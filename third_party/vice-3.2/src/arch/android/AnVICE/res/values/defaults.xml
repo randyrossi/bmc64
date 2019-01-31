@@ -1,0 +1,8 @@
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <bool name="pref_default_famec_on">true</bool>
+    <bool name="pref_default_ntsc_on">false</bool>
+    <bool name="pref_default_true_drive_on">false</bool>
+    <bool name="pref_default_screen_border_on">false</bool>
+    <string name="pref_default_floppy_count">4</string>
+    <string name="pref_default_screen_height">240</string>
+</resources>

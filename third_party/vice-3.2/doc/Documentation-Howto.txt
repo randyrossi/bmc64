@@ -1,0 +1,367 @@
+
+This document contains information on how to create/edit the documentation
+that comes with VICE. Incase you were looking for the documentation itself,
+look at the generated files in the html subdirectory.
+
+------------------------------------------------------------------------------
+
+WARNING: this document is under construction :)
+
+Overview:
+=========
+
+* vice/doc/vice.texi is the main documentation source.
+
+* vice/doc/plain/*.txt should contain only technical information (related to
+  actual commodore computers, not vice). Files placed here should get linked
+  from index.html and also mentioned in vice.texi
+
+* vice/doc/readmes/*.txt should contain port specific readme files
+* vice/doc/building/*.txt should contain info on building specific ports
+* vice/doc/*.txt should only contain developer- or port-specific info
+
+------------------------------------------------------------------------------
+
+updating the documentation:
+===========================
+
+to make half automatic checking easier, mark things that should be fixed right
+in vice.texi in the following form:
+
+@c FIXME: <details>
+
+chapters/sections:
+------------------
+
+when creating a new chapter or (sub)section, you may not want to immediatly
+create a proper node (and possibly menus) too. in that case add a comment
+like this directly above the new section:
+
+@c @node FIXME
+@subsection New Section
+
+the general format of a node looks like this:
+
+@node <this node>, <next node>, <previous node>, <parent node>
+
+for example:
+
+@node New Section, Next Section, Last Section, Chapter
+@section New Section
+
+command-line options:
+---------------------
+
+@table @code
+
+@findex -something
+@item -something <value>
+Set something to <value>
+(@code{SomeResource})
+(all emulators except x128).
+(0: on, 1: off, 2: something else)
+
+@findex SomeResource
+@item SomeResource
+Set the volume
+(xplus4 only).
+(0..100)
+
+@findex -something, +something
+@item -something
+@itemx +something
+Enable/disable something
+(@code{SomeResource=1}, @code{SomeResource=0})
+(xvic only).
+
+@end table
+
+resources:
+----------
+
+@table @code
+
+@vindex SomeResource
+@item SomeResource
+Boolean to enable some option
+(all emulators except x128).
+
+@vindex SomeResource
+@item SomeResource
+Integer specifying the mode to use
+(xvic only).
+(0: on, 1: off, 2: something else)
+
+@vindex SomeResource
+@item SomeResource
+Integer specifying the volume
+(xplus4 only).
+(0..100)
+
+@vindex SomeResource
+@item SomeResource
+String specifying the filename of the ROM
+(xplus4 and x64 only).
+
+@c NOTE: put commands above this block, not in between
+@vindex SomeResource1
+@vindex SomeResource2
+@vindex SomeResource3
+@vindex SomeResource4
+@item SomeResource1
+@itemx SomeResource2
+@itemx SomeResource3
+@itemx SomeResource4
+Boolean to enable some option
+(xplus4, xvic and vsid only).
+
+@end table
+
+simple unnumbered list:
+-----------------------
+
+@itemize @bullet
+
+@item foo
+@item bar
+
+@end itemize
+
+preformatted text:
+------------------
+
+@example
+    +---------
+    + whatever
+    +---------
+@end example
+
+Warning: using more than 77 characters per line will produce bugs in the pdf
+         output (and possibly others) - use @smallexample instead in such
+         cases.
+
+------------------------------------------------------------------------------
+
+platform specific sections:
+===========================
+
+When VICE is configured with the --enable-platformdox option, the configure
+script will try to detect what platform is being compiled for and it will
+tell the documentation generation system to make the documentation platform
+specific. Only the parts of the vice.texi that are for the platform being
+compiled for will show up in the resulting documentation files.
+
+Certain variables are defined to indicate which platform the documentation
+needs to be generated for:
+
+- platformamigaos3 (amiga os 3.x)
+- platformamigaos4 (amiga os 4.x)
+- platformmorphos  (morphos)
+- platformaros     (aros)
+- platformamiga    (will be set when using platformamigaos3,
+                    platformamigaos4, platformmorphos or platformaros)
+- platformbeos     (beos, zeta or haiku)
+- platformdingoo   (dingoo)
+- platformdos      (dos)
+- platformos2      (os/2)
+- platformsdl      (sdl)
+- platformxaw      (xaw)
+- platformgtk2     (gtk2)
+- platformgtk3     (gtk3)
+- platformunix     (will be set when using platformxaw, platformgtk2,
+                    platformgtk3 or platformdingoo)
+- platformosx      (mac os x)
+- platformwindows  (windows)
+- platformall      (sets all previous variables)
+
+An example of a platform specific section would be:
+
+@ifset platformamiga
+* AmigaOS-specific features::
+@end ifset
+
+------------------------------------------------------------------------------
+
+generating the various documentation formats:
+=============================================
+
+The VICE documentation base is vice.texi, all the other documentation formats
+are generated from this file.
+
+The following formats are generated provided you have the tools to be able
+to generate them:
+
+- html (doc/html/vice_*.html)
+  The included doc/html/texi2html perl script is used to convert from texi to
+  html. Perl needs to be installed to be able to generate the html
+  documentation.
+
+- text (doc/vice.txt)
+  Makeinfo is used to convert from texi to text, and the included
+  doc/fixdox.sh shell script is used to 'post-fix' the text. Makeinfo needs to
+  be installed to be able to generate the text documentation.
+
+- pdf (doc/vice.pdf)
+  Texi2dvi is used to convert from texi to pdf. Texi2dvi needs to be installed
+  to be able to generate the pdf documentation.
+
+- amigaguide (doc/vice.guide)
+  A special version of makeinfo that is able to generate amigaguide files is
+  used to convert from texi to amigaguide. If you want to keep your regular
+  makeinfo you can rename the amigaguide makeinfo to makeguide and the
+  configure script will be able to find and use it. The included
+  doc/texi2guide.sh shell script is used to do the actual converting. The
+  special amigaguide makeinfo/makeguide needs to be installed to be able to
+  generate amigaguide documentation.
+  
+  http://aminet.net/text/hyper/mkguide155.lha
+
+- windows help (doc/vice.hlp)
+  Makertf and hcrtf from the winhelp compiler package is used to convert from
+  texi to windows help. The included doc/fixdox.sh shell script is used to
+  pre-fix the texi file so that it can be converted by makertf to rtf, which
+  hcrtf then converts to a windows help file. Makertf and hcrtf need to be
+  installed to be able to generate the window help documentation.
+
+  http://download.microsoft.com/download/office97dev/helpws97/4.03/win98/en-us/hcwsetup.exe
+
+- windows chm (doc/vice.chm)
+  Hhc from the Microsoft help compiler package is used to convert from texi to
+  windows chm. The included doc/texi2chm.sh shell script is used to do the
+  actual converting. It uses the included doc/fixdox.sh shell script to
+  pre-fix the texi file so that the included doc/t2h.pl perl script can
+  convert the texi file to an html file which hhc can then convert to a
+  windows chm. Hhc and perl need to be installed to be able to generate the
+  windows chm documentation.
+
+  http://go.microsoft.com/fwlink/?LinkId=14188
+
+- os/2 inf (doc/vice.inf)
+  Texi2ipf in combination with either ipfc (which is part of the ibm visual
+  age c++ package) or wipfc (which is part of the openwatcom package) is used
+  to convert from texi to os/2 inf. Texi2ipf and (w)ipfc needs to be installed
+  to be able to generate os/2 inf documentation.
+
+- info (doc/vice.info)
+  Makeinfo is used to convert texi to info. Makeinfo needs to be installed to
+  be able to generate info documentation.
+  
+------------------------------------------------------------------------------
+
+other files generated from the documentation:
+=============================================
+
+Some other files are (re-)generated from information contained in the
+documentation, the sections that are used for this are indicated by a comment
+line:
+
+@c section used in file generation, keep to the format used.
+...
+@c end of file generation section.
+
+Do not remove any comments in these sections and keep to the format being used
+in these sections.
+
+Files generated from these sections are:
+
+src/infocontrib.h                             (fully generated)
+AUTHORS                                       (fully generated)
+src/arch/unix/macosx/Resources/Credits.html   (fully generated)
+README                                        (partially generated)
+doc/html/index.html                           (partially generated)
+man/vice.1                                    (fully generated)
+
+------------------------------------------------------------------------------
+
+how to use the checkdoc tool:
+=============================
+
+This is a little tool which tries to automatically check the documentation for
+some common errors and missing things, for example:
+ - missing and/or outdated commandline options
+ - missing and/or outdated resources
+ - incorrect usage of the index
+
+- the tool must be run from within vice/doc and the emulator must be installed
+  prior to running the tool (because that is required for the translation stuff
+  to work correctly)
+
+run the tool by either typing
+
+make -f checkdoc.mak <option>
+
+or (if your shell can figure out and call the interpreter) simply:
+
+./checkdoc.mak <option>
+
+with option being one of either
+
+full    do all checks
+opt     check command-line options
+res     check resources
+listopt list all command-line options
+listres list all resources
+fixme   show FIXMEs
+nodes   show nodes marked FIXME
+clean   remove temp files
+update  generate the documentation
+
+------------------------------------------------------------------------------
+
+TODO:
+=====
+
+like mentioned above, the todo list is contained in vice.texi in the form of
+comments. to show it using the checkdoc tool use "./checkdoc.mak fixme"
+
+at the time of last updating this file (11/04/2016), the list looked like this:
+
+list of FIXMEs (28):
+793:@c FIXME: add link to PETdoc.txt
+814:@c FIXME: add link to PETdoc.txt
+854:@c FIXME: add link to section
+963:@c FIXME: add a detailed list of all keys
+5215:@c FIXME: add the following section to archdep stuff:
+5265:@c FIXME: is this correct?
+5378:@c FIXME: clean up "c64/128" vs "c64"
+16119:@c FIXME: add some info on making screenshots, wav- and avi recordings
+16294:@c FIXME: the "Event history" section needs to be style-checked.
+17324:@c FIXME: add more c1541 examples
+17728:@c FIXME: add D67 CBM2040 (DOS1) disk image file structure
+17729:@c FIXME: add D1M FD2000/FD4000 DD disk image file structure
+17730:@c FIXME: add D2M FD2000/FD4000 HD disk image file structure
+17731:@c FIXME: add D4M FD4000 ED disk image file structure
+18150:@c FIXME: the P64 section needs to be style-checked.
+18438:@c FIXME: the D64 section needs to be style-checked.
+19424:@c FIXME: the X64 section needs to be style-checked.
+19540:@c FIXME: the D71 section needs to be style-checked.
+20202:@c FIXME: the D81 section needs to be style-checked.
+21101:@c FIXME: the D80 section needs to be style-checked.
+21791:@c FIXME: the D82 section needs to be style-checked.
+22883:@c FIXME: the P00 section needs to be style-checked.
+22937:@c FIXME: the CRT section needs to be style-checked.
+25810:@c FIXME: todo
+25828:@c FIXME: todo
+25846:@c FIXME: todo
+25862:@c FIXME: todo
+25889:@c FIXME: todo
+
+nodes that need fixing (180)
+
+to get a much more detailed list use "./checkdoc.mak full"
+
+------------------------------------------------------------------------------
+
+Last fully checked:
+
+c64 using cartridges                        - 22/01/2011
+c64 io extensions                           - 22/01/2011
+
+monitor                                     - 22/01/2011
+
+petcat                                      - 22/01/2011
+cartconv                                    - 22/01/2011
+c1541                                       -
+
+all command line options complete           - 19/06/2012
+all resources complete                      - 22/06/2012

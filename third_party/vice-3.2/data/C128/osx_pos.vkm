@@ -1,0 +1,166 @@
+# VICE keyboard mapping file
+#
+# A Keyboard map is read in as patch to the current map.
+#
+# File format:
+# - comment lines start with '#'
+# - keyword lines start with '!keyword'
+# - normal line has 'keysym/scancode row column shiftflag'
+#
+# Keywords and their lines are:
+# '!CLEAR'               clear whole table
+# '!INCLUDE filename'    read file as mapping file
+# '!LSHIFT row col'      left shift keyboard row/column
+# '!RSHIFT row col'      right shift keyboard row/column
+# '!VSHIFT shiftkey'     virtual shift key (RSHIFT or LSHIFT)
+# '!UNDEF keysym'        remove keysym from table
+#
+# Shiftflag can have the values:
+# 0      key is not shifted for this keysym
+# 1      key is shifted for this keysym
+# 2      left shift
+# 4      right shift
+# 8      key can be shifted or not with this keysym
+# 16     deshift key for this keysym/scancode
+# 32     another definition for this keysym/scancode follows
+# 256    key is used for an alternative keyboard mapping
+#
+# Negative row values:
+# 'keysym -1 n' joystick #1, direction n
+# 'keysym -2 n' joystick #2, direction n
+# 'keysym -3 0' first RESTORE key
+# 'keysym -3 1' second RESTORE key
+# 'keysym -4 0' 40/80 column key
+# 'keysym -4 1' CAPS (ASCII/DIN) key
+#
+
+!CLEAR
+!LSHIFT 1 7
+!RSHIFT 6 4
+!VSHIFT RSHIFT
+
+0  1 2 8            /*            A -> A            */
+1  1 5 8            /*            S -> S            */
+2  2 2 8            /*            D -> D            */
+3  2 5 8            /*            F -> F            */
+4  3 5 8            /*            H -> H            */
+5  3 2 8            /*            G -> G            */
+6  1 4 8            /*            Y -> Y            */
+7  2 7 8            /*            X -> X            */
+8  2 4 8            /*            C -> C            */
+9  3 7 8            /*            V -> V            */
+10 7 1 8            /*            ^ -> Left Arrow   */
+11 3 4 8            /*            B -> B            */
+12 7 6 8            /*            Q -> Q            */
+13 1 1 8            /*            W -> W            */
+14 1 6 8            /*            E -> E            */
+15 2 1 8            /*            R -> R            */
+16 3 1 8            /*            Z -> Z            */
+17 2 6 8            /*            T -> T            */
+18 7 0 8            /*            1 -> 1            */
+19 7 3 8            /*            2 -> 2            */
+20 1 0 8            /*            3 -> 3            */
+21 1 3 8            /*            4 -> 4            */
+22 2 3 8            /*            6 -> 6            */
+23 2 0 8            /*            5 -> 5            */
+24 5 3 8            /*            ` -> Minus        */
+25 4 0 8            /*            9 -> 9            */
+26 3 0 8            /*            7 -> 7            */
+27 5 0 8            /*          \ss -> Plus         */
+28 3 3 8            /*            8 -> 8            */
+29 4 3 8            /*            0 -> 0            */
+30 6 1 8            /*         Plus -> *            */
+31 4 6 8            /*            O -> O            */
+32 3 6 8            /*            U -> U            */
+33 5 6 8            /*           "U -> @            */
+34 4 1 8            /*            I -> I            */
+35 5 1 8            /*            P -> P            */
+36 0 1 8            /*       Return -> Return       */
+37 5 2 8            /*            L -> L            */
+38 4 2 8            /*            J -> J            */
+39 6 2 8            /*           "A -> ;            */
+40 4 5 8            /*            K -> K            */
+41 5 5 8            /*           "O -> :            */
+42 6 5 8            /*         Hash -> =            */
+43 5 7 8            /*            , -> ,            */
+44 6 7 8            /*        Minus -> /            */
+45 4 7 8            /*            N -> N            */
+46 4 4 8            /*            M -> M            */
+47 5 4 8            /*            . -> .            */
+48 7 2 8            /*          TAB -> Ctrl         */
+49 7 4 8            /*        Space -> Space        */
+50 7 1 8            /*     Backtick -> Left Arrow   */
+51 0 0 8            /*    Backspace -> Del          */
+52 6 4 4            /*        Enter -> Right Shift  */
+53 7 7 8            /*          ESC -> Run/Stop     */
+
+#54 -1 -1 0          /*           (no key)           */
+#55 -1 -1 0          /*           (no key)           */
+56 1 7 2            /*   Left Shift -> Left Shift   */
+#57 -1 -1 0          /*           (no key)           */
+58 7 5 8            /*       Option -> CBM          */
+59 7 2 8            /*    Left Ctrl -> Ctrl         */
+#60 -1 -1 0          /*  Right Shift -> (no key)     */
+#61 -1 -1 0          /*           (no key)           */
+#62 -1 -1 0          /*           (no key)           */
+#63 -1 -1 0          /*           (no key)           */
+#64 -1 -1 0          /*          F17 -> (no key)     */
+#65 -1 -1 0          /*     Numpad . -> (no key)     */
+#66 -1 -1 0          /*          &&& -> (no key)     */
+#67 -1 -1 0          /*     Numpad * -> (no key)     */
+#68 -1 -1 0          /*           (no key)           */
+#69 -1 -1 0          /*     Numpad + -> (no key)     */
+#70 -1 -1 0          /*          &&& -> (no key)     */
+#71 -1 -1 0          /* Numpad Clear -> (no key)     */
+#72 -1 -1 0          /*          &&& -> (no key)     */
+#73 -1 -1 0          /*          &&& -> (no key)     */
+#74 -1 -1 0          /*          &&& -> (no key)     */
+#75 -1 -1 0          /*     Numpad / -> (no key)     */
+#76 -1 -1 0          /* Numpad Enter -> (no key)     */
+#77 -1 -1 0          /*          &&& -> (no key)     */
+#78 -1 -1 0          /*     Numpad - -> (no key)     */
+#79 -1 -1 0          /*          F18 -> (no key)     */
+#80 -1 -1 0          /*          F19 -> (no key)     */
+#82 -1 -1 0          /*     Numpad 0 -> (no key)     */
+#83 -1 -1 0          /*     Numpad 1 -> (no key)     */
+#84 -1 -1 0          /*     Numpad 2 -> (no key)     */
+#85 -1 -1 0          /*     Numpad 3 -> (no key)     */
+#86 -1 -1 0          /*     Numpad 4 -> (no key)     */
+#87 -1 -1 0          /*     Numpad 5 -> (no key)     */
+#88 -1 -1 0          /*     Numpad 6 -> (no key)     */
+#89 -1 -1 0          /*     Numpad 7 -> (no key)     */
+#90 -1 -1 0          /*          F20 -> (no key)     */
+#91 -1 -1 0          /*     Numpad 8 -> (no key)     */
+#92 -1 -1 0          /*     Numpad 9 -> (no key)     */
+96  0 6 8           /*           F5 -> F5           */
+97  0 6 1           /*           F6 -> F6           */
+98  0 3 8           /*           F7 -> F7           */
+99  0 5 8           /*           F3 -> F3           */
+100 0 3 1           /*           F8 -> F8           */
+101 -4 0            /*           F9 -> 40/80        */
+#103 -1 -1 0         /*          F11 -> (no key)     */
+#105 -1 -1 0         /*          F13 -> (no key)     */
+#106 -1 -1 0         /*          F16 -> (no key)     */
+#107 -1 -1 0         /*          F14 -> (no key)     */
+#109 -1 -1 0         /*          F10 -> (no key)     */
+#111 -1 -1 0         /*          F12 -> (no key)     */
+#113 -1 -1 0         /*          F15 -> (no key)     */
+#114 -1 -1 0         /*         Help -> (no key)     */
+115 6 3 8           /*         Home -> CLR/HOME     */
+116 6 6 8           /*         PgUp -> Up Arrow     */
+117 -3 0            /*          Del -> RESTORE      */
+118 0 5 1           /*           F4 -> F4           */
+#119 -1 -1 0         /*          End -> (no key)    */
+120 0 4 1           /*           F2 -> F2           */
+121 6 0 8           /*       PgDown -> Pound        */
+122 0 4 8           /*           F1 -> F1           */
+
+123 0 2 257         /*         Left -> CRSR LEFT    */
+123 10 5 8          /*         Left -> CRSR LEFT    */
+124 0 2 264         /*        Right -> CRSR RIGHT   */
+124 10 6 8          /*        Right -> CRSR RIGHT   */
+125 0 7 264         /*         Down -> CRSR DOWN    */
+125 10 4 8          /*         Down -> CRSR DOWN    */
+126 0 7 257         /*           Up -> CRSR UP      */
+126 10 3 8          /*           Up -> CRSR UP      */
+

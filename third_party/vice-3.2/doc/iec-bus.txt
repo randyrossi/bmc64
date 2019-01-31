@@ -1,0 +1,56 @@
+
+This is an overview of the VICE IEC bus emulation (x64 example).
+
+
+/----<---- diskcontents-iec <-- diskcontents --> diskcontents-block ---->----\
+|                                                                   \-> *B   |
+|                                /-> cia1581 -\                              |
+| 6510core --> c64cia2 -> iecbus --> via1541 --> drive (TDE) --> *A          |
+|          \                     \->-\                                       |
+|          |                         |                                       |
+|         / /-----------<------------/            c1541 >--\--------------->-\
+|        /  |                                   monitor >--\-\               |
+|       /   \- s*-iec-device -\                              |               |
+|       |                      \             /-> realdevice  |               |
+|       \-> traps --> s*-trap --> s*-iec-bus                 \               |
+|                              /             \-> fsdrive -->--> vdrive-iec >-\
+\----> s*-iec-lib --> s*-iec -/                          \-> fsdevice        |
+    /                                                    \-> interface-s*    |
+    |                                           /- *B                        |
+    \--------<-------- realimage <-- diskimage <-- vdrive <----------<-------/
+                        rawimage <-/            \- driveimage <-- *A
+                         fsimage <-/            \----- wd1770 <-/
+                                                \-------- fdc <-/
+
+User of the IEC bus system
+--------------------------
+6510core:
+IEC bus access by the host CPU
+
+diskcontents:
+IEC bus and block acccess by image content lister
+
+monitor:
+IEC bus access by the build in monitor
+
+c1541:
+IEC bus and block acccess by the c1541 stand-alone utility
+
+
+Backends used by the IEC bus system
+-----------------------------------
+fsimage:
+Block access to disk images files on the host file system
+
+rawimage:
+Block access to raw devices like a host (PC) disk drive
+
+realdevice:
+IEC access to real IEC devices connected to the host (PC)
+
+interface-serial:
+IEC access to the printer emulation
+
+fsdevice:
+File access to files on the host file system
+

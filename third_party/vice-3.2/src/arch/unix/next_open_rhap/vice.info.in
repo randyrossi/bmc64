@@ -1,0 +1,9 @@
+Title          VICE
+Version        @VICE_VERSION@
+Description    Versatile Commodore 8bit emulator.
+
+DefaultLocation      /usr/local
+Diskname             VICE
+Relocatable          NO
+Application          YES
+LibrarySubdirectory  Standard

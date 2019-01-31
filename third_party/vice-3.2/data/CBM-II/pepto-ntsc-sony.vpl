@@ -1,0 +1,57 @@
+#
+# VICE Palette file
+#
+# Syntax:
+# Red Green Blue Dither
+#
+
+# this palette was calculated for NTSC according to http://www.pepto.de/projects/colorvic/
+# using the SONY CXA2025AS US decoder matrix - this looks noteably different to PAL
+
+# Black
+00 00 00 0
+
+# White
+FF FF FF E
+
+# Red
+7C 35 2B 4
+
+# Cyan
+5A A6 B1 C
+
+# Purple
+69 41 85 8
+
+# Green
+5D 86 43 4
+
+# Blue
+21 2E 78 4
+
+# Yellow
+CF BE 6F C
+
+# Orange
+89 4A 26 4
+
+# Brown
+5B 33 0 4
+
+# Light Red
+AF 64 59 8
+
+# Dark Gray
+43 43 43 4
+
+# Medium Gray
+6B 6B 6B 8
+
+# Light Green
+A0 CB 84 8
+
+# Light Blue
+56 65 B3 8
+
+# Light Gray
+95 95 95 C

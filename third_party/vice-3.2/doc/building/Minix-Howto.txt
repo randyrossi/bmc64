@@ -1,0 +1,58 @@
+VICE can be compiled on either Minix-Vmd or Minix-3.x.
+
+
+Compiling VICE on Minix-Vmd
+===========================
+
+To build VICE on Minix-Vmd you will need to have the kernel source and all of Xfree86 installed.
+
+Minix-Vmd lacks the ability to properly compile the ReSID library, and the shell lacks the ability
+to recognize the --without-resid option, so we will have to set the 'with_resid' variable to 'no'
+before starting the configure script.
+
+The configure script is set to recognize Minix-Vmd only when the '--build=i386-pc-minixvmd' option
+is used.
+
+The library archiver 'ar' used by Minix-Vmd lacks the 'u' option which is used standard in all makefiles
+in VICE, therefor a wrapper script is provided to take care of this problem.
+
+Since the X11 libraries are in ack format, VICE is built using the ack compiler rather than the gcc compiler.
+
+To compile VICE alot of memory is needed, you might have to change the stack/malloc settings of
+/usr/lib/ack/em_led and /usr/lib/ack/cv using chmem, something like 20 MB's might do.
+
+The resulting binaries are statically linked and therefor extremely big, and will also need alot of memory
+to run, you will have to change the stack/malloc settings of the resulting x64, x128, xvic, xpet, xplus4,
+xcbm2, c1541 and petcat.
+
+When configuring VICE, use the following command line :
+
+with_resid=no CC=cc ./configure -v --build=i386-pc-minixvmd
+
+
+Naturally you can use the '--prefix=' option to have the install happen in a place of your choosing.
+
+After configure has finished, you can initiate the
+build process by simply typing 'make'.
+
+You can have the package installed in it's proper place by typing 'make install'.
+
+
+
+
+Compiling VICE on Minix-3.x
+===========================
+
+To build VICE on Minix-3.x you will need to have the X11 package installed.
+
+The proper way to configure VICE on Minix-3.x is by using the following :
+
+AR=ar RANLIB=true CC=cc bigsh configure --prefix=/usr/local --without-resid --disable-nls
+
+
+Naturally you can use the '--prefix=' option to have the install happen in a place of your choosing.
+
+After configure has finished, you can initiate the
+build process by simply typing 'make'.
+
+You can have the package installed in it's proper place by typing 'make install'.

@@ -1,0 +1,6 @@
+kernel.o
+kernel7.elf
+kernel7.img
+kernel7.lst
+kernel7.map
+*.o

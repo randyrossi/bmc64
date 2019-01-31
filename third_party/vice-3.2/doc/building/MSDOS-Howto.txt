@@ -1,0 +1,62 @@
+Compiling MS-DOS VICE with DJGPP
+================================
+
+By Fabrizio Gennari (fabrizio.ge@tiscalinet.it)
+
+A way of compiling the MS-DOS version of VICE is to use a cross-compiler
+which runs on Linux. But it is also possible to compile VICE with a native
+MS-DOS compiler, DJGPP. The only limitation is that VICE cannot be compiled
+on native MS-DOS, only on an MS-DOS prompt under Windows. Why? Because VICE
+sources use long filenames, while MS-DOS only supports "8+3" filenames: when
+unpacking VICE sources, often two different filenames become identical after
+8+3 truncation, and it is impossible to distinguish between them. Luckily,
+DJGPP supports long filenames when run in a Windows environment.
+
+First of all, download the required DJGPP files from the official site
+(http://www.delorie.com/pub/djgpp/current/) or a mirror. These are the files for a
+minimum installation, newer version of the files should be fine:
+* from directory v2, djdev203.zip
+* from directory v2gnu, bnu214b.zip, bsh204b.zip, dif28b.zip, fil41b.zip,
+gcc332b.zip, gpp332b.zip, grep24b.zip, mak3791b.zip, sed407b.zip, shl2011b.zip,
+txt20b.zip
+* from directory v2tk/allegro, all403.zip . Actually, any Allegro from 3.1
+on will do. Note that Allegro is distributed as source only, so you will have
+to compile it.
+Follow the instructions to install DJGPP. In short, unpack all the DJGPP ZIP
+files in the same directory (remember to preserve the directory structure
+while unpacking!), which will be called DJDIR from now on, add DJDIR\bin to
+the PATH variable, and run the command
+
+setdjgpp DJDIR DJDIR
+
+where the first DJDIR has MS-DOS directory separators (\), and the second
+DJDIR has Unix directory separators (/). Example:
+
+setdjgpp C:\DJGPP C:/DJGPP
+
+If you want those command to be automatically executed at boot, add them in
+the AUTOEXEC.BAT file.
+
+Now, unpack VICE sources in a directory: all VICE files will be in a
+sub-directory called vice-<version number>. Open an MS-DOS prompt window,
+go to the vice-<version number> dir and type
+
+bash
+
+. From now on, you just have to follow the instructions to compile Unix
+VICE: the simplest way is to type
+
+./configure
+make
+make bindist
+
+After that, you will have a binary distribution from which you can run
+VICE.
+
+You can run the compiled VICE either from windows or on native MS-DOS.
+
+To run the compiled emulatoron native MS-DOS mode you will need a little
+addition. Download from subdir v2misc of DJGPP website the file
+csdpmi5b.zip (older version should be OK, too) and unzip the file
+CWSDPMI.EXE in the same directory as the VICE .EXE files, or in a directory
+in the path.

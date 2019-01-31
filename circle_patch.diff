@@ -1,0 +1,35 @@
+diff --git a/include/circle/sysconfig.h b/include/circle/sysconfig.h
+index dd5c887..cf940ee 100644
+--- a/include/circle/sysconfig.h
++++ b/include/circle/sysconfig.h
+@@ -34,7 +34,7 @@
+ // If your kernel image contains big data areas it may be required to
+ // increase this value. The value must be a multiple of 16 KByte.
+ 
+-#define KERNEL_MAX_SIZE		(2 * MEGABYTE)
++#define KERNEL_MAX_SIZE		(8 * MEGABYTE)
+ 
+ ///////////////////////////////////////////////////////////////////////
+ //
+@@ -132,7 +132,7 @@
+ // this option is that the "SpeedFactor" of your system is displayed.
+ // You can reduce the time needed for booting, if you disable this.
+ 
+-#define CALIBRATE_DELAY
++//#define CALIBRATE_DELAY
+ 
+ ///////////////////////////////////////////////////////////////////////
+ //
+diff --git a/lib/usb/usbdevicefactory.cpp b/lib/usb/usbdevicefactory.cpp
+index 541aba4..9694acb 100644
+--- a/lib/usb/usbdevicefactory.cpp
++++ b/lib/usb/usbdevicefactory.cpp
+@@ -98,7 +98,7 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
+ 	}
+ 	else if (pName->Compare ("ven424-ec00") == 0)
+ 	{
+-		pResult = new CSMSC951xDevice (pParent);
++		//pResult = new CSMSC951xDevice (pParent);
+ 	}
+ 	else if (pName->Compare ("ven424-7800") == 0)
+ 	{

@@ -1,0 +1,2715 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>6510 On-Chip</key>
+	<dict>
+		<key>range</key>
+		<string>0-1</string>
+		<key>valid</key>
+		<string>_C128_C64_C64DTV_</string>
+		<key>children</key>
+		<dict>
+			<key>Data Direction</key>
+			<dict>
+				<key>format</key>
+				<string>bits</string>
+				<key>src</key>
+				<array>
+					<string>0</string>
+				</array>
+			</dict>
+			<key>Cassette Motor Control</key>
+			<dict>
+				<key>format</key>
+				<string>map</string>
+				<key>map</key>
+				<array>
+					<string>Running</string>
+					<string>Stopped</string>
+				</array>
+				<key>src</key>
+				<array>
+					<string>1&amp;20&gt;5</string>
+				</array>
+			</dict>
+			<key>Cassette Switch Sense</key>
+			<dict>
+				<key>format</key>
+				<string>bool</string>
+				<key>src</key>
+				<array>
+					<string>1&amp;10</string>
+				</array>
+			</dict>
+			<key>Cassette Data Output</key>
+			<dict>
+				<key>format</key>
+				<string>bool</string>
+				<key>src</key>
+				<array>
+					<string>1&amp;8</string>
+				</array>
+			</dict>
+			<key>/CharEn</key>
+			<dict>
+				<key>format</key>
+				<string>bool</string>
+				<key>src</key>
+				<array>
+					<string>1&amp;4</string>
+				</array>
+			</dict>
+			<key>/HiRam</key>
+			<dict>
+				<key>format</key>
+				<string>bool</string>
+				<key>src</key>
+				<array>
+					<string>1&amp;2</string>
+				</array>
+			</dict>
+			<key>/LoRam</key>
+			<dict>
+				<key>format</key>
+				<string>bool</string>
+				<key>src</key>
+				<array>
+					<string>1&amp;1</string>
+				</array>
+			</dict>
+		</dict>
+	</dict>
+	<key>VIC II</key>
+	<dict>
+		<key>valid</key>
+		<string>_C128_C64_C64DTV_</string>
+		<key>range</key>
+		<string>d000-d02f</string>
+		<key>children</key>
+		<dict>
+			<key>Colors</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Border Color</key>
+					<dict>
+						<key>format</key>
+						<string>vicii_color</string>
+						<key>src</key>
+						<array>
+							<string>d020</string>
+						</array>
+					</dict>
+					<key>Background Color 0</key>
+					<dict>
+						<key>format</key>
+						<string>vicii_color</string>
+						<key>src</key>
+						<array>
+							<string>d021</string>
+						</array>
+					</dict>
+					<key>Background Color 1 (MC 0)</key>
+					<dict>
+						<key>format</key>
+						<string>vicii_color</string>
+						<key>src</key>
+						<array>
+							<string>d022</string>
+						</array>
+					</dict>
+					<key>Background Color 2 (MC 1)</key>
+					<dict>
+						<key>format</key>
+						<string>vicii_color</string>
+						<key>src</key>
+						<array>
+							<string>d023</string>
+						</array>
+					</dict>
+					<key>Background Color 3</key>
+					<dict>
+						<key>format</key>
+						<string>vicii_color</string>
+						<key>src</key>
+						<array>
+							<string>d024</string>
+						</array>
+					</dict>
+					<key>Sprite Multi Color 0</key>
+					<dict>
+						<key>format</key>
+						<string>vicii_color</string>
+						<key>src</key>
+						<array>
+							<string>d025</string>
+						</array>
+					</dict>
+					<key>Sprite Multi Color 1</key>
+					<dict>
+						<key>format</key>
+						<string>vicii_color</string>
+						<key>src</key>
+						<array>
+							<string>d026</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>IRQ</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Interrupt Request (IRR)</key>
+					<dict>
+						<key>children</key>
+						<dict>
+							<key>IRQ Generated</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d019&amp;80</string>
+								</array>
+							</dict>
+							<key>Light-Pen Triggered Flag</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d019&amp;8</string>
+								</array>
+							</dict>
+							<key>Sprite-To-Sprite Collision Flag</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d019&amp;4</string>
+								</array>
+							</dict>
+							<key>Sprite-To-Background Collision Flag - 2</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d019&amp;2</string>
+								</array>
+							</dict>
+							<key>Raster Compare Flag</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d019&amp;1</string>
+								</array>
+							</dict>
+						</dict>
+					</dict>
+					<key>Interrupt Mask (IMR)</key>
+					<dict>
+						<key>children</key>
+						<dict>
+							<key>Light-Pen Triggered Flag</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d01a&amp;8</string>
+								</array>
+							</dict>
+							<key>Sprite-To-Sprite Collision Flag</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d01a&amp;4</string>
+								</array>
+							</dict>
+							<key>Sprite-To-Background Collision Flag - 2</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d01a&amp;2</string>
+								</array>
+							</dict>
+							<key>Raster Compare Flag</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d01a&amp;1</string>
+								</array>
+							</dict>
+						</dict>
+					</dict>
+				</dict>
+			</dict>
+			<key>Memory Control</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Video Matrix Base Address</key>
+					<dict>
+						<key>src</key>
+						<array>
+							<string>d018&amp;f0&gt;4</string>
+						</array>
+						<key>format</key>
+						<string>map</string>
+						<key>map</key>
+						<array>
+							<string>$0000</string>
+							<string>$0400</string>
+							<string>$0800</string>
+							<string>$0c00</string>
+							<string>$1000</string>
+							<string>$1400</string>
+							<string>$1800</string>
+							<string>$1c00</string>
+							<string>$2000</string>
+							<string>$2400</string>
+							<string>$2800</string>
+							<string>$2c00</string>
+							<string>$3000</string>
+							<string>$3400</string>
+							<string>$3800</string>
+							<string>$3c00</string>
+						</array>
+					</dict>
+					<key>Character Dot Data Base Address</key>
+					<dict>
+						<key>src</key>
+						<array>
+							<string>d018&amp;e&gt;1</string>
+						</array>
+						<key>format</key>
+						<string>map</string>
+						<key>map</key>
+						<array>
+							<string>$0000-$07ff</string>
+							<string>$0800-$0fff</string>
+							<string>$1000-$17ff</string>
+							<string>$1800-$1fff</string>
+							<string>$2000-$27ff</string>
+							<string>$2800-$2fff</string>
+							<string>$3000-$37ff</string>
+							<string>$3800-$3fff</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>Raster Pos</key>
+			<dict>
+				<key>format</key>
+				<string>d</string>
+				<key>src</key>
+				<array>
+					<string>d012</string>
+					<string>d011&amp;80&lt;1</string>
+				</array>
+			</dict>
+			<key>Latch X Pos</key>
+			<dict>
+				<key>format</key>
+				<string>d</string>
+				<key>src</key>
+				<array>
+					<string>d013</string>
+				</array>
+			</dict>
+			<key>Latch Y Pos</key>
+			<dict>
+				<key>format</key>
+				<string>d</string>
+				<key>src</key>
+				<array>
+					<string>d014</string>
+				</array>
+			</dict>
+			<key>Control</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Extended Color Text Mode</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d011&amp;40</string>
+						</array>
+					</dict>
+					<key>Bitmap Mode</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d011&amp;20</string>
+						</array>
+					</dict>
+					<key>Blank Screen</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d011&amp;10</string>
+						</array>
+					</dict>
+					<key>25 Row Display</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d011&amp;8</string>
+						</array>
+					</dict>
+					<key>Smooth Y Scroll</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d011&amp;7</string>
+						</array>
+					</dict>
+					<key>Reset-Bit</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d016&amp;20</string>
+						</array>
+					</dict>
+					<key>Multi-Color Mode</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d016&amp;10</string>
+						</array>
+					</dict>
+					<key>40 Column Display</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d016&amp;8</string>
+						</array>
+					</dict>
+					<key>Smooth X Scroll</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d016&amp;7</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>Sprite 0</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Color</key>
+					<dict>
+						<key>src</key>
+						<array>
+							<string>d027</string>
+						</array>
+						<key>format</key>
+						<string>vicii_color</string>
+					</dict>
+					<key>Enable</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d015&amp;1</string>
+						</array>
+					</dict>
+					<key>X Pos</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d000</string>
+							<string>d010&amp;1&lt;8</string>
+						</array>
+					</dict>
+					<key>Y Pos</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d001</string>
+						</array>
+					</dict>
+					<key>Multi Color</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01c&amp;1</string>
+						</array>
+					</dict>
+					<key>Hi Prio</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01b&amp;1</string>
+						</array>
+					</dict>
+					<key>Expand X</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01d&amp;1</string>
+						</array>
+					</dict>
+					<key>Expand Y</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d017&amp;1</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>Sprite 1</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Color</key>
+					<dict>
+						<key>src</key>
+						<array>
+							<string>d028</string>
+						</array>
+						<key>format</key>
+						<string>vicii_color</string>
+					</dict>
+					<key>Enable</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d015&amp;2</string>
+						</array>
+					</dict>
+					<key>X Pos</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d002</string>
+							<string>d010&amp;2&lt;7</string>
+						</array>
+					</dict>
+					<key>Y Pos</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d003</string>
+						</array>
+					</dict>
+					<key>Multi Color</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01c&amp;2</string>
+						</array>
+					</dict>
+					<key>Hi Prio</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01b&amp;2</string>
+						</array>
+					</dict>
+					<key>Expand X</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01d&amp;2</string>
+						</array>
+					</dict>
+					<key>Expand Y</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d017&amp;2</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>Sprite 2</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Color</key>
+					<dict>
+						<key>src</key>
+						<array>
+							<string>d029</string>
+						</array>
+						<key>format</key>
+						<string>vicii_color</string>
+					</dict>
+					<key>Enable</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d015&amp;4</string>
+						</array>
+					</dict>
+					<key>X Pos</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d004</string>
+							<string>d010&amp;4&lt;6</string>
+						</array>
+					</dict>
+					<key>Y Pos</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d005</string>
+						</array>
+					</dict>
+					<key>Multi Color</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01c&amp;4</string>
+						</array>
+					</dict>
+					<key>Hi Prio</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01b&amp;4</string>
+						</array>
+					</dict>
+					<key>Expand X</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01d&amp;4</string>
+						</array>
+					</dict>
+					<key>Expand Y</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d017&amp;4</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>Sprite 3</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Color</key>
+					<dict>
+						<key>src</key>
+						<array>
+							<string>d02a</string>
+						</array>
+						<key>format</key>
+						<string>vicii_color</string>
+					</dict>
+					<key>Enable</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d015&amp;8</string>
+						</array>
+					</dict>
+					<key>X Pos</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d006</string>
+							<string>d010&amp;8&lt;5</string>
+						</array>
+					</dict>
+					<key>Y Pos</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d007</string>
+						</array>
+					</dict>
+					<key>Multi Color</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01c&amp;8</string>
+						</array>
+					</dict>
+					<key>Hi Prio</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01b&amp;8</string>
+						</array>
+					</dict>
+					<key>Expand X</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01d&amp;8</string>
+						</array>
+					</dict>
+					<key>Expand Y</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d017&amp;8</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>Sprite 4</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Color</key>
+					<dict>
+						<key>src</key>
+						<array>
+							<string>d02b</string>
+						</array>
+						<key>format</key>
+						<string>vicii_color</string>
+					</dict>
+					<key>Enable</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d015&amp;10</string>
+						</array>
+					</dict>
+					<key>X Pos</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d008</string>
+							<string>d010&amp;10&lt;4</string>
+						</array>
+					</dict>
+					<key>Y Pos</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d009</string>
+						</array>
+					</dict>
+					<key>Multi Color</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01c&amp;10</string>
+						</array>
+					</dict>
+					<key>Hi Prio</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01b&amp;10</string>
+						</array>
+					</dict>
+					<key>Expand X</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01d&amp;10</string>
+						</array>
+					</dict>
+					<key>Expand Y</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d017&amp;10</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>Sprite 5</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Color</key>
+					<dict>
+						<key>src</key>
+						<array>
+							<string>d02c</string>
+						</array>
+						<key>format</key>
+						<string>vicii_color</string>
+					</dict>
+					<key>Enable</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d015&amp;20</string>
+						</array>
+					</dict>
+					<key>X Pos</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d00a</string>
+							<string>d010&amp;20&lt;3</string>
+						</array>
+					</dict>
+					<key>Y Pos</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d00b</string>
+						</array>
+					</dict>
+					<key>Multi Color</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01c&amp;20</string>
+						</array>
+					</dict>
+					<key>Hi Prio</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01b&amp;20</string>
+						</array>
+					</dict>
+					<key>Expand X</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01d&amp;20</string>
+						</array>
+					</dict>
+					<key>Expand Y</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d017&amp;20</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>Sprite 6</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Color</key>
+					<dict>
+						<key>src</key>
+						<array>
+							<string>d02d</string>
+						</array>
+						<key>format</key>
+						<string>vicii_color</string>
+					</dict>
+					<key>Enable</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d015&amp;40</string>
+						</array>
+					</dict>
+					<key>X Pos</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d00c</string>
+							<string>d010&amp;40&lt;2</string>
+						</array>
+					</dict>
+					<key>Y Pos</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d00d</string>
+						</array>
+					</dict>
+					<key>Multi Color</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01c&amp;40</string>
+						</array>
+					</dict>
+					<key>Hi Prio</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01b&amp;40</string>
+						</array>
+					</dict>
+					<key>Expand X</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01d&amp;40</string>
+						</array>
+					</dict>
+					<key>Expand Y</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d017&amp;40</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>Sprite 7</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Color</key>
+					<dict>
+						<key>src</key>
+						<array>
+							<string>d02e</string>
+						</array>
+						<key>format</key>
+						<string>vicii_color</string>
+					</dict>
+					<key>Enable</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d015&amp;80</string>
+						</array>
+					</dict>
+					<key>X Pos</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d00e</string>
+							<string>d010&amp;80&lt;1</string>
+						</array>
+					</dict>
+					<key>Y Pos</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d00f</string>
+						</array>
+					</dict>
+					<key>Multi Color</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01c&amp;80</string>
+						</array>
+					</dict>
+					<key>Hi Prio</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01b&amp;80</string>
+						</array>
+					</dict>
+					<key>Expand X</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d01d&amp;80</string>
+						</array>
+					</dict>
+					<key>Expand Y</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d017&amp;80</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>Sprite Collision</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Sprite-To-Sprite</key>
+					<dict>
+						<key>format</key>
+						<string>bits</string>
+						<key>src</key>
+						<array>
+							<string>d01e</string>
+						</array>
+					</dict>
+					<key>Sprite-To-Background</key>
+					<dict>
+						<key>format</key>
+						<string>bits</string>
+						<key>src</key>
+						<array>
+							<string>d01f</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+		</dict>
+	</dict>
+	<key>SID</key>
+	<dict>
+		<key>valid</key>
+		<string>_C128_C64_C64DTV_</string>
+		<key>range</key>
+		<string>d400-d41f</string>
+		<key>children</key>
+		<dict>
+			<key>Output Volume</key>
+			<dict>
+				<key>format</key>
+				<string>d</string>
+				<key>src</key>
+				<array>
+					<string>d418&amp;f</string>
+				</array>
+			</dict>
+			<key>Osc 3 Output</key>
+			<dict>
+				<key>format</key>
+				<string>d</string>
+				<key>src</key>
+				<array>
+					<string>d41b</string>
+				</array>
+			</dict>
+			<key>Env Generator 3 Output</key>
+			<dict>
+				<key>format</key>
+				<string>d</string>
+				<key>src</key>
+				<array>
+					<string>d41c</string>
+				</array>
+			</dict>
+			<key>A/D Converter Paddle 1</key>
+			<dict>
+				<key>format</key>
+				<string>d</string>
+				<key>src</key>
+				<array>
+					<string>d419</string>
+				</array>
+			</dict>
+			<key>A/D Converter Paddle 2</key>
+			<dict>
+				<key>format</key>
+				<string>d</string>
+				<key>src</key>
+				<array>
+					<string>d41a</string>
+				</array>
+			</dict>
+			<key>Voice 1</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>ADSR</key>
+					<dict>
+						<key>children</key>
+						<dict>
+							<key>1 Attack Cycle Duration</key>
+							<dict>
+								<key>format</key>
+								<string>d</string>
+								<key>src</key>
+								<array>
+									<string>d405&amp;f0&gt;4</string>
+								</array>
+							</dict>
+							<key>2 Decay Cycle Duration</key>
+							<dict>
+								<key>format</key>
+								<string>d</string>
+								<key>src</key>
+								<array>
+									<string>d405&amp;f</string>
+								</array>
+							</dict>
+							<key>3 Sustain Cycle Duration</key>
+							<dict>
+								<key>format</key>
+								<string>d</string>
+								<key>src</key>
+								<array>
+									<string>d406&amp;f0&gt;4</string>
+								</array>
+							</dict>
+							<key>4 Release Cycle Duration</key>
+							<dict>
+								<key>format</key>
+								<string>d</string>
+								<key>src</key>
+								<array>
+									<string>d406&amp;f</string>
+								</array>
+							</dict>
+						</dict>
+					</dict>
+					<key>Frequency Control</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d400</string>
+							<string>d401&lt;8</string>
+						</array>
+					</dict>
+					<key>Pulse Waveform Width</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d402</string>
+							<string>d403&amp;f&lt;8</string>
+						</array>
+					</dict>
+					<key>Control</key>
+					<dict>
+						<key>children</key>
+						<dict>
+							<key>Random Noise Waveform</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d404&amp;80</string>
+								</array>
+							</dict>
+							<key>Pulse Waveform</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d404&amp;40</string>
+								</array>
+							</dict>
+							<key>Sawtooth Waveform</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d404&amp;20</string>
+								</array>
+							</dict>
+							<key>Triangle Waveform</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d404&amp;10</string>
+								</array>
+							</dict>
+							<key>Test Bit</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d404&amp;8</string>
+								</array>
+							</dict>
+							<key>Ring Modulate Osc 1 with Osc 3 Out</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d404&amp;4</string>
+								</array>
+							</dict>
+							<key>Synchronize Osc 1 with Osc 3 Frequency</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d404&amp;2</string>
+								</array>
+							</dict>
+							<key>Gate Bit: (On=Start Att/Dec/Sus, Off=Start Release)</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d404&amp;1</string>
+								</array>
+							</dict>
+						</dict>
+					</dict>
+				</dict>
+			</dict>
+			<key>Voice 2</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>ADSR</key>
+					<dict>
+						<key>children</key>
+						<dict>
+							<key>1 Attack Cycle Duration</key>
+							<dict>
+								<key>format</key>
+								<string>d</string>
+								<key>src</key>
+								<array>
+									<string>d40c&amp;f0&gt;4</string>
+								</array>
+							</dict>
+							<key>2 Decay Cycle Duration</key>
+							<dict>
+								<key>format</key>
+								<string>d</string>
+								<key>src</key>
+								<array>
+									<string>d40c&amp;f</string>
+								</array>
+							</dict>
+							<key>3 Sustain Cycle Duration</key>
+							<dict>
+								<key>format</key>
+								<string>d</string>
+								<key>src</key>
+								<array>
+									<string>d40d&amp;f0&gt;4</string>
+								</array>
+							</dict>
+							<key>4 Release Cycle Duration</key>
+							<dict>
+								<key>format</key>
+								<string>d</string>
+								<key>src</key>
+								<array>
+									<string>d40d&amp;f</string>
+								</array>
+							</dict>
+						</dict>
+					</dict>
+					<key>Frequency Control</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d407</string>
+							<string>d408&lt;8</string>
+						</array>
+					</dict>
+					<key>Pulse Waveform Width</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d409</string>
+							<string>d40a&amp;f&lt;8</string>
+						</array>
+					</dict>
+					<key>Control</key>
+					<dict>
+						<key>children</key>
+						<dict>
+							<key>Random Noise Waveform</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d40b&amp;80</string>
+								</array>
+							</dict>
+							<key>Pulse Waveform</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d40b&amp;40</string>
+								</array>
+							</dict>
+							<key>Sawtooth Waveform</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d40b&amp;20</string>
+								</array>
+							</dict>
+							<key>Triangle Waveform</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d40b&amp;10</string>
+								</array>
+							</dict>
+							<key>Test Bit</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d40b&amp;8</string>
+								</array>
+							</dict>
+							<key>Ring Modulate Osc 1 with Osc 3 Out</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d40b&amp;4</string>
+								</array>
+							</dict>
+							<key>Synchronize Osc 1 with Osc 3 Frequency</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d40b&amp;2</string>
+								</array>
+							</dict>
+							<key>Gate Bit: (On=Start Att/Dec/Sus, Off=Start Release)</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d40b&amp;1</string>
+								</array>
+							</dict>
+						</dict>
+					</dict>
+				</dict>
+			</dict>
+			<key>Voice 3</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>ADSR</key>
+					<dict>
+						<key>children</key>
+						<dict>
+							<key>1 Attack Cycle Duration</key>
+							<dict>
+								<key>format</key>
+								<string>d</string>
+								<key>src</key>
+								<array>
+									<string>d413&amp;f0&gt;4</string>
+								</array>
+							</dict>
+							<key>2 Decay Cycle Duration</key>
+							<dict>
+								<key>format</key>
+								<string>d</string>
+								<key>src</key>
+								<array>
+									<string>d413&amp;f</string>
+								</array>
+							</dict>
+							<key>3 Sustain Cycle Duration</key>
+							<dict>
+								<key>format</key>
+								<string>d</string>
+								<key>src</key>
+								<array>
+									<string>d414&amp;f0&gt;4</string>
+								</array>
+							</dict>
+							<key>4 Release Cycle Duration</key>
+							<dict>
+								<key>format</key>
+								<string>d</string>
+								<key>src</key>
+								<array>
+									<string>d414&amp;f</string>
+								</array>
+							</dict>
+						</dict>
+					</dict>
+					<key>Frequency Control</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d40e</string>
+							<string>d40f&lt;8</string>
+						</array>
+					</dict>
+					<key>Pulse Waveform Width</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d410</string>
+							<string>d411&amp;f&lt;8</string>
+						</array>
+					</dict>
+					<key>Control</key>
+					<dict>
+						<key>children</key>
+						<dict>
+							<key>Random Noise Waveform</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d412&amp;80</string>
+								</array>
+							</dict>
+							<key>Pulse Waveform</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d412&amp;40</string>
+								</array>
+							</dict>
+							<key>Sawtooth Waveform</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d412&amp;20</string>
+								</array>
+							</dict>
+							<key>Triangle Waveform</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d412&amp;10</string>
+								</array>
+							</dict>
+							<key>Test Bit</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d412&amp;8</string>
+								</array>
+							</dict>
+							<key>Ring Modulate Osc 1 with Osc 3 Out</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d412&amp;4</string>
+								</array>
+							</dict>
+							<key>Synchronize Osc 1 with Osc 3 Frequency</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d412&amp;2</string>
+								</array>
+							</dict>
+							<key>Gate Bit: (On=Start Att/Dec/Sus, Off=Start Release)</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>d412&amp;1</string>
+								</array>
+							</dict>
+						</dict>
+					</dict>
+				</dict>
+			</dict>
+			<key>Filter</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Cutoff Frequency</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d416&lt;4</string>
+							<string>d415&amp;f</string>
+						</array>
+					</dict>
+					<key>Resonance</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>d417&amp;f0&gt;4</string>
+						</array>
+					</dict>
+					<key>Filter External Input</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d417&amp;8</string>
+						</array>
+					</dict>
+					<key>Filter Voice 3 Output</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d417&amp;4</string>
+						</array>
+					</dict>
+					<key>Filter Voice 2 Output</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d417&amp;2</string>
+						</array>
+					</dict>
+					<key>Filter Voice 1 Output</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d417&amp;1</string>
+						</array>
+					</dict>
+					<key>Cut-Off Voice 3 Output</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d418&amp;80</string>
+						</array>
+					</dict>
+					<key>High Pass Mode</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d418&amp;40</string>
+						</array>
+					</dict>
+					<key>Band Pass Mode</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d418&amp;20</string>
+						</array>
+					</dict>
+					<key>Low Pass Mode</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>d418&amp;10</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+		</dict>
+	</dict>
+	<key>CIA 1</key>
+	<dict>
+		<key>valid</key>
+		<string>_C128_C64_C64DTV_</string>
+		<key>range</key>
+		<string>dc00-dc0f</string>
+		<key>children</key>
+		<dict>
+			<key>IRQ Control</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>IRQ occurred</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc0d&amp;80</string>
+						</array>
+					</dict>
+					<key>FLAG1 IRQ (Cassette Read/ Serial Bus SRQ Input)</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc0d&amp;10</string>
+						</array>
+					</dict>
+					<key>Serial I/O IRQ</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc0d&amp;8</string>
+						</array>
+					</dict>
+					<key>Time Of Day Clock Alarm IRQ</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc0d&amp;4</string>
+						</array>
+					</dict>
+					<key>Timer B IRQ</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc0d&amp;2</string>
+						</array>
+					</dict>
+					<key>Timer A IRQ</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc0d&amp;1</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>Data Port A</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Paddle Port B</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc00&amp;80</string>
+						</array>
+					</dict>
+					<key>Paddle Port A</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc00&amp;40</string>
+						</array>
+					</dict>
+					<key>Joy A Fire</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc00&amp;10</string>
+						</array>
+					</dict>
+					<key>Joy A Right / Paddle Button</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc00&amp;8</string>
+						</array>
+					</dict>
+					<key>Joy A Left / Paddle Button</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc00&amp;4</string>
+						</array>
+					</dict>
+					<key>Joy A Down</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc00&amp;2</string>
+						</array>
+					</dict>
+					<key>Joy A Up</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc00&amp;1</string>
+						</array>
+					</dict>
+					<key>Keyboard Column (Write)</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>dc00</string>
+						</array>
+					</dict>
+					<key>Data Direction</key>
+					<dict>
+						<key>format</key>
+						<string>bits</string>
+						<key>src</key>
+						<array>
+							<string>dc02</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>Data Port B</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Joy B Fire</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc01&amp;10</string>
+						</array>
+					</dict>
+					<key>Joy B Right / Paddle Button</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc01&amp;8</string>
+						</array>
+					</dict>
+					<key>Joy B Left / Paddle Button</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc01&amp;4</string>
+						</array>
+					</dict>
+					<key>Joy B Down</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc01&amp;2</string>
+						</array>
+					</dict>
+					<key>Joy B Up</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc01&amp;1</string>
+						</array>
+					</dict>
+					<key>Keyboard Row (Read)</key>
+					<dict>
+						<key>format</key>
+						<string>d</string>
+						<key>src</key>
+						<array>
+							<string>dc01</string>
+						</array>
+					</dict>
+					<key>Data Direction</key>
+					<dict>
+						<key>format</key>
+						<string>bits</string>
+						<key>src</key>
+						<array>
+							<string>dc03</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>Timer A Value</key>
+			<dict>
+				<key>format</key>
+				<string>d</string>
+				<key>src</key>
+				<array>
+					<string>dc04</string>
+					<string>dc05&lt;8</string>
+				</array>
+			</dict>
+			<key>Timer B Value</key>
+			<dict>
+				<key>format</key>
+				<string>d</string>
+				<key>src</key>
+				<array>
+					<string>dc06</string>
+					<string>dc07&lt;8</string>
+				</array>
+			</dict>
+			<key>Time Of Day</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Tenth Seconds</key>
+					<dict>
+						<key>format</key>
+						<string>x</string>
+						<key>src</key>
+						<array>
+							<string>dc08&amp;f</string>
+						</array>
+					</dict>
+					<key>Seconds</key>
+					<dict>
+						<key>format</key>
+						<string>02x</string>
+						<key>src</key>
+						<array>
+							<string>dc09</string>
+						</array>
+					</dict>
+					<key>Minutes</key>
+					<dict>
+						<key>format</key>
+						<string>02x</string>
+						<key>src</key>
+						<array>
+							<string>dc0a</string>
+						</array>
+					</dict>
+					<key>Hours</key>
+					<dict>
+						<key>format</key>
+						<string>02x</string>
+						<key>src</key>
+						<array>
+							<string>dc0b&amp;1f</string>
+						</array>
+					</dict>
+					<key>PM Flag</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc0b&amp;80</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>Serial I/O Data</key>
+			<dict>
+				<key>format</key>
+				<string>d</string>
+				<key>src</key>
+				<array>
+					<string>dc0c</string>
+				</array>
+			</dict>
+			<key>Control</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Time Of Day Clock Frequency</key>
+					<dict>
+						<key>format</key>
+						<string>map</string>
+						<key>map</key>
+						<array>
+							<string>60 Hz</string>
+							<string>50 Hz</string>
+						</array>
+						<key>src</key>
+						<array>
+							<string>dc0e&amp;80&gt;7</string>
+						</array>
+					</dict>
+					<key>Time Of Day Clock: Set Alarm</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dc0f&amp;80</string>
+						</array>
+					</dict>
+					<key>Serial Port Mode</key>
+					<dict>
+						<key>format</key>
+						<string>map</string>
+						<key>map</key>
+						<array>
+							<string>Input</string>
+							<string>Output</string>
+						</array>
+						<key>src</key>
+						<array>
+							<string>dc0e&amp;40&gt;6</string>
+						</array>
+					</dict>
+					<key>Timer A</key>
+					<dict>
+						<key>children</key>
+						<dict>
+							<key>Count Mode</key>
+							<dict>
+								<key>format</key>
+								<string>map</string>
+								<key>map</key>
+								<array>
+									<string>System 02 Clock</string>
+									<string>CNT Signals</string>
+								</array>
+								<key>src</key>
+								<array>
+									<string>dc0e&amp;20&gt;5</string>
+								</array>
+							</dict>
+							<key>Force Load Timer</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>dc0e&amp;10</string>
+								</array>
+							</dict>
+							<key>Run Mode</key>
+							<dict>
+								<key>format</key>
+								<string>map</string>
+								<key>map</key>
+								<array>
+									<string>Continous</string>
+									<string>One-Shot</string>
+								</array>
+								<key>src</key>
+								<array>
+									<string>dc0e&amp;8&gt;3</string>
+								</array>
+							</dict>
+							<key>Output Mode to PB6</key>
+							<dict>
+								<key>format</key>
+								<string>map</string>
+								<key>map</key>
+								<array>
+									<string>Pulse</string>
+									<string>Toggle</string>
+								</array>
+								<key>src</key>
+								<array>
+									<string>dc0e&amp;4&gt;2</string>
+								</array>
+							</dict>
+							<key>Output on PB6</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>dc0e&amp;2</string>
+								</array>
+							</dict>
+							<key>Start/Stop</key>
+							<dict>
+								<key>format</key>
+								<string>map</string>
+								<key>map</key>
+								<array>
+									<string>Stop</string>
+									<string>Start</string>
+								</array>
+								<key>src</key>
+								<array>
+									<string>dc0e&amp;1</string>
+								</array>
+							</dict>
+						</dict>
+					</dict>
+					<key>Timer B</key>
+					<dict>
+						<key>children</key>
+						<dict>
+							<key>Count Mode</key>
+							<dict>
+								<key>format</key>
+								<string>map</string>
+								<key>map</key>
+								<array>
+									<string>System 02 Clock</string>
+									<string>Positive CNT Transitions</string>
+									<string>Timer A Underflow Pulses</string>
+									<string>Timer A Underflows while CNT</string>
+								</array>
+								<key>src</key>
+								<array>
+									<string>dc0f&amp;60&gt;5</string>
+								</array>
+							</dict>
+							<key>Force Load Timer</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>dc0f&amp;10</string>
+								</array>
+							</dict>
+							<key>Run Mode</key>
+							<dict>
+								<key>format</key>
+								<string>map</string>
+								<key>map</key>
+								<array>
+									<string>Continous</string>
+									<string>One-Shot</string>
+								</array>
+								<key>src</key>
+								<array>
+									<string>dc0f&amp;8&gt;3</string>
+								</array>
+							</dict>
+							<key>Output Mode to PB7</key>
+							<dict>
+								<key>format</key>
+								<string>map</string>
+								<key>map</key>
+								<array>
+									<string>Pulse</string>
+									<string>Toggle</string>
+								</array>
+								<key>src</key>
+								<array>
+									<string>dc0f&amp;4&gt;2</string>
+								</array>
+							</dict>
+							<key>Output on PB7</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>dc0f&amp;2</string>
+								</array>
+							</dict>
+							<key>Start/Stop</key>
+							<dict>
+								<key>format</key>
+								<string>map</string>
+								<key>map</key>
+								<array>
+									<string>Stop</string>
+									<string>Start</string>
+								</array>
+								<key>src</key>
+								<array>
+									<string>dc0f&amp;1</string>
+								</array>
+							</dict>
+						</dict>
+					</dict>
+				</dict>
+			</dict>
+		</dict>
+	</dict>
+	<key>CIA 2</key>
+	<dict>
+		<key>valid</key>
+		<string>_C128_C64_C64DTV_</string>
+		<key>range</key>
+		<string>dd00-dd0f</string>
+		<key>children</key>
+		<dict>
+			<key>IRQ Control</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>IRQ occurred</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd0d&amp;80</string>
+						</array>
+					</dict>
+					<key>FLAG1 NMI IRQ (User/RS232 Received Data Input)</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd0d&amp;10</string>
+						</array>
+					</dict>
+					<key>Serial I/O IRQ</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd0d&amp;8</string>
+						</array>
+					</dict>
+					<key>Time Of Day Clock Alarm IRQ</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd0d&amp;4</string>
+						</array>
+					</dict>
+					<key>Timer B IRQ</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd0d&amp;2</string>
+						</array>
+					</dict>
+					<key>Timer A IRQ</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd0d&amp;1</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>Data Port A</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Serial Bus Data Input</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd00&amp;80</string>
+						</array>
+					</dict>
+					<key>Serial Bus Clock Pulse Input</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd00&amp;40</string>
+						</array>
+					</dict>
+					<key>Serial Bus Data Output</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd00&amp;20</string>
+						</array>
+					</dict>
+					<key>Serial Bus Clock Pulse Output</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd00&amp;10</string>
+						</array>
+					</dict>
+					<key>Serial Bus ATN Signal Output</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd00&amp;8</string>
+						</array>
+					</dict>
+					<key>RS232 Tx Data (User)</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd00&amp;4</string>
+						</array>
+					</dict>
+					<key>VIC Chip System Memory Bank</key>
+					<dict>
+						<key>format</key>
+						<string>map</string>
+						<key>map</key>
+						<array>
+							<string>$c000-$ffff</string>
+							<string>$8000-$bfff</string>
+							<string>$4000-$7fff</string>
+							<string>$0000-$3fff</string>
+						</array>
+						<key>src</key>
+						<array>
+							<string>dd00&amp;3</string>
+						</array>
+					</dict>
+					<key>Data Direction</key>
+					<dict>
+						<key>format</key>
+						<string>bits</string>
+						<key>src</key>
+						<array>
+							<string>dd02</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>Data Port B</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>User PB7 / RS232 DSR</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd01&amp;80</string>
+						</array>
+					</dict>
+					<key>User PB6 / RS232 CTS</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd01&amp;40</string>
+						</array>
+					</dict>
+					<key>User PB5</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd01&amp;20</string>
+						</array>
+					</dict>
+					<key>User PB4 / RS232 CD</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd01&amp;10</string>
+						</array>
+					</dict>
+					<key>User PB3 / RS232 RI</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd01&amp;8</string>
+						</array>
+					</dict>
+					<key>User PB2 / RS232 DTR</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd01&amp;4</string>
+						</array>
+					</dict>
+					<key>User PB1 / RS232 RTS</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd01&amp;2</string>
+						</array>
+					</dict>
+					<key>User PB0 / RS232 Rx Data</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd01&amp;1</string>
+						</array>
+					</dict>
+					<key>Data Direction</key>
+					<dict>
+						<key>format</key>
+						<string>bits</string>
+						<key>src</key>
+						<array>
+							<string>dd03</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>Timer A Value</key>
+			<dict>
+				<key>format</key>
+				<string>d</string>
+				<key>src</key>
+				<array>
+					<string>dd04</string>
+					<string>dd05&lt;8</string>
+				</array>
+			</dict>
+			<key>Timer B Value</key>
+			<dict>
+				<key>format</key>
+				<string>d</string>
+				<key>src</key>
+				<array>
+					<string>dd06</string>
+					<string>dd07&lt;8</string>
+				</array>
+			</dict>
+			<key>Time Of Day</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Tenth Seconds</key>
+					<dict>
+						<key>format</key>
+						<string>x</string>
+						<key>src</key>
+						<array>
+							<string>dd08&amp;f</string>
+						</array>
+					</dict>
+					<key>Seconds</key>
+					<dict>
+						<key>format</key>
+						<string>02x</string>
+						<key>src</key>
+						<array>
+							<string>dd09</string>
+						</array>
+					</dict>
+					<key>Minutes</key>
+					<dict>
+						<key>format</key>
+						<string>02x</string>
+						<key>src</key>
+						<array>
+							<string>dd0a</string>
+						</array>
+					</dict>
+					<key>Hours</key>
+					<dict>
+						<key>format</key>
+						<string>02x</string>
+						<key>src</key>
+						<array>
+							<string>dd0b&amp;1f</string>
+						</array>
+					</dict>
+					<key>PM Flag</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd0b&amp;80</string>
+						</array>
+					</dict>
+				</dict>
+			</dict>
+			<key>Serial I/O Data</key>
+			<dict>
+				<key>format</key>
+				<string>d</string>
+				<key>src</key>
+				<array>
+					<string>dd0c</string>
+				</array>
+			</dict>
+			<key>Control</key>
+			<dict>
+				<key>children</key>
+				<dict>
+					<key>Time Of Day Clock Frequency</key>
+					<dict>
+						<key>format</key>
+						<string>map</string>
+						<key>map</key>
+						<array>
+							<string>60 Hz</string>
+							<string>50 Hz</string>
+						</array>
+						<key>src</key>
+						<array>
+							<string>dd0e&amp;80&gt;7</string>
+						</array>
+					</dict>
+					<key>Time Of Day Clock: Set Alarm</key>
+					<dict>
+						<key>format</key>
+						<string>bool</string>
+						<key>src</key>
+						<array>
+							<string>dd0f&amp;80</string>
+						</array>
+					</dict>
+					<key>Serial Port Mode</key>
+					<dict>
+						<key>format</key>
+						<string>map</string>
+						<key>map</key>
+						<array>
+							<string>Input</string>
+							<string>Output</string>
+						</array>
+						<key>src</key>
+						<array>
+							<string>dd0e&amp;40&gt;6</string>
+						</array>
+					</dict>
+					<key>Timer A</key>
+					<dict>
+						<key>children</key>
+						<dict>
+							<key>Count Mode</key>
+							<dict>
+								<key>format</key>
+								<string>map</string>
+								<key>map</key>
+								<array>
+									<string>System 02 Clock</string>
+									<string>CNT Signals</string>
+								</array>
+								<key>src</key>
+								<array>
+									<string>dd0e&amp;20&gt;5</string>
+								</array>
+							</dict>
+							<key>Force Load Timer</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>dd0e&amp;10</string>
+								</array>
+							</dict>
+							<key>Run Mode</key>
+							<dict>
+								<key>format</key>
+								<string>map</string>
+								<key>map</key>
+								<array>
+									<string>Continous</string>
+									<string>One-Shot</string>
+								</array>
+								<key>src</key>
+								<array>
+									<string>dd0e&amp;8&gt;3</string>
+								</array>
+							</dict>
+							<key>Output Mode to PB6</key>
+							<dict>
+								<key>format</key>
+								<string>map</string>
+								<key>map</key>
+								<array>
+									<string>Pulse</string>
+									<string>Toggle</string>
+								</array>
+								<key>src</key>
+								<array>
+									<string>dd0e&amp;4&gt;2</string>
+								</array>
+							</dict>
+							<key>Output on PB6</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>dd0e&amp;2</string>
+								</array>
+							</dict>
+							<key>Start/Stop</key>
+							<dict>
+								<key>format</key>
+								<string>map</string>
+								<key>map</key>
+								<array>
+									<string>Stop</string>
+									<string>Start</string>
+								</array>
+								<key>src</key>
+								<array>
+									<string>dd0e&amp;1</string>
+								</array>
+							</dict>
+						</dict>
+					</dict>
+					<key>Timer B</key>
+					<dict>
+						<key>children</key>
+						<dict>
+							<key>Count Mode</key>
+							<dict>
+								<key>format</key>
+								<string>map</string>
+								<key>map</key>
+								<array>
+									<string>System 02 Clock</string>
+									<string>Positive CNT Transitions</string>
+									<string>Timer A Underflow Pulses</string>
+									<string>Timer A Underflows while CNT</string>
+								</array>
+								<key>src</key>
+								<array>
+									<string>dd0f&amp;60&gt;5</string>
+								</array>
+							</dict>
+							<key>Force Load Timer</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>dd0f&amp;10</string>
+								</array>
+							</dict>
+							<key>Run Mode</key>
+							<dict>
+								<key>format</key>
+								<string>map</string>
+								<key>map</key>
+								<array>
+									<string>Continous</string>
+									<string>One-Shot</string>
+								</array>
+								<key>src</key>
+								<array>
+									<string>dd0f&amp;8&gt;3</string>
+								</array>
+							</dict>
+							<key>Output Mode to PB7</key>
+							<dict>
+								<key>format</key>
+								<string>map</string>
+								<key>map</key>
+								<array>
+									<string>Pulse</string>
+									<string>Toggle</string>
+								</array>
+								<key>src</key>
+								<array>
+									<string>dd0f&amp;4&gt;2</string>
+								</array>
+							</dict>
+							<key>Output on PB7</key>
+							<dict>
+								<key>format</key>
+								<string>bool</string>
+								<key>src</key>
+								<array>
+									<string>dd0f&amp;2</string>
+								</array>
+							</dict>
+							<key>Start/Stop</key>
+							<dict>
+								<key>format</key>
+								<string>map</string>
+								<key>map</key>
+								<array>
+									<string>Stop</string>
+									<string>Start</string>
+								</array>
+								<key>src</key>
+								<array>
+									<string>dd0f&amp;1</string>
+								</array>
+							</dict>
+						</dict>
+					</dict>
+				</dict>
+			</dict>
+		</dict>
+	</dict>
+</dict>
+</plist>

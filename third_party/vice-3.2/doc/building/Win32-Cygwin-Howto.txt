@@ -1,0 +1,63 @@
+Compiling VICE on Win32 with Cygwin
+===================================
+
+1. Install Cygwin [http://cygwin.com/].  Download and run the setup.exe
+   tool.  During installation, be sure to select these two packages (along
+   with all the ones selected by default):
+
+        gcc: C compiler upgrade helper               (I used 3.4.4-3)
+        make: The GNU version of the 'make' utility  (I used 3.81-1)
+
+   These are both found under the Devel category.  'gcc' will bring in
+   the packages gcc-core, gcc-c++, gcc-mingw-core, and gcc-mingw-g++ as
+   dependencies.
+
+2. Obtain a copy of the VICE sources.  Extract the vice-x.xx directory into
+   your Cygwin user's home directory (e.g. /home/Owner/vice-2.0).
+
+3. Obtain DirectX 7 header files and libraries.  It doesn't look like
+   Microsoft still makes this distribution available for download from its
+   website, but if you search the web for "dx7libhdr.exe" you should still
+   be able to find it.  Alternatively, (I haven't tried this myself, but in
+   theory) you should be able to use the latest DirectX headers available
+   from Microsoft.  Note, however, that distributions of DirectX later than
+   version 7 contain a large amount of stuff (about a half of a gigabyte
+   worth) that you won't need if all you want to do is just build VICE.
+
+   dx7libhdr.exe is a self-extracting achive.  Extract the dx7sdk directory
+   from it into your Cygwin user's home directory (e.g. /home/Owner/dx7sdk).
+
+4. Change into the VICE sources directory.
+
+   If you have checked out the unstable svn version of VICE you need to generate
+   the configure script first by doing:
+
+     ./autogen.sh
+
+    The stable tarball already has the configure script, so continue with:
+
+     CFLAGS="-mno-cygwin -I$HOME/dx7sdk/include" ./configure --without-png --without-zlib
+
+   Note that you must specify "-mno-cygwin" to get the mingw compiler;
+   otherwise the build will try to use Cygwin's default gcc compiler, which
+   will choke on symbols like FAR that are used (but not defined) in the
+   DirectX headers.
+
+   Wait for configure to finish.  Then run
+
+     make
+
+   to build the binaries, and
+
+     make bindist
+
+   to make an executable distribution, which will appear in a directory
+   called e.g. /home/Owner/vice-2.0/src/WinVICE-2.0.  For development
+   purposes, no further installation is necessary; you can run the
+   executables directly from this directory.
+
+   I haven't been able to build VICE with PNG and ZLIB support under Cygwin
+   yet, but it is probably not too difficult.
+
+   Note: configuring and building VICE under Cygwin can take a *long* time
+   to finish, even on a fast computer.  Be prepared to be patient.

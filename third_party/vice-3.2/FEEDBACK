@@ -1,0 +1,48 @@
+It's always nice to receive feedback and/or bugreports about VICE, but
+please read these few notes before sending mail to anybody in the
+team.
+
+- Please don't send any HTML mail (we really hate that!).  If you use
+  M$ Outlook or Netscape Communicator, make sure you turn off the
+  "rich text" (HTML) feature.
+
+- Please don't send any binaries without asking first.
+
+- Please read the following documents carefully before reporting a bug
+  or a problem you cannot solve:
+
+   - the VICE documentation (you should have received it with the main
+     distribution--if not, tell us);
+
+   - the VICE knowledge base at http://www.vicekb.de.vu/
+
+   - the comp.emulators.cbm and comp.sys.cbm FAQs (available from many
+     places; one famous repository is at ftp://rtfm.mit.edu/).
+
+- When you report a bug, please try to be as accurate as possible and
+  describe how it can be reproduced to the very detail.  You should
+  also tell us what machine you are running on, what operating system
+  you are using as well as the version of it.
+
+- Please don't ask us how to transfer original C64 disk or tapes to
+  your PC.  To transfer disks, you can use the Star Commander
+  (http://sta.c64.org/sc.html).
+
+- Please don't ask us where to find games for the emulator on the
+  Internet.
+
+- Please don't ask us when the next version will be out, because we
+  really don't know.
+
+- Please write in English, or in the native language of the person you
+  are writing to (All Andreas are German).
+
+In any case, we would be really glad to receive your comments about
+VICE.  
+
+The central place for bug reports is the bug tracker at sourceforge:
+https://sourceforge.net/p/vice-emu/bugs/
+
+The email address for feedback is: vice-emu-mail@lists.sourceforge.net
+
+Thanks!

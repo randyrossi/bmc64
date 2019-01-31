@@ -1,0 +1,252 @@
+
+Doxygen is a tool that allows to generate quite elaborate documentation out of
+an existing documented sourcecode without too much extra effort.
+
+--------------------------------------------------------------------------------
+ How to document
+--------------------------------------------------------------------------------
+
+(notice that the following may only apply to the way doxygen is set up here and 
+is  not a complete or comprehensive documentation, but a quick overview that only
+mentions the bare minimum needed. Some of the documented functions are infact
+aliases, which you will therefore not find in any other doxygen guide, see notes)
+
+* doxygen generates documentation based on the sourcecode itself, and special
+  comment blocks which contain further details
+
+* every special comment block starts with an adapted comment marker. You can use 
+  an extra exclamation mark (QT style) or an extra asterisk. (JavaDoc style).
+  Blocks end in the usual way. 
+
+* Doxygen accepts commands starting with a backslash or at sign.
+
+NOTE: for consistency reasons, only use the format used in this file when 
+creating new comments.
+
+Example:
+
+/*! \command argument */
+
+practically, just write comments as you are used to, and add a few special
+things, which are mentioned below, in certain cases.
+
+--------------------------------------------------------------------------------
+ Where to document
+--------------------------------------------------------------------------------
+
+there is only one important rule: a special comment block that refers to a
+specific entity should occur only once, ie either in a header- or sourcefile,
+not both.
+
+when creating new comments, it is often useful to put special comment blocks for
+public functions into their respective header files.
+
+--------------------------------------------------------------------------------
+ What to document
+--------------------------------------------------------------------------------
+
+** brief descriptions
+
+to get the most out of generating a documentation with doxygen, a few basic
+entities should have a so called "brief description", which is no more than a
+small comment which you would (hopefully) have written anyway.
+
+a brief description is a comment in the following form, and generally appears in
+the line before what it applies to (a function, a struct, a typedef...):
+
+/*! \brief this function does something 
+ */
+
+notice that you will have to end the brief description with a blank line (unless
+it is the only thing in that comment block). anything that you put after that 
+blank line, will go into the documentation as a detailed description, like:
+
+/*! \brief this function does something 
+
+    some people said this function does magic, some dont know what it does at all
+ */
+
+at least brief descriptions should be declared for all declarations for:
+
+typedef
+struct
+enum
+functions
+
+This will enable doxygen to link all parameter types to the declarations every
+time the type is used in a function - very helpful not only to new developers,
+but also everyone else trying to understand parts of code he isnt used to :)
+
+** describing enum/struct members
+
+Use the 'back reference' to document entities which are left hand to the special
+comment.
+
+Examples:
+
+/*!
+ * a string with length
+ */
+typedef struct
+{
+  char * name       ; /*!< the name */
+  int    namelength ; /*!< the size of the name */
+} str ;
+
+** describing function parameters
+
+Use the \param command to describe function parameters in the text.
+
+Example:
+
+/*! \brief copy memory block
+
+ Copies bytes from a source memory area to a destination memory area,
+ where both areas may not overlap.
+ \param[out] dest The memory area to copy to.
+ \param[in]  src  The memory area to copy from.
+ \param[in]  n    The number of bytes to copy
+*/
+void memcpy(void *dest, const void *src, size_t n);
+
+** File Header
+
+every file should get a header similar to this one, this way doxygen can identify
+individual files better and also the description will be shown in the file lists.
+
+/*! \file path/to/filename.h
+
+    \brief this code does magic
+
+    \author someone <someone@somewhere.org>
+*/
+
+note that everything which follows in this special comment block will end up as
+a detailed description in the documentation, so things like the standard license
+header should be put into a seperate, normal comment block.
+
+the path of the filename should be the full path with "src" as root, ie "c64/c64.h"
+
+** TODOs
+
+mark all TODOs using the \todo command, which makes them appear in the todo list
+under "related pages" in the documentation.
+
+\todo <notice>
+
+Example:
+
+/*! \todo extend this function */
+
+** FIXMEs
+
+mark all FIXMEs using the \fixme command, which makes them appear in the todo 
+list under "related pages" in the documentation.
+
+\fixme <notice> (Note:Alias)
+
+Example:
+
+/*! \fixme make this function work */
+
+** deprecated stuff
+
+mark all deprecated things using the \deprecated command, which makes them appear 
+in the deprecated list under "related pages" in the documentation.
+
+\deprecated <notice>
+
+Example:
+
+/*! \deprecated this is old and will get removed */
+
+** including text files
+
+in some (rare) cases you would want to include an ascii text file, you can do
+that using the \txtinclude alias. note that files included this way must be
+located in the doc, or in the doc/building directory. 
+the textfile will be included verbatim with the formatting (hopefully) intact
+and urls converted to html links.
+
+\txtinclude <filename> (Note:Alias)
+
+Example:
+
+/*! \txtinclude somedoc.txt */
+
+see src/cia.h and the generated documentation (includes CIA-README.txt)
+see src/iecbus.h and the generated documentation (includes iec-bus.txt)
+
+** extras
+
+- Use :: at the start of a function or structure to link to the page for that 
+function in the doxygen documentation.
+
+look at the doxygen reference/manual for many more things you can do:
+
+http://qof.sourceforge.net/doxy/reference.html
+
+** further examples
+
+some sourcefiles are already extensively documented using doxygen markup, you
+may take these, and the documentation generated for these, as an example, too:
+
+src/aciacore.c
+src/autostart.c
+src/socket.c
+src/util.c
+src/vicesocket.h
+src/monitor/monitor_network.c
+src/c64/cart/reu.h
+src/c64/cart/reu.c
+src/lib/libffmpeg/*
+src/arch/*/socketimpl.h
+
+--------------------------------------------------------------------------------
+using the mkdoxy.sh script
+--------------------------------------------------------------------------------
+
+prerequisites:
+- the source must be configured for the configuration you want to generate the
+documentation for (the script derives some information from config.h, so 
+actually copying it over from a configured source is enough)
+- you need the doxygen package installed (>=1.7.6.1 recommended), and the 
+graphviz package for the call graphs (if enabled). the script also uses some 
+basic *nix tools and shell stuff, so in reality it will probably only work on 
+*nix or a properly configured cygwin or mingw environment.
+
+the script takes 3 arguments:
+
+- the name of the emulator to generate the documentation for
+- the port name
+- an additional id for the respective (g)ui
+
+mkdoxy.sh [all|vsid|x128|x64|x64sc ...] [linux|win32|osx] [gtk|win32|cocoa|sdl]
+
+NOTE: the script is new and WIP, and only a few combinations will actually work.
+if you want to generate the documentation for a yet not handled combination, you
+will have to update the script. (and update this document after doing so, some
+hints on what to update are in the script itself)
+
+NOTE: options to enable call graphs or the source browser are not yet implemented.
+(and they are disabled by default because the time to generate the documentation
+increases - a lot even for the call graphs) if you want to play with these 
+features, enable them manually in Doxyfile.
+
+currently correctly handled are:
+
+emulators: vsid, x64, x64sc
+ports: linux
+uis: gtk
+
+run ./mkdoxy.sh from the doc directory. the documentation will then be generated
+in doc/doxy/<emulator>/html
+
+Example:
+
+# ./mkdoxy.sh x64sc linux gtk
+
+running the script without arguments will use the defaults, which are currently
+hardcoded as "all linux gtk" (and should at some point get autodetected)
+
+using "all" as the first argument will generate documentation for all emulators.

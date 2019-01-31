@@ -1,0 +1,120 @@
+#
+# VICE definition file for Keyboard Shortcuts in Win32
+#
+# This version is for x64dtv.
+#
+# Syntax
+# First column: Combination of ALT|CTRL to hold for the shortcut
+# Second column: (virtual) Keycode for the shortcut
+#   Code can be character ('X'), hex (0xAB) or decimal (168)
+#   Have a look at winuser.h for the list of virtual key codes (VK_..)
+# Third column: command identifier that is executed with the shortcut
+# Fourth column: text to display in the menu item; missing this lets 
+#   the keycode char be displayed.
+
+CTRL|ALT    'R'         IDM_RESET_HARD
+ALT         'R'         IDM_RESET_SOFT
+ALT         '4'         IDM_FORMFEED_PRINTERIEC4
+ALT         '5'         IDM_FORMFEED_PRINTERIEC5
+ALT         '8'         IDM_ATTACH_8
+ALT         '9'         IDM_ATTACH_9
+ALT         '0'         IDM_ATTACH_10
+ALT         '1'         IDM_ATTACH_11
+ALT         'A'         IDM_DETACH_ALL
+ALT         'L'         IDM_LOADQUICK
+ALT         'S'         IDM_SAVEQUICK
+ALT         'M'         IDM_MONITOR
+ALT         'X'         IDM_EXIT
+ALT         'W'         IDM_TOGGLE_WARP_MODE
+ALT         'I'         IDM_FLIP_ADD
+ALT         'K'         IDM_FLIP_REMOVE
+ALT         'N'         IDM_FLIP_NEXT
+ALT         'B'         IDM_FLIP_PREVIOUS
+ALT         'J'         IDM_SWAP_JOYSTICK
+ALT         'C'         IDM_MEDIAFILE
+ALT         'G'         IDM_EVENT_SETMILESTONE
+ALT         'H'         IDM_EVENT_RESETMILESTONE
+ALT         'D'         IDM_TOGGLE_FULLSCREEN
+ALT         13          IDM_TOGGLE_FULLSCREEN               # VK_RETURN
+ALT         0x13        IDM_PAUSE                   Pause   # VK_PAUSE
+ALT         0xBB        IDM_SINGLE_FRAME_ADVANCE    +       # VK_OEM_PLUS   0xBB
+ALT         0x6B        IDM_SINGLE_FRAME_ADVANCE            # VK_ADD        0x6B
+
+ALT         'Q'         IDM_MOUSE
+
+ALT         0x79        IDM_TOGGLE_MAINCPU_TRACE    F10     # VK_F10
+ALT         0x7A        IDM_TOGGLE_DRIVE0CPU_TRACE  F11     # VK_F11
+ALT         0x7B        IDM_TOGGLE_DRIVE1CPU_TRACE  F12     # VK_F12
+
+ALT             0x2E        IDM_EDIT_COPY                     Del
+ALT             0x2D        IDM_EDIT_PASTE                    Ins
+
+#
+# Other command identifier that can be used in shortcuts
+#
+# IDM_ABOUT                               IDM_AUTOSTART
+# IDM_RESET_DRIVE8                        IDM_RESET_DRIVE9
+# IDM_RESET_DRIVE10                       IDM_RESET_DRIVE11
+# IDM_DETACH_8                            IDM_DETACH_9
+# IDM_DETACH_10                           IDM_DETACH_11
+# IDM_TOGGLE_SOUND                        IDM_ATTACH_DTV_FLASH
+# IDM_DETACH_DTV_FLASH                    IDM_CREATE_DTV_FLASH
+# IDM_TOGGLE_DOUBLESIZE                   IDM_TOGGLE_DOUBLESCAN
+# IDM_TOGGLE_DRIVE_TRUE_EMULATION         IDM_TOGGLE_VIDEOCACHE
+# IDM_DRIVE_SETTINGS                      IDM_CART_ATTACH_FUNCLO
+# IDM_CART_ATTACH_FUNCHI                  IDM_CART_ATTACH_C1LO
+# IDM_CART_ATTACH_C1HI                    IDM_CART_ATTACH_C2LO
+# IDM_CART_ATTACH_C2HI                    IDM_CART_ATTACH_STB
+# IDM_SNAPSHOT_LOAD                       IDM_SNAPSHOT_SAVE
+# IDM_EVENT_DIRECTORY                     IDM_EVENT_TOGGLE_RECORD
+# IDM_EVENT_TOGGLE_PLAYBACK               IDM_EVENT_START_MODE_SAVE
+# IDM_EVENT_START_MODE_LOAD               IDM_EVENT_START_MODE_RESET
+# IDM_EVENT_START_MODE_PLAYBACK           IDM_SETTINGS_SAVE
+# IDM_SETTINGS_LOAD                       IDM_SETTINGS_DEFAULT
+# IDM_DEVICEMANAGER                       IDM_REFRESH_RATE_AUTO
+# IDM_REFRESH_RATE_1                      IDM_REFRESH_RATE_2
+# IDM_REFRESH_RATE_3                      IDM_REFRESH_RATE_4
+# IDM_REFRESH_RATE_5                      IDM_REFRESH_RATE_6
+# IDM_REFRESH_RATE_7                      IDM_REFRESH_RATE_8
+# IDM_REFRESH_RATE_9                      IDM_REFRESH_RATE_10
+# IDM_MAXIMUM_SPEED_200                   IDM_MAXIMUM_SPEED_100
+# IDM_MAXIMUM_SPEED_50                    IDM_MAXIMUM_SPEED_20
+# IDM_MAXIMUM_SPEED_10                    IDM_MAXIMUM_SPEED_NO_LIMIT
+# IDM_MAXIMUM_SPEED_CUSTOM                IDM_VICII_SETTINGS
+# IDM_SYNC_FACTOR_PAL                     IDM_SYNC_FACTOR_NTSC
+# IDM_JOY_SETTINGS                        IDM_SOUND_SETTINGS
+# IDM_HELP                                IDM_FLIP_LOAD
+# IDM_FLIP_SAVE                           IDM_TOGGLE_EMUID
+# IDM_TOGGLE_VIRTUAL_DEVICES              IDM_CONTRIBUTORS
+# IDM_LICENSE                             IDM_WARRANTY
+# IDM_CMDLINE                             IDM_TOGGLE_SAVE_SETTINGS_ON_EXIT
+# IDM_TOGGLE_ALWAYSONTOP                  IDM_TOGGLE_CONFIRM_ON_EXIT
+# IDM_SID_SETTINGS                        IDM_TOGGLE_FASTPAL
+# IDM_VIDEO_SETTINGS                      IDM_RAM_SETTINGS
+# IDM_TOGGLE_SCALE2X                      IDM_FORMFEED_PRINTERUSERPORT
+# IDM_ROM_SETTINGS                        IDM_KEYBOARD_SETTINGS
+# IDM_DEBUG_MODE_NORMAL                   IDM_DEBUG_MODE_SMALL
+# IDM_DEBUG_MODE_HISTORY                  IDM_DEBUG_MODE_AUTOPLAY
+# IDM_LANG_EN                             IDM_LANG_DE
+# IDM_LANG_FR                             IDM_LANG_HU
+# IDM_LANG_IT                             IDM_LANG_NL
+# IDM_LANG_PL                             IDM_LANG_SV
+# IDM_MON_OPEN                            IDM_MON_SAVE
+# IDM_MON_PRINT                           IDM_MON_STOP_DEBUG
+# IDM_MON_STOP_EXEC                       IDM_MON_CURRENT
+# IDM_MON_STEP_INTO                       IDM_MON_STEP_OVER
+# IDM_MON_SKIP_RETURN                     IDM_MON_GOTO_CURSOR
+# IDM_MON_EVAL                            IDM_MON_WND_EVAL
+# IDM_MON_WND_REG                         IDM_MON_WND_MEM
+# IDM_MON_WND_DIS                         IDM_MON_WND_CONSOLE
+# IDM_MON_COMPUTER                        IDM_MON_DRIVE8
+# IDM_MON_DRIVE9                          IDM_MON_HELP
+# IDM_MON_CASCADE                         IDM_MON_TILE_HORIZ
+# IDM_MON_TILE_VERT                       IDM_MON_ARRANGE_ICONS
+# IDM_MON_GOTO_PC                         IDM_MON_GOTO_ADDRESS
+# IDM_MON_SET_BP                          IDM_MON_UNSET_BP
+# IDM_MON_ENABLE_BP                       IDM_MON_DISABLE_BP
+# IDM_WNDCHILD                            IDM_C64DTV_SETTINGS
+# IDM_SOUND_RECORD_START                  IDM_PS2MOUSE
+# IDM_SOUND_RECORD_STOP                   IDM_TOGGLE_FLASH_TRUE_FILESYSTEM
+# IDM_TOGGLE_AUTOSTART_HANDLE_TDE

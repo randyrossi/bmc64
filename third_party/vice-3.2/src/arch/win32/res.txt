@@ -1,0 +1,8 @@
+
+// Misc resource IDs
+
+IDR_MONTOOLBAR
+
+IDI_ICON1
+
+ 

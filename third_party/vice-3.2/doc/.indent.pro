@@ -1,0 +1,13 @@
+-gnu
+-bls
+-npsl
+-hnl
+-nut
+-sc
+-bli0
+-cbi0
+-cli4
+-ci4
+-di16
+-i4
+-l80

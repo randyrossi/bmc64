@@ -1,0 +1,17 @@
+#!/bin/sh
+binsizes xxl
+
+# see if we are building the SDL version or not
+if [ ! -f SDL.build ]; then
+  AR=gar ./configure --prefix=/usr/local --x-includes=/usr/X11R6-gcc/include --x-libraries=/usr/X11R6-gcc/lib
+else
+  AR=gar ./configure --prefix=/usr/local --enable-sdlui
+fi
+
+make
+make install
+for b in x64 x64dtv x64sc x128 xvic xplus4 xpet xcbm2 petcat c1541 cartconv
+do
+  gstrip /usr/local/bin/$b
+  chmem +10000000 /usr/local/bin/$b
+done

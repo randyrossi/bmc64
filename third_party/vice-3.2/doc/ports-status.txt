@@ -1,0 +1,102 @@
+This document details the status of the supported ports,
+this information includes last built, last official release,
+and progress concerning devlog information.
+
+gui   | open devlog items | notes
+---------------------------------
+mui   | 16                |
+beos  | 26                |
+dos   | 21                |
+os/2  | 41                |
+win32 | 10                |
+cocoa | 40                |
+*nix  | 5                 |
+sdl   | 6                 |
+
+
+port            | gui   | latest build | latest release | notes
+---------------------------------------------------------------
+m68k-amigaos    | mui   | 2010-02-19   | 2.4            | 2010-02-19 build just crashes at startup
+ppc-amigaos     | mui   |              | 2.4            |
+ppc-morphos     | mui   |              | 2.4            |
+intel-aros      | mui   |              | 2.4            |
+ppc-aros        | mui   |              | 2.4            |
+arm-aros        | mui   |              | 2.4            |
+m68k-aros       | mui   |              |                |
+amd64-aros      | mui   |              | 2.4            |
+---------------------------------------------------------------
+intel-beos      | beos  |              | 2.4            |
+ppc-beos        | beos  |              | 2.4            |
+haiku64         | beos  |              |                |
+---------------------------------------------------------------
+dos             | dos   |              | 2.4            |
+---------------------------------------------------------------
+os/2            | os/2  |              | 2.4            |
+---------------------------------------------------------------
+win32           | win32 |              | 2.4            |
+win-x64         | win32 |              | 2.4            |
+win-ia64        | win32 |              | 2.4            |
+winrt           | win32 |              |                |
+---------------------------------------------------------------
+ppc-osx         | cocoa |              | 2.4            |
+intel-osx       | cocoa |              | 2.4            |
+---------------------------------------------------------------
+minix-vmd       | xaw   |              |                |
+minix 3.x       | xaw   |              | 2.4            |
+i386-darwin     | xaw   |              |                |
+ppc-darwin      | xaw   |              |                |
+qnx6-x86        | xaw   |              | 2.4            |
+sparc-sol2.2    | xaw   |              |                |
+sparc-sol2.3    | xaw   |              |                |
+intel-sol2.4    | xaw   |              |                |
+sparc-sol2.4    | xaw   |              |                |
+intel-sol2.5    | xaw   |              | 2.4            |
+ppc-sol2.5      | xaw   |              |                |
+sparc-sol2.5    | xaw   |              | 2.4            |
+intel-sol2.6    | xaw   |              | 2.4            |
+sparc-sol2.6    | xaw   |              | 2.4            |
+intel-sol7      | xaw   |              | 2.4            |
+sparc-sol7      | xaw   |              | 2.4            |
+intel-sol8      | xaw   |              | 2.4            |
+sparc-sol8      | xaw   |              | 2.4            |
+intel-sol9      | xaw   |              | 2.4            |
+sparc-sol9      | xaw   |              | 2.4            |
+intel-sol10     | xaw   |              | 2.4            |
+sparc-sol10     | xaw   |              | 2.4            |
+intel-osol      | xaw   |              | 2.4            |
+intel-sol11     | xaw   |              | 2.4            |
+intel-sol11.1   | xaw   |              |                |
+intel-sol11.2   | xaw   |              |                |
+sco unix 4      | xaw   |              |                |
+osr5            | xaw   |              | 2.4            |
+osr6            | xaw   |              | 2.4            |
+uw7             | xaw   |              | 2.4            |
+nextstep        | xaw   |              |                |
+openstep        | xaw   |              |                |
+rhapsody        | xaw   |              |                |
+i386-hurd       | xaw   |              |                |
+vax-ultrix      | xaw   |              |                |
+mipsel-ultrix   | xaw   |              |                |
+tru64           | xaw   |              |                |
+---------------------------------------------------------------
+win32-sdl       | sdl   |              | 2.4            |
+win-x64-sdl     | sdl   |              | 2.4            |
+win-ia64-sdl    | sdl   |              | 2.4            |
+win-mips-sdl    | sdl   |              | 2.4            |
+winrt-sdl       | sdl   |              |                |
+winnt351-sdl    | sdl   |              |                |
+winnt350-sdl    | sdl   |              |                |
+dingoo-sdl      | sdl   |              | 2.4            |
+syllable-sdl    | sdl   |              | 2.4            |
+mint-sdl        | sdl   |              | 2.4            |
+qnx4-sdl        | sdl   |              | 2.4            |
+qnx6-armle-sdl  | sdl   |              | 2.4            |
+qnx6-mipsbe-sdl | sdl   |              | 2.4            |
+qnx6-mipsle-sdl | sdl   |              | 2.4            |
+qnx6-ppcbe-sdl  | sdl   |              | 2.4            |
+qnx6-shle-sdl   | sdl   |              | 2.4            |
+m68k-sunos-sdl  | sdl   |              | 2.4            |
+sparc-sunos-sdl | sdl   |              |                |
+i386-sysv-sdl   | sdl   |              |                |
+skyos-sdl       | sdl   |              |                |
+sortix-sdl      | sdl   |              |                |

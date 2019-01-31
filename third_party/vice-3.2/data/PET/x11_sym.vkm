@@ -1,0 +1,4 @@
+# VICE keyboard mapping file
+
+# use PET business mapping as base
+!INCLUDE x11_buuk_sym.vkm

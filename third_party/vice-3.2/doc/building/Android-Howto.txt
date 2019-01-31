@@ -1,0 +1,29 @@
+Building the Android port of VICE:
+
+To build the Android port you will need to use the building script in a *nix
+like environment, building in an IDE is not possible at present.
+
+Requirements:
+
+- The Android SDK installed and the path to the tools and platform-tools in
+  the PATH variable.
+- The Android NDK installed and the path to ndk-build in the PATH variable.
+- Ant installed and the path to the ant program in the PATH variable.
+
+The build-script needs to be started from the root directory of vice.
+
+. ./build/android/build-android.sh [emulators] [cpus] [release]
+
+release indicates that the binary needs to be build as an official release as
+opposed to a developent release.
+
+cpu-types: armeabi, armeabi-v7a, mips, x86 (or all-cpu for all).
+if no cpu-type is given armeabi will be built by default.
+
+emulators: x64, x64sc, x64dtv, xscpu64, x128, xcbm2, xcbm5x0, xpet, xplus4,
+           xvic (or all-emu for all emulators).
+
+The Android port uses SDL and is still a work in progress, any help in
+improving it is appreciated.
+
+Happy gaming/experimenting!!!

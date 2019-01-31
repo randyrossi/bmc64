@@ -1,0 +1,196 @@
+@import 'latofonts.css';
+
+body {
+    background-color: #222;
+    color: #ccc;
+
+    margin:0.5em 0.5em 0.5em 0.5em;
+    padding:0.5em 0.5em 0.5em 0.5em;
+
+    font-family: 'LatoWeb', Verdana, Geneva, sans-serif;
+}
+
+#header {
+    margin-bottom: 16px;
+    background-color: rgba(16, 16, 16, 0.75);
+    padding-top: 1px;
+    padding-bottom: 1px;
+    top: 0;
+    width: 100%;
+    min-height: 30px;
+}
+#header img {
+    margin-right: 32px;
+    margin-left: 32px;
+}
+#header h1 img {
+    margin: 0;
+    vertical-align: top;
+    margin-left: 32px;
+}
+
+#menu p {
+    border:0px solid black;
+    margin-left:auto;
+    margin-right:auto;
+    display: block;
+    text-align:center;
+    margin:0.5em 0.1em 0.5em 0.1em;
+}
+
+#menu table {
+    border:1px solid black;
+    padding:0 0 0 0;
+    margin-left:auto;
+    margin-right:auto;
+    width:95%;
+}
+#menu tr {
+    border:1px solid black;
+    padding:0 0 0 0;
+    width:100%;
+}
+#menu td {
+    border:1px solid black;
+    width:10%;
+    padding:0.5em 0.5em 0.5em 0.5em;
+    font-weight:bold;
+    text-align:center;
+}
+
+#menu h1 {
+    margin:0;
+    border:0px solid white;
+    padding:0.1em 0.1em 1.0em 0.1em;
+
+    font-family:fixed;
+    font-size:150%;
+    font-weight:bold;
+    text-align:center;
+}
+#menu tbody {
+    border: 2px solid #111;
+}
+
+/* "innovation price" table should not get fance background colors */
+#bottom td {
+    background-color: #222;
+}
+#bottom tbody tr:nth-child(1) {
+    background-color: #111;
+    font-weight:normal;
+}
+#bottom tbody tr:last-child {
+    border-bottom: 0px solid #222;
+}
+
+#footer {
+    text-align:right;
+}
+
+h1 {
+    margin:24px 0;
+    border:0px solid white;
+    padding:0.1em 0.2em 0.2em 0.1em;
+
+    font-size:32px;
+    font-weight:normal;
+    text-align:left;
+}
+h2 {
+    margin:24px 0;
+    border:0px solid white;
+    padding:0.2em 0.2em 0.2em 0.2em;
+
+    font-size:130%;
+    font-weight:normal;
+    text-align:justify;
+}
+h3{
+    margin:.5em 0 .5em 0;
+    border:0px solid;
+    padding:0.2em 0.2em 0.2em 0.2em;
+
+    font-size:110%;
+    font-weight:bold;
+}
+
+b {
+    font-weight:bold;
+}
+tt {
+    font-weight:bold;
+    margin:0em 0em 0em 0em;
+}
+pre {
+    margin-top: 16px;
+    margin-bottom: 16px;
+    font-weight:bold;
+    font-size:120%;
+    font-style:fixed;
+}
+li {
+    list-style-type:square;
+}
+ul {
+    margin-left:1em;
+    padding-left:0em;
+}
+
+a {
+    color: #888;
+    text-decoration: underline;
+}
+
+dt {
+    font-size: 18px;
+}
+
+dd {
+    margin-left: 16px;
+    padding-bottom: 16px;
+}
+
+dl {
+    padding-bottom: -16px;
+}
+
+img {
+    border:0px solid white;
+    /* text-align:justify; */
+    margin:0.5em 0.1em 0.5em 0.1em;
+}
+
+table {
+    border-collapse: collapse;
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+tbody {
+    border: 2px solid #333;
+}
+
+thead {
+    background-color: #111;
+    font-weight:bold;
+}
+
+th, td {
+    border: 2px solid #222;
+    padding: 4px 8px;
+}
+
+/* texi2html does not use th */
+tbody tr:nth-child(1) {
+    background-color: #111;
+    font-weight:bold;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #333;
+}
+
+tbody tr:last-child {
+    border-bottom: 3px solid #333;
+}

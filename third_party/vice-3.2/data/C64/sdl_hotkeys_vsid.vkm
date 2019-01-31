@@ -1,0 +1,49 @@
+# VICE hotkey mapping file
+#
+# A hotkey map is read in as a patch to the current map.
+#
+# File format:
+# - comment lines start with '#'
+# - keyword lines start with '!keyword'
+# - normal line has 'keynum path&to&menuitem'
+#
+# Keywords and their lines are:
+# '!CLEAR'    clear all mappings
+#
+
+!CLEAR
+
+# ALT+0
+1072 Default tune
+
+# ALT+1..ALT+9
+1073 Select tune&Tune 1
+1074 Select tune&Tune 2
+1075 Select tune&Tune 3
+1076 Select tune&Tune 4
+1077 Select tune&Tune 5
+1078 Select tune&Tune 6
+1079 Select tune&Tune 7
+1080 Select tune&Tune 8
+1081 Select tune&Tune 9
+
+# ALT+H
+1128 Monitor&Start monitor
+# ALT+L
+1132 Load PSID file
+# ALT+P
+1136 Pause
+# ALT+Q
+1137 Quit emulator
+# ALT+W
+1143 Speed settings&Warp mode
+
+# ALT+SHIFT+R
+#1650 Save media file
+# ALT+SHIFT+S
+#1651 Save media file&Create sound recording&Stop recording
+
+# ALT+F9
+1314 Reset&Soft
+# ALT+F12
+1317 Reset&Hard

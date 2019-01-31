@@ -1,0 +1,25 @@
+#
+# VICE Palette file
+#
+# Syntax:
+# Red Green Blue Dither
+#
+# colors taken from "C64 Community Colors V1.2a" palette, see
+# https://p1x3l.net/36/c64-community-colors-theor/
+
+00 00 00 0
+ff ff ff e
+af 2a 29 4
+62 d8 cc c
+b0 3f b6 8
+4a c6 4a 4
+37 39 c4 4
+e4 ed 4e c
+b6 59 1c 4
+68 38 08 4
+ea 74 6c 8
+4d 4d 4d 4
+84 84 84 8
+a6 fa 9e 8
+70 7c e6 8
+b6 b6 b5 c

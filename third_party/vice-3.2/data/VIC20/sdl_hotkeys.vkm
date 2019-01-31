@@ -1,0 +1,99 @@
+# VICE hotkey mapping file
+#
+# A hotkey map is read in as a patch to the current map.
+#
+# File format:
+# - comment lines start with '#'
+# - keyword lines start with '!keyword'
+# - normal line has 'keynum path&to&menuitem'
+#
+# Keywords and their lines are:
+# '!CLEAR'    clear all mappings
+#
+
+!CLEAR
+
+# Numlock
+#300 Machine settings&Joystick settings&Swap joystick ports
+
+# ALT+0
+1072 Drive&Attach disk image to drive 10
+# ALT+1
+1073 Drive&Attach disk image to drive 11
+# ALT+4
+1076 Printer&Printer #4 form feed
+# ALT+5
+1077 Printer&Printer #5 form feed
+# ALT+6
+1078 Printer&Printer #6 form feed
+# ALT+8
+1080 Drive&Attach disk image to drive 8
+# ALT+9
+1081 Drive&Attach disk image to drive 9
+
+# ALT+A
+1121 Autostart image
+# ALT+B
+1122 Statusbar
+# ALT+C
+#1123 Cartridge&Attach CRT image
+1123 Cartridge&Attach generic cartridge image
+# ALT+D
+1124 Video settings&Size settings&Fullscreen
+# ALT+E
+1125 Snapshot&Set recording milestone
+# ALT+H
+1128 Monitor&Start monitor
+# ALT+I
+1129 Drive&Fliplist settings&Add current image to fliplist
+# ALT+J
+#1130 Machine settings&Joystick settings&Swap joystick ports
+# ALT+K
+1131 Drive&Fliplist settings&Remove current image from fliplist
+# ALT+L
+1132 Snapshot&Load snapshot image
+# ALT+M
+1133 Machine settings&Mouse emulation&Grab mouse events
+# ALT+N
+1134 Drive&Fliplist settings&Attach next image in fliplist
+# ALT+P
+1136 Pause
+# ALT+Q
+1137 Quit emulator
+# ALT+S
+1139 Snapshot&Save snapshot image
+# ALT+T
+1140 Tape&Attach tape image
+# ALT+U
+1141 Snapshot&Return to milestone
+# ALT+W
+1143 Speed settings&Warp mode
+# ALT+Z
+#1146 Cartridge&Cartridge freeze
+
+# ALT+SHIFT+J
+1642 Machine settings&Joystick settings&Allow keyset joystick
+# ALT+SHIFT+N
+3182 Drive&Fliplist settings&Attach previous image in fliplist
+# ALT+SHIFT+P
+1648 Advance Frame
+# ALT+SHIFT+R
+1650 Save media file
+# ALT+SHIFT+S
+1651 Save media file&Create sound recording&Stop recording
+# ALT+SHIFT+U
+1653 Machine settings&Joystick settings&Swap userport joystick ports
+
+# ALT+F9
+1314 Reset&Soft
+# ALT+F10
+1315 Snapshot&Quickload snapshot.vsf
+# ALT+F11
+1316 Snapshot&Quicksave snapshot.vsf
+# ALT+F12
+1317 Reset&Hard
+
+# ALT+Delete
+1151 Edit&Copy to Clipboard
+# ALT+Insert
+1301 Edit&Paste from Clipboard

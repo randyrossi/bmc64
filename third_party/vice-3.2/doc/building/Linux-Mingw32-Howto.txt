@@ -1,0 +1,42 @@
+Compiling VICE on Linux with Mingw32
+====================================
+
+you need a working mingw32 installation, and the directx header files. you should
+have a look at your distributions repositories first, and install their respective
+packages if available. if they are not, you may want to look at the mingw32 
+buildscript: vice/build/mingw32/build-cross.sh
+
+i recommend doing the following on a fresh svn checkout, or atleast a sourcetree
+which has been cleaned from old .o and .a files.
+
+first run autogen to generate the configuration scripts:
+
+$ ./autogen.sh
+
+now, if you have a sane system-wide mingw32 install, the following configure line
+should work:
+
+$ ./configure --host mingw32 --with-resid --enable-ethernet --enable-fullscreen
+
+if it does not, which will be the case if mingw32 is not installed system-wide
+and/or the mingw32 binaries can not be found in your path environment, then 
+something like the following is required:
+
+$ MINGW="/path/to/mingw32/bin/mingw32-" \
+WINDRES="$MINGW""windres" \
+WRC="$WINDRES" \
+AR="$MINGW""ar" \
+RANLIB="$MINGW""ranlib" \
+LD="$MINGW""ld" \
+CC="$MINGW""gcc" \
+CXX="$MINGW""g++" \
+./configure --host mingw32 --with-resid --enable-ethernet --enable-fullscreen
+
+after that finished, you can simply run "make" to create the binaries:
+
+$ make
+
+and last not least, create a proper vice binary directory tree from which you
+could run the executables:
+
+$ make bindist

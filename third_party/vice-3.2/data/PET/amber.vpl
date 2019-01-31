@@ -1,0 +1,14 @@
+#
+# VICE Palette file
+#
+# Syntax:
+# Red Green Blue Dither
+#
+
+# amber screens use P3 phosphor (602nm)
+
+# Background
+00 00 00 0
+
+# Foreground
+FF A8 00 F

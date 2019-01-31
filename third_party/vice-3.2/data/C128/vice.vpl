@@ -1,0 +1,54 @@
+#
+# VICE Palette file
+#
+# Syntax:
+# Red Green Blue Dither
+#
+#
+# Black
+00 00 00 0
+
+# White
+FD FE FC E
+
+# Red
+BE 1A 24 4
+
+# Cyan
+30 E6 C6 C
+
+# Purple
+B4 1A E2 8
+
+# Green
+1F D2 1E 4
+
+# Blue
+21 1B AE 4
+
+# Yellow
+DF F6 0A C
+
+# Orange
+B8 41 04 4
+
+# Brown
+6A 33 04 4
+
+# Light Red
+FE 4A 57 8
+
+# Dark Gray
+42 45 40 4
+
+# Medium Gray
+70 74 6F 8
+
+# Light Green
+59 FE 59 8
+
+# Light Blue
+5F 53 FE 8
+
+# Light Gray
+A4 A7 A2 C

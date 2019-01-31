@@ -1,0 +1,153 @@
+# VICE keyboard mapping file
+#
+# A Keyboard map is read in as patch to the current map.
+#
+# File format:
+# - comment lines start with '#'
+# - keyword lines start with '!keyword'
+# - normal line has 'keysym/scancode row column shiftflag'
+#
+# Keywords and their lines are:
+# '!CLEAR'               clear whole table
+# '!INCLUDE filename'    read file as mapping file
+# '!LSHIFT row col'      left shift keyboard row/column
+# '!RSHIFT row col'      right shift keyboard row/column
+# '!VSHIFT shiftkey'     virtual shift key (RSHIFT or LSHIFT)
+# '!UNDEF keysym'        remove keysym from table
+#
+# Shiftflag can have the values:
+# 0      key is not shifted for this keysym/scancode
+# 1      key is shifted for this keysym/scancode
+# 2      left shift
+# 4      right shift
+# 8      key can be shifted or not with this keysym/scancode
+# 16     deshift key for this keysym/scancode
+# 32     another definition for this keysym/scancode follows
+#
+# Negative row values:
+# 'keysym -1 n' joystick #1, direction n
+# 'keysym -2 n' joystick #2, direction n
+# 'keysym -3 0' first RESTORE key
+# 'keysym -3 1' second RESTORE key
+# 'keysym -4 0' 40/80 column key
+# 'keysym -4 1' CAPS (ASCII/DIN) key
+#
+
+# this is a PET graphics keyboard mapping (symbolic)
+
+#
+# Graphics keyboard matrix:
+#
+#       0        1        2        3        4        5        6        7
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 0 |   !    |   #    |   %    |   &    |   (    |  <--   |  home  |crsr rgt|
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 1 |   "    |   $    |   '    |   \    |   )    |--------|crsr dwn|  del   |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 2 |   q    |   e    |   t    |   u    |   o    |   ^    |   7    |   9    |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 3 |   w    |   r    |   y    |   i    |   p    |--------|   8    |   /    |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 4 |   a    |   d    |   g    |   j    |   l    |--------|   4    |   6    |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 5 |   s    |   f    |   h    |   k    |   :    |--------|   5    |   *    |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 6 |   z    |   c    |   b    |   m    |   ;    | return |   1    |   3    |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 7 |   x    |   v    |   n    |   ,    |   ?    |--------|   2    |   +    |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 8 |l shift |   @    |   ]    |--------|   >    |r shift |   0    |   -    |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 9 | rvs on |   [    | space  |   <    |  stop  |--------|   .    |   =    |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+#
+# The original gfx keyboard reflects the matrix perfectly:
+#
+#           !  "  #  $  %  '  &  \  (  )  <-     ^s ^q ^] ^t
+#           q  w  e  r  t  y  u  i  o  p  ^       7  8  9  /
+#           a  s  d  f  g  h  j  k  l  : ^m       4  5  6  *
+#           z  x  c  v  b  n  m  ,  ;  ? ^m       1  2  3  +
+#          LS ^r  @  [  ]  SPACE <  > ^c  RS      0  .  -  =
+#
+# http://www.6502.org/users/andre/petindex/keyboards.html
+
+!CLEAR
+!LSHIFT 8 0
+!RSHIFT 8 5
+!VSHIFT RSHIFT
+
+27 9 4 8        /*          ESC -> Run/Stop     */
+49 0 0 8        /*            1 -> !            */
+50 1 0 8        /*            2 -> "            */
+51 0 1 8        /*            3 -> #            */
+52 1 1 8        /*            4 -> $            */
+53 0 2 8        /*            5 -> %            */
+54 1 2 8        /*            6 -> '            */
+55 0 3 8        /*            7 -> &            */
+56 1 3 8        /*            8 -> \            */
+57 0 4 8        /*            9 -> (            */
+48 1 4 8        /*            0 -> )            */
+45 0 5 8        /*        Minus -> Left arrow   */
+8 1 8 8         /*    Backspace -> Del          */
+113 2 0 8       /*            Q -> Q            */
+119 3 0 8       /*            W -> W            */
+101 2 1 8       /*            E -> E            */
+114 3 1 8       /*            R -> R            */
+116 2 2 8       /*            T -> T            */
+121 3 2 8       /*            Y -> Y            */
+117 2 3 8       /*            U -> U            */
+105 3 3 8       /*            I -> I            */
+111 2 4 8       /*            O -> O            */
+112 3 4 8       /*            P -> P            */
+91 2 5 8        /*            [ -> Up arrow     */
+13 6 5 8        /*       Return -> Return       */
+306 9 0 8       /*    Left Ctrl -> RVS ON/OFF   */
+97 4 0 8        /*            A -> A            */
+115 5 0 8       /*            S -> S            */
+100 4 1 8       /*            D -> D            */
+102 5 1 8       /*            F -> F            */
+103 4 2 8       /*            G -> G            */
+104 5 2 8       /*            H -> H            */
+106 4 3 8       /*            J -> J            */
+107 5 3 8       /*            K -> K            */
+108 4 4 8       /*            L -> L            */
+59 5 4 8        /*            ; -> :            */
+304 8 0 2       /*   Left Shift -> Left Shift   */
+122 6 0 8       /*            Z -> Z            */
+120 7 0 8       /*            X -> X            */
+99 6 1 8        /*            C -> C            */
+118 7 1 8       /*            V -> V            */
+98 6 2 8        /*            B -> B            */
+110 7 2 8       /*            N -> N            */
+109 6 3 8       /*            M -> M            */
+44 7 3 8        /*            , -> ,            */
+46 6 4 8        /*            . -> ;            */
+47 7 4 8        /*            / -> ?            */
+303 8 5 4       /*  Right Shift -> Right Shift  */
+32 9 2 8        /*        Space -> Space        */
+278 9 1 8       /*         Home -> [            */
+273 1 6 1       /*           Up -> CRSR UP      */
+276 0 7 1       /*         Left -> CRSR LEFT    */
+275 0 7 8       /*        Right -> CRSR RIGHT   */
+274 1 6 8       /*         Down -> CRSR DOWN    */
+277 8 1 8       /*          Ins -> @            */
+127 0 6 8       /*          Del -> CLR/HOME     */
+280 8 2 8       /*         PgUp -> ]            */
+279 9 3 8       /*          End -> <            */
+281 8 4 8       /*       PgDown -> >            */
+305 9 4 8       /*   Right Ctrl -> RUN/STOP     */
+271 9 7 8       /* Numpad Enter -> =            */
+267 3 7 8       /*     Numpad / -> /            */
+263 2 6 8       /*     Numpad 7 -> 7            */
+264 3 6 8       /*     Numpad 8 -> 8            */
+265 2 7 8       /*     Numpad 9 -> 9            */
+269 8 7 8       /*     Numpad - -> Minus        */
+260 4 6 8       /*     Numpad 4 -> 4            */
+261 5 6 8       /*     Numpad 5 -> 5            */
+262 4 7 8       /*     Numpad 6 -> 6            */
+270 7 7 8       /*     Numpad + -> +            */
+257 6 6 8       /*     Numpad 1 -> 1            */
+258 7 6 8       /*     Numpad 2 -> 2            */
+259 6 7 8       /*     Numpad 3 -> 3            */
+256 8 6 8       /*     Numpad 0 -> 0            */
+266 9 6 8       /*     Numpad . -> .            */

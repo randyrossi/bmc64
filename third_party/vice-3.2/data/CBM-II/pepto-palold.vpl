@@ -1,0 +1,42 @@
+#
+# VICE Palette file
+#
+# Syntax:
+# Red Green Blue Dither
+#
+
+# this palette was calculated for PAL according to http://www.pepto.de/projects/colorvic/
+# using the 5 lumas present in R1 chips
+
+# Black
+00 00 00 0
+# White
+ff ff ff e
+# Red
+58 29 1d 4
+# Cyan
+91 c6 d5 c
+# Purple
+91 5c a8 8
+# Green
+58 8d 43 4
+# Blue
+35 28 79 4
+# Yellow
+b8 c7 6f c
+# Orange 
+91 6f 43 4
+# Brown
+43 39 00 4
+# Light Red
+9a 67 59 8
+# Dark Gray
+35 35 35 4
+# Medium Gray
+74 74 74 8
+# Light Green
+9a d2 84 8
+# Light Blue
+74 66 be 8
+# Light Gray
+b8 b8 b8 c

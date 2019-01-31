@@ -1,0 +1,6 @@
+tix.version=1
+tix.class=srctix
+pkg.name=vice
+pkg.build-libraries=
+pkg.build-system=configure
+pkg.configure.args=-v --enable-sdlui

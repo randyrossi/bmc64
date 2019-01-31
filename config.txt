@@ -1,0 +1,49 @@
+#
+# Bare Metal Commodore 64 Emulator For The Raspberry Pi
+#
+
+# Uncomment wither PAL or NTSC section below to suit
+# your needs. You MUST also edit cmdline.txt to match
+# the frequency of video you select here.
+# PAL for 50hz modes
+# NTSC for 60hz modes.
+
+# -----------------------------------------------------
+# PAL CRT OR HDMI CONFIGURATION (720p@50hz)
+# NOTE: You MUST set machine_timing=pal in cmdline.txt
+#       if you want to use a 50hz video mode.
+# -----------------------------------------------------
+disable_overscan=1
+sdtv_mode=2
+hdmi_group=1
+hdmi_mode=19
+
+# -----------------------------------------------------
+# NTSC CRT OR HDMI CONFIGURATION (720p60hz)
+# NOTE: You MUST set machine_timing=ntsc in cmdline.txt
+#       if you want to use a 60hz video mode.
+# -----------------------------------------------------
+#disable_overscan=1
+#sdtv_mode=1
+#hdmi_group=1
+#hdmi_mode=4
+
+# -----------------------------------------------------
+# Optional settings follow
+# -----------------------------------------------------
+
+# uncomment if you get no picture on HDMI for a default "safe" mode
+#hdmi_safe=1
+
+# uncomment to force a HDMI mode rather than DVI. This can make audio work in
+# DMT (computer monitor) modes
+#hdmi_drive=2
+
+# uncomment to increase signal to HDMI, if you have interference, blanking, or
+# no display
+#config_hdmi_boost=4
+
+gpu_mem=128
+disable_splash=1
+boot_delay=0
+

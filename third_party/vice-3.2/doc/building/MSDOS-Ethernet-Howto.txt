@@ -1,0 +1,94 @@
+Compiling MS-DOS VICE with ethernet-support with DJGPP
+======================================================
+
+By Marco van den Heuvel (blackystardust68@yahoo.com)
+
+Based on the "MSDOS-Howto.txt" by Fabrizio Gennari (fabrizio.ge@tiscalinet.it)
+
+A way of compiling the MS-DOS version of VICE is to use a cross-compiler
+which runs on Linux. But it is also possible to compile VICE with a native
+MS-DOS compiler, DJGPP. The only limitation is that VICE cannot be compiled
+on native MS-DOS, only on an MS-DOS prompt under Windows. Why? Because VICE
+sources use long filenames, while MS-DOS only supports "8+3" filenames: when
+unpacking VICE sources, often two different filenames become identical after
+8+3 truncation, and it is impossible to distinguish between them. Luckily,
+DJGPP supports long filenames when run in a Windows environment.
+
+First of all, download the required DJGPP files from the official site
+(http://www.delorie.com/pub/djgpp/current/) or a mirror. These are the files for a
+minimum installation, newer version of the files should be fine:
+* from directory v2, djdev203.zip
+* from directory v2gnu, bnu214b.zip, bsh204b.zip, dif28b.zip, fil41b.zip,
+gcc332b.zip, gpp332b.zip, grep24b.zip, mak3791b.zip, sed407b.zip, shl2011b.zip,
+txt20b.zip
+* from directory v2tk/allegro, all403.zip . Actually, any Allegro from 3.1
+on will do. Note that Allegro is distributed as source only, so you will have
+to compile it.
+Follow the instructions to install DJGPP. In short, unpack all the DJGPP ZIP
+files in the same directory (remember to preserve the directory structure
+while unpacking!), which will be called DJDIR from now on, add DJDIR\bin to
+the PATH variable, and run the command
+
+setdjgpp DJDIR DJDIR
+
+where the first DJDIR has MS-DOS directory separators (\), and the second
+DJDIR has Unix directory separators (/). Example:
+
+setdjgpp C:\DJGPP C:/DJGPP
+
+If you want those command to be automatically executed at boot, add them in
+the AUTOEXEC.BAT file.
+
+In order for VICE to be able to use the ethernet card it needs a library
+that provides bsd-sockets compatibilty, this library is watt32. Download the
+source package of watt32 (http://www.bgnett.no/~giva/watt32s-2.2-dev.9.zip).
+Unpack the source in the DJGPP directory. Follow the instructions to compile
+watt32. After it has been compiled you can copy the lib/libwatt.a to the lib
+directory in the DJGPP directory, and copy the contents of the inc directory
+to the include directory of the DJGPP directory.
+
+In order for VICE to be able to capture all packets from an ethernet card it
+needs a library that provides this capabillity, this library is called libpcap.
+Download the source package of libpcap (http://www.bgnett.no/~giva/pcap/libpcap.zip)
+Unpack the source and follow the instructions to compile pcap. After it has been
+compiled you can copy libpcap.a to the lib directory of the DJGPP directory and
+copy pcap.h and pc-bpf.h to the include directory of the DJGPP directory.
+
+Optionally you can install another library to handle the outgoing packets,
+this library is called libnet and you can download it from
+(http://www.bgnett.no/~giva/pcap/libnet.zip), unpack and compile by following
+the instructions in the package. This package is not needed for VICE to be able
+to use the ethernet, it only provides a different means to do outgoing packets.
+
+Now, unpack VICE sources in a directory: all VICE files will be in a
+sub-directory called vice-<version number>. Open an MS-DOS prompt window,
+go to the vice-<version number> dir and type
+
+bash
+
+. From now on, you just have to follow the instructions to compile Unix
+VICE: the simplest way is to type
+
+./configure --enable-ethernet
+make
+make bindist
+
+After that, you will have a binary distribution from which you can run
+VICE.
+
+Note for the more advanced users : libpcap uses the dma.o module from the allegro
+library therefor compiling a program and linking in libpcap and allegro would result
+in a collision between the two modules. The makefile generated when ethernet is
+enabled will take care of this problem by generating a libpcap_nodma.a without the
+dma.o module.
+
+Before starting VICE make sure you have setup the msdos ethernet package driver
+for your ethernet card and make sure you have setup the watt32 configuration
+files correctly, instructions for how to do this are in the watt32 package.
+
+You can run the compiled VICE either from windows or on native MS-DOS.
+
+Note that to run the compiled emulator on native MS-DOS mode you need to download
+the file csdpmi5b.zip (older version should be OK, too) from subdir v2misc of
+DJGPP website  and unzip the file CWSDPMI.EXE in the same directory as the
+VICE .EXE files, or in a directory in the path.

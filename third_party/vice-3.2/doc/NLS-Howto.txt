@@ -1,0 +1,198 @@
+0 Introduction
+--------------
+
+This version of VICE contains national language support (NLS) using
+the GNU (or OS-supplied) gettext library. gettext eases the handling
+of translations of (usually English) output messages to other
+languages by introducing the concept of message catalogs.
+
+Message catalogs can exist in various formats. The human-readable and
+-editable format is the PO file format. These human-readable files are
+then translated to MO files which can be used by the gettext library.
+
+Please refer to the (quite good) GNU gettext documentation for further
+details. Read it with info ('info gettext'), or go online to 
+http://www.gnu.org/software/gettext/gettext.html
+
+For the windows and amiga based platforms the same message catalogs
+are used to generate string tables to provide national language
+support for those platforms.
+
+
+1 Compiling VICE with localized messages
+----------------------------------------
+
+VICE is compiled by default with *nix NLS enabled. If you don't want
+NLS invoke configure with the option
+
+./configure --disable-nls
+
+Note however that this option will not turn off the windows and amiga
+platforms NLS.
+
+If you don't know how to compile VICE, please read the INSTALL file.
+
+
+2 Changing *nix language settings
+---------------------------------
+
+In general most modern (Linux-) distributions add support for choosing
+the language at login time or for the actual session.
+
+However to enable vice internationalization support without changing
+the language for all other applications you can try to set the
+appropriate environment variables (see below). To choose the
+appropriate language check the alias in 
+  /usr/share/locale/locale.alias
+
+There you'll find "danish", "german", "spanish", "french", hungarian",
+"italian", "dutch", "swedish", "turkish" and "polish".
+
+so try
+  LC_ALL=german ; export LC_ALL 
+to get a german UI for Vice.
+
+Make sure you have the proper language support package
+installed. There you usually find the necessary fonts, etc. Check your
+distro's manuals if you don't know what I'm speaking of.
+
+Older (Linux-)distributions (based on older C-libs) sometimes use other
+variables to set the language. 
+Try this:
+  You have to set the `LANG' environment variable to the appropriate
+  language code before running VICE. ISO 639 language codes can be found
+  in the gettext manual.
+  
+  For example, if you speak Swedish, just type `export LANG=sv' at the 
+  BASH prompt. This can be done from your `.login' or `.profile' file, 
+  once and for all.
+  
+  If this doesn't work on your system (e.g. you get messages like this:
+    `locale not supported by C library'
+  try to set the environment variable `LANGUAGE' or `LC_MESSAGES' to the
+  values described above.
+  
+3 Changing windows and amiga language settings
+----------------------------------------------
+
+By default the windows and amiga versions of VICE will try to check
+the current language set for the system/user and use the same
+language (if supported) in VICE.
+
+The windows and amiga versions of VICE can change the language
+setting during runtime, just select the language menu item from
+the main VICE menu and select the language you want to use.
+
+4 Adding new messages
+---------------------
+
+1. Edit the ALL_LINGUAS line in 'configure.proto' and add your
+   language code. In this example we will use Italian, so we
+   will add "it":
+
+   ALL_LINGUAS="de sv fr it"
+                        ^^^^
+   As I said earlier, ISO 639 language codes can be found in
+   the gettext manual.
+
+2. Execute 'autoconf' to create a new 'configure' script.
+
+3. Now issue './configure'.
+
+4. Go to the 'po' subdirectory.
+
+5. Do a 'cp vice.pot it.po'. 'vice.pot' is is the common ground 
+   for the translation teams to produce one PO for their language.
+   'it.po' is the new translation file for your language. The part
+   before the dot is your language code.
+
+6. Now use the editor of your choice to provide translations in
+   'it.po'. There is an emacs major mode (po-mode) that eases this
+   process. Please also read paragraph 5!
+
+7. Now issue 'make'. This causes an 'it.gmo' to be created. It is the
+   file that will be used by the gettext library.
+
+8. Do a 'make install' to install 'it.gmo' to the appropriate directory.
+
+
+5 Updating *nix messages
+------------------------
+
+VICE messages change at every release. Go to the 'po' subdirectory and 
+do a 'make update-po'. This updates all existing PO-files (removing 
+obsolete translations, providing new, empty entries). Check the PO file
+for your language and provide translations for the new, empty entries.
+
+
+6 Updating windows and amiga messages
+-------------------------------------
+
+To update the windows and amiga messages you go to the 'po'
+subdirectory and do a 'make trans-update'. This will update
+the windows, amiga and also the *nix translation files.
+
+Note however that the automatic updating of the windows and amiga
+messages can only be done from a *nix environment with NLS
+support enabled, this might seem counter-intuitive, but because
+we decided to generate all the messages from one set of files
+this is unavoidable.
+
+7 Notes on translating messages
+-------------------------------
+
+A leading '*' is a hint for the menu generator to generate a
+checkbox. In your translation just leave the '*' in the beginning:
+
+#: src/arch/unix/c128ui.c:78 src/arch/unix/uicrtc.c:58
+#: src/arch/unix/uisettings.c:1195 src/arch/unix/uisettings.c:1215
+msgid "*Double size"
+msgstr "*Doppelte Größe"
+
+C format strings must be saved within the translation otherwhise
+the program might fail.
+
+The example below tries to print a number (%d) and then a string
+(%s). Your translation must also adhere this sequence (%d before
+%s), otherwhise strange things (even a crash) might happen.
+
+#: src/arch/unix/archdep.c:233
+#, c-format
+msgid "Received signal %d (%s)."
+msgstr "Signal %d (%s) empfangen."
+
+Luckily those situations are rare within Vice.
+
+BTW, the `c-format' above indicates that a C-format string is
+contained in the to-be-translated msgid.
+ 
+Other format specifiers (\n, etc.) are used for print formatting,
+and are not strictly required. It depends on the language what is
+nicely formatted and what is not.
+
+Sometimes you'll find messages marked as fuzzy. e.g.:
+  #: src/event.c:466
+  #, fuzzy, c-format
+  msgid "Could not create start snapshot file %s."
+
+Those have been translated by heuristic and shall be reviewed by the
+translator. After correction or confirmation the word `fuzzy' has to
+be removed: e.g.
+  #: src/event.c:466
+  #, c-format
+  msgid "Could not create start snapshot file %s."
+  [...]
+
+If `,fuzzy' was the only mark, the whole line (including `#') can be
+removed:
+  #: src/event.c:486
+  msgid "Could not create start snapshot."
+  [...]
+
+-- 
+Andrea Musuruane, 
+http://musuruane.cjb.net
+
+pottendo <pottendo@gmx.net>
+
+Marco van den Heuvel <blackystardust68@yahoo.com>
