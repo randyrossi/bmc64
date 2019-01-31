@@ -24,6 +24,8 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
 
   * Some USB gamepads will require manual tweaking of settings from the defaults. 
 
+  * SID emulation is not using ReSid.  I have a build issue to resolve.
+
 # Precompiled Images
 
   * http://accentual.com/bmc64
@@ -96,7 +98,9 @@ A: Yes, the original machine ran at 50.125Hz for PAL and 59.826Hz for NTSC. So, 
 
 # Build Instructions
 
-    Building this is a bit of a pain.  A lot more work has to be done to make this easier. For now, this is what you have to do:
+Building this is a bit of a pain.  A lot more work has to be done to make this easier.
+
+Pre-reqs:
 
     sudo apt-get install xa65
 
