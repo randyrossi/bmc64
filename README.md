@@ -25,7 +25,8 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
   * Some USB gamepads will require manual tweaking of settings from the defaults. 
 
 # Precompiled Images
-  * COMING SOON
+
+  * http://accentual.com/bmc64
 
 # Notes
 The machine config defaults to PAL 50hz for both HDMI and composite.  You can change this (see below).
@@ -88,6 +89,10 @@ The default settings work fine for composite out.
 Q: Can I change option 'X' in vice?
 
 A: Most options are fixed right now to make sure video and audio are rendered properly. Other options may be added in the future.
+
+Q: Hey, isn't the real thing running at 50.125Hz?
+
+A: Yes, the original machine ran at 50.125Hz for PAL and 59.826Hz for NTSC. So, yeah, you'll be about 0.25% off in terms of timing.
 
 # Build Instructions
 
@@ -193,7 +198,7 @@ If that happens, reset these repos using "git reset HASH --hard" commands in the
     libs/mbedtls 60fbd5bdf05c223b641677204469b53c2ff39d4e
 
 # Todo
-- [ ] Measure latency (in frames) between input event and display change
+- [ ] Measure latency (in frames) between input and response (both audio/video)
 - [ ] Add ability to filter long lists of files 
 - [ ] Add more emulator options to UI (i.e. true drive emulation toggle)
 - [ ] From https://www.youtube.com/watch?v=b73BONBBZR8
@@ -205,7 +210,4 @@ Real C64 + Framemeister HDMI Upscaler | 3 frames
 Ultimate64                            | 1-2 frames
 C64 Mini                              | 6-7 frames
 Vice2.4 Desktop (O/S? settings?)      | 6 frames
-BMC64                                 | ?
-
-- [ ] Measure latency between input event and audio (come up with a way to measure this)
-
+BMC64                                 | ? (need to measure!)
