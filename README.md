@@ -30,7 +30,7 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
 
   * http://accentual.com/bmc64
 
-# Notes
+# Timing
 The machine config defaults to PAL 50hz for both HDMI and composite.  You can change this (see below).
 
 You can make drive 8 an IECDevice for the root file system of the sdcard. However, I don't recommend loading programs this way. The sdcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk oeprations anyway.
@@ -115,14 +115,14 @@ Apply some required patches:
     Patch #1:
 
     cd third_party/circle-stdlib/libs/circle-newlib
-    patch -p1 < ../../../circle_newlib_patch.diff
+    patch -p1 < ../../../../circle_newlib_patch.diff
 
     The second patch increases the kernel limit from 2 MB to 8 MB.
 
     Patch #2:
 
     cd third_party/circle-stdlib/libs/circle
-    patch -p1 < ../../../circle_patch.diff
+    patch -p1 < ../../../../circle_patch.diff
 
 Now make inside third_party/circle-stdlib:
 
@@ -205,13 +205,14 @@ If that happens, reset these repos using "git reset HASH --hard" commands in the
 - [ ] Measure latency (in frames) between input and response (both audio/video)
 - [ ] Add ability to filter long lists of files 
 - [ ] Add more emulator options to UI (i.e. true drive emulation toggle)
-- [ ] From https://www.youtube.com/watch?v=b73BONBBZR8
+- [ ] Most timings below were taken from https://www.youtube.com/watch?v=b73BONBBZR8
 
-Machine/Emulator                      | Delay
---------------------------------------|-------------
-Real C64                              | 0 frames
-Real C64 + Framemeister HDMI Upscaler | 3 frames
-Ultimate64                            | 1-2 frames
-C64 Mini                              | 6-7 frames
-Vice2.4 Desktop (O/S? settings?)      | 6 frames
-BMC64                                 | ? (need to measure!)
+Machine/Emulator                      | Input->Video Delay   | Input->Audio Delay
+--------------------------------------|-------------------------------------------
+Real C64                              | 0 frames             | 0
+Real C64 + Framemeister HDMI Upscaler | 3 frames             | 0
+Ultimate64                            | 1-2 frames           | ?
+C64 Mini                              | 6-7 frames           | ~360ms
+Vice2.4 Desktop (O/S? settings?)      | 6 frames             | ?
+PiLizard/Chameleon/Combian            | ? frames             | ?
+BMC64                                 | ? (need to measure!) | ? (need to measure!)
