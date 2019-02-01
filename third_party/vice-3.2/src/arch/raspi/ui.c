@@ -283,7 +283,7 @@ static void ui_key(long key) {
 // on an interrupt so just capture what the key was and
 // pick it up and service it on the main loop
 void circle_ui_key_interrupt(long key) {
-   if (circle_get_ticks() - pending_ui_key_time > 200000) {
+   if (circle_get_ticks() - pending_ui_key_time > 100000) {
       pending_ui_key = key;
       pending_ui_key_time = circle_get_ticks();
    }

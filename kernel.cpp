@@ -367,8 +367,8 @@ ViceApp::TShutdownMode CKernel::Run (void)
 
   if (!StartupChecksOk()) {
      mScreen.SetHideConsole(false);
-     mLogger.Write ("vice", LogNotice, "KERNAL, CHARGEN or BASIC MISSING");
-     mLogger.Write ("vice", LogNotice, "Please read documentation.");
+     mLogger.Write ("", LogNotice, "KERNAL, CHARGEN or BASIC MISSING");
+     mLogger.Write ("", LogNotice, "Please read documentation.");
      for (;;) {
         circle_sleep(1000000);
      }
