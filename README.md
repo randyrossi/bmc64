@@ -208,7 +208,7 @@ If that happens, reset these repos using "git reset HASH --hard" commands in the
 - [ ] Most timings below were taken from https://www.youtube.com/watch?v=b73BONBBZR8
 
 Machine/Emulator                      | Input->Video Delay   | Input->Audio Delay
---------------------------------------|-------------------------------------------
+--------------------------------------|----------------------|--------------------
 Real C64                              | 0 frames             | 0
 Real C64 + Framemeister HDMI Upscaler | 3 frames             | 0
 Ultimate64                            | 1-2 frames           | ?
