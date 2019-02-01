@@ -12,7 +12,7 @@ Some platforms VICE is compiled for (like Win32, AmigaOS) have had this feature 
 
 In addition to the horizontal tearing, there's also the issue of input latency.  I watched the 8-bit guy and _ kieferkn/i:/stern _ on YouTube testing the latency between input and audio/video response on the C64 mini.  The 8-bit guy measured audio latency (from key press to bleep) at around 360ms.  Video latency was about 130ms.  _ kieferkn/i:/stern _ measured a frame latency of 6-7 frames @50 hz which would put it in agreement with the 8-bit guy's measurements.  (I think the mini was updated since then but according to _ kieferkn/i:/stern _, this did not improve the latency).
 
-I noticed that all three Pi distributions that include a Commodore 64 emulator (Combian, PiLizard, Chameleon) have audio/video sync issues as well. If you run the 8-Bit guy's delay test (delay8k.bin), you can notice the latency introduced by the emulator.  But with BMC64, it's MUCH better.
+I noticed that all three Pi distributions that include a Commodore 64 emulator (Combian, PiLizard, Chameleon) have audio/video sync issues as well. If you run the 8-Bit guy's delay test (delaytst.crt), you can notice the latency introduced by the emulator.  But with BMC64, it's MUCH better.
 
 How much better?  I don't know yet.  BMC64's audio/video sync is much tighter than Combian/PiLizard/Chameleon.  The fragment size is a mere 2.9ms and I *think* I have the latency down to about 40ms.  However, I'm working on actually measuring it.  That would put it around 2 frames.  You can try running the 8-bit guy's delay test (included in github link below) and compare for yourself.  Also compare BMC64 to the real thing!
 
