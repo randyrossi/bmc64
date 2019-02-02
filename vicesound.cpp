@@ -66,6 +66,7 @@ unsigned ViceSound::AddChunk (s16 *pBuffer, unsigned nChunkSize) {
         src_size = nChunkSize;
         if (src_size > CHUNK_SIZE)
           src_size = CHUNK_SIZE;
+
 	WriteChunk();
 	src_pos += src_size;
         nChunkSize-= src_size;
@@ -78,6 +79,12 @@ unsigned ViceSound::GetChunk (s16 *pBuffer, unsigned nChunkSize) {
     assert (pBuffer != 0);
     assert (nChunkSize > 0);
     assert ((nChunkSize & 1) == 0);
+
+    // VICE expects us to 'block' if our buffer is full. But
+    // this shouldn't happen since we use 'flexible' soundsync.
+    while (bytes_buffered >= FRAG_SIZE * NUM_FRAGS * BYTES_PER_SAMPLE) {
+       CScheduler::Get ()->Yield();
+    }
 
     if (src_size == 0) {
       // Nothing to give? Give a silent packet.

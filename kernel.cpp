@@ -319,12 +319,8 @@ ViceApp::TShutdownMode CKernel::Run (void)
 
   // Call Vice's main_program
 
-  // Use -soundsync 1 option for now to get low
-  // latency without buffer overrun issues. The
-  // downside is that it causes a vibrato effect
-  // on some audio. Need to figure out why
-  // default sync overflows the 32k buffer in
-  // sound.c
+  // Use -soundsync 0 option for 'flexible'
+  // sound sync.
 
   // Use -refresh 1 option to turn off the 'auto'
   // refresh which screws up badly after some time.
@@ -382,7 +378,7 @@ ViceApp::TShutdownMode CKernel::Run (void)
       (char*)"-soundoutput",
       (char*)"1",
       (char*)"-soundsync",
-      (char*)"1",
+      (char*)"0",
       (char*)"-refresh",
       (char*)"1",
       // Unless we disable the video cache, vsync is messed up

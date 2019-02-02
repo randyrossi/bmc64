@@ -24,10 +24,10 @@
 #define SAMPLE_RATE             44100
 
 // This is the fragment size we give to vice.
-#define FRAG_SIZE               128
+#define FRAG_SIZE               256
 
 // This is the number of fragments we want for our buffer.
-#define NUM_FRAGS               25
+#define NUM_FRAGS               16
 
 // This is the number of bytes we send to VC4 at a time.  It doesn't
 // have to be equal to FRAG_SIZE but keep in mind this more or less

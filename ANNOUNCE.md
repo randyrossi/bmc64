@@ -12,9 +12,9 @@ Some platforms VICE is compiled for (like Win32, AmigaOS) have had this feature 
 
 In addition to the horizontal tearing, there's also the issue of input latency.  I watched the 8-bit guy and _ kieferkn/i:/stern _ on YouTube testing the latency between input and audio/video response on the C64 mini.  The 8-bit guy measured audio latency (from key press to bleep) at around 360ms.  Video latency was about 130ms.  _ kieferkn/i:/stern _ measured a frame latency of 6-7 frames @50 hz which would put it in agreement with the 8-bit guy's measurements.  (I think the mini was updated since then but according to _ kieferkn/i:/stern _, this did not improve the latency).
 
-I noticed that all three Pi distributions that include a Commodore 64 emulator (Combian, PiLizard, Chameleon) have audio/video sync issues as well. If you run the 8-Bit guy's delay test (delaytst.crt), you can notice the latency introduced by the emulator.  But with BMC64, it's MUCH better.
+I noticed that all three Pi distributions that are/or include a Commodore 64 emulator (Combian, PiLizard, Chameleon) have audio/video sync issues as well. If you run the 8-Bit guy's delay test (delaytst.crt), you can notice the latency introduced by the emulator.
 
-How much better?  I don't know yet.  BMC64's audio/video sync is much tighter than Combian/PiLizard/Chameleon.  The fragment size is a mere 2.9ms and I *think* I have the latency down to about 40ms.  However, I'm working on actually measuring it.  That would put it around 2 frames.  You can try running the 8-bit guy's delay test (included in github link below) and compare for yourself.  Also compare BMC64 to the real thing!
+I believe the latency in BMC64 is down to about 50ms.  However, I'm working on actually measuring it. That would put it around 2-3 frames.  You can try running the 8-bit guy's delay test (included in github link below) and compare for yourself.  Also compare BMC64 to the real thing!
 
 I *think* I have input to video latency down to one frame which would put in on par with the Ultimate64. See the chart in the README for measurements from other emulators.
 
@@ -22,7 +22,7 @@ Boot time is down to 6 seconds (compared to 13 for Combian and a whopping 52 for
 
 What do you mean by bare metal?
 
-  There is no operating system! An O/S like Linux adds layers of abstraction between the application (VICE) and the privileged kernel code that has access to hardware.  That adds latency in processing events.  User space programs can't get notified directly from interrupts, for example.  The interrupt has to be serviced by the kernel, into user space, into your program (at the mercy of the scheduler) before they can get processed.  For sound production, the user space program must fill buffers to deliver to a sound driver in the kernel before it can pass it on to the hardware.  With Combian/PiLizard and Chameleon installations, you are effectively installing a full blown linux distribution (1.5Gb image files!). You get the benefits of a real O/S but there are disadvantages to performance.
+  There is no operating system! An O/S like Linux adds layers of abstraction between the application (VICE) and the privileged kernel code that has access to hardware.  That adds latency in processing events.  User space programs can't get notified directly from interrupts, for example.  The interrupt has to be serviced by the kernel, into user space, into your program (at the mercy of the scheduler) before they can get processed.  For sound production, the user space program must fill buffers to deliver to a sound driver in the kernel before it can pass it on to the hardware.  With Combian/PiLizard and Chameleon installations, you are effectively installing a full blown linux distribution (1.5Gb image files!).
 
    With BMC64, VICE -IS- the kernel and has direct access to the hardware.  As soon as you power on the device, it goes straight into the emulator.  The entire kernel is ~2MB.
 

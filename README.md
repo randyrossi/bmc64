@@ -215,4 +215,4 @@ Ultimate64                            | 1-2 frames           | ?
 C64 Mini                              | 6-7 frames           | ~360ms
 Vice2.4 Desktop (O/S? settings?)      | 6 frames             | ?
 PiLizard/Chameleon/Combian            | ? frames             | ?
-BMC64                                 | ? (need to measure!) | ? (need to measure!)
+BMC64                                 | ? (need to measure!) | 50ms
