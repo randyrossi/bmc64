@@ -364,10 +364,10 @@ void vsyncarch_postsync(void){
   circle_check_gpio();
 
   if (joydevs[0].device == JOYDEV_GPIO_0 || joydevs[1].device == JOYDEV_GPIO_0) {
-     circle_poll_joysticks(1);
+     circle_poll_joysticks(0);
   }
   if (joydevs[0].device == JOYDEV_GPIO_1 || joydevs[1].device == JOYDEV_GPIO_1) {
-     circle_poll_joysticks(2);
+     circle_poll_joysticks(1);
   }
 
   // Hold the frame until vsync
