@@ -362,7 +362,7 @@ ViceApp::TShutdownMode CKernel::Run (void)
   joy_set_gamepad_info(num_pads, num_axes, num_hats);
 
   if (!StartupChecksOk()) {
-     mScreen.SetHideConsole(false);
+     mViceOptions.SetHideConsole(false);
      mLogger.Write ("", LogNotice, "KERNAL, CHARGEN or BASIC MISSING");
      mLogger.Write ("", LogNotice, "Please read documentation.");
      for (;;) {
