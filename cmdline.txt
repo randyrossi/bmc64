@@ -1,1 +1,1 @@
-fast=true canvas_width=384 canvas_height=272 machine_timing=pal
+hide_console=1 fast=true canvas_width=384 canvas_height=272 machine_timing=pal

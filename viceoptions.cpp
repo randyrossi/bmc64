@@ -26,7 +26,8 @@ ViceOptions *ViceOptions::s_pThis = 0;
 ViceOptions::ViceOptions (void) :
 	m_nCanvasWidth (DEFAULT_CANVAS_WIDTH),
 	m_nCanvasHeight (DEFAULT_CANVAS_HEIGHT),
-	m_nMachineTiming (MACHINE_TIMING_PAL)
+	m_nMachineTiming (MACHINE_TIMING_PAL),
+	m_bHideConsole(true)
 {
 	s_pThis = this;
 
@@ -78,6 +79,16 @@ ViceOptions::ViceOptions (void) :
 				m_nMachineTiming = MACHINE_TIMING_PAL;
 			}
 		}
+		else if (strcmp (pOption, "hide_console") == 0)
+		{
+			if (strcmp(pValue, "1") == 0)
+			{
+				m_bHideConsole = true;
+			}
+			else {
+				m_bHideConsole = false;
+			}
+		}
 	}
 }
 
@@ -99,6 +110,16 @@ unsigned ViceOptions::GetCanvasHeight (void) const
 unsigned ViceOptions::GetMachineTiming (void) const
 {
 	return m_nMachineTiming;
+}
+
+bool ViceOptions::GetHideConsole (void) const
+{
+	return m_bHideConsole;
+}
+
+void ViceOptions::SetHideConsole (bool value)
+{
+	m_bHideConsole = value;
 }
 
 ViceOptions *ViceOptions::Get (void)

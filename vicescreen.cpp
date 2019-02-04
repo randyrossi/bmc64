@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include "vicescreen.h"
+#include "viceoptions.h"
 #include <circle/devicenameservice.h>
 #include <circle/synchronize.h>
 #include <circle/sysconfig.h>
@@ -46,8 +47,7 @@ CViceScreenDevice::CViceScreenDevice (unsigned nWidth, unsigned nHeight, boolean
 	m_bCursorOn (TRUE),
 	m_Color (NORMAL_COLOR),
 	m_bInsertOn (FALSE),
-	m_bUpdated (FALSE),
-	m_bHideConsole (TRUE)
+	m_bUpdated (FALSE)
 #ifdef REALTIME
 	, m_SpinLock (TASK_LEVEL)
 #endif
@@ -722,7 +722,7 @@ void CViceScreenDevice::Tabulator (void)
 
 void CViceScreenDevice::Scroll (void)
 {
-        if (m_bHideConsole) { return; }
+        if (ViceOptions::Get()->GetHideConsole()) { return; }
 
 	unsigned nLines = m_CharGen.GetCharHeight ();
 
@@ -799,7 +799,7 @@ void CViceScreenDevice::SetPixel (unsigned nPosX, unsigned nPosY, TScreenColor C
 	if (   nPosX < m_nWidth
 	    && nPosY < m_nHeight)
 	{
-           if (!m_bHideConsole) {
+           if (!ViceOptions::Get()->GetHideConsole()) {
 		m_pBuffer[m_nPitch * nPosY + nPosX] = Color;
            }
 	}
@@ -842,8 +842,4 @@ void CViceScreenDevice::SetVirtualOffset(u32 x, u32 y) {
 
 void CViceScreenDevice::WaitForVerticalSync() {
   m_pFrameBuffer->WaitForVerticalSync();
-}
-
-void CViceScreenDevice::SetHideConsole(boolean v) {
-  m_bHideConsole = v;
 }

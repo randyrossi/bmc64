@@ -140,7 +140,6 @@ public:
         void UpdatePalette();
         void SetVirtualOffset(u32 x, u32 y);
         void WaitForVerticalSync();
-	void SetHideConsole (boolean v);
 
 private:
 	void Write (char chChar);
@@ -197,7 +196,6 @@ private:
 	unsigned	 m_nParam2;
 	boolean		 m_bUpdated;
 	CSpinLock	 m_SpinLock;
-	boolean		 m_bHideConsole;
 };
 
 #endif

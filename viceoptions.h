@@ -39,6 +39,8 @@ public:
 	unsigned GetCanvasWidth (void) const;
 	unsigned GetCanvasHeight (void) const;
 	unsigned GetMachineTiming (void) const;
+	bool GetHideConsole (void) const;
+	void SetHideConsole (bool value);
 
 	static ViceOptions *Get (void);
 
@@ -56,6 +58,7 @@ private:
 	unsigned m_nCanvasWidth;
 	unsigned m_nCanvasHeight;
 	unsigned m_nMachineTiming;
+	bool m_bHideConsole;
 
 	static ViceOptions *s_pThis;
 };
