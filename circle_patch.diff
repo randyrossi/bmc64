@@ -1,5 +1,5 @@
 diff --git a/include/circle/sysconfig.h b/include/circle/sysconfig.h
-index dd5c887..cf940ee 100644
+index dd5c887..709feeb 100644
 --- a/include/circle/sysconfig.h
 +++ b/include/circle/sysconfig.h
 @@ -34,7 +34,7 @@
@@ -11,6 +11,24 @@ index dd5c887..cf940ee 100644
  
  ///////////////////////////////////////////////////////////////////////
  //
+@@ -98,7 +98,7 @@
+ // counter (which is used without this option). It reduces the I/O load
+ // too. This option cannot be used with QEMU.
+ 
+-//#define USE_PHYSICAL_COUNTER
++#define USE_PHYSICAL_COUNTER
+ 
+ #endif
+ 
+@@ -123,7 +123,7 @@
+ // system timing, because it triggers up to 8000 IRQs per second. For
+ // compatibility with existing applications it is not set by default.
+ 
+-//#define USE_USB_SOF_INTR
++#define USE_USB_SOF_INTR
+ 
+ #endif
+ 
 @@ -132,7 +132,7 @@
  // this option is that the "SpeedFactor" of your system is displayed.
  // You can reduce the time needed for booting, if you disable this.
