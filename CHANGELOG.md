@@ -1,0 +1,11 @@
+## 1.0.1
+  * Initial release
+
+## 1.0.2
+  * GPIO joystick was broken in 1.0.1 - FIXED
+
+## 1.0.3
+  * Add hide_console=0 option in cmdline.txt to diagnose startup issues
+
+## 1.0.4
+  * Fixed save/restore joystick port selection issue

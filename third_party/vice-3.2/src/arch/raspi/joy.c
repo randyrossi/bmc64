@@ -278,12 +278,6 @@ int joy_arch_init(void) {
 
    circle_joy_init();
 
-   for (dev = 0; dev < 2; dev++ ) {
-      memset(&joydevs[dev], 0, sizeof(struct joydev_config));
-      joydevs[dev].port = dev + 1;
-      joydevs[dev].device = JOYDEV_NONE;
-   }
-
    return 0;
 }
 

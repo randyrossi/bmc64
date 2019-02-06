@@ -67,14 +67,7 @@ In the menu, select either GPIO1 or GPIO2 and assign it to one of the emulated p
 
 # Changelog
 
-## 1.0.1
-  * Initial release
-
-## 1.0.2
-  * GPIO joystick was broken in 1.0.1 - FIXED 
-
-## 1.0.3
-  * Add hide_console=0 option in cmdline.txt to diagnose startup issues
+  * https://github.com/randyrossi/bmc64/CHANGELOG.md
 
 # Q&A
 

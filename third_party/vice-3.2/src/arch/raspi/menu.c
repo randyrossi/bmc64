@@ -196,6 +196,19 @@ static void save_settings() {
    fclose(fp);
 }
 
+// Make joydev reflect menu choice
+static void ui_set_joy_devs() {
+   if (joydevs[0].port == 1)
+     joydevs[0].device = port_1_menu_item->choice_ints[port_1_menu_item->value];
+   else if (joydevs[0].port == 2)
+     joydevs[0].device = port_2_menu_item->choice_ints[port_2_menu_item->value];
+
+   if (joydevs[1].port == 1)
+     joydevs[1].device = port_1_menu_item->choice_ints[port_1_menu_item->value];
+   else if (joydevs[1].port == 2)
+     joydevs[1].device = port_2_menu_item->choice_ints[port_2_menu_item->value];
+}
+
 static void load_settings() {
    FILE *fp = fopen("settings.txt","r");
    if (fp == NULL) return;
@@ -212,8 +225,8 @@ static void load_settings() {
       if (value_str == NULL) break;
       int value = atoi(value_str);
 
-      if (strcmp(name,"port_1")==0) { port_1_menu_item->value = value; }
-      else if (strcmp(name,"port_2")==0) { port_2_menu_item->value = value; }
+      if (strcmp(name,"port_1")==0) { printf("LOADED VALUE %d for port 1\n",value); port_1_menu_item->value = value; }
+      else if (strcmp(name,"port_2")==0) { printf("LOADED VALUE %d for port 2\n",value); port_2_menu_item->value = value; }
       else if (strcmp(name,"usb_0")==0) { usb_pref_0_item->value = value; }
       else if (strcmp(name,"usb_1")==0) { usb_pref_1_item->value = value; }
       else if (strcmp(name,"usb_x_0")==0) { usb_x_axis_0_item->value = value; }
@@ -224,6 +237,8 @@ static void load_settings() {
       else if (strcmp(name,"keyboard_type")==0) { keyboard_type_item->value = value; }
    }
    fclose(fp);
+
+   ui_set_joy_devs();
 }
 
 // Interpret what menu item changed and make the change to vice
@@ -420,6 +435,15 @@ void build_menu(void) {
    struct menu_item* root;
    struct menu_item* parent;
    struct menu_item* child1;
+   int dev;
+
+   // TODO: This doesn't really belong here. Need to sort
+   // out init order of structs.
+   for (dev = 0; dev < 2; dev++ ) {
+      memset(&joydevs[dev], 0, sizeof(struct joydev_config));
+      joydevs[dev].port = dev + 1;
+      joydevs[dev].device = JOYDEV_NONE;
+   }
 
    root = ui_get_root_menu();
 
