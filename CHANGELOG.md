@@ -11,3 +11,4 @@
   * Fixed save/restore joystick port selection issue
   * Pause emulation when ui is activated
   * Added tape controls (for .tap only)
+  * Switch to soft usb irq for better gamepad support
