@@ -32,6 +32,9 @@
 #include <stdio.h>
 #include "kbd.h"
 #include "menu.h"
+#include "interrupt.h"
+#include "videoarch.h"
+#include "circle.h"
 
 volatile int ui_activated = 0;
 
@@ -296,8 +299,20 @@ void ui_check_key(void) {
    }
 }
 
+static void pause_trap(uint16_t addr, void *data) {
+   while (ui_activated) {
+      ui_check_key();
+      ui_render_now();
+      videoarch_swap();
+      circle_wait_vsync();
+   }
+}
+
 void ui_toggle(void) {
   ui_activated = 1 - ui_activated;
+  if (ui_activated) {
+     interrupt_maincpu_trigger_trap(pause_trap, 0);
+  }
 }
 
 void ui_switch_menu(int menu) {

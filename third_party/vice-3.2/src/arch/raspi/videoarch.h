@@ -107,6 +107,8 @@ void vsyncarch_postsync(void);
 void vsyncarch_presync(void);
 void vsyncarch_sleep(unsigned long delay);
 
+void videoarch_swap(void);
+
 // Draws a single vice frame into our framebuffer
 void draw(uint8_t *src, int srcw, int srch, int src_pitch,
           uint8_t *dst, int dst_pitch, int off_x, int off_y, int w, int h);

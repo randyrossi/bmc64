@@ -40,6 +40,7 @@
 #include "resources.h"
 #include "autostart.h"
 #include "util.h"
+#include "datasette.h"
 
 // For filename filters
 #define FILTER_NONE 0
@@ -327,9 +328,11 @@ static void menu_value_changed(struct menu_item* item) {
          return;
       case MENU_SOFT_RESET:
          machine_trigger_reset(MACHINE_RESET_MODE_SOFT);
+         ui_toggle();
          return;
       case MENU_HARD_RESET:
          machine_trigger_reset(MACHINE_RESET_MODE_HARD);
+         ui_toggle();
          return;
       case MENU_ABOUT:
          show_about();
@@ -346,7 +349,7 @@ static void menu_value_changed(struct menu_item* item) {
          joydevs[0].device = joydevs[1].device;
          joydevs[1].device = tmp;
          ui_set_joy_items();
-         break;
+         return;
       case MENU_JOYSTICK_PORT_1:
          // device in port 1 was changed
          if (joydevs[0].port == 1) {
@@ -354,7 +357,7 @@ static void menu_value_changed(struct menu_item* item) {
          } else if (joydevs[1].port == 1) {
             joydevs[1].device = item->choice_ints[item->value];
          }
-         break;
+         return;
       case MENU_JOYSTICK_PORT_2:
          // device in port 2 was changed
          if (joydevs[0].port == 2) {
@@ -362,6 +365,22 @@ static void menu_value_changed(struct menu_item* item) {
          } else if (joydevs[1].port == 2) {
             joydevs[1].device = item->choice_ints[item->value];
          }
+         return;
+      case MENU_TAPE_START:
+         datasette_control(DATASETTE_CONTROL_START);
+         ui_toggle();
+         return;
+      case MENU_TAPE_STOP:
+         datasette_control(DATASETTE_CONTROL_STOP);
+         ui_toggle();
+         return;
+      case MENU_TAPE_REWIND:
+         datasette_control(DATASETTE_CONTROL_REWIND);
+         ui_toggle();
+         return;
+      case MENU_TAPE_RESET:
+         datasette_control(DATASETTE_CONTROL_RESET);
+         ui_toggle();
          return;
    }
 
@@ -477,6 +496,12 @@ void build_menu(void) {
 
    ui_menu_add_button(MENU_ATTACH_TAPE, root, "Attach tape image...");
    ui_menu_add_button(MENU_DETACH_TAPE, root, "Detach tape image");
+
+   parent = ui_menu_add_folder(root, "Datasette controls (.tap)...");
+      ui_menu_add_button(MENU_TAPE_START, parent, "Play");
+      ui_menu_add_button(MENU_TAPE_STOP, parent, "Stop");
+      ui_menu_add_button(MENU_TAPE_REWIND, parent, "Rewind");
+      ui_menu_add_button(MENU_TAPE_RESET, parent, "Reset");
 
    ui_menu_add_divider(root);
 

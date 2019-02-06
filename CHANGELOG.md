@@ -9,3 +9,5 @@
 
 ## 1.0.4
   * Fixed save/restore joystick port selection issue
+  * Pause emulation when ui is activated
+  * Added tape controls (for .tap only)

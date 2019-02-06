@@ -329,21 +329,19 @@ void vsyncarch_presync(void){
     // Nothing to do.
 }
 
+void videoarch_swap() {
+  // Show the region we just drew.
+  circle_set_fb_y(video_state.offscreen_buffer_y);
+  // Swap buffer ptr for next frame.
+  video_state.offscreen_buffer_y = circle_get_display_h() - 
+                                      video_state.offscreen_buffer_y;
+}
+
 void vsyncarch_postsync(void){
   // Sync with display's vertical blank signal.
 
-  if (ui_activated) {
-    // Draw ui frame now
-    ui_render_now();
-    need_buffer_swap = 1;
-  }
-
   if (need_buffer_swap) {
-    // Show the region we just drew.
-    circle_set_fb_y(video_state.offscreen_buffer_y);
-    // Swap buffer ptr for next frame.
-    video_state.offscreen_buffer_y = circle_get_display_h() - 
-                                        video_state.offscreen_buffer_y;
+    videoarch_swap();
     need_buffer_swap = 0;
   }
 
