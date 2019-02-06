@@ -67,7 +67,7 @@ In the menu, select either GPIO1 or GPIO2 and assign it to one of the emulated p
 
 # Changelog
 
-  * https://github.com/randyrossi/bmc64/CHANGELOG.md
+  * https://github.com/randyrossi/bmc64/blob/master/CHANGELOG.md
 
 # Q&A
 
