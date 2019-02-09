@@ -63,6 +63,7 @@ extern void new_joystick(void);
 extern int joy_num_pads;
 extern int joy_num_axes[2];
 extern int joy_num_hats[2];
+extern int joy_num_buttons[2];
 
 int joy_key_up(unsigned int device, int key);
 int joy_key_down(unsigned int device, int key);

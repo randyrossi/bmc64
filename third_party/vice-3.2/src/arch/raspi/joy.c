@@ -35,6 +35,7 @@
 #include "joyport/joystick.h"
 
 int joy_num_pads = 0;
+int joy_num_buttons[2];
 int joy_num_axes[2];
 int joy_num_hats[2];
 
@@ -281,13 +282,15 @@ int joy_arch_init(void) {
    return 0;
 }
 
-void joy_set_gamepad_info(int num_pads, 
+void joy_set_gamepad_info(int num_pads, int num_buttons[2],
                           int num_axes[2], int num_hats[2]) {
    joy_num_pads = num_pads;
    joy_num_axes[0] = num_axes[0];
    joy_num_axes[1] = num_axes[1];
    joy_num_hats[0] = num_hats[0];
    joy_num_hats[1] = num_hats[1];
+   joy_num_buttons[0] = num_buttons[0];
+   joy_num_buttons[1] = num_buttons[1];
 }
 
 int circle_joy_need_gpio(int device) {

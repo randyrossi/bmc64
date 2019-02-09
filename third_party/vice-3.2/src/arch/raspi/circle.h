@@ -37,6 +37,14 @@
 
 #include <sys/types.h>
 
+#define USB_PREF_ANALOG 0
+#define USB_PREF_HAT 1
+
+#define NUM_BUTTON_ASSIGNMENTS 3
+#define BTN_ASSIGN_UNDEF 0
+#define BTN_ASSIGN_FIRE 1
+#define BTN_ASSIGN_MENU 2
+
 // TODO: Replace this with a direct call from kernel
 typedef void (*raspi_key_handler)(long key);
 
@@ -60,7 +68,7 @@ extern void circle_yield();
 extern void circle_poll_joysticks(int port);
 extern void circle_check_gpio();
 
-extern void joy_set_gamepad_info(int num_pads, int axes[2], int hats[2]);
+extern void joy_set_gamepad_info(int num_pads, int num_buttons[2], int axes[2], int hats[2]);
 
 extern void circle_joy_usb(unsigned device, int value);
 extern void circle_joy_gpio(unsigned device, int value);
@@ -73,5 +81,7 @@ extern void circle_ui_key_interrupt(long key);
 
 extern int menu_wants_raw_usb(void);
 extern void menu_raw_usb(int device, unsigned buttons, const int hats[6], const int axes[16]);
+
+extern int circle_button_function(int dev, unsigned button_value);
 
 #endif

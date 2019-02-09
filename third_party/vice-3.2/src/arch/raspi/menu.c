@@ -60,6 +60,10 @@ int usb_x_axis_0;
 int usb_y_axis_0;
 int usb_x_axis_1;
 int usb_y_axis_1;
+int usb_0_button_assignments[16];
+int usb_1_button_assignments[16];
+int usb_0_button_bits[16]; // never change
+int usb_1_button_bits[16]; // never change
 struct menu_item *palette_item;
 struct menu_item *keyboard_type_item;
 struct menu_item *drive_sounds_item;
@@ -183,6 +187,7 @@ static void ui_set_joy_items()
 }
 
 static void save_settings() {
+   int i;
    FILE *fp = fopen("settings.txt","w");
    if (fp == NULL) return;
 
@@ -198,6 +203,12 @@ static void save_settings() {
    fprintf(fp,"keyboard_type=%d\n",keyboard_type_item->value);
    fprintf(fp,"drive_sounds=%d\n",drive_sounds_item->value);
    fprintf(fp,"drive_sounds_vol=%d\n",drive_sounds_vol_item->value);
+   for (i=0;i<16;i++) {
+      fprintf(fp,"usb_btn_0=%d\n",usb_0_button_assignments[i]);
+   }
+   for (i=0;i<16;i++) {
+      fprintf(fp,"usb_btn_1=%d\n",usb_1_button_assignments[i]);
+   }
    fclose(fp);
 }
 
@@ -219,6 +230,8 @@ static void load_settings() {
    if (fp == NULL) return;
    char name_value[80];
    int value;
+   int usb_btn_0_i = 0;
+   int usb_btn_1_i = 0;
    while (1) {
       name_value[0] = '\0';
       // Looks like circle-stdlib doesn't support something like %s=%d
@@ -252,6 +265,18 @@ static void load_settings() {
       else if (strcmp(name,"drive_sounds_vol")==0) {
          drive_sounds_vol_item->value = value;
          resources_set_int("DriveSoundEmulationVolume", value);
+      } else if (strcmp(name,"usb_btn_0")==0) {
+         usb_0_button_assignments[usb_btn_0_i] = value;
+         usb_btn_0_i++;
+         if (usb_btn_0_i >= 16) {
+            usb_btn_0_i = 0;
+         }
+      } else if (strcmp(name,"usb_btn_1")==0) {
+         usb_1_button_assignments[usb_btn_1_i] = value;
+         usb_btn_1_i++;
+         if (usb_btn_1_i >= 16) {
+            usb_btn_1_i = 0;
+         }
       }
    }
    fclose(fp);
@@ -472,6 +497,7 @@ void build_menu(struct menu_item* root) {
    struct menu_item* parent;
    struct menu_item* child1;
    int dev;
+   int i;
 
    // TODO: This doesn't really belong here. Need to sort
    // out init order of structs.
@@ -570,6 +596,12 @@ void build_menu(struct menu_item* root) {
       usb_y_axis_0 = 1;
       usb_x_axis_1 = 0;
       usb_y_axis_1 = 1;
+      for (i=0;i<16;i++) {
+         usb_0_button_assignments[i] = (i==0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
+         usb_1_button_assignments[i] = (i==0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
+         usb_0_button_bits[i] = 1 << i;
+         usb_1_button_bits[i] = 1 << i;
+      }
 
    ui_menu_add_divider(root);
 

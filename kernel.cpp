@@ -206,8 +206,6 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
    unsigned b = pState->buttons;
 
    // usb_pref is the value of the usb pref menu item
-   // 0 = analog
-   // 1 = dpad (hat)
    int usb_pref;
    int axis_x;
    int axis_y;
@@ -216,7 +214,7 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
    int max_index = axis_x;
    if (axis_y > max_index) max_index = axis_y;
 
-   if (usb_pref == 1 && pState->nhats > 0) {
+   if (usb_pref == USB_PREF_HAT && pState->nhats > 0) {
 	   int dpad = pState->hats[0];
 	   bool has_changed =
 			(prev_buttons[nDeviceIndex] != b) ||
@@ -226,6 +224,7 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
               prev_dpad[nDeviceIndex] = dpad;
 
               // If the UI is activated, route to the menu.
+              int button_func = circle_button_function(nDeviceIndex, b);
               if (ui_activated) {
                  if (dpad == 0) {
                     circle_ui_key_interrupt(KEYCODE_Up);
@@ -239,19 +238,27 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
                  else if (dpad == 2) {
                     circle_ui_key_interrupt(KEYCODE_Right);
                  }
-                 else if (b) {
+                 else if (button_func == BTN_ASSIGN_FIRE) {
                     circle_ui_key_interrupt(KEYCODE_Return);
                  }
+                 else if (button_func == BTN_ASSIGN_MENU) {
+                    circle_ui_key_interrupt(KEYCODE_F12);
+                 }
+                 return;
+              }
+
+              if (button_func == BTN_ASSIGN_MENU) {
+                 circle_ui_key_interrupt(KEYCODE_F12);
                  return;
               }
 
 	      int value = 0;
               if (dpad < 8) value |= dpad_to_joy[dpad];
-              if (b) value |= 0x10;
+              if (button_func == BTN_ASSIGN_FIRE) value |= 0x10;
 
               circle_joy_usb(nDeviceIndex, value);
 	   }
-   } else if (usb_pref == 0 && pState->naxes > max_index) {
+   } else if (usb_pref == USB_PREF_ANALOG && pState->naxes > max_index) {
 	   int x = pState->axes[axis_x].value;
 	   int y = pState->axes[axis_y].value;
 	   // TODO: Do this just once at init
@@ -272,6 +279,7 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
               prev_axes[nDeviceIndex][axis_y] = y;
               prev_buttons[nDeviceIndex] = b;
               // If the UI is activated, route to the menu.
+              int button_func = circle_button_function(nDeviceIndex, b);
               if (ui_activated) {
                  if (y < my - ty) {
                     circle_ui_key_interrupt(KEYCODE_Up);
@@ -285,9 +293,17 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
                  else if (x > mx + tx) {
                     circle_ui_key_interrupt(KEYCODE_Right);
                  }
-                 else if (b) {
+                 else if (button_func == BTN_ASSIGN_FIRE) {
                     circle_ui_key_interrupt(KEYCODE_Return);
                  }
+                 else if (button_func == BTN_ASSIGN_MENU) {
+                    circle_ui_key_interrupt(KEYCODE_F12);
+                 }
+                 return;
+              }
+
+              if (button_func == BTN_ASSIGN_MENU) {
+                 circle_ui_key_interrupt(KEYCODE_F12);
                  return;
               }
 
@@ -296,7 +312,7 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
               if (x > mx + tx) value |= 0x8;
               if (y < my - ty) value |= 0x1;
               if (y > my + ty) value |= 0x2;
-              if (b) value |= 0x10;
+              if (button_func == BTN_ASSIGN_FIRE) value |= 0x10;
 
               circle_joy_usb(nDeviceIndex, value);
 	   }
@@ -345,6 +361,7 @@ ViceApp::TShutdownMode CKernel::Run (void)
   }
 
   unsigned num_pads = 0;
+  int num_buttons[2] = {0,0};
   int num_axes[2] = {0,0};
   int num_hats[2] = {0,0};
   while (num_pads < 2) {
@@ -361,13 +378,14 @@ ViceApp::TShutdownMode CKernel::Run (void)
 
     num_axes[num_pads]= pState->naxes;
     num_hats[num_pads]= pState->nhats;
+    num_buttons[num_pads]= pState->nbuttons;
 
     game_pad->RegisterStatusHandler (GamePadStatusHandler);
     num_pads++;
   }
 
   // Tell vice what we found
-  joy_set_gamepad_info(num_pads, num_axes, num_hats);
+  joy_set_gamepad_info(num_pads, num_buttons, num_axes, num_hats);
 
   if (!StartupChecksOk()) {
      mViceOptions.SetHideConsole(false);
@@ -627,7 +645,6 @@ void CKernel::circle_check_gpio()
 void CKernel::circle_poll_joysticks(int device)
 {
   if (device == 0) {
-
      // If the UI is activated, route to the menu.
      if (circle_ui_activated()) {
         if (joystickPins1[JOY_UP]->Read() == LOW) {
@@ -665,55 +682,55 @@ void CKernel::circle_poll_joysticks(int device)
         value |= 0x10;
      }
      circle_joy_gpio(0, value);
-  } else if (device == 1) {
-     // If the UI is activated, route to the menu.
-     if (circle_ui_activated()) {
-        if (joystickPins2[JOY_UP]->Read() == LOW) {
-           circle_ui_key_interrupt(KEYCODE_Up);
-        }
-        else if (joystickPins2[JOY_DOWN]->Read() == LOW) {
-           circle_ui_key_interrupt(KEYCODE_Down);
-        }
-        else if (joystickPins2[JOY_LEFT]->Read() == LOW) {
-           circle_ui_key_interrupt(KEYCODE_Left);
-        }
-        else if (joystickPins2[JOY_RIGHT]->Read() == LOW) {
-           circle_ui_key_interrupt(KEYCODE_Right);
-        }
-        else if (joystickPins2[JOY_FIRE]->Read() == LOW) {
-           circle_ui_key_interrupt(KEYCODE_Return);
-        }
-        return;
-     }
-
-     int value = 0;
-     if (joystickPins2[JOY_UP]->Read() == LOW) {
-        value |= 0x1;
-     }
-     if (joystickPins2[JOY_DOWN]->Read() == LOW) {
-        value |= 0x2;
-     }
-     if (joystickPins2[JOY_LEFT]->Read() == LOW) {
-        value |= 0x4;
-     }
-     if (joystickPins2[JOY_RIGHT]->Read() == LOW) {
-        value |= 0x8;
-     }
-     if (joystickPins2[JOY_FIRE]->Read() == LOW) {
-        value |= 0x10;
-     }
-     circle_joy_gpio(1, value);
   }
+
+  // If the UI is activated, route to the menu.
+  if (circle_ui_activated()) {
+     if (joystickPins2[JOY_UP]->Read() == LOW) {
+        circle_ui_key_interrupt(KEYCODE_Up);
+     }
+     else if (joystickPins2[JOY_DOWN]->Read() == LOW) {
+        circle_ui_key_interrupt(KEYCODE_Down);
+     }
+     else if (joystickPins2[JOY_LEFT]->Read() == LOW) {
+        circle_ui_key_interrupt(KEYCODE_Left);
+     }
+     else if (joystickPins2[JOY_RIGHT]->Read() == LOW) {
+        circle_ui_key_interrupt(KEYCODE_Right);
+     }
+     else if (joystickPins2[JOY_FIRE]->Read() == LOW) {
+        circle_ui_key_interrupt(KEYCODE_Return);
+     }
+     return;
+  }
+
+  int value = 0;
+  if (joystickPins2[JOY_UP]->Read() == LOW) {
+     value |= 0x1;
+  }
+  if (joystickPins2[JOY_DOWN]->Read() == LOW) {
+     value |= 0x2;
+  }
+  if (joystickPins2[JOY_LEFT]->Read() == LOW) {
+     value |= 0x4;
+  }
+  if (joystickPins2[JOY_RIGHT]->Read() == LOW) {
+     value |= 0x8;
+  }
+  if (joystickPins2[JOY_FIRE]->Read() == LOW) {
+     value |= 0x10;
+  }
+  circle_joy_gpio(1, value);
 }
 
 void CKernel::InterruptStub (void *pParam)
 {
-        CKernel *pThis = (CKernel *) pParam;
-        assert (pThis != 0);
+   CKernel *pThis = (CKernel *) pParam;
+   assert (pThis != 0);
 
-        if (circle_joy_need_gpio(0))
-           pThis->circle_poll_joysticks(0);
-        if (circle_joy_need_gpio(1))
-           pThis->circle_poll_joysticks(1);
+   if (circle_joy_need_gpio(0))
+        pThis->circle_poll_joysticks(0);
+   if (circle_joy_need_gpio(1))
+        pThis->circle_poll_joysticks(1);
 }
 

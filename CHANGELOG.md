@@ -14,9 +14,9 @@
   * Switch to soft usb irq for better gamepad support
 
 ## 1.0.5
+  * Added configuration of usb button functions (fire or menu, more later)
   * Added drive sound emulation and volume to menu
   * Made menu larger
-  * Added push/pop menu functions for deeper nesting of menus
-  * Moved USB config into sub menu
+  * Moved USB config into a sub menu
   * Fixed hanging issue with gamepad when # analog axes > 4
   * Added raw usb monitor to help with gamepad config

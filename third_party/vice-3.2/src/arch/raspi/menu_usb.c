@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <string.h>
+#include <math.h>
 #include "ui.h"
 #include "menu.h"
 #include "joy.h"
@@ -40,6 +41,10 @@ extern int usb_x_axis_0;
 extern int usb_y_axis_0;
 extern int usb_x_axis_1;
 extern int usb_y_axis_1;
+extern int usb_0_button_assignments[16];
+extern int usb_1_button_assignments[16];
+extern int usb_0_button_bits[16];
+extern int usb_1_button_bits[16];
 
 extern volatile int ui_activated;
 
@@ -50,6 +55,13 @@ struct menu_item* raw_axes_item[16];
 // Set to one when we are listening for raw usb values for config
 int want_raw_usb = 0;
 int want_raw_usb_device = 0;
+
+// Conver this value to log2(b) for display purposes
+// Shows user which button index is being pressed on raw screen
+static int map_button_value(int b) {
+   if (b == 0) return -1;
+   return log2(b);
+}
 
 static void raw_popped(struct menu_item* item) {
    // This is our raw monitor being popped.
@@ -68,7 +80,10 @@ static void show_usb_monitor(int device) {
   // We need to get notified of pop to turn off monitoring
   root->on_value_changed = raw_popped;
 
-  raw_buttons_item = ui_menu_add_button_with_value(MENU_TEXT, root, "Button", 0, "", "");
+  raw_buttons_item = ui_menu_add_button_with_value(MENU_TEXT, root, "Button #", 0, "", "");
+  // We want to show button index so have to show log base 2 of value
+  raw_buttons_item->map_value_func = map_button_value;
+
   for (i=0;i<joy_num_hats[device];i++) {
      sprintf (scratch,"Hat %d",i);
      raw_hats_item[i] = ui_menu_add_button_with_value(MENU_TEXT, root, scratch, 0, "", "");
@@ -106,6 +121,12 @@ static void menu_usb_value_changed(struct menu_item* item) {
       case MENU_USB_1_WATCH_RAW:
          show_usb_monitor(1);
          break;
+      case MENU_USB_0_BTN_ASSIGN:
+         usb_0_button_assignments[item->sub_id] = item->value;
+         break;
+      case MENU_USB_1_BTN_ASSIGN:
+         usb_1_button_assignments[item->sub_id] = item->value;
+         break;
       default:
          break;
    }
@@ -116,8 +137,11 @@ void build_usb_menu(int dev, struct menu_item* root) {
   struct menu_item* x_axis_item;
   struct menu_item* y_axis_item;
   struct menu_item* tmp_item;
+  struct menu_item* usb_btn_item[16];
   char desc[40];
   char scratch[32];
+  int i;
+  int j;
 
   if (dev == 0) {
       strcpy (desc, "USB 1:");
@@ -137,6 +161,19 @@ void build_usb_menu(int dev, struct menu_item* root) {
       y_axis_item = ui_menu_add_range(MENU_USB_0_Y_AXIS, root, "USB 1 Analog Y #", 0, 12, 1, usb_y_axis_0);
       tmp_item = ui_menu_add_button(MENU_USB_0_WATCH_RAW, root, "Monitor raw USB 1 data...");
       tmp_item->on_value_changed = menu_usb_value_changed;
+
+      for (i=0;i<joy_num_buttons[0];i++) {
+         sprintf (scratch, "Button %d Function", i);
+         tmp_item = ui_menu_add_multiple_choice(MENU_USB_0_BTN_ASSIGN, root,
+                                                         scratch);
+         tmp_item->num_choices = NUM_BUTTON_ASSIGNMENTS;
+         strcpy (tmp_item->choices[BTN_ASSIGN_UNDEF], "None");
+         strcpy (tmp_item->choices[BTN_ASSIGN_FIRE], "Fire");
+         strcpy (tmp_item->choices[BTN_ASSIGN_MENU], "Menu");
+         tmp_item->value = usb_0_button_assignments[i];
+         tmp_item->on_value_changed = menu_usb_value_changed;
+         tmp_item->sub_id = i;
+      }
   } else {
       strcpy (desc, "USB 2:");
       if (joy_num_pads > 1) {
@@ -155,6 +192,19 @@ void build_usb_menu(int dev, struct menu_item* root) {
       y_axis_item = ui_menu_add_range(MENU_USB_1_Y_AXIS, root, "USB 2 Analog Y #", 0, 12, 1, usb_y_axis_1);
       tmp_item = ui_menu_add_button(MENU_USB_1_WATCH_RAW, root, "Monitor raw USB 2 data...");
       tmp_item->on_value_changed = menu_usb_value_changed;
+
+      for (i=0;i<joy_num_buttons[1];i++) {
+         sprintf (scratch, "Button %d Function", i);
+         tmp_item = ui_menu_add_multiple_choice(MENU_USB_1_BTN_ASSIGN, root,
+                                                         scratch);
+         tmp_item->num_choices = NUM_BUTTON_ASSIGNMENTS;
+         strcpy (tmp_item->choices[BTN_ASSIGN_UNDEF], "None");
+         strcpy (tmp_item->choices[BTN_ASSIGN_FIRE], "Fire");
+         strcpy (tmp_item->choices[BTN_ASSIGN_MENU], "Menu");
+         tmp_item->value = usb_1_button_assignments[i];
+         tmp_item->on_value_changed = menu_usb_value_changed;
+         tmp_item->sub_id = i;
+      }
   }
 
   usb_pref_item->num_choices = 2;
@@ -183,3 +233,24 @@ void menu_raw_usb(int device, unsigned buttons, const int hats[6], const int axe
      }
   }
 }
+
+// Returns the first function found for the button
+int circle_button_function(int dev, unsigned b) {
+   int i;
+   if (dev == 0) {
+      for (i=0;i<joy_num_buttons[dev];i++) {
+         if (b & usb_0_button_bits[i]) {
+            return usb_0_button_assignments[i];
+         }
+      }
+      return BTN_ASSIGN_UNDEF;
+   }
+
+   for (i=0;i<joy_num_buttons[dev];i++) {
+      if (b & usb_1_button_bits[i]) {
+         return usb_1_button_assignments[i];
+      }
+   }
+   return BTN_ASSIGN_UNDEF;
+}
+

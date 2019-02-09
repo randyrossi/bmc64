@@ -111,7 +111,7 @@ static void ui_draw_char(uint8_t c, int pos_x, int pos_y, int color) {
     uint8_t *draw_pos;
 
     // Draw into off screen buffer
-    uint8_t *dst = video_state.dst + 
+    uint8_t *dst = video_state.dst +
         video_state.offscreen_buffer_y * video_state.dst_pitch;
 
     // Don't draw out of bounds
@@ -145,7 +145,7 @@ void ui_draw_text(const char* text, int x, int y, int color) {
 // Draw a rectangle at x/y of given w/h into the offscreen area
 void ui_draw_rect(int x,int y, int w, int h, int color, int fill) {
    int xx, yy, x2, y2;
-   uint8_t *dst = video_state.dst + 
+   uint8_t *dst = video_state.dst +
       video_state.offscreen_buffer_y*video_state.dst_pitch;
    x2 = x + w;
    y2 = y + h;
@@ -169,7 +169,7 @@ int ui_text_width(const char* text) {
 static void do_on_value_changed(struct menu_item* item) {
    if (item->on_value_changed) {
       item->on_value_changed(menu_cursor_item[current_menu]);
-   } 
+   }
    else if (on_value_changed) {
       on_value_changed(menu_cursor_item[current_menu]);
    }
@@ -407,37 +407,43 @@ static void ui_render_children(struct menu_item* node, int* index, int indent) {
                ui_draw_text("+", menu_left + (indent) * 8, y, 1);
          } else if (node->type == TOGGLE) {
             if (node->value)
-               ui_draw_text("On", menu_left + menu_width - 
+               ui_draw_text("On", menu_left + menu_width -
                          ui_text_width("On"), y, 1);
             else
-               ui_draw_text("Off", menu_left + menu_width - 
+               ui_draw_text("Off", menu_left + menu_width -
                          ui_text_width("Off"), y, 1);
          } else if (node->type == CHECKBOX) {
             if (node->value)
-               ui_draw_text("True", menu_left + menu_width - 
+               ui_draw_text("True", menu_left + menu_width -
                          ui_text_width("True"), y, 1);
             else
-               ui_draw_text("False", menu_left + menu_width - 
+               ui_draw_text("False", menu_left + menu_width -
                          ui_text_width("False"), y, 1);
          } else if (node->type == RANGE) {
             sprintf(node->scratch,"%d",node->value);
-            ui_draw_text(node->scratch, menu_left + menu_width - 
+            ui_draw_text(node->scratch, menu_left + menu_width -
                          ui_text_width(node->scratch), y, 1);
          } else if (node->type == MULTIPLE_CHOICE) {
-            ui_draw_text(node->choices[node->value], menu_left + menu_width - 
+            ui_draw_text(node->choices[node->value], menu_left + menu_width -
                          ui_text_width(node->choices[node->value]), y, 1);
          } else if (node->type == DIVIDER) {
             ui_draw_rect(menu_left, y+3, menu_width, 2, 3, 1);
          } else if (node->type == BUTTON) {
             if (strlen(node->displayed_value) > 0) {
                // Prefer displayed value if set
-               ui_draw_text(node->displayed_value, menu_left + menu_width - 
+               ui_draw_text(node->displayed_value, menu_left + menu_width -
                          ui_text_width(node->displayed_value), y, 1);
             } else {
                // Turn value into string as fallback
-               sprintf(node->scratch,"%d",node->value);
-               ui_draw_text(node->scratch, menu_left + menu_width - 
+               if (node->map_value_func) {
+                  sprintf(node->scratch,"%d",node->map_value_func(node->value));
+                  ui_draw_text(node->scratch, menu_left + menu_width -
                          ui_text_width(node->scratch), y, 1);
+               } else {
+                  sprintf(node->scratch,"%d",node->value);
+                  ui_draw_text(node->scratch, menu_left + menu_width -
+                         ui_text_width(node->scratch), y, 1);
+               }
             }
          }
       }

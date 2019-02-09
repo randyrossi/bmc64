@@ -50,6 +50,9 @@ struct menu_item {
    // Client defined id.
    int id;
 
+   // Client sub-identifier
+   int sub_id;
+
    menu_item_type type;
 
    // For all
@@ -88,6 +91,9 @@ struct menu_item {
 
    // Optional menu item specific value changed function
    void (*on_value_changed)(struct menu_item*);
+
+   // Optional mapping of button value to some other int for display
+   int (*map_value_func)(int);
 };
 
 struct menu_item* ui_menu_add_toggle(int id, struct menu_item *folder, char* name, int initial_state);
