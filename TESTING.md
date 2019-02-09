@@ -25,15 +25,19 @@
 # JS1=USB1, JS2=None
  * Test: Gamepad is joystick in emulator
  * Test: Gamepad navigates in menu
+ * Test: Gamepad fire/menu button assignments work
 # JS1=None, JS2=USB1
  * Test: Gamepad is joystick in emulator
  * Test: Gamepad navigates in menu
+ * Test: Gamepad fire/menu button assignments work
 # JS1=GPIO1, JS2=None
  * Test: GPIO bank1 is joystick in emulator
  * Test: GPIO bank1 navigates in menu
+ * Test: Gamepad fire/menu button assignments work
 # JS1=None, JS2=GPIO1
  * Test: GPIO bank1 is joystick in emulator
  * Test: GPIO bank1 navigates in menu
+ * Test: Gamepad fire/menu button assignments work
 # JS1=GPIO2, JS2=None
  * Test: GPIO bank2 is joystick in emulator
  * Test: GPIO bank2 navigates in menu
@@ -52,4 +56,5 @@
  * Test: audio does not pop
 # Keyrah:
  * Test: All keys work, including =
-
+# Save Settings:
+ * Test: values are restored properly
