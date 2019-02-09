@@ -41,6 +41,8 @@ extern int usb_y_axis_0;
 extern int usb_x_axis_1;
 extern int usb_y_axis_1;
 
+extern volatile int ui_activated;
+
 struct menu_item* raw_buttons_item;
 struct menu_item* raw_hats_item[6];
 struct menu_item* raw_axes_item[16];
@@ -165,7 +167,7 @@ void build_usb_menu(int dev, struct menu_item* root) {
 }
 
 int menu_wants_raw_usb(void) {
-   return want_raw_usb;
+   return ui_activated && want_raw_usb;
 }
 
 void menu_raw_usb(int device, unsigned buttons, const int hats[6], const int axes[16]) {
