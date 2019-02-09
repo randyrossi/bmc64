@@ -71,4 +71,7 @@ extern int circle_ui_activated(void);
 extern int circle_ui_activated(void);
 extern void circle_ui_key_interrupt(long key);
 
+extern int menu_wants_raw_usb(void);
+extern void menu_raw_usb(int device, unsigned buttons, const int hats[6], const int axes[16]);
+
 #endif

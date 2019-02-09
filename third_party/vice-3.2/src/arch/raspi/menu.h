@@ -99,20 +99,18 @@
 
 #define MENU_CONFIGURE_USB_0 49
 #define MENU_CONFIGURE_USB_1 50
-
 #define MENU_USB_0_X_AXIS 51
 #define MENU_USB_0_Y_AXIS 52
 #define MENU_USB_1_X_AXIS 53
 #define MENU_USB_1_Y_AXIS 54
+#define MENU_USB_0_WATCH_RAW 55
+#define MENU_USB_1_WATCH_RAW 56
 
 #define KEYBOARD_TYPE_US 0
 #define KEYBOARD_TYPE_UK 1
 
 // Called at initialzation
 void build_menu(struct menu_item* root);
-
-// Called when menu is up to handle gamepad configuration
-void menu_gamepad_event(int device, int button, int dpad);
 
 int menu_get_keyboard_type(void);
 

@@ -83,7 +83,6 @@ struct menu_item {
    char scratch[64];
 
    // For buttons - optional values
-   int int_value;
    char str_value[32];
    char displayed_value[32];
 

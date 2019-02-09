@@ -193,6 +193,16 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
 
    if (nDeviceIndex >= 2) return;
 
+   if (menu_wants_raw_usb()) {
+      // Send the raw usb data and we're done.
+      int axes[16];
+      for (int i=0;i<pState->naxes;i++) { axes[i] = pState->axes[i].value; }
+      menu_raw_usb(nDeviceIndex, pState->buttons, pState->hats, axes);
+      return;
+   }
+
+   int ui_activated = circle_ui_activated();
+
    unsigned b = pState->buttons;
 
    // usb_pref is the value of the usb pref menu item
@@ -216,7 +226,7 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
               prev_dpad[nDeviceIndex] = dpad;
 
               // If the UI is activated, route to the menu.
-              if (circle_ui_activated()) {
+              if (ui_activated) {
                  if (dpad == 0) {
                     circle_ui_key_interrupt(KEYCODE_Up);
                  }
@@ -262,7 +272,7 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
               prev_axes[nDeviceIndex][axis_y] = y;
               prev_buttons[nDeviceIndex] = b;
               // If the UI is activated, route to the menu.
-              if (circle_ui_activated()) {
+              if (ui_activated) {
                  if (y < my - ty) {
                     circle_ui_key_interrupt(KEYCODE_Up);
                  }
@@ -588,9 +598,10 @@ void CKernel::KeyStatusHandlerRaw (unsigned char ucModifiers,
    }
 
    // Compare previous to present and handle key press/release events.
+   int ui_activated = circle_ui_activated();
    for (unsigned i = 1; i < MAX_KEY_CODES; i++) {
       if (key_states[i] == true && new_states[i] == false) {
-           if (circle_ui_activated()) {
+           if (ui_activated) {
               // We have to handle shift+left/right here or else our ui
               // isn't navigable by keyrah with real C64 board.
               if (uiShift && i == KEYCODE_Right) i = KEYCODE_Left;

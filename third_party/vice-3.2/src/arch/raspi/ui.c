@@ -349,13 +349,13 @@ struct menu_item* ui_menu_add_multiple_choice(int id, struct menu_item *folder, 
 }
 
 struct menu_item* ui_menu_add_button(int id, struct menu_item *folder, char *name) {
-   ui_menu_add_button_with_value(id,folder,name,0,"","");
+   ui_menu_add_button_with_value(id,folder,name,0," "," ");
 }
 
-struct menu_item* ui_menu_add_button_with_value(int id, struct menu_item *folder, char *name, int int_value, char* str_value, char* displayed_value) {
+struct menu_item* ui_menu_add_button_with_value(int id, struct menu_item *folder, char *name, int value, char* str_value, char* displayed_value) {
    struct menu_item* new_item = ui_new_item(name,id);
    new_item->type = BUTTON;
-   new_item->int_value = int_value;
+   new_item->value = value;
    strncpy(new_item->str_value, str_value, 32);
    strncpy(new_item->displayed_value, displayed_value, 32);
    append(folder, new_item);
@@ -428,9 +428,17 @@ static void ui_render_children(struct menu_item* node, int* index, int indent) {
                          ui_text_width(node->choices[node->value]), y, 1);
          } else if (node->type == DIVIDER) {
             ui_draw_rect(menu_left, y+3, menu_width, 2, 3, 1);
-         } else if (node->type == BUTTON && strlen(node->displayed_value) > 0) {
-            ui_draw_text(node->displayed_value, menu_left + menu_width - 
+         } else if (node->type == BUTTON) {
+            if (strlen(node->displayed_value) > 0) {
+               // Prefer displayed value if set
+               ui_draw_text(node->displayed_value, menu_left + menu_width - 
                          ui_text_width(node->displayed_value), y, 1);
+            } else {
+               // Turn value into string as fallback
+               sprintf(node->scratch,"%d",node->value);
+               ui_draw_text(node->scratch, menu_left + menu_width - 
+                         ui_text_width(node->scratch), y, 1);
+            }
          }
       }
 
@@ -483,6 +491,10 @@ static void ui_clear_menu(int menu_index) {
 }
 
 struct menu_item* ui_pop_menu(void) {
+  if (menu_roots[current_menu].on_value_changed) {
+     // Notify pop happened
+     menu_roots[current_menu].on_value_changed(&menu_roots[current_menu]);
+  }
   ui_clear_menu(current_menu);
   current_menu--;
   if (current_menu < 0) {
@@ -499,6 +511,8 @@ struct menu_item* ui_push_menu(void) {
      return NULL;
   }
   ui_clear_menu(current_menu);
+  // Client must set callback on each push so clear here.
+  menu_roots[current_menu].on_value_changed = NULL;
   return &menu_roots[current_menu];
 }
 

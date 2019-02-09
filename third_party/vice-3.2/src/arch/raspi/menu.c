@@ -446,10 +446,6 @@ static void menu_value_changed(struct menu_item* item) {
    }
 }
 
-void menu_gamepad_event(int device, int button, int dpad) {
-   // Use this later for gamepad config
-}
-
 // Returns what input preference user has for this usb device
 void circle_usb_pref(int device, int *usb_pref, int* x_axis, int *y_axis) {
    if (device == 0) {

@@ -18,4 +18,5 @@
   * Made menu larger
   * Added push/pop menu functions for deeper nesting of menus
   * Moved USB config into sub menu
-  * Fixed issue with gamepad with analog axes > 4
+  * Fixed hanging issue with gamepad when # analog axes > 4
+  * Added raw usb monitor to help with gamepad config
