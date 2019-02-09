@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <strings.h>
 #include <sys/time.h>
+#include "ui.h"
 
 // ------------------------------------------------------------------------
 // These are stubs to get things compiling. The vast majority of these
@@ -85,6 +86,7 @@ int c64ui_init_early(void){
    return 0;
 }
 int c64ui_init(void){
+   ui_init_menu();
    return 0;
 }
 int cbm2ui_init_early(void){

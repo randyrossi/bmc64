@@ -61,6 +61,8 @@ struct menu_item *usb_x_axis_1_item;
 struct menu_item *usb_y_axis_1_item;
 struct menu_item *palette_item;
 struct menu_item *keyboard_type_item;
+struct menu_item *drive_sounds_item;
+struct menu_item *drive_sounds_vol_item;
 
 int unit;
 const int num_disk_ext = 13;
@@ -188,6 +190,8 @@ static void save_settings() {
    fprintf(fp,"usb_y_1=%d\n",usb_y_axis_1_item->value);
    fprintf(fp,"palette=%d\n",palette_item->value);
    fprintf(fp,"keyboard_type=%d\n",keyboard_type_item->value);
+   fprintf(fp,"drive_sounds=%d\n",drive_sounds_item->value);
+   fprintf(fp,"drive_sounds_vol=%d\n",drive_sounds_vol_item->value);
    fclose(fp);
 }
 
@@ -228,8 +232,21 @@ static void load_settings() {
       else if (strcmp(name,"usb_y_0")==0) { usb_y_axis_0_item->value = value; }
       else if (strcmp(name,"usb_x_1")==0) { usb_x_axis_1_item->value = value; }
       else if (strcmp(name,"usb_y_1")==0) { usb_y_axis_1_item->value = value; }
-      else if (strcmp(name,"palette")==0) { palette_item->value = value; video_canvas_change_palette(palette_item->value); }
-      else if (strcmp(name,"keyboard_type")==0) { keyboard_type_item->value = value; }
+      else if (strcmp(name,"palette")==0) {
+         palette_item->value = value;
+         video_canvas_change_palette(palette_item->value);
+      }
+      else if (strcmp(name,"keyboard_type")==0) {
+         keyboard_type_item->value = value;
+      }
+      else if (strcmp(name,"drive_sounds")==0) {
+         drive_sounds_item->value = value;
+         resources_set_int("DriveSoundEmulation", value);
+      }
+      else if (strcmp(name,"drive_sounds_vol")==0) {
+         drive_sounds_vol_item->value = value;
+         resources_set_int("DriveSoundEmulationVolume", value);
+      }
    }
    fclose(fp);
 
@@ -337,6 +354,12 @@ static void menu_value_changed(struct menu_item* item) {
       case MENU_WARP_MODE:
          resources_set_int("WarpMode", item->value);
          raspi_warp = item->value;
+         return;
+      case MENU_DRIVE_SOUND_EMULATION:
+         resources_set_int("DriveSoundEmulation", item->value);
+         return;
+      case MENU_DRIVE_SOUND_EMULATION_VOLUME:
+         resources_set_int("DriveSoundEmulationVolume", item->value);
          return;
       case MENU_SWAP_JOYSTICKS:
          tmp = joydevs[0].device;
@@ -558,6 +581,12 @@ void build_menu(struct menu_item* root) {
    strcpy (parent->choices[3], "Pepto-Ntsc");
 
    ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
+
+   drive_sounds_item = ui_menu_add_toggle(MENU_DRIVE_SOUND_EMULATION,
+      root, "Drive sound emulation", 0);
+   drive_sounds_vol_item = ui_menu_add_range(MENU_DRIVE_SOUND_EMULATION_VOLUME,
+      root, "Drive sound emulation volume", 0, 1000, 100, 1000);
+
    parent = ui_menu_add_folder(root, "Reset");
       ui_menu_add_button(MENU_SOFT_RESET, parent, "Soft Reset");
       ui_menu_add_button(MENU_HARD_RESET, parent, "Hard Reset");

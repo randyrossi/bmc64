@@ -270,8 +270,6 @@ void video_arch_canvas_init(struct video_canvas_s *canvas){
      video_state.font_translate[i] = 8 * char_to_screen[i];
   }
   video_state.offscreen_buffer_y = 0;
-
-  ui_init_menu();
 }
 
 void video_canvas_refresh(struct video_canvas_s *canvas,
