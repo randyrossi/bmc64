@@ -126,32 +126,26 @@ static void list_files(struct menu_item* parent, int filter, int menu_id) {
 
 static void show_files(int filter, int menu_id) {
    // Show files
-   struct menu_item* file_root = ui_get_file_menu();
-   ui_clear_menu(1);
+   struct menu_item* file_root = ui_push_menu();
    list_files(file_root, filter, menu_id);
-   ui_switch_menu(1);
 }
 
 static void show_about() {
-   struct menu_item* file_root = ui_get_file_menu();
-   ui_clear_menu(1);
-   ui_menu_add_button(MENU_TEXT, file_root, "BMC64 v1.0.4");
-   ui_menu_add_button(MENU_TEXT, file_root, "A Bare Metal C64 Emulator");
-   ui_menu_add_button(MENU_TEXT, file_root, "For the Rasbperry Pi 2/3");
-   ui_menu_add_divider(file_root);
-   ui_menu_add_button(MENU_TEXT, file_root, "https://github.com/");
-   ui_menu_add_button(MENU_TEXT, file_root, "         randyrossi/bmc64");
-   ui_switch_menu(1);
+   struct menu_item* about_root = ui_push_menu();
+   ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.0.4");
+   ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C64 Emulator");
+   ui_menu_add_button(MENU_TEXT, about_root, "For the Rasbperry Pi 2/3");
+   ui_menu_add_divider(about_root);
+   ui_menu_add_button(MENU_TEXT, about_root, "https://github.com/");
+   ui_menu_add_button(MENU_TEXT, about_root, "         randyrossi/bmc64");
 }
 
 static void show_license() {
    int i;
-   struct menu_item* file_root = ui_get_file_menu();
-   ui_clear_menu(1);
+   struct menu_item* license_root = ui_push_menu();
    for (i=0;i<510;i++) {
-      ui_menu_add_button(MENU_TEXT, file_root, license[i]);
+      ui_menu_add_button(MENU_TEXT, license_root, license[i]);
    }
-   ui_switch_menu(1);
 }
 
 static void ui_set_joy_items()
@@ -388,38 +382,31 @@ static void menu_value_changed(struct menu_item* item) {
    if (item->id == MENU_DISK_FILE) {
          // Perform the attach
          file_system_attach_disk(unit, item->name);
-         ui_switch_menu(0);
-         ui_clear_menu(1);
+         ui_pop_menu();
          ui_toggle();
    } else if (item->id == MENU_TAPE_FILE) {
          tape_image_attach(1, item->name);
-         ui_switch_menu(0);
-         ui_clear_menu(1);
+         ui_pop_menu();
          ui_toggle();
    } else if (item->id == MENU_CART_FILE) {
          cartridge_attach_image(CARTRIDGE_CRT, item->name);
-         ui_switch_menu(0);
-         ui_clear_menu(1);
+         ui_pop_menu();
          ui_toggle();
    } else if (item->id == MENU_CART_8K_FILE) {
          cartridge_attach_image(CARTRIDGE_GENERIC_8KB, item->name);
-         ui_switch_menu(0);
-         ui_clear_menu(1);
+         ui_pop_menu();
          ui_toggle();
    } else if (item->id == MENU_CART_16K_FILE) {
          cartridge_attach_image(CARTRIDGE_GENERIC_16KB, item->name);
-         ui_switch_menu(0);
-         ui_clear_menu(1);
+         ui_pop_menu();
          ui_toggle();
    } else if (item->id == MENU_CART_ULTIMAX_FILE) {
          cartridge_attach_image(CARTRIDGE_ULTIMAX, item->name);
-         ui_switch_menu(0);
-         ui_clear_menu(1);
+         ui_pop_menu();
          ui_toggle();
    } else if (item->id == MENU_AUTOSTART_FILE) {
          autostart_autodetect(item->name, "*", 0, AUTOSTART_MODE_RUN);
-         ui_switch_menu(0);
-         ui_clear_menu(1);
+         ui_pop_menu();
          ui_toggle();
    }
 }
@@ -450,8 +437,7 @@ int menu_get_keyboard_type(void) {
    return keyboard_type_item->value;
 }
 
-void build_menu(void) {
-   struct menu_item* root;
+void build_menu(struct menu_item* root) {
    struct menu_item* parent;
    struct menu_item* child1;
    int dev;
@@ -463,8 +449,6 @@ void build_menu(void) {
       joydevs[dev].port = dev + 1;
       joydevs[dev].device = JOYDEV_NONE;
    }
-
-   root = ui_get_root_menu();
 
    ui_menu_add_button(MENU_ABOUT, root, "About...");
    ui_menu_add_button(MENU_LICENSE, root, "License...");

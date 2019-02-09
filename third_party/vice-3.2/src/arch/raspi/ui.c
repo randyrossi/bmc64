@@ -54,23 +54,20 @@ int menu_height;
 int menu_top;
 int menu_left;
 
-// We have two menus to use. One for settings, the other for file dialogs.
-struct menu_item root_menu;
-struct menu_item file_menu;
-
-int current_menu;
-struct menu_item* menus[2];
+// Stack of menu screens
+int current_menu = -1;
+struct menu_item menu_roots[NUM_MENU_ROOTS];
 
 // Where is our cursor in the menu?
-int menu_cursor[2] = {0,0};
-struct menu_item* menu_cursor_item[2];
+int menu_cursor[NUM_MENU_ROOTS];
+struct menu_item* menu_cursor_item[NUM_MENU_ROOTS];
 
 // Sliding window marking start and stop of what we're showing.
-int menu_window_top[2];
-int menu_window_bottom[2];
+int menu_window_top[NUM_MENU_ROOTS];
+int menu_window_bottom[NUM_MENU_ROOTS];
 
 // The index of the last item + 1. Can't set cursor to this or higher.
-int max_index[2];
+int max_index[NUM_MENU_ROOTS];
 
 // Callback for events that happen on menu items
 void (*on_value_changed)(struct menu_item*) = NULL;
@@ -82,38 +79,31 @@ void ui_init_menu(void) {
    int i;
 
    ui_activated = 0;
+   current_menu = -1;
 
-   memset(&root_menu, 0, sizeof(struct menu_item));
-   root_menu.type = FOLDER;
-   root_menu.is_expanded = 1;
-   strncpy(root_menu.name, "Root", MAX_MENU_STR);
+   // Init menu roots
+   for (i = 0; i < NUM_MENU_ROOTS; i++) {
+      memset(&menu_roots[i], 0, sizeof(struct menu_item));
+      menu_roots[i].type = FOLDER;
+      menu_roots[i].is_expanded = 1;
+      strncpy(menu_roots[i].name, "", MAX_MENU_STR);
+      menu_cursor[i] = 0;
+      menu_window_top[i] = 0;
+      menu_window_bottom[i] = menu_height_chars;
+   }
 
-   memset(&file_menu, 0, sizeof(struct menu_item));
-   file_menu.type = FOLDER;
-   file_menu.is_expanded = 1;
-   strncpy(file_menu.name, "File", MAX_MENU_STR);
-
-   build_menu();
-
-   menus[0] = &root_menu;
-   menus[1] = &file_menu;
-
-   ui_switch_menu(0);
+   // Root menu is never popped
+   struct menu_item* root = ui_push_menu();
+   build_menu(root);
 
    menu_width = menu_width_chars * 8;
    menu_height = menu_height_chars * 8;
-
-   // sliding window
-   menu_window_top[current_menu] = 0;
-   menu_window_bottom[current_menu] = menu_height_chars;
-   menu_cursor[0] = 0;
-   menu_cursor[1] = 0;
 
    menu_left = (video_state.scr_w - menu_width) / 2;
    menu_top = (video_state.scr_h - menu_height) / 2;
 }
 
-// Draw a single character at x,y coords
+// Draw a single character at x,y coords into the offscreen area
 static void ui_draw_char(uint8_t c, int pos_x, int pos_y, int color) {
     int x, y;
     uint8_t fontchar;
@@ -121,7 +111,8 @@ static void ui_draw_char(uint8_t c, int pos_x, int pos_y, int color) {
     uint8_t *draw_pos;
 
     // Draw into off screen buffer
-    uint8_t *dst = video_state.dst + video_state.offscreen_buffer_y * video_state.dst_pitch;
+    uint8_t *dst = video_state.dst + 
+        video_state.offscreen_buffer_y * video_state.dst_pitch;
 
     // Don't draw out of bounds
     if (pos_y < 0 || pos_y > video_state.scr_h - 8) { return; }
@@ -151,7 +142,7 @@ void ui_draw_text(const char* text, int x, int y, int color) {
    }
 }
 
-// Draw a rectangle at x/y of given w/h
+// Draw a rectangle at x/y of given w/h into the offscreen area
 void ui_draw_rect(int x,int y, int w, int h, int color, int fill) {
    int xx, yy, x2, y2;
    uint8_t *dst = video_state.dst + 
@@ -172,7 +163,7 @@ void ui_draw_rect(int x,int y, int w, int h, int color, int fill) {
 
 // Returns the height/width the given text would occupy if drawn
 int ui_text_width(const char* text) {
-    return 8* strlen(text);
+   return 8 * strlen(text);
 }
 
 static void ui_key(long key) {
@@ -275,9 +266,8 @@ static void ui_key(long key) {
          break;
       case KEYCODE_Escape:
       case KEYCODE_F12:
-         if (current_menu == 1) {
-            ui_switch_menu(0);
-            ui_clear_menu(1);
+         if (current_menu > 0) {
+            ui_pop_menu();
          } else {
             ui_toggle();
          }
@@ -316,10 +306,6 @@ void ui_toggle(void) {
   if (ui_activated) {
      interrupt_maincpu_trigger_trap(pause_trap, 0);
   }
-}
-
-void ui_switch_menu(int menu) {
-   current_menu = menu;
 }
 
 static void append(struct menu_item *folder, struct menu_item *new_item) {
@@ -469,7 +455,7 @@ static void ui_render_children(struct menu_item* node, int* index, int indent) {
 void ui_render_now(void) {
   int index = 0;
   int indent = 0;
-  struct menu_item* ptr = menus[current_menu]->first_child;
+  struct menu_item* ptr = menu_roots[current_menu].first_child;
 
   // black background
   ui_draw_rect(menu_left, menu_top, menu_width, menu_height, 0, 1);
@@ -479,19 +465,9 @@ void ui_render_now(void) {
 
   max_index[current_menu] = index;
 
-  if (menu_cursor[current_menu] >= max_index[current_menu]) { menu_cursor[current_menu] = max_index[current_menu] - 1; }
-}
-
-struct menu_item* ui_get_root_menu(void) {
-  return &root_menu;
-}
-
-struct menu_item* ui_get_file_menu(void) {
-  return &file_menu;
-}
-
-void ui_set_on_value_changed_callback(void (*callback)(struct menu_item*)) {
-   on_value_changed = callback;
+  if (menu_cursor[current_menu] >= max_index[current_menu]) {
+     menu_cursor[current_menu] = max_index[current_menu] - 1;
+  }
 }
 
 static void ui_clear_child_menu(struct menu_item* node) {
@@ -506,13 +482,37 @@ static void ui_clear_child_menu(struct menu_item* node) {
    }
 }
 
-void ui_clear_menu(int menu_index) {
-   struct menu_item* node = menus[menu_index];
+static void ui_clear_menu(int menu_index) {
+   struct menu_item* node = &menu_roots[menu_index];
    ui_clear_child_menu(node->first_child);
    node->first_child = NULL;
    menu_window_top[menu_index] = 0;
    menu_window_bottom[menu_index] = menu_height_chars;
    menu_cursor[menu_index] = 0;
+}
+
+struct menu_item* ui_pop_menu(void) {
+  ui_clear_menu(current_menu);
+  current_menu--;
+  if (current_menu < 0) {
+     printf ("FATAL ERROR: tried to pop last menu\n");
+     return NULL;
+  }
+  return &menu_roots[current_menu];
+}
+
+struct menu_item* ui_push_menu(void) {
+  current_menu++;
+  if (current_menu >= NUM_MENU_ROOTS) {
+     printf ("FATAL ERROR: tried to push menu beyond NUM_MENU_ROOTS\n");
+     return NULL;
+  }
+  ui_clear_menu(current_menu);
+  return &menu_roots[current_menu];
+}
+
+void ui_set_on_value_changed_callback(void (*callback)(struct menu_item*)) {
+   on_value_changed = callback;
 }
 
 int circle_ui_activated(void) {

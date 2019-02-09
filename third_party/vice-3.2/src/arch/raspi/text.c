@@ -24,7 +24,9 @@
  *
  */
 
-char license[510][40] = {
+#include "text.h"
+
+char license[NUM_LICENSE_LINES][40] = {
 	{"GNU GENERAL PUBLIC"},
 	{"LICENSE"},
 	{"Version 2, June 1991"},

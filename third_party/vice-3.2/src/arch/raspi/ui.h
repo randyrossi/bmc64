@@ -29,6 +29,7 @@
 
 #include "videoarch.h"
 
+#define NUM_MENU_ROOTS 5
 #define MAX_CHOICES    16
 #define MAX_MENU_STR   36
 
@@ -121,15 +122,13 @@ void ui_toggle(void);
 
 void ui_render_now(void);
 
-void ui_switch_menu(int menu);
+struct menu_item* ui_pop_menu(void);
 
-struct menu_item* ui_get_root_menu(void);
-struct menu_item* ui_get_file_menu(void);
+struct menu_item* ui_push_menu(void);
 
 void ui_set_on_value_changed_callback(
     void (*on_value_changed)(struct menu_item*));
 
-void ui_clear_menu(int);
 void ui_check_key();
 
 volatile int ui_activated;

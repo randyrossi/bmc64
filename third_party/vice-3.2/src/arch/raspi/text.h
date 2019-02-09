@@ -26,6 +26,8 @@
 #ifndef VICE_TEXT_H
 #define VICE_TEXT_H
 
-extern char license[510][40];
+#define NUM_LICENSE_LINES 510
+
+extern char license[NUM_LICENSE_LINES][40];
 
 #endif

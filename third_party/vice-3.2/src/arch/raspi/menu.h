@@ -24,6 +24,8 @@
  *
  */
 
+#include "ui.h"
+
 #ifndef VICE_MENU_H
 #define VICE_MENU_H
 
@@ -106,7 +108,7 @@
 #define KEYBOARD_TYPE_UK 1
 
 // Called at initialzation
-void build_menu(void);
+void build_menu(struct menu_item* root);
 
 // Called when menu is up to handle gamepad configuration
 void menu_gamepad_event(int device, int button, int dpad);
