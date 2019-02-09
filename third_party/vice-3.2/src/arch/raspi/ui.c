@@ -166,6 +166,15 @@ int ui_text_width(const char* text) {
    return 8 * strlen(text);
 }
 
+static void do_on_value_changed(struct menu_item* item) {
+   if (item->on_value_changed) {
+      item->on_value_changed(menu_cursor_item[current_menu]);
+   } 
+   else if (on_value_changed) {
+      on_value_changed(menu_cursor_item[current_menu]);
+   }
+}
+
 static void ui_key(long key) {
    switch (key) {
       case KEYCODE_Up:
@@ -191,8 +200,8 @@ static void ui_key(long key) {
             menu_cursor_item[current_menu]->value -= menu_cursor_item[current_menu]->step;
             if (menu_cursor_item[current_menu]->value < menu_cursor_item[current_menu]->min) {
                 menu_cursor_item[current_menu]->value = menu_cursor_item[current_menu]->min;
-            } else if (on_value_changed) {
-                on_value_changed(menu_cursor_item[current_menu]);
+            } else {
+                do_on_value_changed(menu_cursor_item[current_menu]);
             }
          }
          else if (menu_cursor_item[current_menu]->type == MULTIPLE_CHOICE) {
@@ -200,14 +209,10 @@ static void ui_key(long key) {
             if (menu_cursor_item[current_menu]->value < 0) {
                menu_cursor_item[current_menu]->value = menu_cursor_item[current_menu]->num_choices - 1;
             }
-            if (on_value_changed) {
-                on_value_changed(menu_cursor_item[current_menu]);
-            }
+            do_on_value_changed(menu_cursor_item[current_menu]);
          } else if (menu_cursor_item[current_menu]->type == TOGGLE) {
             menu_cursor_item[current_menu]->value = 1-menu_cursor_item[current_menu]->value;
-            if (on_value_changed) {
-                on_value_changed(menu_cursor_item[current_menu]);
-            }
+            do_on_value_changed(menu_cursor_item[current_menu]);
          }
          break;
       case KEYCODE_Right:
@@ -215,8 +220,8 @@ static void ui_key(long key) {
             menu_cursor_item[current_menu]->value += menu_cursor_item[current_menu]->step;
             if (menu_cursor_item[current_menu]->value > menu_cursor_item[current_menu]->max) {
                 menu_cursor_item[current_menu]->value = menu_cursor_item[current_menu]->max;
-            } else if (on_value_changed) {
-                on_value_changed(menu_cursor_item[current_menu]);
+            } else {
+                do_on_value_changed(menu_cursor_item[current_menu]);
             }
          }
          else if (menu_cursor_item[current_menu]->type == MULTIPLE_CHOICE) {
@@ -224,44 +229,30 @@ static void ui_key(long key) {
             if (menu_cursor_item[current_menu]->value >= menu_cursor_item[current_menu]->num_choices) {
                menu_cursor_item[current_menu]->value = 0;
             }
-            if (on_value_changed) {
-                on_value_changed(menu_cursor_item[current_menu]);
-            }
+            do_on_value_changed(menu_cursor_item[current_menu]);
          } else if (menu_cursor_item[current_menu]->type == TOGGLE) {
             menu_cursor_item[current_menu]->value = 1-menu_cursor_item[current_menu]->value;
-            if (on_value_changed) {
-                on_value_changed(menu_cursor_item[current_menu]);
-            }
+            do_on_value_changed(menu_cursor_item[current_menu]);
          }
          break;
       case KEYCODE_Return:
          if (menu_cursor_item[current_menu]->type == FOLDER) {
             menu_cursor_item[current_menu]->is_expanded = 1-menu_cursor_item[current_menu]->is_expanded;
-            if (on_value_changed) {
-                on_value_changed(menu_cursor_item[current_menu]);
-            }
+            do_on_value_changed(menu_cursor_item[current_menu]);
          } else if (menu_cursor_item[current_menu]->type == CHECKBOX) {
             menu_cursor_item[current_menu]->value = 1-menu_cursor_item[current_menu]->value;
-            if (on_value_changed) {
-                on_value_changed(menu_cursor_item[current_menu]);
-            }
+            do_on_value_changed(menu_cursor_item[current_menu]);
          } else if (menu_cursor_item[current_menu]->type == TOGGLE) {
             menu_cursor_item[current_menu]->value = 1-menu_cursor_item[current_menu]->value;
-            if (on_value_changed) {
-                on_value_changed(menu_cursor_item[current_menu]);
-            }
+            do_on_value_changed(menu_cursor_item[current_menu]);
          } else if (menu_cursor_item[current_menu]->type == BUTTON) {
-            if (on_value_changed) {
-                on_value_changed(menu_cursor_item[current_menu]);
-            }
+            do_on_value_changed(menu_cursor_item[current_menu]);
          } else if (menu_cursor_item[current_menu]->type == MULTIPLE_CHOICE) {
             menu_cursor_item[current_menu]->value += 1;
             if (menu_cursor_item[current_menu]->value >= menu_cursor_item[current_menu]->num_choices) {
                menu_cursor_item[current_menu]->value = 0;
             }
-            if (on_value_changed) {
-                on_value_changed(menu_cursor_item[current_menu]);
-            }
+            do_on_value_changed(menu_cursor_item[current_menu]);
          }
          break;
       case KEYCODE_Escape:

@@ -41,6 +41,7 @@
 #include "autostart.h"
 #include "util.h"
 #include "datasette.h"
+#include "menu_usb.h"
 
 // For filename filters
 #define FILTER_NONE 0
@@ -53,12 +54,12 @@ extern struct joydev_config joydevs[2];
 // These can be saved
 struct menu_item* port_1_menu_item;
 struct menu_item* port_2_menu_item;
-struct menu_item* usb_pref_0_item;
-struct menu_item* usb_pref_1_item;
-struct menu_item *usb_x_axis_0_item;
-struct menu_item *usb_y_axis_0_item;
-struct menu_item *usb_x_axis_1_item;
-struct menu_item *usb_y_axis_1_item;
+int usb_pref_0;
+int usb_pref_1;
+int usb_x_axis_0;
+int usb_y_axis_0;
+int usb_x_axis_1;
+int usb_y_axis_1;
 struct menu_item *palette_item;
 struct menu_item *keyboard_type_item;
 struct menu_item *drive_sounds_item;
@@ -150,6 +151,11 @@ static void show_license() {
    }
 }
 
+static void configure_usb(int dev) {
+   struct menu_item* usb_root = ui_push_menu();
+   build_usb_menu(dev, usb_root);   
+}
+
 static void ui_set_joy_items()
 {
    int joydev;
@@ -182,12 +188,12 @@ static void save_settings() {
 
    fprintf(fp,"port_1=%d\n",port_1_menu_item->value);
    fprintf(fp,"port_2=%d\n",port_2_menu_item->value);
-   fprintf(fp,"usb_0=%d\n",usb_pref_0_item->value);
-   fprintf(fp,"usb_1=%d\n",usb_pref_1_item->value);
-   fprintf(fp,"usb_x_0=%d\n",usb_x_axis_0_item->value);
-   fprintf(fp,"usb_y_0=%d\n",usb_y_axis_0_item->value);
-   fprintf(fp,"usb_x_1=%d\n",usb_x_axis_1_item->value);
-   fprintf(fp,"usb_y_1=%d\n",usb_y_axis_1_item->value);
+   fprintf(fp,"usb_0=%d\n",usb_pref_0);
+   fprintf(fp,"usb_1=%d\n",usb_pref_1);
+   fprintf(fp,"usb_x_0=%d\n",usb_x_axis_0);
+   fprintf(fp,"usb_y_0=%d\n",usb_y_axis_0);
+   fprintf(fp,"usb_x_1=%d\n",usb_x_axis_1);
+   fprintf(fp,"usb_y_1=%d\n",usb_y_axis_1);
    fprintf(fp,"palette=%d\n",palette_item->value);
    fprintf(fp,"keyboard_type=%d\n",keyboard_type_item->value);
    fprintf(fp,"drive_sounds=%d\n",drive_sounds_item->value);
@@ -226,12 +232,12 @@ static void load_settings() {
 
       if (strcmp(name,"port_1")==0) { port_1_menu_item->value = value; }
       else if (strcmp(name,"port_2")==0) { port_2_menu_item->value = value; }
-      else if (strcmp(name,"usb_0")==0) { usb_pref_0_item->value = value; }
-      else if (strcmp(name,"usb_1")==0) { usb_pref_1_item->value = value; }
-      else if (strcmp(name,"usb_x_0")==0) { usb_x_axis_0_item->value = value; }
-      else if (strcmp(name,"usb_y_0")==0) { usb_y_axis_0_item->value = value; }
-      else if (strcmp(name,"usb_x_1")==0) { usb_x_axis_1_item->value = value; }
-      else if (strcmp(name,"usb_y_1")==0) { usb_y_axis_1_item->value = value; }
+      else if (strcmp(name,"usb_0")==0) { usb_pref_0 = value; }
+      else if (strcmp(name,"usb_1")==0) { usb_pref_1 = value; }
+      else if (strcmp(name,"usb_x_0")==0) { usb_x_axis_0 = value; }
+      else if (strcmp(name,"usb_y_0")==0) { usb_y_axis_0 = value; }
+      else if (strcmp(name,"usb_x_1")==0) { usb_x_axis_1 = value; }
+      else if (strcmp(name,"usb_y_1")==0) { usb_y_axis_1 = value; }
       else if (strcmp(name,"palette")==0) {
          palette_item->value = value;
          video_canvas_change_palette(palette_item->value);
@@ -351,6 +357,12 @@ static void menu_value_changed(struct menu_item* item) {
       case MENU_LICENSE:
          show_license();
          return;
+      case MENU_CONFIGURE_USB_0:
+         configure_usb(0);
+         return;
+      case MENU_CONFIGURE_USB_1:
+         configure_usb(1);
+         return;
       case MENU_WARP_MODE:
          resources_set_int("WarpMode", item->value);
          raspi_warp = item->value;
@@ -440,20 +452,20 @@ void menu_gamepad_event(int device, int button, int dpad) {
 
 // Returns what input preference user has for this usb device
 void circle_usb_pref(int device, int *usb_pref, int* x_axis, int *y_axis) {
-	if (device == 0) {
-		*usb_pref = usb_pref_0_item->value;
-		*x_axis = usb_x_axis_0_item->value;
-		*y_axis = usb_y_axis_0_item->value;
-	}
-	else if (device == 1) {
-		*usb_pref = usb_pref_1_item->value;
-		*x_axis = usb_x_axis_1_item->value;
-		*y_axis = usb_y_axis_1_item->value;
-	} else {
-		*usb_pref = -1;
-		*x_axis = -1;
-		*y_axis = -1;
-	}
+   if (device == 0) {
+      *usb_pref = usb_pref_0;
+      *x_axis = usb_x_axis_0;
+      *y_axis = usb_y_axis_0;
+   }
+   else if (device == 1) {
+      *usb_pref = usb_pref_1;
+      *x_axis = usb_x_axis_1;
+      *y_axis = usb_y_axis_1;
+   } else {
+      *usb_pref = -1;
+      *x_axis = -1;
+      *y_axis = -1;
+   }
 }
 
 int menu_get_keyboard_type(void) {
@@ -553,22 +565,15 @@ void build_menu(struct menu_item* root) {
 
       ui_set_joy_items();
 
-      usb_pref_0_item = ui_menu_add_multiple_choice(MENU_USB_0_PREF, parent, "USB 1 Uses");
-      usb_pref_0_item->num_choices = 2;
-      usb_pref_0_item->value = 0;
-      strcpy (usb_pref_0_item->choices[0], "Analog Stick");
-      strcpy (usb_pref_0_item->choices[1], "First DPad");
+      ui_menu_add_button(MENU_CONFIGURE_USB_0, parent, "Configure USB 1...");
+      ui_menu_add_button(MENU_CONFIGURE_USB_1, parent, "Configure USB 2...");
 
-      usb_pref_1_item = ui_menu_add_multiple_choice(MENU_USB_1_PREF, parent, "USB 2 Uses");
-      usb_pref_1_item->num_choices = 2;
-      usb_pref_1_item->value = 0;
-      strcpy (usb_pref_1_item->choices[0], "Analog Stick");
-      strcpy (usb_pref_1_item->choices[1], "First DPad");
-
-      usb_x_axis_0_item = ui_menu_add_range(MENU_TEXT, parent, "USB 1 Analog X #", 0, 12, 1, 0);
-      usb_y_axis_0_item = ui_menu_add_range(MENU_TEXT, parent, "USB 1 Analog Y #", 0, 12, 1, 1);
-      usb_x_axis_1_item = ui_menu_add_range(MENU_TEXT, parent, "USB 2 Analog X #", 0, 12, 1, 0);
-      usb_y_axis_1_item = ui_menu_add_range(MENU_TEXT, parent, "USB 2 Analog Y #", 0, 12, 1, 1);
+      usb_pref_0 = 0;
+      usb_pref_1 = 0;
+      usb_x_axis_0 = 0;
+      usb_y_axis_0 = 1;
+      usb_x_axis_1 = 0;
+      usb_y_axis_1 = 1;
 
    ui_menu_add_divider(root);
 

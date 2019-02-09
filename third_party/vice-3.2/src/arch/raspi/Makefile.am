@@ -41,5 +41,7 @@ libarch_a_SOURCES = \
 	videoarch.c \
 	menu.h \
 	menu.c \
+	menu_usb.h \
+	menu_usb.c \
 	text.h \
 	text.c

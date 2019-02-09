@@ -12,3 +12,10 @@
   * Pause emulation when ui is activated
   * Added tape controls (for .tap only)
   * Switch to soft usb irq for better gamepad support
+
+## 1.0.5
+  * Added drive sound emulation and volume to menu
+  * Made menu larger
+  * Added push/pop menu functions for deeper nesting of menus
+  * Moved USB config into sub menu
+  * Fixed issue with gamepad with analog axes > 4

@@ -188,7 +188,8 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
 
    static unsigned int prev_buttons[2] = {0, 0};
    static int prev_dpad[2] = {8, 8};
-   static int prev_axes[2][4] = { {0, 0, 0, 0 }, {0, 0, 0, 0 } };
+   static int prev_axes[2][12] = { {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                                   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } };
 
    if (nDeviceIndex >= 2) return;
 
@@ -211,6 +212,8 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
 			(prev_buttons[nDeviceIndex] != b) ||
 			(prev_dpad[nDeviceIndex] != dpad);
 	   if (has_changed) {
+              prev_buttons[nDeviceIndex] = b;
+              prev_dpad[nDeviceIndex] = dpad;
 
               // If the UI is activated, route to the menu.
               if (circle_ui_activated()) {
@@ -237,9 +240,6 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
               if (b) value |= 0x10;
 
               circle_joy_usb(nDeviceIndex, value);
-
-              prev_buttons[nDeviceIndex] = b;
-              prev_dpad[nDeviceIndex] = dpad;
 	   }
    } else if (usb_pref == 0 && pState->naxes > max_index) {
 	   int x = pState->axes[axis_x].value;
@@ -258,7 +258,9 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
 		   (prev_axes[nDeviceIndex][axis_x] != x) ||
 		   (prev_axes[nDeviceIndex][axis_y] != y);
 	   if (has_changed) {
-
+              prev_axes[nDeviceIndex][axis_x] = x;
+              prev_axes[nDeviceIndex][axis_y] = y;
+              prev_buttons[nDeviceIndex] = b;
               // If the UI is activated, route to the menu.
               if (circle_ui_activated()) {
                  if (y < my - ty) {
@@ -287,10 +289,6 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
               if (b) value |= 0x10;
 
               circle_joy_usb(nDeviceIndex, value);
-
-              prev_axes[nDeviceIndex][axis_x] = x;
-              prev_axes[nDeviceIndex][axis_y] = y;
-              prev_buttons[nDeviceIndex] = b;
 	   }
    }
 }

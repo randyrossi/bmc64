@@ -86,6 +86,9 @@ struct menu_item {
    int int_value;
    char str_value[32];
    char displayed_value[32];
+
+   // Optional menu item specific value changed function
+   void (*on_value_changed)(struct menu_item*);
 };
 
 struct menu_item* ui_menu_add_toggle(int id, struct menu_item *folder, char* name, int initial_state);
