@@ -35,6 +35,9 @@
 
 extern struct joydev_config joydevs[2];
 
+// Keep track of commodore key down/up state
+int commodore_mod = 0;
+
 void kbd_arch_init(void) {
   // Register keyboard callbacks with circle
   circle_kbd_init(&raspi_key_pressed, &raspi_key_released);
@@ -207,6 +210,10 @@ const char *kbd_arch_keynum_to_keyname(signed long keynum) { return 0; }
 void kbd_initialize_numpad_joykeys(int *joykeys) {}
 
 void raspi_key_pressed(long key) {
+   if (key == KEYCODE_LeftControl) {
+      commodore_mod = 1;
+   }
+
    if (!ui_activated) {
       // Intercept keys meant to become joystick values
       if (joydevs[0].device == JOYDEV_NUMS_1 ||
@@ -228,7 +235,11 @@ void raspi_key_pressed(long key) {
 }
 
 void raspi_key_released(long key) {
-   if (key == KEYCODE_F12) {
+   if (key == KEYCODE_LeftControl) {
+     commodore_mod = 0;
+   }
+
+   if (key == KEYCODE_F12 || (menu_alt_f12() && commodore_mod == 1 && key == KEYCODE_F7)) {
       ui_toggle();
    } else {
       // Intercept keys meant to become joystick values
@@ -250,6 +261,5 @@ void raspi_key_released(long key) {
       } else {
          keyboard_key_released(key);
       }
-
    }
 }

@@ -68,6 +68,7 @@ struct menu_item *palette_item;
 struct menu_item *keyboard_type_item;
 struct menu_item *drive_sounds_item;
 struct menu_item *drive_sounds_vol_item;
+struct menu_item *menu_alt_f12_item;
 
 int unit;
 const int num_disk_ext = 13;
@@ -209,6 +210,7 @@ static void save_settings() {
    for (i=0;i<16;i++) {
       fprintf(fp,"usb_btn_1=%d\n",usb_1_button_assignments[i]);
    }
+   fprintf(fp,"alt_f12=%d\n",menu_alt_f12_item->value);
    fclose(fp);
 }
 
@@ -277,6 +279,8 @@ static void load_settings() {
          if (usb_btn_1_i >= 16) {
             usb_btn_1_i = 0;
          }
+      } else if (strcmp(name,"alt_f12")==0) {
+         menu_alt_f12_item->value = value;
       }
    }
    fclose(fp);
@@ -493,9 +497,13 @@ int menu_get_keyboard_type(void) {
    return keyboard_type_item->value;
 }
 
+int menu_alt_f12(void) {
+   return menu_alt_f12_item->value;
+}
+
 void build_menu(struct menu_item* root) {
    struct menu_item* parent;
-   struct menu_item* child1;
+   struct menu_item* child;
    int dev;
    int i;
 
@@ -547,43 +555,51 @@ void build_menu(struct menu_item* root) {
    ui_menu_add_divider(root);
 
    parent = ui_menu_add_folder(root, "Keyboard");
-      child1 = keyboard_type_item = ui_menu_add_multiple_choice(
+      child = keyboard_type_item = ui_menu_add_multiple_choice(
           MENU_KEYBOARD_TYPE, parent, 
           "Layout");
-      child1->num_choices = 2;
-      child1->value = 0;
-      strcpy (child1->choices[KEYBOARD_TYPE_US], "US");
-      strcpy (child1->choices[KEYBOARD_TYPE_UK], "UK");
+      child->num_choices = 2;
+      child->value = KEYBOARD_TYPE_US;
+      strcpy (child->choices[KEYBOARD_TYPE_US], "US");
+      strcpy (child->choices[KEYBOARD_TYPE_UK], "UK");
+
+      child = menu_alt_f12_item = ui_menu_add_multiple_choice(
+          MENU_KEYBOARD_MENU_ALT_F12, parent, 
+          "Alternate Menu Key");
+      child->num_choices = 2;
+      child->value = ALT_F12_COMMODOREF7;
+      strcpy (child->choices[ALT_F12_DISABLED], "Disabled");
+      strcpy (child->choices[ALT_F12_COMMODOREF7], "C= + F7");
 
    parent = ui_menu_add_folder(root, "Joystick");
       ui_menu_add_button(MENU_SWAP_JOYSTICKS, parent, "Swap Joystick Ports");
-      child1 = port_1_menu_item = ui_menu_add_multiple_choice(
+      child = port_1_menu_item = ui_menu_add_multiple_choice(
           MENU_JOYSTICK_PORT_1, parent, 
           "Joystick Port 1");
-      child1->num_choices = 8;
-      child1->value = 0;
-      strcpy (child1->choices[0], "None"); child1->choice_ints[0] = JOYDEV_NONE;
-      strcpy (child1->choices[1], "USB 1"); child1->choice_ints[1] = JOYDEV_USB_0;
-      strcpy (child1->choices[2], "USB 2"); child1->choice_ints[2] = JOYDEV_USB_1;
-      strcpy (child1->choices[3], "GPIO 1"); child1->choice_ints[3] = JOYDEV_GPIO_0;
-      strcpy (child1->choices[4], "GPIO 2"); child1->choice_ints[4] = JOYDEV_GPIO_1;
-      strcpy (child1->choices[5], "CURS + SPACE"); child1->choice_ints[5] = JOYDEV_CURS;
-      strcpy (child1->choices[6], "NUMPAD 64825"); child1->choice_ints[6] = JOYDEV_NUMS_1;
-      strcpy (child1->choices[7], "NUMPAD 17930"); child1->choice_ints[7] = JOYDEV_NUMS_2;
+      child->num_choices = 8;
+      child->value = 0;
+      strcpy (child->choices[0], "None"); child->choice_ints[0] = JOYDEV_NONE;
+      strcpy (child->choices[1], "USB 1"); child->choice_ints[1] = JOYDEV_USB_0;
+      strcpy (child->choices[2], "USB 2"); child->choice_ints[2] = JOYDEV_USB_1;
+      strcpy (child->choices[3], "GPIO Bank 1"); child->choice_ints[3] = JOYDEV_GPIO_0;
+      strcpy (child->choices[4], "GPIO Bank 2"); child->choice_ints[4] = JOYDEV_GPIO_1;
+      strcpy (child->choices[5], "CURS + SPACE"); child->choice_ints[5] = JOYDEV_CURS;
+      strcpy (child->choices[6], "NUMPAD 64825"); child->choice_ints[6] = JOYDEV_NUMS_1;
+      strcpy (child->choices[7], "NUMPAD 17930"); child->choice_ints[7] = JOYDEV_NUMS_2;
 
-      child1 = port_2_menu_item = ui_menu_add_multiple_choice(
+      child = port_2_menu_item = ui_menu_add_multiple_choice(
           MENU_JOYSTICK_PORT_2, parent, 
           "Joystick Port 2");
-      child1->num_choices = 8;
-      child1->value = 0;
-      strcpy (child1->choices[0], "None"); child1->choice_ints[0] = JOYDEV_NONE;
-      strcpy (child1->choices[1], "USB 1"); child1->choice_ints[1] = JOYDEV_USB_0;
-      strcpy (child1->choices[2], "USB 2"); child1->choice_ints[2] = JOYDEV_USB_1;
-      strcpy (child1->choices[3], "GPIO 1"); child1->choice_ints[3] = JOYDEV_GPIO_0;
-      strcpy (child1->choices[4], "GPIO 2"); child1->choice_ints[4] = JOYDEV_GPIO_1;
-      strcpy (child1->choices[5], "CURS + SPACE"); child1->choice_ints[5] = JOYDEV_CURS;
-      strcpy (child1->choices[6], "NUMPAD 64825"); child1->choice_ints[6] = JOYDEV_NUMS_1;
-      strcpy (child1->choices[7], "NUMPAD 17930"); child1->choice_ints[7] = JOYDEV_NUMS_2;
+      child->num_choices = 8;
+      child->value = 0;
+      strcpy (child->choices[0], "None"); child->choice_ints[0] = JOYDEV_NONE;
+      strcpy (child->choices[1], "USB 1"); child->choice_ints[1] = JOYDEV_USB_0;
+      strcpy (child->choices[2], "USB 2"); child->choice_ints[2] = JOYDEV_USB_1;
+      strcpy (child->choices[3], "GPIO 1"); child->choice_ints[3] = JOYDEV_GPIO_0;
+      strcpy (child->choices[4], "GPIO 2"); child->choice_ints[4] = JOYDEV_GPIO_1;
+      strcpy (child->choices[5], "CURS + SPACE"); child->choice_ints[5] = JOYDEV_CURS;
+      strcpy (child->choices[6], "NUMPAD 64825"); child->choice_ints[6] = JOYDEV_NUMS_1;
+      strcpy (child->choices[7], "NUMPAD 17930"); child->choice_ints[7] = JOYDEV_NUMS_2;
 
       ui_set_joy_items();
 

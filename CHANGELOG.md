@@ -20,3 +20,6 @@
   * Moved USB config into a sub menu
   * Fixed hanging issue with gamepad when # analog axes > 4
   * Added raw usb monitor to help with gamepad config
+
+## 1.0.6
+  * Added Commodore + F7 to trigger menu for real keyboard users

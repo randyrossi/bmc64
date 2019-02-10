@@ -109,14 +109,18 @@
 #define MENU_USB_0_BTN_ASSIGN 57
 #define MENU_USB_1_BTN_ASSIGN 58
 
-// NEXT MENU INDEX IS 89
+#define MENU_KEYBOARD_MENU_ALT_F12 59
 
 #define KEYBOARD_TYPE_US 0
 #define KEYBOARD_TYPE_UK 1
+
+#define ALT_F12_DISABLED 0
+#define ALT_F12_COMMODOREF7 1
 
 // Called at initialzation
 void build_menu(struct menu_item* root);
 
 int menu_get_keyboard_type(void);
+int menu_alt_f12(void);
 
 #endif

@@ -56,5 +56,6 @@
  * Test: audio does not pop
 # Keyrah:
  * Test: All keys work, including =
+ * Test: Commodore + F7 = Menu
 # Save Settings:
  * Test: values are restored properly

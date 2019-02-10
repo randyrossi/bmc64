@@ -15,6 +15,7 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
   * SDcard is read-only (for now)
   * All files must reside in root directory (no dirs for now)
   * USB gamepad support is limited
+  * Sound emulation is not using ReSid (yet)
 
 This project uses VICE for emulation without any O/S (Linux) distribution installed on the Pi.  VICE (Versatile Commodore Emulator) platform dependencies are satisfied using circle-stdlib.
 
@@ -37,15 +38,17 @@ You can make drive 8 an IECDevice for the root file system of the sdcard. Howeve
 
 # Keyboards
 
-Use F-12 to bring up the menu and ESC to exit.  
+Use F-12 to bring up the menu and ESC/RUNSTOP to exit.
 
-If you use a keyrah, there is no key at the moment that will bring up menu.  But you can wire a button between GPIO16 and GND to activate the menu.  A configurable key combo will come later.
+If you use a real commodore keyboard, you can use Commodore Key + F7 in place of F12. You can also wire a button between GPIO16 and GND to activate the menu or use gamepads with buttons configured for the menu.
 
 For the Keyrah, if you find your '=' key doesn't work.  Try switching the keyboard type to 'UK'.
 
 # Gamepad config
 
 As mentioned, gamepad support is limited.  Some gamepads advertise their dpads as analog sticks so if your dpad setting doesn't work and you want to use a dpad, try switching to analog.  Also, if the analog setting doesn't work, you may have to do some work to find the right axis # for both X and Y.  Usually, axis 0 and 1 are left stick X and Y axes but not always.  My cheap 'Kiwitata' gamepads are 3 & 4.  If your gamepad has two sticks, try 2 & 3 for right X/Y.
+
+In v1.0.5+, there is a configuration sub-menu that will help you configure your usb gamepads.  You can monitor the raw usb values using 'Monitor raw USB data' men option.  The only way to escape from this menu is ESC/RUNSTOP.
 
 # GPIO Joystick Banks
 
