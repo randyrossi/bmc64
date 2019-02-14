@@ -271,7 +271,6 @@ void video_arch_canvas_init(struct video_canvas_s *canvas){
   }
   video_state.offscreen_buffer_y = 0;
 
-  ui_activated = 0;
   ui_init_menu();
 }
 

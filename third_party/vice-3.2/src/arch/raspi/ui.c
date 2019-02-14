@@ -80,6 +80,9 @@ volatile long pending_ui_key_time = 0;
 
 void ui_init_menu(void) {
    int i;
+
+   ui_activated = 0;
+
    memset(&root_menu, 0, sizeof(struct menu_item));
    root_menu.type = FOLDER;
    root_menu.is_expanded = 1;
