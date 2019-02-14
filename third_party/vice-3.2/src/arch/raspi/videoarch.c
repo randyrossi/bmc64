@@ -368,8 +368,8 @@ void vsyncarch_postsync(void){
      circle_poll_joysticks(1);
   }
 
-  // Hold the frame until vsync
-  if (ui_activated || (!raspi_boot_warp && !raspi_warp)) {
+  // Hold the frame until vsync unless warping
+  if (!raspi_boot_warp && !raspi_warp) {
      circle_wait_vsync();
   }
 }

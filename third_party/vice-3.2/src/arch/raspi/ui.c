@@ -43,8 +43,8 @@ void ui_pause_emulation(int flag) { }
 int ui_emulation_is_paused(void) { return 0; }
 
 // Width and height of our text menu in characters
-const int menu_width_chars = 36;
-const int menu_height_chars = 20;
+const int menu_width_chars = 40;
+const int menu_height_chars = 25;
 
 int menu_width;
 int menu_height;
@@ -468,9 +468,11 @@ void ui_render_now(void) {
   int indent = 0;
   struct menu_item* ptr = menus[current_menu]->first_child;
 
+  // black background
   ui_draw_rect(menu_left, menu_top, menu_width, menu_height, 0, 1);
+
+  // menu text
   ui_render_children(ptr,&index, indent);
-  ui_draw_rect(menu_left, menu_top, menu_width, menu_height, 3, 0);
 
   max_index[current_menu] = index;
 

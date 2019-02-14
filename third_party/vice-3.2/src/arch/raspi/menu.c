@@ -226,8 +226,8 @@ static void load_settings() {
       if (value_str == NULL) break;
       int value = atoi(value_str);
 
-      if (strcmp(name,"port_1")==0) { printf("LOADED VALUE %d for port 1\n",value); port_1_menu_item->value = value; }
-      else if (strcmp(name,"port_2")==0) { printf("LOADED VALUE %d for port 2\n",value); port_2_menu_item->value = value; }
+      if (strcmp(name,"port_1")==0) { port_1_menu_item->value = value; }
+      else if (strcmp(name,"port_2")==0) { port_2_menu_item->value = value; }
       else if (strcmp(name,"usb_0")==0) { usb_pref_0_item->value = value; }
       else if (strcmp(name,"usb_1")==0) { usb_pref_1_item->value = value; }
       else if (strcmp(name,"usb_x_0")==0) { usb_x_axis_0_item->value = value; }
