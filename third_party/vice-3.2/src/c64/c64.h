@@ -32,7 +32,13 @@
 #ifndef VICE_C64_H
 #define VICE_C64_H
 
+#ifdef RASPI_COMPILE
+// This is necessary to match the actual ticks we need to simulate
+// between frames. RASPI is tied to vsync which is exactly 50hz.
+#define C64_PAL_CYCLES_PER_SEC  982800
+#else
 #define C64_PAL_CYCLES_PER_SEC  985248
+#endif
 #define C64_PAL_CYCLES_PER_LINE 63
 #define C64_PAL_SCREEN_LINES    312
 #define C64_PAL_CYCLES_PER_RFSH (C64_PAL_SCREEN_LINES * C64_PAL_CYCLES_PER_LINE)

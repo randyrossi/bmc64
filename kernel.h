@@ -85,11 +85,12 @@ public:
 	int circle_sound_resume(void);
 	int circle_sound_bufferspace(void);
 	void circle_yield(void);
-    void circle_kbd_init(raspi_key_handler press_handler,
+	void circle_kbd_init(raspi_key_handler press_handler,
                          raspi_key_handler release_handler);
-    void circle_joy_init();
-    void circle_poll_joysticks(int port);
-    void circle_check_gpio();
+	void circle_joy_init();
+	void circle_poll_joysticks(int port);
+	void circle_check_gpio();
+
 private:
         static void InterruptStub (void *pParam);
         static bool uiShift;

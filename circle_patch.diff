@@ -1,5 +1,5 @@
 diff --git a/include/circle/sysconfig.h b/include/circle/sysconfig.h
-index dd5c887..709feeb 100644
+index dd5c887..ccb6411 100644
 --- a/include/circle/sysconfig.h
 +++ b/include/circle/sysconfig.h
 @@ -34,7 +34,7 @@
@@ -7,7 +7,7 @@ index dd5c887..709feeb 100644
  // increase this value. The value must be a multiple of 16 KByte.
  
 -#define KERNEL_MAX_SIZE		(2 * MEGABYTE)
-+#define KERNEL_MAX_SIZE		(8 * MEGABYTE)
++#define KERNEL_MAX_SIZE		(32 * MEGABYTE)
  
  ///////////////////////////////////////////////////////////////////////
  //
@@ -38,6 +38,39 @@ index dd5c887..709feeb 100644
  
  ///////////////////////////////////////////////////////////////////////
  //
+diff --git a/lib/sysinit.cpp b/lib/sysinit.cpp
+index 700c43a..e1070f2 100644
+--- a/lib/sysinit.cpp
++++ b/lib/sysinit.cpp
+@@ -148,19 +148,21 @@ void sysinit (void)
+ 	vfpinit ();
+ 
+ 	// clear BSS
+-	extern unsigned char __bss_start;
+-	extern unsigned char _end;
+-	for (unsigned char *pBSS = &__bss_start; pBSS < &_end; pBSS++)
+-	{
+-		*pBSS = 0;
+-	}
++        asm(
++	"ldr	r1,	=__bss_start\n\t"
++	"ldr	r2,	=_end\n\t"
++	"mov	r3,	#0x00\n\t"
++        "_clear_bss:\n\t"
++	"cmp	r1,r2\n\t"
++	"strne 	r3,[r1],#+4\n\t"
++	"bne 	_clear_bss\n\t"
++        );
+ 
+ 	CMachineInfo MachineInfo;
+ 
+ #if STDLIB_SUPPORT >= 2
+ 	CMemorySystem Memory;
+ #endif
+-
+ 	// call construtors of static objects
+ 	extern void (*__init_start) (void);
+ 	extern void (*__init_end) (void);
 diff --git a/lib/usb/usbdevicefactory.cpp b/lib/usb/usbdevicefactory.cpp
 index 541aba4..9694acb 100644
 --- a/lib/usb/usbdevicefactory.cpp

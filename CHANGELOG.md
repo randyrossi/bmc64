@@ -23,3 +23,10 @@
 
 ## 1.0.6
   * Added Commodore + F7 to trigger menu for real keyboard users
+  * Added ReSid
+     * Added Fast/ReSid options (default to ReSid)
+     * Added Sid model options 6581/8580 (default 6581)
+     * Added Sid filter option (default On)
+  * Had to increase kernel max to 32MB due to huge uninitialized
+    data section added by libresid.a
+  * Replaced inefficient bss clear routine with hand rolled asm

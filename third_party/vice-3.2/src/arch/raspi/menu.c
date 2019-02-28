@@ -42,6 +42,7 @@
 #include "util.h"
 #include "datasette.h"
 #include "menu_usb.h"
+#include "sid.h"
 
 // For filename filters
 #define FILTER_NONE 0
@@ -69,6 +70,9 @@ struct menu_item *keyboard_type_item;
 struct menu_item *drive_sounds_item;
 struct menu_item *drive_sounds_vol_item;
 struct menu_item *menu_alt_f12_item;
+struct menu_item *sid_engine_item;
+struct menu_item *sid_model_item;
+struct menu_item *sid_filter_item;
 
 int unit;
 const int num_disk_ext = 13;
@@ -140,7 +144,7 @@ static void show_files(int filter, int menu_id) {
 
 static void show_about() {
    struct menu_item* about_root = ui_push_menu();
-   ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.0.5");
+   ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.0.6");
    ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C64 Emulator");
    ui_menu_add_button(MENU_TEXT, about_root, "For the Rasbperry Pi 2/3");
    ui_menu_add_divider(about_root);
@@ -211,6 +215,9 @@ static void save_settings() {
       fprintf(fp,"usb_btn_1=%d\n",usb_1_button_assignments[i]);
    }
    fprintf(fp,"alt_f12=%d\n",menu_alt_f12_item->value);
+   fprintf(fp,"sid_engine=%d\n",sid_engine_item->value);
+   fprintf(fp,"sid_model=%d\n",sid_model_item->value);
+   fprintf(fp,"sid_filter=%d\n",sid_filter_item->value);
    fclose(fp);
 }
 
@@ -281,9 +288,21 @@ static void load_settings() {
          }
       } else if (strcmp(name,"alt_f12")==0) {
          menu_alt_f12_item->value = value;
+      } else if (strcmp(name,"sid_engine")==0) {
+         sid_engine_item->value = value;
+         resources_set_int("SidEngine", sid_engine_item->choice_ints[value]);
+      } else if (strcmp(name,"sid_filter")==0) {
+         sid_filter_item->value = value;
+         resources_set_int("SidFilters", sid_filter_item->value);
+      } else if (strcmp(name,"sid_model")==0) {
+         sid_model_item->value = value;
+         resources_set_int("SidModel", sid_model_item->choice_ints[value]);
       }
    }
    fclose(fp);
+
+   // Always turn off resampling
+   resources_set_int("SidResidSampling", 0);
 
    ui_set_joy_devs();
 }
@@ -440,6 +459,15 @@ static void menu_value_changed(struct menu_item* item) {
          datasette_control(DATASETTE_CONTROL_RESET);
          ui_toggle();
          return;
+      case MENU_SID_ENGINE:
+         resources_set_int("SidEngine", item->choice_ints[item->value]);
+         return;
+      case MENU_SID_MODEL:
+         resources_set_int("SidModel", item->choice_ints[item->value]);
+         return;
+      case MENU_SID_FILTER:
+         resources_set_int("SidFilters", item->value);
+         return;
    }
 
    // This is selection of a file
@@ -553,6 +581,37 @@ void build_menu(struct menu_item* root) {
       ui_menu_add_button(MENU_TAPE_RESET, parent, "Reset");
 
    ui_menu_add_divider(root);
+
+   parent = ui_menu_add_folder(root, "Sid");
+      // Resid by default
+      child = sid_engine_item = ui_menu_add_multiple_choice(
+          MENU_SID_ENGINE, parent,
+          "Sid Engine");
+      child->num_choices = 2;
+      child->value = MENU_SID_ENGINE_RESID;
+      resources_set_int("SidEngine", SID_ENGINE_FASTSID);
+      strcpy (child->choices[MENU_SID_ENGINE_FAST], "Fast");
+      strcpy (child->choices[MENU_SID_ENGINE_RESID], "ReSid");
+      child->choice_ints[MENU_SID_ENGINE_FAST] = SID_ENGINE_FASTSID;
+      child->choice_ints[MENU_SID_ENGINE_RESID] = SID_ENGINE_RESID;
+
+      // 6581 by default
+      child = sid_model_item = ui_menu_add_multiple_choice(
+          MENU_SID_MODEL, parent,
+          "Sid Model");
+      child->num_choices = 2;
+      child->value = MENU_SID_MODEL_6581;
+      resources_set_int("SidModel", SID_MODEL_6581);
+      strcpy (child->choices[MENU_SID_MODEL_6581], "6581");
+      strcpy (child->choices[MENU_SID_MODEL_8580], "8580");
+      child->choice_ints[MENU_SID_MODEL_6581] = SID_MODEL_6581;
+      child->choice_ints[MENU_SID_MODEL_8580] = SID_MODEL_8580;
+
+      // Filter on by default
+      child = sid_filter_item = ui_menu_add_toggle(
+          MENU_SID_FILTER, parent,
+          "Sid Filter", 1);
+      resources_set_int("SidFilters", 1);
 
    parent = ui_menu_add_folder(root, "Keyboard");
       child = keyboard_type_item = ui_menu_add_multiple_choice(

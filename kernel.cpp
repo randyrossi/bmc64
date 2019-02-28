@@ -483,11 +483,7 @@ int CKernel::circle_sound_write(int16_t *pbuf, size_t nr) {
 }
 
 void CKernel::circle_sound_close(void) {
-  if (!mViceSound) return;
-
-  mViceSound->CancelPlayback();
-  delete mViceSound;
-  mViceSound = nullptr;
+  // Nothing to do here since we never actually close vc4.
 }
 
 int CKernel::circle_sound_suspend(void) {

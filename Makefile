@@ -49,6 +49,7 @@ LIBS := $(VICE)/alarm.o $(VICE)/attach.o $(VICE)/autostart.o $(VICE)/autostart-p
 	$(VICE)/raster/libraster.a $(VICE)/userport/libuserport.a $(VICE)/diag/libdiag.a \
 	$(VICE)/rtc/librtc.a $(VICE)/video/libvideo.a $(VICE)/usleep.o  \
 	$(VICE)/imagecontents/libimagecontents.a \
+	$(VICE)/resid/libresid.a \
 	$(VICE)/arch/raspi/libarch.a \
         $(NEWLIBDIR)/lib/libm.a \
 	$(NEWLIBDIR)/lib/libc.a \
