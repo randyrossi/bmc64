@@ -675,6 +675,7 @@ void CKernel::circle_poll_joysticks(int device)
         value |= 0x10;
      }
      circle_joy_gpio(0, value);
+     return;
   }
 
   // If the UI is activated, route to the menu.

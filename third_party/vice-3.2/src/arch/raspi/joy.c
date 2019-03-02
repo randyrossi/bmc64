@@ -294,7 +294,7 @@ void joy_set_gamepad_info(int num_pads, int num_buttons[2],
 }
 
 int circle_joy_need_gpio(int device) {
-  if (device == 1) {
+  if (device == 0) {
      return joydevs[0].device == JOYDEV_GPIO_0 || joydevs[1].device == JOYDEV_GPIO_0;
   } else {
      return joydevs[0].device == JOYDEV_GPIO_1 || joydevs[1].device == JOYDEV_GPIO_1;

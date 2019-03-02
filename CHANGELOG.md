@@ -30,3 +30,5 @@
   * Had to increase kernel max to 32MB due to huge uninitialized
     data section added by libresid.a
   * Replaced inefficient bss clear routine with hand rolled asm
+  * Placed main emulator loop on core 1 while core 0 services interrupts
+  * Fixed bug with DB9 joysticks ports backwards for menu control
