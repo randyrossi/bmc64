@@ -21,6 +21,7 @@
 
 #include "vicescreen.h"
 #include "vicesound.h"
+#include "viceemulatorcore.h"
 #include <circle/memory.h>
 #include <circle/actled.h>
 #include <circle/devicenameservice.h>
@@ -102,6 +103,7 @@ private:
 	CUSBKeyboardDevice *pKeyboard;
         CCPUThrottle mCPUThrottle;
         CGPIOManager mGPIOManager;
+        ViceEmulatorCore mEmulatorCore;
 
         CGPIOPin *joystickPins1[5];
         CGPIOPin *joystickPins2[5];

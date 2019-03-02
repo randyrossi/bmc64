@@ -157,7 +157,8 @@ bool CKernel::uiShift = false;
 
 CKernel::CKernel (void) : ViceStdioApp("vice"),
                           mVCHIQ (&mMemory, &mInterrupt),
-                          mGPIOManager (&mInterrupt)
+                          mGPIOManager (&mInterrupt),
+                          mEmulatorCore (&mMemory)
 {
   static_kernel = this;
   mod_states = 0;
@@ -174,6 +175,10 @@ bool CKernel::Initialize(void) {
    }
 
    if (!mGPIOManager.Initialize()) {
+     return false;
+   }
+
+   if (!mEmulatorCore.Initialize()) {
      return false;
    }
 
@@ -395,22 +400,14 @@ ViceApp::TShutdownMode CKernel::Run (void)
         circle_sleep(1000000);
      }
   } else {
-    int argc = 11;
-    char *argv[] = {
-      (char*)"vice",
-      timing_option,
-      (char*)"-sounddev",
-      (char*)"raspi",
-      (char*)"-soundoutput",
-      (char*)"1",
-      (char*)"-soundsync",
-      (char*)"0",
-      (char*)"-refresh",
-      (char*)"1",
-      // Unless we disable the video cache, vsync is messed up
-      (char*)"+VICIIvcache",
-    };
-    main_program(argc, argv);
+    // Core 1 will be used for the main emulator loop.
+    mEmulatorCore.SetTimingOption(timing_option);
+    mEmulatorCore.Launch();
+
+    // This core will do nothing but service interrupts from
+    // usb or gpio.
+    printf ("Core 0 idle\n");
+    for (;;) { circle_sleep(1000000); }
   }
 
   return ShutdownHalt;

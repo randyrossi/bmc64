@@ -35,9 +35,9 @@ You can make drive 8 an IECDevice for the root file system of the sdcard. Howeve
 
 # Sound
 
-Since v1.0.6, the default Sid engine is 'ReSid' which more accurately reproduces the sound chip.  However, using ReSid on a Raspberry Pi 2 can sometimes cause stuttering on more demanding demos.  (i.e. Comaland: last sequence of the first disk).  For most software, it doesn't appear to be an issue.  If you see stuttering, switch to the Fast engine.
+Since v1.0.6, the default Sid engine is 'ReSid' which more accurately reproduces the sound chip.
 
-You can also switch between 6581 and 8580 models as well as turn on/off the filter.  For ReSid, only fast interpolation method is currently supported.
+You can switch between 6581 and 8580 models as well as turn on/off the filter.  For ReSid, only fast interpolation method is currently supported.
 
 # Keyboards
 
