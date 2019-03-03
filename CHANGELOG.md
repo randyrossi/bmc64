@@ -32,3 +32,9 @@
   * Replaced inefficient bss clear routine with hand rolled asm
   * Placed main emulator loop on core 1 while core 0 services interrupts
   * Fixed bug with DB9 joysticks ports backwards for menu control
+
+## 1.0.7
+  * Fixed emulator lockup issue
+    * Queues key events from ISR to main loop
+  * Fixed keyboard issue with Commodore + F7 combo
+    * Emulator would get stuck commodore key

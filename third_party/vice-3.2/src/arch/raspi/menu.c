@@ -144,7 +144,7 @@ static void show_files(int filter, int menu_id) {
 
 static void show_about() {
    struct menu_item* about_root = ui_push_menu();
-   ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.0.6");
+   ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.0.7");
    ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C64 Emulator");
    ui_menu_add_button(MENU_TEXT, about_root, "For the Rasbperry Pi 2/3");
    ui_menu_add_divider(about_root);

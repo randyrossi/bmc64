@@ -1,4 +1,4 @@
-# BMC64 v1.0.6
+# BMC64 v1.0.7
 
 BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio.
 
