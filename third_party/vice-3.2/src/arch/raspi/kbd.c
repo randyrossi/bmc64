@@ -28,10 +28,11 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "keyboard.h"
 #include "ui.h"
 #include "joy.h"
+#include "keyboard.h"
 #include "menu.h"
+#include "circle.h"
 
 extern struct joydev_config joydevs[2];
 
@@ -230,7 +231,7 @@ void raspi_key_pressed(long key) {
       }
 
       // Keys go to emulated machine
-      keyboard_key_pressed(key);
+      circle_emu_key_interrupt(key, 1 /* down */);
    }
 }
 
@@ -240,6 +241,12 @@ void raspi_key_released(long key) {
    }
 
    if (key == KEYCODE_F12 || (menu_alt_f12() && commodore_mod == 1 && key == KEYCODE_F7)) {
+      if (commodore_mod) {
+         // Have to release the commodore key or emulator locks up.
+         circle_emu_key_interrupt(KEYCODE_LeftControl, 0 /* up */);
+         commodore_mod = 0;
+      }
+      circle_emu_key_interrupt(key, 0 /* up */);
       ui_toggle();
    } else {
       // Intercept keys meant to become joystick values
@@ -259,7 +266,7 @@ void raspi_key_released(long key) {
       if (ui_activated) {
          circle_ui_key_interrupt(key);
       } else {
-         keyboard_key_released(key);
+         circle_emu_key_interrupt(key, 0 /* up */);
       }
    }
 }

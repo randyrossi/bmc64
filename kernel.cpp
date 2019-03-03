@@ -151,6 +151,14 @@ extern "C" {
   void circle_check_gpio() {
      static_kernel->circle_check_gpio();
   }
+
+  void circle_lock_acquire() {
+     static_kernel->circle_lock_acquire();
+  }
+
+  void circle_lock_release() {
+     static_kernel->circle_lock_release();
+  }
 };
 
 bool CKernel::uiShift = false;
@@ -728,3 +736,10 @@ void CKernel::InterruptStub (void *pParam)
         pThis->circle_poll_joysticks(1);
 }
 
+void CKernel::circle_lock_acquire() {
+  m_Lock.Acquire();
+}
+
+void CKernel::circle_lock_release() {
+  m_Lock.Release();
+}

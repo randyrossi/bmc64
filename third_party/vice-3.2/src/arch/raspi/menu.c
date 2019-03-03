@@ -616,7 +616,7 @@ void build_menu(struct menu_item* root) {
    parent = ui_menu_add_folder(root, "Keyboard");
       child = keyboard_type_item = ui_menu_add_multiple_choice(
           MENU_KEYBOARD_TYPE, parent, 
-          "Layout");
+          "Layout (Needs Save+Reboot)");
       child->num_choices = 2;
       child->value = KEYBOARD_TYPE_US;
       strcpy (child->choices[KEYBOARD_TYPE_US], "US");

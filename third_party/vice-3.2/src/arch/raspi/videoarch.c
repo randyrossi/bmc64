@@ -38,6 +38,7 @@
 #include "monitor.h"
 #include "mem.h"
 #include "kbd.h"
+#include "keyboard.h"
 #include "video.h"
 #include "viewport.h"
 #include "ui.h"
@@ -171,6 +172,11 @@ int raspi_warp = 0;
 int raspi_boot_warp = 1;
 
 extern struct joydev_config joydevs[2];
+
+int pending_emu_key_head = 0;
+int pending_emu_key_tail = 0;
+volatile long pending_emu_key[16];
+volatile int pending_emu_key_pressed[16];
 
 #define COLOR16(red, green, blue)         (((red) & 0x1F) << 11 \
                                         | ((green) & 0x1F) << 6 \
@@ -365,6 +371,19 @@ void vsyncarch_postsync(void){
      circle_poll_joysticks(1);
   }
 
+  // Do key press/releases on the main loop
+  circle_lock_acquire();
+  while (pending_emu_key_head != pending_emu_key_tail) {
+     int i = pending_emu_key_head & 0xf;
+     if (pending_emu_key_pressed[i]) {
+        keyboard_key_pressed(pending_emu_key[i]);
+     } else {
+        keyboard_key_released(pending_emu_key[i]);
+     }
+     pending_emu_key_head++;
+  }
+  circle_lock_release();
+
   // Hold the frame until vsync unless warping
   if (!raspi_boot_warp && !raspi_warp) {
      circle_wait_vsync();
@@ -375,4 +394,14 @@ void vsyncarch_sleep(unsigned long delay) {
   // We don't sleep here. Instead, our pace is governed by the
   // wait for vertical blank in vsyncarch_postsync above. This
   // times our machine properly.
+}
+
+// queue a key for press/release on the main loop
+void circle_emu_key_interrupt(long key, int pressed) {
+  circle_lock_acquire();
+  int i = pending_emu_key_tail & 0xf;
+  pending_emu_key[i] = key;
+  pending_emu_key_pressed[i] = pressed;
+  pending_emu_key_tail++;
+  circle_lock_release();
 }

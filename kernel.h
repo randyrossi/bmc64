@@ -36,6 +36,7 @@
 #include <circle/usb/usbgamepad.h>
 #include <circle/cputhrottle.h>
 #include <circle/gpiomanager.h>
+#include <circle/spinlock.h>
 #include <stdint.h>
 #include <vc4/vchiq/vchiqdevice.h>
 
@@ -91,6 +92,8 @@ public:
 	void circle_joy_init();
 	void circle_poll_joysticks(int port);
 	void circle_check_gpio();
+	void circle_lock_acquire();
+	void circle_lock_release();
 
 private:
         static void InterruptStub (void *pParam);
@@ -108,6 +111,7 @@ private:
         CGPIOPin *joystickPins1[5];
         CGPIOPin *joystickPins2[5];
         CGPIOPin *uiPin;
+        CSpinLock m_Lock;
 };
 
 #endif
