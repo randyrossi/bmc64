@@ -225,9 +225,23 @@ char *archdep_filename_parameter(const char *name)
     return a;
 }
 
+static char* clean_tmp(char* tmp_filename) {
+    // TODO: We don't have a file system with dirs so
+    // until that happens, strip off the '/tmp/' from
+    // the generated name. This comes from newlib libc.
+    if (tmp_filename[0] == '/' &&
+        tmp_filename[1] == 't' &&
+        tmp_filename[2] == 'm' &&
+        tmp_filename[3] == 'p' &&
+        tmp_filename[4] == '/') {
+       return tmp_filename + 5;
+    }
+    return tmp_filename;
+}
+
 char *archdep_tmpnam(void)
 {
-    return lib_stralloc(tmpnam(NULL));
+    return lib_stralloc(clean_tmp(tmpnam(NULL)));
 }
 
 FILE *archdep_mkstemp_fd(char **filename, const char *mode)
@@ -235,8 +249,7 @@ FILE *archdep_mkstemp_fd(char **filename, const char *mode)
     char *tmp;
     FILE *fd;
 
-    tmp = lib_stralloc(tmpnam(NULL));
-
+    tmp = lib_stralloc(clean_tmp(tmpnam(NULL)));
     fd = fopen(tmp, mode);
 
     if (fd == NULL) {
