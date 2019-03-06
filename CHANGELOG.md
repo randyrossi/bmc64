@@ -38,3 +38,9 @@
     * Queues key events from ISR to main loop
   * Fixed keyboard issue with Commodore + F7 combo
     * Emulator would get stuck commodore key
+
+## 1.0.8
+  * Support read/write mode for files
+    * Save to D64 files
+    * Create snapshots
+  * Better menu navigation with auto repeat and acceleration during hold

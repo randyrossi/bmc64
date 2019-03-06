@@ -353,9 +353,6 @@ void vsyncarch_postsync(void){
   // This yield is important to let the fake kernel 'threads' run.
   circle_yield();
 
-  // Need to service ui keystrokes on main loop here
-  ui_check_key();
-
   video_frame_count++;
   if (raspi_boot_warp && video_frame_count > 120) {
      raspi_boot_warp = 0;
@@ -365,10 +362,10 @@ void vsyncarch_postsync(void){
   circle_check_gpio();
 
   if (joydevs[0].device == JOYDEV_GPIO_0 || joydevs[1].device == JOYDEV_GPIO_0) {
-     circle_poll_joysticks(0);
+     circle_poll_joysticks(0, 0);
   }
   if (joydevs[0].device == JOYDEV_GPIO_1 || joydevs[1].device == JOYDEV_GPIO_1) {
-     circle_poll_joysticks(1);
+     circle_poll_joysticks(1, 0);
   }
 
   // Do key press/releases on the main loop

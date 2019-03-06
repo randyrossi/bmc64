@@ -229,9 +229,13 @@ void raspi_key_pressed(long key) {
          if (joy_key_down(1, key))
             return;
       }
+   }
 
-      // Keys go to emulated machine
-      circle_emu_key_interrupt(key, 1 /* down */);
+   if (ui_activated) {
+     circle_ui_key_interrupt(key, 1 /* down */);
+   } else {
+     // Keys go to emulated machine
+     circle_emu_key_interrupt(key, 1 /* down */);
    }
 }
 
@@ -264,7 +268,7 @@ void raspi_key_released(long key) {
       }
 
       if (ui_activated) {
-         circle_ui_key_interrupt(key);
+         circle_ui_key_interrupt(key, 0 /* up */);
       } else {
          circle_emu_key_interrupt(key, 0 /* up */);
       }

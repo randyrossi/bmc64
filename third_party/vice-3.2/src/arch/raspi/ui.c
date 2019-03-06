@@ -35,8 +35,11 @@
 #include "interrupt.h"
 #include "videoarch.h"
 #include "circle.h"
+#include "joy.h"
 
 volatile int ui_activated = 0;
+
+extern struct joydev_config joydevs[2];
 
 // Stubs for vice callbacks. Unimplemented for now.
 void ui_pause_emulation(int flag) { }
@@ -69,11 +72,38 @@ int menu_window_bottom[NUM_MENU_ROOTS];
 // The index of the last item + 1. Can't set cursor to this or higher.
 int max_index[NUM_MENU_ROOTS];
 
+int pending_ui_key_head = 0;
+int pending_ui_key_tail = 0;
+volatile long pending_ui_key[16];
+volatile int pending_ui_key_pressed[16];
+
 // Callback for events that happen on menu items
 void (*on_value_changed)(struct menu_item*) = NULL;
 
-volatile long pending_ui_key = KEYCODE_NONE;
-volatile long pending_ui_key_time = 0;
+// Key presses turn into these. Some actions are repeatable and
+// the frequency at which they are executed can accelerate the
+// longer they are enabled. Key releases will cancel the repeat.
+#define ACTION_None 0
+#define ACTION_Up 1
+#define ACTION_Down 2
+#define ACTION_Left 3
+#define ACTION_Right 4
+#define ACTION_Return 5
+#define ACTION_Escape 6
+
+#define INITIAL_ACTION_DELAY 25
+#define INITIAL_ACTION_REPEAT_DELAY 15
+
+// State variables managing hold and repeat behavior of menu
+// actions.  Frequency of repeat will increase as time goes
+// on.
+static int ui_key_action;
+static long ui_key_ticks;
+static long ui_key_ticks_next;
+static int ui_key_ticks_repeats;
+static int ui_key_ticks_repeats_next;
+
+static void ui_action(long action);
 
 void ui_init_menu(void) {
    int i;
@@ -101,6 +131,12 @@ void ui_init_menu(void) {
 
    menu_left = (video_state.scr_w - menu_width) / 2;
    menu_top = (video_state.scr_h - menu_height) / 2;
+
+   ui_key_action = ACTION_None;
+   ui_key_ticks = 0;
+   ui_key_ticks_next = 0;
+   ui_key_ticks_repeats = 0;
+   ui_key_ticks_repeats_next = 0;
 }
 
 // Draw a single character at x,y coords into the offscreen area
@@ -175,9 +211,90 @@ static void do_on_value_changed(struct menu_item* item) {
    }
 }
 
-static void ui_key(long key) {
-   switch (key) {
-      case KEYCODE_Up:
+// Happens on main loop.
+static void ui_key_pressed(long key) {
+  switch (key) {
+    case KEYCODE_Up:
+       ui_key_action = ACTION_Up;
+       ui_key_ticks = INITIAL_ACTION_DELAY;
+       ui_key_ticks_next = INITIAL_ACTION_REPEAT_DELAY;
+       ui_key_ticks_repeats = 0;
+       ui_key_ticks_repeats_next = 4;
+       ui_action(ACTION_Up);
+       break;
+    case KEYCODE_Down:
+       ui_key_action = ACTION_Down;
+       ui_key_ticks = INITIAL_ACTION_DELAY;
+       ui_key_ticks_next = INITIAL_ACTION_REPEAT_DELAY;
+       ui_key_ticks_repeats = 0;
+       ui_key_ticks_repeats_next = 4;
+       ui_action(ACTION_Down);
+       break;
+    case KEYCODE_Left:
+       ui_key_action = ACTION_Left;
+       ui_key_ticks = INITIAL_ACTION_DELAY;
+       ui_key_ticks_next = INITIAL_ACTION_REPEAT_DELAY;
+       ui_key_ticks_repeats = 0;
+       ui_key_ticks_repeats_next = 4;
+       ui_action(ACTION_Left);
+       break;
+    case KEYCODE_Right:
+       ui_key_action = ACTION_Right;
+       ui_key_ticks = INITIAL_ACTION_DELAY;
+       ui_key_ticks_next = INITIAL_ACTION_REPEAT_DELAY;
+       ui_key_ticks_repeats = 0;
+       ui_key_ticks_repeats_next = 4;
+       ui_action(ACTION_Right);
+       break;
+       break;
+    case KEYCODE_Return:
+       ui_action(ACTION_Return);
+       break;
+    case KEYCODE_Escape:
+    case KEYCODE_F12:
+       ui_action(ACTION_Escape);
+       break;
+  }
+}
+
+// Happens on main loop. Process a key release for the ui.
+static void ui_key_released(long key) {
+  switch (key) {
+    case KEYCODE_Up:
+    case KEYCODE_Down:
+    case KEYCODE_Left:
+    case KEYCODE_Right:
+    case KEYCODE_Return:
+    case KEYCODE_F12:
+    case KEYCODE_Escape:
+       ui_key_action = ACTION_None;
+       break;
+  }
+}
+
+// Do the next ui action based on key pressed and timeout
+static void ui_action_frame() {
+   if (ui_key_action != ACTION_None) {
+      ui_key_ticks--;
+      // When key ticks hits zero, repeat the action.
+      if (ui_key_ticks == 0) {
+         ui_action(ui_key_action);
+         // Set new ticks
+         ui_key_ticks = ui_key_ticks_next;
+         // Keep track of how many repeats
+         ui_key_ticks_repeats++;
+         if (ui_key_ticks_repeats >= ui_key_ticks_repeats_next) {
+            ui_key_ticks_repeats_next *= 4;
+            ui_key_ticks_next /= 2;
+            if (ui_key_ticks_next < 1) ui_key_ticks_next = 1;
+         }
+      }
+   }
+}
+
+static void ui_action(long action) {
+   switch (action) {
+      case ACTION_Up:
          menu_cursor[current_menu]--;
          if (menu_cursor[current_menu] < 0) { menu_cursor[current_menu] = 0; }
          if (menu_cursor[current_menu] <= (menu_window_top[current_menu]-1)) {
@@ -185,7 +302,7 @@ static void ui_key(long key) {
             menu_window_bottom[current_menu]--;
          }
          break;
-      case KEYCODE_Down:
+      case ACTION_Down:
          menu_cursor[current_menu]++;
          if (menu_cursor[current_menu] >= max_index[current_menu]) {
             menu_cursor[current_menu] = max_index[current_menu] - 1;
@@ -195,7 +312,7 @@ static void ui_key(long key) {
             menu_window_bottom[current_menu]++;
          }
          break;
-      case KEYCODE_Left:
+      case ACTION_Left:
          if (menu_cursor_item[current_menu]->type == RANGE) {
             menu_cursor_item[current_menu]->value -= menu_cursor_item[current_menu]->step;
             if (menu_cursor_item[current_menu]->value < menu_cursor_item[current_menu]->min) {
@@ -215,7 +332,7 @@ static void ui_key(long key) {
             do_on_value_changed(menu_cursor_item[current_menu]);
          }
          break;
-      case KEYCODE_Right:
+      case ACTION_Right:
          if (menu_cursor_item[current_menu]->type == RANGE) {
             menu_cursor_item[current_menu]->value += menu_cursor_item[current_menu]->step;
             if (menu_cursor_item[current_menu]->value > menu_cursor_item[current_menu]->max) {
@@ -235,7 +352,7 @@ static void ui_key(long key) {
             do_on_value_changed(menu_cursor_item[current_menu]);
          }
          break;
-      case KEYCODE_Return:
+      case ACTION_Return:
          if (menu_cursor_item[current_menu]->type == FOLDER) {
             menu_cursor_item[current_menu]->is_expanded = 1-menu_cursor_item[current_menu]->is_expanded;
             do_on_value_changed(menu_cursor_item[current_menu]);
@@ -255,8 +372,7 @@ static void ui_key(long key) {
             do_on_value_changed(menu_cursor_item[current_menu]);
          }
          break;
-      case KEYCODE_Escape:
-      case KEYCODE_F12:
+      case ACTION_Escape:
          if (current_menu > 0) {
             ui_pop_menu();
          } else {
@@ -266,25 +382,48 @@ static void ui_key(long key) {
    }
 }
 
-// We can't handle keys that want to call back into vice
-// on an interrupt so just capture what the key was and
-// pick it up and service it on the main loop
-void circle_ui_key_interrupt(long key) {
-   if (circle_get_ticks() - pending_ui_key_time > 100000) {
-      pending_ui_key = key;
-      pending_ui_key_time = circle_get_ticks();
-   }
+// queue a key for press/release on the main loop
+void circle_ui_key_interrupt(long key, int pressed) {
+   circle_lock_acquire();
+   int i = pending_ui_key_tail & 0xf;
+   pending_ui_key[i] = key;
+   pending_ui_key_pressed[i] = pressed;
+   pending_ui_key_tail++;
+   circle_lock_release();
 }
 
+// Do key press/releases on the main loop
 void ui_check_key(void) {
-   if (pending_ui_key != KEYCODE_NONE) {
-      ui_key(pending_ui_key);
-      pending_ui_key = KEYCODE_NONE;
-   }
+  if (!ui_activated) {
+     return;
+  }
+
+  // Process ui key event queue
+  circle_lock_acquire();
+  while (pending_ui_key_head != pending_ui_key_tail) {
+     int i = pending_ui_key_head & 0xf;
+     if (pending_ui_key_pressed[i]) {
+        ui_key_pressed(pending_ui_key[i]);
+     } else {
+        ui_key_released(pending_ui_key[i]);
+     }
+     pending_ui_key_head++;
+  }
+  circle_lock_release();
+
+  // Ui action frame tick
+  ui_action_frame();
 }
 
 static void pause_trap(uint16_t addr, void *data) {
    while (ui_activated) {
+      if (joydevs[0].device == JOYDEV_GPIO_0 || joydevs[1].device == JOYDEV_GPIO_0) {
+         circle_poll_joysticks(0, 0);
+      }
+      if (joydevs[0].device == JOYDEV_GPIO_1 || joydevs[1].device == JOYDEV_GPIO_1) {
+         circle_poll_joysticks(1, 0);
+      }
+      circle_check_gpio();
       ui_check_key();
       ui_render_now();
       videoarch_swap();

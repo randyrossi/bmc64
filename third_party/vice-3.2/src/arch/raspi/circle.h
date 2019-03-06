@@ -65,7 +65,7 @@ extern unsigned long circle_get_ticks();
 extern void circle_set_fb_y(int);
 extern void circle_wait_vsync();
 extern void circle_yield();
-extern void circle_poll_joysticks(int port);
+extern void circle_poll_joysticks(int port, int is_interrupt);
 extern void circle_check_gpio();
 
 extern void joy_set_gamepad_info(int num_pads, int num_buttons[2], int axes[2], int hats[2]);
@@ -77,7 +77,7 @@ extern int circle_joy_need_gpio(int device);
 extern void circle_usb_pref(int device, int *usb_pref, int* x_axis, int *y_axis);
 extern int circle_ui_activated(void);
 extern int circle_ui_activated(void);
-extern void circle_ui_key_interrupt(long key);
+extern void circle_ui_key_interrupt(long key, int pressed);
 extern void circle_emu_key_interrupt(long key, int pressed);
 
 extern int menu_wants_raw_usb(void);

@@ -144,8 +144,8 @@ extern "C" {
      static_kernel->circle_joy_init();
   }
 
-  void circle_poll_joysticks(int port) {
-     static_kernel->circle_poll_joysticks(port);
+  void circle_poll_joysticks(int port, int is_interrupt) {
+     static_kernel->circle_poll_joysticks(port, is_interrupt);
   }
 
   void circle_check_gpio() {
@@ -201,8 +201,10 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
 
    static unsigned int prev_buttons[2] = {0, 0};
    static int prev_dpad[2] = {8, 8};
-   static int prev_axes[2][12] = { {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-                                   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } };
+   static int prev_axes_dirs[2][12] = {
+      {0, 0, 0, 0 },
+      {0, 0, 0, 0 }
+   };
 
    if (nDeviceIndex >= 2) return;
 
@@ -233,35 +235,51 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
 			(prev_buttons[nDeviceIndex] != b) ||
 			(prev_dpad[nDeviceIndex] != dpad);
 	   if (has_changed) {
+              int old_dpad = prev_dpad[nDeviceIndex];
               prev_buttons[nDeviceIndex] = b;
               prev_dpad[nDeviceIndex] = dpad;
 
               // If the UI is activated, route to the menu.
               int button_func = circle_button_function(nDeviceIndex, b);
               if (ui_activated) {
-                 if (dpad == 0) {
-                    circle_ui_key_interrupt(KEYCODE_Up);
+                 if (dpad == 0 && old_dpad != 0) {
+                    circle_ui_key_interrupt(KEYCODE_Up, 1);
                  }
-                 else if (dpad == 4) {
-                    circle_ui_key_interrupt(KEYCODE_Down);
+                 else if (dpad != 0 && old_dpad == 0) {
+                    circle_ui_key_interrupt(KEYCODE_Up, 0);
                  }
-                 else if (dpad == 6) {
-                    circle_ui_key_interrupt(KEYCODE_Left);
+                 if (dpad == 4 && old_dpad != 4) {
+                    circle_ui_key_interrupt(KEYCODE_Down, 1);
                  }
-                 else if (dpad == 2) {
-                    circle_ui_key_interrupt(KEYCODE_Right);
+                 else if (dpad != 4 && old_dpad == 4) {
+                    circle_ui_key_interrupt(KEYCODE_Down, 0);
                  }
-                 else if (button_func == BTN_ASSIGN_FIRE) {
-                    circle_ui_key_interrupt(KEYCODE_Return);
+                 if (dpad == 6 && old_dpad != 6) {
+                    circle_ui_key_interrupt(KEYCODE_Left, 1);
+                 }
+                 else if (dpad != 6 && old_dpad == 6) {
+                    circle_ui_key_interrupt(KEYCODE_Left, 0);
+                 }
+                 if (dpad == 2 && old_dpad != 2) {
+                    circle_ui_key_interrupt(KEYCODE_Right, 1);
+                 }
+                 else if (dpad != 2 && old_dpad == 2) {
+                    circle_ui_key_interrupt(KEYCODE_Right, 1);
+                 }
+                 if (button_func == BTN_ASSIGN_FIRE) {
+                    circle_ui_key_interrupt(KEYCODE_Return, 1);
+                    circle_ui_key_interrupt(KEYCODE_Return, 0);
                  }
                  else if (button_func == BTN_ASSIGN_MENU) {
-                    circle_ui_key_interrupt(KEYCODE_F12);
+                    circle_ui_key_interrupt(KEYCODE_F12, 1);
+                    circle_ui_key_interrupt(KEYCODE_F12, 0);
                  }
                  return;
               }
 
               if (button_func == BTN_ASSIGN_MENU) {
-                 circle_ui_key_interrupt(KEYCODE_F12);
+                 raspi_press_handler(KEYCODE_F12);
+                 raspi_release_handler(KEYCODE_F12);
                  return;
               }
 
@@ -272,8 +290,6 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
               circle_joy_usb(nDeviceIndex, value);
 	   }
    } else if (usb_pref == USB_PREF_ANALOG && pState->naxes > max_index) {
-	   int x = pState->axes[axis_x].value;
-	   int y = pState->axes[axis_y].value;
 	   // TODO: Do this just once at init
 	   int minx = pState->axes[axis_x].minimum;
 	   int maxx = pState->axes[axis_x].maximum;
@@ -283,48 +299,75 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
 	   int mx = (maxx + minx) / 2;
 	   int ty = (maxy - miny) / 4;
 	   int my = (maxy + miny) / 2;
+	   int a_left = pState->axes[axis_x].value < mx - tx;
+	   int a_right = pState->axes[axis_x].value > mx + tx;
+	   int a_up = pState->axes[axis_y].value < my - ty;
+	   int a_down = pState->axes[axis_y].value > my + ty;
 	   bool has_changed =
 		   (prev_buttons[nDeviceIndex] != b) ||
-		   (prev_axes[nDeviceIndex][axis_x] != x) ||
-		   (prev_axes[nDeviceIndex][axis_y] != y);
+		   (prev_axes_dirs[nDeviceIndex][0] != a_up) ||
+		   (prev_axes_dirs[nDeviceIndex][1] != a_down) ||
+                   (prev_axes_dirs[nDeviceIndex][2] != a_left) ||
+                   (prev_axes_dirs[nDeviceIndex][3] != a_right);
 	   if (has_changed) {
-              prev_axes[nDeviceIndex][axis_x] = x;
-              prev_axes[nDeviceIndex][axis_y] = y;
+              int prev_a_up = prev_axes_dirs[nDeviceIndex][0];
+              int prev_a_down = prev_axes_dirs[nDeviceIndex][1];
+              int prev_a_left = prev_axes_dirs[nDeviceIndex][2];
+              int prev_a_right = prev_axes_dirs[nDeviceIndex][3];
+              prev_axes_dirs[nDeviceIndex][0] = a_up;
+              prev_axes_dirs[nDeviceIndex][1] = a_down;
+              prev_axes_dirs[nDeviceIndex][2] = a_left;
+              prev_axes_dirs[nDeviceIndex][3] = a_right;
               prev_buttons[nDeviceIndex] = b;
               // If the UI is activated, route to the menu.
               int button_func = circle_button_function(nDeviceIndex, b);
               if (ui_activated) {
-                 if (y < my - ty) {
-                    circle_ui_key_interrupt(KEYCODE_Up);
+                 if (a_up && !prev_a_up) {
+                    circle_ui_key_interrupt(KEYCODE_Up, 1);
                  }
-                 else if (y > my + ty) {
-                    circle_ui_key_interrupt(KEYCODE_Down);
+                 else if (!a_up && prev_a_up) {
+                    circle_ui_key_interrupt(KEYCODE_Up, 0);
                  }
-                 else if (x < mx - tx) {
-                    circle_ui_key_interrupt(KEYCODE_Left);
+                 if (a_down && !prev_a_down) {
+                    circle_ui_key_interrupt(KEYCODE_Down, 1);
                  }
-                 else if (x > mx + tx) {
-                    circle_ui_key_interrupt(KEYCODE_Right);
+                 else if (!a_down && prev_a_down) {
+                    circle_ui_key_interrupt(KEYCODE_Down, 0);
                  }
-                 else if (button_func == BTN_ASSIGN_FIRE) {
-                    circle_ui_key_interrupt(KEYCODE_Return);
+                 if (a_left && !prev_a_left) {
+                    circle_ui_key_interrupt(KEYCODE_Left, 1);
+                 }
+                 else if (!a_left && prev_a_left) {
+                    circle_ui_key_interrupt(KEYCODE_Left, 0);
+                 }
+                 if (a_right && !prev_a_right) {
+                    circle_ui_key_interrupt(KEYCODE_Right, 1);
+                 }
+                 else if (!a_right && prev_a_right) {
+                    circle_ui_key_interrupt(KEYCODE_Right, 0);
+                 }
+                 if (button_func == BTN_ASSIGN_FIRE) {
+                    circle_ui_key_interrupt(KEYCODE_Return, 1);
+                    circle_ui_key_interrupt(KEYCODE_Return, 0);
                  }
                  else if (button_func == BTN_ASSIGN_MENU) {
-                    circle_ui_key_interrupt(KEYCODE_F12);
+                    circle_ui_key_interrupt(KEYCODE_F12, 1);
+                    circle_ui_key_interrupt(KEYCODE_F12, 0);
                  }
                  return;
               }
 
               if (button_func == BTN_ASSIGN_MENU) {
-                 circle_ui_key_interrupt(KEYCODE_F12);
+                 raspi_press_handler(KEYCODE_F12);
+                 raspi_release_handler(KEYCODE_F12);
                  return;
               }
 
               int value = 0;
-              if (x < mx - tx) value |= 0x4;
-              if (x > mx + tx) value |= 0x8;
-              if (y < my - ty) value |= 0x1;
-              if (y > my + ty) value |= 0x2;
+              if (a_left) value |= 0x4;
+              if (a_right) value |= 0x8;
+              if (a_up) value |= 0x1;
+              if (a_down) value |= 0x2;
               if (button_func == BTN_ASSIGN_FIRE) value |= 0x10;
 
               circle_joy_usb(nDeviceIndex, value);
@@ -639,30 +682,63 @@ void CKernel::KeyStatusHandlerRaw (unsigned char ucModifiers,
 void CKernel::circle_check_gpio()
 {
    if (uiPin->Read() == LOW) {
-      circle_ui_key_interrupt(KEYCODE_F12);
+      circle_ui_key_interrupt(KEYCODE_F12, 1);
+      circle_ui_key_interrupt(KEYCODE_F12, 0);
    }
 }
 
-void CKernel::circle_poll_joysticks(int device)
+void CKernel::circle_poll_joysticks(int device, int is_interrupt)
 {
+  static int js_prev_ui1[5] = { 0,0,0,0,0 };
+  static int js_prev_ui2[5] = { 0,0,0,0,0 };
+
   if (device == 0) {
      // If the UI is activated, route to the menu.
-     if (circle_ui_activated()) {
-        if (joystickPins1[JOY_UP]->Read() == LOW) {
-           circle_ui_key_interrupt(KEYCODE_Up);
+     // Don't do this from edge interrupts since its too
+     // bouncy.
+     if (circle_ui_activated() && !is_interrupt) {
+        int js_up = joystickPins1[JOY_UP]->Read();
+        int js_down = joystickPins1[JOY_DOWN]->Read();
+        int js_left = joystickPins1[JOY_LEFT]->Read();
+        int js_right = joystickPins1[JOY_RIGHT]->Read();
+        int js_fire = joystickPins1[JOY_FIRE]->Read();
+
+        if (js_up == LOW && js_prev_ui1[JOY_UP] != LOW) {
+           circle_ui_key_interrupt(KEYCODE_Up, 1);
         }
-        else if (joystickPins1[JOY_DOWN]->Read() == LOW) {
-           circle_ui_key_interrupt(KEYCODE_Down);
+        else if (js_up != LOW && js_prev_ui1[JOY_UP] == LOW) {
+           circle_ui_key_interrupt(KEYCODE_Up, 0);
         }
-        else if (joystickPins1[JOY_LEFT]->Read() == LOW) {
-           circle_ui_key_interrupt(KEYCODE_Left);
+        if (js_down == LOW && js_prev_ui1[JOY_DOWN] != LOW) {
+           circle_ui_key_interrupt(KEYCODE_Down, 1);
         }
-        else if (joystickPins1[JOY_RIGHT]->Read() == LOW) {
-           circle_ui_key_interrupt(KEYCODE_Right);
+        else if (js_down != LOW && js_prev_ui1[JOY_DOWN] == LOW) {
+           circle_ui_key_interrupt(KEYCODE_Down, 0);
         }
-        else if (joystickPins1[JOY_FIRE]->Read() == LOW) {
-           circle_ui_key_interrupt(KEYCODE_Return);
+        if (js_left == LOW && js_prev_ui1[JOY_LEFT] != LOW) {
+           circle_ui_key_interrupt(KEYCODE_Left, 1);
         }
+        else if (js_left != LOW && js_prev_ui1[JOY_LEFT] == LOW) {
+           circle_ui_key_interrupt(KEYCODE_Left, 0);
+        }
+        if (js_right == LOW && js_prev_ui1[JOY_RIGHT] != LOW) {
+           circle_ui_key_interrupt(KEYCODE_Right, 1);
+        }
+        else if (js_right != LOW && js_prev_ui1[JOY_RIGHT] == LOW) {
+           circle_ui_key_interrupt(KEYCODE_Right, 0);
+        }
+        if (js_fire == LOW && js_prev_ui1[JOY_FIRE] != LOW) {
+           circle_ui_key_interrupt(KEYCODE_Return, 1);
+        }
+        else if (js_fire != LOW && js_prev_ui1[JOY_FIRE] == LOW) {
+           circle_ui_key_interrupt(KEYCODE_Return, 0);
+        }
+
+        js_prev_ui1[JOY_UP] = js_up;
+        js_prev_ui1[JOY_DOWN] = js_down;
+        js_prev_ui1[JOY_LEFT] = js_left;
+        js_prev_ui1[JOY_RIGHT] = js_right;
+        js_prev_ui1[JOY_FIRE] = js_fire;
         return;
      }
 
@@ -687,23 +763,51 @@ void CKernel::circle_poll_joysticks(int device)
   }
 
   // If the UI is activated, route to the menu.
-  if (circle_ui_activated()) {
-     if (joystickPins2[JOY_UP]->Read() == LOW) {
-        circle_ui_key_interrupt(KEYCODE_Up);
+  // Don't do this from edge interrupts since its too
+  // bouncy.
+  if (circle_ui_activated() && !is_interrupt) {
+     int js_up = joystickPins2[JOY_UP]->Read();
+     int js_down = joystickPins2[JOY_DOWN]->Read();
+     int js_left = joystickPins2[JOY_LEFT]->Read();
+     int js_right = joystickPins2[JOY_RIGHT]->Read();
+     int js_fire = joystickPins2[JOY_FIRE]->Read();
+
+     if (js_up == LOW && js_prev_ui2[JOY_UP] != LOW) {
+        circle_ui_key_interrupt(KEYCODE_Up, 1);
      }
-     else if (joystickPins2[JOY_DOWN]->Read() == LOW) {
-        circle_ui_key_interrupt(KEYCODE_Down);
+     else if (js_up != LOW && js_prev_ui2[JOY_UP] == LOW) {
+        circle_ui_key_interrupt(KEYCODE_Up, 0);
      }
-     else if (joystickPins2[JOY_LEFT]->Read() == LOW) {
-        circle_ui_key_interrupt(KEYCODE_Left);
+     if (js_down == LOW && js_prev_ui2[JOY_DOWN] != LOW) {
+        circle_ui_key_interrupt(KEYCODE_Down, 1);
      }
-     else if (joystickPins2[JOY_RIGHT]->Read() == LOW) {
-        circle_ui_key_interrupt(KEYCODE_Right);
+     else if (js_down != LOW && js_prev_ui2[JOY_DOWN] == LOW) {
+        circle_ui_key_interrupt(KEYCODE_Down, 0);
      }
-     else if (joystickPins2[JOY_FIRE]->Read() == LOW) {
-        circle_ui_key_interrupt(KEYCODE_Return);
+     if (js_left == LOW && js_prev_ui2[JOY_LEFT] != LOW) {
+        circle_ui_key_interrupt(KEYCODE_Left, 1);
      }
-     return;
+     else if (js_left != LOW && js_prev_ui2[JOY_LEFT] == LOW) {
+        circle_ui_key_interrupt(KEYCODE_Left, 0);
+     }
+     if (js_right == LOW && js_prev_ui2[JOY_RIGHT] != LOW) {
+        circle_ui_key_interrupt(KEYCODE_Right, 1);
+     }
+     else if (js_right != LOW && js_prev_ui2[JOY_RIGHT] == LOW) {
+        circle_ui_key_interrupt(KEYCODE_Right, 0);
+     }
+     if (js_fire == LOW && js_prev_ui2[JOY_FIRE] != LOW) {
+        circle_ui_key_interrupt(KEYCODE_Return, 1);
+     }
+     else if (js_fire != LOW && js_prev_ui2[JOY_FIRE] == LOW) {
+        circle_ui_key_interrupt(KEYCODE_Return, 0);
+     }
+
+     js_prev_ui2[JOY_UP] = js_up;
+     js_prev_ui2[JOY_DOWN] = js_down;
+     js_prev_ui2[JOY_LEFT] = js_left;
+     js_prev_ui2[JOY_RIGHT] = js_right;
+     js_prev_ui2[JOY_FIRE] = js_fire;
   }
 
   int value = 0;
@@ -731,9 +835,9 @@ void CKernel::InterruptStub (void *pParam)
    assert (pThis != 0);
 
    if (circle_joy_need_gpio(0))
-        pThis->circle_poll_joysticks(0);
+        pThis->circle_poll_joysticks(0, 1);
    if (circle_joy_need_gpio(1))
-        pThis->circle_poll_joysticks(1);
+        pThis->circle_poll_joysticks(1, 1);
 }
 
 void CKernel::circle_lock_acquire() {

@@ -59,3 +59,10 @@
  * Test: Commodore + F7 = Menu
 # Save Settings:
  * Test: values are restored properly
+# Save Snapshot:
+ * With tape attached
+ * Load it (creates tmp file)
+ * With disk attached
+ * Load it
+# Menu nav repeat
+ * Hold up/down/left/right and check acceleration

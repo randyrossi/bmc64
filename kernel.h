@@ -90,7 +90,7 @@ public:
 	void circle_kbd_init(raspi_key_handler press_handler,
                          raspi_key_handler release_handler);
 	void circle_joy_init();
-	void circle_poll_joysticks(int port);
+	void circle_poll_joysticks(int port, int is_interrupt);
 	void circle_check_gpio();
 	void circle_lock_acquire();
 	void circle_lock_release();

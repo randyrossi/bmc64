@@ -49,19 +49,19 @@ int joy_key_up(unsigned int device, int key) {
         if (joydevs[device].device == JOYDEV_NUMS_1) {
           switch (key) {
             case KEYCODE_KP8:
-               circle_ui_key_interrupt(KEYCODE_Up);
+               circle_ui_key_interrupt(KEYCODE_Up, 0 /* up */);
                return 1;
             case KEYCODE_KP2:
-               circle_ui_key_interrupt(KEYCODE_Down);
+               circle_ui_key_interrupt(KEYCODE_Down, 0 /* up */);
                return 1;
             case KEYCODE_KP4:
-               circle_ui_key_interrupt(KEYCODE_Left);
+               circle_ui_key_interrupt(KEYCODE_Left, 0 /* up */);
                return 1;
             case KEYCODE_KP6:
-               circle_ui_key_interrupt(KEYCODE_Right);
+               circle_ui_key_interrupt(KEYCODE_Right, 0 /* up */);
                return 1;
             case KEYCODE_KP5:
-               circle_ui_key_interrupt(KEYCODE_Return);
+               circle_ui_key_interrupt(KEYCODE_Return, 0 /* up */);
                return 1;
             default:
                return 0;
@@ -69,19 +69,19 @@ int joy_key_up(unsigned int device, int key) {
         } else if (joydevs[device].device == JOYDEV_NUMS_2) {
           switch (key) {
             case KEYCODE_KP9:
-               circle_ui_key_interrupt(KEYCODE_Up);
+               circle_ui_key_interrupt(KEYCODE_Up, 0 /* up */);
                return 1;
             case KEYCODE_KP3:
-               circle_ui_key_interrupt(KEYCODE_Down);
+               circle_ui_key_interrupt(KEYCODE_Down, 0 /* up */);
                return 1;
             case KEYCODE_KP7:
-               circle_ui_key_interrupt(KEYCODE_Left);
+               circle_ui_key_interrupt(KEYCODE_Left, 0 /* up */);
                return 1;
             case KEYCODE_KP1:
-               circle_ui_key_interrupt(KEYCODE_Right);
+               circle_ui_key_interrupt(KEYCODE_Right, 0 /* up */);
                return 1;
             case KEYCODE_KP0:
-               circle_ui_key_interrupt(KEYCODE_Return);
+               circle_ui_key_interrupt(KEYCODE_Return, 0 /* up */);
                return 1;
             default:
                return 0;
@@ -89,19 +89,19 @@ int joy_key_up(unsigned int device, int key) {
         } else if (joydevs[device].device == JOYDEV_CURS) {
          switch (key) {
             case KEYCODE_Up:
-               circle_ui_key_interrupt(KEYCODE_Up);
+               circle_ui_key_interrupt(KEYCODE_Up, 0 /* up */);
                return 1;
             case KEYCODE_Down:
-               circle_ui_key_interrupt(KEYCODE_Down);
+               circle_ui_key_interrupt(KEYCODE_Down, 0 /* up */);
                return 1;
             case KEYCODE_Left:
-               circle_ui_key_interrupt(KEYCODE_Left);
+               circle_ui_key_interrupt(KEYCODE_Left, 0 /* up */);
                return 1;
             case KEYCODE_Right:
-               circle_ui_key_interrupt(KEYCODE_Right);
+               circle_ui_key_interrupt(KEYCODE_Right, 0 /* up */);
                return 1;
             case KEYCODE_Space:
-               circle_ui_key_interrupt(KEYCODE_Return);
+               circle_ui_key_interrupt(KEYCODE_Return, 0 /* up */);
                return 1;
             default:
                return 0;
@@ -178,9 +178,68 @@ int joy_key_up(unsigned int device, int key) {
 
 int joy_key_down(unsigned int device, int key) {
      if (circle_ui_activated()) {
-        // When the ui is showing, we want these to
-        // go nowhere.
-        return 1;
+        if (joydevs[device].device == JOYDEV_NUMS_1) {
+          switch (key) {
+            case KEYCODE_KP8:
+               circle_ui_key_interrupt(KEYCODE_Up, 1 /* down */);
+               return 1;
+            case KEYCODE_KP2:
+               circle_ui_key_interrupt(KEYCODE_Down, 1 /* down */);
+               return 1;
+            case KEYCODE_KP4:
+               circle_ui_key_interrupt(KEYCODE_Left, 1 /* down */);
+               return 1;
+            case KEYCODE_KP6:
+               circle_ui_key_interrupt(KEYCODE_Right, 1 /* down */);
+               return 1;
+            case KEYCODE_KP5:
+               circle_ui_key_interrupt(KEYCODE_Return, 1 /* down */);
+               return 1;
+            default:
+               return 0;
+          }
+        } else if (joydevs[device].device == JOYDEV_NUMS_2) {
+          switch (key) {
+            case KEYCODE_KP9:
+               circle_ui_key_interrupt(KEYCODE_Up, 1 /* down */);
+               return 1;
+            case KEYCODE_KP3:
+               circle_ui_key_interrupt(KEYCODE_Down, 1 /* down */);
+               return 1;
+            case KEYCODE_KP7:
+               circle_ui_key_interrupt(KEYCODE_Left, 1 /* down */);
+               return 1;
+            case KEYCODE_KP1:
+               circle_ui_key_interrupt(KEYCODE_Right, 1 /* down */);
+               return 1;
+            case KEYCODE_KP0:
+               circle_ui_key_interrupt(KEYCODE_Return, 1 /* down */);
+               return 1;
+            default:
+               return 0;
+          }
+        } else if (joydevs[device].device == JOYDEV_CURS) {
+         switch (key) {
+            case KEYCODE_Up:
+               circle_ui_key_interrupt(KEYCODE_Up, 1 /* down */);
+               return 1;
+            case KEYCODE_Down:
+               circle_ui_key_interrupt(KEYCODE_Down, 1 /* down */);
+               return 1;
+            case KEYCODE_Left:
+               circle_ui_key_interrupt(KEYCODE_Left, 1 /* down */);
+               return 1;
+            case KEYCODE_Right:
+               circle_ui_key_interrupt(KEYCODE_Right, 1 /* down */);
+               return 1;
+            case KEYCODE_Space:
+               circle_ui_key_interrupt(KEYCODE_Return, 1 /* down */);
+               return 1;
+            default:
+               return 0;
+          }
+        }
+        return 0;
      }
 
      int port = joydevs[device].port;
