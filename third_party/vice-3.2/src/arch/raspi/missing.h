@@ -118,7 +118,6 @@ void ui_display_tape_counter(int counter);
 void ui_display_tape_current_image(const char *image);
 void ui_display_tape_motor_status(int motor);
 void ui_enable_drive_status(ui_drive_enable_t state, int *drive_led_color);
-void ui_error(const char *format, ...);
 void ui_error_string(const char *text);
 void ui_init_checkbox_style(void);
 void ui_init_drive_status_widget(void);

@@ -333,6 +333,7 @@ static void menu_value_changed(struct menu_item* item) {
    switch (item->id) {
       case MENU_SAVE_SETTINGS:
          save_settings();
+         ui_info("Settings saved");
          break;
       case MENU_COLOR_PALETTE:
          video_canvas_change_palette(item->value);
@@ -473,33 +474,54 @@ static void menu_value_changed(struct menu_item* item) {
    // This is selection of a file
    if (item->id == MENU_DISK_FILE) {
          // Perform the attach
-         file_system_attach_disk(unit, item->name);
-         ui_pop_menu();
-         ui_toggle();
+         if (file_system_attach_disk(unit, item->name) < 0) {
+            ui_error("Failed to attach disk image");
+         } else {
+            ui_pop_menu();
+            ui_toggle();
+         }
    } else if (item->id == MENU_TAPE_FILE) {
-         tape_image_attach(1, item->name);
-         ui_pop_menu();
-         ui_toggle();
+         if (tape_image_attach(1, item->name) < 0) {
+            ui_error("Failed to attach tape image");
+         } else {
+            ui_pop_menu();
+            ui_toggle();
+         }
    } else if (item->id == MENU_CART_FILE) {
-         cartridge_attach_image(CARTRIDGE_CRT, item->name);
-         ui_pop_menu();
-         ui_toggle();
+         if (cartridge_attach_image(CARTRIDGE_CRT, item->name) < 0) {
+            ui_error("Failed to attach cart image");
+         } else {
+            ui_pop_menu();
+            ui_toggle();
+         }
    } else if (item->id == MENU_CART_8K_FILE) {
-         cartridge_attach_image(CARTRIDGE_GENERIC_8KB, item->name);
-         ui_pop_menu();
-         ui_toggle();
+         if (cartridge_attach_image(CARTRIDGE_GENERIC_8KB, item->name) < 0) {
+            ui_error("Failed to attach cart image");
+         } else {
+           ui_pop_menu();
+           ui_toggle();
+         }
    } else if (item->id == MENU_CART_16K_FILE) {
-         cartridge_attach_image(CARTRIDGE_GENERIC_16KB, item->name);
-         ui_pop_menu();
-         ui_toggle();
+         if (cartridge_attach_image(CARTRIDGE_GENERIC_16KB, item->name) < 0) {
+            ui_error("Failed to attach cart image");
+         } else {
+           ui_pop_menu();
+           ui_toggle();
+         }
    } else if (item->id == MENU_CART_ULTIMAX_FILE) {
-         cartridge_attach_image(CARTRIDGE_ULTIMAX, item->name);
-         ui_pop_menu();
-         ui_toggle();
+         if (cartridge_attach_image(CARTRIDGE_ULTIMAX, item->name) < 0) {
+            ui_error("Failed to attach cart image");
+         } else {
+           ui_pop_menu();
+           ui_toggle();
+         }
    } else if (item->id == MENU_AUTOSTART_FILE) {
-         autostart_autodetect(item->name, "*", 0, AUTOSTART_MODE_RUN);
-         ui_pop_menu();
-         ui_toggle();
+         if (autostart_autodetect(item->name, "*", 0, AUTOSTART_MODE_RUN) < 0) {
+            ui_error("Failed to autostart file");
+         } else {
+           ui_pop_menu();
+           ui_toggle();
+         }
    }
 }
 

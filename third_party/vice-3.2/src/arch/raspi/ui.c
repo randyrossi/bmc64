@@ -30,6 +30,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include "kbd.h"
 #include "menu.h"
 #include "interrupt.h"
@@ -686,3 +687,39 @@ void ui_set_on_value_changed_callback(void (*callback)(struct menu_item*)) {
 int circle_ui_activated(void) {
    return ui_activated;
 }
+
+static struct menu_item* ui_push_dialog_header(int is_error) {
+   if (!ui_activated) {
+      ui_toggle();
+   }
+
+   struct menu_item* root = ui_push_menu(30, 4);
+   if (is_error) {
+      ui_menu_add_button(MENU_ERROR_DIALOG, root, "Error");
+   } else {
+      ui_menu_add_button(MENU_INFO_DIALOG, root, "Info");
+   }
+   ui_menu_add_divider(root);
+   return root;
+}
+
+void ui_error(const char *format, ...) {
+   struct menu_item* root = ui_push_dialog_header(1);
+   char buffer[256];
+   va_list args;
+   va_start (args, format);
+   vsnprintf (buffer, 255, format, args);
+   ui_menu_add_button(MENU_ERROR_DIALOG, root, buffer);
+   va_end (args);
+}
+
+void ui_info(const char *format, ...) {
+   struct menu_item* root = ui_push_dialog_header(0);
+   char buffer[256];
+   va_list args;
+   va_start (args, format);
+   vsnprintf (buffer, 255, format, args);
+   ui_menu_add_button(MENU_INFO_DIALOG, root, buffer);
+   va_end (args);
+}
+

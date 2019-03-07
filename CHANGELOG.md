@@ -44,3 +44,4 @@
     * Save to D64 files
     * Create snapshots
   * Better menu navigation with auto repeat and acceleration during hold
+  * Added error/info dialogs for errors or confirmation of actions

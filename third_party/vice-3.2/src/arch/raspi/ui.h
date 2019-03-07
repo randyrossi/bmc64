@@ -137,6 +137,8 @@ void ui_check_key(void);
 void ui_toggle(void);
 
 void ui_render_now(void);
+void ui_error(const char *format, ...);
+void ui_info(const char *format, ...);
 
 struct menu_item* ui_pop_menu(void);
 
