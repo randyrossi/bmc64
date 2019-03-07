@@ -49,14 +49,6 @@ int ui_emulation_is_paused(void) { return 0; }
 const int menu_width_chars = 40;
 const int menu_height_chars = 25;
 
-int menu_width;
-int menu_height;
-
-// Computed top left coordinates of where our menu will begin drawing
-// Menu will be centered in frame buffer
-int menu_top;
-int menu_left;
-
 // Stack of menu screens
 int current_menu = -1;
 struct menu_item menu_roots[NUM_MENU_ROOTS];
@@ -90,9 +82,10 @@ void (*on_value_changed)(struct menu_item*) = NULL;
 #define ACTION_Right 4
 #define ACTION_Return 5
 #define ACTION_Escape 6
+#define ACTION_Exit 7
 
-#define INITIAL_ACTION_DELAY 25
-#define INITIAL_ACTION_REPEAT_DELAY 15
+#define INITIAL_ACTION_DELAY 24
+#define INITIAL_ACTION_REPEAT_DELAY 8
 
 // State variables managing hold and repeat behavior of menu
 // actions.  Frequency of repeat will increase as time goes
@@ -117,20 +110,11 @@ void ui_init_menu(void) {
       menu_roots[i].type = FOLDER;
       menu_roots[i].is_expanded = 1;
       strncpy(menu_roots[i].name, "", MAX_MENU_STR);
-      menu_cursor[i] = 0;
-      menu_window_top[i] = 0;
-      menu_window_bottom[i] = menu_height_chars;
    }
 
    // Root menu is never popped
-   struct menu_item* root = ui_push_menu();
+   struct menu_item* root = ui_push_menu(-1, -1);
    build_menu(root);
-
-   menu_width = menu_width_chars * 8;
-   menu_height = menu_height_chars * 8;
-
-   menu_left = (video_state.scr_w - menu_width) / 2;
-   menu_top = (video_state.scr_h - menu_height) / 2;
 
    ui_key_action = ACTION_None;
    ui_key_ticks = 0;
@@ -219,7 +203,7 @@ static void ui_key_pressed(long key) {
        ui_key_ticks = INITIAL_ACTION_DELAY;
        ui_key_ticks_next = INITIAL_ACTION_REPEAT_DELAY;
        ui_key_ticks_repeats = 0;
-       ui_key_ticks_repeats_next = 4;
+       ui_key_ticks_repeats_next = 8;
        ui_action(ACTION_Up);
        break;
     case KEYCODE_Down:
@@ -227,7 +211,7 @@ static void ui_key_pressed(long key) {
        ui_key_ticks = INITIAL_ACTION_DELAY;
        ui_key_ticks_next = INITIAL_ACTION_REPEAT_DELAY;
        ui_key_ticks_repeats = 0;
-       ui_key_ticks_repeats_next = 4;
+       ui_key_ticks_repeats_next = 8;
        ui_action(ACTION_Down);
        break;
     case KEYCODE_Left:
@@ -235,7 +219,7 @@ static void ui_key_pressed(long key) {
        ui_key_ticks = INITIAL_ACTION_DELAY;
        ui_key_ticks_next = INITIAL_ACTION_REPEAT_DELAY;
        ui_key_ticks_repeats = 0;
-       ui_key_ticks_repeats_next = 4;
+       ui_key_ticks_repeats_next = 8;
        ui_action(ACTION_Left);
        break;
     case KEYCODE_Right:
@@ -243,7 +227,7 @@ static void ui_key_pressed(long key) {
        ui_key_ticks = INITIAL_ACTION_DELAY;
        ui_key_ticks_next = INITIAL_ACTION_REPEAT_DELAY;
        ui_key_ticks_repeats = 0;
-       ui_key_ticks_repeats_next = 4;
+       ui_key_ticks_repeats_next = 8;
        ui_action(ACTION_Right);
        break;
        break;
@@ -251,7 +235,6 @@ static void ui_key_pressed(long key) {
        ui_action(ACTION_Return);
        break;
     case KEYCODE_Escape:
-    case KEYCODE_F12:
        ui_action(ACTION_Escape);
        break;
   }
@@ -265,9 +248,12 @@ static void ui_key_released(long key) {
     case KEYCODE_Left:
     case KEYCODE_Right:
     case KEYCODE_Return:
-    case KEYCODE_F12:
     case KEYCODE_Escape:
        ui_key_action = ACTION_None;
+       break;
+    case KEYCODE_F7:
+    case KEYCODE_F12:
+       ui_action(ACTION_Exit);
        break;
   }
 }
@@ -379,6 +365,12 @@ static void ui_action(long action) {
             ui_toggle();
          }
          break;
+      case ACTION_Exit:
+         while (current_menu > 0) {
+           ui_pop_menu();
+         }
+         ui_toggle();
+         break;
    }
 }
 
@@ -453,18 +445,25 @@ static void append(struct menu_item *folder, struct menu_item *new_item) {
    }
 }
 
-static struct menu_item* ui_new_item(char* name, int id)  {
+static struct menu_item* ui_new_item(struct menu_item *parent,
+                                     char* name, int id)  {
    struct menu_item* new_item = (struct menu_item*)
        malloc(sizeof(struct menu_item));
    memset(new_item, 0, sizeof(struct menu_item));
    strncpy(new_item->name, name, MAX_MENU_STR);
    new_item->id = id;
+
+   // Inherit parent dimensions
+   new_item->menu_width = parent->menu_width;
+   new_item->menu_height = parent->menu_height;
+   new_item->menu_top = parent->menu_top;
+   new_item->menu_left = parent->menu_left;
    return new_item;
 }
 
 struct menu_item* ui_menu_add_toggle(int id, struct menu_item *folder,
                                      char* name, int initial_state) {
-   struct menu_item* new_item = ui_new_item(name,id);
+   struct menu_item* new_item = ui_new_item(folder, name,id);
    new_item->type = TOGGLE;
    new_item->value = initial_state;
    append(folder, new_item);
@@ -472,7 +471,7 @@ struct menu_item* ui_menu_add_toggle(int id, struct menu_item *folder,
 }
 
 struct menu_item* ui_menu_add_checkbox(int id, struct menu_item *folder, char* name, int initial_state) {
-   struct menu_item* new_item = ui_new_item(name,id);
+   struct menu_item* new_item = ui_new_item(folder, name,id);
    new_item->type = CHECKBOX;
    new_item->value = initial_state;
    append(folder, new_item);
@@ -480,7 +479,7 @@ struct menu_item* ui_menu_add_checkbox(int id, struct menu_item *folder, char* n
 }
 
 struct menu_item* ui_menu_add_multiple_choice(int id, struct menu_item *folder, char *name) {
-   struct menu_item* new_item = ui_new_item(name,id);
+   struct menu_item* new_item = ui_new_item(folder, name,id);
    new_item->type = MULTIPLE_CHOICE;
    new_item->num_choices = 0;
    append(folder, new_item);
@@ -492,7 +491,7 @@ struct menu_item* ui_menu_add_button(int id, struct menu_item *folder, char *nam
 }
 
 struct menu_item* ui_menu_add_button_with_value(int id, struct menu_item *folder, char *name, int value, char* str_value, char* displayed_value) {
-   struct menu_item* new_item = ui_new_item(name,id);
+   struct menu_item* new_item = ui_new_item(folder, name,id);
    new_item->type = BUTTON;
    new_item->value = value;
    strncpy(new_item->str_value, str_value, 32);
@@ -502,7 +501,7 @@ struct menu_item* ui_menu_add_button_with_value(int id, struct menu_item *folder
 }
 
 struct menu_item* ui_menu_add_range(int id, struct menu_item *folder, char *name, int min, int max, int step, int initial_value) {
-   struct menu_item* new_item = ui_new_item(name,id);
+   struct menu_item* new_item = ui_new_item(folder, name,id);
    new_item->type = RANGE;
    new_item->min = min;
    new_item->max = max;
@@ -513,14 +512,14 @@ struct menu_item* ui_menu_add_range(int id, struct menu_item *folder, char *name
 }
 
 struct menu_item* ui_menu_add_folder(struct menu_item *folder, char *name) {
-   struct menu_item* new_item = ui_new_item(name, MENU_ID_DO_NOTHING);
+   struct menu_item* new_item = ui_new_item(folder, name, MENU_ID_DO_NOTHING);
    new_item->type = FOLDER;
    append(folder, new_item);
    return new_item;
 }
 
 struct menu_item* ui_menu_add_divider(struct menu_item *folder) {
-   struct menu_item* new_item = ui_new_item("", MENU_ID_DO_NOTHING);
+   struct menu_item* new_item = ui_new_item(folder, "", MENU_ID_DO_NOTHING);
    new_item->type = DIVIDER;
    append(folder, new_item);
    return new_item;
@@ -532,55 +531,55 @@ static void ui_render_children(struct menu_item* node, int* index, int indent) {
 
       // Render a row
       if (*index >= menu_window_top[current_menu] && *index < menu_window_bottom[current_menu]) {
-         int y = (*index - menu_window_top[current_menu]) * 8 + menu_top;
+         int y = (*index - menu_window_top[current_menu]) * 8 + node->menu_top;
          if (*index == menu_cursor[current_menu]) {
-             ui_draw_rect(menu_left, y, menu_width, 8, 2, 1);
+             ui_draw_rect(node->menu_left, y, node->menu_width, 8, 2, 1);
              menu_cursor_item[current_menu] = node;
          }
 
-         ui_draw_text(node->name, menu_left + (indent+1) * 8, y, 1);
+         ui_draw_text(node->name, node->menu_left + (indent+1) * 8, y, 1);
          if (node->type == FOLDER) {
             if (node->is_expanded)
-               ui_draw_text("-", menu_left + (indent) * 8, y, 1);
+               ui_draw_text("-", node->menu_left + (indent) * 8, y, 1);
             else
-               ui_draw_text("+", menu_left + (indent) * 8, y, 1);
+               ui_draw_text("+", node->menu_left + (indent) * 8, y, 1);
          } else if (node->type == TOGGLE) {
             if (node->value)
-               ui_draw_text("On", menu_left + menu_width -
+               ui_draw_text("On", node->menu_left + node->menu_width -
                          ui_text_width("On"), y, 1);
             else
-               ui_draw_text("Off", menu_left + menu_width -
+               ui_draw_text("Off", node->menu_left + node->menu_width -
                          ui_text_width("Off"), y, 1);
          } else if (node->type == CHECKBOX) {
             if (node->value)
-               ui_draw_text("True", menu_left + menu_width -
+               ui_draw_text("True", node->menu_left + node->menu_width -
                          ui_text_width("True"), y, 1);
             else
-               ui_draw_text("False", menu_left + menu_width -
+               ui_draw_text("False", node->menu_left + node->menu_width -
                          ui_text_width("False"), y, 1);
          } else if (node->type == RANGE) {
             sprintf(node->scratch,"%d",node->value);
-            ui_draw_text(node->scratch, menu_left + menu_width -
+            ui_draw_text(node->scratch, node->menu_left + node->menu_width -
                          ui_text_width(node->scratch), y, 1);
          } else if (node->type == MULTIPLE_CHOICE) {
-            ui_draw_text(node->choices[node->value], menu_left + menu_width -
+            ui_draw_text(node->choices[node->value], node->menu_left + node->menu_width -
                          ui_text_width(node->choices[node->value]), y, 1);
          } else if (node->type == DIVIDER) {
-            ui_draw_rect(menu_left, y+3, menu_width, 2, 3, 1);
+            ui_draw_rect(node->menu_left, y+3, node->menu_width, 2, 3, 1);
          } else if (node->type == BUTTON) {
             if (strlen(node->displayed_value) > 0) {
                // Prefer displayed value if set
-               ui_draw_text(node->displayed_value, menu_left + menu_width -
+               ui_draw_text(node->displayed_value, node->menu_left + node->menu_width -
                          ui_text_width(node->displayed_value), y, 1);
             } else {
                // Turn value into string as fallback
                if (node->map_value_func) {
                   sprintf(node->scratch,"%d",node->map_value_func(node->value));
-                  ui_draw_text(node->scratch, menu_left + menu_width -
+                  ui_draw_text(node->scratch, node->menu_left + node->menu_width -
                          ui_text_width(node->scratch), y, 1);
                } else {
                   sprintf(node->scratch,"%d",node->value);
-                  ui_draw_text(node->scratch, menu_left + menu_width -
+                  ui_draw_text(node->scratch, node->menu_left + node->menu_width -
                          ui_text_width(node->scratch), y, 1);
                }
             }
@@ -602,7 +601,11 @@ void ui_render_now(void) {
   struct menu_item* ptr = menu_roots[current_menu].first_child;
 
   // black background
-  ui_draw_rect(menu_left, menu_top, menu_width, menu_height, 0, 1);
+  ui_draw_rect(ptr->menu_left, ptr->menu_top,
+               ptr->menu_width, ptr->menu_height, 0, 1);
+  // border
+  ui_draw_rect(ptr->menu_left-1, ptr->menu_top-1,
+               ptr->menu_width+2, ptr->menu_height+2, 3, 0);
 
   // menu text
   ui_render_children(ptr,&index, indent);
@@ -630,9 +633,6 @@ static void ui_clear_menu(int menu_index) {
    struct menu_item* node = &menu_roots[menu_index];
    ui_clear_child_menu(node->first_child);
    node->first_child = NULL;
-   menu_window_top[menu_index] = 0;
-   menu_window_bottom[menu_index] = menu_height_chars;
-   menu_cursor[menu_index] = 0;
 }
 
 struct menu_item* ui_pop_menu(void) {
@@ -649,15 +649,33 @@ struct menu_item* ui_pop_menu(void) {
   return &menu_roots[current_menu];
 }
 
-struct menu_item* ui_push_menu(void) {
+struct menu_item* ui_push_menu(int w_chars, int h_chars) {
+
+  if (w_chars == -1) w_chars = menu_width_chars;
+  if (h_chars == -1) h_chars = menu_height_chars;
+
   current_menu++;
   if (current_menu >= NUM_MENU_ROOTS) {
      printf ("FATAL ERROR: tried to push menu beyond NUM_MENU_ROOTS\n");
      return NULL;
   }
   ui_clear_menu(current_menu);
+
   // Client must set callback on each push so clear here.
   menu_roots[current_menu].on_value_changed = NULL;
+
+  // Set dimensions
+  int menu_width = w_chars * 8;
+  int menu_height = h_chars * 8;
+  menu_roots[current_menu].menu_width = menu_width;
+  menu_roots[current_menu].menu_height = menu_height;
+  menu_roots[current_menu].menu_left = (video_state.scr_w - menu_width) / 2;
+  menu_roots[current_menu].menu_top = (video_state.scr_h - menu_height) / 2;
+
+  menu_cursor[current_menu] = 0;
+  menu_window_top[current_menu] = 0;
+  menu_window_bottom[current_menu] = h_chars;
+
   return &menu_roots[current_menu];
 }
 

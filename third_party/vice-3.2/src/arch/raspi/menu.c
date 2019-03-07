@@ -138,12 +138,12 @@ static void list_files(struct menu_item* parent, int filter, int menu_id) {
 
 static void show_files(int filter, int menu_id) {
    // Show files
-   struct menu_item* file_root = ui_push_menu();
+   struct menu_item* file_root = ui_push_menu(-1, -1);
    list_files(file_root, filter, menu_id);
 }
 
 static void show_about() {
-   struct menu_item* about_root = ui_push_menu();
+   struct menu_item* about_root = ui_push_menu(32, 8);
    ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.0.7");
    ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C64 Emulator");
    ui_menu_add_button(MENU_TEXT, about_root, "For the Rasbperry Pi 2/3");
@@ -154,14 +154,14 @@ static void show_about() {
 
 static void show_license() {
    int i;
-   struct menu_item* license_root = ui_push_menu();
+   struct menu_item* license_root = ui_push_menu(-1, -1);
    for (i=0;i<510;i++) {
       ui_menu_add_button(MENU_TEXT, license_root, license[i]);
    }
 }
 
 static void configure_usb(int dev) {
-   struct menu_item* usb_root = ui_push_menu();
+   struct menu_item* usb_root = ui_push_menu(-1, -1);
    build_usb_menu(dev, usb_root);   
 }
 

@@ -76,7 +76,7 @@ static void show_usb_monitor(int device) {
   want_raw_usb = 1;
   want_raw_usb_device = device;
 
-  struct menu_item* root = ui_push_menu();
+  struct menu_item* root = ui_push_menu(-1, -1);
   // We need to get notified of pop to turn off monitoring
   root->on_value_changed = raw_popped;
 

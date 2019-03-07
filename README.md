@@ -12,7 +12,6 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
   * Keyrah friendly
 
 # Limitations
-  * SDcard is read-only (for now)
   * All files must reside in root directory (no dirs for now)
   * USB gamepad support is limited
 
@@ -31,6 +30,8 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
 # Timing
 The machine config defaults to PAL 50hz for both HDMI and composite.  You can change this (see below).
 
+# Drives
+
 You can make drive 8 an IECDevice for the root file system of the sdcard. However, I don't recommend loading programs this way. The sdcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk oeprations anyway.
 
 # Sound
@@ -41,17 +42,21 @@ You can switch between 6581 and 8580 models as well as turn on/off the filter.  
 
 # Keyboards
 
-Use F-12 to bring up the menu and ESC/RUNSTOP to exit.
+Use F12 to bring up the menu and ESC/RUNSTOP to exit.
 
-If you use a real commodore keyboard, you can use Commodore Key + F7 in place of F12. You can also wire a button between GPIO16 and GND to activate the menu or use gamepads with buttons configured for the menu.
+If you use a real commodore keyboard, you can use Commodore Key + F7 in place of F12. You can also wire a button between GPIO16 and GND to activate the menu or use gamepads with buttons configured for the menu.  Gamepads that have had a button configured to bring up the menu don't have to be assigned to a port to do that.  So even if you have DB9 joysticks wired, you should still be able to plug in a wired/wireless usb gamepad to trigger the menu if you want.
 
-For the Keyrah, if you find your '=' key doesn't work.  Try switching the keyboard type to 'UK'.
+For the Keyrah, if you find your '=' key doesn't work.  Try switching the keyboard type to 'UK'.  You must save and restart for this to take effect.
 
 # Gamepad config
 
 As mentioned, gamepad support is limited.  Some gamepads advertise their dpads as analog sticks so if your dpad setting doesn't work and you want to use a dpad, try switching to analog.  Also, if the analog setting doesn't work, you may have to do some work to find the right axis # for both X and Y.  Usually, axis 0 and 1 are left stick X and Y axes but not always.  My cheap 'Kiwitata' gamepads are 3 & 4.  If your gamepad has two sticks, try 2 & 3 for right X/Y.
 
 In v1.0.5+, there is a configuration sub-menu that will help you configure your usb gamepads.  You can monitor the raw usb values using 'Monitor raw USB data' men option.  The only way to escape from this menu is ESC/RUNSTOP.
+
+# Menu Navigation
+
+Since v1.0.8, you can hold down keys or gamepad/joystick directions and the navigation action will auto-repeat.  This accelerates the longer you hold in the same direction.
 
 # GPIO Joystick Banks
 

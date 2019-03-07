@@ -244,33 +244,39 @@ void raspi_key_released(long key) {
      commodore_mod = 0;
    }
 
-   if (key == KEYCODE_F12 || (menu_alt_f12() && commodore_mod == 1 && key == KEYCODE_F7)) {
+   if (key == KEYCODE_F12 ||
+      (menu_alt_f12() && commodore_mod == 1 && key == KEYCODE_F7)) {
       if (commodore_mod) {
          // Have to release the commodore key or emulator locks up.
          circle_emu_key_interrupt(KEYCODE_LeftControl, 0 /* up */);
-         commodore_mod = 0;
       }
-      circle_emu_key_interrupt(key, 0 /* up */);
-      ui_toggle();
-   } else {
-      // Intercept keys meant to become joystick values
-      if (joydevs[0].device == JOYDEV_NUMS_1 ||
-         joydevs[0].device == JOYDEV_NUMS_2 ||
-         joydevs[0].device == JOYDEV_CURS) {
-         if (joy_key_up(0, key))
-            return;
-      }
-      if (joydevs[1].device == JOYDEV_NUMS_1 ||
-         joydevs[1].device == JOYDEV_NUMS_2 ||
-         joydevs[1].device == JOYDEV_CURS) {
-         if (joy_key_up(1, key))
-            return;
-      }
-
       if (ui_activated) {
+         // Let the ui handle the menu action as it sees fit.
          circle_ui_key_interrupt(key, 0 /* up */);
       } else {
          circle_emu_key_interrupt(key, 0 /* up */);
+         ui_toggle();
       }
+      return;
+   }
+
+   // Intercept keys meant to become joystick values
+   if (joydevs[0].device == JOYDEV_NUMS_1 ||
+      joydevs[0].device == JOYDEV_NUMS_2 ||
+      joydevs[0].device == JOYDEV_CURS) {
+      if (joy_key_up(0, key))
+         return;
+   }
+   if (joydevs[1].device == JOYDEV_NUMS_1 ||
+      joydevs[1].device == JOYDEV_NUMS_2 ||
+      joydevs[1].device == JOYDEV_CURS) {
+      if (joy_key_up(1, key))
+         return;
+   }
+
+   if (ui_activated) {
+      circle_ui_key_interrupt(key, 0 /* up */);
+   } else {
+      circle_emu_key_interrupt(key, 0 /* up */);
    }
 }

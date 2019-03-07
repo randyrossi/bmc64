@@ -94,6 +94,14 @@ struct menu_item {
 
    // Optional mapping of button value to some other int for display
    int (*map_value_func)(int);
+
+   // By default these are set to the full screen but can be overridden
+   // when pushing a new root node to paint smaller dialogs overtop the
+   // previous menu.
+   int menu_width;
+   int menu_height;
+   int menu_left;
+   int menu_top;
 };
 
 struct menu_item* ui_menu_add_toggle(int id, struct menu_item *folder, char* name, int initial_state);
@@ -132,7 +140,8 @@ void ui_render_now(void);
 
 struct menu_item* ui_pop_menu(void);
 
-struct menu_item* ui_push_menu(void);
+// Pass in -1,-1 for a full screen menu.
+struct menu_item* ui_push_menu(int w_chars, int h_chars);
 
 void ui_set_on_value_changed_callback(
     void (*on_value_changed)(struct menu_item*));
