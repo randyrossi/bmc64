@@ -604,16 +604,14 @@ void CKernel::KeyStatusHandlerRaw (unsigned char ucModifiers,
            case 1: // LeftShift
               if (circle_ui_activated()) {
                  uiShift = true;
-              } else {
-                 raspi_press_handler(KEYCODE_LeftShift);
               }
+              raspi_press_handler(KEYCODE_LeftShift);
               break;
            case 5: // RightShift
               if (circle_ui_activated()) {
                  uiShift = true;
-              } else {
-                 raspi_press_handler(KEYCODE_RightShift);
               }
+              raspi_press_handler(KEYCODE_RightShift);
               break;
            case 3: // LeftAlt
               raspi_press_handler(KEYCODE_LeftAlt);
@@ -629,16 +627,14 @@ void CKernel::KeyStatusHandlerRaw (unsigned char ucModifiers,
            case 1: // LeftShift
               if (circle_ui_activated()) {
                  uiShift = false;
-              } else {
-                 raspi_release_handler(KEYCODE_LeftShift);
               }
+              raspi_release_handler(KEYCODE_LeftShift);
               break;
            case 5: // RightShift
               if (circle_ui_activated()) {
                  uiShift = false;
-              } else {
-                 raspi_release_handler(KEYCODE_RightShift);
               }
+              raspi_release_handler(KEYCODE_RightShift);
               break;
            case 3: // LeftAlt
               raspi_release_handler(KEYCODE_LeftAlt);
