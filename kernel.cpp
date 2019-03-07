@@ -665,13 +665,32 @@ void CKernel::KeyStatusHandlerRaw (unsigned char ucModifiers,
       if (key_states[i] == true && new_states[i] == false) {
            if (ui_activated) {
               // We have to handle shift+left/right here or else our ui
-              // isn't navigable by keyrah with real C64 board.
-              if (uiShift && i == KEYCODE_Right) i = KEYCODE_Left;
-              else if (uiShift && i == KEYCODE_Down) i = KEYCODE_Up;
+              // isn't navigable by keyrah with real C64 board. Keep
+              // key_states below managing the state of the original key,
+              // not the translated one.
+              if (uiShift && i == KEYCODE_Right) {
+                raspi_release_handler(KEYCODE_Left);
+              } else if (uiShift && i == KEYCODE_Down) {
+                raspi_release_handler(KEYCODE_Up);
+              } else {
+                raspi_release_handler(i);
+              }
+           } else {
+              raspi_release_handler(i);
            }
-           raspi_release_handler(i);
       } else if (key_states[i] == false && new_states[i] == true) {
-           raspi_press_handler(i);
+           if (ui_activated) {
+              // See above note on shift.
+              if (uiShift && i == KEYCODE_Right) {
+                raspi_press_handler(KEYCODE_Left);
+              } else if (uiShift && i == KEYCODE_Down) {
+                raspi_press_handler(KEYCODE_Up);
+              } else {
+                raspi_press_handler(i);
+              }
+           } else {
+              raspi_press_handler(i);
+           }
       }
       key_states[i] = new_states[i];    
    }

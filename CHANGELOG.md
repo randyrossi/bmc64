@@ -45,3 +45,4 @@
     * Create snapshots
   * Better menu navigation with auto repeat and acceleration during hold
   * Added error/info dialogs for errors or confirmation of actions
+  * Fixed wierd behavior with shift+down/right mapping to up/left for keyrah
