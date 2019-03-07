@@ -369,36 +369,48 @@ static void menu_value_changed(struct menu_item* item) {
          show_files(FILTER_NONE, MENU_CART_ULTIMAX_FILE);
          return;
       case MENU_DETACH_DISK_8:
+         ui_info("Deatching...");
+         ui_render_single_frame();
          file_system_detach_disk(8);
-         ui_toggle();
+         ui_pop_all_and_toggle();
          return;
       case MENU_DETACH_DISK_9:
+         ui_info("Deatching...");
+         ui_render_single_frame();
          file_system_detach_disk(9);
-         ui_toggle();
+         ui_pop_all_and_toggle();
          return;
       case MENU_DETACH_DISK_10:
+         ui_info("Deatching...");
+         ui_render_single_frame();
          file_system_detach_disk(10);
-         ui_toggle();
+         ui_pop_all_and_toggle();
          return;
       case MENU_DETACH_DISK_11:
+         ui_info("Deatching...");
+         ui_render_single_frame();
          file_system_detach_disk(11);
-         ui_toggle();
+         ui_pop_all_and_toggle();
          return;
       case MENU_DETACH_TAPE:
+         ui_info("Deatching...");
+         ui_render_single_frame();
          tape_image_detach(1);
-         ui_toggle();
+         ui_pop_all_and_toggle();
          return;
       case MENU_DETACH_CART:
+         ui_info("Deatching...");
+         ui_render_single_frame();
          cartridge_detach_image(CARTRIDGE_CRT);
-         ui_toggle();
+         ui_pop_all_and_toggle();
          return;
       case MENU_SOFT_RESET:
          machine_trigger_reset(MACHINE_RESET_MODE_SOFT);
-         ui_toggle();
+         ui_pop_all_and_toggle();
          return;
       case MENU_HARD_RESET:
          machine_trigger_reset(MACHINE_RESET_MODE_HARD);
-         ui_toggle();
+         ui_pop_all_and_toggle();
          return;
       case MENU_ABOUT:
          show_about();
@@ -446,19 +458,19 @@ static void menu_value_changed(struct menu_item* item) {
          return;
       case MENU_TAPE_START:
          datasette_control(DATASETTE_CONTROL_START);
-         ui_toggle();
+         ui_pop_all_and_toggle();
          return;
       case MENU_TAPE_STOP:
          datasette_control(DATASETTE_CONTROL_STOP);
-         ui_toggle();
+         ui_pop_all_and_toggle();
          return;
       case MENU_TAPE_REWIND:
          datasette_control(DATASETTE_CONTROL_REWIND);
-         ui_toggle();
+         ui_pop_all_and_toggle();
          return;
       case MENU_TAPE_RESET:
          datasette_control(DATASETTE_CONTROL_RESET);
-         ui_toggle();
+         ui_pop_all_and_toggle();
          return;
       case MENU_SID_ENGINE:
          resources_set_int("SidEngine", item->choice_ints[item->value]);
@@ -474,53 +486,67 @@ static void menu_value_changed(struct menu_item* item) {
    // This is selection of a file
    if (item->id == MENU_DISK_FILE) {
          // Perform the attach
+         ui_info("Attaching...");
+         ui_render_single_frame();
          if (file_system_attach_disk(unit, item->name) < 0) {
+            ui_pop_menu();
             ui_error("Failed to attach disk image");
          } else {
-            ui_pop_menu();
-            ui_toggle();
+            ui_pop_all_and_toggle();
          }
    } else if (item->id == MENU_TAPE_FILE) {
+         ui_info("Attaching...");
+         ui_render_single_frame();
          if (tape_image_attach(1, item->name) < 0) {
+            ui_pop_menu();
             ui_error("Failed to attach tape image");
          } else {
-            ui_pop_menu();
-            ui_toggle();
+            ui_pop_all_and_toggle();
          }
    } else if (item->id == MENU_CART_FILE) {
+         ui_info("Attaching...");
+         ui_render_single_frame();
          if (cartridge_attach_image(CARTRIDGE_CRT, item->name) < 0) {
+            ui_pop_menu();
             ui_error("Failed to attach cart image");
          } else {
-            ui_pop_menu();
-            ui_toggle();
+            ui_pop_all_and_toggle();
          }
    } else if (item->id == MENU_CART_8K_FILE) {
+         ui_info("Attaching...");
+         ui_render_single_frame();
          if (cartridge_attach_image(CARTRIDGE_GENERIC_8KB, item->name) < 0) {
+            ui_pop_menu();
             ui_error("Failed to attach cart image");
          } else {
-           ui_pop_menu();
-           ui_toggle();
+            ui_pop_all_and_toggle();
          }
    } else if (item->id == MENU_CART_16K_FILE) {
+         ui_info("Attaching...");
+         ui_render_single_frame();
          if (cartridge_attach_image(CARTRIDGE_GENERIC_16KB, item->name) < 0) {
+            ui_pop_menu();
             ui_error("Failed to attach cart image");
          } else {
-           ui_pop_menu();
-           ui_toggle();
+            ui_pop_all_and_toggle();
          }
    } else if (item->id == MENU_CART_ULTIMAX_FILE) {
+         ui_info("Attaching...");
+         ui_render_single_frame();
          if (cartridge_attach_image(CARTRIDGE_ULTIMAX, item->name) < 0) {
+            ui_pop_menu();
             ui_error("Failed to attach cart image");
          } else {
-           ui_pop_menu();
-           ui_toggle();
+            ui_pop_all_and_toggle();
          }
    } else if (item->id == MENU_AUTOSTART_FILE) {
+         ui_info("Starting...");
+         ui_render_single_frame();
          if (autostart_autodetect(item->name, "*", 0, AUTOSTART_MODE_RUN) < 0) {
+            ui_pop_menu();
             ui_error("Failed to autostart file");
          } else {
-           ui_pop_menu();
-           ui_toggle();
+            ui_pop_all_and_toggle();
          }
    }
 }

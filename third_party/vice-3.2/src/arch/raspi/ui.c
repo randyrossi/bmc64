@@ -279,6 +279,13 @@ static void ui_action_frame() {
    }
 }
 
+void ui_pop_all_and_toggle() {
+   while (current_menu > 0) {
+      ui_pop_menu();
+   }
+   ui_toggle();
+}
+
 static void ui_action(long action) {
    switch (action) {
       case ACTION_Up:
@@ -367,10 +374,7 @@ static void ui_action(long action) {
          }
          break;
       case ACTION_Exit:
-         while (current_menu > 0) {
-           ui_pop_menu();
-         }
-         ui_toggle();
+         ui_pop_all_and_toggle();
          break;
    }
 }
@@ -408,6 +412,11 @@ void ui_check_key(void) {
   ui_action_frame();
 }
 
+void ui_render_single_frame() {
+   ui_render_now();
+   videoarch_swap();
+}
+
 static void pause_trap(uint16_t addr, void *data) {
    while (ui_activated) {
       if (joydevs[0].device == JOYDEV_GPIO_0 || joydevs[1].device == JOYDEV_GPIO_0) {
@@ -418,8 +427,7 @@ static void pause_trap(uint16_t addr, void *data) {
       }
       circle_check_gpio();
       ui_check_key();
-      ui_render_now();
-      videoarch_swap();
+      ui_render_single_frame();
       circle_wait_vsync();
    }
 }
