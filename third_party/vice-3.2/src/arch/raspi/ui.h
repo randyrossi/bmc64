@@ -32,6 +32,7 @@
 #define NUM_MENU_ROOTS 5
 #define MAX_CHOICES    16
 #define MAX_MENU_STR   36
+#define MAX_FN_NAME    12
 
 // Special menu id for items that do nothing or have no action callback
 #define MENU_ID_DO_NOTHING -1 
@@ -43,7 +44,8 @@ typedef enum menu_item_type {
    BUTTON,          // an action with optional displayable value to hold
    RANGE,           // something with a min, max and step
    FOLDER,          // contains sub-items/folders
-   DIVIDER
+   DIVIDER,         // just a line
+   TEXTFIELD,       // editable text field
 } menu_item_type;
 
 struct menu_item {
@@ -59,7 +61,8 @@ struct menu_item {
    char name[MAX_MENU_STR];
 
    // 0/1 for TOGGLE or CHECKBOX, or range value for RANGE
-   // index for multple choice
+   // index for MULTIPLE_CHOICE
+   // cursor position for TEXTFIELD
    int value;
 
    // For MULTIPLE_CHOICE
@@ -86,6 +89,7 @@ struct menu_item {
    char scratch[64];
 
    // For buttons - optional values
+   // Also for TEXTFIELD, holds text
    char str_value[32];
    char displayed_value[32];
 
@@ -112,6 +116,7 @@ struct menu_item* ui_menu_add_button_with_value(int id, struct menu_item *folder
 struct menu_item* ui_menu_add_range(int id, struct menu_item *folder, char *name, int min, int max, int step, int initial_value);
 struct menu_item* ui_menu_add_folder(struct menu_item *folder, char *name);
 struct menu_item* ui_menu_add_divider(struct menu_item *folder);
+struct menu_item* ui_menu_add_text_field(int id, struct menu_item *folder, char *name, char *value);
 
 
 // Stubs for vice calls. Unimplemented for now.

@@ -49,6 +49,7 @@
 #define FILTER_DISK 1
 #define FILTER_CART 2
 #define FILTER_TAPE 3
+#define FILTER_SNAP 4
 
 extern struct joydev_config joydevs[2];
 
@@ -87,6 +88,9 @@ char tape_filt_ext[2][5] = { ".t64",".tap" };
 const int num_cart_ext = 2;
 char cart_filt_ext[2][5] = { ".crt",".bin" };
 
+const int num_snap_ext = 1;
+char snap_filt_ext[1][5] = { ".vsf" };
+
 #define TEST_FILTER_MACRO(funcname, numvar, filtarray) \
 static int funcname(char *name) { \
    int include = 0; \
@@ -104,12 +108,13 @@ static int funcname(char *name) { \
 TEST_FILTER_MACRO(test_disk_name, num_disk_ext, disk_filt_ext);
 TEST_FILTER_MACRO(test_tape_name, num_tape_ext, tape_filt_ext);
 TEST_FILTER_MACRO(test_cart_name, num_cart_ext, cart_filt_ext);
+TEST_FILTER_MACRO(test_snap_name, num_snap_ext, snap_filt_ext);
 
 // Clears the file menu and populates with files
 // Only the root dir is supported
 static void list_files(struct menu_item* parent, int filter, int menu_id) {
   DIR *dp;
-  struct dirent *ep;     
+  struct dirent *ep;
   int i;
   int include;
 
@@ -124,6 +129,8 @@ static void list_files(struct menu_item* parent, int filter, int menu_id) {
          include = test_tape_name(ep->d_name);
       } else if (filter == FILTER_CART) {
          include = test_cart_name(ep->d_name);
+      } else if (filter == FILTER_SNAP) {
+         include = test_snap_name(ep->d_name);
       } else if (filter == FILTER_NONE) {
          include = 1;
       }
@@ -139,6 +146,9 @@ static void list_files(struct menu_item* parent, int filter, int menu_id) {
 static void show_files(int filter, int menu_id) {
    // Show files
    struct menu_item* file_root = ui_push_menu(-1, -1);
+   if (menu_id == MENU_SAVE_SNAP_FILE) {
+      ui_menu_add_text_field(menu_id, file_root, "Enter name:", "");
+   }
    list_files(file_root, filter, menu_id);
 }
 
@@ -162,7 +172,7 @@ static void show_license() {
 
 static void configure_usb(int dev) {
    struct menu_item* usb_root = ui_push_menu(-1, -1);
-   build_usb_menu(dev, usb_root);   
+   build_usb_menu(dev, usb_root);
 }
 
 static void ui_set_joy_items()
@@ -341,6 +351,12 @@ static void menu_value_changed(struct menu_item* item) {
       case MENU_AUTOSTART:
          show_files(FILTER_NONE, MENU_AUTOSTART_FILE);
          return;
+      case MENU_SAVE_SNAP:
+         show_files(FILTER_SNAP, MENU_SAVE_SNAP_FILE);
+         return;
+      case MENU_LOAD_SNAP:
+         show_files(FILTER_SNAP, MENU_LOAD_SNAP_FILE);
+         return;
       case MENU_IECDEVICE_8:
       case MENU_IECDEVICE_9:
       case MENU_IECDEVICE_10:
@@ -468,6 +484,10 @@ static void menu_value_changed(struct menu_item* item) {
          datasette_control(DATASETTE_CONTROL_REWIND);
          ui_pop_all_and_toggle();
          return;
+      case MENU_TAPE_RECORD:
+         datasette_control(DATASETTE_CONTROL_RECORD);
+         ui_pop_all_and_toggle();
+         return;
       case MENU_TAPE_RESET:
          datasette_control(DATASETTE_CONTROL_RESET);
          ui_pop_all_and_toggle();
@@ -484,7 +504,49 @@ static void menu_value_changed(struct menu_item* item) {
    }
 
    // This is selection of a file
-   if (item->id == MENU_DISK_FILE) {
+   if (item->id == MENU_LOAD_SNAP_FILE) {
+      ui_info("Loading...");
+      ui_render_single_frame();
+      if(machine_read_snapshot(item->name,0) < 0) {
+          ui_pop_menu();
+          ui_error("Load snapshot failed");
+      } else {
+          ui_pop_all_and_toggle();
+      }
+   } else if (item->id == MENU_SAVE_SNAP_FILE) {
+      char *fname = item->name;
+      if (item->type == TEXTFIELD) {
+         // Scrub the filename before passing it along
+         fname = item->str_value;
+         if (strlen(fname) == 0) {
+            ui_error("Empty filename");
+            return;
+         } else if (strlen(fname) > MAX_FN_NAME) {
+            ui_error("Too long");
+            return;
+         }
+         char* dot = strchr(fname, '.');
+         if (dot == NULL) {
+            ui_error("Missing extension");
+            return;
+         } else {
+            if ((dot[1] != 'v' && dot[1] != 'V') ||
+                (dot[2] != 's' && dot[2] != 'S') ||
+                (dot[3] != 'f' && dot[3] != 'F')) {
+              ui_error("Need .VSF extension");
+              return;
+            }
+         }
+      }
+      ui_info("Saving...");
+      ui_render_single_frame();
+      if(machine_write_snapshot(fname, 1, 1, 0) < 0) {
+          ui_pop_menu();
+          ui_error("Save snapshot failed");
+      } else {
+          ui_pop_all_and_toggle();
+      }
+   } else if (item->id == MENU_DISK_FILE) {
          // Perform the attach
          ui_info("Attaching...");
          ui_render_single_frame();
@@ -626,11 +688,16 @@ void build_menu(struct menu_item* root) {
       ui_menu_add_button(MENU_TAPE_START, parent, "Play");
       ui_menu_add_button(MENU_TAPE_STOP, parent, "Stop");
       ui_menu_add_button(MENU_TAPE_REWIND, parent, "Rewind");
+      ui_menu_add_button(MENU_TAPE_RECORD, parent, "Record");
       ui_menu_add_button(MENU_TAPE_RESET, parent, "Reset");
 
    ui_menu_add_divider(root);
 
-   parent = ui_menu_add_folder(root, "Sid");
+   parent = ui_menu_add_folder(root, "Snapshots");
+      ui_menu_add_button(MENU_LOAD_SNAP, parent, "Load Snapshot");
+      ui_menu_add_button(MENU_SAVE_SNAP, parent, "Save Snapshot");
+
+   parent = ui_menu_add_folder(root, "Sound");
       // Resid by default
       child = sid_engine_item = ui_menu_add_multiple_choice(
           MENU_SID_ENGINE, parent,
@@ -663,7 +730,7 @@ void build_menu(struct menu_item* root) {
 
    parent = ui_menu_add_folder(root, "Keyboard");
       child = keyboard_type_item = ui_menu_add_multiple_choice(
-          MENU_KEYBOARD_TYPE, parent, 
+          MENU_KEYBOARD_TYPE, parent,
           "Layout (Needs Save+Reboot)");
       child->num_choices = 2;
       child->value = KEYBOARD_TYPE_US;
@@ -671,7 +738,7 @@ void build_menu(struct menu_item* root) {
       strcpy (child->choices[KEYBOARD_TYPE_UK], "UK");
 
       child = menu_alt_f12_item = ui_menu_add_multiple_choice(
-          MENU_KEYBOARD_MENU_ALT_F12, parent, 
+          MENU_KEYBOARD_MENU_ALT_F12, parent,
           "Alternate Menu Key");
       child->num_choices = 2;
       child->value = ALT_F12_COMMODOREF7;
@@ -681,7 +748,7 @@ void build_menu(struct menu_item* root) {
    parent = ui_menu_add_folder(root, "Joystick");
       ui_menu_add_button(MENU_SWAP_JOYSTICKS, parent, "Swap Joystick Ports");
       child = port_1_menu_item = ui_menu_add_multiple_choice(
-          MENU_JOYSTICK_PORT_1, parent, 
+          MENU_JOYSTICK_PORT_1, parent,
           "Joystick Port 1");
       child->num_choices = 8;
       child->value = 0;
@@ -695,7 +762,7 @@ void build_menu(struct menu_item* root) {
       strcpy (child->choices[7], "NUMPAD 17930"); child->choice_ints[7] = JOYDEV_NUMS_2;
 
       child = port_2_menu_item = ui_menu_add_multiple_choice(
-          MENU_JOYSTICK_PORT_2, parent, 
+          MENU_JOYSTICK_PORT_2, parent,
           "Joystick Port 2");
       child->num_choices = 8;
       child->value = 0;
@@ -728,20 +795,22 @@ void build_menu(struct menu_item* root) {
 
    ui_menu_add_divider(root);
 
-   palette_item = parent = ui_menu_add_multiple_choice(MENU_COLOR_PALETTE, root, "Color Palette");
-   parent->num_choices = 4;
-   parent->value = 0;
-   strcpy (parent->choices[0], "Default");
-   strcpy (parent->choices[1], "Vice");
-   strcpy (parent->choices[2], "C64hq");
-   strcpy (parent->choices[3], "Pepto-Ntsc");
+   parent = ui_menu_add_folder(root, "Prefs");
+
+      palette_item = ui_menu_add_multiple_choice(MENU_COLOR_PALETTE, parent, "Color Palette");
+      palette_item->num_choices = 4;
+      palette_item->value = 0;
+      strcpy (palette_item->choices[0], "Default");
+      strcpy (palette_item->choices[1], "Vice");
+      strcpy (palette_item->choices[2], "C64hq");
+      strcpy (palette_item->choices[3], "Pepto-Ntsc");
+
+      drive_sounds_item = ui_menu_add_toggle(MENU_DRIVE_SOUND_EMULATION,
+         parent, "Drive sound emulation", 0);
+      drive_sounds_vol_item = ui_menu_add_range(MENU_DRIVE_SOUND_EMULATION_VOLUME,
+         parent, "Drive sound emulation volume", 0, 1000, 100, 1000);
 
    ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
-
-   drive_sounds_item = ui_menu_add_toggle(MENU_DRIVE_SOUND_EMULATION,
-      root, "Drive sound emulation", 0);
-   drive_sounds_vol_item = ui_menu_add_range(MENU_DRIVE_SOUND_EMULATION_VOLUME,
-      root, "Drive sound emulation volume", 0, 1000, 100, 1000);
 
    parent = ui_menu_add_folder(root, "Reset");
       ui_menu_add_button(MENU_SOFT_RESET, parent, "Soft Reset");

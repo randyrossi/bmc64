@@ -99,6 +99,8 @@ static int ui_key_ticks_repeats_next;
 
 static void ui_action(long action);
 
+static int keyboard_shift = 0;
+
 void ui_init_menu(void) {
    int i;
 
@@ -196,6 +198,27 @@ static void do_on_value_changed(struct menu_item* item) {
    }
 }
 
+static void ui_type_char(char ch) {
+   struct menu_item* cur = menu_cursor_item[current_menu];
+   if (cur->type == TEXTFIELD) {
+      if (ch == '\b') {
+        if (cur->value <= 0) return;
+        char *str = cur->str_value;
+        memmove(str+cur->value-1, str+cur->value,
+           (strlen(str) - cur->value + 1)*sizeof(char));
+        cur->value--;
+      } else {
+        if (strlen(cur->str_value) >= MAX_FN_NAME) return;
+
+        char *str = cur->str_value;
+        memmove(str+cur->value+1, str+cur->value,
+           (strlen(str) - cur->value + 1)*sizeof(char));
+        str[cur->value] = ch;
+        cur->value++;
+      }
+   }
+}
+
 // Happens on main loop.
 static void ui_key_pressed(long key) {
   switch (key) {
@@ -206,7 +229,7 @@ static void ui_key_pressed(long key) {
        ui_key_ticks_repeats = 0;
        ui_key_ticks_repeats_next = 8;
        ui_action(ACTION_Up);
-       break;
+       return;
     case KEYCODE_Down:
        ui_key_action = ACTION_Down;
        ui_key_ticks = INITIAL_ACTION_DELAY;
@@ -214,7 +237,7 @@ static void ui_key_pressed(long key) {
        ui_key_ticks_repeats = 0;
        ui_key_ticks_repeats_next = 8;
        ui_action(ACTION_Down);
-       break;
+       return;
     case KEYCODE_Left:
        ui_key_action = ACTION_Left;
        ui_key_ticks = INITIAL_ACTION_DELAY;
@@ -222,7 +245,7 @@ static void ui_key_pressed(long key) {
        ui_key_ticks_repeats = 0;
        ui_key_ticks_repeats_next = 8;
        ui_action(ACTION_Left);
-       break;
+       return;
     case KEYCODE_Right:
        ui_key_action = ACTION_Right;
        ui_key_ticks = INITIAL_ACTION_DELAY;
@@ -230,14 +253,39 @@ static void ui_key_pressed(long key) {
        ui_key_ticks_repeats = 0;
        ui_key_ticks_repeats_next = 8;
        ui_action(ACTION_Right);
-       break;
-       break;
-    case KEYCODE_Return:
-       ui_action(ACTION_Return);
-       break;
+       return;
     case KEYCODE_Escape:
-       ui_action(ACTION_Escape);
-       break;
+       return;
+    case KEYCODE_LeftShift:
+       keyboard_shift |= 1;
+       return;
+    case KEYCODE_RightShift:
+       keyboard_shift |= 2;
+       return;
+  }
+
+  if (key >= KEYCODE_a && key <= KEYCODE_z) {
+     char ch;
+     if (keyboard_shift) ch = 'A' + key - KEYCODE_a;
+     else ch = 'a' + key - KEYCODE_a;
+     ui_type_char(ch);
+  }
+  else if (key >= KEYCODE_1 && key <= KEYCODE_9) {
+     char ch = '1' + key - KEYCODE_1;
+     ui_type_char(ch);
+  }
+  else if (key == KEYCODE_0) {
+     ui_type_char(0);
+  }
+  else if (key == KEYCODE_Dash) {
+     if (keyboard_shift) ui_type_char('_');
+     else ui_type_char('-');
+  }
+  else if (key == KEYCODE_Period) {
+     ui_type_char('.');
+  }
+  else if (key == KEYCODE_Backspace) {
+     ui_type_char('\b');
   }
 }
 
@@ -248,14 +296,24 @@ static void ui_key_released(long key) {
     case KEYCODE_Down:
     case KEYCODE_Left:
     case KEYCODE_Right:
-    case KEYCODE_Return:
-    case KEYCODE_Escape:
        ui_key_action = ACTION_None;
-       break;
+       return;
+    case KEYCODE_Return:
+       ui_action(ACTION_Return);
+       return;
+    case KEYCODE_Escape:
+       ui_action(ACTION_Escape);
+       return;
     case KEYCODE_F7:
     case KEYCODE_F12:
        ui_action(ACTION_Exit);
-       break;
+       return;
+    case KEYCODE_LeftShift:
+       keyboard_shift &= ~1;
+       return;
+    case KEYCODE_RightShift:
+       keyboard_shift &= ~2;
+       return;
   }
 }
 
@@ -287,6 +345,7 @@ void ui_pop_all_and_toggle() {
 }
 
 static void ui_action(long action) {
+   struct menu_item* cur = menu_cursor_item[current_menu];
    switch (action) {
       case ACTION_Up:
          menu_cursor[current_menu]--;
@@ -307,62 +366,76 @@ static void ui_action(long action) {
          }
          break;
       case ACTION_Left:
-         if (menu_cursor_item[current_menu]->type == RANGE) {
-            menu_cursor_item[current_menu]->value -= menu_cursor_item[current_menu]->step;
-            if (menu_cursor_item[current_menu]->value < menu_cursor_item[current_menu]->min) {
-                menu_cursor_item[current_menu]->value = menu_cursor_item[current_menu]->min;
+         if (cur->type == RANGE) {
+            cur->value -= cur->step;
+            if (cur->value < cur->min) {
+                cur->value = cur->min;
             } else {
                 do_on_value_changed(menu_cursor_item[current_menu]);
             }
          }
-         else if (menu_cursor_item[current_menu]->type == MULTIPLE_CHOICE) {
-            menu_cursor_item[current_menu]->value -= 1;
-            if (menu_cursor_item[current_menu]->value < 0) {
-               menu_cursor_item[current_menu]->value = menu_cursor_item[current_menu]->num_choices - 1;
+         else if (cur->type == MULTIPLE_CHOICE) {
+            cur->value -= 1;
+            if (cur->value < 0) {
+               cur->value = cur->num_choices - 1;
             }
             do_on_value_changed(menu_cursor_item[current_menu]);
-         } else if (menu_cursor_item[current_menu]->type == TOGGLE) {
-            menu_cursor_item[current_menu]->value = 1-menu_cursor_item[current_menu]->value;
+         } else if (cur->type == TOGGLE) {
+            cur->value = 1-cur->value;
             do_on_value_changed(menu_cursor_item[current_menu]);
+         } else if (cur->type == TEXTFIELD) {
+            // Move cursor left
+            cur->value--;
+            if (cur->value < 0) {
+               cur->value = 0;
+            }
          }
          break;
       case ACTION_Right:
-         if (menu_cursor_item[current_menu]->type == RANGE) {
-            menu_cursor_item[current_menu]->value += menu_cursor_item[current_menu]->step;
-            if (menu_cursor_item[current_menu]->value > menu_cursor_item[current_menu]->max) {
-                menu_cursor_item[current_menu]->value = menu_cursor_item[current_menu]->max;
+         if (cur->type == RANGE) {
+            cur->value += cur->step;
+            if (cur->value > cur->max) {
+                cur->value = cur->max;
             } else {
                 do_on_value_changed(menu_cursor_item[current_menu]);
             }
          }
-         else if (menu_cursor_item[current_menu]->type == MULTIPLE_CHOICE) {
-            menu_cursor_item[current_menu]->value += 1;
-            if (menu_cursor_item[current_menu]->value >= menu_cursor_item[current_menu]->num_choices) {
-               menu_cursor_item[current_menu]->value = 0;
+         else if (cur->type == MULTIPLE_CHOICE) {
+            cur->value += 1;
+            if (cur->value >= cur->num_choices) {
+               cur->value = 0;
             }
             do_on_value_changed(menu_cursor_item[current_menu]);
-         } else if (menu_cursor_item[current_menu]->type == TOGGLE) {
-            menu_cursor_item[current_menu]->value = 1-menu_cursor_item[current_menu]->value;
+         } else if (cur->type == TOGGLE) {
+            cur->value = 1-cur->value;
             do_on_value_changed(menu_cursor_item[current_menu]);
+         } else if (cur->type == TEXTFIELD) {
+            // Move cursor right
+            cur->value++;
+            if (cur->value >= strlen(cur->str_value)) {
+               cur->value = strlen(cur->str_value);
+            }
          }
          break;
       case ACTION_Return:
-         if (menu_cursor_item[current_menu]->type == FOLDER) {
-            menu_cursor_item[current_menu]->is_expanded = 1-menu_cursor_item[current_menu]->is_expanded;
+         if (cur->type == FOLDER) {
+            cur->is_expanded = 1-cur->is_expanded;
             do_on_value_changed(menu_cursor_item[current_menu]);
-         } else if (menu_cursor_item[current_menu]->type == CHECKBOX) {
-            menu_cursor_item[current_menu]->value = 1-menu_cursor_item[current_menu]->value;
+         } else if (cur->type == CHECKBOX) {
+            cur->value = 1-cur->value;
             do_on_value_changed(menu_cursor_item[current_menu]);
-         } else if (menu_cursor_item[current_menu]->type == TOGGLE) {
-            menu_cursor_item[current_menu]->value = 1-menu_cursor_item[current_menu]->value;
+         } else if (cur->type == TOGGLE) {
+            cur->value = 1-cur->value;
             do_on_value_changed(menu_cursor_item[current_menu]);
-         } else if (menu_cursor_item[current_menu]->type == BUTTON) {
+         } else if (cur->type == BUTTON) {
             do_on_value_changed(menu_cursor_item[current_menu]);
-         } else if (menu_cursor_item[current_menu]->type == MULTIPLE_CHOICE) {
-            menu_cursor_item[current_menu]->value += 1;
-            if (menu_cursor_item[current_menu]->value >= menu_cursor_item[current_menu]->num_choices) {
-               menu_cursor_item[current_menu]->value = 0;
+         } else if (cur->type == MULTIPLE_CHOICE) {
+            cur->value += 1;
+            if (cur->value >= cur->num_choices) {
+               cur->value = 0;
             }
+            do_on_value_changed(menu_cursor_item[current_menu]);
+         } else if (cur->type == TEXTFIELD) {
             do_on_value_changed(menu_cursor_item[current_menu]);
          }
          break;
@@ -510,7 +583,7 @@ struct menu_item* ui_menu_add_button_with_value(int id, struct menu_item *folder
 }
 
 struct menu_item* ui_menu_add_range(int id, struct menu_item *folder, char *name, int min, int max, int step, int initial_value) {
-   struct menu_item* new_item = ui_new_item(folder, name,id);
+   struct menu_item* new_item = ui_new_item(folder, name, id);
    new_item->type = RANGE;
    new_item->min = min;
    new_item->max = max;
@@ -530,6 +603,15 @@ struct menu_item* ui_menu_add_folder(struct menu_item *folder, char *name) {
 struct menu_item* ui_menu_add_divider(struct menu_item *folder) {
    struct menu_item* new_item = ui_new_item(folder, "", MENU_ID_DO_NOTHING);
    new_item->type = DIVIDER;
+   append(folder, new_item);
+   return new_item;
+}
+
+struct menu_item* ui_menu_add_text_field(int id, struct menu_item *folder, char *name, char *value) {
+   struct menu_item* new_item = ui_new_item(folder, name, id);
+   new_item->type = TEXTFIELD;
+   new_item->value = strlen(new_item->str_value);
+   strcpy(new_item->str_value, value);
    append(folder, new_item);
    return new_item;
 }
@@ -592,6 +674,12 @@ static void ui_render_children(struct menu_item* node, int* index, int indent) {
                          ui_text_width(node->scratch), y, 1);
                }
             }
+         } else if (node->type == TEXTFIELD) {
+            // draw cursor underneath text
+            ui_draw_rect(node->menu_left + ui_text_width(node->name) + 8 + node->value * 8,
+               y, 8, 8, 3, 1);
+            ui_draw_text(node->str_value,
+               node->menu_left + ui_text_width(node->name) + 8, y, 1);
          }
       }
 
