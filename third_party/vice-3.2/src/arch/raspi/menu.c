@@ -75,7 +75,6 @@ struct menu_item *sid_engine_item;
 struct menu_item *sid_model_item;
 struct menu_item *sid_filter_item;
 
-int unit;
 const int num_disk_ext = 13;
 char disk_filt_ext[13][5] =
     {".d64",".d67",".d71",".d80",".d81",".d82",
@@ -320,6 +319,7 @@ static void load_settings() {
 // Interpret what menu item changed and make the change to vice
 static void menu_value_changed(struct menu_item* item) {
    int tmp;
+   int unit;
 
    switch (item->id) {
       case MENU_ATTACH_DISK_8:
@@ -344,7 +344,7 @@ static void menu_value_changed(struct menu_item* item) {
       case MENU_SAVE_SETTINGS:
          save_settings();
          ui_info("Settings saved");
-         break;
+         return;
       case MENU_COLOR_PALETTE:
          video_canvas_change_palette(item->value);
          return;
@@ -386,37 +386,31 @@ static void menu_value_changed(struct menu_item* item) {
          return;
       case MENU_DETACH_DISK_8:
          ui_info("Deatching...");
-         ui_render_single_frame();
          file_system_detach_disk(8);
          ui_pop_all_and_toggle();
          return;
       case MENU_DETACH_DISK_9:
          ui_info("Deatching...");
-         ui_render_single_frame();
          file_system_detach_disk(9);
          ui_pop_all_and_toggle();
          return;
       case MENU_DETACH_DISK_10:
          ui_info("Deatching...");
-         ui_render_single_frame();
          file_system_detach_disk(10);
          ui_pop_all_and_toggle();
          return;
       case MENU_DETACH_DISK_11:
          ui_info("Deatching...");
-         ui_render_single_frame();
          file_system_detach_disk(11);
          ui_pop_all_and_toggle();
          return;
       case MENU_DETACH_TAPE:
          ui_info("Deatching...");
-         ui_render_single_frame();
          tape_image_detach(1);
          ui_pop_all_and_toggle();
          return;
       case MENU_DETACH_CART:
          ui_info("Deatching...");
-         ui_render_single_frame();
          cartridge_detach_image(CARTRIDGE_CRT);
          ui_pop_all_and_toggle();
          return;
@@ -506,7 +500,6 @@ static void menu_value_changed(struct menu_item* item) {
    // This is selection of a file
    if (item->id == MENU_LOAD_SNAP_FILE) {
       ui_info("Loading...");
-      ui_render_single_frame();
       if(machine_read_snapshot(item->name,0) < 0) {
           ui_pop_menu();
           ui_error("Load snapshot failed");
@@ -532,14 +525,14 @@ static void menu_value_changed(struct menu_item* item) {
          } else {
             if ((dot[1] != 'v' && dot[1] != 'V') ||
                 (dot[2] != 's' && dot[2] != 'S') ||
-                (dot[3] != 'f' && dot[3] != 'F')) {
+                (dot[3] != 'f' && dot[3] != 'F') ||
+                 dot[4] != '\0') {
               ui_error("Need .VSF extension");
               return;
             }
          }
       }
       ui_info("Saving...");
-      ui_render_single_frame();
       if(machine_write_snapshot(fname, 1, 1, 0) < 0) {
           ui_pop_menu();
           ui_error("Save snapshot failed");
@@ -549,7 +542,6 @@ static void menu_value_changed(struct menu_item* item) {
    } else if (item->id == MENU_DISK_FILE) {
          // Perform the attach
          ui_info("Attaching...");
-         ui_render_single_frame();
          if (file_system_attach_disk(unit, item->name) < 0) {
             ui_pop_menu();
             ui_error("Failed to attach disk image");
@@ -558,7 +550,6 @@ static void menu_value_changed(struct menu_item* item) {
          }
    } else if (item->id == MENU_TAPE_FILE) {
          ui_info("Attaching...");
-         ui_render_single_frame();
          if (tape_image_attach(1, item->name) < 0) {
             ui_pop_menu();
             ui_error("Failed to attach tape image");
@@ -567,7 +558,6 @@ static void menu_value_changed(struct menu_item* item) {
          }
    } else if (item->id == MENU_CART_FILE) {
          ui_info("Attaching...");
-         ui_render_single_frame();
          if (cartridge_attach_image(CARTRIDGE_CRT, item->name) < 0) {
             ui_pop_menu();
             ui_error("Failed to attach cart image");
@@ -576,7 +566,6 @@ static void menu_value_changed(struct menu_item* item) {
          }
    } else if (item->id == MENU_CART_8K_FILE) {
          ui_info("Attaching...");
-         ui_render_single_frame();
          if (cartridge_attach_image(CARTRIDGE_GENERIC_8KB, item->name) < 0) {
             ui_pop_menu();
             ui_error("Failed to attach cart image");
@@ -585,7 +574,6 @@ static void menu_value_changed(struct menu_item* item) {
          }
    } else if (item->id == MENU_CART_16K_FILE) {
          ui_info("Attaching...");
-         ui_render_single_frame();
          if (cartridge_attach_image(CARTRIDGE_GENERIC_16KB, item->name) < 0) {
             ui_pop_menu();
             ui_error("Failed to attach cart image");
@@ -594,7 +582,6 @@ static void menu_value_changed(struct menu_item* item) {
          }
    } else if (item->id == MENU_CART_ULTIMAX_FILE) {
          ui_info("Attaching...");
-         ui_render_single_frame();
          if (cartridge_attach_image(CARTRIDGE_ULTIMAX, item->name) < 0) {
             ui_pop_menu();
             ui_error("Failed to attach cart image");
@@ -603,7 +590,6 @@ static void menu_value_changed(struct menu_item* item) {
          }
    } else if (item->id == MENU_AUTOSTART_FILE) {
          ui_info("Starting...");
-         ui_render_single_frame();
          if (autostart_autodetect(item->name, "*", 0, AUTOSTART_MODE_RUN) < 0) {
             ui_pop_menu();
             ui_error("Failed to autostart file");

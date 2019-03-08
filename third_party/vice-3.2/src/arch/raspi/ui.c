@@ -485,7 +485,7 @@ void ui_check_key(void) {
   ui_action_frame();
 }
 
-void ui_render_single_frame() {
+static void ui_render_single_frame() {
    ui_render_now();
    videoarch_swap();
 }
@@ -807,6 +807,7 @@ void ui_error(const char *format, ...) {
    vsnprintf (buffer, 255, format, args);
    ui_menu_add_button(MENU_ERROR_DIALOG, root, buffer);
    va_end (args);
+   ui_render_single_frame();
 }
 
 void ui_info(const char *format, ...) {
@@ -817,5 +818,6 @@ void ui_info(const char *format, ...) {
    vsnprintf (buffer, 255, format, args);
    ui_menu_add_button(MENU_INFO_DIALOG, root, buffer);
    va_end (args);
+   ui_render_single_frame();
 }
 

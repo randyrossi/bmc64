@@ -40,8 +40,8 @@ extern struct joydev_config joydevs[2];
 int commodore_mod = 0;
 
 void kbd_arch_init(void) {
-  // Register keyboard callbacks with circle
-  circle_kbd_init(&raspi_key_pressed, &raspi_key_released);
+  // Pass up to kernel for keyboard init.
+  circle_kbd_init();
 }
 
 int kbd_arch_get_host_mapping(void) { return KBD_MAPPING_US; }
@@ -210,7 +210,7 @@ const char *kbd_arch_keynum_to_keyname(signed long keynum) { return 0; }
 
 void kbd_initialize_numpad_joykeys(int *joykeys) {}
 
-void raspi_key_pressed(long key) {
+void circle_key_pressed(long key) {
    if (key == KEYCODE_LeftControl) {
       commodore_mod = 1;
    }
@@ -239,7 +239,7 @@ void raspi_key_pressed(long key) {
    }
 }
 
-void raspi_key_released(long key) {
+void circle_key_released(long key) {
    if (key == KEYCODE_LeftControl) {
      commodore_mod = 0;
    }

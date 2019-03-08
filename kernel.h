@@ -48,10 +48,6 @@ extern "C" {
 
 }
 
-// TODO: Define these in a header in vice and include here
-typedef void (*raspi_key_handler)(long key);
-typedef void (*raspi_usb_joy_handler)(unsigned int device, unsigned int buttons, int dpad);
-
 class CKernel : public ViceStdioApp
 {
 public:
@@ -87,8 +83,7 @@ public:
 	int circle_sound_resume(void);
 	int circle_sound_bufferspace(void);
 	void circle_yield(void);
-	void circle_kbd_init(raspi_key_handler press_handler,
-                         raspi_key_handler release_handler);
+	void circle_kbd_init();
 	void circle_joy_init();
 	void circle_poll_joysticks(int port, int is_interrupt);
 	void circle_check_gpio();

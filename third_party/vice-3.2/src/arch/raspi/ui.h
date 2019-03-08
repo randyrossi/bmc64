@@ -142,7 +142,6 @@ void ui_check_key(void);
 void ui_pop_all_and_toggle(void);
 void ui_toggle(void);
 
-void ui_render_single_frame(void);
 void ui_render_now(void);
 void ui_error(const char *format, ...);
 void ui_info(const char *format, ...);

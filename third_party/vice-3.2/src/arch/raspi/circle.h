@@ -49,9 +49,7 @@
 typedef void (*raspi_key_handler)(long key);
 
 extern void circle_joy_init();
-
-extern void circle_kbd_init(raspi_key_handler press_handler,
-                            raspi_key_handler release_handler);
+extern void circle_kbd_init();
 
 extern int circle_get_machine_timing();
 extern uint8_t* circle_get_fb();
@@ -86,5 +84,8 @@ extern void menu_raw_usb(int device, unsigned buttons, const int hats[6], const 
 extern int circle_button_function(int dev, unsigned button_value);
 extern void circle_lock_acquire();
 extern void circle_lock_release();
+
+extern void circle_key_pressed(long key);
+extern void circle_key_released(long key);
 
 #endif

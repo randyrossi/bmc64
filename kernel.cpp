@@ -51,9 +51,6 @@ CKernel* static_kernel = NULL;
 static bool key_states[MAX_KEY_CODES];
 static unsigned char mod_states;
 
-static raspi_key_handler raspi_press_handler = nullptr;
-static raspi_key_handler raspi_release_handler = nullptr;
-
 extern "C" {
   ssize_t circle_serial_write (int fd, const void * buf, size_t count) {
     if (static_kernel == NULL) return 0;
@@ -135,9 +132,8 @@ extern "C" {
      static_kernel->circle_yield();
   }
 
-  void circle_kbd_init(raspi_key_handler press_handler,
-                             raspi_key_handler release_handler) {
-     static_kernel->circle_kbd_init(press_handler, release_handler);
+  void circle_kbd_init() {
+     static_kernel->circle_kbd_init();
   }
 
   void circle_joy_init() {
@@ -278,8 +274,8 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
               }
 
               if (button_func == BTN_ASSIGN_MENU) {
-                 raspi_press_handler(KEYCODE_F12);
-                 raspi_release_handler(KEYCODE_F12);
+                 circle_key_pressed(KEYCODE_F12);
+                 circle_key_released(KEYCODE_F12);
                  return;
               }
 
@@ -358,8 +354,8 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
               }
 
               if (button_func == BTN_ASSIGN_MENU) {
-                 raspi_press_handler(KEYCODE_F12);
-                 raspi_release_handler(KEYCODE_F12);
+                 circle_key_pressed(KEYCODE_F12);
+                 circle_key_released(KEYCODE_F12);
                  return;
               }
 
@@ -550,11 +546,7 @@ void CKernel::circle_yield(void) {
   CScheduler::Get()->Yield();
 }
 
-void CKernel::circle_kbd_init(raspi_key_handler press_handler,
-                             raspi_key_handler release_handler) {
-  raspi_press_handler = press_handler;
-  raspi_release_handler = release_handler;
-
+void CKernel::circle_kbd_init() {
   pKeyboard =  (CUSBKeyboardDevice *) mDeviceNameService.GetDevice ("ukbd1",
                                                                     FALSE);
   pKeyboard->RegisterKeyStatusHandlerRaw (KeyStatusHandlerRaw);
@@ -599,22 +591,22 @@ void CKernel::KeyStatusHandlerRaw (unsigned char ucModifiers,
       if ((ucModifiers & v) && !(mod_states & v)) {
          switch (i) {
            case 0: // LeftControl
-              raspi_press_handler(KEYCODE_LeftControl);
+              circle_key_pressed(KEYCODE_LeftControl);
               break;
            case 1: // LeftShift
               if (circle_ui_activated()) {
                  uiShift = true;
               }
-              raspi_press_handler(KEYCODE_LeftShift);
+              circle_key_pressed(KEYCODE_LeftShift);
               break;
            case 5: // RightShift
               if (circle_ui_activated()) {
                  uiShift = true;
               }
-              raspi_press_handler(KEYCODE_RightShift);
+              circle_key_pressed(KEYCODE_RightShift);
               break;
            case 3: // LeftAlt
-              raspi_press_handler(KEYCODE_LeftAlt);
+              circle_key_pressed(KEYCODE_LeftAlt);
               break;
            default:
               break;
@@ -622,22 +614,22 @@ void CKernel::KeyStatusHandlerRaw (unsigned char ucModifiers,
       } else if (!(ucModifiers & v) && (mod_states & v)) {
          switch (i) {
            case 0: // LeftControl
-              raspi_release_handler(KEYCODE_LeftControl);
+              circle_key_released(KEYCODE_LeftControl);
               break;
            case 1: // LeftShift
               if (circle_ui_activated()) {
                  uiShift = false;
               }
-              raspi_release_handler(KEYCODE_LeftShift);
+              circle_key_released(KEYCODE_LeftShift);
               break;
            case 5: // RightShift
               if (circle_ui_activated()) {
                  uiShift = false;
               }
-              raspi_release_handler(KEYCODE_RightShift);
+              circle_key_released(KEYCODE_RightShift);
               break;
            case 3: // LeftAlt
-              raspi_release_handler(KEYCODE_LeftAlt);
+              circle_key_released(KEYCODE_LeftAlt);
               break;
            default:
               break;
@@ -665,27 +657,27 @@ void CKernel::KeyStatusHandlerRaw (unsigned char ucModifiers,
               // key_states below managing the state of the original key,
               // not the translated one.
               if (uiShift && i == KEYCODE_Right) {
-                raspi_release_handler(KEYCODE_Left);
+                circle_key_released(KEYCODE_Left);
               } else if (uiShift && i == KEYCODE_Down) {
-                raspi_release_handler(KEYCODE_Up);
+                circle_key_released(KEYCODE_Up);
               } else {
-                raspi_release_handler(i);
+                circle_key_released(i);
               }
            } else {
-              raspi_release_handler(i);
+              circle_key_released(i);
            }
       } else if (key_states[i] == false && new_states[i] == true) {
            if (ui_activated) {
               // See above note on shift.
               if (uiShift && i == KEYCODE_Right) {
-                raspi_press_handler(KEYCODE_Left);
+                circle_key_pressed(KEYCODE_Left);
               } else if (uiShift && i == KEYCODE_Down) {
-                raspi_press_handler(KEYCODE_Up);
+                circle_key_pressed(KEYCODE_Up);
               } else {
-                raspi_press_handler(i);
+                circle_key_pressed(i);
               }
            } else {
-              raspi_press_handler(i);
+              circle_key_pressed(i);
            }
       }
       key_states[i] = new_states[i];    

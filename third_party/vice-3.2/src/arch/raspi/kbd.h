@@ -38,8 +38,4 @@ extern void kbd_initialize_numpad_joykeys(int *joykeys);
 
 #define KBD_PORT_PREFIX "rpi"
 
-// callbacks from circle layer into us
-void raspi_key_pressed(long key);
-void raspi_key_released(long key);
-
 #endif
