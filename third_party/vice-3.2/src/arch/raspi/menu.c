@@ -520,8 +520,12 @@ static void menu_value_changed(struct menu_item* item) {
          }
          char* dot = strchr(fname, '.');
          if (dot == NULL) {
-            ui_error("Missing extension");
-            return;
+            if (strlen(fname) + 4 <= MAX_FN_NAME) {
+               strcat(fname, ".vsf");
+            } else {
+               ui_error("Too long");
+               return;
+            }
          } else {
             if ((dot[1] != 'v' && dot[1] != 'V') ||
                 (dot[2] != 's' && dot[2] != 'S') ||

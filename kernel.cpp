@@ -161,6 +161,7 @@ bool CKernel::uiShift = false;
 
 CKernel::CKernel (void) : ViceStdioApp("vice"),
                           mVCHIQ (&mMemory, &mInterrupt),
+                          mViceSound(nullptr),
                           mGPIOManager (&mInterrupt),
                           mEmulatorCore (&mMemory)
 {
@@ -511,19 +512,24 @@ void CKernel::circle_wait_vsync() {
 
 int CKernel::circle_sound_init(const char *param, int *speed, 
                                int *fragsize, int *fragnr, int *channels) {
-  *speed = SAMPLE_RATE;
-  *fragsize = FRAG_SIZE;
-  *fragnr = NUM_FRAGS;
-  // We force mono.
-  *channels = 1;
+  if (!mViceSound) {
+     *speed = SAMPLE_RATE;
+     *fragsize = FRAG_SIZE;
+     *fragnr = NUM_FRAGS;
+     // We force mono.
+     *channels = 1;
 
-  mViceSound = new ViceSound(&mVCHIQ,  VCHIQSoundDestinationAuto);
-  mViceSound->Playback();
+     mViceSound = new ViceSound(&mVCHIQ,  VCHIQSoundDestinationAuto);
+     mViceSound->Playback();
+  }
   return 0;
 }
 
 int CKernel::circle_sound_write(int16_t *pbuf, size_t nr) {
-  return mViceSound->AddChunk(pbuf, nr);
+  if (mViceSound) {
+     return mViceSound->AddChunk(pbuf, nr);
+  }
+  return nr;
 }
 
 void CKernel::circle_sound_close(void) {
@@ -539,7 +545,10 @@ int CKernel::circle_sound_resume(void) {
 }
 
 int CKernel::circle_sound_bufferspace(void) {
-  return mViceSound->BufferSpaceBytes();
+  if (mViceSound) {
+     return mViceSound->BufferSpaceBytes();
+  }
+  return 0;
 }
 
 void CKernel::circle_yield(void) {
