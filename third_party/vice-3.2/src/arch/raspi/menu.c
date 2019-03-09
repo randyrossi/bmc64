@@ -75,6 +75,7 @@ struct menu_item *sid_engine_item;
 struct menu_item *sid_model_item;
 struct menu_item *sid_filter_item;
 
+int unit;
 const int num_disk_ext = 13;
 char disk_filt_ext[13][5] =
     {".d64",".d67",".d71",".d80",".d81",".d82",
@@ -319,7 +320,6 @@ static void load_settings() {
 // Interpret what menu item changed and make the change to vice
 static void menu_value_changed(struct menu_item* item) {
    int tmp;
-   int unit;
 
    switch (item->id) {
       case MENU_ATTACH_DISK_8:
