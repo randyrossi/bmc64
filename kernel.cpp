@@ -697,16 +697,17 @@ void CKernel::KeyStatusHandlerRaw (unsigned char ucModifiers,
 // Not hooked to interrupt, only polled.
 void CKernel::circle_check_gpio()
 {
+   // TODO: Debounce this...
    if (uiPin->Read() == LOW) {
-      circle_ui_key_interrupt(KEYCODE_F12, 1);
-      circle_ui_key_interrupt(KEYCODE_F12, 0);
+      circle_key_pressed(KEYCODE_F12);
+      circle_key_released(KEYCODE_F12);
    }
 }
 
 void CKernel::circle_poll_joysticks(int device, int is_interrupt)
 {
-  static int js_prev_ui1[5] = { 0,0,0,0,0 };
-  static int js_prev_ui2[5] = { 0,0,0,0,0 };
+  static int js_prev_ui1[5] = { HIGH,HIGH,HIGH,HIGH,HIGH };
+  static int js_prev_ui2[5] = { HIGH,HIGH,HIGH,HIGH,HIGH };
 
   if (device == 0) {
      // If the UI is activated, route to the menu.
