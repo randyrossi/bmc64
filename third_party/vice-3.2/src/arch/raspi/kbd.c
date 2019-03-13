@@ -215,20 +215,18 @@ void circle_key_pressed(long key) {
       commodore_mod = 1;
    }
 
-   if (!ui_activated) {
-      // Intercept keys meant to become joystick values
-      if (joydevs[0].device == JOYDEV_NUMS_1 ||
-         joydevs[0].device == JOYDEV_NUMS_2 ||
-         joydevs[0].device == JOYDEV_CURS) {
-         if (joy_key_down(0, key))
-            return;
-      }
-      if (joydevs[1].device == JOYDEV_NUMS_1 ||
-         joydevs[1].device == JOYDEV_NUMS_2 ||
-         joydevs[1].device == JOYDEV_CURS) {
-         if (joy_key_down(1, key))
-            return;
-      }
+   // Intercept keys meant to become joystick values
+   if (joydevs[0].device == JOYDEV_NUMS_1 ||
+      joydevs[0].device == JOYDEV_NUMS_2 ||
+      joydevs[0].device == JOYDEV_CURS) {
+      if (joy_key_down(0, key))
+         return;
+   }
+   if (joydevs[1].device == JOYDEV_NUMS_1 ||
+      joydevs[1].device == JOYDEV_NUMS_2 ||
+      joydevs[1].device == JOYDEV_CURS) {
+      if (joy_key_down(1, key))
+         return;
    }
 
    if (ui_activated) {

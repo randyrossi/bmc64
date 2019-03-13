@@ -228,7 +228,7 @@ If the patches don't apply successfully, it's possible those projects have moved
 If that happens, reset these repos using "git reset HASH --hard" commands in the following directories:
 
     circle-stdlib ea6fd459838f40586e4c60adb7a0912222a227b5
-    libs/circle 5c693117e31a567fafd3e68880071f2f8c64977
+    libs/circle a5c693117e31a567fafd3e68880071f2f8c64977
     libs/circle-newlib 8a313d45ad5d8c0e306ce8751b6e3d6d3ef46ab3
     libs/mbedtls 60fbd5bdf05c223b641677204469b53c2ff39d4e
 
