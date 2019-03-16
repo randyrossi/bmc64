@@ -14,7 +14,7 @@
 #       if you want to use a 50hz video mode.
 # -----------------------------------------------------
 disable_overscan=1
-sdtv_mode=2
+sdtv_mode=18
 hdmi_group=1
 hdmi_mode=19
 

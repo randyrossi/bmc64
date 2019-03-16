@@ -359,6 +359,11 @@ void vsyncarch_postsync(void){
      resources_set_int("WarpMode", 0);
   }
 
+  // Hold the frame until vsync unless warping
+  if (!raspi_boot_warp && !raspi_warp) {
+     circle_wait_vsync();
+  }
+
   circle_check_gpio();
 
   if (joydevs[0].device == JOYDEV_GPIO_0 || joydevs[1].device == JOYDEV_GPIO_0) {
@@ -368,7 +373,7 @@ void vsyncarch_postsync(void){
      circle_poll_joysticks(1, 0);
   }
 
-  // Do key press/releases on the main loop
+  // Do key press/releases on the main loop from the queue.
   circle_lock_acquire();
   while (pending_emu_key_head != pending_emu_key_tail) {
      int i = pending_emu_key_head & 0xf;
@@ -381,10 +386,6 @@ void vsyncarch_postsync(void){
   }
   circle_lock_release();
 
-  // Hold the frame until vsync unless warping
-  if (!raspi_boot_warp && !raspi_warp) {
-     circle_wait_vsync();
-  }
 }
 
 void vsyncarch_sleep(unsigned long delay) {
