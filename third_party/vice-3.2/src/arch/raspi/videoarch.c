@@ -44,6 +44,7 @@
 #include "ui.h"
 #include "joy.h"
 #include "resources.h"
+#include "joyport/joystick.h"
 
 // Keep video state shared between compilation units here
 struct VideoData video_state;
@@ -173,10 +174,16 @@ int raspi_boot_warp = 1;
 
 extern struct joydev_config joydevs[2];
 
-int pending_emu_key_head = 0;
-int pending_emu_key_tail = 0;
+volatile int pending_emu_key_head = 0;
+volatile int pending_emu_key_tail = 0;
 volatile long pending_emu_key[16];
 volatile int pending_emu_key_pressed[16];
+
+volatile int pending_emu_joy_head = 0;
+volatile int pending_emu_joy_tail = 0;
+volatile int pending_emu_joy_value[128];
+volatile int pending_emu_joy_port[128];
+volatile int pending_emu_joy_type[128];
 
 #define COLOR16(red, green, blue)         (((red) & 0x1F) << 11 \
                                         | ((green) & 0x1F) << 6 \
@@ -373,7 +380,7 @@ void vsyncarch_postsync(void){
      circle_poll_joysticks(1, 0);
   }
 
-  // Do key press/releases on the main loop from the queue.
+  // Do key press/releases and joy latches on the main loop.
   circle_lock_acquire();
   while (pending_emu_key_head != pending_emu_key_tail) {
      int i = pending_emu_key_head & 0xf;
@@ -383,6 +390,26 @@ void vsyncarch_postsync(void){
         keyboard_key_released(pending_emu_key[i]);
      }
      pending_emu_key_head++;
+  }
+  while (pending_emu_joy_head != pending_emu_joy_tail) {
+     int i = pending_emu_joy_head & 0x7f;
+     switch (pending_emu_joy_type[i]) {
+        case PENDING_EMU_JOY_TYPE_ABSOLUTE:
+           joystick_set_value_absolute(pending_emu_joy_port[i],
+              pending_emu_joy_value[i]);
+           break;
+        case PENDING_EMU_JOY_TYPE_AND:
+           joystick_set_value_and(pending_emu_joy_port[i],
+              pending_emu_joy_value[i]);
+           break;
+        case PENDING_EMU_JOY_TYPE_OR:
+           joystick_set_value_or(pending_emu_joy_port[i],
+              pending_emu_joy_value[i]);
+           break;
+        default:
+           break;
+     }
+     pending_emu_joy_head++;
   }
   circle_lock_release();
 
@@ -394,12 +421,23 @@ void vsyncarch_sleep(unsigned long delay) {
   // times our machine properly.
 }
 
-// queue a key for press/release on the main loop
+// queue a key for press/release for the main loop
 void circle_emu_key_interrupt(long key, int pressed) {
   circle_lock_acquire();
   int i = pending_emu_key_tail & 0xf;
   pending_emu_key[i] = key;
   pending_emu_key_pressed[i] = pressed;
   pending_emu_key_tail++;
+  circle_lock_release();
+}
+
+// queue a joy latch change for the main loop
+void circle_emu_joy_interrupt(int type, int port, int value) {
+  circle_lock_acquire();
+  int i = pending_emu_joy_tail & 0x7f;
+  pending_emu_joy_type[i] = type;
+  pending_emu_joy_port[i] = port;
+  pending_emu_joy_value[i] = value;
+  pending_emu_joy_tail++;
   circle_lock_release();
 }

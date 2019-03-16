@@ -91,7 +91,6 @@ public:
 	void circle_lock_release();
 
 private:
-        static void InterruptStub (void *pParam);
         static bool uiShift;
 
         CMemorySystem mMemory; 

@@ -41,7 +41,7 @@ int joy_num_hats[2];
 
 struct joydev_config joydevs[2];
 
-
+// Called from ISR
 int joy_key_up(unsigned int device, int key) {
      if (circle_ui_activated()) {
         // When the ui is showing, we want these
@@ -114,19 +114,19 @@ int joy_key_up(unsigned int device, int key) {
      if (joydevs[device].device == JOYDEV_NUMS_1) {
          switch (key) {
             case KEYCODE_KP8:
-               joystick_set_value_and(port, ~0x01);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x01);
                return 1;
             case KEYCODE_KP2:
-               joystick_set_value_and(port, ~0x02);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x02);
                return 1;
             case KEYCODE_KP4:
-               joystick_set_value_and(port, ~0x04);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x04);
                return 1;
             case KEYCODE_KP6:
-               joystick_set_value_and(port, ~0x08);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x08);
                return 1;
             case KEYCODE_KP5:
-               joystick_set_value_and(port, ~0x10);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x10);
                return 1;
             default:
                return 0;
@@ -134,19 +134,19 @@ int joy_key_up(unsigned int device, int key) {
      } else if (joydevs[device].device == JOYDEV_NUMS_2) {
          switch (key) {
             case KEYCODE_KP9:
-               joystick_set_value_and(port, ~0x01);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x01);
                return 1;
             case KEYCODE_KP3:
-               joystick_set_value_and(port, ~0x02);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x02);
                return 1;
             case KEYCODE_KP7:
-               joystick_set_value_and(port, ~0x04);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x04);
                return 1;
             case KEYCODE_KP1:
-               joystick_set_value_and(port, ~0x08);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x08);
                return 1;
             case KEYCODE_KP0:
-               joystick_set_value_and(port, ~0x10);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x10);
                return 1;
             default:
                return 0;
@@ -154,19 +154,19 @@ int joy_key_up(unsigned int device, int key) {
      } else if (joydevs[device].device == JOYDEV_CURS) {
          switch (key) {
             case KEYCODE_Up:
-               joystick_set_value_and(port, ~0x01);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x01);
                return 1;
             case KEYCODE_Down:
-               joystick_set_value_and(port, ~0x02);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x02);
                return 1;
             case KEYCODE_Left:
-               joystick_set_value_and(port, ~0x04);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x04);
                return 1;
             case KEYCODE_Right:
-               joystick_set_value_and(port, ~0x08);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x08);
                return 1;
             case KEYCODE_Space:
-               joystick_set_value_and(port, ~0x10);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x10);
                return 1;
             default:
                return 0;
@@ -176,6 +176,7 @@ int joy_key_up(unsigned int device, int key) {
      }
 }
 
+// Called from ISR
 int joy_key_down(unsigned int device, int key) {
      if (circle_ui_activated()) {
         if (joydevs[device].device == JOYDEV_NUMS_1) {
@@ -246,19 +247,19 @@ int joy_key_down(unsigned int device, int key) {
      if (joydevs[device].device == JOYDEV_NUMS_1) {
          switch (key) {
             case KEYCODE_KP8:
-               joystick_set_value_or(port, 0x01);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x01);
                return 1;
             case KEYCODE_KP2:
-               joystick_set_value_or(port, 0x02);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x02);
                return 1;
             case KEYCODE_KP4:
-               joystick_set_value_or(port, 0x04);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x04);
                return 1;
             case KEYCODE_KP6:
-               joystick_set_value_or(port, 0x08);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x08);
                return 1;
             case KEYCODE_KP5:
-               joystick_set_value_or(port, 0x10);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x10);
                return 1;
             default:
                return 0;
@@ -266,19 +267,19 @@ int joy_key_down(unsigned int device, int key) {
      } else if (joydevs[device].device == JOYDEV_NUMS_2) {
          switch (key) {
             case KEYCODE_KP9:
-               joystick_set_value_or(port, 0x01);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x01);
                return 1;
             case KEYCODE_KP3:
-               joystick_set_value_or(port, 0x02);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x02);
                return 1;
             case KEYCODE_KP7:
-               joystick_set_value_or(port, 0x04);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x04);
                return 1;
             case KEYCODE_KP1:
-               joystick_set_value_or(port, 0x08);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x08);
                return 1;
             case KEYCODE_KP0:
-               joystick_set_value_or(port, 0x10);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x10);
                return 1;
             default:
                return 0;
@@ -286,19 +287,19 @@ int joy_key_down(unsigned int device, int key) {
      } else if (joydevs[device].device == JOYDEV_CURS) {
          switch (key) {
             case KEYCODE_Up:
-               joystick_set_value_or(port, 0x01);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x01);
                return 1;
             case KEYCODE_Down:
-               joystick_set_value_or(port, 0x02);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x02);
                return 1;
             case KEYCODE_Left:
-               joystick_set_value_or(port, 0x04);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x04);
                return 1;
             case KEYCODE_Right:
-               joystick_set_value_or(port, 0x08);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x08);
                return 1;
             case KEYCODE_Space:
-               joystick_set_value_or(port, 0x10);
+               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x10);
                return 1;
             default:
                return 0;
@@ -308,18 +309,27 @@ int joy_key_down(unsigned int device, int key) {
      }
 }
 
+// NOTE: This is called from the ISR so we can't call into the
+// emulator API directly from here. Instead, we have to queue up
+// the event for processing on the main loop.
 void circle_joy_usb(unsigned int device, int value) {
      if (device == 0 && joydevs[0].device == JOYDEV_USB_0) {
-        joystick_set_value_absolute(joydevs[0].port, value);
+        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE,
+            joydevs[0].port, value);
      } else if (device == 0 && joydevs[1].device == JOYDEV_USB_0) {
-        joystick_set_value_absolute(joydevs[1].port, value);
+        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE,
+            joydevs[1].port, value);
      } else if (device == 1 && joydevs[0].device == JOYDEV_USB_1) {
-        joystick_set_value_absolute(joydevs[0].port, value);
+        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE,
+            joydevs[0].port, value);
      } else if (device == 1 && joydevs[1].device == JOYDEV_USB_1) {
-        joystick_set_value_absolute(joydevs[1].port, value);
+        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE,
+            joydevs[1].port, value);
      }
 }
 
+// This is always called off the main loop, so it's safe to call
+// directly into the emulator API from here.
 void circle_joy_gpio(unsigned int device, int value) {
     if (device == 0 && joydevs[0].device == JOYDEV_GPIO_0) {
 	joystick_set_value_absolute(joydevs[0].port, value);

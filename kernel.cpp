@@ -576,15 +576,6 @@ void CKernel::circle_joy_init() {
   joystickPins2[JOY_LEFT] = new CGPIOPin(GPIO_JOY_2_LEFT, GPIOModeInputPullUp, &mGPIOManager);
   joystickPins2[JOY_RIGHT] = new CGPIOPin(GPIO_JOY_2_RIGHT, GPIOModeInputPullUp, &mGPIOManager);
   joystickPins2[JOY_FIRE] = new CGPIOPin(GPIO_JOY_2_FIRE, GPIOModeInputPullUp, &mGPIOManager);
-
-  for (int i=0;i<5;i++) {
-     joystickPins1[i]->ConnectInterrupt (InterruptStub, this);
-     joystickPins1[i]->EnableInterrupt (GPIOInterruptOnRisingEdge);
-     joystickPins1[i]->EnableInterrupt2 (GPIOInterruptOnFallingEdge);
-     joystickPins2[i]->ConnectInterrupt (InterruptStub, this);
-     joystickPins2[i]->EnableInterrupt (GPIOInterruptOnRisingEdge);
-     joystickPins2[i]->EnableInterrupt2 (GPIOInterruptOnFallingEdge);
-  }
 }
 
 void CKernel::KeyStatusHandlerRaw (unsigned char ucModifiers,
@@ -844,17 +835,6 @@ void CKernel::circle_poll_joysticks(int device, int is_interrupt)
      value |= 0x10;
   }
   circle_joy_gpio(1, value);
-}
-
-void CKernel::InterruptStub (void *pParam)
-{
-   CKernel *pThis = (CKernel *) pParam;
-   assert (pThis != 0);
-
-   if (circle_joy_need_gpio(0))
-        pThis->circle_poll_joysticks(0, 1);
-   if (circle_joy_need_gpio(1))
-        pThis->circle_poll_joysticks(1, 1);
 }
 
 void CKernel::circle_lock_acquire() {

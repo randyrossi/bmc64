@@ -119,4 +119,7 @@ extern struct VideoData video_state;
 // Make sure ui also sets this when turning on/off warp
 extern int raspi_warp;
 
+// May be called from an ISR to change joy value for emulator
+void circle_emu_joy_interrupt(int type, int port, int value);
+
 #endif

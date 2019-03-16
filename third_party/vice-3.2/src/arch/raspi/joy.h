@@ -65,6 +65,11 @@ extern int joy_num_axes[2];
 extern int joy_num_hats[2];
 extern int joy_num_buttons[2];
 
+// Types of queued joystick events for calls into emulator API
+#define PENDING_EMU_JOY_TYPE_ABSOLUTE 0
+#define PENDING_EMU_JOY_TYPE_AND 1
+#define PENDING_EMU_JOY_TYPE_OR 2
+
 int joy_key_up(unsigned int device, int key);
 int joy_key_down(unsigned int device, int key);
 
