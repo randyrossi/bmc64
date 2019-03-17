@@ -46,3 +46,10 @@
   * Better menu navigation with auto repeat and acceleration during hold
   * Added error/info dialogs for errors or confirmation of actions
   * Fixed wierd behavior with shift+down/right mapping to up/left for keyrah
+  * Fixed audio cut out after sound engine restarted 8 times
+
+## 1.0.9
+  * Fix lockup issue caused by joystick value changes called from ISRs
+  * Default PAL composite to progressive mode (18)
+  * Fixed gpio16 not bringing up menu (still need to debounce)
+  * Improved GPIO joystick response time (~45ms avg)
