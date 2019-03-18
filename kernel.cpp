@@ -413,6 +413,8 @@ ViceApp::TShutdownMode CKernel::Run (void)
      strcpy(timing_option, "-pal");
   }
 
+  circle_set_demo_mode(mViceOptions.GetDemoMode());
+
   unsigned num_pads = 0;
   int num_buttons[2] = {0,0};
   int num_axes[2] = {0,0};

@@ -124,6 +124,8 @@
 #define MENU_LOAD_SNAP 68
 #define MENU_LOAD_SNAP_FILE 69
 
+#define MENU_DEMO_MODE 70
+
 #define KEYBOARD_TYPE_US 0
 #define KEYBOARD_TYPE_UK 1
 
@@ -141,5 +143,6 @@ void build_menu(struct menu_item* root);
 
 int menu_get_keyboard_type(void);
 int menu_alt_f12(void);
+void menu_swap_joysticks(void);
 
 #endif

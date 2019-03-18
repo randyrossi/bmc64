@@ -45,6 +45,7 @@
 #include "joy.h"
 #include "resources.h"
 #include "joyport/joystick.h"
+#include "demo.h"
 
 // Keep video state shared between compilation units here
 struct VideoData video_state;
@@ -380,10 +381,13 @@ void vsyncarch_postsync(void){
      circle_poll_joysticks(1, 0);
   }
 
+  int reset_demo = 0;
+
   // Do key press/releases and joy latches on the main loop.
   circle_lock_acquire();
   while (pending_emu_key_head != pending_emu_key_tail) {
      int i = pending_emu_key_head & 0xf;
+     reset_demo = 1;
      if (pending_emu_key_pressed[i]) {
         keyboard_key_pressed(pending_emu_key[i]);
      } else {
@@ -393,6 +397,7 @@ void vsyncarch_postsync(void){
   }
   while (pending_emu_joy_head != pending_emu_joy_tail) {
      int i = pending_emu_joy_head & 0x7f;
+     reset_demo = 1;
      switch (pending_emu_joy_type[i]) {
         case PENDING_EMU_JOY_TYPE_ABSOLUTE:
            joystick_set_value_absolute(pending_emu_joy_port[i],
@@ -413,6 +418,13 @@ void vsyncarch_postsync(void){
   }
   circle_lock_release();
 
+  if (reset_demo) {
+     demo_reset_timeout();
+  }
+
+  if (raspi_demo_mode) {
+     demo_check();     
+  }
 }
 
 void vsyncarch_sleep(unsigned long delay) {

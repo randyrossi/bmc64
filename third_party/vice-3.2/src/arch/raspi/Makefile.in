@@ -111,7 +111,7 @@ libarch_a_AR = $(AR) $(ARFLAGS)
 am_libarch_a_OBJECTS = archdep.$(OBJEXT) joy.$(OBJEXT) kbd.$(OBJEXT) \
 	mousedrv.$(OBJEXT) missing.$(OBJEXT) ui.$(OBJEXT) \
 	videoarch.$(OBJEXT) menu.$(OBJEXT) menu_usb.$(OBJEXT) \
-	text.$(OBJEXT)
+	text.$(OBJEXT) demo.$(OBJEXT)
 libarch_a_OBJECTS = $(am_libarch_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -523,7 +523,9 @@ libarch_a_SOURCES = \
 	menu_usb.h \
 	menu_usb.c \
 	text.h \
-	text.c
+	text.c \
+	demo.h \
+	demo.c
 
 all: all-recursive
 
@@ -574,6 +576,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archdep.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/demo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/joy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kbd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu.Po@am__quote@

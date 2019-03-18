@@ -1,0 +1,55 @@
+# This is a demo mode script for setting up an
+# interactive Commodore 64 kiosk.  It instructs
+# BMC64 to cycle through a set of snapshots with
+# a specified timeout for each one. You can chose
+# whether user input (joystick/keyboard) will reset
+# the timeout or not. You can also indicate joystick
+# ports should be swapped for some games that require
+# different ports from that of startup settings.
+
+# The format is:
+# [operation],[file],[timeout],[mode],[joyswap],
+#
+# (note the last , is required)
+
+# where:
+# [operation] is one of:
+#    r = reset to basic
+#    s = snapshot
+#    d = diskswap
+#    c = cartridge
+#    dc = detach cartridge (causes reset)
+#    dd = detach disk
+#
+# [timeout] is the timeout in seconds
+# [mode] is one of:
+#    i = timeout will be reset by any user activity
+#    n = timeout will not be reset by user activity
+# [joyswap] is one of:
+#    1 = joy port assignments swapped from saved settings
+#    0 = joy port assignments not swapped
+
+
+# Jumpman for 5 min
+s,jump.vsf,300,i,0,
+
+# BASIC for 2 min
+dc,none,120,i,0,
+
+# StarWars Disk 1 287 seconds
+s,sw1.vsf,287,n,0,
+
+# StarWars Disk 2 328 seconds
+s,sw2.vsf,328,n,0,
+
+# BASIC for 2 min
+r,none,120,i,0,
+
+# Sam's Journey for 5 min
+s,sam3.vsf,300,i,0
+
+# Jupiter Lander for 5 min
+s,jupit.vsf,300,i,1
+
+# Uridium for 5 min
+s,urid.vsf,300,i,0

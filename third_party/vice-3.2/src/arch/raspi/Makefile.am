@@ -44,4 +44,6 @@ libarch_a_SOURCES = \
 	menu_usb.h \
 	menu_usb.c \
 	text.h \
-	text.c
+	text.c \
+	demo.h \
+	demo.c

@@ -43,6 +43,7 @@
 #include "datasette.h"
 #include "menu_usb.h"
 #include "sid.h"
+#include "demo.h"
 
 // For filename filters
 #define FILTER_NONE 0
@@ -317,10 +318,15 @@ static void load_settings() {
    ui_set_joy_devs();
 }
 
+void menu_swap_joysticks() {
+   int tmp = joydevs[0].device;
+   joydevs[0].device = joydevs[1].device;
+   joydevs[1].device = tmp;
+   ui_set_joy_items();
+}
+
 // Interpret what menu item changed and make the change to vice
 static void menu_value_changed(struct menu_item* item) {
-   int tmp;
-
    switch (item->id) {
       case MENU_ATTACH_DISK_8:
       case MENU_IECDEVICE_8:
@@ -438,6 +444,10 @@ static void menu_value_changed(struct menu_item* item) {
          resources_set_int("WarpMode", item->value);
          raspi_warp = item->value;
          return;
+      case MENU_DEMO_MODE:
+         raspi_demo_mode = item->value;
+         demo_reset();
+         return;
       case MENU_DRIVE_SOUND_EMULATION:
          resources_set_int("DriveSoundEmulation", item->value);
          return;
@@ -445,10 +455,7 @@ static void menu_value_changed(struct menu_item* item) {
          resources_set_int("DriveSoundEmulationVolume", item->value);
          return;
       case MENU_SWAP_JOYSTICKS:
-         tmp = joydevs[0].device;
-         joydevs[0].device = joydevs[1].device;
-         joydevs[1].device = tmp;
-         ui_set_joy_items();
+         menu_swap_joysticks();
          return;
       case MENU_JOYSTICK_PORT_1:
          // device in port 1 was changed
@@ -801,6 +808,12 @@ void build_menu(struct menu_item* root) {
          parent, "Drive sound emulation volume", 0, 1000, 100, 1000);
 
    ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
+
+   // This is an undocumented feature for now. Keep invisible unless it
+   // is activated by cmdline.txt
+   if (raspi_demo_mode) {
+      ui_menu_add_toggle(MENU_DEMO_MODE, root, "Demo Mode", raspi_demo_mode);
+   }
 
    parent = ui_menu_add_folder(root, "Reset");
       ui_menu_add_button(MENU_SOFT_RESET, parent, "Soft Reset");

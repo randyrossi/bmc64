@@ -29,6 +29,7 @@
 #include "ui.h"
 #include "menu.h"
 #include "kbd.h"
+#include "demo.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -332,13 +333,17 @@ void circle_joy_usb(unsigned int device, int value) {
 // directly into the emulator API from here.
 void circle_joy_gpio(unsigned int device, int value) {
     if (device == 0 && joydevs[0].device == JOYDEV_GPIO_0) {
-	joystick_set_value_absolute(joydevs[0].port, value);
+       joystick_set_value_absolute(joydevs[0].port, value);
+       demo_reset_timeout();
     } else if (device == 0 && joydevs[1].device == JOYDEV_GPIO_0) {
-        joystick_set_value_absolute(joydevs[1].port, value);
+       joystick_set_value_absolute(joydevs[1].port, value);
+       demo_reset_timeout();
     } else if (device == 1 && joydevs[0].device == JOYDEV_GPIO_1) {
        joystick_set_value_absolute(joydevs[0].port, value);
+       demo_reset_timeout();
     } else if (device == 1 && joydevs[1].device == JOYDEV_GPIO_1) {
        joystick_set_value_absolute(joydevs[1].port, value);
+       demo_reset_timeout();
     }
 }
 

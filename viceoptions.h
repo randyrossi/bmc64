@@ -41,6 +41,7 @@ public:
 	unsigned GetMachineTiming (void) const;
 	bool GetHideConsole (void) const;
 	void SetHideConsole (bool value);
+	bool GetDemoMode (void) const;
 
 	static ViceOptions *Get (void);
 
@@ -59,6 +60,7 @@ private:
 	unsigned m_nCanvasHeight;
 	unsigned m_nMachineTiming;
 	bool m_bHideConsole;
+	bool m_bDemoMode;
 
 	static ViceOptions *s_pThis;
 };
