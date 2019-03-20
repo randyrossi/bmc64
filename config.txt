@@ -24,7 +24,7 @@ hdmi_mode=19
 #       if you want to use a 60hz video mode.
 # -----------------------------------------------------
 #disable_overscan=1
-#sdtv_mode=1
+#sdtv_mode=16
 #hdmi_group=1
 #hdmi_mode=4
 
