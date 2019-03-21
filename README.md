@@ -3,7 +3,7 @@
 BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio.
 
 # Features
-  * Quick boot time (approx 6 seconds)
+  * Quick boot time (approx 7 seconds)
   * Frames are timed to vsync for true 50/60 hz smooth scrolling (no horizontal tearing!)
   * Low latency between input & audio/video
   * No shutdown sequence required, just power off
@@ -36,7 +36,7 @@ You can make drive 8 an IECDevice for the root file system of the sdcard. Howeve
 
 # Sound
 
-Since v1.0.6, the default Sid engine is 'ReSid' which more accurately reproduces the sound chip.
+The default Sid engine is 'ReSid' which more accurately reproduces the sound chip. However, it consumes more CPU which is sometimes too much for the Raspberry Pi 2 @ 900Mhz.  Some high intensity demos may start to 'stagger' on the Pi 2. A good example of this is the end of Disk 1 of Comaland.  For most games, however, this won't be a problem.  If you run into this issue, however, you can switch the Sid engine to 'Fast'. It's lower quality but won't stutter.  The Pi 3 Model B @ 1.2 Ghz doesn't appear to have this problem.
 
 You can switch between 6581 and 8580 models as well as turn on/off the filter.  For ReSid, only fast interpolation method is currently supported.
 
@@ -75,6 +75,12 @@ GPIO23        |GPIO19       | 6 (Fire)
 GND           |GND          | 8 (GND)
 
 In the menu, select either GPIO1 or GPIO2 and assign it to one of the emulated ports.
+
+# CPU Temperature
+
+The CPU temperature on a RPi 3 Model B clocked at @1.2Ghz can easily hit 70 degrees without a heat sync.  This measurement was made running the last sequence of Comaland mentioned above. With a good heat sync, however, it can drop to as low as 55. If you are going to put your Pi inside a case, I recommend you implement sufficient cooling measures to ensure your Pi does not overheat.
+
+CPU temperature on a RPi 2 clocked at @900Mhz hit 46 degrees without a heat sync.  With a heat sync, it dropped to 40.  This is well below the default maximum of 85.  There's no reason to overclock your Pi so please don't do it.  I know of no game that won't run smoothly on the RPi 2 at its default clock rate.
 
 # Changelog
 
