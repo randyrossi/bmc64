@@ -396,27 +396,27 @@ static void menu_value_changed(struct menu_item* item) {
          ui_pop_all_and_toggle();
          return;
       case MENU_DETACH_DISK_9:
-         ui_info("Deatching...");
+         ui_info("Detaching...");
          file_system_detach_disk(9);
          ui_pop_all_and_toggle();
          return;
       case MENU_DETACH_DISK_10:
-         ui_info("Deatching...");
+         ui_info("Detaching...");
          file_system_detach_disk(10);
          ui_pop_all_and_toggle();
          return;
       case MENU_DETACH_DISK_11:
-         ui_info("Deatching...");
+         ui_info("Detaching...");
          file_system_detach_disk(11);
          ui_pop_all_and_toggle();
          return;
       case MENU_DETACH_TAPE:
-         ui_info("Deatching...");
+         ui_info("Detaching...");
          tape_image_detach(1);
          ui_pop_all_and_toggle();
          return;
       case MENU_DETACH_CART:
-         ui_info("Deatching...");
+         ui_info("Detaching...");
          cartridge_detach_image(CARTRIDGE_CRT);
          ui_pop_all_and_toggle();
          return;
