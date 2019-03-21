@@ -19,6 +19,8 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
 
 # Known Issues
 
+  * Units 9-11 cannot mount disks yet.
+
   * There is no hot plug in/out support for USB devices.  All devices must be plugged in before the device is booted and never removed.  Attempting to remove them will halt the emulator or make it slow down considerably.
 
   * Some USB gamepads will require manual tweaking of settings from the defaults. 
@@ -30,9 +32,11 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
 # Timing
 The machine config defaults to PAL 50hz for both HDMI and composite.  You can change this (see below).
 
-# Drives
+# FileSystem/Drives
 
-You can make drive 8 an IECDevice for the root file system of the sdcard. However, I don't recommend loading programs this way. The sdcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk oeprations anyway.
+By default, the first partition of the SDcard is mounted and is where BMC64 will search for files to load. To change this, add "partition=emmc1-#" to cmdline.txt where # is the partition number you want to mount. (NOTE: The kernel must still reside in the root partition.)
+
+You can make drive 8 an IECDevice for the root file system of the SDcard. However, I don't recommend loading programs this way. The SDcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk oeprations anyway.
 
 # Sound
 
@@ -212,7 +216,7 @@ Now cd back up to bmc64:
 
 That should make a kernel7.img for RPI2, kernel8-32.img for RPI3
 
-What to put on the sdcard:
+What to put on the SDcard:
 
     KERNAL, BASIC, CHARGEN, d1541II
     kernel7.img for Pi2 or kernel8.img for Pi3 or both
