@@ -2,7 +2,7 @@
 # Bare Metal Commodore 64 Emulator For The Raspberry Pi
 #
 
-# Uncomment wither PAL or NTSC section below to suit
+# Uncomment either PAL or NTSC section below to suit
 # your needs. You MUST also edit cmdline.txt to match
 # the frequency of video you select here.
 # PAL for 50hz modes
@@ -24,7 +24,7 @@ hdmi_mode=19
 #       if you want to use a 60hz video mode.
 # -----------------------------------------------------
 #disable_overscan=1
-#sdtv_mode=1
+#sdtv_mode=16
 #hdmi_group=1
 #hdmi_mode=4
 

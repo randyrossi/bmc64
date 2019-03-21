@@ -53,3 +53,8 @@
   * Default PAL composite to progressive mode (18)
   * Fixed gpio16 not bringing up menu (still need to debounce)
   * Improved GPIO joystick response time (~45ms avg)
+
+## 1.1.10
+  * Added Pepto-Pal color palette to prefs
+  * Fixed audio sync bug for ntsc timing
+  * Created tools dir for delay test programs
