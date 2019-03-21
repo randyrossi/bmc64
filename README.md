@@ -34,7 +34,7 @@ The machine config defaults to PAL 50hz for both HDMI and composite.  You can ch
 
 # FileSystem/Drives
 
-By default, the first partition of the SDcard is mounted and is where BMC64 will search for files to load. To change this, add "partition=emmc1-#" to cmdline.txt where # is the partition number you want to mount. (NOTE: The kernel must still reside in the root partition.)
+By default, the first partition of the SDcard is mounted and is where BMC64 will search for emulator files. To change this, add "partition=emmc1-#" to cmdline.txt where # is the partition number you want to mount. NOTE: The files the Raspbery Pi itself needs to boot BMC64 must still reside in the root partition (i.e. bootcode.bin, start.elf, config.txt kernel*.img, cmdline.txt).
 
 You can make drive 8 an IECDevice for the root file system of the SDcard. However, I don't recommend loading programs this way. The SDcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk oeprations anyway.
 

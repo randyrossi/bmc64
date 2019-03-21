@@ -28,7 +28,7 @@
 
 MAINTEXT:
         !BYTE   147,5           ;CLEAR SCREEN AND WHITE
-	!PET    "JOY port 2 button delay."
+	!PET    "joy port 2 button delay."
 
 MAINROUTINE
         LDA     #$00
