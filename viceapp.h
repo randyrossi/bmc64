@@ -30,7 +30,7 @@
 #include <circle/logger.h>
 #include <circle/usb/dwhcidevice.h>
 #include <SDCard/emmc.h>
-#include <circle/fs/fat/fatfs.h>
+#include <ff.h>
 #include <circle/input/console.h>
 #include <circle/sched/scheduler.h>
 #include <circle/net/netsubsystem.h>
@@ -154,21 +154,9 @@ public:
 
                 const char *mpPartitionName = mViceOptions.GetPartition ();
 
-                CDevice * const pPartition =
-                        mDeviceNameService.GetDevice (mpPartitionName, true);
-                if (pPartition == 0)
-                {
+                if (f_mount (&mFileSystem, mpPartitionName, 1) != FR_OK) {
                         mLogger.Write (GetKernelName (), LogError,
-                                       "Partition not found: %s", mpPartitionName);
-
-                        return false;
-                }
-
-                if (!mFileSystem.Mount (pPartition))
-                {
-                        mLogger.Write (GetKernelName (), LogError,
-                                         "Cannot mount partition: %s", mpPartitionName);
-
+                                         "Cannot mount (fatfs) partition: %s", mpPartitionName);
                         return false;
                 }
 
@@ -182,8 +170,8 @@ public:
                         return false;
                 }
 
-                // Initialize newlib stdio with a reference to Circle's file system and console
-                CGlueStdioInit (mFileSystem, mConsole);
+                // Initialize our replacement newlib stdio
+                CGlueStdioInit (mConsole);
 
                 mLogger.Write (GetKernelName (), LogNotice, "Compile time: " __DATE__ " " __TIME__);
 
@@ -192,15 +180,18 @@ public:
 
         virtual void Cleanup (void)
         {
-                mFileSystem.UnMount ();
-
+                const char *mpPartitionName = mViceOptions.GetPartition ();
+                if (f_mount (0, mpPartitionName, 0) != FR_OK) {
+                        mLogger.Write (GetKernelName (), LogError,
+                                "Cannot unmount drive");
+                }
                 ViceScreenApp::Cleanup ();
         }
 
 protected:
         CDWHCIDevice    mDWHCI;
         CEMMCDevice     mEMMC;
-        CFATFileSystem  mFileSystem;
+        FATFS           mFileSystem;
         CConsole        mConsole;
 };
 

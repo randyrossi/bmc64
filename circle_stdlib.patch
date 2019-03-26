@@ -1,0 +1,25 @@
+diff --git a/configure b/configure
+index 363cc32..a86b094 100755
+--- a/configure
++++ b/configure
+@@ -150,7 +150,7 @@ ARCH=$(make -n -p -f libs/circle/Rules.mk CIRCLEHOME=libs/circle | grep ^ARCH |
+     sed -e "s/\$(FLOAT_ABI)/$FLOAT_ABI/" -e 's/ARCH = //')
+ 
+ export \
+-    CPPFLAGS_FOR_TARGET="-I\"$CIRCLEHOME/include\" -I\"$TOPDIR/include\"" \
++    CPPFLAGS_FOR_TARGET="-I\"$CIRCLEHOME/include\" -I\"$TOPDIR/include\" -I\"$CIRCLEHOME/addon/fatfs\"" \
+     CC_FOR_TARGET=${TOOLPREFIX}gcc \
+     CXX_FOR_TARGET=${TOOLPREFIX}g++ \
+     GCC_FOR_TARGET=${TOOLPREFIX}gcc \
+diff --git a/libs/circle b/libs/circle
+--- a/libs/circle
++++ b/libs/circle
+@@ -1 +1 @@
+-Subproject commit a5c693117e31a567fafd3e68880071f2f8c64977
++Subproject commit a5c693117e31a567fafd3e68880071f2f8c64977-dirty
+diff --git a/libs/circle-newlib b/libs/circle-newlib
+--- a/libs/circle-newlib
++++ b/libs/circle-newlib
+@@ -1 +1 @@
+-Subproject commit 8a313d45ad5d8c0e306ce8751b6e3d6d3ef46ab3
++Subproject commit 8a313d45ad5d8c0e306ce8751b6e3d6d3ef46ab3-dirty

@@ -1,3 +1,16 @@
+diff --git a/include/circle/memorymap.h b/include/circle/memorymap.h
+index 538c594..1182652 100644
+--- a/include/circle/memorymap.h
++++ b/include/circle/memorymap.h
+@@ -26,7 +26,7 @@
+ 	#define MEGABYTE	0x100000
+ #endif
+ 
+-#define MEM_SIZE		(256 * MEGABYTE)		// default size
++#define MEM_SIZE		(512 * MEGABYTE)		// default size
+ #define GPU_MEM_SIZE		(64 * MEGABYTE)			// set in config.txt
+ #define ARM_MEM_SIZE		(MEM_SIZE - GPU_MEM_SIZE)	// normally overwritten
+ 
 diff --git a/include/circle/sysconfig.h b/include/circle/sysconfig.h
 index dd5c887..b914758 100644
 --- a/include/circle/sysconfig.h
