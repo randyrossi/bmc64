@@ -158,7 +158,7 @@ Apply some required patches:
     Patch #1:
 
     cd third_party/circle-stdlib
-    patch -p1 < ../../circle_stdlib.diff
+    patch -p1 < ../../circle_stdlib_patch.diff
 
     Patch #2:
 
