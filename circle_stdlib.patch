@@ -11,6 +11,38 @@ index 363cc32..a86b094 100755
      CC_FOR_TARGET=${TOOLPREFIX}gcc \
      CXX_FOR_TARGET=${TOOLPREFIX}g++ \
      GCC_FOR_TARGET=${TOOLPREFIX}gcc \
+diff --git a/include/circle_glue.h b/include/circle_glue.h
+index e0b90d5..271d367 100644
+--- a/include/circle_glue.h
++++ b/include/circle_glue.h
+@@ -6,22 +6,16 @@
+ #include <circle/sched/scheduler.h>
+ 
+ /**
+- * Initialize stdio for file system and console I/O (stdin/stdout/stderr).
++ * Initialize stdio.
+  * Must only be called once.
+  */
+-void CGlueStdioInit (CFATFileSystem& rFATFileSystem, CConsole& rConsole);
++void CGlueStdioInit ();
+ 
+ /**
+- * Initialize stdio only for file system I/O.
+- * Must only be called once.
+- */
+-void CGlueStdioInit (CFATFileSystem& rFATFileSystem);
+-
+-/**
+- * Initialize stdio only for console I/O  (stdin/stdout/stderr).
+- * Must only be called once.
++ * Sets the partition to mount for the given volume.
++ * volume string must match one of volumes defined in ffconf.h
+  */
+-void CGlueStdioInit (CConsole& rConsole);
++void CGlueStdioSetPartitionForVolume (const char* volume, int p);
+ 
+ class CGlueIO
+ {
 diff --git a/libs/circle b/libs/circle
 --- a/libs/circle
 +++ b/libs/circle

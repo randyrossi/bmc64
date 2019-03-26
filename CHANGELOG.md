@@ -54,10 +54,11 @@
   * Fixed gpio16 not bringing up menu (still need to debounce)
   * Improved GPIO joystick response time (~45ms avg)
 
-## 1.1.10
+## 1.0.10
   * Added Pepto-Pal color palette to prefs
   * Fixed audio sync bug for ntsc timing
   * Created tools dir for delay test programs
   * Made mounted partition configurable
   * Fixed unshiftable keys bug
   * Added temperature notes to README.md
+  * gpu_mem changed to 64

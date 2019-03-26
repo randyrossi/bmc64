@@ -34,7 +34,6 @@
 #include "monitor.h"
 #include "viewport.h"
 
-int chdir(const char *path);
 char *getwd(char *buf);
 char* ui_get_file(const char *format, ...);
 char *uimon_get_in(char **p1, const char *p2);

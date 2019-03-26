@@ -1,3 +1,16 @@
+diff --git a/addon/fatfs/ffconf.h b/addon/fatfs/ffconf.h
+index eae1896..bbf174a 100644
+--- a/addon/fatfs/ffconf.h
++++ b/addon/fatfs/ffconf.h
+@@ -181,7 +181,7 @@
+ */
+ 
+ 
+-#define FF_MULTI_PARTITION	0
++#define FF_MULTI_PARTITION	1
+ /* This option switches support for multiple volumes on the physical drive.
+ /  By default (0), each logical drive number is bound to the same physical drive
+ /  number and only an FAT volume found on the physical drive will be mounted.
 diff --git a/include/circle/memorymap.h b/include/circle/memorymap.h
 index 538c594..1182652 100644
 --- a/include/circle/memorymap.h

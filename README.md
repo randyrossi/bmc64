@@ -34,9 +34,27 @@ The machine config defaults to PAL 50hz for both HDMI and composite.  You can ch
 
 # FileSystem/Drives
 
-By default, the first partition of the SDcard is mounted and is where BMC64 will search for emulator files. To change this, add "partition=emmc1-#" to cmdline.txt where # is the partition number you want to mount. NOTE: The files the Raspbery Pi itself needs to boot BMC64 must still reside in the root partition (i.e. bootcode.bin, start.elf, config.txt kernel*.img, cmdline.txt).
+By default, the first partition of the SDcard is mounted and is where BMC64 will search for emulator files. To change this, add "disk_partition=#" to cmdline.txt where # is the partition number you want to mount.
 
-You can make drive 8 an IECDevice for the root file system of the SDcard. However, I don't recommend loading programs this way. The SDcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk oeprations anyway.
+IMPORTANT: The files the Raspbery Pi itself needs to boot BMC64 must still reside in the root partition. They are:
+
+    bootcode.bin
+    start.elf
+    config.txt
+    kernel*.img
+    cmdline.txt
+
+Directories and long filesnames are supported as of v1.0.9. Previous versions, required all disks, tapes, cartridges, rom files etc to reside in the root directory.  This is no longer the case. If you have an existing image, it is recommended you move your files to the following directory structure:
+
+    C64/  <- for kernal, basic, chargen, disk roms, etc.
+    SNAPSHOTS/
+    DISKS/
+    TAPES/
+    CARTRIDGES/
+
+The default directories where BMC64 will look for each file type can be configured in the settings menu.
+
+You can make drive 8 an IECDevice for the root directory of the SDcard. However, I don't recommend loading programs this way. The SDcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk oeprations anyway.  It's mostly used for testing purposes.
 
 # Sound
 

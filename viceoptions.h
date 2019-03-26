@@ -30,7 +30,7 @@
 #define TEST_PIN_TARGET_FIRE_1 2
 #define TEST_PIN_TARGET_FIRE_2 3
 
-#define PARTITION_NAME_LEN 16
+#define VOLUME_NAME_LEN 16
 
 class ViceOptions
 {
@@ -44,7 +44,8 @@ public:
 	bool GetHideConsole (void) const;
 	void SetHideConsole (bool value);
 	bool GetDemoMode (void) const;
-	const char* GetPartition (void) const;
+	int GetDiskPartition (void) const;
+	const char* GetDiskVolume (void) const;
 
 	static ViceOptions *Get (void);
 
@@ -64,7 +65,8 @@ private:
 	unsigned m_nMachineTiming;
 	bool m_bHideConsole;
 	bool m_bDemoMode;
-        char m_partition[PARTITION_NAME_LEN];
+        int m_disk_partition;
+        char m_disk_volume[VOLUME_NAME_LEN];
 
 	static ViceOptions *s_pThis;
 };

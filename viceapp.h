@@ -36,6 +36,7 @@
 #include <circle/net/netsubsystem.h>
 
 #include <circle_glue.h>
+#include <string.h>
 
 class ViceApp
 {
@@ -152,11 +153,20 @@ public:
                         return false;
                 }
 
-                const char *mpPartitionName = mViceOptions.GetPartition ();
+		int partition = mViceOptions.GetDiskPartition ();
 
-                if (f_mount (&mFileSystem, mpPartitionName, 1) != FR_OK) {
+		// When mounting, fatfs gets ":" appended.  But StdioInit
+		// does not.
+                const char *volumeName = mViceOptions.GetDiskVolume ();
+		char fatFsVol[VOLUME_NAME_LEN];
+		strncpy (fatFsVol, volumeName, VOLUME_NAME_LEN-2);
+		strcat (fatFsVol, ":");
+
+                CGlueStdioSetPartitionForVolume (volumeName, partition);
+
+                if (f_mount (&mFileSystem, fatFsVol, 1) != FR_OK) {
                         mLogger.Write (GetKernelName (), LogError,
-                                         "Cannot mount (fatfs) partition: %s", mpPartitionName);
+                            "Cannot mount partition: %s", fatFsVol);
                         return false;
                 }
 
@@ -171,7 +181,7 @@ public:
                 }
 
                 // Initialize our replacement newlib stdio
-                CGlueStdioInit (mConsole);
+                CGlueStdioInit ();
 
                 mLogger.Write (GetKernelName (), LogNotice, "Compile time: " __DATE__ " " __TIME__);
 
@@ -180,8 +190,14 @@ public:
 
         virtual void Cleanup (void)
         {
-                const char *mpPartitionName = mViceOptions.GetPartition ();
-                if (f_mount (0, mpPartitionName, 0) != FR_OK) {
+		// When mounting, fatfs gets ":" appended.  But StdioInit
+		// does not.
+                const char *volumeName = mViceOptions.GetDiskVolume ();
+		char fatFsVol[VOLUME_NAME_LEN];
+		strncpy (fatFsVol, volumeName, VOLUME_NAME_LEN-2);
+		strcat (fatFsVol, ":");
+
+                if (f_mount (0, fatFsVol, 0) != FR_OK) {
                         mLogger.Write (GetKernelName (), LogError,
                                 "Cannot unmount drive");
                 }
