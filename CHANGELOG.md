@@ -55,10 +55,13 @@
   * Improved GPIO joystick response time (~45ms avg)
 
 ## 1.0.10
+  * Added directory support
   * Added Pepto-Pal color palette to prefs
   * Fixed audio sync bug for ntsc timing
   * Created tools dir for delay test programs
   * Made mounted partition configurable
   * Fixed unshiftable keys bug
   * Added temperature notes to README.md
-  * gpu_mem changed to 64
+  * gpu_mem changed to 64mb in mem config and config.txt
+  * changed mem to 512mb in circle mem config
+  * fixed issue with 0 key on snapshot file names crashing

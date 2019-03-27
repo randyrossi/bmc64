@@ -41,7 +41,7 @@ extern int raspi_demo_mode;
 
 struct demo_entry {
    int operation;
-   char file[16];
+   char file[256];
    long timeout;
    int mode;
    int joyswap;

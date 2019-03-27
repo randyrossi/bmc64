@@ -32,7 +32,7 @@
 #define NUM_MENU_ROOTS 5
 #define MAX_CHOICES    16
 #define MAX_MENU_STR   36
-#define MAX_FN_NAME    12
+#define MAX_FN_NAME    20
 
 // Special menu id for items that do nothing or have no action callback
 #define MENU_ID_DO_NOTHING -1 

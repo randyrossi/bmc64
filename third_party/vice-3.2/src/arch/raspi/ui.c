@@ -277,7 +277,7 @@ static void ui_key_pressed(long key) {
      ui_type_char(ch);
   }
   else if (key == KEYCODE_0) {
-     ui_type_char(0);
+     ui_type_char('0');
   }
   else if (key == KEYCODE_Dash) {
      if (keyboard_shift) ui_type_char('_');
