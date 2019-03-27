@@ -36,7 +36,7 @@ The machine config defaults to PAL 50hz for both HDMI and composite.  You can ch
 
 By default, the first partition of the SDcard is mounted and is where BMC64 will search for emulator files. To change this, add "disk_partition=#" to cmdline.txt where # is the partition number you want to mount.
 
-IMPORTANT: The files the Raspbery Pi itself needs to boot BMC64 must still reside in the root partition. They are:
+IMPORTANT: The files the Raspbery Pi itself needs to boot BMC64 must still reside in the first partition. They are:
 
     bootcode.bin
     start.elf

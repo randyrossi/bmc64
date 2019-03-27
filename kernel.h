@@ -54,7 +54,6 @@ public:
         CKernel (void);
 
 	bool Initialize(void) override;
-        bool StartupChecksOk(void);
         TShutdownMode Run (void);
         
         static void KeyStatusHandlerRaw (unsigned char ucModifiers, 

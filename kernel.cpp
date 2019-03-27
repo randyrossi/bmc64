@@ -372,22 +372,6 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
    }
 }
 
-bool CKernel::StartupChecksOk() {
-   FILE *fp = fopen("chargen","r");
-   if (fp == NULL) return false;
-   fclose(fp);
-
-   fp = fopen("basic","r");
-   if (fp == NULL) return false;
-   fclose(fp);
-
-   fp = fopen("kernal","r");
-   if (fp == NULL) return false;
-   fclose(fp);
-
-   return true;
-}
-
 ViceApp::TShutdownMode CKernel::Run (void)
 {
   mLogger.Write ("vice", LogNotice, "VICE");
@@ -442,23 +426,14 @@ ViceApp::TShutdownMode CKernel::Run (void)
   // Tell vice what we found
   joy_set_gamepad_info(num_pads, num_buttons, num_axes, num_hats);
 
-  if (!StartupChecksOk()) {
-     mViceOptions.SetHideConsole(false);
-     mLogger.Write ("", LogNotice, "KERNAL, CHARGEN or BASIC MISSING");
-     mLogger.Write ("", LogNotice, "Please read documentation.");
-     for (;;) {
-        circle_sleep(1000000);
-     }
-  } else {
-    // Core 1 will be used for the main emulator loop.
-    mEmulatorCore.SetTimingOption(timing_option);
-    mEmulatorCore.Launch();
+  // Core 1 will be used for the main emulator loop.
+  mEmulatorCore.SetTimingOption(timing_option);
+  mEmulatorCore.Launch();
 
-    // This core will do nothing but service interrupts from
-    // usb or gpio.
-    printf ("Core 0 idle\n");
-    for (;;) { circle_sleep(1000000); }
-  }
+  // This core will do nothing but service interrupts from
+  // usb or gpio.
+  printf ("Core 0 idle\n");
+  for (;;) { circle_sleep(1000000); }
 
   return ShutdownHalt;
 }

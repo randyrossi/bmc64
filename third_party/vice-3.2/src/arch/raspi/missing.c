@@ -41,10 +41,6 @@
 // it).
 // ------------------------------------------------------------------------
 
-char *getwd(char *buf) {
-   return NULL;
-}
-
 char* ui_get_file(const char *format, ...){
    return 0;
 }
