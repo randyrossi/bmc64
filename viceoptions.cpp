@@ -49,7 +49,7 @@ ViceOptions::ViceOptions (void) :
 	m_pOptions = (char *) m_TagCommandLine.String;
 
 	// Set the default volume we mount for fatfs
-	m_disk_partition = 0;
+	m_disk_partition = 0; // this tells fatfs 'auto'
 	strcpy(m_disk_volume, "SD");
 
 	char *pOption;
@@ -114,7 +114,7 @@ ViceOptions::ViceOptions (void) :
 		else if (strcmp (pOption, "disk_partition") == 0)
 		{
 			m_disk_partition = atoi(pValue);
-			if (m_disk_partition > 3) m_disk_partition = 3;
+			if (m_disk_partition > 4) m_disk_partition = 4;
 			if (m_disk_partition < 0) m_disk_partition = 0;
 		}
 	}
