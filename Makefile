@@ -7,7 +7,7 @@ NEWLIBDIR = third_party/circle-stdlib/install/arm-none-circle
 VICE = third_party/vice-3.2/src
 
 OBJS	= main.o kernel.o vicescreen.o vicesound.o vicesoundbasedevice.o \
-          viceoptions.o viceemulatorcore.o
+          viceoptions.o viceemulatorcore.o viceapp.o
 
 # TODO Add subdir to kick off vice compilation
 

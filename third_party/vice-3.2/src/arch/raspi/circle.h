@@ -89,5 +89,6 @@ extern void circle_key_pressed(long key);
 extern void circle_key_released(long key);
 
 extern void circle_set_demo_mode(int is_demo);
+extern void circle_boot_complete();
 
 #endif

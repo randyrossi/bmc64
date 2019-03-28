@@ -162,6 +162,9 @@ static void demo_load_script() {
 
          char *joyswap = strtok(NULL, ",");
          if (joyswap != NULL) {
+            if (joyswap[strlen(joyswap)-1] == '\n') {
+               joyswap[strlen(joyswap)-1] = '\0';
+            }
             new_entry->joyswap = atoi(joyswap);
          }
 

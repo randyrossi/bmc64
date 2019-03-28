@@ -106,9 +106,9 @@ extern "C" {
      return static_kernel->circle_sound_bufferspace();
   }
 
-  int circle_sound_init(const char *param, int *speed, 
+  int circle_sound_init(const char *param, int *speed,
                         int *fragsize, int *fragnr, int *channels) {
-     return static_kernel->circle_sound_init(param, speed, 
+     return static_kernel->circle_sound_init(param, speed,
                                              fragsize, fragnr, channels);
   }
 
@@ -154,6 +154,10 @@ extern "C" {
 
   void circle_lock_release() {
      static_kernel->circle_lock_release();
+  }
+
+  void circle_boot_complete() {
+     static_kernel->circle_boot_complete();
   }
 };
 
@@ -487,7 +491,7 @@ void CKernel::circle_wait_vsync() {
   mScreen.WaitForVerticalSync();
 }
 
-int CKernel::circle_sound_init(const char *param, int *speed, 
+int CKernel::circle_sound_init(const char *param, int *speed,
                                int *fragsize, int *fragnr, int *channels) {
   if (!mViceSound) {
      *speed = SAMPLE_RATE;
@@ -557,7 +561,7 @@ void CKernel::circle_joy_init() {
 
 void CKernel::KeyStatusHandlerRaw (unsigned char ucModifiers,
                                    const unsigned char RawKeys[6]) {
-   
+ 
    bool new_states[MAX_KEY_CODES];
    memset(new_states, 0, MAX_KEY_CODES * sizeof(bool));
 
@@ -657,7 +661,7 @@ void CKernel::KeyStatusHandlerRaw (unsigned char ucModifiers,
               circle_key_pressed(i);
            }
       }
-      key_states[i] = new_states[i];    
+      key_states[i] = new_states[i];
    }
 }
 
@@ -820,4 +824,8 @@ void CKernel::circle_lock_acquire() {
 
 void CKernel::circle_lock_release() {
   m_Lock.Release();
+}
+
+void CKernel::circle_boot_complete() {
+  DisableBootStat();
 }

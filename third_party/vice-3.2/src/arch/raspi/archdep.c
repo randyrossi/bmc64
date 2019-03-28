@@ -281,14 +281,9 @@ int archdep_stat(const char *file_name, unsigned int *len, unsigned int *isdir)
         strcasecmp("./kernel8-32.img", file_name) == 0 ||
         strcasecmp("./config.txt", file_name) == 0 ||
         strcasecmp("./cmdline.txt", file_name) == 0 ||
-        strcasecmp("./basic", file_name) == 0 ||
-        strcasecmp("./kernal", file_name) == 0 ||
-        strcasecmp("./chargen", file_name) == 0 ||
-        strcasecmp("./rpi_sym.vkm", file_name) == 0 ||
+        strcasecmp("./bootstat.txt", file_name) == 0 ||
         strcasecmp("./bootcode.bin", file_name) == 0 ||
-        strcasecmp("./start.elf", file_name) == 0 ||
-        strcasecmp("./d1541II", file_name) == 0 ||
-        strcasecmp("./dos1541", file_name) == 0) {
+        strcasecmp("./start.elf", file_name) == 0) {
         return -1;
     }
 

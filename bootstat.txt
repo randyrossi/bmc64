@@ -1,0 +1,26 @@
+# This file tells stdio glue code to fast fail,
+# fast stat certain files that are accessed 
+# at boot time in order to speed up the 
+# boot process.  If this file is missing, boot
+# time will be much longer.
+stat,kernal,8192
+stat,basic,8192
+stat,chargen,4096
+stat,d1541II,16384
+fail,rpi_pos.vkm,0
+fail,fliplist-C64.vfl,0
+fail,mps803,0
+fail,mps803.vpl,0
+fail,nl10-cbm,0
+fail,1520.vpl,0
+fail,dos1540,0
+fail,dos1541,0
+fail,dos1570,0
+fail,dos1581,0
+fail,dos2000,0
+fail,dos4000,0
+fail,dos2031,0
+fail,dos2040,0
+fail,dos3040,0
+fail,dos4040,0
+fail,dos1001,0

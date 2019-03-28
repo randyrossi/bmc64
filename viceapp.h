@@ -37,6 +37,8 @@
 
 #include <circle_glue.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 class ViceApp
 {
@@ -183,6 +185,8 @@ public:
                 // Initialize our replacement newlib stdio
                 CGlueStdioInit ();
 
+                InitBootStat();
+
                 mLogger.Write (GetKernelName (), LogNotice, "Compile time: " __DATE__ " " __TIME__);
 
                 return true;
@@ -204,11 +208,27 @@ public:
                 ViceScreenApp::Cleanup ();
         }
 
+private:
+	// Must be called after fatfs/stdio has been initialized
+	// This routine loads the bootstat.txt file and passes the
+	// information along to stdio so it can bypass the disk
+	// to answer questions about a set of known files. This speeds
+	// up boot time.
+	void InitBootStat();
+
 protected:
+	// Called after VICE has completed booting so we no longer
+	// fast fail or fast stat anything.
+	void DisableBootStat();
+
         CDWHCIDevice    mDWHCI;
         CEMMCDevice     mEMMC;
         FATFS           mFileSystem;
         CConsole        mConsole;
+
+	int mBootStatWhat[MAX_BOOTSTAT_LINES];
+	char *mBootStatFile[MAX_BOOTSTAT_LINES];
+	int mBootStatSize[MAX_BOOTSTAT_LINES];
 };
 
 #endif
