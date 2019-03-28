@@ -52,8 +52,6 @@ Directories and long filenames are supported as of v1.0.10. Previous versions, r
     carts/
     tmp/
 
-The default directories where BMC64 will look for each file type can be configured in the settings menu.
-
 You can make drive 8 an IECDevice for the root directory of the SDcard. However, I don't recommend loading programs this way. The SDcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk oeprations anyway.  It's mostly used for testing purposes.
 
 # Sound
@@ -190,12 +188,15 @@ Now make inside third_party/circle-stdlib:
     EDIT third_party/circle-stdlib/build/circle-newlib/arm-none-circle/libgloss/circle/Makefile
     ADD -std=c++14 to CPPFLAGS
 
-Build some addons required for hdmi sound:
+Build some addons required for hdmi sound and fatfs:
 
     cd $(CIRCLEHOME)/addon/vc4/vchiq
     make
 
     cd $(CIRCLEHOME)/addon/linux
+    make
+
+    cd $(CIRCLEHOME)/addon/fatfs
     make
 
 Now cd into bmc64/third_party/vice-3.2 and configure vice. You have to set CIRCLE_HOME and ARM_HOME to match your paths:
@@ -239,13 +240,26 @@ That should make a kernel7.img for RPI2, kernel8-32.img for RPI3
 
 What to put on the SDcard:
 
-    KERNAL, BASIC, CHARGEN, d1541II
-    kernel7.img for Pi2 or kernel8.img for Pi3 or both
-    rpi_sym.vkm
+    C64/
+        KERNAL
+        BASIC
+        CHARGEN
+        d1541II
+        rpi_sym.vkm
+    kernel7.img (for Pi2)
+    kernel8-32.img (for Pi3)
     config.txt
     cmdline.txt
-
-NOTE: Any disk or cartridge images MUST be placed in the root directory. Subdirectories are not supported.
+    snapshots/
+        (place snapshot files here)
+    disks/
+        (place .d64 or other disk files here)
+    tapes/
+        (place .tap files here)
+    carts/
+        (place .crt files here)
+    tmp/
+        (used by the emulator sometimes)
 
 # Resources
 
