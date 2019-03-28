@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <string.h>
+#include <assert.h>
 #include "attach.h"
 #include "cartridge.h"
 #include "machine.h"
@@ -163,12 +164,25 @@ static void list_files(struct menu_item* parent, int dir_type,
      ui_menu_add_button(menu_id, parent, "..")->sub_id = MENU_SUB_UP_DIR;
   }
 
+  // Make two buckets
+  struct menu_item dirs_root;
+  memset(&dirs_root, 0, sizeof(struct menu_item));
+  dirs_root.type = FOLDER;
+  dirs_root.is_expanded = 1;
+  dirs_root.name[0] = '\0';
+
+  struct menu_item files_root;
+  memset(&files_root, 0, sizeof(struct menu_item));
+  files_root.type = FOLDER;
+  files_root.is_expanded = 1;
+  files_root.name[0] = '\0';
+
   // TODO : Prefetch and order dirs at top
   if (dp != NULL) {
     while (ep = readdir (dp)) {
       if (ep->d_type & DT_DIR) {
         ui_menu_add_button_with_value(
-           menu_id, parent, ep->d_name, 0, ep->d_name, "(dir)")
+           menu_id, &dirs_root, ep->d_name, 0, ep->d_name, "(dir)")
               ->sub_id = MENU_SUB_ENTER_DIR;
       } else {
         include = 0;
@@ -185,13 +199,21 @@ static void list_files(struct menu_item* parent, int dir_type,
         }
         if (include) {
           ui_menu_add_button(
-             menu_id, parent, ep->d_name)->sub_id = MENU_SUB_PICK_FILE;
+             menu_id, &files_root, ep->d_name)->sub_id = MENU_SUB_PICK_FILE;
         }
       }
     }
 
     (void) closedir (dp);
   }
+
+  // Transfer ownership of dirs children first, then files. Childless
+  // parents are on the stack.
+  ui_add_all(&dirs_root, parent);
+  ui_add_all(&files_root, parent);
+
+  assert(dirs_root.first_child == NULL);
+  assert(files_root.first_child == NULL);
 }
 
 static void show_files(int dir_type, int filter, int menu_id) {

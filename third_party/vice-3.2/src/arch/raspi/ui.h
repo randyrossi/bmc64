@@ -118,6 +118,8 @@ struct menu_item* ui_menu_add_folder(struct menu_item *folder, char *name);
 struct menu_item* ui_menu_add_divider(struct menu_item *folder);
 struct menu_item* ui_menu_add_text_field(int id, struct menu_item *folder, char *name, char *value);
 
+// Move ownership of all children from src onto dest
+void ui_add_all(struct menu_item* src, struct menu_item* dest);
 
 // Stubs for vice calls. Unimplemented for now.
 void ui_pause_emulation(int flag);
