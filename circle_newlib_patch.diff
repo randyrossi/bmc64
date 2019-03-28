@@ -33,10 +33,10 @@ index 0ea1923..d5cf197 100644
  
  stub_warning(_getpid)
 diff --git a/libgloss/circle/io.cpp b/libgloss/circle/io.cpp
-index 23720b6..0e1873f 100644
+index 23720b6..ea5b568 100644
 --- a/libgloss/circle/io.cpp
 +++ b/libgloss/circle/io.cpp
-@@ -1,385 +1,657 @@
+@@ -1,385 +1,665 @@
  #include "config.h"
  #include <_ansi.h>
  #include <_syslist.h>
@@ -356,19 +356,24 @@ index 23720b6..0e1873f 100644
 -{
 -        CGlueInitConsole (rConsole);
 -        CGlueInitFileSystem (rFATFileSystem);
-+static void slurp_file(CircleFile &file) {
++// Returns non zero value on any failure. Any memory will be
++// freed on error and file.contents nulled.
++static int slurp_file(CircleFile &file) {
 +  if (file.contents == nullptr) {
-+    // Read the entire contents of the file into our
-+    // memory buffer.
++    // Read the entire contents of the file into memory.
 +    file.size = 0;
 +    unsigned total = 0;
 +    if (f_lseek(&file.file, 0) != FR_OK) {
-+       return;
++       return -1;
 +    }
 +    while (true) {
 +      unsigned int num_read;
 +      if (f_read(&file.file, file.readBuf, READ_BUF_SIZE, &num_read) != FR_OK) {
-+        break;
++        if (file.contents) {
++           free(file.contents);
++           file.contents = nullptr;
++        }  
++        return -1;
 +      }
 +
 +      if (num_read == 0) {
@@ -388,6 +393,7 @@ index 23720b6..0e1873f 100644
 +      file.size = total;
 +    }
 +  }
++  return 0;
  }
  
 -void CGlueStdioInit (CFATFileSystem& rFATFileSystem)
@@ -435,10 +441,13 @@ index 23720b6..0e1873f 100644
 +
 +    // When file is opened O_RDWR, slurp it into memory.
 +    if (masked_flags == O_RDWR) {
-+       slurp_file(newFile);
-+       if (newFile.size == 0 || f_close(&newFile.file) != FR_OK) {
-+          slot = -1;
++       if (slurp_file(newFile)) {
 +          errno = ENFILE;
++          return -1;
++       }
++       if (f_close(&newFile.file) != FR_OK) {
++          errno = ENFILE;
++          return -1;
 +       }
 +    }
 +
@@ -947,8 +956,7 @@ index 23720b6..0e1873f 100644
 +
 +  if (file.mode == O_RDONLY) {
 +    // Assert FIL has been opened
-+    slurp_file(file);
-+    if (file.size == 0) {
++    if (slurp_file(file)) {
 +       errno = EACCES;
 +       return -1;
 +    }
@@ -1054,25 +1062,25 @@ index 7c34637..471c176 100644
 -stub_warning(_stat)
 +// Moved to io.cpp
 diff --git a/newlib/libc/sys/circle/sys/dirent.h b/newlib/libc/sys/circle/sys/dirent.h
-index 1f73230..0321778 100644
+index 1f73230..4157027 100644
 --- a/newlib/libc/sys/circle/sys/dirent.h
 +++ b/newlib/libc/sys/circle/sys/dirent.h
-@@ -7,15 +7,44 @@ extern "C" {
+@@ -7,16 +7,43 @@ extern "C" {
  
  #include <sys/types.h>
  
 -#include <circle/fs/fsdef.h>
-+#include <ff.h>
- 
+-
 -typedef struct _CIRCLE_DIR DIR;
-+#define FS_TITLE_LEN 12
++#include <ff.h>
  
  /* Directory entry as returned by readdir */
  struct dirent {
          ino_t  d_ino;
+-        char   d_name[FS_TITLE_LEN + 1];
 +        unsigned char d_type;
-         char   d_name[FS_TITLE_LEN + 1];
- };
++        char   d_name[FF_MAX_LFN + 1];
++};
 +#define _DIRENT_HAVE_D_TYPE
 +
 +/* File types for `d_type'.  */
@@ -1096,11 +1104,12 @@ index 1f73230..0321778 100644
 +# define DT_SOCK        DT_SOCK
 +  DT_WHT = 14
 +# define DT_WHT         DT_WHT
-+};
-+
+ };
+ 
 +/* Convert between stat structure types and directory types.  */
 +# define IFTODT(mode)           (((mode) & 0170000) >> 12)
 +# define DTTOIF(dirtype)        ((dirtype) << 12)
- 
++
  DIR *opendir(const char *);
  struct dirent *readdir(DIR *);
+ int readdir_r(DIR *__restrict, struct dirent *__restrict,
