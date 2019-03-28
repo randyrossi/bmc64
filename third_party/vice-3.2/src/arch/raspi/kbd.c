@@ -253,7 +253,9 @@ void circle_key_released(long key) {
          circle_ui_key_interrupt(key, 0 /* up */);
       } else {
          circle_emu_key_interrupt(key, 0 /* up */);
-         ui_toggle();
+         circle_lock_acquire();
+         ui_toggle_pending = 2;
+         circle_lock_release();
       }
       return;
    }
