@@ -11,6 +11,19 @@ index eae1896..bbf174a 100644
  /* This option switches support for multiple volumes on the physical drive.
  /  By default (0), each logical drive number is bound to the same physical drive
  /  number and only an FAT volume found on the physical drive will be mounted.
+diff --git a/addon/linux/bug.h b/addon/linux/bug.h
+index 6b80534..0e3e97a 100644
+--- a/addon/linux/bug.h
++++ b/addon/linux/bug.h
+@@ -9,7 +9,7 @@
+ extern "C" {
+ #endif
+ 
+-#define BUG_ON(exp)	assert (!(exp))
++#define BUG_ON(exp)	;
+ #define BUG()		assert (0)
+ 
+ void __warn (const char *file, const int line);
 diff --git a/include/circle/memorymap.h b/include/circle/memorymap.h
 index 538c594..1182652 100644
 --- a/include/circle/memorymap.h
