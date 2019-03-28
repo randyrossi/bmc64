@@ -12,27 +12,36 @@ index 363cc32..a86b094 100755
      CXX_FOR_TARGET=${TOOLPREFIX}g++ \
      GCC_FOR_TARGET=${TOOLPREFIX}gcc \
 diff --git a/include/circle_glue.h b/include/circle_glue.h
-index e0b90d5..271d367 100644
+index e0b90d5..58f93b9 100644
 --- a/include/circle_glue.h
 +++ b/include/circle_glue.h
-@@ -6,22 +6,16 @@
+@@ -6,22 +6,27 @@
  #include <circle/sched/scheduler.h>
  
  /**
-- * Initialize stdio for file system and console I/O (stdin/stdout/stderr).
-+ * Initialize stdio.
+- * Initialize stdio for file system and console I/O (stdin/stdout/stderr).  + * Initialize stdio.
   * Must only be called once.
   */
 -void CGlueStdioInit (CFATFileSystem& rFATFileSystem, CConsole& rConsole);
 +void CGlueStdioInit ();
  
- /**
+-/**
 - * Initialize stdio only for file system I/O.
 - * Must only be called once.
 - */
 -void CGlueStdioInit (CFATFileSystem& rFATFileSystem);
--
--/**
++#define MAX_BOOTSTAT_LINES 32
++#define MAX_BOOTSTAT_FLEN 64
++
++#define BOOTSTAT_WHAT_STAT 0
++#define BOOTSTAT_WHAT_FAIL 1
++
++void CGlueStdioInitBootStat (int num,
++        int *mBootStatWhat,
++        const char **mBootStateFile,
++        int *mBootStatSize);
+ 
+ /**
 - * Initialize stdio only for console I/O  (stdin/stdout/stderr).
 - * Must only be called once.
 + * Sets the partition to mount for the given volume.
@@ -43,15 +52,3 @@ index e0b90d5..271d367 100644
  
  class CGlueIO
  {
-diff --git a/libs/circle b/libs/circle
---- a/libs/circle
-+++ b/libs/circle
-@@ -1 +1 @@
--Subproject commit a5c693117e31a567fafd3e68880071f2f8c64977
-+Subproject commit a5c693117e31a567fafd3e68880071f2f8c64977-dirty
-diff --git a/libs/circle-newlib b/libs/circle-newlib
---- a/libs/circle-newlib
-+++ b/libs/circle-newlib
-@@ -1 +1 @@
--Subproject commit 8a313d45ad5d8c0e306ce8751b6e3d6d3ef46ab3
-+Subproject commit 8a313d45ad5d8c0e306ce8751b6e3d6d3ef46ab3-dirty
