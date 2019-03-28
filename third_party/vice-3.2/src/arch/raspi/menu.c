@@ -736,12 +736,15 @@ static void menu_value_changed(struct menu_item* item) {
          return;
       case MENU_SID_ENGINE:
          resources_set_int("SidEngine", item->choice_ints[item->value]);
+         resources_set_int("SidResidSampling", 0);
          return;
       case MENU_SID_MODEL:
          resources_set_int("SidModel", item->choice_ints[item->value]);
+         resources_set_int("SidResidSampling", 0);
          return;
       case MENU_SID_FILTER:
          resources_set_int("SidFilters", item->value);
+         resources_set_int("SidResidSampling", 0);
          return;
    }
 
