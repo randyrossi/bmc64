@@ -28,7 +28,7 @@
 
 MAINTEXT:
         !BYTE   147,5           ;CLEAR SCREEN AND WHITE
-	!PET    "KEY delay test by the 8-bit guy."
+	!PET    "key delay test by the 8-bit guy."
 
 MAINROUTINE
         LDA     #$00

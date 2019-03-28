@@ -131,18 +131,9 @@ protected:
 
 class ViceStdioApp: public ViceScreenApp
 {
-private:
-        char const *mpPartitionName;
-
 public:
-        // TODO transform to constexpr
-        // constexpr char static DefaultPartition[] = "emmc1-1";
-#define CSTDLIBAPP_DEFAULT_PARTITION "emmc1-1"
-
-        ViceStdioApp (const char *kernel,
-                      const char *pPartitionName = CSTDLIBAPP_DEFAULT_PARTITION)
+        ViceStdioApp (const char *kernel)
                 : ViceScreenApp (kernel),
-                  mpPartitionName (pPartitionName),
                   mDWHCI (&mInterrupt, &mTimer),
                   mEMMC (&mInterrupt, &mTimer, &mActLED),
                   mConsole (&mScreen)
@@ -160,6 +151,8 @@ public:
                 {
                         return false;
                 }
+
+                const char *mpPartitionName = mViceOptions.GetPartition ();
 
                 CDevice * const pPartition =
                         mDeviceNameService.GetDevice (mpPartitionName, true);

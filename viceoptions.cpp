@@ -47,6 +47,9 @@ ViceOptions::ViceOptions (void) :
 	
 	m_pOptions = (char *) m_TagCommandLine.String;
 
+        // Set the default partition we mount for fatfs
+	strcpy(m_partition, "emmc1-1");
+
 	char *pOption;
 	while ((pOption = GetToken ()) != 0)
 	{
@@ -100,6 +103,10 @@ ViceOptions::ViceOptions (void) :
 				m_bDemoMode = false;
 			}
 		}
+		else if (strcmp (pOption, "partition") == 0)
+		{
+			strncpy(m_partition, pValue, PARTITION_NAME_LEN - 1);
+		}
 	}
 }
 
@@ -136,6 +143,11 @@ void ViceOptions::SetHideConsole (bool value)
 bool ViceOptions::GetDemoMode (void) const
 {
 	return m_bDemoMode;
+}
+
+const char* ViceOptions::GetPartition (void) const
+{
+        return m_partition;
 }
 
 ViceOptions *ViceOptions::Get (void)

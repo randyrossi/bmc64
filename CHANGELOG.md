@@ -58,3 +58,6 @@
   * Added Pepto-Pal color palette to prefs
   * Fixed audio sync bug for ntsc timing
   * Created tools dir for delay test programs
+  * Made mounted partition configurable
+  * Fixed unshiftable keys bug
+  * Added temperature notes to README.md
