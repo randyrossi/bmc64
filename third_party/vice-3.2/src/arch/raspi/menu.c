@@ -519,10 +519,16 @@ static void relist_files(struct menu_item* item) {
        show_files(DIR_TAPES, FILTER_TAPE, item->id);
        break;
      case MENU_CART_FILE:
-     case MENU_CART_8K_FILE:
-     case MENU_CART_16K_FILE:
-     case MENU_CART_ULTIMAX_FILE:
        show_files(DIR_CARTS, FILTER_CART, item->id);
+       break;
+     case MENU_CART_8K_FILE:
+       show_files(DIR_CARTS, FILTER_NONE, item->id);
+       break;
+     case MENU_CART_16K_FILE:
+       show_files(DIR_CARTS, FILTER_NONE, item->id);
+       break;
+     case MENU_CART_ULTIMAX_FILE:
+       show_files(DIR_CARTS, FILTER_NONE, item->id);
        break;
      case MENU_AUTOSTART_FILE:
        show_files(DIR_ROOT, FILTER_NONE, item->id);
