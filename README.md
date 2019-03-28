@@ -43,7 +43,7 @@ IMPORTANT: The files the Raspbery Pi itself needs to boot BMC64 must still resid
     kernel*.img
     cmdline.txt
 
-Directories and long filesnames are supported as of v1.0.10. Previous versions, required all disks, tapes, cartridges, rom files etc to reside in the root directory.  This is no longer the case.  If you have an existing image, it is recommended you move your files to the following directory structure:
+Directories and long filenames are supported as of v1.0.10. Previous versions, required all disks, tapes, cartridges, rom files etc to reside in the root directory.  This is no longer the case.  If you have an existing image, it is recommended you move your files to the following directory structure:
 
     C64/  <- for kernal, basic, chargen, disk roms, etc.
     snapshots/
