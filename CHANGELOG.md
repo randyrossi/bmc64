@@ -56,6 +56,7 @@
 
 ## 1.0.10
   * Added directory support
+  * Long filename support added
   * Added Pepto-Pal color palette to prefs
   * Fixed audio sync bug for ntsc timing
   * Created tools dir for delay test programs

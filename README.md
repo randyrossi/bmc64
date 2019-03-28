@@ -12,7 +12,6 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
   * Keyrah friendly
 
 # Limitations
-  * All files must reside in root directory (no dirs for now)
   * USB gamepad support is limited
 
 This project uses VICE for emulation without any O/S (Linux) distribution installed on the Pi.  VICE (Versatile Commodore Emulator) platform dependencies are satisfied using circle-stdlib.
@@ -34,7 +33,7 @@ The machine config defaults to PAL 50hz for both HDMI and composite.  You can ch
 
 # FileSystem/Drives
 
-By default, the first partition of the SDcard is mounted and is where BMC64 will search for emulator files. To change this, add "disk_partition=#" to cmdline.txt where # is the partition number you want to mount.
+By default, the first partition of the SDcard is mounted and is where BMC64 will search for emulator files. To change this, add "disk_partition=#" to cmdline.txt where # is the partition number you want to mount (1-4).
 
 IMPORTANT: The files the Raspbery Pi itself needs to boot BMC64 must still reside in the first partition. They are:
 
@@ -44,13 +43,14 @@ IMPORTANT: The files the Raspbery Pi itself needs to boot BMC64 must still resid
     kernel*.img
     cmdline.txt
 
-Directories and long filesnames are supported as of v1.0.9. Previous versions, required all disks, tapes, cartridges, rom files etc to reside in the root directory.  This is no longer the case. If you have an existing image, it is recommended you move your files to the following directory structure:
+Directories and long filesnames are supported as of v1.0.10. Previous versions, required all disks, tapes, cartridges, rom files etc to reside in the root directory.  This is no longer the case.  If you have an existing image, it is recommended you move your files to the following directory structure:
 
     C64/  <- for kernal, basic, chargen, disk roms, etc.
-    SNAPSHOTS/
-    DISKS/
-    TAPES/
-    CARTRIDGES/
+    snapshots/
+    disks/
+    tapes/
+    carts/
+    tmp/
 
 The default directories where BMC64 will look for each file type can be configured in the settings menu.
 
