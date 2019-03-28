@@ -7,14 +7,15 @@ NEWLIBDIR = third_party/circle-stdlib/install/arm-none-circle
 VICE = third_party/vice-3.2/src
 
 OBJS	= main.o kernel.o vicescreen.o vicesound.o vicesoundbasedevice.o \
-          viceoptions.o viceemulatorcore.o
+          viceoptions.o viceemulatorcore.o viceapp.o
 
 # TODO Add subdir to kick off vice compilation
 
 include $(CIRCLEHOME)/Rules.mk
 
 CFLAGS += -I "$(NEWLIBDIR)/include" -I $(STDDEF_INCPATH) \
-          -I third_party/circle-stdlib/include
+          -I third_party/circle-stdlib/include \
+          -I $(CIRCLEHOME)/addon/fatfs
 LIBS := $(VICE)/alarm.o $(VICE)/attach.o $(VICE)/autostart.o $(VICE)/autostart-prg.o \
 	$(VICE)/cbmdos.o $(VICE)/cbmimage.o $(VICE)/charset.o \
 	$(VICE)/clipboard.o $(VICE)/clkguard.o $(VICE)/cmdline.o $(VICE)/color.o \
@@ -57,11 +58,11 @@ LIBS := $(VICE)/alarm.o $(VICE)/attach.o $(VICE)/autostart.o $(VICE)/autostart-p
  	$(CIRCLEHOME)/addon/SDCard/libsdcard.a \
   	$(CIRCLEHOME)/lib/usb/libusb.a \
  	$(CIRCLEHOME)/lib/input/libinput.a \
- 	$(CIRCLEHOME)/lib/fs/fat/libfatfs.a \
  	$(CIRCLEHOME)/lib/fs/libfs.a \
   	$(CIRCLEHOME)/lib/net/libnet.a \
   	$(CIRCLEHOME)/addon/vc4/vchiq/libvchiq.a \
   	$(CIRCLEHOME)/addon/linux/liblinuxemu.a \
+	$(CIRCLEHOME)/addon/fatfs/libfatfs.a \
   	$(CIRCLEHOME)/lib/sched/libsched.a \
   	$(CIRCLEHOME)/lib/libcircle.a
 

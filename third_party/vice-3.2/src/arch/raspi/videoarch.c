@@ -386,6 +386,7 @@ void vsyncarch_postsync(void){
   video_frame_count++;
   if (raspi_boot_warp && video_frame_count > 120) {
      raspi_boot_warp = 0;
+     circle_boot_complete();
      resources_set_int("WarpMode", 0);
   }
 

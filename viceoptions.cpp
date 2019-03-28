@@ -18,6 +18,7 @@
 #include <circle/util.h>
 #include <circle/sysconfig.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define INVALID_VALUE	((unsigned) -1)
 
@@ -33,7 +34,7 @@ ViceOptions::ViceOptions (void) :
 	s_pThis = this;
 
 	CBcmPropertyTags Tags;
-	if (!Tags.GetTag (PROPTAG_GET_COMMAND_LINE, 
+	if (!Tags.GetTag (PROPTAG_GET_COMMAND_LINE,
 		&m_TagCommandLine, sizeof m_TagCommandLine))
 	{
 		return;
@@ -47,8 +48,9 @@ ViceOptions::ViceOptions (void) :
 	
 	m_pOptions = (char *) m_TagCommandLine.String;
 
-        // Set the default partition we mount for fatfs
-	strcpy(m_partition, "emmc1-1");
+	// Set the default volume we mount for fatfs
+	m_disk_partition = 0; // this tells fatfs 'auto'
+	strcpy(m_disk_volume, "SD");
 
 	char *pOption;
 	while ((pOption = GetToken ()) != 0)
@@ -103,9 +105,17 @@ ViceOptions::ViceOptions (void) :
 				m_bDemoMode = false;
 			}
 		}
-		else if (strcmp (pOption, "partition") == 0)
+		else if (strcmp (pOption, "disk_volume") == 0)
 		{
-			strncpy(m_partition, pValue, PARTITION_NAME_LEN - 1);
+			if (strlen(pValue) > 0) {
+				strncpy(m_disk_volume, pValue, VOLUME_NAME_LEN - 1);
+			}
+		}
+		else if (strcmp (pOption, "disk_partition") == 0)
+		{
+			m_disk_partition = atoi(pValue);
+			if (m_disk_partition > 4) m_disk_partition = 4;
+			if (m_disk_partition < 0) m_disk_partition = 0;
 		}
 	}
 }
@@ -145,9 +155,14 @@ bool ViceOptions::GetDemoMode (void) const
 	return m_bDemoMode;
 }
 
-const char* ViceOptions::GetPartition (void) const
+int ViceOptions::GetDiskPartition (void) const
 {
-        return m_partition;
+        return m_disk_partition;
+}
+
+const char* ViceOptions::GetDiskVolume (void) const
+{
+        return m_disk_volume;
 }
 
 ViceOptions *ViceOptions::Get (void)

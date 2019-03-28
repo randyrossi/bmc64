@@ -54,7 +54,6 @@ public:
         CKernel (void);
 
 	bool Initialize(void) override;
-        bool StartupChecksOk(void);
         TShutdownMode Run (void);
         
         static void KeyStatusHandlerRaw (unsigned char ucModifiers, 
@@ -89,6 +88,7 @@ public:
 	void circle_check_gpio();
 	void circle_lock_acquire();
 	void circle_lock_release();
+	void circle_boot_complete();
 
 private:
         static bool uiShift;

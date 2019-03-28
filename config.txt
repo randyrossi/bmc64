@@ -43,7 +43,7 @@ hdmi_mode=19
 # no display
 #config_hdmi_boost=4
 
-gpu_mem=128
+gpu_mem=64
 disable_splash=1
 boot_delay=0
 

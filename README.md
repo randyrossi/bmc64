@@ -12,7 +12,6 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
   * Keyrah friendly
 
 # Limitations
-  * All files must reside in root directory (no dirs for now)
   * USB gamepad support is limited
 
 This project uses VICE for emulation without any O/S (Linux) distribution installed on the Pi.  VICE (Versatile Commodore Emulator) platform dependencies are satisfied using circle-stdlib.
@@ -34,9 +33,26 @@ The machine config defaults to PAL 50hz for both HDMI and composite.  You can ch
 
 # FileSystem/Drives
 
-By default, the first partition of the SDcard is mounted and is where BMC64 will search for emulator files. To change this, add "partition=emmc1-#" to cmdline.txt where # is the partition number you want to mount. NOTE: The files the Raspbery Pi itself needs to boot BMC64 must still reside in the root partition (i.e. bootcode.bin, start.elf, config.txt kernel*.img, cmdline.txt).
+By default, the first partition of the SDcard is mounted and is where BMC64 will search for emulator files. To change this, add "disk_partition=#" to cmdline.txt where # is the partition number you want to mount (1-4).
 
-You can make drive 8 an IECDevice for the root file system of the SDcard. However, I don't recommend loading programs this way. The SDcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk oeprations anyway.
+IMPORTANT: The files the Raspbery Pi itself needs to boot BMC64 must still reside in the first partition. They are:
+
+    bootcode.bin
+    start.elf
+    config.txt
+    kernel*.img
+    cmdline.txt
+
+Directories and long filenames are supported as of v1.0.10. Previous versions, required all disks, tapes, cartridges, rom files etc to reside in the root directory.  This is no longer the case.  If you have an existing image, it is recommended you move your files to the following directory structure:
+
+    C64/  <- for kernal, basic, chargen, disk roms, etc.
+    snapshots/
+    disks/
+    tapes/
+    carts/
+    tmp/
+
+You can make drive 8 an IECDevice for the root directory of the SDcard. However, I don't recommend loading programs this way. The SDcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk oeprations anyway.  It's mostly used for testing purposes.
 
 # Sound
 
@@ -139,12 +155,15 @@ Apply some required patches:
 
     Patch #1:
 
+    cd third_party/circle-stdlib
+    patch -p1 < ../../circle_stdlib_patch.diff
+
+    Patch #2:
+
     cd third_party/circle-stdlib/libs/circle-newlib
     patch -p1 < ../../../../circle_newlib_patch.diff
 
-    The second patch increases the kernel limit from 2 MB to 8 MB.
-
-    Patch #2:
+    Patch #3:
 
     cd third_party/circle-stdlib/libs/circle
     patch -p1 < ../../../../circle_patch.diff
@@ -169,12 +188,15 @@ Now make inside third_party/circle-stdlib:
     EDIT third_party/circle-stdlib/build/circle-newlib/arm-none-circle/libgloss/circle/Makefile
     ADD -std=c++14 to CPPFLAGS
 
-Build some addons required for hdmi sound:
+Build some addons required for hdmi sound and fatfs:
 
     cd $(CIRCLEHOME)/addon/vc4/vchiq
     make
 
     cd $(CIRCLEHOME)/addon/linux
+    make
+
+    cd $(CIRCLEHOME)/addon/fatfs
     make
 
 Now cd into bmc64/third_party/vice-3.2 and configure vice. You have to set CIRCLE_HOME and ARM_HOME to match your paths:
@@ -187,7 +209,7 @@ For RPI2:
 
     cd ../..
 
-    CIRCLE_HOME="$HOME/bmc64/third_party/circle-stdlib" ARM_HOME="$HOME/gcc-arm-none-eabi-7-2018-q2-update" LDFLAGS="-L$CIRCLE_HOME/install/arm-none-circle/lib" CXXFLAGS="-O2 -mfloat-abi=hard -ffreestanding -march=armv7-a -marm -mfpu=neon-vfpv4 -fno-exceptions -fno-rtti -nostdinc++ --specs=nosys.specs" CFLAGS="-O2 -I$CIRCLE_HOME/install/arm-none-circle/include/ -I$ARM_HOME/lib/gcc/arm-none-eabi/7.3.1/include -I$ARM_HOME/lib/gcc/arm-none-eabi/7.3.1/include-fixed -fno-exceptions --specs=nosys.specs -mfloat-abi=hard -ffreestanding -nostdlib -march=armv7-a -marm -mfpu=neon-vfpv4 -nostdinc" ./configure --host=arm-none-eabi --disable-textfield --disable-fullscreen --disable-vte --disable-nls --disable-realdevice --disable-ipv6 --disable-ssi2001 --disable-catweasel --disable-hardsid --disable-parsid --disable-portaudio --disable-ahi --disable-bundle --disable-editline --disable-lame --disable-rs232 --disable-midi --disable-hidmgr --disable-hidutils --without-oss --without-alsa --without-pulse --without-zlib
+    CIRCLE_HOME="$HOME/bmc64/third_party/circle-stdlib" ARM_HOME="$HOME/gcc-arm-none-eabi-7-2018-q2-update" LDFLAGS="-L$CIRCLE_HOME/install/arm-none-circle/lib" CXXFLAGS="-O2 -mfloat-abi=hard -ffreestanding -march=armv7-a -marm -mfpu=neon-vfpv4 -fno-exceptions -fno-rtti -nostdinc++ --specs=nosys.specs" CFLAGS="-O2 -I$CIRCLE_HOME/install/arm-none-circle/include/ -I$ARM_HOME/lib/gcc/arm-none-eabi/7.3.1/include -I$ARM_HOME/lib/gcc/arm-none-eabi/7.3.1/include-fixed -I$CIRCLE_HOME/libs/circle/addon/fatfs -fno-exceptions --specs=nosys.specs -mfloat-abi=hard -ffreestanding -nostdlib -march=armv7-a -marm -mfpu=neon-vfpv4 -nostdinc" ./configure --host=arm-none-eabi --disable-textfield --disable-fullscreen --disable-vte --disable-nls --disable-realdevice --disable-ipv6 --disable-ssi2001 --disable-catweasel --disable-hardsid --disable-parsid --disable-portaudio --disable-ahi --disable-bundle --disable-editline --disable-lame --disable-rs232 --disable-midi --disable-hidmgr --disable-hidutils --without-oss --without-alsa --without-pulse --without-zlib
 
    (ignore the error about resid configuration, was configured in previous step)
 
@@ -199,7 +221,7 @@ For RPI3:
 
     cd ../..
 
-    CIRCLE_HOME="$HOME/bmc64/third_party/circle-stdlib" ARM_HOME="$HOME/rpi-tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf" LDFLAGS="-L$CIRCLE_HOME/install/arm-none-circle/lib" CXXFLAGS="-O2 -fno-exceptions -march=armv8-a -mtune=cortex-a53 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard -ffreestanding -nostdlib -nostdinc" CFLAGS="-O2 -I$CIRCLE_HOME/install/arm-none-circle/include/ -I$ARM_HOME/lib/gcc/arm-linux-gnueabihf/4.9.3/include -I$ARM_HOME/lib/gcc/arm-linux-gnueabihf/4.9.3/include-fixed -fno-exceptions -march=armv8-a -mtune=cortex-a53 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard -ffreestanding -nostdlib -nostdinc" ./configure --host=arm-linux-gnueabihf --disable-textfield --disable-fullscreen --disable-vte --disable-nls --disable-realdevice --disable-ipv6 --disable-ssi2001 --disable-catweasel --disable-hardsid --disable-parsid --disable-portaudio --disable-ahi --disable-bundle --disable-editline --disable-lame --disable-rs232 --disable-midi --disable-hidmgr --disable-hidutils --without-oss --without-alsa --without-pulse --without-zlib
+    CIRCLE_HOME="$HOME/bmc64/third_party/circle-stdlib" ARM_HOME="$HOME/rpi-tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf" LDFLAGS="-L$CIRCLE_HOME/install/arm-none-circle/lib" CXXFLAGS="-O2 -fno-exceptions -march=armv8-a -mtune=cortex-a53 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard -ffreestanding -nostdlib" CFLAGS="-O2 -I$CIRCLE_HOME/install/arm-none-circle/include/ -I$CIRCLE_HOME/libs/circle/addon/fatfs -I$ARM_HOME/lib/gcc/arm-linux-gnueabihf/4.9.3/include -I$ARM_HOME/lib/gcc/arm-linux-gnueabihf/4.9.3/include-fixed -fno-exceptions -march=armv8-a -mtune=cortex-a53 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard -ffreestanding -nostdlib" ./configure --host=arm-linux-gnueabihf --disable-textfield --disable-fullscreen --disable-vte --disable-nls --disable-realdevice --disable-ipv6 --disable-ssi2001 --disable-catweasel --disable-hardsid --disable-parsid --disable-portaudio --disable-ahi --disable-bundle --disable-editline --disable-lame --disable-rs232 --disable-midi --disable-hidmgr --disable-hidutils --without-oss --without-alsa --without-pulse --without-zlib
 
    (ignore the error about resid configuration, was configured in previous step)
 
@@ -218,13 +240,27 @@ That should make a kernel7.img for RPI2, kernel8-32.img for RPI3
 
 What to put on the SDcard:
 
-    KERNAL, BASIC, CHARGEN, d1541II
-    kernel7.img for Pi2 or kernel8.img for Pi3 or both
-    rpi_sym.vkm
+    C64/
+        KERNAL
+        BASIC
+        CHARGEN
+        d1541II
+        rpi_sym.vkm
+    kernel7.img (for Pi2)
+    kernel8-32.img (for Pi3)
+    bootstat.txt
     config.txt
     cmdline.txt
-
-NOTE: Any disk or cartridge images MUST be placed in the root directory. Subdirectories are not supported.
+    snapshots/
+        (place snapshot files here)
+    disks/
+        (place .d64 or other disk files here)
+    tapes/
+        (place .tap files here)
+    carts/
+        (place .crt files here)
+    tmp/
+        (used by the emulator sometimes)
 
 # Resources
 
@@ -256,4 +292,4 @@ Ultimate64                            | 1-2 frames           | ?
 C64 Mini                              | 6-7 frames           | ~360ms
 Vice2.4 Desktop (O/S? settings?)      | 6 frames             | ?
 PiLizard/Chameleon/Combian            | ? frames             | ?
-BMC64                                 | ? (need to measure!) | 50ms
+BMC64                                 | 2-3 frames (GPIO Joy)| 50ms

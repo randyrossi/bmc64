@@ -134,14 +134,8 @@ char *archdep_default_autostart_disk_image_file_name(void)
 
 FILE *archdep_open_default_log_file(void)
 {
-    char *fname;
-    FILE *f;
-
-    fname = util_concat(archdep_boot_path(), "/vice.log", NULL);
-    f = fopen(fname, "wt");
-    lib_free(fname);
-
-    return f;
+    // Don't ever need this for BMC64.
+    return 0;
 }
 
 int archdep_default_logger(const char *level_string, const char *txt)
@@ -225,23 +219,9 @@ char *archdep_filename_parameter(const char *name)
     return a;
 }
 
-static char* clean_tmp(char* tmp_filename) {
-    // TODO: We don't have a file system with dirs so
-    // until that happens, strip off the '/tmp/' from
-    // the generated name. This comes from newlib libc.
-    if (tmp_filename[0] == '/' &&
-        tmp_filename[1] == 't' &&
-        tmp_filename[2] == 'm' &&
-        tmp_filename[3] == 'p' &&
-        tmp_filename[4] == '/') {
-       return tmp_filename + 5;
-    }
-    return tmp_filename;
-}
-
 char *archdep_tmpnam(void)
 {
-    return lib_stralloc(clean_tmp(tmpnam(NULL)));
+    return lib_stralloc(tmpnam(NULL));
 }
 
 FILE *archdep_mkstemp_fd(char **filename, const char *mode)
@@ -249,7 +229,7 @@ FILE *archdep_mkstemp_fd(char **filename, const char *mode)
     char *tmp;
     FILE *fd;
 
-    tmp = lib_stralloc(clean_tmp(tmpnam(NULL)));
+    tmp = lib_stralloc(tmpnam(NULL));
     fd = fopen(tmp, mode);
 
     if (fd == NULL) {
@@ -276,7 +256,7 @@ int archdep_rmdir(const char *pathname)
 
 int archdep_stat(const char *file_name, unsigned int *len, unsigned int *isdir)
 {
-    struct stat stat_buf;
+    struct stat st;
     int fn_len;
 
     // The consequence of having to yield to let some fake kernel threads
@@ -298,42 +278,21 @@ int archdep_stat(const char *file_name, unsigned int *len, unsigned int *isdir)
     // We can ignore these system files
     if (strcasecmp("./kernel7.img", file_name) == 0 ||
         strcasecmp("./kernel~1.img", file_name) == 0 ||
+        strcasecmp("./kernel8-32.img", file_name) == 0 ||
         strcasecmp("./config.txt", file_name) == 0 ||
         strcasecmp("./cmdline.txt", file_name) == 0 ||
-        strcasecmp("./basic", file_name) == 0 ||
-        strcasecmp("./kernal", file_name) == 0 ||
-        strcasecmp("./chargen", file_name) == 0 ||
-        strcasecmp("./rpi_sym.vkm", file_name) == 0 ||
+        strcasecmp("./bootstat.txt", file_name) == 0 ||
         strcasecmp("./bootcode.bin", file_name) == 0 ||
-        strcasecmp("./start.elf", file_name) == 0 ||
-        strcasecmp("./d1541II", file_name) == 0 ||
-        strcasecmp("./dos1541", file_name) == 0) {
+        strcasecmp("./start.elf", file_name) == 0) {
         return -1;
     }
 
-    // We don't have real fstat support. Our fake fs implementation
-    // will attempt to read the whole file into memory. When we get
-    // a real file system, this hack can be removed. For now, just
-    // report 1 for the length since we are likely only being called
-    // for IEC drive support by ioutil.c anyway and the length is
-    // needed only for the block size calc in dir listings...
-    
-/*
-    FILE *fp = fopen(file_name,"r");
-    if (fp != NULL) {
-       fstat(fileno(fp), &stat_buf);
-       *len = stat_buf.st_size;  
-       fclose(fp);
+    if (stat(file_name, &st) == 0) {
+       *len = st.st_size;  
+       *isdir = st.st_mode & S_IFDIR;
        return 0;
     }
     return -1;
-*/
-
-    // Hack this for now
-    *len = 1;
-    *isdir = 0;
-
-    return 0;
 }
 
 /* set permissions of given file to rw, respecting current umask */

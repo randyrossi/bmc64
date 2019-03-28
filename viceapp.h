@@ -30,12 +30,15 @@
 #include <circle/logger.h>
 #include <circle/usb/dwhcidevice.h>
 #include <SDCard/emmc.h>
-#include <circle/fs/fat/fatfs.h>
+#include <ff.h>
 #include <circle/input/console.h>
 #include <circle/sched/scheduler.h>
 #include <circle/net/netsubsystem.h>
 
 #include <circle_glue.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 class ViceApp
 {
@@ -152,23 +155,20 @@ public:
                         return false;
                 }
 
-                const char *mpPartitionName = mViceOptions.GetPartition ();
+		int partition = mViceOptions.GetDiskPartition ();
 
-                CDevice * const pPartition =
-                        mDeviceNameService.GetDevice (mpPartitionName, true);
-                if (pPartition == 0)
-                {
+		// When mounting, fatfs gets ":" appended.  But StdioInit
+		// does not.
+                const char *volumeName = mViceOptions.GetDiskVolume ();
+		char fatFsVol[VOLUME_NAME_LEN];
+		strncpy (fatFsVol, volumeName, VOLUME_NAME_LEN-2);
+		strcat (fatFsVol, ":");
+
+                CGlueStdioSetPartitionForVolume (volumeName, partition);
+
+                if (f_mount (&mFileSystem, fatFsVol, 1) != FR_OK) {
                         mLogger.Write (GetKernelName (), LogError,
-                                       "Partition not found: %s", mpPartitionName);
-
-                        return false;
-                }
-
-                if (!mFileSystem.Mount (pPartition))
-                {
-                        mLogger.Write (GetKernelName (), LogError,
-                                         "Cannot mount partition: %s", mpPartitionName);
-
+                            "Cannot mount partition: %s", fatFsVol);
                         return false;
                 }
 
@@ -182,8 +182,10 @@ public:
                         return false;
                 }
 
-                // Initialize newlib stdio with a reference to Circle's file system and console
-                CGlueStdioInit (mFileSystem, mConsole);
+                // Initialize our replacement newlib stdio
+                CGlueStdioInit ();
+
+                InitBootStat();
 
                 mLogger.Write (GetKernelName (), LogNotice, "Compile time: " __DATE__ " " __TIME__);
 
@@ -192,16 +194,41 @@ public:
 
         virtual void Cleanup (void)
         {
-                mFileSystem.UnMount ();
+		// When mounting, fatfs gets ":" appended.  But StdioInit
+		// does not.
+                const char *volumeName = mViceOptions.GetDiskVolume ();
+		char fatFsVol[VOLUME_NAME_LEN];
+		strncpy (fatFsVol, volumeName, VOLUME_NAME_LEN-2);
+		strcat (fatFsVol, ":");
 
+                if (f_mount (0, fatFsVol, 0) != FR_OK) {
+                        mLogger.Write (GetKernelName (), LogError,
+                                "Cannot unmount drive");
+                }
                 ViceScreenApp::Cleanup ();
         }
 
+private:
+	// Must be called after fatfs/stdio has been initialized
+	// This routine loads the bootstat.txt file and passes the
+	// information along to stdio so it can bypass the disk
+	// to answer questions about a set of known files. This speeds
+	// up boot time.
+	void InitBootStat();
+
 protected:
+	// Called after VICE has completed booting so we no longer
+	// fast fail or fast stat anything.
+	void DisableBootStat();
+
         CDWHCIDevice    mDWHCI;
         CEMMCDevice     mEMMC;
-        CFATFileSystem  mFileSystem;
+        FATFS           mFileSystem;
         CConsole        mConsole;
+
+	int mBootStatWhat[MAX_BOOTSTAT_LINES];
+	char *mBootStatFile[MAX_BOOTSTAT_LINES];
+	int mBootStatSize[MAX_BOOTSTAT_LINES];
 };
 
 #endif

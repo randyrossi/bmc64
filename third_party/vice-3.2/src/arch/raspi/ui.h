@@ -32,7 +32,7 @@
 #define NUM_MENU_ROOTS 5
 #define MAX_CHOICES    16
 #define MAX_MENU_STR   36
-#define MAX_FN_NAME    12
+#define MAX_FN_NAME    20
 
 // Special menu id for items that do nothing or have no action callback
 #define MENU_ID_DO_NOTHING -1 
@@ -118,6 +118,8 @@ struct menu_item* ui_menu_add_folder(struct menu_item *folder, char *name);
 struct menu_item* ui_menu_add_divider(struct menu_item *folder);
 struct menu_item* ui_menu_add_text_field(int id, struct menu_item *folder, char *name, char *value);
 
+// Move ownership of all children from src onto dest
+void ui_add_all(struct menu_item* src, struct menu_item* dest);
 
 // Stubs for vice calls. Unimplemented for now.
 void ui_pause_emulation(int flag);
