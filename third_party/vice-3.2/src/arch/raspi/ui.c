@@ -40,6 +40,8 @@
 
 volatile int ui_activated = 0;
 
+int ui_toggle_pending = 0;
+
 extern struct joydev_config joydevs[2];
 
 // Stubs for vice callbacks. Unimplemented for now.
