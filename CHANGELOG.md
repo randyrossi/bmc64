@@ -66,3 +66,4 @@
   * gpu_mem changed to 64mb in mem config and config.txt
   * changed mem to 512mb in circle mem config
   * fixed issue with 0 key on snapshot file names crashing
+  * debounced GPIO16 for menu

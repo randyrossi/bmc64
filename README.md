@@ -248,6 +248,7 @@ What to put on the SDcard:
         rpi_sym.vkm
     kernel7.img (for Pi2)
     kernel8-32.img (for Pi3)
+    bootstat.txt
     config.txt
     cmdline.txt
     snapshots/

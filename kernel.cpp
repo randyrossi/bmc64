@@ -665,12 +665,46 @@ void CKernel::KeyStatusHandlerRaw (unsigned char ucModifiers,
    }
 }
 
+#define BTN_PRESS 1
+#define BTN_RELEASE 2
+#define BTN_UP 3
+#define BTN_DOWN 4
+
+static int gpio_menu = BTN_UP;
+
+// This debounces the menu pin
+static int GetMenuPinState(CGPIOPin* uiPin) {
+   if (uiPin->Read() == LOW) {
+      if (gpio_menu == BTN_PRESS) {
+         gpio_menu = BTN_DOWN;
+      }
+      if (gpio_menu == BTN_UP) {
+        circle_sleep(5);
+        if (uiPin->Read() == LOW) {
+           gpio_menu = BTN_PRESS;
+        }
+      }
+   } else {
+      if (gpio_menu == BTN_RELEASE) {
+         gpio_menu = BTN_UP;
+      }
+      if (gpio_menu == BTN_DOWN) {
+         if (uiPin->Read() == HIGH) {
+            circle_sleep(5);
+            if (uiPin->Read() == HIGH) {
+               gpio_menu = BTN_RELEASE;
+            }
+         }
+      }
+   }
+   return gpio_menu;
+}
+
 // This checks whether GPIO16 has triggered the ui activation
 // Not hooked to interrupt, only polled.
 void CKernel::circle_check_gpio()
 {
-   // TODO: Debounce this...
-   if (uiPin->Read() == LOW) {
+   if (GetMenuPinState(uiPin) == BTN_PRESS) {
       circle_key_pressed(KEYCODE_F12);
       circle_key_released(KEYCODE_F12);
    }
