@@ -19,7 +19,8 @@ index e0b90d5..58f93b9 100644
  #include <circle/sched/scheduler.h>
  
  /**
-- * Initialize stdio for file system and console I/O (stdin/stdout/stderr).  + * Initialize stdio.
+- * Initialize stdio for file system and console I/O (stdin/stdout/stderr).
++ * Initialize stdio.
   * Must only be called once.
   */
 -void CGlueStdioInit (CFATFileSystem& rFATFileSystem, CConsole& rConsole);
@@ -52,3 +53,15 @@ index e0b90d5..58f93b9 100644
  
  class CGlueIO
  {
+diff --git a/libs/circle b/libs/circle
+--- a/libs/circle
++++ b/libs/circle
+@@ -1 +1 @@
+-Subproject commit a5c693117e31a567fafd3e68880071f2f8c64977
++Subproject commit a5c693117e31a567fafd3e68880071f2f8c64977-dirty
+diff --git a/libs/circle-newlib b/libs/circle-newlib
+--- a/libs/circle-newlib
++++ b/libs/circle-newlib
+@@ -1 +1 @@
+-Subproject commit 8a313d45ad5d8c0e306ce8751b6e3d6d3ef46ab3
++Subproject commit 8a313d45ad5d8c0e306ce8751b6e3d6d3ef46ab3-dirty
