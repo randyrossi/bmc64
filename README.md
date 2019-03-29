@@ -3,7 +3,7 @@
 BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio.
 
 # Features
-  * Quick boot time (approx 7 seconds)
+  * Quick boot time (approx 5-6 seconds)
   * Frames are timed to vsync for true 50/60 hz smooth scrolling (no horizontal tearing!)
   * Low latency between input & audio/video
   * No shutdown sequence required, just power off
@@ -52,7 +52,7 @@ Directories and long filenames are supported as of v1.0.10. Previous versions, r
     carts/
     tmp/
 
-You can make drive 8 an IECDevice for the root directory of the SDcard. However, I don't recommend loading programs this way. The SDcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk oeprations anyway.  It's mostly used for testing purposes.
+You can make drive 8 an IECDevice for the root directory of the SDcard. However, I don't recommend loading programs this way. The SDcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk operations anyway.  It's mostly used for testing purposes.
 
 # Sound
 
