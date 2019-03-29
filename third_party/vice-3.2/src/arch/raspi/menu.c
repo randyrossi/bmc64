@@ -425,7 +425,7 @@ static void select_file(struct menu_item* item) {
          }
    } else if (item->id == MENU_TAPE_FILE) {
          ui_info("Attaching...");
-         if (tape_image_attach(1, fullpath(DIR_DISKS, item->name)) < 0) {
+         if (tape_image_attach(1, fullpath(DIR_TAPES, item->name)) < 0) {
             ui_pop_menu();
             ui_error("Failed to attach tape image");
          } else {
