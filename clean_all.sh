@@ -32,6 +32,8 @@ cd ..
 
 cd $SRC_DIR/third_party/circle-stdlib
 
+rm -rf build
+
 git reset --hard
 cd libs/circle-newlib
 git reset --hard
