@@ -54,7 +54,7 @@
   * Fixed gpio16 not bringing up menu (still need to debounce)
   * Improved GPIO joystick response time (~45ms avg)
 
-## 1.0.10
+## 1.1
   * Added directory support
   * Long filename support added
   * Added Pepto-Pal color palette to prefs
@@ -67,3 +67,4 @@
   * changed mem to 512mb in circle mem config
   * fixed issue with 0 key on snapshot file names crashing
   * debounced GPIO16 for menu
+  * fixed issue with resid restart causing slowness
