@@ -139,8 +139,6 @@ A: Yes, the original machine ran at 50.125Hz for PAL and 59.826Hz for NTSC. So, 
 
 # Build Instructions
 
-Building this is a bit of a pain.  A lot more work has to be done to make this easier.
-
 Pre-reqs:
 
     sudo apt-get install xa65
@@ -149,94 +147,14 @@ First get this repo:
 
     git clone https://github.com/randyrossi/bmc64.git --recursive
 
-Apply some required patches:
+From the top level dir:
 
-    The first patch modifies some of newlib's glue code to support fseek and fstat as well as routing stdout to the serial device.
-
-    Patch #1:
-
-    cd third_party/circle-stdlib
-    patch -p1 < ../../circle_stdlib_patch.diff
-
-    Patch #2:
-
-    cd third_party/circle-stdlib/libs/circle-newlib
-    patch -p1 < ../../../../circle_newlib_patch.diff
-
-    Patch #3:
-
-    cd third_party/circle-stdlib/libs/circle
-    patch -p1 < ../../../../circle_patch.diff
-
-Now make inside third_party/circle-stdlib:
-
-    For RPI2:
-
-    PATH=~/gcc-arm-none-eabi-7-2018-q2-update/bin
-    cd third_party/circle-stdlib
-    ./configure -n --raspberrypi=2
-    make
-
-    For RPI3:
-
-    PATH=~/rpi-tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/bin:$PATH
-    ./configure -n --raspberrypi=3 --prefix=arm-linux-gnueabihf-
-    make
-
-    NOTE: If libgloss fails, do this:
-
-    EDIT third_party/circle-stdlib/build/circle-newlib/arm-none-circle/libgloss/circle/Makefile
-    ADD -std=c++14 to CPPFLAGS
-
-Build some addons required for hdmi sound and fatfs:
-
-    cd $(CIRCLEHOME)/addon/vc4/vchiq
-    make
-
-    cd $(CIRCLEHOME)/addon/linux
-    make
-
-    cd $(CIRCLEHOME)/addon/fatfs
-    make
-
-Now cd into bmc64/third_party/vice-3.2 and configure vice. You have to set CIRCLE_HOME and ARM_HOME to match your paths:
-
-For RPI2:
-
-    cd src/resid
-
-    CIRCLE_HOME="$HOME/bmc64/third_party/circle-stdlib" ARM_HOME="$HOME/gcc-arm-none-eabi-7-2018-q2-update" CXXFLAGS="-funsafe-math-optimizations -fno-exceptions -fno-rtti -nostdinc++ -mfloat-abi=hard -ffreestanding -nostdlib -march=armv7-a -marm -mfpu=neon-vfpv4 --specs=nosys.specs -O2 -I$CIRCLE_HOME/install/arm-none-circle/include/ -I$ARM_HOME/lib/gcc/arm-none-eabi/7.3.1/include -I$ARM_HOME/lib/gcc/arm-none-eabi/7.3.1/include-fixed" LDFLAGS="-L$CIRCLE_HOME/install/arm-none-circle/lib" ./configure --host=arm-none-eabi
-
-    cd ../..
-
-    CIRCLE_HOME="$HOME/bmc64/third_party/circle-stdlib" ARM_HOME="$HOME/gcc-arm-none-eabi-7-2018-q2-update" LDFLAGS="-L$CIRCLE_HOME/install/arm-none-circle/lib" CXXFLAGS="-O2 -mfloat-abi=hard -ffreestanding -march=armv7-a -marm -mfpu=neon-vfpv4 -fno-exceptions -fno-rtti -nostdinc++ --specs=nosys.specs" CFLAGS="-O2 -I$CIRCLE_HOME/install/arm-none-circle/include/ -I$ARM_HOME/lib/gcc/arm-none-eabi/7.3.1/include -I$ARM_HOME/lib/gcc/arm-none-eabi/7.3.1/include-fixed -I$CIRCLE_HOME/libs/circle/addon/fatfs -fno-exceptions --specs=nosys.specs -mfloat-abi=hard -ffreestanding -nostdlib -march=armv7-a -marm -mfpu=neon-vfpv4 -nostdinc" ./configure --host=arm-none-eabi --disable-textfield --disable-fullscreen --disable-vte --disable-nls --disable-realdevice --disable-ipv6 --disable-ssi2001 --disable-catweasel --disable-hardsid --disable-parsid --disable-portaudio --disable-ahi --disable-bundle --disable-editline --disable-lame --disable-rs232 --disable-midi --disable-hidmgr --disable-hidutils --without-oss --without-alsa --without-pulse --without-zlib
-
-   (ignore the error about resid configuration, was configured in previous step)
-
-For RPI3:
-
-    cd src/resid
-
-    CIRCLE_HOME="$HOME/bmc64/third_party/circle-stdlib" ARM_HOME="$HOME/rpi-tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf" CXXFLAGS="-funsafe-math-optimizations -fno-exceptions -fno-rtti -nostdinc++ -mfloat-abi=hard -ffreestanding -nostdlib -march=armv8-a -mtune=cortex-a53 -marm -mfpu=neon-fp-armv8 -O2 -I$CIRCLE_HOME/install/arm-none-circle/include/ -I$ARM_HOME/lib/gcc/arm-linux-gnueabihf/4.9.3/include -I$ARM_HOME/lib/gcc/arm-linux-gnueabihf/4.9.3/include-fixed" LDFLAGS="-L$CIRCLE_HOME/install/arm-none-circle/lib" ./configure --host=arm-linux-gnueabihf
-
-    cd ../..
-
-    CIRCLE_HOME="$HOME/bmc64/third_party/circle-stdlib" ARM_HOME="$HOME/rpi-tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf" LDFLAGS="-L$CIRCLE_HOME/install/arm-none-circle/lib" CXXFLAGS="-O2 -fno-exceptions -march=armv8-a -mtune=cortex-a53 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard -ffreestanding -nostdlib" CFLAGS="-O2 -I$CIRCLE_HOME/install/arm-none-circle/include/ -I$CIRCLE_HOME/libs/circle/addon/fatfs -I$ARM_HOME/lib/gcc/arm-linux-gnueabihf/4.9.3/include -I$ARM_HOME/lib/gcc/arm-linux-gnueabihf/4.9.3/include-fixed -fno-exceptions -march=armv8-a -mtune=cortex-a53 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard -ffreestanding -nostdlib" ./configure --host=arm-linux-gnueabihf --disable-textfield --disable-fullscreen --disable-vte --disable-nls --disable-realdevice --disable-ipv6 --disable-ssi2001 --disable-catweasel --disable-hardsid --disable-parsid --disable-portaudio --disable-ahi --disable-bundle --disable-editline --disable-lame --disable-rs232 --disable-midi --disable-hidmgr --disable-hidutils --without-oss --without-alsa --without-pulse --without-zlib
-
-   (ignore the error about resid configuration, was configured in previous step)
-
-Now try to make x64:
-
-    make x64
-
-    Note that step will fail at link time since it tries to make an executable. This step will be replaced with a rule that will only build the libs. But all the .a files should have compiled.
-
-Now cd back up to bmc64:
-
-    cd ..
-    make
+./clean_all.sh - will clean everything
+./make_all.sh [pi2|pi3] - build everything
 
 That should make a kernel7.img for RPI2, kernel8-32.img for RPI3
+
+NOTE: There is no incremental build and the make_all.sh script will likely fail if run without a clean_all.sh before.
 
 What to put on the SDcard:
 
