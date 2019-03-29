@@ -178,18 +178,13 @@ FILE *sysfile_open(const char *name, char **complete_path_return,
     }
 
     p = findpath(name, expanded_system_path, IOUTIL_ACCESS_R_OK);
-
-// TODO: Remove this once proper FAT glue code is working
-// for bare metal raspi.
-#ifndef RASPI_COMPILE
     if (p == NULL) {
         if (complete_path_return != NULL) {
             *complete_path_return = NULL;
         }
         return NULL;
     } else {
-#endif
-        f = fopen(name, open_mode);
+        f = fopen(p, open_mode);
 
         if (f == NULL || complete_path_return == NULL) {
             lib_free(p);
@@ -199,11 +194,7 @@ FILE *sysfile_open(const char *name, char **complete_path_return,
             *complete_path_return = p;
         }
         return f;
-// TODO: Remove this once proper FAT glue code is working
-// for bare metal raspi.
-#ifndef RASPI_COMPILE
     }
-#endif
 }
 
 /* As `sysfile_open', but do not open the file.  Just return 0 if the file is

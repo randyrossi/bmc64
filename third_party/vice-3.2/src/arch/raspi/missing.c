@@ -41,14 +41,6 @@
 // it).
 // ------------------------------------------------------------------------
 
-int chdir(const char *path) {
-   return 0;
-}
-
-char *getwd(char *buf) {
-   return NULL;
-}
-
 char* ui_get_file(const char *format, ...){
    return 0;
 }

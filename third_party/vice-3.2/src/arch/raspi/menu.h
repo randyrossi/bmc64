@@ -126,6 +126,11 @@
 
 #define MENU_DEMO_MODE 70
 
+#define MENU_SUB_NONE 0
+#define MENU_SUB_PICK_FILE 1
+#define MENU_SUB_UP_DIR 2
+#define MENU_SUB_ENTER_DIR 3
+
 #define KEYBOARD_TYPE_US 0
 #define KEYBOARD_TYPE_UK 1
 

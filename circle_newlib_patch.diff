@@ -33,10 +33,10 @@ index 0ea1923..d5cf197 100644
  
  stub_warning(_getpid)
 diff --git a/libgloss/circle/io.cpp b/libgloss/circle/io.cpp
-index 23720b6..2c60aa9 100644
+index 23720b6..56e8b77 100644
 --- a/libgloss/circle/io.cpp
 +++ b/libgloss/circle/io.cpp
-@@ -1,385 +1,662 @@
+@@ -1,385 +1,728 @@
  #include "config.h"
  #include <_ansi.h>
  #include <_syslist.h>
@@ -54,13 +54,11 @@ index 23720b6..2c60aa9 100644
  extern int errno;
  #include "warning.h"
  
-+#include "circle_glue.h"
-+#include <assert.h>
- #include <circle/fs/fat/fatfs.h>
- #include <circle/input/console.h>
- #include <circle/string.h>
--#include "circle_glue.h"
--#include <assert.h>
+-#include <circle/fs/fat/fatfs.h>
+-#include <circle/input/console.h>
+-#include <circle/string.h>
+ #include "circle_glue.h"
+ #include <assert.h>
  
 -struct _CIRCLE_DIR {
 -        _CIRCLE_DIR() :
@@ -72,127 +70,142 @@ index 23720b6..2c60aa9 100644
 +#include <malloc.h>
 +#include <sys/unistd.h>
 +
++#include <ff.h>
++
 +// This is a replacement io.cpp specifically for BMC64.
-+// The circle fat fs implementation does not support stat, seek
-+// or read+write modes.  This implementation attempts to get
-+// around that by loading the entire file into memory in order
-+// to provide those functions.  Since any file the emulator
++// This implementation will sometimes load the entire file
++// into memory to provide faster seek operations, improving
++// performance on slow SD cards.  Since any file the emulator
 +// attempts to load is relatively small (<200k), this works out
 +// just fine for our needs. Obviously, this would not be a
-+// viable solution for most other circumstances.
++// viable solution for most other circumstances.  It also
++// works around an issue with circle/fatfs integration that
++// was causing memory corruption.
 +//
-+// When a file is opened for READ ONLY, fat fs is used to open
-+// the file.  As long as the client never seeks or performs an
-+// fstat, the file will not be loaded into ram and fat fs still
-+// backs the data.  As soon as either seek or fstat is called,
-+// the file will be loaded into ram and from then on, ram
-+// backs the data.  NOTE the fat fs file remains open even after
-+// the file is loaded into ram in this case.  This was done
-+// mainly to support IEC mode. When the root file system is
-+// mounted as an IEC device, VICE's directory listing implementation
-+// opens every file. If we read every file into ram, it would be
-+// very slow.  The impl was changed to skip any fstat/fseek and we
-+// simply lie about the size of the files we found.
++// When a file is opened for READ ONLY, fatfs is used to open
++// the file.  As long as the client never seeks, the file will
++// not be loaded into ram and the disk still backs the data.  As
++// soon as seek is called, the file will be loaded into ram and
++// from then on, ram backs the data.  NOTE the fatfs file remains
++// open even after the file is loaded into ram in this case. If
++// the client never calls seek, the data will be read from fatfs.
 +//
-+// When a file is opened for WRITE ONLY, fat fs is used to create
++// When a file is opened for WRITE ONLY, fatfs is used to create
 +// the file. However, all write operations write to ram and only
 +// when the file is finally closed will the data be dumped to
-+// the fat fs filesystem.  The fat fs file remains open during
-+// the entire time betwee open/close.  Seek is technically
++// the fat fs filesystem.  The fatfs file remains open during
++// the entire time between open/close.  Seek is technically
 +// supported in this case but attempting to seek past the
-+// current file size is not.  Call to fstat will return the
-+// number of bytes written so far.
++// current file size is not.  Call to fstat on a file in WRTE_ONLY
++// mode will not work as expected.
 +//
 +// When a file is opened for READ_WRITE, fat fs is used to
 +// immediately load the contents of the existing file into ram.
 +// The input fat fs file is immediatly closed in this case.
-+// Writes, seeks, fstats, etc use the ram copy. Only when the
-+// file is closed will the fat fs system be used to create a new
-+// file from the ram.  Again, seeking past the file's current
-+// length is not supported at this time.
++// Writes & seeks use the ram copy. Only when the file is closed
++// will the fatfs system be used to create a new file from the ram.
++// Again, seeking past the file's current length is not supported.
 +
-+// BCM64 : For routing stdout/stderr to serial via circle
-+extern "C" {
-+extern ssize_t circle_serial_write(int fd, const void *buf, size_t count);
-+}
++#define MAX_OPEN_FILES 10
++#define MAX_OPEN_DIRS 10
++#define READ_BUF_SIZE 1024
 +
-+// Uncomment this for useful debugging messages to stdout/serial.
-+//#define DEBUG_IO_CPP
++static const char *pattern = "*";
 +
-+static char *strdup2(const char *s) {
-+  char *d = (char*) malloc (strlen (s) + 1);
-+  if (d == nullptr) return nullptr;
-+  strcpy (d,s);
-+  return d;
++static char currentDir[256];
++
++/**
++ * @fn int strend(const char *s, const char *t)
++ * @brief Searches the end of string s for string t
++ * @param s the string to be searched
++ * @param t the substring to locate at the end of string s
++ * @return one if the string t occurs at the end of the string s, and zero otherwise
++ */
++int strend(const char *s, const char *t)
++{
++    size_t ls = strlen(s); // find length of s
++    size_t lt = strlen(t); // find length of t
++    if (ls >= lt)  // check if t can fit in s
++    {
++        // point s to where t should start and compare the strings from there
++        return (0 == memcmp(t, s + (ls - lt), lt));
++    }
++    return 0; // t was longer than s
 +}
 +
 +static void reverse(char *x, int begin, int end) {
-+   char c;
-+ 
-+   if (begin >= end)
-+      return;
-+ 
-+   c          = *(x+begin);
-+   *(x+begin) = *(x+end);
-+   *(x+end)   = c;
-+ 
-+   reverse(x, ++begin, --end);
-+}
++  char c;
 +
-+static void itoa2(int i, char *dst) {
-+  int q = 0;
-+  int j;
-+  do {
-+    j=i%10;
-+    dst[q] = '0'+j;
-+    q++;
-+    i=i/10;
-+  } while (i > 0);
-+  dst[q] = '\0';
-+  
-+  reverse(dst, 0, strlen(dst)-1);
-+}
++  if (begin >= end)
++    return;
 +
-+static void circle_log_io_err(const char *msg) {
-+  circle_serial_write(1, msg, strlen(msg));
-+}
++  c = *(x + begin);
++  *(x + begin) = *(x + end);
++  *(x + end) = c;
 +
-+static void circle_log_io_err_n(int n) {
-+   char num_str[32];
-+   itoa2(n,num_str);
-+   circle_log_io_err(num_str);
-+   circle_log_io_err("\n");
++  reverse(x, ++begin, --end);
 +}
  
 -        TFindCurrentEntry mCurrentEntry;
 -        struct dirent mEntry;
 -        unsigned int mFirstRead : 1;
 -        unsigned int mOpen : 1;
-+struct _CIRCLE_DIR {
-+  _CIRCLE_DIR() : mFirstRead(0), mOpen(0) {
-+    mEntry.d_ino = 0;
-+    mEntry.d_name[0] = 0;
-+  }
++static void itoa2(int i, char *dst) {
++  int q = 0;
++  int j;
++  do {
++    j = i % 10;
++    dst[q] = '0' + j;
++    q++;
++    i = i / 10;
++  } while (i > 0);
++  dst[q] = '\0';
 +
-+  TFindCurrentEntry mCurrentEntry;
-+  struct dirent mEntry;
-+  unsigned int mFirstRead : 1;
-+  unsigned int mOpen : 1;
-+};
++  reverse(dst, 0, strlen(dst) - 1);
++}
  
-+namespace {
-+constexpr unsigned int READ_BUF_SIZE = 1024;
-+struct CircleFile {
-+  CircleFile() : mCGlueIO(nullptr) {}
-+  CGlueIO *mCGlueIO;
-+  char readBuf[READ_BUF_SIZE];
-+  char *contents;
-+  int allocated;
-+  int size;
-+  int position;
-+  int mode;
-+  int is_used;
-+  char *filename;
++// BCM64 : For routing stdout/stderr to serial via circle
++extern "C" {
++extern ssize_t circle_serial_write(int fd, const void *buf, size_t count);
++}
++static void logm(const char *msg) { circle_serial_write(1, msg, strlen(msg)); }
++static void logi(int i) { char nn[16]; itoa2(i,nn); circle_serial_write(1, nn, strlen(nn)); }
++
++struct CirclePath {
++   CirclePath(const char* p) {
++      path[0] = '\0';
++
++      if (p == nullptr) {
++         return;
++      }
++
++      int len = strlen(p);
++      if (len == 0) {
++         return;
++      }
++
++      if (p[0] == '/') {
++         // Absolute
++         strcpy (path, p);
++         return;
++      } 
++
++      // Relative
++      strcpy (path, currentDir);
++      if (len == 1 && p[0] == '.') {
++         // Treat as current dir
++         return;
++      }
++
++      // Handle ./ at start but we don't in the middle.
++      if (len >= 2 && p[0] == '.' && p[1] == '/') {
++         strcat (path, p+2);
++      } else {
++         strcpy (path, p);
++      }
++   }
++
++   char path[256];
  };
  
 -namespace
@@ -202,15 +215,43 @@ index 23720b6..2c60aa9 100644
 -    	CircleFile() : mCGlueIO(nullptr) {}
 -    	CGlueIO *mCGlueIO;
 -    };
--
++struct CircleFile {
++  FIL file;
++  int in_use;
++  char fname[256];
++
++  char readBuf[READ_BUF_SIZE];
++  char *contents;
++  int allocated;
++  unsigned size;
++  unsigned position;
++  int mode;
++};
+ 
 -    constexpr unsigned int MAX_OPEN_FILES = 20;
 -    constexpr unsigned int MAX_OPEN_DIRS = 20;
--
++struct CircleDir {
++  CircleDir() {
++    mEntry.d_ino = 0;
++    mEntry.d_name[0] = 0;
++    dir.pat = pattern;
++    in_use = 0;
++  }
++
++  DIR dir;
++  int in_use;
++  struct dirent mEntry;
++};
+ 
 -    CFATFileSystem *circle_fat_fs = nullptr;
--
++CircleFile fileTab[MAX_OPEN_FILES];
++CircleDir dirTab[MAX_OPEN_DIRS];
+ 
 -    CircleFile fileTab[MAX_OPEN_FILES];
 -    _CIRCLE_DIR dirTab[MAX_OPEN_DIRS];
--
++static const char* const VolumeStr[FF_VOLUMES] = {FF_VOLUME_STRS};
++PARTITION VolToPart[FF_VOLUMES];
+ 
 -    int FindFreeFileSlot(void)
 -    {
 -    	int slotNr = -1;
@@ -226,17 +267,16 @@ index 23720b6..2c60aa9 100644
 -
 -    	return slotNr;
 -    }
-+constexpr unsigned int MAX_OPEN_FILES = 20;
-+constexpr unsigned int MAX_OPEN_DIRS = 20;
-+
-+CFATFileSystem *circle_fat_fs = nullptr;
++void CGlueStdioInit() {
++  // Initialize stdio, stderr and stdin
++  fileTab[0].in_use = 1;
++  fileTab[1].in_use = 1;
++  fileTab[2].in_use = 1;
  
 -    int FindFreeDirSlot(void)
 -    {
 -    	int slotNr = -1;
-+CircleFile fileTab[MAX_OPEN_FILES];
-+_CIRCLE_DIR dirTab[MAX_OPEN_DIRS];
- 
+-
 -    	for (auto const& slot: dirTab)
 -    	{
 -    		if (!slot.mOpen)
@@ -245,15 +285,13 @@ index 23720b6..2c60aa9 100644
 -    			break;
 -    		}
 -    	}
-+int FindFreeFileSlot(void) {
-+  int slotNr = -1;
- 
+-
 -    	return slotNr;
-+  for (auto const &slot : fileTab) {
-+    if (slot.is_used == 0) {
-+      slotNr = &slot - fileTab;
-+      break;
-     }
+-    }
++  // By default, use the first partition of each physical drive.
++  for (int pd = 0; pd < FF_VOLUMES; pd++) {
++    VolToPart[pd].pd = pd;
++    VolToPart[pd].pt = 0;
 +  }
  
 -    void
@@ -261,13 +299,44 @@ index 23720b6..2c60aa9 100644
 -    {
 -            // Must only be called once
 -            assert (!circle_fat_fs);
-+  return slotNr;
++  strcpy (currentDir, "/");
 +}
  
 -            circle_fat_fs = &rFATFileSystem;
--    }
-+int FindFreeDirSlot(void) {
++static int g_bootStatNum = 0;
++static int *g_bootStatWhat;
++static const char **g_bootStatFile;
++static int *g_bootStatSize;
++
++// Set global vars pointing to bootstat info
++void CGlueStdioInitBootStat (int num,
++        int *bootStatWhat,
++        const char **bootStatFile,
++        int *bootStatSize) {
++   g_bootStatNum = num;
++   g_bootStatWhat = bootStatWhat;
++   g_bootStatFile = bootStatFile;
++   g_bootStatSize = bootStatSize;
++}
++
++void CGlueStdioSetPartitionForVolume (const char* volume, int part) {
++  for (int pd = 0; pd < FF_VOLUMES; pd++) {
++     if (strcmp(volume, VolumeStr[pd]) == 0) {
++        VolToPart[pd].pt = part;
++        return;
++     }
++  }
++}
++
++static int FindFreeFileSlot(void) {
 +  int slotNr = -1;
++
++  for (const CircleFile &slot : fileTab) {
++    if (slot.in_use == 0) {
++      slotNr = &slot - fileTab;
++      break;
+     }
++  }
  
 -    void
 -    CGlueInitConsole (CConsole& rConsole)
@@ -284,8 +353,23 @@ index 23720b6..2c60aa9 100644
 -            stdin.mCGlueIO = new CGlueConsole (rConsole, CGlueConsole::ConsoleModeRead);
 -            stdout.mCGlueIO = new CGlueConsole (rConsole, CGlueConsole::ConsoleModeWrite);
 -            stderr.mCGlueIO = new CGlueConsole (rConsole, CGlueConsole::ConsoleModeWrite);
-+  for (auto const &slot : dirTab) {
-+    if (!slot.mOpen) {
++  return slotNr;
++}
++
++static char *strdup2(const char *s) {
++  char *d = (char *)malloc(strlen(s) + 1);
++  if (d == nullptr)
++    return nullptr;
++  strcpy(d, s);
++  return d;
++}
++
++
++static int FindFreeDirSlot(void) {
++  int slotNr = -1;
++
++  for (const CircleDir &slot : dirTab) {
++    if (!slot.in_use) {
 +      slotNr = &slot - dirTab;
 +      break;
      }
@@ -298,45 +382,128 @@ index 23720b6..2c60aa9 100644
 -{
 -        CGlueInitConsole (rConsole);
 -        CGlueInitFileSystem (rFATFileSystem);
-+void CGlueInitFileSystem(CFATFileSystem &rFATFileSystem) {
-+  // Must only be called once
-+  assert(!circle_fat_fs);
-+
-+  circle_fat_fs = &rFATFileSystem;
++static CircleDir *FindCircleDirFromDIR(DIR *dir) {
++  for (CircleDir &slot : dirTab) {
++    if (slot.in_use && dir == &slot.dir) {
++      return &slot;
++    }
++  }
++  return nullptr;
  }
  
 -void CGlueStdioInit (CFATFileSystem& rFATFileSystem)
 -{
 -        CGlueInitFileSystem (rFATFileSystem);
-+void CGlueInitConsole(CConsole &rConsole) {
-+  CircleFile &stdin = fileTab[0];
-+  CircleFile &stdout = fileTab[1];
-+  CircleFile &stderr = fileTab[2];
++// Returns non zero value on any failure. Any memory will be
++// freed on error and file.contents nulled.
++static int slurp_file(CircleFile &file) {
++  if (file.contents == nullptr) {
++    // Read the entire contents of the file into memory.
++    file.size = 0;
++    unsigned total = 0;
++    if (f_lseek(&file.file, 0) != FR_OK) {
++       return -1;
++    }
++    while (true) {
++      unsigned int num_read;
++      if (f_read(&file.file, file.readBuf, READ_BUF_SIZE, &num_read) != FR_OK) {
++        if (file.contents) {
++           free(file.contents);
++           file.contents = nullptr;
++        }  
++        return -1;
++      }
 +
-+  // Must only be called once and not be called after a file has already been
-+  // opened
-+  assert(!stdin.mCGlueIO);
-+  assert(!stdout.mCGlueIO);
-+  assert(!stderr.mCGlueIO);
++      if (num_read == 0) {
++        break;
++      }
++      
++      if (file.contents == nullptr) {
++        file.allocated = READ_BUF_SIZE;
++        file.contents = (char *)malloc(file.allocated);
++      } else if (file.allocated < total + num_read) {
++        file.allocated *= 2;
++        file.contents = (char *)realloc(file.contents, file.allocated);
++      }
 +
-+  stdin.mCGlueIO = new CGlueConsole(rConsole, CGlueConsole::ConsoleModeRead);
-+  stdin.mode = O_RDONLY;
-+  stdin.is_used = 1;
-+  stdout.mCGlueIO = new CGlueConsole(rConsole, CGlueConsole::ConsoleModeWrite);
-+  stdout.mode = O_WRONLY;
-+  stdout.is_used = 1;
-+  stderr.mCGlueIO = new CGlueConsole(rConsole, CGlueConsole::ConsoleModeWrite);
-+  stderr.mode = O_WRONLY;
-+  stderr.is_used = 1;
-+}
++      memcpy(file.contents + total, file.readBuf, num_read);
++      total += num_read;
++      file.size = total;
++    }
++  }
++  return 0;
  }
  
 -void CGlueStdioInit (CConsole& rConsole)
 -{
 -        CGlueInitConsole (rConsole);
-+void CGlueStdioInit(CFATFileSystem &rFATFileSystem, CConsole &rConsole) {
-+  CGlueInitConsole(rConsole);
-+  CGlueInitFileSystem(rFATFileSystem);
++extern "C" int _DEFUN(_open, (file, flags, mode),
++                      char *file _AND int flags _AND int mode) {
++  int const masked_flags = flags & 7;
++  if (masked_flags != O_RDONLY && masked_flags != O_WRONLY &&
++      masked_flags != O_RDWR) {
++    errno = ENOSYS;
++    return -1;
++  }
++
++  // Handle fast fail here
++  for (int i=0;i<g_bootStatNum;i++) {
++     if (g_bootStatWhat[i] == BOOTSTAT_WHAT_FAIL) {
++        if (strend(file, g_bootStatFile[i])) {
++          errno = EACCES;
++          return -1;
++        }
++     }
++  }
++  int slot = FindFreeFileSlot();
++
++  if (slot != -1) {
++    CirclePath circlePath(file);
++    CircleFile &newFile = fileTab[slot];
++
++    int result;
++    if (masked_flags == O_RDONLY) {
++      result = f_open(&newFile.file, circlePath.path, FA_READ);
++    } else if (masked_flags == O_WRONLY) {
++      result = f_open(&newFile.file, circlePath.path, 
++         FA_WRITE | FA_CREATE_ALWAYS);
++    } else {
++      assert(masked_flags == O_RDWR);
++      // Note: We open read only because this will be slurped and changed
++      // in memory.
++      result = f_open(&newFile.file, circlePath.path, FA_READ);
++    }
++
++    if (result != FR_OK) {
++      errno = EACCES;
++      return -1;
++    }
++
++    newFile.contents = nullptr;
++    newFile.position = 0;
++    newFile.size = 0;
++    newFile.allocated = 0;
++    newFile.mode = masked_flags;
++    strcpy(newFile.fname, circlePath.path);
++
++    // When file is opened O_RDWR, slurp it into memory.
++    if (masked_flags == O_RDWR) {
++       if (slurp_file(newFile)) {
++          errno = ENFILE;
++          return -1;
++       }
++       if (f_close(&newFile.file) != FR_OK) {
++          errno = ENFILE;
++          return -1;
++       }
++    }
++
++    newFile.in_use = 1;
++  } else {
++    errno = ENFILE;
++  }
++
++  return slot;
  }
  
 -extern "C"
@@ -389,8 +556,54 @@ index 23720b6..2c60aa9 100644
 -	}
 -
 -	return slot;
-+void CGlueStdioInit(CFATFileSystem &rFATFileSystem) {
-+  CGlueInitFileSystem(rFATFileSystem);
++extern "C" int _DEFUN(_close, (fildes), int fildes) {
++  if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
++    errno = EBADF;
++    return -1;
++  }
++
++  CircleFile &file = fileTab[fildes];
++  if (!file.in_use) {
++    errno = EBADF;
++    return -1;
++  }
++
++  if (file.contents) {
++     if (file.mode == O_RDWR) {
++        // Assert FIL is not used
++        if (f_open(&file.file, file.fname,
++                      FA_WRITE | FA_CREATE_ALWAYS) != FR_OK) {
++           // We won't be able to flush in memory changes back to disk.
++        }
++     }
++
++     if (file.mode == O_RDWR || file.mode == O_WRONLY) {
++        // Dump contents of memory buffer to actual file.
++        unsigned int num_written;
++        if (f_write(&file.file, file.contents,
++                      file.size, &num_written) != FR_OK) {
++           // Can't write new file or modified file contents back to disk.
++        }
++     }
++  }
++
++  file.allocated = 0;
++  file.size = 0;
++  file.mode = 0;
++  file.in_use = 0;
++  file.fname[0] = '\0';
++
++  if (file.contents) {
++    free(file.contents);
++    file.contents = nullptr;
++  } 
++  
++  if (f_close(&file.file) != FR_OK) {
++    errno = EIO;
++    return -1;
++  }
++
++  return 0;
  }
  
 -extern "C"
@@ -423,46 +636,46 @@ index 23720b6..2c60aa9 100644
 -	}
 -
 -	return 0;
-+void CGlueStdioInit(CConsole &rConsole) { CGlueInitConsole(rConsole); }
++extern "C" int _DEFUN(_read, (fildes, ptr, len),
++                      int fildes _AND char *ptr _AND int len) {
++  if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
++    errno = EBADF;
++    return -1;
++  }
 +
-+static void slurp_file(CircleFile &file) {
++  CircleFile &file = fileTab[fildes];
++  if (!file.in_use) {
++    errno = EBADF;
++    return -1;
++  }
++
++  unsigned int num_read;
 +  if (file.contents == nullptr) {
++     // Assert file.FIL has been opened
++     // else EBADF -1
 +
-+    #ifdef DEBUG_IO_CPP
-+    circle_log_io_err("slurp file\n");
-+    #endif
++     // Read data from the file
++     if (f_read(&file.file, ptr, len, &num_read) != FR_OK) {
++       errno = EIO;
++       return -1;
++     }
 +
-+    // Read the entire contents of the file into our
-+    // memory buffer.
-+    unsigned read_result = 0;
-+    unsigned total = 0;
-+    while (true) {
-+      read_result = file.mCGlueIO->Read(file.readBuf,
-+                                        static_cast<unsigned>(READ_BUF_SIZE));
-+      if (read_result == 0 || read_result == CGlueIO::GeneralFailure) {
-+        break;
-+      }
-+      if (file.contents == nullptr) {
-+        file.allocated = READ_BUF_SIZE;
-+        file.contents = (char *)malloc(file.allocated);
-+      } else if (file.allocated < total + read_result) {
-+        file.allocated *= 2;
-+        file.contents = (char *)realloc(file.contents, file.allocated);
-+      }
++     file.position += num_read;
++     return static_cast<int>(num_read);
++  } else {
++     // Read data from our internal buffer
++     unsigned int max = len;
++     unsigned int remain = file.size - file.position;
 +
-+      memcpy(file.contents + total, file.readBuf, read_result);
-+      total += read_result;
-+      file.size = total;
-+    }
++     if (max > remain) {
++        max = remain;
++     }
 +
-+    if (read_result == CGlueIO::GeneralFailure) {
-+      file.size = 0;
-+    }
-+    
-+    #ifdef DEBUG_IO_CPP
-+    circle_log_io_err("slurped size ");
-+    circle_log_io_err_n(file.size);
-+    #endif
++     if (max > 0) {
++        memcpy(ptr, file.contents + file.position, max);
++        file.position += max;
++     }
++     return static_cast<int>(max);
 +  }
  }
  
@@ -495,80 +708,44 @@ index 23720b6..2c60aa9 100644
 -	}
 -
 -	return static_cast<int>(read_result);
-+extern "C" int _DEFUN(_open, (file_orig, flags, mode),
-+                      char *file_orig _AND int flags _AND int mode) {
-+  int slot = -1;
-+  char *file = file_orig;
-+  int flen = strlen(file);
-+  if (flen > 2 && file[0] == '.' && file[1] == '/') {
-+    file = file + 2;
++extern "C" int _DEFUN(_write, (fildes, ptr, len),
++                      int fildes _AND char *ptr _AND int len) {
++  if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
++    errno = EBADF;
++    return -1;
 +  }
 +
-+  // Only supported modes are read and write. The mask is
-+  // determined from the newlib header.
-+  int const masked_flags = flags & 7;
-+  if (masked_flags != O_RDONLY &&
-+         masked_flags != O_WRONLY &&
-+            masked_flags != O_RDWR) {
-+    errno = ENOSYS;
-+  } else {
-+    slot = FindFreeFileSlot();
-+
-+    if (slot != -1) {
-+      CircleFile &newFile = fileTab[slot];
-+      newFile.contents = nullptr;
-+      newFile.position = 0;
-+      newFile.size = 0;
-+      newFile.allocated = 0;
-+      newFile.mode = masked_flags;
-+      newFile.filename = strdup2(file);
-+      if (newFile.filename == nullptr) {
-+         errno = ENOSYS;
-+         return -1;
-+      }
-+
-+      #ifdef DEBUG_IO_CPP
-+      circle_log_io_err("open ");
-+      circle_log_io_err(file);
-+      circle_log_io_err("\n");
-+      circle_log_io_err("file# ");
-+      circle_log_io_err_n(slot);
-+      circle_log_io_err("mode ");
-+      circle_log_io_err_n(masked_flags);
-+      #endif
-+
-+      unsigned handle;
-+      if (masked_flags == O_RDONLY) {
-+        handle = circle_fat_fs->FileOpen(file);
-+      } else if (masked_flags == O_WRONLY) {
-+        handle = circle_fat_fs->FileCreate(file);
-+      } else {
-+        assert(masked_flags == O_RDWR);
-+        handle = circle_fat_fs->FileOpen(file);
-+      }
-+
-+      if (handle != 0) {
-+        newFile.mCGlueIO = new CGlueIoFatFs(*circle_fat_fs, handle);
-+
-+        if (masked_flags == O_RDWR) {
-+          slurp_file(newFile);
-+          newFile.mCGlueIO->Close();
-+          delete newFile.mCGlueIO;
-+          newFile.mCGlueIO = nullptr;
-+        }
-+
-+        newFile.is_used = 1;
-+
-+      } else {
-+        slot = -1;
-+        errno = EACCES;
-+      }
-+    } else {
-+      errno = ENFILE;
-+    }
++  if (fildes == 1 || fildes == 2) {
++    return circle_serial_write(fildes, ptr, len);
 +  }
 +
-+  return slot;
++  CircleFile &file = fileTab[fildes];
++  if (!file.in_use) {
++    errno = EBADF;
++    return -1;
++  }
++
++  // Nothing allocated yet? Allocate now.
++  if (file.contents == nullptr) {
++     file.allocated = READ_BUF_SIZE;
++     file.contents = (char *) malloc(file.allocated);
++  }
++
++  // Make sure we always have enough room allocated for the
++  // next write.
++  while (file.position + len >= file.allocated) {
++     file.allocated *= 2;
++     file.contents = (char *)realloc(file.contents, file.allocated);
++  }
++
++  // Do the write.
++  memcpy(file.contents + file.position, ptr, len);
++  file.position += len;
++  if (file.position > file.size) {
++     file.size = file.position;
++  }
++
++  return len;
  }
  
 -extern "C"
@@ -600,63 +777,23 @@ index 23720b6..2c60aa9 100644
 -	}
 -
 -	return static_cast<int>(write_result);
-+extern "C" int _DEFUN(_close, (fildes), int fildes) {
-+  if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
-+    errno = EBADF;
-+    return -1;
++extern "C" DIR *opendir(const char *name) {
++  CirclePath circlePath(name); 
++  
++  int const slotNum = FindFreeDirSlot();
++  if (slotNum == -1) {
++    errno = ENFILE;
++    return 0;
 +  }
 +
-+  CircleFile &file = fileTab[fildes];
-+
-+  unsigned circle_write_result = file.size;
-+  if (file.contents) {
-+    if (file.mode == O_RDWR) {
-+      assert(file.mCGlueIO == nullptr);
-+      unsigned handle = circle_fat_fs->FileCreate(file.filename);
-+      file.mCGlueIO = new CGlueIoFatFs(*circle_fat_fs, handle);
-+    }
-+
-+    if (file.mode == O_RDWR || file.mode == O_WRONLY) {
-+      // Dump contents of memory buffer to the actual file.
-+      circle_write_result =
-+        file.mCGlueIO->Write(file.contents,
-+           static_cast<unsigned>(file.size));
-+    }
++  CircleDir &slot = dirTab[slotNum];
++  if (f_opendir(&slot.dir, circlePath.path) != FR_OK) {
++    errno = ENFILE;
++    return 0;
 +  }
 +
-+  if (file.mCGlueIO == nullptr) {
-+    errno = EBADF;
-+    return -1;
-+  }
-+
-+  #ifdef DEBUG_IO_CPP
-+  circle_log_io_err("close #");
-+  circle_log_io_err_n(fildes);
-+  #endif
-+
-+  unsigned const circle_close_result = file.mCGlueIO->Close();
-+
-+  delete file.mCGlueIO;
-+  file.mCGlueIO = nullptr;
-+
-+  if (file.contents) {
-+    free(file.contents);
-+    file.contents = nullptr;
-+  }
-+  file.allocated = 0;
-+  file.size = 0;
-+  file.mode = 0;
-+  file.is_used = 0;
-+  free(file.filename);
-+  file.filename = nullptr;
-+
-+  if (circle_close_result == 0 ||
-+         circle_write_result == CGlueIO::GeneralFailure) {
-+    errno = EIO;
-+    return -1;
-+  }
-+
-+  return 0;
++  slot.in_use = 1;
++  return &slot.dir;
  }
  
 -extern "C"
@@ -664,12 +801,7 @@ index 23720b6..2c60aa9 100644
 -opendir (const char *name)
 -{
 -        assert (circle_fat_fs);
-+extern "C" int _DEFUN(_read, (fildes, ptr, len),
-+                      int fildes _AND char *ptr _AND int len) {
-+  if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
-+    errno = EBADF;
-+    return -1;
-+  }
++static struct dirent *do_readdir(CircleDir *dir, struct dirent *de) {
  
 -        /* For now only the single root directory and the current directory are supported */
 -        if (strcmp(name, "/") != 0 && strcmp(name, ".") != 0)
@@ -677,7 +809,7 @@ index 23720b6..2c60aa9 100644
 -                errno = ENOENT;
 -                return 0;
 -        }
-+  CircleFile &file = fileTab[fildes];
++  assert(dir->in_use);
  
 -        int const slotNum = FindFreeDirSlot ();
 -        if (slotNum == -1)
@@ -685,47 +817,39 @@ index 23720b6..2c60aa9 100644
 -                errno = ENFILE;
 -                return 0;
 -        }
-+  #ifdef DEBUG_IO_CPP
-+  circle_log_io_err("read #");
-+  circle_log_io_err_n(fildes);
-+  #endif
++  FILINFO fno;
++  struct dirent *result = nullptr;
 +
-+  if (file.contents == nullptr) {
-+    if (file.mCGlueIO == nullptr) {
-+      errno = EBADF;
-+      return -1;
++  FRESULT res = f_findnext(&dir->dir, &fno);
++  if (res == FR_OK && fno.fname[0] != 0) {
++    strcpy(de->d_name, fno.fname);
++    de->d_ino = 0;
++    de->d_type = 0;
++    if (fno.fattrib & AM_DIR) {
++      de->d_type |= DT_DIR;
++    } else {
++      de->d_type |= DT_REG;
 +    }
-+
-+    // Read data from the file
-+    unsigned const read_result =
-+        file.mCGlueIO->Read(ptr, static_cast<unsigned>(len));
++    result = de;
++  }
  
 -        auto &slot = dirTab[slotNum];
-+    if (read_result == CGlueIO::GeneralFailure) {
-+      errno = EIO;
-+      return -1;
-+    }
++  return result;
++}
++
++extern "C" struct dirent *readdir(DIR *dir) {
++  struct dirent *result;
  
 -        slot.mOpen = 1;
 -        slot.mFirstRead = 1;
-+    file.position += read_result;
-+    return static_cast<int>(read_result);
-+  } else {
-+    // Read data from our internal buffer
-+    unsigned int max = len;
-+    unsigned int remain = file.size - file.position;
++  CircleDir *c_dir = FindCircleDirFromDIR(dir);
++  if (c_dir == nullptr) {
++    errno = EBADF;
++    return nullptr;
++  }
  
 -        return &slot;
-+    if (max > remain) {
-+      max = remain;
-+    }
-+
-+    if (max > 0) {
-+      memcpy(ptr, file.contents + file.position, max);
-+      file.position += max;
-+    }
-+    return static_cast<int>(max);
-+  }
++  return do_readdir(c_dir, &c_dir->mEntry);
  }
  
 -static struct dirent *
@@ -742,45 +866,10 @@ index 23720b6..2c60aa9 100644
 -        {
 -                haveEntry = circle_fat_fs->RootFindNext (&Direntry, &dir->mCurrentEntry);
 -        }
-+extern "C" int _DEFUN(_write, (fildes, ptr, len),
-+                      int fildes _AND char *ptr _AND int len) {
-+  if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
-+    errno = EBADF;
-+    return -1;
-+  }
-+
-+  if (fildes == 1 || fildes == 2)
-+    return circle_serial_write(fildes, ptr, len);
-+
-+  #ifdef DEBUG_IO_CPP
-+  circle_log_io_err("write #");
-+  circle_log_io_err_n(fildes);
-+  #endif
-+
-+  CircleFile &file = fileTab[fildes];
-+
-+  // Nothing allocated yet? Allocate now.
-+  if (file.contents == nullptr) {
-+     file.allocated = READ_BUF_SIZE;
-+     file.contents = (char *)malloc(file.allocated);
-+  }
-+
-+  // Make sure we always have enough room allocated for the
-+  // next write.
-+  while (file.position + len >= file.allocated) {
-+     file.allocated *= 2;
-+     file.contents = (char *)realloc(file.contents, file.allocated);
-+  }
-+
-+  // Do the write.
-+  memcpy(file.contents + file.position, ptr, len);
-+  file.position += len;
-+  if (file.position > file.size) {
-+     file.size = file.position;
-+  }
-+
-+  return len;
-+}
++extern "C" int readdir_r(DIR *__restrict dir, dirent *__restrict de,
++                         dirent **__restrict ode) {
++  int result;
++  CircleDir *c_dir = FindCircleDirFromDIR(dir);
  
 -        struct dirent *result;
 -        if (haveEntry)
@@ -794,88 +883,98 @@ index 23720b6..2c60aa9 100644
 -                // end of directory does not change errno
 -                result = nullptr;
 -        }
-+extern "C" DIR *opendir(const char *name) {
-+  assert(circle_fat_fs);
-+
-+  /* For now only the single root directory and the current directory are
-+   * supported */
-+  if (strcmp(name, "/") != 0 && strcmp(name, ".") != 0) {
-+    errno = ENOENT;
-+    return 0;
++  if (c_dir == nullptr) {
++    *ode = nullptr;
++    result = EBADF;
++  } else {
++    *ode = do_readdir(c_dir, de);
++    result = 0;
 +  }
-+
-+  int const slotNum = FindFreeDirSlot();
-+  if (slotNum == -1) {
-+    errno = ENFILE;
-+    return 0;
-+  }
-+
-+  auto &slot = dirTab[slotNum];
  
 -        return result;
-+  slot.mOpen = 1;
-+  slot.mFirstRead = 1;
-+
-+  return &slot;
++  return result;
  }
  
 -extern "C" struct dirent *
 -readdir (DIR *dir)
 -{
 -        struct dirent *result;
-+static struct dirent *do_readdir(DIR *dir, struct dirent *de) {
-+  TDirentry Direntry;
-+  bool haveEntry;
-+  if (dir->mFirstRead) {
-+    haveEntry = circle_fat_fs->RootFindFirst(&Direntry, &dir->mCurrentEntry);
-+    dir->mFirstRead = 0;
-+  } else {
-+    haveEntry = circle_fat_fs->RootFindNext(&Direntry, &dir->mCurrentEntry);
-+  }
++extern "C" void rewinddir(DIR *dir) { f_rewinddir(dir); }
 +
-+  struct dirent *result;
-+  if (haveEntry) {
-+    memcpy(de->d_name, Direntry.chTitle, sizeof(de->d_name));
-+    de->d_ino = 0; // TODO: how to determine an inode number in Circle?
-+    result = de;
-+  } else {
-+    // end of directory does not change errno
-+    result = nullptr;
++extern "C" int closedir(DIR *dir) {
++  CircleDir *c_dir = FindCircleDirFromDIR(dir);
++  if (c_dir == nullptr) {
++    errno = EBADF;
++    return -1;
 +  }
-+
-+  return result;
-+}
  
 -        if (dir->mOpen)
 -        {
 -                result = do_readdir (dir, &dir->mEntry);
--        }
++  c_dir->in_use = 0;
++
++  if (f_closedir(dir) != FR_OK) {
++    errno = EIO;
++    return -1;
++  }
++
++  return 0;
++}
++
++extern "C" int _DEFUN(_stat, (file, st),
++                      const char *file _AND struct stat *st) {
++  CirclePath circlePath(file);
++  memset(st, 0, sizeof(struct stat));
++
++  // Fastfail or fastsucceed
++  for (int i=0;i<g_bootStatNum;i++) {
++     if (g_bootStatWhat[i] == BOOTSTAT_WHAT_STAT) {
++        if (strend(circlePath.path, g_bootStatFile[i])) {
++           st->st_mode = S_IFREG | S_IREAD | S_IWRITE;
++           st->st_size = g_bootStatSize[i];
+         }
 -        else
 -        {
 -                errno = EBADF;
 -                result = nullptr;
--        }
-+extern "C" struct dirent *readdir(DIR *dir) {
-+  struct dirent *result;
++        return 0;
++     }
++     else if (g_bootStatWhat[i] == BOOTSTAT_WHAT_FAIL) {
++        if (strend(circlePath.path, g_bootStatFile[i])) {
++          errno = EBADF;
++          return -1;
+         }
++     }
++  }
++        
 +
-+  if (dir->mOpen) {
-+    result = do_readdir(dir, &dir->mEntry);
-+  } else {
-+    errno = EBADF;
-+    result = nullptr;
++  FILINFO fno;
++  if (f_stat(circlePath.path, &fno) == FR_OK) {
++    if (fno.fattrib & AM_DIR) {
++      st->st_mode |= S_IFDIR;
++    } else {
++      st->st_mode |= S_IFREG;
++    }
++    if (fno.fattrib & AM_RDO) {
++      st->st_mode |= S_IREAD;
++    } else {
++      st->st_mode |= S_IREAD | S_IWRITE;
++    }
++
++    st->st_size = fno.fsize;
++    return 0;
 +  }
  
 -        return result;
-+  return result;
++  errno = EBADF;
++  return -1;
  }
  
 -extern "C" int
 -readdir_r (DIR *__restrict dir, dirent *__restrict de, dirent **__restrict ode)
 -{
 -        int result;
-+extern "C" int readdir_r(DIR *__restrict dir, dirent *__restrict de,
-+                         dirent **__restrict ode) {
-+  int result;
++extern "C" int _DEFUN(_fstat, (fildes, st), int fildes _AND struct stat *st) {
  
 -        if (dir->mOpen)
 -        {
@@ -887,52 +986,22 @@ index 23720b6..2c60aa9 100644
 -                *ode = nullptr;
 -                result = EBADF;
 -        }
-+  if (dir->mOpen) {
-+    *ode = do_readdir(dir, de);
-+    result = 0;
-+  } else {
-+    *ode = nullptr;
-+    result = EBADF;
++  CircleFile &file = fileTab[fildes];
++  if (!file.in_use) {
++    errno = EBADF;
++    return -1;
 +  }
  
 -        return result;
-+  return result;
++  return _stat(file.fname, st);
  }
  
 -extern "C" void
 -rewinddir (DIR *dir)
 -{
 -        dir->mFirstRead = 1;
-+extern "C" void rewinddir(DIR *dir) { dir->mFirstRead = 1; }
-+
-+extern "C" int closedir(DIR *dir) {
-+  if (!dir->mOpen) {
-+    errno = EBADF;
-+    return -1;
-+  }
-+
-+  dir->mOpen = 0;
-+  return 0;
- }
- 
--extern "C" int
--closedir (DIR *dir)
--{
--        if (!dir->mOpen)
--        {
--                errno = EBADF;
--                return -1;
--        }
 +extern "C" int _DEFUN(_lseek, (fildes, ptr, dir),
 +                      int fildes _AND int ptr _AND int dir) {
-+  #ifdef DEBUG_IO_CPP
-+  circle_log_io_err("fseek #");
-+  circle_log_io_err_n(fildes);
-+  circle_log_io_err("ptr");
-+  circle_log_io_err_n(ptr);
-+  circle_log_io_err("dir");
-+  circle_log_io_err_n(dir);
-+  #endif
 +
 +  if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
 +    errno = EBADF;
@@ -940,13 +1009,17 @@ index 23720b6..2c60aa9 100644
 +  }
 +
 +  CircleFile &file = fileTab[fildes];
++  if (!file.in_use) {
++    errno = EBADF;
++    return -1;
++  }
 +
 +  if (file.mode == O_RDONLY) {
-+    if (file.mCGlueIO == nullptr) {
-+      errno = EBADF;
-+      return -1;
++    // Assert FIL has been opened
++    if (slurp_file(file)) {
++       errno = EACCES;
++       return -1;
 +    }
-+    slurp_file(file);
 +  }
 +
 +  if (dir == SEEK_SET) {
@@ -960,66 +1033,55 @@ index 23720b6..2c60aa9 100644
 +    return -1;
 +  }
 +
-+  #ifdef DEBUG_IO_CPP
-+  circle_log_io_err("file.size ");
-+  circle_log_io_err_n(file.size);
-+  circle_log_io_err("file.position ");
-+  circle_log_io_err_n(file.position);
-+  #endif
-+
-+  if (file.position < 0) {
-+    // Not sure if this is an error or if we should just
-+    // clamp to 0.
-+    circle_log_io_err("io.cpp: file.position < 0 after seek\n");
-+  } else if (file.position > file.size) {
-+    // If this ever happens, we will have to extend the allocated
-+    // space to include the new position and zero out every byte
-+    // between the old position and new.
-+    circle_log_io_err("io.cpp: file.position > file.size after seek\n");
-+  }
-+
 +  // Bail
-+  assert(file.position >=0 && file.position <= file.size);
++  assert(file.position >= 0 && file.position <= file.size);
 +
 +  return file.position;
-+}
-+
-+extern "C" int _DEFUN(_fstat, (fildes, st), int fildes _AND struct stat *st) {
-+  if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
-+    errno = EBADF;
-+    return -1;
+ }
+ 
+-extern "C" int
+-closedir (DIR *dir)
++int chdir (const char *path)
+ {
+-        if (!dir->mOpen)
+-        {
+-                errno = EBADF;
+-                return -1;
+-        }
++  if (path == nullptr) {
++     errno = EIO;
++     return -1;
 +  }
 +
-+  CircleFile &file = fileTab[fildes];
++  int len = strlen(path);
++  if (len == 0) {
++     errno = EIO;
++     return -1;
++  }
++
++  if (len == 1 && path[0] == '.') {
++     return 0;
++  }
++
++  CirclePath circlePath(path);
++  strcpy(currentDir, circlePath.path);
++
++  // Ensure trailing slash
++  if (currentDir[strlen(currentDir)-1] != '/') {
++     strcat(currentDir, "/");
++  }
++  return 0;
++}
  
 -        dir->mOpen = 0;
 -        return 0;
-+  #ifdef DEBUG_IO_CPP
-+  circle_log_io_err("fstat #");
-+  circle_log_io_err_n(fildes);
-+  #endif
-+
-+  if (file.mode == O_RDONLY) {
-+     // Only slurp when in read mode.
-+     if (file.mCGlueIO == nullptr) {
-+        errno = EBADF;
-+        return -1;
-+     }
-+     slurp_file(file);
-+  }
-+
-+  st->st_size = file.size;
-+
-+  return 0;
-+}
-+
-+extern "C" int _DEFUN (_stat, (file, st), const char  *file _AND struct stat *st)
-+{
-+  memset(st, 0, sizeof(struct stat));
-+  // Everything is a regular file that can be written to and read from.
-+  st->st_mode = S_IFREG | S_IWRITE | S_IREAD;
-+  return 0;
++char *getwd(char *buf) {
++   if (buf) {
++      strcpy(buf, currentDir);
++   }
++   return currentDir;
  }
++
 diff --git a/libgloss/circle/lseek.c b/libgloss/circle/lseek.c
 index 0aa89e2..90c8d98 100644
 --- a/libgloss/circle/lseek.c
@@ -1059,3 +1121,55 @@ index 7c34637..471c176 100644
 -
 -stub_warning(_stat)
 +// Moved to io.cpp
+diff --git a/newlib/libc/sys/circle/sys/dirent.h b/newlib/libc/sys/circle/sys/dirent.h
+index 1f73230..4157027 100644
+--- a/newlib/libc/sys/circle/sys/dirent.h
++++ b/newlib/libc/sys/circle/sys/dirent.h
+@@ -7,16 +7,43 @@ extern "C" {
+ 
+ #include <sys/types.h>
+ 
+-#include <circle/fs/fsdef.h>
+-
+-typedef struct _CIRCLE_DIR DIR;
++#include <ff.h>
+ 
+ /* Directory entry as returned by readdir */
+ struct dirent {
+         ino_t  d_ino;
+-        char   d_name[FS_TITLE_LEN + 1];
++        unsigned char d_type;
++        char   d_name[FF_MAX_LFN + 1];
++};
++#define _DIRENT_HAVE_D_TYPE
++
++/* File types for `d_type'.  */
++enum
++{
++  DT_UNKNOWN = 0,
++# define DT_UNKNOWN     DT_UNKNOWN
++  DT_FIFO = 1,
++# define DT_FIFO        DT_FIFO
++  DT_CHR = 2,
++# define DT_CHR         DT_CHR
++  DT_DIR = 4,
++# define DT_DIR         DT_DIR
++  DT_BLK = 6,
++# define DT_BLK         DT_BLK
++  DT_REG = 8,
++# define DT_REG         DT_REG
++  DT_LNK = 10,
++# define DT_LNK         DT_LNK
++  DT_SOCK = 12,
++# define DT_SOCK        DT_SOCK
++  DT_WHT = 14
++# define DT_WHT         DT_WHT
+ };
+ 
++/* Convert between stat structure types and directory types.  */
++# define IFTODT(mode)           (((mode) & 0170000) >> 12)
++# define DTTOIF(dirtype)        ((dirtype) << 12)
++
+ DIR *opendir(const char *);
+ struct dirent *readdir(DIR *);
+ int readdir_r(DIR *__restrict, struct dirent *__restrict,

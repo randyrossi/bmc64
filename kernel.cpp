@@ -106,9 +106,9 @@ extern "C" {
      return static_kernel->circle_sound_bufferspace();
   }
 
-  int circle_sound_init(const char *param, int *speed, 
+  int circle_sound_init(const char *param, int *speed,
                         int *fragsize, int *fragnr, int *channels) {
-     return static_kernel->circle_sound_init(param, speed, 
+     return static_kernel->circle_sound_init(param, speed,
                                              fragsize, fragnr, channels);
   }
 
@@ -154,6 +154,10 @@ extern "C" {
 
   void circle_lock_release() {
      static_kernel->circle_lock_release();
+  }
+
+  void circle_boot_complete() {
+     static_kernel->circle_boot_complete();
   }
 };
 
@@ -372,22 +376,6 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
    }
 }
 
-bool CKernel::StartupChecksOk() {
-   FILE *fp = fopen("chargen","r");
-   if (fp == NULL) return false;
-   fclose(fp);
-
-   fp = fopen("basic","r");
-   if (fp == NULL) return false;
-   fclose(fp);
-
-   fp = fopen("kernal","r");
-   if (fp == NULL) return false;
-   fclose(fp);
-
-   return true;
-}
-
 ViceApp::TShutdownMode CKernel::Run (void)
 {
   mLogger.Write ("vice", LogNotice, "VICE");
@@ -442,23 +430,14 @@ ViceApp::TShutdownMode CKernel::Run (void)
   // Tell vice what we found
   joy_set_gamepad_info(num_pads, num_buttons, num_axes, num_hats);
 
-  if (!StartupChecksOk()) {
-     mViceOptions.SetHideConsole(false);
-     mLogger.Write ("", LogNotice, "KERNAL, CHARGEN or BASIC MISSING");
-     mLogger.Write ("", LogNotice, "Please read documentation.");
-     for (;;) {
-        circle_sleep(1000000);
-     }
-  } else {
-    // Core 1 will be used for the main emulator loop.
-    mEmulatorCore.SetTimingOption(timing_option);
-    mEmulatorCore.Launch();
+  // Core 1 will be used for the main emulator loop.
+  mEmulatorCore.SetTimingOption(timing_option);
+  mEmulatorCore.Launch();
 
-    // This core will do nothing but service interrupts from
-    // usb or gpio.
-    printf ("Core 0 idle\n");
-    for (;;) { circle_sleep(1000000); }
-  }
+  // This core will do nothing but service interrupts from
+  // usb or gpio.
+  printf ("Core 0 idle\n");
+  for (;;) { circle_sleep(1000000); }
 
   return ShutdownHalt;
 }
@@ -512,7 +491,7 @@ void CKernel::circle_wait_vsync() {
   mScreen.WaitForVerticalSync();
 }
 
-int CKernel::circle_sound_init(const char *param, int *speed, 
+int CKernel::circle_sound_init(const char *param, int *speed,
                                int *fragsize, int *fragnr, int *channels) {
   if (!mViceSound) {
      *speed = SAMPLE_RATE;
@@ -582,7 +561,7 @@ void CKernel::circle_joy_init() {
 
 void CKernel::KeyStatusHandlerRaw (unsigned char ucModifiers,
                                    const unsigned char RawKeys[6]) {
-   
+ 
    bool new_states[MAX_KEY_CODES];
    memset(new_states, 0, MAX_KEY_CODES * sizeof(bool));
 
@@ -682,16 +661,50 @@ void CKernel::KeyStatusHandlerRaw (unsigned char ucModifiers,
               circle_key_pressed(i);
            }
       }
-      key_states[i] = new_states[i];    
+      key_states[i] = new_states[i];
    }
+}
+
+#define BTN_PRESS 1
+#define BTN_RELEASE 2
+#define BTN_UP 3
+#define BTN_DOWN 4
+
+static int gpio_menu = BTN_UP;
+
+// This debounces the menu pin
+static int GetMenuPinState(CGPIOPin* uiPin) {
+   if (uiPin->Read() == LOW) {
+      if (gpio_menu == BTN_PRESS) {
+         gpio_menu = BTN_DOWN;
+      }
+      if (gpio_menu == BTN_UP) {
+        circle_sleep(5);
+        if (uiPin->Read() == LOW) {
+           gpio_menu = BTN_PRESS;
+        }
+      }
+   } else {
+      if (gpio_menu == BTN_RELEASE) {
+         gpio_menu = BTN_UP;
+      }
+      if (gpio_menu == BTN_DOWN) {
+         if (uiPin->Read() == HIGH) {
+            circle_sleep(5);
+            if (uiPin->Read() == HIGH) {
+               gpio_menu = BTN_RELEASE;
+            }
+         }
+      }
+   }
+   return gpio_menu;
 }
 
 // This checks whether GPIO16 has triggered the ui activation
 // Not hooked to interrupt, only polled.
 void CKernel::circle_check_gpio()
 {
-   // TODO: Debounce this...
-   if (uiPin->Read() == LOW) {
+   if (GetMenuPinState(uiPin) == BTN_PRESS) {
       circle_key_pressed(KEYCODE_F12);
       circle_key_released(KEYCODE_F12);
    }
@@ -845,4 +858,8 @@ void CKernel::circle_lock_acquire() {
 
 void CKernel::circle_lock_release() {
   m_Lock.Release();
+}
+
+void CKernel::circle_boot_complete() {
+  DisableBootStat();
 }

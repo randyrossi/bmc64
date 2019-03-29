@@ -34,8 +34,6 @@
 #include "monitor.h"
 #include "viewport.h"
 
-int chdir(const char *path);
-char *getwd(char *buf);
 char* ui_get_file(const char *format, ...);
 char *uimon_get_in(char **p1, const char *p2);
 char video_canvas_can_resize(struct video_canvas_s *canvas);

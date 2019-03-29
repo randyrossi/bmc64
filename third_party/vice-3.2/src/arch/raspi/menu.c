@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <string.h>
+#include <assert.h>
 #include "attach.h"
 #include "cartridge.h"
 #include "machine.h"
@@ -106,56 +107,127 @@ static int funcname(char *name) { \
    return include; \
 }
 
+// For file type dialogs. Determines what dir we start in. Used
+// as index into default_dir_names and current_dir_names.
+#define DIR_ROOT 0
+#define DIR_DISKS 1
+#define DIR_TAPES 2
+#define DIR_CARTS 3
+#define DIR_SNAPS 4
+#define NUM_DIR_TYPES 5
+
+// What directories to initialize file search dialogs with for
+// each type of file.
+// TODO: Make these start dirs configurable.
+static const char default_dir_names[NUM_DIR_TYPES][16] = {
+   "/", "/disks", "/tapes", "/carts", "/snapshots"
+};
+
+// Keep track of current directory for each type of file.
+static char current_dir_names[NUM_DIR_TYPES][256];
+static char dir_scratch[256];
+
 TEST_FILTER_MACRO(test_disk_name, num_disk_ext, disk_filt_ext);
 TEST_FILTER_MACRO(test_tape_name, num_tape_ext, tape_filt_ext);
 TEST_FILTER_MACRO(test_cart_name, num_cart_ext, cart_filt_ext);
 TEST_FILTER_MACRO(test_snap_name, num_snap_ext, snap_filt_ext);
 
-// Clears the file menu and populates with files
-// Only the root dir is supported
-static void list_files(struct menu_item* parent, int filter, int menu_id) {
+// Clears the file menu and populates it with files.
+static void list_files(struct menu_item* parent, int dir_type,
+                          int filter, int menu_id) {
   DIR *dp;
   struct dirent *ep;
   int i;
   int include;
 
-  dp = opendir (".");
+  char *currentDir = current_dir_names[dir_type];
+  dp = opendir (currentDir);
+  if (dp == NULL) {
+     strcpy (dir_scratch, "(");
+     strcat (dir_scratch, currentDir);
+     strcat (dir_scratch, " Not Found - Using /)");
 
+     // Fall back to root
+     strcpy(current_dir_names[dir_type], "/");
+     currentDir = current_dir_names[dir_type];
+     dp = opendir (currentDir);
+     ui_menu_add_button(MENU_TEXT, parent, dir_scratch);
+     if (dp == NULL) {
+        return;
+     }
+  }
+
+  ui_menu_add_button(MENU_TEXT, parent, currentDir);
+  ui_menu_add_divider(parent);
+
+  if (strcmp(currentDir,"/") != 0) {
+     ui_menu_add_button(menu_id, parent, "..")->sub_id = MENU_SUB_UP_DIR;
+  }
+
+  // Make two buckets
+  struct menu_item dirs_root;
+  memset(&dirs_root, 0, sizeof(struct menu_item));
+  dirs_root.type = FOLDER;
+  dirs_root.is_expanded = 1;
+  dirs_root.name[0] = '\0';
+
+  struct menu_item files_root;
+  memset(&files_root, 0, sizeof(struct menu_item));
+  files_root.type = FOLDER;
+  files_root.is_expanded = 1;
+  files_root.name[0] = '\0';
+
+  // TODO : Prefetch and order dirs at top
   if (dp != NULL) {
     while (ep = readdir (dp)) {
-      include = 0;
-      if (filter == FILTER_DISK) {
-         include = test_disk_name(ep->d_name);
-      } else if (filter == FILTER_TAPE) {
-         include = test_tape_name(ep->d_name);
-      } else if (filter == FILTER_CART) {
-         include = test_cart_name(ep->d_name);
-      } else if (filter == FILTER_SNAP) {
-         include = test_snap_name(ep->d_name);
-      } else if (filter == FILTER_NONE) {
-         include = 1;
-      }
-      if (include) {
-         ui_menu_add_button(menu_id, parent, ep->d_name);
+      if (ep->d_type & DT_DIR) {
+        ui_menu_add_button_with_value(
+           menu_id, &dirs_root, ep->d_name, 0, ep->d_name, "(dir)")
+              ->sub_id = MENU_SUB_ENTER_DIR;
+      } else {
+        include = 0;
+        if (filter == FILTER_DISK) {
+          include = test_disk_name(ep->d_name);
+        } else if (filter == FILTER_TAPE) {
+          include = test_tape_name(ep->d_name);
+        } else if (filter == FILTER_CART) {
+          include = test_cart_name(ep->d_name);
+        } else if (filter == FILTER_SNAP) {
+          include = test_snap_name(ep->d_name);
+        } else if (filter == FILTER_NONE) {
+          include = 1;
+        }
+        if (include) {
+          ui_menu_add_button(
+             menu_id, &files_root, ep->d_name)->sub_id = MENU_SUB_PICK_FILE;
+        }
       }
     }
 
     (void) closedir (dp);
   }
+
+  // Transfer ownership of dirs children first, then files. Childless
+  // parents are on the stack.
+  ui_add_all(&dirs_root, parent);
+  ui_add_all(&files_root, parent);
+
+  assert(dirs_root.first_child == NULL);
+  assert(files_root.first_child == NULL);
 }
 
-static void show_files(int filter, int menu_id) {
+static void show_files(int dir_type, int filter, int menu_id) {
    // Show files
    struct menu_item* file_root = ui_push_menu(-1, -1);
    if (menu_id == MENU_SAVE_SNAP_FILE) {
       ui_menu_add_text_field(menu_id, file_root, "Enter name:", "");
    }
-   list_files(file_root, filter, menu_id);
+   list_files(file_root, dir_type, filter, menu_id);
 }
 
 static void show_about() {
    struct menu_item* about_root = ui_push_menu(32, 8);
-   ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.0.9");
+   ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.1");
    ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C64 Emulator");
    ui_menu_add_button(MENU_TEXT, about_root, "For the Rasbperry Pi 2/3");
    ui_menu_add_divider(about_root);
@@ -204,7 +276,7 @@ static void ui_set_joy_items()
 
 static void save_settings() {
    int i;
-   FILE *fp = fopen("settings.txt","w");
+   FILE *fp = fopen("/settings.txt","w");
    if (fp == NULL) return;
 
    fprintf(fp,"port_1=%d\n",port_1_menu_item->value);
@@ -246,7 +318,7 @@ static void ui_set_joy_devs() {
 }
 
 static void load_settings() {
-   FILE *fp = fopen("settings.txt","r");
+   FILE *fp = fopen("/settings.txt","r");
    if (fp == NULL) return;
    char name_value[80];
    int value;
@@ -325,6 +397,175 @@ void menu_swap_joysticks() {
    ui_set_joy_items();
 }
 
+static char* fullpath(int dir_type, char* name) {
+   strcpy(dir_scratch, current_dir_names[dir_type]);
+   strcat(dir_scratch, "/");
+   strcat(dir_scratch, name);
+   return dir_scratch;
+}
+
+static void select_file(struct menu_item* item) {
+   if (item->id == MENU_LOAD_SNAP_FILE) {
+      ui_info("Loading...");
+      if(machine_read_snapshot(fullpath(DIR_SNAPS, item->name),0) < 0) {
+          ui_pop_menu();
+          ui_error("Load snapshot failed");
+      } else {
+          ui_pop_all_and_toggle();
+      }
+   } else if (item->id == MENU_DISK_FILE) {
+         // Perform the attach
+         ui_info("Attaching...");
+         if (file_system_attach_disk(unit,
+                fullpath(DIR_DISKS, item->name)) < 0) {
+            ui_pop_menu();
+            ui_error("Failed to attach disk image");
+         } else {
+            ui_pop_all_and_toggle();
+         }
+   } else if (item->id == MENU_TAPE_FILE) {
+         ui_info("Attaching...");
+         if (tape_image_attach(1, fullpath(DIR_TAPES, item->name)) < 0) {
+            ui_pop_menu();
+            ui_error("Failed to attach tape image");
+         } else {
+            ui_pop_all_and_toggle();
+         }
+   } else if (item->id == MENU_CART_FILE) {
+         ui_info("Attaching...");
+         if (cartridge_attach_image(
+                 CARTRIDGE_CRT, fullpath(DIR_CARTS, item->name)) < 0) {
+            ui_pop_menu();
+            ui_error("Failed to attach cart image");
+         } else {
+            ui_pop_all_and_toggle();
+         }
+   } else if (item->id == MENU_CART_8K_FILE) {
+         ui_info("Attaching...");
+         if (cartridge_attach_image(CARTRIDGE_GENERIC_8KB,
+                fullpath(DIR_CARTS, item->name)) < 0) {
+            ui_pop_menu();
+            ui_error("Failed to attach cart image");
+         } else {
+            ui_pop_all_and_toggle();
+         }
+   } else if (item->id == MENU_CART_16K_FILE) {
+         ui_info("Attaching...");
+         if (cartridge_attach_image(CARTRIDGE_GENERIC_16KB,
+                fullpath(DIR_CARTS, item->name)) < 0) {
+            ui_pop_menu();
+            ui_error("Failed to attach cart image");
+         } else {
+            ui_pop_all_and_toggle();
+         }
+   } else if (item->id == MENU_CART_ULTIMAX_FILE) {
+         ui_info("Attaching...");
+         if (cartridge_attach_image(CARTRIDGE_ULTIMAX,
+                fullpath(DIR_CARTS, item->name)) < 0) {
+            ui_pop_menu();
+            ui_error("Failed to attach cart image");
+         } else {
+            ui_pop_all_and_toggle();
+         }
+   } else if (item->id == MENU_AUTOSTART_FILE) {
+         ui_info("Starting...");
+         if (autostart_autodetect(fullpath(DIR_ROOT, item->name),
+                "*", 0, AUTOSTART_MODE_RUN) < 0) {
+            ui_pop_menu();
+            ui_error("Failed to autostart file");
+         } else {
+            ui_pop_all_and_toggle();
+         }
+   }
+}
+
+// Utility to determine current dir index from a menu file item
+static int menu_file_item_to_dir_index(struct menu_item* item) {
+  int index;
+  switch (item->id) {
+     case MENU_LOAD_SNAP_FILE:
+     case MENU_SAVE_SNAP_FILE:
+       return DIR_SNAPS;
+     case MENU_DISK_FILE:
+       return DIR_DISKS;
+     case MENU_TAPE_FILE:
+       return DIR_TAPES;
+     case MENU_CART_FILE:
+     case MENU_CART_8K_FILE:
+     case MENU_CART_16K_FILE:
+     case MENU_CART_ULTIMAX_FILE:
+       return DIR_CARTS;
+     case MENU_AUTOSTART_FILE:
+       return DIR_ROOT;
+     default:
+       return -1;
+  }
+}
+
+// Utility function to re-list same type of files given
+// a file item.
+static void relist_files(struct menu_item* item) {
+  switch (item->id) {
+     case MENU_LOAD_SNAP_FILE:
+       show_files(DIR_SNAPS, FILTER_SNAP, item->id);
+       break;
+     case MENU_SAVE_SNAP_FILE:
+       show_files(DIR_SNAPS, FILTER_SNAP, item->id);
+       break;
+     case MENU_DISK_FILE:
+       show_files(DIR_DISKS, FILTER_DISK, item->id);
+       break;
+     case MENU_TAPE_FILE:
+       show_files(DIR_TAPES, FILTER_TAPE, item->id);
+       break;
+     case MENU_CART_FILE:
+       show_files(DIR_CARTS, FILTER_CART, item->id);
+       break;
+     case MENU_CART_8K_FILE:
+       show_files(DIR_CARTS, FILTER_NONE, item->id);
+       break;
+     case MENU_CART_16K_FILE:
+       show_files(DIR_CARTS, FILTER_NONE, item->id);
+       break;
+     case MENU_CART_ULTIMAX_FILE:
+       show_files(DIR_CARTS, FILTER_NONE, item->id);
+       break;
+     case MENU_AUTOSTART_FILE:
+       show_files(DIR_ROOT, FILTER_NONE, item->id);
+       break;
+     default:
+       break;
+  }
+}
+
+static void up_dir(struct menu_item* item) {
+  int i;
+  int dir_index = menu_file_item_to_dir_index(item);
+  if (dir_index < 0) return;
+  // Remove last directory from current_dir_names
+  i = strlen(current_dir_names[dir_index])-1;
+  while (current_dir_names[dir_index][i] != '/' && i > 0) i--;
+  current_dir_names[dir_index][i] = '\0';
+  if (strlen(current_dir_names[dir_index]) == 0) {
+     strcpy(current_dir_names[dir_index], "/");
+  }
+  ui_pop_menu();
+  relist_files(item);
+}
+
+static void enter_dir(struct menu_item* item) {
+  int dir_index = menu_file_item_to_dir_index(item);
+  if (dir_index < 0) return;
+  // Append this item's value to current dir
+  if (current_dir_names[dir_index][strlen(current_dir_names[dir_index])-1]
+          != '/') {
+     strcat(current_dir_names[dir_index], "/");
+  }
+  strcat(current_dir_names[dir_index], item->str_value);
+  ui_pop_menu();
+  relist_files(item);
+}
+
 // Interpret what menu item changed and make the change to vice
 static void menu_value_changed(struct menu_item* item) {
    switch (item->id) {
@@ -355,13 +596,13 @@ static void menu_value_changed(struct menu_item* item) {
          video_canvas_change_palette(item->value);
          return;
       case MENU_AUTOSTART:
-         show_files(FILTER_NONE, MENU_AUTOSTART_FILE);
+         show_files(DIR_ROOT, FILTER_NONE, MENU_AUTOSTART_FILE);
          return;
       case MENU_SAVE_SNAP:
-         show_files(FILTER_SNAP, MENU_SAVE_SNAP_FILE);
+         show_files(DIR_SNAPS, FILTER_SNAP, MENU_SAVE_SNAP_FILE);
          return;
       case MENU_LOAD_SNAP:
-         show_files(FILTER_SNAP, MENU_LOAD_SNAP_FILE);
+         show_files(DIR_SNAPS, FILTER_SNAP, MENU_LOAD_SNAP_FILE);
          return;
       case MENU_IECDEVICE_8:
       case MENU_IECDEVICE_9:
@@ -373,22 +614,22 @@ static void menu_value_changed(struct menu_item* item) {
       case MENU_ATTACH_DISK_9:
       case MENU_ATTACH_DISK_10:
       case MENU_ATTACH_DISK_11:
-         show_files(FILTER_DISK, MENU_DISK_FILE);
+         show_files(DIR_DISKS, FILTER_DISK, MENU_DISK_FILE);
          return;
       case MENU_ATTACH_TAPE:
-         show_files(FILTER_TAPE, MENU_TAPE_FILE);
+         show_files(DIR_TAPES, FILTER_TAPE, MENU_TAPE_FILE);
          return;
       case MENU_ATTACH_CART:
-         show_files(FILTER_CART, MENU_CART_FILE);
+         show_files(DIR_CARTS, FILTER_CART, MENU_CART_FILE);
          return;
       case MENU_ATTACH_CART_8K:
-         show_files(FILTER_NONE, MENU_CART_8K_FILE);
+         show_files(DIR_CARTS, FILTER_NONE, MENU_CART_8K_FILE);
          return;
       case MENU_ATTACH_CART_16K:
-         show_files(FILTER_NONE, MENU_CART_16K_FILE);
+         show_files(DIR_CARTS, FILTER_NONE, MENU_CART_16K_FILE);
          return;
       case MENU_ATTACH_CART_ULTIMAX:
-         show_files(FILTER_NONE, MENU_CART_ULTIMAX_FILE);
+         show_files(DIR_CARTS, FILTER_NONE, MENU_CART_ULTIMAX_FILE);
          return;
       case MENU_DETACH_DISK_8:
          ui_info("Deatching...");
@@ -495,25 +736,29 @@ static void menu_value_changed(struct menu_item* item) {
          return;
       case MENU_SID_ENGINE:
          resources_set_int("SidEngine", item->choice_ints[item->value]);
+         resources_set_int("SidResidSampling", 0);
          return;
       case MENU_SID_MODEL:
          resources_set_int("SidModel", item->choice_ints[item->value]);
+         resources_set_int("SidResidSampling", 0);
          return;
       case MENU_SID_FILTER:
          resources_set_int("SidFilters", item->value);
+         resources_set_int("SidResidSampling", 0);
          return;
    }
 
-   // This is selection of a file
-   if (item->id == MENU_LOAD_SNAP_FILE) {
-      ui_info("Loading...");
-      if(machine_read_snapshot(item->name,0) < 0) {
-          ui_pop_menu();
-          ui_error("Load snapshot failed");
-      } else {
-          ui_pop_all_and_toggle();
-      }
-   } else if (item->id == MENU_SAVE_SNAP_FILE) {
+   // Only items that were for file selection/nav should have these set...
+   if (item->sub_id == MENU_SUB_PICK_FILE) {
+      select_file(item);
+   } else if (item->sub_id == MENU_SUB_UP_DIR) {
+      up_dir(item);
+   } else if (item->sub_id == MENU_SUB_ENTER_DIR) {
+      enter_dir(item);
+   }
+
+   // Handle saving snapshots.
+   if (item->id == MENU_SAVE_SNAP_FILE) {
       char *fname = item->name;
       if (item->type == TEXTFIELD) {
          // Scrub the filename before passing it along
@@ -544,69 +789,12 @@ static void menu_value_changed(struct menu_item* item) {
          }
       }
       ui_info("Saving...");
-      if(machine_write_snapshot(fname, 1, 1, 0) < 0) {
+      if(machine_write_snapshot(fullpath(DIR_SNAPS, fname), 1, 1, 0) < 0) {
           ui_pop_menu();
           ui_error("Save snapshot failed");
       } else {
           ui_pop_all_and_toggle();
       }
-   } else if (item->id == MENU_DISK_FILE) {
-         // Perform the attach
-         ui_info("Attaching...");
-         if (file_system_attach_disk(unit, item->name) < 0) {
-            ui_pop_menu();
-            ui_error("Failed to attach disk image");
-         } else {
-            ui_pop_all_and_toggle();
-         }
-   } else if (item->id == MENU_TAPE_FILE) {
-         ui_info("Attaching...");
-         if (tape_image_attach(1, item->name) < 0) {
-            ui_pop_menu();
-            ui_error("Failed to attach tape image");
-         } else {
-            ui_pop_all_and_toggle();
-         }
-   } else if (item->id == MENU_CART_FILE) {
-         ui_info("Attaching...");
-         if (cartridge_attach_image(CARTRIDGE_CRT, item->name) < 0) {
-            ui_pop_menu();
-            ui_error("Failed to attach cart image");
-         } else {
-            ui_pop_all_and_toggle();
-         }
-   } else if (item->id == MENU_CART_8K_FILE) {
-         ui_info("Attaching...");
-         if (cartridge_attach_image(CARTRIDGE_GENERIC_8KB, item->name) < 0) {
-            ui_pop_menu();
-            ui_error("Failed to attach cart image");
-         } else {
-            ui_pop_all_and_toggle();
-         }
-   } else if (item->id == MENU_CART_16K_FILE) {
-         ui_info("Attaching...");
-         if (cartridge_attach_image(CARTRIDGE_GENERIC_16KB, item->name) < 0) {
-            ui_pop_menu();
-            ui_error("Failed to attach cart image");
-         } else {
-            ui_pop_all_and_toggle();
-         }
-   } else if (item->id == MENU_CART_ULTIMAX_FILE) {
-         ui_info("Attaching...");
-         if (cartridge_attach_image(CARTRIDGE_ULTIMAX, item->name) < 0) {
-            ui_pop_menu();
-            ui_error("Failed to attach cart image");
-         } else {
-            ui_pop_all_and_toggle();
-         }
-   } else if (item->id == MENU_AUTOSTART_FILE) {
-         ui_info("Starting...");
-         if (autostart_autodetect(item->name, "*", 0, AUTOSTART_MODE_RUN) < 0) {
-            ui_pop_menu();
-            ui_error("Failed to autostart file");
-         } else {
-            ui_pop_all_and_toggle();
-         }
    }
 }
 
@@ -648,6 +836,11 @@ void build_menu(struct menu_item* root) {
       memset(&joydevs[dev], 0, sizeof(struct joydev_config));
       joydevs[dev].port = dev + 1;
       joydevs[dev].device = JOYDEV_NONE;
+   }
+
+   // TODO: Make these start dirs configurable.
+   for (i = 0; i < NUM_DIR_TYPES; i++) {
+      strcpy(current_dir_names[i], default_dir_names[i]);
    }
 
    ui_menu_add_button(MENU_ABOUT, root, "About...");

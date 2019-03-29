@@ -40,6 +40,8 @@
 
 volatile int ui_activated = 0;
 
+int ui_toggle_pending = 0;
+
 extern struct joydev_config joydevs[2];
 
 // Stubs for vice callbacks. Unimplemented for now.
@@ -275,7 +277,7 @@ static void ui_key_pressed(long key) {
      ui_type_char(ch);
   }
   else if (key == KEYCODE_0) {
-     ui_type_char(0);
+     ui_type_char('0');
   }
   else if (key == KEYCODE_Dash) {
      if (keyboard_shift) ui_type_char('_');
@@ -512,7 +514,41 @@ void ui_toggle(void) {
   }
 }
 
+void ui_add_all(struct menu_item *src, struct menu_item *dest) {
+   assert (src != NULL);
+   assert (src->type == FOLDER);
+   assert (dest != NULL);
+   assert (dest->type == FOLDER);
+   struct menu_item* dest_prev = NULL;
+   struct menu_item* dest_ptr = dest->first_child;
+   struct menu_item* src_ptr = src->first_child;
+
+   // Move to end of dest list
+   while (dest_ptr != 0) {
+      dest_prev = dest_ptr;
+      dest_ptr = dest_ptr->next;
+   }
+
+   while (src_ptr != 0) {
+      // Children must inheret these properties from new parent.
+      src_ptr->menu_width = dest->menu_width;
+      src_ptr->menu_height = dest->menu_height;
+      src_ptr->menu_top = dest->menu_top;
+      src_ptr->menu_left = dest->menu_left;
+      src_ptr = src_ptr->next;
+   }
+
+   // Put src's children onto dest and cut link from src
+   if (dest_prev == NULL) {
+      dest->first_child = src->first_child;
+   } else {
+      dest_prev->next = src->first_child;
+   }
+   src->first_child = NULL;
+}
+
 static void append(struct menu_item *folder, struct menu_item *new_item) {
+   assert (folder != NULL);
    assert (folder->type == FOLDER);
    struct menu_item* prev = NULL;
    struct menu_item* ptr = folder->first_child;
@@ -560,7 +596,8 @@ struct menu_item* ui_menu_add_checkbox(int id, struct menu_item *folder, char* n
    return new_item;
 }
 
-struct menu_item* ui_menu_add_multiple_choice(int id, struct menu_item *folder, char *name) {
+struct menu_item* ui_menu_add_multiple_choice(int id,
+      struct menu_item *folder, char *name) {
    struct menu_item* new_item = ui_new_item(folder, name,id);
    new_item->type = MULTIPLE_CHOICE;
    new_item->num_choices = 0;
@@ -568,8 +605,9 @@ struct menu_item* ui_menu_add_multiple_choice(int id, struct menu_item *folder, 
    return new_item;
 }
 
-struct menu_item* ui_menu_add_button(int id, struct menu_item *folder, char *name) {
-   ui_menu_add_button_with_value(id,folder,name,0," "," ");
+struct menu_item* ui_menu_add_button(int id,
+       struct menu_item *folder, char *name) {
+   return ui_menu_add_button_with_value(id,folder,name,0," "," ");
 }
 
 struct menu_item* ui_menu_add_button_with_value(int id, struct menu_item *folder, char *name, int value, char* str_value, char* displayed_value) {

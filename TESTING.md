@@ -61,8 +61,16 @@
  * Test: values are restored properly
 # Save Snapshot:
  * With tape attached
- * Load it (creates tmp file)
+ * Load it (creates tmp file in /tmp)
  * With disk attached
  * Load it
 # Menu nav repeat
  * Hold up/down/left/right and check acceleration
+# Missing expected dir
+ * Should fallback to root
+# Navigate 3-4 levels deep
+# Navigate back up
+# Navigate to root from default dir
+# All files in one partition
+# Boot files in partition 1, Emulator files in partition 2
+# Commodore+F7 + simpsons.crt reset bug

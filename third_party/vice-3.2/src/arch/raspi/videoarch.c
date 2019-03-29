@@ -386,6 +386,7 @@ void vsyncarch_postsync(void){
   video_frame_count++;
   if (raspi_boot_warp && video_frame_count > 120) {
      raspi_boot_warp = 0;
+     circle_boot_complete();
      resources_set_int("WarpMode", 0);
   }
 
@@ -417,6 +418,7 @@ void vsyncarch_postsync(void){
      }
      pending_emu_key_head++;
   }
+
   while (pending_emu_joy_head != pending_emu_joy_tail) {
      int i = pending_emu_joy_head & 0x7f;
      reset_demo = 1;
@@ -438,6 +440,18 @@ void vsyncarch_postsync(void){
      }
      pending_emu_joy_head++;
   }
+
+  // This ensures we transition from emulator to ui only after we've
+  // submitted key events and let the emulator process them. Otherwise,
+  // we can leave keys in a down state unintentionally. Needs to be set
+  // to 2 to ensure we dequeue, then let the emulator process those events.
+  if (ui_toggle_pending) {
+     ui_toggle_pending--;
+     if (ui_toggle_pending == 0) {
+        ui_toggle();
+     }
+  }
+
   circle_lock_release();
 
   if (reset_demo) {

@@ -32,7 +32,7 @@
 #define NUM_MENU_ROOTS 5
 #define MAX_CHOICES    16
 #define MAX_MENU_STR   36
-#define MAX_FN_NAME    12
+#define MAX_FN_NAME    20
 
 // Special menu id for items that do nothing or have no action callback
 #define MENU_ID_DO_NOTHING -1 
@@ -118,6 +118,8 @@ struct menu_item* ui_menu_add_folder(struct menu_item *folder, char *name);
 struct menu_item* ui_menu_add_divider(struct menu_item *folder);
 struct menu_item* ui_menu_add_text_field(int id, struct menu_item *folder, char *name, char *value);
 
+// Move ownership of all children from src onto dest
+void ui_add_all(struct menu_item* src, struct menu_item* dest);
 
 // Stubs for vice calls. Unimplemented for now.
 void ui_pause_emulation(int flag);
@@ -157,5 +159,11 @@ void ui_set_on_value_changed_callback(
 void ui_check_key();
 
 volatile int ui_activated;
+
+// Used to ensure we process all key events before transitioning to
+// the ui. Can be set to 2 from an ISR to ensure handling from key queue and
+// give emulator at least one frame to process the key events we send.
+// Should acquire lock around changing.
+extern int ui_toggle_pending;
 
 #endif
