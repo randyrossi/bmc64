@@ -33,10 +33,10 @@ index 0ea1923..d5cf197 100644
  
  stub_warning(_getpid)
 diff --git a/libgloss/circle/io.cpp b/libgloss/circle/io.cpp
-index 23720b6..56e8b77 100644
+index 23720b6..5b3fa7b 100644
 --- a/libgloss/circle/io.cpp
 +++ b/libgloss/circle/io.cpp
-@@ -1,385 +1,728 @@
+@@ -1,385 +1,733 @@
  #include "config.h"
  #include <_ansi.h>
  #include <_syslist.h>
@@ -202,6 +202,11 @@ index 23720b6..56e8b77 100644
 +         strcat (path, p+2);
 +      } else {
 +         strcpy (path, p);
++      }
++
++      // Fat fs doesn't like trailing slashes for dirs
++      if (strlen(path) > 1 && path[strlen(p)-1] == '/') {
++         path[strlen(p)-1] = '\0';
 +      }
 +   }
 +
