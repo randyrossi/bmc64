@@ -35,7 +35,7 @@ cd ../circle
 patch -p1 < ../../../../circle_patch.diff
 
 cd ../..
-patch -p1 < ../../circle_stdlib_patch.diff
+cat ../../circle_stdlib_patch.diff  | sed 's/-std=c++14//' | patch -p1
 
 if [ "$1" = "pi2" ]
 then
