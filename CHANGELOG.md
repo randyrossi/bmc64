@@ -68,3 +68,11 @@
   * fixed issue with 0 key on snapshot file names crashing
   * debounced GPIO16 for menu
   * fixed issue with resid restart causing slowness
+
+## 1.1.1
+  * Fixed issue where defaults were not taking effect when
+    settings file was missing
+  * Fixed issue where info dialogs were triggering save
+    snapshot dialog
+  * Fixed IEC mode not able to change dirs using
+    open 1,8,15,"cd:newdir":close 1

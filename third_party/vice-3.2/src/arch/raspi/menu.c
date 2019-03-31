@@ -320,6 +320,7 @@ static void ui_set_joy_devs() {
 static void load_settings() {
    FILE *fp = fopen("/settings.txt","r");
    if (fp == NULL) return;
+
    char name_value[80];
    int value;
    int usb_btn_0_i = 0;
@@ -383,11 +384,6 @@ static void load_settings() {
       }
    }
    fclose(fp);
-
-   // Always turn off resampling
-   resources_set_int("SidResidSampling", 0);
-
-   ui_set_joy_devs();
 }
 
 void menu_swap_joysticks() {
@@ -899,6 +895,7 @@ void build_menu(struct menu_item* root) {
       strcpy (child->choices[MENU_SID_ENGINE_RESID], "ReSid");
       child->choice_ints[MENU_SID_ENGINE_FAST] = SID_ENGINE_FASTSID;
       child->choice_ints[MENU_SID_ENGINE_RESID] = SID_ENGINE_RESID;
+      resources_set_int("SidEngine", sid_engine_item->choice_ints[sid_engine_item->value]);
 
       // 6581 by default
       child = sid_model_item = ui_menu_add_multiple_choice(
@@ -906,17 +903,17 @@ void build_menu(struct menu_item* root) {
           "Sid Model");
       child->num_choices = 2;
       child->value = MENU_SID_MODEL_6581;
-      resources_set_int("SidModel", SID_MODEL_6581);
       strcpy (child->choices[MENU_SID_MODEL_6581], "6581");
       strcpy (child->choices[MENU_SID_MODEL_8580], "8580");
       child->choice_ints[MENU_SID_MODEL_6581] = SID_MODEL_6581;
       child->choice_ints[MENU_SID_MODEL_8580] = SID_MODEL_8580;
+      resources_set_int("SidModel", sid_model_item->choice_ints[sid_model_item->value]);
 
       // Filter on by default
       child = sid_filter_item = ui_menu_add_toggle(
           MENU_SID_FILTER, parent,
           "Sid Filter", 1);
-      resources_set_int("SidFilters", 1);
+      resources_set_int("SidFilters", sid_filter_item->value);
 
    parent = ui_menu_add_folder(root, "Keyboard");
       child = keyboard_type_item = ui_menu_add_multiple_choice(
@@ -998,8 +995,10 @@ void build_menu(struct menu_item* root) {
 
       drive_sounds_item = ui_menu_add_toggle(MENU_DRIVE_SOUND_EMULATION,
          parent, "Drive sound emulation", 0);
+      resources_set_int("DriveSoundEmulation", drive_sounds_item->value);
       drive_sounds_vol_item = ui_menu_add_range(MENU_DRIVE_SOUND_EMULATION_VOLUME,
          parent, "Drive sound emulation volume", 0, 1000, 100, 1000);
+      resources_set_int("DriveSoundEmulationVolume", drive_sounds_vol_item->value);
 
    ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
 
@@ -1018,5 +1017,9 @@ void build_menu(struct menu_item* root) {
    ui_set_on_value_changed_callback(menu_value_changed);
 
    load_settings();
+
+   // Always turn off resampling
+   resources_set_int("SidResidSampling", 0);
+   ui_set_joy_devs();
 }
 

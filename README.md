@@ -3,7 +3,7 @@
 BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio.
 
 # Features
-  * Quick boot time (approx 5-6 seconds)
+  * Quick boot time (5 seconds w/ Fast Sid, 7 seconds ReSid)
   * Frames are timed to vsync for true 50/60 hz smooth scrolling (no horizontal tearing!)
   * Low latency between input & audio/video
   * No shutdown sequence required, just power off
@@ -34,6 +34,28 @@ The machine config defaults to PAL 50hz for both HDMI and composite.  You can ch
 # FileSystem/Drives
 
 By default, the first partition of the SDcard is mounted and is where BMC64 will search for emulator files. To change this, add "disk_partition=#" to cmdline.txt where # is the partition number you want to mount (1-4).
+
+Mounting extended partitions is possible but requires the start sector to be known. (The fatfs library used is not capable of finding extended partitions by number or id). To find the start sector of the extended partition you want to use, use fdisk:
+
+Ex: sudo fdisk /dev/sdb
+
+    Command (m for help): p
+    Disk /dev/sdb: 29.9 GiB, 32036093952 bytes, 62570496 sectors
+    Units: sectors of 1 * 512 = 512 bytes
+    Sector size (logical/physical): 512 bytes / 512 bytes
+    I/O size (minimum/optimal): 512 bytes / 512 bytes
+    Disklabel type: dos
+    Disk identifier: 0xf57fa762
+
+    Device     Boot   Start      End  Sectors  Size Id Type
+    /dev/sdb1          2048   204799   202752   99M  b W95 FAT32
+    /dev/sdb2        204800 62570495 62365696 29.8G  5 Extended
+    /dev/sdb5        206848  1230847  1024000  500M 83 Linux
+    /dev/sdb6       1232896  2256895  1024000  500M 83 Linux
+    /dev/sdb7       2258944  3282943  1024000  500M 83 Linux
+    /dev/sdb8       3284992  4308991  1024000  500M 83 Linux
+
+To use the extended partition /dev/sdb7, for example, you would set disk_partition=2258944 in cmdline.txt (Any value > 4 is assumed to be a start sector for a fatfs partition)
 
 IMPORTANT: The files the Raspbery Pi itself needs to boot BMC64 must still reside in the first partition. They are:
 
