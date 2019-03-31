@@ -12,10 +12,10 @@ index 363cc32..0341268 100755
      CXX_FOR_TARGET=${TOOLPREFIX}g++ \
      GCC_FOR_TARGET=${TOOLPREFIX}gcc \
 diff --git a/include/circle_glue.h b/include/circle_glue.h
-index e0b90d5..58f93b9 100644
+index e0b90d5..88331ce 100644
 --- a/include/circle_glue.h
 +++ b/include/circle_glue.h
-@@ -6,22 +6,27 @@
+@@ -6,22 +6,28 @@
  #include <circle/sched/scheduler.h>
  
  /**
@@ -47,9 +47,10 @@ index e0b90d5..58f93b9 100644
 - * Must only be called once.
 + * Sets the partition to mount for the given volume.
 + * volume string must match one of volumes defined in ffconf.h
++ * if p == 5, ss will be used to force a start sector when finding the volume
   */
 -void CGlueStdioInit (CConsole& rConsole);
-+void CGlueStdioSetPartitionForVolume (const char* volume, int p);
++void CGlueStdioSetPartitionForVolume (const char* volume, int p, unsigned int ss);
  
  class CGlueIO
  {

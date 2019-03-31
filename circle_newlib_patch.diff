@@ -33,10 +33,10 @@ index 0ea1923..d5cf197 100644
  
  stub_warning(_getpid)
 diff --git a/libgloss/circle/io.cpp b/libgloss/circle/io.cpp
-index 23720b6..5b3fa7b 100644
+index 23720b6..5fb23cc 100644
 --- a/libgloss/circle/io.cpp
 +++ b/libgloss/circle/io.cpp
-@@ -1,385 +1,733 @@
+@@ -1,385 +1,735 @@
  #include "config.h"
  #include <_ansi.h>
  #include <_syslist.h>
@@ -324,10 +324,12 @@ index 23720b6..5b3fa7b 100644
 +   g_bootStatSize = bootStatSize;
 +}
 +
-+void CGlueStdioSetPartitionForVolume (const char* volume, int part) {
++void CGlueStdioSetPartitionForVolume (const char* volume, int part, unsigned int ss) {
 +  for (int pd = 0; pd < FF_VOLUMES; pd++) {
 +     if (strcmp(volume, VolumeStr[pd]) == 0) {
 +        VolToPart[pd].pt = part;
++	// Start sector only forced if part == 5
++        VolToPart[pd].ss = ss;
 +        return;
 +     }
 +  }

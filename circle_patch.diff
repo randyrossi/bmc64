@@ -1,3 +1,61 @@
+diff --git a/addon/fatfs/ff.c b/addon/fatfs/ff.c
+index 290f577..8313de3 100644
+--- a/addon/fatfs/ff.c
++++ b/addon/fatfs/ff.c
+@@ -224,6 +224,9 @@
+ #if FF_MULTI_PARTITION
+ #define LD2PD(vol) VolToPart[vol].pd	/* Get physical drive number */
+ #define LD2PT(vol) VolToPart[vol].pt	/* Get partition index */
++// BEGIN BCM64 Patch
++#define LD2SS(vol) VolToPart[vol].ss	/* Get start sector */
++// END BCM64 Patch
+ #else
+ #define LD2PD(vol) (BYTE)(vol)	/* Each logical drive is bound to the same physical drive number */
+ #define LD2PT(vol) 0			/* Find first valid partition or in SFD */
+@@ -3273,12 +3276,26 @@ static FRESULT find_volume (	/* FR_OK(0): successful, !=0: an error occurred */
+ 			pt = fs->win + (MBR_Table + i * SZ_PTE);
+ 			br[i] = pt[PTE_System] ? ld_dword(pt + PTE_StLba) : 0;
+ 		}
+-		i = LD2PT(vol);					/* Partition number: 0:auto, 1-4:forced */
++		i = LD2PT(vol);					/* Partition number: 0:auto, 1-4:forced, 5:forced start sector */
++// BEGIN BMC64 Patch
++#if FF_MULTI_PARTITION
++if (i == 5) {
++			// Forced start sector
++			bsect = LD2SS(vol);
++			fmt = bsect ? check_fs(fs, bsect) : 3;
++} else {
++// END BMC64 Patch
++#endif
+ 		if (i != 0) i--;
+ 		do {							/* Find an FAT volume */
+ 			bsect = br[i];
+ 			fmt = bsect ? check_fs(fs, bsect) : 3;	/* Check the partition */
+ 		} while (LD2PT(vol) == 0 && fmt >= 2 && ++i < 4);
++// BEGIN BMC64 Patch
++#if FF_MULTI_PARTITION
++}
++#endif
++// END BMC64 Patch
+ 	}
+ 	if (fmt == 4) return FR_DISK_ERR;		/* An error occured in the disk I/O layer */
+ 	if (fmt >= 2) return FR_NO_FILESYSTEM;	/* No FAT volume is found */
+diff --git a/addon/fatfs/ff.h b/addon/fatfs/ff.h
+index a0792b2..598d584 100644
+--- a/addon/fatfs/ff.h
++++ b/addon/fatfs/ff.h
+@@ -63,7 +63,10 @@ typedef unsigned long	DWORD;	/* 32-bit unsigned integer */
+ #if FF_MULTI_PARTITION		/* Multiple partition configuration */
+ typedef struct {
+ 	BYTE pd;	/* Physical drive number */
+-	BYTE pt;	/* Partition: 0:Auto detect, 1-4:Forced partition) */
++// BEGIN BMC64 Patch
++	BYTE pt;	/* Partition: 0:Auto detect, 1-4:Forced partition, 5:Forced start sector, use ss) */
++	DWORD ss;	/* Forced start sector if pt==5 */
++// END BMC64 Patch
+ } PARTITION;
+ extern PARTITION VolToPart[];	/* Volume - Partition resolution table */
+ #endif
 diff --git a/addon/fatfs/ffconf.h b/addon/fatfs/ffconf.h
 index eae1896..bbf174a 100644
 --- a/addon/fatfs/ffconf.h

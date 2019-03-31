@@ -114,7 +114,6 @@ ViceOptions::ViceOptions (void) :
 		else if (strcmp (pOption, "disk_partition") == 0)
 		{
 			m_disk_partition = atoi(pValue);
-			if (m_disk_partition > 4) m_disk_partition = 4;
 			if (m_disk_partition < 0) m_disk_partition = 0;
 		}
 	}

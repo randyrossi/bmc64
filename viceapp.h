@@ -156,6 +156,15 @@ public:
                 }
 
 		int partition = mViceOptions.GetDiskPartition ();
+		int ss = 0;
+		if (partition > 4) {
+			// User is forcing a start sector by specifying
+			// a partition above 4. Tell glue code partition
+			// is 5 and this will set the start sector to what
+			// they provided when the disk is mounted.
+			ss = partition;
+			partition = 5;
+		}
 
 		// When mounting, fatfs gets ":" appended.  But StdioInit
 		// does not.
@@ -164,7 +173,7 @@ public:
 		strncpy (fatFsVol, volumeName, VOLUME_NAME_LEN-2);
 		strcat (fatFsVol, ":");
 
-                CGlueStdioSetPartitionForVolume (volumeName, partition);
+                CGlueStdioSetPartitionForVolume (volumeName, partition, ss);
 
                 if (f_mount (&mFileSystem, fatFsVol, 1) != FR_OK) {
                         mLogger.Write (GetKernelName (), LogError,
