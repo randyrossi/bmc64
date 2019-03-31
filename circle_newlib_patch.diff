@@ -33,10 +33,10 @@ index 0ea1923..d5cf197 100644
  
  stub_warning(_getpid)
 diff --git a/libgloss/circle/io.cpp b/libgloss/circle/io.cpp
-index 23720b6..5fb23cc 100644
+index 23720b6..45ffcab 100644
 --- a/libgloss/circle/io.cpp
 +++ b/libgloss/circle/io.cpp
-@@ -1,385 +1,735 @@
+@@ -1,385 +1,750 @@
  #include "config.h"
  #include <_ansi.h>
  #include <_syslist.h>
@@ -225,12 +225,14 @@ index 23720b6..5fb23cc 100644
 +  int in_use;
 +  char fname[256];
 +
-+  char readBuf[READ_BUF_SIZE];
-+  char *contents;
-+  int allocated;
-+  unsigned size;
-+  unsigned position;
-+  int mode;
++  char readBuf[READ_BUF_SIZE]; // tmp read buffer
++  char *contents; // bytes for file in memory
++  int allocated; // total bytes allocated for in memory file
++  unsigned size; // total size of file in memory file
++  unsigned position; // current in memory write position
++  int mode; // remembers mode this file was opened under
++  int written_to; // at least one write was performed on this file
++  int fopen_called; // f_open was called and thus f_close needs to be called
 +};
  
 -    constexpr unsigned int MAX_OPEN_FILES = 20;
@@ -486,11 +488,13 @@ index 23720b6..5fb23cc 100644
 +      return -1;
 +    }
 +
++    newFile.fopen_called = 1;
 +    newFile.contents = nullptr;
 +    newFile.position = 0;
 +    newFile.size = 0;
 +    newFile.allocated = 0;
 +    newFile.mode = masked_flags;
++    newFile.written_to = 0;
 +    strcpy(newFile.fname, circlePath.path);
 +
 +    // When file is opened O_RDWR, slurp it into memory.
@@ -576,15 +580,18 @@ index 23720b6..5fb23cc 100644
 +  }
 +
 +  if (file.contents) {
-+     if (file.mode == O_RDWR) {
++     // Only open if something was actually written to memory
++     if (file.mode == O_RDWR && file.written_to) {
 +        // Assert FIL is not used
++        file.fopen_called = 1;
 +        if (f_open(&file.file, file.fname,
 +                      FA_WRITE | FA_CREATE_ALWAYS) != FR_OK) {
 +           // We won't be able to flush in memory changes back to disk.
 +        }
 +     }
 +
-+     if (file.mode == O_RDWR || file.mode == O_WRONLY) {
++     // Always flush to disk for WRONLY but only if written to for RDRW
++     if ((file.mode == O_RDWR && file.written_to) || file.mode == O_WRONLY) {
 +        // Dump contents of memory buffer to actual file.
 +        unsigned int num_written;
 +        if (f_write(&file.file, file.contents,
@@ -594,10 +601,14 @@ index 23720b6..5fb23cc 100644
 +     }
 +  }
 +
++  int need_close = file.fopen_called;
++
 +  file.allocated = 0;
 +  file.size = 0;
 +  file.mode = 0;
 +  file.in_use = 0;
++  file.written_to = 0;
++  file.fopen_called = 0;
 +  file.fname[0] = '\0';
 +
 +  if (file.contents) {
@@ -605,7 +616,8 @@ index 23720b6..5fb23cc 100644
 +    file.contents = nullptr;
 +  } 
 +  
-+  if (f_close(&file.file) != FR_OK) {
++  // If we opened for RDWR but never wrote, nothing do to.
++  if (need_close && f_close(&file.file) != FR_OK) {
 +    errno = EIO;
 +    return -1;
 +  }
@@ -731,6 +743,9 @@ index 23720b6..5fb23cc 100644
 +    errno = EBADF;
 +    return -1;
 +  }
++
++  // Mark this dirty so it will be flushed from memory to disk on close
++  file.written_to = 1;
 +
 +  // Nothing allocated yet? Allocate now.
 +  if (file.contents == nullptr) {
