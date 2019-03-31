@@ -69,7 +69,7 @@
   * debounced GPIO16 for menu
   * fixed issue with resid restart causing slowness
 
-## 1.1.1
+## 1.2
   * Fixed issue where defaults were not taking effect when
     settings file was missing
   * Fixed issue where info dialogs were triggering save
