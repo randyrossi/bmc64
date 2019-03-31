@@ -32,7 +32,10 @@
 #define NUM_MENU_ROOTS 5
 #define MAX_CHOICES    16
 #define MAX_MENU_STR   36
-#define MAX_FN_NAME    20
+#define MAX_FN_NAME    20   // only limit for new file names
+
+#define MAX_STR_VAL_LEN 256 // should match max fn from ffconf.h
+#define MAX_DSP_VAL_LEN 32  // should be below display width
 
 // Special menu id for items that do nothing or have no action callback
 #define MENU_ID_DO_NOTHING -1 
@@ -90,8 +93,8 @@ struct menu_item {
 
    // For buttons - optional values
    // Also for TEXTFIELD, holds text
-   char str_value[32];
-   char displayed_value[32];
+   char str_value[MAX_STR_VAL_LEN];
+   char displayed_value[MAX_DSP_VAL_LEN];
 
    // Optional menu item specific value changed function
    void (*on_value_changed)(struct menu_item*);

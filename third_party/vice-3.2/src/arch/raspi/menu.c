@@ -198,8 +198,13 @@ static void list_files(struct menu_item* parent, int dir_type,
           include = 1;
         }
         if (include) {
-          ui_menu_add_button(
-             menu_id, &files_root, ep->d_name)->sub_id = MENU_SUB_PICK_FILE;
+          // Button name will be filename but it will be truncated
+          // due to menu width.  Actual filename will be stored in
+          // str_value which is never displayed except for text fields.
+          struct menu_item* new_button = ui_menu_add_button(
+             menu_id, &files_root, ep->d_name);
+          new_button->sub_id = MENU_SUB_PICK_FILE;
+          strncpy(new_button->str_value, ep->d_name, MAX_STR_VAL_LEN-1);
         }
       }
     }
@@ -403,7 +408,7 @@ static char* fullpath(int dir_type, char* name) {
 static void select_file(struct menu_item* item) {
    if (item->id == MENU_LOAD_SNAP_FILE) {
       ui_info("Loading...");
-      if(machine_read_snapshot(fullpath(DIR_SNAPS, item->name),0) < 0) {
+      if(machine_read_snapshot(fullpath(DIR_SNAPS, item->str_value),0) < 0) {
           ui_pop_menu();
           ui_error("Load snapshot failed");
       } else {
@@ -413,7 +418,7 @@ static void select_file(struct menu_item* item) {
          // Perform the attach
          ui_info("Attaching...");
          if (file_system_attach_disk(unit,
-                fullpath(DIR_DISKS, item->name)) < 0) {
+                fullpath(DIR_DISKS, item->str_value)) < 0) {
             ui_pop_menu();
             ui_error("Failed to attach disk image");
          } else {
@@ -421,7 +426,7 @@ static void select_file(struct menu_item* item) {
          }
    } else if (item->id == MENU_TAPE_FILE) {
          ui_info("Attaching...");
-         if (tape_image_attach(1, fullpath(DIR_TAPES, item->name)) < 0) {
+         if (tape_image_attach(1, fullpath(DIR_TAPES, item->str_value)) < 0) {
             ui_pop_menu();
             ui_error("Failed to attach tape image");
          } else {
@@ -430,7 +435,7 @@ static void select_file(struct menu_item* item) {
    } else if (item->id == MENU_CART_FILE) {
          ui_info("Attaching...");
          if (cartridge_attach_image(
-                 CARTRIDGE_CRT, fullpath(DIR_CARTS, item->name)) < 0) {
+                 CARTRIDGE_CRT, fullpath(DIR_CARTS, item->str_value)) < 0) {
             ui_pop_menu();
             ui_error("Failed to attach cart image");
          } else {
@@ -439,7 +444,7 @@ static void select_file(struct menu_item* item) {
    } else if (item->id == MENU_CART_8K_FILE) {
          ui_info("Attaching...");
          if (cartridge_attach_image(CARTRIDGE_GENERIC_8KB,
-                fullpath(DIR_CARTS, item->name)) < 0) {
+                fullpath(DIR_CARTS, item->str_value)) < 0) {
             ui_pop_menu();
             ui_error("Failed to attach cart image");
          } else {
@@ -448,7 +453,7 @@ static void select_file(struct menu_item* item) {
    } else if (item->id == MENU_CART_16K_FILE) {
          ui_info("Attaching...");
          if (cartridge_attach_image(CARTRIDGE_GENERIC_16KB,
-                fullpath(DIR_CARTS, item->name)) < 0) {
+                fullpath(DIR_CARTS, item->str_value)) < 0) {
             ui_pop_menu();
             ui_error("Failed to attach cart image");
          } else {
@@ -457,7 +462,7 @@ static void select_file(struct menu_item* item) {
    } else if (item->id == MENU_CART_ULTIMAX_FILE) {
          ui_info("Attaching...");
          if (cartridge_attach_image(CARTRIDGE_ULTIMAX,
-                fullpath(DIR_CARTS, item->name)) < 0) {
+                fullpath(DIR_CARTS, item->str_value)) < 0) {
             ui_pop_menu();
             ui_error("Failed to attach cart image");
          } else {
@@ -465,7 +470,7 @@ static void select_file(struct menu_item* item) {
          }
    } else if (item->id == MENU_AUTOSTART_FILE) {
          ui_info("Starting...");
-         if (autostart_autodetect(fullpath(DIR_ROOT, item->name),
+         if (autostart_autodetect(fullpath(DIR_ROOT, item->str_value),
                 "*", 0, AUTOSTART_MODE_RUN) < 0) {
             ui_pop_menu();
             ui_error("Failed to autostart file");
@@ -755,7 +760,7 @@ static void menu_value_changed(struct menu_item* item) {
 
    // Handle saving snapshots.
    if (item->id == MENU_SAVE_SNAP_FILE) {
-      char *fname = item->name;
+      char *fname = item->str_value;
       if (item->type == TEXTFIELD) {
          // Scrub the filename before passing it along
          fname = item->str_value;

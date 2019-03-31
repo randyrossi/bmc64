@@ -78,3 +78,4 @@
     open 1,8,15,"cd:newdir":close 1
   * Added ability to mount extended partitions by start sector
   * Only flush RDWR in-memory files back to disk if written to
+  * Fix issue with filenames > 32 chars not accessible

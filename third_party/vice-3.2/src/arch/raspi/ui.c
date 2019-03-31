@@ -614,8 +614,8 @@ struct menu_item* ui_menu_add_button_with_value(int id, struct menu_item *folder
    struct menu_item* new_item = ui_new_item(folder, name,id);
    new_item->type = BUTTON;
    new_item->value = value;
-   strncpy(new_item->str_value, str_value, 32);
-   strncpy(new_item->displayed_value, displayed_value, 32);
+   strncpy(new_item->str_value, str_value, MAX_STR_VAL_LEN);
+   strncpy(new_item->displayed_value, displayed_value, MAX_DSP_VAL_LEN);
    append(folder, new_item);
    return new_item;
 }
@@ -645,11 +645,11 @@ struct menu_item* ui_menu_add_divider(struct menu_item *folder) {
    return new_item;
 }
 
-struct menu_item* ui_menu_add_text_field(int id, struct menu_item *folder, char *name, char *value) {
+struct menu_item* ui_menu_add_text_field(int id, struct menu_item *folder, char *name, char *value_str) {
    struct menu_item* new_item = ui_new_item(folder, name, id);
    new_item->type = TEXTFIELD;
-   new_item->value = strlen(new_item->str_value);
-   strcpy(new_item->str_value, value);
+   new_item->value = strlen(value_str);
+   strcpy(new_item->str_value, value_str);
    append(folder, new_item);
    return new_item;
 }
