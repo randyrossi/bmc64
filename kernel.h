@@ -21,8 +21,6 @@
 
 #include "vicescreen.h"
 #include "vicesound.h"
-#include "viceemulatorcore.h"
-#include <circle/memory.h>
 #include <circle/actled.h>
 #include <circle/devicenameservice.h>
 #include <circle/serial.h>
@@ -93,14 +91,12 @@ public:
 private:
         static bool uiShift;
 
-        CMemorySystem mMemory; 
         CScheduler mScheduler;
         CVCHIQDevice  mVCHIQ;
 	ViceSound *mViceSound;
 	CUSBKeyboardDevice *pKeyboard;
         CCPUThrottle mCPUThrottle;
         CGPIOManager mGPIOManager;
-        ViceEmulatorCore mEmulatorCore;
 
         CGPIOPin *joystickPins1[5];
         CGPIOPin *joystickPins2[5];

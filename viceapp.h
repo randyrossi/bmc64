@@ -19,6 +19,7 @@
 
 #include <circle/actled.h>
 #include <circle/devicenameservice.h>
+#include <circle/memory.h>
 #include <circle/nulldevice.h>
 #include <circle/exceptionhandler.h>
 #include <circle/interrupt.h>
@@ -40,6 +41,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "viceemulatorcore.h"
+
 class ViceApp
 {
 public:
@@ -51,7 +54,7 @@ public:
         };
 
         ViceApp (const char *kernel) :
-                FromKernel (kernel)
+                FromKernel (kernel), mEmulatorCore(&mMemory)
         {
         }
 
@@ -65,8 +68,13 @@ public:
                 {
                         return false;
                 }
+mSerial.Write("here\n",5);
 
-                return mInterrupt.Initialize ();
+                if (!mInterrupt.Initialize ()) {
+			return false;
+		}
+
+		return true;
         }
 
         virtual void Cleanup (void)
@@ -80,18 +88,20 @@ public:
                 return FromKernel;
         }
 
+private:
+        char const *FromKernel;
+
 protected:
         CActLED            mActLED;
         ViceOptions        mViceOptions;
         CKernelOptions     mOptions;
         CSerialDevice      mSerial;
+        CMemorySystem      mMemory;
+        ViceEmulatorCore   mEmulatorCore;
         CDeviceNameService mDeviceNameService;
         CNullDevice        mNullDevice;
         CExceptionHandler  mExceptionHandler;
         CInterruptSystem   mInterrupt;
-
-private:
-        char const *FromKernel;
 };
 
 class ViceScreenApp : public ViceApp
@@ -122,6 +132,10 @@ public:
                 {
                         return false;
                 }
+
+		if (!mEmulatorCore.Initialize()) {
+			return false;
+		}
 
                 return mTimer.Initialize ();
         }

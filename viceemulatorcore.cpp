@@ -23,6 +23,8 @@ extern "C" {
 #include "third_party/vice-3.2/src/main.h"
 }
 
+#include "third_party/vice-3.2/src/resid/filter.h"
+
 ViceEmulatorCore::ViceEmulatorCore (CMemorySystem *pMemorySystem) : 
    CMultiCoreSupport (pMemorySystem), launch_(false) {
 }
@@ -30,11 +32,8 @@ ViceEmulatorCore::ViceEmulatorCore (CMemorySystem *pMemorySystem) :
 ViceEmulatorCore::~ViceEmulatorCore (void) {
 }
 
-void ViceEmulatorCore::Run (unsigned nCore)
-{
-  assert (nCore > 0);
-  if (nCore == 1) {
-    printf ("Core 1 waiting for launch\n");
+void ViceEmulatorCore::RunMainVice() {
+    printf ("Core waiting for launch\n");
     bool waiting = true;
     while (waiting) {
       m_Lock.Acquire();
@@ -43,7 +42,7 @@ void ViceEmulatorCore::Run (unsigned nCore)
       m_Lock.Release();
     }
 
-    printf ("Starting emulator on core 1\n");
+    printf ("Starting emulator\n");
     int argc = 11;
     char *argv[] = {
       (char*)"vice",
@@ -60,18 +59,45 @@ void ViceEmulatorCore::Run (unsigned nCore)
       (char*)"+VICIIvcache",
     };
     main_program(argc, argv);
-  } else {
-    printf ("Core %d idle\n", nCore);
-    for (;;) { circle_sleep(1000000); }
-  }
 }
 
-void ViceEmulatorCore::Launch() {
+// Initializing the filters for each SID model takes quite a bit.
+// This method instantiates a modified Filter object in ReSid.  The
+// modified version lets us initialize both SIDs in parallel on seperate
+// cores.  This saves a lot of boot time since when VICE eventually gets
+// around to initializing the filters, they are already done and opening
+// ReSid is very quick at that point.  See resid/filter.cc for
+// modifications done for BMC64.
+void ViceEmulatorCore::ComputeResidFilter(int model) {
+   reSID::Filter f(model);
+}
+
+void ViceEmulatorCore::Run (unsigned nCore)
+{
+  assert (nCore > 0);
+  switch (nCore) {
+    case 1:
+       RunMainVice();
+       break;
+    case 2:
+       // Core 2 will initialize 6581 filter data. Then sleep.
+       ComputeResidFilter(0);
+       break;
+    case 3:
+       // Core 3 will initialize 8580 filter data. Then sleep.
+       ComputeResidFilter(1);
+       break;
+  }
+
+  printf ("Core %d idle\n", nCore);
+  for (;;) { circle_sleep(1000000); }
+}
+
+void ViceEmulatorCore::LaunchEmulator() {
   m_Lock.Acquire();
   launch_ = true;
   m_Lock.Release();
 }
-
 
 void ViceEmulatorCore::SetTimingOption(char* timing_option) {
   strncpy(timing_option_, timing_option, 8);

@@ -32,13 +32,16 @@ public:
 
 	void Run (unsigned nCore) override;
 
-        void Launch();
+        void LaunchEmulator();
         void SetTimingOption(char* timing_option);
 
 private:
 	bool launch_;
 	char timing_option_[8];
 	CSpinLock m_Lock;
+
+	void RunMainVice();
+	void ComputeResidFilter(int model);
 };
 
 #endif

@@ -28,6 +28,8 @@
 #include "dac.h"
 #include "spline.h"
 #include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 namespace reSID
 {
@@ -242,26 +244,38 @@ static double log1p(double x)
 }
 #endif
 
-Filter::model_filter_t Filter::model_filter[2];
+Filter::model_filter_t* Filter::model_filter[2];
 
+Filter::Filter() : Filter(-1) {
+}
 
 // ----------------------------------------------------------------------------
 // Constructor.
 // ----------------------------------------------------------------------------
-Filter::Filter()
+Filter::Filter(int model)
 {
-  static bool class_init;
+  static bool class_init_0;
+  static bool class_init_1;
 
-  if (!class_init) {
+  if (!class_init_0 || !class_init_1) {
     double tmp_n_param[2];
 
     // Temporary tables for op-amp transfer function.
     unsigned int* voltages = new unsigned int[1 << 16];
     opamp_t* opamp = new opamp_t[1 << 16];
 
-    for (int m = 0; m < 2; m++) {
+    int start_model = 0;
+    int end_model = 2;
+    if (model != -1) {
+       start_model = model;
+       end_model = model+1;
+    }
+
+    for (int m = start_model; m < end_model; m++) {
+      model_filter[m] = (model_filter_t*) malloc(sizeof(model_filter_t));
+      memset(model_filter[m],0,sizeof(model_filter_t));
       model_filter_init_t& fi = model_filter_init[m];
-      model_filter_t& mf = model_filter[m];
+      model_filter_t& mf = *model_filter[m];
 
       // Convert op-amp voltage transfer to 16 bit values.
       double vmin = fi.opamp_voltage[0][0];
@@ -430,12 +444,13 @@ Filter::Filter()
 
     unsigned int dac_bits = 11;
 
+    if (model == -1 || model == 1)
     {
       // 8580 only
       for (int n8 = 0; n8 < 16; n8++) {
-        int x = model_filter[1].ak;
+        int x = model_filter[1]->ak;
         for (int vi = 0; vi < (1 << 16); vi++) {
-          resonance[n8][vi] = solve_gain(opamp, resGain[n8], vi, x, model_filter[1]);
+          resonance[n8][vi] = solve_gain(opamp, resGain[n8], vi, x, *model_filter[1]);
         }
       }
 
@@ -443,7 +458,7 @@ Filter::Filter()
       n_param = (int)(tmp_n_param[1] * 32 + 0.5);
 
       model_filter_init_t& fi = model_filter_init[1];
-      model_filter_t& f = model_filter[1];
+      model_filter_t& f = *model_filter[1];
 
       double Vgt = fi.k * ((4.75 * 1.6) - fi.Vth);
       kVgt = (int)(f.vo_N16 * (Vgt - fi.opamp_voltage[0][0]) + 0.5);
@@ -469,10 +484,10 @@ Filter::Filter()
     // Free temporary table.
     delete[] opamp;
 
-    {
+    if (model == -1 || model == 0) {
       // 6581 only
       model_filter_init_t& fi = model_filter_init[0];
-      model_filter_t& f = model_filter[0];
+      model_filter_t& f = *model_filter[0];
       double N16 = f.vo_N16;
       double vmin = fi.opamp_voltage[0][0];
 
@@ -531,7 +546,12 @@ Filter::Filter()
       }
     }
 
-    class_init = true;
+    if (model == -1 || model == 0) {
+       class_init_0 = true;
+    }
+    if (model == -1 || model == 1) {
+       class_init_1 = true;
+    }
   }
 
   enable_filter(true);
@@ -559,7 +579,7 @@ void Filter::enable_filter(bool enable)
 // ----------------------------------------------------------------------------
 void Filter::adjust_filter_bias(double dac_bias)
 {
-  Vw_bias = int(dac_bias*model_filter[0].vo_N16);
+  Vw_bias = int(dac_bias*model_filter[0]->vo_N16);
   set_w0();
 
   // Gate voltage is controlled by the switched capacitor voltage divider
@@ -570,7 +590,7 @@ void Filter::adjust_filter_bias(double dac_bias)
 
   // Vg - Vth, normalized so that translated values can be subtracted:
   // k*Vgt - x = (k*Vgt - t) - (x - t)
-  kVgt = (int)(model_filter[1].vo_N16 * (Vgt - vmin) + 0.5);
+  kVgt = (int)(model_filter[1]->vo_N16 * (Vgt - vmin) + 0.5);
 }
 
 // ----------------------------------------------------------------------------
@@ -659,14 +679,14 @@ void Filter::set_w0()
 {
   {
     // MOS 6581
-    model_filter_t& f = model_filter[0];
+    model_filter_t& f = *model_filter[0];
     int Vw = Vw_bias + f.f0_dac[fc];
     Vddt_Vw_2 = unsigned(f.kVddt - Vw)*unsigned(f.kVddt - Vw) >> 1;
   }
 
   {
     // MOS 8580 cutoff: 0 - 12.5kHz.
-    model_filter_t& f = model_filter[1];
+    model_filter_t& f = *model_filter[1];
     n_dac = (n_param * f.f0_dac[fc]) >> 10;
   }
 }

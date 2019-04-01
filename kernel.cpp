@@ -166,8 +166,7 @@ bool CKernel::uiShift = false;
 CKernel::CKernel (void) : ViceStdioApp("vice"),
                           mVCHIQ (&mMemory, &mInterrupt),
                           mViceSound(nullptr),
-                          mGPIOManager (&mInterrupt),
-                          mEmulatorCore (&mMemory)
+                          mGPIOManager (&mInterrupt)
 {
   static_kernel = this;
   mod_states = 0;
@@ -184,10 +183,6 @@ bool CKernel::Initialize(void) {
    }
 
    if (!mGPIOManager.Initialize()) {
-     return false;
-   }
-
-   if (!mEmulatorCore.Initialize()) {
      return false;
    }
 
@@ -432,7 +427,7 @@ ViceApp::TShutdownMode CKernel::Run (void)
 
   // Core 1 will be used for the main emulator loop.
   mEmulatorCore.SetTimingOption(timing_option);
-  mEmulatorCore.Launch();
+  mEmulatorCore.LaunchEmulator();
 
   // This core will do nothing but service interrupts from
   // usb or gpio.
