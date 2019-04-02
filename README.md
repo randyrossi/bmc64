@@ -230,5 +230,5 @@ Real C64                              | 0 frames             | 0
 Real C64 + Framemeister HDMI Upscaler | 3 frames             | 0
 Ultimate64                            | 1-2 frames           | ?
 C64 Mini                              | 6-7 frames           | ~360ms
-Combian                               | ? frames             | ~200ms default (~110ms best)
-BMC64                                 | 2-3 frames (GPIO Joy)| ~90ms
+Combian                               | ? frames             | ~200ms default (~110ms best) Fast SID Engine
+BMC64                                 | 2-3 frames (GPIO Joy)| ~90ms ReSid SID Engine
