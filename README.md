@@ -224,11 +224,4 @@ If that happens, reset these repos using "git reset HASH --hard" commands in the
 - [ ] Add more emulator options to UI (i.e. true drive emulation toggle)
 - [ ] Most timings below were taken from https://www.youtube.com/watch?v=b73BONBBZR8
 
-Machine/Emulator                      | Input->Video Delay   | Input->Audio Delay
---------------------------------------|----------------------|--------------------
-Real C64                              | 0 frames             | 0
-Real C64 + Framemeister HDMI Upscaler | 3 frames             | 0
-Ultimate64                            | 1-2 frames           | ?
-C64 Mini                              | 6-7 frames           | ~360ms
-Combian                               | ? frames             | ~200ms default (~110ms best) Fast SID Engine
-BMC64                                 | 2-3 frames (GPIO Joy)| ~90ms ReSid SID Engine
+# Performance comparison can be found at https://accentual.com/bmc64
