@@ -1,1 +1,16 @@
 hide_console=1 fast=true canvas_width=384 canvas_height=272 machine_timing=pal
+
+# Kernel options must appear on a single line separated by spaces.
+#
+# machine_timing
+#
+# For 50hz modes (PAL)
+#    Set to 'pal' or 'pal-hdmi' when using an HDMI display
+#    Set to 'pal-composite' when using the Pi's composite out
+#
+# For 60hz modes (NTSC)
+#    Set to 'ntsc' or 'ntsc-hdmi' when using an HDMI display
+#    Set to 'ntsc-composite' when using the Pi's composite out
+#
+# If you try to use pal or pal-hdmi with composite out, you will get
+# audio synchronization issues with ReSid.

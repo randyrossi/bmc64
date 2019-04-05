@@ -20,6 +20,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+extern "C" {
+#include "third_party/vice-3.2/src/arch/raspi/circle.h"
+}
+
 #define INVALID_VALUE	((unsigned) -1)
 
 ViceOptions *ViceOptions::s_pThis = 0;
@@ -27,7 +31,7 @@ ViceOptions *ViceOptions::s_pThis = 0;
 ViceOptions::ViceOptions (void) :
 	m_nCanvasWidth (DEFAULT_CANVAS_WIDTH),
 	m_nCanvasHeight (DEFAULT_CANVAS_HEIGHT),
-	m_nMachineTiming (MACHINE_TIMING_PAL),
+	m_nMachineTiming (MACHINE_TIMING_PAL_HDMI),
 	m_bHideConsole(true),
 	m_bDemoMode(false)
 {
@@ -77,12 +81,16 @@ ViceOptions::ViceOptions (void) :
 		}
 		else if (strcmp (pOption, "machine_timing") == 0)
 		{
-			if (strcmp(pValue, "ntsc") == 0)
-			{
-				m_nMachineTiming = MACHINE_TIMING_NTSC;
-			}
-			else {
-				m_nMachineTiming = MACHINE_TIMING_PAL;
+			if (strcmp(pValue, "ntsc") == 0 ||
+                                strcmp(pValue, "ntsc-hdmi") == 0) {
+				m_nMachineTiming = MACHINE_TIMING_NTSC_HDMI;
+			} else if (strcmp(pValue, "ntsc-composite") == 0) {
+				m_nMachineTiming = MACHINE_TIMING_NTSC_COMPOSITE;
+			} else if (strcmp(pValue, "pal") == 0 ||
+				strcmp(pValue, "pal-hdmi") == 0) {
+				m_nMachineTiming = MACHINE_TIMING_PAL_HDMI;
+			} else if (strcmp(pValue, "pal-composite") == 0) {
+				m_nMachineTiming = MACHINE_TIMING_PAL_COMPOSITE;
 			}
 		}
 		else if (strcmp (pOption, "hide_console") == 0)

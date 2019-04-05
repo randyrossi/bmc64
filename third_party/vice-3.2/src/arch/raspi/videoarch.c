@@ -281,7 +281,9 @@ void video_arch_canvas_init(struct video_canvas_s *canvas){
   int h = circle_get_display_h();
   bzero(fb, h*fb_pitch);
 
-  if (circle_get_machine_timing() == 0) {
+  int timing = circle_get_machine_timing();
+  if (timing == MACHINE_TIMING_NTSC_HDMI ||
+        timing == MACHINE_TIMING_NTSC_COMPOSITE) {
      canvas->refreshrate = C64_NTSC_RFSH_PER_SEC;
   } else {
      canvas->refreshrate = C64_PAL_RFSH_PER_SEC;
@@ -366,7 +368,7 @@ void videoarch_swap() {
   // Show the region we just drew.
   circle_set_fb_y(video_state.offscreen_buffer_y);
   // Swap buffer ptr for next frame.
-  video_state.offscreen_buffer_y = circle_get_display_h() - 
+  video_state.offscreen_buffer_y = circle_get_display_h() -
                                       video_state.offscreen_buffer_y;
 }
 
@@ -459,7 +461,7 @@ void vsyncarch_postsync(void){
   }
 
   if (raspi_demo_mode) {
-     demo_check();     
+     demo_check();
   }
 }
 

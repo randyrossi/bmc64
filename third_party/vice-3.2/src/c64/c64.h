@@ -33,9 +33,16 @@
 #define VICE_C64_H
 
 #ifdef RASPI_COMPILE
-// This is necessary to match the actual ticks we need to simulate
-// between frames. RASPI is tied to vsync which is exactly 50hz.
-#define C64_PAL_CYCLES_PER_SEC  982800
+extern int circle_cycles_per_sec();
+#endif
+
+#ifdef RASPI_COMPILE
+// Raspi needs to change between 50hz and 50.125hz depending on what
+// the user sets in kernel options (cmdline.txt). This this was changed
+// to give results from a function rather than hard coded constant.
+// 982800 // 50hz for hdmi
+// 985248 // 50.125hz for composite
+#define C64_PAL_CYCLES_PER_SEC  (circle_cycles_per_sec())
 #else
 #define C64_PAL_CYCLES_PER_SEC  985248
 #endif
@@ -46,9 +53,12 @@
 #define C64_PAL_RFSH_PER_SEC    (1.0 / ((double)C64_PAL_CYCLES_PER_RFSH / (double)C64_PAL_CYCLES_PER_SEC))
 
 #ifdef RASPI_COMPILE
-// This is necessary to match the actual ticks we need to simulate
-// between frames. RASPI is tied to vsync which is exactly 60hz.
-#define C64_NTSC_CYCLES_PER_SEC  1025700
+// Raspi needs to change between 50hz and 50.125hz depending on what
+// the user sets in kernel options (cmdline.txt). This this was changed
+// to give results from a function rather than hard coded constant.
+// 1025700 60hz NTSC hdmi
+// 1022730 59.826hz NTSC composite
+#define C64_NTSC_CYCLES_PER_SEC  (circle_cycles_per_sec())
 #else
 #define C64_NTSC_CYCLES_PER_SEC  1022730
 #endif

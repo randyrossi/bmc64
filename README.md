@@ -29,7 +29,7 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
   * http://accentual.com/bmc64
 
 # Timing
-The machine config defaults to PAL 50hz for both HDMI and composite.  You can change this (see below).
+The machine config provided defaults to PAL 50hz for HDMI.  If you want to use composite out, you MUST change the machine_timing parameter in cmdline.txt to 'pal-composite'.  Otherwise, you will have audio synchronization issues.  You can change the machine to be NTSC if you want (see below).
 
 # FileSystem/Drives
 
@@ -135,9 +135,10 @@ Q: Can I switch the machine to NTSC?
 A: Yes, you must edit BOTH config.txt and cmdline.txt.
 
    In config.txt, select an hdmi_mode that is 60hz.
-   In cmdline.txt, change machine_timing to ntsc
+   In cmdline.txt, change machine_timing to ntsc or ntsc-hdmi for HDMI
+   If using composite, machine_timing MUST be ntsc-composite.  Othersie you will get audio synchronization issues.
 
-   Be aware that some demos/games will not run if the machine is NTSC.  If you mix those two settings, your machine will likely run fast/slow and not look good.
+   Be aware that some demos/games will not run if the machine is NTSC.  If you mix those two settings, your machine will likely run fast/slow, not look good or have audio issues (or all of the above).
 
 Q: Why does the video look soft/stretched/dark?
 

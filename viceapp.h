@@ -68,7 +68,6 @@ public:
                 {
                         return false;
                 }
-mSerial.Write("here\n",5);
 
                 if (!mInterrupt.Initialize ()) {
 			return false;

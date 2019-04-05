@@ -844,6 +844,24 @@ void build_menu(struct menu_item* root) {
       strcpy(current_dir_names[i], default_dir_names[i]);
    }
 
+   switch (circle_get_machine_timing()) {
+      case MACHINE_TIMING_NTSC_HDMI:
+         ui_menu_add_button(MENU_TEXT, root, "Timing: NTSC 60Hz HDMI");
+         break;
+      case MACHINE_TIMING_NTSC_COMPOSITE:
+         ui_menu_add_button(MENU_TEXT, root, "Timing: NTSC 60Hz Composite");
+         break;
+      case MACHINE_TIMING_PAL_HDMI:
+         ui_menu_add_button(MENU_TEXT, root, "Timing: PAL 50Hz HDMI");
+         break;
+      case MACHINE_TIMING_PAL_COMPOSITE:
+         ui_menu_add_button(MENU_TEXT, root, "Timing: PAL 50Hz Composite");
+         break;
+      default:
+         ui_menu_add_button(MENU_TEXT, root, "Timing: ERROR");
+         break;
+   }
+
    ui_menu_add_button(MENU_ABOUT, root, "About...");
    ui_menu_add_button(MENU_LICENSE, root, "License...");
 

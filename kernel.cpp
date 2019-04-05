@@ -159,6 +159,10 @@ extern "C" {
   void circle_boot_complete() {
      static_kernel->circle_boot_complete();
   }
+
+  int circle_cycles_per_sec() {
+     return static_kernel->circle_cycles_per_second();
+  }
 };
 
 bool CKernel::uiShift = false;
@@ -390,7 +394,8 @@ ViceApp::TShutdownMode CKernel::Run (void)
   // See arch/raspi/videoarch.c
 
   char timing_option[8];
-  if (circle_get_machine_timing() == MACHINE_TIMING_NTSC) {
+  if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_HDMI ||
+      circle_get_machine_timing() == MACHINE_TIMING_NTSC_COMPOSITE) {
      strcpy(timing_option, "-ntsc");
   } else {
      strcpy(timing_option, "-pal");
@@ -442,7 +447,7 @@ ssize_t CKernel::vice_write (int fd, const void * buf, size_t count) {
 }
 
 int CKernel::circle_get_machine_timing () {
-   // Returns 0 for ntsc, 1 for pal
+   // See circle.h for valid values
    return mViceOptions.GetMachineTiming();
 }
 
@@ -857,4 +862,30 @@ void CKernel::circle_lock_release() {
 
 void CKernel::circle_boot_complete() {
   DisableBootStat();
+}
+
+// 1025700 60hz NTSC hdmi
+// 1022730 59.826hz NTSC composite
+// 982800 50hz for hdmi
+// 985248 50.125hz for composite
+int CKernel::circle_cycles_per_second() {
+   if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_HDMI) {
+      // 60hz
+      return 1025700;
+   } else if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_COMPOSITE) {
+      // Actual C64's NTSC Composite frequency is 59.826 but the Pi's vertical
+      // sync frequency on composite is 60.055. See c64.h for how this is
+      // calculated. This keeps audio buffer to a minimum using ReSid.
+      return 1026640;
+   } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_HDMI) {
+      // 50hz
+      return 982800;
+   } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_COMPOSITE) {
+      // Actual C64's PAL Composite frequency is 50.125 but the Pi's vertical
+      // sync frequency on composite is 50.0816. See c64.h for how this is
+      // calculated.  This keep audio buffer to a minimum using ReSid.
+      return 984404;
+   } else {
+      return 982800;
+   }
 }
