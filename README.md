@@ -3,7 +3,7 @@
 BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio.
 
 # Features
-  * Quick boot time (5 seconds w/ Fast Sid, 7 seconds ReSid)
+  * Quick boot time (5 seconds!)
   * Frames are timed to vsync for true 50/60 hz smooth scrolling (no horizontal tearing!)
   * Low latency between input & audio/video
   * No shutdown sequence required, just power off
@@ -26,7 +26,11 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
 
 # Precompiled Images
 
-  * http://accentual.com/bmc64
+  * https://accentual.com/bmc64
+
+# Github Link
+
+  * https://github.com/randyrossi/bmc64
 
 # Timing
 The machine config provided defaults to PAL 50hz for HDMI.  If you want to use composite out, you MUST change the machine_timing parameter in cmdline.txt to 'pal-composite'.  Otherwise, you will have audio synchronization issues.  You can change the machine to be NTSC if you want (see below).
