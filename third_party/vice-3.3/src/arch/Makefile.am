@@ -20,6 +20,13 @@ if WIN32_COMPILE
 
 SUBDIRS = mingw32-pcap shared
 
+else
+
+if RASPI_COMPILE
+
+SUBDIRS = raspi shared
+
+endif
 endif
 endif
 endif

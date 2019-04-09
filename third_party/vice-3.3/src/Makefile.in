@@ -3035,6 +3035,7 @@ x64-all: \
 	librtc \
 	libuserport \
 	libtapeport \
+	libhvsc \
 	x64$(EXEEXT)
 
 .PHONY: x64sc-all

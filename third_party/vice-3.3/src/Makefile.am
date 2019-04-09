@@ -1519,6 +1519,7 @@ x64-all: \
 	librtc \
 	libuserport \
 	libtapeport \
+	libhvsc \
 	x64$(EXEEXT)
 
 # x64sc

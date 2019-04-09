@@ -59,6 +59,10 @@ int archdep_rmdir(const char *pathname)
 #ifdef ARCHDEP_OS_WINDOWS
     return _rmdir(pathname);
 #else
+#ifdef RASPI_COMPILE
+    return -1;
+#else
     return rmdir(pathname);
+#endif
 #endif
 }

@@ -31,6 +31,7 @@ VICE_ARG_WITH_LIST(jpeg,          [  --without-jpeg          do not use the JPEG
 VICE_ARG_WITH_LIST(png,           [  --without-png           do not use the PNG screenshot system])
 VICE_ARG_WITH_LIST(gif,           [  --without-gif           do not use the GIF screenshot sustem])
 VICE_ARG_WITH_LIST(zlib,          [  --without-zlib          do not use the zlib support])
+VICE_ARG_ENABLE_LIST(raspiui,     [  --enable-raspiui        enables Bare Metal Raspberry Pi UI support])
 VICE_ARG_ENABLE_LIST(sdlui,       [  --enable-sdlui          enables SDL UI support])
 VICE_ARG_ENABLE_LIST(sdlui2,      [  --enable-sdlui2         enables SDL2 UI support])
 VICE_ARG_ENABLE_LIST(native-gtk3ui,[  --enable-native-gtk3ui  enables native GTK3 UI support])
@@ -175,6 +176,7 @@ is_win32_gtk3=no
 is_os2=no
 is_beos=no
 is_amiga=no
+is_raspi=no
 
 HAVE_CAIRO_SUPPORT="no "
 HAVE_PANGO_SUPPORT="no "
@@ -960,6 +962,10 @@ if test x"$check_sdl1" = "xyes"; then
   fi
 fi
 
+if test x"$enable_raspiui" = "xyes"; then
+   found_gui=raspi
+fi
+
 dnl check if any gui support was found
 if test x"$found_gui" = "x"; then
   AC_MSG_ERROR([No GUI support found])
@@ -1646,6 +1652,16 @@ darwin*)
 
   ;;
 
+eabi*)
+  echo "Configuring for bare metal raspberry pi"
+  is_raspi=yes
+  ;;
+
+linux-gnueabihf*)
+  echo "Configuring for bare metal raspberry pi"
+  is_raspi=yes
+  ;;
+
 dnl All other UN*X systems
 *)
 
@@ -2172,6 +2188,40 @@ if test x"$is_unix" = "xyes" -o x"$is_beos" = "xyes"; then
                  ],,)
     fi
   fi
+elif test x"$is_raspi" = "xyes"; then
+  AM_CONDITIONAL(RASPI_COMPILE, true)
+  AM_CONDITIONAL(HAVE_RAWDRIVE, false)
+  AM_CONDITIONAL(UNIX_COMPILE, false)
+  AM_CONDITIONAL(UNIX_SKYOS_COMPILE, false)
+  AM_CONDITIONAL(UNIX_QNX4_COMPILE, false)
+  AM_CONDITIONAL(UNIX_QNX6_COMPILE, false)
+  AM_CONDITIONAL(UNIX_SOLARIS_COMPILE, false)
+  AM_CONDITIONAL(UNIX_RHAPSODY_COMPILE, false)
+  AM_CONDITIONAL(UNIX_OPENSTEP_COMPILE, false)
+  AM_CONDITIONAL(UNIX_NEXTSTEP_COMPILE, false)
+  AM_CONDITIONAL(UNIX_SCO4_COMPILE, false)
+  AM_CONDITIONAL(UNIX_OPENSERVER5_COMPILE, false)
+  AM_CONDITIONAL(UNIX_OPENSERVER6_COMPILE, false)
+  AM_CONDITIONAL(UNIX_UNIXWARE_COMPILE, false)
+  AM_CONDITIONAL(UNIX_HPUX_COMPILE, false)
+  AM_CONDITIONAL(SYLLABLE_COMPILE, false)
+  AM_CONDITIONAL(WIN32_COMPILE, false)
+  AM_CONDITIONAL(MSDOS_COMPILE, false)
+  AM_CONDITIONAL(OS2_COMPILE, false)
+  AM_CONDITIONAL(BEOS_COMPILE, false)
+  AM_CONDITIONAL(AMIGA_COMPILE, false)
+  AM_CONDITIONAL(UNIX_MACOSX_COMPILE, false)
+  AM_CONDITIONAL(SUPPORT_CMDLINE_TOOLS, false)
+  AM_CONDITIONAL(HAVE_TRANSLATION, false)
+  AM_CONDITIONAL(MAKE_BINDIST, false)
+
+  ARCH_DIR="\$(top_builddir)/src/arch/raspi"
+  ARCH_SRC_DIR="\$(top_srcdir)/src/arch/raspi"
+  ARCH_LIBS="$ARCH_DIR/libarch.a"
+  ARCH_INCLUDES="-I\$(top_srcdir)/src/arch/raspi"
+  AC_DEFINE(RASPI_COMPILE,,[Are we compiling for bare metal raspberry pi?])
+  SOUND_DRIVERS="$SOUND_DRIVERS soundraspi.o"
+
 elif test x"$is_win32" = "xyes" ; then
   AC_DEFINE(HAVE_DYNLIB_SUPPORT,,[Support for dynamic library loading.])
   HAVE_DYNLIB_SUPPORT_TOO="yes"
@@ -3890,6 +3940,7 @@ elif test x"$is_win32" = "xyes"; then
     fi
   fi
 
+  AM_CONDITIONAL(RASPI_COMPILE, false)
   AM_CONDITIONAL(WIN32_COMPILE, true)
   AM_CONDITIONAL(UNIX_COMPILE, false)
   AM_CONDITIONAL(UNIX_SKYOS_COMPILE, false)
@@ -4186,6 +4237,7 @@ AC_OUTPUT([Makefile
            src/arch/mingw32-pcap/Makefile
            src/arch/mingw32-pcap/wpcap/Makefile
            src/arch/mingw32-pcap/wpcap/net/Makefile
+           src/arch/raspi/Makefile
            src/arch/sdl/Makefile
            src/arch/sdl/qnx4/Makefile
            src/arch/sdl/sortix-files/Makefile
@@ -4257,7 +4309,7 @@ dnl compile-command: "autoconf"
 dnl End:
 
 dnl construct show_arch
-if test x"$is_amiga" != "xyes" -a x"$is_beos" != "xyes" -a x"$is_os2" != "xyes" -a x"$is_unix_macosx" != "xyes" -a x"$is_win32" != "xyes" -a x"$is_win32_gtk3" != "xyes"; then
+if test x"$is_amiga" != "xyes" -a x"$is_beos" != "xyes" -a x"$is_os2" != "xyes" -a x"$is_unix_macosx" != "xyes" -a x"$is_win32" != "xyes" -a x"$is_win32_gtk3" != "xyes" -a x"$is_raspi" != "xyes"; then
     show_arch="Unix"
     real_arch="Unix"
 else
@@ -4283,6 +4335,10 @@ else
             real_arch="Unix"
         fi
     fi
+    if test x"$is_raspi" = "xyes"; then
+        show_arch="Circle"
+        real_arch="Circle"
+    fi
 fi
 
 dnl construct show_gui
@@ -4293,6 +4349,10 @@ fi
 
 if test x"$enable_sdlui2" = "xyes"; then
     show_gui="SDL2"
+fi
+
+if test x"$enable_raspiui" = "xyes"; then
+    show_gui="BMC64"
 fi
 
 if test x"$enable_native_gtk3ui" = "xyes"; then

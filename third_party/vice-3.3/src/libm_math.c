@@ -35,12 +35,20 @@
 #include "libm_math.h"
 #endif
 
+#ifdef RASPI_COMPILE
+#define HUGE           3.40282347e+38F
+#endif
+
 int errno;
 
 extern double frexp(double, int *);
 extern double modf(double, double *);
 
+#ifdef RASPI_COMPILE
+static double log2_raspi = 0.693147180559945309e0;
+#else
 static double log2 = 0.693147180559945309e0;
+#endif
 static double sqrto2 = 0.707106781186547524e0;
 static double logp0 = -.240139179559210510e2;
 static double logp1 = 0.309572928215376501e2;
@@ -191,7 +199,11 @@ double log(double arg)
 
     temp = ((logp3 * zsq + logp2) * zsq + logp1) * zsq + logp0;
     temp = temp / (((1.0 * zsq + logq2) * zsq + logq1) * zsq + logq0);
+#ifdef RASPI_COMPILE
+    temp = temp * z + exp * log2_raspi;
+#else
     temp = temp * z + exp * log2;
+#endif
     return (temp);
 }
 

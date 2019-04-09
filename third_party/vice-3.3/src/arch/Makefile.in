@@ -152,7 +152,7 @@ am__define_uniq_tagged_files = \
   done | $(am__uniquify_input)`
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = android mingw32-pcap shared sdl gtk3
+DIST_SUBDIRS = android raspi shared mingw32-pcap sdl gtk3
 am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/mkinstalldirs
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 am__relativize = \
@@ -404,6 +404,7 @@ xplus4_LDFLAGS = @xplus4_LDFLAGS@
 xscpu64_LDFLAGS = @xscpu64_LDFLAGS@
 xvic_LDFLAGS = @xvic_LDFLAGS@
 @DUMMY_COMPILE_TRUE@SUBDIRS = android
+@NATIVE_GTK3_COMPILE_FALSE@@RASPI_COMPILE_TRUE@@SDL_COMPILE_FALSE@@WIN32_COMPILE_FALSE@SUBDIRS = raspi shared
 @NATIVE_GTK3_COMPILE_FALSE@@SDL_COMPILE_FALSE@@WIN32_COMPILE_TRUE@SUBDIRS = mingw32-pcap shared
 @NATIVE_GTK3_COMPILE_FALSE@@SDL_COMPILE_TRUE@SUBDIRS = sdl shared
 @NATIVE_GTK3_COMPILE_TRUE@SUBDIRS = gtk3 shared

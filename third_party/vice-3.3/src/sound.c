@@ -98,6 +98,9 @@ static sound_register_devices_t sound_register_devices[] = {
 #ifdef USE_COREAUDIO
     { "coreaudio", sound_init_coreaudio_device, SOUND_PLAYBACK_DEVICE },
 #endif
+#ifdef RASPI_COMPILE
+    { "raspi", sound_init_raspi_device, SOUND_PLAYBACK_DEVICE },
+#endif
 #ifdef USE_OSS
 
 /* don't use oss for FreeBSD or BSDI */

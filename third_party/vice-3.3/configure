@@ -642,50 +642,8 @@ ARCH_DIR
 ARCH_LIBS
 ARCH_INCLUDES
 HAVE_READLINE
-UNIX_MACOSX_COMPILE_FALSE
-UNIX_MACOSX_COMPILE_TRUE
-SYLLABLE_COMPILE_FALSE
-SYLLABLE_COMPILE_TRUE
-UNIX_HPUX_COMPILE_FALSE
-UNIX_HPUX_COMPILE_TRUE
-UNIX_UNIXWARE_COMPILE_FALSE
-UNIX_UNIXWARE_COMPILE_TRUE
-UNIX_OPENSERVER6_COMPILE_FALSE
-UNIX_OPENSERVER6_COMPILE_TRUE
-UNIX_OPENSERVER5_COMPILE_FALSE
-UNIX_OPENSERVER5_COMPILE_TRUE
-UNIX_SCO4_COMPILE_FALSE
-UNIX_SCO4_COMPILE_TRUE
-UNIX_SOLARIS_COMPILE_FALSE
-UNIX_SOLARIS_COMPILE_TRUE
-UNIX_QNX6_COMPILE_FALSE
-UNIX_QNX6_COMPILE_TRUE
-UNIX_QNX4_COMPILE_FALSE
-UNIX_QNX4_COMPILE_TRUE
-UNIX_SKYOS_COMPILE_FALSE
-UNIX_SKYOS_COMPILE_TRUE
-UNIX_NEXTSTEP_COMPILE_FALSE
-UNIX_NEXTSTEP_COMPILE_TRUE
-UNIX_OPENSTEP_COMPILE_FALSE
-UNIX_OPENSTEP_COMPILE_TRUE
-UNIX_RHAPSODY_COMPILE_FALSE
-UNIX_RHAPSODY_COMPILE_TRUE
-AMIGA_COMPILE_FALSE
-AMIGA_COMPILE_TRUE
-BEOS_COMPILE_FALSE
-BEOS_COMPILE_TRUE
-OS2_COMPILE_FALSE
-OS2_COMPILE_TRUE
-WIN32_COMPILE_FALSE
-WIN32_COMPILE_TRUE
-UNIX_COMPILE_FALSE
-UNIX_COMPILE_TRUE
-SUPPORT_CMDLINE_TOOLS_FALSE
-SUPPORT_CMDLINE_TOOLS_TRUE
 NATIVE_GTK3_COMPILE_FALSE
 NATIVE_GTK3_COMPILE_TRUE
-MAKE_BINDIST_FALSE
-MAKE_BINDIST_TRUE
 SDL_VERSION
 SDL2_COMPILE_FALSE
 SDL2_COMPILE_TRUE
@@ -750,6 +708,54 @@ NETPLAY_LIBS
 ZLIB_LIBS
 JOY_LIBS
 DYNLIB_LIBS
+MAKE_BINDIST_FALSE
+MAKE_BINDIST_TRUE
+HAVE_TRANSLATION_FALSE
+HAVE_TRANSLATION_TRUE
+SUPPORT_CMDLINE_TOOLS_FALSE
+SUPPORT_CMDLINE_TOOLS_TRUE
+UNIX_MACOSX_COMPILE_FALSE
+UNIX_MACOSX_COMPILE_TRUE
+AMIGA_COMPILE_FALSE
+AMIGA_COMPILE_TRUE
+BEOS_COMPILE_FALSE
+BEOS_COMPILE_TRUE
+OS2_COMPILE_FALSE
+OS2_COMPILE_TRUE
+MSDOS_COMPILE_FALSE
+MSDOS_COMPILE_TRUE
+WIN32_COMPILE_FALSE
+WIN32_COMPILE_TRUE
+SYLLABLE_COMPILE_FALSE
+SYLLABLE_COMPILE_TRUE
+UNIX_HPUX_COMPILE_FALSE
+UNIX_HPUX_COMPILE_TRUE
+UNIX_UNIXWARE_COMPILE_FALSE
+UNIX_UNIXWARE_COMPILE_TRUE
+UNIX_OPENSERVER6_COMPILE_FALSE
+UNIX_OPENSERVER6_COMPILE_TRUE
+UNIX_OPENSERVER5_COMPILE_FALSE
+UNIX_OPENSERVER5_COMPILE_TRUE
+UNIX_SCO4_COMPILE_FALSE
+UNIX_SCO4_COMPILE_TRUE
+UNIX_NEXTSTEP_COMPILE_FALSE
+UNIX_NEXTSTEP_COMPILE_TRUE
+UNIX_OPENSTEP_COMPILE_FALSE
+UNIX_OPENSTEP_COMPILE_TRUE
+UNIX_RHAPSODY_COMPILE_FALSE
+UNIX_RHAPSODY_COMPILE_TRUE
+UNIX_SOLARIS_COMPILE_FALSE
+UNIX_SOLARIS_COMPILE_TRUE
+UNIX_QNX6_COMPILE_FALSE
+UNIX_QNX6_COMPILE_TRUE
+UNIX_QNX4_COMPILE_FALSE
+UNIX_QNX4_COMPILE_TRUE
+UNIX_SKYOS_COMPILE_FALSE
+UNIX_SKYOS_COMPILE_TRUE
+UNIX_COMPILE_FALSE
+UNIX_COMPILE_TRUE
+RASPI_COMPILE_FALSE
+RASPI_COMPILE_TRUE
 NATIVE_TOOLS_COMPILER
 CROSS
 NATIVE_TOOLS_FALSE
@@ -963,6 +969,7 @@ with_jpeg
 with_png
 with_gif
 with_zlib
+enable_raspiui
 enable_sdlui
 enable_sdlui2
 enable_native_gtk3ui
@@ -1663,6 +1670,7 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-raspiui        enables Bare Metal Raspberry Pi UI support
   --enable-sdlui          enables SDL UI support
   --enable-sdlui2         enables SDL2 UI support
   --enable-native-gtk3ui  enables native GTK3 UI support
@@ -3015,6 +3023,14 @@ fi
 vice_arg_with_list="$vice_arg_with_list zlib"
 
 
+# Check whether --enable-raspiui was given.
+if test "${enable_raspiui+set}" = set; then :
+  enableval=$enable_raspiui;
+fi
+
+vice_arg_enable_list="$vice_arg_enable_list raspiui"
+
+
 # Check whether --enable-sdlui was given.
 if test "${enable_sdlui+set}" = set; then :
   enableval=$enable_sdlui;
@@ -4099,6 +4115,7 @@ is_win32_gtk3=no
 is_os2=no
 is_beos=no
 is_amiga=no
+is_raspi=no
 
 HAVE_CAIRO_SUPPORT="no "
 HAVE_PANGO_SUPPORT="no "
@@ -8558,6 +8575,10 @@ $as_echo "#define HAVE_SDLMAIN /**/" >>confdefs.h
   fi
 fi
 
+if test x"$enable_raspiui" = "xyes"; then
+   found_gui=raspi
+fi
+
 if test x"$found_gui" = "x"; then
   as_fn_error $? "No GUI support found" "$LINENO" 5
 fi
@@ -11089,6 +11110,16 @@ $as_echo "#define MACOSX_BUNDLE /**/" >>confdefs.h
   LDFLAGS="$LDFLAGS -L/usr/local/lib"
   LIBS="$LIBS -framework CoreServices"
 
+  ;;
+
+eabi*)
+  echo "Configuring for bare metal raspberry pi"
+  is_raspi=yes
+  ;;
+
+linux-gnueabihf*)
+  echo "Configuring for bare metal raspberry pi"
+  is_raspi=yes
   ;;
 
 *)
@@ -14325,6 +14356,217 @@ fi
 
     fi
   fi
+elif test x"$is_raspi" = "xyes"; then
+   if true; then
+  RASPI_COMPILE_TRUE=
+  RASPI_COMPILE_FALSE='#'
+else
+  RASPI_COMPILE_TRUE='#'
+  RASPI_COMPILE_FALSE=
+fi
+
+   if false; then
+  HAVE_RAWDRIVE_TRUE=
+  HAVE_RAWDRIVE_FALSE='#'
+else
+  HAVE_RAWDRIVE_TRUE='#'
+  HAVE_RAWDRIVE_FALSE=
+fi
+
+   if false; then
+  UNIX_COMPILE_TRUE=
+  UNIX_COMPILE_FALSE='#'
+else
+  UNIX_COMPILE_TRUE='#'
+  UNIX_COMPILE_FALSE=
+fi
+
+   if false; then
+  UNIX_SKYOS_COMPILE_TRUE=
+  UNIX_SKYOS_COMPILE_FALSE='#'
+else
+  UNIX_SKYOS_COMPILE_TRUE='#'
+  UNIX_SKYOS_COMPILE_FALSE=
+fi
+
+   if false; then
+  UNIX_QNX4_COMPILE_TRUE=
+  UNIX_QNX4_COMPILE_FALSE='#'
+else
+  UNIX_QNX4_COMPILE_TRUE='#'
+  UNIX_QNX4_COMPILE_FALSE=
+fi
+
+   if false; then
+  UNIX_QNX6_COMPILE_TRUE=
+  UNIX_QNX6_COMPILE_FALSE='#'
+else
+  UNIX_QNX6_COMPILE_TRUE='#'
+  UNIX_QNX6_COMPILE_FALSE=
+fi
+
+   if false; then
+  UNIX_SOLARIS_COMPILE_TRUE=
+  UNIX_SOLARIS_COMPILE_FALSE='#'
+else
+  UNIX_SOLARIS_COMPILE_TRUE='#'
+  UNIX_SOLARIS_COMPILE_FALSE=
+fi
+
+   if false; then
+  UNIX_RHAPSODY_COMPILE_TRUE=
+  UNIX_RHAPSODY_COMPILE_FALSE='#'
+else
+  UNIX_RHAPSODY_COMPILE_TRUE='#'
+  UNIX_RHAPSODY_COMPILE_FALSE=
+fi
+
+   if false; then
+  UNIX_OPENSTEP_COMPILE_TRUE=
+  UNIX_OPENSTEP_COMPILE_FALSE='#'
+else
+  UNIX_OPENSTEP_COMPILE_TRUE='#'
+  UNIX_OPENSTEP_COMPILE_FALSE=
+fi
+
+   if false; then
+  UNIX_NEXTSTEP_COMPILE_TRUE=
+  UNIX_NEXTSTEP_COMPILE_FALSE='#'
+else
+  UNIX_NEXTSTEP_COMPILE_TRUE='#'
+  UNIX_NEXTSTEP_COMPILE_FALSE=
+fi
+
+   if false; then
+  UNIX_SCO4_COMPILE_TRUE=
+  UNIX_SCO4_COMPILE_FALSE='#'
+else
+  UNIX_SCO4_COMPILE_TRUE='#'
+  UNIX_SCO4_COMPILE_FALSE=
+fi
+
+   if false; then
+  UNIX_OPENSERVER5_COMPILE_TRUE=
+  UNIX_OPENSERVER5_COMPILE_FALSE='#'
+else
+  UNIX_OPENSERVER5_COMPILE_TRUE='#'
+  UNIX_OPENSERVER5_COMPILE_FALSE=
+fi
+
+   if false; then
+  UNIX_OPENSERVER6_COMPILE_TRUE=
+  UNIX_OPENSERVER6_COMPILE_FALSE='#'
+else
+  UNIX_OPENSERVER6_COMPILE_TRUE='#'
+  UNIX_OPENSERVER6_COMPILE_FALSE=
+fi
+
+   if false; then
+  UNIX_UNIXWARE_COMPILE_TRUE=
+  UNIX_UNIXWARE_COMPILE_FALSE='#'
+else
+  UNIX_UNIXWARE_COMPILE_TRUE='#'
+  UNIX_UNIXWARE_COMPILE_FALSE=
+fi
+
+   if false; then
+  UNIX_HPUX_COMPILE_TRUE=
+  UNIX_HPUX_COMPILE_FALSE='#'
+else
+  UNIX_HPUX_COMPILE_TRUE='#'
+  UNIX_HPUX_COMPILE_FALSE=
+fi
+
+   if false; then
+  SYLLABLE_COMPILE_TRUE=
+  SYLLABLE_COMPILE_FALSE='#'
+else
+  SYLLABLE_COMPILE_TRUE='#'
+  SYLLABLE_COMPILE_FALSE=
+fi
+
+   if false; then
+  WIN32_COMPILE_TRUE=
+  WIN32_COMPILE_FALSE='#'
+else
+  WIN32_COMPILE_TRUE='#'
+  WIN32_COMPILE_FALSE=
+fi
+
+   if false; then
+  MSDOS_COMPILE_TRUE=
+  MSDOS_COMPILE_FALSE='#'
+else
+  MSDOS_COMPILE_TRUE='#'
+  MSDOS_COMPILE_FALSE=
+fi
+
+   if false; then
+  OS2_COMPILE_TRUE=
+  OS2_COMPILE_FALSE='#'
+else
+  OS2_COMPILE_TRUE='#'
+  OS2_COMPILE_FALSE=
+fi
+
+   if false; then
+  BEOS_COMPILE_TRUE=
+  BEOS_COMPILE_FALSE='#'
+else
+  BEOS_COMPILE_TRUE='#'
+  BEOS_COMPILE_FALSE=
+fi
+
+   if false; then
+  AMIGA_COMPILE_TRUE=
+  AMIGA_COMPILE_FALSE='#'
+else
+  AMIGA_COMPILE_TRUE='#'
+  AMIGA_COMPILE_FALSE=
+fi
+
+   if false; then
+  UNIX_MACOSX_COMPILE_TRUE=
+  UNIX_MACOSX_COMPILE_FALSE='#'
+else
+  UNIX_MACOSX_COMPILE_TRUE='#'
+  UNIX_MACOSX_COMPILE_FALSE=
+fi
+
+   if false; then
+  SUPPORT_CMDLINE_TOOLS_TRUE=
+  SUPPORT_CMDLINE_TOOLS_FALSE='#'
+else
+  SUPPORT_CMDLINE_TOOLS_TRUE='#'
+  SUPPORT_CMDLINE_TOOLS_FALSE=
+fi
+
+   if false; then
+  HAVE_TRANSLATION_TRUE=
+  HAVE_TRANSLATION_FALSE='#'
+else
+  HAVE_TRANSLATION_TRUE='#'
+  HAVE_TRANSLATION_FALSE=
+fi
+
+   if false; then
+  MAKE_BINDIST_TRUE=
+  MAKE_BINDIST_FALSE='#'
+else
+  MAKE_BINDIST_TRUE='#'
+  MAKE_BINDIST_FALSE=
+fi
+
+
+  ARCH_DIR="\$(top_builddir)/src/arch/raspi"
+  ARCH_SRC_DIR="\$(top_srcdir)/src/arch/raspi"
+  ARCH_LIBS="$ARCH_DIR/libarch.a"
+  ARCH_INCLUDES="-I\$(top_srcdir)/src/arch/raspi"
+
+$as_echo "#define RASPI_COMPILE /**/" >>confdefs.h
+
+  SOUND_DRIVERS="$SOUND_DRIVERS soundraspi.o"
+
 elif test x"$is_win32" = "xyes" ; then
 
 $as_echo "#define HAVE_DYNLIB_SUPPORT /**/" >>confdefs.h
@@ -21146,6 +21388,14 @@ $as_echo "#define WIN32_COMPILE /**/" >>confdefs.h
     fi
   fi
 
+   if false; then
+  RASPI_COMPILE_TRUE=
+  RASPI_COMPILE_FALSE='#'
+else
+  RASPI_COMPILE_TRUE='#'
+  RASPI_COMPILE_FALSE=
+fi
+
    if true; then
   WIN32_COMPILE_TRUE=
   WIN32_COMPILE_FALSE='#'
@@ -21963,7 +22213,7 @@ _ACEOF
 rpath_line=`${CONFIG_SHELL-/bin/sh} "$srcdir/config.rpath" "$CC" "$GCC" "$LDFLAGS" "$LD" "$with_gnu_ld" "$host" "$VICEDIR/lib"`
 LDFLAGS="$LDFLAGS $rpath_line"
 
-ac_config_files="$ac_config_files Makefile vice-mint-sdl.spec build/Makefile build/android/Makefile build/beos/Makefile build/macosx/Makefile build/nextstep/Makefile build/openstep/Makefile build/openwatcom/Makefile build/qnx4/Makefile build/rhapsody/Makefile data/Makefile data/C128/Makefile data/C64/Makefile data/C64DTV/Makefile data/CBM-II/Makefile data/DRIVES/Makefile data/PET/Makefile data/PLUS4/Makefile data/SCPU64/Makefile data/PRINTER/Makefile data/VIC20/Makefile data/fonts/Makefile doc/Makefile doc/building/Makefile doc/html/Makefile doc/readmes/Makefile man/Makefile src/Makefile src/debug.h src/arch/Makefile src/arch/android/Makefile src/arch/android/AnVICE/AndroidManifest.xml src/arch/android/AnVICE/Makefile src/arch/android/AnVICE/.settings/Makefile src/arch/android/AnVICE/assets-proto/Makefile src/arch/android/AnVICE/jni/Makefile src/arch/android/AnVICE/jni/locnet/Makefile src/arch/android/AnVICE/jni/locnet_x64/Makefile src/arch/android/AnVICE/jni/locnet_x64dtv/Makefile src/arch/android/AnVICE/jni/locnet_x64sc/Makefile src/arch/android/AnVICE/jni/locnet_x128/Makefile src/arch/android/AnVICE/jni/locnet_xcbm2/Makefile src/arch/android/AnVICE/jni/locnet_xcbm5x0/Makefile src/arch/android/AnVICE/jni/locnet_xpet/Makefile src/arch/android/AnVICE/jni/locnet_xplus4/Makefile src/arch/android/AnVICE/jni/locnet_xscpu64/Makefile src/arch/android/AnVICE/jni/locnet_xvic/Makefile src/arch/android/AnVICE/jni/locnet_al/Makefile src/arch/android/AnVICE/jni/sdl/Makefile src/arch/android/AnVICE/jni/vice_x64/Makefile src/arch/android/AnVICE/jni/vice_x64_128_5x0/Makefile src/arch/android/AnVICE/jni/vice_x64_dtv_128_5x0/Makefile src/arch/android/AnVICE/jni/vice_x64_sc/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_128/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_128_2_5x0_pet_4_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_128_2_5x0_pet_4_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_scpu/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_scpu_128/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_scpu_128_2_5x0_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_scpu_128_2_5x0_4_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_scpu_128_2_5x0_pet_4/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_scpu_128_2_5x0_pet_4_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_scpu_128_2_pet_4_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_scpu_128_4_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_scpu_128_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_scpu/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_scpu_128/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_scpu_128_2/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_scpu_128_2_5x0_pet_4_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_scpu_128_2_pet_4_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_scpu_128_2_pet_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_scpu_128_4/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_scpu_128_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_scpu_128_5x0_4_20/Makefile src/arch/android/AnVICE/jni/vice_x64dtv/Makefile src/arch/android/AnVICE/jni/vice_x64sc/Makefile src/arch/android/AnVICE/jni/vice_x64sc_scpu/Makefile src/arch/android/AnVICE/jni/vice_x64sc_scpu_128_2_pet_4_20/Makefile src/arch/android/AnVICE/jni/vice_x128/Makefile src/arch/android/AnVICE/jni/vice_x128_2_5x0_pet/Makefile src/arch/android/AnVICE/jni/vice_xcbm2/Makefile src/arch/android/AnVICE/jni/vice_xcbm2_5x0/Makefile src/arch/android/AnVICE/jni/vice_xcbm2_pet/Makefile src/arch/android/AnVICE/jni/vice_xcbm5x0/Makefile src/arch/android/AnVICE/jni/vice_xpet/Makefile src/arch/android/AnVICE/jni/vice_xplus4/Makefile src/arch/android/AnVICE/jni/vice_xscpu64/Makefile src/arch/android/AnVICE/jni/vice_xvic/Makefile src/arch/android/AnVICE/res-proto/Makefile src/arch/android/AnVICE/res-proto/layout/Makefile src/arch/android/AnVICE/res-proto/values/Makefile src/arch/android/AnVICE/src-proto/Makefile src/arch/android/AnVICE/src-proto/com/Makefile src/arch/android/AnVICE/src-proto/com/locnet/Makefile src/arch/android/AnVICE/src-proto/com/locnet/vice/Makefile src/arch/gtk3/Makefile src/arch/gtk3/data/Makefile src/arch/gtk3/novte/Makefile src/arch/gtk3/widgets/Makefile src/arch/gtk3/widgets/base/Makefile src/arch/mingw32-pcap/Makefile src/arch/mingw32-pcap/wpcap/Makefile src/arch/mingw32-pcap/wpcap/net/Makefile src/arch/sdl/Makefile src/arch/sdl/qnx4/Makefile src/arch/sdl/sortix-files/Makefile src/arch/sdl/syllable-files/Makefile src/arch/shared/Makefile src/buildtools/Makefile src/c128/Makefile src/c64/Makefile src/c64/cart/Makefile src/c64dtv/Makefile src/scpu64/Makefile src/cbm2/Makefile src/core/Makefile src/crtc/Makefile src/diag/Makefile src/diskimage/Makefile src/drive/Makefile src/drive/iec/Makefile src/drive/iec/c64exp/Makefile src/drive/iec/plus4exp/Makefile src/drive/iec128dcr/Makefile src/drive/iecieee/Makefile src/drive/ieee/Makefile src/drive/tcbm/Makefile src/fileio/Makefile src/fsdevice/Makefile src/gfxoutputdrv/Makefile src/hwsiddrv/Makefile src/hvsc/Makefile src/iecbus/Makefile src/imagecontents/Makefile src/iodrv/Makefile src/joyport/Makefile src/lib/Makefile src/lib/ffmpeg/Makefile src/lib/p64/Makefile src/mididrv/Makefile src/monitor/Makefile src/parallel/Makefile src/pet/Makefile src/plus4/Makefile src/printerdrv/Makefile src/raster/Makefile src/rs232drv/Makefile src/rtc/Makefile src/samplerdrv/Makefile src/serial/Makefile src/sid/Makefile src/socketdrv/Makefile src/sounddrv/Makefile src/tape/Makefile src/tapeport/Makefile src/userport/Makefile src/vdc/Makefile src/vdrive/Makefile src/vic20/Makefile src/vic20/cart/Makefile src/vicii/Makefile src/viciisc/Makefile src/viciivsid/Makefile src/video/Makefile src/version.h src/vice-version.sh"
+ac_config_files="$ac_config_files Makefile vice-mint-sdl.spec build/Makefile build/android/Makefile build/beos/Makefile build/macosx/Makefile build/nextstep/Makefile build/openstep/Makefile build/openwatcom/Makefile build/qnx4/Makefile build/rhapsody/Makefile data/Makefile data/C128/Makefile data/C64/Makefile data/C64DTV/Makefile data/CBM-II/Makefile data/DRIVES/Makefile data/PET/Makefile data/PLUS4/Makefile data/SCPU64/Makefile data/PRINTER/Makefile data/VIC20/Makefile data/fonts/Makefile doc/Makefile doc/building/Makefile doc/html/Makefile doc/readmes/Makefile man/Makefile src/Makefile src/debug.h src/arch/Makefile src/arch/android/Makefile src/arch/android/AnVICE/AndroidManifest.xml src/arch/android/AnVICE/Makefile src/arch/android/AnVICE/.settings/Makefile src/arch/android/AnVICE/assets-proto/Makefile src/arch/android/AnVICE/jni/Makefile src/arch/android/AnVICE/jni/locnet/Makefile src/arch/android/AnVICE/jni/locnet_x64/Makefile src/arch/android/AnVICE/jni/locnet_x64dtv/Makefile src/arch/android/AnVICE/jni/locnet_x64sc/Makefile src/arch/android/AnVICE/jni/locnet_x128/Makefile src/arch/android/AnVICE/jni/locnet_xcbm2/Makefile src/arch/android/AnVICE/jni/locnet_xcbm5x0/Makefile src/arch/android/AnVICE/jni/locnet_xpet/Makefile src/arch/android/AnVICE/jni/locnet_xplus4/Makefile src/arch/android/AnVICE/jni/locnet_xscpu64/Makefile src/arch/android/AnVICE/jni/locnet_xvic/Makefile src/arch/android/AnVICE/jni/locnet_al/Makefile src/arch/android/AnVICE/jni/sdl/Makefile src/arch/android/AnVICE/jni/vice_x64/Makefile src/arch/android/AnVICE/jni/vice_x64_128_5x0/Makefile src/arch/android/AnVICE/jni/vice_x64_dtv_128_5x0/Makefile src/arch/android/AnVICE/jni/vice_x64_sc/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_128/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_128_2_5x0_pet_4_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_128_2_5x0_pet_4_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_scpu/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_scpu_128/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_scpu_128_2_5x0_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_scpu_128_2_5x0_4_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_scpu_128_2_5x0_pet_4/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_scpu_128_2_5x0_pet_4_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_scpu_128_2_pet_4_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_scpu_128_4_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_dtv_scpu_128_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_scpu/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_scpu_128/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_scpu_128_2/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_scpu_128_2_5x0_pet_4_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_scpu_128_2_pet_4_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_scpu_128_2_pet_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_scpu_128_4/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_scpu_128_20/Makefile src/arch/android/AnVICE/jni/vice_x64_sc_scpu_128_5x0_4_20/Makefile src/arch/android/AnVICE/jni/vice_x64dtv/Makefile src/arch/android/AnVICE/jni/vice_x64sc/Makefile src/arch/android/AnVICE/jni/vice_x64sc_scpu/Makefile src/arch/android/AnVICE/jni/vice_x64sc_scpu_128_2_pet_4_20/Makefile src/arch/android/AnVICE/jni/vice_x128/Makefile src/arch/android/AnVICE/jni/vice_x128_2_5x0_pet/Makefile src/arch/android/AnVICE/jni/vice_xcbm2/Makefile src/arch/android/AnVICE/jni/vice_xcbm2_5x0/Makefile src/arch/android/AnVICE/jni/vice_xcbm2_pet/Makefile src/arch/android/AnVICE/jni/vice_xcbm5x0/Makefile src/arch/android/AnVICE/jni/vice_xpet/Makefile src/arch/android/AnVICE/jni/vice_xplus4/Makefile src/arch/android/AnVICE/jni/vice_xscpu64/Makefile src/arch/android/AnVICE/jni/vice_xvic/Makefile src/arch/android/AnVICE/res-proto/Makefile src/arch/android/AnVICE/res-proto/layout/Makefile src/arch/android/AnVICE/res-proto/values/Makefile src/arch/android/AnVICE/src-proto/Makefile src/arch/android/AnVICE/src-proto/com/Makefile src/arch/android/AnVICE/src-proto/com/locnet/Makefile src/arch/android/AnVICE/src-proto/com/locnet/vice/Makefile src/arch/gtk3/Makefile src/arch/gtk3/data/Makefile src/arch/gtk3/novte/Makefile src/arch/gtk3/widgets/Makefile src/arch/gtk3/widgets/base/Makefile src/arch/mingw32-pcap/Makefile src/arch/mingw32-pcap/wpcap/Makefile src/arch/mingw32-pcap/wpcap/net/Makefile src/arch/raspi/Makefile src/arch/sdl/Makefile src/arch/sdl/qnx4/Makefile src/arch/sdl/sortix-files/Makefile src/arch/sdl/syllable-files/Makefile src/arch/shared/Makefile src/buildtools/Makefile src/c128/Makefile src/c64/Makefile src/c64/cart/Makefile src/c64dtv/Makefile src/scpu64/Makefile src/cbm2/Makefile src/core/Makefile src/crtc/Makefile src/diag/Makefile src/diskimage/Makefile src/drive/Makefile src/drive/iec/Makefile src/drive/iec/c64exp/Makefile src/drive/iec/plus4exp/Makefile src/drive/iec128dcr/Makefile src/drive/iecieee/Makefile src/drive/ieee/Makefile src/drive/tcbm/Makefile src/fileio/Makefile src/fsdevice/Makefile src/gfxoutputdrv/Makefile src/hwsiddrv/Makefile src/hvsc/Makefile src/iecbus/Makefile src/imagecontents/Makefile src/iodrv/Makefile src/joyport/Makefile src/lib/Makefile src/lib/ffmpeg/Makefile src/lib/p64/Makefile src/mididrv/Makefile src/monitor/Makefile src/parallel/Makefile src/pet/Makefile src/plus4/Makefile src/printerdrv/Makefile src/raster/Makefile src/rs232drv/Makefile src/rtc/Makefile src/samplerdrv/Makefile src/serial/Makefile src/sid/Makefile src/socketdrv/Makefile src/sounddrv/Makefile src/tape/Makefile src/tapeport/Makefile src/userport/Makefile src/vdc/Makefile src/vdrive/Makefile src/vic20/Makefile src/vic20/cart/Makefile src/vicii/Makefile src/viciisc/Makefile src/viciivsid/Makefile src/video/Makefile src/version.h src/vice-version.sh"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -22263,6 +22513,106 @@ if test -z "${NATIVE_TOOLS_TRUE}" && test -z "${NATIVE_TOOLS_FALSE}"; then
   as_fn_error $? "conditional \"NATIVE_TOOLS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${RASPI_COMPILE_TRUE}" && test -z "${RASPI_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"RASPI_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_RAWDRIVE_TRUE}" && test -z "${HAVE_RAWDRIVE_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_RAWDRIVE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${UNIX_COMPILE_TRUE}" && test -z "${UNIX_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"UNIX_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${UNIX_SKYOS_COMPILE_TRUE}" && test -z "${UNIX_SKYOS_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"UNIX_SKYOS_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${UNIX_QNX4_COMPILE_TRUE}" && test -z "${UNIX_QNX4_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"UNIX_QNX4_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${UNIX_QNX6_COMPILE_TRUE}" && test -z "${UNIX_QNX6_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"UNIX_QNX6_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${UNIX_SOLARIS_COMPILE_TRUE}" && test -z "${UNIX_SOLARIS_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"UNIX_SOLARIS_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${UNIX_RHAPSODY_COMPILE_TRUE}" && test -z "${UNIX_RHAPSODY_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"UNIX_RHAPSODY_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${UNIX_OPENSTEP_COMPILE_TRUE}" && test -z "${UNIX_OPENSTEP_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"UNIX_OPENSTEP_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${UNIX_NEXTSTEP_COMPILE_TRUE}" && test -z "${UNIX_NEXTSTEP_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"UNIX_NEXTSTEP_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${UNIX_SCO4_COMPILE_TRUE}" && test -z "${UNIX_SCO4_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"UNIX_SCO4_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${UNIX_OPENSERVER5_COMPILE_TRUE}" && test -z "${UNIX_OPENSERVER5_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"UNIX_OPENSERVER5_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${UNIX_OPENSERVER6_COMPILE_TRUE}" && test -z "${UNIX_OPENSERVER6_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"UNIX_OPENSERVER6_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${UNIX_UNIXWARE_COMPILE_TRUE}" && test -z "${UNIX_UNIXWARE_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"UNIX_UNIXWARE_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${UNIX_HPUX_COMPILE_TRUE}" && test -z "${UNIX_HPUX_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"UNIX_HPUX_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${SYLLABLE_COMPILE_TRUE}" && test -z "${SYLLABLE_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"SYLLABLE_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${WIN32_COMPILE_TRUE}" && test -z "${WIN32_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"WIN32_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MSDOS_COMPILE_TRUE}" && test -z "${MSDOS_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"MSDOS_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${OS2_COMPILE_TRUE}" && test -z "${OS2_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"OS2_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BEOS_COMPILE_TRUE}" && test -z "${BEOS_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"BEOS_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${AMIGA_COMPILE_TRUE}" && test -z "${AMIGA_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"AMIGA_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${UNIX_MACOSX_COMPILE_TRUE}" && test -z "${UNIX_MACOSX_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"UNIX_MACOSX_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${SUPPORT_CMDLINE_TOOLS_TRUE}" && test -z "${SUPPORT_CMDLINE_TOOLS_FALSE}"; then
+  as_fn_error $? "conditional \"SUPPORT_CMDLINE_TOOLS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_TRANSLATION_TRUE}" && test -z "${HAVE_TRANSLATION_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_TRANSLATION\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MAKE_BINDIST_TRUE}" && test -z "${MAKE_BINDIST_FALSE}"; then
+  as_fn_error $? "conditional \"MAKE_BINDIST\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${HAVE_SHARED_FFMPEG_TRUE}" && test -z "${HAVE_SHARED_FFMPEG_FALSE}"; then
   as_fn_error $? "conditional \"HAVE_SHARED_FFMPEG\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -22513,6 +22863,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${UNIX_MACOSX_COMPILE_TRUE}" && test -z "${UNIX_MACOSX_COMPILE_FALSE}"; then
   as_fn_error $? "conditional \"UNIX_MACOSX_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${RASPI_COMPILE_TRUE}" && test -z "${RASPI_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"RASPI_COMPILE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${WIN32_COMPILE_TRUE}" && test -z "${WIN32_COMPILE_FALSE}"; then
@@ -23570,6 +23924,7 @@ do
     "src/arch/mingw32-pcap/Makefile") CONFIG_FILES="$CONFIG_FILES src/arch/mingw32-pcap/Makefile" ;;
     "src/arch/mingw32-pcap/wpcap/Makefile") CONFIG_FILES="$CONFIG_FILES src/arch/mingw32-pcap/wpcap/Makefile" ;;
     "src/arch/mingw32-pcap/wpcap/net/Makefile") CONFIG_FILES="$CONFIG_FILES src/arch/mingw32-pcap/wpcap/net/Makefile" ;;
+    "src/arch/raspi/Makefile") CONFIG_FILES="$CONFIG_FILES src/arch/raspi/Makefile" ;;
     "src/arch/sdl/Makefile") CONFIG_FILES="$CONFIG_FILES src/arch/sdl/Makefile" ;;
     "src/arch/sdl/qnx4/Makefile") CONFIG_FILES="$CONFIG_FILES src/arch/sdl/qnx4/Makefile" ;;
     "src/arch/sdl/sortix-files/Makefile") CONFIG_FILES="$CONFIG_FILES src/arch/sdl/sortix-files/Makefile" ;;
@@ -24506,7 +24861,7 @@ fi
 
 
 
-if test x"$is_amiga" != "xyes" -a x"$is_beos" != "xyes" -a x"$is_os2" != "xyes" -a x"$is_unix_macosx" != "xyes" -a x"$is_win32" != "xyes" -a x"$is_win32_gtk3" != "xyes"; then
+if test x"$is_amiga" != "xyes" -a x"$is_beos" != "xyes" -a x"$is_os2" != "xyes" -a x"$is_unix_macosx" != "xyes" -a x"$is_win32" != "xyes" -a x"$is_win32_gtk3" != "xyes" -a x"$is_raspi" != "xyes"; then
     show_arch="Unix"
     real_arch="Unix"
 else
@@ -24532,6 +24887,10 @@ else
             real_arch="Unix"
         fi
     fi
+    if test x"$is_raspi" = "xyes"; then
+        show_arch="Circle"
+        real_arch="Circle"
+    fi
 fi
 
 show_gui="Unknown"
@@ -24541,6 +24900,10 @@ fi
 
 if test x"$enable_sdlui2" = "xyes"; then
     show_gui="SDL2"
+fi
+
+if test x"$enable_raspiui" = "xyes"; then
+    show_gui="BMC64"
 fi
 
 if test x"$enable_native_gtk3ui" = "xyes"; then

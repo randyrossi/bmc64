@@ -61,6 +61,9 @@
           no less) */
 int usleep(unsigned long int microSeconds)
 {
+#ifdef RASPI_COMPILE
+    // Not used for raspi
+#else
     unsigned int Seconds, uSec;
 #ifdef __OS2__
     int nfds;
@@ -93,5 +96,6 @@ int usleep(unsigned long int microSeconds)
     }
 
     return 0;
+#endif
 }
 #endif

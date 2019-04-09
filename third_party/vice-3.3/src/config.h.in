@@ -781,6 +781,9 @@
 /* Where do we want to install the executable? */
 #undef PREFIX
 
+/* Are we compiling for bare metal raspberry pi? */
+#undef RASPI_COMPILE
+
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE
 
