@@ -20,10 +20,10 @@
 #include <string.h>
 
 extern "C" {
-#include "third_party/vice-3.2/src/main.h"
+#include "third_party/vice-3.3/src/main.h"
 }
 
-#include "third_party/vice-3.2/src/resid/filter.h"
+#include "third_party/vice-3.3/src/resid/filter.h"
 
 ViceEmulatorCore::ViceEmulatorCore (CMemorySystem *pMemorySystem) : 
    CMultiCoreSupport (pMemorySystem), launch_(false) {

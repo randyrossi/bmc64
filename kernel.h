@@ -40,9 +40,9 @@
 
 extern "C" {
 
-#include "third_party/vice-3.2/src/main.h"
-#include "third_party/vice-3.2/src/arch/raspi/circle.h"
-#include "third_party/vice-3.2/src/arch/raspi/keycodes.h"
+#include "third_party/vice-3.3/src/main.h"
+#include "third_party/vice-3.3/src/arch/raspi/circle.h"
+#include "third_party/vice-3.3/src/arch/raspi/keycodes.h"
 
 }
 
