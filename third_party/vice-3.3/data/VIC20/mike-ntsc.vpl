@@ -1,0 +1,55 @@
+#
+# VICE Palette file
+#
+# Syntax:
+# Red Green Blue Dither
+#
+
+# 
+00 00 00 0
+
+# 
+FF FF FF E
+
+# 
+F9 11 37 4
+
+# 
+35 F9 F6 C
+
+# 
+FF 3C C6 8
+
+# 
+3C ED A9 4
+
+# 
+0F 57 F7 4
+
+# 
+FE E9 63 C
+
+# 
+FB 62 44 4
+
+# 
+FB BF DE 4
+
+# 
+F3 AC E5 8
+
+# 
+A8 EA DD 4
+
+# 
+E6 B8 F7 8
+
+# 
+AB DD A4 8
+
+# 
+6A B3 E7 8
+
+# 
+F7 DA A5 C
+

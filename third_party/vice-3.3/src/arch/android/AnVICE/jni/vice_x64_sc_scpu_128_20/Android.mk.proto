@@ -1,0 +1,59 @@
+LOCAL_PATH := $(call my-dir)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := vice_x64_sc_scpu_128_20
+
+MY_PATH2 := ../../../../../..
+
+# Add more subdirs here, like src/subdir1 src/subdir2
+
+MY_PATH := $(LOCAL_PATH)
+
+CG_SRCDIR := $(LOCAL_PATH)
+
+LOCAL_CFLAGS := -DANDROID_COMPILE
+
+LOCAL_C_INCLUDES :=	$(LOCAL_PATH)/include \
+				$(LOCAL_PATH)/../sdl/include \
+				$(LOCAL_PATH)/../locnet/include \
+				$(LOCAL_PATH) \
+				$(LOCAL_PATH)/../../../../../../src/arch/sdl \
+				$(LOCAL_PATH)/../../../../../../src/sid \
+				$(LOCAL_PATH)/../../../../../../src/rtc \
+				$(LOCAL_PATH)/../../../../../../src/core \
+				$(LOCAL_PATH)/../../../../../../src/samplerdrv \
+				$(LOCAL_PATH)/../../../../../../src \
+				$(LOCAL_PATH)/../.. \
+				$(LOCAL_PATH)
+
+LOCAL_PATH := $(MY_PATH)
+
+LOCAL_CPPFLAGS := $(LOCAL_CFLAGS)
+LOCAL_CXXFLAGS := $(LOCAL_CFLAGS)
+
+#Change C++ file extension as appropriate
+LOCAL_CPP_EXTENSION := .cpp
+
+LOCAL_SRC_FILES := \
+	$(MY_PATH2)/src/arch/sdl/menu_ethernet.c \
+	$(MY_PATH2)/src/arch/sdl/menu_midi.c \
+	$(MY_PATH2)/src/arch/sdl/menu_ethernetcart.c \
+	$(MY_PATH2)/src/arch/sdl/mididrv.c \
+	$(MY_PATH2)/src/c64/cart/c64acia1.c \
+	$(MY_PATH2)/src/c64/cart/cs8900io.c \
+	$(MY_PATH2)/src/c64/cart/digimax.c \
+	$(MY_PATH2)/src/c64/cart/ds12c887rtc.c \
+	$(MY_PATH2)/src/c64/cart/ethernetcart.c \
+	$(MY_PATH2)/src/c64/cart/georam.c \
+	$(MY_PATH2)/src/c64/cart/sfx_soundexpander.c \
+	$(MY_PATH2)/src/c64/cart/sfx_soundsampler.c \
+	$(MY_PATH2)/src/core/cs8900.c \
+	$(MY_PATH2)/src/core/flash040core.c \
+	$(MY_PATH2)/src/core/fmopl.c \
+	$(MY_PATH2)/src/midi.c \
+	$(MY_PATH2)/src/rtc/ds12c887.c
+
+LOCAL_ARM_MODE := arm
+
+include $(BUILD_STATIC_LIBRARY)

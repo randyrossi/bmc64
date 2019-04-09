@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+	<Preference
+		android:key="pref_key_start_x64"
+		android:title="@string/pref_start_x64"
+		android:summary="@string/pref_start_summary_x64"
+		android:persistent="false"
+		android:selectable="true"
+		android:enabled="true"
+	/>
+
+	<Preference
+		android:key="pref_key_start_x64sc"
+		android:title="@string/pref_start_x64sc"
+		android:summary="@string/pref_start_summary_x64sc"
+		android:persistent="false"
+		android:selectable="true"
+		android:enabled="true"
+	/>
+
+	<Preference
+		android:key="pref_key_start_xscpu64"
+		android:title="@string/pref_start_xscpu64"
+		android:summary="@string/pref_start_summary_xscpu64"
+		android:persistent="false"
+		android:selectable="true"
+		android:enabled="true"
+	/>
+
+	<Preference
+		android:key="pref_key_start_x64dtv"
+		android:title="@string/pref_start_x64dtv"
+		android:summary="@string/pref_start_summary_x64dtv"
+		android:persistent="false"
+		android:selectable="true"
+		android:enabled="true"
+	/>
+
+	<Preference
+		android:key="pref_key_start_x128"
+		android:title="@string/pref_start_x128"
+		android:summary="@string/pref_start_summary_x128"
+		android:persistent="false"
+		android:selectable="true"
+		android:enabled="true"
+	/>
+
+	<Preference
+		android:key="pref_key_start_xcbm2"
+		android:title="@string/pref_start_xcbm2"
+		android:summary="@string/pref_start_summary_xcbm2"
+		android:persistent="false"
+		android:selectable="true"
+		android:enabled="true"
+	/>
+
+	<Preference
+		android:key="pref_key_start_xcbm5x0"
+		android:title="@string/pref_start_xcbm5x0"
+		android:summary="@string/pref_start_summary_xcbm5x0"
+		android:persistent="false"
+		android:selectable="true"
+		android:enabled="true"
+	/>
+
+	<Preference
+		android:key="pref_key_start_xpet"
+		android:title="@string/pref_start_xpet"
+		android:summary="@string/pref_start_summary_xpet"
+		android:persistent="false"
+		android:selectable="true"
+		android:enabled="true"
+	/>
+
+	<Preference
+		android:key="pref_key_start_xplus4"
+		android:title="@string/pref_start_xplus4"
+		android:summary="@string/pref_start_summary_xplus4"
+		android:persistent="false"
+		android:selectable="true"
+		android:enabled="true"
+	/>
+
+	<Preference
+		android:key="pref_key_start_xvic"
+		android:title="@string/pref_start_xvic"
+		android:summary="@string/pref_start_summary_xvic"
+		android:persistent="false"
+		android:selectable="true"
+		android:enabled="true"
+	/>
+
+	<PreferenceCategory
+		android:title="@string/pref_category_preconfig">
+			    
+		<Preference
+			android:key="pref_key_floppy1"
+			android:title="@string/pref_floppy1"
+			android:persistent="false"
+			android:selectable="true"
+			android:enabled="true"
+		/>
+		<CheckBoxPreference
+			android:key="pref_key_true_drive_on"
+			android:title="@string/pref_true_drive_on"
+			android:summary="@string/pref_true_drive_on_summary"
+			android:persistent="true"
+			android:defaultValue="@bool/pref_default_true_drive_on"
+		/>
+	
+		<CheckBoxPreference
+			android:key="pref_key_screen_border_on"
+			android:title="@string/pref_screen_border_on"
+			android:persistent="true"
+			android:defaultValue="@bool/pref_default_screen_border_on"
+		/>
+
+		<CheckBoxPreference
+			android:key="pref_key_ntsc_on"
+			android:title="@string/pref_ntsc_on"
+			android:persistent="true"
+			android:defaultValue="@bool/pref_default_ntsc_on"
+		/>
+		
+	</PreferenceCategory>	
+
+</PreferenceScreen>

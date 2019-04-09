@@ -1,0 +1,21 @@
+FIXME: this should be much more detailed :)
+
+the following requires macports, and perhaps some more libs (libjpeg) need to be
+installed:
+
+sudo port install gdk-pixbuf2 +quartz
+sudo port install gtk3 +quartz
+
+svn co https://svn.code.sf.net/p/vice-emu/code/trunk vice-src
+
+
+cd vice-src/vice
+./autogen.sh
+awk '!/docsdir/' src/arch/gtk3/archdep.c > temp && mv temp src/arch/gtk3/archdep.c
+./configure CXXFLAGS='-std=c++0x' --enable-native-gtk3ui
+make -j
+cp -r data/{C64,DRIVES,PRINTER} ~/.config/vice
+cp -r src/arch/gtk3/data/vice.gresource* ~/.config/vice
+./src/x64sc
+
+then switch from resid to fastsid 

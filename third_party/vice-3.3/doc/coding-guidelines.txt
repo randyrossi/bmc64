@@ -1,0 +1,517 @@
+VICE project coding guidelines
+==============================
+
+This document is intended to set some guidelines for people wanting to
+contribute code to the VICE project.
+
+There are two distinct parts to the VICE source code, the architecture code
+parts which are located in src/arch, and the common code parts which are
+located everywhere in src except in src/arch.
+
+The architecture code parts are in their own respective directories and *may*
+have their own coding style, however try to stick to these guidelines at least
+for C code, if possible.
+
+The common code however is used by all supported architectures and therefor
+needs to be as portable as possible. To achieve this portability some
+guidelines have to be followed.
+
+Project Folders Hierarchy Descriptions
+--------------------------------------
+Here are short descriptions of the project code folders and their functions:
+
+src/           - common code
+ arch          - architecture specific code for various platforms (win, unix, amigaos, etc)
+ c64           - c64 specific code
+ c64/cart      - c64 cartridge specific code
+ c64dtv        - c64 direct tv specific code
+ c128          - commodore 128 specific code
+ cbm2          - Commodore CBM-II computer emulator
+ core          - various chip emulations (CIA, VIA and Cart specific chip emulations)
+ crtc          - CRTC emulation
+ diskimage     - various file types support (.d64, .d81, etc..)
+ drive         - various disk drive hardware emulations and bus systems used (iec or ieee)
+ fileio        - for accessing prg files directly
+ fsdevice      - for host filesystem as if an iec device is used
+ gfxoutputdrv  - screen capture (image and video drivers)
+ iecbus        - iec bus handling
+ imagecontents - disk and tape directory interface
+ lib           - anything related to external libraries (ffmpeg codec, etc..)
+ monitor       - code for built-in monitor
+ parallel      - ieee488 emulation code
+ pet           - pet computer specific emulation code
+ platform      - platform specific discovery/reporting code (os, cpu, compiler used, etc..)
+ plus4         - commodore plus4 specific code
+ printerdrv    - specific printer type emulation and drivers
+ raster        - raster-based video chip emulation 
+ resid folders - cycle exact sid engine (made by dag lem)
+ rs232drv      - rs232 communication and modem code for interfacing with arch specific drivers
+ rtc           - real time clock emulation used in some devices (fd2000/4000, ide64, etc..)
+ serial        - iec interface code and real iec access (for using real drives on usb with vice)
+ sid           - SID chip interface and emulation for fallback sid engine (fastsid)
+ sounddrv      - framework specific sound drivers
+ tape          - tape drive specific emulation and T64 support
+ userport      - userport device emulation code
+ vdc           - MOS8563 VDC emulation
+ vdrive        - virtual drives code, opposed to "true drive emulation" found in drive folder
+ vic20         - commodore vic20 specific code
+ vicii         - almost cycle exact VICII emulation code for x64, x128, xcbm2, and x64dtv
+ viciisc       - more cycle exact then vicii code emulation used in x64sc and xscpu64
+ video         - pixel framebuffer to physical screen interface code
+
+
+Cosmetic guidelines for all code
+--------------------------------
+
+To keep the code easy to follow please read the following statements:
+
+- Use the types in <stdint.h> for fixed-width types, so `uint8_t` rather than
+  `BYTE`, `uint16_t` for `WORD` and `uint32_t` for `DWORD`.
+
+- No variable declarations after the first line of code, some compilers
+  just can't handle it.
+
+  New block-level declarations are fine:
+
+    if (foo) {
+        int bar = 0;
+        /* code using bar */
+    }
+
+  Perfectly valid even in C89, if a compiler can't handle this, get a proper
+  compiler.
+
+- Don't use mixtures of tabs and spaces as indentation, using 4 spaces per
+  level will make the code look the same no matter what editor you use.
+  When changing an existing file, make sure the indentation style is the
+  same throughout the source file.
+
+- For 'if' and 'for' always use braces.
+  examples:
+
+    if (foo) {
+        ...
+    }
+
+    if (foo) {
+        ...
+    } else {
+        ...
+    }
+
+    for (i = 0; i < 255; i++) {
+        ...
+    }
+
+- A keyword should be followed by a space, so:
+    if (foo == 0) { ... }
+  not
+    if(foo == 0) { ... }
+
+  Exception: the sizeof operator, using sizeof as a "function" on a type should
+             not use spaces, ie: sizeof(int), however using sizeof on an object
+             should use spaces (ie: int *i; sizeof *i)
+
+- Binary operators: use spaces around binary operators:
+    int i = 1 + 2;
+    unsigned int i <<= 3;
+
+  But please don't use them with when accessing members of an object:
+    foo->bar, not foo -> bar.
+
+- Unary operators:
+  Don't use spaces when using unary operators:
+    ~0 is fine,
+    ~ 0 isn't.
+
+- Use boolean logic only when the context is clear and the thing tested can
+  actually be considered boolean:
+
+  Basically:
+    `if (!strcmp(a b))` is WRONG since strcmp() returns three different values,
+    0 when equal (which is what the ! tests against), < 0 when a < b, and
+    > 0 when b > a.
+    So please use `if (strcmp(a, b) == 0)`, a little more typing, but much more
+    clear.
+
+    We also seem to have a lot of functions returning either 0 on success, or
+    -1 on error. And a lot of code using boolean logic on the return value.
+    Please don't. Unfortunately this is so wide spread in the VICE code it's
+    hard to fix.
+
+
+- No 'clever' while/do trickery, unless required for preprocessor code. The
+  following looks clever:
+
+    while (*s++ != '\0');
+
+  But this is clearer and will generate the same object code:
+
+    while (*s != '\0') {
+        s++;
+    }
+
+- To give the code a consistent look use specifiers named with prefixes
+  like in the following examples:
+
+    struct foobar_s {
+        ...
+    };
+
+    typedef ... foobar_t;
+
+    enum stuff_e {
+        ...
+    };
+
+    union many_u {
+        ...
+    };
+
+  Of course combinations may be used:
+
+    typedef struct foobar_s {
+        ...
+    } foobar_t;
+
+  Exceptions are basic type like BYTE, WORD, DWORD and code that follows a
+  coding style of a certain architecture, e.g. UI code.
+
+- Preprocessor macros which define constants or enumeration values should
+  be written in capital letters.
+
+   #define FORTYTWO 42
+
+   typedef numbers_e {
+       NUM_ZERO,
+       NUM_ONE
+   } numbers_t;
+
+Common code guidelines
+----------------------
+
+Many different compilers are used to compile the common code parts.
+
+- When using headers which are tested for in configure.proto don't assume they
+  exist, use the #ifdef HAVE_*_H instead.
+
+- Don't use C++ style comments (// comment), use C-style comments instead
+  (/* comment */). This goes for C99 code as well.
+
+- When adding header files use VICE_*_H as shown in the following example:
+
+#ifndef VICE_RS232_H
+#define VICE_RS232_H
+
+...code...
+
+#endif
+
+- Refrain from using any non ASCII characters in source files, unless absolutely
+  necessary. Previously a common trap were copyright headers - make sure to
+  use latin letters only to write your name etc. or in other words: such chars
+  should not be used anywhere, except in a few selected (usually translation
+  related) files that contain tables of strings.
+  The reason for this is that various tools get confused or even choke on any-
+  thing that isnt the encoding they expect (and plain ascii always works). It
+  also ensures that all files can be edited by anyone at any time without intro-
+  ducing weird side effects.
+  On a *nix system you may use the "file" command to check the files you
+  changed, normally it should always say "ASCII text" (not ISO-8859, and
+  definately not UTF-8 Unicode).
+
+current exceptions from this rule are:
+
+src/infocontrib.h:                 ISO-8859                     (generated file)
+
+src/translate_text.c:              ISO-8859                        (translation)
+src/translate_text.c.po.c:         ISO-8859             (translation, generated)
+
+src/arch/amigaos/intl.c:           ISO-8859                        (translation)
+src/arch/amigaos/intl_text.c:      ISO-8859                        (translation)
+src/arch/amigaos/intl_text.c.po.c: ISO-8859             (translation, generated)
+
+src/arch/win32/res*.rc.po.c:       ISO-8859             (translation, generated)
+
+src/arch/win32/vs_tmpl/mkmsvc.c:   UTF-8 Unicode, CRLF line terminators
+
+Keep in mind that editing the translation related files need special care, make
+sure not to mess up the file by somehow converting the encoding!
+
+intl code guidelines
+--------------------
+
+VICE supports intl for win32, amiga and *nix platforms. Any text belonging
+that is meant for the user (command-line/UI) needs to be handled by means
+of the translation system.
+
+The command-line options structure is defined as followed:
+
+typedef struct cmdline_option_s {
+    /* Name of command-line option.  */
+    const char *name;
+
+    /* Behavior of this command-line option.  */
+    cmdline_option_type_t type;
+
+    /* Flag: Does this option need an argument?  */
+    int need_arg;
+
+    /* Function to call if type is `CALL_FUNCTION'.  */
+    int (*set_func)(const char *value, void *extra_param);
+
+    /* Extra parameter to pass to `set_func' if type is `CALL_FUNCTION'.  */
+    void *extra_param;
+
+    /* Resource to change if `type' is `SET_RESOURCE'.  */
+    const char *resource_name;
+
+    /* Value to assign to `resource_name' if `type' is `SET_RESOURCE' and
+       `need_arg' is zero.  */
+    void *resource_value;
+
+    /* flag to indicate to use the ID instead of the char */
+    int use_param_name_id;
+
+    /* flag to indicate to use the ID instead of the char */
+    int use_description_id;
+
+    /* ID of the string to display after the option name in the help screen. */
+    int param_name_trans;
+
+    /* ID of the description string. */
+    int description_trans;
+
+    /* String to display after the option name in the help screen. */
+    const char *param_name;
+
+    /* Description string. */
+    const char *description;
+} cmdline_option_t;
+
+
+The intl related fields are:
+
+param_name           This field holds a pointer to the string to be used for
+                     the parameter of the commandline option, fill in with
+                     NULL when ID is used.
+
+description          This field holds a pointer to the string to be used for
+                     the description of the commandline option, fill up with
+                     NULL when ID is used.
+
+
+param_name_trans     This field holds the ID of the string to be used for the
+                     parameter of the commandline option, fill in with
+                     IDCLS_UNUSED when string is used.
+
+description_trans    This field holds the ID of the string to be used for the
+                     description of the commandline option, fill in with
+                     IDCLS_UNUSED when string is used.
+
+
+use_param_name_id    This field is used to indicate if an ID or text needs to
+                     be used, ID's are normally used for common code, amiga
+                     code and win32 code. When set to USE_PARAM_ID the ID
+                     field will be used, and when set to USE_PARAM_STRING the
+                     text pointer field will be used.
+
+use_description_id   This field is used to indicate if an ID or text needs to
+                     be used, ID's are normally used for common code, amiga
+                     code and win32 code. When set to USE_DESCRIPTION_ID
+                     the ID field will be used, and when set to
+                     USE_DESCRIPTION_STRING the text pointer field will be
+                     used.
+
+
+Adding new common code and win32/amiga ui-related elements
+----------------------------------------------------------
+
+Easy way:
+
+ui_message(T_("text"))
+
+The T_(...) will indicate to the intl maintainer that this item needs to be
+added to the translation system. The intl maintainer will take care of these
+and the coder has no extra worries about it.
+
+
+Hard way:
+
+For any text you add you will need to create a new ID and add the ID to the
+ID-list in src/translate.txt and add a translation table block in
+src/translate_text.c. There are two types of ID's in the common code IDGS_*
+(Global Strings: text used in common code) and IDCLS_* (Command Line Strings:
+text used in command-line options).
+
+Example:
+
+you want to add the command-line option text "<example>".
+
+add IDCLS_EXAMPLE to translate.txt
+add IDCLS_EXAMPLE text to the translation table in the following form
+
+/* path/file.c */
+/* en */ {IDCLS_EXAMPLE,    N_("<example>")},
+#ifdef HAS_TRANSLATION
+/* de */ {IDCLS_EXAMPLE_DE, ""},  /* fuzzy */
+/* fr */ {IDCLS_EXAMPLE_FR, ""},  /* fuzzy */
+/* hu */ {IDCLS_EXAMPLE_HU, ""},  /* fuzzy */
+/* it */ {IDCLS_EXAMPLE_IT, ""},  /* fuzzy */
+/* nl */ {IDCLS_EXAMPLE_NL, ""},  /* fuzzy */
+/* pl */ {IDCLS_EXAMPLE_PL, ""},  /* fuzzy */
+/* sv */ {IDCLS_EXAMPLE_SV, ""},  /* fuzzy */
+#endif
+
+
+Adding a common code or amiga/win32 command-line option
+-------------------------------------------------------
+
+Easy way:
+
+    { "-midiout", SET_RESOURCE, 1,
+      NULL, NULL, "MIDIOutDev", NULL,
+      USE_PARAM_STRING, USE_DESCRIPTION_STRING,
+      IDCLS_UNUSED, IDCLS_UNUSED,
+      T_("<name>"), T_("Specify MIDI-Out device") },
+
+The T_(...) will indicate to the intl maintainer that this item needs to be
+added to translate.*
+
+
+Hard way:
+
+    { "-midiout", SET_RESOURCE, 1,
+      NULL, NULL, "MIDIOutDev", NULL,
+      USE_PARAM_STRING, USE_DESCRIPTION_STRING,
+      IDCLS_NAME, IDCLS_SPECIFY_MIDI_OUT_DEVICE,
+      NULL, NULL },
+
+You will need to add the IDCLS_NAME and IDCLS_SPECIFY_MIDI_OUT_DEVICE to the
+translate files if the ID's don't exist yet.
+
+
+Adding a common code or amiga/win32 ui_message
+----------------------------------------------
+
+Easy way:
+
+ui_message(T_("this is a dialog message"));
+
+
+Hard way:
+
+ui_message(translate_text(IDGS_THIS_IS_A_DIALOG_MESSAGE));
+
+IDGS_THIS_IS_A_DIALOG_MESSAGE will need to be added to the translate files if
+the ID doesn't exist yet.
+
+
+
+Adding a *nix command-line option
+---------------------------------
+
+For *nix no ID's are used, but it does use the gettext method, so N_(...) is
+needed.
+
+    { "-midiout", SET_RESOURCE, 1,
+      NULL, NULL, "MIDIOutDev", NULL,
+      USE_PARAM_STRING, USE_DESCRIPTION_STRING,
+      IDCLS_UNUSED, IDCLS_UNUSED,
+      N_("<name>"), N_("Specify MIDI-Out device") },
+
+
+
+Adding a *nix ui_message
+------------------------
+
+For *nix no ID's are used, but it does use the gettext method, so _(...) is
+needed.
+
+ui_message(_("this is a dialog message"));
+
+
+Adding a command-line option for an architecture other than *nix, amiga or win32
+--------------------------------------------------------------------------------
+
+For thsee no ID's nor gettext is used.
+
+    { "-midiout", SET_RESOURCE, 1,
+      NULL, NULL, "MIDIOutDev", NULL,
+      USE_PARAM_STRING, USE_DESCRIPTION_STRING,
+      IDCLS_UNUSED, IDCLS_UNUSED,
+      "<name>", "Specify MIDI-Out device" },
+
+
+
+Adding a ui_message for an architecture other than *nix, amiga or win32
+-----------------------------------------------------------------------
+
+For thsee no ID's nor gettext is used.
+
+ui_message("this is a dialog message");
+
+
+Adding GUI elements to the OSX UI
+---------------------------------
+
+The resource bindings for the UI is split into two parts: For the most common
+ones there are dialogs and menu entries available. For all others a so called
+"Inspector" Window is used: its a hierarchical list of all resources with a
+column showing its values. You can use simple edit widgets to change the value
+directly there.
+
+The nice thing with the inspector is, that the whole tree is generated
+automatically from a file called ResourceTree.plist. There the resource binding,
+valid values, and also hints for GUI elements are stored. Furthermore this
+single files provides the info for all VICE emulators and has sub tree elements
+that match only a subset of them. There is a detailed instruction on the file
+format in doc/MacOSX-ResourceTree.txt.
+
+So adding a new resource in the Inspector can be easily done by changing
+ResourceTree.plist. While this can be done in any text editor, the Property List
+Editor in XCode is much more conforable for this.
+
+All dialogs and menus are stored in .nib Files. Those osx specific container
+files are usually edited directly in XCode. There are nice GUI based editors to
+edit these files. Binding to the source code is done by enhancing the
+corresponding objective-c classes of VICE and then importing the new classes
+into XCode. Then you can associate GUI elements with these new methods. .nib
+files are available for each emulator instance and also for all dialogs.
+
+Adding new files to the svn repo
+--------------------------------
+
+When adding a *nix script file use the following svn properties:
+
+svn:eol-style   LF
+svn:mime-type   text/plain
+svn:executable  *
+
+When adding a windows/dos batch file use the following svn properties:
+
+svn:eol-style   CRLF
+svn:mime-type   text/plain
+svn:executable  *
+
+When adding a 'Changelog' file use the following svn properties:
+
+svn:eol-style   LF
+svn:mime-type   text/plain
+
+When adding a windows msvc template file use the following svn properties:
+
+svn:eol-style   CRLF
+svn:mime-type   text/plain
+
+When adding an openwatcom target or project file use the following svn properties:
+
+svn:eol-style   CRLF
+svn:mime-type   text/plain
+
+When adding a non-text file use only the correct mime-type.
+
+For all other files use the following svn properties:
+
+svn:eol-style   native
+svn:mime-type   text/plain

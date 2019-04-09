@@ -1,0 +1,1162 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.52
+     from ../../doc/vice.texi on 19 December 2018 -->
+
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<TITLE>VICE Manual - 17  Acknowledgments</TITLE>
+<style type="text/css">
+    @import 'vice.css';
+</style>
+</HEAD>
+<BODY>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_16.html">previous</A>, <A HREF="vice_18.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H1><A NAME="SEC399" HREF="vice_toc.html#TOC399">17  Acknowledgments</A></H1>
+
+<P>
+VICE derives from X64, the first Commodore 64 emulator for the
+X Window System. Here is an informal list of the people who were
+mostly involved in the development of X64 and VICE:
+
+</P>
+<P>
+The VICE core team:
+
+<UL>
+
+<LI>
+
+<B>Martin Pottendorfer</B>
+Implemented the Gnome Port based on Oliver Schaertels GTK+
+port. Added support code for internationalization based on
+gettext. Improved the *nix fullscreen support. Added multi-
+threaded GUI display for *nix. Translated the UI to German.
+Implemented the fliplists + UI (*nix).
+
+<LI>
+
+<B>Marco van den Heuvel</B>
+Translated the UI to Dutch. Made the internationalization
+support for the Win32 and Amiga ports. Wrote the GEO-RAM and
+RamCart cartridge code. Wrote the c64 +60K, +256K and 256K
+memory expansions code. Wrote the pet REU code. Wrote the plus4
+memory expansions code. Made the ethernet support for the DOS
+port. Maintains the QNX 4.x, QNX 6.x, Solaris, Openserver,
+Unixware, Minix 3.x, Amiga, Syllable and OS/2 binary ports.
+Maintains the Win64 and Open Watcom project files. Maintains
+the SDL port(s). Added new .crt support. Added new screenshot
+formats. Added new sound recording support. Added SIDcart
+support for xpet, xplus4 and xvic. Improved the MMC64
+emulation. Added 2 MHz mode and banks 2/3 support for x128.
+Added the various userport joystick emulations. Added text copy
+and paste support to the Amiga and BeOS ports. Added DQBB and
+ISEPIC cartridge support. Added SFX Sound Sampler and SFX Sound
+Expander support. Added PCI support to the Amiga and DOS ports.
+Rewrote the sound system into a modular one, added always mono
+and always stereo support for the sound output. Added the RTC
+system. Added digiblaster support. Added 3rd SID support. Added
+the 6309 CPU emulation. Added the 65(S)C02 emulation. Added the
+65816 emulation. Added native screenshot (koala/doodle)
+support. Added 6502/6510/8500/8502 cpu port unused bit fading.
+Added vice.chm (windows), vice.guide (amiga), vice.hlp
+(windows), vice.inf (os/2), vice.pdf (generic) and vice.txt
+documentation generation. Added Android port based on
+'AnVICE 1.0.5'. Improved/fixed the 'in-source' FFMPEG support
+and fixed it for msvc7.0 and up. Generalized the 'RS232 net'
+support to be able to be used on any network supporting arch.
+Started the SDL2 port. Added generic sampler input support.
+Added new joyport system and converted the joystick, mouse and
+lightpen code to use the new system. Added joyport attached
+rtc (bbrtc). Added joyport attached cardkey keypad. Added
+joyport attached coplin keypad. Added joyport attached atari
+cx21 keypad. Added joyport attached atari cx85 keypad. Added
+joyport attached paperclip 64 dongle. Added joyport attached
+rushware keypad. Added joyport attached 2/4 bit samplers. Added
+vic20 I/O-2 and I/O-3 RAM support. Added the c64 cp/m (z80)
+cartridge. Added IDE64 digimax short bus device emulation.
+Added tapeport system and the tapelog, cp-clockf83, tape-sense
+dongle, and (not yet working) dtl basic dongle devices. Added
+easy calc result cartridge emulation. Added hardware SID I/O
+access system which allows CW3, HardSID, ParSID and SSI2001 to
+work on AmigaOS, BeOS, DOS, SDL, *nix and windows with and
+without device drivers. Added clockport system for mmc64,
+mmcreplay, retroreplay and ide64. Added rrnet clockport device.
+Added mp3@64 clockport device. And lots of other fixes and
+improvements.
+
+<LI>
+
+<B>Fabrizio Gennari</B>
+Added some improvements to the DOS and GTK+ ports. Changed the
+Windows video to use GDI as fallback, making it compile without
+DX if needed. Fixed the t64 support. Added monitor window support
+using VTE to the GTK+ GUI. Made some monitor fixes. Fixed some
+tape code issues.
+
+<LI>
+
+<B>Groepaz</B>
+Added new more precise CRT emulation. Added support for the new
+cartridge system and many new cartridges. Fixed up parts of
+cartconv, c1541 and petcat. Added video to audio leak sound support.
+Improved the GTK3 GUI. Added x64(sc), x128, x64dtv, xplus4, xvic model
+selection system. Added KoalaPad emulation. Added keyrah keymaps.
+Added joystick keys mapping to the keymap system. CIA emulation
+improvements. Added basic support for compute gazette sidplayer
+files (mus/str) to vsid. Added new palette files. Added
+'available features' code. Fixed/added some items in the OSX GUI.
+Added random tape wobble emulation. Added 64k RGCD cartridge
+emulation. Added psid v4 3sid support to vsid. Added single frame
+advance. Added drive RPM and wobble support. Added rrnet mk3
+emulation. Added GMod2 cartridge emulation. Added xvic BehrBonz
+cartridge emulation. Added VICII VSP-bug emulation. Wrote alot of
+test programs. Updated this document after a long period of
+outdated mess. And various fixes and improvements.
+
+<LI>
+
+<B>Olaf Seibert</B>
+Contributed some PET, including PET DWW hires, Xaw, lightpen,
+hardware scaling, and disk drive patches. Added proper SuperPET
+support, including 6809/6309 CPU emulation. Maintains the Xaw UI.
+Added PET HRE (High Res Emulator) board emulation. Added the
+2-chip colour board for the Universal PET mainboard. Added
+support for 'printer/plotter' Commodore 1520.
+
+<LI>
+
+<B>Marcus Sutton</B>
+Made some console, dialog and joystick fixes for the BeOS port.
+Maintains the BeOS port. Added some GTK2 fixes. Fixed some PET model
+selection issues. Revived the Windows NT Unicode port.
+
+<LI>
+
+<B>Kajtar Zsolt</B>
+Wrote the IDE64 interface emulation, FD2000/4000 drive emulation, SCPU64
+emulation and alot of fixes. Improved the mouse support. Added drive
+burst modification support. Added 1541 drive sounds emulation. Improved
+c64 cart emulation. Added DAC high pass filtering. Added the xscpu64
+emulator. Added scroll wheel support for the Micromys mouse emulation.
+Added Swiss ROM support to x128. Added IDE64 USB server emulation. Added
+1540 drive emulation. Improved monitor support. Improved vdrive
+compatibility. Added godot screenshot support. And fixed various issues.
+
+<LI>
+
+<B>AreaScout</B>
+Fixed the SDL2 port. Revived the Android port. Maintains the SDL1,
+SDL2 and Android ports.
+
+<LI>
+
+<B>Bas Wassink</B>
+Fixed some gtk2/3 issues. Fixed t64 file handling. Fixed memory
+leaks. Added more doxygen documentation. Fixed c1541 issues.
+Updated the Linux-Native-Howto.txt file. Added autoconf, automake and
+yasm version checking. Fixed runtime linker path issues with *BSD. Fixed
+out-of-tree building. One of the driving forces behind the 'native' GTK3
+port.
+
+<LI>
+
+<B>Michael C. Martin</B>
+One of the driving forces behind the 'native' GTK3 port.
+
+</UL>
+
+<P>
+Former/inactive team members:
+
+</P>
+
+<UL>
+
+<LI>
+
+<B>BSzili</B>
+Provided many amigaos4 fixes. Maintained the amigaos based and derived
+ports.
+
+<LI>
+
+<B>Errol Smith</B>
+Improved VDC emulation. Improved MPS803 printer emulation.
+
+<LI>
+
+<B>Daniel Kahlin</B>
+Worked on DTV VIC emulation, palette, DTV SID support in resid,
+better DMA/Blitter support and did lots of refactoring. Added
+new monitor commands and features. Improved the VIC emulation
+for xvic. Made MIDI driver code for Win32. Rewrote the xvic
+cartridge system. Added Mega-Cart and Final Expansion V3.2
+support to xvic. Wrote large parts of the new VIC-II emulation
+used in x64sc, especially the dot clock domain emulation. Wrote
+many test programs for hardware analysis.
+
+<LI>
+
+<B>Andreas Matthies</B>
+Improved the datasette support, the VIC20 video emulation and
+some UI stuff in the Win32 and DOS ports. He also wrote the
+BeOS port and implemented video/audio capture support. Improved
+history recording/playback and implemented support for video
+recording and the netlink feature. Made the Win32 user
+changable keyboard shortcut system. Improved CIA and VIA
+emulation. Worked on x64sc, especially interrupt timing.
+Improved the FFMPEG support and started the 'in-source'
+FFMPEG support/merge. Wrote test programs. Various
+bug(fixe)s. ;-)
+
+<LI>
+
+<B>Ulrich Schulz</B>
+Maintains the Dingoo port(s).
+
+<LI>
+
+<B>Stefan Haubenthal</B>
+Added some Amiga fixes.
+
+<LI>
+
+<B>Thomas Giesel</B>
+Added new monitor commands, features and improvements.
+
+<LI>
+
+<B>Ingo Korb</B>
+Corrected block allocation and interleave for c1541/vdrive,
+added rudimentary xplus4 tape recording support, fixed some GTK2
+issues, corrected a case of missing Pi symbols in petcat, changed
+the trap opcode byte, stopped the high-level serial drive code
+from responding to addresses 16-30 and was forced to update this
+entry himself.
+
+<LI>
+
+<B>Antti S. Lankila</B>
+Made the ReSID-fp engine, rewrote the PAL emulation code and
+fixed the sound core for lower latency. Rewrote DTV SID support
+(ReSID-dtv). Improved 1541 drive rotation emulation. Worked on
+x64sc. Added RSID BASIC tunes support to vsid. Several ReSID
+fixes and improvements.
+
+<LI>
+
+<B>Christian Vogelgsang</B>
+Maintained the Mac OS X port. Added Intel Mac support and
+universal binary creation. Wrote the build scripts for all
+external Mac libraries and the bindist bundle tool. Improved
+the TFE chip emulation. Added some GTK+ fixes.
+
+<LI>
+
+<B>Dag Lem</B>
+Implemented the reSID SID emulation engine and video hardware
+scaling.
+
+<LI>
+
+<B>Spiro Trikaliotis</B>
+Copyright (C) 2000-2011
+Wrote the Win32 console implementation for the built-in
+monitor, corrected some REU related bugs, improved the CIA
+emulation, added com-port CIA support to the Win32 port, added
+text copy and paste support to the Win32 port, added support
+for the TFE and RR-Net (cs8900a), and wrote some further
+patches.
+
+<LI>
+
+<B>Hannu Nuotio</B>
+Copyright (C) 2007-2011
+Implemented DTV flash emulation, DTV support in the monitor,
+large parts of the DTV VIC, burst mode and skip cycle emulation
+as well as many other things. Added NEOS and Amiga mouse,
+paddle and light pen support. Added new monitor commands and
+features, including memmap. Made MIDI support and OSS MIDI
+driver. Implemented most of the SDL UI. Rewrote xvic CPU/VIC-I
+core for cycle based emulation. Implemented C64 cartridge
+snapshot support. Initiated and worked on all parts of
+implementing x64sc. Wrote test programs.
+
+<LI>
+
+<B>Andreas Boose</B>
+Copyright (C) 1998-2010
+Gave lots of information and bug reports about the VIC-II, the
+6510 and the CIAs; moreover, he wrote several test-routines
+that were used to improve the emulation. He also added
+cartridge support and has been the main head behind the drive
+and datasette emulation since version 0.15. Also added several
+UI elements to the DOS, Win32 and *nix ports. He rewrote the
+C128 emulation adding Z80 mode, C64 mode and function ROM
+support, wrote the screenshot and the event system and started
+the plus4 emulator. Restructured the serial bus emulation and
+added realdrive and rawdrive support.
+
+<LI>
+
+<B>Tibor Biczo</B>
+Copyright (C) 1998-2010
+Improved the Win32 port and plus4 emulation.
+
+<LI>
+
+<B>M. Kiesel</B>
+Copyright (C) 2007-2010
+Started implementing x64dtv. The C64DTV memory model and early
+versions of the DMA and Blitter engine have been implemented by
+him. Added new monitor commands and features.
+
+<LI>
+
+<B>Andreas Dehmel</B>
+Copyright (C) 1999-2007
+Wrote the Acorn RISC OS port.
+
+<LI>
+
+<B>David Hansel</B>
+Copyright (C) 2003-2005
+Wrote the Star NL10 printer driver, implemented IEC devices and
+improved the tape emulation.
+
+<LI>
+
+<B>Markus Brenner</B>
+Copyright (C) 2000-2004
+Added VDC emulation to x128 and added support for some more
+cartridges.
+
+<LI>
+
+<B>Thomas Bretz</B>
+Copyright (C) 1999-2004
+Started the OS/2 port.
+
+<LI>
+
+<B>Daniel Sladic</B>
+Copyright (C) 1997-2001
+Started the work on hardware-level 1541 emulation and wrote the
+new monitor introduced with VICE 0.15.
+
+<LI>
+
+<B>André Fachat</B>
+Copyright (C) 1996-2001
+Wrote the PET and CBM-II emulators, the CIA and VIA emulation,
+the IEEE488 interface, implemented the IEC serial bus in `xvic'
+and made tons of bug fixes.
+
+<LI>
+
+<B>Ettore Perazzoli</B>
+Copyright (C) 1996-1999
+Made the 6510, VIC-II, VIC-I and CRTC emulations, part of the
+hardware-level 1541 emulation, speed optimizations, bug fixes,
+the event-driven cycle-exact engine, the Xt/Xaw/Xfwf-based GUI
+for X11, a general code reorganization, the new resource
+handling, most of the documentation. He also wrote the DOS port
+and the initial Win32 port (well, somebody had to do it).
+
+<LI>
+
+<B>Teemu Rantanen</B>
+Copyright (C) 1993-1994, 1997-1999
+Implemented the SID emulation and the trap-based disk drive and
+serial bus implementation; added support for multiple display
+depths under X11. Also wrote <CODE>c1541</CODE>
+
+<LI>
+
+<B>Jouko Valta</B>
+Copyright (C) 1993-1996
+Wrote <CODE>petcat</CODE> and <CODE>c1541</CODE>, <CODE>T64</CODE> handling, user
+service and maintenance (most of the work in x64 0.3.x was made
+by him); retired from the project in July 96, after VICE
+0.10.0.
+
+<LI>
+
+<B>Jarkko Sonninen</B>
+Copyright (C) 1993-1994
+He was the founder of the project, wrote the old version of the
+6502 emulation and the XDebugger, and retired from the project
+after x64 0.2.1.
+
+</UL>
+
+<P>
+Internationalization Team:
+
+</P>
+
+<UL>
+
+<LI>
+
+<B>Mikkel Holm Olsen</B>
+Copyright (C) 2009-2017
+Provided the Danish user interface translations and fixed a few monitor bugs.
+
+<B>Martin Pottendorfer</B>
+Copyright (C) 2000-2017
+Provided the German user interface translations.
+
+<B>Manuel Antonio Rodriguez Bas</B>
+Copyright (C) 2011-2017
+Provided the Spanish user interface translations.
+
+<B>Paul Dubé</B>
+Copyright (C) 2004-2017
+Provided the French user interface translations.
+
+<B>Czirkos Zoltan</B>
+Copyright (C) 2006-2017
+Provided the Hungarian user interface translations.
+
+<B>Karai Csaba</B>
+Copyright (C) 2006-2017
+Provided the Hungarian user interface translations.
+
+<B>Andrea Musuruane</B>
+Copyright (C) 2001-2017
+Provided the Italian user interface translations.
+
+<B>Jesse Lee</B>
+Copyright (C) 2011-2016
+Provided the Korean user interface translations.
+
+<B>Marco van den Heuvel</B>
+Copyright (C) 2005-2017
+Provided the Dutch user interface translations.
+
+<B>Jarek Sobolewski</B>
+Copyright (C) 2011-2017
+Provided the Polish user interface translations.
+
+<B>Michael Litvinov</B>
+Copyright (C) 2010-2017
+Provided the Russian user interface translations.
+
+<B>Peter Krefting</B>
+Copyright (C) 2000-2017
+Provided the Swedish user interface translations.
+
+<B>Emir Akaydin</B>
+Copyright (C) 2008-2017
+Provided the Turkish user interface translations.
+
+</UL>
+
+<P>
+Documentation Team:
+
+</P>
+
+<UL>
+
+<LI>
+
+<B>Daniel Kahlin</B>
+
+<B>Groepaz</B>
+
+<B>Kajtar Zsolt</B>
+
+<B>Marco van den Heuvel</B>
+
+<B>Olaf Seibert</B>
+
+</UL>
+
+<P>
+External contributors:
+
+</P>
+
+<UL>
+
+<LI>
+
+<B>Alexis Ballier</B>
+Provided some ffmpeg fixes.
+
+<LI>
+
+<B>Christian Bauer</B>
+Wrote the very interesting "VIC article" from which we got
+invaluable information about the VIC-II chip: without this, the
+VIC-II implementation would not have been possible.
+
+<LI>
+
+<B>Anthony J. Bentley</B>
+Provided some man page fixes.
+
+<LI>
+
+<B>Eliseo Bianchi</B>
+Provided the italian Amiga translations.
+
+<LI>
+
+<B>Enrico Bruttomesso</B>
+Improved some italian translations.
+
+<LI>
+
+<B>Frank Buss</B>
+Provide some midi fixes.
+
+<LI>
+
+<B>ck!</B>
+Provided a win32 cbm character font.
+
+<LI>
+
+<B>iAN CooG</B>
+Added win32 vsid GUI and contributed various patches.
+
+<LI>
+
+<B>Mike Dawson</B>
+Provided the GP2X port.
+
+<LI>
+
+<B>Hans Deragon</B>
+Added support for dead keys in X11.
+
+<LI>
+
+<B>Paul David Doherty</B>
+Wrote <CODE>zip2disk</CODE>, on which the Zipcode support in <CODE>c1541</CODE> is based.
+
+<LI>
+
+<B>Sven A. Droll</B>
+Added Supergrafik support to petcat.
+
+<LI>
+
+<B>Peter Edwards</B>
+Implemented the SDL UI slider control and fixed some
+GP2X/Dingoo SDL UI issues.
+
+<LI>
+
+<B>István Fábián</B>
+Contributed a initial patch with the more correct 1541 bus
+timing code and which gave us hints for to improving the 1541
+emulation.
+
+<LI>
+
+<B>Daniel Fandrich</B>
+Contributed some disk drive patches.
+
+<LI>
+
+<B>Dirk Farin</B>
+Rewrote the MITSHM code.
+
+<LI>
+
+<B>Georg Feil</B>
+Added support for toggling CB2 sound output line in the PET
+emulator.
+
+<LI>
+
+<B>Peter Andrew Felvegi aka Petschy</B>
+Fixed a couple of bugs in the fast serial emulation.
+
+<LI>
+
+<B>Ricardo Ferreira</B>
+Contributed the <CODE>unlynx</CODE> and <CODE>system</CODE> commands in <CODE>c1541</CODE> and
+added aRts sound support.
+
+<LI>
+
+<B>Flooder</B>
+Provided parts of the Polish user interface translations.
+
+<LI>
+
+<B>Robert H. Forsman Jr.</B>
+Provided parts of the widget set for implementing the Xaw GUI.
+
+<LI>
+
+<B>Ian Gledhill</B>
+Added support for the catweasel.device driver.
+
+<LI>
+
+<B>Peter Gordon</B>
+Provided support for native AmigaOS4 compiling.
+
+<LI>
+
+<B>Richard Hable</B>
+Contributed the initial version of the REU emulation.
+
+<LI>
+
+<B>Shawn Hargreaves</B>
+Wrote Allegro, the graphics and audio library used in the DOS
+version.
+
+<LI>
+
+<B>Ville-Matias Heikkila</B>
+Rewrote the vic20 sound code.
+
+<LI>
+
+<B>David Holz</B>
+Provided a label file which gives the built-in monitor the
+labels for the C64.
+
+<LI>
+
+<B>Nathan Huizinga</B>
+Added support for Expert and Super Snapshot carts.
+
+<LI>
+
+<B>Derrick Inksley</B>
+Fixed loading of zip files with brackets ([]) in
+the filename for the windows port. Added drive selection
+functionality to the window sdl port. Some drive sound
+fixes. Fixed some windows drag'n'drop issues. Fixed some
+monitor code issues.
+
+<LI>
+
+<B>Craig Jackson</B>
+Contributed miscellaneous patches in the old X64 times.
+
+<LI>
+
+<B>Dirk Jagdmann</B>
+Wrote the Catweasel sound driver.
+
+<LI>
+
+<B>Uffe Jakobsen</B>
+Wrote the Silverrock cartridge emulation and fixed the
+ocean cartridge bank wrap. Fixed some network code
+issues. Fixed some monitor issues. Provided some SDL
+port fixes.
+
+<LI>
+
+<B>Lasse Jyrkinen</B>
+Contributed miscellaneous patches in the old X64 times.
+
+<LI>
+
+<B>Peter Karlsson</B>
+Provided the swedish UI translations in the past.
+
+<LI>
+
+<B>Greg King</B>
+Added a working RTC to the emulation of the IDE64
+cartridge. Provided some vdrive fixes. Added Inkwell
+Systems lightpen support. Fixed some monitor code
+issues. Provided some windows port fixes. Provided some
+SDL port fixes.
+
+<LI>
+
+<B>Michael Klein</B>
+Fixed some MacOSX code issues. Contributed the ESD sound
+driver, basic support for the OPENCBM library and some
+other patches.
+
+<LI>
+
+<B>Frank König</B>
+Contributed the Win32 joystick autofire feature.
+
+<LI>
+
+<B>Bernd Kortz</B>
+Provided some fixes for ZETA and the ZETA binary package.
+
+<LI>
+
+<B>Bernhard Kuhn</B>
+Made some joystick improvements for Linux.
+
+<LI>
+
+<B>Alexander Lehmann</B>
+Added complete support for all the VIC20 memory configurations
+for the old VICE 0.12.
+
+<LI>
+
+<B>Ilkka "itix" Lehtoranta</B>
+Provided the routines for the cybergraphics support for the
+Amiga ports.
+
+<LI>
+
+<B>Magnus Lind</B>
+Atari ST mouse and Atari CX-22 trackball emulation and pixel
+aspect fixes. Improved the Amiga mouse emulation. Improved
+the vic20 sound output. Added windows POV hat support.
+Improved sound fragment size handling. Provided some windows
+fixes. Provided some gtk port fixes. Provided some SDL port
+fixes.
+
+<LI>
+
+<B>Lioncash</B>
+Provided some c1541 fixes. Fixed some 'geninfocontrib' helper tool
+issues. Fixed some 'embedded' build issues. Fixed some memory leaks.
+
+<LI>
+
+<B>Locnet</B>
+Made the initial android port of x64.
+
+<LI>
+
+<B>Wolfgang Lorenz</B>
+Wrote an excellent 6510 test suite that helped us to debug the
+CPU emulation.
+
+<LI>
+
+<B>lvd</B>
+Provided some monitor fixes.
+
+<LI>
+
+<B>Marko Mäkelä</B>
+Wrote lots of CPU documentation. Wrote the VIC Flash Plugin
+cartridge emulation in xvic. Wrote the Ultimem cartridge
+emulation in xvic.
+
+<LI>
+
+<B>mar77i</B>
+Fixed some resource handling issues.
+
+<LI>
+
+<B>Robert McIntyre</B>
+Bugged people enough to get the improved g64 support rolling,
+updated g64 support to allow variable-length tracks, and
+performed initial development of half-track support.
+
+<LI>
+
+<B>Robert W. McMullen</B>
+Provided parts of the widget set for implementing the Xaw GUI.
+
+<LI>
+
+<B>Jennifer Medkief</B>
+Was in charge of checking up on the GUIs for elements that are
+wrong, unaccessable, and missing.
+
+<LI>
+
+<B>Dan Miner</B>
+Contributed some patches to the fast disk drive emulation.
+
+<LI>
+
+<B>mjhn</B>
+Provided some *nix 'readme' fixes.
+
+<LI>
+
+<B>Moiree</B>
+Provided some command line fixes. Improved the build system. Fixed
+some vsid bugs. Fixed some SDL GUI issues. Fixed some documentation
+items.
+
+<LI>
+
+<B>Luca Montecchiani</B>
+Contributed a new Unix joystick driver.
+
+<LI>
+
+<B>Wolfgang Moser</B>
+Provided small optimization fixes to the GCR code, provided an
+excellent REU test suite and added REU fixes, and is always the
+good guy reviewing and commenting changes in the background.
+
+<LI>
+
+<B>Roberto Muscedere</B>
+Improved support for REL files.
+
+<LI>
+
+<B>Leandro Nini</B>
+Improved ReSID emulation. And fixed some c64dtv cpu opcode issues.
+
+<LI>
+
+<B>Tomi Ollila</B>
+Donated <CODE>findpath.c</CODE>.
+
+<LI>
+
+<B>Per Olofsson</B>
+Digitalized the C64 colors used in the (old) default palette.
+
+<LI>
+
+<B>Lasse Öörni</B>
+Contributed the Windows Multimedia sound driver
+
+<LI>
+
+<B>Stein Pedersen</B>
+Fixed windows midi driver for 64bit windows.
+
+<LI>
+
+<B>Helfried Peyrl</B>
+Supplied a patch that fixes REL file records larger 256 bytes
+when using vdrive.
+
+<B>Christopher Phillips</B>
+Fixed and improved some Mac OS X gui items.
+
+<LI>
+
+<B>Frank Prindle</B>
+Contributed some patches.
+
+<LI>
+
+<B>Giuliano Procida</B>
+Used to maintain the VICE <CODE>deb</CODE> package for the Debian
+distribution, and also helped proofreading the documentation.
+
+<LI>
+
+<B>Vesa-Matti Puro</B>
+Wrote the very first 6502 CPU emulator in x64 0.1.0. That was
+the beginning of the story...
+
+<LI>
+
+<B>Rami Rasanen</B>
+Rewrote the VIC20 sound code.
+
+<LI>
+
+<B>Peter Rittwage</B>
+Made 1541 GCR hardware tests.
+
+<LI>
+
+<B>David Roden</B>
+Fixed various issues related to ffmpeg settings.
+
+<LI>
+
+<B>Pablo Roldán</B>
+Contributed initial patch for VIC-II PAL-N model selection.
+
+<LI>
+
+<B>Mathias Roslund</B>
+Provided the AmigaOS4 port.
+
+<LI>
+
+<B>Gunnar Ruthenberg</B>
+Provided some VIC-II enhancements and improved the Win32 port.
+
+<LI>
+
+<B>Johan Samuelsson</B>
+Provided the Swedish Amiga translations.
+
+<LI>
+
+<B>Oliver Schaertel</B>
+Wrote the X11 full screen, parts of custom ROM set support and
+1351 mouse emulation for unix.
+
+<LI>
+
+<B>Peter Schepers</B>
+Contributed a document describing the G64 image format.
+
+<LI>
+
+<B>Michael Schwendt</B>
+Helped with the SID (audio) chip emulation, bringing important
+suggestions and bug reports, as well as the wave tables and
+filter emulation from his SIDplay emulator.
+
+<LI>
+
+<B>Heiko Selber</B>
+Contributed some VIC20 I/O patches.
+
+<LI>
+
+<B>John Selck</B>
+Improved the video rendering and added the fast PAL emulation.
+Implemented new color generation based on P. Timmermanns
+knowledge.
+
+<LI>
+
+<B>Chris Sharp</B>
+Wrote the AIX sound driver.
+
+<LI>
+
+<B>Andr351 "JoBBo" Siegel</B>
+Provided the native MorphOS icons.
+
+<LI>
+
+<B>Harry "Piru" Sintonen</B>
+Provided lots of fixes and improvements for the Amiga ports.
+
+<LI>
+
+<B>Manfred Spraul</B>
+Wrote the Win32 text lister.
+
+<LI>
+
+<B>Markus Stehr</B>
+Provided the MMC64 emulation.
+
+<LI>
+
+<B>Michael Steil</B>
+Provided some c1541 fixes.
+
+<LI>
+
+<B>Dominique Strigl</B>
+Contributed miscellaneous patches in the old X64 times.
+
+<LI>
+
+<B>Samuli Suominen</B>
+Fixed XShm includes for newer xextproto versions and updated
+libpng check for newer versions.
+
+<LI>
+
+<B>Steven Tieu</B>
+Added initial support for 16/24 bpp X11 displays.
+
+<LI>
+
+<B>Philip Timmermann</B>
+Did a lot of research about the VIC-II colors.
+
+<LI>
+
+<B>TMLPiper</B>
+Provided fixes for the osx port.
+
+<LI>
+
+<B>Brian Totty</B>
+Provided parts of the widget set for implementing the Xaw GUI.
+
+<LI>
+
+<B>Mustafa "GnoStiC" Tufan</B>
+Made improvements to the GP2x port.
+
+<LI>
+
+<B>Lionel Ulmer</B>
+Implemented joystick support for Linux and a first try of a SID
+emulation for SGI machines.
+
+<LI>
+
+<B>vonred</B>
+Added multiple monitor support to the windows port.
+
+<LI>
+
+<B>Krister Walfridsson</B>
+Implemented joystick and sound support for NetBSD.
+
+<LI>
+
+<B>webulator</B>
+Provided Win32 drag &#38; drop support
+
+<LI>
+
+<B>Robert Willie</B>
+Added some additional commands to the fsdevice emulation.
+
+<LI>
+
+<B>Peter Weighill</B>
+Gave many ideas and contributed the ROM patcher.
+
+<LI>
+
+<B>Gerhard Wesp</B>
+Contributed the <CODE>extract</CODE> command in <CODE>c1541</CODE>.
+
+<LI>
+
+<B>Maciej Witkowiak</B>
+Did some IDE64 and C1541 fixes.
+
+<LI>
+
+<B>David Wood</B>
+Provided some monitor fixes.
+
+<LI>
+
+<B>Count Zero</B>
+Fixed some monitor issues.
+
+<LI>
+
+<B>Bjoern Odendahl</B>
+Created the new VICE logo and volunteered to create new icons.
+
+</UL>
+
+<P>
+(We hope we have not forgotten anybody; if you think we have,
+please tell us.)
+
+</P>
+<P>
+The people around the world providing results from running our
+test programs on various machines deserve a special mention:
+
+</P>
+
+<UL>
+
+<LI>
+
+<B>hedning</B> (Drean C64 PAL-N, various C64 PAL boxes)
+<LI>
+
+<B>Jason Compton</B> (Various C64 and C128 NTSC boxes)
+<LI>
+
+<B>The Woz</B> (Drean C64 PAL-N)
+<LI>
+
+<B>Thierry</B> (Drean C64 PAL-N)
+<LI>
+
+<B>MOS6569</B> (C64C PAL)
+<LI>
+
+<B>Mike</B> (VIC-20 PAL)
+<LI>
+
+<B>Wilson</B> (VIC-20 NTSC)
+<LI>
+
+<B>Vicassembly</B> (VIC-20 NTSC)
+<LI>
+
+<B>David "jbevren" Wood</B> (C64 NTSC-OLD)
+</UL>
+
+<P>
+Thanks also to everyone else for sending suggestions, ideas,
+bug reports, questions and requests. In particular, a warm
+thanks goes to the following people:
+
+</P>
+
+<UL>
+<LI>
+
+<B>Lutz Sammer</B>
+<LI>
+
+<B>Ralph Mason</B>
+<LI>
+
+<B>George Caswell</B>
+<LI>
+
+<B>Jasper Phillips</B>
+<LI>
+
+<B>Luca Forcucci</B>
+<LI>
+
+<B>Asger Alstrup</B>
+<LI>
+
+<B>Bernhard Schwall</B>
+<LI>
+
+<B>Salvatore Valente</B>
+<LI>
+
+<B>Arthur Hagen</B>
+<LI>
+
+<B>Douglas Carmichael</B>
+<LI>
+
+<B>Ferenc Veres</B>
+<LI>
+
+<B>Frank Reichel</B>
+<LI>
+
+<B>Ullrich von Bassewitz</B>
+<LI>
+
+<B>Holger Busse</B>
+<LI>
+
+<B>David "jbevren" Wood</B>
+<LI>
+
+<B>Gary Glenn</B>
+</UL>
+
+<P>
+Last but not least, a very special thank to Andreas Arens, Lutz
+Sammer, Edgar Tornig, Christian Bauer, Wolfgang Lorenz, Miha
+Peternel, Per Håkan Sundell, David Horrocks, Benjamin Rosseaux and William McCabe
+for writing cool emulators to compete with.  <TT>:-)</TT>
+
+</P>
+<P><HR><P>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_16.html">previous</A>, <A HREF="vice_18.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+</BODY>
+</HTML>

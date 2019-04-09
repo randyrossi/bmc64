@@ -1,0 +1,24 @@
+#
+# VICE Palette file
+#
+# Syntax:
+# Red Green Blue Dither
+#
+# VIC palette based on http://www.colodore.com/
+
+00 00 00 0
+ff ff ff 0
+6d 23 27 0
+a0 fe f8 0
+8e 3c 97 0
+7e da 75 0
+25 23 90 0
+ff ff 86 0
+a4 64 3b 0
+ff c8 a1 0
+f2 a7 ab 0
+db ff ff 0
+ff b4 ff 0
+d7 ff ce 0
+9d 9a ff 0
+ff ff c9 0

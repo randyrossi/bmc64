@@ -1,0 +1,697 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.52
+     from ../../doc/vice.texi on 19 December 2018 -->
+
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<TITLE>VICE Manual - 4  System files</TITLE>
+<style type="text/css">
+    @import 'vice.css';
+</style>
+</HEAD>
+<BODY>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_3.html">previous</A>, <A HREF="vice_5.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H1><A NAME="SEC25" HREF="vice_toc.html#TOC25">4  System files</A></H1>
+
+<P>
+In order to work properly, the emulators need to load a few system
+files:
+
+</P>
+
+<UL>
+
+<LI>
+
+the <EM>system ROMs</EM>, raw binary files containing copies of the original ROMs
+of the machine you are emulating;
+
+<LI>
+
+the <EM>keyboard maps</EM>, text files describing the keyboard layout;
+
+<LI>
+
+the <EM>palette files</EM>, text files describing the colors of the machine you
+are emulating.
+
+<LI>
+
+the <EM>romset files</EM>, text files describing the different ROMs to load.
+
+</UL>
+
+<P>
+The place where they will be searched for depends on the value of the
+<CODE>Directory</CODE> resource, which is a colon (<CODE>:</CODE>)-separated search
+path list, like the UNIX <CODE>PATH</CODE> environment variable.  The
+default value is
+
+</P>
+
+<PRE>
+PREFIX/lib/vice/EMU:$HOME/.vice/EMU:BOOTPATH/EMU
+</PRE>
+
+<P>
+Where <CODE>PREFIX</CODE> is the installation prefix (usually
+<TT>`/usr/local'</TT>), <CODE>EMU</CODE> is the name of the emulated machine
+(<CODE>C64</CODE>, <CODE>C64DTV</CODE>, <CODE>C128</CODE>, <CODE>PET</CODE>,  <CODE>PLUS4</CODE>, <CODE>CBM-II</CODE>, <CODE>SCPU64</CODE>
+or <CODE>VIC20</CODE>) and <CODE>BOOTPATH</CODE> is the directory where the executable resides.
+The disk drive ROMs are looked for in a directory with <CODE>EMU</CODE> set to
+<CODE>DRIVES</CODE>. <CODE>$HOME</CODE> is the user's home directory.
+
+</P>
+<P>
+For example, if you have the C64 emulator installed in
+
+</P>
+
+<PRE>
+/usr/local/bin/x64
+</PRE>
+
+<P>
+then the value will be
+
+</P>
+
+<PRE>
+/usr/local/lib/vice/C64:$HOME/.vice/C64:/usr/local/bin/C64
+</PRE>
+
+<P>
+And system files will be searched for under the following directories,
+in the specified order:
+
+</P>
+
+<OL>
+<LI>
+
+<CODE>/usr/local/lib/VICE/C64</CODE>
+<LI>
+
+<CODE>$HOME/.vice/C64</CODE>
+<LI>
+
+<CODE>/usr/local/bin/C64</CODE>
+</OL>
+
+<P>
+System files can still be installed in a different directory if you
+specify a complete path instead of just a file name.  For example, if
+you specify <TT>`./kernal'</TT> as the kernal image name, the kernal image
+will be loaded from the current directory.  This can be done by using
+command-line options or by modifying resource values (see section <A HREF="vice_6.html#SEC43">6.1  Format of resource files</A>).
+
+</P>
+
+
+
+<H2><A NAME="SEC26" HREF="vice_toc.html#TOC26">4.1  ROM files</A></H2>
+
+<P>
+Every emulator requires its own ROM set.  For the VIC20 and the C64, the
+ROM set consists of the following files:
+
+</P>
+
+<UL>
+
+<LI>
+
+<TT>`kernal'</TT>,  the Kernal ROM (8 KBytes)
+
+<LI>
+
+<TT>`basic'</TT>, the Basic ROM (8 KBytes)
+
+<LI>
+
+<TT>`chargen'</TT>, the character generator ROM (4 Kbytes)
+
+</UL>
+
+<P>
+The C128 needs the following files:
+
+</P>
+
+<UL>
+
+<LI>
+
+<TT>`kernal'</TT>, the Kernal ROM (8 Kbytes)
+
+<LI>
+
+<TT>`basic'</TT>, the Basic + Editor ROM (32 Kbytes)
+
+<LI>
+
+<TT>`chargen'</TT>, the character generator ROM (4 Kbytes)
+
+</UL>
+
+<P>
+The C128, VIC20, SCPU64 and C64 emulators also need the following DOS ROMs for
+the hardware-level emulation of the 1540, 1541, 1571, 1581, 2000 and 4000 disk
+drives:
+
+</P>
+
+<UL>
+
+<LI>
+
+<TT>`dos1540'</TT>, the 1540 drive ROM (16 Kbytes)
+
+<LI>
+
+<TT>`dos1541'</TT>, the 1541 drive ROM (16 Kbytes)
+
+<LI>
+
+<TT>`dos1541II'</TT>, the 1541-II drive ROM (16 Kbytes)
+
+<LI>
+
+<TT>`dos1571'</TT>, the 1571 drive ROM (32 Kbytes)
+
+<LI>
+
+<TT>`dos1581'</TT>, the 1581 drive ROM (32 Kbytes)
+
+<LI>
+
+<TT>`dos2000'</TT>, the 2000 drive ROM (32 Kbytes)
+
+<LI>
+
+<TT>`dos4000'</TT>, the 4000 drive ROM (32 Kbytes)
+
+</UL>
+
+<P>
+In addition to those all emulators can handle
+a parallel IEEE488 interface (the C64 and C128 via <CODE>$df**</CODE> extension,
+the VIC20 via VIC1112 emulation)
+so they also need the DOS ROM for the IEEE disk drives:
+
+</P>
+
+<UL>
+
+<LI>
+
+<TT>`dos2031'</TT>, the 2031 drive ROM (16 Kbytes)
+(DOS 2.6, Commodore ROM images 901484-03 and 901484-05)
+
+<LI>
+
+<TT>`dos2040'</TT>, the 2040 drive ROM (8 Kbytes)
+(DOS 1, Commodore ROM images 901468-06, 901468-07)
+
+<LI>
+
+<TT>`dos3040'</TT>, the 3040 drive ROM (12 Kbytes)
+(DOS 2, Commodore ROM images 901468-11, 901468-12 and 901468-13)
+
+<LI>
+
+<TT>`dos4040'</TT>, the 4040 drive ROM (12 Kbytes)
+(DOS 2, Commodore ROM images 901468-14, 901468-15 and 901468-16)
+
+<LI>
+
+<TT>`dos1001'</TT>, the 1001/8050/8250 drive ROM (16 Kbytes)
+(DOS 2.7, Commodore ROM images 901887-01 and 901888-01)
+
+</UL>
+
+<P>
+Note that there are other DOS images on the internet. The DOS 2.5 images
+might be used with the 8050, but it cannot handle the double sided drives
+of the 1001 and 8250 and it is not supported by VICE.
+
+</P>
+<P>
+The PET emulator uses an expanded setup, because there are three major
+versions of the Basic and the Kernal, and many versions of the
+Editor ROM. In addition there are cartridge ROM sockets.
+
+</P>
+<P>
+The Kernal files contain the memory from range $F000-$FFFF, the Basic
+ROMs either the range $C000-$DFFF or $B000-$DFFF.
+To handle the different screen
+sizes and keyboards, different so-called "editor-ROMs" for the memory
+range $E000-$E800 are provided.
+The PET ROMs have the following names:
+
+</P>
+
+<UL>
+
+<LI>
+
+<TT>`kernal1'</TT>, the PET2001 Kernal ROM (4 KBytes)
+(Commodore ROM images 901447-06 and 901447-07)
+<LI>
+
+<TT>`kernal2'</TT>, the PET3032 Kernal ROM (4 KBytes)
+(Commodore ROM image 901465-03)
+<LI>
+
+<TT>`kernal4'</TT>, the PET4032/8032 Kernal ROM (4 KBytes)
+(Commodore ROM image 901465-22)
+
+<LI>
+
+<TT>`basic1'</TT>, the PET2001 Basic 1 ROM (8 KBytes)
+(Commodore ROM images 901447-09, 901447-02, 901447-03, 901447-04.bin.
+The -09 ROM is the revised -01 ROM)
+<LI>
+
+<TT>`basic2'</TT>, the PET3032 Basic 2 ROM (8 KBytes)
+(Commodore ROM images 901465-01 and 901465-01)
+<LI>
+
+<TT>`basic4'</TT>, the PET4032/8032 Basic 4 ROM (12 KBytes)
+(Commodore ROM images 901465-23, 901465-20 and 901465-21.
+The -23 ROM is a revised -19 ROM)
+
+<LI>
+
+<TT>`edit1g'</TT>, the PET2001 editor for graphics keyboards (2 KBytes)
+(Commodore ROM image 901447-05)
+<LI>
+
+<TT>`edit2b'</TT>, the PET3032 editor for business keyboards (2 KBytes)
+(Commodore ROM image 901474-01)
+<LI>
+
+<TT>`edit2g'</TT>, the PET3032 editor for graphics keyboards (2 KBytes)
+(Commodore ROM image 901447-24)
+<LI>
+
+<TT>`edit4g40'</TT>, the PET4032 editor for graphics keyboards (2 KBytes)
+(Commodore ROM image 901498-01)
+<LI>
+
+<TT>`edit4b40'</TT>, the PET4032 editor for business keyboards (2 KBytes)
+(Commodore ROM image 901474-02)
+<LI>
+
+<TT>`edit4b80'</TT>, the PET8032 editor for business keyboards (2 KBytes)
+(Commodore ROM image 901474-04-?)
+
+<LI>
+
+<TT>`chargen'</TT>, the character generator ROM (2k).  It has two sets
+with 128 chars each.  The second (inverted) half of each set is computed from
+the first half by inverting it.  This is a PET hardware feature.
+(Commodore ROM image 901447-10)
+<LI>
+
+<TT>`chargen.de'</TT>, the character generator ROM (2k). This version is a
+patched German charset, with the characters [, \ and ] replaced by umlauts.
+It has been provided by U. Guettich and he reports that it is supported
+by some programs.
+
+<LI>
+
+<TT>`characters.901640-01.bin'</TT>, the SuperPET character generator ROM (4k).
+The first half is the same as <TT>`chargen'</TT>, the second half contains,
+instead of an upper and lower case set, an ASCII character set and an
+APL character set. For these sets, the screen code is equal to the
+ASCII/APL code.
+<LI>
+
+<TT>`waterloo-[abcdf]000.901898-0[1-5].bin'</TT>,
+<TT>`waterloo-e000.901897-01.bin'</TT>.
+The Waterloo system ROMs.
+
+<LI>
+
+<TT>`hre-9000.324992-02.bin'</TT> HiRes Emulator (at $9000) and
+<TT>`hre-a000.324993-02.bin'</TT> HiRes BASIC (at $A000).
+These are the two roms for supporting the HRE on the 8296.
+The ROMs are initialized by the command <CODE>SYS 36864</CODE>.
+</UL>
+
+<P>
+The PETs also have sockets for extension ROMs for the addresses
+$9000-$9FFF, $A000-$AFFF and $B000-$BFFF (the last one for PET2001 and
+PET3032 only).  You can specify ROM image files for those extensions
+command line options <CODE>-petrom9</CODE>, <CODE>-petromA</CODE> and
+<CODE>-petromB</CODE> resp.
+
+</P>
+<P>
+An alternative would be to specify a long kernal ROM with the
+<CODE>-kernal</CODE> option that includes the extension ROM areas.
+
+</P>
+<P>
+Also, you can specify replacements for the basic ROM at $B000-$DFFF
+with the <CODE>-petromBasic</CODE> option and for the editor ROM
+at $E000-$E7FF with the <CODE>-petromEditor</CODE> option.
+
+</P>
+<P>
+The CBM-II emulator again uses another setup.  For those models the
+kernal used is the same for all.  However, for different amounts of
+memory exist different versions of the BASIC ROMs.  The 128k RAM version
+(C610, C710, B128) uses one bank of 64k for the BASIC text and another
+one for all the variables.  The 256k RAM version uses one bank for text,
+one for variables, one for arrays and one for strings.
+
+</P>
+<P>
+Also the character generator ROMs have a format different from the
+above.  The other character ROMs have 8 bytes of pixel data per
+character.  Those ROMs have 16 bytes per character instead.  The C6x0
+only uses the first 8 of it, but the C7x0 uses 14 lines per character
+and needs those increased ROMs.  Both ROMs hold, like the PET, two
+character sets with 128 characters each.  Again the second half of the
+full (256 char) character set is computed by inverting.
+
+</P>
+
+<UL>
+
+<LI>
+
+<TT>`kernal'</TT>, the KERNAL (8k) for the business machines (6xx/7xx)
+
+<LI>
+
+<TT>`kernal.500'</TT>, the KERNAL (8k) for the personal machine (510) (901234-02)
+
+<LI>
+
+<TT>`basic.128'</TT>, the CBM-II 128k BASIC (16k)
+
+<LI>
+
+<TT>`basic.256'</TT>, CBM-II 256k BASIC (16k)
+
+<LI>
+
+<TT>`basic.500'</TT>, C510 BASIC (16k) (901236-02 + 901235-02)
+
+<LI>
+
+<TT>`chargen.500'</TT>, character generator ROM for the C5x0 (4k) (901225-01)
+
+<LI>
+
+<TT>`chargen.600'</TT>, character generator ROM for the C6x0 (4k)
+
+<LI>
+
+<TT>`chargen.700'</TT>, character generator ROM for the C7x0 (4k)
+
+</UL>
+
+<P>
+The SCPU64 needs the following files:
+
+</P>
+
+<UL>
+
+<LI>
+
+<TT>`scpu64'</TT>, the SCPU64 ROM (128 Kbytes)
+
+<LI>
+
+<TT>`chargen'</TT>, the character generator ROM (4 Kbytes)
+
+</UL>
+
+
+
+<H2><A NAME="SEC27" HREF="vice_toc.html#TOC27">4.2  Keymap files</A></H2>
+
+<P>
+<EM>Keymap files</EM> are used to define the keyboard layout, defining which
+key (or combination of keys) must be mapped to each keysym.
+
+</P>
+<P>
+In other words, the keyboard emulation works like this: whenever the
+user presses or releases a key while the emulation window has the input
+focus, the emulator receives an X-Window event with a value that
+identifies that key.  That value is called a <EM>keysym</EM> and is unique
+to that key.  The emulator then looks up that keysym in an internal
+table that tells it which key(s) to press or release on the emulated
+keyboard.
+
+</P>
+<P>
+This table is described by the keymap file, which is made up of lines
+like the following:
+
+</P>
+
+<PRE>
+KEYSYM ROW COLUMN SHIFTFLAG
+</PRE>
+
+<P>
+Where:
+
+</P>
+
+<UL>
+
+<LI>
+
+<CODE>KEYSYM</CODE> is a string identifying the keysym: you can use the
+<CODE>xev</CODE> utility (shipped with the X Window system) to see what keysym
+is bound to any key;
+
+<LI>
+
+<CODE>ROW</CODE> and <CODE>COLUMN</CODE> identify the key on the emulated keyboard;
+
+<LI>
+
+<CODE>SHIFTFLAG</CODE> can have one of the following values:
+
+
+<UL>
+
+<LI>
+
+<CODE>0</CODE>: the key is never shifted;
+
+<LI>
+
+<CODE>1</CODE>: the key is shifted;
+
+<LI>
+
+<CODE>2</CODE>: the key is the left shift;
+
+<LI>
+
+<CODE>4</CODE>: the key is the right shift;
+
+<LI>
+
+<CODE>8</CODE>: the key can be (optionally) shifted by the user.
+
+</UL>
+
+</UL>
+
+<P>
+The <CODE>SHIFTFLAG</CODE> is useful if you want certain keys to be
+"artificially" shifted by the emulator, and not by the user.  For
+example, <KBD>F2</KBD> is shifted on the C64 keyboard, but you might want it
+to be mapped to the unshifted <KBD>F2</KBD> key on the PC keyboard.  To do
+so, you just have to use a line like the following:
+
+</P>
+
+<PRE>
+F2 0 4 1
+</PRE>
+
+<P>
+where <CODE>0</CODE> and <CODE>4</CODE> identify the key (row 0, column 4 on the
+keyboard matrix), and <CODE>1</CODE> specifies that every time the user presses
+<KBD>F2</KBD> the shift key on the C64 keyboard must be pressed.
+
+</P>
+<P>
+There are also some special commands you can put into the keyboard file;
+they are recognized because they start with an exclamation mark:
+
+</P>
+
+<UL>
+
+<LI>
+
+<CODE>!CLEAR</CODE> clears the currently loaded keyboard map; it is
+necessary to put this at the beginning of the file if you want the
+keymap file to override all of the current internal settings;
+
+<LI>
+
+<CODE>!LSHIFT</CODE>, <CODE>!RSHIFT</CODE>, followed by a row and a column
+value, specify where the left and right shift keys are located on the
+emulated keyboard; for example, C64 default keymaps will specify
+
+
+<PRE>
+!LSHIFT 1 7
+!RSHIFT 6 4
+</PRE>
+
+</UL>
+
+<P>
+Any line starting with the <CODE>#</CODE> sign, instead, is completely
+ignored.  This is useful for adding comments within the keymap file.
+
+</P>
+<P>
+VICE keymap files have the <TT>`.vkm'</TT> default extension, and every
+emulator comes with a default positional mapping and a default symbolic
+mapping.
+
+</P>
+
+
+
+<H2><A NAME="SEC28" HREF="vice_toc.html#TOC28">4.3  Palette files</A></H2>
+
+<P>
+<EM>Palette files</EM> are used to specify the colors used in the
+emulators.  They are made up of lines like the following:
+
+</P>
+
+<PRE>
+RED GREEN BLUE DITHER
+</PRE>
+
+<P>
+where <CODE>RED</CODE>, <CODE>GREEN</CODE> and <CODE>BLUE</CODE> are hexadecimal values
+ranging from 0 to FF and specifying the amount of red, green and blue
+you want for each color and <CODE>DITHER</CODE> is a 4-bit hexadecimal number
+specifying the pattern you want when rendering on a B/W display.
+
+</P>
+<P>
+You have to include as many lines as the number of colors the emulated
+machine has, and the order of the lines must respect the one used in the
+machine (so the N'th line must contain the specifications for color N -
+1 in the emulated machine).
+
+</P>
+<P>
+Lines starting with the <CODE>#</CODE> sign are completely ignored.  This is
+useful for adding comments (such as color names) within the palette
+file.
+
+</P>
+<P>
+For example, the default PET palette file (which has only two colors, 0 for
+background and 1 for foreground), looks like the following:
+
+</P>
+
+<PRE>
+#
+# VICE Palette file
+#
+# Syntax:
+# Red Green Blue Dither
+#
+
+# Background
+00 00 00 0
+
+# Foreground
+00 FF 00 F
+</PRE>
+
+
+
+<H2><A NAME="SEC29" HREF="vice_toc.html#TOC29">4.4  Romset files</A></H2>
+
+<P>
+The Romset files are not used by default on all emulators.
+You might have recognized that the names of the ROM images are
+saved in resources. Loading a Romset file now just means a `shortcut'
+to changing all the resources with ROM image names and reloading
+the ROMs.
+
+</P>
+<P>
+The PET and CBM-II emulators use this feature to change between the
+different ROM versions available for those machines. E.g. the
+Romset file for the PET 2001 is
+
+</P>
+
+<PRE>
+KernalName="pet2001"
+EditorName=
+ChargenName="chargen"
+RomModule9Name=
+RomModuleAName=
+RomModuleBName=
+</PRE>
+
+<P>
+As you can see, the file even uses the same syntax as the
+resource file, it is just a bit stripped down.
+
+</P>
+<P>
+While a Romset file is processed, the directory where the Romset file
+was found is temporarily prepended to the search path (<CODE>Directory</CODE>
+resource). This also means that if you have a setting for
+<CODE>Directory</CODE> in it, its effect is limited to the Romset file itself.
+
+</P>
+
+
+<H3><A NAME="SEC30" HREF="vice_toc.html#TOC30">4.4.1  Romset command line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-romsetfile &#60;File&#62;</CODE>
+<DD>
+<A NAME="IDX36"></A>
+ 
+load the given romset file
+
+<A NAME="IDX37"></A>
+<DT><CODE>-romsetarchive &#60;File&#62;</CODE>
+<DD>
+load the given romset archive
+
+<A NAME="IDX38"></A>
+<DT><CODE>-romsetarchiveselect &#60;Item number&#62;</CODE>
+<DD>
+select the given item from the current romset archive
+
+</DL>
+
+<P><HR><P>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_3.html">previous</A>, <A HREF="vice_5.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+</BODY>
+</HTML>

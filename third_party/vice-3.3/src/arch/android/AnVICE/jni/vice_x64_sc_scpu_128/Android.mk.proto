@@ -1,0 +1,138 @@
+LOCAL_PATH := $(call my-dir)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := vice_x64_sc_scpu_128
+
+MY_PATH2 := ../../../../../..
+
+# Add more subdirs here, like src/subdir1 src/subdir2
+
+MY_PATH := $(LOCAL_PATH)
+
+CG_SRCDIR := $(LOCAL_PATH)
+
+LOCAL_CFLAGS := -DANDROID_COMPILE
+
+LOCAL_C_INCLUDES :=	$(LOCAL_PATH)/include \
+				$(LOCAL_PATH)/../sdl/include \
+				$(LOCAL_PATH)/../locnet/include \
+				$(LOCAL_PATH) \
+				$(LOCAL_PATH)/../../../../../../src/arch/sdl \
+				$(LOCAL_PATH)/../../../../../../src/c64/cart \
+				$(LOCAL_PATH)/../../../../../../src/c64 \
+				$(LOCAL_PATH)/../../../../../../src/drive \
+				$(LOCAL_PATH)/../../../../../../src/lib/p64 \
+				$(LOCAL_PATH)/../../../../../../src/userport \
+				$(LOCAL_PATH)/../../../../../../src/vicii \
+				$(LOCAL_PATH)/../../../../../../src/sid \
+				$(LOCAL_PATH)/../../../../../../src/core \
+				$(LOCAL_PATH)/../../../../../../src/rtc \
+				$(LOCAL_PATH)/../../../../../../src \
+				$(LOCAL_PATH)/../.. \
+				$(LOCAL_PATH)
+
+LOCAL_PATH := $(MY_PATH)
+
+LOCAL_CPPFLAGS := $(LOCAL_CFLAGS)
+LOCAL_CXXFLAGS := $(LOCAL_CFLAGS)
+
+#Change C++ file extension as appropriate
+LOCAL_CPP_EXTENSION := .cpp
+
+LOCAL_SRC_FILES := \
+	$(MY_PATH2)/src/arch/sdl/menu_c64_common_expansions.c \
+	$(MY_PATH2)/src/arch/sdl/menu_c64cart.c \
+	$(MY_PATH2)/src/c64/c64cia2.c \
+	$(MY_PATH2)/src/c64/c64export.c \
+	$(MY_PATH2)/src/c64/c64iec.c \
+	$(MY_PATH2)/src/c64/c64io.c \
+	$(MY_PATH2)/src/c64/c64printer.c \
+	$(MY_PATH2)/src/c64/c64rsuser.c \
+	$(MY_PATH2)/src/c64/c64sound.c \
+	$(MY_PATH2)/src/c64/cart/actionreplay.c \
+	$(MY_PATH2)/src/c64/cart/actionreplay2.c \
+	$(MY_PATH2)/src/c64/cart/actionreplay3.c \
+	$(MY_PATH2)/src/c64/cart/actionreplay4.c \
+	$(MY_PATH2)/src/c64/cart/atomicpower.c \
+	$(MY_PATH2)/src/c64/cart/c64cart.c \
+	$(MY_PATH2)/src/c64/cart/c64carthooks.c \
+	$(MY_PATH2)/src/c64/cart/c64cartmem.c \
+	$(MY_PATH2)/src/c64/cart/c64-generic.c \
+	$(MY_PATH2)/src/c64/cart/c64-midi.c \
+	$(MY_PATH2)/src/c64/cart/c64tpi.c \
+	$(MY_PATH2)/src/c64/cart/capture.c \
+	$(MY_PATH2)/src/c64/cart/clockport.c \
+	$(MY_PATH2)/src/c64/cart/clockport-mp3at64.c \
+	$(MY_PATH2)/src/c64/cart/clockport-rrnet.c \
+	$(MY_PATH2)/src/c64/cart/comal80.c \
+	$(MY_PATH2)/src/c64/cart/cpmcart.c \
+	$(MY_PATH2)/src/c64/cart/crt.c \
+	$(MY_PATH2)/src/c64/cart/daa.c \
+	$(MY_PATH2)/src/c64/cart/debugcart.c \
+	$(MY_PATH2)/src/c64/cart/delaep256.c \
+	$(MY_PATH2)/src/c64/cart/delaep64.c \
+	$(MY_PATH2)/src/c64/cart/delaep7x8.c \
+	$(MY_PATH2)/src/c64/cart/diashowmaker.c \
+	$(MY_PATH2)/src/c64/cart/dinamic.c \
+	$(MY_PATH2)/src/c64/cart/dqbb.c \
+	$(MY_PATH2)/src/c64/cart/easycalc.c \
+	$(MY_PATH2)/src/c64/cart/easyflash.c \
+	$(MY_PATH2)/src/c64/cart/epyxfastload.c \
+	$(MY_PATH2)/src/c64/cart/exos.c \
+	$(MY_PATH2)/src/c64/cart/expert.c \
+	$(MY_PATH2)/src/c64/cart/final.c \
+	$(MY_PATH2)/src/c64/cart/final3.c \
+	$(MY_PATH2)/src/c64/cart/finalplus.c \
+	$(MY_PATH2)/src/c64/cart/formel64.c \
+	$(MY_PATH2)/src/c64/cart/freezeframe.c \
+	$(MY_PATH2)/src/c64/cart/freezemachine.c \
+	$(MY_PATH2)/src/c64/cart/funplay.c \
+	$(MY_PATH2)/src/c64/cart/gamekiller.c \
+	$(MY_PATH2)/src/c64/cart/gmod2.c \
+	$(MY_PATH2)/src/c64/cart/gs.c \
+	$(MY_PATH2)/src/c64/cart/ide64.c \
+	$(MY_PATH2)/src/c64/cart/isepic.c \
+	$(MY_PATH2)/src/c64/cart/kcs.c \
+	$(MY_PATH2)/src/c64/cart/kingsoft.c \
+	$(MY_PATH2)/src/c64/cart/mach5.c \
+	$(MY_PATH2)/src/c64/cart/magicdesk.c \
+	$(MY_PATH2)/src/c64/cart/magicformel.c \
+	$(MY_PATH2)/src/c64/cart/magicvoice.c \
+	$(MY_PATH2)/src/c64/cart/mikroass.c \
+	$(MY_PATH2)/src/c64/cart/mmc64.c \
+	$(MY_PATH2)/src/c64/cart/mmcreplay.c \
+	$(MY_PATH2)/src/c64/cart/ocean.c \
+	$(MY_PATH2)/src/c64/cart/pagefox.c \
+	$(MY_PATH2)/src/c64/cart/prophet64.c \
+	$(MY_PATH2)/src/c64/cart/ramcart.c \
+	$(MY_PATH2)/src/c64/cart/retroreplay.c \
+	$(MY_PATH2)/src/c64/cart/reu.c \
+	$(MY_PATH2)/src/c64/cart/rexep256.c \
+	$(MY_PATH2)/src/c64/cart/rexutility.c \
+	$(MY_PATH2)/src/c64/cart/rgcd.c \
+	$(MY_PATH2)/src/c64/cart/ross.c \
+	$(MY_PATH2)/src/c64/cart/rrnetmk3.c \
+	$(MY_PATH2)/src/c64/cart/shortbus.c \
+	$(MY_PATH2)/src/c64/cart/shortbus_digimax.c \
+	$(MY_PATH2)/src/c64/cart/shortbus_etfe.c \
+	$(MY_PATH2)/src/c64/cart/silverrock128.c \
+	$(MY_PATH2)/src/c64/cart/simonsbasic.c \
+	$(MY_PATH2)/src/c64/cart/snapshot64.c \
+	$(MY_PATH2)/src/c64/cart/stardos.c \
+	$(MY_PATH2)/src/c64/cart/stb.c \
+	$(MY_PATH2)/src/c64/cart/superexplode5.c \
+	$(MY_PATH2)/src/c64/cart/supergames.c \
+	$(MY_PATH2)/src/c64/cart/supersnapshot.c \
+	$(MY_PATH2)/src/c64/cart/supersnapshot4.c \
+	$(MY_PATH2)/src/c64/cart/warpspeed.c \
+	$(MY_PATH2)/src/c64/cart/westermann.c \
+	$(MY_PATH2)/src/c64/cart/zaxxon.c \
+	$(MY_PATH2)/src/core/ata.c \
+	$(MY_PATH2)/src/core/m93c86.c \
+	$(MY_PATH2)/src/core/ser-eeprom.c \
+	$(MY_PATH2)/src/core/spi-sdcard.c
+
+LOCAL_ARM_MODE := arm
+
+include $(BUILD_STATIC_LIBRARY)

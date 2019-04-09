@@ -1,0 +1,18 @@
+GTK3-VICE FreeBSD install instructions
+======================================
+
+Some notes:
+
+* Most packages are called the same as on Linux, but there are no -dev/-devel
+  packages, the packages such as 'gtk3' will install their headers as well.
+
+* Also very important is to use `gmake` and not BSD's `make`.
+
+* pkg-config is called devel/pkgconf in the package manager, so to install
+  pkg-config you need to install 'devel/pkgconf' as root.
+
+
+<todo: translate Linux' `apt-get install` lines into `pkg install`>
+
+
+

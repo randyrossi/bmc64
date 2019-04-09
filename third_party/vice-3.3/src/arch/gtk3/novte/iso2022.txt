@@ -1,0 +1,15 @@
+#
+#  Sample text using terminal national character set suppport.
+#
+General format: [ISO-2022]
+                [UTF-8]
+
+#
+#  Sample text based on XTerm's specs and random other docs.
+#
+US-ASCII:         [(B#$@[\]^_{|}~(B]
+                  [#$@[\]^_{|}~]
+Graphics:         [(0abcdefghijklmnopqrstuvwxyz_{|}~(B]
+                  [▒␉␌␍␊°±␤␋┘┐┌└┼⎺⎻─⎼⎽├┤┴┬│≤≥_π≠£·]
+British:          [(A#$@[\]^_{|}~(B]
+                  [£$@[\]^_{|}~]

@@ -1,0 +1,53 @@
+Vice on Windows - The Next G(TK)eneration
+=========================================
+
+This is some quick instructions on getting Vice with the GTK3 GUI compiled on Windows under MinGW.
+
+1. Get msys2 (includes mingw):
+http://www.msys2.org/
+Install as per that webpage, but don't bother with step 7 (GIT), unless you actually want GIT.
+
+
+2. Install the stuff you actually need to build vice:
+NOTE - this assumes you installed the 64 bit version of msys2...
+
+Launch MSYS2 MinGW 64-bit and run the following to install your prerequisites:
+$ pacman -S mingw-w64-x86_64-gtk3 mingw-w64-x86_64-toolchain base-devel
+(Hit enter for default on all the prompts, then wait for the 300MB of stuff to download and install.)
+
+Get ntldd to help create the distribution:
+$ pacboy sync ntldd
+
+You might also want SVN to get/manage the source (or you could use a gui like e.g. TortoiseSVN):
+$ pacman -S subversion
+
+To checkout the source with SVN (e.g. to ~/vicetrunk/ ) you could then use:
+$ svn checkout https://svn.code.sf.net/p/vice-emu/code/trunk vicetrunk
+
+
+3. You need the xa 6502 compiler which you will have to download and install:
+http://www.floodgap.com/retrotech/xa/
+Download, unpack to e.g.:
+C:\msys64\home\user\xa-2.3.8
+Then at the msys prompt e.g.:
+$ cd ~/xa-2.3.8
+$ make
+$ make install
+
+
+4. Now you can try to build Vice:
+Note the below assumes your source is in c:\src\vice\
+At the MSYS2 prompt run:
+$ cd /c/src/vice/vice
+$ ./autogen.sh
+$ ./configure --enable-native-gtk3ui
+$ make
+$ make bindist
+
+NOTE if you want to help us out with bug reports, please instead configure with:
+$ ./configure --enable-native-gtk3ui --enable-debug-gtk3ui --enable-debug
+
+
+5. If it got through all those steps you should have some executables to play with in ..\vice\vice\GTK3VICE-3.*
+
+Enjoy!

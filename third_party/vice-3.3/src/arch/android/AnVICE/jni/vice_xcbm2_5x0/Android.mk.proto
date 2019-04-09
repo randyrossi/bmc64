@@ -1,0 +1,62 @@
+LOCAL_PATH := $(call my-dir)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := vice_xcbm2_5x0
+
+MY_PATH2 := ../../../../../..
+
+# Add more subdirs here, like src/subdir1 src/subdir2
+
+MY_PATH := $(LOCAL_PATH)
+
+CG_SRCDIR := $(LOCAL_PATH)
+
+LOCAL_CFLAGS := -DANDROID_COMPILE
+
+LOCAL_C_INCLUDES :=	$(LOCAL_PATH)/include \
+				$(LOCAL_PATH)/../sdl/include \
+				$(LOCAL_PATH)/../locnet/include \
+				$(LOCAL_PATH) \
+				$(LOCAL_PATH)/../../../../../../src/arch/sdl \
+				$(LOCAL_PATH)/../../../../../../src/cbm2 \
+				$(LOCAL_PATH)/../../../../../../src/drive \
+				$(LOCAL_PATH)/../../../../../../src/lib/p64 \
+				$(LOCAL_PATH)/../../../../../../src/sid \
+				$(LOCAL_PATH)/../../../../../../src/tapeport \
+				$(LOCAL_PATH)/../../../../../../src \
+				$(LOCAL_PATH)/../.. \
+				$(LOCAL_PATH)
+
+LOCAL_PATH := $(MY_PATH)
+
+LOCAL_CPPFLAGS := $(LOCAL_CFLAGS)
+LOCAL_CXXFLAGS := $(LOCAL_CFLAGS)
+
+#Change C++ file extension as appropriate
+LOCAL_CPP_EXTENSION := .cpp
+
+LOCAL_SRC_FILES += \
+	$(MY_PATH2)/src/arch/sdl/menu_cbm2cart.c \
+	$(MY_PATH2)/src/arch/sdl/menu_cbm2hw.c \
+	$(MY_PATH2)/src/arch/sdl/xcbm2_ui.c \
+	$(MY_PATH2)/src/cbm2/cbm2acia1.c \
+	$(MY_PATH2)/src/cbm2/cbm2bus.c \
+	$(MY_PATH2)/src/cbm2/cbm2cart.c \
+	$(MY_PATH2)/src/cbm2/cbm2-cmdline-options.c \
+	$(MY_PATH2)/src/cbm2/cbm2cpu.c \
+	$(MY_PATH2)/src/cbm2/cbm2datasette.c \
+	$(MY_PATH2)/src/cbm2/cbm2drive.c \
+	$(MY_PATH2)/src/cbm2/cbm2iec.c \
+	$(MY_PATH2)/src/cbm2/cbm2io.c \
+	$(MY_PATH2)/src/cbm2/cbm2memsnapshot.c \
+	$(MY_PATH2)/src/cbm2/cbm2model.c \
+	$(MY_PATH2)/src/cbm2/cbm2romset.c \
+	$(MY_PATH2)/src/cbm2/cbm2sound.c \
+	$(MY_PATH2)/src/cbm2/cbm2tpi1.c \
+	$(MY_PATH2)/src/cbm2/cbm2tpi2.c \
+	$(MY_PATH2)/src/cbm2/debugcart.c
+
+LOCAL_ARM_MODE := arm
+
+include $(BUILD_STATIC_LIBRARY)

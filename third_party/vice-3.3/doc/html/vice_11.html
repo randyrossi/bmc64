@@ -1,0 +1,256 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.52
+     from ../../doc/vice.texi on 19 December 2018 -->
+
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<TITLE>VICE Manual - 11  Event history</TITLE>
+<style type="text/css">
+    @import 'vice.css';
+</style>
+</HEAD>
+<BODY>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_10.html">previous</A>, <A HREF="vice_12.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H1><A NAME="SEC261" HREF="vice_toc.html#TOC261">11  Event history</A></H1>
+
+<P>
+VICE supports recording an arbitrary session on the emulated machine and
+playing back this session later. This is done by saving a snapshot at the beginning
+of the recording session and then remembering all the user interaction such as
+keyboard and joystick input. We call this an 'event history'.
+The main purpose for having an event history is to create game sessions, e.g. recording
+how to solve a game. An example walkthrough for the well known game "Fort Apocalypse" is
+available.
+
+</P>
+<P>
+This brief chapter will advise you how to record and playback such a session.
+Although it is based on the WinVICE x64 release and its user interface, histories may be
+transferred to other machines and other ports that support event history, e.g. the
+Unix port.
+
+</P>
+
+
+<H2><A NAME="SEC262" HREF="vice_toc.html#TOC262">11.1  Recommended Settings</A></H2>
+
+<P>
+When using the event history feature it is possible that the playback session
+differs from what was done at recording time. This might arise due to a problem
+in the initial snapshot or settings.
+Here are some suggestions to minimize the chance of failures in the session:
+a. Reset to default settings.
+b. Choose refresh rate 1/1.
+c. Choose joystick and Video/Doublesize settings as desired or needed.
+d. SID engine must be reSID (which is the default).
+e. Choose Drive settings/Idle method: None
+Do not change any settings during recording or playback!
+
+</P>
+
+
+<H2><A NAME="SEC263" HREF="vice_toc.html#TOC263">11.2  Recorded Events</A></H2>
+
+<P>
+The following is a list of the user interaction that will be recorded:
+- Joystick movement and button
+- Keyboard
+- Resetting the machine (hard and soft)
+- Attaching or detaching disk/tape images (see 8. Limitations)
+- Datasette controls
+
+</P>
+
+
+<H2><A NAME="SEC264" HREF="vice_toc.html#TOC264">11.3  Recording an Event History</A></H2>
+
+<P>
+Recording an event history will create one or two files for a snapshot and
+the list of the user events. First, create an empty directory in which these
+files are to be saved and then select this directory and the name of the
+snapshot files via 'Snapshot//Select History files/directory'.
+Next, attach the disk or tape image with the game you want to record and load and
+run the game.
+
+</P>
+<P>
+Start recording via 'Snapshot//Start/Stop Recording History'.
+Play the game. All actions will be recorded.
+After the game is finished, stop recording via 'Snapshot//Start/Stop
+Recording History'. The selected directory should now contain the two
+snapshot files (default ist start.vsf and end.vsf).
+
+</P>
+
+
+<H2><A NAME="SEC265" HREF="vice_toc.html#TOC265">11.4  Setting and Returning to Milestones</A></H2>
+
+<P>
+It is difficult to finish a game in one sitting and noone wants to
+record all their mistakes and lost lives. Use the milestone feature in a
+recording session in the following way:
+
+</P>
+<P>
+Set a milestone when you have finished a level or completed a task
+('Snapshot//Set recording milestone' or ALT-E). This will save the event
+history and a snapshot of the machine to the file end.vsf but recording will
+continue.
+
+</P>
+<P>
+Return to the last milestone when you have made a mistake or lost a life
+('Snapshot//Return to milestone' or ALT-U). This will reset the game and the
+event history to the last milestone snapshot so that you can try again.
+
+</P>
+
+
+<H2><A NAME="SEC266" HREF="vice_toc.html#TOC266">11.5  Continuing an Event History</A></H2>
+
+<P>
+If you have stopped a recording session and want to continue it later, you
+should create a backup of your start.vsf and end.vsf files first to avoid
+overwriting them by accident.
+
+</P>
+<P>
+Then change the event history start mode: 'Snapshot//Recording start mode//Load
+existing snapshot'. When you start recording now, you will continue where the
+session was stopped last time.
+
+</P>
+<P>
+Another way of continuing an existing history is to start somewhere inside the
+history (e.g. you have recorded 10 minutes of a game and later recognize that you
+made a mistake after 6 minutes that makes it impossible to finish the game).
+For this you have to select the start mode 'Overwrite playback'. Now you can
+start the playback with 'Snapshot//Start/Stop Playback History' and when you
+reach the point where you want to change the history you can directly switch to
+recording via 'Snapshot//Start/Stop Recording History'.
+
+</P>
+
+
+<H2><A NAME="SEC267" HREF="vice_toc.html#TOC267">11.6  Playing Back an Event History</A></H2>
+
+<P>
+To play back an event history, select the directory with the history files
+start.vsf and end.vsf via 'Snapshot//Select History directory' and start the
+playback with 'Snapshot//Start/Stop Playback History'. Enjoy!
+During playback any user interaction is disabled.
+The playback stops when the end of the session is reached or if
+'Snapshot//Select History directory' is selected again.
+
+</P>
+
+
+<H2><A NAME="SEC268" HREF="vice_toc.html#TOC268">11.7  Limitations and Suggestions</A></H2>
+
+<P>
+a. Snapshot files will be quite big (&#62;1MB) if a disk image has been attached.
+If possible, use PRG or T64 images to reduce the size of snapshot files.
+b. Snapshots may not be 100% accurate even with all the recommended settings.
+
+</P>
+
+
+
+<H2><A NAME="SEC269" HREF="vice_toc.html#TOC269">11.8  Event history resources</A></H2>
+
+<DL COMPACT>
+
+<DT><CODE>EventSnapshotDir</CODE>
+<DD>
+<A NAME="IDX1748"></A>
+ 
+String specifying the directory used for loading and saving snapshots
+(all emulators except vsid).
+
+<A NAME="IDX1749"></A>
+<DT><CODE>EventStartSnapshot</CODE>
+<DD>
+String specifying the filename for the start snapshot
+(all emulators except vsid).
+
+<A NAME="IDX1750"></A>
+<DT><CODE>EventEndSnapshot</CODE>
+<DD>
+String specifying the filename for the end snapshot
+(all emulators except vsid).
+
+<A NAME="IDX1751"></A>
+<DT><CODE>EventStartMode</CODE>
+<DD>
+Integer specifying how to start event recording
+(all emulators except vsid).
+(0: save new snapshot, 1: load existing snapshot, 2: reset, 3: playback)
+
+<A NAME="IDX1752"></A>
+<DT><CODE>EventImageInclude</CODE>
+<DD>
+Boolean specifying whether to include ROM and Disk images in the snapshots
+(all emulators except vsid).
+
+</DL>
+
+
+
+<H2><A NAME="SEC270" HREF="vice_toc.html#TOC270">11.9  Event history command-line options</A></H2>
+
+<DL COMPACT>
+
+<DT><CODE>-playback</CODE>
+<DD>
+<A NAME="IDX1753"></A>
+ 
+Playback recorded events
+(all emulators except vsid).
+
+<A NAME="IDX1754"></A>
+<DT><CODE>-eventsnapshotdir &#60;Name&#62;</CODE>
+<DD>
+Set event snapshot directory
+(<CODE>EventSnapshotDir</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX1755"></A>
+<DT><CODE>-eventstartsnapshot &#60;Name&#62;</CODE>
+<DD>
+Set event start snapshot filename
+(<CODE>EventStartSnapshot</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX1756"></A>
+<DT><CODE>-eventendsnapshot &#60;Name&#62;</CODE>
+<DD>
+Set event end snapshot filename
+(<CODE>EventEndSnapshot</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX1757"></A>
+<DT><CODE>-eventstartmode &#60;Mode&#62;</CODE>
+<DD>
+Set event start mode
+(<CODE>EventStartMode</CODE>)
+(all emulators except vsid).
+(0: save new snapshot, 1: load existing snapshot, 2: reset, 3: playback)
+
+<A NAME="IDX1758"></A>
+<DT><CODE>-eventimageinc</CODE>
+<DD>
+<DT><CODE>+eventimageinc</CODE>
+<DD>
+Enable/disable the inclusion of disk images in the event
+(<CODE>EventImageInclude=1</CODE>, <CODE>EventImageInclude=0</CODE>)
+(all emulators except vsid).
+
+</DL>
+
+<P><HR><P>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_10.html">previous</A>, <A HREF="vice_12.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+</BODY>
+</HTML>

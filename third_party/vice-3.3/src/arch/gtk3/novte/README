@@ -1,0 +1,65 @@
+
+"novte" is a stripped down library based on vte-0.52.2
+
+the purpose of the resulting code is to be used for the ml monitor in VICE, and
+to do that in a portable way that would work on all GTK3 targets.
+
+what was removed from VTE:
+
+- everything that deals with regular expressions, and thus the need for libpcre2
+- all support for pty, and the requirement for termios
+- gnutls support, and warning about no support
+
+- in vteseq.cc reporting screen size is disabled in seq_window_manipulation
+  (uses deprecated gdk functions and doesnt seem to be mission critical)
+
+- in vterowdata.h there are some static asserts which apparently fail when
+  building on window (?) and thus are disabled for the time being
+
+- in VteTerminalPrivate::seq_checksum_rectangular_area in vteseq.cc a couple
+  feed_child() calls have been removed. probably the whole function is defunct.
+
+- in VteTerminalPrivate::im_commit in vte.cc a feed_child_using_modes call has
+  been removed. probably the whole function is defunct.
+
+- in VteTerminalPrivate::change_color in vteseq.cc a feed_child() call has been 
+  removed. probably the whole function is defunct.
+  
+- VteTerminalPrivate::seq_device_status_report in vteseq.cc is defunct.
+- VteTerminalPrivate::seq_dec_device_status_report in vteseq.cc is defunct.
+
+- more removed functions:
+    vte_get_features, vte_get_major_version, vte_get_minor_version,
+    vte_get_micro_version, vte_get_user_shell
+  
+--------------------------------------------------------------------------------
+
+right now the use of this "novte" replacement is forced, if you want for some
+reason check if things work/behave different with real vte, remove the
+"#define USE_NOVTE" things at the top of the following files:
+
+src/arch/gtk3/linenoise.c
+src/arch/gtk3/uimon.c
+src/arch/gtk3/uimon-fallback.c
+
+this stuff should get removed at some point and "novte" forced always
+
+- uimon code should then use the novte_ functions instead of macros for them
+
+--------------------------------------------------------------------------------
+
+TODOs and FIXMEs:
+
+- vtetypes.hh "smartfd" - what is it used for? it needs to be fixed, or removed
+
+- a bunch of functions call vte_... in vteterminal.h should get renamed to
+  novte_... also some defines should get renamed from VTE_... to NOVTE_...
+
+- some files use deprecated GValueArray and should use GArray instead: 
+  matcher.cc matcher.hh table.cc table.hh vteinternal.hh
+
+  GLIB_DISABLE_DEPRECATION_WARNINGS has been defined at the top of a couple of
+  files that make use of this.
+
+- there is still a lot of features/functionality that doesnt make a lot of sense 
+  for what we are doing here.

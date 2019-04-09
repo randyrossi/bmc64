@@ -1,0 +1,755 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.52
+     from ../../doc/vice.texi on 19 December 2018 -->
+
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<TITLE>VICE Manual - 12  Monitor</TITLE>
+<style type="text/css">
+    @import 'vice.css';
+</style>
+</HEAD>
+<BODY>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_11.html">previous</A>, <A HREF="vice_13.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H1><A NAME="SEC271" HREF="vice_toc.html#TOC271">12  Monitor</A></H1>
+
+<P>
+Every VICE emulator has a complete built-in monitor, which can be used
+to examine, disassemble and assemble machine language programs, as
+well as debug them through breakpoints.  It can be activated by using
+the "Activate monitor" command (left button menu).  Notice that in some
+ports you have to run the emulator from a terminal emulation program (such as
+<CODE>rxvt</CODE> or <CODE>xterm</CODE>) in order to use the monitor.
+
+</P>
+
+
+
+<H2><A NAME="SEC272" HREF="vice_toc.html#TOC272">12.1  Terminology</A></H2>
+
+<DL COMPACT>
+
+<DT><SAMP>`address_space'</SAMP>
+<DD>
+This refers to the range of memory locations and a set of registers.
+This can be the addresses available to the computer's processor, the
+disk drive's processor or a specific memory configuration of one of
+the mentioned processors.
+
+<DT><SAMP>`bankname'</SAMP>
+<DD>
+The CPU can only see 64k of memory at any one time, due to its 16 bit
+address bus. The C64 and other computers have more than this amount,
+and this is handled by banking: a memory address can have different
+contents, depending on the active memory bank.
+A bankname names a specific bank in the current address_space.
+
+<DT><SAMP>`register'</SAMP>
+<DD>
+One of the following: program counter (PC), stack pointer (SP),
+accumulator (A), X register (X), or Y register (Y).
+
+<DT><SAMP>`address'</SAMP>
+<DD>
+A specific memory location in the range $0000 to $FFFF.
+
+<DT><SAMP>`address_range'</SAMP>
+<DD>
+Two addresses.  If the second address is less than the first, the
+range is assumed to wraparound from $FFFF to $0000.  Both addresses
+must be in the same address space.
+
+<DT><SAMP>`address_opt_range'</SAMP>
+<DD>
+An address or an address range.
+
+<DT><SAMP>`label'</SAMP>
+<DD>
+<CODE>label</CODE> is the name of a label. It must start with a dot (".")
+in order for the monitor to recognize it as a label. Register names preceeded
+by a dot (for example <CODE>.PC</CODE>) are special labels that evaluate to value of
+the respective register at the time it is used, and thus can not be used as
+a regular label.
+
+<DT><SAMP>`prompt'</SAMP>
+<DD>
+The prompt has the format [x:y].  If x is -, memory reads from the
+monitor do not have side effects.  Otherwise, x is S.  The second part
+of the prompt, y, shows the default address space.
+
+<DT><SAMP>`checkpoint'</SAMP>
+<DD>
+The monitor has the ability to setup triggers that perform an action
+when a specified situation occurs.  There are three types of
+checkpoints; breakpoints, tracepoints and watchpoints.
+
+<DT><SAMP>`breakpoint'</SAMP>
+<DD>
+A breakpoint is triggered based on the program counter.  When it is
+triggered, the monitor is entered.
+
+<DT><SAMP>`tracepoint'</SAMP>
+<DD>
+Like breakpoints, a tracepoint is triggered based on the program
+counter.  Instead of entering the monitor, the program counter is
+printed and execution continues.
+
+<DT><SAMP>`watchpoint'</SAMP>
+<DD>
+Watchpoints are triggered by a read and/or write to an address.  When
+a watchpoint is triggered, the monitor is entered.
+
+<DT><SAMP>`memmap'</SAMP>
+<DD>
+The memmap keeps track of RAM/ROM/IO read/write/execute
+accesses. The feature must be enabled with "--enable-cpuhistory"
+configure option, as it might decrease performance notably on
+slower hardware. The option also enables CPU history.
+
+<DT><SAMP>`&#60;...&#62;'</SAMP>
+<DD>
+A data type.
+
+<DT><SAMP>`*'</SAMP>
+<DD>
+Zero or more occurrences.
+
+<DT><SAMP>`[...]'</SAMP>
+<DD>
+An optional argument.
+
+</DL>
+
+
+
+<H2><A NAME="SEC273" HREF="vice_toc.html#TOC273">12.2  Machine state commands</A></H2>
+
+<DL COMPACT>
+
+<DT><CODE>backtrace</CODE>
+<DD>
+<DT><CODE>bt</CODE>
+<DD>
+Print JSR call chain (most recent call first). Stack offset
+relative to SP+1 is printed in parentheses. This is a best guess
+only.
+
+<DT><CODE>cpuhistory [&#60;count&#62;]</CODE>
+<DD>
+<DT><CODE>chis [&#60;count&#62;]</CODE>
+<DD>
+Show &#60;count&#62; last executed commands.
+(disabled by default; configure with --enable-cpuhistory to enable)
+
+<DT><CODE>dump "&#60;filename&#62;"</CODE>
+<DD>
+Write a snapshot of the machine into the file specified.
+This snapshot is compatible with a snapshot written out by the UI.
+Note: No ROM images are included into the dump.
+
+<DT><CODE>goto &#60;address&#62;</CODE>
+<DD>
+<DT><CODE>g &#60;address&#62;</CODE>
+<DD>
+Change the PC to address and continue execution.
+
+<DT><CODE>io [&#60;address&#62;]</CODE>
+<DD>
+Display i/o registers. Invoking without an address shows a dump of
+the entire io range, if an address is given then details for the
+chip at the respective (base-)address are displayed (if available).
+
+<DT><CODE>next [&#60;count&#62;]</CODE>
+<DD>
+<DT><CODE>n [&#60;count&#62;]</CODE>
+<DD>
+Advance to the next instruction.  Subroutines are treated as a single
+instruction.
+
+<DT><CODE>registers [&#60;reg_name&#62; = &#60;number&#62; [, &#60;reg_name&#62; = &#60;number&#62;]*]</CODE>
+<DD>
+<DT><CODE>r [&#60;reg_name&#62; = &#60;number&#62; [, &#60;reg_name&#62; = &#60;number&#62;]*]</CODE>
+<DD>
+Assign respective registers.  With no parameters, display register
+values.
+
+<DT><CODE>reset [&#60;type&#62;]</CODE>
+<DD>
+Reset the machine or drive.
+<CODE>type</CODE>: 0 = soft, 1 = hard, 8-11 = drive.
+
+<DT><CODE>return</CODE>
+<DD>
+<DT><CODE>ret</CODE>
+<DD>
+Continues execution  and returns to the monitor just
+after the next RTS or RTI is executed.
+
+<DT><CODE>step [&#60;count&#62;]</CODE>
+<DD>
+<DT><CODE>z [&#60;count&#62;]</CODE>
+<DD>
+Single step through instructions.  An optional count allows stepping
+more than a single instruction at a time.
+
+<DT><CODE>stopwatch [reset]</CODE>
+<DD>
+Print the CPU cycle counter of the current device. 'reset' sets the counter to 0.
+
+<DT><CODE>undump "&#60;filename&#62;"</CODE>
+<DD>
+Read a snapshot of the machine from the file specified.
+
+</DL>
+
+
+
+<H2><A NAME="SEC274" HREF="vice_toc.html#TOC274">12.3  Memory commands</A></H2>
+
+<DL COMPACT>
+
+<DT><CODE>bank [&#60;bankname&#62;]</CODE>
+<DD>
+Without a bankname, display all available banks for the current
+address_space. With a bankname given, switch to the specified
+bank. If a bank is not completely filled (ROM banks for example)
+normally the <CODE>ram</CODE> bank is used where the bank has holes.
+The <CODE>cpu</CODE> bank uses the bank currently used by the CPU.
+
+<DT><CODE>compare &#60;address_range&#62; &#60;address&#62;</CODE>
+<DD>
+<DT><CODE>c &#60;address_range&#62; &#60;address&#62;</CODE>
+<DD>
+Compare memory from the source specified by the address range to the
+destination specified by the address.  The regions may overlap.  Any
+values that miscompare are displayed using the default displaytype.
+
+<DT><CODE>device [c:|8:|9:]</CODE>
+<DD>
+Set the default address space to either the computer `c:' or the
+specified drive `8:' or `9:'
+
+<DT><CODE>fill &#60;address_range&#62; &#60;data_list&#62;</CODE>
+<DD>
+<DT><CODE>f &#60;address_range&#62; &#60;data_list&#62;</CODE>
+<DD>
+Fill memory in the specified address range with the data in
+&#60;data_list&#62;.  If the size of the address range is greater than the
+size of the data_list, the data_list is repeated.
+
+<DT><CODE>hunt &#60;address_range&#62; &#60;data_list&#62;</CODE>
+<DD>
+<DT><CODE>h &#60;address_range&#62; &#60;data_list&#62;</CODE>
+<DD>
+Hunt memory in the specified address range for the data in
+&#60;data_list&#62;.  If the data is found, the starting address of the match
+is displayed.  The entire range is searched for all possible matches.
+The data list may have `xx' as a wildcard.
+
+<DT><CODE>i &#60;address_opt_range&#62;</CODE>
+<DD>
+Display memory contents as PETSCII text.
+
+<DT><CODE>ii &#60;address_opt_range&#62;</CODE>
+<DD>
+Display memory contents as screen code text
+
+<DT><CODE>mem [&#60;data_type&#62;] [&#60;address_opt_range&#62;]</CODE>
+<DD>
+<DT><CODE>m [&#60;data_type&#62;] [&#60;address_opt_range&#62;]</CODE>
+<DD>
+Display the contents of memory.  If no datatype is given, the default
+is used.  If only one address is specified, the length of data
+displayed is based on the datatype.  If no addresses are given, the
+'dot' address is used.
+
+<DT><CODE>memmapshow [&#60;mask&#62;] [&#60;address_opt_range&#62;]</CODE>
+<DD>
+<DT><CODE>mmsh [&#60;mask&#62;] [&#60;address_opt_range&#62;]</CODE>
+<DD>
+Show the memmap. The mask can be specified to show only those
+locations with accesses of certain type(s). The mask is a number
+with the bits "ioRWXrwx", where RWX are for ROM and rwx for RAM.
+Optionally, an address range can be specified.
+(disabled by default; configure with --enable-cpuhistory to enable)
+
+<DT><CODE>memmapzap</CODE>
+<DD>
+<DT><CODE>mmzap</CODE>
+<DD>
+Clear the memmap.
+(disabled by default; configure with --enable-cpuhistory to enable)
+
+<DT><CODE>memmapsave "&#60;filename&#62;" &#60;format&#62;</CODE>
+<DD>
+<DT><CODE>mmsave "&#60;filename&#62;" &#60;format&#62;</CODE>
+<DD>
+Save the memmap as a picture. <CODE>format</CODE>:
+0 = BMP, 1 = PCX, 2 = PNG, 3 = GIF, 4 = IFF.
+(disabled by default; configure with --enable-cpuhistory to enable)
+
+<DT><CODE>memchar [&#60;data_type&#62;] [&#60;address_opt_range&#62;]</CODE>
+<DD>
+<DT><CODE>mc [&#60;data_type&#62;] [&#60;address_opt_range&#62;]</CODE>
+<DD>
+Display the contents of memory as character data.  If only one address
+is specified, only one character is displayed.  If no addresses are
+given, the "dot" address is used.
+
+<DT><CODE>memsprite [&#60;data_type&#62;] [&#60;address_opt_range&#62;]</CODE>
+<DD>
+<DT><CODE>ms [&#60;data_type&#62;] [&#60;address_opt_range&#62;]</CODE>
+<DD>
+Display the contents of memory as sprite data.  If only one address is
+specified, only one sprite is displayed.  If no addresses are given,
+the "dot" address is used.
+
+<DT><CODE>move &#60;address_range&#62; &#60;address&#62;</CODE>
+<DD>
+<DT><CODE>t &#60;address_range&#62; &#60;address&#62;</CODE>
+<DD>
+Move memory from the source specified by the address range to the
+destination specified by the address.  The regions may overlap.
+
+<DT><CODE>screen</CODE>
+<DD>
+<DT><CODE>sc</CODE>
+<DD>
+Displays the contents of the screen.
+
+<DT><CODE>sidefx [on|off|toggle]</CODE>
+<DD>
+<DT><CODE>sfx [on|off|toggle]</CODE>
+<DD>
+Control how monitor generated reads affect memory locations that have
+read side-effects, like CIA interrupt registers for example.
+If the argument is 'on' then reads may cause side-effects.  If the
+argument is 'off' then reads don't cause side-effects.  If the
+argument is 'toggle' then the current mode is switched.  No argument
+displays the current state.
+
+<DT><CODE>&#62; [&#60;address&#62;] &#60;data_list&#62;</CODE>
+<DD>
+Write the specified data at <CODE>address</CODE>.
+
+</DL>
+
+
+
+<H2><A NAME="SEC275" HREF="vice_toc.html#TOC275">12.4  Assembly commands</A></H2>
+
+<DL COMPACT>
+
+<DT><CODE>a &#60;address&#62; [ &#60;instruction&#62; [: &#60;instruction&#62;]* ]</CODE>
+<DD>
+Assemble instructions to the specified address.  If only one
+instruction is specified, enter assembly mode (enter an empty line to
+exit assembly mode).
+
+<DT><CODE>disass [&#60;address&#62; [&#60;address&#62;]]</CODE>
+<DD>
+<DT><CODE>d [&#60;address&#62; [&#60;address&#62;]]</CODE>
+<DD>
+Disassemble instructions.  If two addresses are specified, they are
+used as a start and end address.  If only one is specified, it is
+treated as the start address and a default number of instructions are
+disassembled.  If no addresses are specified, a default number of
+instructions are disassembled from the dot address.
+
+</DL>
+
+
+
+<H2><A NAME="SEC276" HREF="vice_toc.html#TOC276">12.5  Checkpoint commands</A></H2>
+
+<DL COMPACT>
+
+<DT><CODE>break [load|store|exec] [address [address] [if &#60;cond_expr&#62;]]</CODE>
+<DD>
+This command allows setting a breakpoint or listing the current
+breakpoints.  If no address is given, the currently valid checkpoints
+are printed.  If an address is given, a breakpoint is set for that
+address and the breakpoint number is printed.
+The "load|store|exec" parameter can be either "load", "store" or "exec"
+(or any combination of these) to determine on which operation the
+monitor breaks. If not specified, the monitor breaks on "exec".
+A conditional expression can also be specified for the breakpoint.
+For more information on conditions, see the CONDITION command.
+
+<DT><CODE>enable &#60;checknum&#62;</CODE>
+<DD>
+<DT><CODE>disable &#60;checknum&#62;</CODE>
+<DD>
+Each checkpoint can be enabled or disabled.  This command allows
+changing between these states.
+
+<DT><CODE>command &#60;checknum&#62; "&#60;command&#62;"</CODE>
+<DD>
+When checkpoint <CODE>checknum</CODE> is hit, the specified command is
+executed by the monitor.  Note that the <CODE>x</CODE> command is not yet
+supported as a command argument.
+
+<DT><CODE>condition &#60;checknum&#62; if &#60;cond_expr&#62;</CODE>
+<DD>
+<DT><CODE>cond &#60;checknum&#62; if &#60;cond_expr&#62;</CODE>
+<DD>
+Each time the specified checkpoint is examined, the condition is
+evaluated.  If it evalutes to true, the checkpoint is activated.
+Otherwise, it is ignored.  If registers are specified in the
+expression, the values used are those at the time the checkpoint is
+examined, not when the condition is set.
+
+Currently, the cond_expr is very limited. You can use registers (.A, .X,
+.Y, .PC, and .SP) and compare against other registers or absolute
+values. For example, the following are all valid conditions:
+.A == 0, .X == .Y, 8:.X == .X, .A != 5, .A &#60; .X.
+
+However, you cannot specify memory contents and compare that.
+
+<DT><CODE>delete &#60;checknum&#62;</CODE>
+<DD>
+<DT><CODE>del &#60;checknum&#62;</CODE>
+<DD>
+Delete the specified checkpoint.
+
+<DT><CODE>ignore &#60;checknum&#62; [&#60;count&#62;]</CODE>
+<DD>
+Ignore a checkpoint after a given number of crossings.  If no count is
+given, the default value is 1.
+
+<DT><CODE>trace [load|store|exec] [address [address] [if &#60;cond_expr&#62;]]</CODE>
+<DD>
+<DT><CODE>tr [load|store|exec] [address [address] [if &#60;cond_expr&#62;]]</CODE>
+<DD>
+This command is similar to the <CODE>break</CODE> command except that it
+operates on tracepoints.  A tracepoint differs from a breakpoint by
+not stopping execution but simply printing the PC, giving the user an
+execution trace.  The second optional address can be used to specify
+the end of an range of addresses to be traced.
+If no addresses are given, a list of all the checkpoints is printed.
+The "load|store|exec" parameter can be either "load", "store" or "exec"
+(or any combination of these) to determine which operation the
+monitor traces. If not specified, the monitor traces all operations.
+A conditional expression can also be specified for the tracepoint.
+For more information on conditions, see the CONDITION command.
+
+<DT><CODE>until [&#60;address&#62;]</CODE>
+<DD>
+<DT><CODE>un [&#60;address&#62;]</CODE>
+<DD>
+If no address is given, the currently valid breakpoints are printed.
+If an address is given, a temporary breakpoint is set for that address
+and the breakpoint number is printed.  Control is returned to the
+emulator by this command.  The breakpoint is deleted once it is hit.
+
+<DT><CODE>watch [load|store|exec] [address [address] [if &#60;cond_expr&#62;]]</CODE>
+<DD>
+<DT><CODE>w [load|store|exec] [address [address] [if &#60;cond_expr&#62;]]</CODE>
+<DD>
+This command is similar to the <CODE>break</CODE> command except that it
+operates on watchpoints.  A watchpoint differs from a breakpoint by
+stopping on a read and/or write to an address or range of addresses.
+If no addresses are given, a list of all the checkpoints is printed.
+The "load|store|exec" parameter can be either "load", "store" or "exec"
+(or any combination of these) to determine on which operation the
+monitor breaks. If not specified, the monitor breaks on "load" and
+"store" operations.
+A conditional expression can also be specified for the watchpoint.
+For more information on conditions, see the CONDITION command.
+
+</DL>
+
+
+
+<H2><A NAME="SEC277" HREF="vice_toc.html#TOC277">12.6  General commands</A></H2>
+
+<DL COMPACT>
+
+<DT><CODE>cd &#60;directory&#62;</CODE>
+<DD>
+Change the working directory.
+
+<DT><CODE>device [c:|8:|9:]</CODE>
+<DD>
+<DT><CODE>dev [c:|8:|9:]</CODE>
+<DD>
+Set the default address space to either the computer (<CODE>c:</CODE>) or
+the disk (<CODE>8:|9:</CODE>).
+
+<DT><CODE>dir [&#60;directory&#62;]</CODE>
+<DD>
+<DT><CODE>ls [&#60;directory&#62;]</CODE>
+<DD>
+Display the directory contents.
+
+<DT><CODE>pwd</CODE>
+<DD>
+Show current working directory.
+
+<DT><CODE>radix [H|D|O|B]</CODE>
+<DD>
+<DT><CODE>rad [H|D|O|B]</CODE>
+<DD>
+Set the default radix to hex, decimal, octal, or binary.  With no
+argument, the current radix is printed.
+
+</DL>
+
+
+
+<H2><A NAME="SEC278" HREF="vice_toc.html#TOC278">12.7  Disk commands</A></H2>
+
+<DL COMPACT>
+
+<DT><CODE>attach &#60;filename&#62; &#60;device&#62;</CODE>
+<DD>
+Attach file to device. (device 32 = cart)
+
+<DT><CODE>block_read &#60;track&#62; &#60;sector&#62; [&#60;address&#62;]</CODE>
+<DD>
+<DT><CODE>br &#60;track&#62; &#60;sector&#62; [&#60;address&#62;]</CODE>
+<DD>
+Read the block at the specified track and sector.  If an address is
+specified, the data is loaded into memory.  If no address is given,
+the data is displayed using the default datatype.
+
+<DT><CODE>block_write &#60;track&#62; &#60;sector&#62; &#60;address&#62;</CODE>
+<DD>
+<DT><CODE>bw &#60;track&#62; &#60;sector&#62; &#60;address&#62;</CODE>
+<DD>
+Write a block of data at <CODE>address</CODE> to the specified track and
+sector of disk in drive 8.
+
+<DT><CODE>detach &#60;device&#62;</CODE>
+<DD>
+Detach file from device. (device 32 = cart)
+
+<DT><CODE>@&#60;disk command&#62;</CODE>
+<DD>
+Perform a disk command on the currently attached disk image on drive
+8.  The specified disk command is sent to the drive's channel #15.
+
+<DT><CODE>load "&#60;filename&#62;" &#60;device&#62; [&#60;address&#62;]</CODE>
+<DD>
+<DT><CODE>l "&#60;filename&#62;" &#60;device&#62; [&#60;address&#62;]</CODE>
+<DD>
+Load the specified file into memory.  If no address is given, the file
+is loaded to the address specified by the first two bytes read from
+the file.  If address is given, the file is loaded to the specified
+address and the first two bytes read from the file are skipped.  If
+device is 0, the file is read from the file system.
+
+<DT><CODE>list [&#60;directory&#62;]</CODE>
+<DD>
+List disk contents.
+
+<DT><CODE>bload "&#60;filename&#62;" &#60;device&#62; &#60;address&#62;</CODE>
+<DD>
+<DT><CODE>bl "&#60;filename&#62;" &#60;device&#62; &#60;address&#62;</CODE>
+<DD>
+Load the specified file into memory at the specified address.
+If device is 0, the file is read from the file system.
+
+<DT><CODE>save "&#60;filename&#62;" &#60;device&#62; &#60;address1&#62; &#60;address2&#62;</CODE>
+<DD>
+<DT><CODE>s "&#60;filename&#62;" &#60;device&#62; &#60;address1&#62; &#60;address2&#62;</CODE>
+<DD>
+Save the memory from address1 to address2 to the specified file.
+Write two-byte load address.
+If device is 0, the file is written to the file system.
+
+<DT><CODE>bsave "&#60;filename&#62;" &#60;device&#62; &#60;address1&#62; &#60;address2&#62;</CODE>
+<DD>
+<DT><CODE>bs "&#60;filename&#62;" &#60;device&#62; &#60;address1&#62; &#60;address2&#62;</CODE>
+<DD>
+Save the memory from address1 to address2 to the specified file.
+If device is 0, the file is written to the file system.
+
+</DL>
+
+
+
+<H2><A NAME="SEC279" HREF="vice_toc.html#TOC279">12.8  Command file commands</A></H2>
+
+<DL COMPACT>
+
+<DT><CODE>playback "&#60;filename&#62;"</CODE>
+<DD>
+<DT><CODE>pb "&#60;filename&#62;"</CODE>
+<DD>
+Monitor commands from the specified file are read and executed.  This
+command stops at the end of file or when a STOP command is read.
+
+<DT><CODE>record "&#60;filename&#62;"</CODE>
+<DD>
+<DT><CODE>rec "&#60;filename&#62;"</CODE>
+<DD>
+After this command, all commands entered are written to the specified
+file until the STOP command is entered.
+
+<DT><CODE>stop</CODE>
+<DD>
+Stop recording commands.  See <CODE>record</CODE>.
+
+</DL>
+
+
+
+<H2><A NAME="SEC280" HREF="vice_toc.html#TOC280">12.9  Label commands</A></H2>
+
+<DL COMPACT>
+
+<DT><CODE>add_label &#60;address&#62; &#60;label&#62;</CODE>
+<DD>
+<DT><CODE>al &#60;address&#62; &#60;label&#62;</CODE>
+<DD>
+Map a given address to a label.  This label can be used when entering
+assembly code and is shown during disassembly.  Additionally, it can
+be used whenever an address must be specified.
+
+&#60;label&#62; is the name of the label; it must start with a dot (".") in
+order for the monitor to recognize it as a label.
+
+<DT><CODE>delete_label [&#60;address_space&#62;] &#60;label&#62;</CODE>
+<DD>
+<DT><CODE>dl [&#60;address_space&#62;] &#60;label&#62;</CODE>
+<DD>
+Remove the specified label from the label tables.  If no address space is
+checked, all tables are checked.
+
+<DT><CODE>load_labels [&#60;address_space&#62;] "&#60;filename&#62;"</CODE>
+<DD>
+<DT><CODE>ll [&#60;address_space&#62;] "&#60;filename&#62;"</CODE>
+<DD>
+Load a file containing a mapping of labels to addresses.  If no address
+space is specified, the default readspace is used.
+
+The file must contain commands the monitor understands, e.g. add_label. The
+compiler cc65 can create such label files.
+
+Vice can also load label files created by the Acme assembler. Their syntax is
+e.g. "labelname = $1234 ; Maybe a comment". A dot will be added automatically
+to label names assigned in this way to fit to the Vice label syntax. Normally
+the semicolon seperates commands but after an assignment of this kind it may be
+used to start a comment to end of line, so unchanged Acme label files can be
+fed into Vice.
+
+<DT><CODE>save_labels [&#60;address_space&#62;] "&#60;filename&#62;"</CODE>
+<DD>
+<DT><CODE>sl [&#60;address_space&#62;] "&#60;filename&#62;"</CODE>
+<DD>
+Save labels to a file.  If no address space is specified, all of the
+labels are saved.
+
+<DT><CODE>show_labels [&#60;address_space&#62;]</CODE>
+<DD>
+<DT><CODE>shl [&#60;address_space&#62;]</CODE>
+<DD>
+Display current label mappings.  If no address space is specified, show
+all labels from default address space.
+
+<DT><CODE>clear_labels [&#60;address_space&#62;]</CODE>
+<DD>
+<DT><CODE>cl [&#60;address_space&#62;]</CODE>
+<DD>
+Clear current label mappings.  If no address space is specified, clear
+all labels from default address space.
+
+</DL>
+
+
+
+<H2><A NAME="SEC281" HREF="vice_toc.html#TOC281">12.10  Miscellaneous commands</A></H2>
+
+<DL COMPACT>
+
+<DT><CODE>cartfreeze</CODE>
+<DD>
+Use cartridge freeze.
+
+<DT><CODE>cpu &#60;type&#62;</CODE>
+<DD>
+Specify the type of CPU currently used (6502/z80).
+
+<DT><CODE>exit</CODE>
+<DD>
+<DT><CODE>x</CODE>
+<DD>
+Leave the monitor and return to execution.
+
+<DT><CODE>export</CODE>
+<DD>
+<DT><CODE>exp</CODE>
+<DD>
+Print out list of attached expansion port devices.
+
+<DT><CODE>help [&#60;command&#62;]</CODE>
+<DD>
+If no argument is given, prints out a list of all available commands.
+If an argument is given, prints out specific help for that command.
+
+<DT><CODE>keybuf "&#60;string&#62;"</CODE>
+<DD>
+Put the specified string into the keyboard buffer. Note that you can specify
+specific keycodes by using C-style escaped hexcodes ("\x0a").
+
+<DT><CODE>print &#60;expression&#62;</CODE>
+<DD>
+<DT><CODE>p &#60;expression&#62;</CODE>
+<DD>
+Evaluate the specified expression and output the result.
+
+<DT><CODE>resourceget "&#60;resource&#62;"</CODE>
+<DD>
+<DT><CODE>resget "&#60;resource&#62;"</CODE>
+<DD>
+Displays the value of the <CODE>resource</CODE>.
+
+<DT><CODE>resourceset "&#60;resource&#62;" "&#60;value&#62;"</CODE>
+<DD>
+<DT><CODE>resset "&#60;resource&#62;" "&#60;value&#62;"</CODE>
+<DD>
+Sets the value of the <CODE>resource</CODE>.
+
+<DT><CODE>load_resources "&#60;file&#62;"</CODE>
+<DD>
+<DT><CODE>resload "&#60;file&#62;"</CODE>
+<DD>
+Load resources from <CODE>file</CODE>.
+
+<DT><CODE>save_resources "&#60;file&#62;"</CODE>
+<DD>
+<DT><CODE>ressave "&#60;file&#62;"</CODE>
+<DD>
+Save resources to <CODE>file</CODE>.
+
+<DT><CODE>screenshot "&#60;filename&#62;" [&#60;format&#62;]</CODE>
+<DD>
+<DT><CODE>scrsh "&#60;filename&#62;" [&#60;format&#62;]</CODE>
+<DD>
+Take a screenshot. <CODE>format</CODE>:
+default = BMP, 1 = PCX, 2 = PNG, 3 = GIF, 4 = IFF.
+
+<DT><CODE>tapectrl &#60;command&#62;</CODE>
+<DD>
+Control the datasette. <CODE>command</CODE>:
+0 = stop, 1 = start, 2 = forward, 3 = rewind, 4 = record,
+5 = reset, 6 = reset counter.
+
+<DT><CODE>quit</CODE>
+<DD>
+Exit the emulator immediately.
+
+<DT><CODE>~ &#60;number&#62;</CODE>
+<DD>
+Display the specified number in decimal, hex, octal and binary.
+
+</DL>
+
+<P><HR><P>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_11.html">previous</A>, <A HREF="vice_13.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+</BODY>
+</HTML>

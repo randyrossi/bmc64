@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+      package="com.locnet.vice"
+      android:versionCode="@VERSION_COMBINED@"
+      android:versionName="@VERSION@"
+      android:installLocation="auto"
+      >
+    <application android:label="@string/app_name" android:icon="@drawable/icon" android:largeHeap="true">
+        <activity android:name="com.locnet.vice.PreConfig"
+                  android:label="@string/app_name"
+                  android:configChanges="orientation|keyboardHidden|keyboard">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+		<activity android:name="org.ab.nativelayer.ImportView"
+                  android:label="Choose a file"
+                  android:configChanges="orientation|keyboardHidden|keyboard">
+		</activity>
+        <activity android:name="com.locnet.vice.DosBoxLauncher"
+                  android:label="@string/app_name"
+                  android:theme="@style/Theme.NoBackground"
+                  android:configChanges="orientation|keyboardHidden|keyboard">
+        </activity>
+	</application>
+    <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="9"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <supports-screens android:xlargeScreens="true"/>    
+</manifest> 

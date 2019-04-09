@@ -1,0 +1,147 @@
+/*!
+  \mainpage Developer Information
+
+  \subpage chips
+  \n
+  \subpage subsystems
+  \n
+  \subpage technical
+  \n
+  \subpage howtocode
+  \n
+  \subpage howtodoxy
+  \n
+  \subpage howtodoc
+  \n
+  \subpage howtonls
+  \n
+  \subpage howtobuild
+  \n
+  \subpage readmes
+*/
+
+/*!
+  \page chips Chips
+  \subpage cia
+*/
+/*!
+  \page subsystems Subsystems
+  \subpage iecbus
+*/
+/*!
+  \page howtocode coding guidelines
+  \htmlinclude coding-guidelines.txt
+  \page howtodoxy doxygen quick guide
+  \htmlinclude Doxygen-Howto.txt
+  \page howtodoc how to update the documentation
+  \htmlinclude Documentation-Howto.txt
+  \page howtonls National Language Support
+  \htmlinclude NLS-Howto.txt
+*/
+
+/*!
+  \page howtobuild How to build VICE
+  \subpage buildgtk3
+  \n
+  \subpage buildwindowsmingw
+  \n
+  \subpage buildwindowscygwin
+  \n
+  \subpage buildlinuxmingw
+  \n
+  \subpage buildlinux
+  \n
+  \subpage buildosx
+  \n
+  \subpage buildmsdos
+  \subpage buildmsdoseth
+  \n
+  \subpage buildsdl
+  \n
+  \subpage buildandroid
+  \n
+  \subpage buildminix
+  \n
+  \subpage buildopenvms
+*/
+/*!
+  \page buildgtk3 native GTK3
+  \htmlinclude GTK3-Howto.txt
+  \page buildwindowsmingw WinVICE (mingw32)
+  \htmlinclude Win32-Mingw32-Howto.txt
+  \page buildwindowscygwin WinVICE (cygwin)
+  \htmlinclude Win32-Cygwin-Howto.txt
+  \page buildlinuxmingw WinVICE on Linux (mingw32)
+  \htmlinclude Linux-Mingw32-Howto.txt
+  \page buildlinux building the Linux port
+  \htmlinclude Linux-Native-Howto.txt
+  \page buildosx building on OSX
+  \htmlinclude MacOSX-Howto.txt
+  \page buildmsdos building the MSDOS port (djgpp)
+  \htmlinclude MSDOS-Howto.txt
+  \page buildmsdoseth building the MSDOS port with ethernet support (djgpp)
+  \htmlinclude MSDOS-Ethernet-Howto.txt
+  \page buildsdl building the SDL ports
+  \htmlinclude SDL-Howto.txt
+  \page buildandroid building the Android port
+  \htmlinclude Android-Howto.txt
+  \page buildminix building VICE on Minix
+  \htmlinclude Minix-Howto.txt
+  \page buildopenvms building VICE on OpenVMS
+  \htmlinclude OpenVMS-Howto.txt
+*/
+
+
+
+/*!
+  \page readmes ReadMes
+  \subpage readme
+  \n
+  \subpage feedback
+  \n
+  \subpage install
+  \n
+  \subpage readmeamiga
+  \n
+  \subpage readmebeos
+  \n
+  \subpage readmemsdos
+  \n
+  \subpage readmeosx
+  \n
+  \subpage readmeos2
+  \n
+  \subpage readmeunix
+  \n
+  \subpage readmegtk3
+  \n
+  \subpage readmesdl
+  \subpage readmesdl2
+  \n
+*/
+/*!
+  \page readme README
+  \htmlinclude README
+  \page feedback FEEDBACK
+  \htmlinclude FEEDBACK
+  \page install INSTALL
+  \htmlinclude INSTALL
+  \page readmeamiga Amiga
+  \htmlinclude Readme-Amiga.txt
+  \page readmebeos BeOS
+  \htmlinclude Readme-BeOS.txt
+  \page readmemsdos MS DOS
+  \htmlinclude Readme-DOS.txt
+  \page readmeosx Mac OSX
+  \htmlinclude Readme-MacOSX.txt
+  \page readmeos2 OS/2
+  \htmlinclude Readme-OS2.txt
+  \page readmesdl SDL
+  \htmlinclude Readme-SDL.txt
+  \page readmesdl2 SDL2
+  \htmlinclude Readme-SDL2.txt
+  \page readmeunix Unix
+  \htmlinclude Readme-Unix.txt
+  \page readmegtk3 GTK3
+  \htmlinclude Readme-GTK3.txt
+*/

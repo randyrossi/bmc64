@@ -1,0 +1,221 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.52
+     from ../../doc/vice.texi on 19 December 2018 -->
+
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<TITLE>VICE Manual - 10  Media images</TITLE>
+<style type="text/css">
+    @import 'vice.css';
+</style>
+</HEAD>
+<BODY>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_9.html">previous</A>, <A HREF="vice_11.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H1><A NAME="SEC258" HREF="vice_toc.html#TOC258">10  Media images</A></H1>
+
+
+
+<H2><A NAME="SEC259" HREF="vice_toc.html#TOC259">10.1  Media images resources</A></H2>
+
+<DL COMPACT>
+
+<DT><CODE>DoodleOversizeHandling</CODE>
+<DD>
+<A NAME="IDX1722"></A>
+ 
+Integer specifying the way the oversized input should be handled
+(all emulators except vsid).
+(0: scale down, 1: crop left top, 2: crop center top,
+3: crop right top, 4: crop left center, 5: crop center,
+6: crop right center, 7: crop left bottom, 8: crop center bottom,
+9: crop right bottom)
+
+<A NAME="IDX1723"></A>
+<DT><CODE>DoodleUndersizeHandling</CODE>
+<DD>
+Integer specifying the way the undersized input should be handled
+(all emulators except vsid).
+(0: scale, 1: borderize)
+
+<A NAME="IDX1724"></A>
+<DT><CODE>DoodleMultiColorHandling</CODE>
+<DD>
+Integer specifying the way the multicolor to hires should be handled
+(all emulators except vsid).
+(0: b&#38;w, 1: 2 colors, 2: 4 colors, 3: gray scale,  4: best cell colors)
+
+<A NAME="IDX1725"></A>
+<DT><CODE>DoodleTEDLumHandling</CODE>
+<DD>
+Integer specifying the way the TED luminosity should be handled
+(all emulators except vsid).
+(0: ignore, 1: dither)
+
+<A NAME="IDX1726"></A>
+<DT><CODE>DoodleCRTCTextColor</CODE>
+<DD>
+Integer specifying the text color used when making screenshots from a CRTC window in doodle format
+(all emulators except vsid).
+(0: white, 1: amber, 2: green)
+
+<A NAME="IDX1727"></A>
+<DT><CODE>KoalaOversizeHandling</CODE>
+<DD>
+Integer specifying the way the oversized input should be handled
+(all emulators except vsid).
+(0: scale down, 1: crop left top, 2: crop center top,
+3: crop right top, 4: crop left center, 5: crop center,
+6: crop right center, 7: crop left bottom, 8: crop center bottom,
+9: crop right bottom)
+
+<A NAME="IDX1728"></A>
+<DT><CODE>KoalaUndersizeHandling</CODE>
+<DD>
+Integer specifying the way the undersized input should be handled
+(all emulators except vsid).
+(0: scale, 1: borderize)
+
+<A NAME="IDX1729"></A>
+<DT><CODE>KoalaTEDLumHandling</CODE>
+<DD>
+Integer specifying the way the TED luminosity should be handled
+(all emulators except vsid).
+(0: ignore, 1: dither)
+
+<A NAME="IDX1730"></A>
+<DT><CODE>KoalaCRTCTextColor</CODE>
+<DD>
+Integer specifying the text color used when making screenshots from a CRTC window in doodle format
+(all emulators except vsid).
+(0: white, 1: amber, 2: green)
+
+<A NAME="IDX1731"></A>
+<DT><CODE>FFMPEGFormat</CODE>
+<DD>
+String specifying the current FFMPEG output driver.
+<A NAME="IDX1732"></A>
+<DT><CODE>FFMPEGAudioBitrate</CODE>
+<DD>
+Integer specifying the current FFMPEG audio bitrate.
+<A NAME="IDX1733"></A>
+<DT><CODE>FFMPEGVideoBitrate</CODE>
+<DD>
+Integer specifying the current FFMPEG video bitrate.
+<A NAME="IDX1734"></A>
+<DT><CODE>FFMPEGAudioCodec</CODE>
+<DD>
+Integer specifying the current FFMPEG audio codec.
+<A NAME="IDX1735"></A>
+<DT><CODE>FFMPEGVideoCodec</CODE>
+<DD>
+Integer specifying the current FFMPEG video codec.
+<A NAME="IDX1736"></A>
+<DT><CODE>FFMPEGVideoHalveFramerate</CODE>
+<DD>
+Boolean, if true record only every other frame.
+
+</DL>
+
+
+
+<H2><A NAME="SEC260" HREF="vice_toc.html#TOC260">10.2  Media images command-line options</A></H2>
+
+<DL COMPACT>
+
+<DT><CODE>-doodleoversize &#60;method&#62;</CODE>
+<DD>
+<A NAME="IDX1737"></A>
+ 
+Select the way the oversized input should be handled
+(<CODE>DoodleOversizeHandling</CODE>)
+(all emulators except vsid).
+(0: scale down, 1: crop left top, 2: crop center top,
+3: crop right top, 4: crop left center, 5: crop center,
+6: crop right center, 7: crop left bottom,
+8: crop center bottom, 9: crop right bottom)
+
+<A NAME="IDX1738"></A>
+<DT><CODE>-doodleundersize &#60;method&#62;</CODE>
+<DD>
+Select the way the undersized input should be handled
+(<CODE>DoodleUndersizeHandling</CODE>)
+(all emulators except vsid).
+(0: scale, 1: borderize)
+
+<A NAME="IDX1739"></A>
+<DT><CODE>-doodlemc &#60;method&#62;</CODE>
+<DD>
+Select the way the multicolor to hires should be handled
+(<CODE>DoodleMultiColorHandling</CODE>)
+(all emulators except vsid).
+(0: b&#38;w, 1: 2 colors, 2: 4 colors, 3: gray scale, 4: best cell colors)
+
+<A NAME="IDX1740"></A>
+<DT><CODE>-doodletedlum &#60;method&#62;</CODE>
+<DD>
+Select the way the TED luminosity should be handled
+(<CODE>DoodleTEDLumHandling</CODE>)
+(all emulators except vsid).
+(0: ignore, 1: dither)
+
+<A NAME="IDX1741"></A>
+<DT><CODE>-doodlecrtctextcolor &#60;color&#62;</CODE>
+<DD>
+Select the CRTC text color
+(<CODE>DoodleCRTCTextColor</CODE>)
+(all emulators except vsid).
+(0: white, 1: amber, 2: green)
+
+<A NAME="IDX1742"></A>
+<DT><CODE>-koalaoversize &#60;method&#62;</CODE>
+<DD>
+Select the way the oversized input should be handled
+(<CODE>KoalaOversizeHandling</CODE>)
+(all emulators except vsid).
+(0: scale down, 1: crop left top, 2: crop center top,
+3: crop right top, 4: crop left center, 5: crop center,
+6: crop right center, 7: crop left bottom,
+8: crop center bottom, 9: crop right bottom)
+
+<A NAME="IDX1743"></A>
+<DT><CODE>-koalaundersize &#60;method&#62;</CODE>
+<DD>
+Select the way the undersized input should be handled
+(<CODE>KoalaUndersizeHandling</CODE>)
+(all emulators except vsid).
+(0: scale, 1: borderize)
+
+<A NAME="IDX1744"></A>
+<DT><CODE>-koalatedlum &#60;method&#62;</CODE>
+<DD>
+Select the way the TED luminosity should be handled
+(<CODE>KoalaTEDLumHandling</CODE>)
+(all emulators except vsid).
+(0: ignore, 1: dither)
+
+<A NAME="IDX1745"></A>
+<DT><CODE>-koalacrtctextcolor &#60;color&#62;</CODE>
+<DD>
+Select the CRTC text color
+(<CODE>KoalaCRTCTextColor</CODE>)
+(all emulators except vsid).
+(0: white, 1: amber, 2: green)
+
+<A NAME="IDX1746"></A>
+<DT><CODE>-ffmpegaudiobitrate &#60;value&#62;</CODE>
+<DD>
+Set bitrate for audio stream in media file
+<A NAME="IDX1747"></A>
+<DT><CODE>-ffmpegvideobitrate &#60;value&#62;</CODE>
+<DD>
+Set bitrate for video stream in media file
+
+</DL>
+
+<P><HR><P>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_9.html">previous</A>, <A HREF="vice_11.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+</BODY>
+</HTML>

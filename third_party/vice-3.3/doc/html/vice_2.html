@@ -1,0 +1,819 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.52
+     from ../../doc/vice.texi on 19 December 2018 -->
+
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<TITLE>VICE Manual - 2  About VICE</TITLE>
+<style type="text/css">
+    @import 'vice.css';
+</style>
+</HEAD>
+<BODY>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_1.html">previous</A>, <A HREF="vice_3.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H1><A NAME="SEC5" HREF="vice_toc.html#TOC5">2  About VICE</A></H1>
+
+<P>
+VICE is the one and only <EM>Versatile Commodore Emulator</EM>.  It provides
+emulation of the Commodore C64, C64DTV, C128, VIC20, PET, PLUS4, SCPU64 and CBM-II computers
+within a single package.  The emulators run as separate programs, but have
+the same user interface, share the same settings and support the same
+file formats.
+
+</P>
+<P>
+<STRONG>Important notice:</STRONG> If you have no idea what a Commodore
+8-bit computer is, or have questions about how these machines are used,
+how the file formats work or anything else that is not strictly
+related to VICE, you should read the appropriate FAQs <EM>first</EM>, as
+that kind of information is not available here.  See section <A HREF="vice_19.html#SEC401">19  Contact information</A>. for
+information about how to retrieve the FAQs.
+
+</P>
+<P>
+All the emulators provide an accurate 6502/6510 emulator, with emulation
+of all the opcodes (both documented and undocumented ones) and accurate
+timing.  Unlike other emulators, VICE aims to be cycle
+accurate; it tries to emulate chip timings as precisely as possible and
+does so <EM>efficiently</EM>.
+
+</P>
+<P>
+Please do <EM>not</EM> expect the C64DTV, C128, PET, PLUS4, SCPU64 and CBM-II emulators to
+be as good as the C64 or VIC20 one, as they are still under construction.
+
+</P>
+<P>
+<EM>Notice:</EM> This documentation is written for the Unix release of VICE, but is slowly being made universal.
+
+</P>
+
+
+
+<H2><A NAME="SEC6" HREF="vice_toc.html#TOC6">2.1  C64 emulator features</A></H2>
+
+<P>
+As of version 2.3, two C64 emulators are provided: <SAMP>`x64'</SAMP> (fast)
+and <SAMP>`x64sc'</SAMP> (accurate).
+
+</P>
+<P>
+The fast C64 emulator, called <SAMP>`x64'</SAMP>, features a fairly complete
+emulation of the VIC-II video chip: sprites, all registers and all video
+modes are fully emulated.  The emulation has been fully cycle-accurate
+since version 0.13.0.
+
+</P>
+<P>
+The accurate C64 emulator, called <SAMP>`x64sc'</SAMP>, features a cycle-based
+and pixel-accurate VIC-II emulation. This requires a much faster machine
+than the old <SAMP>`x64'</SAMP>.
+
+</P>
+<P>
+A rather complete emulation of the SID sound chip is also provided.  All
+the basic features are implemented as well as most of the complex ones
+including synchronisation, ring modulation and filters.  There are two
+emulators of the SID chip available: first is the "standard" VICE
+emulator, available since VICE 0.12; the second is Dag Lem's reSID
+engine. The reSID engine is a lot more accurate than the standard engine,
+but it is also a lot slower, and only suitable for faster machines.
+
+</P>
+<P>
+Naturally, also both CIAs (or VIAs, in some cases) are fully emulated
+and cycle accurate.
+
+</P>
+
+
+
+<H2><A NAME="SEC7" HREF="vice_toc.html#TOC7">2.2  C64DTV emulator features</A></H2>
+
+<P>
+The C64DTV emulator, called <SAMP>`x64dtv'</SAMP>, features emulation of C64DTV
+revisions 2 and 3. The emulator is under construction, but most of the
+DTV specific features are already supported (with varying accuracy).
+
+</P>
+<P>
+Video cache is disabled by default as it currently doesn't work with
+some of C64DTV's new video modes. The new video modes have a simple
+"fake" video cache implementation that may give incorrect results
+and decreased performance.
+
+</P>
+
+
+
+<H2><A NAME="SEC8" HREF="vice_toc.html#TOC8">2.3  C128 emulator features</A></H2>
+
+<P>
+The C128 emulator, called <SAMP>`x128'</SAMP>, features a complete emulation of
+the internal MMU (<EM>Memory Management Unit</EM>), 80 column VDC screen, fast
+IEC bus emulation, 2 MHz mode, Z80 emulation plus all the features of the
+C64 emulation.
+
+</P>
+
+
+
+<H2><A NAME="SEC9" HREF="vice_toc.html#TOC9">2.4  VIC20 emulator features</A></H2>
+
+<P>
+The VIC20 emulates all the internal hardware, including the VIA chips.
+The VIC-I video chip is fully emulated except NTSC interlace mode, so most
+graphical effects will work correctly.
+
+</P>
+<P>
+Sound support is implemented, but is still at an experimental stage.  If
+you think it could be improved and know how to do so, feel
+free to contact us (see section <A HREF="vice_19.html#SEC401">19  Contact information</A>).
+
+</P>
+<P>
+The VIC20 emulator now allows the use of the VIC1112 IEEE488
+interface. You have to enable the hardware (by menu, resource, or
+commandline option) and then load the IEEE488 ROM (see for
+example <A HREF="http://www.funet.fi/pub/cbm/schematics/cartridges/vic20/ieee-488/325329-04.bin">http://www.funet.fi/pub/cbm/schematics/cartridges/vic20/ieee-488/325329-04.bin</A>, but you have to double the size to 4k for now).
+The IEEE-488 code is then started by <CODE>SYS45065</CODE>.
+
+</P>
+
+
+
+<H2><A NAME="SEC10" HREF="vice_toc.html#TOC10">2.5  PET emulator features</A></H2>
+
+<P>
+The PET emulator emulates the 2001, 3032, 4032, 8032, 8096, 8296 and
+SuperPET (MicroMainFrame 9000) models, covering the whole series.
+The hardware is pretty much the same in each and that is why one single
+program is enough to emulate all of them.  For more detailed information
+about PET hardware please refer to the <TT>`PETdoc'</TT> file.
+
+</P>
+<P>
+Both the 40 column and 80 column CRTC video chips are emulated (from the
+4032 onward), but a few of the features are not implemented yet (numbers
+of rasterlines per char and lines per screen).  Fortunately, they are
+not very important for average applications.
+
+</P>
+<P>
+Sound is available for the PET as well, but like the VIC20's it is still
+under construction.
+
+</P>
+<P>
+The PET 8096 is basically a PET 8032 with a 64k extension board which
+allows remapping the upper 32k with RAM.  You have to write to a special
+register at <CODE>$fff0</CODE> to remap the memory.  The PET 8296 is a
+8096 but with a completely redesigned motherboard with 128k RAM in
+total.  Of the additional 32k RAM you can use only some in blocks of 4k,
+but you have to set jumpers on the motherboard for it.  VICE uses the
+command line options <SAMP>`-petram9'</SAMP> and <SAMP>`-petramA'</SAMP>
+instead.  Also, the video controller can handle a larger address range.
+The PET 8x96 model emulations run the Commodore LOS-96 operating system
+- basically an improved BASIC 4 version with up to 32k for BASIC
+text and 32k for variables.  See <TT>`PETdoc'</TT> for more information.
+
+</P>
+<P>
+The PET 8296D is an 8296 with built-in 8250 low-profile dual disk drive.
+
+</P>
+<P>
+The PET 8296GD is an 8296D with additionally a "HiRes Emulator" (HRE).
+This is a cheaper version of a "HRG" hi-res board which was based on
+Thomson chips. This version instead uses no additional hardware support
+apart from some memory mapping tricks. It has supporting software in the
+hre-*.bin rom files.
+
+</P>
+<P>
+The SuperPET also is a PET 8032 with an expansion board.  It can map 4k
+at a time out of 64k into the <CODE>$9***</CODE> area.  Also it has an ACIA
+6551 for RS232 communication.  The 6809 CPU that is built into the
+SuperPET is now emulated, since release 2.4, including the 6702 dongle
+chip.
+
+</P>
+<P>
+The Super-OS-9 MMU expansion, developed by TPUG (Toronto PET Users
+Group) is also emulated.
+
+</P>
+<P>
+The PET computers came with three major ROM revisions, so-called BASIC
+1, 2 and 4, all of which are provided.  The PET 2001 uses the version 1,
+the PET 3032 uses version 2, and the others use version 4.  The 2001 ROM
+is horribly broken with respect to IEEE488 (they shipped it before they
+tested it with the floppy drive, so only tape worked.  Therefore the
+emulator patches the ROM to fix the IEEE488 routines.
+
+</P>
+<P>
+As well as other low-level fixes the 2001 patch obtains the load address
+for a program file from the first two bytes of the file.  This allows
+the loading of both PET2001-saved files (that have $0400 as their load
+address) and other PET files (that have $0401).  The PET2001 saves from
+$0400 and not from $0401 as other PETs do.
+
+</P>
+<P>
+Moreover, the secondary addresses used are now <CODE>0</CODE> and <CODE>1</CODE> for
+load and save, respectively, and not arbitrary unused secondary
+addresses.
+
+</P>
+<P>
+To select which model to run, specify it on the
+command line with the <CODE>-model MODEL</CODE> option, where
+<CODE>MODEL</CODE> can be one of a list of PET model numbers, all
+described in see section <A HREF="vice_7.html#SEC191">7.7.1  Changing PET model settings</A>
+
+</P>
+
+
+
+<H2><A NAME="SEC11" HREF="vice_toc.html#TOC11">2.6  CBM-II emulator features</A></H2>
+
+<P>
+The CBM-II emulator emulates several types of CBM-II models.  Those
+models are known under different names in the USA and Europe.  In the
+States they have been sold as <CODE>B128</CODE> and <CODE>B256</CODE>, in Europe as
+<CODE>CBM 610</CODE>, <CODE>CBM 620</CODE> (low-profile case) or <CODE>CBM 710</CODE> and
+<CODE>CBM 720</CODE> (high-profile case with monitor). In addition to that
+now an experimental C510 emulation is included. The C510 (also known as
+P500) is the little brother of the C600/700 machines. It runs at roughly
+1 MHz and, surprise, it has a VIC-II instead of the CRTC. Otherwise
+the different line of computers are very similar.
+
+</P>
+<P>
+These computers are prepared to take a coprocessor board with an 8088 or
+Z80 CPU.  Indeed there are models <CODE>CBM 630</CODE> and <CODE>CBM 730</CODE> that
+supposedly had those processors.  However these models are not emulated.
+
+</P>
+<P>
+The basic difference is the amount of RAM these machines have been
+supplied with.  The <CODE>B128</CODE> and the <CODE>CBM *10</CODE> models had 128k
+RAM, the others 256k. This implies some banking scheme, as the 6502 can
+only address 64k.  And indeed those machines use a 6509, that can
+address 1 MByte of RAM.  It has 2 registers at addresses 0 and 1.  The
+indirect bank register at address 1 determines the bank (0-15) where the
+opcodes <CODE>LDA (zp),Y</CODE> and <CODE>STA (zp),Y</CODE> take the data from.  The
+exec bank register at address 0 determines the bank where all other read
+and write addresses take place.
+
+</P>
+<P>
+The business line machines (C6xx/7xx) have the RAM in banks 1-2, resp.
+1-4. All available banks are used for BASIC, where program code is separated
+from all variables, resp. from normal variables, strings and arrays that
+are distributed over other banks. The C510 instead has RAM in banks 0 and 1,
+and uses bank 1 for program and all variables. Bank 0, though, can be
+accessed by the VIC-II to display graphics.
+
+</P>
+<P>
+Many models have been expanded to more than the built-in memory.  In fact
+some machines have been expanded to the full 1M.  Bank 15 is used as
+system bank, with only little RAM, and lots of expansion cartridge ROM
+area, the I/O and the kernal/basic ROMs.  Some models have been modified
+to map RAM into the expansion ROM area.  Those modifications can be
+emulated as well.
+
+</P>
+<P>
+The different settings are described in see section <A HREF="vice_7.html#SEC210">7.8.1  Changing CBM-II model</A>.
+
+</P>
+
+
+<H2><A NAME="SEC12" HREF="vice_toc.html#TOC12">2.7  SCPU64 emulator features</A></H2>
+
+<P>
+The XSCPU64 emulator is a simulation of a C64 equipped with a SuperCPU64 V2B. Features:
+
+</P>
+
+<UL>
+<LI>20 MHz asynchronous single cycle 65816 CPU core with proper dummy and invalid cycle handling.
+
+<LI>128 KiB static RAM, 0-16 MiB SIMM RAM, 64-512 KiB EPROM emulated and their respective timing details.
+
+<LI>All RAM optimization configurations supported with write buffer.
+
+<LI>I/O area access delays, write through to SRAM implemented.
+
+<LI>Memory mappings including cartridge and boot memory map and kernal shadow.
+
+<LI>Hardware registers and switches implemented.
+
+<LI>Replacement SCPU64 ROM compatible with the original to avoid distribution problems
+
+<LI>It's using the single cycle VICII core for accurate simulation
+
+</UL>
+
+<P>
+Still to do:
+
+</P>
+
+<UL>
+<LI>Measure and verify VICII interrupt phase shift
+
+<LI>Measure and verify BA phase shift
+
+<LI>SIMM RAM extra 7.5 cycle refresh delay every 10us missing.
+
+<LI>CPU NMI support for "reset" button
+
+</UL>
+
+<P>
+The emulation is quite accurate but not perfect. If you code something timing
+intensive using this simulation please always check it on real hardware to avoid
+bad surprises.
+
+</P>
+<P>
+The hardware itself is asynchronous in nature, therefore caution must be taken
+to not do long timing loops without synchronization in 20 MHz mode. Also don't
+squeeze out the last remaining cycles without leaving a safety buffer.
+Synchronization points can be created by doing I/O reads or writes and leaving
+a few hundred cycles left each frame will not hurt.
+
+</P>
+<P>
+Otherwise it can happen that the code is running on this version of VICE or my
+SCPU64 V2+C128D perfectly but nowhere else due to manufacturing variations and
+frequency drifts.
+
+</P>
+
+
+<H2><A NAME="SEC13" HREF="vice_toc.html#TOC13">2.8  The keyboard emulation</A></H2>
+
+<P>
+There are two ways of emulating the keyboard in VICE.
+
+</P>
+<P>
+The default way (<EM>symbolic mapping</EM>) is to map every key
+combination to the corresponding key combination on the real machine:
+for example, if you press <KBD>*</KBD>, which is bound to <KBD>Shift-8</KBD> on a
+U.S. keyboard, in the C64 emulator, the emulated machine will have just
+the <EM>unshifted</EM> <KBD>*</KBD> key pressed (as <KBD>*</KBD> is unshifted on the
+C64 keyboard).  Likewise, pressing <KBD>'</KBD> on the same U.S. keyboard
+without any shift key will cause the combination <KBD>Shift-7</KBD> to be
+pressed in the emulated C64.  This way, it becomes quite obvious what
+keys should be typed to obtain all the symbols.
+
+</P>
+<P>
+There is, however, one problem with symbolic mapping: some keys really
+need to be mapped specially regardless.  The most important examples
+being, in the VIC20, C64 and C128 emulators, that <KBD>CTRL</KBD> is mapped
+to <KBD>Tab</KBD> and that the <KBD>Commodore</KBD> key is mapped to the left
+<KBD>Control</KBD>). The <KBD>RUN/STOP</KBD> key is mapped to the <KBD>ESC</KBD> key
+on the PC keyboard. The PET emulator, lacking the <KBD>Commodore</KBD> key
+but having an <KBD>ESC</KBD> key, uses the left <KBD>Control</KBD> key as
+<KBD>RUN/STOP</KBD> and the <KBD>ESC</KBD> key as <KBD>ESC</KBD> of course.
+
+</P>
+
+<P>
+The second way (<EM>positional mapping</EM>) is to map every key on the
+"real" keyboard to the key which has the same position on the keyboard
+of the emulated machine.  This way, no <KBD>Shift</KBD> key is forced by the
+program (with the exception of the function keys <KBD>F2</KBD>, <KBD>F4</KBD>,
+<KBD>F6</KBD> and <KBD>F8</KBD>, which require <KBD>Shift</KBD> on the Commodore
+keyboards), and the keyboard is more comfortable to use in those
+programs (such as some games) that require the keys to be in the correct
+positions.
+
+</P>
+<P>
+<STRONG>Warning:</STRONG> unlike the real C64, VICE "presses" the <KBD>Shift</KBD>
+key <EM>together</EM> with the key to shift when the <KBD>Shift</KBD> must be
+forced.  In most cases this should work fine, but some keyboard routines
+are quite picky and tend not to recognize the shift key because of this.
+For instance, <KBD>F6</KBD> (which on the real C64 is obtained with
+<KBD>Shift + F5</KBD>) could be recognized as <KBD>F5</KBD>.  In that case, use
+the shift key manually (i.e., type <KBD>Shift + F5</KBD> in the example).
+Yes, we know this is a bug.
+
+</P>
+<P>
+The <KBD>RESTORE</KBD> key is mapped to <KBD>Page Up</KBD> (or <KBD>Prev</KBD>) by
+default.
+
+</P>
+
+
+
+<H2><A NAME="SEC14" HREF="vice_toc.html#TOC14">2.9  The joystick emulation</A></H2>
+
+<P>
+Joysticks can be emulated both via the keyboard and via a real joystick
+connected to the host machine (the latter only works on GNU/Linux
+systems).
+
+</P>
+<P>
+There are two keyboard layouts for joystick use, known as <EM>numpad</EM>
+and <EM>custom</EM>.
+
+</P>
+<P>
+The <EM>numpad</EM> layout uses the numeric keypad keys, i.e., the numbers
+<KBD>1</KBD>...<KBD>9</KBD> which emulate all the directions including the
+diagonal ones; <KBD>0</KBD> emulates the fire button.
+
+</P>
+<P>
+The <EM>custom</EM> layout uses the keys <KBD>w</KBD>, <KBD>e</KBD>, <KBD>r</KBD>,
+<KBD>s</KBD>, <KBD>d</KBD>, <KBD>f</KBD>, <KBD>x</KBD>, <KBD>c</KBD>, <KBD>v</KBD> for the directions
+and <KBD>space</KBD> for the fire button instead.
+
+</P>
+
+
+
+<H2><A NAME="SEC15" HREF="vice_toc.html#TOC15">2.10  The disk drive emulation</A></H2>
+
+<P>
+All the emulators support up to 4 external disk drives as
+devices 8, 9, 10 and 11.  Each of these devices can emulate virtual
+Commodore 1541, 1541-II, 1571, 1581, 2031, 2040, 3040, 4040, 1001, 8050 and
+8250 drives in one of four ways:
+
+</P>
+
+<UL>
+<LI>
+
+using disk images, i.e., files that contain a dump of all the blocks
+contained in a real floppy disk (if you want more information about
+what a disk image is, consult the
+<CODE>comp.emulators.cbm</CODE> FAQ);
+<LI>
+
+accessing file system directories, thus giving you the use of files
+without having to copy them to disk images; this also allows you to
+read and write files in the <CODE>P00</CODE> format (again, consult the
+<CODE>comp.emulators.cbm</CODE> FAQ for more info).
+<LI>
+
+accessing a real device connected to the host machine. As of VICE 1.11
+it is possible to connect real drives like Commodore 1541 to the
+printer port of the host using the XA1541 or XM1541 cable. Currently
+this only works on Linux or Windows using the OpenCBM library. You can
+get it from <A HREF="http://www.lb.shuttle.de/puffin/cbm4linux">http://www.lb.shuttle.de/puffin/cbm4linux</A> (cbm4linux,
+Linux version) or from <A HREF="http://cbm4win.sf.net">http://cbm4win.sf.net</A> (cbm4win, Windows
+version).
+
+<LI>
+
+directly using the disk drive of the host. The 3.5" disk drive of the
+host can be used to read or write Commodore 1581 formatted disks.
+Currently this raw drive access feature is only available for Linux
+hosts.
+</UL>
+
+<P>
+When using disk images there are two available types of drive
+emulation.  One of them the <EM>virtual drive</EM> emulation.  It does
+<EM>not</EM> really emulate the serial line, but patches the kernal ROM
+(with the so-called <EM>kernal traps</EM>) so that serial line operations
+can be emulated via C language routines.  This emulation is very fast,
+but only allows use of standard DOS functions (and not even all of
+them).  For real device or raw drive access it is required to enable
+this type of emulation.
+
+</P>
+<P>
+The IEEE488 drives (2031, 2040, 3040, 4040, 1001, 8050 and 8250) do
+not use kernal traps. Instead the IEEE488 interface lines are
+monitored and the data is passed to the drive emulation. To use them
+on the C64, you need to enable the IEEE488 interface emulation. Only
+if the IEEE488 emulation is enabled, those drives can be selected.
+
+</P>
+<P>
+The other alternative is a <EM>true drive</EM> emulation.  The
+Commodore disk drives are provided with their own CPU (a 6502 as the
+VIC20 and the PETs) and their own RAM and ROM.  So, in order to more
+closely emulate its features, a complete emulation of this hardware
+must be provided and that is what the <EM>hardware level</EM> emulation
+does. When the <EM>hardware level</EM> emulation is used, the kernal
+routines remain unpatched and the serial line is fully emulated.
+The problem with this emulation is that it needs a lot of processing
+power, mainly because the emulator has to emulate two CPUs instead of
+one.
+
+</P>
+<P>
+The PETs do not use a serial IEC bus to communicate with the floppy
+drive but instead use the parallel IEEE488 bus.  This does
+<EM>byte by byte</EM> transfers, as opposed to the <EM>bit by bit</EM>
+transfers of the C64 and VIC20, so making it feasible to emulate the
+parallel line completely while emulating the drive at DOS level only.
+The IEEE488 line interpreter maps the drives 8-11 (as described
+above) to the IEEE488 disk units, and no kernal traps are needed.
+The same emulation of the Commodore IEEE488 bus interface is
+available for the C64 and the VIC20. With IEEE488 drives you can have
+true 2031 emulation at unit #8, and still have filesystem access at
+units #10 or #11, because monitoring the IEEE488 lines does not
+interfere with the true drive emulation.
+
+</P>
+<P>
+The IEEE488 disk drives 2040, 3040, 4040, 8050 and 8250 are Dual Drive
+Floppy Disks.  This means that these drives handle two disks. To
+accomplish the emulation, only two disks can be emulated, namely units
+#8 and #10. The attached image, track display and LED display of unit
+#9 and #11 are used for the second drive of the dual disk drives. On
+unix the unit number display (8 or 9, 10 or 11) in the emulation
+window changes to the drive number display (0 or 1).
+
+</P>
+<P>
+The Commodore 2040, 3040, 4040, 1001, 8050 and 8250 disk drives are
+so-called "old-style" disk drives. Their architecture includes not
+one, but two processors of the 6502 type, namely a 6502 for the file
+handling and communication with the PET (IP), and a 6504 (which is a
+6502 with reduced address space) for the drive handling (FDC). Both
+processors communicate over a shared memory area. The IP writes
+commands to read/write blocks to this area and the FDC executes them.
+To make the emulation feasible, the FDC processor is not emulated
+cycle-exactly as a 6504, but simply by checking the commands and
+executing them on the host. This provides a fast FDC emulation, but
+disallows the sending the FDC processor commands to execute code.
+Applications where this is necessary are believed to be rather
+seldom. Only the format command uses this feature, but this is
+checked for.
+
+</P>
+<P>
+The dual disk drive 2040 emulates one of the very first CBM disk
+drives. This drive has DOS version 1. DOS1 uses an own disk type,
+that is closely related to the 1541 disk image. Only on tracks 18-24
+DOS1 disks have a sector more than 1541 disks. DOS1 disk images have
+the extension .d67.
+
+</P>
+<P>
+The dual disk drives 3040 and 4040 use the same logical disk format
+as the VC1541 and the 2031. In fact, the 4040 was the first disk with
+DOS version 2. The 3040 emulated here originally was the same as
+2040, only for the european 30xx PET series. As many of the original
+DOS1 disk drives were upgraded (a simple ROM upgrade!) to DOS2, I use
+the 3040 number for a DOS 2.0 disk drive, and 4040 for a revised DOS
+2 disk drive. It is, however, not yet clear whether the disks here
+are write compatible to the 1541, as rumors exist that the write gap
+between  sectors is different. But read compatible they are. As VICE
+emulates the FDC processor in C and not as 6504 emulation, this does
+not matter in VICE.
+
+</P>
+<P>
+The drives 1001, 8050 and 8250 do actually have the very same DOS
+ROM. Only the code in the FDC is different, which is taken care of by
+VICE. So for all three of those disk drives, only <CODE>dos1001</CODE> is
+needed. The DOS version used is 2.7.
+
+</P>
+
+
+<H2><A NAME="SEC16" HREF="vice_toc.html#TOC16">2.11  Supported file formats</A></H2>
+
+<P>
+VICE supports the most popular Commodore file formats:
+
+</P>
+
+<UL>
+
+<LI>
+
+<CODE>X64</CODE> or <CODE>D64</CODE> disk image files; Used by the 1541, 2031, 3040, 4040 drives.
+
+<LI>
+
+<CODE>G64</CODE> GCR-encoded 1541 disk image files
+
+<LI>
+
+<CODE>P64</CODE> lowlevel NRZI flux pulse disk image files
+
+<LI>
+
+<CODE>D67</CODE> CBM2040 (DOS1) disk image format
+
+<LI>
+
+<CODE>D71</CODE> VC1571 disk image format
+
+<LI>
+
+<CODE>D81</CODE> VC1581 disk image format
+
+<LI>
+
+<CODE>D80</CODE> CBM8050 disk image format
+
+<LI>
+
+<CODE>D82</CODE> CBM8250/1001 disk image format
+
+<LI>
+
+<CODE>D1M</CODE> FD2000/FD4000 DD disk image format
+
+<LI>
+
+<CODE>D2M</CODE> FD2000/FD4000 HD disk image format
+
+<LI>
+
+<CODE>D4M</CODE> FD4000 ED disk image format
+
+<LI>
+
+<CODE>T64</CODE> tape container files (read-only)
+
+<LI>
+
+<CODE>TAP</CODE> lowlevel tape image files
+
+<LI>
+
+<CODE>P00</CODE> program files
+
+<LI>
+
+<CODE>CRT</CODE> C64 cartridge image files
+
+</UL>
+
+<P>
+An utility (<CODE>c1541</CODE>, see section <A HREF="vice_13.html#SEC282">13  c1541</A>) is provided to allow transfers
+and conversions between these formats.
+
+</P>
+<P>
+Notice that the use of the <CODE>X64</CODE> file format is depreciated now.
+
+</P>
+<P>
+<A NAME="IDX1"></A>
+You can convert an <CODE>X64</CODE> file back into a <CODE>D64</CODE> file with the
+UNIX <CODE>dd</CODE> command:
+
+</P>
+
+<PRE>
+dd bs=64 skip=1 if=IMAGE.X64 of=IMAGE.D64
+</PRE>
+
+<P>
+See section <A HREF="vice_16.html#SEC294">16  The emulator file formats</A>. for a technical description of the supported file
+formats.
+
+</P>
+
+
+<H2><A NAME="SEC17" HREF="vice_toc.html#TOC17">2.12  Common problems</A></H2>
+
+<P>
+This section tries to describe the most common known problems with VICE,
+and how to resolve them.
+
+</P>
+
+
+
+<H3><A NAME="SEC18" HREF="vice_toc.html#TOC18">2.12.1  Sound problems</A></H3>
+
+<P>
+VICE should compile and run without major problems on many systems,
+but there are some known issues related to the sound driver.
+
+</P>
+<P>
+If you are having sound problems, such as skipping, first monitor how much CPU
+time the respective emulator is taking on your system. To run smoothly, on a
+modern system, it should really never go over 50% or so, except for very short
+peaks that should also stay well beyond 90%. If you see it takes more, try
+disabling some of the most CPU intense features (disable CRT emulation, use
+fastsid instead of reSID, disable true drive emulation).
+
+</P>
+<P>
+If the CPU usage is ok, try using a different sound driver. You may also try
+increasing the sound buffer size (although the default should be ok for modern
+systems).
+
+</P>
+<P>
+Linux, AIX and SGI systems should play sound without any problems; if
+you are running Linux please use a 2.x kernel, as VICE needs some
+features that were not implemented in older versions of the Linux sound
+driver.
+
+</P>
+<P>
+Windows should play sound ok.
+
+</P>
+<P>
+macOS is currently untested.
+
+</P>
+<P>
+All platforms that can run the SDL port (like Amiga, BeOS, etc) should be able
+to play sound via SDL.
+
+</P>
+<P>
+<A NAME="IDX2"></A>
+On the other hand, HP-UX and Solaris machines are known to cause
+troubles.  If you think you can help debugging the code for these
+systems, your help would be really appreciated.  We are having troubles
+finding HP-UX and SUN consoles to work at...
+
+</P>
+<P>
+<A NAME="IDX3"></A>
+Some problems have been reported with the proprietary version of the
+Open Sound System for Linux.  With a Crystal sound card, sound output
+was significantly delayed and, apparently, the allocated buffer size was
+completely wrong.  This is not a VICE bug, but rather an OSS bug.
+
+</P>
+
+
+<H3><A NAME="SEC19" HREF="vice_toc.html#TOC19">2.12.2  Video problems</A></H3>
+
+<P>
+Due to the way VICE currently handles its main loop, a common problem with
+video sync occurs when the real (the monitors) frame rate is very close to, 
+equal, or lower than the framerate of the emulated machine. We recommend to
+use a framerate which is slightly higher than that (eg 51Hz for the C64).
+
+</P>
+
+
+<H3><A NAME="SEC20" HREF="vice_toc.html#TOC20">2.12.3  Printer problems</A></H3>
+
+<P>
+VICE supports the emulation of a printer either on the userport or as
+IEC device 4. Unfortunately the Commodore IEC routines do not
+send all commands to the IEC bus. For example an <CODE>OPEN 1,4</CODE>
+is not seen on the IEC bus. Also a <CODE>CLOSE 1</CODE> after that
+is not seen. VICE can see from printing that there was an <CODE>OPEN</CODE>,
+but it cannot see when the close was. Also a "finish print job"
+cannot be seen on the userport device.
+To flush the printer buffer (write to <CODE>print.dump</CODE> or to the
+printer) now a menu entry can be used. Disabling and re-enabling the printer
+should work as well.
+
+</P>
+<P>
+The printing services have not been extensively tested but apart
+from the problem mentioned above it should work fine now.
+
+</P>
+
+
+<H3><A NAME="SEC21" HREF="vice_toc.html#TOC21">2.12.4  PET keyboard problems</A></H3>
+
+<P>
+If you find that the German keyboard mapping (plus German charset)
+does not print uppercase umlauts, then you are right.
+The umlauts replace the [,\ and ] characters in the charset. The keys
+that make these characters do not have a different entry in the
+PET editor ROM tables when shifted.
+Thus it is not possible to get the uppercase umlauts in the editor.
+Nevertheless other programs are reported to change the keyboard
+mapping table and thus allow the use of the shifted (uppercase) umlauts.
+
+</P>
+<P>
+Anyway, the VICE keyboard mappings are far from being perfect and we are open
+to any suggestions.
+
+</P>
+<P><HR><P>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_1.html">previous</A>, <A HREF="vice_3.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+</BODY>
+</HTML>

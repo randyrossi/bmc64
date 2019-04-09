@@ -1,0 +1,60 @@
+
+Prerequisites:
+--------------
+
+- update README and NEWS
+
+to get a list of all changes since last release you can use svn log like this:
+
+$ svn log -r <rev of last release>:<current rev> > log.txt
+
+you can look up the revision of the last release in the tags directory in the
+repo: https://sourceforge.net/p/vice-emu/code/HEAD/tree/tags/
+
+- update the html pages in doc/html (index.html, windows.html)
+
+- update man pages and vice.texi
+
+- make sure (c) dates are correct (README, index.html, vice.texi, soundflac.c)
+
+- make sure the version in configure.proto is updated and it's updated in other 
+  files (index.html)
+
+- ANNOUNCE A CODE FREEZE ;)
+
+
+generate tarball:
+-----------------
+
+(make sure dos2unix is installed)
+
+first update and clean your sourcetree
+
+$ svn up
+$ make distclean
+
+now configure the source tree with sid engines and ffmpeg included. this is
+needed because make dist propagates through the source tree, and if resid and/or 
+ffmpeg is not configured they will not have any makefiles to get 'make dist'ed
+
+$ ./configure --with-resid --disable-external-ffmpeg --enable-static-ffmpeg
+$ make dist
+
+
+create a tagged branch on the svn
+
+$ svn cp <url of svn trunk> <url of svn tag>
+
+
+publish the release
+-------------------
+
+- upload changes to the website on sf
+
+- upload the tarball to sf
+
+- announce the release on the ml (and eventually elsewhere)
+
+- update the TODO wiki page (remove old crossed out things)
+
+- PROFIT!!!

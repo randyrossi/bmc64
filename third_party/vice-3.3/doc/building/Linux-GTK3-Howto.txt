@@ -1,0 +1,139 @@
+The following notes come from an edited IRC session and the distribution used
+was Ubuntu, package names and installation commands may differ in other distros.
+
+Note that you may need a semi-recent distribution for the appropriate GTK3.2
+libraries to be available. E.g. the below doesn't work on LinuxMint 18.3 or
+earlier, though you may be able to manually download and compile GTK3.22 for
+your platform (untested).
+
+Tested on: Linux Mint 19, Ubuntu 17.10.1 and Ubuntu 18.04
+
+--------------------------------------------------------------------------------
+1. adhoc build from SVN
+--------------------------------------------------------------------------------
+
+first, check out the svn:
+
+if you dont have svn, install it first
+$ sudo apt-get install subversion
+
+$ mkdir myworkdir
+$ cd myworkdir
+$ svn checkout https://svn.code.sf.net/p/vice-emu/code/trunk trunk
+
+now ... you will need some packages:
+$ sudo apt-get install autoconf
+$ sudo apt-get install automake
+$ sudo apt-get install build-essential  # (contains gcc, make)
+$ sudo apt-get install byacc
+$ sudo apt-get install flex
+$ sudo apt-get install xa65             # needed to build the vsid driver
+$ sudo apt-get install libgtk-3-dev
+$ sudo apt-get install texinfo
+$ sudo apt-get install dos2unix         # only used when doing `make dist`
+$ sudo apt-get install libpulse-dev     # for Pulse Audio sound support
+$ sudo apt-get install libasound2-dev   # for ALSA sound support
+
+The following are optional but recommended (not required for a basic build):
+
+$ sudo apt-get install texi2html        # (it this required? VICE carries its
+                                        # own texi2html in doc/html)
+$ sudo apt-get install libreadline-dev
+$ sudo apt-get install libgif-dev       # GIF screenshot support
+$ sudo apt-get install libjpeg-dev      # JPEG screenshot support
+$ sudo apt-get install libpcap-dev      # Ethernet support
+
+
+If you have those installed, do run autogen.sh inside the vice dir:
+$ cd trunk/vice/
+$ ./autogen.sh
+that should complete without error (and generate the actual configure scripts)
+
+try configuring now:
+$ ./configure --enable-native-gtk3ui
+it should complete without error
+
+lets try compiling it... we'll reconfigure again later and enable the options
+you are missing :)
+$ make
+
+try running x64sc
+$ ./src/x64sc
+
+note: VICE expects ROM images at /usr/lib/vice, if you've not installed VICE
+      before, these won't be present and x64sc will fail.
+      In that case, tell x64sc where to find the ROM's:
+      $ ./src/x64sc -kernal data/C64/kernal \
+                    -basic data/C64/basic \
+                    -chargen data/C64/chargen
+      Once you've succesfully run `make install`, the ROMs will be present at
+      $PREFIX/lib[64]/vice and the above command won't be necessary anymore.
+
+success :)
+$ sudo make install
+
+
+NOTE: The following is from the previous Linux build readme and may not be
+      relevant (I've updated most of this for Gtk3 now, I think --compyx)
+
+--------------------------------------------------------------------------------
+2. tweak the configuration
+--------------------------------------------------------------------------------
+
+run x64 in a terminal, it should print a line that tells some config details:
+
+$ ./src/x64
+<...>
+*** VICE Version 3.3, rev 35869:35870 ***
+
+Welcome to x64, the free portable C64 emulator.
+<...>
+
+
+install additional packages:
+
+$ sudo apt-get install libvte-dev         # (NOT libvte-2.90/2.91-dev) for GUI
+                                          # monitor terminal window
+
+$ sudo apt-get install libpulse-dev       # for pulse audio support
+
+$ sudo apt-get install libpcap-dev        # for ethernet emulation
+
+$ sudo apt-get install libavcodec-dev     # for video capturing support
+$ sudo apt-get install libavformat-dev
+$ sudo apt-get install libswscale-dev
+
+$ sudo apt-get install libmp3lame-dev     # required for MP3 encoding
+$ sudo apt-get install libmpg123-dev      # required for MP3 decoding (and for
+                                          # mp3@64 cartridge support)
+
+$ sudo apt-get install yasm               # required for --enable-static-ffmpeg
+                                          # and --enable-shared-ffmpeg, yasm
+                                          # needs to be >=1.2.0
+
+reconfigure with a few more options (check if you really want/need them!):
+$ ./configure --enable-arch=native --with-resid --enable-native-gtk3ui \
+    --enable-ethernet --with-pulse --with-alsa --enable-cpuhistory \
+    --enable-vte --enable-external-ffmpeg
+
+(optionally add --enable-debug-gtk3ui --enable-debug to get debugging messages
+ to better debug problems, or to help reporting bugs)
+
+
+compile again...
+$ make
+
+... and finally install
+$ sudo make install
+
+--------------------------------------------------------------------------------
+3. staying up to date
+--------------------------------------------------------------------------------
+
+Once you did all this, you can keep your local work directory, and build
+yourself a cutting edge version simply by doing:
+
+$ svn up
+$ make
+$ sudo make install
+

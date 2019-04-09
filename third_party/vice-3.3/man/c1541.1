@@ -1,0 +1,160 @@
+.TH C1541 1 "May 2018" "VICE"
+.SH NAME
+c1541 \- a stand alone disk image maintenance program
+.SH SYNOPSIS
+.IR c1541
+[options] [image]
+.SH DESCRIPTION
+.IR c1541
+is a stand alone program that can be used for D64, D71, D81, X64 and G64
+disk image file maintenance.  It is part of the
+.IR VICE
+emulator.
+.P
+.IR c1541
+can be used both in interactive and batch mode.  It will start in interactive
+mode if no images and no options are specified or if one image is specified;
+when started in interactive mode, command line editing and command history
+are available.
+.P
+Each command line option for use in batch mode has an interactive mode
+counterpart, that is shown in parenthesis.
+.TP 8
+.B \-@ \fIcommand\fR
+execute CBM DOS command
+.TP
+.B \-attach \fIimage\fR (attach \fIimage\fR)
+attach \fIimage\fR for use.  All consequent commands in interactive mode will
+refer to this image.
+.TP
+.B \-bam [\fIunit\fR] | \fItrack-min\fR \fItrack_max\fR [\fIunit\fR] (bam [\fIunit\fR] | \fItrack-min\fR \fItrack_max\fR [\fIunit\fR])
+show bam bitmap of an imagem optionally specifying unit and/or a slice of the tracks using \fItrack-min\fR and \fItrack-max\fR.
+.TP
+.B \-bcopy \fIsrc_trk\fR \fIsrc_sec\fR \fIdst_trk\fR \fIdst_sec\fR [\fIsrc_unit\fR [\fIdst_unit\fR]] (bcopy \fIsrc_trk\fR \fIsrc_sec\fR \fIdst_trk\fR \fIdst_sec\fR [\fIsrc_unit\fR [\fIdst_unit\fR]])
+copy a block to another block. When not using the optional unit numbers, the block is copied among the current unit. If one unit (\fIsrc_unit\fR) is specified that unit is used for both source and destination. Using both unit number allows copying blocks between different units.
+.TP
+.B \-bfill \fItrack\fR \fIsector\fR \fIvalue\fR \fI[unit]\fR (bfill \fItrack\fR \fIsector\fR \fIvalue\fR \fI[unit]\fR)
+fill a block with a single value.
+.TP
+.B \-block \fItrack\fR \fIsector\fR \fI[offset]\fR \fI[unit]\fR (block \fItrack\fR \fIsector\fR \fI[offset]\fR \fI[unit]\fR)
+show disk blocks in hex format.
+.TP
+.B \-bpoke [\fI[@unit:]\fR \fItrack\fR \fIsector\fR \fIoffset\fR \fIdata\fR (bpoke [\fI[@unit:]\fR \fItrack\fR \fIsector\fR \fIoffset\fR \fIdata\fR)
+poke data into a block. The \fIdata\fR list should be at least a single byte. Multiple prefixes for the data are supported: 0x/$ for hex, 0b/% for binary, & for octal and unadorned for plain decimal.
+.TP
+.B \-bread \fIfilename\fR \fItrack\fR \fIsector\fR [\fIunit\fR] (bread \fIfilename\fR \fItrack\fR \fIsector\fR [\fIunit\fR])
+read a block from the disk image at (\fItrack\fR,\fIsector\fR) and write it to the host file system as \fIfilename\fR.
+.TP
+.B \-bwrite \fIfilename\fR \fItrack\fR \fIsector\fR [\fIunit\fR] (bwrite \fIfilename\fR \fItrack\fR \fIsector\fR [\fIunit\fR])
+write a block from \fIfilename\fR on the host file system to a disk image at (\fItrack\fR,\fIsector\fR).
+.TP
+.B \-chain \fItrack\fR \fIsector\fR \fi[unit]\fR (chain \fItrack\fR \fIsector\fR \fI[unit]\fR)
+show block chain starting at (\fItrack\fR,\fIsector\fR). The last number shown is the number of bytes in the final block.
+.TP
+.B \-copy \fIimage\fR \fIoldname1\fR \fI[oldname2...]\fR \fInewname\fR (copy \fIoldname1\fR \fI[oldname2...]\fR \fInewname\fR)
+concatenate \fIoldname1\fR, \fIoldname2\fR... into \fInewname\fR on \fIimage\fR
+(can be used to copy files).
+.TP
+.B \-delete \fIimage\fR \fIfiles...\fR (delete \fIfiles...\fR)
+delete \fIfiles\fR from \fIimage\fR
+.TP
+.B \-dir \fI[pattern]\fR (dir \fI[pattern]\fR)
+list directory. See the \fBlist\fR command for details.
+.TP
+.B \-extract \fIimage\fR (extract \fIimage\fR)
+extract all files from \fIimage\fR.
+.TP
+.B \-format \fIimage\fR (format \fIimage\fR '\fIname,id\fR')
+format the disk image \fIimage\fR with the specified label.  \fIimage\fR is
+created if it does not exist.
+.TP
+.B \-geosextract \fIsource\fR (geosextract \fIsource\fR)
+extract all the files to the file system and GEOS Convert them.
+.TP
+.B \-geosread \fIsource\fR \fI[destination]\fR (geosread \fIsource\fR \fI[destination]\fR)
+read GEOS \fIsource\fR from the disk image and copy it as a Convert file into
+\fIdestination\fR in the file system. If \fIdestination\fR is not specified,
+copy it into a file with the same name as \fIsource\fR.
+Please note that since GEOS files are stored in ASCII, violating CBMDOS
+conventions, the filename should be given in inverted case.
+.TP
+.B \-geoswrite \fIsource\fR (geoswrite \fIsource\fR)
+write GEOS Convert file \fIsource\fR from the file system on a disk image.
+.TP
+.B \-help \fI[command]\fR (help)
+show help on all commands or more detailed help on a specific \fIcommand\fR
+.TP
+.B \-info \fIimage\fR \fI[unit]\fR (info \fI[unit]\fR)
+show information about image (format, geometry, error-block, write-protect)
+.TP
+.B \-list \fI[pattern]\fR (list)
+list directory. The optional \fIpattern\fR accepts the usual
+CBM DOS wildcards (\fB*\fR and \fB?\fR) and also supports file type selection
+with '=X', where \fBX\fR is one of \fBS\fR, \fBP\fR, \fBU\fR or \fBR\fR.
+Multiple sub patterns can be specified by using comma's.
+.TP
+.B \-name \fIdiskname[,id]\fR \fI[unit]\fR (name \fIdiskname[,id]\fR \fI[unit]\fR)
+set diskname and optionally id.
+.TP
+.B \-p00save \fIenable\fR \fI[unit]\fR (p00save \fIenable\fR \fI[unit\fR)
+save P00 files to the file system.
+.TP
+.B \-read \fIimage\fR \fI1541name\fR \fI[fsname]\fR (read \fI1541name\fR \fI[fsname]\fR)
+extract \fI1541name\fR from the disk image into \fIfsname\fR (\fI1541name\fR
+by default) from \fIimage\fR.
+.TP
+.B \-rename \fIoldname\fR \fInewname\fR (rename \fIoldname\fR \fInewname\fR)
+rename files. The files must be on the same drive.
+.TP
+.B \-show \fI'copying'\fR|\fI'warranty'\fR (show \fI'copying'\fR|\fI'warranty'\fR)
+show license or warranty information.
+.TP
+.B \-tape \fIimage\fR \fItapeimage\fR \fI[files...]\fR (tape \fIimage\fR \fItapeimage\fR \fI[files...]\fR)
+transfer \fIfiles\fR from \fItapeimage\fR to \fIimage\fR (default is all files).
+.TP
+.B \-unlynx \fIarchive\fR \fI[unit]\fR (unlynx \fIarchive\fR \fI[unit]\fR)
+dissolve Lynx \fIarchive\fR.
+.TP
+.B \-validate \fIimage\fR (validate)
+validate \fImage\fR.
+.TP
+.B \-verbose \fR[off] (verbose [off])
+set verbose mode. Output extra logging information, disable with \fBverbose off\fR.
+.TP
+.B \-write \fIimage\fR \fIfsname\fR \fI[1541name]\fR (write \fIfsname\fR \fI[1541name]\fR)
+write \fIfsname\fR to \fIimage\fR as \fI1541name\fR (\fIfsname\fR by default).
+(works with \fIP00\fR files as well).
+.TP
+.B \-zcreate \fIx64name\fR \fIzipname\fR [\fIlabel,id\fR] (zcreate \fIx64name\fR \fIzipname\fR [\fIlabel,id\fR]
+create an X64 disk image from four Zipcoded files named \fI1!zipname\fR through
+\fI4!zipname\fR.
+.P
+When more than one command is specified in batch mode, all of them are
+executed in the same order they have on the command line.
+.P
+If you use
+.B \-
+as a file name, it stands for \fIstdin\fR or \fIstdout\fR.
+.P
+Exit interactive mode with either \fBexit\fR or \fBquit\fR.
+.SH SEE ALSO
+.BR vice(1),
+.BR cartconv(1),
+.BR petcat(1)
+.SH AUTHORS
+Teemu Rantanen <tvr@cs.hut.fi>
+.br
+Ettore Perazzoli <ettore@comm2000.it>
+.br
+Andreas Boose <boose@linux.rz.fh-hannover.de>
+.br
+Jouko Valta <jopi@stekt.oulu.fi>
+.P
+with improvements by
+.P
+.br
+Olaf Seibert <rhialto@mbfys.kun.nl>
+.br
+Gerhard Wesp <gwesp@cosy.sbg.ac.at>
+.br
+Bas Wassink <b.wassink@ziggo.nl>

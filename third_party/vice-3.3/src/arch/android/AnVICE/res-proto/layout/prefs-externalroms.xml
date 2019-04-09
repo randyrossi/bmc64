@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+	<Preference
+		android:key="pref_key_start"
+		android:title="@string/pref_start"
+		android:summary="@string/pref_start_summary"
+		android:persistent="false"
+		android:selectable="true"
+		android:enabled="false"
+	/>
+
+	<PreferenceCategory
+		android:title="@string/pref_category_preconfig">
+			    
+		<Preference
+			android:key="pref_key_rom"
+			android:title="@string/pref_rom"
+			android:persistent="false"
+			android:selectable="true"
+			android:enabled="true"
+		/>
+
+<!-- 
+		<ListPreference
+	        android:key="pref_key_floppy_count"
+	        android:title="@string/pref_floppy_count"
+	        android:summary="@string/pref_floppy_count_summary"
+	        android:persistent="true"
+	        android:defaultValue="@string/pref_default_floppy_count"
+	        android:entries="@array/pref_floppy_count_entry"
+	        android:entryValues="@array/pref_floppy_count_value"
+		/>
+-->
+	
+		<Preference
+			android:key="pref_key_floppy1"
+			android:title="@string/pref_floppy1"
+			android:persistent="false"
+			android:selectable="true"
+			android:enabled="true"
+		/>
+<!-- 
+		<Preference
+			android:key="pref_key_floppy2"
+			android:title="@string/pref_floppy2"
+			android:persistent="false"
+			android:selectable="true"
+			android:enabled="true"
+		/>
+	
+		<Preference
+			android:key="pref_key_floppy3"
+			android:title="@string/pref_floppy3"
+			android:persistent="false"
+			android:selectable="true"
+			android:enabled="true"
+		/>
+	
+		<Preference
+			android:key="pref_key_floppy4"
+			android:title="@string/pref_floppy4"
+			android:persistent="false"
+			android:selectable="true"
+			android:enabled="true"
+		/>
+-->	
+
+<!-- 
+		<ListPreference
+	        android:key="pref_key_screen_height"
+	        android:title="@string/pref_screen_height"
+	        android:persistent="true"
+	        android:defaultValue="@string/pref_default_screen_height"
+	        android:entries="@array/pref_screen_height_entry"
+	        android:entryValues="@array/pref_screen_height_value"
+		/>
+-->	
+		<CheckBoxPreference
+			android:key="pref_key_true_drive_on"
+			android:title="@string/pref_true_drive_on"
+			android:summary="@string/pref_true_drive_on_summary"
+			android:persistent="true"
+			android:defaultValue="@bool/pref_default_true_drive_on"
+		/>
+	
+		<CheckBoxPreference
+			android:key="pref_key_screen_border_on"
+			android:title="@string/pref_screen_border_on"
+			android:persistent="true"
+			android:defaultValue="@bool/pref_default_screen_border_on"
+		/>
+
+		<CheckBoxPreference
+			android:key="pref_key_ntsc_on"
+			android:title="@string/pref_ntsc_on"
+			android:persistent="true"
+			android:defaultValue="@bool/pref_default_ntsc_on"
+		/>
+		
+	</PreferenceCategory>	
+
+</PreferenceScreen>

@@ -1,0 +1,65 @@
+LOCAL_PATH := $(call my-dir)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := vice_xplus4
+
+MY_PATH2 := ../../../../../..
+
+CG_SUBDIRS := \
+$(MY_PATH2)/src/plus4 \
+$(MY_PATH2)/src/drive/iec/plus4exp
+
+# Add more subdirs here, like src/subdir1 src/subdir2
+
+MY_PATH := $(LOCAL_PATH)
+
+CG_SRCDIR := $(LOCAL_PATH)
+
+LOCAL_CFLAGS := -DANDROID_COMPILE
+
+LOCAL_C_INCLUDES :=	$(LOCAL_PATH)/include \
+				$(LOCAL_PATH)/../sdl/include \
+				$(LOCAL_PATH)/../locnet/include \
+				$(LOCAL_PATH) \
+				$(LOCAL_PATH)/../../../../../../src/arch/sdl \
+				$(LOCAL_PATH)/../../../../../../src/drive \
+				$(LOCAL_PATH)/../../../../../../src/lib/p64 \
+				$(LOCAL_PATH)/../../../../../../src/raster \
+				$(LOCAL_PATH)/../../../../../../src/tapeport \
+				$(LOCAL_PATH)/../../../../../../src/samplerdrv \
+				$(LOCAL_PATH)/../../../../../../src/joyport \
+				$(LOCAL_PATH)/../../../../../../src/sid \
+				$(LOCAL_PATH)/../../../../../../src/userport \
+				$(LOCAL_PATH)/../../../../../../src/video \
+				$(LOCAL_PATH)/../../../../../../src/monitor \
+				$(LOCAL_PATH)/../../../../../../src/core \
+				$(LOCAL_PATH)/../../../../../../src/plus4 \
+				$(LOCAL_PATH)/../../../../../../src \
+				$(LOCAL_PATH)/../.. \
+				$(LOCAL_PATH)
+
+LOCAL_PATH := $(MY_PATH)
+
+LOCAL_CPPFLAGS := $(LOCAL_CFLAGS)
+LOCAL_CXXFLAGS := $(LOCAL_CFLAGS)
+
+#Change C++ file extension as appropriate
+LOCAL_CPP_EXTENSION := .cpp
+
+LOCAL_SRC_FILES := $(foreach F, $(CG_SUBDIRS), $(addprefix $(F)/,$(notdir $(wildcard $(LOCAL_PATH)/$(F)/*.c))))
+
+LOCAL_SRC_FILES += \
+	$(MY_PATH2)/src/arch/sdl/menu_plus4cart.c \
+	$(MY_PATH2)/src/arch/sdl/menu_plus4hw.c \
+	$(MY_PATH2)/src/arch/sdl/xplus4_ui.c \
+	$(MY_PATH2)/src/drive/tcbm/glue1551.c \
+	$(MY_PATH2)/src/drive/tcbm/mem1551.c \
+	$(MY_PATH2)/src/drive/tcbm/tcbm.c \
+	$(MY_PATH2)/src/drive/tcbm/tcbm-cmdline-options.c \
+	$(MY_PATH2)/src/drive/tcbm/tcbm-resources.c \
+	$(MY_PATH2)/src/drive/tcbm/tcbmrom.c
+
+LOCAL_ARM_MODE := arm
+
+include $(BUILD_STATIC_LIBRARY)

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+		
+	<LinearLayout
+		android:orientation="vertical"
+		android:gravity="center_horizontal"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content">
+
+		<LinearLayout
+			android:orientation="horizontal"
+			android:gravity="center_horizontal"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+			
+			<Button android:id="@+id/save_state1" 
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content" 
+				android:layout_weight="1"
+				android:enabled="false"
+				android:text="@string/save_state1"/>
+
+			<Button android:id="@+id/load_state1" 
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content" 
+				android:layout_weight="1"
+				android:enabled="false"
+				android:text="@string/load_state1" />
+		</LinearLayout>
+
+		<LinearLayout
+			android:orientation="horizontal"
+			android:gravity="center_horizontal"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+			
+			<Button android:id="@+id/save_state2" 
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content" 
+				android:layout_weight="1"
+				android:enabled="false"
+				android:text="@string/save_state2"/>
+
+			<Button android:id="@+id/load_state2" 
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content" 
+				android:layout_weight="1"
+				android:enabled="false"
+				android:text="@string/load_state2" />
+		</LinearLayout>
+
+		<LinearLayout
+			android:orientation="horizontal"
+			android:gravity="center_horizontal"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+			
+			<Button android:id="@+id/save_state3" 
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content" 
+				android:layout_weight="1"
+				android:enabled="false"
+				android:text="@string/save_state3"/>
+
+			<Button android:id="@+id/load_state3" 
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content" 
+				android:layout_weight="1"
+				android:enabled="false"
+				android:text="@string/load_state3" />
+		</LinearLayout>
+
+		<LinearLayout
+			android:orientation="horizontal"
+			android:gravity="center_horizontal"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+			
+			<Button android:id="@+id/change_floppy1" 
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content" 
+				android:layout_weight="1"
+				android:enabled="false"
+				android:text="@string/change_floppy_1"/>
+
+			<Button android:id="@+id/change_floppy2" 
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content" 
+				android:layout_weight="1"
+				android:enabled="false"
+				android:text="@string/change_floppy_2" />
+				
+		</LinearLayout>
+
+		<LinearLayout
+			android:orientation="horizontal"
+			android:gravity="center_horizontal"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+			
+			<Button android:id="@+id/change_floppy3" 
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content" 
+				android:layout_weight="1"
+				android:enabled="false"
+				android:text="@string/change_floppy_3" />
+
+			<Button android:id="@+id/change_floppy4" 
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content" 
+				android:layout_weight="1"
+				android:enabled="false"
+				android:text="@string/change_floppy_4" />
+				
+		</LinearLayout>
+		
+		<LinearLayout
+			android:orientation="horizontal"
+			android:gravity="center_horizontal"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+			
+			<TextView android:id="@+id/change_tape" 
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content" 
+				android:layout_weight="1"
+				android:enabled="true"
+	        	android:gravity="center"
+				android:text="Tape:" />
+
+			<Button android:id="@+id/tape_rewind" 
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content" 
+				android:layout_weight="1"
+				android:enabled="true"
+				android:text="&lt;&lt;" />
+
+			<Button android:id="@+id/tape_stop" 
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content" 
+				android:layout_weight="1"
+				android:enabled="true"
+				android:text="=" />
+
+			<Button android:id="@+id/tape_start" 
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content" 
+				android:layout_weight="1"
+				android:enabled="true"
+				android:text=">"/>
+
+			<Button android:id="@+id/tape_forward" 
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content" 
+				android:layout_weight="1"
+				android:enabled="true"
+				android:text="&gt;&gt;" />
+		</LinearLayout>
+
+	</LinearLayout>
+</ScrollView>

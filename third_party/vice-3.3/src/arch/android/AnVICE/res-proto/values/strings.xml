@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">@VICE@</string>
+    <string name="help">- Volume Up/Down is mapped to respective buttons in Mouse/Joystick mode.\n\n- (Menu->Buttons->Show Buttons) to check onscreen buttons and joystick area.\n\n- Advance user can edit /sdcard/sdl-vicerc for customization.\n\n- To use D-Pad as arrow keys make sure Joystick Keys is disabled. \n\n- Alternative keys: [\\]=>\':\' [End]=>\'@\' [PgDn]=>\'*\'</string>
+    <string name="acknowledge">The emulation part of the software is based on GPL source code of DOSBox 0.74 from DOSBox Team (available at www.dosbox.com).</string>
+    <string name="keymapper">Button Mapper</string>
+    <string name="scale_factor">Resize Factor</string>
+    <string name="mouse_sensitivity">Mouse Sensitivity</string>
+
+    <string name="save_state1">Save state 1</string>
+    <string name="load_state1">Load state 1</string>
+    <string name="save_state2">Save state 2</string>
+    <string name="load_state2">Load state 2</string>
+    <string name="save_state3">Save state 3</string>
+    <string name="load_state3">Load state 3</string>
+    <string name="change_floppy_1">Change Drive 8</string>
+    <string name="change_floppy_2">Change Drive 9</string>
+    <string name="change_floppy_3">Change Drive 10</string>
+    <string name="change_floppy_4">Change Drive 11</string>
+
+    <string name="pref_start_x64">Start X64</string>
+    <string name="pref_start_summary_x64">Savestate will bind to the autostart image BEFORE emulator started</string>
+
+    <string name="pref_start_x64sc">Start X64SC</string>
+    <string name="pref_start_summary_x64sc">Savestate will bind to the autostart image BEFORE emulator started</string>
+
+    <string name="pref_start_xscpu64">Start XSCPU64</string>
+    <string name="pref_start_summary_xscpu64">Savestate will bind to the autostart image BEFORE emulator started</string>
+
+    <string name="pref_start_x64dtv">Start X64DTV</string>
+    <string name="pref_start_summary_x64dtv">Savestate will bind to the autostart image BEFORE emulator started</string>
+
+    <string name="pref_start_x128">Start X128</string>
+    <string name="pref_start_summary_x128">Savestate will bind to the autostart image BEFORE emulator started</string>
+
+    <string name="pref_start_xcbm2">Start XCBM2</string>
+    <string name="pref_start_summary_xcbm2">Savestate will bind to the autostart image BEFORE emulator started</string>
+
+    <string name="pref_start_xcbm5x0">Start XCBM5X0</string>
+    <string name="pref_start_summary_xcbm5x0">Savestate will bind to the autostart image BEFORE emulator started</string>
+
+    <string name="pref_start_xpet">Start XPET</string>
+    <string name="pref_start_summary_xpet">Savestate will bind to the autostart image BEFORE emulator started</string>
+
+    <string name="pref_start_xplus4">Start XPLUS4</string>
+    <string name="pref_start_summary_xplus4">Savestate will bind to the autostart image BEFORE emulator started</string>
+
+    <string name="pref_start_xvic">Start XVIC</string>
+    <string name="pref_start_summary_xvic">Savestate will bind to the autostart image BEFORE emulator started</string>
+
+    <string name="pref_category_preconfig">Boot Parameters</string>
+    <string name="pref_start">Start Emulator</string>
+    <string name="pref_start_summary">Savestate will bind to the autostart image BEFORE emulator started</string>
+    <string name="pref_rom">@VICE_ROM@</string>
+    <string name="pref_floppy_count">No. of Floppy Drives</string>
+    <string name="pref_floppy_count_summary">Some games only work with 1 floppy drive</string>
+<!-- 
+    <string name="pref_floppy1">Drive 8</string>
+-->
+    <string name="pref_floppy1">Autostart Image</string>
+    <string name="pref_floppy2">Drive 9</string>
+    <string name="pref_floppy3">Drive 10</string>
+    <string name="pref_floppy4">Drive 11</string>
+    <string name="pref_famec_on">Use fast core</string>
+    <string name="pref_famec_on_summary">Disable for better compatibility</string>
+    <string name="pref_screen_height">Screen Height</string>
+    <string name="pref_ntsc_on">NTSC mode</string>
+    <string name="pref_true_drive_on">True Drive Emulation</string>
+    <string name="pref_true_drive_on_summary">Slower but have better compatibility</string>
+    <string name="pref_screen_border_on">Show Screen Border</string>
+
+	<string-array name="pref_floppy_count_entry">
+		<item>1</item>
+		<item>2</item>
+		<item>3</item>
+		<item>4</item>
+	</string-array>
+
+	<string-array name="pref_floppy_count_value">
+		<item>1</item>
+		<item>2</item>
+		<item>3</item>
+		<item>4</item>
+	</string-array>
+
+	<string-array name="pref_screen_height_entry">
+		<item>200</item>
+		<item>240</item>
+		<item>256</item>
+	</string-array>
+
+	<string-array name="pref_screen_height_value">
+		<item>200</item>
+		<item>240</item>
+		<item>256</item>
+	</string-array>
+<!-- 
+<string name="paths_section">Paths</string>
+
+<string name="rom_location">ROM Location (*.rom)</string>
+<string name="floppy1_location">Floppy1 Location (*.adf)</string>
+<string name="floppy2_location">Floppy2 Location (*.adf)</string>
+<string name="perf_section">Performance settings</string>
+<string name="auto_frameskip">Auto Frameskip</string>
+<string name="frameskip_value">Frameskip</string>
+
+<string name="sound">Sound</string>
+<string name="configure">Manage</string>
+<string name="input">Switch Input</string>
+<string name="reset">Reset</string>
+<string name="quit">Quit</string>
+<string name="reset_ask">Do you want to reset ?</string>
+<string name="yes">Yes</string>
+<string name="no">No</string>
+<string name="joystick_mode">Switch to joystick mode</string>
+<string name="keyb_mode">Switch to keyboard mode</string>
+<string name="mapping_settings">Controls</string>
+<string name="custom_mappings">Physical controls</string>
+<string name="perf">Performance</string>
+<string name="quit_info">Unfortunately, you can\'t change the ROM on the fly! This app will now quit. Please restart it to take ROM change into account !</string>
+<string name="system_clock">System clock</string>
+<string name="system_clock_summary">Tweak to improve perf at expense of compatibility</string>
+<string name="sync_threshold">Sync threshold</string>
+
+<string-array name="fs_entries"><item>1</item><item>2</item><item>3</item><item>4</item><item>5</item><item>6</item><item>7</item><item>8</item><item>9</item></string-array>
+<string-array name="sc_entries"><item>0</item><item>2</item><item>4</item></string-array>
+<string-array name="sc_entries_summary"><item>100%</item><item>83%</item><item>75%</item></string-array>
+<string-array name="st_entries"><item>0</item><item>1</item><item>2</item><item>3</item></string-array>
+<string-array name="st_entries_summary"><item>100%</item><item>83%</item><item>75%</item><item>50%</item></string-array>
+
+<string name="show_touch">Show touch controls</string>
+<string name="hide_touch">Hide touch controls</string>
+<string name="drivestatus">Show drive loading status</string>
+<string name="ntsc">Switch to NTSC mode</string>
+<string name="change_mouse">Change mouse button</string>
+<string name="mouse_left">Left button selected</string>
+<string name="mouse_right">Right button selected</string>
+<string name="floppy3_location">Floppy3 Location (*.adf)</string>
+<string name="floppy4_location">Floppy4 Location (*.adf)</string>
+<string name="cyclone_core">Cyclone M68k emulation</string>
+<string name="cyclone_desc">ARM optimized core (No save states, needs App Restart!)</string>
+<string name="notes">Notes</string>
+<string name="release_notes_097">New in v0.99:\n\n- Better multitouch controls.\n- Cyclone core not the default one anymore.\n- Screen size option.\n- Floppy removal.\n\nNew in v0.98.1:\n\n- Mouse clicks on physical keys\n- Revert regression on 1.5 devices and ROM issues on Cyclone Core?\n\nNew in v0.97:\n\n- Optional new CPU core + save states. ARM Cyclone Core still enabled by default because it\'s faster. Your choice (I hope to manage save states on Cyclone one day).\n\n- Different graphic management: No more relying on OpenGL for framebuffer support : too much performance differences between devices\n\n- Right mouse support\n\n- Fire with trackball by default\n\n- NTSC support\n\n- FPS/Drive loading status bar</string>
+<string name="ok">Ok</string>
+<string name="start_amiga">Start Amiga</string>
+<string name="configure_amiga">Configure</string>
+<string name="joystick_layout_test">Virtual joystick Layout</string>
+<string name="joystick_layout_size">Virtual joystick Size</string>
+<string-array name="joystick_layout"><item>bottom_bottom</item><item>top_bottom</item><item>bottom_top</item><item>top_top</item></string-array>
+<string-array name="joystick_layout_test"><item>Bottom + Bottom</item><item>Top + Bottom</item><item>Bottom + Top</item><item>Top + Top</item></string-array>
+<string-array name="joystick_size"><item>small</item><item>medium</item><item>large</item></string-array>
+<string-array name="screen_size"><item>stretched</item><item>scaled</item><item>2x</item><item>1x</item></string-array>
+<string name="screen_size_text">Screen Size</string>
+<string name="save_state">Save state</string>
+<string name="load_state">Load state</string>
+<string name="remove_floppy1">Remove Floppy1</string>
+<string name="remove_floppy2">Remove Floppy2</string>
+<string name="remove_floppy3">Remove Floppy3</string>
+<string name="remove_floppy4">Remove Floppy4</string>
+<string name="change_disk">Change Disk</string>
+-->
+
+</resources>

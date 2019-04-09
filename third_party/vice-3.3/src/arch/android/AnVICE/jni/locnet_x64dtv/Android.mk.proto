@@ -1,0 +1,55 @@
+LOCAL_PATH := $(call my-dir)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := x64dtv
+
+CG_SUBDIRS := .
+
+# Add more subdirs here, like src/subdir1 src/subdir2
+
+MY_PATH := $(LOCAL_PATH)
+
+CG_SRCDIR := $(LOCAL_PATH)
+
+LOCAL_CFLAGS := -DANDROID_COMPILE -D__X64DTV__
+
+LOCAL_C_INCLUDES :=	$(LOCAL_PATH)/../locnet/include \
+				$(LOCAL_PATH)/../sdl/include \
+				$(LOCAL_PATH)/../../../../../../src/ \
+				$(LOCAL_PATH)/../../../../../../src/arch/sdl \
+				$(LOCAL_PATH)/../../../../../../src/joyport \
+				$(LOCAL_PATH)/../.. \
+				$(LOCAL_PATH)
+
+LOCAL_PATH := $(MY_PATH)
+
+LOCAL_CPPFLAGS := $(LOCAL_CFLAGS)
+LOCAL_CXXFLAGS := $(LOCAL_CFLAGS)
+
+#Change C++ file extension as appropriate
+LOCAL_CPP_EXTENSION := .cpp
+
+LOCAL_SRC_FILES := ../locnet/locnet_loader.cpp
+
+LOCAL_WHOLE_STATIC_LIBRARIES := \
+	locnet_al \
+	vice_x64_dtv_128_5x0 \
+	vice_x64_sc_dtv \
+	vice_x64_sc_dtv_128_2_5x0_pet_4_20 \
+	vice_x64_sc_dtv_scpu \
+	vice_x64_sc_dtv_scpu_128 \
+	vice_x64_sc_dtv_scpu_128_2_5x0_20 \
+	vice_x64_sc_dtv_scpu_128_2_5x0_4_20 \
+	vice_x64_sc_dtv_scpu_128_2_5x0_pet_4 \
+	vice_x64_sc_dtv_scpu_128_2_5x0_pet_4_20 \
+	vice_x64_sc_dtv_scpu_128_2_pet_4_20 \
+	vice_x64_sc_dtv_scpu_128_4_20 \
+	vice_x64_sc_dtv_scpu_128_20 \
+	vice_x64dtv
+
+LOCAL_LDLIBS := -lz -llog
+
+LOCAL_ARM_MODE := arm
+
+include $(BUILD_SHARED_LIBRARY)

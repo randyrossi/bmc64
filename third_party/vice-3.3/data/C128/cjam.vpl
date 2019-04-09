@@ -1,0 +1,55 @@
+#
+# VICE Palette file
+#
+# Syntax:
+# Red Green Blue Dither
+#
+# taken from http://jamontoads.net/p/lumachroma.html
+
+# Black
+00 00 00 0
+
+# White
+FF FF FF E
+
+# Red
+7d 20 2c 4
+
+# Cyan
+4f b3 a5 C
+
+# Purple
+84 25 8c 8
+
+# Green
+33 98 40 4
+
+# Blue
+2a 1b 9d 4
+
+# Yellow
+bf d0 4a C
+
+# Orange
+7f 41 0d 4
+
+# Brown
+4c 2e 00 4
+
+# Light Red
+b4 4f 5c 8
+
+# Dark Gray
+3c 3c 3c 4
+
+# Medium Gray
+64 64 64 8
+
+# Light Green
+7c e5 87 8
+
+# Light Blue
+63 51 db 8
+
+# Light Gray
+93 93 93 C

@@ -1,0 +1,160 @@
+# VICE keyboard mapping file
+#
+# A Keyboard map is read in as patch to the current map.
+#
+# File format:
+# - comment lines start with '#'
+# - keyword lines start with '!keyword'
+# - normal line has 'keysym/scancode row column shiftflag'
+#
+# Keywords and their lines are:
+# '!CLEAR'               clear whole table
+# '!INCLUDE filename'    read file as mapping file
+# '!LSHIFT row col'      left shift keyboard row/column
+# '!RSHIFT row col'      right shift keyboard row/column
+# '!VSHIFT shiftkey'     virtual shift key (RSHIFT or LSHIFT)
+# '!UNDEF keysym'        remove keysym from table
+#
+# Shiftflag can have the values:
+# 0      key is not shifted for this keysym/scancode
+# 1      key is shifted for this keysym/scancode
+# 2      left shift
+# 4      right shift
+# 8      key can be shifted or not with this keysym/scancode
+# 16     deshift key for this keysym/scancode
+# 32     another definition for this keysym/scancode follows
+#
+# Negative row values:
+# 'keysym -1 n' joystick #1, direction n
+# 'keysym -2 n' joystick #2, direction n
+# 'keysym -3 0' first RESTORE key
+# 'keysym -3 1' second RESTORE key
+# 'keysym -4 0' 40/80 column key
+# 'keysym -4 1' CAPS (ASCII/DIN) key
+#
+
+# this is a PET business (uk) keyboard mapping (symbolic)
+
+# Business (UK) keyboard matrix:
+#
+# Keys starting with 'KP' are on the number pad.
+#
+#       0        1        2        3        4        5        6        7
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 0 |   2    |   5    |   8    |   -    |  KP8   |crsr rgt|  ^N    |   .    |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 1 |   1    |   4    |   7    |   0    |  KP7   |   ^    |--------|  KP9   |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 2 | escape |   s    |   f    |   h    |   ]    |   k    |   ;    |  KP5   |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 3 |   a    |   d    |   g    |   j    | return |   l    |   @    |  KP6   |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 4 |  tab   |   w    |   r    |   y    |   \    |   i    |   p    |  del   |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 5 |   q    |   e    |   t    |   u    |crsr dwn|   o    |   [    |  KP4   |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 6 |l shift |   c    |   b    |   .    |  KP.   |  ^Y    |r shift |  KP3   |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 7 |   z    |   v    |   n    |   ,    |  KP0   |  ^O    | repeat |  KP2   |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 8 |  RVS   |   x    | space  |   m    | home   |  ^U    |   /    |  KP1   |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 9 |  <--   |   3    |   6    |   9    |runstop |   :    |--------|  ^V    |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+#
+#   ^N = both shifts + 2
+#   ^Y = left shift + TAB + I
+#   ^O = Z + A + L
+#   ^U = RVS + A + L
+#   ^V = TAB + <- + DEL
+#
+# Business (US) matrix (differences to UK)
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 2 |        |        |        |        |   ;    |        |   \    |        |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 3 |        |        |        |        |        |        |   [    |        |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 4 |        |        |        |        |   @    |        |        |        |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 5 |        |        |        |        |        |        |   ]    |        |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+
+!CLEAR
+!LSHIFT 6 0
+!RSHIFT 6 6
+!VSHIFT RSHIFT
+
+27 2 0 8        /*          ESC -> ESC          */
+49 1 0 8        /*            1 -> 1            */
+50 0 0 8        /*            2 -> 2            */
+51 9 1 8        /*            3 -> 3            */
+52 1 1 8        /*            4 -> 4            */
+53 0 1 8        /*            5 -> 5            */
+54 9 2 8        /*            6 -> 6            */
+55 1 2 8        /*            7 -> 7            */
+56 0 2 8        /*            8 -> 8            */
+57 9 3 8        /*            9 -> 9            */
+48 1 3 8        /*            0 -> 0            */
+45 9 5 8        /*        Minus -> :            */
+61 0 3 8        /*        Equal -> Minus        */
+8 4 7 8         /*    Backspace -> Del          */
+9 4 0 8         /*          TAB -> TAB          */
+113 5 0 8       /*            Q -> Q            */
+119 4 1 8       /*            W -> W            */
+101 5 1 8       /*            E -> E            */
+114 4 2 8       /*            R -> R            */
+116 5 2 8       /*            T -> T            */
+121 4 3 8       /*            Y -> Y            */
+117 5 3 8       /*            U -> U            */
+105 4 5 8       /*            I -> I            */
+111 5 5 8       /*            O -> O            */
+112 4 6 8       /*            P -> P            */
+91 5 6 8        /*            [ -> [            */
+93 2 4 8        /*            ] -> ]            */
+13 3 4 8        /*       Return -> Return       */
+306 8 0 8       /*    Left Ctrl -> RVS          */
+97 3 0 8        /*            A -> A            */
+115 2 1 8       /*            S -> S            */
+100 3 1 8       /*            D -> D            */
+102 2 2 8       /*            F -> F            */
+103 3 2 8       /*            G -> G            */
+104 2 3 8       /*            H -> H            */
+106 3 3 8       /*            J -> J            */
+107 2 5 8       /*            K -> K            */
+108 3 5 8       /*            L -> L            */
+59 2 6 8        /*            ; -> ;            */
+39 3 6 8        /*            ' -> @            */
+96 9 0 8        /*            ` -> Left Arrow   */
+304 6 0 2       /*   Left Shift -> Left Shift   */
+92 4 4 8        /*            \ -> \            */
+122 7 0 8       /*            Z -> Z            */
+120 8 1 8       /*            X -> X            */
+99 6 1 8        /*            C -> C            */
+118 7 1 8       /*            V -> V            */
+98 6 2 8        /*            B -> B            */
+110 7 2 8       /*            N -> N            */
+109 8 3 8       /*            M -> M            */
+44 7 3 8        /*            , -> ,            */
+46 6 3 8        /*            . -> .            */
+47 8 6 8        /*            / -> /            */
+303 6 6 4       /*  Right Shift -> Right Shift  */
+32 8 2 8        /*        Space -> Space        */
+278 8 4 8       /*         Home -> CLR/HOME     */
+273 5 4 1       /*           Up -> CRSR UP      */
+276 0 5 1       /*         Left -> CRSR LEFT    */
+275 0 5 8       /*        Right -> CRSR RIGHT   */
+274 5 4 8       /*         Down -> CRSR DOWN    */
+277 9 4 8       /*          Ins -> STOP         */
+127 1 5 8       /*          Del -> Up Arrow     */
+305 7 6 8       /*   Right Ctrl -> RPT          */
+263 1 4 8       /*     Numpad 7 -> Numpad 7     */
+264 0 4 8       /*     Numpad 8 -> Numpad 8     */
+265 1 7 8       /*     Numpad 9 -> Numpad 9     */
+260 5 7 8       /*     Numpad 4 -> Numpad 4     */
+261 2 7 8       /*     Numpad 5 -> Numpad 5     */
+262 3 7 8       /*     Numpad 6 -> Numpad 6     */
+257 8 7 8       /*     Numpad 1 -> Numpad 1     */
+258 7 7 8       /*     Numpad 2 -> Numpad 2     */
+259 6 7 8       /*     Numpad 3 -> Numpad 3     */
+256 7 4 8       /*     Numpad 0 -> Numpad 0     */
+266 6 4 8       /*     Numpad . -> Numpad .     */

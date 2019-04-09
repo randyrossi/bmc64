@@ -1,0 +1,402 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.52
+     from ../../doc/vice.texi on 19 December 2018 -->
+
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<TITLE>VICE Manual - 13  c1541</TITLE>
+<style type="text/css">
+    @import 'vice.css';
+</style>
+</HEAD>
+<BODY>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_12.html">previous</A>, <A HREF="vice_14.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H1><A NAME="SEC282" HREF="vice_toc.html#TOC282">13  c1541</A></H1>
+
+<P>
+VICE is provided with a complete stand-alone disk image maintenance
+utility, called <CODE>c1541</CODE>.
+
+</P>
+<P>
+You can either invoke it from the command
+line or from within one of the VICE emulators, using the "Run c1541"
+menu item which will open a new terminal window with a running
+<CODE>c1541</CODE> in it.
+
+</P>
+<P>
+The syntax is:
+
+</P>
+
+<PRE>
+c1541 [IMAGE1 [IMAGE2]] [COMMAND1 COMMAND2 ... COMMANDN]
+</PRE>
+
+<P>
+<CODE>IMAGE1</CODE> and <CODE>IMAGE2</CODE> are disk image names that can be
+attached before <CODE>c1541</CODE> starts.  <CODE>c1541</CODE> can handle up to
+two disk images at the same time by using two virtual built-in drives,
+numbered <CODE>8</CODE> and <CODE>9</CODE>; <CODE>IMAGE1</CODE> (if present) is always
+attached to drive <CODE>8</CODE>, while <CODE>IMAGE2</CODE> is attached to drive
+<CODE>9</CODE>.
+
+</P>
+<P>
+<CODE>COMMAND</CODE>s specified on the command-line all begin with the minus
+sign (<CODE>-</CODE>); if present, <CODE>c1541</CODE> executes them in the same
+order as they are on the command line and returns a zero error code if
+they were successful.  If any of the <CODE>COMMAND</CODE>s fails, <CODE>c1541</CODE>
+stops and returns a nonzero error code.
+
+</P>
+<P>
+If no <CODE>COMMAND</CODE>s are specified at all, <CODE>c1541</CODE> enters
+interactive mode, where you can type commands manually.  Commands in
+interactive mode are the same as commands in batch mode, but do not
+require a leading <CODE>-</CODE>.  As with the monitor, file name completion
+and command line editing with history are provided via GNU
+<CODE>readline</CODE>.  Use the command <SAMP>`quit'</SAMP> or press <KBD>C-d</KBD> to
+exit.
+
+</P>
+
+
+
+<H2><A NAME="SEC283" HREF="vice_toc.html#TOC283">13.1  Specifying files in c1541</A></H2>
+
+<P>
+When accessing CBM DOS files (i.e. files that reside on disk images),
+c1541 uses a special syntax that lets you access files on both drive 8
+and 9.  If you prepend the file name with <CODE>@8:</CODE> or <CODE>@9:</CODE>, you
+will specified that file is to be found or created on drive 8 and 9,
+respectively.
+
+</P>
+<P>
+For instance,
+
+</P>
+
+<PRE>
+@8:somefile
+</PRE>
+
+<P>
+will name file named <CODE>somefile</CODE> on unit 8, while
+
+</P>
+
+<PRE>
+@9:somefile
+</PRE>
+
+<P>
+will name file named <CODE>somefile</CODE> on unit 9.
+
+</P>
+
+
+<H2><A NAME="SEC284" HREF="vice_toc.html#TOC284">13.2  Using quotes and backslashes</A></H2>
+
+<P>
+You can use quotes (<CODE>"</CODE>) in a command to embed spaces into file
+names.  For instance,
+
+</P>
+
+<PRE>
+read some file
+</PRE>
+
+<P>
+will read file <CODE>some</CODE> from the disk image and write it into the
+file system as <CODE>file</CODE>, while
+
+</P>
+
+<PRE>
+read "some file"
+</PRE>
+
+<P>
+will copy <CODE>some file</CODE> into the file system, with the name
+<CODE>some file</CODE>.
+
+</P>
+<P>
+The backslash character (<CODE>\</CODE>) has a special meaning too: it lets
+you literally insert the following character no matter what it is.  For
+example,
+
+</P>
+
+<PRE>
+read some\ file
+</PRE>
+
+<P>
+will copy file <CODE>some file</CODE> into the file system, while
+
+</P>
+
+<PRE>
+read some\ file this\"file
+</PRE>
+
+<P>
+will copy <CODE>some file</CODE> into the file system with name
+<CODE>this"file</CODE> (with an embedded quote).
+
+</P>
+
+
+
+<H2><A NAME="SEC285" HREF="vice_toc.html#TOC285">13.3  c1541 commands and options</A></H2>
+
+<P>
+This is a list of the <CODE>c1541</CODE> commands.  They are shown in their
+interactive form, without the leading <CODE>-</CODE>.
+Square brackets [] indicate an optional part, and "&#60;COMMAND&#62;" translates
+to a disk command according to CBM DOS, like "i0" for example.
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>@ [&#60;command&#62;]</CODE>
+<DD>
+Execute specified CBM DOS command and print the current status of the
+drive.  If no <CODE>command</CODE> is specified, just print the status.
+
+<DT><CODE>? [&#60;command&#62;]</CODE>
+<DD>
+Explain specified command.  If no command is specified, list available
+ones.
+
+<DT><CODE>attach &#60;diskimage&#62; [&#60;unit&#62;]</CODE>
+<DD>
+Attach <CODE>diskimage</CODE> to <CODE>unit</CODE> (default unit is 8).
+
+<DT><CODE>bam [&#60;unit&#62;] | &#60;track-min&#62; &#60;track-max&#62; [&#60;unit&#62;]</CODE>
+<DD>
+Show the BAM of <CODE>unit</CODE>, optionally displaying only the entries for
+<CODE>track-min</CODE> to <CODE>track-max</CODE>
+
+<DT><CODE>bcopy &#60;src-trk&#62; &#60;src-sec&#62; &#60;dst-trk&#62; &#60;dst-sec&#62; [&#60;src-unit&#62; [&#60;dst-unit&#62;]]</CODE>
+<DD>
+Copy a block to another block, optionally specifying different source and
+destination units. The block is copied using all 256 bytes.
+
+<DT><CODE>bfill &#60;track&#62; &#60;sector&#62; &#60;value&#62; [&#60;unit&#62;]</CODE>
+<DD>
+Fill a block with a single value.
+
+<DT><CODE>block &#60;track&#62; &#60;sector&#62; [&#60;offset&#62; [&#60;unit&#62;]]</CODE>
+<DD>
+Show specified disk block in hex form.
+
+<DT><CODE>bpoke [@unit:&#60;unit&#62;] &#60;track&#62; &#60;sector&#62; &#60;offset&#62; &#60;data ...&#62;</CODE>
+<DD>
+Store one or more bytes of <CODE>data</CODE> into a block. The <CODE>data</CODE> can be
+specified using prefixes:
+<DL COMPACT>
+
+<DT><CODE>0b or %</CODE>
+<DD>
+binary value (`%11111111`)
+<DT><CODE>&#38;</CODE>
+<DD>
+octal value (`&#38;377`)
+<DT><CODE>0x or $</CODE>
+<DD>
+hexadecimal value (`$ff`)
+</DL>
+The &#60;unit&#62; is optional, and when used must use the CBM DOS notation for the
+unit number, for example `@9:`.
+
+<DT><CODE>bread &#60;filename&#62; &#60;track&#62; &#60;sector&#62; [&#60;unit&#62;]</CODE>
+<DD>
+Read a block from a disk image and write it to the host filesystem as
+<CODE>filename</CODE>.
+
+<DT><CODE>bwrite &#60;filename&#62; &#60;track&#62; &#60;sector&#62; [&#60;unit&#62;]</CODE>
+<DD>
+Write data from the host filesystem using <CODE>filename</CODE> as input. At most 256
+bytes are written to the disk image.
+
+<DT><CODE>chain &#60;track&#62; &#60;sector&#62; [&#60;unit&#62;]</CODE>
+<DD>
+Show block chain starting at (<CODE>track</CODE>, <CODE>sector</CODE>). The last number
+shown is the number of bytes used in the final block.
+
+<DT><CODE>copy &#60;source1&#62; [&#60;source2&#62; ... &#60;sourceN&#62;] &#60;destination&#62;</CODE>
+<DD>
+Copy <CODE>source1</CODE> ... <CODE>sourceN</CODE> into destination.  If N &#62; 1,
+<CODE>destination</CODE> must be a simple drive specifier (<CODE>@n:</CODE>).
+
+<DT><CODE>delete &#60;file1&#62; [&#60;file2&#62; ... &#60;fileN&#62;]</CODE>
+<DD>
+Delete the specified files.
+
+<DT><CODE>exit</CODE>
+<DD>
+Exit (same as <CODE>quit</CODE>).
+
+<DT><CODE>extract</CODE>
+<DD>
+Extract all the files to the file system.
+
+<DT><CODE>format &#60;diskname,id&#62; [&#60;type&#62; &#60;imagename&#62;] [&#60;unit&#62;]</CODE>
+<DD>
+If <CODE>unit</CODE> is specified, format the disk in unit <CODE>unit</CODE>.  If
+<CODE>type</CODE> and <CODE>imagename</CODE> are specified, create a new image named
+<CODE>imagename</CODE>, attach it to unit 8 and format it.  <CODE>type</CODE> is a
+disk image type, and must be either <CODE>x64</CODE>, <CODE>d64</CODE> (both VC1541/2031),
+<CODE>g64</CODE> (VC1541/2031 but in GCR coding), <CODE>d71</CODE> (VC1571),
+<CODE>g71</CODE> (VC1571 but in GCR coding), <CODE>d81</CODE>
+(VC1581), <CODE>d80</CODE> (CBM8050) or <CODE>d82</CODE> (CBM8250/1001).
+Otherwise, format the disk in the current unit, if any.
+
+<DT><CODE>geosread &#60;source&#62; [&#60;destination&#62;]</CODE>
+<DD>
+Read GEOS &#60;source&#62; from the disk image and copy it as a Convert file into
+&#60;destination&#62; in the file system.  If &#60;destination&#62; is not specified, copy
+it into a file with the same name as &#60;source&#62;.
+
+<DT><CODE>geoswrite &#60;source&#62;</CODE>
+<DD>
+Write GOES Convert file &#60;source&#62; from the file system on a disk image.
+
+<DT><CODE>geosextract &#60;source&#62;</CODE>
+<DD>
+Extract all the files to the file system and GEOS Convert them.
+
+<DT><CODE>help [&#60;command&#62;]</CODE>
+<DD>
+Explain specified command.  If no command is specified, list available
+ones.
+
+<DT><CODE>info [&#60;unit&#62;]</CODE>
+<DD>
+Display information about unit <CODE>unit</CODE> (if unspecified, use the current
+one).
+
+<DT><CODE>list [&#60;pattern&#62;]</CODE>
+<DD>
+<DT><CODE>dir [&#60;pattern&#62;]</CODE>
+<DD>
+List files matching <CODE>pattern</CODE> (default is all files).
+
+<DT><CODE>name &#60;diskname&#62;[,&#60;id&#62;] &#60;unit&#62;</CODE>
+<DD>
+Change image name.
+
+<DT><CODE>p00save &#60;enable&#62; [&#60;unit&#62;]</CODE>
+<DD>
+Save P00 files to the file system.
+
+<DT><CODE>quit</CODE>
+<DD>
+Exit (same as <CODE>exit</CODE>).
+
+<DT><CODE>read &#60;source&#62; [&#60;destination&#62;]</CODE>
+<DD>
+Read <CODE>source</CODE> from the disk image and copy it into <CODE>destination</CODE> in
+the file system.  If <CODE>destination</CODE> is not specified, copy it into a
+file with the same name as <CODE>source</CODE>.",
+
+<DT><CODE>rename &#60;oldname&#62; &#60;newname&#62;</CODE>
+<DD>
+Rename <CODE>oldname</CODE> into <CODE>newname</CODE>.  The files must be on the
+same drive.
+
+<DT><CODE>show [copying | warranty]</CODE>
+<DD>
+Show conditions for redistributing copies of C1541 (`copying') or the
+various kinds of warranty you do not have with C1541 (`warranty').
+
+<DT><CODE>tape &#60;t64name&#62; [&#60;file1&#62; ... &#60;fileN&#62;]</CODE>
+<DD>
+Extract files from a T64 image.
+
+<DT><CODE>unit &#60;number&#62;</CODE>
+<DD>
+Make unit <CODE>number</CODE> the current unit.
+
+<DT><CODE>unlynx &#60;lynxname&#62; [&#60;unit&#62;]</CODE>
+<DD>
+Extract the specified Lynx image file into the specified unit (default
+is the current unit).
+
+<DT><CODE>validate [&#60;unit&#62;]</CODE>
+<DD>
+Validate the disk in unit <CODE>unit</CODE>.  If <CODE>unit</CODE> is not specified,
+validate the disk in the current unit.
+
+<DT><CODE>verbose ["off"]</CODE>
+<DD>
+Enable or disable verbose output.
+
+<DT><CODE>version</CODE>
+<DD>
+Show C1541 version string
+
+<DT><CODE>write &#60;source&#62; [&#60;destination&#62;]</CODE>
+<DD>
+Write <CODE>source</CODE> from the file system into <CODE>destination</CODE> on a
+disk image.
+
+<DT><CODE>zcreate &#60;x64name&#62; &#60;zipname&#62; [&#60;label,id&#62;]</CODE>
+<DD>
+Create an X64 disk image out of a set of four Zipcoded files named
+<CODE>1!zipname</CODE>, <CODE>2!zipname</CODE>, <CODE>3!zipname</CODE> and
+<CODE>4!zipname</CODE>.
+
+</DL>
+
+
+
+<H2><A NAME="SEC286" HREF="vice_toc.html#TOC286">13.4  Executing shell commands</A></H2>
+
+<P>
+If you want to execute a shell command from within <CODE>c1541</CODE>, just
+prepend it with an exclamation mark (<CODE>!</CODE>).  For example,
+
+</P>
+
+<PRE>
+!ls -la
+</PRE>
+
+<P>
+will execute the command <CODE>ls -la</CODE>, which will show you all the
+files in the current directory.
+
+</P>
+
+
+<H2><A NAME="SEC287" HREF="vice_toc.html#TOC287">13.5  c1541 examples</A></H2>
+
+<DL COMPACT>
+
+<DT><CODE>c1541 -attach test.d64 -list</CODE>
+<DD>
+Attach <CODE>test.d64</CODE> and show directory.
+
+<DT><CODE>c1541 -attach test.d64 -write test.prg testfile</CODE>
+<DD>
+Write <CODE>test.prg</CODE> to <CODE>test.d64</CODE> as <CODE>testfile</CODE>.
+
+<DT><CODE>c1541 -format "name,id" d64 disk.d64</CODE>
+<DD>
+Create a disk image in <CODE>d64</CODE> format, format it with the <CODE>name</CODE> and <CODE>id</CODE> and save it to <CODE>disk.d64</CODE>.
+</DL>
+
+<P><HR><P>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_12.html">previous</A>, <A HREF="vice_14.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+</BODY>
+</HTML>

@@ -1,0 +1,14 @@
+#
+# VICE Palette file
+#
+# Syntax:
+# Red Green Blue Dither
+#
+
+# white screens use P4 phosphor
+
+# Background
+00 00 00 0
+
+# Foreground
+FF FF FF F

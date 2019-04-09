@@ -1,0 +1,4348 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.52
+     from ../../doc/vice.texi on 19 December 2018 -->
+
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<TITLE>VICE Manual - 6  Settings and resources</TITLE>
+<style type="text/css">
+    @import 'vice.css';
+</style>
+</HEAD>
+<BODY>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_5.html">previous</A>, <A HREF="vice_7.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H1><A NAME="SEC42" HREF="vice_toc.html#TOC42">6  Settings and resources</A></H1>
+
+<P>
+In the VICE emulators, all the settings are stored in entities known as
+called <EM>resources</EM>.  Each resource has a name and a value which may
+be either an integer or a string.  Integer values are often used as
+boolean values with the usual convention of using zero for "false"
+and any other value for "true".
+
+</P>
+<P>
+Resource values can be changed via the right-button menu (the
+<EM>settings</EM> menu), via command-line options or via the <EM>resource
+file</EM>.
+
+</P>
+<P>
+The <EM>resource file</EM> is a human-readable file containing resource
+values: it is called <TT>`vicerc'</TT> and is stored in the directory
+<TT>`.vice/'</TT> in the user's home
+directory.  It is possible to dump the current values of the resources
+into that file or load the values stored into that file as the current
+values, at any time.  This is achieved with the "Save settings" and
+"Load settings" right menu items.  A third menu item, "Restore
+Default Settings", can be used to reset all the values to the factory
+defaults.
+
+</P>
+<P>
+A special resource, <CODE>SaveResourcesOnExit</CODE>, if set to a non zero
+value, causes the emulator to ask you if you want to save the current
+(changed) settings before exiting, and can be toggled with the "Save
+settings on exit" command from the right-button menu.
+
+</P>
+<P>
+Notice that not all the resources can be changed from the menus; some of
+them can only be changed by manually modifying the resource file or by
+using command-line options.
+
+</P>
+
+
+
+<H2><A NAME="SEC43" HREF="vice_toc.html#TOC43">6.1  Format of resource files</A></H2>
+
+<P>
+A resource file is made up of several sections; sections have the
+purpose of separating the resources of a certain emulator from the ones
+of the other emulators.  A section starts with the name of an
+emulator in brackets (e.g., <SAMP>`[C64]'</SAMP>) and ends when another section
+starts or when the file ends.
+
+</P>
+<P>
+Every line in a section has the following format:
+
+</P>
+
+<PRE>
+RESOURCE=VALUE
+</PRE>
+
+<P>
+where <CODE>RESOURCE</CODE> is the name of a resource and <CODE>VALUE</CODE> is its
+assigned value.  Resource names are case-sensitive and resource values
+are either strings or integers.  Strings must start and end with a
+double quote character (<CODE>"</CODE>), while integers must be given in
+decimal notation.
+
+</P>
+<P>
+Here is an example of a stripped-down <TT>`.vice/vicerc'</TT> file:
+
+</P>
+
+<PRE>
+[VIC20]
+SaveResourcesOnExit=0
+FileSystemDevice8=1
+FSDevice8ConvertP00=1
+FSDevice8Dir="/home/ettore/cbm/stuff/vic20p00"
+FSDevice8SaveP00=1
+FSDevice8HideCBMFiles=1
+[C64]
+SaveResourcesOnExit=1
+FileSystemDevice8=1
+FSDevice8ConvertP00=1
+FSDevice8Dir="/home/ettore/cbm/stuff/c64p00"
+FSDevice8SaveP00=1
+FSDevice8HideCBMFiles=1
+</PRE>
+
+<P>
+Notice that, when resource values are saved with "Save settings", the
+emulator only modifies its own section, leaving the others unchanged.
+
+</P>
+
+
+<H2><A NAME="SEC44" HREF="vice_toc.html#TOC44">6.2  Using command-line options to change resources</A></H2>
+
+<P>
+Resources can also be changed via command-line options.
+
+</P>
+<P>
+Command-line options always override the defaults from <CODE>.vice/vicerc</CODE>,
+and their assignments last for the whole session.  So, if you specify a
+certain command-line option that changes a certain resource from its
+default value and then use "Save Settings", the value specified with
+the command-line option will be saved back to the resource file.
+
+</P>
+<P>
+Command-line options can begin with with a minus sign (<SAMP>`-'</SAMP>) or
+with a plus sign (<SAMP>`+'</SAMP>).  Options beginning with a minus sign
+may require an additional parameter, while the ones beginning with the
+plus sign never require one.
+
+</P>
+<P>
+Moreover, options beginning with a plus sign always have a counterpart
+with the same name, but with a minus sign; in that case, the option
+beginning with a minus sign is used to <EM>enable</EM> a certain
+feature, while the one beginning with a plus sign is used to
+<EM>disable</EM> the same feature (this is an X11 convention).  For
+example, <CODE>-mitshm</CODE> enables support of MITSHM, while <CODE>+mitshm</CODE>
+disables it.
+
+</P>
+
+
+<H2><A NAME="SEC45" HREF="vice_toc.html#TOC45">6.3  Autostart settings</A></H2>
+
+
+
+<H3><A NAME="SEC46" HREF="vice_toc.html#TOC46">6.3.1  Autostart resources</A></H3>
+
+<P>
+<B>All these resources are available for all emulators except vsid.</B>
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>AutostartPrgDiskImage</CODE>
+<DD>
+<A NAME="IDX39"></A>
+ 
+String specifying the filename of the disk image used when autostarting a prg file and "copy to D64" is enabled
+(all emulators except vsid).
+
+<A NAME="IDX40"></A>
+<DT><CODE>AutostartBasicLoad</CODE>
+<DD>
+Boolean, if true load to basic start using ,8 when autostarting
+(all emulators except vsid).
+
+<A NAME="IDX41"></A>
+<DT><CODE>AutostartRunWithColon</CODE>
+<DD>
+Boolean, if true put a colon after the load command when autostarting
+(all emulators except vsid).
+
+<A NAME="IDX42"></A>
+<DT><CODE>AutostartHandleTrueDriveEmulation</CODE>
+<DD>
+Boolean, if true handle (enable/disable) True Drive Emulation on autostart
+(all emulators except vsid).
+
+<A NAME="IDX43"></A>
+<DT><CODE>AutostartWarp</CODE>
+<DD>
+Boolean, if true temporarily enable warp mode when autostarting
+(all emulators except vsid).
+
+<A NAME="IDX44"></A>
+<DT><CODE>AutostartPrgMode</CODE>
+<DD>
+Integer specifying the autostart mode for prg files
+(all emulators except vsid).
+(0: virtual filesystem, 1: inject to RAM, 2: copy to D64)
+
+<A NAME="IDX45"></A>
+<DT><CODE>AutostartDelayRandom</CODE>
+<DD>
+Boolean, enables a short (0-10 frames) random delay on autostart. This is added
+to the <CODE>AutostartDelay</CODE>
+(all emulators except vsid).
+
+<A NAME="IDX46"></A>
+<DT><CODE>AutostartDelay</CODE>
+<DD>
+Integer specifying the delay in seconds required to wait for the kernal reset
+routine before autostart. (0: use builtin value for standard kernal)
+When tweaking this value start with 'large' values and then lower it, a value
+that is too small results in autostart not happening.
+(all emulators except vsid).
+(0..1000)
+
+</DL>
+
+
+
+<H3><A NAME="SEC47" HREF="vice_toc.html#TOC47">6.3.2  Autostart command-line options</A></H3>
+
+<P>
+<B>All these command-line options are available for all emulators except vsid.</B>
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>-autostartprgdiskimage &#60;Name&#62;</CODE>
+<DD>
+<A NAME="IDX47"></A>
+ 
+Set disk image for autostart of PRG files
+(<CODE>AutostartPrgDiskImage</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX48"></A>
+<DT><CODE>-basicload</CODE>
+<DD>
+On autostart, load to BASIC start (without ',1')
+(<CODE>AutostartBasicLoad=1</CODE>)
+(all emulators except vsid).
+<DT><CODE>+basicload</CODE>
+<DD>
+On autostart, load with ',1'
+(<CODE>AutostartBasicLoad=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX49"></A>
+<DT><CODE>-autostartwithcolon</CODE>
+<DD>
+On autostart, use the 'RUN' command with a colon, i.e., 'RUN:'
+(<CODE>AutostartRunWithColon=1</CODE>).
+(all emulators except vsid)
+<DT><CODE>+autostartwithcolon</CODE>
+<DD>
+On autostart, do not use the 'RUN' command with a colon; i.e., 'RUN'
+(<CODE>AutostartRunWithColon=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX50"></A>
+<DT><CODE>-autostart-handle-tde</CODE>
+<DD>
+<DT><CODE>+autostart-handle-tde</CODE>
+<DD>
+Handle/Do not handle True Drive Emulation on autostart
+(<CODE>AutostartHandleTrueDriveEmulation=1</CODE>, <CODE>AutostartHandleTrueDriveEmulation=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX51"></A>
+<DT><CODE>-autostart-warp</CODE>
+<DD>
+<DT><CODE>+autostart-warp</CODE>
+<DD>
+Enable/disable warp mode during autostart
+(<CODE>AutostartWarp=1</CODE>, <CODE>AutostartWarp=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX52"></A>
+<DT><CODE>-autostartprgmode &#60;Mode&#62;</CODE>
+<DD>
+Set autostart mode for PRG files
+(<CODE>AutostartPrgMode</CODE>)
+(all emulators except vsid).
+(0: virtual filesystem, 1: inject to RAM, 2: copy to D64)
+
+<A NAME="IDX53"></A>
+<DT><CODE>-autostart-delay-random</CODE>
+<DD>
+<DT><CODE>+autostart-delay-random</CODE>
+<DD>
+Enable/disable random delay on autostart
+(<CODE>AutostartDelayRandom</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX54"></A>
+<DT><CODE>-autostart-delay &#60;seconds&#62;</CODE>
+<DD>
+Set initial autostart delay in seconds for the kernal reset
+routine before autostart. (0: use builtin value for standard kernal).
+When tweaking this value start with 'large' values and then lower it, a value
+that is too small results in autostart not happening.
+(<CODE>AutostartDelay</CODE>)
+(all emulators except vsid).
+(0..1000)
+
+</DL>
+
+
+
+<H2><A NAME="SEC48" HREF="vice_toc.html#TOC48">6.4  Performance settings</A></H2>
+
+<P>
+<A NAME="IDX55"></A>
+It is possible to control the emulation speed by using the "Maximum
+speed" menu item in the right-button menu.  The default setting is
+<CODE>100</CODE>, which causes the emulation to never run faster than the real
+machine.  A higher value allows the emulator to run faster, a lower one
+may force it to run slower.  The setting "No limit" means to run as
+fast as possible, without limiting speed.
+
+</P>
+<P>
+<A NAME="IDX56"></A>
+It is also possible to control the emulator's rate of frame update using
+the "Refresh rate" setting; the value ranges from "1/1" (update 1/1
+of the frames of the real machine, that is 50 frames per second) to
+"1/10" (update 1 every 10 frames) and can be changed via the "Refresh
+Rate" submenu.  The "Auto" setting means to dynamically adapt the
+refresh rate to the current speed of the host machine, making sure the
+maximum speed specified by the via "Maxium speed" is always reached if
+possible.  In any case, the refresh rate will never be worse than 1/10
+if this option is specified.
+
+</P>
+<P>
+Note that you cannot simultaneously specify "Auto" as the refresh rate
+and "No limit" as the maximum speed..
+
+</P>
+<P>
+<A NAME="IDX57"></A>
+Moreover, a special <EM>warp speed</EM> mode is provided and can be toggled
+with the "Enable Warp Mode" menu item.  If this mode is enabled, it
+will cause the emulator to disable any speed limit, turn sound emulation
+off and use a 1/10 refresh rate, so that it will run at the maximum
+possible speed.
+
+</P>
+
+
+
+<H3><A NAME="SEC49" HREF="vice_toc.html#TOC49">6.4.1  Performance resources</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>Speed</CODE>
+<DD>
+<A NAME="IDX58"></A>
+ 
+Integer specifying the maximum relative speed, as a percentage.  <CODE>0</CODE>
+stands for "no limit".
+
+<A NAME="IDX59"></A>
+<DT><CODE>RefreshRate</CODE>
+<DD>
+Integer specifying the refresh rate; a value of <CODE>n</CODE> specifies a
+refresh rate of 1/<CODE>n</CODE>.  A value of <CODE>0</CODE> enables automatic frame
+skipping.
+
+<A NAME="IDX60"></A>
+<DT><CODE>WarpMode</CODE>
+<DD>
+Booolean specifying whether "warp mode" is turned on or not.
+
+</DL>
+
+
+
+<H3><A NAME="SEC50" HREF="vice_toc.html#TOC50">6.4.2  Performance command-line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-speed &#60;percent&#62;</CODE>
+<DD>
+<A NAME="IDX61"></A>
+ 
+Specifies the maximum speed as a percentage. <CODE>0</CODE> stands for "no limit"
+(<CODE>Speed</CODE>).
+
+<A NAME="IDX62"></A>
+<DT><CODE>-refresh &#60;value&#62;</CODE>
+<DD>
+Specifies refresh rate, a value of <CODE>n</CODE> specifies a refresh rate of
+1/<CODE>n</CODE>. A value of <CODE>0</CODE> enables automatic frame skipping
+(<CODE>RefreshRate</CODE>).
+
+<A NAME="IDX63"></A>
+<DT><CODE>-warp</CODE>
+<DD>
+<DT><CODE>+warp</CODE>
+<DD>
+Enable/Disable warp mode
+(<CODE>WarpMode=1</CODE>, <CODE>WarpMode=0</CODE>).
+
+</DL>
+
+
+
+<H2><A NAME="SEC51" HREF="vice_toc.html#TOC51">6.5  Video settings</A></H2>
+
+<P>
+The following right-button menu items control the video output.
+On emulators that include two video chips (like <CODE>x128</CODE>)
+all options exist twice, once for each chip.
+
+</P>
+
+<UL>
+
+<LI>
+
+<A NAME="IDX64"></A>
+ 
+"Video Cache" enables a video cache that can speed up the emulation
+when little graphics activity is going on; it is especially useful when
+you run the emulator on a networked X terminal as it can reduce the
+network bandwidth required.  However, this setting can actually make the
+emulator slower when there is little graphics activity and the amount of
+work needed to maintain the cache is greater than the amount of work that
+would be wasted by not using it (if any).
+
+<A NAME="IDX65"></A>
+<LI>
+
+"Double Size" toggles <EM>double-size mode</EM>, which makes the
+emulation window twice as big.  When emulating an 80-column PET, only the
+height is doubled, so that the aspect ratio is closer to that of the
+real thing.
+
+<A NAME="IDX66"></A>
+<LI>
+
+"Double Scan" toggles <EM>double-scan mode</EM>, which causes the
+emulator to draw only odd lines when running in double-size mode (this
+saves some CPU time and also makes the emulation window look more like
+an old monitor).
+
+</UL>
+
+
+
+<H3><A NAME="SEC52" HREF="vice_toc.html#TOC52">6.5.1  using openGL Rastersynchronization under X11</A></H3>
+
+<P>
+Warning: To get full retro experience with synchronization to the vertrical
+raster retrace messing with X11 modelines (resolution and refresh frequencies)
+is necessary. This description is a suggestion - Follow this instructions at
+your own risk!
+
+</P>
+<P>
+The following was tested under Ubuntu Linux (8.04) featuring Xorg Xserver 1:7.3+10ubuntu
+and mesa openGL including HW support (NVIDIA driver) supporting glx version 1.4
+supplying GLX_SGI_video_sync.
+
+</P>
+<P>
+It is assumed that this works also on other systems supporting the
+required extensions.
+
+</P>
+<P>
+Preconditions:
+
+<UL>
+<LI>openGL extension GLX_SGI_video_sync in your X11 setup.
+
+  The availability of the extension is checked at startup.
+
+<LI>XRandR extension to switch proper modes (50Hz for PAL, 60Hz for
+
+NTSC) is mandatory, proper modelines in your /etc/X11/xorg.conf must be present.
+</UL>
+
+<P>
+If your systems lacks 50 or 60Hz modes you might try using
+`gtf' (typcally shipped with Xorg, xserver) - see related man page.
+
+</P>
+<P>
+You might need to add the output such as:
+
+<PRE>
+# 800x600 # 50.00 Hz (GTF) hsync: 30.90 kHz; pclk: 31.15 MHz
+Modeline "800x600_50.00" 31.15 800 824 904 1008 600 601 604 618 -HSync +Vsync
+</PRE>
+
+<P>
+to you Monitor Section of /etc/X11/xorg.conf and add the resolution to the `Screen' section.
+
+</P>
+<P>
+Sometimes some consistency checks within the display driver drop
+this resolutions again.
+To drop e.g. the autodetection features in the NVIDIA driver you
+might add <CODE>Option "UseEDID" "FALSE"</CODE> in section <CODE>Device</CODE>.
+
+</P>
+<P>
+XRandR cannot cope properly with the DynamicTwinView feature of the
+proprietary nvidia driver. You might need
+
+</P>
+<P>
+<CODE>Option         "DynamicTwinView" "False"</CODE>
+
+</P>
+<P>
+to get proper results (in Screen or Device section of you xorg.conf).
+
+</P>
+<P>
+ATTENTION: Disabling such features might allow X11 to access your HW
+in a way that it gets damaged! You are at your own risk!
+
+</P>
+<P>
+Enable fullscreen (not necessary, but makes sense):
+
+<UL>
+<LI>choose your preferred resolution/refresh XRandR Resolutions and
+
+enable XRandR as fullscreen device (50Hz/PAL or 60Hz/NTSC mode).
+<LI>Activate fullscreen with `Alt-D'.
+
+<LI>choose `OpenGL Rastersynchronization' in the
+
+video chip menu (VIC-II Settings, VIC Setting, etc.)
+</UL>
+
+<P>
+Note that:
+
+<UL>
+<LI>the current implementation is dropping synchronization
+
+silently in case the display frequency isn't aligned (50Hz
+for PAL, 60Hz for NTSC).
+
+<LI>On some systems the XRandR system isn't informed about desktop
+
+display frequency changes if you switch resolutions via hotkeys like
+CTRL-Alt-+ (Numpad), which is possible e.g. with the X11
+implementation of Xorg.
+
+In that case you can override/tell the current frequency via menu:
+Settings-&#62;VICII Settings-&#62;Desktop Refreshrate (e.g. in x64)
+(this shouldn't be necessary if you use fullscreen via XRandR.
+</UL>
+
+
+
+<H3><A NAME="SEC53" HREF="vice_toc.html#TOC53">6.5.2  Video resources</A></H3>
+
+<P>
+The following resources affect the screen emulation.
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>HwScalePossible</CODE>
+<DD>
+<A NAME="IDX67"></A>
+ 
+Boolean that indicates whether hardware scaling is possible or not.
+
+<A NAME="IDX68"></A>
+<DT><CODE>openGL_sync</CODE>
+<DD>
+Boolean, if true enable Open-GL frame sync.
+
+<A NAME="IDX69"></A>
+<DT><CODE>openGL_no_sync</CODE>
+<DD>
+Boolean, if true Open-GL sync is not available.
+
+<A NAME="IDX70"></A>
+<DT><CODE>Speed</CODE>
+<DD>
+Integer specifying the maximum relative speed, as a percentage. <CODE>0</CODE>
+stands for "no limit".
+
+<A NAME="IDX71"></A>
+<DT><CODE>RefreshRate</CODE>
+<DD>
+Integer specifying the refresh rate, a value of <CODE>n</CODE> specifies a
+refresh rate of 1/<CODE>n</CODE>. A value of <CODE>0</CODE> enables automatic frame
+skipping.
+
+<A NAME="IDX72"></A>
+<DT><CODE>WarpMode</CODE>
+<DD>
+Boolean specifying whether "warp mode" is turned on or not.
+
+</DL>
+
+
+
+<H3><A NAME="SEC54" HREF="vice_toc.html#TOC54">6.5.3  Video command line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-hwscalepossible</CODE>
+<DD>
+<A NAME="IDX73"></A>
+ 
+<DT><CODE>+hwscalepossible</CODE>
+<DD>
+Enable/Disable the possibility of hardware scaling
+<CODE>HwScalePossible=1</CODE> or <CODE>HwScalePossible=1</CODE>).
+
+</DL>
+
+
+
+<H2><A NAME="SEC55" HREF="vice_toc.html#TOC55">6.6  Keyboard settings</A></H2>
+
+<P>
+It is possible to specify whether the "positional" or "symbolic"
+keyboard mapping should be used with the "Keyboard mapping type"
+submenu (see section <A HREF="vice_2.html#SEC13">2.8  The keyboard emulation</A> for an explanation of positional
+and symbolic mappings).
+
+</P>
+<P>
+The keyboard settings submenu also allows you to:
+
+</P>
+
+<UL>
+<LI>
+
+Load custom-made positional and symbolic keymap files
+("Set symbolic keymap file" and "Set positional keymap file").
+<LI>
+
+Dump the current keymap to a user-defined keymap file ("Dump to keymap
+file").
+</UL>
+
+
+
+<H3><A NAME="SEC56" HREF="vice_toc.html#TOC56">6.6.1  Keyboard resources</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>KeymapIndex</CODE>
+<DD>
+<A NAME="IDX74"></A>
+ 
+Integer identifying which keymap is being used.
+(0: symbolic, 1: positional, 2: symbolic (user), 3: positional (user)).
+
+<A NAME="IDX75"></A>
+<DT><CODE>KeymapSymFile</CODE>
+<DD>
+String specifying the name of the keymap file for the symbolic mapping
+(see section <A HREF="vice_2.html#SEC13">2.8  The keyboard emulation</A>
+(this will be set indirectly by changing <CODE>KeymapIndex</CODE>,
+<CODE>KeyboardMapping</CODE> or <CODE>KeyboardType</CODE>).
+
+<A NAME="IDX76"></A>
+<DT><CODE>KeymapPosFile</CODE>
+<DD>
+String specifying the name of the keymap file for the positional mapping
+(see section <A HREF="vice_2.html#SEC13">2.8  The keyboard emulation</A>
+(this will be set indirectly by changing <CODE>KeymapIndex</CODE>,
+<CODE>KeyboardMapping</CODE> or <CODE>KeyboardType</CODE>).
+
+<A NAME="IDX77"></A>
+<DT><CODE>KeymapUserSymFile</CODE>
+<DD>
+String specifying the name of the user keymap file for symbolic mapping
+(see section <A HREF="vice_2.html#SEC13">2.8  The keyboard emulation</A>
+
+<A NAME="IDX78"></A>
+<DT><CODE>KeymapUserPosFile</CODE>
+<DD>
+String specifying the name of the user keymap file for positional mapping
+(see section <A HREF="vice_2.html#SEC13">2.8  The keyboard emulation</A>
+
+<A NAME="IDX79"></A>
+<DT><CODE>KeyboardMapping</CODE>
+<DD>
+Integer specifying the keyboard layout of the host.
+(0: American 1: British 2: German 3: Danish 4: Norwegian 5: Finnish 6: Italian).
+
+<A NAME="IDX80"></A>
+<DT><CODE>KeyboardType</CODE>
+<DD>
+Integer specifying the emulated type of keyboard.
+(machine specific, currently always 0 except for xpet: 0: Business (us)
+1: Business (uk) 2: Business (de) 3: Business (jp) 4: Graphics (us)).
+
+</DL>
+
+
+
+<H3><A NAME="SEC57" HREF="vice_toc.html#TOC57">6.6.2  Keyboard command-line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-keymap &#60;number&#62;</CODE>
+<DD>
+<A NAME="IDX81"></A>
+ 
+Specifies which keymap is being used
+(<CODE>KeymapIndex</CODE>
+0: symbolic, 1: positional, 2: symbolic (user), 3: positional (user)).
+
+<A NAME="IDX82"></A>
+<DT><CODE>-symkeymap &#60;Name&#62;</CODE>
+<DD>
+Specify filename of the symbolic user keymap file
+(<CODE>KeymapUserSymFile</CODE>).
+
+<A NAME="IDX83"></A>
+<DT><CODE>-poskeymap &#60;Name&#62;</CODE>
+<DD>
+Specify filename of the positional user keymap file
+(<CODE>KeymapUserPosFile</CODE>).
+
+<A NAME="IDX84"></A>
+<DT><CODE>-keyboardmapping &#60;number&#62;</CODE>
+<DD>
+Specifies the keyboard layout of the host
+(<CODE>KeyboardMapping</CODE>
+0: American 1: British 2: German 3: Danish 4: Norwegian 5: Finnish 6: Italian).
+
+<A NAME="IDX85"></A>
+<DT><CODE>-keyboardtype &#60;number&#62;</CODE>
+<DD>
+Specifies the emulated type of keyboard
+(<CODE>KeyboardType</CODE>
+machine specific, currently always 0 except for xpet: 0: Business (us)
+1: Business (uk) 2: Business (de) 3: Business (jp) 4: Graphics (us)).
+
+</DL>
+
+<P>
+The control port settings submenu allows you to select which control
+port device is connected to a control port.
+
+</P>
+
+
+
+<H3><A NAME="SEC58" HREF="vice_toc.html#TOC58">6.6.3  Control port resources</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>JoyPort1Device</CODE>
+<DD>
+<A NAME="IDX86"></A>
+ 
+Set the device attached to:
+control port 1 (x64, x64sc, x64dtv, xscpu64, x128, xcbm5x0, xplus4)
+control port (xvic).
+(x64, x64sc, xscpu, x128, xcbm5x0, xvic: 0: None, 1: Joystick, 2: Paddles, 3: Mouse (1351), 4: Mouse (NEOS), 5: Mouse (Amiga), 6: Mouse (CX-22), 7: Mouse (Atari ST), 8: Mouse (SmartMouse), 9: Mouse (Micromys), 10: KoalaPad, 11: Light Pen (up trigger), 12: Light Pen (left trigger), 13: Datel Light Pen, 14: Magnum Light Phaser, 15: Stack Light Rifle, 16: Inkwell Light Pen, 17: Sampler (2bit))
+(x64dtv, xplus4: 0: None, 1: Joystick, 6: Mouse (CX-22), 17: Sampler (2bit))
+
+<A NAME="IDX87"></A>
+<DT><CODE>JoyPort2Device</CODE>
+<DD>
+Set the device attached to:
+control port 2 (x64, x64sc, x64dtv, xscpu64, x128, xcbm5x0, xplus4)
+(x64, x64sc, xscpu, x128, xcbm5x0: 0: None, 1: Joystick, 2: Paddles, 3: Mouse (1351), 4: Mouse (NEOS), 5: Mouse (Amiga), 6: Mouse (CX-22), 7: Mouse (Atari ST), 8: Mouse (SmartMouse), 9: Mouse (Micromys), 10: KoalaPad, 17: Sampler (2bit))
+(x64dtv, xplus4: 0: None, 1: Joystick, 6: Mouse (CX-22), 17: Sampler (2bit))
+
+<A NAME="IDX88"></A>
+<DT><CODE>JoyPort3Device</CODE>
+<DD>
+Set the device attached to:
+userport joystick adapter port 1 (x64, x64sc, xscpu64, x128, xcbm2, xpet, xvic)
+userport joystick adapter port (x64dtv)
+sidcart control port (xplus4).
+(x64, x64sc, x64dtv, xscpu, x128, xcbm2, xpet, xvic: 0: None, 1: Joystick, 6: Mouse (CX-22), 17: Sampler (2bit))
+(xplus4: 0: None, 1: Joystick, 2: Paddles, 3: Mouse (1351), 4: Mouse (NEOS), 5: Mouse (Amiga), 6: Mouse (CX-22), 7: Mouse (Atari ST), 8: Mouse (SmartMouse), 9: Mouse (Micromys), 10: KoalaPad, 17: Sampler (2bit))
+
+<A NAME="IDX89"></A>
+<DT><CODE>JoyPort4Device</CODE>
+<DD>
+Set the device attached to:
+userport joystick adapter port 2 (x64, x64sc, xscpu64, x128, xcbm2, xpet, xvic)
+(x64, x64sc, xscpu, x128, xcbm2, xpet, xvic: 0: None, 1: Joystick, 6: Mouse (CX-22), 17: Sampler (2bit))
+
+<A NAME="IDX90"></A>
+<DT><CODE>JoyPort5Device</CODE>
+<DD>
+Set the device attached to:
+SidCart on the Plus4 (xplus4)
+
+<A NAME="IDX91"></A>
+<DT><CODE>BBRTCSave</CODE>
+<DD>
+Enable saving of the battery-backed real time clock data.
+
+</DL>
+
+
+
+<H3><A NAME="SEC59" HREF="vice_toc.html#TOC59">6.6.4  Control port command-line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-controlport1device &#60;device&#62;</CODE>
+<DD>
+<A NAME="IDX92"></A>
+ 
+Set the device attached to:
+control port 1 (x64, x64sc, x64dtv, xscpu, x128, xcbm5x0, xplus4)
+control port (xvic)
+(<CODE>JoyPort1Device</CODE>).
+(x64, x64sc, xscpu, x128, xcbm5x0, xvic: 0: None, 1: Joystick, 2: Paddles, 3: Mouse (1351), 4: Mouse (NEOS), 5: Mouse (Amiga), 6: Mouse (CX-22), 7: Mouse (Atari ST), 8: Mouse (SmartMouse), 9: Mouse (Micromys), 10: KoalaPad, 11: Light Pen (up trigger), 12: Light Pen (left trigger), 13: Datel Light Pen, 14: Magnum Light Phaser, 15: Stack Light Rifle, 16: Inkwell Light Pen, 17: Sampler (2bit))
+(x64dtv, xplus4: 0: None, 1: Joystick, 6: Mouse (CX-22), 17: Sampler (2bit))
+
+<A NAME="IDX93"></A>
+<DT><CODE>-controlport2device &#60;device&#62;</CODE>
+<DD>
+Set the device attached to:
+control port 2 (x64, x64sc, x64dtv, xscpu, x128, xcbm5x0, xplus4)
+(<CODE>JoyPort2Device</CODE>).
+(x64, x64sc, xscpu, x128, xcbm5x0: 0: None, 1: Joystick, 2: Paddles, 3: Mouse (1351), 4: Mouse (NEOS), 5: Mouse (Amiga), 6: Mouse (CX-22), 7: Mouse (Atari ST), 8: Mouse (SmartMouse), 9: Mouse (Micromys), 10: KoalaPad, 17: Sampler (2bit))
+(x64dtv, xplus4: 0: None, 1: Joystick, 6: Mouse (CX-22), 17: Sampler (2bit))
+
+<A NAME="IDX94"></A>
+<DT><CODE>-controlport3device &#60;device&#62;</CODE>
+<DD>
+Set the device attached to:
+userport joystick adapter port 1 (x64, x64sc, xscpu, x128, xcbm2, xpet, xvic)
+userport joystick adapter port (x64dtv)
+sidcart control port (xplus4)
+(<CODE>JoyPort3Device</CODE>).
+(x64, x64sc, x64dtv, xscpu, x128, xcbm2, xpet, xvic: 0: None, 1: Joystick, 6: Mouse (CX-22), 17: Sampler (2bit))
+(xplus4: 0: None, 1: Joystick, 2: Paddles, 3: Mouse (1351), 4: Mouse (NEOS), 5: Mouse (Amiga), 6: Mouse (CX-22), 7: Mouse (Atari ST), 8: Mouse (SmartMouse), 9: Mouse (Micromys), 10: KoalaPad, 17: Sampler (2bit))
+
+<A NAME="IDX95"></A>
+<DT><CODE>-controlport4device &#60;device&#62;</CODE>
+<DD>
+Set the device attached to:
+userport joystick adapter port 2 (x64, x64sc, xscpu, x128, xcbm2, xpet, xvic)
+(<CODE>JoyPort4Device</CODE>).
+(x64, x64sc, xscpu, x128, xcbm2, xpet, xvic: 0: None, 1: Joystick, 6: Mouse (CX-22), 17: Sampler (2bit))
+
+<A NAME="IDX96"></A>
+<DT><CODE>-controlport5device &#60;device&#62;</CODE>
+<DD>
+Set the device attached to:
+SID cart joystick port (xplus4)
+(<CODE>JoyPort5Device</CODE>).
+(xplus4: 0: None, 1: Joystick, 2: Paddles, 3: Mouse (1351), 4: Mouse (NEOS), 5: Mouse (Amiga), 6: Mouse (CX-22), 7: Mouse (Atari ST), 8: Mouse (SmartMouse), 9: Mouse (Micromys), 10: KoalaPad, 17: Sampler (2bit), 18: Sampler (4bit), 19: BBRTC, 20: Paperclip64 dongle, 21: Coplin Keypad, 22: Cardco Cardkey 1 keypad, 23: Atari CX85 keypad, 24: RushWare Keypad, 25: Atari CX21 keypad)
+
+<A NAME="IDX97"></A>
+<DT><CODE>-bbrtcsave</CODE>
+<DD>
+<DT><CODE>+bbrtcsave</CODE>
+<DD>
+Enable/Disable saving of the battery-backed real time clock data
+(<CODE>BBRTCSave</CODE>).
+
+</DL>
+
+
+
+<H2><A NAME="SEC60" HREF="vice_toc.html#TOC60">6.7  Joystick settings</A></H2>
+
+
+
+<H3><A NAME="SEC61" HREF="vice_toc.html#TOC61">6.7.1  Joystick resources</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>JoyDevice1</CODE>
+<DD>
+<A NAME="IDX98"></A>
+ <A NAME="IDX99"></A>
+ <A NAME="IDX100"></A>
+ <A NAME="IDX101"></A>
+ <A NAME="IDX102"></A>
+ 
+<DT><CODE>JoyDevice2</CODE>
+<DD>
+<DT><CODE>JoyDevice3</CODE>
+<DD>
+<DT><CODE>JoyDevice4</CODE>
+<DD>
+<DT><CODE>JoyDevice5</CODE>
+<DD>
+Integer specifying which joystick device the emulator should use for
+joystick emulation for ports 1 - 5, respectively.
+(0=None, 1=Joystick 1, 2=Joystick 2, 4=Numpad, 8=Keyset 1, 16=Keyset 2 on OS/2)
+(0=None, 1=Numpad, 2=Keyset 1, 3=Keyset 2, 4=HID joystick 0, 5=HID joystick 1 on Mac OS X)
+The available joysticks might differ depending on operating system and
+joystick support in the OS (Linux joystick module must be
+available for example).
+
+<A NAME="IDX103"></A>
+<DT><CODE>JoyOpposite</CODE>
+<DD>
+Boolean, if true allow (usually impossible) bitcombinations for opposite directions.
+(all emulators except vsid)
+
+<A NAME="IDX104"></A>
+<DT><CODE>UserportJoy</CODE>
+<DD>
+Boolean to enable/disable extra joysticks
+(all emulators except xcbm5x0 and vsid).
+
+<A NAME="IDX105"></A>
+<DT><CODE>UserportJoyType</CODE>
+<DD>
+Integer specifying the type of adapter used for the extra joysticks
+(all emulators except xcbm5x0 and vsid).
+(0: Classical Games/Protovision, 1: PET, 2: Hummer, 3: OEM, 4: Digital Excess/Hitmen, 5: Kingsoft, 6: Starbyte)
+4, 5 and 6 are x64, x64sc, xscpu64 and x128 only.
+
+<A NAME="IDX106"></A>
+<DT><CODE>Mouse</CODE>
+<DD>
+Boolean, enables mouse emulation
+
+<A NAME="IDX107"></A>
+<DT><CODE>SmartMouseRTCSave</CODE>
+<DD>
+Boolean, specified whether to save real time clock data for the SmartMouse
+
+<A NAME="IDX108"></A>
+<A NAME="IDX109"></A>
+<A NAME="IDX110"></A>
+<A NAME="IDX111"></A>
+<A NAME="IDX112"></A>
+<A NAME="IDX113"></A>
+<A NAME="IDX114"></A>
+<A NAME="IDX115"></A>
+<A NAME="IDX116"></A>
+<DT><CODE>KeySet1NorthWest</CODE>
+<DD>
+<DT><CODE>KeySet1North</CODE>
+<DD>
+<DT><CODE>KeySet1NorthEast</CODE>
+<DD>
+<DT><CODE>KeySet1East</CODE>
+<DD>
+<DT><CODE>KeySet1SouthEast</CODE>
+<DD>
+<DT><CODE>KeySet1South</CODE>
+<DD>
+<DT><CODE>KeySet1SouthWest</CODE>
+<DD>
+<DT><CODE>KeySet1West</CODE>
+<DD>
+<DT><CODE>KeySet1Fire</CODE>
+<DD>
+Integers specifying the keycodes for keyset 1
+(all emulators except vsid).
+
+<A NAME="IDX117"></A>
+<A NAME="IDX118"></A>
+<A NAME="IDX119"></A>
+<A NAME="IDX120"></A>
+<A NAME="IDX121"></A>
+<A NAME="IDX122"></A>
+<A NAME="IDX123"></A>
+<A NAME="IDX124"></A>
+<A NAME="IDX125"></A>
+<DT><CODE>KeySet2NorthWest</CODE>
+<DD>
+<DT><CODE>KeySet2North</CODE>
+<DD>
+<DT><CODE>KeySet2NorthEast</CODE>
+<DD>
+<DT><CODE>KeySet2East</CODE>
+<DD>
+<DT><CODE>KeySet2SouthEast</CODE>
+<DD>
+<DT><CODE>KeySet2South</CODE>
+<DD>
+<DT><CODE>KeySet2SouthWest</CODE>
+<DD>
+<DT><CODE>KeySet2West</CODE>
+<DD>
+<DT><CODE>KeySet2Fire</CODE>
+<DD>
+Integers specifying the keycodes for keyset 2
+(all emulators except vsid).
+
+<A NAME="IDX126"></A>
+<DT><CODE>KeySetEnable</CODE>
+<DD>
+Boolean that specifies whether user defined keysets are enabled
+(all emulators except vsid).
+
+<A NAME="IDX127"></A>
+<DT><CODE>KbdbufDelay</CODE>
+<DD>
+Integer specifying the additional keyboard delay.
+(0: use default)
+
+</DL>
+
+
+
+<H3><A NAME="SEC62" HREF="vice_toc.html#TOC62">6.7.2  Joystick command-line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-joydev1 &#60;range&#62;</CODE>
+<DD>
+<A NAME="IDX128"></A>
+ <A NAME="IDX129"></A>
+ 
+<DT><CODE>-joydev2 &#60;range&#62;</CODE>
+<DD>
+Set the device for joystick emulation of port 1 and 2, respectively.
+(<CODE>JoyDevice1</CODE>, <CODE>JoyDevice2</CODE>).
+The range for OS/2 is, valid numbers in the range are 0, 1, 2, 4, 8 and 16.
+<A NAME="IDX130"></A>
+<A NAME="IDX131"></A>
+<A NAME="IDX132"></A>
+<DT><CODE>-extrajoydev1 &#60;0-8&#62;</CODE>
+<DD>
+<DT><CODE>-extrajoydev2 &#60;0-8&#62;</CODE>
+<DD>
+<DT><CODE>-extrajoydev3 &#60;0-8&#62;</CODE>
+<DD>
+Set device for extra joystick port 1, 2 and 3.
+
+<A NAME="IDX133"></A>
+<DT><CODE>-joyopposite</CODE>
+<DD>
+<DT><CODE>+joyopposite</CODE>
+<DD>
+Enable/disable opposite joystick directions
+(<CODE>JoyOpposite=1</CODE>, <CODE>JoyOpposite=0</CODE>).
+(all emulators except vsid)
+
+<A NAME="IDX134"></A>
+<DT><CODE>-userportjoy</CODE>
+<DD>
+<DT><CODE>+userportjoy</CODE>
+<DD>
+Enable/disable extra joystick(s)
+(<CODE>UserportJoy=1</CODE>, <CODE>UserportJoy=0</CODE>).
+(all emulators except xcbm5x0 and vsid).
+
+<A NAME="IDX135"></A>
+<DT><CODE>-userportjoytype &#60;Type&#62;</CODE>
+<DD>
+Set extra joystick type
+(<CODE>UserportJoyType</CODE>)
+(all emulators except xcbm5x0 and vsid).
+(0: Classical Games/Protovision, 1: PET, 2: Hummer, 3: OEM, 4: Digital Excess/Hitmen, 5: Kingsoft, 6: Starbyte)
+4, 5 and 6 are x64, x64sc, xscpu64 and x128 only.
+
+<A NAME="IDX136"></A>
+<DT><CODE>-mouse</CODE>
+<DD>
+<DT><CODE>+mouse</CODE>
+<DD>
+Enable/Disable mouse grab
+
+<A NAME="IDX137"></A>
+<DT><CODE>-smartmousertcsave</CODE>
+<DD>
+<DT><CODE>+smartmousertcsave</CODE>
+<DD>
+Enable/Disable saving of the real time clock data for the SmartMouse
+
+<A NAME="IDX138"></A>
+<DT><CODE>-keyset</CODE>
+<DD>
+<DT><CODE>+keyset</CODE>
+<DD>
+Enable/disable user defined keyset
+(<CODE>KeySetEnable=1</CODE>, <CODE>KeySetEnable=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX139"></A>
+<DT><CODE>-keybuf-delay &#60;value&#62;</CODE>
+<DD>
+Set additional keyboard buffer delay
+(<CODE>KbdbufDelay</CODE>).
+(0: use default)
+
+</DL>
+
+
+
+<H2><A NAME="SEC63" HREF="vice_toc.html#TOC63">6.8  Sound settings</A></H2>
+
+<P>
+The following menu items control sound output:
+
+</P>
+
+<UL>
+
+<LI>
+
+<A NAME="IDX140"></A>
+ 
+"Enable sound playback" turns sound emulation on and off.
+
+<A NAME="IDX141"></A>
+<A NAME="IDX142"></A>
+<LI>
+
+"Sound synchronization" specifies the method for syncronizing the
+sound playback.  Possible settings are:
+
+<UL>
+<LI>
+
+"Flexible", i.e., the audio renderer flexibly adds/removes samples to
+the output to smoothly adapt the playback to slight changes in the speed
+of the emulator.
+<LI>
+
+"Adjusting" works like "flexible", but supports bigger differences
+in speed.  For example, if the emulation speed drops down from from 100%
+to 50%, audio slows down by the same amount too.
+<LI>
+
+"Exact", instead, makes the audio renderer output always the same
+sounds you would hear from the real thing, without trying to adapt the
+ratio; to compensate the tolerances in speed, some extra frames will be
+skipped or added.
+</UL>
+
+<A NAME="IDX143"></A>
+<LI>
+
+"Sample rate" specifies the sampling frequency, ranging from 8000 to
+48000 Hz (not all the sound cards and/or sound drivers can support all
+the frequencies, so actually the nearest candidate will be chosen).
+
+<A NAME="IDX144"></A>
+<A NAME="IDX145"></A>
+<LI>
+
+"Buffer size" specifies the size of the audio buffer; the bigger the
+buffer, the longer the delay with which sounds are played.  You should
+pick the smallest value your machine can handle without problems.
+
+<A NAME="IDX146"></A>
+<LI>
+
+"Sound suspend time", will cause the audio playback to pause for the
+specified number of seconds whenever some clicking happens.  If "Keep
+going" is selected, no pausing is done.
+
+The following menu items control sound input:
+
+<A NAME="IDX147"></A>
+<LI>
+
+"Sampler Device" specifies the host device/method used for sampling/sound input,
+currently portaudio (if linked in) and file methods are supported.
+
+<A NAME="IDX148"></A>
+<LI>
+
+"Sampler Gain" specifies the amount of gain (increase the input volume if above 100
+or decrease the input volume if below 100) for the input of the sampler device.
+
+<A NAME="IDX149"></A>
+<LI>
+
+"Sampler File" specifies the name of the file to be uses as an input source for
+the 'file' method/device.
+
+</UL>
+
+
+
+<H3><A NAME="SEC64" HREF="vice_toc.html#TOC64">6.8.1  Sound resources</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>Sound</CODE>
+<DD>
+<A NAME="IDX150"></A>
+ 
+Boolean specifying whether audio emulation is turned on.
+
+<A NAME="IDX151"></A>
+<DT><CODE>SoundSpeedAdjustment</CODE>
+<DD>
+Integer specifying what speed adjustment method the audio renderer should use.
+(0: flexible, 1: adjusting, 2: exact)
+
+<A NAME="IDX152"></A>
+<DT><CODE>SoundSampleRate</CODE>
+<DD>
+Integer specifying the sampling frequency in Hz
+(not all the sound cards and/or sound drivers can support all the
+frequencies, so actually the nearest candidate will be chosen).
+(8000..48000)
+
+<A NAME="IDX153"></A>
+<DT><CODE>SoundBufferSize</CODE>
+<DD>
+Integer specifying the size of the audio buffer, in milliseconds.
+
+<A NAME="IDX154"></A>
+<DT><CODE>SoundSuspendTime</CODE>
+<DD>
+Integer specifying the pause interval when audio underflows ("clicks")
+happen. <CODE>0</CODE> means no pause is done.
+
+<A NAME="IDX155"></A>
+<DT><CODE>SoundDeviceName</CODE>
+<DD>
+String specifying the audio driver.
+
+Implemented drivers are:
+
+
+<UL>
+<LI>
+
+<CODE>ahi</CODE>, for the Amiga/Morphos/Aros sound driver.
+<LI>
+
+<CODE>aix</CODE>, for the IBM AIX sound driver.
+<LI>
+
+<CODE>allegro</CODE>, for the DOS Allegro sound driver.
+<LI>
+
+<CODE>alsa</CODE>, for the linux ALSA sound driver.
+<LI>
+
+<CODE>arts</CODE>, for the *nix ARTS sound driver.
+<LI>
+
+<CODE>beos</CODE>, for the BeOS/Zeta/Haiku sound driver.
+<LI>
+
+<CODE>bsp</CODE>, for the BeOS/Zeta/Haiku BeOS Media Kit sound driver.
+<LI>
+
+<CODE>coreaudio</CODE>, for the Mac OS X sound driver (<CODE>SoundDeviceArg</CODE>
+specifies the audio device, default system output by default).
+<LI>
+
+<CODE>dart</CODE>, for the OS/2 sound driver.
+<LI>
+
+<CODE>dummy</CODE>, fully emulating the sound output chip(s), but not actually playing samples.
+<LI>
+
+<CODE>dx</CODE>, for the Windows Direct-X sound driver.
+<LI>
+
+<CODE>hpux</CODE>, for the HP-UX audio device (unfinished;
+<CODE>SoundDeviceArg</CODE> specifies the audio device, <TT>`/dev/audio'</TT> by
+default).
+<LI>
+
+<CODE>midas</CODE>, for the DOS Midas sound driver.
+<LI>
+
+<CODE>pulse</CODE>, for the Pulseaudio sound driver.
+<LI>
+
+<CODE>sdl</CODE>, for the Simple DirectMedia Layer audio driver.
+<LI>
+
+<CODE>sgi</CODE>, for the Silicon Graphics audio device (<CODE>SoundDeviceArg</CODE>
+specifies the audio device, <TT>`/dev/audio'</TT> by default);
+<LI>
+
+<CODE>speed</CODE>, like <CODE>dummy</CODE> but also calculating samples (mainly
+used to evaluate the speed of the sample generator);
+<LI>
+
+<CODE>sun</CODE>, for the Solaris and NetBDS audio device (unfinished;
+<CODE>SoundDeviceArg</CODE> specifies the audio device, <TT>`/dev/audio'</TT> by
+default).
+<LI>
+
+<CODE>uss</CODE>, for the Linux/FreeBSD Universal Sound System driver
+(<CODE>SoundDeviceArg</CODE> specifies the audio device, <TT>`/dev/dsp'</TT> by
+default);
+<LI>
+
+<CODE>wmm</CODE>, for the Windows Multimedia Waveout sound device.
+</UL>
+
+These drivers will actually be present only if the VICE configuration
+script detected the corresponding development support at the time of compilation.
+
+<A NAME="IDX156"></A>
+<DT><CODE>SoundDeviceArg</CODE>
+<DD>
+String specifying an additional parameter for the audio driver (see
+<CODE>SoundDeviceName</CODE>).
+
+<A NAME="IDX157"></A>
+<DT><CODE>SoundRecordDeviceName</CODE>
+<DD>
+String specifying the driver used for sound recording.
+
+Implemented drivers are:
+
+
+<UL>
+<LI>
+
+<CODE>aiff</CODE>, for the Apple Interchange File Format 16bit sound recorder driver.
+<LI>
+
+<CODE>dump</CODE>, writing all the write accesses to the registers to a file
+(specified by <CODE>SoundDeviceArg</CODE>, default value is
+<CODE>vicesnd.sid</CODE>);
+<LI>
+
+<CODE>fs</CODE>, writing samples to a file (specified by
+<CODE>SoundDeviceArg</CODE>; default is <TT>`vicesnd.raw'</TT>);
+<CODE>iff</CODE>, for the Amiga Interchange File Format (8SVX) 8bit sound recorder driver.
+<LI>
+
+<CODE>mp3</CODE>, for the MP3 sound recorder driver.
+<LI>
+
+<CODE>flac</CODE>, for the FLAC sound recorder driver.
+<LI>
+
+<CODE>ogg</CODE>, for the ogg/vorbis sound recorder driver.
+<LI>
+
+<CODE>voc</CODE>, for the Creative Voice (VOC) sound recorder driver.
+<LI>
+
+<CODE>wav</CODE>, for the RIFF/WAV sound recorder driver.
+</UL>
+
+These drivers will actually be present only if the VICE configuration
+script detected the corresponding development support at the time of compilation.
+
+<A NAME="IDX158"></A>
+<DT><CODE>SoundRecordDeviceArg</CODE>
+<DD>
+String specifying additional arguments for sound recording.
+
+<A NAME="IDX159"></A>
+<DT><CODE>SoundFragmentSize</CODE>
+<DD>
+Integer specifying the fragment size.
+(0: very small, 1: small, 2: medium, 3: large, 4: very large)
+
+<A NAME="IDX160"></A>
+<DT><CODE>SoundVolume</CODE>
+<DD>
+Integer specifying the master volume in percent.
+(0..100)
+
+<A NAME="IDX161"></A>
+<DT><CODE>SoundOutput</CODE>
+<DD>
+Integer specifying the type of sound output. Output is selectable between 'system'
+(system decides to use mono or stereo output based on the presence of a stereo sid),
+'always mono' (output is always mono, stereo streams are mixed into a mono stream)
+or 'always stereo' (output is always stereo, mono streams are multiplexed to a stereo
+stream).
+(0: system, 1: mono, 2: stereo)
+
+<A NAME="IDX162"></A>
+<DT><CODE>SamplerDevice</CODE>
+<DD>
+Integer specifying the device/method to be used for sound input.
+(0: sample file device, 1: PortAudio device)
+
+<A NAME="IDX163"></A>
+<DT><CODE>SamplerGain</CODE>
+<DD>
+Integer specifying the gain to be used for sound input.
+(&#62;100 increase input volume, &#60;100: decrease input volume)
+
+<A NAME="IDX164"></A>
+<DT><CODE>SampleName</CODE>
+<DD>
+String specifying the name of the file/sample to be used as the input
+source for the 'file' sampler device.
+
+</DL>
+
+
+
+<H3><A NAME="SEC65" HREF="vice_toc.html#TOC65">6.8.2  Sound command-line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-sound</CODE>
+<DD>
+<A NAME="IDX165"></A>
+ 
+<DT><CODE>+sound</CODE>
+<DD>
+Enable/disable sound emulation
+(<CODE>Sound=1</CODE>, <CODE>Sound=0</CODE>).
+
+<A NAME="IDX166"></A>
+<DT><CODE>-soundsync &#60;sync&#62;</CODE>
+<DD>
+Specify the sound speed adjustment method
+(<CODE>SoundSpeedAdjustment</CODE>).
+(0: flexible, 1: adjusting, 2: exact)
+
+<A NAME="IDX167"></A>
+<DT><CODE>-soundrate &#60;value&#62;</CODE>
+<DD>
+Specify the sound playback sample rate
+(<CODE>SoundSampleRate</CODE>).
+(8000..48000)
+
+<A NAME="IDX168"></A>
+<DT><CODE>-soundoutput &#60;output mode&#62;</CODE>
+<DD>
+Sound output mode
+(<CODE>SoundOutput</CODE>).
+(0: system decides mono/stereo, 1: always mono, 2: always stereo)
+
+<A NAME="IDX169"></A>
+<DT><CODE>-soundbufsize &#60;value&#62;</CODE>
+<DD>
+Specify the size of the audio buffer in milliseconds
+(<CODE>SoundBufferSize</CODE>).
+
+<A NAME="IDX170"></A>
+<DT><CODE>-soundfragsize &#60;value&#62;</CODE>
+<DD>
+Set sound fragment size
+(<CODE>SoundFragmentSize</CODE>).
+(0: very small, 1: small, 2: medium, 3: large, 4: very large)
+
+<A NAME="IDX171"></A>
+<DT><CODE>-sounddev &#60;Name&#62;</CODE>
+<DD>
+Specifies the name of the audio device
+(<CODE>SoundDeviceName</CODE>).
+(ahi, aix, allegro, alsa, arts, beos, bsp, coreaudio, dart, dummy, dx, hpux, midas, pulse, sdl, sgi, sun, uss, wmm)
+
+<A NAME="IDX172"></A>
+<DT><CODE>-soundarg &#60;args&#62;</CODE>
+<DD>
+Specifies an additional parameter for the audio device
+(<CODE>SoundDeviceArg</CODE>).
+
+<A NAME="IDX173"></A>
+<DT><CODE>-soundrecdev &#60;name&#62;</CODE>
+<DD>
+Specify recording sound driver
+(<CODE>SoundRecordDeviceName</CODE>).
+(aiff, dump, fs, iff, mp3, flac, ogg, speed, voc, wav)
+
+<A NAME="IDX174"></A>
+<DT><CODE>-soundrecarg &#60;args&#62;</CODE>
+<DD>
+Specify initialization parameters for recording sound driver
+(<CODE>SoundRecordDeviceArg</CODE>).
+
+<A NAME="IDX175"></A>
+<DT><CODE>-soundsuspend &#60;seconds&#62;</CODE>
+<DD>
+Specify the pause interval when audio underflows (clicks) happen. 0 means no pause is done
+(<CODE>SoundSuspendTime</CODE>).
+
+<A NAME="IDX176"></A>
+<DT><CODE>-soundvolume &#60;volume&#62;</CODE>
+<DD>
+Specify the sound volume
+(<CODE>SoundVolume</CODE>).
+(0..100)
+
+<A NAME="IDX177"></A>
+<DT><CODE>-samplerdev &#60;device number&#62;</CODE>
+<DD>
+Specify the device to use for audio input
+(<CODE>SamplerDevice</CODE>).
+(0: file device, 1: portaudio device)
+
+<A NAME="IDX178"></A>
+<DT><CODE>-samplergain &#60;percent&#62;</CODE>
+<DD>
+Specify the amount of gain (volume increase/decrease) for the audio input device
+(<CODE>SamplerGain</CODE>).
+(0..200)
+
+<A NAME="IDX179"></A>
+<DT><CODE>-samplename &#60;name&#62;</CODE>
+<DD>
+Specify the name of the file to use for the 'file' audio input device
+(<CODE>SampleFile</CODE>).
+
+</DL>
+
+
+
+<H2><A NAME="SEC66" HREF="vice_toc.html#TOC66">6.9  Tape settings</A></H2>
+
+<P>
+These settings are used to control the hardware-level emulation of the Tape
+drive.
+
+</P>
+
+
+<H3><A NAME="SEC67" HREF="vice_toc.html#TOC67">6.9.1  Tape resources</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>Datasette</CODE>
+<DD>
+<A NAME="IDX180"></A>
+ 
+Boolean specifying whether to emulate the datasette.
+
+<A NAME="IDX181"></A>
+<DT><CODE>DatasetteResetWithCPU</CODE>
+<DD>
+Boolean specifying whether to reset (rewind) the tape when resetting the CPU.
+
+<A NAME="IDX182"></A>
+<DT><CODE>DatasetteZeroGapDelay</CODE>
+<DD>
+Integer specifying the delay in cycles for a zero in the tap.
+
+<A NAME="IDX183"></A>
+<DT><CODE>DatasetteSpeedTuning</CODE>
+<DD>
+Integer specifying the number of cycles added to each gap in the tap.
+
+<A NAME="IDX184"></A>
+<DT><CODE>DatasetteTapeWobble</CODE>
+<DD>
+Integer specifying the maximum random number of cycles added to each gap in the tap.
+</DL>
+
+
+
+<H3><A NAME="SEC68" HREF="vice_toc.html#TOC68">6.9.2  Tape command-line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-datasette</CODE>
+<DD>
+<A NAME="IDX185"></A>
+ 
+<DT><CODE>+datasette</CODE>
+<DD>
+Enable/disable datasette emulation
+(<CODE>Datasette=1</CODE>, <CODE>Datasette=0</CODE>).
+
+<A NAME="IDX186"></A>
+<DT><CODE>-dsresetwithcpu</CODE>
+<DD>
+<DT><CODE>+dsresetwithcpu</CODE>
+<DD>
+Enable/disable automatic Datasette-Reset
+(<CODE>DatasetteResetWithCPU=1</CODE>, <CODE>DatasetteResetWithCPU=0</CODE>).
+
+<A NAME="IDX187"></A>
+<DT><CODE>-dszerogapdelay &#60;value&#62;</CODE>
+<DD>
+Set delay in cycles for a zero in the tap
+(<CODE>DatasetteZeroGapDelay</CODE>).
+
+<A NAME="IDX188"></A>
+<DT><CODE>-dsspeedtuning &#60;value&#62;</CODE>
+<DD>
+Set number of cycles added to each gap in the tap
+(<CODE>DatasetteSpeedTuning</CODE>).
+
+<A NAME="IDX189"></A>
+<DT><CODE>-dstapewobble &#60;value&#62;</CODE>
+<DD>
+Set maximum random number of cycles added to each gap in the tap
+(<CODE>DatasetteTapeWobble</CODE>).
+
+</DL>
+
+
+
+<H2><A NAME="SEC69" HREF="vice_toc.html#TOC69">6.10  Drive settings</A></H2>
+
+<P>
+These settings are used to control the hardware-level emulation of the Disk
+drives.  When hardware-level emulation is turned on, only drives 8 and 9
+are being emulated.
+
+</P>
+<P>
+The following settings affect both drives:
+
+</P>
+
+<UL>
+
+<LI>
+
+"Enable true drive emulation" enables the (slow) hardware-level
+emulation of the drives for maximum compatibility.  This must be turned
+on for any of the following settings to have effect.
+
+<LI>
+
+"Drive sync factor" specifies the speed of the drive's CPU.  This can
+be used to help loading certain programs that have trouble with the
+default PAL setting (for example, programs designed for NTSC machines).
+The ratio is calculated as follows:
+
+
+<PRE>
+sync_factor = 65536 * clk_drive / clk_machine
+</PRE>
+
+where <CODE>clk_drive</CODE> and <CODE>clk_machine</CODE> are clock speeds in MHz.
+The menu lets you choose between the PAL and NTSC values, and also lets
+you specify whatever value you want.  Be careful when changing it,
+though, because a wrong value can break things and even corrupt disk
+images.
+
+</UL>
+
+<P>
+The following settings, instead, are specific of each drive:
+
+</P>
+
+<UL>
+
+<LI>
+
+"Drive model" specifies the model of the drive being emulated.
+<STRONG>Warning:</STRONG> This will reset the drive.
+
+<LI>
+
+"Enable parallel cable" enables emulation of a SpeedDOS parallel
+cable; if you switch this option on and replace the original Commodore
+ROMs with SpeedDOS-compatible ones, you can speed up loading/saving times.
+
+<LI>
+
+"Idle method" specifies which method the drive emulation should use to
+save CPU cycles in the host CPU.  There are three methods:
+
+
+<UL>
+<LI>
+
+<EM>Skip cycles</EM>: Each time the serial line is accessed by the C64, the
+drive executes all the cycles since the last time it ran.  If
+the number of elapsed cycles is larger than a certain value, the drive
+discards part of them.
+<LI>
+
+<EM>Trap idle</EM>: The disk drive is still emulated upon serial line
+accesses as with the previous option, but it is also always emulated at
+the end of each screen frame.  If the drive gets into the DOS idle loop,
+only pending interrupts are emulated to save time.
+<LI>
+
+<EM>No traps</EM>: Like "Trap idle", but without any traps at all.  So
+basically the drive works exactly as with the real thing, and nothing is
+done to reduce the power needs of the drive emulation.
+</UL>
+
+The first option ("Skip cycles") is usually best for performance, as
+the drive is emulated as little as possible; on the other hand, you may
+notice sudden slowdowns (when the drive executes several cycles at once)
+and the LED status is never updated (because it would not be possible to
+do correctly so).  Moreover, if the drive tries to get in sync with the
+computer in some weird way and the computer does not access the serial
+line for a long time, it is possible that some cycles are discarded and
+the sync is lost.  Notice that this hack will have no effect on
+performance if a program continuously reads from the IEC port, as the
+drive will have to be fully emulated in any case (some stupid programs
+do this, even when they don't actually need to use the drive).
+
+<P>
+
+The second option ("Trap idle") is usually a bit slower, as at least
+interrupts are always emulated, but ensures the LED state is always
+updated correctly and always keeps the drive and the computer in sync.
+On the other hand, if a program installs a non-standard idle loop in the
+drive, the drive CPU has to be emulated even when not necessary and the
+global emulation speed is then <EM>much</EM> slower.
+
+<LI>
+
+"40-track image support" specifies how 40-track ("extended") disk
+images should be supported.  There are three possible ways:
+
+
+<UL>
+<LI>
+
+"Never extend" never extends disk images at all (so if a program tries
+to write tracks beyond the 35th, it is not allowed to do so);
+<LI>
+
+"Ask on extend" prompts the user as soon as a program tries to write
+tracks beyond the 35th, and the user can then choose whether he wants
+the disk image to be extended or not;
+<LI>
+
+"Extend on access" simply extends the disk image as soon the program
+needs it, without prompting the user.
+</UL>
+
+</UL>
+
+
+
+<H3><A NAME="SEC70" HREF="vice_toc.html#TOC70">6.10.1  Drive resources</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>DriveTrueEmulation</CODE>
+<DD>
+<A NAME="IDX190"></A>
+ 
+Boolean controlling whether the "true" drive emulation is turned on.
+
+<A NAME="IDX191"></A>
+<DT><CODE>DriveSoundEmulation</CODE>
+<DD>
+Boolean controlling whether the drive noise emulation is turned on
+(all emulators except vsid).
+
+<A NAME="IDX192"></A>
+<DT><CODE>DriveSoundEmulationVolume</CODE>
+<DD>
+Integer specifying the volume of the drive noise emulation
+(all emulators except vsid).
+(0..4000)
+
+<A NAME="IDX193"></A>
+<A NAME="IDX194"></A>
+<A NAME="IDX195"></A>
+<A NAME="IDX196"></A>
+<DT><CODE>Drive8Type</CODE>
+<DD>
+<DT><CODE>Drive9Type</CODE>
+<DD>
+<DT><CODE>Drive10Type</CODE>
+<DD>
+<DT><CODE>Drive11Type</CODE>
+<DD>
+Integers specifying the model number for drives 8 to 11.  Possible
+values are <CODE>1541</CODE> [all emulators except xcbm2, xcbm5x0, xpet and vsid],
+<CODE>1542</CODE> (1541-II) [all emulators except xcbm2, xcbm5x0, xpet and vsid],
+<CODE>1570</CODE> [all emulators except xcbm2, xcbm5x0, xpet and vsid],
+<CODE>1571</CODE> [all emulators except xcbm2, xcbm5x0, xpet and vsid],
+<CODE>1573</CODE> (1571CR) [x128 only],
+<CODE>1551</CODE> [xplus4 only],
+<CODE>1581</CODE> [all emulators except xcbm2, xcbm5x0, xpet and vsid],
+<CODE>1001</CODE> [all emulators except x64dtv, xplus4 and vsid],
+<CODE>2000</CODE> [all emulators except xcbm2, xcbm5x0, xpet and vsid],
+<CODE>2031</CODE> [all emulators except x64dtv, xplus4 and vsid],
+<CODE>2040</CODE> [all emulators except x64dtv, xplus4 and vsid],
+<CODE>3040</CODE> [all emulators except x64dtv, xplus4 and vsid],
+<CODE>4000</CODE> [all emulators except xcbm2, xcbm5x0, xpet and vsid],
+<CODE>4040</CODE> [all emulators except x64dtv, xplus4 and vsid],
+<CODE>8050</CODE> [all emulators except x64dtv, xplus4 and vsid],
+<CODE>8250</CODE> [all emulators except x64dtv, xplus4 and vsid].
+
+<A NAME="IDX197"></A>
+<DT><CODE>Drive8RTCSave</CODE>
+<DD>
+Integer specifying whether the RTC data of drive 8 should be saved when changed or not (drive type 2000/4000 only).
+
+<A NAME="IDX198"></A>
+<DT><CODE>Drive9RTCSave</CODE>
+<DD>
+Integer specifying whether the RTC data of drive 9 should be saved when changed or not (drive type 2000/4000 only).
+
+<A NAME="IDX199"></A>
+<DT><CODE>Drive10RTCSave</CODE>
+<DD>
+Integer specifying whether the RTC data of drive 10 should be saved when changed or not (drive type 2000/4000 only).
+
+<A NAME="IDX200"></A>
+<DT><CODE>Drive11RTCSave</CODE>
+<DD>
+Integer specifying whether the RTC data of drive 11 should be saved when changed or not (drive type 2000/4000 only).
+
+<A NAME="IDX201"></A>
+<A NAME="IDX202"></A>
+<A NAME="IDX203"></A>
+<A NAME="IDX204"></A>
+<DT><CODE>Drive8ParallelCable</CODE>
+<DD>
+<DT><CODE>Drive9ParallelCable</CODE>
+<DD>
+<DT><CODE>Drive10ParallelCable</CODE>
+<DD>
+<DT><CODE>Drive11ParallelCable</CODE>
+<DD>
+integers controlling what type of parallel cable is emulated for drives 8 to 11
+(x64, x64sc, xscpu64, x128 and xplus4 only).
+x64, x64sc, xscpu64, x128: (0: None, 1: Standard, 2: Dolphin DOS 3, 3: Formel64)
+xplus4: (0: None, 1: Standard)
+
+<A NAME="IDX205"></A>
+<A NAME="IDX206"></A>
+<A NAME="IDX207"></A>
+<A NAME="IDX208"></A>
+<DT><CODE>Drive8ProfDOS</CODE>
+<DD>
+<DT><CODE>Drive9ProfDOS</CODE>
+<DD>
+<DT><CODE>Drive10ProfDOS</CODE>
+<DD>
+<DT><CODE>Drive11ProfDOS</CODE>
+<DD>
+Booleans controlling whether Professional DOS is emulated or not for drives 8 to 11
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX209"></A>
+<A NAME="IDX210"></A>
+<A NAME="IDX211"></A>
+<A NAME="IDX212"></A>
+<DT><CODE>Drive8SuperCard</CODE>
+<DD>
+<DT><CODE>Drive9SuperCard</CODE>
+<DD>
+<DT><CODE>Drive10SuperCard</CODE>
+<DD>
+<DT><CODE>Drive11SuperCard</CODE>
+<DD>
+Booleans controlling whether Super Card is emulated or not for drives 8 to 11
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX213"></A>
+<A NAME="IDX214"></A>
+<A NAME="IDX215"></A>
+<A NAME="IDX216"></A>
+<DT><CODE>Drive8StarDos</CODE>
+<DD>
+<DT><CODE>Drive9StarDos</CODE>
+<DD>
+<DT><CODE>Drive10StarDos</CODE>
+<DD>
+<DT><CODE>Drive11StarDos</CODE>
+<DD>
+Booleans controlling whether StarDOS is emulated or not for drives 8 to 11
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX217"></A>
+<A NAME="IDX218"></A>
+<A NAME="IDX219"></A>
+<A NAME="IDX220"></A>
+<A NAME="IDX221"></A>
+<A NAME="IDX222"></A>
+<A NAME="IDX223"></A>
+<A NAME="IDX224"></A>
+<A NAME="IDX225"></A>
+<A NAME="IDX226"></A>
+<A NAME="IDX227"></A>
+<A NAME="IDX228"></A>
+<A NAME="IDX229"></A>
+<A NAME="IDX230"></A>
+<A NAME="IDX231"></A>
+<A NAME="IDX232"></A>
+<A NAME="IDX233"></A>
+<A NAME="IDX234"></A>
+<A NAME="IDX235"></A>
+<A NAME="IDX236"></A>
+<DT><CODE>Drive8RAM2000</CODE>
+<DD>
+<DT><CODE>Drive8RAM4000</CODE>
+<DD>
+<DT><CODE>Drive8RAM6000</CODE>
+<DD>
+<DT><CODE>Drive8RAM8000</CODE>
+<DD>
+<DT><CODE>Drive8RAMA000</CODE>
+<DD>
+<DT><CODE>Drive9RAM2000</CODE>
+<DD>
+<DT><CODE>Drive9RAM4000</CODE>
+<DD>
+<DT><CODE>Drive9RAM6000</CODE>
+<DD>
+<DT><CODE>Drive9RAM8000</CODE>
+<DD>
+<DT><CODE>Drive9RAMA000</CODE>
+<DD>
+<DT><CODE>Drive10RAM2000</CODE>
+<DD>
+<DT><CODE>Drive10RAM4000</CODE>
+<DD>
+<DT><CODE>Drive10RAM6000</CODE>
+<DD>
+<DT><CODE>Drive10RAM8000</CODE>
+<DD>
+<DT><CODE>Drive10RAMA000</CODE>
+<DD>
+<DT><CODE>Drive11RAM2000</CODE>
+<DD>
+<DT><CODE>Drive11RAM4000</CODE>
+<DD>
+<DT><CODE>Drive11RAM6000</CODE>
+<DD>
+<DT><CODE>Drive11RAM8000</CODE>
+<DD>
+<DT><CODE>Drive11RAMA000</CODE>
+<DD>
+Booleans controlling whether a RAM block is emulated at the respective block or
+not for drives 8 to 11 respectively.
+
+<A NAME="IDX237"></A>
+<A NAME="IDX238"></A>
+<A NAME="IDX239"></A>
+<A NAME="IDX240"></A>
+<DT><CODE>Drive8ExtendImagePolicy</CODE>
+<DD>
+<DT><CODE>Drive9ExtendImagePolicy</CODE>
+<DD>
+<DT><CODE>Drive10ExtendImagePolicy</CODE>
+<DD>
+<DT><CODE>Drive11ExtendImagePolicy</CODE>
+<DD>
+Integer specifying the policy for 40-track support for drives 8 to 11.
+(0: never extend, 1: ask on extend, 2: extend on access)
+
+<A NAME="IDX241"></A>
+<A NAME="IDX242"></A>
+<A NAME="IDX243"></A>
+<A NAME="IDX244"></A>
+<DT><CODE>Drive8IdleMethod</CODE>
+<DD>
+<DT><CODE>Drive9IdleMethod</CODE>
+<DD>
+<DT><CODE>Drive10IdleMethod</CODE>
+<DD>
+<DT><CODE>Drive11IdleMethod</CODE>
+<DD>
+Integers specifying the idling method for the drive CPU.
+See section <A HREF="vice_6.html#SEC69">6.10  Drive settings</A>.
+(0: none, 1: skip cycles, 2: trap idle)
+
+<A NAME="IDX245"></A>
+<A NAME="IDX246"></A>
+<A NAME="IDX247"></A>
+<A NAME="IDX248"></A>
+<DT><CODE>Drive8RPM</CODE>
+<DD>
+<DT><CODE>Drive9RPM</CODE>
+<DD>
+<DT><CODE>Drive10RPM</CODE>
+<DD>
+<DT><CODE>Drive11RPM</CODE>
+<DD>
+Integers specifying the rotation speed of the drive, multiplied by 100, so
+300rpm equals 30000.
+
+<A NAME="IDX249"></A>
+<A NAME="IDX250"></A>
+<A NAME="IDX251"></A>
+<A NAME="IDX252"></A>
+<DT><CODE>Drive8Wobble</CODE>
+<DD>
+<DT><CODE>Drive9Wobble</CODE>
+<DD>
+<DT><CODE>Drive10Wobble</CODE>
+<DD>
+<DT><CODE>Drive11Wobble</CODE>
+<DD>
+Integers specifying the random deviation of the rotation speed, multiplied by
+100 so 100 equals +/- 1rpm.
+
+<A NAME="IDX253"></A>
+<A NAME="IDX254"></A>
+<A NAME="IDX255"></A>
+<A NAME="IDX256"></A>
+<A NAME="IDX257"></A>
+<A NAME="IDX258"></A>
+<A NAME="IDX259"></A>
+<A NAME="IDX260"></A>
+<DT><CODE>DosName1540</CODE>
+<DD>
+<DT><CODE>DosName1541</CODE>
+<DD>
+<DT><CODE>DosName1541ii</CODE>
+<DD>
+<DT><CODE>DosName1570</CODE>
+<DD>
+<DT><CODE>DosName1571</CODE>
+<DD>
+<DT><CODE>DosName1581</CODE>
+<DD>
+<DT><CODE>DosName2000</CODE>
+<DD>
+<DT><CODE>DosName4000</CODE>
+<DD>
+Strings specifying the names of the ROM images for the drive emulation.
+(all emulators except xcbm2, xcbm5x0, xpet and vsid)
+
+<A NAME="IDX261"></A>
+<DT><CODE>DosName1551</CODE>
+<DD>
+String specifying the name of the ROM image for the drive emulation.
+(xplus4 only)
+
+<A NAME="IDX262"></A>
+<DT><CODE>DosName1571cr</CODE>
+<DD>
+String specifying the name of the ROM image for the drive emulation.
+(x128 only)
+
+<A NAME="IDX263"></A>
+<A NAME="IDX264"></A>
+<A NAME="IDX265"></A>
+<A NAME="IDX266"></A>
+<A NAME="IDX267"></A>
+<DT><CODE>DosName2031</CODE>
+<DD>
+<DT><CODE>DosName2040</CODE>
+<DD>
+<DT><CODE>DosName3040</CODE>
+<DD>
+<DT><CODE>DosName4040</CODE>
+<DD>
+<DT><CODE>DosName1001</CODE>
+<DD>
+Strings specifying the names of the ROM images for the drive emulation.
+(all emulators except x64dtv, xplus4 and vsid)
+
+<A NAME="IDX268"></A>
+<DT><CODE>DriveProfDOS1571Name</CODE>
+<DD>
+String specifying the filename of the 1571 professional DOS ROM image
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX269"></A>
+<DT><CODE>DriveSuperCardName</CODE>
+<DD>
+String specifying the filename of the Super Card ROM image
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX270"></A>
+<DT><CODE>DriveStarDosName</CODE>
+<DD>
+String specifying the filename of the image of the lower half of the StarDOS ROM
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX271"></A>
+<DT><CODE>RawDriveDriver</CODE>
+<DD>
+String specifying the name of the device to be used for raw block access.
+
+</DL>
+
+
+
+<H3><A NAME="SEC71" HREF="vice_toc.html#TOC71">6.10.2  Drive command-line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-truedrive</CODE>
+<DD>
+<A NAME="IDX272"></A>
+ 
+<DT><CODE>+truedrive</CODE>
+<DD>
+Enable/disable true drive emulation
+(<CODE>DriveTrueEmulation=1</CODE>, <CODE>DriveTrueEmulation=0</CODE>).
+
+<A NAME="IDX273"></A>
+<DT><CODE>-drivesound</CODE>
+<DD>
+<DT><CODE>+drivesound</CODE>
+<DD>
+Enable/disable drive sound emulation
+(<CODE>DriveSoundEmulation=1</CODE>, <CODE>DriveSoundEmulation=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX274"></A>
+<DT><CODE>-drivesoundvolume &#60;Volume&#62;</CODE>
+<DD>
+Set the volume of the drive sound emulation
+(<CODE>DriveSoundEmulationVolume=1</CODE>, <CODE>DriveSoundEmulationVolume=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX275"></A>
+<A NAME="IDX276"></A>
+<A NAME="IDX277"></A>
+<A NAME="IDX278"></A>
+<DT><CODE>-drive8type &#60;Type&#62;</CODE>
+<DD>
+<DT><CODE>-drive9type &#60;Type&#62;</CODE>
+<DD>
+<DT><CODE>-drive10type &#60;Type&#62;</CODE>
+<DD>
+<DT><CODE>-drive11type &#60;Type&#62;</CODE>
+<DD>
+Specifies the drive types for drives 8-11, respectively.
+Possible values for <CODE>TYPE</CODE> are
+<CODE>1541</CODE> [all emulators except xcbm2, xcbm5x0, xpet and vsid],
+<CODE>1542</CODE> (meaning 1541-II) [all emulators except xcbm2, xcbm5x0, xpet and vsid],
+<CODE>1551</CODE> [xplus4 only],
+<CODE>1570</CODE> [all emulators except xcbm2, xcbm5x0, xpet and vsid],
+<CODE>1571</CODE> [all emulators except xcbm2, xcbm5x0, xpet and vsid],
+<CODE>1573</CODE> (meaning 1571cr) [x128 only],
+<CODE>1581</CODE> [all emulators except xcbm2, xcbm5x0, xpet and vsid],
+<CODE>2000</CODE> [all emulators except xcbm2, xcbm5x0, xpet and vsid],
+<CODE>4000</CODE> [all emulators except xcbm2, xcbm5x0, xpet and vsid],
+<CODE>2031</CODE> [all emulators except x64dtv, xplus4 and vsid],
+<CODE>2040</CODE> [all emulators except x64dtv, xplus4 and vsid],
+<CODE>3040</CODE> [all emulators except x64dtv, xplus4 and vsid],
+<CODE>4040</CODE> [all emulators except x64dtv, xplus4 and vsid],
+<CODE>1001</CODE> [all emulators except x64dtv, xplus4 and vsid],
+<CODE>8050</CODE> [all emulators except x64dtv, xplus4 and vsid]
+and <CODE>8250</CODE> [all emulators except x64dtv, xplus4 and vsid].
+
+<A NAME="IDX279"></A>
+<DT><CODE>-drive8rtcsave</CODE>
+<DD>
+<DT><CODE>-drive8rtcsave</CODE>
+<DD>
+Enable/disable the saving of the RTC data for drive 8 when changed (drive type 2000/4000 only)
+(<CODE>Drive8RTCSave=1</CODE>, <CODE>Drive8RTCSave=0</CODE>).
+
+<A NAME="IDX280"></A>
+<DT><CODE>-drive9rtcsave</CODE>
+<DD>
+<DT><CODE>-drive9rtcsave</CODE>
+<DD>
+Enable/disable the saving of the RTC data for drive 9 when changed (drive type 2000/4000 only)
+(<CODE>Drive9RTCSave=1</CODE>, <CODE>Drive9RTCSave=0</CODE>).
+
+<A NAME="IDX281"></A>
+<DT><CODE>-drive10rtcsave</CODE>
+<DD>
+<DT><CODE>-drive10rtcsave</CODE>
+<DD>
+Enable/disable the saving of the RTC data for drive 10 when changed (drive type 2000/4000 only)
+(<CODE>Drive10RTCSave=1</CODE>, <CODE>Drive10RTCSave=0</CODE>).
+
+<A NAME="IDX282"></A>
+<DT><CODE>-drive11rtcsave</CODE>
+<DD>
+<DT><CODE>-drive11rtcsave</CODE>
+<DD>
+Enable/disable the saving of the RTC data for drive 11 when changed (drive type 2000/4000 only)
+(<CODE>Drive11RTCSave=1</CODE>, <CODE>Drive11RTCSave=0</CODE>).
+
+<A NAME="IDX283"></A>
+<A NAME="IDX284"></A>
+<A NAME="IDX285"></A>
+<A NAME="IDX286"></A>
+<DT><CODE>-parallel8 &#60;type&#62;</CODE>
+<DD>
+<DT><CODE>-parallel9 &#60;type&#62;</CODE>
+<DD>
+<DT><CODE>-parallel10 &#60;type&#62;</CODE>
+<DD>
+<DT><CODE>-parallel11 &#60;type&#62;</CODE>
+<DD>
+Set parallel cable type for drives 8-11 respectively
+(<CODE>Drive8ParallelCable</CODE>, <CODE>Drive9ParallelCable</CODE>,
+<CODE>Drive10ParallelCable</CODE>, <CODE>Drive11ParallelCable</CODE>)
+(x64, x64sc, xscpu64, x128 and xplus4 only).
+x64, x64sc, xscpu64, x128: (0: None, 1: Standard, 2: Professional DOS, 3: Formel64)
+xplus4: (0: None, 1: Standard)
+
+<A NAME="IDX287"></A>
+<A NAME="IDX288"></A>
+<A NAME="IDX289"></A>
+<A NAME="IDX290"></A>
+<DT><CODE>-drive8idle &#60;method&#62;</CODE>
+<DD>
+<DT><CODE>-drive9idle &#60;method&#62;</CODE>
+<DD>
+<DT><CODE>-drive10idle &#60;method&#62;</CODE>
+<DD>
+<DT><CODE>-drive11idle &#60;method&#62;</CODE>
+<DD>
+Specifies &#60;method&#62; as the idling method for drives 8-11 respectively
+(<CODE>Drive8IdleMethod</CODE>, <CODE>Drive9IdleMethod</CODE>,
+<CODE>Drive10IdleMethod</CODE>), <CODE>Drive11IdleMethod</CODE>).
+(0: none, 1: skip cycles, 2: trap idle)
+
+<A NAME="IDX291"></A>
+<A NAME="IDX292"></A>
+<A NAME="IDX293"></A>
+<A NAME="IDX294"></A>
+<DT><CODE>-drive8extend &#60;method&#62;</CODE>
+<DD>
+<DT><CODE>-drive9extend &#60;method&#62;</CODE>
+<DD>
+<DT><CODE>-drive10extend &#60;method&#62;</CODE>
+<DD>
+<DT><CODE>-drive11extend &#60;method&#62;</CODE>
+<DD>
+Specifies &#60;method&#62; as the track 40 extend policy in drives 8-11 respectively
+(<CODE>Drive8ExtendImagePolicy</CODE>, <CODE>Drive9ExtendImagePolicy</CODE>,
+<CODE>Drive10ExtendImagePolicy</CODE>, <CODE>Drive11ExtendImagePolicy</CODE>).
+(0: never extend, 1: ask on extend, 2: extend on access)
+
+<A NAME="IDX295"></A>
+<A NAME="IDX296"></A>
+<A NAME="IDX297"></A>
+<A NAME="IDX298"></A>
+<DT><CODE>-drive8rpm &#60;rpm&#62;</CODE>
+<DD>
+<DT><CODE>-drive9rpm &#60;rpm&#62;</CODE>
+<DD>
+<DT><CODE>-drive10rpm &#60;rpm&#62;</CODE>
+<DD>
+<DT><CODE>-drive11rpm &#60;rpm&#62;</CODE>
+<DD>
+Specifies the rotation speed of the drive, multiplied by 100 so 300rpm
+equal 30000.
+
+<A NAME="IDX299"></A>
+<A NAME="IDX300"></A>
+<A NAME="IDX301"></A>
+<A NAME="IDX302"></A>
+<DT><CODE>-drive8wobble &#60;wobble&#62;</CODE>
+<DD>
+<DT><CODE>-drive9wobble &#60;wobble&#62;</CODE>
+<DD>
+<DT><CODE>-drive10wobble &#60;wobble&#62;</CODE>
+<DD>
+<DT><CODE>-drive11wobble &#60;wobble&#62;</CODE>
+<DD>
+Specifies random amount of wobble added to the rotation speed.
+
+<A NAME="IDX303"></A>
+<DT><CODE>-dos1540 &#60;name&#62;</CODE>
+<DD>
+Specify the ROM name for the 1540 emulation
+(<CODE>DosName1540</CODE>).
+(all emulators except xcbm2, xcbm5x0, xpet and vsid)
+
+<A NAME="IDX304"></A>
+<DT><CODE>-dos1541 &#60;name&#62;</CODE>
+<DD>
+Specify the ROM name for the 1541 emulation
+(<CODE>DosName1541</CODE>).
+(all emulators except xcbm2, xcbm5x0, xpet and vsid)
+
+<A NAME="IDX305"></A>
+<DT><CODE>-dos1541II &#60;name&#62;</CODE>
+<DD>
+Specify the ROM name for the 1541-II emulation
+(<CODE>DosName1541ii</CODE>).
+(all emulators except xcbm2, xcbm5x0, xpet and vsid)
+
+<A NAME="IDX306"></A>
+<DT><CODE>-dos1551 &#60;name&#62;</CODE>
+<DD>
+Specify the ROM name for the 1551 emulation
+(<CODE>DosName1551</CODE>).
+(xplus4 only)
+
+<A NAME="IDX307"></A>
+<DT><CODE>-dos1570 &#60;name&#62;</CODE>
+<DD>
+Specify the ROM name for the 1570 emulation
+(<CODE>DosName1570</CODE>).
+(all emulators except xcbm2, xcbm5x0, xpet and vsid)
+
+<A NAME="IDX308"></A>
+<DT><CODE>-dos1571 &#60;name&#62;</CODE>
+<DD>
+Specify the ROM name for the 1571 emulation
+(<CODE>DosName1571</CODE>).
+(all emulators except xcbm2, xcbm5x0, xpet and vsid)
+
+<A NAME="IDX309"></A>
+<DT><CODE>-dos1571cr &#60;name&#62;</CODE>
+<DD>
+Specify the ROM name for the 1571 emulation
+(<CODE>DosName1571CR</CODE>).
+(x128 only)
+
+<A NAME="IDX310"></A>
+<DT><CODE>-dos1581 &#60;name&#62;</CODE>
+<DD>
+Specify the ROM name for the 1581 emulation
+(<CODE>DosName1581</CODE>).
+(all emulators except xcbm2, xcbm5x0, xpet and vsid)
+
+<A NAME="IDX311"></A>
+<DT><CODE>-dos2000 &#60;name&#62;</CODE>
+<DD>
+Specify the ROM name for the FD2000 emulation
+(<CODE>DosName2000</CODE>).
+(all emulators except xcbm2, xcbm5x0, xpet and vsid)
+
+<A NAME="IDX312"></A>
+<DT><CODE>-dos4000 &#60;name&#62;</CODE>
+<DD>
+Specify the ROM name for the FD4000 emulation
+(<CODE>DosName4000</CODE>).
+(all emulators except xcbm2, xcbm5x0, xpet and vsid)
+
+<A NAME="IDX313"></A>
+<DT><CODE>-dos2031 &#60;name&#62;</CODE>
+<DD>
+Specify the ROM name for the 2031 emulation
+(<CODE>DosName2031</CODE>).
+(all emulators except x64dtv, xplus4 and vsid)
+
+<A NAME="IDX314"></A>
+<DT><CODE>-dos2040 &#60;name&#62;</CODE>
+<DD>
+Specify the ROM name for the 2040 emulation
+(<CODE>DosName2040</CODE>).
+(all emulators except x64dtv, xplus4 and vsid)
+
+<A NAME="IDX315"></A>
+<DT><CODE>-dos3040 &#60;name&#62;</CODE>
+<DD>
+Specify the ROM name for the 3040 emulation
+(<CODE>DosName3040</CODE>).
+(all emulators except x64dtv, xplus4 and vsid)
+
+<A NAME="IDX316"></A>
+<DT><CODE>-dos4040 &#60;name&#62;</CODE>
+<DD>
+Specify the ROM name for the 4040 emulation
+(<CODE>DosName4040</CODE>).
+(all emulators except x64dtv, xplus4 and vsid)
+
+<A NAME="IDX317"></A>
+<DT><CODE>-dos1001 &#60;name&#62;</CODE>
+<DD>
+Specify the ROM name for the 1001, 8050 and 8250 emulations
+(<CODE>DosName1001</CODE>).
+(all emulators except x64dtv, xplus4 and vsid)
+
+<A NAME="IDX318"></A>
+<DT><CODE>-drive8ram2000, +drive8ram2000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $2000-$3FFF for drive 8
+(<CODE>Drive8RAM2000=1</CODE>, <CODE>Drive8RAM2000=0</CODE>).
+
+<A NAME="IDX319"></A>
+<DT><CODE>-drive9ram2000, +drive9ram2000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $2000-$3FFF for drive 9
+(<CODE>Drive9RAM2000=1</CODE>, <CODE>Drive9RAM2000=0</CODE>).
+
+<A NAME="IDX320"></A>
+<DT><CODE>-drive10ram2000, +drive10ram2000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $2000-$3FFF for drive 10
+(<CODE>Drive10RAM2000=1</CODE>, <CODE>Drive10RAM2000=0</CODE>).
+
+<A NAME="IDX321"></A>
+<DT><CODE>-drive11ram2000, +drive11ram2000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $2000-$3FFF for drive 11
+(<CODE>Drive11RAM2000=1</CODE>, <CODE>Drive11RAM2000=0</CODE>).
+
+<A NAME="IDX322"></A>
+<DT><CODE>-drive8ram4000, +drive8ram4000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $4000-$5FFF for drive 8
+(<CODE>Drive8RAM4000=1</CODE>, <CODE>Drive8RAM4000=0</CODE>).
+
+<A NAME="IDX323"></A>
+<DT><CODE>-drive9ram4000, +drive9ram4000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $4000-$5FFF for drive 9
+(<CODE>Drive9RAM4000=1</CODE>, <CODE>Drive9RAM4000=0</CODE>).
+
+<A NAME="IDX324"></A>
+<DT><CODE>-drive10ram4000, +drive10ram4000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $4000-$5FFF for drive 10
+(<CODE>Drive10RAM4000=1</CODE>, <CODE>Drive10RAM4000=0</CODE>).
+
+<A NAME="IDX325"></A>
+<DT><CODE>-drive11ram4000, +drive11ram4000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $4000-$5FFF for drive 11
+(<CODE>Drive11RAM4000=1</CODE>, <CODE>Drive11RAM4000=0</CODE>).
+
+<A NAME="IDX326"></A>
+<DT><CODE>-drive8ram6000, +drive8ram6000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $6000-$7FFF for drive 8
+(<CODE>Drive8RAM6000=1</CODE>, <CODE>Drive8RAM6000=0</CODE>).
+
+<A NAME="IDX327"></A>
+<DT><CODE>-drive9ram6000, +drive9ram6000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $6000-$7FFF for drive 9
+(<CODE>Drive9RAM6000=1</CODE>, <CODE>Drive9RAM6000=0</CODE>).
+
+<A NAME="IDX328"></A>
+<DT><CODE>-drive10ram6000, +drive10ram6000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $6000-$7FFF for drive 10
+(<CODE>Drive10RAM6000=1</CODE>, <CODE>Drive10RAM6000=0</CODE>).
+
+<A NAME="IDX329"></A>
+<DT><CODE>-drive11ram6000, +drive11ram6000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $6000-$7FFF for drive 11
+(<CODE>Drive11RAM6000=1</CODE>, <CODE>Drive11RAM6000=0</CODE>).
+
+<A NAME="IDX330"></A>
+<DT><CODE>-drive8ram8000, +drive8ram8000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $8000-$9FFF for drive 8
+(<CODE>Drive8RAM8000=1</CODE>, <CODE>Drive8RAM8000=0</CODE>).
+
+<A NAME="IDX331"></A>
+<DT><CODE>-drive9ram8000, +drive9ram8000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $8000-$9FFF for drive 9
+(<CODE>Drive9RAM8000=1</CODE>, <CODE>Drive9RAM8000=0</CODE>).
+
+<A NAME="IDX332"></A>
+<DT><CODE>-drive10ram8000, +drive10ram8000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $8000-$9FFF for drive 10
+(<CODE>Drive10RAM8000=1</CODE>, <CODE>Drive10RAM8000=0</CODE>).
+
+<A NAME="IDX333"></A>
+<DT><CODE>-drive11ram8000, +drive11ram8000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $8000-$9FFF for drive 11
+(<CODE>Drive11RAM8000=1</CODE>, <CODE>Drive11RAM8000=0</CODE>).
+
+<A NAME="IDX334"></A>
+<DT><CODE>-drive8rama000, +drive8rama000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $A000-$BFFF for drive 8
+(<CODE>Drive8RAMA000=1</CODE>, <CODE>Drive8RAMA000=0</CODE>).
+
+<A NAME="IDX335"></A>
+<DT><CODE>-drive9rama000, +drive9rama000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $A000-$BFFF for drive 9
+(<CODE>Drive9RAMA000=1</CODE>, <CODE>Drive9RAMA000=0</CODE>).
+
+<A NAME="IDX336"></A>
+<DT><CODE>-drive10rama000, +drive10rama000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $A000-$BFFF for drive 10
+(<CODE>Drive10RAMA000=1</CODE>, <CODE>Drive10RAMA000=0</CODE>).
+
+<A NAME="IDX337"></A>
+<DT><CODE>-drive11rama000, +drive11rama000</CODE>
+<DD>
+Enable/disable 8KB RAM expansion at $A000-$BFFF for drive 11
+(<CODE>Drive11RAMA000=1</CODE>, <CODE>Drive11RAMA000=0</CODE>).
+
+<A NAME="IDX338"></A>
+<DT><CODE>-drive8profdos</CODE>
+<DD>
+<DT><CODE>+drive8profdos</CODE>
+<DD>
+Enable/disable Professional DOS for drive 8
+(<CODE>Drive8ProfDOS=1</CODE>, <CODE>Drive8ProfDOS=0</CODE>)
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX339"></A>
+<DT><CODE>-drive9profdos</CODE>
+<DD>
+<DT><CODE>+drive9profdos</CODE>
+<DD>
+Enable/disable Professional DOS for drive 9
+(<CODE>Drive9ProfDOS=1</CODE>, <CODE>Drive9ProfDOS=0</CODE>)
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX340"></A>
+<DT><CODE>-drive10profdos</CODE>
+<DD>
+<DT><CODE>+drive10profdos</CODE>
+<DD>
+Enable/disable Professional DOS for drive 10
+(<CODE>Drive10ProfDOS=1</CODE>, <CODE>Drive10ProfDOS=0</CODE>)
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX341"></A>
+<DT><CODE>-drive11profdos</CODE>
+<DD>
+<DT><CODE>+drive11profdos</CODE>
+<DD>
+Enable/disable Professional DOS for drive 11
+(<CODE>Drive11ProfDOS=1</CODE>, <CODE>Drive11ProfDOS=0</CODE>)
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX342"></A>
+<DT><CODE>-profdos1571 &#60;name&#62;</CODE>
+<DD>
+Specify name of Professional DOS 1571 ROM image
+(<CODE>DriveProfDOS1571Name</CODE>)
+(x64, x64sc, xscpu64 and x128).
+
+<A NAME="IDX343"></A>
+<DT><CODE>-drive8supercard</CODE>
+<DD>
+<DT><CODE>+drive8supercard</CODE>
+<DD>
+Enable/disable Super Card for drive 8
+(<CODE>Drive8SuperCard=1</CODE>, <CODE>Drive8SuperCard=0</CODE>)
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX344"></A>
+<DT><CODE>-drive9supercard</CODE>
+<DD>
+<DT><CODE>+drive9supercard</CODE>
+<DD>
+Enable/disable Super Card for drive 9
+(<CODE>Drive9SuperCard=1</CODE>, <CODE>Drive9SuperCard=0</CODE>)
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX345"></A>
+<DT><CODE>-drive10supercard</CODE>
+<DD>
+<DT><CODE>+drive10supercard</CODE>
+<DD>
+Enable/disable Super Card for drive 10
+(<CODE>Drive10SuperCard=1</CODE>, <CODE>Drive10SuperCard=0</CODE>)
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX346"></A>
+<DT><CODE>-drive11supercard</CODE>
+<DD>
+<DT><CODE>+drive11supercard</CODE>
+<DD>
+Enable/disable Super Card for drive 11
+(<CODE>Drive11SuperCard=1</CODE>, <CODE>Drive11SuperCard=0</CODE>)
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX347"></A>
+<DT><CODE>-supercard &#60;name&#62;</CODE>
+<DD>
+Specify name of Super Card ROM image
+(<CODE>DriveSuperCardName</CODE>)
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX348"></A>
+<DT><CODE>-drive8stardos</CODE>
+<DD>
+<DT><CODE>+drive8stardos</CODE>
+<DD>
+Enable/disable StarDOS for drive 8
+(<CODE>Drive8StarDos=1</CODE>, <CODE>Drive8StarDos=0</CODE>)
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX349"></A>
+<DT><CODE>-drive9stardos</CODE>
+<DD>
+<DT><CODE>+drive9stardos</CODE>
+<DD>
+Enable/disable StarDOS for drive 9
+(<CODE>Drive9StarDos=1</CODE>, <CODE>Drive9StarDos=0</CODE>)
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX350"></A>
+<DT><CODE>-drive10stardos</CODE>
+<DD>
+<DT><CODE>+drive10stardos</CODE>
+<DD>
+Enable/disable StarDOS for drive 10
+(<CODE>Drive10StarDos=1</CODE>, <CODE>Drive10StarDos=0</CODE>)
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX351"></A>
+<DT><CODE>-drive11stardos</CODE>
+<DD>
+<DT><CODE>+drive11stardos</CODE>
+<DD>
+Enable/disable StarDOS for drive 11
+(<CODE>Drive11StarDos=1</CODE>, <CODE>Drive11StarDos=0</CODE>)
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX352"></A>
+<DT><CODE>-stardos &#60;name&#62;</CODE>
+<DD>
+Specify name of the image of the lower half of the StarDOS ROM. (Attach the upper
+half using the -dos1541 option.)
+(<CODE>DriveStarDosName</CODE>)
+(x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX353"></A>
+<DT><CODE>-rawdrive &#60;name&#62;</CODE>
+<DD>
+Set raw drive device name
+(<CODE>RawDriveDriver</CODE>)
+
+</DL>
+
+
+
+<H2><A NAME="SEC72" HREF="vice_toc.html#TOC72">6.11  Peripheral settings</A></H2>
+
+<P>
+VICE is able to support some special peripherals:
+
+</P>
+
+<UL>
+<LI>
+
+<EM>file system devices</EM>, pseudo-drives accessing the Unix file system;
+<LI>
+
+printers.
+</UL>
+
+<P>
+These features depend on some <EM>kernal traps</EM> that replace the
+existing routines in the original Commodore operating system with
+custom-made C routines.
+
+</P>
+
+
+
+<H3><A NAME="SEC73" HREF="vice_toc.html#TOC73">6.11.1  Settings for file system devices</A></H3>
+
+<P>
+These settings deal with the drive-like peripherals connected to the bus
+of the emulated machine.
+The first setting relates to the parallel IEEE488 interface. With
+this interface a special engine is used to listen to the bus lines
+to translates them to the filesystem code. Thus the PET will always
+detect a drive for example, but it can also use drives 10 and 11 even
+together with true disk drive emulation.
+
+</P>
+
+<UL>
+<LI>
+
+"Enable virtual devices", enables the peripheral access via
+the fast disk emulation (either kernal traps or IEEE488 interface).
+Both, filesystem and disk image access via fast
+drive emulation, are affected.
+</UL>
+
+<P>
+Four peripherals, numbered from 8 to 11, are
+accessible; each of them provides the following settings:
+
+</P>
+
+<UL>
+<LI>
+
+"File system access", if enabled, allows the device to emulate a drive
+accessing a file system directory; note that when a disk image is
+attached to the same drive, the directory is no longer visible and the
+attached disk is used instead.
+<LI>
+
+"File system directory" specifies the directory to be accessed by the
+drive.
+<LI>
+
+"Convert P00 file names", if enabled, allows access to P00 files using
+their built-in name instead of the Unix one.
+<LI>
+
+"Create P00 files on save", if enabled, creates P00 files (instead of
+raw CBM files) whenever a program creates a file.
+</UL>
+
+<P>
+Note that, by default, all drives create P00 files on save.
+
+</P>
+
+
+
+<H4><A NAME="SEC74" HREF="vice_toc.html#TOC74">6.11.1.1  Resources for file system devices</A></H4>
+
+<DL COMPACT>
+
+<DT><CODE>IECDevice8</CODE>
+<DD>
+<A NAME="IDX354"></A>
+ <A NAME="IDX355"></A>
+ <A NAME="IDX356"></A>
+ <A NAME="IDX357"></A>
+ 
+<DT><CODE>IECDevice9</CODE>
+<DD>
+<DT><CODE>IECDevice10</CODE>
+<DD>
+<DT><CODE>IECDevice11</CODE>
+<DD>
+Booleans that specify whether IEC device emulation for device #8 to #11 is enabled.
+
+<A NAME="IDX358"></A>
+<A NAME="IDX359"></A>
+<A NAME="IDX360"></A>
+<A NAME="IDX361"></A>
+<DT><CODE>FileSystemDevice8</CODE>
+<DD>
+<DT><CODE>FileSystemDevice9</CODE>
+<DD>
+<DT><CODE>FileSystemDevice10</CODE>
+<DD>
+<DT><CODE>FileSystemDevice11</CODE>
+<DD>
+Integers specifying the device type for device 8-11 respectively
+(all emulators except vsid).
+(0: None, 1: Filesystem, 2: OpenCBM (Real), 3: Block Device (Raw))
+
+<A NAME="IDX362"></A>
+<A NAME="IDX363"></A>
+<A NAME="IDX364"></A>
+<A NAME="IDX365"></A>
+<DT><CODE>FSDevice8ConvertP00</CODE>
+<DD>
+<DT><CODE>FSDevice9ConvertP00</CODE>
+<DD>
+<DT><CODE>FSDevice10ConvertP00</CODE>
+<DD>
+<DT><CODE>FSDevice11ConvertP00</CODE>
+<DD>
+Booleans specifying whether on-read support for P00 files is enabled on drives 8, 9, 10 and 11 respectively
+(all emulators except vsid).
+
+<A NAME="IDX366"></A>
+<A NAME="IDX367"></A>
+<A NAME="IDX368"></A>
+<A NAME="IDX369"></A>
+<DT><CODE>FSDevice8SaveP00</CODE>
+<DD>
+<DT><CODE>FSDevice9SaveP00</CODE>
+<DD>
+<DT><CODE>FSDevice10SaveP00</CODE>
+<DD>
+<DT><CODE>FSDevice11SaveP00</CODE>
+<DD>
+Booleans specifying whether the drives should create P00 files instead of plain CBM ones for drives 8, 9, 10 and 11 respectively
+(all emulators except vsid).
+
+<A NAME="IDX370"></A>
+<A NAME="IDX371"></A>
+<A NAME="IDX372"></A>
+<A NAME="IDX373"></A>
+<DT><CODE>FSDevice8HideCBMFiles</CODE>
+<DD>
+<DT><CODE>FSDevice9HideCBMFiles</CODE>
+<DD>
+<DT><CODE>FSDevice10HideCBMFiles</CODE>
+<DD>
+<DT><CODE>FSDevice11HideCBMFiles</CODE>
+<DD>
+Booleans specifying whether non-P00 files should be invisible for drives 8, 9, 10 and 11 respectively
+(all emulators except vsid).
+
+<A NAME="IDX374"></A>
+<A NAME="IDX375"></A>
+<A NAME="IDX376"></A>
+<A NAME="IDX377"></A>
+<DT><CODE>FSDevice8Dir</CODE>
+<DD>
+<DT><CODE>FSDevice9Dir</CODE>
+<DD>
+<DT><CODE>FSDevice10Dir</CODE>
+<DD>
+<DT><CODE>FSDevice11Dir</CODE>
+<DD>
+Strings specifying the directories to which drives 8, 9, 10 and 11 have access
+(all emulators except vsid).
+
+</DL>
+
+
+
+<H4><A NAME="SEC75" HREF="vice_toc.html#TOC75">6.11.1.2  Command-line options for file system devices</A></H4>
+
+<DL COMPACT>
+
+<DT><CODE>-iecdevice8</CODE>
+<DD>
+<A NAME="IDX378"></A>
+ 
+<DT><CODE>+iecdevice8</CODE>
+<DD>
+Enable/disable IEC device emulation for device #8
+(<CODE>IECDevice8=1</CODE>, <CODE>IECDevice8=0</CODE>).
+
+<A NAME="IDX379"></A>
+<DT><CODE>-iecdevice9</CODE>
+<DD>
+<DT><CODE>+iecdevice9</CODE>
+<DD>
+Enable/disable IEC device emulation for device #9
+(<CODE>IECDevice9=1</CODE>, <CODE>IECDevice9=0</CODE>).
+
+<A NAME="IDX380"></A>
+<DT><CODE>-iecdevice10</CODE>
+<DD>
+<DT><CODE>+iecdevice10</CODE>
+<DD>
+Enable/disable IEC device emulation for device #10
+(<CODE>IECDevice10=1</CODE>, <CODE>IECDevice10=0</CODE>).
+
+<A NAME="IDX381"></A>
+<DT><CODE>-iecdevice11</CODE>
+<DD>
+<DT><CODE>+iecdevice11</CODE>
+<DD>
+Enable/disable IEC device emulation for device #11
+(<CODE>IECDevice11=1</CODE>, <CODE>IECDevice11=0</CODE>).
+
+<A NAME="IDX382"></A>
+<A NAME="IDX383"></A>
+<A NAME="IDX384"></A>
+<A NAME="IDX385"></A>
+<DT><CODE>-device8 &#60;type&#62;</CODE>
+<DD>
+<DT><CODE>-device9 &#60;type&#62;</CODE>
+<DD>
+<DT><CODE>-device10 &#60;type&#62;</CODE>
+<DD>
+<DT><CODE>-device11 &#60;type&#62;</CODE>
+<DD>
+Set device type for device 8-11 respectively
+(<CODE>FileSystemDevice8</CODE>, <CODE>FileSystemDevice9</CODE>, <CODE>FileSystemDevice10</CODE>, <CODE>FileSystemDevice11</CODE>)
+(all emulators except vsid).
+(0: None, 1: Filesystem, 2: OpenCBM (Real), 3: Block device (Raw))
+
+<A NAME="IDX386"></A>
+<A NAME="IDX387"></A>
+<A NAME="IDX388"></A>
+<A NAME="IDX389"></A>
+<DT><CODE>-fs8 &#60;Name&#62;</CODE>
+<DD>
+<DT><CODE>-fs9 &#60;Name&#62;</CODE>
+<DD>
+<DT><CODE>-fs10 &#60;Name&#62;</CODE>
+<DD>
+<DT><CODE>-fs11 &#60;Name&#62;</CODE>
+<DD>
+Specify the paths for the file system access on drives 8, 9, 10 and 11, respectively
+(<CODE>FSDevice8Dir</CODE>, <CODE>FSDevice9Dir</CODE>,
+<CODE>FSDevice10Dir</CODE> and <CODE>FSDevice11Dir</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX390"></A>
+<DT><CODE>-fs8convertp00</CODE>
+<DD>
+<DT><CODE>+fs8convertp00</CODE>
+<DD>
+Enable/disable on-read support for P00 files on drive 8
+(<CODE>FSDevice8ConvertP00=1</CODE>, <CODE>FSDevice8ConvertP00=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX391"></A>
+<DT><CODE>-fs9convertp00</CODE>
+<DD>
+<DT><CODE>+fs9convertp00</CODE>
+<DD>
+Enable/disable on-read support for P00 files on drive 9
+(<CODE>FSDevice9ConvertP00=1</CODE>, <CODE>FSDevice9ConvertP00=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX392"></A>
+<DT><CODE>-fs10convertp00</CODE>
+<DD>
+<DT><CODE>+fs10convertp00</CODE>
+<DD>
+Enable/disable on-read support for P00 files on drive 10
+(<CODE>FSDevice10ConvertP00=1</CODE>, <CODE>FSDevice10ConvertP00=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX393"></A>
+<DT><CODE>-fs11convertp00</CODE>
+<DD>
+<DT><CODE>+fs11convertp00</CODE>
+<DD>
+Enable/disable on-read support for P00 files on drive 11
+(<CODE>FSDevice11ConvertP00=1</CODE>, <CODE>FSDevice11ConvertP00=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX394"></A>
+<DT><CODE>-fs8savep00</CODE>
+<DD>
+<DT><CODE>+fs8savep00</CODE>
+<DD>
+Enable/disable saving P00 files on drive 8
+(<CODE>FSDevice8SaveP00=1</CODE>, <CODE>FSDevice8SaveP00=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX395"></A>
+<DT><CODE>-fs9savep00</CODE>
+<DD>
+<DT><CODE>+fs9savep00</CODE>
+<DD>
+Enable/disable saving P00 files on drive 9
+(<CODE>FSDevice9SaveP00=1</CODE>, <CODE>FSDevice9SaveP00=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX396"></A>
+<DT><CODE>-fs10savep00</CODE>
+<DD>
+<DT><CODE>+fs10savep00</CODE>
+<DD>
+Enable/disable saving P00 files on drive 10
+(<CODE>FSDevice10SaveP00=1</CODE>, <CODE>FSDevice10SaveP00=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX397"></A>
+<DT><CODE>-fs11savep00</CODE>
+<DD>
+<DT><CODE>+fs11savep00</CODE>
+<DD>
+Enable/disable saving P00 files on drive 11
+(<CODE>FSDevice11SaveP00=1</CODE>, <CODE>FSDevice11SaveP00=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX398"></A>
+<DT><CODE>-fs8hidecbm</CODE>
+<DD>
+<DT><CODE>+fs8hidecbm</CODE>
+<DD>
+Enable/disable hiding of CBM files for drive 8
+(<CODE>FSDevice8HideCBMFiles=1</CODE>, <CODE>FSDevice8HideCBMFiles=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX399"></A>
+<DT><CODE>-fs9hidecbm</CODE>
+<DD>
+<DT><CODE>+fs9hidecbm</CODE>
+<DD>
+Enable/disable hiding of CBM files for drive 9
+(<CODE>FSDevice9HideCBMFiles=1</CODE>, <CODE>FSDevice9HideCBMFiles=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX400"></A>
+<DT><CODE>-fs10hidecbm</CODE>
+<DD>
+<DT><CODE>+fs10hidecbm</CODE>
+<DD>
+Enable/disable hiding of CBM files for drive 10
+(<CODE>FSDevice10HideCBMFiles=1</CODE>, <CODE>FSDevice10HideCBMFiles=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX401"></A>
+<DT><CODE>-fs11hidecbm</CODE>
+<DD>
+<DT><CODE>+fs11hidecbm</CODE>
+<DD>
+Enable/disable hiding of CBM files for drive 11
+(<CODE>FSDevice11HideCBMFiles=1</CODE>, <CODE>FSDevice11HideCBMFiles=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX402"></A>
+<DT><CODE>-flipname &#60;name&#62;</CODE>
+<DD>
+Specify name of the flip list file image
+(<CODE>FliplistName</CODE>)
+(all emulators except vsid).
+
+</DL>
+
+
+
+<H3><A NAME="SEC76" HREF="vice_toc.html#TOC76">6.11.2  Printer settings</A></H3>
+
+<P>
+The VICE emulators can emulate printers connected to either the IEC
+buffer or the user port.  Emulation can be achieved by redirecting the
+printer output to a file or by piping it through an external process.
+This is defined by so-called <EM>printer device file names</EM>; a printer
+device file name can be either a simple path, or a command name
+preceeded by a pipe symbol <SAMP>`|'</SAMP>.
+
+</P>
+<P>
+For example, printer device <SAMP>`filename'</SAMP> will cause the output to be
+appended to the file <TT>`filename'</TT>, while printer device <SAMP>`|lpr'</SAMP>
+will cause the <CODE>lpr</CODE> command to be executed and be fed the printer
+output.  The printer output will not be converted but saved as printed
+by the emulated machine.
+
+</P>
+<P>
+Up to three printer devices may be specified through the following
+resources:
+
+</P>
+
+<UL>
+<LI>
+
+device 1, whose default value is <CODE>print.dump</CODE>;
+<LI>
+
+device 2, whose default value is <CODE>|lpr</CODE>.
+<LI>
+
+device 3, whose default value is <CODE>|petlp -F PS|lpr</CODE>;
+</UL>
+
+<P>
+So, basically, by default printer device 1 will dump printer
+output to <TT>`print.dump'</TT>; printer device 2 will print it via
+<CODE>lpr</CODE> directly to the printer and device 3 will print it via
+<CODE>petlp</CODE> (a not-yet-complete utility that will produce Postscript
+output from the Commodore printer code) and then to the printer via
+<CODE>lpr</CODE>.
+
+</P>
+
+
+
+<H4><A NAME="SEC77" HREF="vice_toc.html#TOC77">6.11.2.1  Printer resources</A></H4>
+
+<DL COMPACT>
+
+<DT><CODE>IECDevice4</CODE>
+<DD>
+<A NAME="IDX403"></A>
+ <A NAME="IDX404"></A>
+ <A NAME="IDX405"></A>
+ <A NAME="IDX406"></A>
+ 
+<DT><CODE>IECDevice5</CODE>
+<DD>
+<DT><CODE>IECDevice6</CODE>
+<DD>
+<DT><CODE>IECDevice7</CODE>
+<DD>
+Booleans that specify whether IEC device emulation for device #4, #5, #6 and #7 is enabled.
+
+<A NAME="IDX407"></A>
+<A NAME="IDX408"></A>
+<A NAME="IDX409"></A>
+<DT><CODE>PrinterTextDevice1</CODE>
+<DD>
+<DT><CODE>PrinterTextDevice2</CODE>
+<DD>
+<DT><CODE>PrinterTextDevice3</CODE>
+<DD>
+Strings specifying the printer devices (see section <A HREF="vice_6.html#SEC76">6.11.2  Printer settings</A>).
+
+<A NAME="IDX410"></A>
+<A NAME="IDX411"></A>
+<A NAME="IDX412"></A>
+<DT><CODE>Printer4TextDevice</CODE>
+<DD>
+<DT><CODE>Printer5TextDevice</CODE>
+<DD>
+<DT><CODE>Printer6TextDevice</CODE>
+<DD>
+Integer (ranging from 0 to 2, for device 1-3) specifying what printer device
+(see section <A HREF="vice_6.html#SEC76">6.11.2  Printer settings</A>) the IEC printer is using.
+
+<A NAME="IDX413"></A>
+<A NAME="IDX414"></A>
+<A NAME="IDX415"></A>
+<DT><CODE>Printer4</CODE>
+<DD>
+<DT><CODE>Printer5</CODE>
+<DD>
+<DT><CODE>Printer6</CODE>
+<DD>
+Integer specifying how the printer (device 4-6) is being emulated.
+(0: None, 1: Filesystem, 2: Real)
+
+<A NAME="IDX416"></A>
+<DT><CODE>Printer7</CODE>
+<DD>
+Integer specifying how printer 7 is being emulated.
+(0: None, 2: Real)
+
+<A NAME="IDX417"></A>
+<DT><CODE>Printer4Driver</CODE>
+<DD>
+String specifying the printer output driver.
+(raw, ascii, mps803, nl10)
+
+<A NAME="IDX418"></A>
+<DT><CODE>Printer5Driver</CODE>
+<DD>
+String specifying the printer output driver.
+(raw, ascii, mps803, nl10)
+
+<A NAME="IDX419"></A>
+<DT><CODE>Printer6Driver</CODE>
+<DD>
+String specifying the printer output driver.
+(raw, 1520)
+
+<A NAME="IDX420"></A>
+<A NAME="IDX421"></A>
+<A NAME="IDX422"></A>
+<DT><CODE>Printer4Output</CODE>
+<DD>
+<DT><CODE>Printer5Output</CODE>
+<DD>
+<DT><CODE>Printer6Output</CODE>
+<DD>
+Strings specifying the IEC printer output device.
+(text, graphics)
+
+<A NAME="IDX423"></A>
+<DT><CODE>PrinterUserport</CODE>
+<DD>
+Boolean specifying if the user-port printer is being emulated.
+
+<A NAME="IDX424"></A>
+<DT><CODE>PrinterUserportTextDevice</CODE>
+<DD>
+Integer (ranging from 0 to 2, for device 1-3) specifying what printer
+device the user-port printer is using.
+
+<A NAME="IDX425"></A>
+<DT><CODE>PrinterUserportDriver</CODE>
+<DD>
+String specifying the user-port printer output driver.
+(ascii/nl10/raw)
+
+<A NAME="IDX426"></A>
+<DT><CODE>PrinterUserportOutput</CODE>
+<DD>
+String specifying the user-port printer output device.
+(text, graphics)
+
+</DL>
+
+
+
+<H4><A NAME="SEC78" HREF="vice_toc.html#TOC78">6.11.2.2  Printer command-line options</A></H4>
+
+<DL COMPACT>
+
+<DT><CODE>-iecdevice4</CODE>
+<DD>
+<A NAME="IDX427"></A>
+ 
+<DT><CODE>+iecdevice4</CODE>
+<DD>
+Enable/disable IEC device emulation for device #4
+(<CODE>IECDevice4=1</CODE>, <CODE>IECDevice4=0</CODE>).
+
+<A NAME="IDX428"></A>
+<DT><CODE>-iecdevice5</CODE>
+<DD>
+<DT><CODE>+iecdevice5</CODE>
+<DD>
+Enable/disable IEC device emulation for device #5
+(<CODE>IECDevice5=1</CODE>, <CODE>IECDevice5=0</CODE>).
+
+<A NAME="IDX429"></A>
+<DT><CODE>-iecdevice6</CODE>
+<DD>
+<DT><CODE>+iecdevice6</CODE>
+<DD>
+Enable/disable IEC device emulation for device #6
+(<CODE>IECDevice6=1</CODE>, <CODE>IECDevice6=0</CODE>).
+
+<A NAME="IDX430"></A>
+<DT><CODE>-iecdevice7</CODE>
+<DD>
+<DT><CODE>+iecdevice7</CODE>
+<DD>
+Enable/disable IEC device emulation for device #7
+(<CODE>IECDevice7=1</CODE>, <CODE>IECDevice7=0</CODE>).
+
+<A NAME="IDX431"></A>
+<DT><CODE>-device4 &#60;type&#62;</CODE>
+<DD>
+Set device type for device 4
+(<CODE>Printer4</CODE>).
+(0: None, 1: Filesystem, 2: Real)
+
+<A NAME="IDX432"></A>
+<DT><CODE>-device5 &#60;type&#62;</CODE>
+<DD>
+Set device type for device 5
+(<CODE>Printer5</CODE>).
+(0: None, 1: Filesystem, 2: Real)
+
+<A NAME="IDX433"></A>
+<DT><CODE>-device6 &#60;type&#62;</CODE>
+<DD>
+Set device type for device 6
+(<CODE>Printer6</CODE>).
+(0: None, 1: Filesystem, 2: Real)
+
+<A NAME="IDX434"></A>
+<DT><CODE>-device7 &#60;type&#62;</CODE>
+<DD>
+Set device type for device 7
+(<CODE>Printer7</CODE>).
+(0: None, 2: Real)
+
+<A NAME="IDX435"></A>
+<A NAME="IDX436"></A>
+<A NAME="IDX437"></A>
+<DT><CODE>-prtxtdev1 &#60;name&#62;</CODE>
+<DD>
+<DT><CODE>-prtxtdev2 &#60;name&#62;</CODE>
+<DD>
+<DT><CODE>-prtxtdev3 &#60;name&#62;</CODE>
+<DD>
+Specify name of printer text device or dump file
+(<CODE>PrinterTextDevice1</CODE>, <CODE>PrinterTextDevice2</CODE>, <CODE>PrinterTextDevice3</CODE>).
+
+<A NAME="IDX438"></A>
+<A NAME="IDX439"></A>
+<A NAME="IDX440"></A>
+<DT><CODE>-pr4txtdev &#60;0-2&#62;</CODE>
+<DD>
+<DT><CODE>-pr5txtdev &#60;0-2&#62;</CODE>
+<DD>
+<DT><CODE>-pr6txtdev &#60;0-2&#62;</CODE>
+<DD>
+Specify printer text output device for IEC printer #4-6
+(<CODE>Printer4TextDevice</CODE>, <CODE>Printer5TextDevice</CODE>, <CODE>Printer6TextDevice</CODE>).
+
+<A NAME="IDX441"></A>
+<DT><CODE>-pr4output &#60;name&#62;</CODE>
+<DD>
+Specify name of output device for device #4
+(<CODE>Printer4Output</CODE>).
+(text, graphics)
+
+<A NAME="IDX442"></A>
+<DT><CODE>-pr5output &#60;name&#62;</CODE>
+<DD>
+Specify name of output device for device #5
+(<CODE>Printer5Output</CODE>).
+(text, graphics)
+
+<A NAME="IDX443"></A>
+<DT><CODE>-pr6output &#60;name&#62;</CODE>
+<DD>
+Specify name of output device for device #6
+(<CODE>Printer6Output</CODE>).
+(text, graphics)
+
+<A NAME="IDX444"></A>
+<DT><CODE>-pr4drv &#60;name&#62;</CODE>
+<DD>
+Specify name of printer driver for device #4
+(<CODE>Printer4Driver</CODE>).
+(raw, ascii, mps803, nl10)
+
+<A NAME="IDX445"></A>
+<DT><CODE>-pr5drv &#60;name&#62;</CODE>
+<DD>
+Specify name of printer driver for device #5
+(<CODE>Printer5Driver</CODE>).
+(raw, ascii, mps803, nl10)
+
+<A NAME="IDX446"></A>
+<DT><CODE>-pr6drv &#60;name&#62;</CODE>
+<DD>
+Specify name of printer driver for device #6
+(<CODE>Printer6Driver</CODE>).
+(raw, 1520)
+
+<A NAME="IDX447"></A>
+<DT><CODE>-pruser</CODE>
+<DD>
+<DT><CODE>+pruser</CODE>
+<DD>
+Enable/disable emulation of the userport printer emulation
+(<CODE>PrUser=1</CODE>, <CODE>PrUser=0</CODE>).
+
+<A NAME="IDX448"></A>
+<DT><CODE>-prusertxtdev &#60;0-2&#62;</CODE>
+<DD>
+Specify printer text output device for userport printer
+(<CODE>PrinterUserportTextDevice</CODE>).
+
+<A NAME="IDX449"></A>
+<DT><CODE>-pruseroutput &#60;name&#62;</CODE>
+<DD>
+Specify name of output device for the userport printer
+(<CODE>PrinterUserportOutput</CODE>).
+(text, graphics)
+
+<A NAME="IDX450"></A>
+<DT><CODE>-pruserdrv &#60;name&#62;</CODE>
+<DD>
+Specify name of printer driver for the userport printer
+(<CODE>PrinterUserportDriver</CODE>).
+
+</DL>
+
+
+
+<H3><A NAME="SEC79" HREF="vice_toc.html#TOC79">6.11.3  Disabling kernal traps</A></H3>
+
+<P>
+If you have compatibility problems, you can completely disable Kernal
+traps with the "Disable kernal traps" option.  This will of course
+disable all the features that depend on it, such as the fast 1541
+emulation (so you will have to turn true 1541 emulation on if you want
+to be able to read or write disk images) and tape support.
+
+</P>
+
+
+
+<H4><A NAME="SEC80" HREF="vice_toc.html#TOC80">6.11.3.1  Resources to control Kernal traps</A></H4>
+
+<DL COMPACT>
+
+<DT><CODE>VirtualDevices</CODE>
+<DD>
+<A NAME="IDX451"></A>
+ 
+Boolean specifying whether all the mechanisms for virtual device
+emulation should be enabled. Serial IEC devices use kernal traps,
+parallel IEEE488 devices use an own IEEE488 engine. Both are switched
+on and off with this resource.
+
+</DL>
+
+
+
+<H4><A NAME="SEC81" HREF="vice_toc.html#TOC81">6.11.3.2  Command-line options to control Kernal traps</A></H4>
+
+<DL COMPACT>
+
+<DT><CODE>-virtualdev</CODE>
+<DD>
+<A NAME="IDX452"></A>
+ 
+<DT><CODE>+virtualdev</CODE>
+<DD>
+Enable/disable virtual devices
+(<CODE>VirtualDevices=1</CODE>, <CODE>VirtualDevices=0</CODE>).
+
+</DL>
+
+
+
+<H2><A NAME="SEC82" HREF="vice_toc.html#TOC82">6.12  RS232 settings</A></H2>
+
+<P>
+The VICE emulators can emulate the RS232 device most of the machines
+have.  The C64, C128 and VIC20 emulators emulate the userport RS232
+interface at 300 and 1200 baud.  The C64 and C128 can also use the 9600
+baud interface by Daniel Dallmann, using the shift registers of the two
+CIA 6526 chips.  The PET can have a 6551 ACIA RS232 interface when
+running as a SuperPET, and the CBM-II has such an ACIA by default.  The
+C64 and C128 emulators can emulate an ACIA 6551 (also known as Datapump
+for example) as extension at <CODE>$de**</CODE>.
+
+</P>
+<P>
+Emulation can be achieved by either:
+
+</P>
+
+<UL>
+<LI>
+
+connecting a real UNIX serial device;
+<LI>
+
+dumping to a file;
+<LI>
+
+piping through a process.
+</UL>
+
+<P>
+It is possible to define up to four UNIX serial devices, and then decide
+which interface should be connected to which device.  This is done by
+so-called <EM>rs232 device file names</EM>; an rs232 device file name can
+be either a simple path, or a command name preceeded by a pipe symbol
+<SAMP>`|'</SAMP>.  If the path specifies a special device (e.g. <TT>`/dev/ttyS0'</TT>) it
+is recognized by VICE and the emulator can set the baudrate.
+
+</P>
+<P>
+For example, rs232 device <SAMP>`filename'</SAMP> will cause the output to be
+written (not appended) to the file <TT>`filename'</TT>, while printer device
+<SAMP>`|lpr'</SAMP> will cause the <CODE>lpr</CODE> command to be executed and be fed
+the rs232 output.  The rs232 output will not be converted but saved as
+sent by the emulated machine.  The same holds true for the rs232 input.
+If the command writes data to the standard output it will be caught by VICE
+and sent back to the emulator.  Also the data sent by the pseudo device will
+be sent back to VICE.
+
+</P>
+<P>
+For example you can setup a null-modem cable between two serial ports
+of your PC, setup one port for login and use the other in VICE.  Then you
+can login from your emulator via the RS232 emulation and the null-modem
+cable to your machine again.
+
+</P>
+<P>
+You can not simply run a shell from VICE, as the shell will notice that
+it does not run on its own pseudo terminal and will thus buffer its
+output.  You need to write some program that opens an own pseudo terminal
+and runs the shell from there (not yet finished).
+
+</P>
+<P>
+Up to four RS232 devices may be specified through the following
+resources:
+
+</P>
+
+<UL>
+<LI>
+
+device 1, whose default value is <CODE>/dev/ttyS0</CODE>;
+<LI>
+
+device 2, whose default value is <CODE>/dev/ttyS1</CODE>;
+<LI>
+
+device 3, whose default value is <CODE>rs232.dump</CODE>;
+<LI>
+
+device 4, whose default value is <CODE>|lpr</CODE>.
+</UL>
+
+<P>
+For the first two devices you can change the baudrate the tty device is
+set to by specifying it on the commandline or in the menu.  This
+baudrate is 9600 by default for the latter two, but can be changed only
+by resources (The baudrate is independent from the baudrate the emulator
+actually expects).
+
+</P>
+
+
+
+<H3><A NAME="SEC83" HREF="vice_toc.html#TOC83">6.12.1  RS232 resources</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>RsDevice1</CODE>
+<DD>
+<A NAME="IDX453"></A>
+ <A NAME="IDX454"></A>
+ <A NAME="IDX455"></A>
+ <A NAME="IDX456"></A>
+ 
+<DT><CODE>RsDevice2</CODE>
+<DD>
+<DT><CODE>RsDevice3</CODE>
+<DD>
+<DT><CODE>RsDevice4</CODE>
+<DD>
+Strings specifying the RS232 devices (see section <A HREF="vice_6.html#SEC82">6.12  RS232 settings</A>).
+
+<A NAME="IDX457"></A>
+<DT><CODE>Acia1Enable</CODE>
+<DD>
+Boolean specifying whether the ACIA (Swiftlink, Turbo232) cartridge should be emulated or not
+(x64, x64sc, xscpu64, x128 and xvic only, and only if RS232 support is enabled and supported at compile time).
+
+<A NAME="IDX458"></A>
+<DT><CODE>Acia1Dev</CODE>
+<DD>
+Integer specifying what RS232 device (see section <A HREF="vice_6.html#SEC82">6.12  RS232 settings</A>) the ACIA is using
+(all emulators except x64dtv and vsid, and only if RS232 support is enabled and supported at compile time).
+
+<A NAME="IDX459"></A>
+<DT><CODE>Acia1Base</CODE>
+<DD>
+Integer specifying the base address for the emulated ACIA chip (x64, x64sc, xscpu64, xvic and x128 only, and only if RS232 support is enabled and supported at compile time).
+(xvic: $9800/$9C00, x128: $D700/$DE00/$DF00, x64, x64sc, xscpu64: $DE00/$DF00)
+
+<A NAME="IDX460"></A>
+<DT><CODE>Acia1Mode</CODE>
+<DD>
+Integer specifying the type of emulated RS232 interface (x64, x64sc, xscpu64, xvic and x128 only, and only if RS232 support is enabled and supported at compile time).
+(0: normal, 1: Swiftlink, 2: Turbo232)
+
+<A NAME="IDX461"></A>
+<DT><CODE>Acia1Irq</CODE>
+<DD>
+Integer specifying which interrupt to use (x64, x64sc, xscpu64, xvic and x128 only, and only if RS232 support is enabled and supported at compile time).
+(0 = none, 1 = IRQ, 2 = NMI)
+
+<A NAME="IDX462"></A>
+<DT><CODE>RsUserEnable</CODE>
+<DD>
+Boolean specifying if the user-port RS232 interface is being emulated
+(C64, C128 and VIC20).
+
+<A NAME="IDX463"></A>
+<DT><CODE>RsUserBaud</CODE>
+<DD>
+Integer specifying the baudrate of the user-port RS232 interface
+(C64, C128 and VIC20).
+
+<A NAME="IDX464"></A>
+<DT><CODE>RsUserDev</CODE>
+<DD>
+Integer (ranging from 0 to 3, for device 1-4) specifying what RS232 device
+the user-port interface is using (C64, C128 and VIC20).
+
+</DL>
+
+
+
+<H3><A NAME="SEC84" HREF="vice_toc.html#TOC84">6.12.2  RS232 command-line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-rsdev1 &#60;Name&#62;</CODE>
+<DD>
+<A NAME="IDX465"></A>
+ 
+<A NAME="IDX466"></A>
+<DT><CODE>-rsdev2 &#60;Name&#62;</CODE>
+<DD>
+<A NAME="IDX467"></A>
+<DT><CODE>-rsdev3 &#60;Name&#62;</CODE>
+<DD>
+<A NAME="IDX468"></A>
+<DT><CODE>-rsdev4 &#60;Name&#62;</CODE>
+<DD>
+Specify &#60;Name&#62; as RS232 devices 1, 2, 3 and 4, respectively
+(<CODE>RsDevice1</CODE>, <CODE>RsDevice2</CODE> <CODE>RsDevice3</CODE> and <CODE>RsDevice4</CODE>).
+
+<A NAME="IDX469"></A>
+<DT><CODE>-acia1</CODE>
+<DD>
+<DT><CODE>+acia1</CODE>
+<DD>
+Enable/Disable the $DE** ACIA RS232 interface emulation
+(<CODE>Acia1Enable=1</CODE>, <CODE>Acia1Enable=0</CODE>)
+(x64, x64sc, xscpu64, x128 and xvic only, and only if RS232 support is enabled and supported at compile time).
+
+<A NAME="IDX470"></A>
+<DT><CODE>-myaciadev &#60;0-3&#62;</CODE>
+<DD>
+Specify RS232 device the ACIA should work on
+(all emulators except x64dtv and vsid, and only if RS232 support is enabled and supported at compile time)
+
+<A NAME="IDX471"></A>
+<DT><CODE>-acia1base &#60;Base address&#62;</CODE>
+<DD>
+Set the base address of the ACIA cartridge
+(<CODE>Acia1Base</CODE>)
+(x64, x64sc, xscpu, x128 and xvic only, and only if RS232 support is enabled and supported at compile time).
+(xvic: $9800/$9C00, x128: $D700/$DE00/$DF00, x64, x64sc, xscpu: $DE00/$DF00)
+
+<A NAME="IDX472"></A>
+<DT><CODE>-acia1mode &#60;mode&#62;</CODE>
+<DD>
+Set the ACIA mode
+(<CODE>Acia1Mode</CODE>)
+(x64, x64sc, xscpu64, xvic and x128 only, and only if RS232 support is enabled and supported at compile time).
+(0: Normal, 1: Swiftlink, 2: Turbo232)
+
+<A NAME="IDX473"></A>
+<DT><CODE>-acia1irq &#60;interrupt&#62;</CODE>
+<DD>
+Set the ACIA interrupt
+(<CODE>Acia1Irq</CODE>)
+(x64, x64sc, xscpu64, xvic and x128 only, and only if RS232 support is enabled and supported at compile time).
+(0: None, 1: IRQ, 2: NMI)
+
+<A NAME="IDX474"></A>
+<DT><CODE>-rsuser</CODE>
+<DD>
+<DT><CODE>+rsuser</CODE>
+<DD>
+Enable or disable emulation of the
+userport RS232 emulation (<CODE>RsUser</CODE>; C64, C128 and VIC20)
+
+<A NAME="IDX475"></A>
+<DT><CODE>-rsuserbaud &#60;baud&#62;</CODE>
+<DD>
+Set the baud rate of the RS232 userport emulation.
+
+<A NAME="IDX476"></A>
+<DT><CODE>-rsuserdev &#60;0-3&#62;</CODE>
+<DD>
+Specify device for the userport RS232 emulation (<CODE>RsUserDev</CODE>;
+C64, C128 and VIC20).
+
+</DL>
+
+
+
+<H3><A NAME="SEC85" HREF="vice_toc.html#TOC85">6.12.3  RS232 usage example</A></H3>
+
+<P>
+Here we give you a simple example how to set up an emulated C64 using
+the modem connected to your PC. The following list shows each step.
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>Attach your modem to your PC at a serial port.</CODE>
+<DD>
+Normally you should set it up to use the modem as "/dev/modem".
+<DT><CODE>start VICE</CODE>
+<DD>
+<DT><CODE>Setup VICE to use your modem as "serial device 1"</CODE>
+<DD>
+Go to the RS232 settings menu and change "Serial 1 device" to "/dev/modem" (or the device where you attached your modem to)
+Then go to the RS232 settings menu and change "Serial 1 baudrate" to the baudrate your modem should run at.
+  Watch out, e.g. on Linux there is an additional multiplier
+  to multiply with the baudrate (so e.g. 19200 gives 115200 or so baud)
+  See the "setserial" manpage on Linux for example.
+  However, most modems should be able to autodetect the speed to
+  the computer as well.
+
+<DT><CODE>Select the RS232 emulation your programs use</CODE>
+<DD>
+If you want to use the Userport emulation, go to the RS232 settings and
+  change "Userport RS232 Device" to
+  "Serial 1". If you want ACIA emulation (swiftlink or what's it called?)
+  then change "ACIA $DE** device" to "Serial 1".
+
+<DT><CODE>Enable the emulation</CODE>
+<DD>
+  Go to the RS232 settings and select either "ACIA $DE** emulation"
+  or Userport 300/1200 baud or CIA 9600 baud emulation.
+
+<DT><CODE>Load your program and start it.</CODE>
+<DD>
+If it is able to detect an
+  RS232 cartridge like swiftlink or so, try to detect the ACIA emulation
+  if enabled.
+  Otherwise just set the baudrate to either 300, 1200 or 9600 according
+  to what you enabled in the VICE menu for the userport.
+
+</DL>
+
+
+
+<H2><A NAME="SEC86" HREF="vice_toc.html#TOC86">6.13  Tape port devices</A></H2>
+
+
+
+<H3><A NAME="SEC87" HREF="vice_toc.html#TOC87">6.13.1  Tape port resources</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>CPClockF83</CODE>
+<DD>
+<A NAME="IDX477"></A>
+ 
+Boolean specifying whether the CP Clock F83 (PCF8583 RTC) is enabled.
+
+<A NAME="IDX478"></A>
+<DT><CODE>CPClockF83Save</CODE>
+<DD>
+Boolean specifying whether the CP Clock F83 (PCF8583 RTC) data is saved when changed.
+
+<A NAME="IDX479"></A>
+<DT><CODE>TapeSenseDongle</CODE>
+<DD>
+Boolean specifying whether the tape sense dongle is enabled.
+
+<A NAME="IDX480"></A>
+<DT><CODE>DTLBasicDongle</CODE>
+<DD>
+Boolean specifying whether the DTL Basic dongle is enabled.
+
+</DL>
+
+
+
+<H3><A NAME="SEC88" HREF="vice_toc.html#TOC88">6.13.2  Tape port command line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-cpclockf83</CODE>
+<DD>
+<A NAME="IDX481"></A>
+ 
+<DT><CODE>+cpclockf83</CODE>
+<DD>
+Enable/Disable CP Clock F83 (PCF8583 RTC)
+(<CODE>CPClockF83=1</CODE>, <CODE>CPClockF83=0</CODE>).
+
+<A NAME="IDX482"></A>
+<DT><CODE>-cpclockf83save</CODE>
+<DD>
+<DT><CODE>+cpclockf83save</CODE>
+<DD>
+Enable/Disable saving of the CP Clock F83 (PCF8583 RTC) data when changed
+ (<CODE>CPClockF83Save=1</CODE>, <CODE>CPClockF83Save=0</CODE>).
+
+<A NAME="IDX483"></A>
+<DT><CODE>-tapesensedongle</CODE>
+<DD>
+<DT><CODE>+tapesensedongle</CODE>
+<DD>
+Enable/Disable tape sense dongle
+ (<CODE>TapeSenseDongle=1</CODE>, <CODE>TapeSenseDongle=0</CODE>).
+
+<A NAME="IDX484"></A>
+<DT><CODE>-dtlbasicdongle</CODE>
+<DD>
+<DT><CODE>+dtlbasicdongle</CODE>
+<DD>
+Enable/Disable DTL Basic dongle
+ (<CODE>DTLBasicDongle=1</CODE>, <CODE>DTLBasicDongle=0</CODE>).
+
+</DL>
+
+
+
+<H2><A NAME="SEC89" HREF="vice_toc.html#TOC89">6.14  Userport devices</A></H2>
+
+
+
+<H3><A NAME="SEC90" HREF="vice_toc.html#TOC90">6.14.1  Userport resources</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>UserportCollisionHandling</CODE>
+<DD>
+<A NAME="IDX485"></A>
+ 
+Boolean specifying the way the Userport collisions should be handled, (0: error message and
+ detach all involved devices, 1: error message and detach last attached involved
+ device, 2: warning in log and 'AND' the valid return values)
+
+<A NAME="IDX486"></A>
+<DT><CODE>UserportDIGIMAX</CODE>
+<DD>
+Boolean specifying whether the userport DigiMAX device is enabled.
+
+<A NAME="IDX487"></A>
+<DT><CODE>Userport4bitSampler</CODE>
+<DD>
+Boolean specifying whether the Userport 4bit sampler is enabled.
+
+<A NAME="IDX488"></A>
+<DT><CODE>Userport8BSS</CODE>
+<DD>
+Boolean specifying whether the Userport 8bit stereo sampler is enabled.
+
+<A NAME="IDX489"></A>
+<DT><CODE>UserportRTC58321a</CODE>
+<DD>
+Boolean specifying whether the userport RTC is emulated or not
+(xpet, cbm2, x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX490"></A>
+<DT><CODE>UserportRTC58321aSave</CODE>
+<DD>
+Boolean specifying whether the userport RTC data is saved when changed or not
+(xpet, cbm2, x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX491"></A>
+<DT><CODE>UserportRTCDS1307</CODE>
+<DD>
+Boolean specifying whether the userport RTC is emulated or not
+(xpet, cbm2, x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX492"></A>
+<DT><CODE>UserportRTCDS1307Save</CODE>
+<DD>
+Boolean specifying whether the userport RTC data is saved when changed or not
+(xpet, cbm2, x64, x64sc, xscpu64 and x128 only).
+
+</DL>
+
+
+
+<H3><A NAME="SEC91" HREF="vice_toc.html#TOC91">6.14.2  Userport command line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-userportcollision</CODE>
+<DD>
+<A NAME="IDX493"></A>
+ 
+Select the way the Userport collisions should be handled, (0: error message and
+ detach all involved devices, 1: error message and detach last attached involved
+ device, 2: warning in log and 'AND' the valid return values)
+(<CODE>UserportCollisionHandling</CODE>)
+
+ @findex -userportdigimax, +userportdigimax
+<DT><CODE>-userportdigimax</CODE>
+<DD>
+<DT><CODE>+userportdigimax</CODE>
+<DD>
+Enable/Disable the userport DigiMAX device
+(<CODE>UserportDIGIMAX=1</CODE>, <CODE>UserportDIGIMAX=0</CODE>)
+
+<A NAME="IDX494"></A>
+<DT><CODE>-userport4bitsampler</CODE>
+<DD>
+<DT><CODE>+userport4bitsampler</CODE>
+<DD>
+Enable/Disable Userport 4bit sampler
+(<CODE>Userport4bitSampler=1</CODE>, <CODE>Userport4bitSampler=0</CODE>)
+
+<A NAME="IDX495"></A>
+<DT><CODE>-userport8bss</CODE>
+<DD>
+<DT><CODE>+userport8bss</CODE>
+<DD>
+Enable/Disable Userport 8bit stereo sampler
+(<CODE>Userport8BSS=1</CODE>, <CODE>Userport8BSS=0</CODE>)
+
+<A NAME="IDX496"></A>
+<DT><CODE>-userportrtc58321a</CODE>
+<DD>
+<DT><CODE>+userportrtc58321a</CODE>
+<DD>
+Enable/disable the userport RTC emulation
+(<CODE>UserportRTC58321a=1</CODE>, <CODE>UserportRTC58321a=0</CODE>)
+(xpet, cbm2, x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX497"></A>
+<DT><CODE>-userportrtc58321asave</CODE>
+<DD>
+<DT><CODE>+userportrtc58321asave</CODE>
+<DD>
+Disable/enable saving of the userport RTC data when changed
+(<CODE>UserportRTC58321aSave=1</CODE>, <CODE>UserportRTC58321aSave=0</CODE>)
+(xpet, cbm2, x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX498"></A>
+<DT><CODE>-userportrtcds1307</CODE>
+<DD>
+<DT><CODE>+userportrtcds1307</CODE>
+<DD>
+Enable/disable the userport RTC emulation
+(<CODE>UserportRTCDS1307=1</CODE>, <CODE>UserportRTCDS1307=0</CODE>)
+(xpet, cbm2, x64, x64sc, xscpu64 and x128 only).
+
+<A NAME="IDX499"></A>
+<DT><CODE>-userportrtcds1307save</CODE>
+<DD>
+<DT><CODE>+userportrtcds1307save</CODE>
+<DD>
+Disable/enable saving of the userport RTC data when changed
+(<CODE>UserportRTCDS1307Save=1</CODE>, <CODE>UserportRTCDS1307Save=0</CODE>)
+(xpet, cbm2, x64, x64sc, xscpu64 and x128 only).
+
+</DL>
+
+
+
+<H2><A NAME="SEC92" HREF="vice_toc.html#TOC92">6.15  Monitor settings</A></H2>
+
+<P>
+This section lists command-line options specific to the built-in monitor.
+
+</P>
+
+
+
+<H3><A NAME="SEC93" HREF="vice_toc.html#TOC93">6.15.1  Monitor resources</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>KeepMonitorOpen</CODE>
+<DD>
+<A NAME="IDX500"></A>
+ 
+Boolean, if true the monitor window may stay open when the emulation is running,
+eg to look at trace-point output. (Not all ports/UIs support this, in that case
+this setting has no effect.)
+
+<A NAME="IDX501"></A>
+<DT><CODE>MonitorServer</CODE>
+<DD>
+Boolean specifying whether the remote monitor server is enabled.
+
+<A NAME="IDX502"></A>
+<DT><CODE>MonitorServerAddress</CODE>
+<DD>
+String specifying the address the remote monitor server listens to (ip4://127.0.0.1:6510)
+
+<A NAME="IDX503"></A>
+<DT><CODE>NativeMonitor</CODE>
+<DD>
+Boolean specifying whether the native monitor is enabled. When enabled, the monitor
+ will not run in the interface of the emulator, but instead work in the spawning
+ terminal.
+
+</DL>
+
+
+
+<H3><A NAME="SEC94" HREF="vice_toc.html#TOC94">6.15.2  Monitor command-line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-moncommands &#60;Name&#62;</CODE>
+<DD>
+<A NAME="IDX504"></A>
+ 
+Execute the commands from the file &#60;Name&#62; in the monitor after starting up. This
+command line switch is mainly thought to load labels and to set breakpoints.
+Not all other commands are useful to be executed in this way, some may even
+lead to strange effects.
+
+<A NAME="IDX505"></A>
+<DT><CODE>-initbreak &#60;address&#62;</CODE>
+<DD>
+Set an initial breakpoint for the monitor. Addresses with prefix "0x" are hexadecimal.
+
+<A NAME="IDX506"></A>
+<DT><CODE>-keepmonopen</CODE>
+<DD>
+<DT><CODE>+keepmonopen</CODE>
+<DD>
+Enable/disable keeping the monitor window open
+(<CODE>KeepMonitorOpen=1</CODE>, <CODE>KeepMonitorOpen=0</CODE>).
+
+<A NAME="IDX507"></A>
+<DT><CODE>-remotemonitor</CODE>
+<DD>
+<DT><CODE>+remotemonitor</CODE>
+<DD>
+Enable/Disable remote monitor
+
+<A NAME="IDX508"></A>
+<DT><CODE>-remotemonitoraddress &#60;name&#62;</CODE>
+<DD>
+The local address the remote monitor should bind to
+
+<A NAME="IDX509"></A>
+<DT><CODE>-nativemonitor</CODE>
+<DD>
+<DT><CODE>+nativemonitor</CODE>
+<DD>
+Enable/Disable native monitor.
+(<CODE>NativeMonitor=1</CODE>, <CODE>NativeMonitor=0</CODE>).
+
+</DL>
+
+
+
+<H2><A NAME="SEC95" HREF="vice_toc.html#TOC95">6.16  Memory settings</A></H2>
+
+
+
+<H3><A NAME="SEC96" HREF="vice_toc.html#TOC96">6.16.1  Memory resources</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>RAMInitStartValue</CODE>
+<DD>
+<A NAME="IDX510"></A>
+ 
+Integer specifying the value for the very first RAM address after powerup
+(all emulators except vsid).
+(0..255)
+
+<A NAME="IDX511"></A>
+<DT><CODE>RAMInitValueInvert</CODE>
+<DD>
+Integer specifying the length of the memory block initialized with the same value
+(all emulators except vsid).
+
+<A NAME="IDX512"></A>
+<DT><CODE>RAMInitPatternInvert</CODE>
+<DD>
+Integer specifying the length of the memory block initialized with the same pattern
+(all emulators except vsid).
+
+</DL>
+
+
+
+<H3><A NAME="SEC97" HREF="vice_toc.html#TOC97">6.16.2  Memory command-line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-raminitstartvalue &#60;value&#62;</CODE>
+<DD>
+<A NAME="IDX513"></A>
+ 
+Set the value for the very first RAM address after powerup
+(<CODE>RAMInitStartValue</CODE>)
+(all emulators except vsid).
+(0..255)
+
+<A NAME="IDX514"></A>
+<DT><CODE>-raminitvalueinvert &#60;num of bytes&#62;</CODE>
+<DD>
+Length of memory block initialized with the same value
+(<CODE>RAMInitValueInvert</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX515"></A>
+<DT><CODE>-raminitpatterninvert &#60;num of bytes&#62;</CODE>
+<DD>
+Length of memory block initialized with the same pattern
+(<CODE>RAMInitPatternInvert</CODE>)
+(all emulators except vsid).
+
+</DL>
+
+
+
+<H2><A NAME="SEC98" HREF="vice_toc.html#TOC98">6.17  Debug settings</A></H2>
+
+
+
+<H3><A NAME="SEC99" HREF="vice_toc.html#TOC99">6.17.1  Debug resources</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>TapeLog</CODE>
+<DD>
+<A NAME="IDX516"></A>
+ 
+Boolean specifying whether the tape log device is enabled.
+
+<A NAME="IDX517"></A>
+<DT><CODE>TapeLogDestination</CODE>
+<DD>
+Integer specifying where the tape log goes to (0=Enable logging to the emulator log file 1=Enable logging to a file).
+
+<A NAME="IDX518"></A>
+<DT><CODE>TapeLogfilename</CODE>
+<DD>
+String that specifies the tape log file name
+
+<A NAME="IDX519"></A>
+<DT><CODE>DebugCartEnable</CODE>
+<DD>
+Boolean specifying whether the debug "cartridge" used for the test suite is enabled.
+
+<B>The following are only available when the emulators were compiled in DEBUG mode:</B>
+
+<A NAME="IDX520"></A>
+<DT><CODE>TraceMode</CODE>
+<DD>
+Integer specifying the trace mode (0=normal 1=small 2=history)
+
+<A NAME="IDX521"></A>
+<DT><CODE>AutoPlaybackFrames</CODE>
+<DD>
+Amount of automatic playback frames
+
+<A NAME="IDX522"></A>
+<DT><CODE>MainCPU_TRACE</CODE>
+<DD>
+Trace the main CPU / Do not trace the main CPU
+<A NAME="IDX523"></A>
+<DT><CODE>Drive0CPU_TRACE</CODE>
+<DD>
+Trace the drive 0 CPU / Do not trace the drive 0 CPU
+<A NAME="IDX524"></A>
+<DT><CODE>Drive1CPU_TRACE</CODE>
+<DD>
+Trace the drive 1 CPU / Do not trace the drive 1 CPU
+<A NAME="IDX525"></A>
+<DT><CODE>Drive2CPU_TRACE</CODE>
+<DD>
+Trace the drive 2 CPU / Do not trace the drive 2 CPU
+<A NAME="IDX526"></A>
+<DT><CODE>Drive3CPU_TRACE</CODE>
+<DD>
+Trace the drive 3 CPU / Do not trace the drive 3 CPU
+
+</DL>
+
+
+
+<H3><A NAME="SEC100" HREF="vice_toc.html#TOC100">6.17.2  Debug command-line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-core</CODE>
+<DD>
+<A NAME="IDX527"></A>
+ 
+<DT><CODE>+core</CODE>
+<DD>
+Enable/disable generation of core dumps
+(<CODE>DoCoreDump=1</CODE>, <CODE>DoCoreDump=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX528"></A>
+<DT><CODE>-debug</CODE>
+<DD>
+<DT><CODE>+debug</CODE>
+<DD>
+Disable/enable calling of the exception handler
+(<CODE>DoCoreDump=1</CODE>, <CODE>DoCoreDump=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX529"></A>
+<DT><CODE>-debugcart</CODE>
+<DD>
+<DT><CODE>+debugcart</CODE>
+<DD>
+Enable/disable the debug "cartridge" used for the test suite.
+
+<A NAME="IDX530"></A>
+<DT><CODE>-tapelog</CODE>
+<DD>
+<DT><CODE>+tapelog</CODE>
+<DD>
+Enable/Disable the tape log device. (<CODE>TapeLog=1</CODE>, <CODE>TapeLog=0</CODE>).
+
+<A NAME="IDX531"></A>
+<DT><CODE>-tapelogtofile</CODE>
+<DD>
+Enable logging to a file (<CODE>TapeLogDestination=1</CODE>).
+
+<A NAME="IDX532"></A>
+<DT><CODE>-tapelogtolog</CODE>
+<DD>
+Enable logging to the emulator log file (<CODE>TapeLogDestination=0</CODE>).
+
+<A NAME="IDX533"></A>
+<DT><CODE>-tapelogimage &#60;name&#62;</CODE>
+<DD>
+Specify tape log file name (<CODE>TapeLogfilename</CODE>).
+
+<B>The following are only available when the emulators were compiled in DEBUG mode:</B>
+
+<A NAME="IDX534"></A>
+<DT><CODE>-trace_maincpu</CODE>
+<DD>
+<DT><CODE>+trace_maincpu</CODE>
+<DD>
+Trace the main CPU / Do not trace the main CPU (<CODE>MainCPU_TRACE=1</CODE>, <CODE>MainCPU_TRACE=0</CODE>)
+
+<A NAME="IDX535"></A>
+<DT><CODE>-trace_drive0</CODE>
+<DD>
+<DT><CODE>+trace_drive0</CODE>
+<DD>
+Trace the drive 0 CPU / Do not trace the drive 0 CPU (<CODE>Drive0CPU_TRACE=1</CODE>, <CODE>Drive0CPU_TRACE=0</CODE>)
+
+<A NAME="IDX536"></A>
+<DT><CODE>-trace_drive1</CODE>
+<DD>
+<DT><CODE>+trace_drive1</CODE>
+<DD>
+Trace the drive 1 CPU / Do not trace the drive 1 CPU (<CODE>Drive1CPU_TRACE=1</CODE>, <CODE>Drive1CPU_TRACE=0</CODE>)
+
+<A NAME="IDX537"></A>
+<DT><CODE>-trace_drive2</CODE>
+<DD>
+<DT><CODE>+trace_drive2</CODE>
+<DD>
+Trace the drive 2 CPU / Do not trace the drive 2 CPU (<CODE>Drive2CPU_TRACE=1</CODE>, <CODE>Drive2CPU_TRACE=0</CODE>)
+
+<A NAME="IDX538"></A>
+<DT><CODE>-trace_drive3</CODE>
+<DD>
+<DT><CODE>+trace_drive3</CODE>
+<DD>
+Trace the drive 3 CPU / Do not trace the drive 3 CPU (<CODE>Drive3CPU_TRACE=1</CODE>, <CODE>Drive3CPU_TRACE=0</CODE>)
+
+<A NAME="IDX539"></A>
+<DT><CODE>-trace_mode &#60;value&#62;</CODE>
+<DD>
+Trace mode (0=normal 1=small 2=history)
+
+<A NAME="IDX540"></A>
+<DT><CODE>-autoplaybackframes &#60;frames&#62;</CODE>
+<DD>
+Set the amount of automatic playback frames
+
+</DL>
+
+
+
+<H2><A NAME="SEC101" HREF="vice_toc.html#TOC101">6.18  Network Play settings</A></H2>
+
+
+
+<H3><A NAME="SEC102" HREF="vice_toc.html#TOC102">6.18.1  Network Play resources</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>NetworkServerName</CODE>
+<DD>
+<A NAME="IDX541"></A>
+ 
+String specifying the name of the remote server.
+
+<A NAME="IDX542"></A>
+<DT><CODE>NetworkServerBindAddress</CODE>
+<DD>
+String specifying the IP of the remote server.
+
+<A NAME="IDX543"></A>
+<DT><CODE>NetworkServerPort</CODE>
+<DD>
+Integer specifying the port used for network play.
+
+<A NAME="IDX544"></A>
+<DT><CODE>NetworkControl</CODE>
+<DD>
+Integer specifying whether the emulator is running as server or client (0: client,
+1: server)
+
+</DL>
+
+
+
+<H3><A NAME="SEC103" HREF="vice_toc.html#TOC103">6.18.2  Network Play command-line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-netplayserver &#60;name&#62;</CODE>
+<DD>
+<A NAME="IDX545"></A>
+ 
+Set the name of the remote server.
+
+<A NAME="IDX546"></A>
+<DT><CODE>-netplaybind &#60;ip&#62;</CODE>
+<DD>
+Set the IP of the remote server.
+
+<A NAME="IDX547"></A>
+<DT><CODE>-netplayport &#60;port&#62;</CODE>
+<DD>
+Set the port used for network play.
+
+<A NAME="IDX548"></A>
+<DT><CODE>-netplayctrl &#60;flag&#62;</CODE>
+<DD>
+Specify whether the emulator is running as server or client (0: client, 1: server)
+
+</DL>
+
+
+
+<H2><A NAME="SEC104" HREF="vice_toc.html#TOC104">6.19  Miscellaneous settings</A></H2>
+
+<P>
+This section lists generic resources that do not fit in the other
+categories.
+
+</P>
+
+
+
+<H3><A NAME="SEC105" HREF="vice_toc.html#TOC105">6.19.1  Miscellaneous resources</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>JAMAction</CODE>
+<DD>
+<A NAME="IDX549"></A>
+ 
+Integer specifying the action to take when the CPU encounters a 'JAM' opcode.
+(0: show dialog, 1: continue emulation, 2: start monitor, 3: soft reset, 4: hard reset, 5: quit emulator)
+
+<A NAME="IDX550"></A>
+<DT><CODE>Directory</CODE>
+<DD>
+String specifying the search path for system files.  It is defined as a
+sequence of directory names, separated by colons (<SAMP>`:'</SAMP>), just like
+the <CODE>PATH</CODE> variable in the shell. The special string <SAMP>`$$'</SAMP>
+stands for the default search path.
+
+<A NAME="IDX551"></A>
+<DT><CODE>DoCoreDump</CODE>
+<DD>
+Boolean specifying whether the emulator should dump core when it gets a signal
+(all emulators except vsid).
+
+<A NAME="IDX552"></A>
+<DT><CODE>LogFileName</CODE>
+<DD>
+String specifying the filename of the current log file.
+
+<A NAME="IDX553"></A>
+<DT><CODE>ExitScreenshotName</CODE>
+<DD>
+String specifying the filename of a screenshot file that will be written when the emulator exits.
+
+<A NAME="IDX554"></A>
+<DT><CODE>ExitScreenshotName1</CODE>
+<DD>
+String specifying the filename of a screenshot file that will be written when the emulator exits. (x128)
+
+<A NAME="IDX555"></A>
+<DT><CODE>FliplistName</CODE>
+<DD>
+String specifying the filename of the current flip list. (Drive 8 only)
+(all emulators except vsid).
+
+<A NAME="IDX556"></A>
+<A NAME="IDX557"></A>
+<A NAME="IDX558"></A>
+<A NAME="IDX559"></A>
+<DT><CODE>AttachDevice8Readonly</CODE>
+<DD>
+<DT><CODE>AttachDevice9Readonly</CODE>
+<DD>
+<DT><CODE>AttachDevice10Readonly</CODE>
+<DD>
+<DT><CODE>AttachDevice11Readonly</CODE>
+<DD>
+Booleans that specify whether to attach images on drives 8 to 11 read-only or not
+(all emulators except vsid).
+
+</DL>
+
+
+
+<H3><A NAME="SEC106" HREF="vice_toc.html#TOC106">6.19.2  Miscellaneous command-line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-jamaction &#60;Type&#62;</CODE>
+<DD>
+<A NAME="IDX560"></A>
+ 
+Specify the action to take when the CPU encounters a 'JAM' opcode
+(<CODE>JAMAction</CODE>)
+(0: Show dialog, 1: continue emulation, 2: start monitor, 3: soft reset, 4: hard reset, 5: quit emulator).
+
+<A NAME="IDX561"></A>
+<DT><CODE>-directory &#60;Path&#62;</CODE>
+<DD>
+Specify the system file search path
+(<CODE>Directory</CODE>).
+
+</DL>
+
+<P><HR><P>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_5.html">previous</A>, <A HREF="vice_7.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+</BODY>
+</HTML>

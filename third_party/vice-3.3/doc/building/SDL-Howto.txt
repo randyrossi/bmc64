@@ -1,0 +1,92 @@
+Building the SDL port of VICE
+-----------------------------
+
+VICE can link against either SDL1 or SDL2 depending on how it is
+configured. Despite being different versions of the "same library",
+they are neither API nor binary compatible and connot be
+simultaneously linked. You will need to pick one to use.
+
+Generally speaking, if SDL2 is available on your target system, that
+is the build you want -- SDL2 provides more efficient use of modern OS
+facilities with fewer external dependencies required. SDL1 is really
+useful only if:
+
+- You are building for a system without graphical acceleration of any
+  kind or for a system with graphical acceleration but which is
+  difficult or finicky to use (like the default Raspberry Pi setup).
+- SDL2 isn't available on your system at all (BeOS, RISC OS,
+  etc). OpenGL will be available if the platform supports it.
+
+
+Building in *nix compile enviroments
+------------------------------------
+
+If you have checked out the unstable svn version of VICE you need to generate
+the configure script first by doing:
+./autogen.sh
+
+The stable tarball already has the configure script, so continue with:
+
+./configure --enable-sdlui2
+make
+make install
+
+You'll need the SDL2 libs and headers. Movie recording needs the
+FFMPEG libraries and headers.
+
+To build SDL1, pass --enable-sdlui to configure instead of --enable-sdlui2,
+and you will need OpenGL headers and libraries as well if you want free-scaling.
+
+Steps to set up the needed external SDL libs for building using with minGW
+--------------------------------------------------------------------------
+1. You will need to download the current version of SDL headers and libs for minGW. 
+   They can be found here https://www.libsdl.org/release/SDL-devel-1.2.15-mingw32.tar.gz
+2. Locate your minGW install include directory (ex. C:\MinGW\include), and
+   create a directory called SDL there (ex. C:\MinGW\include\SDL). Inside this
+   directory, copy all your SDL header (.h) files extracted in the SDL 'include' 
+   directory from step #1
+3. Locate your minGW library directory (ex. C:\MinGW\lib). Inside this directory, 
+   copy all your SDL libs (.a) files extracted into the SDL 'lib' directory from step #1
+4. Follow the standard build instructions for *nix environment now
+5. After making, type 'make bindist' to create the binary distribution files. They 
+   will appear in a newly created SDLVICE directory. 
+
+NOTE: The default SDL build does not statically link the mingw and sdl runtime libs, 
+so you will need to locate and copy the SDL.dll from found in step #1 and the minGW 
+libstdc++.dll & libgcc.dll files from the minGW (ex. C:\MinGW\bin) directory to a global
+windows path (ex. \WINDOWS\system32) or you can just drop them in the local SDLVICE 
+binary dir so they can be found during runtime.
+
+TODO: Update these instructions for MSYS2 and SDL2.
+
+Building on macOS
+-----------------
+Building on Mac requires a number of preconditions for best results.
+
+Due to Apple's deprecation of OpenGL in 10.14, we recommend using SDL2
+exclusively on macOS. SDL2 includes a native Metal-based backend that
+should ensure some level of future-proofing. In the meantime, it also
+transparently uses OpenGL on legacy systems.
+
+We also recommend that third-party package managers such as Brew or
+MacPorts not be present on your build system. These package managers
+tend to interfere with command-line-based compilation and linkage of
+projects that are intended to be wholly self-contained.
+
+The build scripts for VICE require macOS 10.9 Mavericks or later -
+this is the earliest version of macOS that includes the C++ runtime
+present on contemporary Macs.
+
+The only external requirement strictly needed is the SDL2 framework.
+Download it from https://www.libsdl.org, and install it in some
+directory. For the purposes of these instructions, we will assume you
+copy the framework into ~/Frameworks.
+
+Once that has been done, a .dmg may be built by executing the following commands:
+
+./autogen.sh
+FW_DIR=~/Frameworks ./configure --enable-sdlui2 --enable-arch=no
+make
+make bindistzip
+
+TODO: Update instructions for readline, ffmpeg, etc. etc. as needed.

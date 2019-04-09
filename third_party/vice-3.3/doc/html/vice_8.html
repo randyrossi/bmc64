@@ -1,0 +1,1461 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.52
+     from ../../doc/vice.texi on 19 December 2018 -->
+
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<TITLE>VICE Manual - 8  Platform-specific features</TITLE>
+<style type="text/css">
+    @import 'vice.css';
+</style>
+</HEAD>
+<BODY>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_7.html">previous</A>, <A HREF="vice_9.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H1><A NAME="SEC220" HREF="vice_toc.html#TOC220">8  Platform-specific features</A></H1>
+
+<P>
+This section lists the settings and commands that are platform specific.
+
+</P>
+
+
+
+<H2><A NAME="SEC221" HREF="vice_toc.html#TOC221">8.1  SDL-specific features</A></H2>
+
+<P>
+This section lists the settings and commands that are common and specific to SDL, and are thus not present in other platforms.
+
+</P>
+
+
+<H3><A NAME="SEC222" HREF="vice_toc.html#TOC222">8.1.1  SDL specific resources</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>HotkeyFile</CODE>
+<DD>
+<A NAME="IDX1527"></A>
+ 
+String specifying the name of the hotkey file
+(all emulators except vsid).
+
+<A NAME="IDX1528"></A>
+<DT><CODE>MenuKey</CODE>
+<DD>
+Integer specifying the keycode for activating the SDL menu.
+
+<A NAME="IDX1529"></A>
+<DT><CODE>MenuKeyUp</CODE>
+<DD>
+Integer specifying the keycode for 'up' in the SDL menu.
+
+<A NAME="IDX1530"></A>
+<DT><CODE>MenuKeyDown</CODE>
+<DD>
+Integer specifying the keycode for 'down' in the SDL menu.
+
+<A NAME="IDX1531"></A>
+<DT><CODE>MenuKeyLeft</CODE>
+<DD>
+Integer specifying the keycode for 'left' in the SDL menu.
+
+<A NAME="IDX1532"></A>
+<DT><CODE>MenuKeyRight</CODE>
+<DD>
+Integer specifying the keycode for 'right' in the SDL menu.
+
+<A NAME="IDX1533"></A>
+<DT><CODE>MenuKeyPageUp</CODE>
+<DD>
+Integer specifying the keycode for 'page up' in the SDL menu.
+
+<A NAME="IDX1534"></A>
+<DT><CODE>MenuKeyPageDown</CODE>
+<DD>
+Integer specifying the keycode for 'page down' in the SDL menu.
+
+<A NAME="IDX1535"></A>
+<DT><CODE>MenuKeyHome</CODE>
+<DD>
+Integer specifying the keycode for 'home' in the SDL menu.
+
+<A NAME="IDX1536"></A>
+<DT><CODE>MenuKeyEnd</CODE>
+<DD>
+Integer specifying the keycode for 'end' in the SDL menu.
+
+<A NAME="IDX1537"></A>
+<DT><CODE>MenuKeySelect</CODE>
+<DD>
+Integer specifying the keycode for 'select' in the SDL menu.
+
+<A NAME="IDX1538"></A>
+<DT><CODE>MenuKeyCancel</CODE>
+<DD>
+Integer specifying the keycode for 'cancel' in the SDL menu.
+
+<A NAME="IDX1539"></A>
+<DT><CODE>MenuKeyExit</CODE>
+<DD>
+Integer specifying the keycode for 'exit' in the SDL menu.
+
+<A NAME="IDX1540"></A>
+<DT><CODE>MenuKeyMap</CODE>
+<DD>
+Integer specifying the keycode for 'map' in the SDL menu.
+
+<A NAME="IDX1541"></A>
+<DT><CODE>SaveResourcesOnExit</CODE>
+<DD>
+Boolean specifying whether the emulator should save changed settings
+before exiting. If this is enabled, the user will be always prompted
+first, in case the settings have changed.
+
+<A NAME="IDX1542"></A>
+<DT><CODE>ConfirmOnExit</CODE>
+<DD>
+Boolean specifying whether to show a confirmation dialog on exit.
+
+<A NAME="IDX1543"></A>
+<DT><CODE>SDLStatusbar</CODE>
+<DD>
+Boolean to enable/disable the statusbar
+(all emulators except vsid).
+
+<A NAME="IDX1544"></A>
+<DT><CODE>SDLBitdepth</CODE>
+<DD>
+Integer specifying the bitdepth used.
+(0: current, 8, 15, 16, 24, 32)
+
+<A NAME="IDX1545"></A>
+<DT><CODE>SDLLimitMode</CODE>
+<DD>
+Integer specifying the resolution limit mode.
+(0: off, 1: max, 2: fixed)
+
+<A NAME="IDX1546"></A>
+<DT><CODE>SDLCustomWidth</CODE>
+<DD>
+Integer specifying the custom resolution width.
+
+<A NAME="IDX1547"></A>
+<DT><CODE>SDLCustomHeight</CODE>
+<DD>
+Integer specifying the custom resolution height.
+
+<A NAME="IDX1548"></A>
+<DT><CODE>SDLKbdStatusbar</CODE>
+<DD>
+Boolean specifying whether the keyboard-status bar is enabled.
+
+<A NAME="IDX1549"></A>
+<DT><CODE>SDL2Renderer</CODE>
+<DD>
+String specifying the preferred SDL2 renderer.
+
+<A NAME="IDX1550"></A>
+<DT><CODE>SDLWindowWidth</CODE>
+<DD>
+Integer specifying the SDL window width.
+
+<A NAME="IDX1551"></A>
+<DT><CODE>SDLWindowHeight</CODE>
+<DD>
+Integer specifying the SDL window height.
+
+<A NAME="IDX1552"></A>
+<DT><CODE>SDLGLFilter</CODE>
+<DD>
+Integer specifying the OpenGL filtering mode.
+
+<A NAME="IDX1553"></A>
+<DT><CODE>JoyDevice1</CODE>
+<DD>
+Integer specifying which joystick device the emulator should use for the emulation of joystick 1
+(all emulators except xcbm2, xpet and vsid).
+(0: None, 1: Numpad, 2: Keyset 1, 3: Keyset 2, 4: Joystick (only if joystick support was present in the compile time SDL library))
+
+<A NAME="IDX1554"></A>
+<DT><CODE>JoyDevice2</CODE>
+<DD>
+Integer specifying which joystick device the emulator should use for the emulation of joystick 2
+(all emulators except xcbm2, xpet, xvic and vsid).
+(0: None, 1: Numpad, 2: Keyset 1, 3: Keyset 2, 4: Joystick (only if joystick support was present in the compile time SDL library))
+
+<A NAME="IDX1555"></A>
+<DT><CODE>JoyDevice3</CODE>
+<DD>
+Integer specifying which joystick device the emulator should use for the emulation of extra joystick 1
+(all emulators except xcbm5x0 and vsid).
+(0: None, 1: Numpad, 2: Keyset 1, 3: Keyset 2, 4: Joystick (only if joystick support was present in the compile time SDL library))
+
+<A NAME="IDX1556"></A>
+<DT><CODE>JoyDevice4</CODE>
+<DD>
+Integer specifying which joystick device the emulator should use for the emulation of extra joystick 2
+(all emulators except xcbm5x0, xplus4 and vsid).
+(0: None, 1: Numpad, 2: Keyset 1, 3: Keyset 2, 4: Joystick (only if joystick support was present in the compile time SDL library))
+
+<A NAME="IDX1557"></A>
+<DT><CODE>CrtcSDLFullscreenMode</CODE>
+<DD>
+Integer specifying the fullscreen mode
+(xcbm2 and xpet only).
+
+<A NAME="IDX1558"></A>
+<DT><CODE>CrtcHwScale</CODE>
+<DD>
+Boolean specifying whether to enable or disable hardware scaling
+(xcbm2 and xpet only).
+
+<A NAME="IDX1559"></A>
+<DT><CODE>CrtcFullscreenDevice</CODE>
+<DD>
+String specifying the fullscreen device
+(xcbm2 and xpet only).
+
+<A NAME="IDX1560"></A>
+<DT><CODE>CrtcFullscreen</CODE>
+<DD>
+Boolean specifying whether to use fullscreen mode or not
+(xcbm2 and xpet only).
+
+<A NAME="IDX1561"></A>
+<DT><CODE>CrtcFullscreenStatusbar</CODE>
+<DD>
+Boolean specifying whether to show the status bar in fullscreen mode or not
+(xcbm2 and xpet only).
+
+<A NAME="IDX1562"></A>
+<DT><CODE>TEDSDLFullscreenMode</CODE>
+<DD>
+Integer specifying the fullscreen mode
+(xplus4 only).
+
+<A NAME="IDX1563"></A>
+<DT><CODE>TEDHwScale</CODE>
+<DD>
+Boolean specifying whether to enable or disable hardware scaling
+(xplus4 only).
+
+<A NAME="IDX1564"></A>
+<DT><CODE>TEDFullscreenDevice</CODE>
+<DD>
+String specifying the fullscreen device
+(xplus4 only).
+
+<A NAME="IDX1565"></A>
+<DT><CODE>TEDFullscreen</CODE>
+<DD>
+Boolean specifying whether to use fullscreen mode or not
+(xplus4 only).
+
+<A NAME="IDX1566"></A>
+<DT><CODE>TEDFullscreenStatusbar</CODE>
+<DD>
+Boolean specifying whether to show the status bar in fullscreen mode or not
+(xplus4 only).
+
+<A NAME="IDX1567"></A>
+<DT><CODE>VDCSDLFullscreenMode</CODE>
+<DD>
+Integer specifying the fullscreen mode
+(x128 only).
+
+<A NAME="IDX1568"></A>
+<DT><CODE>VDCHwScale</CODE>
+<DD>
+Boolean specifying whether to enable or disable hardware scaling
+(x128 only).
+
+<A NAME="IDX1569"></A>
+<DT><CODE>VDCFullscreenDevice</CODE>
+<DD>
+String specifying the fullscreen device
+(x128 only).
+
+<A NAME="IDX1570"></A>
+<DT><CODE>VDCFullscreen</CODE>
+<DD>
+Boolean specifying whether to use fullscreen mode or not
+(x128 only).
+
+<A NAME="IDX1571"></A>
+<DT><CODE>VDCFullscreenStatusbar</CODE>
+<DD>
+Boolean specifying whether to show the status bar in fullscreen mode or not
+(x128 only).
+
+<A NAME="IDX1572"></A>
+<DT><CODE>VICSDLFullscreenMode</CODE>
+<DD>
+Integer specifying the fullscreen mode
+(xvic only).
+
+<A NAME="IDX1573"></A>
+<DT><CODE>VICHwScale</CODE>
+<DD>
+Boolean specifying whether to enable or disable hardware scaling
+(xvic only).
+
+<A NAME="IDX1574"></A>
+<DT><CODE>VICFullscreenDevice</CODE>
+<DD>
+String specifying the fullscreen device
+(xvic only).
+
+<A NAME="IDX1575"></A>
+<DT><CODE>VICFullscreen</CODE>
+<DD>
+Boolean specifying whether to use fullscreen mode or not
+(xvic only).
+
+<A NAME="IDX1576"></A>
+<DT><CODE>VICFullscreenStatusbar</CODE>
+<DD>
+Boolean specifying whether to show the status bar in fullscreen mode or not
+(xvic only).
+
+<A NAME="IDX1577"></A>
+<DT><CODE>VICIISDLFullscreenMode</CODE>
+<DD>
+Integer specifying the fullscreen mode
+(all emulators except xcbm2, xpet, xplus4, xvic and vsid).
+
+<A NAME="IDX1578"></A>
+<DT><CODE>VICIIHwScale</CODE>
+<DD>
+Boolean specifying whether to enable or disable hardware scaling
+(all emulators except xcbm2, xpet, xplus4, xvic and vsid).
+
+<A NAME="IDX1579"></A>
+<DT><CODE>VICIIFullscreenDevice</CODE>
+<DD>
+String specifying the fullscreen device
+(all emulators except xcbm2, xpet, xplus4, xvic and vsid).
+
+<A NAME="IDX1580"></A>
+<DT><CODE>VICIIFullscreen</CODE>
+<DD>
+Boolean specifying whether to use fullscreen mode or not
+(all emulators except xcbm2, xpet, xplus4, xvic and vsid).
+
+<A NAME="IDX1581"></A>
+<DT><CODE>VICIIFullscreenStatusbar</CODE>
+<DD>
+Boolean specifying whether to show the status bar in fullscreen mode or not
+(all emulators except xcbm2, xpet, xplus4, xvic and vsid).
+
+</DL>
+
+<P>
+<B>The following resources are only present if the OpenGL library is present and used at compile time.</B>
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>AspectRatio</CODE>
+<DD>
+<A NAME="IDX1582"></A>
+ 
+String/float specifying the aspect ratio.
+(0.5-2.0)
+
+<A NAME="IDX1583"></A>
+<DT><CODE>SDLGLAspectMode</CODE>
+<DD>
+Integer specifying the OpenGL aspect mode.
+(0: off, 1: custom, 2: true)
+
+<A NAME="IDX1584"></A>
+<DT><CODE>SDLGLFlipX</CODE>
+<DD>
+Boolean to enable/disable OpenGL horizontal screen flip.
+
+<A NAME="IDX1585"></A>
+<DT><CODE>SDLGLFlipY</CODE>
+<DD>
+Boolean to enable/disable OpenGL vertical screen flip.
+
+</DL>
+
+<P>
+<B>The following resources are only present if the SDL library has joystick support at compile time and applies to all emulators except vsid.</B>
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>JoyMapFile</CODE>
+<DD>
+<A NAME="IDX1586"></A>
+ 
+String specifying the name of the joystick map file.
+
+<A NAME="IDX1587"></A>
+<DT><CODE>JoyThreshold</CODE>
+<DD>
+Integer specifying the joystick threshold.
+(0..32767)
+
+<A NAME="IDX1588"></A>
+<DT><CODE>JoyFuzz</CODE>
+<DD>
+Integer specifying the joystick fuzz.
+(0..32767)
+
+</DL>
+
+<P>
+<B>The following resource is only present if compiling for native dingoo.</B>
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>OverClock</CODE>
+<DD>
+<A NAME="IDX1589"></A>
+ 
+Boolean to enable/disable overclocking.
+
+</DL>
+
+
+
+<H3><A NAME="SEC223" HREF="vice_toc.html#TOC223">8.1.2  SDL specific command-line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-hotkeyfile &#60;name&#62;</CODE>
+<DD>
+<A NAME="IDX1590"></A>
+ 
+Set the hotkey file name
+(<CODE>HotkeyFile</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX1591"></A>
+<DT><CODE>-menukey &#60;key&#62;</CODE>
+<DD>
+Set the keycode of the SDL menu activation key
+(<CODE>MenuKey</CODE>).
+
+<A NAME="IDX1592"></A>
+<DT><CODE>-menukeyup &#60;key&#62;</CODE>
+<DD>
+Set the keycode of the 'up' key in the SDL menu
+(<CODE>MenuKeyUp</CODE>).
+
+<A NAME="IDX1593"></A>
+<DT><CODE>-menukeydown &#60;key&#62;</CODE>
+<DD>
+Set the keycode of the 'down' key in the SDL menu
+(<CODE>MenuKeyDown</CODE>).
+
+<A NAME="IDX1594"></A>
+<DT><CODE>-menukeyleft &#60;key&#62;</CODE>
+<DD>
+Set the keycode of the 'left' key in the SDL menu
+(<CODE>MenuKeyLeft</CODE>).
+
+<A NAME="IDX1595"></A>
+<DT><CODE>-menukeyright &#60;key&#62;</CODE>
+<DD>
+Set the keycode of the 'right' key in the SDL menu
+(<CODE>MenuKeyRight</CODE>).
+
+<A NAME="IDX1596"></A>
+<DT><CODE>-menukeypageup &#60;key&#62;</CODE>
+<DD>
+Set the keycode of the 'page up' key in the SDL menu
+(<CODE>MenuKeyPageUp</CODE>).
+
+<A NAME="IDX1597"></A>
+<DT><CODE>-menukeypagedown &#60;key&#62;</CODE>
+<DD>
+Set the keycode of the 'page down' key in the SDL menu
+(<CODE>MenuKeyPageDown</CODE>).
+
+<A NAME="IDX1598"></A>
+<DT><CODE>-menukeyhome &#60;key&#62;</CODE>
+<DD>
+Set the keycode of the 'home' key in the SDL menu
+(<CODE>MenuKeyHome</CODE>).
+
+<A NAME="IDX1599"></A>
+<DT><CODE>-menukeyend &#60;key&#62;</CODE>
+<DD>
+Set the keycode of the 'end' key in the SDL menu
+(<CODE>MenuKeyEnd</CODE>).
+
+<A NAME="IDX1600"></A>
+<DT><CODE>-menukeyselect &#60;key&#62;</CODE>
+<DD>
+Set the keycode of the 'select' key in the SDL menu
+(<CODE>MenuKeySelect</CODE>).
+
+<A NAME="IDX1601"></A>
+<DT><CODE>-menukeycancel &#60;key&#62;</CODE>
+<DD>
+Set the keycode of the 'cancel' key in the SDL menu
+(<CODE>MenuKeyCancel</CODE>).
+
+<A NAME="IDX1602"></A>
+<DT><CODE>-menukeyexit &#60;key&#62;</CODE>
+<DD>
+Set the keycode of the 'exit' key in the SDL menu
+(<CODE>MenuKeyExit</CODE>).
+
+<A NAME="IDX1603"></A>
+<DT><CODE>-menukeymap &#60;key&#62;</CODE>
+<DD>
+Set the keycode of the 'map' key in the SDL menu
+(<CODE>MenuKeyMap</CODE>).
+
+<A NAME="IDX1604"></A>
+<DT><CODE>-saveres</CODE>
+<DD>
+<DT><CODE>+saveres</CODE>
+<DD>
+Enable/disable automatic saving of settings on exit
+(<CODE>SaveResourcesOnExit=1</CODE>, <CODE>SaveResourcesOnExit=0</CODE>).
+
+<A NAME="IDX1605"></A>
+<DT><CODE>-confirmonexit</CODE>
+<DD>
+Confirm quitting VICE
+(<CODE>ConfirmOnExit=1</CODE>).
+<DT><CODE>+confirmonexit</CODE>
+<DD>
+Never confirm quitting VICE
+(<CODE>ConfirmOnExit=0</CODE>).
+
+<A NAME="IDX1606"></A>
+<DT><CODE>-statusbar</CODE>
+<DD>
+<DT><CODE>+statusbar</CODE>
+<DD>
+Enable/disable the statusbar
+(<CODE>SDLStatusbar=1</CODE>, <CODE>SDLStatusbar=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX1607"></A>
+<DT><CODE>-sdlbitdepth &#60;bpp&#62;</CODE>
+<DD>
+Set the display bitdepth
+(<CODE>SDLBitdepth</CODE>).
+(0: current, 8, 15, 16, 24, 32)
+
+<A NAME="IDX1608"></A>
+<DT><CODE>-sdllimitmode &#60;mode&#62;</CODE>
+<DD>
+Set the resolution limit mode
+(<CODE>SDLLimitMode</CODE>).
+(0: off, 1: max, 2: fixed)
+
+<A NAME="IDX1609"></A>
+<DT><CODE>-sdlcustomw &#60;width&#62;</CODE>
+<DD>
+Set the custom resolution width
+(<CODE>SDLCustomWidth</CODE>).
+
+<A NAME="IDX1610"></A>
+<DT><CODE>-sdlcustomh &#60;height&#62;</CODE>
+<DD>
+Set the custom resolution height
+(<CODE>SDLCustomHeight</CODE>).
+
+<A NAME="IDX1611"></A>
+<DT><CODE>-kbdstatusbar</CODE>
+<DD>
+<DT><CODE>+kbdstatusbar</CODE>
+<DD>
+Enable/Disable keyboard-status bar (when status bar is enabled)
+(<CODE>SDLKbdStatusbar=1</CODE>, <CODE>SDLKbdStatusbar=0</CODE>).
+
+<A NAME="IDX1612"></A>
+<DT><CODE>-sdlglfilter &#60;mode&#62;</CODE>
+<DD>
+Set OpenGL filtering mode (0 = nearest, 1 = linear)
+(<CODE>SDLKbdStatusbar</CODE>).
+
+<A NAME="IDX1613"></A>
+<DT><CODE>-sdl2renderer &#60;renderer name&#62;</CODE>
+<DD>
+Set the preferred SDL2 renderer
+(<CODE>SDL2Renderer</CODE>).
+
+<A NAME="IDX1614"></A>
+<DT><CODE>-joydev1 &#60;0-3&#62; / &#60;0-4&#62;</CODE>
+<DD>
+Set the device for joystick emulation of port 1
+(<CODE>JoyDevice1</CODE>)
+(all emulators except xcbm2, xpet and vsid).
+(0: None, 1: Numpad, 2: Keyset 1, 3: Keyset 2, 4: Joystick (only if joystick support was present in the compile time SDL library))
+
+<A NAME="IDX1615"></A>
+<DT><CODE>-joydev2 &#60;0-3&#62; / &#60;0-4&#62;</CODE>
+<DD>
+Set the device for joystick emulation of port 2
+(<CODE>JoyDevice2</CODE>)
+(all emulators except xcbm2, xpet, xvic and vsid).
+(0: None, 1: Numpad, 2: Keyset 1, 3: Keyset 2, 4: Joystick (only if joystick support was present in the compile time SDL library))
+
+<A NAME="IDX1616"></A>
+<DT><CODE>-extrajoydev1 &#60;0-3&#62; / &#60;0-4&#62;</CODE>
+<DD>
+Set device for extra joystick port 1
+(<CODE>JoyDevice3</CODE>)
+(all emulators except xcbm5x0 and vsid).
+(0: None, 1: Numpad, 2: Keyset 1, 3: Keyset 2, 4: Joystick (only if joystick support was present in the compile time SDL library))
+
+<A NAME="IDX1617"></A>
+<DT><CODE>-extrajoydev2 &#60;0-3&#62; / &#60;0-4&#62;</CODE>
+<DD>
+Set device for extra joystick port 2
+(<CODE>JoyDevice4</CODE>)
+(all emulators except xcbm5x0, xplus4 and vsid).
+(0: None, 1: Numpad, 2: Keyset 1, 3: Keyset 2, 4: Joystick (only if joystick support was present in the compile time SDL library))
+
+<A NAME="IDX1618"></A>
+<DT><CODE>-CRTCSDLfullmode &#60;Mode&#62;</CODE>
+<DD>
+Set the fullscreen mode
+(<CODE>CrtcSDLFullscreenMode</CODE>)
+(xcbm2 and xpet only).
+
+<A NAME="IDX1619"></A>
+<DT><CODE>-CRTChwscale</CODE>
+<DD>
+<DT><CODE>+CRTChwscale</CODE>
+<DD>
+Enable/Disable hardware scaling
+(<CODE>CrtcHwScale=1</CODE>, <CODE>CrtcHwScale=0</CODE>)
+(xcbm2 and xpet only).
+
+<A NAME="IDX1620"></A>
+<DT><CODE>-CRTCfulldevice &#60;device&#62;</CODE>
+<DD>
+Select fullscreen device
+(<CODE>CrtcFullscreenDevice</CODE>)
+(xcbm2 and xpet only).
+
+<A NAME="IDX1621"></A>
+<DT><CODE>-CRTCfull</CODE>
+<DD>
+<DT><CODE>+CRTCfull</CODE>
+<DD>
+Enable/Disable fullscreen
+(<CODE>CrtcFullscreen=1</CODE>, <CODE>CrtcFullscreen=0</CODE>)
+(xcbm2 and xpet only).
+
+<A NAME="IDX1622"></A>
+<DT><CODE>-TEDSDLfullmode &#60;Mode&#62;</CODE>
+<DD>
+Set the fullscreen mode
+(<CODE>TEDSDLFullscreenMode</CODE>)
+(xplus4 only).
+
+<A NAME="IDX1623"></A>
+<DT><CODE>-TEDhwscale</CODE>
+<DD>
+<DT><CODE>+TEDhwscale</CODE>
+<DD>
+Enable/Disable hardware scaling
+(<CODE>TEDHwScale=1</CODE>, <CODE>TEDHwScale=0</CODE>)
+(xplus4 only).
+
+<A NAME="IDX1624"></A>
+<DT><CODE>-TEDfulldevice &#60;device&#62;</CODE>
+<DD>
+Select fullscreen device
+(<CODE>TEDFullscreenDevice</CODE>)
+(xplus4 only).
+
+<A NAME="IDX1625"></A>
+<DT><CODE>-TEDfull</CODE>
+<DD>
+<DT><CODE>+TEDfull</CODE>
+<DD>
+Enable/Disable fullscreen
+(<CODE>TEDFullscreen=1</CODE>, <CODE>TEDFullscreen=0</CODE>)
+(xplus4 only).
+
+<A NAME="IDX1626"></A>
+<DT><CODE>-VDCSDLfullmode &#60;Mode&#62;</CODE>
+<DD>
+Set the fullscreen mode
+(<CODE>VDCSDLFullscreenMode</CODE>)
+(x128 only).
+
+<A NAME="IDX1627"></A>
+<DT><CODE>-VDChwscale</CODE>
+<DD>
+<DT><CODE>+VDChwscale</CODE>
+<DD>
+Enable/Disable hardware scaling
+(<CODE>VDCHwScale=1</CODE>, <CODE>VDCHwScale=1</CODE>)
+(x128 only).
+
+<A NAME="IDX1628"></A>
+<DT><CODE>-VDCfulldevice &#60;device&#62;</CODE>
+<DD>
+Select fullscreen device
+(<CODE>VDCFullscreenDevice</CODE>)
+(x128 only).
+
+<A NAME="IDX1629"></A>
+<DT><CODE>-VDCfull</CODE>
+<DD>
+<DT><CODE>+VDCfull</CODE>
+<DD>
+Enable/Disable fullscreen
+(<CODE>VDCFullscreen=1</CODE>, <CODE>VDCFullscreen=0</CODE>)
+(x128 only).
+
+<A NAME="IDX1630"></A>
+<DT><CODE>-VICSDLfullmode &#60;Mode&#62;</CODE>
+<DD>
+Set the fullscreen mode
+(<CODE>VICSDLFullscreenMode</CODE>)
+(xvic only).
+
+<A NAME="IDX1631"></A>
+<DT><CODE>-VIChwscale</CODE>
+<DD>
+<DT><CODE>+VIChwscale</CODE>
+<DD>
+Enable/Disable hardware scaling
+(<CODE>VICHwScale=1</CODE>, <CODE>VICHwScale=0</CODE>)
+(xvic only).
+
+<A NAME="IDX1632"></A>
+<DT><CODE>-VICfulldevice &#60;device&#62;</CODE>
+<DD>
+Select fullscreen device
+(<CODE>VICFullscreenDevice</CODE>)
+(xvic only).
+
+<A NAME="IDX1633"></A>
+<DT><CODE>-VICfull</CODE>
+<DD>
+<DT><CODE>+VICfull</CODE>
+<DD>
+Enable/Disable fullscreen
+(<CODE>VICFullscreen=1</CODE>, <CODE>VICFullscreen=0</CODE>)
+(xvic only).
+
+<A NAME="IDX1634"></A>
+<DT><CODE>-VICIISDLfullmode &#60;Mode&#62;</CODE>
+<DD>
+Set the fullscreen mode
+(<CODE>VICIISDLFullscreenMode</CODE>)
+(all emulators except xcbm2, xpet, xplus4, xvic and vsid).
+
+<A NAME="IDX1635"></A>
+<DT><CODE>-VICIIhwscale</CODE>
+<DD>
+<DT><CODE>+VICIIhwscale</CODE>
+<DD>
+Enable/Disable hardware scaling
+(<CODE>VICIIHwScale=1</CODE>, <CODE>VICIIHwScale=0</CODE>)
+(all emulators except xcbm2, xpet, xplus4, xvic and vsid).
+
+<A NAME="IDX1636"></A>
+<DT><CODE>-VICIIfulldevice &#60;device&#62;</CODE>
+<DD>
+Select fullscreen device
+(<CODE>VICIIFullscreenDevice</CODE>)
+(all emulators except xcbm2, xpet, xplus4, xvic and vsid).
+
+<A NAME="IDX1637"></A>
+<DT><CODE>-VICIIfull</CODE>
+<DD>
+<DT><CODE>+VICIIfull</CODE>
+<DD>
+Enable/Disable fullscreen
+(<CODE>VICIIFullscreen=1</CODE>, <CODE>VICIIFullscreen=0</CODE>)
+(all emulators except xcbm2, xpet, xplus4, xvic and vsid).
+
+</DL>
+
+<P>
+<B>The following command-line options are only present if the OpenGL library is present and used at compile time.</B>
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>-aspect &#60;aspect ratio&#62;</CODE>
+<DD>
+<A NAME="IDX1638"></A>
+ 
+Set the aspect ratio
+(<CODE>AspectRatio</CODE>).
+(0.5-2.0)
+
+<A NAME="IDX1639"></A>
+<DT><CODE>-sdlaspectmode &#60;mode&#62;</CODE>
+<DD>
+Set the aspect mode
+(<CODE>SDLGLAspectMode</CODE>).
+(0: off, 1: custom, 2: true)
+
+<A NAME="IDX1640"></A>
+<DT><CODE>-sdlflipx</CODE>
+<DD>
+<DT><CODE>+sdlflipx</CODE>
+<DD>
+Enable/disable OpenGL horizontal screen flip
+(<CODE>SDLGLFlipX=1</CODE>, <CODE>SDLGLFlipX=0</CODE>).
+
+<A NAME="IDX1641"></A>
+<DT><CODE>-sdlflipy</CODE>
+<DD>
+<DT><CODE>+sdlflipy</CODE>
+<DD>
+Enable/disable OpenGL vertical screen flip
+(<CODE>SDLGLFlipY=1</CODE>, <CODE>SDLGLFlipY=0</CODE>).
+
+</DL>
+
+<P>
+<B>The following command-line options are only present if the SDL library has joystick support at compile time and applies
+to all emulators except vsid.</B>
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>-joymap &#60;name&#62;</CODE>
+<DD>
+<A NAME="IDX1642"></A>
+ 
+Set the joystick map file name
+(<CODE>JoyMapFile</CODE>).
+
+<A NAME="IDX1643"></A>
+<DT><CODE>-joythreshold &#60;0-32767&#62;</CODE>
+<DD>
+Set the joystick threshold
+(<CODE>JoyThreshold</CODE>).
+
+<A NAME="IDX1644"></A>
+<DT><CODE>-joyfuzz &#60;0-32767&#62;</CODE>
+<DD>
+Set the joystick fuzz
+(<CODE>JoyFuzz</CODE>).
+
+</DL>
+
+
+
+<H2><A NAME="SEC224" HREF="vice_toc.html#TOC224">8.2  GTK3 specific features</A></H2>
+
+<P>
+This section lists the settings and commands that are common and specific to Unix, and are thus not present in other platforms.
+
+</P>
+
+
+<H3><A NAME="SEC225" HREF="vice_toc.html#TOC225">8.2.1  GTK3 specific resources</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>AspectRatio</CODE>
+<DD>
+<A NAME="IDX1645"></A>
+ 
+String/float specifying the aspect ratio
+(0.5-2.0).
+
+<A NAME="IDX1646"></A>
+<DT><CODE>KeepAspectRatio</CODE>
+<DD>
+Boolean specifying whether the aspect ratio of the output window should be preserved.
+(0: free scaling, 1: scale with fixed aspect ratio)
+
+<A NAME="IDX1647"></A>
+<DT><CODE>TrueAspectRatio</CODE>
+<DD>
+Boolean specifying whether to use the true (non square pixels) aspect ratio.
+
+<A NAME="IDX1648"></A>
+<DT><CODE>StartMinimized</CODE>
+<DD>
+Boolean specifying whether the emulator should start minimized
+
+<A NAME="IDX1649"></A>
+<DT><CODE>SaveResourcesOnExit</CODE>
+<DD>
+Boolean specifying whether the emulator should save changed settings
+before exiting. If this is enabled, the user will be always prompted
+first, in case the settings have changed.
+
+<A NAME="IDX1650"></A>
+<DT><CODE>ConfirmOnExit</CODE>
+<DD>
+Boolean specifying whether to show a confirmation dialog on exit.
+
+<A NAME="IDX1651"></A>
+<DT><CODE>DisplayDepth</CODE>
+<DD>
+Integer specifying the depth of the host display. The value <SAMP>`0'</SAMP>
+(the default) causes the emulator to autodetect it
+(all emulators except vsid).
+(0..32)
+
+<A NAME="IDX1652"></A>
+<A NAME="IDX1653"></A>
+<A NAME="IDX1654"></A>
+<A NAME="IDX1655"></A>
+<DT><CODE>Window0Width</CODE>
+<DD>
+<DT><CODE>Window0Height</CODE>
+<DD>
+<DT><CODE>Window0Xpos</CODE>
+<DD>
+<DT><CODE>Window0Ypos</CODE>
+<DD>
+Integers specifying the position and size of the (first) emulator window
+(all emulators except vsid).
+
+<A NAME="IDX1656"></A>
+<A NAME="IDX1657"></A>
+<A NAME="IDX1658"></A>
+<A NAME="IDX1659"></A>
+<DT><CODE>Window1Width</CODE>
+<DD>
+<DT><CODE>Window1Height</CODE>
+<DD>
+<DT><CODE>Window1Xpos</CODE>
+<DD>
+<DT><CODE>Window1Ypos</CODE>
+<DD>
+Integers specifying the position and size of the (second) emulator window
+(x128 only).
+
+<A NAME="IDX1660"></A>
+<DT><CODE>FOURCC</CODE>
+<DD>
+String specifying the YUV FOURCC format to use.
+
+<A NAME="IDX1661"></A>
+<DT><CODE>UseFullscreen</CODE>
+<DD>
+Boolean specifying whether fullscreen mode is currently in use
+(all emulators except vsid).
+
+<A NAME="IDX1662"></A>
+<DT><CODE>CrtcHwScale</CODE>
+<DD>
+Boolean specifying whether to enable or disable hardware scaling
+(xcbm2 and xpet only).
+
+<A NAME="IDX1663"></A>
+<DT><CODE>CrtcFullscreenDevice</CODE>
+<DD>
+String specifying the fullscreen device
+(xcbm2 and xpet only).
+
+<A NAME="IDX1664"></A>
+<DT><CODE>CrtcFullscreen</CODE>
+<DD>
+Boolean specifying whether to use fullscreen mode or not
+(xcbm2 and xpet only).
+
+<A NAME="IDX1665"></A>
+<DT><CODE>CrtcFullscreenStatusbar</CODE>
+<DD>
+Boolean specifying whether to show the status bar in fullscreen mode or not
+(xcbm2 and xpet only).
+
+<A NAME="IDX1666"></A>
+<DT><CODE>TEDHwScale</CODE>
+<DD>
+Boolean specifying whether to enable or disable hardware scaling
+(xplus4 only).
+
+<A NAME="IDX1667"></A>
+<DT><CODE>TEDFullscreenDevice</CODE>
+<DD>
+String specifying the fullscreen device
+(xplus4 only).
+
+<A NAME="IDX1668"></A>
+<DT><CODE>TEDFullscreen</CODE>
+<DD>
+Boolean specifying whether to use fullscreen mode or not
+(xplus4 only).
+
+<A NAME="IDX1669"></A>
+<DT><CODE>TEDFullscreenStatusbar</CODE>
+<DD>
+Boolean specifying whether to show the status bar in fullscreen mode or not
+(xplus4 only).
+
+<A NAME="IDX1670"></A>
+<DT><CODE>VDCHwScale</CODE>
+<DD>
+Boolean specifying whether to enable or disable hardware scaling
+(x128 only).
+
+<A NAME="IDX1671"></A>
+<DT><CODE>VDCFullscreenDevice</CODE>
+<DD>
+String specifying the fullscreen device
+(x128 only).
+
+<A NAME="IDX1672"></A>
+<DT><CODE>VDCFullscreen</CODE>
+<DD>
+Boolean specifying whether to use fullscreen mode or not
+(x128 only).
+
+<A NAME="IDX1673"></A>
+<DT><CODE>VDCFullscreenStatusbar</CODE>
+<DD>
+Boolean specifying whether to show the status bar in fullscreen mode or not
+(x128 only).
+
+<A NAME="IDX1674"></A>
+<DT><CODE>VICHwScale</CODE>
+<DD>
+Boolean specifying whether to enable or disable hardware scaling
+(xvic only).
+
+<A NAME="IDX1675"></A>
+<DT><CODE>VICFullscreenDevice</CODE>
+<DD>
+String specifying the fullscreen device
+(xvic only).
+
+<A NAME="IDX1676"></A>
+<DT><CODE>VICFullscreen</CODE>
+<DD>
+Boolean specifying whether to use fullscreen mode or not
+(xvic only).
+
+<A NAME="IDX1677"></A>
+<DT><CODE>VICFullscreenStatusbar</CODE>
+<DD>
+Boolean specifying whether to show the status bar in fullscreen mode or not
+(xvic only).
+
+<A NAME="IDX1678"></A>
+<DT><CODE>VICIIHwScale</CODE>
+<DD>
+Boolean specifying whether to enable or disable hardware scaling
+(all emulators except xcbm2, xpet, xplus4, xvic and vsid).
+
+<A NAME="IDX1679"></A>
+<DT><CODE>VICIIFullscreenDevice</CODE>
+<DD>
+String specifying the fullscreen device
+(all emulators except xcbm2, xpet, xplus4, xvic and vsid).
+
+<A NAME="IDX1680"></A>
+<DT><CODE>VICIIFullscreen</CODE>
+<DD>
+Boolean specifying whether to use fullscreen mode or not
+(all emulators except xcbm2, xpet, xplus4, xvic and vsid).
+
+<A NAME="IDX1681"></A>
+<DT><CODE>VICIIFullscreenStatusbar</CODE>
+<DD>
+Boolean specifying whether to show the status bar in fullscreen mode or not
+(all emulators except xcbm2, xpet, xplus4, xvic and vsid).
+
+<A NAME="IDX1682"></A>
+<DT><CODE>JoyDevice1</CODE>
+<DD>
+Integer specifying which joystick device the emulator should use for the emulation of joystick 1
+(all emulators except xcbm2, xpet and vsid).
+(0: None, 1: Numpad, 2: Keyset 1, 3: Keyset 2, 4: Analog joystick 1, 5: Analog joystick 2, 6: Analog joystick 3, 7: Analog joystick 4, 8: Analog joystick 5, 9: Analog joystick 6, 10: Digital joystick 1, 11: Digital joystick 2, 12: USB joystick 1, 13: USB joystick 2)
+
+<A NAME="IDX1683"></A>
+<DT><CODE>JoyDevice2</CODE>
+<DD>
+Integer specifying which joystick device the emulator should use for the emulation of joystick 2
+(all emulators except xcbm2, xpet, xvic and vsid).
+(0: None, 1: Numpad, 2: Keyset 1, 3: Keyset 2, 4: Analog joystick 1, 5: Analog joystick 2, 6: Analog joystick 3, 7: Analog joystick 4, 8: Analog joystick 5, 9: Analog joystick 6, 10: Digital joystick 1, 11: Digital joystick 2, 12: USB joystick 1, 13: USB joystick 2)
+
+<A NAME="IDX1684"></A>
+<DT><CODE>JoyDevice3</CODE>
+<DD>
+Integer specifying which joystick device the emulator should use for the emulation of extra joystick 1
+(all emulators except xcbm5x0 and vsid).
+(0: None, 1: Numpad, 2: Keyset 1, 3: Keyset 2, 4: Analog joystick 1, 5: Analog joystick 2, 6: Analog joystick 3, 7: Analog joystick 4, 8: Analog joystick 5, 9: Analog joystick 6, 10: Digital joystick 1, 11: Digital joystick 2, 12: USB joystick 1, 13: USB joystick 2)
+
+<A NAME="IDX1685"></A>
+<DT><CODE>JoyDevice4</CODE>
+<DD>
+Integer specifying which joystick device the emulator should use for the emulation of extra joystick 2
+(all emulators except xcbm5x0, xplus4 and vsid).
+(0: None, 1: Numpad, 2: Keyset 1, 3: Keyset 2, 4: Analog joystick 1, 5: Analog joystick 2, 6: Analog joystick 3, 7: Analog joystick 4, 8: Analog joystick 5, 9: Analog joystick 6, 10: Digital joystick 1, 11: Digital joystick 2, 12: USB joystick 1, 13: USB joystick 2)
+
+</DL>
+
+<P>
+<B>The available joysticks might differ depending on operating system and joystick support in the OS.</B>
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>Devices 4..9</CODE>
+<DD>
+Only available if joystick support is available at compile time.
+
+<DT><CODE>Devices 10 and 11</CODE>
+<DD>
+Only available if digital joystick support is available at compile time.
+
+<DT><CODE>Devices 12 and 13</CODE>
+<DD>
+Only available if USB joystick support is available at compile time.
+
+</DL>
+
+<P>
+<B>The following resources are only available if MIDI support is available at compile time.</B>
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>MIDIInDev</CODE>
+<DD>
+<A NAME="IDX1686"></A>
+ 
+String specifying the MIDI input device
+(x64, x64sc, xscpu64, x128 and xvic only).
+
+<A NAME="IDX1687"></A>
+<DT><CODE>MIDIOutDev</CODE>
+<DD>
+String specifying the MIDI output device
+(x64, x64sc, xscpu64, x128 and xvic only).
+
+</DL>
+
+<P>
+<B>The following resource is only available if MIDI support and ALSA support is available at compile time.</B>
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>MIDIDriver</CODE>
+<DD>
+<A NAME="IDX1688"></A>
+ 
+Enum specifying the MIDI driver
+(x64, x64sc, xscpu64, x128 and xvic only).
+(0: OSS, 1: ALSA)
+
+</DL>
+
+<P>
+<B>The following resources are only available if RS232 device support or RS232 network support is available at compile time.</B>
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>RsDevice1Baud</CODE>
+<DD>
+<A NAME="IDX1689"></A>
+ <A NAME="IDX1690"></A>
+ <A NAME="IDX1691"></A>
+ <A NAME="IDX1692"></A>
+ 
+<DT><CODE>RsDevice2Baud</CODE>
+<DD>
+<DT><CODE>RsDevice3Baud</CODE>
+<DD>
+<DT><CODE>RsDevice4Baud</CODE>
+<DD>
+Integers specifying the RS232 baudrate devices if the device file points
+to a special device (like <TT>`/dev/ttyS0'</TT>; see section <A HREF="vice_6.html#SEC82">6.12  RS232 settings</A>)
+(all emulators except vsid).
+
+</DL>
+
+
+
+<H3><A NAME="SEC226" HREF="vice_toc.html#TOC226">8.2.2  GTK3 specific command-line options</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>-saveres</CODE>
+<DD>
+<A NAME="IDX1693"></A>
+ 
+<DT><CODE>+saveres</CODE>
+<DD>
+Enable/disable automatic saving of settings on exit
+(<CODE>SaveResourcesOnExit=1</CODE>, <CODE>SaveResourcesOnExit=0</CODE>).
+
+<A NAME="IDX1694"></A>
+<DT><CODE>-minimized</CODE>
+<DD>
+<DT><CODE>+minimized</CODE>
+<DD>
+Start/Do not start with minimized window
+(<CODE>StartMinimized=1</CODE>, <CODE>StartMinimized=0</CODE>).
+
+<A NAME="IDX1695"></A>
+<DT><CODE>-aspect &#60;aspect ratio&#62;</CODE>
+<DD>
+Set the aspect ratio
+(<CODE>AspectRatio</CODE>).
+(0.5-2.0)
+
+<A NAME="IDX1696"></A>
+<DT><CODE>-keepaspect</CODE>
+<DD>
+Enable keeping of the aspect ratio when scaling
+(<CODE>KeepAspectRatio=1</CODE>).
+<DT><CODE>+keepaspect</CODE>
+<DD>
+Disable keeping of the aspect ratio when scaling (freescaling)
+(<CODE>KeepAspectRatio=0</CODE>).
+
+<A NAME="IDX1697"></A>
+<DT><CODE>-trueaspect</CODE>
+<DD>
+<DT><CODE>+trueaspect</CODE>
+<DD>
+Enable/disable whether to use the true (non square pixels) aspect ratio
+(<CODE>TrueAspectRatio=1</CODE>, (<CODE>TrueAspectRatio=0</CODE>).
+
+<A NAME="IDX1698"></A>
+<DT><CODE>-confirmonexit</CODE>
+<DD>
+Confirm quitting VICE
+(<CODE>ConfirmOnExit=1</CODE>).
+<DT><CODE>+confirmonexit</CODE>
+<DD>
+Never confirm quitting VICE
+(<CODE>ConfirmOnExit=0</CODE>).
+
+<A NAME="IDX1699"></A>
+<DT><CODE>-displaydepth &#60;value&#62;</CODE>
+<DD>
+Specify the display depth
+(<CODE>DisplayDepth</CODE>)
+(all emulators except vsid).
+(0..32)
+
+<A NAME="IDX1700"></A>
+<DT><CODE>-fourcc &#60;fourcc&#62;</CODE>
+<DD>
+Set the YUV FOURCC format to use
+(<CODE>FOURCC</CODE>).
+
+<A NAME="IDX1701"></A>
+<DT><CODE>-fullscreen</CODE>
+<DD>
+<DT><CODE>+fullscreen</CODE>
+<DD>
+Enable/disable fullscreen mode
+(<CODE>UseFullscreen=1</CODE>, (<CODE>UseFullscreen=0</CODE>)
+(all emulators except vsid).
+
+<A NAME="IDX1702"></A>
+<DT><CODE>-CRTChwscale</CODE>
+<DD>
+<DT><CODE>+CRTChwscale</CODE>
+<DD>
+Enable/Disable hardware scaling
+(<CODE>CrtcHwScale=1</CODE>, <CODE>CrtcHwScale=0</CODE>)
+(xcbm2 and xpet only).
+
+<A NAME="IDX1703"></A>
+<DT><CODE>-CRTCfulldevice &#60;device&#62;</CODE>
+<DD>
+Select fullscreen device
+(<CODE>CrtcFullscreenDevice</CODE>)
+(xcbm2 and xpet only).
+
+<A NAME="IDX1704"></A>
+<DT><CODE>-TEDhwscale</CODE>
+<DD>
+<DT><CODE>+TEDhwscale</CODE>
+<DD>
+Enable/Disable hardware scaling
+(<CODE>TEDHwScale=1</CODE>, <CODE>TEDHwScale=0</CODE>)
+(xplus4 only).
+
+<A NAME="IDX1705"></A>
+<DT><CODE>-TEDfulldevice &#60;device&#62;</CODE>
+<DD>
+Select fullscreen device
+(<CODE>TEDFullscreenDevice</CODE>)
+(xplus4 only).
+
+<A NAME="IDX1706"></A>
+<DT><CODE>-VDChwscale</CODE>
+<DD>
+<DT><CODE>+VDChwscale</CODE>
+<DD>
+Enable/Disable hardware scaling
+(<CODE>VDCHwScale=1</CODE>, <CODE>VDCHwScale=1</CODE>)
+(x128 only).
+
+<A NAME="IDX1707"></A>
+<DT><CODE>-VIChwscale</CODE>
+<DD>
+<DT><CODE>+VIChwscale</CODE>
+<DD>
+Enable/Disable hardware scaling
+(<CODE>VICHwScale=1</CODE>, <CODE>VICHwScale=0</CODE>)
+(xvic only).
+
+<A NAME="IDX1708"></A>
+<DT><CODE>-VICfulldevice &#60;device&#62;</CODE>
+<DD>
+Select fullscreen device
+(<CODE>VICFullscreenDevice</CODE>)
+(xvic only).
+
+<A NAME="IDX1709"></A>
+<DT><CODE>-VICIIhwscale</CODE>
+<DD>
+<DT><CODE>+VICIIhwscale</CODE>
+<DD>
+Enable/Disable hardware scaling
+(<CODE>VICIIHwScale=1</CODE>, <CODE>VICIIHwScale=0</CODE>)
+(all emulators except xcbm2, xpet, xplus4, xvic and vsid).
+
+<A NAME="IDX1710"></A>
+<DT><CODE>-VICIIfulldevice &#60;device&#62;</CODE>
+<DD>
+Select fullscreen device
+(<CODE>VICIIFullscreenDevice</CODE>)
+(all emulators except xcbm2, xpet, xplus4, xvic and vsid).
+
+<A NAME="IDX1711"></A>
+<DT><CODE>-joydev1 &#60;0-3&#62; / &#60;0-9&#62; / &#60;0-11&#62; / &#60;0-13&#62;</CODE>
+<DD>
+Set the device for joystick emulation of port 1
+(<CODE>JoyDevice1</CODE>)
+(all emulators except xcbm2, xpet and vsid).
+(0: None, 1: Numpad, 2: Keyset 1, 3: Keyset 2, 4: Analog joystick 1, 5: Analog joystick 2, 6: Analog joystick 3, 7: Analog joystick 4, 8: Analog joystick 5, 9: Analog joystick 6, 10: Digital joystick 1, 11: Digital joystick 2, 12: USB joystick 1, 13: USB joystick 2)
+
+<A NAME="IDX1712"></A>
+<DT><CODE>-joydev2 &#60;0-3&#62; / &#60;0-9&#62; / &#60;0-11&#62; / &#60;0-13&#62;</CODE>
+<DD>
+Set the device for joystick emulation of port 2
+(<CODE>JoyDevice2</CODE>)
+(all emulators except xcbm2, xpet, xvic and vsid).
+(0: None, 1: Numpad, 2: Keyset 1, 3: Keyset 2, 4: Analog joystick 1, 5: Analog joystick 2, 6: Analog joystick 3, 7: Analog joystick 4, 8: Analog joystick 5, 9: Analog joystick 6, 10: Digital joystick 1, 11: Digital joystick 2, 12: USB joystick 1, 13: USB joystick 2)
+
+<A NAME="IDX1713"></A>
+<DT><CODE>-extrajoydev1 &#60;0-3&#62; / &#60;0-9&#62; / &#60;0-11&#62; / &#60;0-13&#62;</CODE>
+<DD>
+Set device for extra joystick port 1
+(<CODE>JoyDevice3</CODE>)
+(all emulators except xcbm5x0 and vsid).
+(0: None, 1: Numpad, 2: Keyset 1, 3: Keyset 2, 4: Analog joystick 1, 5: Analog joystick 2, 6: Analog joystick 3, 7: Analog joystick 4, 8: Analog joystick 5, 9: Analog joystick 6, 10: Digital joystick 1, 11: Digital joystick 2, 12: USB joystick 1, 13: USB joystick 2)
+
+<A NAME="IDX1714"></A>
+<DT><CODE>-extrajoydev2 &#60;0-3&#62; / &#60;0-9&#62; / &#60;0-11&#62; / &#60;0-13&#62;</CODE>
+<DD>
+Set device for extra joystick port 2
+(<CODE>JoyDevice4</CODE>)
+(all emulators except xcbm5x0, xplus4 and vsid).
+(0: None, 1: Numpad, 2: Keyset 1, 3: Keyset 2, 4: Analog joystick 1, 5: Analog joystick 2, 6: Analog joystick 3, 7: Analog joystick 4, 8: Analog joystick 5, 9: Analog joystick 6, 10: Digital joystick 1, 11: Digital joystick 2, 12: USB joystick 1, 13: USB joystick 2)
+
+</DL>
+
+<P>
+<B>The available joysticks might differ depending on operating system and joystick support in the OS.</B>
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>Devices 4..9</CODE>
+<DD>
+Only available if joystick support is available at compile time.
+
+<DT><CODE>Devices 10 and 11</CODE>
+<DD>
+Only available if digital joystick support is available at compile time.
+
+<DT><CODE>Devices 12 and 13</CODE>
+<DD>
+Only available if USB joystick support is available at compile time.
+
+</DL>
+
+<P>
+<B>The following command-line options are only available if MIDI support is available at compile time.</B>
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>-midiin &#60;name&#62;</CODE>
+<DD>
+<A NAME="IDX1715"></A>
+ 
+Specify MIDI-In device
+(<CODE>MIDIInDev</CODE>)
+(x64, x64sc, xscpu64, x128 and xvic only).
+
+<A NAME="IDX1716"></A>
+<DT><CODE>-midiout &#60;name&#62;</CODE>
+<DD>
+Specify MIDI-Out device
+(<CODE>MIDIOutDev</CODE>)
+(x64, x64sc, xscpu64, x128 and xvic only).
+
+</DL>
+
+<P>
+<B>The following command-line option is only available if MIDI support and ALSA support is available at compile time.</B>
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>-mididrv &#60;driver&#62;</CODE>
+<DD>
+<A NAME="IDX1717"></A>
+ 
+Specify MIDI driver
+(<CODE>MIDIDriver</CODE>)
+(x64, x64sc, xscpu64, x128 and xvic only).
+(0: OSS, 1: ALSA)
+
+</DL>
+
+<P>
+<B>The following command-line options are only available if RS232 device support or RS232 network support is available at compile time.</B>
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>-rsdev1baud &#60;baudrate&#62;</CODE>
+<DD>
+<A NAME="IDX1718"></A>
+ 
+<A NAME="IDX1719"></A>
+<DT><CODE>-rsdev2baud &#60;baudrate&#62;</CODE>
+<DD>
+<A NAME="IDX1720"></A>
+<DT><CODE>-rsdev3baud &#60;baudrate&#62;</CODE>
+<DD>
+<A NAME="IDX1721"></A>
+<DT><CODE>-rsdev4baud &#60;baudrate&#62;</CODE>
+<DD>
+Specify &#60;baudrate&#62; as baudrate for the RS232 devices if the device name
+specifies a special device (like <TT>`/dev/ttyS0'</TT> for example,
+see section <A HREF="vice_6.html#SEC82">6.12  RS232 settings</A>;
+<CODE>RsDevice1Baud</CODE>, <CODE>RsDevice2Baud</CODE> <CODE>RsDevice3Baud</CODE> and
+<CODE>RsDevice4Baud</CODE>)
+(all emulators except vsid).
+
+</DL>
+
+<P><HR><P>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_7.html">previous</A>, <A HREF="vice_9.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+</BODY>
+</HTML>

@@ -1,0 +1,412 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.52
+     from ../../doc/vice.texi on 19 December 2018 -->
+
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<TITLE>VICE Manual - 5  Basic operation</TITLE>
+<style type="text/css">
+    @import 'vice.css';
+</style>
+</HEAD>
+<BODY>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_4.html">previous</A>, <A HREF="vice_6.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H1><A NAME="SEC31" HREF="vice_toc.html#TOC31">5  Basic operation</A></H1>
+
+<P>
+This section describes the basic things you can do once the emulator
+has been fired up.
+
+</P>
+
+
+
+<H2><A NAME="SEC32" HREF="vice_toc.html#TOC32">5.1  The emulation window</A></H2>
+
+<P>
+When the emulator is run, the screen of the emulated machine is
+displayed in a standard X Window which we will call the <EM>emulation
+window</EM>.  This window will be updated in real time, displaying the same
+contents that a real monitor or TV set would.
+
+</P>
+<P>
+Below the emulation window there is an area which is used to display
+information about the state of the emulator; we will call this area the
+<EM>status bar</EM>.
+
+</P>
+<P>
+On the extreme left of the status bar, there is a <EM>performance
+meter</EM>.  This displays the current relative speed of the emulator (as a
+percentage) and the update frequency (in frames per second).  All the
+machines emulated are PAL, so the update frequency will be 50 frames
+per second if your system is fast enough to allow emulation at
+the speed of the real machine.
+
+</P>
+<P>
+On the extreme right of the status bar, there is a <EM>drive status
+indicator</EM>.  This is only visible if the hardware-level ("True") 1541
+emulation is turned on.  In that case, the drive status indicator will
+contain a rectangle emulating the drive LED and will display the current
+track position of the drive's read/write head.
+
+</P>
+
+
+<H2><A NAME="SEC33" HREF="vice_toc.html#TOC33">5.2  Using the menus</A></H2>
+
+<P>
+It is possible to execute some commands and change emulation parameters
+while the emulator is running: when the pointer is over the emulation
+window, two menus are available by pressing either the left or right
+mouse buttons.  The left mouse button will open the <EM>command menu</EM>
+from which several emulation-related commands can be executed; the right
+mouse button will open the <EM>settings menu</EM> from which emulation
+parameters can be changed.  The basic difference between the command and
+the settings menu is that, while commands have only effect on the
+current session, settings can be saved and later used with the "Save
+settings" and "Load settings" right-button menu items, respectively.
+"Restore default settings" restores the factory defaults.
+See section <A HREF="vice_6.html#SEC42">6  Settings and resources</A>. for more information about how settings
+work in VICE.
+
+</P>
+<P>
+Sometimes commands can be reached via <EM>shortcuts</EM> or <EM>hotkeys</EM>,
+i.e., it is possible to execute them by pressing a sequence of keys
+instead of going through the menu with the mouse.  Where shortcuts
+exist, they are displayed in parentheses at the right edge of the menu
+item.  In VICE, all shortcuts must begin with the <KBD>Meta</KBD> or
+<KBD>Alt</KBD> key.  So, for example, to attach a disk image to drive #8 (the
+corresponding menu item displays "M-8"), you have to press the
+<KBD>Meta</KBD> (or <KBD>Alt</KBD>) and then <KBD>8</KBD>.
+
+</P>
+<P>
+Note that no other key presses are passed on to the emulated machine
+while either <KBD>Meta</KBD> or <KBD>Alt</KBD> are held down.
+
+</P>
+
+
+
+<H2><A NAME="SEC34" HREF="vice_toc.html#TOC34">5.3  Getting help</A></H2>
+
+<P>
+At any time, if you get stuck or do not remember how to perform a
+certain action, you can use the "Browse manuals" command (from the help
+menu).  This will open either the PDF or popup a browser and open the HTML
+version of the documentation.  
+
+</P>
+<P>
+Notice that on Linux this requires VICE to be properly (and fully) installed,
+eg with a <SAMP>`make install'</SAMP>.
+
+</P>
+
+
+<H2><A NAME="SEC35" HREF="vice_toc.html#TOC35">5.4  Using the file selector</A></H2>
+
+<P>
+In those situations where it is necessary to specify a file name, all
+of the VICE emulators will pop up a file selector window allowing
+you to select or specify a file interactively.
+
+</P>
+<P>
+To the left of the file selector, there is a list of ancestor
+directories: by clicking on them, you can ascend the directory tree.  To
+the right, there is a list of the files in the current directory; files
+can be selected by clicking on them.  If you click on a directory, that
+directory becomes the current one; if you click on an ordinary file, it
+becomes the active selection.
+
+</P>
+<P>
+At the top, there is a <EM>directory box</EM>, with the complete path of
+the current directory, and a <EM>file name box</EM>, with the name of the
+currently selected file.  At the bottom there are two buttons: "OK"
+confirms the selected file and "Cancel" abandons the file selector
+without cancelling the operation.
+
+</P>
+<P>
+It is also possible to specify what files you want to show in the file
+selector by writing an appropriate shell-like pattern in the directory
+box; e.g., <SAMP>`~/*.[dx]64'</SAMP> will only show files in the home directory whose
+name ends with either <TT>`.d64'</TT> or with <TT>`.x64'</TT>.
+
+</P>
+
+
+
+<H2><A NAME="SEC36" HREF="vice_toc.html#TOC36">5.5  Using disk and tape images</A></H2>
+
+<P>
+The emulator is able to emulate disk drives and tape
+recorders if provided with suitable <EM>disk images</EM> or <EM>tape
+images</EM>.  An <EM>image</EM> is a raw dump of the contents of the media, and
+must be <EM>attached</EM> before the emulator can use it.  "Attaching" a
+disk or tape image is like "virtually" inserting a diskette or a
+cassette into the disk drive or the tape recorder: once an image is
+attached, the emulator is able to use it as a storage media.
+
+</P>
+<P>
+There are five commands (in the left button menu) that deal with disk
+and tape images:
+
+</P>
+
+<UL>
+
+<LI>
+
+Attach Disk Image
+<LI>
+
+Detach Disk Image
+<LI>
+
+Attach Tape Image
+<LI>
+
+Detach Tape Image
+<LI>
+
+Smart-attach a file
+
+</UL>
+
+<P>
+The first four commands are used to insert and remove the virtual disks
+and cassettes from the respective units.  On the other hand, the
+last commands tries to guess the type of the image you are attaching
+from its name and size, and attaches it to the most reasonable device.
+
+</P>
+<P>
+Supported formats are <CODE>D64</CODE>, <CODE>G64</CODE>, <CODE>P64</CODE> and the ancient 
+<CODE>X64</CODE> for disk images (devices 8, 9 and 10) and <CODE>T64</CODE> and <CODE>TAP</CODE> 
+for tape images.  
+
+</P>
+<P>
+Notice that <CODE>T64</CODE> support is <EM>read-only</EM>, and that the cassette is 
+automatically rewound when you reach its end. For actually emulating tape, the
+<CODE>TAP</CODE> format is highly recommended.
+
+</P>
+<P>
+Another important feature is that raw Commodore BASIC binary files and
+.P00 files can be attached as tapes.  As you can autostart a
+tape image when it is attached (see section <A HREF="vice_5.html#SEC38">5.5.2  "Autostarting" an image</A>), this allows you to
+autostart these particular files as well.
+
+</P>
+<P>
+You can attach a disk for which you do not have write permissions: when this
+happens, the 1541 emulator will emulate a write-protected disk.  This is
+also useful if you want to prevent certain disk images from being
+written to; in the latter case, just remove the write permission for
+that file, e.g., by doing a <CODE>chmod a-w</CODE>.
+
+</P>
+
+
+
+<H3><A NAME="SEC37" HREF="vice_toc.html#TOC37">5.5.1  Previewing the image contents</A></H3>
+
+<P>
+It is possible to examine the directory of a disk or tape image before
+attaching it.  Just press the "Contents" button in the file selector
+window and a new window will pop up with the contents of the selected
+image.
+
+</P>
+<P>
+Notice that this function automatically translates the directory from
+PETSCII to ASCII; but, due to differences in the two encodings, it is
+not always possible to translate all the characters, so you might get
+funny results when "weird" characters such as the semi-graphical ones
+are being used.
+
+</P>
+
+
+
+<H3><A NAME="SEC38" HREF="vice_toc.html#TOC38">5.5.2  "Autostarting" an image</A></H3>
+
+<P>
+If you want to reset the machine and run the first program on a certain
+image without typing any commands at the Commodore BASIC prompt, you can
+use the "Autostart" button in the file selector window after selecting
+a proper disk or tape image file.
+
+</P>
+<P>
+Notice that, if true drive emulation is turned on, it will be turned off
+before running the program and then turned on again after it has been
+loaded.  This way, you get the maximum possible speed while loading the
+file, but you do not lose compatibility once the program itself is
+running.
+
+</P>
+<P>
+This method is not completely safe, because some autostarting methods
+might cause the true drive emulation not to be turned on again.  In such
+cases, the best thing to do is to disable kernal traps (which will cause
+true drive emulation to be always kept turned on), or to manually load
+the program with true drive emulation turned on.
+
+</P>
+
+
+
+<H3><A NAME="SEC39" HREF="vice_toc.html#TOC39">5.5.3  Using compressed files</A></H3>
+
+<P>
+It is also possible to attach disk or tape images that have been
+compressed through various algorithms; compression formats are
+identified from the file extension.  The following formats are supported
+(the expected file name extension is in parenthesis):
+
+</P>
+
+<UL>
+<LI>
+
+GNU Zip (<CODE>.gz</CODE> or <CODE>.z</CODE>);
+<LI>
+
+BZip version 2 (<CODE>.bz2</CODE>);
+<LI>
+
+PkZip (<CODE>.zip</CODE>);
+<LI>
+
+GNU Zipped TAR archives (<CODE>.tar.gz</CODE>, <CODE>.tgz</CODE>);
+<LI>
+
+Zoo (<CODE>.zoo</CODE>).
+</UL>
+
+<P>
+PkZip, <CODE>tar.gz</CODE>, <CODE>lha</CODE> and <CODE>zoo</CODE> support is
+<EM>read-only</EM> and always uses the <EM>first</EM> <CODE>T64</CODE> or
+<CODE>D64</CODE> file in the archive.  So archives containing multiple files
+will always be handled as if they contain only a single file.
+
+</P>
+<P>
+Windows and DOS don't contain the needful programs to handle
+compressed archives. Get gzip and unzip for Windows at
+<A HREF="ftp://ftp.freesoftware.com/pub/infozip/WIN32">ftp://ftp.freesoftware.com/pub/infozip/WIN32</A> and for DOS at
+<A HREF="ftp://ftp.freesoftware.com/pub/infozip/MSDOS">ftp://ftp.freesoftware.com/pub/infozip/MSDOS</A>. Don't use pkunzip
+for DOS, it doesn't work. The programs to use BZip2 archives may be
+found at <A HREF="http://sourceware.cygnus.com/bzip2">http://sourceware.cygnus.com/bzip2</A>.
+Just put the programs (unzip.exe, gzip.exe, bzip2.exe) into a directory
+of your search path (e.g. C:\DOS or C:\WINDOWS\COMMAND; have a look at
+the PATH variable).
+
+</P>
+
+
+<H3><A NAME="SEC40" HREF="vice_toc.html#TOC40">5.5.4  Using Zipcode and Lynx images</A></H3>
+
+<P>
+Since version 0.15, the VICE emulators have been able to attach disks
+packed with Zipcode or Lynx directly, removing the need to manually
+convert them into <CODE>D64</CODE> or <CODE>X64</CODE> files with <CODE>c1541</CODE>.
+This is achieved by automatically invoking <CODE>c1541</CODE>, letting it
+decode the file into a temporary image and attaching the resulting
+temporary image read-only.  For this to work, the directory containing
+<CODE>c1541</CODE> must be in your <CODE>PATH</CODE>.
+
+</P>
+<P>
+This uses the <CODE>-unlynx</CODE> and <CODE>-zcreate</CODE> options of <CODE>c1541</CODE>
+(see section <A HREF="vice_13.html#SEC285">13.3  c1541 commands and options</A>); these commands are not very
+reliable yet, and could fail with certain kinds of Lynx and Zipcode
+images (for example, they cannot deal with <CODE>DEL</CODE> files properly).
+So please use them with caution.
+
+</P>
+<P>
+Lynx files usually come as <TT>`.lnx'</TT> files which are unpacked into
+single disk images.  On the other hand, Zipcode files do not have a
+particular extension (although <TT>`.z64'</TT> is sometimes used), and
+represent a disk by means of component files, named as follows:
+
+</P>
+
+<UL>
+<LI>
+
+<TT>`1!NAME'</TT>
+<LI>
+
+<TT>`2!NAME'</TT>
+<LI>
+
+<TT>`3!NAME'</TT>
+<LI>
+
+<TT>`4!NAME'</TT>
+</UL>
+
+<P>
+If you attach as a disk image (or smart-attach) any one of these files,
+the emulator will simply pick up the other three (by examining
+the name) and then build a disk image using all four.
+
+</P>
+
+
+
+<H2><A NAME="SEC41" HREF="vice_toc.html#TOC41">5.6  Resetting the machine</A></H2>
+
+<P>
+You can reset the emulated machine at any time by using the "Reset"
+command from the command menu.  There are two types of reset:
+
+</P>
+
+<UL>
+<LI>
+
+<EM>soft reset</EM>, which simply resets the CPU and all the other chips;
+<LI>
+
+<EM>hard reset</EM>, which also clears up the contents of RAM.
+</UL>
+
+<P>
+A <EM>soft reset</EM> is the same as a hardware reset achieved by pulling
+the RESET line down; a <EM>hard reset</EM> is more like a power
+on/power off sequence in that it makes sure the whole RAM is cleared.
+
+</P>
+<P>
+It is possible that a soft reset may not be enough to take the machine
+to the OS initialization sequence: in such cases, you will have to do a
+hard reset instead.
+
+</P>
+<P>
+This is especially the case for the CBM-II emulators.  Those machines
+examine a memory location and if they find a certain "magic" value they
+only do what you know from the C64 as <CODE>Run/Stop-Restore</CODE>.
+Therefore, to really reset a CBM-II use hard reset.
+
+</P>
+<P><HR><P>
+Go to the <A HREF="vice_1.html">first</A>, <A HREF="vice_4.html">previous</A>, <A HREF="vice_6.html">next</A>, <A HREF="vice_22.html">last</A> section, <A HREF="vice_toc.html">table of contents</A>.
+</BODY>
+</HTML>

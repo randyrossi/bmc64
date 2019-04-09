@@ -1,0 +1,268 @@
+LOCAL_PATH := $(call my-dir)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := vice_x64_sc_dtv_scpu_128_2_5x0_pet_4_20
+
+MY_PATH2 := ../../../../../..
+
+CG_SUBDIRS := \
+$(MY_PATH2)/src/diskimage \
+$(MY_PATH2)/src/drive \
+$(MY_PATH2)/src/drive/iecieee \
+$(MY_PATH2)/src/drive/ieee \
+$(MY_PATH2)/src/fileio \
+$(MY_PATH2)/src/fsdevice \
+$(MY_PATH2)/src/gfxoutputdrv \
+$(MY_PATH2)/src/hwsiddrv \
+$(MY_PATH2)/src/lib/p64 \
+$(MY_PATH2)/src/parallel \
+$(MY_PATH2)/src/platform \
+$(MY_PATH2)/src/samplerdrv \
+$(MY_PATH2)/src/socketdrv \
+$(MY_PATH2)/src/sounddrv \
+$(MY_PATH2)/src/vdrive
+
+# Add more subdirs here, like src/subdir1 src/subdir2
+
+MY_PATH := $(LOCAL_PATH)
+
+CG_SRCDIR := $(LOCAL_PATH)
+
+LOCAL_CFLAGS := -DANDROID_COMPILE
+
+LOCAL_C_INCLUDES :=	$(LOCAL_PATH)/include \
+				$(LOCAL_PATH)/../sdl/include \
+				$(LOCAL_PATH)/../locnet/include \
+				$(LOCAL_PATH) \
+				$(LOCAL_PATH)/../../../../../../src/arch/sdl \
+				$(LOCAL_PATH)/../../../../../../src/platform \
+				$(LOCAL_PATH)/../../../../../../src/joyport \
+				$(LOCAL_PATH)/../../../../../../src/drive \
+				$(LOCAL_PATH)/../../../../../../src/lib/p64 \
+				$(LOCAL_PATH)/../../../../../../src/vdrive \
+				$(LOCAL_PATH)/../../../../../../src/userport \
+				$(LOCAL_PATH)/../../../../../../src/samplerdrv \
+				$(LOCAL_PATH)/../../../../../../src/sid \
+				$(LOCAL_PATH)/../../../../../../src/plus4 \
+				$(LOCAL_PATH)/../../../../../../src/vic20 \
+				$(LOCAL_PATH)/../../../../../../src/raster \
+				$(LOCAL_PATH)/../../../../../../src/imagecontents \
+				$(LOCAL_PATH)/../../../../../../src/tape \
+				$(LOCAL_PATH)/../../../../../../src/tapeport \
+				$(LOCAL_PATH)/../../../../../../src/monitor \
+				$(LOCAL_PATH)/../../../../../../src/rtc \
+				$(LOCAL_PATH)/../../../../../../src/drive/iec \
+				$(LOCAL_PATH)/../../../../../../src/drive/ieee \
+				$(LOCAL_PATH)/../../../../../../src/drive/tcbm \
+				$(LOCAL_PATH)/../../../../../../src \
+				$(LOCAL_PATH)/../.. \
+				$(LOCAL_PATH)
+
+LOCAL_PATH := $(MY_PATH)
+
+LOCAL_CPPFLAGS := $(LOCAL_CFLAGS)
+LOCAL_CXXFLAGS := $(LOCAL_CFLAGS)
+
+#Change C++ file extension as appropriate
+LOCAL_CPP_EXTENSION := .cpp
+
+LOCAL_SRC_FILES := \
+	$(MY_PATH2)/src/arch/sdl/archdep.c \
+	$(MY_PATH2)/src/arch/sdl/console.c \
+	$(MY_PATH2)/src/arch/sdl/dynlib.c \
+	$(MY_PATH2)/src/arch/sdl/fullscreen.c \
+	$(MY_PATH2)/src/arch/sdl/joy.c \
+	$(MY_PATH2)/src/arch/sdl/kbd.c \
+	$(MY_PATH2)/src/arch/sdl/lightpendrv.c \
+	$(MY_PATH2)/src/arch/sdl/menu_common.c \
+	$(MY_PATH2)/src/arch/sdl/menu_drive.c \
+	$(MY_PATH2)/src/arch/sdl/menu_drive_rom.c \
+	$(MY_PATH2)/src/arch/sdl/menu_help.c \
+	$(MY_PATH2)/src/arch/sdl/menu_jam.c \
+	$(MY_PATH2)/src/arch/sdl/menu_joyport.c \
+	$(MY_PATH2)/src/arch/sdl/menu_joystick.c \
+	$(MY_PATH2)/src/arch/sdl/menu_media.c \
+	$(MY_PATH2)/src/arch/sdl/menu_monitor.c \
+	$(MY_PATH2)/src/arch/sdl/menu_network.c \
+	$(MY_PATH2)/src/arch/sdl/menu_printer.c \
+	$(MY_PATH2)/src/arch/sdl/menu_ram.c \
+	$(MY_PATH2)/src/arch/sdl/menu_reset.c \
+	$(MY_PATH2)/src/arch/sdl/menu_rom.c \
+	$(MY_PATH2)/src/arch/sdl/menu_sampler.c \
+	$(MY_PATH2)/src/arch/sdl/menu_screenshot.c \
+	$(MY_PATH2)/src/arch/sdl/menu_settings.c \
+	$(MY_PATH2)/src/arch/sdl/menu_sid.c \
+	$(MY_PATH2)/src/arch/sdl/menu_snapshot.c \
+	$(MY_PATH2)/src/arch/sdl/menu_sound.c \
+	$(MY_PATH2)/src/arch/sdl/menu_speed.c \
+	$(MY_PATH2)/src/arch/sdl/menu_video.c \
+	$(MY_PATH2)/src/arch/sdl/mousedrv.c \
+	$(MY_PATH2)/src/arch/sdl/parsid-drv.c \
+	$(MY_PATH2)/src/arch/sdl/ps-device.c \
+	$(MY_PATH2)/src/arch/sdl/ps-ieee1284.c \
+	$(MY_PATH2)/src/arch/sdl/ps-io.c \
+	$(MY_PATH2)/src/arch/sdl/rawnetarch.c \
+	$(MY_PATH2)/src/arch/sdl/rs232dev.c \
+	$(MY_PATH2)/src/arch/sdl/sdlmain.c \
+	$(MY_PATH2)/src/arch/sdl/signals.c \
+	$(MY_PATH2)/src/arch/sdl/ui.c \
+	$(MY_PATH2)/src/arch/sdl/uicmdline.c \
+	$(MY_PATH2)/src/arch/sdl/uifilereq.c \
+	$(MY_PATH2)/src/arch/sdl/uihotkey.c \
+	$(MY_PATH2)/src/arch/sdl/uimenu.c \
+	$(MY_PATH2)/src/arch/sdl/uimon.c \
+	$(MY_PATH2)/src/arch/sdl/uimsgbox.c \
+	$(MY_PATH2)/src/arch/sdl/uipause.c \
+	$(MY_PATH2)/src/arch/sdl/uipoll.c \
+	$(MY_PATH2)/src/arch/sdl/uistatusbar.c \
+	$(MY_PATH2)/src/arch/sdl/video.c \
+	$(MY_PATH2)/src/arch/sdl/vkbd.c \
+	$(MY_PATH2)/src/arch/sdl/vsyncarch.c \
+	$(MY_PATH2)/src/alarm.c \
+	$(MY_PATH2)/src/attach.c \
+	$(MY_PATH2)/src/autostart.c \
+	$(MY_PATH2)/src/autostart-prg.c \
+	$(MY_PATH2)/src/cbmdos.c \
+	$(MY_PATH2)/src/cbmimage.c \
+	$(MY_PATH2)/src/charset.c \
+	$(MY_PATH2)/src/clipboard.c \
+	$(MY_PATH2)/src/clkguard.c \
+	$(MY_PATH2)/src/cmdline.c \
+	$(MY_PATH2)/src/color.c \
+	$(MY_PATH2)/src/crc32.c \
+	$(MY_PATH2)/src/datasette.c \
+	$(MY_PATH2)/src/debug.c \
+	$(MY_PATH2)/src/dma.c \
+	$(MY_PATH2)/src/event.c \
+	$(MY_PATH2)/src/findpath.c \
+	$(MY_PATH2)/src/fliplist.c \
+	$(MY_PATH2)/src/gcr.c \
+	$(MY_PATH2)/src/info.c \
+	$(MY_PATH2)/src/init.c \
+	$(MY_PATH2)/src/initcmdline.c \
+	$(MY_PATH2)/src/interrupt.c \
+	$(MY_PATH2)/src/ioutil.c \
+	$(MY_PATH2)/src/kbdbuf.c \
+	$(MY_PATH2)/src/keyboard.c \
+	$(MY_PATH2)/src/lib.c \
+	$(MY_PATH2)/src/log.c \
+	$(MY_PATH2)/src/machine.c \
+	$(MY_PATH2)/src/machine-bus.c \
+	$(MY_PATH2)/src/main.c \
+	$(MY_PATH2)/src/network.c \
+	$(MY_PATH2)/src/opencbmlib.c \
+	$(MY_PATH2)/src/palette.c \
+	$(MY_PATH2)/src/ram.c \
+	$(MY_PATH2)/src/rawfile.c \
+	$(MY_PATH2)/src/rawnet.c \
+	$(MY_PATH2)/src/resources.c \
+	$(MY_PATH2)/src/romset.c \
+	$(MY_PATH2)/src/screenshot.c \
+	$(MY_PATH2)/src/snapshot.c \
+	$(MY_PATH2)/src/socket.c \
+	$(MY_PATH2)/src/sound.c \
+	$(MY_PATH2)/src/sysfile.c \
+	$(MY_PATH2)/src/translate.c \
+	$(MY_PATH2)/src/traps.c \
+	$(MY_PATH2)/src/util.c \
+	$(MY_PATH2)/src/vicefeatures.c \
+	$(MY_PATH2)/src/vsync.c \
+	$(MY_PATH2)/src/zfile.c \
+	$(MY_PATH2)/src/zipcode.c \
+	$(MY_PATH2)/src/core/ciacore.c \
+	$(MY_PATH2)/src/core/ciatimer.c \
+	$(MY_PATH2)/src/core/riotcore.c \
+	$(MY_PATH2)/src/core/tpicore.c \
+	$(MY_PATH2)/src/core/viacore.c \
+	$(MY_PATH2)/src/drive/iec/cia1571d.c \
+	$(MY_PATH2)/src/drive/iec/cia1581d.c \
+	$(MY_PATH2)/src/drive/iec/fdd.c \
+	$(MY_PATH2)/src/drive/iec/glue1571.c \
+	$(MY_PATH2)/src/drive/iec/pc8477.c \
+	$(MY_PATH2)/src/drive/iec/via1d1541.c \
+	$(MY_PATH2)/src/drive/iec/via4000.c \
+	$(MY_PATH2)/src/drive/iec/wd1770.c \
+	$(MY_PATH2)/src/drive/tcbm/tpid.c \
+	$(MY_PATH2)/src/imagecontents/diskcontents.c \
+	$(MY_PATH2)/src/imagecontents/diskcontents-block.c \
+	$(MY_PATH2)/src/imagecontents/imagecontents.c \
+	$(MY_PATH2)/src/joyport/bbrtc.c \
+	$(MY_PATH2)/src/joyport/coplin_keypad.c \
+	$(MY_PATH2)/src/joyport/joyport.c \
+	$(MY_PATH2)/src/joyport/joystick.c \
+	$(MY_PATH2)/src/joyport/lightpen.c \
+	$(MY_PATH2)/src/joyport/paperclip64.c \
+	$(MY_PATH2)/src/joyport/rushware_keypad.c \
+	$(MY_PATH2)/src/joyport/sampler2bit.c \
+	$(MY_PATH2)/src/joyport/sampler4bit.c \
+	$(MY_PATH2)/src/monitor/asm6502.c \
+	$(MY_PATH2)/src/monitor/mon_assemble6502.c \
+	$(MY_PATH2)/src/monitor/mon_breakpoint.c \
+	$(MY_PATH2)/src/monitor/mon_command.c \
+	$(MY_PATH2)/src/monitor/mon_disassemble.c \
+	$(MY_PATH2)/src/monitor/mon_drive.c \
+	$(MY_PATH2)/src/monitor/mon_file.c \
+	$(MY_PATH2)/src/monitor/mon_lex.c \
+	$(MY_PATH2)/src/monitor/mon_memmap.c \
+	$(MY_PATH2)/src/monitor/mon_memory.c \
+	$(MY_PATH2)/src/monitor/mon_parse.c \
+	$(MY_PATH2)/src/monitor/mon_register.c \
+	$(MY_PATH2)/src/monitor/mon_register6502.c \
+	$(MY_PATH2)/src/monitor/mon_ui.c \
+	$(MY_PATH2)/src/monitor/mon_util.c \
+	$(MY_PATH2)/src/monitor/monitor.c \
+	$(MY_PATH2)/src/monitor/monitor_network.c \
+	$(MY_PATH2)/src/printerdrv/driver-select.c \
+	$(MY_PATH2)/src/printerdrv/drv-1520.c \
+	$(MY_PATH2)/src/printerdrv/drv-ascii.c \
+	$(MY_PATH2)/src/printerdrv/drv-mps803.c \
+	$(MY_PATH2)/src/printerdrv/drv-nl10.c \
+	$(MY_PATH2)/src/printerdrv/drv-raw.c \
+	$(MY_PATH2)/src/printerdrv/interface-serial.c \
+	$(MY_PATH2)/src/printerdrv/output-graphics.c \
+	$(MY_PATH2)/src/printerdrv/output-select.c \
+	$(MY_PATH2)/src/printerdrv/output-text.c \
+	$(MY_PATH2)/src/printerdrv/printer.c \
+	$(MY_PATH2)/src/printerdrv/printer-serial.c \
+	$(MY_PATH2)/src/raster/raster.c \
+	$(MY_PATH2)/src/raster/raster-cache.c \
+	$(MY_PATH2)/src/raster/raster-canvas.c \
+	$(MY_PATH2)/src/raster/raster-changes.c \
+	$(MY_PATH2)/src/raster/raster-cmdline-options.c \
+	$(MY_PATH2)/src/raster/raster-line.c \
+	$(MY_PATH2)/src/raster/raster-modes.c \
+	$(MY_PATH2)/src/raster/raster-resources.c \
+	$(MY_PATH2)/src/rs232drv/rs232.c \
+	$(MY_PATH2)/src/rs232drv/rs232drv.c \
+	$(MY_PATH2)/src/rs232drv/rs232net.c \
+	$(MY_PATH2)/src/rtc/ds1216e.c \
+	$(MY_PATH2)/src/rtc/ds1602.c \
+	$(MY_PATH2)/src/rtc/rtc.c \
+	$(MY_PATH2)/src/serial/realdevice.c \
+	$(MY_PATH2)/src/serial/serial-device.c \
+	$(MY_PATH2)/src/serial/serial-realdevice.c \
+	$(MY_PATH2)/src/sid/catweaselmkiii.c \
+	$(MY_PATH2)/src/sid/fastsid.c \
+	$(MY_PATH2)/src/sid/hardsid.c \
+	$(MY_PATH2)/src/sid/parsid.c \
+	$(MY_PATH2)/src/sid/sid.c \
+	$(MY_PATH2)/src/sid/sid-cmdline-options.c \
+	$(MY_PATH2)/src/sid/sid-resources.c \
+	$(MY_PATH2)/src/sid/ssi2001.c \
+	$(MY_PATH2)/src/video/render1x1.c \
+	$(MY_PATH2)/src/video/render2x2.c \
+	$(MY_PATH2)/src/video/renderscale2x.c \
+	$(MY_PATH2)/src/video/video-canvas.c \
+	$(MY_PATH2)/src/video/video-cmdline-options.c \
+	$(MY_PATH2)/src/video/video-color.c \
+	$(MY_PATH2)/src/video/video-render.c \
+	$(MY_PATH2)/src/video/video-resources.c \
+	$(MY_PATH2)/src/video/video-sound.c \
+	$(MY_PATH2)/src/video/video-viewport.c
+
+LOCAL_SRC_FILES += $(foreach F, $(CG_SUBDIRS), $(addprefix $(F)/,$(notdir $(wildcard $(LOCAL_PATH)/$(F)/*.c))))
+	
+LOCAL_ARM_MODE := arm
+
+include $(BUILD_STATIC_LIBRARY)

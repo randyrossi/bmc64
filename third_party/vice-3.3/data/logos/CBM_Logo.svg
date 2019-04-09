@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="700" height="700" id="svg3062" version="1.1" inkscape:version="0.48.5 r10040" sodipodi:docname="CBM Logo.svg">
+  <defs id="defs3064"/>
+  <sodipodi:namedview id="base" pagecolor="#ffffff" bordercolor="#666666" borderopacity="1.0" inkscape:pageopacity="0.0" inkscape:pageshadow="2" inkscape:zoom="0.35" inkscape:cx="375" inkscape:cy="520" inkscape:document-units="px" inkscape:current-layer="layer1" showgrid="false" showguides="true" inkscape:guide-bbox="true" inkscape:window-width="1280" inkscape:window-height="962" inkscape:window-x="-8" inkscape:window-y="-8" inkscape:window-maximized="1" borderlayer="false" height="989px"/>
+  <metadata id="metadata3067">
+    <rdf:RDF>
+      <cc:Work rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+        <dc:title/>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g inkscape:label="Layer 1" inkscape:groupmode="layer" id="layer1" transform="translate(0,-352.36193)">
+    <path inkscape:connector-curvature="0" style="color:#000000;fill:#002255;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" d="m 348.73933,442.60994 c -159.34239,0 -288.610914,113.81712 -288.610914,254.1134 0,140.29628 129.268524,253.96249 288.610914,253.96249 30.64277,0 60.21743,-4.28364 87.92006,-12.07189 l 0,-126.7549 c -23.92297,12.24689 -51.91935,19.31503 -81.92161,19.31503 -87.68144,0 -158.70173,-60.19095 -158.70173,-134.45073 0,-74.25974 71.02029,-134.45074 158.70173,-134.45074 30.00226,0 57.99864,7.06819 81.92161,19.31503 l 0,-126.90579 c -27.70263,-7.79724 -57.27729,-12.0719 -87.92006,-12.0719 z" id="path3002"/>
+    <polygon points="179.959,78.103 298.459,78.103 245.459,134.853 179.959,134.853 179.959,78.103 " transform="matrix(1.8139408,0,0,1.5533825,112.77035,478.75783)" style="fill:#002255" id="polygon9367"/>
+    <polygon points="179.959,203.103 298.459,203.103 245.459,146.353 179.959,146.353 179.959,203.103 " transform="matrix(1.8139408,0,0,1.5533825,112.77035,478.75783)" style="fill:#ff0000" id="polygon9369"/>
+  </g>
+</svg>

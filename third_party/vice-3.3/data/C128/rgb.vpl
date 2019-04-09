@@ -1,0 +1,56 @@
+#
+# VICE Palette file
+#
+# Syntax:
+# Red Green Blue Dither
+#
+
+# this palette contains fully saturated RGB colors, mostly useful for testing
+
+# Black
+00 00 00 0
+
+# White
+FF FF FF E
+
+# Red
+FF 00 00 4
+
+# Cyan
+00 FF FF C
+
+# Purple
+FF 00 FF 8
+
+# Green
+00 FF 00 4
+
+# Blue
+00 00 FF 4
+
+# Yellow
+FF FF 00 C
+
+# Orange
+FF 80 00 4
+
+# Brown
+80 40 00 4
+
+# Light Red
+FF 80 80 8
+
+# Dark Gray
+40 40 40 4
+
+# Medium Gray
+80 80 80 8
+
+# Light Green
+80 FF 80 8
+
+# Light Blue
+80 80 FF 8
+
+# Light Gray
+C0 C0 C0 C
