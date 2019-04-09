@@ -1,3 +1,0 @@
-Building the native GTK3 port of VICE:
-
-FIXME: FILL IN THE NEEDED INFORMATION

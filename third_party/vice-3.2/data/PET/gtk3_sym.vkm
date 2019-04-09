@@ -1,4 +1,0 @@
-# VICE keyboard mapping file
-
-# use PET business mapping as base
-!INCLUDE gtk3_buuk_sym.vkm

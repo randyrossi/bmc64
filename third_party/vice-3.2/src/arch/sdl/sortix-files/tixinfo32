@@ -1,5 +1,0 @@
-tix.version=1
-tix.class=tix
-tix.platform=i686-sortix
-pkg.name=vice
-pkg.prefix=
