@@ -79,3 +79,13 @@
   * Added ability to mount extended partitions by start sector
   * Only flush RDWR in-memory files back to disk if written to
   * Fix issue with filenames > 32 chars not accessible
+
+## 1.3
+  * Boot time reduced to 5 seconds for both SID engine types.
+  * Composite video refresh rate was discovered to be a tiny fraction higher than 50/60 hz and resulted in audio data accumulating in the audio buffer over time (causing audio latency). Added pal-composite and ntsc-composite machine_timing parameters to set it properly.
+  * Changed main release format to a zip file with flat files rather than an img to flash. This will let people chose the size of their SD card partitions and make updating easier. The .img file is still available with a 300Mb partition now.
+
+## 1.4
+  * Moved to VICE 3.3
+  * Fixed CRT attach issue that was leaking/clobbering memory
+  * Added missing fixup.dat so pi will report actual memory available
