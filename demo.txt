@@ -31,19 +31,19 @@
 
 
 # Jumpman for 5 min
-s,jump.vsf,300,i,0,
+s,jump.vsf,300,i,0
 
 # BASIC for 2 min
-dc,none,120,i,0,
+dc,none,120,i,0
 
 # StarWars Disk 1 287 seconds
-s,sw1.vsf,287,n,0,
+s,sw1.vsf,287,n,0
 
 # StarWars Disk 2 328 seconds
-s,sw2.vsf,328,n,0,
+s,sw2.vsf,328,n,0
 
 # BASIC for 2 min
-r,none,120,i,0,
+r,none,120,i,0
 
 # Sam's Journey for 5 min
 s,sam3.vsf,300,i,0
