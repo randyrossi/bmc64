@@ -60,4 +60,6 @@ libarch_a_SOURCES = \
 	text.h \
 	text.c \
 	demo.h \
-	demo.c
+	demo.c \
+	overlay.c \
+	overlay.h

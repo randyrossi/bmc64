@@ -81,6 +81,9 @@ struct VideoData {
    // to show the pixels we just wrote, avoiding horizontal tearing.
    int offscreen_buffer_y;
 
+   // Just the opposite of the above. Will point to on screen buffer.
+   int onscreen_buffer_y;
+
    int palette_index;
 };
 
@@ -112,7 +115,7 @@ void videoarch_swap(void);
 
 // Draws a single vice frame into our framebuffer
 void draw(uint8_t *src, int srcw, int srch, int src_pitch,
-          uint8_t *dst, int dst_pitch, int off_x, int off_y, int w, int h);
+          uint8_t *dst, int dst_pitch, int off_x, int off_y);
 
 // Make our video state visible
 extern struct VideoData video_state;

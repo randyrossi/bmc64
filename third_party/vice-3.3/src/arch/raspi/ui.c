@@ -129,23 +129,27 @@ void ui_init_menu(void) {
 }
 
 // Draw a single character at x,y coords into the offscreen area
-static void ui_draw_char(uint8_t c, int pos_x, int pos_y, int color) {
+static void ui_draw_char(uint8_t c, int pos_x, int pos_y, int color,
+                         uint8_t *dst, int dst_pitch) {
     int x, y;
     uint8_t fontchar;
     uint8_t *font_pos;
     uint8_t *draw_pos;
 
-    // Draw into off screen buffer
-    uint8_t *dst = video_state.dst +
-        video_state.offscreen_buffer_y * video_state.dst_pitch;
+    // Destination is main frame buffer if not specified.
+    if (dst == NULL) {
+       // Always draw into off screen buffer.
+       dst_pitch = video_state.dst_pitch;
+       dst = video_state.dst +
+          video_state.offscreen_buffer_y * dst_pitch;
+    }
 
     // Don't draw out of bounds
     if (pos_y < 0 || pos_y > video_state.scr_h - 8) { return; }
     if (pos_x < 0 || pos_x > video_state.scr_w - 8) { return; }
 
-    font_pos = &(video_state.font[video_state.font_translate[(int)c]]);
-
-    draw_pos = &(dst[pos_x + pos_y * video_state.dst_pitch]);
+    font_pos = &(video_state.font[video_state.font_translate[c]]);
+    draw_pos = &(dst[pos_x + pos_y * dst_pitch]);
 
     for (y = 0; y < 8; ++y) {
         fontchar = *font_pos;
@@ -155,35 +159,49 @@ static void ui_draw_char(uint8_t c, int pos_x, int pos_y, int color) {
           }
         }
         ++font_pos;
-        draw_pos += video_state.dst_pitch;
+        draw_pos += dst_pitch;
     }
 }
 
 // Draw a string of text at location x,y. Does not word wrap.
-void ui_draw_text(const char* text, int x, int y, int color) {
+void ui_draw_text_buf(const char* text, int x, int y, int color, uint8_t *dst, int dst_pitch) {
    int i;
    for (i=0;i<strlen(text);i++) {
-      ui_draw_char(text[i], x, y, color); x=x+8;
+      ui_draw_char(text[i], x, y, color, dst, dst_pitch);
+      x=x+8;
    }
 }
 
+void ui_draw_text(const char* text, int x, int y, int color) {
+   ui_draw_text_buf(text, x, y, color, NULL, 0);
+}
+
 // Draw a rectangle at x/y of given w/h into the offscreen area
-void ui_draw_rect(int x,int y, int w, int h, int color, int fill) {
+void ui_draw_rect_buf(int x,int y, int w, int h, int color, int fill, uint8_t* dst, int dst_pitch) {
    int xx, yy, x2, y2;
-   uint8_t *dst = video_state.dst +
-      video_state.offscreen_buffer_y*video_state.dst_pitch;
+
+   // Destination is main frame buffer if not specified.
+   if (dst == NULL) {
+      dst_pitch = video_state.dst_pitch;
+      dst = video_state.dst +
+         video_state.offscreen_buffer_y * dst_pitch;
+   }
    x2 = x + w;
    y2 = y + h;
    for(xx= x, yy=y; yy < y2; xx++){
       if(xx >= x2) {
          xx = x - 1; yy++;
       } else {
-         int p1 = xx+yy*video_state.dst_pitch;
+         int p1 = xx + yy * dst_pitch;
          if (fill | (yy==y || yy==(y2-1) || (xx == x) || xx == (x2-1))) {
             dst[p1]= color;
          }
       }
    }
+}
+
+void ui_draw_rect(int x,int y, int w, int h, int color, int fill) {
+   ui_draw_rect_buf(x,y,w,h,color,fill,NULL, 0);
 }
 
 // Returns the height/width the given text would occupy if drawn

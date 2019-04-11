@@ -214,17 +214,12 @@ void signals_init(int do_core_dumps){ }
 void tui_error(const char *format, ...){ }
 void tui_init(void){ }
 void ui_display_drive_current_image(unsigned int drive_number, const char *image){ }
-void ui_display_drive_led(int drive_number, unsigned int pwm1, unsigned int led_pwm2){ }
 void ui_display_drive_track(unsigned int drive_number, unsigned int drive_base, unsigned int half_track_number) { }
 void ui_display_event_time(unsigned int current, unsigned int total){ }
 void ui_display_joyport(uint8_t *joyport){ }
 void ui_display_playback(int playback_status, char *version){ }
 void ui_display_recording(int recording_status){ }
-void ui_display_tape_control_status(int control){ }
-void ui_display_tape_counter(int counter){ }
 void ui_display_tape_current_image(const char *image){ }
-void ui_display_tape_motor_status(int motor){ }
-void ui_enable_drive_status(ui_drive_enable_t state, int *drive_led_color) { }
 void ui_error_string(const char *text){ }
 void ui_init_checkbox_style(void){ }
 void ui_init_drive_status_widget(void){ }

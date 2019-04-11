@@ -727,6 +727,10 @@ static void menu_value_changed(struct menu_item* item) {
          datasette_control(DATASETTE_CONTROL_REWIND);
          ui_pop_all_and_toggle();
          return;
+      case MENU_TAPE_FASTFWD:
+         datasette_control(DATASETTE_CONTROL_FORWARD);
+         ui_pop_all_and_toggle();
+         return;
       case MENU_TAPE_RECORD:
          datasette_control(DATASETTE_CONTROL_RECORD);
          ui_pop_all_and_toggle();
@@ -897,6 +901,7 @@ void build_menu(struct menu_item* root) {
       ui_menu_add_button(MENU_TAPE_START, parent, "Play");
       ui_menu_add_button(MENU_TAPE_STOP, parent, "Stop");
       ui_menu_add_button(MENU_TAPE_REWIND, parent, "Rewind");
+      ui_menu_add_button(MENU_TAPE_FASTFWD, parent, "FastFwd");
       ui_menu_add_button(MENU_TAPE_RECORD, parent, "Record");
       ui_menu_add_button(MENU_TAPE_RESET, parent, "Reset");
 

@@ -112,7 +112,7 @@ libarch_a_LIBADD =
 am_libarch_a_OBJECTS = archdep.$(OBJEXT) joy.$(OBJEXT) kbd.$(OBJEXT) \
 	mousedrv.$(OBJEXT) missing.$(OBJEXT) ui.$(OBJEXT) \
 	videoarch.$(OBJEXT) menu.$(OBJEXT) menu_usb.$(OBJEXT) \
-	text.$(OBJEXT) demo.$(OBJEXT)
+	text.$(OBJEXT) demo.$(OBJEXT) overlay.$(OBJEXT)
 libarch_a_OBJECTS = $(am_libarch_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -449,7 +449,9 @@ libarch_a_SOURCES = \
 	text.h \
 	text.c \
 	demo.h \
-	demo.c
+	demo.c \
+	overlay.c \
+	overlay.h
 
 all: all-am
 
@@ -507,6 +509,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_usb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/missing.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mousedrv.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/overlay.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/text.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/videoarch.Po@am__quote@
