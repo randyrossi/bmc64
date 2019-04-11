@@ -87,7 +87,8 @@ int joy_key_up(unsigned int device, int key) {
             default:
                return 0;
           }
-        } else if (joydevs[device].device == JOYDEV_CURS) {
+        } else if (joydevs[device].device == JOYDEV_CURS_SP ||
+                   joydevs[device].device == JOYDEV_CURS_LC) {
          switch (key) {
             case KEYCODE_Up:
                circle_ui_key_interrupt(KEYCODE_Up, 0 /* up */);
@@ -102,9 +103,12 @@ int joy_key_up(unsigned int device, int key) {
                circle_ui_key_interrupt(KEYCODE_Right, 0 /* up */);
                return 1;
             case KEYCODE_Space:
-               circle_ui_key_interrupt(KEYCODE_Return, 0 /* up */);
-               return 1;
+               if (joydevs[device].device == JOYDEV_CURS_SP) {
+                  circle_ui_key_interrupt(KEYCODE_Return, 0 /* up */);
+                  return 1;
+               }
             default:
+               // NOTE: Don't consume LeftControl when ui is up
                return 0;
           }
         }
@@ -152,7 +156,8 @@ int joy_key_up(unsigned int device, int key) {
             default:
                return 0;
          }
-     } else if (joydevs[device].device == JOYDEV_CURS) {
+     } else if (joydevs[device].device == JOYDEV_CURS_SP ||
+                joydevs[device].device == JOYDEV_CURS_LC) {
          switch (key) {
             case KEYCODE_Up:
                circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x01);
@@ -167,8 +172,15 @@ int joy_key_up(unsigned int device, int key) {
                circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x08);
                return 1;
             case KEYCODE_Space:
-               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x10);
-               return 1;
+               if (joydevs[device].device == JOYDEV_CURS_SP) {
+                  circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x10);
+                  return 1;
+               }
+            case KEYCODE_LeftControl:
+               if (joydevs[device].device == JOYDEV_CURS_LC) {
+                  circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x10);
+                  return 1;
+               }
             default:
                return 0;
          }
@@ -220,7 +232,8 @@ int joy_key_down(unsigned int device, int key) {
             default:
                return 0;
           }
-        } else if (joydevs[device].device == JOYDEV_CURS) {
+        } else if (joydevs[device].device == JOYDEV_CURS_SP ||
+                   joydevs[device].device == JOYDEV_CURS_LC) {
          switch (key) {
             case KEYCODE_Up:
                circle_ui_key_interrupt(KEYCODE_Up, 1 /* down */);
@@ -238,6 +251,7 @@ int joy_key_down(unsigned int device, int key) {
                circle_ui_key_interrupt(KEYCODE_Return, 1 /* down */);
                return 1;
             default:
+               // NOTE: Don't consume LeftControl when ui is up
                return 0;
           }
         }
@@ -285,7 +299,8 @@ int joy_key_down(unsigned int device, int key) {
             default:
                return 0;
          }
-     } else if (joydevs[device].device == JOYDEV_CURS) {
+     } else if (joydevs[device].device == JOYDEV_CURS_SP ||
+                joydevs[device].device == JOYDEV_CURS_LC) {
          switch (key) {
             case KEYCODE_Up:
                circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x01);
@@ -300,8 +315,15 @@ int joy_key_down(unsigned int device, int key) {
                circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x08);
                return 1;
             case KEYCODE_Space:
-               circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x10);
-               return 1;
+               if (joydevs[device].device == JOYDEV_CURS_SP) {
+                 circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x10);
+                 return 1;
+               }
+            case KEYCODE_LeftControl:
+               if (joydevs[device].device == JOYDEV_CURS_LC) {
+                 circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x10);
+                 return 1;
+               }
             default:
                return 0;
          }

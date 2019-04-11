@@ -47,9 +47,10 @@ int joy_arch_init(void);
 #define JOYDEV_USB_1     13
 #define JOYDEV_GPIO_0    14
 #define JOYDEV_GPIO_1    15
-#define JOYDEV_CURS      16
+#define JOYDEV_CURS_SP   16
 #define JOYDEV_NUMS_1    17
 #define JOYDEV_NUMS_2    18
+#define JOYDEV_CURS_LC   19
 
 extern void joystick_close(void);
 extern void joystick(void);

@@ -89,3 +89,4 @@
   * Moved to VICE 3.3
   * Fixed CRT attach issue that was leaking/clobbering memory
   * Added missing fixup.dat so pi will report actual memory available
+  * Added LeftControl + Cursor keys as joystick option

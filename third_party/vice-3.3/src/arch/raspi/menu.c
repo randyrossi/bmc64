@@ -965,30 +965,32 @@ void build_menu(struct menu_item* root) {
       child = port_1_menu_item = ui_menu_add_multiple_choice(
           MENU_JOYSTICK_PORT_1, parent,
           "Joystick Port 1");
-      child->num_choices = 8;
+      child->num_choices = 9;
       child->value = 0;
       strcpy (child->choices[0], "None"); child->choice_ints[0] = JOYDEV_NONE;
       strcpy (child->choices[1], "USB 1"); child->choice_ints[1] = JOYDEV_USB_0;
       strcpy (child->choices[2], "USB 2"); child->choice_ints[2] = JOYDEV_USB_1;
       strcpy (child->choices[3], "GPIO Bank 1"); child->choice_ints[3] = JOYDEV_GPIO_0;
       strcpy (child->choices[4], "GPIO Bank 2"); child->choice_ints[4] = JOYDEV_GPIO_1;
-      strcpy (child->choices[5], "CURS + SPACE"); child->choice_ints[5] = JOYDEV_CURS;
+      strcpy (child->choices[5], "CURS + SPACE"); child->choice_ints[5] = JOYDEV_CURS_SP;
       strcpy (child->choices[6], "NUMPAD 64825"); child->choice_ints[6] = JOYDEV_NUMS_1;
       strcpy (child->choices[7], "NUMPAD 17930"); child->choice_ints[7] = JOYDEV_NUMS_2;
+      strcpy (child->choices[8], "CURS + LCTRL"); child->choice_ints[8] = JOYDEV_CURS_LC;
 
       child = port_2_menu_item = ui_menu_add_multiple_choice(
           MENU_JOYSTICK_PORT_2, parent,
           "Joystick Port 2");
-      child->num_choices = 8;
+      child->num_choices = 9;
       child->value = 0;
       strcpy (child->choices[0], "None"); child->choice_ints[0] = JOYDEV_NONE;
       strcpy (child->choices[1], "USB 1"); child->choice_ints[1] = JOYDEV_USB_0;
       strcpy (child->choices[2], "USB 2"); child->choice_ints[2] = JOYDEV_USB_1;
       strcpy (child->choices[3], "GPIO Bank 1"); child->choice_ints[3] = JOYDEV_GPIO_0;
       strcpy (child->choices[4], "GPIO Bank 2"); child->choice_ints[4] = JOYDEV_GPIO_1;
-      strcpy (child->choices[5], "CURS + SPACE"); child->choice_ints[5] = JOYDEV_CURS;
+      strcpy (child->choices[5], "CURS + SPACE"); child->choice_ints[5] = JOYDEV_CURS_SP;
       strcpy (child->choices[6], "NUMPAD 64825"); child->choice_ints[6] = JOYDEV_NUMS_1;
       strcpy (child->choices[7], "NUMPAD 17930"); child->choice_ints[7] = JOYDEV_NUMS_2;
+      strcpy (child->choices[8], "CURS + LCTRL"); child->choice_ints[8] = JOYDEV_CURS_LC;
 
       ui_set_joy_items();
 

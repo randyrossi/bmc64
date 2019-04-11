@@ -218,13 +218,15 @@ void circle_key_pressed(long key) {
    // Intercept keys meant to become joystick values
    if (joydevs[0].device == JOYDEV_NUMS_1 ||
       joydevs[0].device == JOYDEV_NUMS_2 ||
-      joydevs[0].device == JOYDEV_CURS) {
+      joydevs[0].device == JOYDEV_CURS_SP ||
+      joydevs[0].device == JOYDEV_CURS_LC) {
       if (joy_key_down(0, key))
          return;
    }
    if (joydevs[1].device == JOYDEV_NUMS_1 ||
       joydevs[1].device == JOYDEV_NUMS_2 ||
-      joydevs[1].device == JOYDEV_CURS) {
+      joydevs[1].device == JOYDEV_CURS_SP ||
+      joydevs[1].device == JOYDEV_CURS_LC) {
       if (joy_key_down(1, key))
          return;
    }
@@ -263,13 +265,15 @@ void circle_key_released(long key) {
    // Intercept keys meant to become joystick values
    if (joydevs[0].device == JOYDEV_NUMS_1 ||
       joydevs[0].device == JOYDEV_NUMS_2 ||
-      joydevs[0].device == JOYDEV_CURS) {
+      joydevs[0].device == JOYDEV_CURS_SP ||
+      joydevs[0].device == JOYDEV_CURS_LC) {
       if (joy_key_up(0, key))
          return;
    }
    if (joydevs[1].device == JOYDEV_NUMS_1 ||
       joydevs[1].device == JOYDEV_NUMS_2 ||
-      joydevs[1].device == JOYDEV_CURS) {
+      joydevs[1].device == JOYDEV_CURS_SP ||
+      joydevs[1].device == JOYDEV_CURS_LC) {
       if (joy_key_up(1, key))
          return;
    }
