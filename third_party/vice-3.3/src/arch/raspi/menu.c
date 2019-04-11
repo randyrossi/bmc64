@@ -76,6 +76,7 @@ struct menu_item *menu_alt_f12_item;
 struct menu_item *sid_engine_item;
 struct menu_item *sid_model_item;
 struct menu_item *sid_filter_item;
+struct menu_item *overlay_item;
 
 int unit;
 const int num_disk_ext = 13;
@@ -306,6 +307,7 @@ static void save_settings() {
    fprintf(fp,"sid_engine=%d\n",sid_engine_item->value);
    fprintf(fp,"sid_model=%d\n",sid_model_item->value);
    fprintf(fp,"sid_filter=%d\n",sid_filter_item->value);
+   fprintf(fp,"overlay=%d\n",overlay_item->value);
    fclose(fp);
 }
 
@@ -386,6 +388,8 @@ static void load_settings() {
       } else if (strcmp(name,"sid_model")==0) {
          sid_model_item->value = value;
          resources_set_int("SidModel", sid_model_item->choice_ints[value]);
+      } else if (strcmp(name,"overlay")==0) {
+         overlay_item->value = value;
       }
    }
    fclose(fp);
@@ -1030,6 +1034,13 @@ void build_menu(struct menu_item* root) {
          parent, "Drive sound emulation volume", 0, 1000, 100, 1000);
       resources_set_int("DriveSoundEmulationVolume", drive_sounds_vol_item->value);
 
+      overlay_item = ui_menu_add_multiple_choice(MENU_OVERLAY, parent, "Show Status Bar");
+      overlay_item->num_choices = 3;
+      overlay_item->value = 0;
+      strcpy (overlay_item->choices[OVERLAY_NEVER], "Never");
+      strcpy (overlay_item->choices[OVERLAY_ALWAYS], "Always");
+      strcpy (overlay_item->choices[OVERLAY_ON_ACTIVITY], "On Activity");
+
    ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
 
    // This is an undocumented feature for now. Keep invisible unless it
@@ -1053,3 +1064,10 @@ void build_menu(struct menu_item* root) {
    ui_set_joy_devs();
 }
 
+int overlay_enabled(void) {
+   return overlay_item->value != OVERLAY_NEVER;
+}
+
+int overlay_forced(void) {
+   return overlay_item->value == OVERLAY_ALWAYS;
+}

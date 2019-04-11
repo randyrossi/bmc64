@@ -87,6 +87,10 @@
 
 ## 1.4
   * Moved to VICE 3.3
+  * Added status bar in Prefs to show disk/tape counter/controls/motor etc
+    Can be turned on permanently or triggered by activity and disappears after
+    a timeout.
   * Fixed CRT attach issue that was leaking/clobbering memory
   * Added missing fixup.dat so pi will report actual memory available
   * Added LeftControl + Cursor keys as joystick option
+  

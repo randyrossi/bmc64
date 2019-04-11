@@ -126,6 +126,7 @@
 #define MENU_LOAD_SNAP_FILE 71
 
 #define MENU_DEMO_MODE 72
+#define MENU_OVERLAY 73
 
 #define MENU_SUB_NONE 0
 #define MENU_SUB_PICK_FILE 1
@@ -144,11 +145,17 @@
 #define ALT_F12_DISABLED 0
 #define ALT_F12_COMMODOREF7 1
 
+#define OVERLAY_NEVER 0
+#define OVERLAY_ALWAYS 1
+#define OVERLAY_ON_ACTIVITY 2
+
 // Called at initialzation
 void build_menu(struct menu_item* root);
 
 int menu_get_keyboard_type(void);
 int menu_alt_f12(void);
 void menu_swap_joysticks(void);
+int overlay_enabled(void);
+int overlay_forced(void);
 
 #endif

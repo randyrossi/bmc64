@@ -47,6 +47,7 @@
 #include "joyport/joystick.h"
 #include "demo.h"
 #include "overlay.h"
+#include "menu.h"
 
 // Keep video state shared between compilation units here
 struct VideoData video_state;
@@ -207,7 +208,6 @@ volatile int pending_emu_joy_port[128];
 volatile int pending_emu_joy_type[128];
 
 static struct video_canvas_s *g_canvas;
-uint8_t* overlay_buf;
 
 #define COLOR16(red, green, blue)         (((red) & 0x1F) << 11 \
                                         | ((green) & 0x1F) << 6 \
@@ -303,8 +303,8 @@ void video_arch_canvas_init(struct video_canvas_s *canvas){
   video_state.canvas = canvas;
   video_state.scr_w = scr_w;
   video_state.scr_h = scr_h;
-  video_state.dst_pitch = circle_get_fb_pitch();
-  video_state.dst = circle_get_fb();
+  video_state.dst_pitch = fb_pitch;
+  video_state.dst = fb;
   video_state.font = mem_chargen_rom + 0x800;
   video_state.palette_index = PALETTE_DEFAULT;
   for (i = 0; i < 256; ++i) {
@@ -320,8 +320,6 @@ void video_canvas_refresh(struct video_canvas_s *canvas,
   // TODO: Precompute as much of this as possible and store in
   // our canvas struct.
   uint8_t *src = canvas->draw_buffer->draw_buffer;
-  uint8_t *fb = circle_get_fb();
-  int fb_pitch = circle_get_fb_pitch();
   int s_pitch = canvas->draw_buffer->draw_buffer_width;
   int sh = canvas->draw_buffer->visible_height;
   int sw = canvas->draw_buffer->visible_width;
@@ -337,7 +335,7 @@ void video_canvas_refresh(struct video_canvas_s *canvas,
      if (canvas->off_x < 0) canvas->off_x = 0;
      if (canvas->off_y < 0) canvas->off_y = 0;
 
-     overlay_buf = overlay_init(sw, 10, sw, sh);
+     overlay_init(sw, 10, sw, sh);
   }
 
   // Top left calculation used for full frame scaling
@@ -348,7 +346,7 @@ void video_canvas_refresh(struct video_canvas_s *canvas,
   // This will do the whole frame, not the region. Scale into the offscreen
   // area.
   draw(src+top_left, sw, sh, s_pitch,
-       fb + video_state.offscreen_buffer_y*fb_pitch, fb_pitch,
+       video_state.dst + video_state.offscreen_buffer_y*video_state.dst_pitch, video_state.dst_pitch,
        canvas->off_x, canvas->off_y);
 
   need_buffer_swap = 1;
@@ -387,12 +385,14 @@ void vsyncarch_postsync(void){
   }
 
   // Always draw overlay on visible buffer
-  // TODO stuff these into video state so we don't have to grab here
-  int sh = g_canvas->draw_buffer->visible_height;
-  int sw = g_canvas->draw_buffer->visible_width;
-  draw(overlay_buf, sw, 10, sw,
+  if (overlay_forced() || overlay_showing) {
+     overlay_check();
+     int sh = g_canvas->draw_buffer->visible_height;
+     int sw = g_canvas->draw_buffer->visible_width;
+     draw(overlay_buf, sw, 10, sw,
        video_state.dst + video_state.onscreen_buffer_y*video_state.dst_pitch,
        video_state.dst_pitch, g_canvas->off_x, g_canvas->off_y + sh - 10);
+  }
 
   video_ticks+=video_tick_inc;
 
