@@ -115,6 +115,7 @@ src/arch/mingw32-pcap/wpcap/Makefile
 src/arch/mingw32-pcap/wpcap/net/Makefile
 src/arch/raspi/.deps/
 src/arch/raspi/Makefile
+src/arch/raspi/libarch.a
 src/arch/raspi/overlay.c
 src/arch/raspi/overlay.h
 src/arch/sdl/.deps/
