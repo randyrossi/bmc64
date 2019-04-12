@@ -33,10 +33,10 @@ index 0ea1923..d5cf197 100644
  
  stub_warning(_getpid)
 diff --git a/libgloss/circle/io.cpp b/libgloss/circle/io.cpp
-index 23720b6..45ffcab 100644
+index 23720b6..c0723ab 100644
 --- a/libgloss/circle/io.cpp
 +++ b/libgloss/circle/io.cpp
-@@ -1,385 +1,750 @@
+@@ -1,385 +1,776 @@
  #include "config.h"
  #include <_ansi.h>
  #include <_syslist.h>
@@ -132,10 +132,14 @@ index 23720b6..45ffcab 100644
 +    }
 +    return 0; // t was longer than s
 +}
-+
+ 
+-        TFindCurrentEntry mCurrentEntry;
+-        struct dirent mEntry;
+-        unsigned int mFirstRead : 1;
+-        unsigned int mOpen : 1;
 +static void reverse(char *x, int begin, int end) {
 +  char c;
-+
+ 
 +  if (begin >= end)
 +    return;
 +
@@ -145,11 +149,7 @@ index 23720b6..45ffcab 100644
 +
 +  reverse(x, ++begin, --end);
 +}
- 
--        TFindCurrentEntry mCurrentEntry;
--        struct dirent mEntry;
--        unsigned int mFirstRead : 1;
--        unsigned int mOpen : 1;
++
 +static void itoa2(int i, char *dst) {
 +  int q = 0;
 +  int j;
@@ -163,7 +163,7 @@ index 23720b6..45ffcab 100644
 +
 +  reverse(dst, 0, strlen(dst) - 1);
 +}
- 
++
 +// BCM64 : For routing stdout/stderr to serial via circle
 +extern "C" {
 +extern ssize_t circle_serial_write(int fd, const void *buf, size_t count);
@@ -308,8 +308,7 @@ index 23720b6..45ffcab 100644
 -            assert (!circle_fat_fs);
 +  strcpy (currentDir, "/");
 +}
- 
--            circle_fat_fs = &rFATFileSystem;
++
 +static int g_bootStatNum = 0;
 +static int *g_bootStatWhat;
 +static const char **g_bootStatFile;
@@ -325,7 +324,8 @@ index 23720b6..45ffcab 100644
 +   g_bootStatFile = bootStatFile;
 +   g_bootStatSize = bootStatSize;
 +}
-+
+ 
+-            circle_fat_fs = &rFATFileSystem;
 +void CGlueStdioSetPartitionForVolume (const char* volume, int part, unsigned int ss) {
 +  for (int pd = 0; pd < FF_VOLUMES; pd++) {
 +     if (strcmp(volume, VolumeStr[pd]) == 0) {
@@ -854,11 +854,11 @@ index 23720b6..45ffcab 100644
 +    }
 +    result = de;
 +  }
- 
--        auto &slot = dirTab[slotNum];
++
 +  return result;
 +}
-+
+ 
+-        auto &slot = dirTab[slotNum];
 +extern "C" struct dirent *readdir(DIR *dir) {
 +  struct dirent *result;
  
@@ -929,10 +929,7 @@ index 23720b6..45ffcab 100644
 +    errno = EBADF;
 +    return -1;
 +  }
- 
--        if (dir->mOpen)
--        {
--                result = do_readdir (dir, &dir->mEntry);
++
 +  c_dir->in_use = 0;
 +
 +  if (f_closedir(dir) != FR_OK) {
@@ -942,7 +939,10 @@ index 23720b6..45ffcab 100644
 +
 +  return 0;
 +}
-+
+ 
+-        if (dir->mOpen)
+-        {
+-                result = do_readdir (dir, &dir->mEntry);
 +extern "C" int _DEFUN(_stat, (file, st),
 +                      const char *file _AND struct stat *st) {
 +  CirclePath circlePath(file);
@@ -982,12 +982,12 @@ index 23720b6..45ffcab 100644
 +    } else {
 +      st->st_mode |= S_IREAD | S_IWRITE;
 +    }
-+
+ 
+-        return result;
 +    st->st_size = fno.fsize;
 +    return 0;
 +  }
- 
--        return result;
++
 +  errno = EBADF;
 +  return -1;
  }
@@ -1070,6 +1070,8 @@ index 23720b6..45ffcab 100644
 -                errno = EBADF;
 -                return -1;
 -        }
++  int i;
++
 +  if (path == nullptr) {
 +     errno = EIO;
 +     return -1;
@@ -1077,32 +1079,55 @@ index 23720b6..45ffcab 100644
 +
 +  int len = strlen(path);
 +  if (len == 0) {
-+     errno = EIO;
-+     return -1;
++     return 0;
 +  }
-+
+ 
+-        dir->mOpen = 0;
 +  if (len == 1 && path[0] == '.') {
 +     return 0;
 +  }
 +
-+  CirclePath circlePath(path);
-+  strcpy(currentDir, circlePath.path);
-+
-+  // Ensure trailing slash
-+  if (currentDir[strlen(currentDir)-1] != '/') {
-+     strcat(currentDir, "/");
++  // Up to parent
++  if (len == 2 && path[0] == '.' && path[1] == '.') {
++     if (strlen(currentDir) == 0) {
++        return 0;
++     }
++     if (strlen(currentDir) == 1 && currentDir[0] == '/') {
+         return 0;
++     }
++     for (i=strlen(currentDir)-1; i >= 0; i--) {
++        if (currentDir[i] == '/') {
++           currentDir[i] = '\0';
++           return 0;
++        }
++     }
++     return 0;
 +  }
++
++  CirclePath circlePath(path);
++  if (path[0] == '/') {
++     // Absolute
++     strcpy(currentDir, circlePath.path);
++  } else {
++     // Ensure trailing slash is present before appending
++     if (strlen(currentDir) == 0 || currentDir[strlen(currentDir)-1] != '/') {
++        strcat(currentDir, "/");
++     }
++     strcat(currentDir, circlePath.path);
++  }
++
 +  return 0;
-+}
- 
--        dir->mOpen = 0;
--        return 0;
+ }
++
 +char *getwd(char *buf) {
 +   if (buf) {
 +      strcpy(buf, currentDir);
++      if (strlen(buf) > 1 && buf[strlen(buf)-1] == '/') {
++         buf[strlen(buf)-1] = '\0';
++      }
 +   }
-+   return currentDir;
- }
++   return buf;
++}
 +
 diff --git a/libgloss/circle/lseek.c b/libgloss/circle/lseek.c
 index 0aa89e2..90c8d98 100644

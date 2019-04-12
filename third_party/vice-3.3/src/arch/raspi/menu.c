@@ -31,6 +31,7 @@
 #include <dirent.h>
 #include <string.h>
 #include <assert.h>
+
 #include "attach.h"
 #include "cartridge.h"
 #include "machine.h"
@@ -280,10 +281,10 @@ static void ui_set_joy_items()
    }
 }
 
-static void save_settings() {
+static int save_settings() {
    int i;
    FILE *fp = fopen("/settings.txt","w");
-   if (fp == NULL) return;
+   if (fp == NULL) return 1;
 
    fprintf(fp,"port_1=%d\n",port_1_menu_item->value);
    fprintf(fp,"port_2=%d\n",port_2_menu_item->value);
@@ -309,6 +310,8 @@ static void save_settings() {
    fprintf(fp,"sid_filter=%d\n",sid_filter_item->value);
    fprintf(fp,"overlay=%d\n",overlay_item->value);
    fclose(fp);
+
+   return 0;
 }
 
 // Make joydev reflect menu choice
@@ -594,8 +597,11 @@ static void menu_value_changed(struct menu_item* item) {
 
    switch (item->id) {
       case MENU_SAVE_SETTINGS:
-         save_settings();
-         ui_info("Settings saved");
+         if (save_settings()) {
+            ui_error("Problem saving");
+         } else {
+            ui_info("Settings saved");
+         }
          return;
       case MENU_COLOR_PALETTE:
          video_canvas_change_palette(item->value);
@@ -667,10 +673,12 @@ static void menu_value_changed(struct menu_item* item) {
          ui_pop_all_and_toggle();
          return;
       case MENU_SOFT_RESET:
+         resources_set_string_sprintf("FSDevice%iDir", "/", 8);
          machine_trigger_reset(MACHINE_RESET_MODE_SOFT);
          ui_pop_all_and_toggle();
          return;
       case MENU_HARD_RESET:
+         resources_set_string_sprintf("FSDevice%iDir", "/", 8);
          machine_trigger_reset(MACHINE_RESET_MODE_HARD);
          ui_pop_all_and_toggle();
          return;
