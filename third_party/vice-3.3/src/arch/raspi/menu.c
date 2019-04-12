@@ -281,7 +281,7 @@ static int get_drive_type_vice(int value)
 
 static void show_about() {
    struct menu_item* about_root = ui_push_menu(32, 8);
-   ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.3");
+   ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.4");
    ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C64 Emulator");
    ui_menu_add_button(MENU_TEXT, about_root, "For the Rasbperry Pi 2/3");
    ui_menu_add_divider(about_root);
