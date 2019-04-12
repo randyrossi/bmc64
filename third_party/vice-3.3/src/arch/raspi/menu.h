@@ -128,6 +128,17 @@
 #define MENU_DEMO_MODE 72
 #define MENU_OVERLAY 73
 
+#define MENU_DRIVE_TYPE_8 74
+#define MENU_DRIVE_TYPE_9 75
+#define MENU_DRIVE_TYPE_10 76
+#define MENU_DRIVE_TYPE_11 77
+
+#define MENU_ITEM_DRIVE_NONE 0
+#define MENU_ITEM_DRIVE_1541 1
+#define MENU_ITEM_DRIVE_1541II 2
+#define MENU_ITEM_DRIVE_1571 3
+#define MENU_ITEM_DRIVE_1581 4
+
 #define MENU_SUB_NONE 0
 #define MENU_SUB_PICK_FILE 1
 #define MENU_SUB_UP_DIR 2
@@ -157,5 +168,8 @@ int menu_alt_f12(void);
 void menu_swap_joysticks(void);
 int overlay_enabled(void);
 int overlay_forced(void);
+
+void menu_about_to_activate(void);
+void menu_about_to_deactivate(void);
 
 #endif

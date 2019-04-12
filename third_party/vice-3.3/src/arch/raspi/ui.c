@@ -511,6 +511,7 @@ static void ui_render_single_frame() {
 }
 
 static void pause_trap(uint16_t addr, void *data) {
+   menu_about_to_activate();
    while (ui_activated) {
       if (joydevs[0].device == JOYDEV_GPIO_0 || joydevs[1].device == JOYDEV_GPIO_0) {
          circle_poll_joysticks(0, 0);
@@ -523,6 +524,7 @@ static void pause_trap(uint16_t addr, void *data) {
       ui_render_single_frame();
       circle_wait_vsync();
    }
+   menu_about_to_deactivate();
 }
 
 void ui_toggle(void) {

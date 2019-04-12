@@ -111,10 +111,22 @@ void ui_enable_drive_status(ui_drive_enable_t state,
     int i, enabled = state;
 
     for (i = 0; i < DRIVE_NUM; ++i) {
+        ui_draw_rect_buf(drive_x[i] + 8 * 0 + inset_x, inset_y + 2,
+                   6, 4, BG_COLOR, 1,
+                   overlay_buf, overlay_buf_pitch);
+        ui_draw_rect_buf(drive_x[i] + 8 * 1 + inset_x, inset_y + 2,
+                   6, 4, BG_COLOR, 1,
+                   overlay_buf, overlay_buf_pitch);
         if (enabled & 1) {
             drive_led_types[i] = drive_led_color[i];
             current_drive_leds[i][0] = 0;
             current_drive_leds[i][1] = 0;
+            ui_draw_rect_buf(drive_x[i] + 8 * 0 + inset_x, inset_y + 2,
+                   6, 4, BLACK, 1,
+                   overlay_buf, overlay_buf_pitch);
+            ui_draw_rect_buf(drive_x[i] + 8 * 1 + inset_x, inset_y + 2,
+                   6, 4, BLACK, 1,
+                   overlay_buf, overlay_buf_pitch);
         }
         enabled >>= 1;
     }

@@ -14,9 +14,7 @@ fail,mps803.vpl,0
 fail,nl10-cbm,0
 fail,1520.vpl,0
 fail,dos1540,0
-fail,dos1541,0
 fail,dos1570,0
-fail,dos1581,0
 fail,dos2000,0
 fail,dos4000,0
 fail,dos2031,0
