@@ -83,6 +83,7 @@ struct menu_item *drive_type_item_8;
 struct menu_item *drive_type_item_9;
 struct menu_item *drive_type_item_10;
 struct menu_item *drive_type_item_11;
+struct menu_item *tape_reset_with_machine_item;
 
 static int drive_type_8_on_pop;
 static int drive_type_9_on_pop;
@@ -356,6 +357,7 @@ static int save_settings() {
    fprintf(fp,"sid_model=%d\n",sid_model_item->value);
    fprintf(fp,"sid_filter=%d\n",sid_filter_item->value);
    fprintf(fp,"overlay=%d\n",overlay_item->value);
+   fprintf(fp,"tapereset=%d\n",tape_reset_with_machine_item->value);
    fclose(fp);
 
    return 0;
@@ -440,6 +442,8 @@ static void load_settings() {
          resources_set_int("SidModel", sid_model_item->choice_ints[value]);
       } else if (strcmp(name,"overlay")==0) {
          overlay_item->value = value;
+      } else if (strcmp(name,"tapereset")==0) {
+         tape_reset_with_machine_item->value = value;
       }
    }
    fclose(fp);
@@ -798,6 +802,14 @@ static void menu_value_changed(struct menu_item* item) {
          datasette_control(DATASETTE_CONTROL_RESET);
          ui_pop_all_and_toggle();
          return;
+      case MENU_TAPE_RESET_COUNTER:
+         datasette_control(DATASETTE_CONTROL_RESET_COUNTER);
+         ui_pop_all_and_toggle();
+         return;
+      case MENU_TAPE_RESET_WITH_MACHINE:
+         resources_set_int("DatasetteResetWithCPU",
+            tape_reset_with_machine_item->value);
+         return;
       case MENU_SID_ENGINE:
          resources_set_int("SidEngine", item->choice_ints[item->value]);
          resources_set_int("SidResidSampling", 0);
@@ -1022,6 +1034,11 @@ void build_menu(struct menu_item* root) {
       ui_menu_add_button(MENU_TAPE_FASTFWD, parent, "FastFwd");
       ui_menu_add_button(MENU_TAPE_RECORD, parent, "Record");
       ui_menu_add_button(MENU_TAPE_RESET, parent, "Reset");
+      ui_menu_add_button(MENU_TAPE_RESET_COUNTER, parent, "Reset Counter");
+      resources_get_int("DatasetteResetWithCPU", &i);
+      tape_reset_with_machine_item = ui_menu_add_toggle(
+          MENU_TAPE_RESET_WITH_MACHINE, parent,
+              "Reset Tape with Machine Reset", i);
 
    ui_menu_add_divider(root);
 
@@ -1237,3 +1254,4 @@ void menu_about_to_deactivate() {
       }
    }
 }
+
