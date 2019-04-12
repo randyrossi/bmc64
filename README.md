@@ -18,8 +18,6 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
 
 # Known Issues
 
-  * Units 9-11 cannot mount disks yet.
-
   * There is no hot plug in/out support for USB devices.  All devices must be plugged in before the device is booted and never removed.  Attempting to remove them will halt the emulator or make it slow down considerably.
 
   * Some USB gamepads will require manual tweaking of settings from the defaults. 
@@ -33,6 +31,7 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
   * https://github.com/randyrossi/bmc64
 
 # Timing
+
 The machine config provided defaults to PAL 50hz for HDMI.  If you want to use composite out, you MUST change the machine_timing parameter in cmdline.txt to 'pal-composite'.  Otherwise, you will have audio synchronization issues.  You can change the machine to be NTSC if you want (see below).
 
 # FileSystem/Drives
@@ -190,9 +189,13 @@ What to put on the SDcard:
         BASIC
         CHARGEN
         d1541II
+        dos1541 (optional)
+        dos1571 (optional)
+        dos1581 (optional)
         rpi_sym.vkm
     kernel7.img (for Pi2)
     kernel8-32.img (for Pi3)
+    fixup.dat
     bootstat.txt
     config.txt
     cmdline.txt

@@ -87,11 +87,12 @@
 
 ## 1.4
   * Moved to VICE 3.3
-  * Added status bar in Prefs to show disk/tape counter/controls/motor etc.
-    Can be turned on permanently or triggered by activity and disappears after
-    a timeout.
+  * Added status bar in Prefs to show disk/tape counter/controls/motor etc
+    at bottom of the screen.  It can be turned on permanently or triggered
+    by activity and disappears after a timeout.
   * Fixed CRT attach issue that was leaking/clobbering memory
   * Fixed CBM File Browser not going into subdirectories (or up to parent)
   * Added missing fixup.dat so pi will report actual memory available
   * Added LeftControl + Cursor keys as joystick option
-  
+  * Got drives 9,10,11 working
+  * Added 1541, 1571 and 1581 drive models with option to change 
