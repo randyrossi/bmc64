@@ -371,10 +371,6 @@ void circle_joy_gpio(unsigned int device, int value) {
 
 // Setup stuff
 int joy_arch_init(void) {
-   int dev;
-
-   circle_joy_init();
-
    return 0;
 }
 

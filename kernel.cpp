@@ -27,20 +27,6 @@ CKernel* static_kernel = NULL;
 
 #define MAX_KEY_CODES 128
 
-#define GPIO_JOY_1_UP 17
-#define GPIO_JOY_1_DOWN 18
-#define GPIO_JOY_1_LEFT 27
-#define GPIO_JOY_1_RIGHT 22
-#define GPIO_JOY_1_FIRE 23
-
-#define GPIO_JOY_2_UP 5
-#define GPIO_JOY_2_DOWN 6
-#define GPIO_JOY_2_LEFT 12
-#define GPIO_JOY_2_RIGHT 13
-#define GPIO_JOY_2_FIRE 19
-
-#define GPIO_UI 16
-
 // Used as indices into the hardwires joystick arrays
 #define JOY_UP 0
 #define JOY_DOWN 1
@@ -52,115 +38,128 @@ static bool key_states[MAX_KEY_CODES];
 static unsigned char mod_states;
 
 extern "C" {
-  ssize_t circle_serial_write (int fd, const void * buf, size_t count) {
-    if (static_kernel == NULL) return 0;
-    return static_kernel->vice_write(fd, buf, count);
-  }
-
   int circle_get_machine_timing() {
      return static_kernel->circle_get_machine_timing();
   }
 
   // circle hooks, these will disappear when we move away from circle
   uint8_t* circle_get_fb() {
+     // Frame buffer guaranteed to be ready before vice can call this
+     // so this is okay.
      return static_kernel->circle_get_fb();
   }
 
   int circle_get_fb_pitch() {
+     // Frame buffer guaranteed to be ready before vice can call this.
      return static_kernel->circle_get_fb_pitch();
   }
 
   void circle_sleep(long delay) {
+     // Timer guaranteed to be ready before vice can call this.
      return static_kernel->circle_sleep(delay);
   }
 
   void circle_set_palette(uint8_t index, uint16_t rgb565) {
+     // Screen guaranteed to be ready before vice can call this.
      return static_kernel->circle_set_palette(index, rgb565);
   }
 
   void circle_update_palette() {
+     // Screen guaranteed to be ready before vice can call this.
      return static_kernel->circle_update_palette();
   }
 
   int circle_get_display_w() {
+     // Screen guaranteed to be ready before vice can call this.
      return static_kernel->circle_get_display_w();
   }
 
   int circle_get_display_h() {
+     // Screen guaranteed to be ready before vice can call this.
      return static_kernel->circle_get_display_h();
   }
 
   unsigned long circle_get_ticks() {
+     // Timer guaranteed to be ready before vice can call this.
      return static_kernel->circle_get_ticks();
   }
 
   void circle_set_fb_y(int loc) {
+     // Screen guaranteed to be ready before vice can call this.
      static_kernel->circle_set_fb_y(loc);
   }
 
   void circle_wait_vsync() {
+     // Screen guaranteed to be ready before vice can call this.
      static_kernel->circle_wait_vsync();
   }
 
   int circle_sound_bufferspace() {
+     // Sound init will happen before this so this is okay
      return static_kernel->circle_sound_bufferspace();
   }
 
   int circle_sound_init(const char *param, int *speed,
                         int *fragsize, int *fragnr, int *channels) {
+     // VCHIQ is guaranteed to have been constructed but not necessarily
+     // initialized so we defer its initialization until this method is
+     // called by vice.
      return static_kernel->circle_sound_init(param, speed,
                                              fragsize, fragnr, channels);
   }
 
   int circle_sound_write(int16_t *pbuf, size_t nr) {
+     // Sound init will happen before this so this is okay
      return static_kernel->circle_sound_write(pbuf, nr);
   }
 
   void circle_sound_close(void) {
+     // Sound init will happen before this so this is okay
      static_kernel->circle_sound_close();
   }
 
   int circle_sound_suspend(void) {
+     // Sound init will happen before this so this is okay
      return static_kernel->circle_sound_suspend();
   }
 
   int circle_sound_resume(void) {
+     // Sound init will happen before this so this is okay
      return static_kernel->circle_sound_resume();
   }
 
   void circle_yield(void) {
+     // Scheduler guaranteed to be ready before vice calls this.
      static_kernel->circle_yield();
   }
 
-  void circle_kbd_init() {
-     static_kernel->circle_kbd_init();
-  }
-
-  void circle_joy_init() {
-     static_kernel->circle_joy_init();
-  }
-
   void circle_poll_joysticks(int port, int is_interrupt) {
+     // GPIO pins guaranteed to be setup before vice calls this.
      static_kernel->circle_poll_joysticks(port, is_interrupt);
   }
 
   void circle_check_gpio() {
+     // GPIO pins guaranteed to be setup before vice calls this.
      static_kernel->circle_check_gpio();
   }
 
   void circle_lock_acquire() {
+     // Always ok
      static_kernel->circle_lock_acquire();
   }
 
   void circle_lock_release() {
+     // Always ok
      static_kernel->circle_lock_release();
   }
 
   void circle_boot_complete() {
+     // Always ok
      static_kernel->circle_boot_complete();
   }
 
   int circle_cycles_per_sec() {
+     // Always ok
      return static_kernel->circle_cycles_per_second();
   }
 };
@@ -169,8 +168,7 @@ bool CKernel::uiShift = false;
 
 CKernel::CKernel (void) : ViceStdioApp("vice"),
                           mVCHIQ (&mMemory, &mInterrupt),
-                          mViceSound(nullptr),
-                          mGPIOManager (&mInterrupt)
+                          mViceSound(nullptr)
 {
   static_kernel = this;
   mod_states = 0;
@@ -179,14 +177,6 @@ CKernel::CKernel (void) : ViceStdioApp("vice"),
 
 bool CKernel::Initialize(void) {
    if (!ViceStdioApp::Initialize()) {
-     return false;
-   }
-
-   if (!mVCHIQ.Initialize()) {
-     return false;
-   }
-
-   if (!mGPIOManager.Initialize()) {
      return false;
    }
 
@@ -375,11 +365,15 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
    }
 }
 
+void CKernel::SetupUSBKeyboard() {
+   CUSBKeyboardDevice *pKeyboard = (CUSBKeyboardDevice *)
+     mDeviceNameService.GetDevice ("ukbd1", FALSE);
+   pKeyboard->RegisterKeyStatusHandlerRaw (KeyStatusHandlerRaw);
+}
+
 ViceApp::TShutdownMode CKernel::Run (void)
 {
-  mLogger.Write ("vice", LogNotice, "VICE");
-
-  printf ("Starting vice\n");
+  SetupUSBKeyboard();
 
   // Call Vice's main_program
 
@@ -392,14 +386,6 @@ ViceApp::TShutdownMode CKernel::Run (void)
   // algorithm that decides to skip frames. Might
   // want to go back to using the open gl hook.
   // See arch/raspi/videoarch.c
-
-  char timing_option[8];
-  if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_HDMI ||
-      circle_get_machine_timing() == MACHINE_TIMING_NTSC_COMPOSITE) {
-     strcpy(timing_option, "-ntsc");
-  } else {
-     strcpy(timing_option, "-pal");
-  }
 
   circle_set_demo_mode(mViceOptions.GetDemoMode());
 
@@ -429,10 +415,6 @@ ViceApp::TShutdownMode CKernel::Run (void)
 
   // Tell vice what we found
   joy_set_gamepad_info(num_pads, num_buttons, num_axes, num_hats);
-
-  // Core 1 will be used for the main emulator loop.
-  mEmulatorCore.SetTimingOption(timing_option);
-  mEmulatorCore.LaunchEmulator();
 
   // This core will do nothing but service interrupts from
   // usb or gpio.
@@ -491,21 +473,25 @@ void CKernel::circle_wait_vsync() {
   mScreen.WaitForVerticalSync();
 }
 
+// Called from VICE: Core 1
 int CKernel::circle_sound_init(const char *param, int *speed,
                                int *fragsize, int *fragnr, int *channels) {
-  if (!mViceSound) {
-     *speed = SAMPLE_RATE;
-     *fragsize = FRAG_SIZE;
-     *fragnr = NUM_FRAGS;
-     // We force mono.
-     *channels = 1;
+  *speed = SAMPLE_RATE;
+  *fragsize = FRAG_SIZE;
+  *fragnr = NUM_FRAGS;
+  // We force mono.
+  *channels = 1;
 
-     mViceSound = new ViceSound(&mVCHIQ,  VCHIQSoundDestinationAuto);
-     mViceSound->Playback();
+  if (!mViceSound) {
+     if (mVCHIQ.Initialize()) {
+        mViceSound = new ViceSound(&mVCHIQ,  VCHIQSoundDestinationAuto);
+        mViceSound->Playback();
+     }
   }
   return 0;
 }
 
+// Called from VICE: Core 1
 int CKernel::circle_sound_write(int16_t *pbuf, size_t nr) {
   if (mViceSound) {
      return mViceSound->AddChunk(pbuf, nr);
@@ -534,29 +520,6 @@ int CKernel::circle_sound_bufferspace(void) {
 
 void CKernel::circle_yield(void) {
   CScheduler::Get()->Yield();
-}
-
-void CKernel::circle_kbd_init() {
-  pKeyboard =  (CUSBKeyboardDevice *) mDeviceNameService.GetDevice ("ukbd1",
-                                                                    FALSE);
-  pKeyboard->RegisterKeyStatusHandlerRaw (KeyStatusHandlerRaw);
-}
-
-void CKernel::circle_joy_init() {
-  uiPin = new CGPIOPin(GPIO_UI, GPIOModeInputPullUp, &mGPIOManager);
-
-  // Configure joystick pins now
-  joystickPins1[JOY_UP] = new CGPIOPin(GPIO_JOY_1_UP, GPIOModeInputPullUp, &mGPIOManager);
-  joystickPins1[JOY_DOWN] = new CGPIOPin(GPIO_JOY_1_DOWN, GPIOModeInputPullUp, &mGPIOManager);
-  joystickPins1[JOY_LEFT] = new CGPIOPin(GPIO_JOY_1_LEFT, GPIOModeInputPullUp, &mGPIOManager);
-  joystickPins1[JOY_RIGHT] = new CGPIOPin(GPIO_JOY_1_RIGHT, GPIOModeInputPullUp, &mGPIOManager);
-  joystickPins1[JOY_FIRE] = new CGPIOPin(GPIO_JOY_1_FIRE, GPIOModeInputPullUp, &mGPIOManager);
-
-  joystickPins2[JOY_UP] = new CGPIOPin(GPIO_JOY_2_UP, GPIOModeInputPullUp, &mGPIOManager);
-  joystickPins2[JOY_DOWN] = new CGPIOPin(GPIO_JOY_2_DOWN, GPIOModeInputPullUp, &mGPIOManager);
-  joystickPins2[JOY_LEFT] = new CGPIOPin(GPIO_JOY_2_LEFT, GPIOModeInputPullUp, &mGPIOManager);
-  joystickPins2[JOY_RIGHT] = new CGPIOPin(GPIO_JOY_2_RIGHT, GPIOModeInputPullUp, &mGPIOManager);
-  joystickPins2[JOY_FIRE] = new CGPIOPin(GPIO_JOY_2_FIRE, GPIOModeInputPullUp, &mGPIOManager);
 }
 
 void CKernel::KeyStatusHandlerRaw (unsigned char ucModifiers,

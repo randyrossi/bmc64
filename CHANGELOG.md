@@ -96,3 +96,10 @@
   * Added LeftControl + Cursor keys as joystick option
   * Got drives 9,10,11 working
   * Added 1541, 1571 and 1581 drive models with option to change 
+
+## 1.5
+  * Boot time down to under 3.5 seconds!!!
+  * Added option to not reset tape on machine reset
+  * Added missing option to reset just counter (not tape)
+  * Fixed status bar showing at boot even though show never was selected
+  * Fixed sid re-initialization not using correct frag/buf sizes

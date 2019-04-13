@@ -28,12 +28,10 @@
 #include <circle/interrupt.h>
 #include <circle/timer.h>
 #include <circle/logger.h>
-#include <circle/sched/scheduler.h>
 #include <circle/types.h>
 #include <circle/usb/usbkeyboard.h>
 #include <circle/usb/usbgamepad.h>
 #include <circle/cputhrottle.h>
-#include <circle/gpiomanager.h>
 #include <circle/spinlock.h>
 #include <stdint.h>
 #include <vc4/vchiq/vchiqdevice.h>
@@ -80,8 +78,6 @@ public:
 	int circle_sound_resume(void);
 	int circle_sound_bufferspace(void);
 	void circle_yield(void);
-	void circle_kbd_init();
-	void circle_joy_init();
 	void circle_poll_joysticks(int port, int is_interrupt);
 	void circle_check_gpio();
 	void circle_lock_acquire();
@@ -90,18 +86,14 @@ public:
 	int circle_cycles_per_second();
 
 private:
+        void SetupUSBKeyboard();
+
         static bool uiShift;
 
         CScheduler mScheduler;
         CVCHIQDevice  mVCHIQ;
 	ViceSound *mViceSound;
-	CUSBKeyboardDevice *pKeyboard;
         CCPUThrottle mCPUThrottle;
-        CGPIOManager mGPIOManager;
-
-        CGPIOPin *joystickPins1[5];
-        CGPIOPin *joystickPins2[5];
-        CGPIOPin *uiPin;
         CSpinLock m_Lock;
 };
 

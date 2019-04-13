@@ -53,9 +53,6 @@
 // TODO: Replace this with a direct call from kernel
 typedef void (*raspi_key_handler)(long key);
 
-extern void circle_joy_init();
-extern void circle_kbd_init();
-
 extern int circle_get_machine_timing();
 extern uint8_t* circle_get_fb();
 extern int circle_get_fb_pitch();

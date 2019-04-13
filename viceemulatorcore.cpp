@@ -38,11 +38,22 @@ void ViceEmulatorCore::RunMainVice() {
     while (waiting) {
       m_Lock.Acquire();
       if (launch_) waiting = false;
-      circle_sleep(100);
       m_Lock.Release();
     }
 
-    printf ("Starting emulator\n");
+    // Call Vice's main_program
+
+    // Use -soundsync 0 option for 'flexible'
+    // sound sync.
+
+    // Use -refresh 1 option to turn off the 'auto'
+    // refresh which screws up badly after some time.
+    // The vertical blank really messes up vice's
+    // algorithm that decides to skip frames. Might
+    // want to go back to using the open gl hook.
+    // See arch/raspi/videoarch.c
+
+    printf ("Starting emulator main loop\n");
     int argc = 11;
     char *argv[] = {
       (char*)"vice",
@@ -93,12 +104,9 @@ void ViceEmulatorCore::Run (unsigned nCore)
   for (;;) { circle_sleep(1000000); }
 }
 
-void ViceEmulatorCore::LaunchEmulator() {
+void ViceEmulatorCore::LaunchEmulator(char* timing_option) {
+  strncpy(timing_option_, timing_option, 8);
   m_Lock.Acquire();
   launch_ = true;
   m_Lock.Release();
-}
-
-void ViceEmulatorCore::SetTimingOption(char* timing_option) {
-  strncpy(timing_option_, timing_option, 8);
 }

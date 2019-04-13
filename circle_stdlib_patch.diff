@@ -12,11 +12,14 @@ index 363cc32..0341268 100755
      CXX_FOR_TARGET=${TOOLPREFIX}g++ \
      GCC_FOR_TARGET=${TOOLPREFIX}gcc \
 diff --git a/include/circle_glue.h b/include/circle_glue.h
-index e0b90d5..88331ce 100644
+index e0b90d5..0bf98e4 100644
 --- a/include/circle_glue.h
 +++ b/include/circle_glue.h
-@@ -6,22 +6,28 @@
+@@ -4,24 +4,31 @@
+ #include <circle/fs/fat/fatfs.h>
+ #include <circle/input/console.h>
  #include <circle/sched/scheduler.h>
++#include <circle/serial.h>
  
  /**
 - * Initialize stdio for file system and console I/O (stdin/stdout/stderr).
@@ -24,7 +27,7 @@ index e0b90d5..88331ce 100644
   * Must only be called once.
   */
 -void CGlueStdioInit (CFATFileSystem& rFATFileSystem, CConsole& rConsole);
-+void CGlueStdioInit ();
++void CGlueStdioInit (CSerialDevice *serial);
  
 -/**
 - * Initialize stdio only for file system I/O.

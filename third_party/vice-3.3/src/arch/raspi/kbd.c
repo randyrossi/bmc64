@@ -40,8 +40,6 @@ extern struct joydev_config joydevs[2];
 int commodore_mod = 0;
 
 void kbd_arch_init(void) {
-  // Pass up to kernel for keyboard init.
-  circle_kbd_init();
 }
 
 int kbd_arch_get_host_mapping(void) { return KBD_MAPPING_US; }

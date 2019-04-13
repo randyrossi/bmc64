@@ -24,6 +24,8 @@
 #include <circle/exceptionhandler.h>
 #include <circle/interrupt.h>
 #include <circle/koptions.h>
+#include <circle/gpiopin.h>
+#include <circle/gpiomanager.h>
 #include "viceoptions.h"
 #include "vicescreen.h"
 #include <circle/serial.h>
@@ -33,7 +35,6 @@
 #include <SDCard/emmc.h>
 #include <ff.h>
 #include <circle/input/console.h>
-#include <circle/sched/scheduler.h>
 #include <circle/net/netsubsystem.h>
 
 #include <circle_glue.h>
@@ -42,6 +43,29 @@
 #include <stdlib.h>
 
 #include "viceemulatorcore.h"
+
+#define GPIO_JOY_1_UP 17
+#define GPIO_JOY_1_DOWN 18
+#define GPIO_JOY_1_LEFT 27
+#define GPIO_JOY_1_RIGHT 22
+#define GPIO_JOY_1_FIRE 23
+
+#define GPIO_JOY_2_UP 5
+#define GPIO_JOY_2_DOWN 6
+#define GPIO_JOY_2_LEFT 12
+#define GPIO_JOY_2_RIGHT 13
+#define GPIO_JOY_2_FIRE 19
+
+#define GPIO_UI 16
+
+// Used as indices into the hardwires joystick arrays
+#define JOY_UP 0
+#define JOY_DOWN 1
+#define JOY_LEFT 2
+#define JOY_RIGHT 3
+#define JOY_FIRE 4
+
+extern "C" { void circle_fs_ready(); }
 
 class ViceApp
 {
@@ -54,7 +78,7 @@ public:
         };
 
         ViceApp (const char *kernel) :
-                FromKernel (kernel), mEmulatorCore(&mMemory)
+                FromKernel (kernel)
         {
         }
 
@@ -68,6 +92,11 @@ public:
                 {
                         return false;
                 }
+
+                // Initialize our replacement newlib stdio. Give it
+                // a pointer to our serial device so we can use printf
+                // to serial as soon as possible.
+                CGlueStdioInit (&mSerial);
 
                 if (!mInterrupt.Initialize ()) {
 			return false;
@@ -96,7 +125,6 @@ protected:
         CKernelOptions     mOptions;
         CSerialDevice      mSerial;
         CMemorySystem      mMemory;
-        ViceEmulatorCore   mEmulatorCore;
         CDeviceNameService mDeviceNameService;
         CNullDevice        mNullDevice;
         CExceptionHandler  mExceptionHandler;
@@ -108,11 +136,12 @@ class ViceScreenApp : public ViceApp
 public:
         ViceScreenApp(const char *kernel)
                 : ViceApp (kernel),
+                  mEmulatorCore(&mMemory),
                   mScreen(mViceOptions.GetCanvasWidth(),
-			mViceOptions.GetCanvasHeight()),
+			  mViceOptions.GetCanvasHeight()),
                   mTimer (&mInterrupt),
-                  mLogger (mOptions.GetLogLevel(), &mTimer)
-        {
+                  mLogger (mOptions.GetLogLevel(), &mTimer),
+                  mGPIOManager (&mInterrupt) {
         }
 
         virtual bool Initialize (void)
@@ -136,13 +165,46 @@ public:
 			return false;
 		}
 
-                return mTimer.Initialize ();
+                if (!mTimer.Initialize ()) {
+			return false;
+                }
+
+		if (!mGPIOManager.Initialize()) {
+			return false;
+		}
+
+		SetupGPIO();
+
+		return true;
         }
 
 protected:
-        CViceScreenDevice mScreen;
-        CTimer          mTimer;
-        CLogger         mLogger;
+	void SetupGPIO() {
+		uiPin = new CGPIOPin(GPIO_UI, GPIOModeInputPullUp, &mGPIOManager);
+
+		// Configure joystick pins now
+		joystickPins1[JOY_UP] = new CGPIOPin(GPIO_JOY_1_UP, GPIOModeInputPullUp, &mGPIOManager);
+		joystickPins1[JOY_DOWN] = new CGPIOPin(GPIO_JOY_1_DOWN, GPIOModeInputPullUp, &mGPIOManager);
+		joystickPins1[JOY_LEFT] = new CGPIOPin(GPIO_JOY_1_LEFT, GPIOModeInputPullUp, &mGPIOManager);
+		joystickPins1[JOY_RIGHT] = new CGPIOPin(GPIO_JOY_1_RIGHT, GPIOModeInputPullUp, &mGPIOManager);
+		joystickPins1[JOY_FIRE] = new CGPIOPin(GPIO_JOY_1_FIRE, GPIOModeInputPullUp, &mGPIOManager);
+
+		joystickPins2[JOY_UP] = new CGPIOPin(GPIO_JOY_2_UP, GPIOModeInputPullUp, &mGPIOManager);
+		joystickPins2[JOY_DOWN] = new CGPIOPin(GPIO_JOY_2_DOWN, GPIOModeInputPullUp, &mGPIOManager);
+		joystickPins2[JOY_LEFT] = new CGPIOPin(GPIO_JOY_2_LEFT, GPIOModeInputPullUp, &mGPIOManager);
+		joystickPins2[JOY_RIGHT] = new CGPIOPin(GPIO_JOY_2_RIGHT, GPIOModeInputPullUp, &mGPIOManager);
+		joystickPins2[JOY_FIRE] = new CGPIOPin(GPIO_JOY_2_FIRE, GPIOModeInputPullUp, &mGPIOManager);
+	}
+
+        ViceEmulatorCore   mEmulatorCore;
+        CViceScreenDevice  mScreen;
+        CTimer             mTimer;
+        CLogger            mLogger;
+        CGPIOManager       mGPIOManager;
+
+        CGPIOPin           *joystickPins1[5];
+        CGPIOPin           *joystickPins2[5];
+        CGPIOPin           *uiPin;
 };
 
 class ViceStdioApp: public ViceScreenApp
@@ -194,6 +256,23 @@ public:
                         return false;
                 }
 
+
+                InitBootStat();
+
+                // Now that emmc is initialized, launch
+                // the emulator main loop on CORE 1 before DWHCI.
+                char timing_option[8];
+                int timing_int = mViceOptions.GetMachineTiming();
+                if (timing_int == MACHINE_TIMING_NTSC_HDMI ||
+                    timing_int == MACHINE_TIMING_NTSC_COMPOSITE) {
+                   strcpy(timing_option, "-ntsc");
+                } else {
+                   strcpy(timing_option, "-pal");
+                }
+
+                mEmulatorCore.LaunchEmulator(timing_option);
+
+                // This takes 1.5 seconds to init.
                 if (!mDWHCI.Initialize ())
                 {
                         return false;
@@ -203,13 +282,6 @@ public:
                 {
                         return false;
                 }
-
-                // Initialize our replacement newlib stdio
-                CGlueStdioInit ();
-
-                InitBootStat();
-
-                mLogger.Write (GetKernelName (), LogNotice, "Compile time: " __DATE__ " " __TIME__);
 
                 return true;
         }

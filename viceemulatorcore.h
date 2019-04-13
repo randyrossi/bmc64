@@ -32,8 +32,7 @@ public:
 
 	void Run (unsigned nCore) override;
 
-        void LaunchEmulator();
-        void SetTimingOption(char* timing_option);
+        void LaunchEmulator(char* timing_option);
 
 private:
 	bool launch_;

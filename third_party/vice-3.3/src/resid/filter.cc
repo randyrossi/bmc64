@@ -258,6 +258,19 @@ Filter::Filter(int model)
   static bool class_init_1;
 
   if (!class_init_0 || !class_init_1) {
+    // BMC64: Technically this isn't right.  Core 1 is on its way to this
+    // method with a -1 argument.  Core 1 will skip over the init because
+    // core 2 and 3 have already been here.  Core 1's arrival is so late
+    // that any concurrency issues (i.e. reading the init flags while
+    // being written to) is not an issue.  Just something to be aware of.
+
+    if (model == -1 || model == 0) {
+       class_init_0 = true;
+    }
+    if (model == -1 || model == 1) {
+       class_init_1 = true;
+    }
+
     double tmp_n_param[2];
 
     // Temporary tables for op-amp transfer function.
@@ -546,12 +559,6 @@ Filter::Filter(int model)
       }
     }
 
-    if (model == -1 || model == 0) {
-       class_init_0 = true;
-    }
-    if (model == -1 || model == 1) {
-       class_init_1 = true;
-    }
   }
 
   enable_filter(true);

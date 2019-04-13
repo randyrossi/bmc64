@@ -33,10 +33,10 @@ index 0ea1923..d5cf197 100644
  
  stub_warning(_getpid)
 diff --git a/libgloss/circle/io.cpp b/libgloss/circle/io.cpp
-index 23720b6..c0723ab 100644
+index 23720b6..de33064 100644
 --- a/libgloss/circle/io.cpp
 +++ b/libgloss/circle/io.cpp
-@@ -1,385 +1,776 @@
+@@ -1,385 +1,790 @@
  #include "config.h"
  #include <_ansi.h>
  #include <_syslist.h>
@@ -69,6 +69,7 @@ index 23720b6..c0723ab 100644
 -        }
 +#include <malloc.h>
 +#include <sys/unistd.h>
++#include <circle/serial.h>
 +
 +#include <ff.h>
 +
@@ -164,12 +165,21 @@ index 23720b6..c0723ab 100644
 +  reverse(dst, 0, strlen(dst) - 1);
 +}
 +
-+// BCM64 : For routing stdout/stderr to serial via circle
-+extern "C" {
-+extern ssize_t circle_serial_write(int fd, const void *buf, size_t count);
++CSerialDevice *g_serial;
++
++static void logm(const char *msg) {
++   if (g_serial) {
++      g_serial->Write(msg, strlen(msg));
++   }
 +}
-+static void logm(const char *msg) { circle_serial_write(1, msg, strlen(msg)); }
-+static void logi(int i) { char nn[16]; itoa2(i,nn); circle_serial_write(1, nn, strlen(nn)); }
++
++static void logi(int i) {
++   char nn[16];
++   itoa2(i,nn);
++   if (g_serial) {
++      g_serial->Write(nn, strlen(nn));
++   }
++}
 +
 +struct CirclePath {
 +   CirclePath(const char* p) {
@@ -274,11 +284,8 @@ index 23720b6..c0723ab 100644
 -
 -    	return slotNr;
 -    }
-+void CGlueStdioInit() {
-+  // Initialize stdio, stderr and stdin
-+  fileTab[0].in_use = 1;
-+  fileTab[1].in_use = 1;
-+  fileTab[2].in_use = 1;
++void CGlueStdioInit(CSerialDevice *serial) {
++  g_serial = serial;
  
 -    int FindFreeDirSlot(void)
 -    {
@@ -295,17 +302,22 @@ index 23720b6..c0723ab 100644
 -
 -    	return slotNr;
 -    }
-+  // By default, use the first partition of each physical drive.
-+  for (int pd = 0; pd < FF_VOLUMES; pd++) {
-+    VolToPart[pd].pd = pd;
-+    VolToPart[pd].pt = 0;
-+  }
++  // Initialize stdio, stderr and stdin
++  fileTab[0].in_use = 1;
++  fileTab[1].in_use = 1;
++  fileTab[2].in_use = 1;
  
 -    void
 -    CGlueInitFileSystem (CFATFileSystem& rFATFileSystem)
 -    {
 -            // Must only be called once
 -            assert (!circle_fat_fs);
++  // By default, use the first partition of each physical drive.
++  for (int pd = 0; pd < FF_VOLUMES; pd++) {
++    VolToPart[pd].pd = pd;
++    VolToPart[pd].pt = 0;
++  }
++
 +  strcpy (currentDir, "/");
 +}
 +
@@ -324,8 +336,7 @@ index 23720b6..c0723ab 100644
 +   g_bootStatFile = bootStatFile;
 +   g_bootStatSize = bootStatSize;
 +}
- 
--            circle_fat_fs = &rFATFileSystem;
++
 +void CGlueStdioSetPartitionForVolume (const char* volume, int part, unsigned int ss) {
 +  for (int pd = 0; pd < FF_VOLUMES; pd++) {
 +     if (strcmp(volume, VolumeStr[pd]) == 0) {
@@ -336,7 +347,8 @@ index 23720b6..c0723ab 100644
 +     }
 +  }
 +}
-+
+ 
+-            circle_fat_fs = &rFATFileSystem;
 +static int FindFreeFileSlot(void) {
 +  int slotNr = -1;
 +
@@ -735,7 +747,10 @@ index 23720b6..c0723ab 100644
 +  }
 +
 +  if (fildes == 1 || fildes == 2) {
-+    return circle_serial_write(fildes, ptr, len);
++    if (g_serial) {
++       return g_serial->Write(ptr, len);
++    } 
++    return len;
 +  }
 +
 +  CircleFile &file = fileTab[fildes];
@@ -841,7 +856,8 @@ index 23720b6..c0723ab 100644
 -        }
 +  FILINFO fno;
 +  struct dirent *result = nullptr;
-+
+ 
+-        auto &slot = dirTab[slotNum];
 +  FRESULT res = f_findnext(&dir->dir, &fno);
 +  if (res == FR_OK && fno.fname[0] != 0) {
 +    strcpy(de->d_name, fno.fname);
@@ -854,16 +870,15 @@ index 23720b6..c0723ab 100644
 +    }
 +    result = de;
 +  }
-+
-+  return result;
-+}
- 
--        auto &slot = dirTab[slotNum];
-+extern "C" struct dirent *readdir(DIR *dir) {
-+  struct dirent *result;
  
 -        slot.mOpen = 1;
 -        slot.mFirstRead = 1;
++  return result;
++}
++
++extern "C" struct dirent *readdir(DIR *dir) {
++  struct dirent *result;
++
 +  CircleDir *c_dir = FindCircleDirFromDIR(dir);
 +  if (c_dir == nullptr) {
 +    errno = EBADF;
@@ -929,7 +944,10 @@ index 23720b6..c0723ab 100644
 +    errno = EBADF;
 +    return -1;
 +  }
-+
+ 
+-        if (dir->mOpen)
+-        {
+-                result = do_readdir (dir, &dir->mEntry);
 +  c_dir->in_use = 0;
 +
 +  if (f_closedir(dir) != FR_OK) {
@@ -939,10 +957,7 @@ index 23720b6..c0723ab 100644
 +
 +  return 0;
 +}
- 
--        if (dir->mOpen)
--        {
--                result = do_readdir (dir, &dir->mEntry);
++
 +extern "C" int _DEFUN(_stat, (file, st),
 +                      const char *file _AND struct stat *st) {
 +  CirclePath circlePath(file);
@@ -968,7 +983,6 @@ index 23720b6..c0723ab 100644
          }
 +     }
 +  }
-+        
 +
 +  FILINFO fno;
 +  if (f_stat(circlePath.path, &fno) == FR_OK) {
@@ -982,12 +996,12 @@ index 23720b6..c0723ab 100644
 +    } else {
 +      st->st_mode |= S_IREAD | S_IWRITE;
 +    }
- 
--        return result;
++
 +    st->st_size = fno.fsize;
 +    return 0;
 +  }
-+
+ 
+-        return result;
 +  errno = EBADF;
 +  return -1;
  }

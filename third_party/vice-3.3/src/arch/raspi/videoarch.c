@@ -385,7 +385,7 @@ void vsyncarch_postsync(void){
   }
 
   // Always draw overlay on visible buffer
-  if (overlay_forced() || overlay_showing) {
+  if (overlay_forced() || (overlay_enabled() && overlay_showing)) {
      overlay_check();
      int sh = g_canvas->draw_buffer->visible_height;
      int sw = g_canvas->draw_buffer->visible_width;
