@@ -419,7 +419,11 @@ ViceApp::TShutdownMode CKernel::Run (void)
   // This core will do nothing but service interrupts from
   // usb or gpio.
   printf ("Core 0 idle\n");
-  for (;;) { circle_sleep(1000000); }
+
+  asm("dsb\n\t"
+      "1: wfi\n\t"
+      "b 1b\n\t"
+  );
 
   return ShutdownHalt;
 }

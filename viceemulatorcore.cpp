@@ -101,7 +101,11 @@ void ViceEmulatorCore::Run (unsigned nCore)
   }
 
   printf ("Core %d idle\n", nCore);
-  for (;;) { circle_sleep(1000000); }
+  asm("dsb\n\t"
+      "1: wfi\n\t"
+      "b 1b\n\t"
+  );
+
 }
 
 void ViceEmulatorCore::LaunchEmulator(char* timing_option) {
