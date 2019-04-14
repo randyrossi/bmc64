@@ -1,3 +1,7 @@
+__IMPORTANT PSA: BMC64 v1.0.6 through v1.4 were not properly putting the other 3 (unused) cores to a low powered mode and was causing CPU temperatures to rise close to or beyond automatic throttling limits. I'm very sorry about this. I don't believe this pushed the devices beyond their limits, it was just a waste of heat. The Pi will automatically throttle itself if CPU temperature goes beyond a certain limit. If you saw thermometer icons in the top right corner of your screen, this is probably why. V1.5+ fixes this.__
+
+__If you are using an older version, I strongly recommend you update to v1.5__
+
 # BMC64
 
 BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio.
@@ -123,9 +127,7 @@ In the menu, select either GPIO1 or GPIO2 and assign it to one of the emulated p
 
 # CPU Temperature
 
-The CPU temperature on a RPi 3 Model B clocked at @1.2Ghz can easily hit 70 degrees without a heat sync.  This measurement was made running the last sequence of Comaland mentioned above. With a good heat sync, however, it can drop to as low as 55. If you are going to put your Pi inside a case, I recommend you implement sufficient cooling measures to ensure your Pi does not overheat.
-
-CPU temperature on a RPi 2 clocked at @900Mhz hit 46 degrees without a heat sync.  With a heat sync, it dropped to 40.  This is well below the default maximum of 85.  There's no reason to overclock your Pi so please don't do it.  I know of no game that won't run smoothly on the RPi 2 at its default clock rate.
+IMPORTANT : BMC64 v1.0.6 through v1.4 were not properly putting the other 3 (unused) cores to a low powered mode and was causing CPU temperatures to rise close to or beyond automatic throttling limits. The CPU temperature on a RPi 3 Model B clocked at @1.2Ghz hit 70 degrees without a heat sync.  V1.5+ should not have this issue.  If you are experiencing heat issues (thermometer icon in top right corner), please update your installation to the latest version.
 
 # Changelog
 
