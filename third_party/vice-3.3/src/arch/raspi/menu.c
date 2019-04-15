@@ -79,20 +79,11 @@ struct menu_item *sid_engine_item;
 struct menu_item *sid_model_item;
 struct menu_item *sid_filter_item;
 struct menu_item *overlay_item;
-struct menu_item *drive_type_item_8;
-struct menu_item *drive_type_item_9;
-struct menu_item *drive_type_item_10;
-struct menu_item *drive_type_item_11;
 struct menu_item *tape_reset_with_machine_item;
 struct menu_item *brightness_item;
 struct menu_item *contrast_item;
 struct menu_item *gamma_item;
 struct menu_item *tint_item;
-
-static int drive_type_8_on_pop;
-static int drive_type_9_on_pop;
-static int drive_type_10_on_pop;
-static int drive_type_11_on_pop;
 
 int unit;
 const int num_disk_ext = 13;
@@ -247,43 +238,6 @@ static void show_files(int dir_type, int filter, int menu_id) {
    list_files(file_root, dir_type, filter, menu_id);
 }
 
-// Chose a menu item value to match actual VICE drive type
-static int get_drive_type_item_value(int drive)
-{
-    int drive_type;
-    resources_get_int_sprintf("Drive%iType", &drive_type, drive);
-
-    switch (drive_type) {
-        case DRIVE_TYPE_1541:
-          return MENU_ITEM_DRIVE_1541;
-        case DRIVE_TYPE_1541II:
-          return MENU_ITEM_DRIVE_1541II;
-        case DRIVE_TYPE_1571:
-          return MENU_ITEM_DRIVE_1571;
-        case DRIVE_TYPE_1581:
-          return MENU_ITEM_DRIVE_1581;
-        default:
-          return MENU_ITEM_DRIVE_NONE;
-    }
-}
-
-// Given a menu index value, return the VICE drive type it represents
-static int get_drive_type_vice(int value)
-{
-    switch (value) {
-        case MENU_ITEM_DRIVE_1541:
-          return DRIVE_TYPE_1541;
-        case MENU_ITEM_DRIVE_1541II:
-          return DRIVE_TYPE_1541II;
-        case MENU_ITEM_DRIVE_1571:
-          return DRIVE_TYPE_1571;
-        case MENU_ITEM_DRIVE_1581:
-          return DRIVE_TYPE_1581;
-        default:
-          return DRIVE_TYPE_NONE;
-    }
-}
-
 static void show_about() {
    struct menu_item* about_root = ui_push_menu(32, 8);
    ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.6");
@@ -305,6 +259,49 @@ static void show_license() {
 static void configure_usb(int dev) {
    struct menu_item* usb_root = ui_push_menu(-1, -1);
    build_usb_menu(dev, usb_root);
+}
+
+static void drive_change_model() {
+   struct menu_item* model_root = ui_push_menu(12, 8);
+   struct menu_item* item;
+
+   int current_drive_type;
+   resources_get_int_sprintf("Drive%iType", &current_drive_type, unit);
+
+   item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "None");
+   item->value = DRIVE_TYPE_NONE;
+   if (current_drive_type == DRIVE_TYPE_NONE) {
+     strcat(item->displayed_value," (*)");
+   }
+
+   if (drive_check_type(DRIVE_TYPE_1541, unit-8) >= 0) {
+     item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1541");
+     item->value = DRIVE_TYPE_1541;
+     if (current_drive_type == DRIVE_TYPE_1541) {
+        strcat(item->displayed_value," (*)");
+     }
+   }
+   if (drive_check_type(DRIVE_TYPE_1541II, unit-8) >= 0) {
+     item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1541II");
+     item->value = DRIVE_TYPE_1541II;
+     if (current_drive_type == DRIVE_TYPE_1541II) {
+        strcat(item->displayed_value," (*)");
+     }
+   }
+   if (drive_check_type(DRIVE_TYPE_1571, unit-8) >= 0) {
+     item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1571");
+     item->value = DRIVE_TYPE_1571;
+     if (current_drive_type == DRIVE_TYPE_1571) {
+        strcat(item->displayed_value," (*)");
+     }
+   }
+   if (drive_check_type(DRIVE_TYPE_1581, unit-8) >= 0) {
+     item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1581");
+     item->value = DRIVE_TYPE_1581;
+     if (current_drive_type == DRIVE_TYPE_1581) {
+        strcat(item->displayed_value," (*)");
+     }
+   }
 }
 
 static void ui_set_joy_items()
@@ -366,6 +363,18 @@ static int save_settings() {
    fprintf(fp,"contrast=%d\n",contrast_item->value);
    fprintf(fp,"gamma=%d\n",gamma_item->value);
    fprintf(fp,"tint=%d\n",tint_item->value);
+
+   int drive_type;
+
+   resources_get_int_sprintf("Drive%iType", &drive_type, 8);
+   fprintf(fp,"drive_type_8=%d\n",drive_type);
+   resources_get_int_sprintf("Drive%iType", &drive_type, 9);
+   fprintf(fp,"drive_type_9=%d\n",drive_type);
+   resources_get_int_sprintf("Drive%iType", &drive_type, 10);
+   fprintf(fp,"drive_type_10=%d\n",drive_type);
+   resources_get_int_sprintf("Drive%iType", &drive_type, 11);
+   fprintf(fp,"drive_type_11=%d\n",drive_type);
+
    fclose(fp);
 
    return 0;
@@ -392,6 +401,7 @@ static void load_settings() {
    int value;
    int usb_btn_0_i = 0;
    int usb_btn_1_i = 0;
+   int drive_type;
    while (1) {
       name_value[0] = '\0';
       // Looks like circle-stdlib doesn't support something like %s=%d
@@ -468,6 +478,26 @@ static void load_settings() {
          tint_item->value = value;
          resources_set_int("VICIIColorTint", value);
          video_color_setting_changed();
+      } else if (strcmp(name,"drive_type_8")==0) {
+         resources_get_int_sprintf("Drive%iType", &drive_type, 8);
+         if (value != drive_type) {
+           resources_set_int_sprintf("Drive%iType", value, 8);
+         }
+      } else if (strcmp(name,"drive_type_9")==0) {
+         resources_get_int_sprintf("Drive%iType", &drive_type, 9);
+         if (value != drive_type) {
+           resources_set_int_sprintf("Drive%iType", value, 9);
+         }
+      } else if (strcmp(name,"drive_type_10")==0) {
+         resources_get_int_sprintf("Drive%iType", &drive_type, 10);
+         if (value != drive_type) {
+           resources_set_int_sprintf("Drive%iType", value, 10);
+         }
+      } else if (strcmp(name,"drive_type_11")==0) {
+         resources_get_int_sprintf("Drive%iType", &drive_type, 11);
+         if (value != drive_type) {
+           resources_set_int_sprintf("Drive%iType", value, 11);
+         }
       }
    }
    fclose(fp);
@@ -654,18 +684,22 @@ static void menu_value_changed(struct menu_item* item) {
    switch (item->id) {
       case MENU_ATTACH_DISK_8:
       case MENU_IECDEVICE_8:
+      case MENU_DRIVE_CHANGE_MODEL_8:
          unit = 8;
          break;
       case MENU_ATTACH_DISK_9:
       case MENU_IECDEVICE_9:
+      case MENU_DRIVE_CHANGE_MODEL_9:
          unit = 9;
          break;
       case MENU_ATTACH_DISK_10:
       case MENU_IECDEVICE_10:
+      case MENU_DRIVE_CHANGE_MODEL_10:
          unit = 10;
          break;
       case MENU_ATTACH_DISK_11:
       case MENU_IECDEVICE_11:
+      case MENU_DRIVE_CHANGE_MODEL_11:
          unit = 11;
          break;
    }
@@ -873,17 +907,16 @@ static void menu_value_changed(struct menu_item* item) {
          resources_set_int("SidFilters", item->value);
          resources_set_int("SidResidSampling", 0);
          return;
-      case MENU_DRIVE_TYPE_8:
-         drive_type_8_on_pop = drive_type_item_8->value;
+
+      case MENU_DRIVE_CHANGE_MODEL_8:
+      case MENU_DRIVE_CHANGE_MODEL_9:
+      case MENU_DRIVE_CHANGE_MODEL_10:
+      case MENU_DRIVE_CHANGE_MODEL_11:
+         drive_change_model();
          return;
-      case MENU_DRIVE_TYPE_9:
-         drive_type_9_on_pop = drive_type_item_9->value;
-         return;
-      case MENU_DRIVE_TYPE_10:
-         drive_type_10_on_pop = drive_type_item_10->value;
-         return;
-      case MENU_DRIVE_TYPE_11:
-         drive_type_11_on_pop = drive_type_item_11->value;
+      case MENU_DRIVE_SELECT:
+         resources_set_int_sprintf("Drive%iType", item->value, unit);
+         ui_pop_all_and_toggle();
          return;
    }
 
@@ -963,31 +996,6 @@ int menu_alt_f12(void) {
    return menu_alt_f12_item->value;
 }
 
-
-static void populate_drive_types(struct menu_item* item, int num) {
-  strcpy (item->choices[MENU_ITEM_DRIVE_NONE], "None");
-  if (drive_check_type(DRIVE_TYPE_1541, num-8) < 1) {
-    strcpy (item->choices[MENU_ITEM_DRIVE_1541], "(NO ROM) 1541");
-  } else {
-    strcpy (item->choices[MENU_ITEM_DRIVE_1541], "1541");
-  }
-  if (drive_check_type(DRIVE_TYPE_1541II, num-8) < 1) {
-    strcpy (item->choices[MENU_ITEM_DRIVE_1541II], "(NO ROM) 1541II");
-  } else {
-    strcpy (item->choices[MENU_ITEM_DRIVE_1541II], "1541II");
-  }
-  if (drive_check_type(DRIVE_TYPE_1571, num-8) < 1) {
-    strcpy (item->choices[MENU_ITEM_DRIVE_1571], "(NO ROM) 1571");
-  } else {
-    strcpy (item->choices[MENU_ITEM_DRIVE_1571], "1571");
-  }
-  if (drive_check_type(DRIVE_TYPE_1581, num-8) < 1) {
-    strcpy (item->choices[MENU_ITEM_DRIVE_1581], "(NO ROM) 1581");
-  } else {
-    strcpy (item->choices[MENU_ITEM_DRIVE_1581], "1581");
-  }
-}
-
 void build_menu(struct menu_item* root) {
    struct menu_item* parent;
    struct menu_item* child;
@@ -1032,42 +1040,26 @@ void build_menu(struct menu_item* root) {
 
    ui_menu_add_divider(root);
 
-   parent = ui_menu_add_folder(root, "Drive 8...");
+   parent = ui_menu_add_folder(root, "Drive 8");
       ui_menu_add_toggle(MENU_IECDEVICE_8, parent, "IEC FileSystem", 0);
-      ui_menu_add_button(MENU_ATTACH_DISK_8, parent, "Attach Disk");
-      ui_menu_add_button(MENU_DETACH_DISK_8, parent, "Detach Disk");
-      drive_type_item_8 =
-         ui_menu_add_multiple_choice(MENU_DRIVE_TYPE_8, parent, "Drive Type");
-      drive_type_item_8->num_choices = 5;
-      drive_type_item_8->value = get_drive_type_item_value(8);
-      populate_drive_types(drive_type_item_8, 8);
+      ui_menu_add_button(MENU_ATTACH_DISK_8, parent, "Attach Disk...");
+      ui_menu_add_button(MENU_DETACH_DISK_8, parent, "Detach Disk...");
+      ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_8, parent, "Change Model...");
 
-   parent = ui_menu_add_folder(root, "Drive 9...");
-      ui_menu_add_button(MENU_ATTACH_DISK_9, parent, "Attach Disk");
-      ui_menu_add_button(MENU_DETACH_DISK_9, parent, "Detach Disk");
-      drive_type_item_9 =
-         ui_menu_add_multiple_choice(MENU_DRIVE_TYPE_9, parent, "Drive Type");
-      drive_type_item_9->num_choices = 5;
-      drive_type_item_9->value = get_drive_type_item_value(9);
-      populate_drive_types(drive_type_item_9, 9);
+   parent = ui_menu_add_folder(root, "Drive 9");
+      ui_menu_add_button(MENU_ATTACH_DISK_9, parent, "Attach Disk...");
+      ui_menu_add_button(MENU_DETACH_DISK_9, parent, "Detach Disk...");
+      ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_9, parent, "Change Model...");
 
-   parent = ui_menu_add_folder(root, "Drive 10...");
-      ui_menu_add_button(MENU_ATTACH_DISK_10, parent, "Attach Disk Image");
-      ui_menu_add_button(MENU_DETACH_DISK_10, parent, "Detach Disk");
-      drive_type_item_10 =
-         ui_menu_add_multiple_choice(MENU_DRIVE_TYPE_10, parent, "Drive Type");
-      drive_type_item_10->num_choices = 5;
-      drive_type_item_10->value = get_drive_type_item_value(10);
-      populate_drive_types(drive_type_item_10, 10);
+   parent = ui_menu_add_folder(root, "Drive 10");
+      ui_menu_add_button(MENU_ATTACH_DISK_10, parent, "Attach Disk...");
+      ui_menu_add_button(MENU_DETACH_DISK_10, parent, "Detach Disk...");
+      ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_10, parent, "Change Model...");
 
-   parent = ui_menu_add_folder(root, "Drive 11...");
-      ui_menu_add_button(MENU_ATTACH_DISK_11, parent, "Attach Disk Image");
+   parent = ui_menu_add_folder(root, "Drive 11");
+      ui_menu_add_button(MENU_ATTACH_DISK_11, parent, "Attach Disk...");
       ui_menu_add_button(MENU_DETACH_DISK_11, parent, "Detach Disk");
-      drive_type_item_11 =
-         ui_menu_add_multiple_choice(MENU_DRIVE_TYPE_11, parent, "Drive Type");
-      drive_type_item_11->num_choices = 5;
-      drive_type_item_11->value = get_drive_type_item_value(11);
-      populate_drive_types(drive_type_item_11, 11);
+      ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");
 
    parent = ui_menu_add_folder(root, "Attach cartridge");
       ui_menu_add_button(MENU_ATTACH_CART, parent, "Attach cart...");
@@ -1212,7 +1204,7 @@ void build_menu(struct menu_item* root) {
       strcpy (palette_item->choices[3], "Pepto-Ntsc");
       strcpy (palette_item->choices[4], "Pepto-Pal");
 
-      child = ui_menu_add_folder(parent, "Color Adjustments");
+      child = ui_menu_add_folder(parent, "Color Adjustments...");
 
        resources_get_int("VICIIColorBrightness", &tmp);
        brightness_item = ui_menu_add_range(MENU_COLOR_BRIGHTNESS,
@@ -1275,53 +1267,9 @@ int overlay_forced(void) {
 
 // Stuff to do when menu is activated
 void menu_about_to_activate() {
-   drive_type_8_on_pop = -1;
-   drive_type_9_on_pop = -1;
-   drive_type_10_on_pop = -1;
-   drive_type_11_on_pop = -1;
 }
 
 // Stuff to do before going back to emulator
 void menu_about_to_deactivate() {
-   if (drive_type_8_on_pop >= 0) {
-      if (drive_type_8_on_pop == MENU_ITEM_DRIVE_NONE ||
-          drive_check_type(
-            get_drive_type_vice(drive_type_8_on_pop), 0) < 1) {
-         resources_set_int_sprintf("Drive%iType", DRIVE_TYPE_NONE, 8);
-      } else {
-         resources_set_int_sprintf("Drive%iType",
-            get_drive_type_vice(drive_type_item_8->value), 8);
-      }
-   }
-   if (drive_type_9_on_pop >= 0) {
-      if (drive_type_9_on_pop == MENU_ITEM_DRIVE_NONE ||
-          drive_check_type(
-            get_drive_type_vice(drive_type_9_on_pop), 1) < 1) {
-         resources_set_int_sprintf("Drive%iType", DRIVE_TYPE_NONE, 9);
-      } else {
-         resources_set_int_sprintf("Drive%iType",
-            get_drive_type_vice(drive_type_item_9->value), 9);
-      }
-   }
-   if (drive_type_10_on_pop >= 0) {
-      if (drive_type_10_on_pop == MENU_ITEM_DRIVE_NONE ||
-          drive_check_type(
-            get_drive_type_vice(drive_type_10_on_pop), 2) < 1) {
-         resources_set_int_sprintf("Drive%iType", DRIVE_TYPE_NONE, 10);
-      } else {
-         resources_set_int_sprintf("Drive%iType",
-            get_drive_type_vice(drive_type_item_10->value), 10);
-      }
-   }
-   if (drive_type_11_on_pop >= 0) {
-      if (drive_type_11_on_pop == MENU_ITEM_DRIVE_NONE ||
-          drive_check_type(
-            get_drive_type_vice(drive_type_11_on_pop), 3) < 1) {
-         resources_set_int_sprintf("Drive%iType", DRIVE_TYPE_NONE, 11);
-      } else {
-         resources_set_int_sprintf("Drive%iType",
-            get_drive_type_vice(drive_type_item_11->value), 11);
-      }
-   }
 }
 
