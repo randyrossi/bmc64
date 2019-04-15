@@ -1226,7 +1226,7 @@ void build_menu(struct menu_item* root) {
        resources_get_int("VICIIColorTint", &tmp);
        tint_item = ui_menu_add_range(MENU_COLOR_TINT,
              child, "Tint", 0, 2000, 100, tmp);
-       tint_item = ui_menu_add_button(MENU_COLOR_RESET, child, "Reset");
+       ui_menu_add_button(MENU_COLOR_RESET, child, "Reset");
 
       drive_sounds_item = ui_menu_add_toggle(MENU_DRIVE_SOUND_EMULATION,
          parent, "Drive sound emulation", 0);

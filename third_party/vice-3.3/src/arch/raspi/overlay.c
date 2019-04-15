@@ -78,12 +78,7 @@ uint8_t* overlay_init(int width, int height, int scrw, int scrh) {
    inset_x = scrw/2 - (32*8)/2;
    inset_y = 1;
 
-   // Initialize some of the static text/graphics
-   int x = inset_x;
-
-   // 8:++ 9:++ 10:++ 11:++ T:000 CNT M
-   ui_draw_text_buf("8:   9:   10:   11:   T:", x, inset_y, FG_COLOR,
-                    overlay_buf, width);
+   // Font appears to not be available here. No drawing text.
 
    // Positions relative to start of text (before inset)
    drive_x[0] = 2 * 8;
@@ -109,6 +104,12 @@ void ui_enable_drive_status(ui_drive_enable_t state,
                             int *drive_led_color) {
     overlay_activate();
     int i, enabled = state;
+
+    // TODO: Consider wiping everything out here and only drawing
+    // text for drives that are enabled....
+    // 8:++ 9:++ 10:++ 11:++ T:000 CNT M
+    ui_draw_text_buf("8:   9:   10:   11:   T:", inset_x, inset_y, FG_COLOR,
+                     overlay_buf, overlay_buf_pitch);
 
     for (i = 0; i < DRIVE_NUM; ++i) {
         ui_draw_rect_buf(drive_x[i] + 8 * 0 + inset_x, inset_y + 2,

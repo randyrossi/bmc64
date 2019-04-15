@@ -207,8 +207,6 @@ volatile int pending_emu_joy_value[128];
 volatile int pending_emu_joy_port[128];
 volatile int pending_emu_joy_type[128];
 
-static struct video_canvas_s *g_canvas;
-
 #define COLOR16(red, green, blue)         (((red) & 0x1F) << 11 \
                                         | ((green) & 0x1F) << 6 \
                                         | ((blue) & 0x1F))
@@ -250,21 +248,21 @@ static unsigned int* get_palette(int index) {
 
 // Called by menu when palette changes
 void video_canvas_change_palette(int index) {
-  if (!g_canvas) return;
+  if (!video_state.canvas) return;
 
   video_state.palette_index = index;
   // This will call set_palette below to get called after color controls
   // have been applied to the palette.
-  video_color_update_palette(g_canvas);
+  video_color_update_palette(video_state.canvas);
 }
 
 // Called when a color setting has changed
 void video_color_setting_changed() {
-  if (!g_canvas) return;
+  if (!video_state.canvas) return;
 
   // This will call set_palette below to get called after color controls
   // have been applied to the palette.
-  video_color_update_palette(g_canvas);
+  video_color_update_palette(video_state.canvas);
 }
 
 int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
@@ -279,13 +277,13 @@ int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
 }
 
 struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas, unsigned int *width, unsigned int *height, int mapped) {
-  g_canvas = canvas;
   *width  = circle_get_display_w();
   *height = circle_get_display_h();
   canvas->draw_buffer->canvas_physical_width = *width;
   canvas->draw_buffer->canvas_physical_height = *height;
   canvas->videoconfig->external_palette = 1;
-  canvas->videoconfig->external_palette_name = "TEST";
+  canvas->videoconfig->external_palette_name = "RASPI";
+  video_state.canvas = canvas;
   return canvas;
 }
 
@@ -328,6 +326,7 @@ void video_arch_canvas_init(struct video_canvas_s *canvas){
   video_state.offscreen_buffer_y = 0;
   video_state.onscreen_buffer_y = circle_get_display_h();
 
+  overlay_init(scr_w, 10, scr_w, scr_h);
 }
 
 void video_canvas_refresh(struct video_canvas_s *canvas,
@@ -350,8 +349,6 @@ void video_canvas_refresh(struct video_canvas_s *canvas,
      canvas->off_y = (scr_h - sh) / 2;
      if (canvas->off_x < 0) canvas->off_x = 0;
      if (canvas->off_y < 0) canvas->off_y = 0;
-
-     overlay_init(sw, 10, sw, sh);
   }
 
   // Top left calculation used for full frame scaling
@@ -362,8 +359,8 @@ void video_canvas_refresh(struct video_canvas_s *canvas,
   // This will do the whole frame, not the region. Scale into the offscreen
   // area.
   draw(src+top_left, sw, sh, s_pitch,
-       video_state.dst + video_state.offscreen_buffer_y*video_state.dst_pitch, video_state.dst_pitch,
-       canvas->off_x, canvas->off_y);
+       video_state.dst + video_state.offscreen_buffer_y*video_state.dst_pitch,
+       video_state.dst_pitch, canvas->off_x, canvas->off_y);
 
   need_buffer_swap = 1;
 }
@@ -403,11 +400,11 @@ void vsyncarch_postsync(void){
   // Always draw overlay on visible buffer
   if (overlay_forced() || (overlay_enabled() && overlay_showing)) {
      overlay_check();
-     int sh = g_canvas->draw_buffer->visible_height;
-     int sw = g_canvas->draw_buffer->visible_width;
+     int sh = video_state.canvas->draw_buffer->visible_height;
+     int sw = video_state.canvas->draw_buffer->visible_width;
      draw(overlay_buf, sw, 10, sw,
        video_state.dst + video_state.onscreen_buffer_y*video_state.dst_pitch,
-       video_state.dst_pitch, g_canvas->off_x, g_canvas->off_y + sh - 10);
+       video_state.dst_pitch, video_state.canvas->off_x, video_state.canvas->off_y + sh - 10);
   }
 
   video_ticks+=video_tick_inc;
