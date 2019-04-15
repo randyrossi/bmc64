@@ -68,17 +68,19 @@ unsigned int overlay_showing = 0;
 uint8_t* overlay_buf;
 
 // Create a new overlay buffer
-uint8_t* overlay_init(int width, int height, int scrw, int scrh) {
+uint8_t* overlay_init(int width, int height) {
    overlay_buf = (uint8_t*) malloc(width * height);
 
    memset(overlay_buf, BG_COLOR, width*height);
    overlay_buf_pitch = width;
 
    // Status line is 32 chars total. Figure out inset that will center.
-   inset_x = scrw/2 - (32*8)/2;
+   inset_x = width/2 - (32*8)/2;
    inset_y = 1;
 
-   // Font appears to not be available here. No drawing text.
+   // 8:++ 9:++ 10:++ 11:++ T:000 CNT M
+   ui_draw_text_buf("8:   9:   10:   11:   T:", inset_x, inset_y, FG_COLOR,
+      overlay_buf, overlay_buf_pitch);
 
    // Positions relative to start of text (before inset)
    drive_x[0] = 2 * 8;
@@ -105,29 +107,27 @@ void ui_enable_drive_status(ui_drive_enable_t state,
     overlay_activate();
     int i, enabled = state;
 
-    // TODO: Consider wiping everything out here and only drawing
-    // text for drives that are enabled....
-    // 8:++ 9:++ 10:++ 11:++ T:000 CNT M
-    ui_draw_text_buf("8:   9:   10:   11:   T:", inset_x, inset_y, FG_COLOR,
-                     overlay_buf, overlay_buf_pitch);
-
     for (i = 0; i < DRIVE_NUM; ++i) {
-        ui_draw_rect_buf(drive_x[i] + 8 * 0 + inset_x, inset_y + 2,
+        if (overlay_buf) {
+           ui_draw_rect_buf(drive_x[i] + 8 * 0 + inset_x, inset_y + 2,
                    6, 4, BG_COLOR, 1,
                    overlay_buf, overlay_buf_pitch);
-        ui_draw_rect_buf(drive_x[i] + 8 * 1 + inset_x, inset_y + 2,
+           ui_draw_rect_buf(drive_x[i] + 8 * 1 + inset_x, inset_y + 2,
                    6, 4, BG_COLOR, 1,
                    overlay_buf, overlay_buf_pitch);
+        }
         if (enabled & 1) {
             drive_led_types[i] = drive_led_color[i];
             current_drive_leds[i][0] = 0;
             current_drive_leds[i][1] = 0;
-            ui_draw_rect_buf(drive_x[i] + 8 * 0 + inset_x, inset_y + 2,
+            if (overlay_buf) {
+               ui_draw_rect_buf(drive_x[i] + 8 * 0 + inset_x, inset_y + 2,
                    6, 4, BLACK, 1,
                    overlay_buf, overlay_buf_pitch);
-            ui_draw_rect_buf(drive_x[i] + 8 * 1 + inset_x, inset_y + 2,
+               ui_draw_rect_buf(drive_x[i] + 8 * 1 + inset_x, inset_y + 2,
                    6, 4, BLACK, 1,
                    overlay_buf, overlay_buf_pitch);
+            }
         }
         enabled >>= 1;
     }

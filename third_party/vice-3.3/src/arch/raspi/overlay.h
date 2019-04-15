@@ -35,7 +35,7 @@ extern unsigned int overlay_showing;
 // Holds overlay graphics buffer
 extern uint8_t* overlay_buf;
 
-uint8_t* overlay_init(int width, int height, int scrw, int scrh);
+uint8_t* overlay_init(int width, int height);
 void overlay_check(void);
 
 #endif

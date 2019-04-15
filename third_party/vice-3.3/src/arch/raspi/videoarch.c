@@ -284,6 +284,7 @@ struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas, unsign
   canvas->videoconfig->external_palette = 1;
   canvas->videoconfig->external_palette_name = "RASPI";
   video_state.canvas = canvas;
+  overlay_init(canvas->draw_buffer->visible_width, 10);
   return canvas;
 }
 
@@ -325,8 +326,6 @@ void video_arch_canvas_init(struct video_canvas_s *canvas){
   }
   video_state.offscreen_buffer_y = 0;
   video_state.onscreen_buffer_y = circle_get_display_h();
-
-  overlay_init(scr_w, 10, scr_w, scr_h);
 }
 
 void video_canvas_refresh(struct video_canvas_s *canvas,

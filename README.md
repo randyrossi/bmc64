@@ -25,6 +25,7 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
   * There is no hot plug in/out support for USB devices.  All devices must be plugged in before the device is booted and never removed.  Attempting to remove them will halt the emulator or make it slow down considerably.
 
   * Some USB gamepads will require manual tweaking of settings from the defaults. 
+  * The drive model can't be changed and then a disk attached within the same menu 'session'.  You have to change the model, go back to the emulator, then go back to the menu to change the disk.
 
 # Precompiled Images
 
