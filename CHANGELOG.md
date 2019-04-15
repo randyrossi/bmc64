@@ -98,8 +98,12 @@
   * Added 1541, 1571 and 1581 drive models with option to change 
 
 ## 1.5
-  * Boot time down to under 3.5 seconds!!!
+  * Properly idle cores (3 cores were spinning causing CPU temperature 
+    to be hotter that required)
   * Added option to not reset tape on machine reset
   * Added missing option to reset just counter (not tape)
+
+## 1.6
+  * OMG! Boot time down to 3.5 seconds!!!
   * Fixed status bar showing at boot even though show never was selected
   * Fixed sid re-initialization not using correct frag/buf sizes
