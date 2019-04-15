@@ -84,6 +84,10 @@ struct menu_item *drive_type_item_9;
 struct menu_item *drive_type_item_10;
 struct menu_item *drive_type_item_11;
 struct menu_item *tape_reset_with_machine_item;
+struct menu_item *brightness_item;
+struct menu_item *contrast_item;
+struct menu_item *gamma_item;
+struct menu_item *tint_item;
 
 static int drive_type_8_on_pop;
 static int drive_type_9_on_pop;
@@ -358,6 +362,10 @@ static int save_settings() {
    fprintf(fp,"sid_filter=%d\n",sid_filter_item->value);
    fprintf(fp,"overlay=%d\n",overlay_item->value);
    fprintf(fp,"tapereset=%d\n",tape_reset_with_machine_item->value);
+   fprintf(fp,"brightness=%d\n",brightness_item->value);
+   fprintf(fp,"contrast=%d\n",contrast_item->value);
+   fprintf(fp,"gamma=%d\n",gamma_item->value);
+   fprintf(fp,"tint=%d\n",tint_item->value);
    fclose(fp);
 
    return 0;
@@ -444,6 +452,22 @@ static void load_settings() {
          overlay_item->value = value;
       } else if (strcmp(name,"tapereset")==0) {
          tape_reset_with_machine_item->value = value;
+      } else if (strcmp(name,"brightness")==0) {
+         brightness_item->value = value;
+         resources_set_int("VICIIColorBrightness", value);
+         video_color_setting_changed();
+      } else if (strcmp(name,"contrast")==0) {
+         contrast_item->value = value;
+         resources_set_int("VICIIColorContrast", value);
+         video_color_setting_changed();
+      } else if (strcmp(name,"gamma")==0) {
+         gamma_item->value = value;
+         resources_set_int("VICIIColorGamma", value);
+         video_color_setting_changed();
+      } else if (strcmp(name,"tint")==0) {
+         tint_item->value = value;
+         resources_set_int("VICIIColorTint", value);
+         video_color_setting_changed();
       }
    }
    fclose(fp);
@@ -759,6 +783,33 @@ static void menu_value_changed(struct menu_item* item) {
       case MENU_DRIVE_SOUND_EMULATION_VOLUME:
          resources_set_int("DriveSoundEmulationVolume", item->value);
          return;
+      case MENU_COLOR_BRIGHTNESS:
+         resources_set_int("VICIIColorBrightness", item->value);
+         video_color_setting_changed();
+         return;
+      case MENU_COLOR_CONTRAST:
+         resources_set_int("VICIIColorContrast", item->value);
+         video_color_setting_changed();
+         return;
+      case MENU_COLOR_GAMMA:
+         resources_set_int("VICIIColorGamma", item->value);
+         video_color_setting_changed();
+         return;
+      case MENU_COLOR_TINT:
+         resources_set_int("VICIIColorTint", item->value);
+         video_color_setting_changed();
+         return;
+      case MENU_COLOR_RESET:
+         brightness_item->value = 1000;
+         contrast_item->value = 1250;
+         gamma_item->value = 2200;
+         tint_item->value = 1000;
+         resources_set_int("VICIIColorBrightness", brightness_item->value);
+         resources_set_int("VICIIColorContrast", contrast_item->value);
+         resources_set_int("VICIIColorGamma", gamma_item->value);
+         resources_set_int("VICIIColorTint", tint_item->value);
+         video_color_setting_changed();
+         return;
       case MENU_SWAP_JOYSTICKS:
          menu_swap_joysticks();
          return;
@@ -942,6 +993,8 @@ void build_menu(struct menu_item* root) {
    struct menu_item* child;
    int dev;
    int i;
+   int j;
+   int tmp;
 
    // TODO: This doesn't really belong here. Need to sort
    // out init order of structs.
@@ -1035,10 +1088,10 @@ void build_menu(struct menu_item* root) {
       ui_menu_add_button(MENU_TAPE_RECORD, parent, "Record");
       ui_menu_add_button(MENU_TAPE_RESET, parent, "Reset");
       ui_menu_add_button(MENU_TAPE_RESET_COUNTER, parent, "Reset Counter");
-      resources_get_int("DatasetteResetWithCPU", &i);
+      resources_get_int("DatasetteResetWithCPU", &tmp);
       tape_reset_with_machine_item = ui_menu_add_toggle(
           MENU_TAPE_RESET_WITH_MACHINE, parent,
-              "Reset Tape with Machine Reset", i);
+              "Reset Tape with Machine Reset", tmp);
 
    ui_menu_add_divider(root);
 
@@ -1138,25 +1191,42 @@ void build_menu(struct menu_item* root) {
       usb_y_axis_0 = 1;
       usb_x_axis_1 = 0;
       usb_y_axis_1 = 1;
-      for (i=0;i<16;i++) {
-         usb_0_button_assignments[i] = (i==0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
-         usb_1_button_assignments[i] = (i==0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
-         usb_0_button_bits[i] = 1 << i;
-         usb_1_button_bits[i] = 1 << i;
+      for (j=0;j<16;j++) {
+         usb_0_button_assignments[j] = (j==0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
+         usb_1_button_assignments[j] = (j==0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
+         usb_0_button_bits[j] = 1 << j;
+         usb_1_button_bits[j] = 1 << j;
       }
 
    ui_menu_add_divider(root);
+
 
    parent = ui_menu_add_folder(root, "Prefs");
 
       palette_item = ui_menu_add_multiple_choice(MENU_COLOR_PALETTE, parent, "Color Palette");
       palette_item->num_choices = 5;
-      palette_item->value = 0;
+      palette_item->value = 1;
       strcpy (palette_item->choices[0], "Default");
       strcpy (palette_item->choices[1], "Vice");
       strcpy (palette_item->choices[2], "C64hq");
       strcpy (palette_item->choices[3], "Pepto-Ntsc");
       strcpy (palette_item->choices[4], "Pepto-Pal");
+
+      child = ui_menu_add_folder(parent, "Color Adjustments");
+
+       resources_get_int("VICIIColorBrightness", &tmp);
+       brightness_item = ui_menu_add_range(MENU_COLOR_BRIGHTNESS,
+             child, "Brightness", 0, 2000, 100, tmp);
+       resources_get_int("VICIIColorContrast", &tmp);
+       contrast_item = ui_menu_add_range(MENU_COLOR_CONTRAST,
+             child, "Contrast", 0, 2000, 100, tmp);
+       resources_get_int("VICIIColorGamma", &tmp);
+       gamma_item = ui_menu_add_range(MENU_COLOR_GAMMA,
+             child, "Gamma", 0, 4000, 100, tmp);
+       resources_get_int("VICIIColorTint", &tmp);
+       tint_item = ui_menu_add_range(MENU_COLOR_TINT,
+             child, "Tint", 0, 2000, 100, tmp);
+       tint_item = ui_menu_add_button(MENU_COLOR_RESET, child, "Reset");
 
       drive_sounds_item = ui_menu_add_toggle(MENU_DRIVE_SOUND_EMULATION,
          parent, "Drive sound emulation", 0);

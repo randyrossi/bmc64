@@ -71,6 +71,10 @@ static uint32_t color_blu[256];
 
 #define MATH_PI 3.141592653589793238462643383279
 
+#ifdef RASPI_COMPILE
+extern palette_t* raspi_video_load_palette(int num_entries, char* name);
+#endif
+
 typedef struct video_ycbcr_color_s {
     float y;
     float cb;
@@ -889,8 +893,14 @@ int video_color_update_palette(struct video_canvas_s *canvas)
 #endif
 
     if (canvas->videoconfig->external_palette) {
+#ifdef RASPI_COMPILE
+        palette = raspi_video_load_palette(
+           canvas->videoconfig->cbm_palette->num_entries,
+           canvas->videoconfig->external_palette_name);
+#else
         palette = video_load_palette(canvas->videoconfig->cbm_palette,
                                      canvas->videoconfig->external_palette_name);
+#endif
 
         if (!palette) {
             return -1;

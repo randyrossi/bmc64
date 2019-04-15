@@ -226,51 +226,66 @@ void draw(uint8_t *src, int srcw, int srch, int src_pitch,
     }
 }
 
-int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
-  canvas->palette = p;
-  video_canvas_change_palette(video_state.palette_index);
-}
-
-void video_canvas_change_palette(int index) {
-  int i;
-  video_state.palette_index = index;
-
-  unsigned int *color_palette;
-  switch (video_state.palette_index) {
+static unsigned int* get_palette(int index) {
+  switch (index) {
      case PALETTE_DEFAULT:
-	color_palette = default_color_palette;
+	return default_color_palette;
 	break;
      case PALETTE_VICE:
-	color_palette = vice_color_palette;
+	return vice_color_palette;
 	break;
      case PALETTE_C64HQ:
-	color_palette = c64hq_color_palette;
+	return c64hq_color_palette;
 	break;
      case PALETTE_PEPTO_NTSC:
-	color_palette = pepto_ntsc_color_palette;
+	return pepto_ntsc_color_palette;
 	break;
      case PALETTE_PEPTO_PAL:
-	color_palette = pepto_pal_color_palette;
+	return pepto_pal_color_palette;
 	break;
+     default:
+        return NULL;
   }
+}
 
-  for (i=0; i<16;i++) {
-    circle_set_palette(i, COLOR16(color_palette[i*3] >> 4,
-                                  color_palette[i*3+1] >> 4,
-                                  color_palette[i*3+2] >> 4));
+// Called by menu when palette changes
+void video_canvas_change_palette(int index) {
+  if (!g_canvas) return;
+
+  video_state.palette_index = index;
+  // This will call set_palette below to get called after color controls
+  // have been applied to the palette.
+  video_color_update_palette(g_canvas);
+}
+
+// Called when a color setting has changed
+void video_color_setting_changed() {
+  if (!g_canvas) return;
+
+  // This will call set_palette below to get called after color controls
+  // have been applied to the palette.
+  video_color_update_palette(g_canvas);
+}
+
+int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
+  canvas->palette = p;
+
+  for (int i=0; i<16;i++) {
+    circle_set_palette(i, COLOR16(p->entries[i].red >> 4,
+                                  p->entries[i].green >> 4,
+                                  p->entries[i].blue >> 4));
   }
-
   circle_update_palette();
 }
 
 struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas, unsigned int *width, unsigned int *height, int mapped) {
-  // Temp hack for now.
+  g_canvas = canvas;
   *width  = circle_get_display_w();
   *height = circle_get_display_h();
   canvas->draw_buffer->canvas_physical_width = *width;
   canvas->draw_buffer->canvas_physical_height = *height;
-  video_canvas_set_palette(canvas, canvas->palette);
-  g_canvas = canvas;
+  canvas->videoconfig->external_palette = 1;
+  canvas->videoconfig->external_palette_name = "TEST";
   return canvas;
 }
 
@@ -312,6 +327,7 @@ void video_arch_canvas_init(struct video_canvas_s *canvas){
   }
   video_state.offscreen_buffer_y = 0;
   video_state.onscreen_buffer_y = circle_get_display_h();
+
 }
 
 void video_canvas_refresh(struct video_canvas_s *canvas,
@@ -504,4 +520,18 @@ void circle_emu_joy_interrupt(int type, int port, int value) {
   pending_emu_joy_value[i] = value;
   pending_emu_joy_tail++;
   circle_lock_release();
+}
+
+// Called by our special hook in vice to load palettes from
+// memory.
+palette_t* raspi_video_load_palette(int num_entries, char* name) {
+  palette_t* palette = palette_create(16, NULL);
+  unsigned int* pal = get_palette(video_state.palette_index);
+  for (int i=0; i<num_entries;i++) {
+    palette->entries[i].red = pal[i*3];
+    palette->entries[i].green = pal[i*3+1];
+    palette->entries[i].blue = pal[i*3+2];
+    palette->entries[i].dither = 0;
+  }
+  return palette;
 }

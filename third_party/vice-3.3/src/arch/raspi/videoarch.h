@@ -126,4 +126,10 @@ extern int raspi_warp;
 // May be called from an ISR to change joy value for emulator
 void circle_emu_joy_interrupt(int type, int port, int value);
 
+// Called by menu after color setting changed (brightness, contrast...)
+void video_color_setting_changed(void);
+
+palette_t* raspi_video_load_palette(int num_entries, char* name);
+
+
 #endif
