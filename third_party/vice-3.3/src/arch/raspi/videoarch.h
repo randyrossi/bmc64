@@ -131,5 +131,4 @@ void video_color_setting_changed(void);
 
 palette_t* raspi_video_load_palette(int num_entries, char* name);
 
-
 #endif

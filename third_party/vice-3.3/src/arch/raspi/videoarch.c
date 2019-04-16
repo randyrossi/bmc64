@@ -207,6 +207,9 @@ volatile int pending_emu_joy_value[128];
 volatile int pending_emu_joy_port[128];
 volatile int pending_emu_joy_type[128];
 
+// One of the quick functions that can be invoked by button assignments
+volatile int pending_emu_quick_func;
+
 #define COLOR16(red, green, blue)         (((red) & 0x1F) << 11 \
                                         | ((green) & 0x1F) << 6 \
                                         | ((blue) & 0x1F))
@@ -478,6 +481,9 @@ void vsyncarch_postsync(void){
      if (ui_toggle_pending == 0) {
         ui_toggle();
      }
+  } else if (pending_emu_quick_func) {
+     menu_quick_func(pending_emu_quick_func);
+     pending_emu_quick_func = 0;
   }
 
   circle_lock_release();
@@ -516,6 +522,10 @@ void circle_emu_joy_interrupt(int type, int port, int value) {
   pending_emu_joy_value[i] = value;
   pending_emu_joy_tail++;
   circle_lock_release();
+}
+
+void circle_emu_quick_func_interrupt(int button_assignment) {
+  pending_emu_quick_func = button_assignment;
 }
 
 // Called by our special hook in vice to load palettes from

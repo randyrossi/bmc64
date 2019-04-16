@@ -267,10 +267,16 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
                  return;
               }
 
-              if (button_func == BTN_ASSIGN_MENU) {
-                 circle_key_pressed(KEYCODE_F12);
-                 circle_key_released(KEYCODE_F12);
-                 return;
+              switch (button_func) {
+                 case BTN_ASSIGN_MENU:
+                   circle_key_pressed(KEYCODE_F12);
+                   circle_key_released(KEYCODE_F12);
+                   return;
+                 case BTN_ASSIGN_WARP:
+                 case BTN_ASSIGN_SWAP_PORTS:
+                 case BTN_ASSIGN_STATUS_TOGGLE:
+                   circle_emu_quick_func_interrupt(button_func);
+                   return;
               }
 
 	      int value = 0;
@@ -347,10 +353,16 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
                  return;
               }
 
-              if (button_func == BTN_ASSIGN_MENU) {
-                 circle_key_pressed(KEYCODE_F12);
-                 circle_key_released(KEYCODE_F12);
-                 return;
+              switch (button_func) {
+                 case BTN_ASSIGN_MENU:
+                   circle_key_pressed(KEYCODE_F12);
+                   circle_key_released(KEYCODE_F12);
+                   return;
+                 case BTN_ASSIGN_WARP:
+                 case BTN_ASSIGN_SWAP_PORTS:
+                 case BTN_ASSIGN_STATUS_TOGGLE:
+                   circle_emu_quick_func_interrupt(button_func);
+                   return;
               }
 
               int value = 0;

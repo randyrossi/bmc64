@@ -179,4 +179,6 @@ int overlay_forced(void);
 void menu_about_to_activate(void);
 void menu_about_to_deactivate(void);
 
+void menu_quick_func(int button_assignment);
+
 #endif

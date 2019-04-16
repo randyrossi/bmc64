@@ -47,6 +47,7 @@
 #include "sid.h"
 #include "demo.h"
 #include "drive.h"
+#include "overlay.h"
 
 // For filename filters
 #define FILTER_NONE 0
@@ -85,21 +86,23 @@ struct menu_item *contrast_item;
 struct menu_item *gamma_item;
 struct menu_item *tint_item;
 
-int unit;
+static int unit;
+static int joyswap;
+static int force_overlay;
 const int num_disk_ext = 13;
-char disk_filt_ext[13][5] =
+static char disk_filt_ext[13][5] =
     {".d64",".d67",".d71",".d80",".d81",".d82",
      ".d1m",".d2m",".d4m",".g64",".g41",".p64",
      ".x64"};
 
 const int num_tape_ext = 2;
-char tape_filt_ext[2][5] = { ".t64",".tap" };
+static char tape_filt_ext[2][5] = { ".t64",".tap" };
 
 const int num_cart_ext = 2;
-char cart_filt_ext[2][5] = { ".crt",".bin" };
+static char cart_filt_ext[2][5] = { ".crt",".bin" };
 
 const int num_snap_ext = 1;
-char snap_filt_ext[1][5] = { ".vsf" };
+static char snap_filt_ext[1][5] = { ".vsf" };
 
 #define TEST_FILTER_MACRO(funcname, numvar, filtarray) \
 static int funcname(char *name) { \
@@ -507,6 +510,8 @@ void menu_swap_joysticks() {
    int tmp = joydevs[0].device;
    joydevs[0].device = joydevs[1].device;
    joydevs[1].device = tmp;
+   joyswap = 1 - joyswap;
+   overlay_joyswap_changed(joyswap);
    ui_set_joy_items();
 }
 
@@ -679,6 +684,12 @@ static void enter_dir(struct menu_item* item) {
   relist_files(item);
 }
 
+static void toggle_warp(int value) {
+  resources_set_int("WarpMode", value);
+  raspi_warp = value;
+  overlay_warp_changed(value);
+}
+
 // Interpret what menu item changed and make the change to vice
 static void menu_value_changed(struct menu_item* item) {
    switch (item->id) {
@@ -804,8 +815,7 @@ static void menu_value_changed(struct menu_item* item) {
          configure_usb(1);
          return;
       case MENU_WARP_MODE:
-         resources_set_int("WarpMode", item->value);
-         raspi_warp = item->value;
+         toggle_warp(item->value);
          return;
       case MENU_DEMO_MODE:
          raspi_demo_mode = item->value;
@@ -1262,7 +1272,7 @@ int overlay_enabled(void) {
 }
 
 int overlay_forced(void) {
-   return overlay_item->value == OVERLAY_ALWAYS;
+   return overlay_item->value == OVERLAY_ALWAYS || force_overlay;
 }
 
 // Stuff to do when menu is activated
@@ -1273,3 +1283,29 @@ void menu_about_to_activate() {
 void menu_about_to_deactivate() {
 }
 
+void menu_quick_func(int button_assignment) {
+   int value;
+   switch(button_assignment) {
+      case BTN_ASSIGN_WARP:
+         resources_get_int("WarpMode", &value);
+         toggle_warp(1 - value);
+         break;
+      case BTN_ASSIGN_SWAP_PORTS:
+         menu_swap_joysticks();
+         break;
+      case BTN_ASSIGN_STATUS_TOGGLE:
+         // Ignore this if it's already showing.
+         if (overlay_item->value == OVERLAY_ALWAYS) return;
+
+         if (overlay_showing || force_overlay) {
+            // Dismiss
+            force_overlay = 0;
+            overlay_force_timeout();
+         } else {
+            force_overlay = 1;
+         }
+         break;
+      default:
+         break;
+   }
+}

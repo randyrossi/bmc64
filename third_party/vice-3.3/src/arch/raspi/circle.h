@@ -45,10 +45,13 @@
 #define USB_PREF_ANALOG 0
 #define USB_PREF_HAT 1
 
-#define NUM_BUTTON_ASSIGNMENTS 3
+#define NUM_BUTTON_ASSIGNMENTS 6
 #define BTN_ASSIGN_UNDEF 0
 #define BTN_ASSIGN_FIRE 1
 #define BTN_ASSIGN_MENU 2
+#define BTN_ASSIGN_WARP 3
+#define BTN_ASSIGN_STATUS_TOGGLE 4
+#define BTN_ASSIGN_SWAP_PORTS 5
 
 // TODO: Replace this with a direct call from kernel
 typedef void (*raspi_key_handler)(long key);
@@ -92,5 +95,7 @@ extern void circle_key_released(long key);
 
 extern void circle_set_demo_mode(int is_demo);
 extern void circle_boot_complete();
+
+void circle_emu_quick_func_interrupt(int button_assignment);
 
 #endif

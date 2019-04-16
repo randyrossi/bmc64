@@ -170,6 +170,10 @@ void build_usb_menu(int dev, struct menu_item* root) {
          strcpy (tmp_item->choices[BTN_ASSIGN_UNDEF], "None");
          strcpy (tmp_item->choices[BTN_ASSIGN_FIRE], "Fire");
          strcpy (tmp_item->choices[BTN_ASSIGN_MENU], "Menu");
+         strcpy (tmp_item->choices[BTN_ASSIGN_WARP], "Warp");
+         strcpy (tmp_item->choices[BTN_ASSIGN_STATUS_TOGGLE], "Status Toggle");
+         strcpy (tmp_item->choices[BTN_ASSIGN_SWAP_PORTS], "Swap Ports");
+
          tmp_item->value = usb_0_button_assignments[i];
          tmp_item->on_value_changed = menu_usb_value_changed;
          tmp_item->sub_id = i;
@@ -201,6 +205,10 @@ void build_usb_menu(int dev, struct menu_item* root) {
          strcpy (tmp_item->choices[BTN_ASSIGN_UNDEF], "None");
          strcpy (tmp_item->choices[BTN_ASSIGN_FIRE], "Fire");
          strcpy (tmp_item->choices[BTN_ASSIGN_MENU], "Menu");
+         strcpy (tmp_item->choices[BTN_ASSIGN_WARP], "Warp");
+         strcpy (tmp_item->choices[BTN_ASSIGN_STATUS_TOGGLE], "Status Toggle");
+         strcpy (tmp_item->choices[BTN_ASSIGN_SWAP_PORTS], "Swap Ports");
+
          tmp_item->value = usb_1_button_assignments[i];
          tmp_item->on_value_changed = menu_usb_value_changed;
          tmp_item->sub_id = i;

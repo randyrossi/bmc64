@@ -107,3 +107,9 @@
   * OMG! Boot time down to 3.5 seconds!!!
   * Fixed status bar showing at boot even though show never was selected
   * Fixed sid re-initialization not using correct frag/buf sizes
+  * Re-designed disk drive model selection. More like a popup.  Must go
+    back to emulator after each selection.
+  * Save and restore drive models properly.
+  * Added warp and joystick swap indicators to status bar
+  * In addition to Fire/Menu, USB buttons can now be mapped to
+    Warp, Status Bar Toggle and Joy Port Swap

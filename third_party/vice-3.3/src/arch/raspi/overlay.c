@@ -51,6 +51,8 @@ static int drive_x[4];
 static int tape_x;
 static int tape_controls_x;
 static int tape_motor_x;
+static int warp_x;
+static int joyswap_x;
 
 static int drive_led_types[DRIVE_NUM];
 static unsigned int current_drive_leds[DRIVE_NUM][2];
@@ -74,12 +76,12 @@ uint8_t* overlay_init(int width, int height) {
    memset(overlay_buf, BG_COLOR, width*height);
    overlay_buf_pitch = width;
 
-   // Status line is 32 chars total. Figure out inset that will center.
-   inset_x = width/2 - (32*8)/2;
+   // Figure out inset that will center.
+   char *template = "8:   9:   10:   11:   T:000 STP   W:  J:12";
+   inset_x = width/2 - (strlen(template)*8)/2;
    inset_y = 1;
 
-   // 8:++ 9:++ 10:++ 11:++ T:000 CNT M
-   ui_draw_text_buf("8:   9:   10:   11:   T:", inset_x, inset_y, FG_COLOR,
+   ui_draw_text_buf(template, inset_x, inset_y, FG_COLOR,
       overlay_buf, overlay_buf_pitch);
 
    // Positions relative to start of text (before inset)
@@ -90,12 +92,17 @@ uint8_t* overlay_init(int width, int height) {
    tape_x =  24 * 8;
    tape_controls_x = 28 * 8;
    tape_motor_x = 32 * 8;
+   warp_x = 36 * 8;
+   joyswap_x = 40 * 8;
+
+   ui_draw_text_buf("-", warp_x + inset_x, inset_y, WHITE,
+                    overlay_buf, overlay_buf_pitch);
 
    return overlay_buf;
 }
 
-// Indicates activity should make overlay show
-static void overlay_activate() {
+// Some activity means overlay should show (if menu option set)
+void overlay_activate() {
   overlay_start = circle_get_ticks();
   overlay_delay = 5 * TICKS_PER_SECOND;
   overlay_showing = 1;
@@ -222,10 +229,32 @@ void ui_display_tape_motor_status(int motor) {
                    overlay_buf, overlay_buf_pitch);
 }
 
+void overlay_warp_changed(int warp) {
+  if (!overlay_buf || !overlay_enabled()) return;
+  overlay_activate();
+  ui_draw_rect_buf(warp_x + inset_x, inset_y, 8, 8, BG_COLOR, 1,
+                   overlay_buf, overlay_buf_pitch);
+  ui_draw_text_buf(warp ? "!" : "-", warp_x + inset_x, inset_y, WHITE,
+                   overlay_buf, overlay_buf_pitch);
+}
+
+void overlay_joyswap_changed(int swap) {
+  if (!overlay_buf || !overlay_enabled()) return;
+  overlay_activate();
+  ui_draw_rect_buf(joyswap_x + inset_x, inset_y, 8*2, 8, BG_COLOR, 1,
+                   overlay_buf, overlay_buf_pitch);
+  ui_draw_text_buf(swap ? "21" : "12", joyswap_x + inset_x, inset_y, WHITE,
+                   overlay_buf, overlay_buf_pitch);
+}
+
 // Checks whether a showing overlay due to activity should no longer be showing
 void overlay_check(void) {
    // Rollover safe way of checking duration
    if (overlay_showing && circle_get_ticks() - overlay_start >= overlay_delay) {
       overlay_showing = 0;
    }
+}
+
+void overlay_force_timeout(void) {
+   overlay_showing = 0;
 }
