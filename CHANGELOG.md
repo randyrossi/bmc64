@@ -105,6 +105,7 @@
 
 ## 1.6
   * OMG! Boot time down to 3.5 seconds!!!
+  * Added brightness, gamma, tint and contrast controls
   * Fixed status bar showing at boot even though show never was selected
   * Fixed sid re-initialization not using correct frag/buf sizes
   * Re-designed disk drive model selection. More like a popup.  Must go
@@ -113,3 +114,4 @@
   * Added warp and joystick swap indicators to status bar
   * In addition to Fire/Menu, USB buttons can now be mapped to
     Warp, Status Bar Toggle and Joy Port Swap
+  * Added error message if emulator won't start (possibly no roms)

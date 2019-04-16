@@ -48,6 +48,7 @@
 #include "demo.h"
 #include "overlay.h"
 #include "menu.h"
+#include "font.h"
 
 // Keep video state shared between compilation units here
 struct VideoData video_state;
@@ -541,3 +542,39 @@ palette_t* raspi_video_load_palette(int num_entries, char* name) {
   }
   return palette;
 }
+
+// This should be self contained. Don't rely on anything other
+// than the frame buffer which is guaranteed to be available.
+void main_exit(void) {
+  // We should never get here.  If we do, it's probably
+  // becasue essential roms are missing.  So display a message
+  // to that effect.
+
+  int i;
+  uint8_t *fb = circle_get_fb();
+  int fb_pitch = circle_get_fb_pitch();
+  int h = circle_get_display_h();
+  bzero(fb, h*fb_pitch);
+
+  video_state.font = (uint8_t *)&font8x8_basic;
+  for (i = 0; i < 256; ++i) {
+     video_state.font_translate[i] = (8 * (i & 0x7f));
+  }
+
+  int x = 0;
+  int y = 3;
+  ui_draw_text_buf("BMC64 failed to start.",
+     x, y, 1, fb, fb_pitch);
+  y+=8;
+  ui_draw_text_buf("This most likely means you are missing",
+     x, y, 1, fb, fb_pitch);
+  y+=8;
+  ui_draw_text_buf("ROM files. See documentation.",
+     x, y, 1, fb, fb_pitch);
+  y+=8;
+
+  circle_set_palette(0, COLOR16(0,0,0));
+  circle_set_palette(1, COLOR16(255>>4,255>>4,255>>4));
+  circle_update_palette();
+}
+

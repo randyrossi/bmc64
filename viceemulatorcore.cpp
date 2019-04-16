@@ -70,6 +70,7 @@ void ViceEmulatorCore::RunMainVice() {
       (char*)"+VICIIvcache",
     };
     main_program(argc, argv);
+    main_exit();
 }
 
 // Initializing the filters for each SID model takes quite a bit.

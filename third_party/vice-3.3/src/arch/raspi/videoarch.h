@@ -130,5 +130,6 @@ void circle_emu_joy_interrupt(int type, int port, int value);
 void video_color_setting_changed(void);
 
 palette_t* raspi_video_load_palette(int num_entries, char* name);
+void main_exit(void);
 
 #endif

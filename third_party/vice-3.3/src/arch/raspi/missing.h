@@ -94,7 +94,6 @@ void cbm2ui_shutdown(void);
 void cbm5x0ui_shutdown(void);
 void fullscreen_capability(struct cap_fullscreen_s *cap_fullscreen);
 void joy_arch_init_default_mapping(int joynum);
-void main_exit(void);
 void petui_shutdown(void);
 void plus4ui_shutdown(void);
 void scpu64ui_shutdown(void);
