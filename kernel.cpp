@@ -183,6 +183,17 @@ bool CKernel::Initialize(void) {
    return true;
 }
 
+void CKernel::InitSound() {
+  // After parallelizing circle + vice init routine, we have to init vchiq
+  // here on core 1 instead of the circle init on core 0.  Not sure why it
+  // fails but the device is not found otherwise.
+  if (!mVCHIQ.Initialize()) {
+    printf ("Could not init VCHIQ\n");
+  }
+
+  mViceSound = new ViceSound(&mVCHIQ,  VCHIQSoundDestinationAuto);
+}
+
 // Interrupt handler. Make this quick.
 void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
                                     const TGamePadState *pState) {
@@ -499,10 +510,7 @@ int CKernel::circle_sound_init(const char *param, int *speed,
   *channels = 1;
 
   if (!mViceSound) {
-     if (mVCHIQ.Initialize()) {
-        mViceSound = new ViceSound(&mVCHIQ,  VCHIQSoundDestinationAuto);
-        mViceSound->Playback();
-     }
+     InitSound();
   }
   return 0;
 }
@@ -841,6 +849,11 @@ void CKernel::circle_lock_release() {
 
 void CKernel::circle_boot_complete() {
   DisableBootStat();
+  if (mViceSound) {
+     mViceSound->Playback();
+  } else {
+     printf ("ERROR: mViceSound was not initialized by boot complete signal\n");
+  }
 }
 
 // 1025700 60hz NTSC hdmi

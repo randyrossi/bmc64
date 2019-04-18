@@ -569,7 +569,13 @@ void main_exit(void) {
   ui_draw_text_buf("This most likely means you are missing",
      x, y, 1, fb, fb_pitch);
   y+=8;
-  ui_draw_text_buf("ROM files. See documentation.",
+  ui_draw_text_buf("ROM files. Or you have specified an",
+     x, y, 1, fb, fb_pitch);
+  y+=8;
+  ui_draw_text_buf("invalid kernal, chargen or basic",
+     x, y, 1, fb, fb_pitch);
+  y+=8;
+  ui_draw_text_buf("ROM in vice.ini.  See documentation.",
      x, y, 1, fb, fb_pitch);
   y+=8;
 

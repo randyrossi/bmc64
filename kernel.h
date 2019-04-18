@@ -86,6 +86,7 @@ public:
 	int circle_cycles_per_second();
 
 private:
+        void InitSound();
         void SetupUSBKeyboard();
 
         static bool uiShift;

@@ -166,9 +166,14 @@ static void ui_draw_char(uint8_t c, int pos_x, int pos_y, int color,
 // Draw a string of text at location x,y. Does not word wrap.
 void ui_draw_text_buf(const char* text, int x, int y, int color, uint8_t *dst, int dst_pitch) {
    int i;
+   int x2 = x;
    for (i=0;i<strlen(text);i++) {
-      ui_draw_char(text[i], x, y, color, dst, dst_pitch);
-      x=x+8;
+      if (text[i] == '\n') {
+         y=y+8; x2 = x;
+      } else {
+         ui_draw_char(text[i], x2, y, color, dst, dst_pitch);
+         x2=x2+8;
+      }
    }
 }
 

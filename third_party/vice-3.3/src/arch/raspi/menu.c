@@ -333,8 +333,38 @@ static void ui_set_joy_items()
    }
 }
 
+static int viceSidEngineToBmcChoice(int viceEngine) {
+   switch (viceEngine) {
+      case SID_ENGINE_FASTSID:
+         return MENU_SID_ENGINE_FAST;
+      case SID_ENGINE_RESID:
+         return MENU_SID_ENGINE_RESID;
+      default:
+         return MENU_SID_ENGINE_RESID;
+   }
+}
+
+
+static int viceSidModelToBmcChoice(int viceModel) {
+   switch (viceModel) {
+      case SID_MODEL_6581:
+         return MENU_SID_MODEL_6581;
+      case SID_MODEL_8580:
+         return MENU_SID_MODEL_8580;
+      default:
+         return MENU_SID_MODEL_6581;
+   }
+}
+
 static int save_settings() {
    int i;
+
+   int r = resources_save(NULL);
+   if (r < 0) {
+      printf ("resource_save failed with %d\n",r);
+      return 1;
+   }
+
    FILE *fp = fopen("/settings.txt","w");
    if (fp == NULL) return 1;
 
@@ -348,8 +378,7 @@ static int save_settings() {
    fprintf(fp,"usb_y_1=%d\n",usb_y_axis_1);
    fprintf(fp,"palette=%d\n",palette_item->value);
    fprintf(fp,"keyboard_type=%d\n",keyboard_type_item->value);
-   fprintf(fp,"drive_sounds=%d\n",drive_sounds_item->value);
-   fprintf(fp,"drive_sounds_vol=%d\n",drive_sounds_vol_item->value);
+
    for (i=0;i<16;i++) {
       fprintf(fp,"usb_btn_0=%d\n",usb_0_button_assignments[i]);
    }
@@ -357,15 +386,9 @@ static int save_settings() {
       fprintf(fp,"usb_btn_1=%d\n",usb_1_button_assignments[i]);
    }
    fprintf(fp,"alt_f12=%d\n",menu_alt_f12_item->value);
-   fprintf(fp,"sid_engine=%d\n",sid_engine_item->value);
-   fprintf(fp,"sid_model=%d\n",sid_model_item->value);
-   fprintf(fp,"sid_filter=%d\n",sid_filter_item->value);
+
    fprintf(fp,"overlay=%d\n",overlay_item->value);
    fprintf(fp,"tapereset=%d\n",tape_reset_with_machine_item->value);
-   fprintf(fp,"brightness=%d\n",brightness_item->value);
-   fprintf(fp,"contrast=%d\n",contrast_item->value);
-   fprintf(fp,"gamma=%d\n",gamma_item->value);
-   fprintf(fp,"tint=%d\n",tint_item->value);
 
    int drive_type;
 
@@ -397,6 +420,24 @@ static void ui_set_joy_devs() {
 }
 
 static void load_settings() {
+
+   int tmp_value;
+
+   resources_get_int("SidEngine", &tmp_value);
+   sid_engine_item->value = viceSidEngineToBmcChoice(tmp_value);
+
+   resources_get_int("SidModel", &tmp_value);
+   sid_model_item->value = viceSidModelToBmcChoice(tmp_value);
+
+   resources_get_int("SidFilters", &sid_filter_item->value);
+   resources_get_int("DriveSoundEmulation", &drive_sounds_item->value);
+   resources_get_int("DriveSoundEmulationVolume", &drive_sounds_vol_item->value );
+   resources_get_int("VICIIColorBrightness", &brightness_item->value);
+   resources_get_int("VICIIColorContrast", &contrast_item->value);
+   resources_get_int("VICIIColorGamma", &gamma_item->value);
+   resources_get_int("VICIIColorTint", &tint_item->value);
+   video_color_setting_changed();
+
    FILE *fp = fopen("/settings.txt","r");
    if (fp == NULL) return;
 
@@ -404,7 +445,6 @@ static void load_settings() {
    int value;
    int usb_btn_0_i = 0;
    int usb_btn_1_i = 0;
-   int drive_type;
    while (1) {
       name_value[0] = '\0';
       // Looks like circle-stdlib doesn't support something like %s=%d
@@ -430,14 +470,6 @@ static void load_settings() {
       }
       else if (strcmp(name,"keyboard_type")==0) {
          keyboard_type_item->value = value;
-      }
-      else if (strcmp(name,"drive_sounds")==0) {
-         drive_sounds_item->value = value;
-         resources_set_int("DriveSoundEmulation", value);
-      }
-      else if (strcmp(name,"drive_sounds_vol")==0) {
-         drive_sounds_vol_item->value = value;
-         resources_set_int("DriveSoundEmulationVolume", value);
       } else if (strcmp(name,"usb_btn_0")==0) {
          usb_0_button_assignments[usb_btn_0_i] = value;
          usb_btn_0_i++;
@@ -452,56 +484,12 @@ static void load_settings() {
          }
       } else if (strcmp(name,"alt_f12")==0) {
          menu_alt_f12_item->value = value;
-      } else if (strcmp(name,"sid_engine")==0) {
-         sid_engine_item->value = value;
-         resources_set_int("SidEngine", sid_engine_item->choice_ints[value]);
-      } else if (strcmp(name,"sid_filter")==0) {
-         sid_filter_item->value = value;
-         resources_set_int("SidFilters", sid_filter_item->value);
-      } else if (strcmp(name,"sid_model")==0) {
-         sid_model_item->value = value;
-         resources_set_int("SidModel", sid_model_item->choice_ints[value]);
       } else if (strcmp(name,"overlay")==0) {
          overlay_item->value = value;
       } else if (strcmp(name,"tapereset")==0) {
          tape_reset_with_machine_item->value = value;
-      } else if (strcmp(name,"brightness")==0) {
-         brightness_item->value = value;
-         resources_set_int("VICIIColorBrightness", value);
-         video_color_setting_changed();
-      } else if (strcmp(name,"contrast")==0) {
-         contrast_item->value = value;
-         resources_set_int("VICIIColorContrast", value);
-         video_color_setting_changed();
-      } else if (strcmp(name,"gamma")==0) {
-         gamma_item->value = value;
-         resources_set_int("VICIIColorGamma", value);
-         video_color_setting_changed();
-      } else if (strcmp(name,"tint")==0) {
-         tint_item->value = value;
-         resources_set_int("VICIIColorTint", value);
-         video_color_setting_changed();
-      } else if (strcmp(name,"drive_type_8")==0) {
-         resources_get_int_sprintf("Drive%iType", &drive_type, 8);
-         if (value != drive_type) {
-           resources_set_int_sprintf("Drive%iType", value, 8);
-         }
-      } else if (strcmp(name,"drive_type_9")==0) {
-         resources_get_int_sprintf("Drive%iType", &drive_type, 9);
-         if (value != drive_type) {
-           resources_set_int_sprintf("Drive%iType", value, 9);
-         }
-      } else if (strcmp(name,"drive_type_10")==0) {
-         resources_get_int_sprintf("Drive%iType", &drive_type, 10);
-         if (value != drive_type) {
-           resources_set_int_sprintf("Drive%iType", value, 10);
-         }
-      } else if (strcmp(name,"drive_type_11")==0) {
-         resources_get_int_sprintf("Drive%iType", &drive_type, 11);
-         if (value != drive_type) {
-           resources_set_int_sprintf("Drive%iType", value, 11);
-         }
       }
+
    }
    fclose(fp);
 }
@@ -761,6 +749,10 @@ static void menu_value_changed(struct menu_item* item) {
          return;
       case MENU_ATTACH_CART_ULTIMAX:
          show_files(DIR_CARTS, FILTER_NONE, MENU_CART_ULTIMAX_FILE);
+         return;
+      case MENU_MAKE_CART_DEFAULT:
+         cartridge_set_default();
+         ui_info("Remember to save..");
          return;
       case MENU_DETACH_DISK_8:
          ui_info("Deatching...");
@@ -1076,6 +1068,7 @@ void build_menu(struct menu_item* root) {
       ui_menu_add_button(MENU_ATTACH_CART_8K, parent, "Attach 8k raw...");
       ui_menu_add_button(MENU_ATTACH_CART_16K, parent, "Attach 16 raw...");
       ui_menu_add_button(MENU_ATTACH_CART_ULTIMAX, parent, "Attach Ultimax raw...");
+      ui_menu_add_button(MENU_MAKE_CART_DEFAULT, parent, "Set current cart default (Need Save)");
 
    ui_menu_add_button(MENU_DETACH_CART, root, "Detach cartridge");
 
@@ -1108,12 +1101,10 @@ void build_menu(struct menu_item* root) {
           "Sid Engine");
       child->num_choices = 2;
       child->value = MENU_SID_ENGINE_RESID;
-      resources_set_int("SidEngine", SID_ENGINE_FASTSID);
       strcpy (child->choices[MENU_SID_ENGINE_FAST], "Fast");
       strcpy (child->choices[MENU_SID_ENGINE_RESID], "ReSid");
       child->choice_ints[MENU_SID_ENGINE_FAST] = SID_ENGINE_FASTSID;
       child->choice_ints[MENU_SID_ENGINE_RESID] = SID_ENGINE_RESID;
-      resources_set_int("SidEngine", sid_engine_item->choice_ints[sid_engine_item->value]);
 
       // 6581 by default
       child = sid_model_item = ui_menu_add_multiple_choice(
@@ -1125,13 +1116,11 @@ void build_menu(struct menu_item* root) {
       strcpy (child->choices[MENU_SID_MODEL_8580], "8580");
       child->choice_ints[MENU_SID_MODEL_6581] = SID_MODEL_6581;
       child->choice_ints[MENU_SID_MODEL_8580] = SID_MODEL_8580;
-      resources_set_int("SidModel", sid_model_item->choice_ints[sid_model_item->value]);
 
       // Filter on by default
       child = sid_filter_item = ui_menu_add_toggle(
           MENU_SID_FILTER, parent,
-          "Sid Filter", 1);
-      resources_set_int("SidFilters", sid_filter_item->value);
+          "Sid Filter", 0);
 
    parent = ui_menu_add_folder(root, "Keyboard");
       child = keyboard_type_item = ui_menu_add_multiple_choice(
@@ -1232,10 +1221,8 @@ void build_menu(struct menu_item* root) {
 
       drive_sounds_item = ui_menu_add_toggle(MENU_DRIVE_SOUND_EMULATION,
          parent, "Drive sound emulation", 0);
-      resources_set_int("DriveSoundEmulation", drive_sounds_item->value);
       drive_sounds_vol_item = ui_menu_add_range(MENU_DRIVE_SOUND_EMULATION_VOLUME,
          parent, "Drive sound emulation volume", 0, 1000, 100, 1000);
-      resources_set_int("DriveSoundEmulationVolume", drive_sounds_vol_item->value);
 
       overlay_item = ui_menu_add_multiple_choice(MENU_OVERLAY, parent, "Show Status Bar");
       overlay_item->num_choices = 3;
@@ -1264,6 +1251,9 @@ void build_menu(struct menu_item* root) {
 
    // Always turn off resampling
    resources_set_int("SidResidSampling", 0);
+   resources_set_int("VICIIVideoCache", 0);
+   resources_set_int("VICIIHwScale", 0);
+
    ui_set_joy_devs();
 }
 
