@@ -1074,7 +1074,8 @@ void build_menu(struct menu_item* root) {
    ui_menu_add_divider(root);
 
    parent = ui_menu_add_folder(root, "Drive 8");
-      ui_menu_add_toggle(MENU_IECDEVICE_8, parent, "IEC FileSystem", 0);
+      resources_get_int_sprintf("IECDevice%i", &tmp, 8);
+      ui_menu_add_toggle(MENU_IECDEVICE_8, parent, "IEC FileSystem", tmp);
       ui_menu_add_button(MENU_ATTACH_DISK_8, parent, "Attach Disk...");
       ui_menu_add_button(MENU_DETACH_DISK_8, parent, "Detach Disk...");
       ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_8, parent, "Change Model...");

@@ -34,6 +34,7 @@
 #include "drive.h"
 #include "datasette.h"
 #include "menu.h"
+#include "resources.h"
 
 #define BG_COLOR    14
 #define FG_COLOR    1
