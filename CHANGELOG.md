@@ -115,3 +115,6 @@
   * In addition to Fire/Menu, USB buttons can now be mapped to
     Warp, Status Bar Toggle and Joy Port Swap
   * Added error message if emulator won't start (possibly no roms)
+  * Added ability to save default cartridge
+  * Sid/DriveEmulation save/restore moved to vice.ini
+  * Added load kernal, basic, chargen roms and save as defaults

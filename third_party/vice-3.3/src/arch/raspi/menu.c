@@ -125,13 +125,14 @@ static int funcname(char *name) { \
 #define DIR_TAPES 2
 #define DIR_CARTS 3
 #define DIR_SNAPS 4
-#define NUM_DIR_TYPES 5
+#define DIR_ROMS 5
+#define NUM_DIR_TYPES 6
 
 // What directories to initialize file search dialogs with for
 // each type of file.
 // TODO: Make these start dirs configurable.
 static const char default_dir_names[NUM_DIR_TYPES][16] = {
-   "/", "/disks", "/tapes", "/carts", "/snapshots"
+   "/", "/disks", "/tapes", "/carts", "/snapshots", "/C64"
 };
 
 // Keep track of current directory for each type of file.
@@ -573,6 +574,15 @@ static void select_file(struct menu_item* item) {
          } else {
             ui_pop_all_and_toggle();
          }
+   } else if (item->id == MENU_KERNAL_FILE) {
+         resources_set_string("KernalName", item->str_value);
+         ui_pop_all_and_toggle();
+   } else if (item->id == MENU_BASIC_FILE) {
+         resources_set_string("BasicName", item->str_value);
+         ui_pop_all_and_toggle();
+   } else if (item->id == MENU_CHARGEN_FILE) {
+         resources_set_string("ChargenName", item->str_value);
+         ui_pop_all_and_toggle();
    } else if (item->id == MENU_AUTOSTART_FILE) {
          ui_info("Starting...");
          if (autostart_autodetect(fullpath(DIR_ROOT, item->str_value),
@@ -601,6 +611,10 @@ static int menu_file_item_to_dir_index(struct menu_item* item) {
      case MENU_CART_16K_FILE:
      case MENU_CART_ULTIMAX_FILE:
        return DIR_CARTS;
+     case MENU_KERNAL_FILE:
+     case MENU_BASIC_FILE:
+     case MENU_CHARGEN_FILE:
+       return DIR_ROMS;
      case MENU_AUTOSTART_FILE:
        return DIR_ROOT;
      default:
@@ -628,13 +642,14 @@ static void relist_files(struct menu_item* item) {
        show_files(DIR_CARTS, FILTER_CART, item->id);
        break;
      case MENU_CART_8K_FILE:
-       show_files(DIR_CARTS, FILTER_NONE, item->id);
-       break;
      case MENU_CART_16K_FILE:
-       show_files(DIR_CARTS, FILTER_NONE, item->id);
-       break;
      case MENU_CART_ULTIMAX_FILE:
        show_files(DIR_CARTS, FILTER_NONE, item->id);
+       break;
+     case MENU_KERNAL_FILE:
+     case MENU_BASIC_FILE:
+     case MENU_CHARGEN_FILE:
+       show_files(DIR_ROMS, FILTER_NONE, item->id);
        break;
      case MENU_AUTOSTART_FILE:
        show_files(DIR_ROOT, FILTER_NONE, item->id);
@@ -749,6 +764,15 @@ static void menu_value_changed(struct menu_item* item) {
          return;
       case MENU_ATTACH_CART_ULTIMAX:
          show_files(DIR_CARTS, FILTER_NONE, MENU_CART_ULTIMAX_FILE);
+         return;
+      case MENU_LOAD_KERNAL:
+         show_files(DIR_ROMS, FILTER_NONE, MENU_KERNAL_FILE);
+         return;
+      case MENU_LOAD_BASIC:
+         show_files(DIR_ROMS, FILTER_NONE, MENU_BASIC_FILE);
+         return;
+      case MENU_LOAD_CHARGEN:
+         show_files(DIR_ROMS, FILTER_NONE, MENU_CHARGEN_FILE);
          return;
       case MENU_MAKE_CART_DEFAULT:
          cartridge_set_default();
@@ -1039,6 +1063,13 @@ void build_menu(struct menu_item* root) {
 
    ui_menu_add_button(MENU_ABOUT, root, "About...");
    ui_menu_add_button(MENU_LICENSE, root, "License...");
+
+   ui_menu_add_divider(root);
+
+   parent = ui_menu_add_folder(root, "ROMs...");
+      ui_menu_add_button(MENU_LOAD_KERNAL, parent, "Load Kernal ROM...");
+      ui_menu_add_button(MENU_LOAD_BASIC, parent, "Load Basic ROM...");
+      ui_menu_add_button(MENU_LOAD_CHARGEN, parent, "Load Chargen ROM...");
 
    ui_menu_add_divider(root);
 
