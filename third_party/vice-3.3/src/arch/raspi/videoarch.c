@@ -437,13 +437,13 @@ void vsyncarch_postsync(void){
   // RESID at this point in the boot process to work around the issue.  This
   // gets our audio buffer as close to the 'live' edge as possible.  It's only
   // an issue if RESID is the engine selected for boot.
-  if (fix_sid && video_frame_count == 121) {
-     resources_set_int("SidEngine", SID_ENGINE_FASTSID);
-  }
-
-  if (fix_sid && video_frame_count == 122) {
-     resources_set_int("SidEngine", SID_ENGINE_RESID);
-     fix_sid = 0;
+  if (fix_sid) {
+     if (video_frame_count == 121) {
+        resources_set_int("SidEngine", SID_ENGINE_FASTSID);
+     } else if (video_frame_count == 122) {
+        resources_set_int("SidEngine", SID_ENGINE_RESID);
+        fix_sid = 0;
+     }
   }
   // END UGLY HACK
 
