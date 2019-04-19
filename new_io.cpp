@@ -16,6 +16,7 @@ extern int errno;
 
 #include <malloc.h>
 #include <sys/unistd.h>
+#include <circle/serial.h>
 
 #include <ff.h>
 
@@ -61,6 +62,68 @@ static const char *pattern = "*";
 
 static char currentDir[256];
 
+/**
+ * @fn int strend(const char *s, const char *t)
+ * @brief Searches the end of string s for string t
+ * @param s the string to be searched
+ * @param t the substring to locate at the end of string s
+ * @return one if the string t occurs at the end of the string s, and zero otherwise
+ */
+int strend(const char *s, const char *t)
+{
+    size_t ls = strlen(s); // find length of s
+    size_t lt = strlen(t); // find length of t
+    if (ls >= lt)  // check if t can fit in s
+    {
+        // point s to where t should start and compare the strings from there
+        return (0 == memcmp(t, s + (ls - lt), lt));
+    }
+    return 0; // t was longer than s
+}
+
+static void reverse(char *x, int begin, int end) {
+  char c;
+
+  if (begin >= end)
+    return;
+
+  c = *(x + begin);
+  *(x + begin) = *(x + end);
+  *(x + end) = c;
+
+  reverse(x, ++begin, --end);
+}
+
+static void itoa2(int i, char *dst) {
+  int q = 0;
+  int j;
+  do {
+    j = i % 10;
+    dst[q] = '0' + j;
+    q++;
+    i = i / 10;
+  } while (i > 0);
+  dst[q] = '\0';
+
+  reverse(dst, 0, strlen(dst) - 1);
+}
+
+CSerialDevice *g_serial;
+
+static void logm(const char *msg) {
+   if (g_serial) {
+      g_serial->Write(msg, strlen(msg));
+   }
+}
+
+static void logi(int i) {
+   char nn[16];
+   itoa2(i,nn);
+   if (g_serial) {
+      g_serial->Write(nn, strlen(nn));
+   }
+}
+
 struct CirclePath {
    CirclePath(const char* p) {
       path[0] = '\0';
@@ -93,6 +156,11 @@ struct CirclePath {
       } else {
          strcpy (path, p);
       }
+
+      // Fat fs doesn't like trailing slashes for dirs
+      if (strlen(path) > 1 && path[strlen(p)-1] == '/') {
+         path[strlen(p)-1] = '\0';
+      }
    }
 
    char path[256];
@@ -103,12 +171,14 @@ struct CircleFile {
   int in_use;
   char fname[256];
 
-  char readBuf[READ_BUF_SIZE];
-  char *contents;
-  int allocated;
-  unsigned size;
-  unsigned position;
-  int mode;
+  char readBuf[READ_BUF_SIZE]; // tmp read buffer
+  char *contents; // bytes for file in memory
+  int allocated; // total bytes allocated for in memory file
+  unsigned size; // total size of file in memory file
+  unsigned position; // current in memory write position
+  int mode; // remembers mode this file was opened under
+  int written_to; // at least one write was performed on this file
+  int fopen_called; // f_open was called and thus f_close needs to be called
 };
 
 struct CircleDir {
@@ -130,7 +200,9 @@ CircleDir dirTab[MAX_OPEN_DIRS];
 static const char* const VolumeStr[FF_VOLUMES] = {FF_VOLUME_STRS};
 PARTITION VolToPart[FF_VOLUMES];
 
-void CGlueStdioInit() {
+void CGlueStdioInit(CSerialDevice *serial) {
+  g_serial = serial;
+
   // Initialize stdio, stderr and stdin
   fileTab[0].in_use = 1;
   fileTab[1].in_use = 1;
@@ -145,10 +217,28 @@ void CGlueStdioInit() {
   strcpy (currentDir, "/");
 }
 
-void CGlueStdioSetPartitionForVolume (const char* volume, int part) {
+static int g_bootStatNum = 0;
+static int *g_bootStatWhat;
+static const char **g_bootStatFile;
+static int *g_bootStatSize;
+
+// Set global vars pointing to bootstat info
+void CGlueStdioInitBootStat (int num,
+        int *bootStatWhat,
+        const char **bootStatFile,
+        int *bootStatSize) {
+   g_bootStatNum = num;
+   g_bootStatWhat = bootStatWhat;
+   g_bootStatFile = bootStatFile;
+   g_bootStatSize = bootStatSize;
+}
+
+void CGlueStdioSetPartitionForVolume (const char* volume, int part, unsigned int ss) {
   for (int pd = 0; pd < FF_VOLUMES; pd++) {
      if (strcmp(volume, VolumeStr[pd]) == 0) {
         VolToPart[pd].pt = part;
+	// Start sector only forced if part == 5
+        VolToPart[pd].ss = ss;
         return;
      }
   }
@@ -175,39 +265,6 @@ static char *strdup2(const char *s) {
   return d;
 }
 
-static void reverse(char *x, int begin, int end) {
-  char c;
-
-  if (begin >= end)
-    return;
-
-  c = *(x + begin);
-  *(x + begin) = *(x + end);
-  *(x + end) = c;
-
-  reverse(x, ++begin, --end);
-}
-
-static void itoa2(int i, char *dst) {
-  int q = 0;
-  int j;
-  do {
-    j = i % 10;
-    dst[q] = '0' + j;
-    q++;
-    i = i / 10;
-  } while (i > 0);
-  dst[q] = '\0';
-
-  reverse(dst, 0, strlen(dst) - 1);
-}
-
-// BCM64 : For routing stdout/stderr to serial via circle
-extern "C" {
-extern ssize_t circle_serial_write(int fd, const void *buf, size_t count);
-}
-static void logm(const char *msg) { circle_serial_write(1, msg, strlen(msg)); }
-static void logi(int i) { char nn[16]; itoa2(i,nn); circle_serial_write(1, nn, strlen(nn)); }
 
 static int FindFreeDirSlot(void) {
   int slotNr = -1;
@@ -231,19 +288,24 @@ static CircleDir *FindCircleDirFromDIR(DIR *dir) {
   return nullptr;
 }
 
-static void slurp_file(CircleFile &file) {
+// Returns non zero value on any failure. Any memory will be
+// freed on error and file.contents nulled.
+static int slurp_file(CircleFile &file) {
   if (file.contents == nullptr) {
-    // Read the entire contents of the file into our
-    // memory buffer.
+    // Read the entire contents of the file into memory.
     file.size = 0;
     unsigned total = 0;
     if (f_lseek(&file.file, 0) != FR_OK) {
-       return;
+       return -1;
     }
     while (true) {
       unsigned int num_read;
       if (f_read(&file.file, file.readBuf, READ_BUF_SIZE, &num_read) != FR_OK) {
-        break;
+        if (file.contents) {
+           free(file.contents);
+           file.contents = nullptr;
+        }  
+        return -1;
       }
 
       if (num_read == 0) {
@@ -263,6 +325,7 @@ static void slurp_file(CircleFile &file) {
       file.size = total;
     }
   }
+  return 0;
 }
 
 extern "C" int _DEFUN(_open, (file, flags, mode),
@@ -274,6 +337,15 @@ extern "C" int _DEFUN(_open, (file, flags, mode),
     return -1;
   }
 
+  // Handle fast fail here
+  for (int i=0;i<g_bootStatNum;i++) {
+     if (g_bootStatWhat[i] == BOOTSTAT_WHAT_FAIL) {
+        if (strend(file, g_bootStatFile[i])) {
+          errno = EACCES;
+          return -1;
+        }
+     }
+  }
   int slot = FindFreeFileSlot();
 
   if (slot != -1) {
@@ -298,19 +370,24 @@ extern "C" int _DEFUN(_open, (file, flags, mode),
       return -1;
     }
 
+    newFile.fopen_called = 1;
     newFile.contents = nullptr;
     newFile.position = 0;
     newFile.size = 0;
     newFile.allocated = 0;
     newFile.mode = masked_flags;
+    newFile.written_to = 0;
     strcpy(newFile.fname, circlePath.path);
 
     // When file is opened O_RDWR, slurp it into memory.
     if (masked_flags == O_RDWR) {
-       slurp_file(newFile);
-       if (newFile.size == 0 || f_close(&newFile.file) != FR_OK) {
-          slot = -1;
+       if (slurp_file(newFile)) {
           errno = ENFILE;
+          return -1;
+       }
+       if (f_close(&newFile.file) != FR_OK) {
+          errno = ENFILE;
+          return -1;
        }
     }
 
@@ -335,15 +412,18 @@ extern "C" int _DEFUN(_close, (fildes), int fildes) {
   }
 
   if (file.contents) {
-     if (file.mode == O_RDWR) {
+     // Only open if something was actually written to memory
+     if (file.mode == O_RDWR && file.written_to) {
         // Assert FIL is not used
+        file.fopen_called = 1;
         if (f_open(&file.file, file.fname,
                       FA_WRITE | FA_CREATE_ALWAYS) != FR_OK) {
            // We won't be able to flush in memory changes back to disk.
         }
      }
 
-     if (file.mode == O_RDWR || file.mode == O_WRONLY) {
+     // Always flush to disk for WRONLY but only if written to for RDRW
+     if ((file.mode == O_RDWR && file.written_to) || file.mode == O_WRONLY) {
         // Dump contents of memory buffer to actual file.
         unsigned int num_written;
         if (f_write(&file.file, file.contents,
@@ -353,10 +433,14 @@ extern "C" int _DEFUN(_close, (fildes), int fildes) {
      }
   }
 
+  int need_close = file.fopen_called;
+
   file.allocated = 0;
   file.size = 0;
   file.mode = 0;
   file.in_use = 0;
+  file.written_to = 0;
+  file.fopen_called = 0;
   file.fname[0] = '\0';
 
   if (file.contents) {
@@ -364,7 +448,8 @@ extern "C" int _DEFUN(_close, (fildes), int fildes) {
     file.contents = nullptr;
   } 
   
-  if (f_close(&file.file) != FR_OK) {
+  // If we opened for RDWR but never wrote, nothing do to.
+  if (need_close && f_close(&file.file) != FR_OK) {
     errno = EIO;
     return -1;
   }
@@ -423,7 +508,10 @@ extern "C" int _DEFUN(_write, (fildes, ptr, len),
   }
 
   if (fildes == 1 || fildes == 2) {
-    return circle_serial_write(fildes, ptr, len);
+    if (g_serial) {
+       return g_serial->Write(ptr, len);
+    } 
+    return len;
   }
 
   CircleFile &file = fileTab[fildes];
@@ -431,6 +519,9 @@ extern "C" int _DEFUN(_write, (fildes, ptr, len),
     errno = EBADF;
     return -1;
   }
+
+  // Mark this dirty so it will be flushed from memory to disk on close
+  file.written_to = 1;
 
   // Nothing allocated yet? Allocate now.
   if (file.contents == nullptr) {
@@ -549,6 +640,23 @@ extern "C" int _DEFUN(_stat, (file, st),
   CirclePath circlePath(file);
   memset(st, 0, sizeof(struct stat));
 
+  // Fastfail or fastsucceed
+  for (int i=0;i<g_bootStatNum;i++) {
+     if (g_bootStatWhat[i] == BOOTSTAT_WHAT_STAT) {
+        if (strend(circlePath.path, g_bootStatFile[i])) {
+           st->st_mode = S_IFREG | S_IREAD | S_IWRITE;
+           st->st_size = g_bootStatSize[i];
+        }
+        return 0;
+     }
+     else if (g_bootStatWhat[i] == BOOTSTAT_WHAT_FAIL) {
+        if (strend(circlePath.path, g_bootStatFile[i])) {
+          errno = EBADF;
+          return -1;
+        }
+     }
+  }
+
   FILINFO fno;
   if (f_stat(circlePath.path, &fno) == FR_OK) {
     if (fno.fattrib & AM_DIR) {
@@ -597,8 +705,7 @@ extern "C" int _DEFUN(_lseek, (fildes, ptr, dir),
 
   if (file.mode == O_RDONLY) {
     // Assert FIL has been opened
-    slurp_file(file);
-    if (file.size == 0) {
+    if (slurp_file(file)) {
        errno = EACCES;
        return -1;
     }
@@ -623,6 +730,8 @@ extern "C" int _DEFUN(_lseek, (fildes, ptr, dir),
 
 int chdir (const char *path)
 {
+  int i;
+
   if (path == nullptr) {
      errno = EIO;
      return -1;
@@ -630,28 +739,72 @@ int chdir (const char *path)
 
   int len = strlen(path);
   if (len == 0) {
-     errno = EIO;
-     return -1;
+     return 0;
   }
 
   if (len == 1 && path[0] == '.') {
      return 0;
   }
 
-  CirclePath circlePath(path);
-  strcpy(currentDir, circlePath.path);
-
-  // Ensure trailing slash
-  if (currentDir[strlen(currentDir)-1] != '/') {
-     strcat(currentDir, "/");
+  // Up to parent
+  if (len == 2 && path[0] == '.' && path[1] == '.') {
+     if (strlen(currentDir) == 0) {
+        return 0;
+     }
+     if (strlen(currentDir) == 1 && currentDir[0] == '/') {
+        return 0;
+     }
+     for (i=strlen(currentDir)-1; i >= 0; i--) {
+        if (currentDir[i] == '/') {
+           currentDir[i] = '\0';
+           return 0;
+        }
+     }
+     return 0;
   }
+
+  CirclePath circlePath(path);
+  if (path[0] == '/') {
+     // Absolute
+     strcpy(currentDir, circlePath.path);
+  } else {
+     // Ensure trailing slash is present before appending
+     if (strlen(currentDir) == 0 || currentDir[strlen(currentDir)-1] != '/') {
+        strcat(currentDir, "/");
+     }
+     strcat(currentDir, circlePath.path);
+  }
+
   return 0;
 }
 
 char *getwd(char *buf) {
    if (buf) {
       strcpy(buf, currentDir);
+      if (strlen(buf) > 1 && buf[strlen(buf)-1] == '/') {
+         buf[strlen(buf)-1] = '\0';
+      }
    }
-   return currentDir;
+   return buf;
 }
 
+extern "C" int
+_DEFUN (_link, (existing, newname),
+        char *existing _AND char *newname)
+{
+  int result = f_rename(existing, newname);
+  if (result != FR_OK) {
+     if (result == FR_EXIST) errno = EEXIST;
+     else errno = EBADF;
+     return -1;
+  }
+  return 0;
+}
+
+extern "C" int
+_DEFUN (_unlink, (name),
+        char *name)
+{
+  f_unlink(name);
+  return 0;
+}
