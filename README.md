@@ -1,13 +1,13 @@
-__IMPORTANT PSA: BMC64 v1.0.6 through v1.4 were not properly putting the other 3 (unused) cores to a low powered mode and was causing CPU temperatures to rise close to or beyond automatic throttling limits. I'm very sorry about this. I don't believe this pushed the devices beyond their limits, it was just a waste of heat. The Pi will automatically throttle itself if CPU temperature goes beyond a certain limit. If you saw thermometer icons in the top right corner of your screen, this is probably why. V1.5+ fixes this.__
+__IMPORTANT PSA: BMC64 v1.0.6 through v1.4 were not properly putting the other 3 (unused) cores to a low powered mode and was causing CPU temperatures to rise close to or beyond automatic throttling limits. I'm very sorry about this. I don't believe this pushed the devices beyond their limits, it was just a waste of heat. The Pi will automatically throttle itself if CPU temperature goes beyond a certain limit. If you saw thermometer icons in the top right corner of your screen, this is probably why. V1.5 or greater fixes this.__
 
-__If you are using an older version, I strongly recommend you update to v1.5__
+__If you are using an older version, I strongly recommend you update to the latest release.__
 
 # BMC64
 
 BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio.
 
 # Features
-  * Quick boot time (5 seconds!)
+  * Quick boot time (3.5 seconds!)
   * Frames are timed to vsync for true 50/60 hz smooth scrolling (no horizontal tearing!)
   * Low latency between input & audio/video
   * No shutdown sequence required, just power off
@@ -25,7 +25,6 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
   * There is no hot plug in/out support for USB devices.  All devices must be plugged in before the device is booted and never removed.  Attempting to remove them will halt the emulator or make it slow down considerably.
 
   * Some USB gamepads will require manual tweaking of settings from the defaults. 
-  * The drive model can't be changed and then a disk attached within the same menu 'session'.  You have to change the model, go back to the emulator, then go back to the menu to change the disk.
 
 # Precompiled Images
 
@@ -38,6 +37,8 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
 # Timing
 
 The machine config provided defaults to PAL 50hz for HDMI.  If you want to use composite out, you MUST change the machine_timing parameter in cmdline.txt to 'pal-composite'.  Otherwise, you will have audio synchronization issues.  You can change the machine to be NTSC if you want (see below).
+
+At the moment, there's a good change that custom hdmi modes will cause audio sync issues since the refresh rate is unlikely to be exactly what BMC64 needs.  A solution is being worked on to allow custom hdmi modes.  Stay tuned.
 
 # FileSystem/Drives
 
@@ -72,6 +73,7 @@ IMPORTANT: The files the Raspbery Pi itself needs to boot BMC64 must still resid
     config.txt
     kernel*.img
     cmdline.txt
+    fixup.dat
 
 Directories and long filenames are supported as of v1.0.10. Previous versions, required all disks, tapes, cartridges, rom files etc to reside in the root directory.  This is no longer the case.  If you have an existing image, it is recommended you move your files to the following directory structure:
 
@@ -86,7 +88,9 @@ You can make drive 8 an IECDevice for the root directory of the SDcard. However,
 
 # Sound
 
-The default Sid engine is 'ReSid' which more accurately reproduces the sound chip. However, it consumes more CPU which is sometimes too much for the Raspberry Pi 2 @ 900Mhz.  Some high intensity demos may start to 'stagger' on the Pi 2. A good example of this is the end of Disk 1 of Comaland.  For most games, however, this won't be a problem.  If you run into this issue, however, you can switch the Sid engine to 'Fast'. It's lower quality but won't stutter.  The Pi 3 Model B @ 1.2 Ghz doesn't appear to have this problem.
+The default Sid engine is 'ReSid' which more accurately reproduces the sound chip. 
+
+NOTE: I had a section here previously about the Pi 2 @900Mhz not being able to keep up with some high intensity demos (i.e. last sequence of disk 1 Comaland 100%).  This is, in fact, a bug that only shows up after a snapshot previously saved at that part of the demo is loaded.  I'm investigating this.  But it appears the Pi 2 does run that sequence okay as long as you load it from disk.
 
 You can switch between 6581 and 8580 models as well as turn on/off the filter.  For ReSid, only fast interpolation method is currently supported.
 
@@ -160,7 +164,7 @@ The default settings work fine for composite out.
 
 Q: Can I change option 'X' in vice?
 
-A: Most options are fixed right now to make sure video and audio are rendered properly. Other options may be added in the future.
+A: Most video options are fixed right now to make sure video is rendered properly. VICE settings are read from 'vice.ini' located in the root of the emulator's partition. If there is no UI support for the option you are looking for, you can try setting it there using VICE documentation.
 
 Q: Hey, isn't the real thing running at 50.125Hz?
 
@@ -229,10 +233,4 @@ If that happens, reset these repos using "git reset HASH --hard" commands in the
     libs/circle-newlib 8a313d45ad5d8c0e306ce8751b6e3d6d3ef46ab3
     libs/mbedtls 60fbd5bdf05c223b641677204469b53c2ff39d4e
 
-# Todo
-- [ ] Measure latency (in frames) between input and response (both audio/video)
-- [ ] Add ability to filter long lists of files 
-- [ ] Add more emulator options to UI (i.e. true drive emulation toggle)
-- [ ] Most timings below were taken from https://www.youtube.com/watch?v=b73BONBBZR8
-
-# Performance comparison can be found at https://accentual.com/bmc64
+# Performance numbers can be found at https://accentual.com/bmc64
