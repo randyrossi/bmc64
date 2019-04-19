@@ -118,3 +118,6 @@
   * Added ability to save default cartridge
   * Sid/DriveEmulation save/restore moved to vice.ini
   * Added load kernal, basic, chargen roms and save as defaults
+  * Fixed audio sync bug at boot where audio was behind until a cart was
+    attached or user spent some time in menu. Fixed with a hack to re-init
+    sid engine after boot.

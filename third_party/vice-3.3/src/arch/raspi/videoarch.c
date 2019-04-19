@@ -49,6 +49,7 @@
 #include "overlay.h"
 #include "menu.h"
 #include "font.h"
+#include "sid.h"
 
 // Keep video state shared between compilation units here
 struct VideoData video_state;
@@ -193,7 +194,8 @@ unsigned long video_freq;
 unsigned long video_frame_count;
 
 int raspi_warp = 0;
-int raspi_boot_warp = 1;
+static int raspi_boot_warp = 1;
+static int fix_sid = 0;
 
 extern struct joydev_config joydevs[2];
 
@@ -376,7 +378,13 @@ unsigned long vsyncarch_gettime(void) {
     return video_ticks;
 }
 
-void vsyncarch_init(void){
+void vsyncarch_init(void) {
+   // See video refresh code to see why this is necessary.
+   int sid_engine;
+   resources_get_int("SidEngine", &sid_engine);
+   if (sid_engine == SID_ENGINE_RESID) {
+      fix_sid = 1;
+   }
 }
 
 void vsyncarch_presync(void){
@@ -421,6 +429,23 @@ void vsyncarch_postsync(void){
      circle_boot_complete();
      resources_set_int("WarpMode", 0);
   }
+
+  // BEGIN UGLY HACK
+  // What follows is an ugly hack to get around a small extra delay
+  // in the audio buffer when RESID is set and we first boot.  I
+  // fought with VICE for a while but eventually just decided to re-init
+  // RESID at this point in the boot process to work around the issue.  This
+  // gets our audio buffer as close to the 'live' edge as possible.  It's only
+  // an issue if RESID is the engine selected for boot.
+  if (fix_sid && video_frame_count == 121) {
+     resources_set_int("SidEngine", SID_ENGINE_FASTSID);
+  }
+
+  if (fix_sid && video_frame_count == 122) {
+     resources_set_int("SidEngine", SID_ENGINE_RESID);
+     fix_sid = 0;
+  }
+  // END UGLY HACK
 
   // Hold the frame until vsync unless warping
   if (!raspi_boot_warp && !raspi_warp) {

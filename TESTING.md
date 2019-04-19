@@ -74,3 +74,7 @@
 # All files in one partition
 # Boot files in partition 1, Emulator files in partition 2
 # Commodore+F7 + simpsons.crt reset bug
+# Load kernal, basic or chargen
+# Vice settings persist to vice.ini
+# Boot with Resid with key/joy delaytest attached as cart
+ * Delay should still be ~80ms (was bug with rel < 1.6)
