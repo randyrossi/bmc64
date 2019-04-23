@@ -32,9 +32,6 @@
 #include <string.h>
 #include <sys/time.h>
 #include <assert.h>
-
-#include "c64/c64.h"
-#include "c64/c64mem.h"
 #include "monitor.h"
 #include "mem.h"
 #include "kbd.h"
@@ -50,29 +47,11 @@
 #include "menu.h"
 #include "font.h"
 #include "sid.h"
+#include "machine.h"
+#include "videoarch_machine.h"
 
 // Keep video state shared between compilation units here
 struct VideoData video_state;
-
-// This maps an ascii char to the charset's index in chargen rom
-static const uint8_t char_to_screen[256] = {
-    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
-    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
-    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
-    0x00, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
-    0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f,
-    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x5f,
-    0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f,
-    0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d, 0x9e, 0x9f,
-    0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f,
-    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f,
-    0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
-    0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f,
-    0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f,
-    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x5e
-};
 
 static unsigned int default_color_palette[] = {
 0x00,0x00,0x00,
@@ -219,12 +198,12 @@ volatile int pending_emu_quick_func;
 
 // Draw the src buffer into the dst buffer.
 void draw(uint8_t *src, int srcw, int srch, int src_pitch,
-           uint8_t *dst, int dst_pitch, int off_x, int off_y) {
+           uint8_t *dst, int dst_pitch, int dst_off_x, int dst_off_y) {
     // x,y are coordinates in src canvas space
     int x,y;
     for(y=0; y < srch; y++){
-       int gy = (y+off_y);
-       int p1 = off_x+gy*dst_pitch;
+       int gy = (y+dst_off_y);
+       int p1 = dst_off_x+gy*dst_pitch;
        int yp = y*src_pitch;
        memcpy(dst+p1, src+yp, srcw);
     }
@@ -290,7 +269,35 @@ struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas, unsign
   canvas->videoconfig->external_palette = 1;
   canvas->videoconfig->external_palette_name = "RASPI";
   video_state.canvas = canvas;
-  overlay_init(canvas->draw_buffer->visible_width, 10);
+  video_state.vis_h = canvas->draw_buffer->visible_height;
+  video_state.vis_w = canvas->draw_buffer->visible_width;
+printf ("vis wh %d %d\n",video_state.vis_w,video_state.vis_h);
+
+  int adj_x = 0;
+  if (machine_class == VICE_MACHINE_VIC20) {
+  // TODO: I don't understand why this is necessary.
+    adj_x = (video_state.vis_w - canvas->geometry->gfx_size.width ) / 2;
+  }
+
+  // Figure out what it takes to center our canvas on the display
+  video_state.dst_off_x = (video_state.fb_w - video_state.vis_w) / 2;
+  video_state.dst_off_y = (video_state.fb_h - video_state.vis_h) / 2;
+  if (video_state.dst_off_x < 0) {
+     // Truncate the source so we don't clobber our frame buffer limits.
+     video_state.dst_off_x = 0;
+     video_state.vis_w = video_state.fb_w;
+  }
+  if (video_state.dst_off_y < 0) {
+     // Truncate the source so we don't clobber our frame buffer limits.
+     video_state.dst_off_y = 0;
+     video_state.vis_h = video_state.fb_h;
+  }
+
+  video_state.top_left = canvas->geometry->first_displayed_line *
+      canvas->draw_buffer->draw_buffer_width +
+          canvas->geometry->extra_offscreen_border_left + adj_x;
+
+  overlay_init(video_state.vis_w, 10);
   return canvas;
 }
 
@@ -305,31 +312,24 @@ void video_arch_canvas_init(struct video_canvas_s *canvas){
   bzero(fb, h*fb_pitch);
 
   int timing = circle_get_machine_timing();
-  if (timing == MACHINE_TIMING_NTSC_HDMI ||
-        timing == MACHINE_TIMING_NTSC_COMPOSITE) {
-     canvas->refreshrate = C64_NTSC_RFSH_PER_SEC;
-  } else {
-     canvas->refreshrate = C64_PAL_RFSH_PER_SEC;
-  }
+  set_refresh_rate(timing, canvas);
 
-  canvas->off_x = -1;
-  canvas->off_y = -1;
+  video_state.first_refresh = 1;
+  video_state.dst_off_x = -1;
+  video_state.dst_off_y = -1;
 
   video_freq = canvas->refreshrate * video_tick_inc;
 
-  int scr_w = circle_get_display_w();
-  int scr_h = circle_get_display_h();
+  int fb_w = circle_get_display_w();
+  int fb_h = circle_get_display_h();
 
   video_state.canvas = canvas;
-  video_state.scr_w = scr_w;
-  video_state.scr_h = scr_h;
+  video_state.fb_w = fb_w;
+  video_state.fb_h = fb_h;
   video_state.dst_pitch = fb_pitch;
   video_state.dst = fb;
-  video_state.font = mem_chargen_rom + 0x800;
+  set_video_font(&video_state);
   video_state.palette_index = PALETTE_DEFAULT;
-  for (i = 0; i < 256; ++i) {
-     video_state.font_translate[i] = 8 * char_to_screen[i];
-  }
   video_state.offscreen_buffer_y = 0;
   video_state.onscreen_buffer_y = circle_get_display_h();
 }
@@ -341,31 +341,21 @@ void video_canvas_refresh(struct video_canvas_s *canvas,
   // our canvas struct.
   uint8_t *src = canvas->draw_buffer->draw_buffer;
   int s_pitch = canvas->draw_buffer->draw_buffer_width;
-  int sh = canvas->draw_buffer->visible_height;
-  int sw = canvas->draw_buffer->visible_width;
 
-  // Figure out what it takes to center our canvas on the display
-  if (canvas->off_x == -1) {
+  // TODO: Try to get rid of this
+  if (video_state.first_refresh == 1) {
      resources_set_int("WarpMode", 1);
      raspi_boot_warp = 1;
-     int scr_w  = circle_get_display_w();
-     int scr_h = circle_get_display_h();
-     canvas->off_x = (scr_w - sw) / 2;
-     canvas->off_y = (scr_h - sh) / 2;
-     if (canvas->off_x < 0) canvas->off_x = 0;
-     if (canvas->off_y < 0) canvas->off_y = 0;
+     video_state.first_refresh = 0;
   }
 
-  // Top left calculation used for full frame scaling
-  int top_left = (canvas->geometry->first_displayed_line) *
-      canvas->draw_buffer->draw_buffer_width +
-          canvas->geometry->extra_offscreen_border_left;
-
-  // This will do the whole frame, not the region. Scale into the offscreen
-  // area.
-  draw(src+top_left, sw, sh, s_pitch,
+  draw(src+video_state.top_left,
+       video_state.vis_w,
+       video_state.vis_h,
+       s_pitch,
        video_state.dst + video_state.offscreen_buffer_y*video_state.dst_pitch,
-       video_state.dst_pitch, canvas->off_x, canvas->off_y);
+       video_state.dst_pitch,
+       video_state.dst_off_x, video_state.dst_off_y);
 
   need_buffer_swap = 1;
 }
@@ -411,11 +401,9 @@ void vsyncarch_postsync(void){
   // Always draw overlay on visible buffer
   if (overlay_forced() || (overlay_enabled() && overlay_showing)) {
      overlay_check();
-     int sh = video_state.canvas->draw_buffer->visible_height;
-     int sw = video_state.canvas->draw_buffer->visible_width;
-     draw(overlay_buf, sw, 10, sw,
+     draw(overlay_buf, video_state.vis_w, 10, video_state.vis_w,
        video_state.dst + video_state.onscreen_buffer_y*video_state.dst_pitch,
-       video_state.dst_pitch, video_state.canvas->off_x, video_state.canvas->off_y + sh - 10);
+       video_state.dst_pitch, video_state.dst_off_x, video_state.dst_off_y + video_state.vis_h - 10);
   }
 
   video_ticks+=video_tick_inc;
@@ -588,7 +576,7 @@ void main_exit(void) {
 
   int x = 0;
   int y = 3;
-  ui_draw_text_buf("BMC64 failed to start.",
+  ui_draw_text_buf("Emulator failed to start.",
      x, y, 1, fb, fb_pitch);
   y+=8;
   ui_draw_text_buf("This most likely means you are missing",

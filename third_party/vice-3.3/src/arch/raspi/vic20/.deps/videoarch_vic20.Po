@@ -1,0 +1,114 @@
+videoarch_vic20.o: videoarch_vic20.c videoarch_vic20.h \
+ ../../../../src/arch/raspi/videoarch.h ../../../../src/vice.h \
+ ../../../../src/config.h ../../../../src/palette.h \
+ ../../../../src/types.h ../../../../src/vice.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/inttypes.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/newlib.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/_newlib_version.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/config.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/machine/ieeefp.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/features.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/_intsup.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/stdint.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/machine/_default_types.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/_stdint.h \
+ /home/rrossi/rpi-tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/lib/gcc/arm-linux-gnueabihf/4.9.3/include/stddef.h \
+ ../../../../src/arch/raspi/circle.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/types.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/_ansi.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/cdefs.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/machine/_types.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/_types.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/lock.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/machine/endian.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/machine/_endian.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/select.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/_sigset.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/_timeval.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/timespec.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/_timespec.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/_pthreadtypes.h \
+ /home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/machine/types.h \
+ ../../../../src/vic20/vic20.h ../../../../src/vic20/vic.h \
+ ../../../../src/types.h ../../../../src/vic20/vic20mem.h \
+ ../../../../src/mem.h ../font.h
+
+videoarch_vic20.h:
+
+../../../../src/arch/raspi/videoarch.h:
+
+../../../../src/vice.h:
+
+../../../../src/config.h:
+
+../../../../src/palette.h:
+
+../../../../src/types.h:
+
+../../../../src/vice.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/inttypes.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/newlib.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/_newlib_version.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/config.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/machine/ieeefp.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/features.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/_intsup.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/stdint.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/machine/_default_types.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/_stdint.h:
+
+/home/rrossi/rpi-tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/lib/gcc/arm-linux-gnueabihf/4.9.3/include/stddef.h:
+
+../../../../src/arch/raspi/circle.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/types.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/_ansi.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/cdefs.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/machine/_types.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/_types.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/lock.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/machine/endian.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/machine/_endian.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/select.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/_sigset.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/_timeval.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/timespec.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/_timespec.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/sys/_pthreadtypes.h:
+
+/home/rrossi/bmc64-pi3/third_party/circle-stdlib/install/arm-none-circle/include/machine/types.h:
+
+../../../../src/vic20/vic20.h:
+
+../../../../src/vic20/vic.h:
+
+../../../../src/types.h:
+
+../../../../src/vic20/vic20mem.h:
+
+../../../../src/mem.h:
+
+../font.h:

@@ -300,4 +300,9 @@ src/viciivsid/Makefile
 src/video/.deps/
 src/video/Makefile
 src/video/libvideo.a
-
+src/c128/libc128.a
+src/c64/libc64c128.a
+src/vdc/libvdc.a
+src/vic20/cart/libmascuerade.a
+src/vic20/cart/libvic20cart.a
+src/vic20/libvic20.a

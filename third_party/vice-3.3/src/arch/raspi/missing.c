@@ -57,6 +57,7 @@ int c128ui_init_early(void){
    return 0;
 }
 int c128ui_init(void){
+   ui_init_menu();
    return 0;
 }
 int c64dtvui_init_early(void){
@@ -163,6 +164,7 @@ int vic20ui_init_early(void){
    return 0;
 }
 int vic20ui_init(void){
+   ui_init_menu();
    return 0;
 }
 int video_arch_cmdline_options_init(void){

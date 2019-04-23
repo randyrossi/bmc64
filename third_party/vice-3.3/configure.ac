@@ -4238,6 +4238,9 @@ AC_OUTPUT([Makefile
            src/arch/mingw32-pcap/wpcap/Makefile
            src/arch/mingw32-pcap/wpcap/net/Makefile
            src/arch/raspi/Makefile
+           src/arch/raspi/c64/Makefile
+           src/arch/raspi/c128/Makefile
+           src/arch/raspi/vic20/Makefile
            src/arch/sdl/Makefile
            src/arch/sdl/qnx4/Makefile
            src/arch/sdl/sortix-files/Makefile

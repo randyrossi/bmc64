@@ -54,6 +54,8 @@ void ViceEmulatorCore::RunMainVice() {
     // See arch/raspi/videoarch.c
 
     printf ("Starting emulator main loop\n");
+
+#if defined(RASPI_C64) || defined(RASPI_C128)
     int argc = 11;
     char *argv[] = {
       (char*)"vice",
@@ -69,6 +71,26 @@ void ViceEmulatorCore::RunMainVice() {
       // Unless we disable the video cache, vsync is messed up
       (char*)"+VICIIvcache",
     };
+#elif defined(RASPI_VIC20)
+    int argc = 11;
+    char *argv[] = {
+      (char*)"vice",
+      timing_option_,
+      (char*)"-sounddev",
+      (char*)"raspi",
+      (char*)"-soundoutput",
+      (char*)"1",
+      (char*)"-soundsync",
+      (char*)"0",
+      (char*)"-refresh",
+      (char*)"1",
+      // Unless we disable the video cache, vsync is messed up
+      (char*)"+VICvcache",
+    };
+#else
+#error "RASPI_[model] NOT DEFINED"
+#endif
+
     main_program(argc, argv);
     main_exit();
 }

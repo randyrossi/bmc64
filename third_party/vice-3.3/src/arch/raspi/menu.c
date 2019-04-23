@@ -132,7 +132,7 @@ static int funcname(char *name) { \
 // each type of file.
 // TODO: Make these start dirs configurable.
 static const char default_dir_names[NUM_DIR_TYPES][16] = {
-   "/", "/disks", "/tapes", "/carts", "/snapshots", "/C64"
+   "/", "/disks", "/tapes", "/carts", "/snapshots", "/roms"
 };
 
 // Keep track of current directory for each type of file.
@@ -244,8 +244,24 @@ static void show_files(int dir_type, int filter, int menu_id) {
 
 static void show_about() {
    struct menu_item* about_root = ui_push_menu(32, 8);
-   ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.6");
-   ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C64 Emulator");
+   
+   switch (machine_class) {
+     case VICE_MACHINE_C64:
+        ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.6");
+        ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C64 Emulator");
+        break;
+     case VICE_MACHINE_C128:
+        ui_menu_add_button(MENU_TEXT, about_root, "BMC128 v1.6");
+        ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C128 Emulator");
+        break;
+     case VICE_MACHINE_VIC20:
+        ui_menu_add_button(MENU_TEXT, about_root, "BMVIC20 v1.6");
+        ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal Vic20 Emulator");
+        break;
+     default:
+        ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal ??? Emulator");
+        break;
+   }
    ui_menu_add_button(MENU_TEXT, about_root, "For the Rasbperry Pi 2/3");
    ui_menu_add_divider(about_root);
    ui_menu_add_button(MENU_TEXT, about_root, "https://github.com/");
@@ -360,13 +376,28 @@ static int viceSidModelToBmcChoice(int viceModel) {
 static int save_settings() {
    int i;
 
+   FILE *fp;
+   switch (machine_class) {
+     case VICE_MACHINE_C64:
+        fp = fopen("/settings.txt","w");
+        break;
+     case VICE_MACHINE_C128:
+        fp = fopen("/settings-c128.txt","w");
+        break;
+     case VICE_MACHINE_VIC20:
+        fp = fopen("/settings-vic20.txt","w");
+        break;
+     default:
+        printf ("ERROR: Unhandled machine\n");
+        return 1;
+   }
+
    int r = resources_save(NULL);
    if (r < 0) {
       printf ("resource_save failed with %d\n",r);
       return 1;
    }
 
-   FILE *fp = fopen("/settings.txt","w");
    if (fp == NULL) return 1;
 
    fprintf(fp,"port_1=%d\n",port_1_menu_item->value);
@@ -439,7 +470,22 @@ static void load_settings() {
    resources_get_int("VICIIColorTint", &tint_item->value);
    video_color_setting_changed();
 
-   FILE *fp = fopen("/settings.txt","r");
+   FILE *fp;
+   switch (machine_class) {
+     case VICE_MACHINE_C64:
+        fp = fopen("/settings.txt","r");
+        break;
+     case VICE_MACHINE_C128:
+        fp = fopen("/settings-c128.txt","r");
+        break;
+     case VICE_MACHINE_VIC20:
+        fp = fopen("/settings-vic20.txt","r");
+        break;
+     default:
+        printf ("ERROR: Unhandled machine\n");
+        return;
+   }
+
    if (fp == NULL) return;
 
    char name_value[80];
@@ -1041,6 +1087,20 @@ void build_menu(struct menu_item* root) {
    // TODO: Make these start dirs configurable.
    for (i = 0; i < NUM_DIR_TYPES; i++) {
       strcpy(current_dir_names[i], default_dir_names[i]);
+   }
+
+   switch (machine_class) {
+     case VICE_MACHINE_C64:
+        strcpy(current_dir_names[DIR_ROMS], "/C64");
+        break;
+     case VICE_MACHINE_C128:
+        strcpy(current_dir_names[DIR_ROMS], "/C128");
+        break;
+     case VICE_MACHINE_VIC20:
+        strcpy(current_dir_names[DIR_ROMS], "/VIC20");
+        break;
+     default:
+        break;
    }
 
    switch (circle_get_machine_timing()) {

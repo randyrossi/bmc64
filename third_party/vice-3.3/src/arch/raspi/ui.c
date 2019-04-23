@@ -145,8 +145,8 @@ static void ui_draw_char(uint8_t c, int pos_x, int pos_y, int color,
     }
 
     // Don't draw out of bounds
-    if (pos_y < 0 || pos_y > video_state.scr_h - 8) { return; }
-    if (pos_x < 0 || pos_x > video_state.scr_w - 8) { return; }
+    if (pos_y < 0 || pos_y > video_state.fb_h - 8) { return; }
+    if (pos_x < 0 || pos_x > video_state.fb_w - 8) { return; }
 
     font_pos = &(video_state.font[video_state.font_translate[c]]);
     draw_pos = &(dst[pos_x + pos_y * dst_pitch]);
@@ -829,8 +829,8 @@ struct menu_item* ui_push_menu(int w_chars, int h_chars) {
   int menu_height = h_chars * 8;
   menu_roots[current_menu].menu_width = menu_width;
   menu_roots[current_menu].menu_height = menu_height;
-  menu_roots[current_menu].menu_left = (video_state.scr_w - menu_width) / 2;
-  menu_roots[current_menu].menu_top = (video_state.scr_h - menu_height) / 2;
+  menu_roots[current_menu].menu_left = (video_state.fb_w - menu_width) / 2;
+  menu_roots[current_menu].menu_top = (video_state.fb_h - menu_height) / 2;
 
   menu_cursor[current_menu] = 0;
   menu_window_top[current_menu] = 0;

@@ -1,4 +1,4 @@
-# Makefile.am for the raspi version of `libarch.a'.
+# Makefile.am for the raspi version of `libarch_c64.a'.
 
 AM_CPPFLAGS = \
 	@ARCH_INCLUDES@ \
@@ -28,33 +28,12 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/imagecontents \
 	-I$(top_srcdir)/src
 
-SUBDIRS = c64 vic20 c128
+noinst_LIBRARIES = libarch_c64.a
 
-noinst_LIBRARIES = libarch.a
-
-libarch_a_SOURCES = \
-	archdep.h \
-	archdep.c \
-	joy.h \
-	joy.c \
-	kbd.h \
-	kbd.c \
-	mousedrv.h \
-	mousedrv.c \
-	missing.c \
-	ui.h \
-	ui.c \
-	videoarch.h \
-	videoarch.c \
-	menu.h \
-	menu.c \
-	menu_usb.h \
-	menu_usb.c \
-	text.h \
-	text.c \
-	demo.h \
-	demo.c \
-	overlay.c \
-	overlay.h \
-	font.c \
-	font.h
+libarch_c64_a_SOURCES = \
+	archdep_c64.h \
+	archdep_c64.c \
+	videoarch_c64.h \
+	videoarch_c64.c \
+	menu_c64.h \
+	menu_c64.c

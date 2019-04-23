@@ -95,16 +95,6 @@ char *archdep_make_backup_filename(const char *fname)
     return tmp;
 }
 
-//char *archdep_default_save_resource_file_name(void)
-//{
-//    return archdep_default_resource_file_name();
-//}
-
-char *archdep_default_resource_file_name(void)
-{
-    return util_concat(archdep_boot_path(), "/vice.ini", NULL);
-}
-
 char *archdep_default_fliplist_file_name(void)
 {
     static char *fname;

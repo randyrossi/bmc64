@@ -97,4 +97,4 @@ echo Link errors above are expected
 echo ==============================================================
 
 make clean
-make
+make -f Makefile-C64

@@ -45,9 +45,6 @@ struct video_canvas_s {
   float refreshrate;
   struct video_draw_buffer_callback_s *video_draw_buffer_callback;
 
-  // Anything specific to raspi follows.
-  unsigned int off_x; // x offset when we draw canvas for centering
-  unsigned int off_y; // y offset when we draw canvas for centering
 };
 
 typedef struct video_canvas_s video_canvas_t;
@@ -62,17 +59,23 @@ typedef struct video_canvas_s video_canvas_t;
 struct VideoData {
    struct video_canvas_s *canvas;
 
-   // The framebuffer
+   // Information about our dest frame buffer
    uint8_t *dst;
    int dst_pitch;
+   // Dest offset when drawing into frame buffer
+   int dst_off_x;
+   int dst_off_y;
+   int fb_w;
+   int fb_h;
+
+   // Information about our source pixel buffer
+   int top_left; // points to top left pixel in emulator canvas
+   int vis_w;
+   int vis_h;
 
    // Used for printing chars to the frame buffer
    uint8_t *font;
    uint16_t font_translate[256];
-
-   // The width and height of our frame buffer
-   int scr_w;
-   int scr_h;
 
    // This keeps track of the y offset for the region in our virtual
    // frame buffer that is NOT visible at the moment. It toggles
@@ -85,6 +88,9 @@ struct VideoData {
    int onscreen_buffer_y;
 
    int palette_index;
+
+   // TODO: Try getting rid of this.
+   int first_refresh;
 };
 
 // Called when video canvas has been created.
