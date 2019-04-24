@@ -184,9 +184,8 @@ int joy_key_up(unsigned int device, int key) {
             default:
                return 0;
          }
-     } else {
-        return 0;
      }
+     return 0;
 }
 
 // Called from ISR
@@ -327,9 +326,8 @@ int joy_key_down(unsigned int device, int key) {
             default:
                return 0;
          }
-     } else {
-        return 0;
      }
+     return 0;
 }
 
 // NOTE: This is called from the ISR so we can't call into the
