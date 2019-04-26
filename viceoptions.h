@@ -43,6 +43,7 @@ public:
 	bool GetDemoMode (void) const;
 	int GetDiskPartition (void) const;
 	const char* GetDiskVolume (void) const;
+	unsigned long GetCyclesPerRefresh (void) const;
 
 	static ViceOptions *Get (void);
 
@@ -64,6 +65,7 @@ private:
 	bool m_bDemoMode;
         int m_disk_partition;
         char m_disk_volume[VOLUME_NAME_LEN];
+        unsigned long m_nCyclesPerRefresh;
 
 	static ViceOptions *s_pThis;
 };

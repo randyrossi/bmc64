@@ -24,3 +24,17 @@
  *
  */
 
+#include "menu_vic20.h"
+
+#include "vic20/vic20.h"
+
+unsigned long calculate_timing(double fps) {
+  if (fps >= 49 && fps <= 51) {
+     return VIC20_PAL_CYCLES_PER_LINE * VIC20_PAL_SCREEN_LINES * fps;
+  } else if (fps >= 59 && fps <= 61) {
+     return VIC20_NTSC_CYCLES_PER_LINE * VIC20_NTSC_SCREEN_LINES * fps;
+  } else {
+     return 0;
+  }
+}
+

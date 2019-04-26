@@ -34,7 +34,8 @@
 void set_refresh_rate(int timing, struct video_canvas_s *canvas)
 {
   if (timing == MACHINE_TIMING_NTSC_HDMI ||
-      timing == MACHINE_TIMING_NTSC_COMPOSITE) {
+      timing == MACHINE_TIMING_NTSC_COMPOSITE ||
+      timing == MACHINE_TIMING_NTSC_CUSTOM) {
     canvas->refreshrate = VIC20_NTSC_RFSH_PER_SEC;
   } else {
     canvas->refreshrate = VIC20_PAL_RFSH_PER_SEC;

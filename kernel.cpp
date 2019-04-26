@@ -862,6 +862,8 @@ int CKernel::circle_cycles_per_second() {
       // sync frequency on composite is 60.055. See c64.h for how this is
       // calculated. This keeps audio buffer to a minimum using ReSid.
       return 1026640;
+   } else if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_CUSTOM) {
+      return mViceOptions.GetCyclesPerRefresh();
    } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_HDMI) {
       // 50hz
       return 982800;
@@ -870,6 +872,8 @@ int CKernel::circle_cycles_per_second() {
       // sync frequency on composite is 50.0816. See c64.h for how this is
       // calculated.  This keep audio buffer to a minimum using ReSid.
       return 984404;
+   } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_CUSTOM) {
+      return mViceOptions.GetCyclesPerRefresh();
    } else {
       return 982800;
    }

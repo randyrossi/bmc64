@@ -50,6 +50,8 @@ libarch_a_SOURCES = \
 	menu.c \
 	menu_usb.h \
 	menu_usb.c \
+	menu_timing.h \
+	menu_timing.c \
 	text.h \
 	text.c \
 	demo.h \

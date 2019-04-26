@@ -33,7 +33,8 @@ ViceOptions::ViceOptions (void) :
 	m_nCanvasHeight (DEFAULT_CANVAS_HEIGHT),
 	m_nMachineTiming (MACHINE_TIMING_PAL_HDMI),
 	m_bHideConsole(true),
-	m_bDemoMode(false)
+	m_bDemoMode(false),
+	m_nCyclesPerRefresh(0)
 {
 	s_pThis = this;
 
@@ -86,11 +87,15 @@ ViceOptions::ViceOptions (void) :
 				m_nMachineTiming = MACHINE_TIMING_NTSC_HDMI;
 			} else if (strcmp(pValue, "ntsc-composite") == 0) {
 				m_nMachineTiming = MACHINE_TIMING_NTSC_COMPOSITE;
+			} else if (strcmp(pValue, "ntsc-custom") == 0) {
+				m_nMachineTiming = MACHINE_TIMING_NTSC_CUSTOM;
 			} else if (strcmp(pValue, "pal") == 0 ||
 				strcmp(pValue, "pal-hdmi") == 0) {
 				m_nMachineTiming = MACHINE_TIMING_PAL_HDMI;
 			} else if (strcmp(pValue, "pal-composite") == 0) {
 				m_nMachineTiming = MACHINE_TIMING_PAL_COMPOSITE;
+			} else if (strcmp(pValue, "pal-custom") == 0) {
+				m_nMachineTiming = MACHINE_TIMING_PAL_CUSTOM;
 			}
 		}
 		else if (strcmp (pOption, "hide_console") == 0)
@@ -124,7 +129,19 @@ ViceOptions::ViceOptions (void) :
 			m_disk_partition = atoi(pValue);
 			if (m_disk_partition < 0) m_disk_partition = 0;
 		}
+		else if (strcmp (pOption, "cycles_per_refresh") == 0)
+		{
+			m_nCyclesPerRefresh = atol(pValue);
+		}
 	}
+
+        if (m_nMachineTiming == MACHINE_TIMING_PAL_CUSTOM &&
+             m_nCyclesPerRefresh == 0) {
+           m_nMachineTiming = MACHINE_TIMING_PAL_HDMI;
+        } else if (m_nMachineTiming == MACHINE_TIMING_NTSC_CUSTOM &&
+             m_nCyclesPerRefresh == 0) {
+           m_nMachineTiming = MACHINE_TIMING_NTSC_HDMI;
+        }
 }
 
 ViceOptions::~ViceOptions (void)
@@ -170,6 +187,11 @@ int ViceOptions::GetDiskPartition (void) const
 const char* ViceOptions::GetDiskVolume (void) const
 {
         return m_disk_volume;
+}
+
+unsigned long ViceOptions::GetCyclesPerRefresh (void) const
+{
+        return m_nCyclesPerRefresh;
 }
 
 ViceOptions *ViceOptions::Get (void)

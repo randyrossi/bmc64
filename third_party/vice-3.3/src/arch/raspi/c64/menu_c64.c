@@ -24,3 +24,17 @@
  *
  */
 
+#include "menu_c64.h"
+
+#include "c64/c64.h"
+
+unsigned long calculate_timing(double fps) {
+  if (fps >= 49 && fps <= 51) {
+     return C64_PAL_CYCLES_PER_LINE * C64_PAL_SCREEN_LINES * fps;
+  } else if (fps >= 59 && fps <= 61) {
+     return C64_NTSC_CYCLES_PER_LINE * C64_NTSC_SCREEN_LINES * fps;
+  } else {
+     return 0;
+  }
+}
+

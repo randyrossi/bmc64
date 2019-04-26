@@ -121,3 +121,11 @@
   * Fixed audio sync bug at boot where audio was behind until a cart was
     attached or user spent some time in menu. Fixed with a hack to re-init
     sid engine after boot.
+
+## 1.7
+  * Internal prep for building BMCV20 and BMC128
+  * Fixed issue where space or cntrl was not functional if curs+space or
+    curs+lcontrol was selected for joystick
+  * Added custom HDMI timing tool to calculate actual fps from custom modes
+    Use to prevent audio sync / popping issues on modes that aren't exactly
+    50 / 60 hz

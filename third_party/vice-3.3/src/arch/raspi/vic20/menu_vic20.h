@@ -24,3 +24,4 @@
  *
  */
 
+unsigned long calculate_timing(double fps);

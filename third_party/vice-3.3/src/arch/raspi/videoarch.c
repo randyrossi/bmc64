@@ -48,7 +48,7 @@
 #include "font.h"
 #include "sid.h"
 #include "machine.h"
-#include "videoarch_machine.h"
+#include "raspi_machine.h"
 
 // Keep video state shared between compilation units here
 struct VideoData video_state;

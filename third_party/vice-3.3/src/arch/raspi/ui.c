@@ -33,6 +33,7 @@
 #include <stdarg.h>
 #include "kbd.h"
 #include "menu.h"
+#include "menu_timing.h"
 #include "interrupt.h"
 #include "videoarch.h"
 #include "circle.h"
@@ -528,6 +529,7 @@ static void pause_trap(uint16_t addr, void *data) {
       ui_check_key();
       ui_render_single_frame();
       circle_wait_vsync();
+      hdmi_timing_hook();
    }
    menu_about_to_deactivate();
 }
@@ -796,12 +798,15 @@ static void ui_clear_menu(int menu_index) {
 }
 
 struct menu_item* ui_pop_menu(void) {
-  if (menu_roots[current_menu].on_value_changed) {
-     // Notify pop happened
-     menu_roots[current_menu].on_value_changed(&menu_roots[current_menu]);
-  }
+  struct menu_item* menu_to_pop = &menu_roots[current_menu];
   ui_clear_menu(current_menu);
   current_menu--;
+
+  if (menu_to_pop->on_value_changed) {
+     // Notify pop happened
+     menu_to_pop->on_value_changed(menu_to_pop);
+  }
+
   if (current_menu < 0) {
      printf ("FATAL ERROR: tried to pop last menu\n");
      return NULL;

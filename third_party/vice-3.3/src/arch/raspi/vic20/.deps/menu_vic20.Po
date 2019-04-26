@@ -1,1 +1,0 @@
-menu_vic20.o: menu_vic20.c

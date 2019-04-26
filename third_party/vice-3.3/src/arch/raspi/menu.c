@@ -44,6 +44,7 @@
 #include "util.h"
 #include "datasette.h"
 #include "menu_usb.h"
+#include "menu_timing.h"
 #include "sid.h"
 #include "demo.h"
 #include "drive.h"
@@ -279,6 +280,11 @@ static void show_license() {
 static void configure_usb(int dev) {
    struct menu_item* usb_root = ui_push_menu(-1, -1);
    build_usb_menu(dev, usb_root);
+}
+
+static void configure_timing() {
+   struct menu_item* timing_root = ui_push_menu(-1, -1);
+   build_timing_menu(timing_root);
 }
 
 static void drive_change_model() {
@@ -990,6 +996,9 @@ static void menu_value_changed(struct menu_item* item) {
          resources_set_int_sprintf("Drive%iType", item->value, unit);
          ui_pop_all_and_toggle();
          return;
+      case MENU_CALC_TIMING:
+         configure_timing();
+         return;
    }
 
    // Only items that were for file selection/nav should have these set...
@@ -1110,11 +1119,17 @@ void build_menu(struct menu_item* root) {
       case MACHINE_TIMING_NTSC_COMPOSITE:
          ui_menu_add_button(MENU_TEXT, root, "Timing: NTSC 60Hz Composite");
          break;
+      case MACHINE_TIMING_NTSC_CUSTOM:
+         ui_menu_add_button(MENU_TEXT, root, "Timing: NTSC 60Hz Custom-HDMI");
+         break;
       case MACHINE_TIMING_PAL_HDMI:
          ui_menu_add_button(MENU_TEXT, root, "Timing: PAL 50Hz HDMI");
          break;
       case MACHINE_TIMING_PAL_COMPOSITE:
          ui_menu_add_button(MENU_TEXT, root, "Timing: PAL 50Hz Composite");
+         break;
+      case MACHINE_TIMING_PAL_CUSTOM:
+         ui_menu_add_button(MENU_TEXT, root, "Timing: PAL 50Hz Custom-HDMI");
          break;
       default:
          ui_menu_add_button(MENU_TEXT, root, "Timing: ERROR");
@@ -1183,8 +1198,37 @@ void build_menu(struct menu_item* root) {
    ui_menu_add_divider(root);
 
    parent = ui_menu_add_folder(root, "Snapshots");
-      ui_menu_add_button(MENU_LOAD_SNAP, parent, "Load Snapshot");
-      ui_menu_add_button(MENU_SAVE_SNAP, parent, "Save Snapshot");
+      ui_menu_add_button(MENU_LOAD_SNAP, parent, "Load Snapshot...");
+      ui_menu_add_button(MENU_SAVE_SNAP, parent, "Save Snapshot...");
+
+   parent = ui_menu_add_folder(root, "Video");
+
+      palette_item = ui_menu_add_multiple_choice(MENU_COLOR_PALETTE, parent, "Color Palette");
+      palette_item->num_choices = 5;
+      palette_item->value = 1;
+      strcpy (palette_item->choices[0], "Default");
+      strcpy (palette_item->choices[1], "Vice");
+      strcpy (palette_item->choices[2], "C64hq");
+      strcpy (palette_item->choices[3], "Pepto-Ntsc");
+      strcpy (palette_item->choices[4], "Pepto-Pal");
+
+      child = ui_menu_add_folder(parent, "Color Adjustments...");
+
+         resources_get_int("VICIIColorBrightness", &tmp);
+         brightness_item = ui_menu_add_range(MENU_COLOR_BRIGHTNESS,
+             child, "Brightness", 0, 2000, 100, tmp);
+         resources_get_int("VICIIColorContrast", &tmp);
+         contrast_item = ui_menu_add_range(MENU_COLOR_CONTRAST,
+             child, "Contrast", 0, 2000, 100, tmp);
+         resources_get_int("VICIIColorGamma", &tmp);
+         gamma_item = ui_menu_add_range(MENU_COLOR_GAMMA,
+             child, "Gamma", 0, 4000, 100, tmp);
+         resources_get_int("VICIIColorTint", &tmp);
+         tint_item = ui_menu_add_range(MENU_COLOR_TINT,
+             child, "Tint", 0, 2000, 100, tmp);
+         ui_menu_add_button(MENU_COLOR_RESET, child, "Reset");
+
+      ui_menu_add_button(MENU_CALC_TIMING, parent, "Custom HDMI mode timing calc...");
 
    parent = ui_menu_add_folder(root, "Sound");
       // Resid by default
@@ -1286,30 +1330,6 @@ void build_menu(struct menu_item* root) {
 
    parent = ui_menu_add_folder(root, "Prefs");
 
-      palette_item = ui_menu_add_multiple_choice(MENU_COLOR_PALETTE, parent, "Color Palette");
-      palette_item->num_choices = 5;
-      palette_item->value = 1;
-      strcpy (palette_item->choices[0], "Default");
-      strcpy (palette_item->choices[1], "Vice");
-      strcpy (palette_item->choices[2], "C64hq");
-      strcpy (palette_item->choices[3], "Pepto-Ntsc");
-      strcpy (palette_item->choices[4], "Pepto-Pal");
-
-      child = ui_menu_add_folder(parent, "Color Adjustments...");
-
-       resources_get_int("VICIIColorBrightness", &tmp);
-       brightness_item = ui_menu_add_range(MENU_COLOR_BRIGHTNESS,
-             child, "Brightness", 0, 2000, 100, tmp);
-       resources_get_int("VICIIColorContrast", &tmp);
-       contrast_item = ui_menu_add_range(MENU_COLOR_CONTRAST,
-             child, "Contrast", 0, 2000, 100, tmp);
-       resources_get_int("VICIIColorGamma", &tmp);
-       gamma_item = ui_menu_add_range(MENU_COLOR_GAMMA,
-             child, "Gamma", 0, 4000, 100, tmp);
-       resources_get_int("VICIIColorTint", &tmp);
-       tint_item = ui_menu_add_range(MENU_COLOR_TINT,
-             child, "Tint", 0, 2000, 100, tmp);
-       ui_menu_add_button(MENU_COLOR_RESET, child, "Reset");
 
       drive_sounds_item = ui_menu_add_toggle(MENU_DRIVE_SOUND_EMULATION,
          parent, "Drive sound emulation", 0);
