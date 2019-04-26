@@ -173,6 +173,9 @@ CKernel::CKernel (void) : ViceStdioApp("vice"),
   static_kernel = this;
   mod_states = 0;
   memset(key_states, 0, MAX_KEY_CODES * sizeof(bool));
+  for (int i =0 ;i < NUM_GPIO_PINS; i++) {
+     gpio_debounce_state[i] = BTN_UP;
+  }
 }
 
 bool CKernel::Initialize(void) {
@@ -650,46 +653,40 @@ void CKernel::KeyStatusHandlerRaw (unsigned char ucModifiers,
    }
 }
 
-#define BTN_PRESS 1
-#define BTN_RELEASE 2
-#define BTN_UP 3
-#define BTN_DOWN 4
-
-static int gpio_menu = BTN_UP;
-
 // This debounces the menu pin
-static int GetMenuPinState(CGPIOPin* uiPin) {
-   if (uiPin->Read() == LOW) {
-      if (gpio_menu == BTN_PRESS) {
-         gpio_menu = BTN_DOWN;
+int CKernel::GetGpioPinState(int pinIndex) {
+   CGPIOPin* pin = gpioPins[pinIndex];
+   if (pin->Read() == LOW) {
+      if (gpio_debounce_state[pinIndex] == BTN_PRESS) {
+         gpio_debounce_state[pinIndex] = BTN_DOWN;
       }
-      if (gpio_menu == BTN_UP) {
+      if (gpio_debounce_state[pinIndex] == BTN_UP) {
         circle_sleep(5);
-        if (uiPin->Read() == LOW) {
-           gpio_menu = BTN_PRESS;
+        if (pin->Read() == LOW) {
+           gpio_debounce_state[pinIndex] = BTN_PRESS;
         }
       }
    } else {
-      if (gpio_menu == BTN_RELEASE) {
-         gpio_menu = BTN_UP;
+      if (gpio_debounce_state[pinIndex] == BTN_RELEASE) {
+         gpio_debounce_state[pinIndex] = BTN_UP;
       }
-      if (gpio_menu == BTN_DOWN) {
-         if (uiPin->Read() == HIGH) {
+      if (gpio_debounce_state[pinIndex] == BTN_DOWN) {
+         if (pin->Read() == HIGH) {
             circle_sleep(5);
-            if (uiPin->Read() == HIGH) {
-               gpio_menu = BTN_RELEASE;
+            if (pin->Read() == HIGH) {
+               gpio_debounce_state[pinIndex] = BTN_RELEASE;
             }
          }
       }
    }
-   return gpio_menu;
+   return gpio_debounce_state[pinIndex];
 }
 
-// This checks whether GPIO16 has triggered the ui activation
-// Not hooked to interrupt, only polled.
+// This checks whether any of our gpio pins has triggered some
+// function. Not hooked to interrupt, only polled.
 void CKernel::circle_check_gpio()
 {
-   if (GetMenuPinState(uiPin) == BTN_PRESS) {
+   if (GetGpioPinState(GPIO_MENU_INDEX) == BTN_PRESS) {
       circle_key_pressed(KEYCODE_F12);
       circle_key_released(KEYCODE_F12);
    }

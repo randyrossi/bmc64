@@ -56,7 +56,10 @@
 #define GPIO_JOY_2_RIGHT 13
 #define GPIO_JOY_2_FIRE 19
 
-#define GPIO_UI 16
+#define NUM_GPIO_PINS 1
+#define GPIO_MENU 16
+
+#define GPIO_MENU_INDEX 0
 
 // Used as indices into the hardwires joystick arrays
 #define JOY_UP 0
@@ -64,6 +67,12 @@
 #define JOY_LEFT 2
 #define JOY_RIGHT 3
 #define JOY_FIRE 4
+
+// For debouncing logic
+#define BTN_PRESS 1
+#define BTN_RELEASE 2
+#define BTN_UP 3
+#define BTN_DOWN 4
 
 extern "C" { void circle_fs_ready(); }
 
@@ -180,7 +189,7 @@ public:
 
 protected:
 	void SetupGPIO() {
-		uiPin = new CGPIOPin(GPIO_UI, GPIOModeInputPullUp, &mGPIOManager);
+		gpioPins[GPIO_MENU_INDEX] = new CGPIOPin(GPIO_MENU, GPIOModeInputPullUp, &mGPIOManager);
 
 		// Configure joystick pins now
 		joystickPins1[JOY_UP] = new CGPIOPin(GPIO_JOY_1_UP, GPIOModeInputPullUp, &mGPIOManager);
@@ -204,7 +213,7 @@ protected:
 
         CGPIOPin           *joystickPins1[5];
         CGPIOPin           *joystickPins2[5];
-        CGPIOPin           *uiPin;
+        CGPIOPin           *gpioPins[NUM_GPIO_PINS];
 };
 
 class ViceStdioApp: public ViceScreenApp

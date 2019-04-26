@@ -88,6 +88,7 @@ public:
 private:
         void InitSound();
         void SetupUSBKeyboard();
+        int GetGpioPinState(int pinIndex);
 
         static bool uiShift;
 
@@ -96,6 +97,8 @@ private:
 	ViceSound *mViceSound;
         CCPUThrottle mCPUThrottle;
         CSpinLock m_Lock;
+
+        int gpio_debounce_state[NUM_GPIO_PINS];
 };
 
 #endif
