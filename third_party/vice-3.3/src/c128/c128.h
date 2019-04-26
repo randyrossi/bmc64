@@ -29,13 +29,25 @@
 #ifndef VICE_C128_H
 #define VICE_C128_H
 
+#ifdef RASPI_COMPILE
+extern int circle_cycles_per_sec();
+#endif
+
+#ifdef RASPI_COMPILE
+#define C128_PAL_CYCLES_PER_SEC  (circle_cycles_per_sec())
+#else
 #define C128_PAL_CYCLES_PER_SEC  985248
+#endif
 #define C128_PAL_CYCLES_PER_LINE 63
 #define C128_PAL_SCREEN_LINES    312
 #define C128_PAL_CYCLES_PER_RFSH (C128_PAL_SCREEN_LINES * C128_PAL_CYCLES_PER_LINE)
 #define C128_PAL_RFSH_PER_SEC    (1.0 / ((double)C128_PAL_CYCLES_PER_RFSH / (double)C128_PAL_CYCLES_PER_SEC))
 
+#ifdef RASPI_COMPILE
+#define C128_NTSC_CYCLES_PER_SEC  (circle_cycles_per_sec())
+#else
 #define C128_NTSC_CYCLES_PER_SEC  1022730
+#endif
 #define C128_NTSC_CYCLES_PER_LINE 65
 #define C128_NTSC_SCREEN_LINES    263
 #define C128_NTSC_CYCLES_PER_RFSH (C128_NTSC_SCREEN_LINES * C128_NTSC_CYCLES_PER_LINE)

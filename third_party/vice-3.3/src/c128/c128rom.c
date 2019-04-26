@@ -548,6 +548,7 @@ int mem_load(void)
         return -1;
     }
 
+#ifndef RASPI_COMPILE
     if (resources_get_string("KernalDEName", &rom_name) < 0) {
         return -1;
     }
@@ -596,6 +597,7 @@ int mem_load(void)
     if (c128rom_load_kernal_ch(rom_name) < 0) {
         return -1;
     }
+#endif
 
     c128rom_kernal_setup();
 
@@ -620,6 +622,7 @@ int mem_load(void)
         return -1;
     }
 
+#ifndef RASPI_COMPILE
     if (resources_get_string("ChargenDEName", &rom_name) < 0) {
         return -1;
     }
@@ -654,6 +657,7 @@ int mem_load(void)
     if (c128rom_load_chargen_no(rom_name) < 0) {
         return -1;
     }
+#endif
 
     c128rom_chargen_setup();
 
