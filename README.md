@@ -24,7 +24,7 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
 
   * There is no hot plug in/out support for USB devices.  All devices must be plugged in before the device is booted and never removed.  Attempting to remove them will halt the emulator or make it slow down considerably.
 
-  * Some USB gamepads will require manual tweaking of settings from the defaults. 
+  * Some USB gamepads will require manual tweaking of settings from the defaults.
 
 # Precompiled Images
 
@@ -38,7 +38,25 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
 
 The machine config provided defaults to PAL 50hz for HDMI.  If you want to use composite out, you MUST change the machine_timing parameter in cmdline.txt to 'pal-composite'.  Otherwise, you will have audio synchronization issues.  You can change the machine to be NTSC if you want (see below).
 
-At the moment, there's a good change that custom hdmi modes will cause audio sync issues since the refresh rate is unlikely to be exactly what BMC64 needs.  A solution is being worked on to allow custom hdmi modes.  Stay tuned.
+Raspberry Pi Video Mode     | machine_timing | cycles_per_refresh
+-----------------------------------------------------------------
+hdmi_group=1,hdmi_mode=19   | pal-hdmi       | not required
+hdmi_group=1,hdmi_mode=4    | ntsc-hdmi      | not required
+sdtv_mode=18                | pal-composite  | not required
+sdtv_mode=16                | ntsc-composite | not required
+
+If you plan to use a custom HDMI mode to match the native resolution of your monitor, you will likely have to alter the machine's 'cycles_per_refresh' value to match the actual fps that mode outputs.  Custom HDMI modes may not be exactly 50 hz or 60 hz and that can cause audio sync issues.  A tool to calculate this number is provided under the 'Video' menu.  The test will take 10 minutes and will let you know what values you should add to cmdline.txt for machine_timing and cycles_per_refresh.  You only need to run the test once.
+
+Example:
+
+(config.txt):
+    # Custom 1360x768 50Hz HDMI Mode
+    disable_overscan=1
+    hdmi_cvt=1360 768 50 3 0 0 0
+    hdmi_group=2
+    hdmi_mode=87
+
+The test tool will tell you the actual frame rate for this mode is 49.89. You would then add the suggested cmdline.txt parameters: machine_timing=pal-custom cycles_per_refresh=980670.
 
 # FileSystem/Drives
 
@@ -88,7 +106,7 @@ You can make drive 8 an IECDevice for the root directory of the SDcard. However,
 
 # Sound
 
-The default Sid engine is 'ReSid' which more accurately reproduces the sound chip. 
+The default Sid engine is 'ReSid' which more accurately reproduces the sound chip.
 
 NOTE: I had a section here previously about the Pi 2 @900Mhz not being able to keep up with some high intensity demos (i.e. last sequence of disk 1 Comaland 100%).  This is, in fact, a bug that only shows up after a snapshot previously saved at that part of the demo is loaded.  I'm investigating this.  But it appears the Pi 2 does run that sequence okay as long as you load it from disk.
 

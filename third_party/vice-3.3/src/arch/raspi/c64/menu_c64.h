@@ -33,7 +33,7 @@ void set_color_tint(int value);
 void set_video_cache(int value);
 void set_hw_scale(int value);
 
-int get_color_brightness();
-int get_color_contrast();
-int get_color_gamma();
-int get_color_tint();
+int get_color_brightness(void);
+int get_color_contrast(void);
+int get_color_gamma(void);
+int get_color_tint(void);

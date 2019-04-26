@@ -39,8 +39,8 @@ extern void set_color_tint(int value);
 extern void set_video_cache(int value);
 extern void set_hw_scale(int value);
 
-extern int get_color_brightness();
-extern int get_color_contrast();
-extern int get_color_gamma();
-extern int get_color_tint();
+extern int get_color_brightness(void);
+extern int get_color_contrast(void);
+extern int get_color_gamma(void);
+extern int get_color_tint(void);
 
