@@ -31,3 +31,16 @@
 extern void set_refresh_rate(int timing, struct video_canvas_s *canvas);
 extern void set_video_font(struct VideoData* video_state);
 extern unsigned long calculate_timing(double fps);
+
+extern void set_color_brightness(int value);
+extern void set_color_contrast(int value);
+extern void set_color_gamma(int value);
+extern void set_color_tint(int value);
+extern void set_video_cache(int value);
+extern void set_hw_scale(int value);
+
+extern int get_color_brightness();
+extern int get_color_contrast();
+extern int get_color_gamma();
+extern int get_color_tint();
+

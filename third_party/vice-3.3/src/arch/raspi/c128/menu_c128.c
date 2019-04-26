@@ -27,6 +27,7 @@
 #include "menu_c128.h"
 
 #include "c128/c128.h"
+#include "resources.h"
 
 unsigned long calculate_timing(double fps) {
   if (fps >= 49 && fps <= 51) {
@@ -38,3 +39,50 @@ unsigned long calculate_timing(double fps) {
   }
 }
 
+void set_color_brightness(int value) {
+   resources_set_int("VICIIColorBrightness", value);
+}
+
+void set_color_contrast(int value) {
+   resources_set_int("VICIIColorContrast", value);
+}
+
+void set_color_gamma(int value) {
+   resources_set_int("VICIIColorGamma", value);
+}
+
+void set_color_tint(int value) {
+   resources_set_int("VICIIColorTint", value);
+}
+
+void set_video_cache(int value) {
+   resources_set_int("VICIIVideoCache", value);
+}
+
+void set_hw_scale(int value) {
+   resources_set_int("VICIIHwScale", value);
+}
+
+int get_color_brightness() {
+   int value;
+   resources_get_int("VICIIColorBrightness", &value);
+   return value;
+}
+
+int get_color_contrast() {
+   int value;
+   resources_get_int("VICIIColorContrast", &value);
+   return value;
+}
+
+int get_color_gamma() {
+   int value;
+   resources_get_int("VICIIColorGamma", &value);
+   return value;
+}
+
+int get_color_tint() {
+   int value;
+   resources_get_int("VICIIColorTint", &value);
+   return value;
+}

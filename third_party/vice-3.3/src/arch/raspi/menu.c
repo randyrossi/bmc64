@@ -49,6 +49,7 @@
 #include "demo.h"
 #include "drive.h"
 #include "overlay.h"
+#include "raspi_machine.h"
 
 // For filename filters
 #define FILTER_NONE 0
@@ -470,10 +471,10 @@ static void load_settings() {
    resources_get_int("SidFilters", &sid_filter_item->value);
    resources_get_int("DriveSoundEmulation", &drive_sounds_item->value);
    resources_get_int("DriveSoundEmulationVolume", &drive_sounds_vol_item->value );
-   resources_get_int("VICIIColorBrightness", &brightness_item->value);
-   resources_get_int("VICIIColorContrast", &contrast_item->value);
-   resources_get_int("VICIIColorGamma", &gamma_item->value);
-   resources_get_int("VICIIColorTint", &tint_item->value);
+   brightness_item->value = get_color_brightness();
+   contrast_item->value = get_color_contrast();
+   gamma_item->value = get_color_gamma();
+   tint_item->value = get_color_tint();
    video_color_setting_changed();
 
    FILE *fp;
@@ -896,19 +897,19 @@ static void menu_value_changed(struct menu_item* item) {
          resources_set_int("DriveSoundEmulationVolume", item->value);
          return;
       case MENU_COLOR_BRIGHTNESS:
-         resources_set_int("VICIIColorBrightness", item->value);
+         set_color_brightness(item->value);
          video_color_setting_changed();
          return;
       case MENU_COLOR_CONTRAST:
-         resources_set_int("VICIIColorContrast", item->value);
+         set_color_contrast(item->value);
          video_color_setting_changed();
          return;
       case MENU_COLOR_GAMMA:
-         resources_set_int("VICIIColorGamma", item->value);
+         set_color_gamma(item->value);
          video_color_setting_changed();
          return;
       case MENU_COLOR_TINT:
-         resources_set_int("VICIIColorTint", item->value);
+         set_color_tint(item->value);
          video_color_setting_changed();
          return;
       case MENU_COLOR_RESET:
@@ -916,10 +917,10 @@ static void menu_value_changed(struct menu_item* item) {
          contrast_item->value = 1250;
          gamma_item->value = 2200;
          tint_item->value = 1000;
-         resources_set_int("VICIIColorBrightness", brightness_item->value);
-         resources_set_int("VICIIColorContrast", contrast_item->value);
-         resources_set_int("VICIIColorGamma", gamma_item->value);
-         resources_set_int("VICIIColorTint", tint_item->value);
+         set_color_brightness(brightness_item->value);
+         set_color_contrast(contrast_item->value);
+         set_color_gamma(gamma_item->value);
+         set_color_tint(tint_item->value);
          video_color_setting_changed();
          return;
       case MENU_SWAP_JOYSTICKS:
@@ -1120,7 +1121,7 @@ void build_menu(struct menu_item* root) {
          ui_menu_add_button(MENU_TEXT, root, "Timing: NTSC 60Hz Composite");
          break;
       case MACHINE_TIMING_NTSC_CUSTOM:
-         ui_menu_add_button(MENU_TEXT, root, "Timing: NTSC 60Hz Custom-HDMI");
+         ui_menu_add_button(MENU_TEXT, root, "Timing: NTSC 60Hz Custom");
          break;
       case MACHINE_TIMING_PAL_HDMI:
          ui_menu_add_button(MENU_TEXT, root, "Timing: PAL 50Hz HDMI");
@@ -1129,7 +1130,7 @@ void build_menu(struct menu_item* root) {
          ui_menu_add_button(MENU_TEXT, root, "Timing: PAL 50Hz Composite");
          break;
       case MACHINE_TIMING_PAL_CUSTOM:
-         ui_menu_add_button(MENU_TEXT, root, "Timing: PAL 50Hz Custom-HDMI");
+         ui_menu_add_button(MENU_TEXT, root, "Timing: PAL 50Hz Custom");
          break;
       default:
          ui_menu_add_button(MENU_TEXT, root, "Timing: ERROR");
@@ -1214,18 +1215,14 @@ void build_menu(struct menu_item* root) {
 
       child = ui_menu_add_folder(parent, "Color Adjustments...");
 
-         resources_get_int("VICIIColorBrightness", &tmp);
          brightness_item = ui_menu_add_range(MENU_COLOR_BRIGHTNESS,
-             child, "Brightness", 0, 2000, 100, tmp);
-         resources_get_int("VICIIColorContrast", &tmp);
+             child, "Brightness", 0, 2000, 100, get_color_brightness());
          contrast_item = ui_menu_add_range(MENU_COLOR_CONTRAST,
-             child, "Contrast", 0, 2000, 100, tmp);
-         resources_get_int("VICIIColorGamma", &tmp);
+             child, "Contrast", 0, 2000, 100, get_color_contrast());
          gamma_item = ui_menu_add_range(MENU_COLOR_GAMMA,
-             child, "Gamma", 0, 4000, 100, tmp);
-         resources_get_int("VICIIColorTint", &tmp);
+             child, "Gamma", 0, 4000, 100, get_color_gamma());
          tint_item = ui_menu_add_range(MENU_COLOR_TINT,
-             child, "Tint", 0, 2000, 100, tmp);
+             child, "Tint", 0, 2000, 100, get_color_tint());
          ui_menu_add_button(MENU_COLOR_RESET, child, "Reset");
 
       ui_menu_add_button(MENU_CALC_TIMING, parent, "Custom HDMI mode timing calc...");
@@ -1363,8 +1360,8 @@ void build_menu(struct menu_item* root) {
 
    // Always turn off resampling
    resources_set_int("SidResidSampling", 0);
-   resources_set_int("VICIIVideoCache", 0);
-   resources_set_int("VICIIHwScale", 0);
+   set_video_cache(0);
+   set_hw_scale(0);
 
    ui_set_joy_devs();
 }

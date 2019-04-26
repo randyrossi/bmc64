@@ -27,6 +27,7 @@
 #include "menu_vic20.h"
 
 #include "vic20/vic20.h"
+#include "resources.h"
 
 unsigned long calculate_timing(double fps) {
   if (fps >= 49 && fps <= 51) {
@@ -38,3 +39,50 @@ unsigned long calculate_timing(double fps) {
   }
 }
 
+void set_color_brightness(int value) {
+   resources_set_int("VICColorBrightness", value);
+}
+
+void set_color_contrast(int value) {
+   resources_set_int("VICColorContrast", value);
+}
+
+void set_color_gamma(int value) {
+   resources_set_int("VICColorGamma", value);
+}
+
+void set_color_tint(int value) {
+   resources_set_int("VICColorTint", value);
+}
+
+void set_video_cache(int value) {
+   resources_set_int("VICVideoCache", value);
+}
+
+void set_hw_scale(int value) {
+   resources_set_int("VICHwScale", value);
+}
+
+int get_color_brightness() {
+   int value;
+   resources_get_int("VICColorBrightness", &value);
+   return value;
+}
+
+int get_color_contrast() {
+   int value;
+   resources_get_int("VICColorContrast", &value);
+   return value;
+}
+
+int get_color_gamma() {
+   int value;
+   resources_get_int("VICColorGamma", &value);
+   return value;
+}
+
+int get_color_tint() {
+   int value;
+   resources_get_int("VICColorTint", &value);
+   return value;
+}
