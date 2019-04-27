@@ -470,15 +470,21 @@ void vsyncarch_postsync(void){
      switch (pending_emu_joy_type[i]) {
         case PENDING_EMU_JOY_TYPE_ABSOLUTE:
            joystick_set_value_absolute(pending_emu_joy_port[i],
-              pending_emu_joy_value[i]);
+              pending_emu_joy_value[i] & 0x1f);
+           joystick_set_potx((pending_emu_joy_value[i] & POTX_BIT_MASK) >> 5);
+           joystick_set_poty((pending_emu_joy_value[i] & POTY_BIT_MASK) >> 13);
            break;
         case PENDING_EMU_JOY_TYPE_AND:
            joystick_set_value_and(pending_emu_joy_port[i],
-              pending_emu_joy_value[i]);
+              pending_emu_joy_value[i] & 0x1f);
+           joystick_set_potx_and((pending_emu_joy_value[i] & POTX_BIT_MASK) >> 5);
+           joystick_set_poty_and((pending_emu_joy_value[i] & POTY_BIT_MASK) >> 13);
            break;
         case PENDING_EMU_JOY_TYPE_OR:
            joystick_set_value_or(pending_emu_joy_port[i],
-              pending_emu_joy_value[i]);
+              pending_emu_joy_value[i] & 0x1f);
+           joystick_set_potx_or((pending_emu_joy_value[i] & POTX_BIT_MASK) >> 5);
+           joystick_set_poty_or((pending_emu_joy_value[i] & POTY_BIT_MASK) >> 13);
            break;
         default:
            break;

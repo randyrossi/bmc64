@@ -1654,11 +1654,15 @@ darwin*)
 
 eabi*)
   echo "Configuring for bare metal raspberry pi"
+  AC_DEFINE(HAVE_MOUSE,,[Enable 1351 mouse support])
+  HAVE_MOUSE_SUPPORT="yes"
   is_raspi=yes
   ;;
 
 linux-gnueabihf*)
   echo "Configuring for bare metal raspberry pi"
+  AC_DEFINE(HAVE_MOUSE,,[Enable 1351 mouse support])
+  HAVE_MOUSE_SUPPORT="yes"
   is_raspi=yes
   ;;
 

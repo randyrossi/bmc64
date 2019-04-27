@@ -52,6 +52,17 @@ struct menu_item* raw_buttons_item;
 struct menu_item* raw_hats_item[6];
 struct menu_item* raw_axes_item[16];
 
+// For pot x y as buttons
+struct menu_item *potx_high_item;
+struct menu_item *potx_low_item;
+struct menu_item *poty_high_item;
+struct menu_item *poty_low_item;
+
+extern int pot_x_high_value;
+extern int pot_x_low_value;
+extern int pot_y_high_value;
+extern int pot_y_low_value;
+
 // Set to one when we are listening for raw usb values for config
 int want_raw_usb = 0;
 int want_raw_usb_device = 0;
@@ -127,9 +138,37 @@ static void menu_usb_value_changed(struct menu_item* item) {
       case MENU_USB_1_BTN_ASSIGN:
          usb_1_button_assignments[item->sub_id] = item->value;
          break;
+      case MENU_POTX_HIGH:
+         pot_x_high_value = item->value;
+         break;
+      case MENU_POTX_LOW:
+         pot_x_low_value = item->value;
+         break;
+      case MENU_POTY_HIGH:
+         pot_y_high_value = item->value;
+         break;
+      case MENU_POTY_LOW:
+         pot_y_low_value = item->value;
+         break;
       default:
          break;
    }
+}
+
+static void add_button_choices(struct menu_item* tmp_item) {
+   tmp_item->num_choices = NUM_BUTTON_ASSIGNMENTS;
+   strcpy (tmp_item->choices[BTN_ASSIGN_UNDEF], "None");
+   strcpy (tmp_item->choices[BTN_ASSIGN_FIRE], "Fire");
+   strcpy (tmp_item->choices[BTN_ASSIGN_MENU], "Menu");
+   strcpy (tmp_item->choices[BTN_ASSIGN_WARP], "Warp");
+   strcpy (tmp_item->choices[BTN_ASSIGN_STATUS_TOGGLE], "Status Toggle");
+   strcpy (tmp_item->choices[BTN_ASSIGN_SWAP_PORTS], "Swap Ports");
+   strcpy (tmp_item->choices[BTN_ASSIGN_UP], "Up");
+   strcpy (tmp_item->choices[BTN_ASSIGN_DOWN], "Down");
+   strcpy (tmp_item->choices[BTN_ASSIGN_LEFT], "Left");
+   strcpy (tmp_item->choices[BTN_ASSIGN_RIGHT], "Right");
+   strcpy (tmp_item->choices[BTN_ASSIGN_POTX], "POT X");
+   strcpy (tmp_item->choices[BTN_ASSIGN_POTY], "POT Y");
 }
 
 void build_usb_menu(int dev, struct menu_item* root) {
@@ -166,18 +205,22 @@ void build_usb_menu(int dev, struct menu_item* root) {
          sprintf (scratch, "Button %d Function", i);
          tmp_item = ui_menu_add_multiple_choice(MENU_USB_0_BTN_ASSIGN, root,
                                                          scratch);
-         tmp_item->num_choices = NUM_BUTTON_ASSIGNMENTS;
-         strcpy (tmp_item->choices[BTN_ASSIGN_UNDEF], "None");
-         strcpy (tmp_item->choices[BTN_ASSIGN_FIRE], "Fire");
-         strcpy (tmp_item->choices[BTN_ASSIGN_MENU], "Menu");
-         strcpy (tmp_item->choices[BTN_ASSIGN_WARP], "Warp");
-         strcpy (tmp_item->choices[BTN_ASSIGN_STATUS_TOGGLE], "Status Toggle");
-         strcpy (tmp_item->choices[BTN_ASSIGN_SWAP_PORTS], "Swap Ports");
-
+         add_button_choices(tmp_item);
          tmp_item->value = usb_0_button_assignments[i];
          tmp_item->on_value_changed = menu_usb_value_changed;
          tmp_item->sub_id = i;
       }
+
+      ui_menu_add_divider(root);
+      potx_high_item = ui_menu_add_range(MENU_POTX_HIGH,
+             root, "POT X Up Value", 0, 255, 1, pot_x_high_value);
+      potx_low_item = ui_menu_add_range(MENU_POTX_LOW,
+             root, "POT X Down Value", 0, 255, 1, pot_x_low_value);
+      poty_high_item = ui_menu_add_range(MENU_POTX_HIGH,
+             root, "POT X Up Value", 0, 255, 1, pot_y_high_value);
+      poty_low_item = ui_menu_add_range(MENU_POTX_LOW,
+             root, "POT X Down Value", 0, 255, 1, pot_y_low_value);
+
   } else {
       strcpy (desc, "USB 2:");
       if (joy_num_pads > 1) {
@@ -202,17 +245,21 @@ void build_usb_menu(int dev, struct menu_item* root) {
          tmp_item = ui_menu_add_multiple_choice(MENU_USB_1_BTN_ASSIGN, root,
                                                          scratch);
          tmp_item->num_choices = NUM_BUTTON_ASSIGNMENTS;
-         strcpy (tmp_item->choices[BTN_ASSIGN_UNDEF], "None");
-         strcpy (tmp_item->choices[BTN_ASSIGN_FIRE], "Fire");
-         strcpy (tmp_item->choices[BTN_ASSIGN_MENU], "Menu");
-         strcpy (tmp_item->choices[BTN_ASSIGN_WARP], "Warp");
-         strcpy (tmp_item->choices[BTN_ASSIGN_STATUS_TOGGLE], "Status Toggle");
-         strcpy (tmp_item->choices[BTN_ASSIGN_SWAP_PORTS], "Swap Ports");
-
+         add_button_choices(tmp_item);
          tmp_item->value = usb_1_button_assignments[i];
          tmp_item->on_value_changed = menu_usb_value_changed;
          tmp_item->sub_id = i;
       }
+
+      ui_menu_add_divider(root);
+      potx_high_item = ui_menu_add_range(MENU_POTX_HIGH,
+             root, "POT X Up Value", 0, 255, 1, pot_x_high_value);
+      potx_low_item = ui_menu_add_range(MENU_POTX_LOW,
+             root, "POT X Down Value", 0, 255, 1, pot_x_low_value);
+      poty_high_item = ui_menu_add_range(MENU_POTX_HIGH,
+             root, "POT X Up Value", 0, 255, 1, pot_y_high_value);
+      poty_low_item = ui_menu_add_range(MENU_POTX_LOW,
+             root, "POT X Down Value", 0, 255, 1, pot_y_low_value);
   }
 
   usb_pref_item->num_choices = 2;
@@ -243,6 +290,8 @@ void menu_raw_usb(int device, unsigned buttons, const int hats[6], const int axe
 }
 
 // Returns the first function found for the button
+// Expected only one button to be on. Only the first
+// one on will return its function.
 int circle_button_function(int dev, unsigned b) {
    int i;
    if (dev == 0) {
@@ -262,3 +311,73 @@ int circle_button_function(int dev, unsigned b) {
    return BTN_ASSIGN_UNDEF;
 }
 
+int circle_add_button_values(int dev, unsigned b) {
+  int i;
+  int value = (pot_x_high_value << 5) | (pot_y_high_value << 13);
+  if (dev == 0) {
+      for (i=0;i<joy_num_buttons[dev];i++) {
+         if (b & usb_0_button_bits[i]) {
+            int j = usb_0_button_assignments[i];
+            switch (j) {
+              case BTN_ASSIGN_FIRE:
+                value |= 0x10;
+                break;
+              case BTN_ASSIGN_POTX:
+                value &= ~(pot_x_high_value << 5);
+                value |= (pot_x_low_value << 5);
+                break;
+              case BTN_ASSIGN_POTY:
+                value &= ~(pot_y_high_value << 13);
+                value |= (pot_y_low_value << 13);
+                break;
+              case BTN_ASSIGN_UP:
+                value |= 0x1;
+                break;
+              case BTN_ASSIGN_DOWN:
+                value |= 0x2;
+                break;
+              case BTN_ASSIGN_LEFT:
+                value |= 0x4;
+                break;
+              case BTN_ASSIGN_RIGHT:
+                value |= 0x8;
+                break;
+            }
+         }
+      }
+      return value;
+   }
+
+   // TODO: Dedupe this later...
+   for (i=0;i<joy_num_buttons[dev];i++) {
+      if (b & usb_1_button_bits[i]) {
+         int j = usb_1_button_assignments[i];
+         switch (j) {
+           case BTN_ASSIGN_FIRE:
+             value |= 0x10;
+             break;
+           case BTN_ASSIGN_POTX:
+             value &= ~(pot_x_high_value << 5);
+             value |= (pot_x_low_value << 5);
+             break;
+           case BTN_ASSIGN_POTY:
+             value &= ~(pot_y_high_value << 13);
+             value |= (pot_y_low_value << 13);
+             break;
+           case BTN_ASSIGN_UP:
+             value |= 0x1;
+             break;
+           case BTN_ASSIGN_DOWN:
+             value |= 0x2;
+             break;
+           case BTN_ASSIGN_LEFT:
+             value |= 0x4;
+             break;
+           case BTN_ASSIGN_RIGHT:
+             value |= 0x8;
+             break;
+         }
+      }
+   }
+   return value;
+}

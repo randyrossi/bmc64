@@ -11114,11 +11114,19 @@ $as_echo "#define MACOSX_BUNDLE /**/" >>confdefs.h
 
 eabi*)
   echo "Configuring for bare metal raspberry pi"
+
+$as_echo "#define HAVE_MOUSE /**/" >>confdefs.h
+
+  HAVE_MOUSE_SUPPORT="yes"
   is_raspi=yes
   ;;
 
 linux-gnueabihf*)
   echo "Configuring for bare metal raspberry pi"
+
+$as_echo "#define HAVE_MOUSE /**/" >>confdefs.h
+
+  HAVE_MOUSE_SUPPORT="yes"
   is_raspi=yes
   ;;
 

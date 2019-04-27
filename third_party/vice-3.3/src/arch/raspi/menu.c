@@ -91,6 +91,13 @@ struct menu_item *tint_item;
 static int unit;
 static int joyswap;
 static int force_overlay;
+
+// Held here, exported for kernal to read
+int pot_x_high_value;
+int pot_x_low_value;
+int pot_y_high_value;
+int pot_y_low_value;
+
 const int num_disk_ext = 13;
 static char disk_filt_ext[13][5] =
     {".d64",".d67",".d71",".d80",".d81",".d82",
@@ -440,6 +447,11 @@ static int save_settings() {
    resources_get_int_sprintf("Drive%iType", &drive_type, 11);
    fprintf(fp,"drive_type_11=%d\n",drive_type);
 
+   fprintf(fp,"pot_x_high=%d\n",pot_x_high_value);
+   fprintf(fp,"pot_x_low=%d\n",pot_x_low_value);
+   fprintf(fp,"pot_y_high=%d\n",pot_y_high_value);
+   fprintf(fp,"pot_y_low=%d\n",pot_y_low_value);
+
    fclose(fp);
 
    return 0;
@@ -476,6 +488,12 @@ static void load_settings() {
    gamma_item->value = get_color_gamma();
    tint_item->value = get_color_tint();
    video_color_setting_changed();
+
+   // Default pot values for buttons
+   pot_x_high_value = 192;
+   pot_x_low_value = 64;
+   pot_y_high_value = 192;
+   pot_y_low_value = 64;
 
    FILE *fp;
    switch (machine_class) {
@@ -542,8 +560,15 @@ static void load_settings() {
          overlay_item->value = value;
       } else if (strcmp(name,"tapereset")==0) {
          tape_reset_with_machine_item->value = value;
+      } else if (strcmp(name,"pot_x_high")==0) {
+         pot_x_high_value = value;
+      } else if (strcmp(name,"pot_x_low")==0) {
+         pot_x_low_value = value;
+      } else if (strcmp(name,"pot_y_high")==0) {
+         pot_y_high_value = value;
+      } else if (strcmp(name,"pot_y_low")==0) {
+         pot_y_low_value = value;
       }
-
    }
    fclose(fp);
 }

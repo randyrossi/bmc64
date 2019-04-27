@@ -95,6 +95,11 @@ static uint8_t network_joystick_value[JOYSTICK_NUM + 1] = { 0 };
 /* Latched joystick status.  */
 static uint8_t latch_joystick_value[JOYSTICK_NUM + 1] = { 0 };
 
+#ifdef RASPI_COMPILE
+static uint8_t joystick_potx_value = 0xff;
+static uint8_t joystick_poty_value = 0xff;
+#endif
+
 /* mapping of the joystick ports */
 int joystick_port_map[JOYSTICK_NUM] = { 0 };
 
@@ -524,6 +529,10 @@ static uint8_t read_joystick(int port)
 /* Some prototypes are needed */
 static int joystick_snapshot_write_module(snapshot_t *s, int port);
 static int joystick_snapshot_read_module(snapshot_t *s, int port);
+#ifdef RASPI_COMPILE
+static uint8_t joystick_read_potx(void);
+static uint8_t joystick_read_poty(void);
+#endif
 
 static joyport_t joystick_device = {
     "Joystick",
@@ -533,8 +542,13 @@ static joyport_t joystick_device = {
     joyport_enable_joystick,
     read_joystick,
     NULL,               /* no store digital */
+#ifdef RASPI_COMPILE
+    joystick_read_potx,
+    joystick_read_poty,
+#else
     NULL,               /* no read potx */
     NULL,               /* no read poty */
+#endif
     joystick_snapshot_write_module,
     joystick_snapshot_read_module
 };
@@ -764,3 +778,45 @@ static int joystick_snapshot_read_module(snapshot_t *s, int port)
 
     return snapshot_module_close(m);
 }
+
+#ifdef RASPI_COMPILE
+void joystick_set_potx(uint8_t value)
+{
+    joystick_potx_value = value;
+}
+
+void joystick_set_poty(uint8_t value)
+{
+    joystick_poty_value = value;
+}
+
+void joystick_set_potx_and(uint8_t value)
+{
+    joystick_potx_value &= value;
+}
+
+void joystick_set_poty_and(uint8_t value)
+{
+    joystick_poty_value &= value;
+}
+
+void joystick_set_potx_or(uint8_t value)
+{
+    joystick_potx_value |= value;
+}
+
+void joystick_set_poty_or(uint8_t value)
+{
+    joystick_poty_value |= value;
+}
+
+static uint8_t joystick_read_potx(void)
+{
+    return joystick_potx_value;
+}
+
+static uint8_t joystick_read_poty(void)
+{
+    return joystick_poty_value;
+}
+#endif

@@ -30,5 +30,5 @@
 
 char *archdep_default_resource_file_name(void)
 {
-    return util_concat(archdep_boot_path(), "/vice-vic20.ini", NULL);
+    return util_concat(archdep_boot_path(), "/vice.ini", NULL);
 }

@@ -47,15 +47,32 @@
 #define USB_PREF_ANALOG 0
 #define USB_PREF_HAT 1
 
-#define NUM_BUTTON_ASSIGNMENTS 6
+// Make sure does not exceed max buttons in ui.h
+#define NUM_BUTTON_ASSIGNMENTS 12
 #define BTN_ASSIGN_UNDEF 0
 #define BTN_ASSIGN_FIRE 1
 #define BTN_ASSIGN_MENU 2
 #define BTN_ASSIGN_WARP 3
 #define BTN_ASSIGN_STATUS_TOGGLE 4
 #define BTN_ASSIGN_SWAP_PORTS 5
+#define BTN_ASSIGN_UP 6
+#define BTN_ASSIGN_DOWN 7
+#define BTN_ASSIGN_LEFT 8
+#define BTN_ASSIGN_RIGHT 9
+#define BTN_ASSIGN_POTX 10
+#define BTN_ASSIGN_POTY 11
 
-// TODO: Replace this with a direct call from kernel
+// potx and poty occupy 8 bits in joy int values passed
+// to joy update calls
+#define POTX_BIT_MASK 0x1fe0
+#define POTY_BIT_MASK 0x1fe000
+
+extern int pot_x_high_value;
+extern int pot_x_low_value;
+extern int pot_y_high_value;
+extern int pot_y_low_value;
+
+// TODO: replace this with a direct call from kernel
 typedef void (*raspi_key_handler)(long key);
 
 extern int circle_get_machine_timing();
@@ -89,6 +106,8 @@ extern int menu_wants_raw_usb(void);
 extern void menu_raw_usb(int device, unsigned buttons, const int hats[6], const int axes[16]);
 
 extern int circle_button_function(int dev, unsigned button_value);
+extern int circle_add_button_values(int dev, unsigned button_value);
+
 extern void circle_lock_acquire();
 extern void circle_lock_release();
 

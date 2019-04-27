@@ -282,10 +282,9 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
                    return;
               }
 
-	      int value = 0;
+              int value = 0;
               if (dpad < 8) value |= dpad_to_joy[dpad];
-              if (button_func == BTN_ASSIGN_FIRE) value |= 0x10;
-
+              value |= circle_add_button_values(nDeviceIndex, b);
               circle_joy_usb(nDeviceIndex, value);
 	   }
    } else if (usb_pref == USB_PREF_ANALOG && pState->naxes > max_index) {
@@ -373,8 +372,7 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
               if (a_right) value |= 0x8;
               if (a_up) value |= 0x1;
               if (a_down) value |= 0x2;
-              if (button_func == BTN_ASSIGN_FIRE) value |= 0x10;
-
+              value |= circle_add_button_values(nDeviceIndex, b);
               circle_joy_usb(nDeviceIndex, value);
 	   }
    }
