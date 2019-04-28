@@ -7,4 +7,7 @@ kernel8-32.elf
 kernel8-32.img
 kernel8-32.lst
 kernel8-32.map
+kernel8-32.img*
+kernel8-32.img.*
+kernel7.img.*
 *.o
