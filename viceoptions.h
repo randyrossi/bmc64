@@ -18,14 +18,10 @@
 
 #include <circle/bcmpropertytags.h>
 #include <circle/cputhrottle.h>
+#include "vicesoundbasedevice.h"
 
 #define DEFAULT_CANVAS_WIDTH 384
 #define DEFAULT_CANVAS_HEIGHT 272
-
-#define TEST_PIN_TARGET_NONE 0
-#define TEST_PIN_TARGET_SPACE 1
-#define TEST_PIN_TARGET_FIRE_1 2
-#define TEST_PIN_TARGET_FIRE_2 3
 
 #define VOLUME_NAME_LEN 16
 
@@ -44,6 +40,7 @@ public:
 	int GetDiskPartition (void) const;
 	const char* GetDiskVolume (void) const;
 	unsigned long GetCyclesPerRefresh (void) const;
+	TVCHIQSoundDestination GetAudioOut(void) const;
 
 	static ViceOptions *Get (void);
 
@@ -66,6 +63,7 @@ private:
         int m_disk_partition;
         char m_disk_volume[VOLUME_NAME_LEN];
         unsigned long m_nCyclesPerRefresh;
+	TVCHIQSoundDestination m_audioOut;
 
 	static ViceOptions *s_pThis;
 };

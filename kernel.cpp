@@ -508,7 +508,7 @@ int CKernel::circle_sound_init(const char *param, int *speed,
        return 0;
      }
 
-     mViceSound = new ViceSound(&mVCHIQ,  VCHIQSoundDestinationAuto);
+     mViceSound = new ViceSound(&mVCHIQ,  mViceOptions.GetAudioOut());
      mViceSound->Playback();
   }
   return 0;

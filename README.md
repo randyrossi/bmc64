@@ -188,6 +188,10 @@ Q: Hey, isn't the real thing running at 50.125Hz?
 
 A: Yes, the original machine ran at 50.125Hz for PAL and 59.826Hz for NTSC. So, yeah, you'll be about 0.25% off in terms of timing.
 
+Q: Audio is not coming out of HDMI/Analog jack when I expect it to. Why?
+
+A. Sometimes the code that auto detects whether audio should be piped through HDMI vs analog jack doesn't work.  You can force audio to where you want it with a audio_out=hdmi or audio_out=analog cmdline.txt parameter.  The default is audio_out=auto.
+
 # Build Instructions
 
 Pre-reqs:

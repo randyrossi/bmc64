@@ -34,7 +34,8 @@ ViceOptions::ViceOptions (void) :
 	m_nMachineTiming (MACHINE_TIMING_PAL_HDMI),
 	m_bHideConsole(true),
 	m_bDemoMode(false),
-	m_nCyclesPerRefresh(0)
+	m_nCyclesPerRefresh(0),
+	m_audioOut(VCHIQSoundDestinationAuto)
 {
 	s_pThis = this;
 
@@ -133,6 +134,17 @@ ViceOptions::ViceOptions (void) :
 		{
 			m_nCyclesPerRefresh = atol(pValue);
 		}
+		else if (strcmp (pOption, "audio_out") == 0)
+		{
+			if (strcmp(pValue, "hdmi") == 0 ||
+                                strcmp(pValue, "ntsc-hdmi") == 0) {
+				m_audioOut = VCHIQSoundDestinationHDMI;
+			} else if (strcmp(pValue, "analog") == 0) {
+				m_audioOut = VCHIQSoundDestinationHeadphones;
+			} else if (strcmp(pValue, "auto") == 0) {
+				m_audioOut = VCHIQSoundDestinationAuto;
+			}
+		}
 	}
 
         if (m_nMachineTiming == MACHINE_TIMING_PAL_CUSTOM &&
@@ -192,6 +204,11 @@ const char* ViceOptions::GetDiskVolume (void) const
 unsigned long ViceOptions::GetCyclesPerRefresh (void) const
 {
         return m_nCyclesPerRefresh;
+}
+
+TVCHIQSoundDestination ViceOptions::GetAudioOut(void) const
+{
+	return m_audioOut;
 }
 
 ViceOptions *ViceOptions::Get (void)

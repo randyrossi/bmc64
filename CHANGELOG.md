@@ -129,3 +129,5 @@
   * Added custom HDMI timing tool to calculate actual fps from custom modes
     Use to prevent audio sync / popping issues on modes that aren't exactly
     50 / 60 hz
+  * Added audio_out cmdline.txt option (hdmi, analog, auto) for cases where
+    auto doesn't do the right thing.
