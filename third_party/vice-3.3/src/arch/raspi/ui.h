@@ -172,6 +172,8 @@ void ui_check_key();
 
 volatile int ui_activated;
 
+void ui_handle_toggle_or_quick_func(void);
+
 // Used to ensure we process all key events before transitioning to
 // the ui. Can be set to 2 from an ISR to ensure handling from key queue and
 // give emulator at least one frame to process the key events we send.

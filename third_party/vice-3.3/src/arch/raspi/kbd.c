@@ -36,10 +36,17 @@
 
 extern struct joydev_config joydevs[2];
 
-// Keep track of commodore key down/up state
-int commodore_mod = 0;
+static int left_control_down = 0;
 
-void kbd_arch_init(void) {
+key_combo_state_t key_combo_states[4];
+
+void kbd_arch_init(void) { }
+
+void kbd_set_hotkey_function(unsigned int slot, long key, int function) {
+  if (slot >= NUM_KEY_COMBOS) return; 
+  key_combo_states[slot].second_key = key;
+  key_combo_states[slot].invoked = 0;
+  key_combo_states[slot].function = function;
 }
 
 int kbd_arch_get_host_mapping(void) { return KBD_MAPPING_US; }
@@ -208,9 +215,67 @@ const char *kbd_arch_keynum_to_keyname(signed long keynum) { return 0; }
 
 void kbd_initialize_numpad_joykeys(int *joykeys) {}
 
+// Return 1 if press is consumed
+static int handle_key_combo_press(long key) {
+  int i;
+  for (i = 0; i < NUM_KEY_COMBOS; i++) {
+     if (key_combo_states[i].second_key == key && left_control_down) {
+        key_combo_states[i].invoked = 1;
+        return 1;
+     }
+  }
+  return 0;
+}
+
+// Return 1 if release is consumed
+// Some things we can do on the up event of the 2nd key
+static int handle_key_combo_release(long key) {
+  int i;
+  for (i = 0; i < NUM_KEY_COMBOS; i++) {
+     if (key_combo_states[i].second_key == key && key_combo_states[i].invoked) {
+        // Can we do this now?
+        switch (key_combo_states[i].function) {
+           case BTN_ASSIGN_WARP:
+           case BTN_ASSIGN_SWAP_PORTS:
+           case BTN_ASSIGN_STATUS_TOGGLE:
+              circle_emu_quick_func_interrupt(key_combo_states[i].function);
+              key_combo_states[i].invoked = 0;
+              return 1;
+           default:
+              break;
+        }
+        return 0;
+     }
+  }
+  return 0;
+}
+
+// Some things we can only do on the up event of the cntrl key
+static void handle_key_combo_function() {
+  int i;
+  for (i = 0; i < NUM_KEY_COMBOS; i++) {
+     if (key_combo_states[i].invoked) {
+        key_combo_states[i].invoked = 0;
+        
+        // KEEP THIS IN SYNC WITH kernel.cpp
+        switch (key_combo_states[i].function) {
+           case BTN_ASSIGN_MENU:
+              // When transitioning to the menu, make sure to give emulator
+              // at least one pass through main loop after sending the up evt. 
+              circle_lock_acquire();
+              ui_toggle_pending = 2;
+              circle_lock_release();
+              break;
+           default:
+              break;
+        }
+     }
+  }
+}
+
 void circle_key_pressed(long key) {
    if (key == KEYCODE_LeftControl) {
-      commodore_mod = 1;
+      left_control_down = 1;
    }
 
    // Intercept keys meant to become joystick values
@@ -229,29 +294,29 @@ void circle_key_pressed(long key) {
          return;
    }
 
+   if (handle_key_combo_press(key)) {
+      return;
+   }
+
    if (ui_activated) {
      circle_ui_key_interrupt(key, 1 /* down */);
    } else {
-     // Keys go to emulated machine
      circle_emu_key_interrupt(key, 1 /* down */);
    }
 }
 
 void circle_key_released(long key) {
    if (key == KEYCODE_LeftControl) {
-     commodore_mod = 0;
+     left_control_down = 0;
    }
 
-   if (key == KEYCODE_F12 ||
-      (menu_alt_f12() && commodore_mod == 1 && key == KEYCODE_F7)) {
-      if (commodore_mod) {
-         // Have to release the commodore key or emulator locks up.
-         circle_emu_key_interrupt(KEYCODE_LeftControl, 0 /* up */);
-      }
+   if (key == KEYCODE_F12) {
       if (ui_activated) {
          // Let the ui handle the menu action as it sees fit.
          circle_ui_key_interrupt(key, 0 /* up */);
       } else {
+         // When transitioning to the menu, make sure to give emulator
+         // at least one pass through main loop after sending the up event. 
          circle_emu_key_interrupt(key, 0 /* up */);
          circle_lock_acquire();
          ui_toggle_pending = 2;
@@ -276,9 +341,20 @@ void circle_key_released(long key) {
          return;
    }
 
+   if (handle_key_combo_release(key)) {
+      return;
+   }
+
    if (ui_activated) {
       circle_ui_key_interrupt(key, 0 /* up */);
    } else {
       circle_emu_key_interrupt(key, 0 /* up */);
+   }
+
+   // Check hotkey combo here
+   if (key == KEYCODE_LeftControl) {
+      // We invoke the hot key func here after the left control is released    
+      // so emulator is not left in a weird state.
+      handle_key_combo_function();
    }
 }

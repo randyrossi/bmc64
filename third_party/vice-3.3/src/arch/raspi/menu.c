@@ -49,6 +49,7 @@
 #include "demo.h"
 #include "drive.h"
 #include "overlay.h"
+#include "kbd.h"
 #include "raspi_machine.h"
 
 // For filename filters
@@ -77,7 +78,10 @@ struct menu_item *palette_item;
 struct menu_item *keyboard_type_item;
 struct menu_item *drive_sounds_item;
 struct menu_item *drive_sounds_vol_item;
-struct menu_item *menu_alt_f12_item;
+struct menu_item *hotkey_cf1_item;
+struct menu_item *hotkey_cf3_item;
+struct menu_item *hotkey_cf5_item;
+struct menu_item *hotkey_cf7_item;
 struct menu_item *sid_engine_item;
 struct menu_item *sid_model_item;
 struct menu_item *sid_filter_item;
@@ -87,6 +91,7 @@ struct menu_item *brightness_item;
 struct menu_item *contrast_item;
 struct menu_item *gamma_item;
 struct menu_item *tint_item;
+struct menu_item *warp_item;
 
 static int unit;
 static int joyswap;
@@ -431,8 +436,10 @@ static int save_settings() {
    for (i=0;i<16;i++) {
       fprintf(fp,"usb_btn_1=%d\n",usb_1_button_assignments[i]);
    }
-   fprintf(fp,"alt_f12=%d\n",menu_alt_f12_item->value);
-
+   fprintf(fp,"hotkey_cf1=%d\n",hotkey_cf1_item->value);
+   fprintf(fp,"hotkey_cf3=%d\n",hotkey_cf3_item->value);
+   fprintf(fp,"hotkey_cf5=%d\n",hotkey_cf5_item->value);
+   fprintf(fp,"hotkey_cf7=%d\n",hotkey_cf7_item->value);
    fprintf(fp,"overlay=%d\n",overlay_item->value);
    fprintf(fp,"tapereset=%d\n",tape_reset_with_machine_item->value);
 
@@ -555,7 +562,8 @@ static void load_settings() {
             usb_btn_1_i = 0;
          }
       } else if (strcmp(name,"alt_f12")==0) {
-         menu_alt_f12_item->value = value;
+         // Old. Equivalent to cf7 = Menu
+         hotkey_cf7_item->value = HOTKEY_CHOICE_MENU;
       } else if (strcmp(name,"overlay")==0) {
          overlay_item->value = value;
       } else if (strcmp(name,"tapereset")==0) {
@@ -568,6 +576,14 @@ static void load_settings() {
          pot_y_high_value = value;
       } else if (strcmp(name,"pot_y_low")==0) {
          pot_y_low_value = value;
+      } else if (strcmp(name,"hotkey_cf1")==0) {
+         hotkey_cf1_item->value = value;
+      } else if (strcmp(name,"hotkey_cf3")==0) {
+         hotkey_cf3_item->value = value;
+      } else if (strcmp(name,"hotkey_cf5")==0) {
+         hotkey_cf5_item->value = value;
+      } else if (strcmp(name,"hotkey_cf7")==0) {
+         hotkey_cf7_item->value = value;
       }
    }
    fclose(fp);
@@ -664,7 +680,7 @@ static void select_file(struct menu_item* item) {
    } else if (item->id == MENU_AUTOSTART_FILE) {
          ui_info("Starting...");
          if (autostart_autodetect(fullpath(DIR_ROOT, item->str_value),
-                "*", 0, AUTOSTART_MODE_RUN) < 0) {
+                NULL, 0, AUTOSTART_MODE_RUN) < 0) {
             ui_pop_menu();
             ui_error("Failed to autostart file");
          } else {
@@ -769,6 +785,7 @@ static void toggle_warp(int value) {
   resources_set_int("WarpMode", value);
   raspi_warp = value;
   overlay_warp_changed(value);
+  warp_item->value = value;
 }
 
 // Interpret what menu item changed and make the change to vice
@@ -1025,6 +1042,22 @@ static void menu_value_changed(struct menu_item* item) {
       case MENU_CALC_TIMING:
          configure_timing();
          return;
+      case MENU_HOTKEY_CF1:
+         kbd_set_hotkey_function(0, KEYCODE_F1,
+            hotkey_cf1_item->choice_ints[hotkey_cf1_item->value]);
+         return;
+      case MENU_HOTKEY_CF3:
+         kbd_set_hotkey_function(1, KEYCODE_F3,
+            hotkey_cf3_item->choice_ints[hotkey_cf3_item->value]);
+         return;
+      case MENU_HOTKEY_CF5:
+         kbd_set_hotkey_function(2, KEYCODE_F5,
+            hotkey_cf5_item->choice_ints[hotkey_cf5_item->value]);
+         return;
+      case MENU_HOTKEY_CF7:
+         kbd_set_hotkey_function(3, KEYCODE_F7,
+            hotkey_cf7_item->choice_ints[hotkey_cf7_item->value]);
+         return;
    }
 
    // Only items that were for file selection/nav should have these set...
@@ -1099,8 +1132,18 @@ int menu_get_keyboard_type(void) {
    return keyboard_type_item->value;
 }
 
-int menu_alt_f12(void) {
-   return menu_alt_f12_item->value;
+static void set_hotkey_choices(struct menu_item* item) {
+  item->num_choices = 5;
+  strcpy (item->choices[0], "None");
+  strcpy (item->choices[1], "Menu");
+  strcpy (item->choices[2], "Warp");
+  strcpy (item->choices[3], "Toggle Status");
+  strcpy (item->choices[4], "Swap Ports");
+  item->choice_ints[HOTKEY_CHOICE_NONE] = BTN_ASSIGN_UNDEF;
+  item->choice_ints[HOTKEY_CHOICE_MENU] = BTN_ASSIGN_MENU;
+  item->choice_ints[HOTKEY_CHOICE_WARP] = BTN_ASSIGN_WARP;
+  item->choice_ints[HOTKEY_CHOICE_STATUS_TOGGLE] = BTN_ASSIGN_STATUS_TOGGLE;
+  item->choice_ints[HOTKEY_CHOICE_SWAP_PORTS] = BTN_ASSIGN_SWAP_PORTS;
 }
 
 void build_menu(struct menu_item* root) {
@@ -1171,6 +1214,8 @@ void build_menu(struct menu_item* root) {
       ui_menu_add_button(MENU_LOAD_KERNAL, parent, "Load Kernal ROM...");
       ui_menu_add_button(MENU_LOAD_BASIC, parent, "Load Basic ROM...");
       ui_menu_add_button(MENU_LOAD_CHARGEN, parent, "Load Chargen ROM...");
+
+   ui_menu_add_button(MENU_AUTOSTART, root, "Autostart Prg/Disk...");
 
    ui_menu_add_divider(root);
 
@@ -1289,13 +1334,26 @@ void build_menu(struct menu_item* root) {
       strcpy (child->choices[KEYBOARD_TYPE_US], "US");
       strcpy (child->choices[KEYBOARD_TYPE_UK], "UK");
 
-      child = menu_alt_f12_item = ui_menu_add_multiple_choice(
-          MENU_KEYBOARD_MENU_ALT_F12, parent,
-          "Alternate Menu Key");
-      child->num_choices = 2;
-      child->value = ALT_F12_COMMODOREF7;
-      strcpy (child->choices[ALT_F12_DISABLED], "Disabled");
-      strcpy (child->choices[ALT_F12_COMMODOREF7], "C= + F7");
+      child = hotkey_cf1_item = ui_menu_add_multiple_choice(
+          MENU_HOTKEY_CF1, parent,
+          "C= + F1 Hotkey");
+      child->value = HOTKEY_CHOICE_NONE;
+      set_hotkey_choices(hotkey_cf1_item);
+      child = hotkey_cf3_item = ui_menu_add_multiple_choice(
+          MENU_HOTKEY_CF3, parent,
+          "C= + F3 Hotkey");
+      child->value = HOTKEY_CHOICE_NONE;
+      set_hotkey_choices(hotkey_cf3_item);
+      child = hotkey_cf5_item = ui_menu_add_multiple_choice(
+          MENU_HOTKEY_CF5, parent,
+          "C= + F5 Hotkey");
+      child->value = HOTKEY_CHOICE_NONE;
+      set_hotkey_choices(hotkey_cf5_item);
+      child = hotkey_cf7_item = ui_menu_add_multiple_choice(
+          MENU_HOTKEY_CF7, parent,
+          "C= + F7 Hotkey");
+      child->value = HOTKEY_CHOICE_MENU;
+      set_hotkey_choices(hotkey_cf7_item);
 
    parent = ui_menu_add_folder(root, "Joystick");
       ui_menu_add_button(MENU_SWAP_JOYSTICKS, parent, "Swap Joystick Ports");
@@ -1365,7 +1423,7 @@ void build_menu(struct menu_item* root) {
       strcpy (overlay_item->choices[OVERLAY_ALWAYS], "Always");
       strcpy (overlay_item->choices[OVERLAY_ON_ACTIVITY], "On Activity");
 
-   ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
+   warp_item = ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
 
    // This is an undocumented feature for now. Keep invisible unless it
    // is activated by cmdline.txt
@@ -1382,6 +1440,29 @@ void build_menu(struct menu_item* root) {
    ui_set_on_value_changed_callback(menu_value_changed);
 
    load_settings();
+
+   kbd_set_hotkey_function(0, 0, BTN_ASSIGN_UNDEF); 
+   kbd_set_hotkey_function(1, 0, BTN_ASSIGN_UNDEF); 
+   kbd_set_hotkey_function(2, 0, BTN_ASSIGN_UNDEF); 
+   kbd_set_hotkey_function(3, 0, BTN_ASSIGN_UNDEF); 
+
+   // Apply hotkey selections to keyboard handler
+   if (hotkey_cf1_item->value > 0) {
+      kbd_set_hotkey_function(0, KEYCODE_F1,
+         hotkey_cf1_item->choice_ints[hotkey_cf1_item->value]);
+   }
+   if (hotkey_cf3_item->value > 0) {
+      kbd_set_hotkey_function(1, KEYCODE_F3,
+         hotkey_cf3_item->choice_ints[hotkey_cf3_item->value]);
+   }
+   if (hotkey_cf5_item->value > 0) {
+      kbd_set_hotkey_function(2, KEYCODE_F5,
+         hotkey_cf5_item->choice_ints[hotkey_cf5_item->value]);
+   }
+   if (hotkey_cf7_item->value > 0) {
+      kbd_set_hotkey_function(3, KEYCODE_F7,
+         hotkey_cf7_item->choice_ints[hotkey_cf7_item->value]);
+   }
 
    // Always turn off resampling
    resources_set_int("SidResidSampling", 0);

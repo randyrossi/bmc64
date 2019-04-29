@@ -162,6 +162,11 @@
 #define MENU_POTY_HIGH 122
 #define MENU_POTY_LOW 123
 
+#define MENU_HOTKEY_CF1 130
+#define MENU_HOTKEY_CF3 131
+#define MENU_HOTKEY_CF5 132
+#define MENU_HOTKEY_CF7 133
+
 #define MENU_SUB_NONE 0
 #define MENU_SUB_PICK_FILE 1
 #define MENU_SUB_UP_DIR 2
@@ -183,11 +188,17 @@
 #define OVERLAY_ALWAYS 1
 #define OVERLAY_ON_ACTIVITY 2
 
+// These are indices into the choice ints array for the item
+#define HOTKEY_CHOICE_NONE 0
+#define HOTKEY_CHOICE_MENU 1
+#define HOTKEY_CHOICE_WARP 2
+#define HOTKEY_CHOICE_STATUS_TOGGLE 3
+#define HOTKEY_CHOICE_SWAP_PORTS 4
+
 // Called at initialzation
 void build_menu(struct menu_item* root);
 
 int menu_get_keyboard_type(void);
-int menu_alt_f12(void);
 void menu_swap_joysticks(void);
 int overlay_enabled(void);
 int overlay_forced(void);

@@ -41,7 +41,11 @@
 
 volatile int ui_activated = 0;
 
+// Countdown to toggle menu on/off
 int ui_toggle_pending = 0;
+
+// One of the quick functions that can be invoked by button assignments
+int pending_emu_quick_func;
 
 extern struct joydev_config joydevs[2];
 
@@ -330,7 +334,6 @@ static void ui_key_released(long key) {
     case KEYCODE_Escape:
        ui_action(ACTION_Escape);
        return;
-    case KEYCODE_F7:
     case KEYCODE_F12:
        ui_action(ACTION_Exit);
        return;
@@ -516,6 +519,22 @@ static void ui_render_single_frame() {
    videoarch_swap();
 }
 
+void ui_handle_toggle_or_quick_func() {
+  // This ensures we transition from emulator to ui only after we've
+  // submitted key events and let the emulator process them. Otherwise,
+  // we can leave keys in a down state unintentionally. Needs to be set
+  // to 2 to ensure we dequeue, then let the emulator process those events.
+  if (ui_toggle_pending) {
+     ui_toggle_pending--;
+     if (ui_toggle_pending == 0) {
+        ui_toggle();
+     }
+  } else if (pending_emu_quick_func) {
+     menu_quick_func(pending_emu_quick_func);
+     pending_emu_quick_func = 0;
+  }
+}
+
 static void pause_trap(uint16_t addr, void *data) {
    menu_about_to_activate();
    while (ui_activated) {
@@ -527,6 +546,9 @@ static void pause_trap(uint16_t addr, void *data) {
       }
       circle_check_gpio();
       ui_check_key();
+
+      ui_handle_toggle_or_quick_func();
+
       ui_render_single_frame();
       circle_wait_vsync();
       hdmi_timing_hook();

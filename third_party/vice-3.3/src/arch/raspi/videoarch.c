@@ -178,19 +178,18 @@ static int fix_sid = 0;
 
 extern struct joydev_config joydevs[2];
 
-volatile int pending_emu_key_head = 0;
-volatile int pending_emu_key_tail = 0;
-volatile long pending_emu_key[16];
-volatile int pending_emu_key_pressed[16];
+int pending_emu_key_head = 0;
+int pending_emu_key_tail = 0;
+long pending_emu_key[16];
+int pending_emu_key_pressed[16];
 
-volatile int pending_emu_joy_head = 0;
-volatile int pending_emu_joy_tail = 0;
-volatile int pending_emu_joy_value[128];
-volatile int pending_emu_joy_port[128];
-volatile int pending_emu_joy_type[128];
+int pending_emu_joy_head = 0;
+int pending_emu_joy_tail = 0;
+int pending_emu_joy_value[128];
+int pending_emu_joy_port[128];
+int pending_emu_joy_type[128];
 
-// One of the quick functions that can be invoked by button assignments
-volatile int pending_emu_quick_func;
+extern int pending_emu_quick_func;
 
 #define COLOR16(red, green, blue)         (((red) & 0x1F) << 11 \
                                         | ((green) & 0x1F) << 6 \
@@ -492,19 +491,7 @@ void vsyncarch_postsync(void){
      pending_emu_joy_head++;
   }
 
-  // This ensures we transition from emulator to ui only after we've
-  // submitted key events and let the emulator process them. Otherwise,
-  // we can leave keys in a down state unintentionally. Needs to be set
-  // to 2 to ensure we dequeue, then let the emulator process those events.
-  if (ui_toggle_pending) {
-     ui_toggle_pending--;
-     if (ui_toggle_pending == 0) {
-        ui_toggle();
-     }
-  } else if (pending_emu_quick_func) {
-     menu_quick_func(pending_emu_quick_func);
-     pending_emu_quick_func = 0;
-  }
+  ui_handle_toggle_or_quick_func();
 
   circle_lock_release();
 

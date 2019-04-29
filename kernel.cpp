@@ -186,6 +186,22 @@ bool CKernel::Initialize(void) {
    return true;
 }
 
+// KEEP THIS IN SYNC WITH kbd.c
+static void handle_button_function(int button_func) {
+   // KEEP THIS IN SYNC WITH kbd.c
+   switch (button_func) {
+      case BTN_ASSIGN_MENU:
+         circle_key_pressed(KEYCODE_F12);
+         circle_key_released(KEYCODE_F12);
+         return;
+      case BTN_ASSIGN_WARP:
+      case BTN_ASSIGN_SWAP_PORTS:
+      case BTN_ASSIGN_STATUS_TOGGLE:
+         circle_emu_quick_func_interrupt(button_func);
+         return;
+   }
+}
+
 // Interrupt handler. Make this quick.
 void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
                                     const TGamePadState *pState) {
@@ -270,17 +286,7 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
                  return;
               }
 
-              switch (button_func) {
-                 case BTN_ASSIGN_MENU:
-                   circle_key_pressed(KEYCODE_F12);
-                   circle_key_released(KEYCODE_F12);
-                   return;
-                 case BTN_ASSIGN_WARP:
-                 case BTN_ASSIGN_SWAP_PORTS:
-                 case BTN_ASSIGN_STATUS_TOGGLE:
-                   circle_emu_quick_func_interrupt(button_func);
-                   return;
-              }
+              handle_button_function(button_func);
 
               int value = 0;
               if (dpad < 8) value |= dpad_to_joy[dpad];
@@ -355,17 +361,7 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
                  return;
               }
 
-              switch (button_func) {
-                 case BTN_ASSIGN_MENU:
-                   circle_key_pressed(KEYCODE_F12);
-                   circle_key_released(KEYCODE_F12);
-                   return;
-                 case BTN_ASSIGN_WARP:
-                 case BTN_ASSIGN_SWAP_PORTS:
-                 case BTN_ASSIGN_STATUS_TOGGLE:
-                   circle_emu_quick_func_interrupt(button_func);
-                   return;
-              }
+              handle_button_function(button_func);
 
               int value = 0;
               if (a_left) value |= 0x4;
