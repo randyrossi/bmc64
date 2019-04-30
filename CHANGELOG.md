@@ -131,3 +131,7 @@
     50 / 60 hz
   * Added audio_out cmdline.txt option (hdmi, analog, auto) for cases where
     auto doesn't do the right thing.
+  * Added hot key functions for Keyrah users. Can map Commodore + F1, F3, F5, F7
+    to one of the available functions (Menu, Warp, Toggle Status, Swap Joy, etc)
+  * Added Autostart Disk/Tape/Prg/Cart menu option
+

@@ -49,6 +49,7 @@
 #include "sid.h"
 #include "machine.h"
 #include "raspi_machine.h"
+#include "kbdbuf.h"
 
 // Keep video state shared between compilation units here
 struct VideoData video_state;
@@ -377,7 +378,7 @@ void vsyncarch_init(void) {
 }
 
 void vsyncarch_presync(void){
-    // Nothing to do.
+   kbdbuf_flush();
 }
 
 void videoarch_swap() {

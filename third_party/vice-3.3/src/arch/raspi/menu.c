@@ -1215,9 +1215,9 @@ void build_menu(struct menu_item* root) {
       ui_menu_add_button(MENU_LOAD_BASIC, parent, "Load Basic ROM...");
       ui_menu_add_button(MENU_LOAD_CHARGEN, parent, "Load Chargen ROM...");
 
-   ui_menu_add_button(MENU_AUTOSTART, root, "Autostart Prg/Disk...");
-
    ui_menu_add_divider(root);
+
+   ui_menu_add_button(MENU_AUTOSTART, root, "Autostart Prg/Disk...");
 
    parent = ui_menu_add_folder(root, "Drive 8");
       resources_get_int_sprintf("IECDevice%i", &tmp, 8);
