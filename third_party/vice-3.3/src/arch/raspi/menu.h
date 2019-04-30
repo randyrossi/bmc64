@@ -167,6 +167,9 @@
 #define MENU_HOTKEY_CF5 132
 #define MENU_HOTKEY_CF7 133
 
+#define MENU_SAVE_EASYFLASH 140
+#define MENU_CART_FREEZE 141
+
 #define MENU_SUB_NONE 0
 #define MENU_SUB_PICK_FILE 1
 #define MENU_SUB_UP_DIR 2
@@ -194,6 +197,11 @@
 #define HOTKEY_CHOICE_WARP 2
 #define HOTKEY_CHOICE_STATUS_TOGGLE 3
 #define HOTKEY_CHOICE_SWAP_PORTS 4
+#define HOTKEY_CHOICE_TAPE_MENU 5
+#define HOTKEY_CHOICE_CART_MENU 6
+#define HOTKEY_CHOICE_CART_FREEZE 7
+
+extern int osd_active;
 
 // Called at initialzation
 void build_menu(struct menu_item* root);

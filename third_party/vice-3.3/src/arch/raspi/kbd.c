@@ -234,10 +234,14 @@ static int handle_key_combo_release(long key) {
   for (i = 0; i < NUM_KEY_COMBOS; i++) {
      if (key_combo_states[i].second_key == key && key_combo_states[i].invoked) {
         // Can we do this now?
+        // KEEP THIS IN SYNC WITH kernel.cpp
         switch (key_combo_states[i].function) {
            case BTN_ASSIGN_WARP:
            case BTN_ASSIGN_SWAP_PORTS:
            case BTN_ASSIGN_STATUS_TOGGLE:
+           case BTN_ASSIGN_TAPE_MENU:
+           case BTN_ASSIGN_CART_MENU:
+           case BTN_ASSIGN_CART_FREEZE:
               circle_emu_quick_func_interrupt(key_combo_states[i].function);
               key_combo_states[i].invoked = 0;
               return 1;
@@ -257,7 +261,6 @@ static void handle_key_combo_function() {
      if (key_combo_states[i].invoked) {
         key_combo_states[i].invoked = 0;
         
-        // KEEP THIS IN SYNC WITH kernel.cpp
         switch (key_combo_states[i].function) {
            case BTN_ASSIGN_MENU:
               // When transitioning to the menu, make sure to give emulator

@@ -50,6 +50,7 @@
 #include "machine.h"
 #include "raspi_machine.h"
 #include "kbdbuf.h"
+#include "menu_tape_osd.h"
 
 // Keep video state shared between compilation units here
 struct VideoData video_state;
@@ -404,6 +405,12 @@ void vsyncarch_postsync(void){
      draw(overlay_buf, video_state.vis_w, 10, video_state.vis_w,
        video_state.dst + video_state.onscreen_buffer_y*video_state.dst_pitch,
        video_state.dst_pitch, video_state.dst_off_x, video_state.dst_off_y + video_state.vis_h - 10);
+  }
+
+  // This render will handle any OSDs we have. ODSs don't pause emulation.
+  if (ui_activated) {
+     ui_render_now();
+     ui_check_key();
   }
 
   video_ticks+=video_tick_inc;

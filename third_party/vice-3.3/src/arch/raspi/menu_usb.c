@@ -163,12 +163,19 @@ static void add_button_choices(struct menu_item* tmp_item) {
    strcpy (tmp_item->choices[BTN_ASSIGN_WARP], "Warp");
    strcpy (tmp_item->choices[BTN_ASSIGN_STATUS_TOGGLE], "Status Toggle");
    strcpy (tmp_item->choices[BTN_ASSIGN_SWAP_PORTS], "Swap Ports");
+
+   // These are only available for USB buttons, not as hotkeys
    strcpy (tmp_item->choices[BTN_ASSIGN_UP], "Up");
    strcpy (tmp_item->choices[BTN_ASSIGN_DOWN], "Down");
    strcpy (tmp_item->choices[BTN_ASSIGN_LEFT], "Left");
    strcpy (tmp_item->choices[BTN_ASSIGN_RIGHT], "Right");
    strcpy (tmp_item->choices[BTN_ASSIGN_POTX], "POT X");
    strcpy (tmp_item->choices[BTN_ASSIGN_POTY], "POT Y");
+
+   // Back to avail for all
+   strcpy (tmp_item->choices[BTN_ASSIGN_TAPE_MENU], "Tape OSD");
+   strcpy (tmp_item->choices[BTN_ASSIGN_CART_MENU], "Cart OSD");
+   strcpy (tmp_item->choices[BTN_ASSIGN_CART_FREEZE], "Cart Freeze");
 }
 
 void build_usb_menu(int dev, struct menu_item* root) {
@@ -289,9 +296,11 @@ void menu_raw_usb(int device, unsigned buttons, const int hats[6], const int axe
   }
 }
 
-// Returns the first function found for the button
-// Expected only one button to be on. Only the first
-// one on will return its function.
+// Returns the first function found for the button if
+// it's bit is set (so only returns something on the
+// down event). Expects only one button to be on.
+// That is, only the function will be returned for
+// the first bit on it finds.
 int circle_button_function(int dev, unsigned b) {
    int i;
    if (dev == 0) {

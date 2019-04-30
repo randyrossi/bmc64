@@ -47,20 +47,27 @@
 #define USB_PREF_ANALOG 0
 #define USB_PREF_HAT 1
 
-// Make sure does not exceed max buttons in ui.h
-#define NUM_BUTTON_ASSIGNMENTS 12
+// Make sure does not exceed max choices in ui.h
+#define NUM_BUTTON_ASSIGNMENTS 15
 #define BTN_ASSIGN_UNDEF 0
 #define BTN_ASSIGN_FIRE 1
 #define BTN_ASSIGN_MENU 2
 #define BTN_ASSIGN_WARP 3
 #define BTN_ASSIGN_STATUS_TOGGLE 4
 #define BTN_ASSIGN_SWAP_PORTS 5
+
+// Directions and POTs are not available for hotkeys, only buttons
 #define BTN_ASSIGN_UP 6
 #define BTN_ASSIGN_DOWN 7
 #define BTN_ASSIGN_LEFT 8
 #define BTN_ASSIGN_RIGHT 9
 #define BTN_ASSIGN_POTX 10
 #define BTN_ASSIGN_POTY 11
+
+// Back to functions available to anything
+#define BTN_ASSIGN_TAPE_MENU 12
+#define BTN_ASSIGN_CART_MENU 13
+#define BTN_ASSIGN_CART_FREEZE 14
 
 // potx and poty occupy 8 bits in joy int values passed
 // to joy update calls
@@ -97,7 +104,6 @@ extern void circle_joy_gpio(unsigned device, int value);
 
 extern int circle_joy_need_gpio(int device);
 extern void circle_usb_pref(int device, int *usb_pref, int* x_axis, int *y_axis);
-extern int circle_ui_activated(void);
 extern int circle_ui_activated(void);
 extern void circle_ui_key_interrupt(long key, int pressed);
 extern void circle_emu_key_interrupt(long key, int pressed);

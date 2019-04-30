@@ -112,7 +112,8 @@ libarch_a_LIBADD =
 am_libarch_a_OBJECTS = archdep.$(OBJEXT) joy.$(OBJEXT) kbd.$(OBJEXT) \
 	mousedrv.$(OBJEXT) missing.$(OBJEXT) ui.$(OBJEXT) \
 	videoarch.$(OBJEXT) menu.$(OBJEXT) menu_usb.$(OBJEXT) \
-	menu_timing.$(OBJEXT) text.$(OBJEXT) demo.$(OBJEXT) \
+	menu_timing.$(OBJEXT) menu_tape_osd.$(OBJEXT) \
+	menu_cart_osd.$(OBJEXT) text.$(OBJEXT) demo.$(OBJEXT) \
 	overlay.$(OBJEXT) font.$(OBJEXT)
 libarch_a_OBJECTS = $(am_libarch_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -487,6 +488,10 @@ libarch_a_SOURCES = \
 	menu_usb.c \
 	menu_timing.h \
 	menu_timing.c \
+	menu_tape_osd.h \
+	menu_tape_osd.c \
+	menu_cart_osd.h \
+	menu_cart_osd.c \
 	text.h \
 	text.c \
 	demo.h \
@@ -550,6 +555,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/joy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kbd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_cart_osd.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_tape_osd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_timing.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_usb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/missing.Po@am__quote@

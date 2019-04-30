@@ -134,4 +134,8 @@
   * Added hot key functions for Keyrah users. Can map Commodore + F1, F3, F5, F7
     to one of the available functions (Menu, Warp, Toggle Status, Swap Joy, etc)
   * Added Autostart Disk/Tape/Prg/Cart menu option
-
+  * Added Tape OSD to control tape using USB or HotKey
+  * Added Cart OSD to control common cartridge functions using USB or HotKey
+  * Added EasyFlash Save Now feature (also available in Cart OSD)
+  * Added Cartridge Freeze feature (also available in Cart OSD)
+  * Fixed bug where drive models would show up even though ROM was not available

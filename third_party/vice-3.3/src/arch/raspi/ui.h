@@ -154,7 +154,6 @@ int ui_text_width(const char* text);
 void ui_check_key(void);
 
 void ui_pop_all_and_toggle(void);
-void ui_toggle(void);
 
 void ui_render_now(void);
 void ui_error(const char *format, ...);

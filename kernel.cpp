@@ -187,18 +187,33 @@ bool CKernel::Initialize(void) {
 }
 
 // KEEP THIS IN SYNC WITH kbd.c
-static void handle_button_function(int button_func) {
+static void handle_button_function(bool is_ui, int button_func) {
    // KEEP THIS IN SYNC WITH kbd.c
    switch (button_func) {
       case BTN_ASSIGN_MENU:
          circle_key_pressed(KEYCODE_F12);
          circle_key_released(KEYCODE_F12);
-         return;
+         break;
       case BTN_ASSIGN_WARP:
       case BTN_ASSIGN_SWAP_PORTS:
       case BTN_ASSIGN_STATUS_TOGGLE:
+      case BTN_ASSIGN_TAPE_MENU:
+      case BTN_ASSIGN_CART_MENU:
+      case BTN_ASSIGN_CART_FREEZE:
          circle_emu_quick_func_interrupt(button_func);
-         return;
+         break;
+      case BTN_ASSIGN_FIRE:
+         // Only need to handle ui fire here.
+         if (is_ui) {
+            circle_ui_key_interrupt(KEYCODE_Return, 1);
+            circle_ui_key_interrupt(KEYCODE_Return, 0);
+         }
+         break;
+      // Don't try to handle dirs here even for ui. We want
+      // repeat to work for those and button func is only
+      // discovered on the down press anyway.
+      default:
+         break;
    }
 }
 
@@ -275,18 +290,11 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
                  else if (dpad != 2 && old_dpad == 2) {
                     circle_ui_key_interrupt(KEYCODE_Right, 1);
                  }
-                 if (button_func == BTN_ASSIGN_FIRE) {
-                    circle_ui_key_interrupt(KEYCODE_Return, 1);
-                    circle_ui_key_interrupt(KEYCODE_Return, 0);
-                 }
-                 else if (button_func == BTN_ASSIGN_MENU) {
-                    circle_ui_key_interrupt(KEYCODE_F12, 1);
-                    circle_ui_key_interrupt(KEYCODE_F12, 0);
-                 }
+                 handle_button_function(true, button_func);
                  return;
               }
 
-              handle_button_function(button_func);
+              handle_button_function(false, button_func);
 
               int value = 0;
               if (dpad < 8) value |= dpad_to_joy[dpad];
@@ -350,18 +358,11 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
                  else if (!a_right && prev_a_right) {
                     circle_ui_key_interrupt(KEYCODE_Right, 0);
                  }
-                 if (button_func == BTN_ASSIGN_FIRE) {
-                    circle_ui_key_interrupt(KEYCODE_Return, 1);
-                    circle_ui_key_interrupt(KEYCODE_Return, 0);
-                 }
-                 else if (button_func == BTN_ASSIGN_MENU) {
-                    circle_ui_key_interrupt(KEYCODE_F12, 1);
-                    circle_ui_key_interrupt(KEYCODE_F12, 0);
-                 }
+                 handle_button_function(true, button_func);
                  return;
               }
 
-              handle_button_function(button_func);
+              handle_button_function(false, button_func);
 
               int value = 0;
               if (a_left) value |= 0x4;

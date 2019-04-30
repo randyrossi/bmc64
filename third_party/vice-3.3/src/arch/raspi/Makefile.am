@@ -52,6 +52,10 @@ libarch_a_SOURCES = \
 	menu_usb.c \
 	menu_timing.h \
 	menu_timing.c \
+	menu_tape_osd.h \
+	menu_tape_osd.c \
+	menu_cart_osd.h \
+	menu_cart_osd.c \
 	text.h \
 	text.c \
 	demo.h \

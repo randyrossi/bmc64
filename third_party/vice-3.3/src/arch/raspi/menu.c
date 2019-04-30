@@ -36,6 +36,7 @@
 #include "cartridge.h"
 #include "machine.h"
 #include "tape.h"
+#include "keyboard.h"
 #include "ui.h"
 #include "text.h"
 #include "joy.h"
@@ -45,6 +46,8 @@
 #include "datasette.h"
 #include "menu_usb.h"
 #include "menu_timing.h"
+#include "menu_tape_osd.h"
+#include "menu_cart_osd.h"
 #include "sid.h"
 #include "demo.h"
 #include "drive.h"
@@ -92,6 +95,8 @@ struct menu_item *contrast_item;
 struct menu_item *gamma_item;
 struct menu_item *tint_item;
 struct menu_item *warp_item;
+
+int osd_active;
 
 static int unit;
 static int joyswap;
@@ -313,28 +318,28 @@ static void drive_change_model() {
      strcat(item->displayed_value," (*)");
    }
 
-   if (drive_check_type(DRIVE_TYPE_1541, unit-8) >= 0) {
+   if (drive_check_type(DRIVE_TYPE_1541, unit-8) > 0) {
      item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1541");
      item->value = DRIVE_TYPE_1541;
      if (current_drive_type == DRIVE_TYPE_1541) {
         strcat(item->displayed_value," (*)");
      }
    }
-   if (drive_check_type(DRIVE_TYPE_1541II, unit-8) >= 0) {
+   if (drive_check_type(DRIVE_TYPE_1541II, unit-8) > 0) {
      item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1541II");
      item->value = DRIVE_TYPE_1541II;
      if (current_drive_type == DRIVE_TYPE_1541II) {
         strcat(item->displayed_value," (*)");
      }
    }
-   if (drive_check_type(DRIVE_TYPE_1571, unit-8) >= 0) {
+   if (drive_check_type(DRIVE_TYPE_1571, unit-8) > 0) {
      item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1571");
      item->value = DRIVE_TYPE_1571;
      if (current_drive_type == DRIVE_TYPE_1571) {
         strcat(item->displayed_value," (*)");
      }
    }
-   if (drive_check_type(DRIVE_TYPE_1581, unit-8) >= 0) {
+   if (drive_check_type(DRIVE_TYPE_1581, unit-8) > 0) {
      item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1581");
      item->value = DRIVE_TYPE_1581;
      if (current_drive_type == DRIVE_TYPE_1581) {
@@ -1058,6 +1063,18 @@ static void menu_value_changed(struct menu_item* item) {
          kbd_set_hotkey_function(3, KEYCODE_F7,
             hotkey_cf7_item->choice_ints[hotkey_cf7_item->value]);
          return;
+      case MENU_SAVE_EASYFLASH:
+         if (cartridge_flush_image(CARTRIDGE_EASYFLASH) < 0) {
+            ui_error("Problem saving");
+         } else {
+            ui_pop_all_and_toggle();
+         }
+         break;
+      case MENU_CART_FREEZE:
+         keyboard_clear_keymatrix();
+         cartridge_trigger_freeze();
+         ui_pop_all_and_toggle();
+         break;
    }
 
    // Only items that were for file selection/nav should have these set...
@@ -1132,18 +1149,25 @@ int menu_get_keyboard_type(void) {
    return keyboard_type_item->value;
 }
 
+// KEEP in sync with kernel.cpp, kbd.c, menu_usb.c
 static void set_hotkey_choices(struct menu_item* item) {
-  item->num_choices = 5;
-  strcpy (item->choices[0], "None");
-  strcpy (item->choices[1], "Menu");
-  strcpy (item->choices[2], "Warp");
-  strcpy (item->choices[3], "Toggle Status");
-  strcpy (item->choices[4], "Swap Ports");
+  item->num_choices = 8;
+  strcpy (item->choices[HOTKEY_CHOICE_NONE], "None");
+  strcpy (item->choices[HOTKEY_CHOICE_MENU], "Menu");
+  strcpy (item->choices[HOTKEY_CHOICE_WARP], "Warp");
+  strcpy (item->choices[HOTKEY_CHOICE_STATUS_TOGGLE], "Toggle Status");
+  strcpy (item->choices[HOTKEY_CHOICE_SWAP_PORTS], "Swap Ports");
+  strcpy (item->choices[HOTKEY_CHOICE_TAPE_MENU], "Tape OSD");
+  strcpy (item->choices[HOTKEY_CHOICE_CART_MENU], "Cart OSD");
+  strcpy (item->choices[HOTKEY_CHOICE_CART_FREEZE], "Cart Freeze");
   item->choice_ints[HOTKEY_CHOICE_NONE] = BTN_ASSIGN_UNDEF;
   item->choice_ints[HOTKEY_CHOICE_MENU] = BTN_ASSIGN_MENU;
   item->choice_ints[HOTKEY_CHOICE_WARP] = BTN_ASSIGN_WARP;
   item->choice_ints[HOTKEY_CHOICE_STATUS_TOGGLE] = BTN_ASSIGN_STATUS_TOGGLE;
   item->choice_ints[HOTKEY_CHOICE_SWAP_PORTS] = BTN_ASSIGN_SWAP_PORTS;
+  item->choice_ints[HOTKEY_CHOICE_TAPE_MENU] = BTN_ASSIGN_TAPE_MENU;
+  item->choice_ints[HOTKEY_CHOICE_CART_MENU] = BTN_ASSIGN_CART_MENU;
+  item->choice_ints[HOTKEY_CHOICE_CART_FREEZE] = BTN_ASSIGN_CART_FREEZE;
 }
 
 void build_menu(struct menu_item* root) {
@@ -1241,12 +1265,16 @@ void build_menu(struct menu_item* root) {
       ui_menu_add_button(MENU_DETACH_DISK_11, parent, "Detach Disk");
       ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");
 
-   parent = ui_menu_add_folder(root, "Attach cartridge");
+   parent = ui_menu_add_folder(root, "Cartridge");
       ui_menu_add_button(MENU_ATTACH_CART, parent, "Attach cart...");
       ui_menu_add_button(MENU_ATTACH_CART_8K, parent, "Attach 8k raw...");
       ui_menu_add_button(MENU_ATTACH_CART_16K, parent, "Attach 16 raw...");
       ui_menu_add_button(MENU_ATTACH_CART_ULTIMAX, parent, "Attach Ultimax raw...");
+      ui_menu_add_button(MENU_TEXT, parent, "");
       ui_menu_add_button(MENU_MAKE_CART_DEFAULT, parent, "Set current cart default (Need Save)");
+      ui_menu_add_button(MENU_SAVE_EASYFLASH, parent, "Save EasyFlash Now");
+      ui_menu_add_button(MENU_CART_FREEZE, parent, "Cartridge Freeze");
+      ui_menu_add_divider(parent);
 
    ui_menu_add_button(MENU_DETACH_CART, root, "Detach cartridge");
 
@@ -1488,6 +1516,7 @@ void menu_about_to_activate() {
 void menu_about_to_deactivate() {
 }
 
+// These are called on the main loop
 void menu_quick_func(int button_assignment) {
    int value;
    switch(button_assignment) {
@@ -1509,6 +1538,16 @@ void menu_quick_func(int button_assignment) {
          } else {
             force_overlay = 1;
          }
+         break;
+      case BTN_ASSIGN_TAPE_MENU:
+         show_tape_osd_menu();
+         break;
+      case BTN_ASSIGN_CART_MENU:
+         show_cart_osd_menu();
+         break;
+      case BTN_ASSIGN_CART_FREEZE:
+         keyboard_clear_keymatrix();
+         cartridge_trigger_freeze();
          break;
       default:
          break;

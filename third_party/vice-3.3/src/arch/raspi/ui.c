@@ -366,6 +366,39 @@ static void ui_action_frame() {
    }
 }
 
+static void ui_render_single_frame() {
+   ui_render_now();
+   videoarch_swap();
+}
+
+static void pause_trap(uint16_t addr, void *data) {
+   menu_about_to_activate();
+   while (ui_activated) {
+      if (joydevs[0].device == JOYDEV_GPIO_0 || joydevs[1].device == JOYDEV_GPIO_0) {
+         circle_poll_joysticks(0, 0);
+      }
+      if (joydevs[0].device == JOYDEV_GPIO_1 || joydevs[1].device == JOYDEV_GPIO_1) {
+         circle_poll_joysticks(1, 0);
+      }
+      circle_check_gpio();
+      ui_check_key();
+
+      ui_handle_toggle_or_quick_func();
+
+      ui_render_single_frame();
+      circle_wait_vsync();
+      hdmi_timing_hook();
+   }
+   menu_about_to_deactivate();
+}
+
+static void ui_toggle(void) {
+  ui_activated = 1 - ui_activated;
+  if (ui_activated) {
+     interrupt_maincpu_trigger_trap(pause_trap, 0);
+  }
+}
+
 void ui_pop_all_and_toggle() {
    while (current_menu > 0) {
       ui_pop_menu();
@@ -470,6 +503,10 @@ static void ui_action(long action) {
          break;
       case ACTION_Escape:
          if (current_menu > 0) {
+            if (osd_active) {
+               ui_pop_all_and_toggle();
+               return;
+            }
             ui_pop_menu();
          } else {
             ui_toggle();
@@ -514,11 +551,6 @@ void ui_check_key(void) {
   ui_action_frame();
 }
 
-static void ui_render_single_frame() {
-   ui_render_now();
-   videoarch_swap();
-}
-
 void ui_handle_toggle_or_quick_func() {
   // This ensures we transition from emulator to ui only after we've
   // submitted key events and let the emulator process them. Otherwise,
@@ -527,39 +559,14 @@ void ui_handle_toggle_or_quick_func() {
   if (ui_toggle_pending) {
      ui_toggle_pending--;
      if (ui_toggle_pending == 0) {
-        ui_toggle();
+        // Even when we are entering the menu, we can't assume there aren't
+        // already menus stacked on the root. This will ensure we always enter
+        // and leave the menu in a known state (only root menu is on stack).
+        ui_pop_all_and_toggle();
      }
   } else if (pending_emu_quick_func) {
      menu_quick_func(pending_emu_quick_func);
      pending_emu_quick_func = 0;
-  }
-}
-
-static void pause_trap(uint16_t addr, void *data) {
-   menu_about_to_activate();
-   while (ui_activated) {
-      if (joydevs[0].device == JOYDEV_GPIO_0 || joydevs[1].device == JOYDEV_GPIO_0) {
-         circle_poll_joysticks(0, 0);
-      }
-      if (joydevs[0].device == JOYDEV_GPIO_1 || joydevs[1].device == JOYDEV_GPIO_1) {
-         circle_poll_joysticks(1, 0);
-      }
-      circle_check_gpio();
-      ui_check_key();
-
-      ui_handle_toggle_or_quick_func();
-
-      ui_render_single_frame();
-      circle_wait_vsync();
-      hdmi_timing_hook();
-   }
-   menu_about_to_deactivate();
-}
-
-void ui_toggle(void) {
-  ui_activated = 1 - ui_activated;
-  if (ui_activated) {
-     interrupt_maincpu_trigger_trap(pause_trap, 0);
   }
 }
 
