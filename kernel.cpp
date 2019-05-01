@@ -288,7 +288,7 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
                     circle_ui_key_interrupt(KEYCODE_Right, 1);
                  }
                  else if (dpad != 2 && old_dpad == 2) {
-                    circle_ui_key_interrupt(KEYCODE_Right, 1);
+                    circle_ui_key_interrupt(KEYCODE_Right, 0);
                  }
                  handle_button_function(true, button_func);
                  return;
