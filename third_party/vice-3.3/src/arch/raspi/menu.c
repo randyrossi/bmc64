@@ -73,6 +73,10 @@ int usb_x_axis_0;
 int usb_y_axis_0;
 int usb_x_axis_1;
 int usb_y_axis_1;
+float usb_x_thresh_0;
+float usb_y_thresh_0;
+float usb_x_thresh_1;
+float usb_y_thresh_1;
 int usb_0_button_assignments[16];
 int usb_1_button_assignments[16];
 int usb_0_button_bits[16]; // never change
@@ -432,6 +436,10 @@ static int save_settings() {
    fprintf(fp,"usb_y_0=%d\n",usb_y_axis_0);
    fprintf(fp,"usb_x_1=%d\n",usb_x_axis_1);
    fprintf(fp,"usb_y_1=%d\n",usb_y_axis_1);
+   fprintf(fp,"usb_x_t_0=%d\n",(int)(usb_x_thresh_0*100.0f));
+   fprintf(fp,"usb_y_t_0=%d\n",(int)(usb_y_thresh_0*100.0f));
+   fprintf(fp,"usb_x_t_1=%d\n",(int)(usb_x_thresh_1*100.0f));
+   fprintf(fp,"usb_y_t_1=%d\n",(int)(usb_y_thresh_1*100.0f));
    fprintf(fp,"palette=%d\n",palette_item->value);
    fprintf(fp,"keyboard_type=%d\n",keyboard_type_item->value);
 
@@ -548,6 +556,10 @@ static void load_settings() {
       else if (strcmp(name,"usb_y_0")==0) { usb_y_axis_0 = value; }
       else if (strcmp(name,"usb_x_1")==0) { usb_x_axis_1 = value; }
       else if (strcmp(name,"usb_y_1")==0) { usb_y_axis_1 = value; }
+      else if (strcmp(name,"usb_x_t_0")==0) { usb_x_thresh_0 = ((float)value) / 100.0f; }
+      else if (strcmp(name,"usb_y_t_0")==0) { usb_y_thresh_0 = ((float)value) / 100.0f; }
+      else if (strcmp(name,"usb_x_t_1")==0) { usb_x_thresh_1 = ((float)value) / 100.0f; }
+      else if (strcmp(name,"usb_y_t_1")==0) { usb_y_thresh_1 = ((float)value) / 100.0f; }
       else if (strcmp(name,"palette")==0) {
          palette_item->value = value;
          video_canvas_change_palette(palette_item->value);
@@ -1128,20 +1140,26 @@ static void menu_value_changed(struct menu_item* item) {
 }
 
 // Returns what input preference user has for this usb device
-void circle_usb_pref(int device, int *usb_pref, int* x_axis, int *y_axis) {
+void circle_usb_pref(int device, int *usb_pref, int* x_axis, int *y_axis, float *x_thresh, float *y_thresh) {
    if (device == 0) {
       *usb_pref = usb_pref_0;
       *x_axis = usb_x_axis_0;
       *y_axis = usb_y_axis_0;
+      *x_thresh = usb_x_thresh_0;
+      *y_thresh = usb_y_thresh_0;
    }
    else if (device == 1) {
       *usb_pref = usb_pref_1;
       *x_axis = usb_x_axis_1;
       *y_axis = usb_y_axis_1;
+      *x_thresh = usb_x_thresh_1;
+      *y_thresh = usb_y_thresh_1;
    } else {
       *usb_pref = -1;
       *x_axis = -1;
       *y_axis = -1;
+      *x_thresh = .50;
+      *y_thresh = .50;
    }
 }
 
@@ -1426,6 +1444,10 @@ void build_menu(struct menu_item* root) {
       usb_y_axis_0 = 1;
       usb_x_axis_1 = 0;
       usb_y_axis_1 = 1;
+      usb_x_thresh_0 = .50;
+      usb_y_thresh_0 = .50;
+      usb_x_thresh_1 = .50;
+      usb_y_thresh_1 = .50;
       for (j=0;j<16;j++) {
          usb_0_button_assignments[j] = (j==0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
          usb_1_button_assignments[j] = (j==0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);

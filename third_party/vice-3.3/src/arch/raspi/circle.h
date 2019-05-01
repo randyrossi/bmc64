@@ -103,7 +103,7 @@ extern void circle_joy_usb(unsigned device, int value);
 extern void circle_joy_gpio(unsigned device, int value);
 
 extern int circle_joy_need_gpio(int device);
-extern void circle_usb_pref(int device, int *usb_pref, int* x_axis, int *y_axis);
+extern void circle_usb_pref(int device, int *usb_pref, int* x_axis, int *y_axis, float *x_thresh, float *y_thresh);
 extern int circle_ui_activated(void);
 extern void circle_ui_key_interrupt(long key, int pressed);
 extern void circle_emu_key_interrupt(long key, int pressed);

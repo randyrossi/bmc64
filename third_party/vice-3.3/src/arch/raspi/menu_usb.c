@@ -41,6 +41,10 @@ extern int usb_x_axis_0;
 extern int usb_y_axis_0;
 extern int usb_x_axis_1;
 extern int usb_y_axis_1;
+extern float usb_x_thresh_0;
+extern float usb_y_thresh_0;
+extern float usb_x_thresh_1;
+extern float usb_y_thresh_1;
 extern int usb_0_button_assignments[16];
 extern int usb_1_button_assignments[16];
 extern int usb_0_button_bits[16];
@@ -150,6 +154,18 @@ static void menu_usb_value_changed(struct menu_item* item) {
       case MENU_POTY_LOW:
          pot_y_low_value = item->value;
          break;
+      case MENU_USB_0_X_THRESH:
+         usb_x_thresh_0 = ((float)item->value) / 100.0f;
+         break;
+      case MENU_USB_0_Y_THRESH:
+         usb_y_thresh_0 = ((float)item->value) / 100.0f;
+         break;
+      case MENU_USB_1_X_THRESH:
+         usb_x_thresh_1 = ((float)item->value) / 100.0f;
+         break;
+      case MENU_USB_1_Y_THRESH:
+         usb_y_thresh_1 = ((float)item->value) / 100.0f;
+         break;
       default:
          break;
    }
@@ -182,6 +198,8 @@ void build_usb_menu(int dev, struct menu_item* root) {
   struct menu_item* usb_pref_item;
   struct menu_item* x_axis_item;
   struct menu_item* y_axis_item;
+  struct menu_item* x_thresh_item;
+  struct menu_item* y_thresh_item;
   struct menu_item* tmp_item;
   struct menu_item* usb_btn_item[16];
   char desc[40];
@@ -205,6 +223,9 @@ void build_usb_menu(int dev, struct menu_item* root) {
 
       x_axis_item = ui_menu_add_range(MENU_USB_0_X_AXIS, root, "USB 1 Analog X #", 0, 12, 1, usb_x_axis_0);
       y_axis_item = ui_menu_add_range(MENU_USB_0_Y_AXIS, root, "USB 1 Analog Y #", 0, 12, 1, usb_y_axis_0);
+      x_thresh_item = ui_menu_add_range(MENU_USB_0_X_THRESH, root, "USB 1 Analog X Threshold %", 10, 90, 1, (int)(usb_x_thresh_0 * 100.0f));
+      y_thresh_item = ui_menu_add_range(MENU_USB_0_Y_THRESH, root, "USB 1 Analog Y Threshold %", 10, 90, 1, (int)(usb_y_thresh_0 * 100.0f));
+
       tmp_item = ui_menu_add_button(MENU_USB_0_WATCH_RAW, root, "Monitor raw USB 1 data...");
       tmp_item->on_value_changed = menu_usb_value_changed;
 
@@ -217,17 +238,6 @@ void build_usb_menu(int dev, struct menu_item* root) {
          tmp_item->on_value_changed = menu_usb_value_changed;
          tmp_item->sub_id = i;
       }
-
-      ui_menu_add_divider(root);
-      potx_high_item = ui_menu_add_range(MENU_POTX_HIGH,
-             root, "POT X Up Value", 0, 255, 1, pot_x_high_value);
-      potx_low_item = ui_menu_add_range(MENU_POTX_LOW,
-             root, "POT X Down Value", 0, 255, 1, pot_x_low_value);
-      poty_high_item = ui_menu_add_range(MENU_POTX_HIGH,
-             root, "POT X Up Value", 0, 255, 1, pot_y_high_value);
-      poty_low_item = ui_menu_add_range(MENU_POTX_LOW,
-             root, "POT X Down Value", 0, 255, 1, pot_y_low_value);
-
   } else {
       strcpy (desc, "USB 2:");
       if (joy_num_pads > 1) {
@@ -244,6 +254,8 @@ void build_usb_menu(int dev, struct menu_item* root) {
 
       x_axis_item = ui_menu_add_range(MENU_USB_1_X_AXIS, root, "USB 2 Analog X #", 0, 12, 1, usb_x_axis_1);
       y_axis_item = ui_menu_add_range(MENU_USB_1_Y_AXIS, root, "USB 2 Analog Y #", 0, 12, 1, usb_y_axis_1);
+      x_thresh_item = ui_menu_add_range(MENU_USB_1_X_THRESH, root, "USB 2 Analog X Threshold %", 10, 90, 1, (int)(usb_x_thresh_1 * 100.0f));
+      y_thresh_item = ui_menu_add_range(MENU_USB_1_Y_THRESH, root, "USB 2 Analog Y Threshold %", 10, 90, 1, (int)(usb_y_thresh_1 * 100.0f));
       tmp_item = ui_menu_add_button(MENU_USB_1_WATCH_RAW, root, "Monitor raw USB 2 data...");
       tmp_item->on_value_changed = menu_usb_value_changed;
 
@@ -257,17 +269,17 @@ void build_usb_menu(int dev, struct menu_item* root) {
          tmp_item->on_value_changed = menu_usb_value_changed;
          tmp_item->sub_id = i;
       }
-
-      ui_menu_add_divider(root);
-      potx_high_item = ui_menu_add_range(MENU_POTX_HIGH,
-             root, "POT X Up Value", 0, 255, 1, pot_x_high_value);
-      potx_low_item = ui_menu_add_range(MENU_POTX_LOW,
-             root, "POT X Down Value", 0, 255, 1, pot_x_low_value);
-      poty_high_item = ui_menu_add_range(MENU_POTX_HIGH,
-             root, "POT X Up Value", 0, 255, 1, pot_y_high_value);
-      poty_low_item = ui_menu_add_range(MENU_POTX_LOW,
-             root, "POT X Down Value", 0, 255, 1, pot_y_low_value);
   }
+
+  ui_menu_add_divider(root);
+  potx_high_item = ui_menu_add_range(MENU_POTX_HIGH,
+     root, "POT X Up Value", 0, 255, 1, pot_x_high_value);
+  potx_low_item = ui_menu_add_range(MENU_POTX_LOW,
+     root, "POT X Down Value", 0, 255, 1, pot_x_low_value);
+  poty_high_item = ui_menu_add_range(MENU_POTX_HIGH,
+     root, "POT X Up Value", 0, 255, 1, pot_y_high_value);
+  poty_low_item = ui_menu_add_range(MENU_POTX_LOW,
+     root, "POT X Down Value", 0, 255, 1, pot_y_low_value);
 
   usb_pref_item->num_choices = 2;
   strcpy (usb_pref_item->choices[0], "Analog Stick");
@@ -276,6 +288,8 @@ void build_usb_menu(int dev, struct menu_item* root) {
   usb_pref_item->on_value_changed = menu_usb_value_changed;
   x_axis_item->on_value_changed = menu_usb_value_changed;
   y_axis_item->on_value_changed = menu_usb_value_changed;
+  x_thresh_item->on_value_changed = menu_usb_value_changed;
+  y_thresh_item->on_value_changed = menu_usb_value_changed;
 }
 
 int menu_wants_raw_usb(void) {

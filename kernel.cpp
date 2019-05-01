@@ -248,7 +248,9 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
    int usb_pref;
    int axis_x;
    int axis_y;
-   circle_usb_pref(nDeviceIndex, &usb_pref, &axis_x, &axis_y);
+   float thresh_x;
+   float thresh_y;
+   circle_usb_pref(nDeviceIndex, &usb_pref, &axis_x, &axis_y, &thresh_x, &thresh_y);
 
    int max_index = axis_x;
    if (axis_y > max_index) max_index = axis_y;
@@ -307,9 +309,9 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
 	   int maxx = pState->axes[axis_x].maximum;
 	   int miny = pState->axes[axis_y].minimum;
 	   int maxy = pState->axes[axis_y].maximum;
-	   int tx = (maxx - minx) / 4;
+	   int tx = (maxx - minx) / 2 * thresh_x;
 	   int mx = (maxx + minx) / 2;
-	   int ty = (maxy - miny) / 4;
+	   int ty = (maxy - miny) / 2 * thresh_y;
 	   int my = (maxy + miny) / 2;
 	   int a_left = pState->axes[axis_x].value < mx - tx;
 	   int a_right = pState->axes[axis_x].value > mx + tx;
@@ -851,9 +853,9 @@ int CKernel::circle_cycles_per_second() {
       return 1025700;
    } else if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_COMPOSITE) {
       // Actual C64's NTSC Composite frequency is 59.826 but the Pi's vertical
-      // sync frequency on composite is 60.055. See c64.h for how this is
+      // sync frequency on composite is 60.053. See c64.h for how this is
       // calculated. This keeps audio buffer to a minimum using ReSid.
-      return 1026640;
+      return 1026611;
    } else if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_CUSTOM) {
       return mViceOptions.GetCyclesPerRefresh();
    } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_HDMI) {
