@@ -7,7 +7,7 @@ __If you are using an older version, I strongly recommend you update to the late
 BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio.
 
 # Features
-  * Quick boot time (3.5 seconds!)
+  * Quick boot time (4.1 seconds!)
   * Frames are timed to vsync for true 50/60 hz smooth scrolling (no horizontal tearing!)
   * Low latency between input & audio/video
   * No shutdown sequence required, just power off
@@ -39,7 +39,7 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
 The machine config provided defaults to PAL 50hz for HDMI.  If you want to use composite out, you MUST change the machine_timing parameter in cmdline.txt to 'pal-composite'.  Otherwise, you will have audio synchronization issues.  You can change the machine to be NTSC if you want (see below).
 
 Raspberry Pi Video Mode     | machine_timing | cycles_per_refresh
------------------------------------------------------------------
+----------------------------|----------------|-------------------
 hdmi_group=1,hdmi_mode=19   | pal-hdmi       | not required
 hdmi_group=1,hdmi_mode=4    | ntsc-hdmi      | not required
 sdtv_mode=18                | pal-composite  | not required
@@ -47,10 +47,8 @@ sdtv_mode=16                | ntsc-composite | not required
 
 If you plan to use a custom HDMI mode to match the native resolution of your monitor, you will likely have to alter the machine's 'cycles_per_refresh' value to match the actual fps that mode outputs.  Custom HDMI modes may not be exactly 50 hz or 60 hz and that can cause audio sync issues.  A tool to calculate this number is provided under the 'Video' menu.  The test will take 10 minutes and will let you know what values you should add to cmdline.txt for machine_timing and cycles_per_refresh.  You only need to run the test once.
 
-Example:
+Example: Custom 1360x768 50Hz HDMI Mode in config.txt
 
-(config.txt):
-    # Custom 1360x768 50Hz HDMI Mode
     disable_overscan=1
     hdmi_cvt=1360 768 50 3 0 0 0
     hdmi_group=2
