@@ -247,8 +247,10 @@ int joy_key_down(unsigned int device, int key) {
                circle_ui_key_interrupt(KEYCODE_Right, 1 /* down */);
                return 1;
             case KEYCODE_Space:
-               circle_ui_key_interrupt(KEYCODE_Return, 1 /* down */);
-               return 1;
+               if (joydevs[device].device == JOYDEV_CURS_SP) {
+                  circle_ui_key_interrupt(KEYCODE_Return, 1 /* down */);
+                  return 1;
+               }
             default:
                // NOTE: Don't consume LeftControl when ui is up
                return 0;
