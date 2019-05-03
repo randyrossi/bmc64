@@ -107,6 +107,7 @@ int joy_key_up(unsigned int device, int key) {
                   circle_ui_key_interrupt(KEYCODE_Return, 0 /* up */);
                   return 1;
                }
+               break;
             default:
                // NOTE: Don't consume LeftControl when ui is up
                return 0;
@@ -176,11 +177,13 @@ int joy_key_up(unsigned int device, int key) {
                   circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x10);
                   return 1;
                }
+               break;
             case KEYCODE_LeftControl:
                if (joydevs[device].device == JOYDEV_CURS_LC) {
                   circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x10);
                   return 1;
                }
+               break;
             default:
                return 0;
          }
@@ -251,6 +254,7 @@ int joy_key_down(unsigned int device, int key) {
                   circle_ui_key_interrupt(KEYCODE_Return, 1 /* down */);
                   return 1;
                }
+               break;
             default:
                // NOTE: Don't consume LeftControl when ui is up
                return 0;
@@ -320,11 +324,13 @@ int joy_key_down(unsigned int device, int key) {
                  circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x10);
                  return 1;
                }
+               break;
             case KEYCODE_LeftControl:
                if (joydevs[device].device == JOYDEV_CURS_LC) {
                  circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x10);
                  return 1;
                }
+               break;
             default:
                return 0;
          }
