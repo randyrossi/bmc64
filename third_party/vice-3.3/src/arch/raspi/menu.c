@@ -1519,6 +1519,9 @@ void build_menu(struct menu_item* root) {
    set_video_cache(0);
    set_hw_scale(0);
 
+   // This can somehow get turned off. Make sure its always 1.
+   resources_set_int("Datasette", 1);
+
    ui_set_joy_devs();
 }
 
