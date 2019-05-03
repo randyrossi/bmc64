@@ -91,6 +91,8 @@ struct VideoData {
 
    // TODO: Try getting rid of this.
    int first_refresh;
+   uint8_t* src;
+   int src_pitch;
 };
 
 // Called when video canvas has been created.

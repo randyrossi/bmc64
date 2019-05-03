@@ -152,13 +152,6 @@ static unsigned int pepto_pal_color_palette[] = {
 0x95,0x95,0x95,
 };
 
-// This keeps track of the y offset for the region in our virtual
-// frame buffer that is NOT visible at the moment. It toggles
-// back and forth between 0 and 2x our physical vertical height.
-// The idea is, we wait for vsync before telling the video hardware
-// to show the pixels we just wrote, avoiding horizontal tearing.
-int need_buffer_swap = 0;
-
 // We tell vice our clock resolution is the actual vertical
 // refresh rate of the machine * some factor. We report our
 // tick count when asked for the current time which is incremented
@@ -338,10 +331,8 @@ void video_arch_canvas_init(struct video_canvas_s *canvas){
 void video_canvas_refresh(struct video_canvas_s *canvas,
                 unsigned int xs, unsigned int ys, unsigned int xi,
                 unsigned int yi, unsigned int w, unsigned int h) {
-  // TODO: Precompute as much of this as possible and store in
-  // our canvas struct.
-  uint8_t *src = canvas->draw_buffer->draw_buffer;
-  int s_pitch = canvas->draw_buffer->draw_buffer_width;
+  video_state.src = canvas->draw_buffer->draw_buffer;
+  video_state.src_pitch = canvas->draw_buffer->draw_buffer_width;
 
   // TODO: Try to get rid of this
   if (video_state.first_refresh == 1) {
@@ -349,16 +340,6 @@ void video_canvas_refresh(struct video_canvas_s *canvas,
      raspi_boot_warp = 1;
      video_state.first_refresh = 0;
   }
-
-  draw(src+video_state.top_left,
-       video_state.vis_w,
-       video_state.vis_h,
-       s_pitch,
-       video_state.dst + video_state.offscreen_buffer_y*video_state.dst_pitch,
-       video_state.dst_pitch,
-       video_state.dst_off_x, video_state.dst_off_y);
-
-  need_buffer_swap = 1;
 }
 
 unsigned long vsyncarch_frequency(void) {
@@ -394,10 +375,15 @@ void videoarch_swap() {
 void vsyncarch_postsync(void){
   // Sync with display's vertical blank signal.
 
-  if (need_buffer_swap) {
-    videoarch_swap();
-    need_buffer_swap = 0;
-  }
+  draw(video_state.src+video_state.top_left,
+       video_state.vis_w,
+       video_state.vis_h,
+       video_state.src_pitch,
+       video_state.dst + video_state.offscreen_buffer_y*video_state.dst_pitch,
+       video_state.dst_pitch,
+       video_state.dst_off_x, video_state.dst_off_y);
+
+  videoarch_swap();
 
   // Always draw overlay on visible buffer
   if (overlay_forced() || (overlay_enabled() && overlay_showing)) {
