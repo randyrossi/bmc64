@@ -40,6 +40,7 @@
 #include "ui.h"
 #include "text.h"
 #include "joy.h"
+#include "joyport.h"
 #include "resources.h"
 #include "autostart.h"
 #include "util.h"
@@ -267,7 +268,7 @@ static void show_files(int dir_type, int filter, int menu_id) {
 
 static void show_about() {
    struct menu_item* about_root = ui_push_menu(32, 8);
-   
+
    switch (machine_class) {
      case VICE_MACHINE_C64:
         ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.7");
@@ -352,6 +353,32 @@ static void drive_change_model() {
    }
 }
 
+static void ui_set_hotkeys()
+{
+   kbd_set_hotkey_function(0, 0, BTN_ASSIGN_UNDEF);
+   kbd_set_hotkey_function(1, 0, BTN_ASSIGN_UNDEF);
+   kbd_set_hotkey_function(2, 0, BTN_ASSIGN_UNDEF);
+   kbd_set_hotkey_function(3, 0, BTN_ASSIGN_UNDEF);
+
+   // Apply hotkey selections to keyboard handler
+   if (hotkey_cf1_item->value > 0) {
+      kbd_set_hotkey_function(0, KEYCODE_F1,
+         hotkey_cf1_item->choice_ints[hotkey_cf1_item->value]);
+   }
+   if (hotkey_cf3_item->value > 0) {
+      kbd_set_hotkey_function(1, KEYCODE_F3,
+         hotkey_cf3_item->choice_ints[hotkey_cf3_item->value]);
+   }
+   if (hotkey_cf5_item->value > 0) {
+      kbd_set_hotkey_function(2, KEYCODE_F5,
+         hotkey_cf5_item->choice_ints[hotkey_cf5_item->value]);
+   }
+   if (hotkey_cf7_item->value > 0) {
+      kbd_set_hotkey_function(3, KEYCODE_F7,
+         hotkey_cf7_item->choice_ints[hotkey_cf7_item->value]);
+   }
+}
+
 static void ui_set_joy_items()
 {
    int joydev;
@@ -375,6 +402,24 @@ static void ui_set_joy_items()
            break;
         }
       }
+   }
+
+   int value = port_1_menu_item->value;
+   if (port_1_menu_item->choice_ints[value] == JOYDEV_NONE) {
+      resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
+   } else if (port_1_menu_item->choice_ints[value] == JOYDEV_MOUSE) {
+      resources_set_int("JoyPort1Device", JOYPORT_ID_MOUSE_1351);
+   } else {
+      resources_set_int("JoyPort1Device", JOYPORT_ID_JOYSTICK);
+   }
+
+   value = port_2_menu_item->value;
+   if (port_2_menu_item->choice_ints[value] == JOYDEV_NONE) {
+      resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
+   } else if (port_2_menu_item->choice_ints[value] == JOYDEV_MOUSE) {
+      resources_set_int("JoyPort2Device", JOYPORT_ID_MOUSE_1351);
+   } else {
+      resources_set_int("JoyPort2Device", JOYPORT_ID_JOYSTICK);
    }
 }
 
@@ -548,19 +593,31 @@ static void load_settings() {
       if (value_str == NULL) break;
       value = atoi(value_str);
 
-      if (strcmp(name,"port_1")==0) { port_1_menu_item->value = value; }
-      else if (strcmp(name,"port_2")==0) { port_2_menu_item->value = value; }
-      else if (strcmp(name,"usb_0")==0) { usb_pref_0 = value; }
-      else if (strcmp(name,"usb_1")==0) { usb_pref_1 = value; }
-      else if (strcmp(name,"usb_x_0")==0) { usb_x_axis_0 = value; }
-      else if (strcmp(name,"usb_y_0")==0) { usb_y_axis_0 = value; }
-      else if (strcmp(name,"usb_x_1")==0) { usb_x_axis_1 = value; }
-      else if (strcmp(name,"usb_y_1")==0) { usb_y_axis_1 = value; }
-      else if (strcmp(name,"usb_x_t_0")==0) { usb_x_thresh_0 = ((float)value) / 100.0f; }
-      else if (strcmp(name,"usb_y_t_0")==0) { usb_y_thresh_0 = ((float)value) / 100.0f; }
-      else if (strcmp(name,"usb_x_t_1")==0) { usb_x_thresh_1 = ((float)value) / 100.0f; }
-      else if (strcmp(name,"usb_y_t_1")==0) { usb_y_thresh_1 = ((float)value) / 100.0f; }
-      else if (strcmp(name,"palette")==0) {
+      if (strcmp(name,"port_1")==0) {
+         port_1_menu_item->value = value;
+      } else if (strcmp(name,"port_2")==0) {
+         port_2_menu_item->value = value;
+      } else if (strcmp(name,"usb_0")==0) {
+         usb_pref_0 = value;
+      } else if (strcmp(name,"usb_1")==0) {
+         usb_pref_1 = value;
+      } else if (strcmp(name,"usb_x_0")==0) {
+         usb_x_axis_0 = value;
+      } else if (strcmp(name,"usb_y_0")==0) {
+         usb_y_axis_0 = value;
+      } else if (strcmp(name,"usb_x_1")==0) {
+         usb_x_axis_1 = value;
+      } else if (strcmp(name,"usb_y_1")==0) {
+         usb_y_axis_1 = value;
+      } else if (strcmp(name,"usb_x_t_0")==0) {
+         usb_x_thresh_0 = ((float)value) / 100.0f;
+      } else if (strcmp(name,"usb_y_t_0")==0) {
+         usb_y_thresh_0 = ((float)value) / 100.0f;
+      } else if (strcmp(name,"usb_x_t_1")==0) {
+         usb_x_thresh_1 = ((float)value) / 100.0f;
+      } else if (strcmp(name,"usb_y_t_1")==0) {
+         usb_y_thresh_1 = ((float)value) / 100.0f;
+      } else if (strcmp(name,"palette")==0) {
          palette_item->value = value;
          video_canvas_change_palette(palette_item->value);
       }
@@ -992,6 +1049,13 @@ static void menu_value_changed(struct menu_item* item) {
          } else if (joydevs[1].port == 1) {
             joydevs[1].device = item->choice_ints[item->value];
          }
+         if (item->choice_ints[item->value] == JOYDEV_NONE) {
+            resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
+         } else if (item->choice_ints[item->value] == JOYDEV_MOUSE) {
+            resources_set_int("JoyPort1Device", JOYPORT_ID_MOUSE_1351);
+         } else {
+            resources_set_int("JoyPort1Device", JOYPORT_ID_JOYSTICK);
+         }
          return;
       case MENU_JOYSTICK_PORT_2:
          // device in port 2 was changed
@@ -999,6 +1063,13 @@ static void menu_value_changed(struct menu_item* item) {
             joydevs[0].device = item->choice_ints[item->value];
          } else if (joydevs[1].port == 2) {
             joydevs[1].device = item->choice_ints[item->value];
+         }
+         if (item->choice_ints[item->value] == JOYDEV_NONE) {
+            resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
+         } else if (item->choice_ints[item->value] == JOYDEV_MOUSE) {
+            resources_set_int("JoyPort2Device", JOYPORT_ID_MOUSE_1351);
+         } else {
+            resources_set_int("JoyPort2Device", JOYPORT_ID_JOYSTICK);
          }
          return;
       case MENU_TAPE_START:
@@ -1406,37 +1477,37 @@ void build_menu(struct menu_item* root) {
       child = port_1_menu_item = ui_menu_add_multiple_choice(
           MENU_JOYSTICK_PORT_1, parent,
           "Joystick Port 1");
-      child->num_choices = 9;
+      child->num_choices = 10;
       child->value = 0;
       strcpy (child->choices[0], "None"); child->choice_ints[0] = JOYDEV_NONE;
-      strcpy (child->choices[1], "USB 1"); child->choice_ints[1] = JOYDEV_USB_0;
-      strcpy (child->choices[2], "USB 2"); child->choice_ints[2] = JOYDEV_USB_1;
+      strcpy (child->choices[1], "USB Gamepad 1"); child->choice_ints[1] = JOYDEV_USB_0;
+      strcpy (child->choices[2], "USB Gamepad 2"); child->choice_ints[2] = JOYDEV_USB_1;
       strcpy (child->choices[3], "GPIO Bank 1"); child->choice_ints[3] = JOYDEV_GPIO_0;
       strcpy (child->choices[4], "GPIO Bank 2"); child->choice_ints[4] = JOYDEV_GPIO_1;
       strcpy (child->choices[5], "CURS + SPACE"); child->choice_ints[5] = JOYDEV_CURS_SP;
       strcpy (child->choices[6], "NUMPAD 64825"); child->choice_ints[6] = JOYDEV_NUMS_1;
       strcpy (child->choices[7], "NUMPAD 17930"); child->choice_ints[7] = JOYDEV_NUMS_2;
       strcpy (child->choices[8], "CURS + LCTRL"); child->choice_ints[8] = JOYDEV_CURS_LC;
+      strcpy (child->choices[9], "USB Mouse (1351)"); child->choice_ints[9] = JOYDEV_MOUSE;
 
       child = port_2_menu_item = ui_menu_add_multiple_choice(
           MENU_JOYSTICK_PORT_2, parent,
           "Joystick Port 2");
-      child->num_choices = 9;
+      child->num_choices = 10;
       child->value = 0;
       strcpy (child->choices[0], "None"); child->choice_ints[0] = JOYDEV_NONE;
-      strcpy (child->choices[1], "USB 1"); child->choice_ints[1] = JOYDEV_USB_0;
-      strcpy (child->choices[2], "USB 2"); child->choice_ints[2] = JOYDEV_USB_1;
+      strcpy (child->choices[1], "USB Gamepad 1"); child->choice_ints[1] = JOYDEV_USB_0;
+      strcpy (child->choices[2], "USB Gamepad 2"); child->choice_ints[2] = JOYDEV_USB_1;
       strcpy (child->choices[3], "GPIO Bank 1"); child->choice_ints[3] = JOYDEV_GPIO_0;
       strcpy (child->choices[4], "GPIO Bank 2"); child->choice_ints[4] = JOYDEV_GPIO_1;
       strcpy (child->choices[5], "CURS + SPACE"); child->choice_ints[5] = JOYDEV_CURS_SP;
       strcpy (child->choices[6], "NUMPAD 64825"); child->choice_ints[6] = JOYDEV_NUMS_1;
       strcpy (child->choices[7], "NUMPAD 17930"); child->choice_ints[7] = JOYDEV_NUMS_2;
       strcpy (child->choices[8], "CURS + LCTRL"); child->choice_ints[8] = JOYDEV_CURS_LC;
+      strcpy (child->choices[9], "USB Mouse (1351)"); child->choice_ints[9] = JOYDEV_MOUSE;
 
-      ui_set_joy_items();
-
-      ui_menu_add_button(MENU_CONFIGURE_USB_0, parent, "Configure USB 1...");
-      ui_menu_add_button(MENU_CONFIGURE_USB_1, parent, "Configure USB 2...");
+      ui_menu_add_button(MENU_CONFIGURE_USB_0, parent, "Configure USB Joy 1...");
+      ui_menu_add_button(MENU_CONFIGURE_USB_1, parent, "Configure USB Joy 2...");
 
       usb_pref_0 = 0;
       usb_pref_1 = 0;
@@ -1490,29 +1561,8 @@ void build_menu(struct menu_item* root) {
    ui_set_on_value_changed_callback(menu_value_changed);
 
    load_settings();
-
-   kbd_set_hotkey_function(0, 0, BTN_ASSIGN_UNDEF); 
-   kbd_set_hotkey_function(1, 0, BTN_ASSIGN_UNDEF); 
-   kbd_set_hotkey_function(2, 0, BTN_ASSIGN_UNDEF); 
-   kbd_set_hotkey_function(3, 0, BTN_ASSIGN_UNDEF); 
-
-   // Apply hotkey selections to keyboard handler
-   if (hotkey_cf1_item->value > 0) {
-      kbd_set_hotkey_function(0, KEYCODE_F1,
-         hotkey_cf1_item->choice_ints[hotkey_cf1_item->value]);
-   }
-   if (hotkey_cf3_item->value > 0) {
-      kbd_set_hotkey_function(1, KEYCODE_F3,
-         hotkey_cf3_item->choice_ints[hotkey_cf3_item->value]);
-   }
-   if (hotkey_cf5_item->value > 0) {
-      kbd_set_hotkey_function(2, KEYCODE_F5,
-         hotkey_cf5_item->choice_ints[hotkey_cf5_item->value]);
-   }
-   if (hotkey_cf7_item->value > 0) {
-      kbd_set_hotkey_function(3, KEYCODE_F7,
-         hotkey_cf7_item->choice_ints[hotkey_cf7_item->value]);
-   }
+   ui_set_hotkeys();
+   ui_set_joy_devs();
 
    // Always turn off resampling
    resources_set_int("SidResidSampling", 0);
@@ -1521,8 +1571,7 @@ void build_menu(struct menu_item* root) {
 
    // This can somehow get turned off. Make sure its always 1.
    resources_set_int("Datasette", 1);
-
-   ui_set_joy_devs();
+   resources_set_int("Mouse", 1);
 }
 
 int overlay_enabled(void) {

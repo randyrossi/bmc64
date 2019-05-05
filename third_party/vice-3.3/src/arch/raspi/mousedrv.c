@@ -26,22 +26,68 @@
 
 #include "mousedrv.h"
 
-int mousedrv_resources_init(mouse_func_t *funcs) { return 0; }
-int mousedrv_cmdline_options_init(void) { return 0;}
-void mousedrv_init(void) { }
+#include "videoarch.h"
+#include <stdio.h>
 
-void mousedrv_mouse_changed(void) { }
+static int mouse_x, mouse_y;
+static unsigned long mouse_timestamp = 0;
+static mouse_func_t mouse_funcs;
 
-int mousedrv_get_x(void) { return 0;}
-int mousedrv_get_y(void) { return 0;}
-unsigned long mousedrv_get_timestamp(void) { return 0;}
+int mousedrv_resources_init(mouse_func_t *funcs) {
+   mouse_funcs.mbl = funcs->mbl;
+   mouse_funcs.mbr = funcs->mbr;
+   mouse_funcs.mbm = funcs->mbm;
+   mouse_funcs.mbu = funcs->mbu;
+   mouse_funcs.mbd = funcs->mbd;
 
-void mouse_button(int bnumber, int state) { }
-void mouse_move(float dx, float dy) { }
+   return 0;
+}
 
-void mousedrv_button_left(int pressed) { }
-void mousedrv_button_right(int pressed) { }
-void mousedrv_button_middle(int pressed) { }
-void mousedrv_button_up(int pressed) { }
-void mousedrv_button_down(int pressed) { }
+int mousedrv_cmdline_options_init(void) {
+   return 0;
+}
+
+void mousedrv_init(void) {
+}
+
+void mousedrv_mouse_changed(void) {
+}
+
+int mousedrv_get_x(void) {
+   return mouse_x;
+}
+
+int mousedrv_get_y(void) {
+   return mouse_y;
+}
+
+unsigned long mousedrv_get_timestamp(void) {
+   return mouse_timestamp;
+}
+
+void circle_mouse_move(int x, int y) {
+    mouse_x += x;
+    mouse_y -= y;
+    mouse_timestamp = vsyncarch_gettime();
+}
+
+void circle_button_left(int pressed) {
+   mouse_funcs.mbl(pressed);
+}
+
+void circle_button_right(int pressed) {
+   mouse_funcs.mbr(pressed);
+}
+
+void circle_button_middle(int pressed) {
+   mouse_funcs.mbm(pressed);
+}
+
+void circle_button_up(int pressed) {
+   mouse_funcs.mbu(pressed);
+}
+
+void circle_button_down(int pressed) {
+   mouse_funcs.mbd(pressed);
+}
 

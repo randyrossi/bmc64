@@ -123,6 +123,13 @@ extern void circle_key_released(long key);
 extern void circle_set_demo_mode(int is_demo);
 extern void circle_boot_complete();
 
+extern void circle_mouse_move(int x, int y);
+extern void circle_button_left(int pressed);
+extern void circle_button_right(int pressed);
+extern void circle_button_middle(int pressed);
+extern void circle_button_up(int pressed);
+extern void circle_button_down(int pressed);
+
 void circle_emu_quick_func_interrupt(int button_assignment);
 
 #endif

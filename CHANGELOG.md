@@ -140,3 +140,6 @@
   * Added Cartridge Freeze feature (also available in Cart OSD)
   * Fixed bug where drive models would show up even though ROM was not available
   * Added threshold % for analog gamepad sticks
+
+## 1.8
+  * Added 1351 Mouse support

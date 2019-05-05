@@ -380,12 +380,23 @@ void CKernel::GamePadStatusHandler (unsigned nDeviceIndex,
 void CKernel::SetupUSBKeyboard() {
    CUSBKeyboardDevice *pKeyboard = (CUSBKeyboardDevice *)
      mDeviceNameService.GetDevice ("ukbd1", FALSE);
-   pKeyboard->RegisterKeyStatusHandlerRaw (KeyStatusHandlerRaw);
+   if (pKeyboard) {
+      pKeyboard->RegisterKeyStatusHandlerRaw (KeyStatusHandlerRaw);
+   }
+}
+
+void CKernel::SetupUSBMouse() {
+   CMouseDevice *pMouse = (CMouseDevice *)
+     mDeviceNameService.GetDevice ("mouse1", FALSE);
+   if (pMouse) {
+      pMouse->RegisterStatusHandler (MouseStatusHandler);
+   }
 }
 
 ViceApp::TShutdownMode CKernel::Run (void)
 {
   SetupUSBKeyboard();
+  SetupUSBMouse();
 
   // Call Vice's main_program
 
@@ -542,6 +553,29 @@ int CKernel::circle_sound_bufferspace(void) {
 
 void CKernel::circle_yield(void) {
   CScheduler::Get()->Yield();
+}
+
+void CKernel::MouseStatusHandler (unsigned nButtons, int deltaX, int deltaY)
+{
+   static unsigned int prev_buttons = {0};
+
+   circle_mouse_move(deltaX, deltaY);
+
+   if ((prev_buttons & MOUSE_BUTTON_LEFT) &&
+          !(nButtons & MOUSE_BUTTON_LEFT)) {
+      circle_button_left(0);
+   } else if (!(prev_buttons & MOUSE_BUTTON_LEFT) &&
+          (nButtons & MOUSE_BUTTON_LEFT)) {
+      circle_button_left(1);
+   }
+   if ((prev_buttons & MOUSE_BUTTON_RIGHT) &&
+          !(nButtons & MOUSE_BUTTON_RIGHT)) {
+      circle_button_right(0);
+   } else if (!(prev_buttons & MOUSE_BUTTON_RIGHT) &&
+          (nButtons & MOUSE_BUTTON_RIGHT)) {
+      circle_button_right(1);
+   }
+   prev_buttons = nButtons;
 }
 
 void CKernel::KeyStatusHandlerRaw (unsigned char ucModifiers,

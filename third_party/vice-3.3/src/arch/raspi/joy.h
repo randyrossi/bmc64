@@ -51,6 +51,7 @@ int joy_arch_init(void);
 #define JOYDEV_NUMS_1    17
 #define JOYDEV_NUMS_2    18
 #define JOYDEV_CURS_LC   19
+#define JOYDEV_MOUSE     20
 
 extern void joystick_close(void);
 extern void joystick(void);

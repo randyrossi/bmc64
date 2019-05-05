@@ -603,6 +603,20 @@ void ui_add_all(struct menu_item *src, struct menu_item *dest) {
    src->first_child = NULL;
 }
 
+static char* get_button_display_str(struct menu_item* node) {
+   if (strlen(node->displayed_value) > 0) {
+      return node->displayed_value;
+   } else {
+      // Turn value into string as fallback
+      if (node->map_value_func) {
+         sprintf(node->scratch,"%d",node->map_value_func(node->value));
+      } else {
+         sprintf(node->scratch,"%d",node->value);
+      }
+      return node->scratch;
+   }
+}
+
 static void append(struct menu_item *folder, struct menu_item *new_item) {
    assert (folder != NULL);
    assert (folder->type == FOLDER);
@@ -752,22 +766,9 @@ static void ui_render_children(struct menu_item* node, int* index, int indent) {
          } else if (node->type == DIVIDER) {
             ui_draw_rect(node->menu_left, y+3, node->menu_width, 2, 3, 1);
          } else if (node->type == BUTTON) {
-            if (strlen(node->displayed_value) > 0) {
-               // Prefer displayed value if set
-               ui_draw_text(node->displayed_value, node->menu_left + node->menu_width -
-                         ui_text_width(node->displayed_value), y, 1);
-            } else {
-               // Turn value into string as fallback
-               if (node->map_value_func) {
-                  sprintf(node->scratch,"%d",node->map_value_func(node->value));
-                  ui_draw_text(node->scratch, node->menu_left + node->menu_width -
-                         ui_text_width(node->scratch), y, 1);
-               } else {
-                  sprintf(node->scratch,"%d",node->value);
-                  ui_draw_text(node->scratch, node->menu_left + node->menu_width -
-                         ui_text_width(node->scratch), y, 1);
-               }
-            }
+            char *dsp_string = get_button_display_str(node);
+            ui_draw_text(dsp_string, node->menu_left + node->menu_width -
+               ui_text_width(dsp_string), y, 1);
          } else if (node->type == TEXTFIELD) {
             // draw cursor underneath text
             ui_draw_rect(node->menu_left + ui_text_width(node->name) + 8 + node->value * 8,

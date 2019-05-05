@@ -31,6 +31,7 @@
 #include <circle/types.h>
 #include <circle/usb/usbkeyboard.h>
 #include <circle/usb/usbgamepad.h>
+#include <circle/input/mouse.h>
 #include <circle/cputhrottle.h>
 #include <circle/spinlock.h>
 #include <stdint.h>
@@ -52,6 +53,8 @@ public:
 	bool Initialize(void) override;
         TShutdownMode Run (void);
         
+        static void MouseStatusHandler (unsigned nButtons,
+                                        int nPosX, int nPosY);
         static void KeyStatusHandlerRaw (unsigned char ucModifiers, 
                                          const unsigned char RawKeys[6]);
         static void GamePadStatusHandler (unsigned nDeviceIndex,
@@ -88,6 +91,7 @@ public:
 private:
         void InitSound();
         void SetupUSBKeyboard();
+        void SetupUSBMouse();
         int GetGpioPinState(int pinIndex);
 
         static bool uiShift;
