@@ -114,7 +114,7 @@ am_libarch_a_OBJECTS = archdep.$(OBJEXT) joy.$(OBJEXT) kbd.$(OBJEXT) \
 	videoarch.$(OBJEXT) menu.$(OBJEXT) menu_usb.$(OBJEXT) \
 	menu_timing.$(OBJEXT) menu_tape_osd.$(OBJEXT) \
 	menu_cart_osd.$(OBJEXT) text.$(OBJEXT) demo.$(OBJEXT) \
-	overlay.$(OBJEXT) font.$(OBJEXT)
+	overlay.$(OBJEXT) util.$(OBJEXT) font.$(OBJEXT)
 libarch_a_OBJECTS = $(am_libarch_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -498,6 +498,8 @@ libarch_a_SOURCES = \
 	demo.c \
 	overlay.c \
 	overlay.h \
+	util.c \
+	util.h \
 	font.c \
 	font.h
 
@@ -564,6 +566,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/overlay.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/text.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/videoarch.Po@am__quote@
 
 .c.o:

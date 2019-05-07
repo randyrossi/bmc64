@@ -248,6 +248,14 @@ static void list_files(struct menu_item* parent, int dir_type,
     (void) closedir (dp);
   }
 
+  struct menu_item *dfc = dirs_root.first_child;
+  merge_sort(&dfc);
+  dirs_root.first_child = dfc;
+
+  struct menu_item *ffc = files_root.first_child;
+  merge_sort(&ffc);
+  files_root.first_child = ffc;
+
   // Transfer ownership of dirs children first, then files. Childless
   // parents are on the stack.
   ui_add_all(&dirs_root, parent);

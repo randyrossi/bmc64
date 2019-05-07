@@ -62,5 +62,7 @@ libarch_a_SOURCES = \
 	demo.c \
 	overlay.c \
 	overlay.h \
+	util.c \
+	util.h \
 	font.c \
 	font.h
