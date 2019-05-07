@@ -1,5 +1,5 @@
 /*
- * util.h
+ * menu_confirm_osd.h
  *
  * Written by
  *  Randy Rossi <randy.rossi@gmail.com>
@@ -24,14 +24,11 @@
  *
  */
 
-#ifndef VICE_UTIL_H_
-#define VICE_UTIL_H_
+#include "ui.h"
 
-struct menu_item *sorted_merge(struct menu_item *a, struct menu_item *b);
-void split(struct menu_item *source, struct menu_item **frontRef,
-           struct menu_item **backRef);
-void merge_sort(struct menu_item **headRef);
+#ifndef VICE_MENU_CONFIRM_OSD_H
+#define VICE_MENU_CONFIRM_OSD_H
 
-int istrcasecmp(const char *s1, const char *s2);
+void show_confirm_osd_menu(int func);
 
 #endif

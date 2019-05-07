@@ -200,6 +200,8 @@ static void handle_button_function(bool is_ui, int button_func) {
       case BTN_ASSIGN_TAPE_MENU:
       case BTN_ASSIGN_CART_MENU:
       case BTN_ASSIGN_CART_FREEZE:
+      case BTN_ASSIGN_RESET_HARD:
+      case BTN_ASSIGN_RESET_SOFT:
          circle_emu_quick_func_interrupt(button_func);
          break;
       case BTN_ASSIGN_FIRE:

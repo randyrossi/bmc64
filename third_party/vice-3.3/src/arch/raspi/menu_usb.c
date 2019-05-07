@@ -192,6 +192,8 @@ static void add_button_choices(struct menu_item* tmp_item) {
    strcpy (tmp_item->choices[BTN_ASSIGN_TAPE_MENU], "Tape OSD");
    strcpy (tmp_item->choices[BTN_ASSIGN_CART_MENU], "Cart OSD");
    strcpy (tmp_item->choices[BTN_ASSIGN_CART_FREEZE], "Cart Freeze");
+   strcpy (tmp_item->choices[BTN_ASSIGN_RESET_HARD], "Hard Reset");
+   strcpy (tmp_item->choices[BTN_ASSIGN_RESET_SOFT], "Soft Reset");
 }
 
 void build_usb_menu(int dev, struct menu_item* root) {

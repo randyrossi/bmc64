@@ -49,12 +49,14 @@
 #include "menu_timing.h"
 #include "menu_tape_osd.h"
 #include "menu_cart_osd.h"
+#include "menu_confirm_osd.h"
 #include "sid.h"
 #include "demo.h"
 #include "drive.h"
 #include "overlay.h"
 #include "kbd.h"
 #include "raspi_machine.h"
+#include "raspi_util.h"
 
 // For filename filters
 #define FILTER_NONE 0
@@ -100,6 +102,7 @@ struct menu_item *contrast_item;
 struct menu_item *gamma_item;
 struct menu_item *tint_item;
 struct menu_item *warp_item;
+struct menu_item *reset_confirm_item;
 
 int osd_active;
 
@@ -508,6 +511,7 @@ static int save_settings() {
    fprintf(fp,"hotkey_cf7=%d\n",hotkey_cf7_item->value);
    fprintf(fp,"overlay=%d\n",overlay_item->value);
    fprintf(fp,"tapereset=%d\n",tape_reset_with_machine_item->value);
+   fprintf(fp,"reset_confirm=%d\n", reset_confirm_item->value);
 
    int drive_type;
 
@@ -666,6 +670,8 @@ static void load_settings() {
          hotkey_cf5_item->value = value;
       } else if (strcmp(name,"hotkey_cf7")==0) {
          hotkey_cf7_item->value = value;
+      } else if (strcmp(name,"reset_confirm")==0) {
+         reset_confirm_item->value = value;
       }
    }
    fclose(fp);
@@ -1248,7 +1254,7 @@ int menu_get_keyboard_type(void) {
 
 // KEEP in sync with kernel.cpp, kbd.c, menu_usb.c
 static void set_hotkey_choices(struct menu_item* item) {
-  item->num_choices = 8;
+  item->num_choices = 12;
   strcpy (item->choices[HOTKEY_CHOICE_NONE], "None");
   strcpy (item->choices[HOTKEY_CHOICE_MENU], "Menu");
   strcpy (item->choices[HOTKEY_CHOICE_WARP], "Warp");
@@ -1257,6 +1263,8 @@ static void set_hotkey_choices(struct menu_item* item) {
   strcpy (item->choices[HOTKEY_CHOICE_TAPE_MENU], "Tape OSD");
   strcpy (item->choices[HOTKEY_CHOICE_CART_MENU], "Cart OSD");
   strcpy (item->choices[HOTKEY_CHOICE_CART_FREEZE], "Cart Freeze");
+  strcpy (item->choices[HOTKEY_CHOICE_RESET_HARD], "Hard Reset");
+  strcpy (item->choices[HOTKEY_CHOICE_RESET_SOFT], "Soft Reset");
   item->choice_ints[HOTKEY_CHOICE_NONE] = BTN_ASSIGN_UNDEF;
   item->choice_ints[HOTKEY_CHOICE_MENU] = BTN_ASSIGN_MENU;
   item->choice_ints[HOTKEY_CHOICE_WARP] = BTN_ASSIGN_WARP;
@@ -1265,6 +1273,8 @@ static void set_hotkey_choices(struct menu_item* item) {
   item->choice_ints[HOTKEY_CHOICE_TAPE_MENU] = BTN_ASSIGN_TAPE_MENU;
   item->choice_ints[HOTKEY_CHOICE_CART_MENU] = BTN_ASSIGN_CART_MENU;
   item->choice_ints[HOTKEY_CHOICE_CART_FREEZE] = BTN_ASSIGN_CART_FREEZE;
+  item->choice_ints[HOTKEY_CHOICE_RESET_HARD] = BTN_ASSIGN_RESET_HARD;
+  item->choice_ints[HOTKEY_CHOICE_RESET_SOFT] = BTN_ASSIGN_RESET_SOFT;
 }
 
 void build_menu(struct menu_item* root) {
@@ -1539,7 +1549,6 @@ void build_menu(struct menu_item* root) {
 
    parent = ui_menu_add_folder(root, "Prefs");
 
-
       drive_sounds_item = ui_menu_add_toggle(MENU_DRIVE_SOUND_EMULATION,
          parent, "Drive sound emulation", 0);
       drive_sounds_vol_item = ui_menu_add_range(MENU_DRIVE_SOUND_EMULATION_VOLUME,
@@ -1551,6 +1560,8 @@ void build_menu(struct menu_item* root) {
       strcpy (overlay_item->choices[OVERLAY_NEVER], "Never");
       strcpy (overlay_item->choices[OVERLAY_ALWAYS], "Always");
       strcpy (overlay_item->choices[OVERLAY_ON_ACTIVITY], "On Activity");
+
+      reset_confirm_item = ui_menu_add_toggle(MENU_RESET_CONFIRM, parent, "Confirm Reset from Emulator", 1);
 
    warp_item = ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
 
@@ -1630,6 +1641,28 @@ void menu_quick_func(int button_assignment) {
       case BTN_ASSIGN_CART_FREEZE:
          keyboard_clear_keymatrix();
          cartridge_trigger_freeze();
+         break;
+      case BTN_ASSIGN_RESET_HARD:
+         if (reset_confirm_item->value) {
+            // Will come back here with HARD2 if confirmed.
+            show_confirm_osd_menu(BTN_ASSIGN_RESET_HARD2);
+            return;
+         }
+         // fallthrough
+      case BTN_ASSIGN_RESET_HARD2:
+         resources_set_string_sprintf("FSDevice%iDir", "/", 8);
+         machine_trigger_reset(MACHINE_RESET_MODE_HARD);
+         break;
+      case BTN_ASSIGN_RESET_SOFT:
+         if (reset_confirm_item->value) {
+            // Will come back here with SOFT2 if confirmed.
+            show_confirm_osd_menu(BTN_ASSIGN_RESET_SOFT2);
+            return;
+         }
+         // fallthrough
+      case BTN_ASSIGN_RESET_SOFT2:
+         resources_set_string_sprintf("FSDevice%iDir", "/", 8);
+         machine_trigger_reset(MACHINE_RESET_MODE_SOFT);
          break;
       default:
          break;

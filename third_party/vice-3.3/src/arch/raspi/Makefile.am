@@ -56,13 +56,15 @@ libarch_a_SOURCES = \
 	menu_tape_osd.c \
 	menu_cart_osd.h \
 	menu_cart_osd.c \
+	menu_confirm_osd.h \
+	menu_confirm_osd.c \
 	text.h \
 	text.c \
 	demo.h \
 	demo.c \
 	overlay.c \
 	overlay.h \
-	util.c \
-	util.h \
+	raspi_util.c \
+	raspi_util.h \
 	font.c \
 	font.h

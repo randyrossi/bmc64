@@ -1,5 +1,5 @@
 /*
- * util.c
+ * raspi_util.c
  *
  * Written by
  *  Randy Rossi <randy.rossi@gmail.com>
@@ -23,7 +23,7 @@
  *  02111-1307  USA.
  *
  */
-#include "util.h"
+#include "raspi_util.h"
 
 #include <string.h>
 #include <stdio.h>

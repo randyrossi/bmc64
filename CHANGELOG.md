@@ -143,3 +143,5 @@
 
 ## 1.8
   * Added 1351 Mouse support
+  * Sorted files in directory listings
+  * Added Reset Soft/Hard button/hotkey functions
