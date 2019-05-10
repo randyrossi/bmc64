@@ -374,12 +374,6 @@ static void ui_render_single_frame() {
 static void pause_trap(uint16_t addr, void *data) {
    menu_about_to_activate();
    while (ui_activated) {
-      if (joydevs[0].device == JOYDEV_GPIO_0 || joydevs[1].device == JOYDEV_GPIO_0) {
-         circle_poll_joysticks(0, 0);
-      }
-      if (joydevs[0].device == JOYDEV_GPIO_1 || joydevs[1].device == JOYDEV_GPIO_1) {
-         circle_poll_joysticks(1, 0);
-      }
       circle_check_gpio();
       ui_check_key();
 

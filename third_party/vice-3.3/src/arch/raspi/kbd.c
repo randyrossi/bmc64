@@ -33,6 +33,7 @@
 #include "keyboard.h"
 #include "menu.h"
 #include "circle.h"
+#include "demo.h"
 
 extern struct joydev_config joydevs[2];
 
@@ -365,4 +366,9 @@ void circle_key_released(long key) {
       // so emulator is not left in a weird state.
       handle_key_combo_function();
    }
+}
+
+void circle_keyboard_set_latch_keyarr(int row, int col, int value) {
+   demo_reset_timeout();
+   keyboard_set_keyarr(row, col, value);
 }

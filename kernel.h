@@ -29,6 +29,7 @@
 #include <circle/timer.h>
 #include <circle/logger.h>
 #include <circle/types.h>
+#include <circle/usertimer.h>
 #include <circle/usb/usbkeyboard.h>
 #include <circle/usb/usbgamepad.h>
 #include <circle/input/mouse.h>
@@ -81,7 +82,6 @@ public:
 	int circle_sound_resume(void);
 	int circle_sound_bufferspace(void);
 	void circle_yield(void);
-	void circle_poll_joysticks(int port, int is_interrupt);
 	void circle_check_gpio();
 	void circle_lock_acquire();
 	void circle_lock_release();
@@ -93,6 +93,8 @@ private:
         void SetupUSBKeyboard();
         void SetupUSBMouse();
         int GetGpioPinState(int pinIndex);
+	void ScanKeyboardAndJoysticks();
+	void ReadJoysticks(int device, bool assignable);
 
         static bool uiShift;
 

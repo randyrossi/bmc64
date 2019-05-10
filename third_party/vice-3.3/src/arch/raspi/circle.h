@@ -78,6 +78,60 @@
 #define POTX_BIT_MASK 0x1fe0
 #define POTY_BIT_MASK 0x1fe000
 
+// Types of queued joystick events for calls into emulator API
+#define PENDING_EMU_JOY_TYPE_ABSOLUTE 0
+#define PENDING_EMU_JOY_TYPE_AND 1
+#define PENDING_EMU_JOY_TYPE_OR 2
+
+#define JOYDEV_NONE      0
+#define JOYDEV_NUMPAD    1
+#define JOYDEV_KEYSET1   2
+#define JOYDEV_KEYSET2   3
+#define JOYDEV_ANALOG_0  4
+#define JOYDEV_ANALOG_1  5
+#define JOYDEV_ANALOG_2  6
+#define JOYDEV_ANALOG_3  7
+#define JOYDEV_ANALOG_4  8
+#define JOYDEV_ANALOG_5  9
+#define JOYDEV_DIGITAL_0 10
+#define JOYDEV_DIGITAL_1 11
+#define JOYDEV_USB_0     12
+#define JOYDEV_USB_1     13
+#define JOYDEV_GPIO_0    14
+#define JOYDEV_GPIO_1    15
+#define JOYDEV_CURS_SP   16
+#define JOYDEV_NUMS_1    17
+#define JOYDEV_NUMS_2    18
+#define JOYDEV_CURS_LC   19
+#define JOYDEV_MOUSE     20
+
+struct axis_config {
+   int use;
+   int neutral;
+   int min;
+   int max;
+   int dir;
+};
+
+struct hat_config {
+   int use;
+   int dir[9]; // DIR_XX_INDEX
+};
+
+// We maintain two joystick devices that can moved
+// to different ports.
+struct joydev_config {
+   // Which port does this device belong to?
+   int port;
+   int device;
+
+   // Relevant for usb devices
+   struct axis_config axes[4];
+   struct hat_config hats[2];
+};
+
+extern struct joydev_config joydevs[2];
+
 extern int pot_x_high_value;
 extern int pot_x_low_value;
 extern int pot_y_high_value;
@@ -98,13 +152,12 @@ extern unsigned long circle_get_ticks();
 extern void circle_set_fb_y(int);
 extern void circle_wait_vsync();
 extern void circle_yield();
-extern void circle_poll_joysticks(int port, int is_interrupt);
 extern void circle_check_gpio();
 
 extern void joy_set_gamepad_info(int num_pads, int num_buttons[2], int axes[2], int hats[2]);
 
 extern void circle_joy_usb(unsigned device, int value);
-extern void circle_joy_gpio(unsigned device, int value);
+extern void circle_emu_joy_interrupt(int type, int port, int value);
 
 extern int circle_joy_need_gpio(int device);
 extern void circle_usb_pref(int device, int *usb_pref, int* x_axis, int *y_axis, float *x_thresh, float *y_thresh);
@@ -134,6 +187,9 @@ extern void circle_button_middle(int pressed);
 extern void circle_button_up(int pressed);
 extern void circle_button_down(int pressed);
 
-void circle_emu_quick_func_interrupt(int button_assignment);
+extern void circle_emu_quick_func_interrupt(int button_assignment);
+
+extern void circle_keyboard_set_latch_keyarr(int row, int col, int value);
+extern int circle_use_real_keyboard(void);
 
 #endif

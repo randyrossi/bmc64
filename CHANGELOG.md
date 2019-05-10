@@ -95,10 +95,10 @@
   * Added missing fixup.dat so pi will report actual memory available
   * Added LeftControl + Cursor keys as joystick option
   * Got drives 9,10,11 working
-  * Added 1541, 1571 and 1581 drive models with option to change 
+  * Added 1541, 1571 and 1581 drive models with option to change
 
 ## 1.5
-  * Properly idle cores (3 cores were spinning causing CPU temperature 
+  * Properly idle cores (3 cores were spinning causing CPU temperature
     to be hotter that required)
   * Added option to not reset tape on machine reset
   * Added missing option to reset just counter (not tape)
@@ -142,6 +142,13 @@
   * Added threshold % for analog gamepad sticks
 
 ## 1.8
-  * Added 1351 Mouse support
+  * Added 1351 Mouse support via USB Mouse
   * Sorted files in directory listings
   * Added Reset Soft/Hard button/hotkey functions
+  * Added real C64 keyboard support.
+    Advantages: Eliminates need for Keyrah or USB keyboard
+                Saves up to 2 frames in response time from keyrah
+                keypress/joystick signals.
+                Can hold RUNSTOP and boot with Final Cart III plugged in
+    Drawbacks: Can't swap ports. Bank 0 must be port 1, Bank 1 must be port 2
+

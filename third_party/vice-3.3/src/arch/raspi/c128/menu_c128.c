@@ -86,3 +86,8 @@ int get_color_tint() {
    resources_get_int("VICIIColorTint", &value);
    return value;
 }
+
+int circle_use_real_keyboard(void) {
+   // No support for this on C128.
+   return 0;
+} 

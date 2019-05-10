@@ -34,8 +34,12 @@ CKernel* static_kernel = NULL;
 #define JOY_RIGHT 3
 #define JOY_FIRE 4
 
+// Usb key states
 static bool key_states[MAX_KEY_CODES];
 static unsigned char mod_states;
+
+// Real C64 keyboard matrix states
+static bool kbdMatrixStates[8][8];
 
 extern "C" {
   int circle_get_machine_timing() {
@@ -133,11 +137,6 @@ extern "C" {
      static_kernel->circle_yield();
   }
 
-  void circle_poll_joysticks(int port, int is_interrupt) {
-     // GPIO pins guaranteed to be setup before vice calls this.
-     static_kernel->circle_poll_joysticks(port, is_interrupt);
-  }
-
   void circle_check_gpio() {
      // GPIO pins guaranteed to be setup before vice calls this.
      static_kernel->circle_check_gpio();
@@ -173,8 +172,16 @@ CKernel::CKernel (void) : ViceStdioApp("vice"),
   static_kernel = this;
   mod_states = 0;
   memset(key_states, 0, MAX_KEY_CODES * sizeof(bool));
+
+  // Only used for pins that are used as buttons. See viceapp.h.
   for (int i =0 ;i < NUM_GPIO_PINS; i++) {
      gpio_debounce_state[i] = BTN_UP;
+  }
+
+  for (int i=0;i<8;i++) {
+    for (int j=0;j<8;j++) {
+       kbdMatrixStates[i][j] = HIGH;
+    }
   }
 }
 
@@ -400,18 +407,6 @@ ViceApp::TShutdownMode CKernel::Run (void)
   SetupUSBKeyboard();
   SetupUSBMouse();
 
-  // Call Vice's main_program
-
-  // Use -soundsync 0 option for 'flexible'
-  // sound sync.
-
-  // Use -refresh 1 option to turn off the 'auto'
-  // refresh which screws up badly after some time.
-  // The vertical blank really messes up vice's
-  // algorithm that decides to skip frames. Might
-  // want to go back to using the open gl hook.
-  // See arch/raspi/videoarch.c
-
   circle_set_demo_mode(mViceOptions.GetDemoMode());
 
   unsigned num_pads = 0;
@@ -451,6 +446,32 @@ ViceApp::TShutdownMode CKernel::Run (void)
   );
 
   return ShutdownHalt;
+}
+
+// For a real C64 keyboard + joystick ports
+void CKernel::ScanKeyboardAndJoysticks() {
+
+  // When we're using a real C64 keyboard, ports cannot be assigned.
+  // The events must go to the 'native' port for that bank.
+  ReadJoysticks(0, false);
+  ReadJoysticks(1, false);
+
+  // Keyboard scan
+  for (int kbdPA=0;kbdPA<8;kbdPA++) {
+    gpioPins[kbdPA]->SetMode(GPIOModeOutput);
+    gpioPins[kbdPA]->Write(LOW);
+    for (int kbdPB=0;kbdPB<8;kbdPB++) {
+      // Read PBi line
+      int val = gpioPins[kbdPB+8]->Read();
+      if (val == LOW && kbdMatrixStates[kbdPB][kbdPA] == HIGH) {
+         circle_keyboard_set_latch_keyarr(kbdPA, kbdPB, 1);
+      } else if (val == HIGH && kbdMatrixStates[kbdPB][kbdPA] == LOW) {
+         circle_keyboard_set_latch_keyarr(kbdPA, kbdPB, 0);
+      }
+      kbdMatrixStates[kbdPB][kbdPA] = val;
+    }
+    gpioPins[kbdPA]->SetMode(GPIOModeInputPullUp);
+  }
 }
 
 ssize_t CKernel::vice_write (int fd, const void * buf, size_t count) {
@@ -715,156 +736,174 @@ int CKernel::GetGpioPinState(int pinIndex) {
    return gpio_debounce_state[pinIndex];
 }
 
-// This checks whether any of our gpio pins has triggered some
-// function. Not hooked to interrupt, only polled.
+// Called from main emulation loop before pending event queues are
+// drained. Checks whether any of our gpio pins have triggered some
+// function. Also scans a real C64 keyboard and joysticks if enabled.
+// Otherwise, just scans gpio joysticks (which are swappable).
 void CKernel::circle_check_gpio()
 {
+   // Do any pins that have special functions.
+   // TODO: Make these assignable like usb buttons and hotkeys.
    if (GetGpioPinState(GPIO_MENU_INDEX) == BTN_PRESS) {
       circle_key_pressed(KEYCODE_F12);
       circle_key_released(KEYCODE_F12);
    }
+
+   // Now do keyboard and/or joysticks.
+   if (circle_use_real_keyboard()) {
+      ScanKeyboardAndJoysticks();
+   } else {
+      ReadJoysticks(0, true);
+      ReadJoysticks(1, true);
+   }
 }
 
-void CKernel::circle_poll_joysticks(int device, int is_interrupt)
+// If assignable is true, means we will route the event to whatever
+// port the user assigned the bank of pins to mean. Otherwise, the event
+// must go to the 'native' port that bank of pins belongs to (when using
+// real c64 keyboards).  Note 'device' is overloaded here.  The argument
+// passed in is the index of the gpio bank we are about to poll.  While
+// joydevs[x].device is the type of device the user assigned to the control
+// port. So when gpio joys are assignable, we find which port the event
+// should go to based on this info.  If the joydev device type is not
+// one of the valid GPIO options (taking assignable into consideration),
+// then no events are sent.
+void CKernel::ReadJoysticks(int device, bool assignable)
 {
-  static int js_prev_ui1[5] = { HIGH,HIGH,HIGH,HIGH,HIGH };
-  static int js_prev_ui2[5] = { HIGH,HIGH,HIGH,HIGH,HIGH };
+  static int js_prev_0[5] = { HIGH,HIGH,HIGH,HIGH,HIGH };
+  static int js_prev_1[5] = { HIGH,HIGH,HIGH,HIGH,HIGH };
 
+  int* js_prev;
+  CGPIOPin** js_pins;
+  int port = joydevs[device].port;
+  int ui_activated = circle_ui_activated();
+
+  // If ui is activated, don't bail if port assignment can't be done
+  // since the event will always go to the ui. We want the joystick to
+  // function in the ui even if the control port is not assigned to be
+  // gpio.
   if (device == 0) {
-     // If the UI is activated, route to the menu.
-     // Don't do this from edge interrupts since its too
-     // bouncy.
-     if (circle_ui_activated() && !is_interrupt) {
-        int js_up = joystickPins1[JOY_UP]->Read();
-        int js_down = joystickPins1[JOY_DOWN]->Read();
-        int js_left = joystickPins1[JOY_LEFT]->Read();
-        int js_right = joystickPins1[JOY_RIGHT]->Read();
-        int js_fire = joystickPins1[JOY_FIRE]->Read();
-
-        if (js_up == LOW && js_prev_ui1[JOY_UP] != LOW) {
-           circle_ui_key_interrupt(KEYCODE_Up, 1);
+     js_prev = js_prev_0;
+     js_pins = joystickPins1;
+     if (assignable) {
+        if (joydevs[0].device == JOYDEV_GPIO_0) {
+           port = joydevs[0].port;
+        } else if (joydevs[1].device == JOYDEV_GPIO_0) {
+           port = joydevs[1].port;
+        } else if (!ui_activated) {
+           return;
         }
-        else if (js_up != LOW && js_prev_ui1[JOY_UP] == LOW) {
-           circle_ui_key_interrupt(KEYCODE_Up, 0);
-        }
-        if (js_down == LOW && js_prev_ui1[JOY_DOWN] != LOW) {
-           circle_ui_key_interrupt(KEYCODE_Down, 1);
-        }
-        else if (js_down != LOW && js_prev_ui1[JOY_DOWN] == LOW) {
-           circle_ui_key_interrupt(KEYCODE_Down, 0);
-        }
-        if (js_left == LOW && js_prev_ui1[JOY_LEFT] != LOW) {
-           circle_ui_key_interrupt(KEYCODE_Left, 1);
-        }
-        else if (js_left != LOW && js_prev_ui1[JOY_LEFT] == LOW) {
-           circle_ui_key_interrupt(KEYCODE_Left, 0);
-        }
-        if (js_right == LOW && js_prev_ui1[JOY_RIGHT] != LOW) {
-           circle_ui_key_interrupt(KEYCODE_Right, 1);
-        }
-        else if (js_right != LOW && js_prev_ui1[JOY_RIGHT] == LOW) {
-           circle_ui_key_interrupt(KEYCODE_Right, 0);
-        }
-        if (js_fire == LOW && js_prev_ui1[JOY_FIRE] != LOW) {
-           circle_ui_key_interrupt(KEYCODE_Return, 1);
-        }
-        else if (js_fire != LOW && js_prev_ui1[JOY_FIRE] == LOW) {
-           circle_ui_key_interrupt(KEYCODE_Return, 0);
-        }
-
-        js_prev_ui1[JOY_UP] = js_up;
-        js_prev_ui1[JOY_DOWN] = js_down;
-        js_prev_ui1[JOY_LEFT] = js_left;
-        js_prev_ui1[JOY_RIGHT] = js_right;
-        js_prev_ui1[JOY_FIRE] = js_fire;
+     } else if (joydevs[0].device != JOYDEV_GPIO_0 && !ui_activated) {
         return;
      }
-
-     int value = 0;
-     if (joystickPins1[JOY_UP]->Read() == LOW) {
-        value |= 0x1;
+  } else {
+     js_prev = js_prev_1;
+     js_pins = joystickPins2;
+     if (assignable) {
+        if (joydevs[0].device == JOYDEV_GPIO_1) {
+           port = joydevs[0].port;
+        } else if (joydevs[1].device == JOYDEV_GPIO_1) {
+           port = joydevs[1].port;
+        } else if (!ui_activated) {
+           return;
+        }
+     } else if (joydevs[1].device != JOYDEV_GPIO_1 && !ui_activated) {
+        return;
      }
-     if (joystickPins1[JOY_DOWN]->Read() == LOW) {
-        value |= 0x2;
-     }
-     if (joystickPins1[JOY_LEFT]->Read() == LOW) {
-        value |= 0x4;
-     }
-     if (joystickPins1[JOY_RIGHT]->Read() == LOW) {
-        value |= 0x8;
-     }
-     if (joystickPins1[JOY_FIRE]->Read() == LOW) {
-        value |= 0x10;
-     }
-     circle_joy_gpio(0, value);
-     return;
   }
 
-  // If the UI is activated, route to the menu.
-  // Don't do this from edge interrupts since its too
-  // bouncy.
-  if (circle_ui_activated() && !is_interrupt) {
-     int js_up = joystickPins2[JOY_UP]->Read();
-     int js_down = joystickPins2[JOY_DOWN]->Read();
-     int js_left = joystickPins2[JOY_LEFT]->Read();
-     int js_right = joystickPins2[JOY_RIGHT]->Read();
-     int js_fire = joystickPins2[JOY_FIRE]->Read();
+  int js_up = js_pins[JOY_UP]->Read();
+  int js_down = js_pins[JOY_DOWN]->Read();
+  int js_left = js_pins[JOY_LEFT]->Read();
+  int js_right = js_pins[JOY_RIGHT]->Read();
+  int js_fire = js_pins[JOY_FIRE]->Read();
 
-     if (js_up == LOW && js_prev_ui2[JOY_UP] != LOW) {
+  if (js_up == LOW && js_prev[JOY_UP] != LOW) {
+     if (ui_activated)
         circle_ui_key_interrupt(KEYCODE_Up, 1);
+     else {
+        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR,
+           port, 0x01);
      }
-     else if (js_up != LOW && js_prev_ui2[JOY_UP] == LOW) {
+  }
+  else if (js_up != LOW && js_prev[JOY_UP] == LOW) {
+     if (ui_activated)
         circle_ui_key_interrupt(KEYCODE_Up, 0);
+     else {
+        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND,
+           port, ~0x01);
      }
-     if (js_down == LOW && js_prev_ui2[JOY_DOWN] != LOW) {
+  }
+  if (js_down == LOW && js_prev[JOY_DOWN] != LOW) {
+     if (ui_activated)
         circle_ui_key_interrupt(KEYCODE_Down, 1);
+     else {
+        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR,
+           port, 0x02);
      }
-     else if (js_down != LOW && js_prev_ui2[JOY_DOWN] == LOW) {
+  }
+  else if (js_down != LOW && js_prev[JOY_DOWN] == LOW) {
+     if (ui_activated)
         circle_ui_key_interrupt(KEYCODE_Down, 0);
+     else {
+        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND,
+           port, ~0x02);
      }
-     if (js_left == LOW && js_prev_ui2[JOY_LEFT] != LOW) {
+  }
+  if (js_left == LOW && js_prev[JOY_LEFT] != LOW) {
+     if (ui_activated)
         circle_ui_key_interrupt(KEYCODE_Left, 1);
+     else {
+        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR,
+           port, 0x04);
      }
-     else if (js_left != LOW && js_prev_ui2[JOY_LEFT] == LOW) {
+  }
+  else if (js_left != LOW && js_prev[JOY_LEFT] == LOW) {
+     if (ui_activated)
         circle_ui_key_interrupt(KEYCODE_Left, 0);
+     else {
+        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND,
+           port, ~0x04);
      }
-     if (js_right == LOW && js_prev_ui2[JOY_RIGHT] != LOW) {
+  }
+  if (js_right == LOW && js_prev[JOY_RIGHT] != LOW) {
+     if (ui_activated)
         circle_ui_key_interrupt(KEYCODE_Right, 1);
+     else {
+        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR,
+           port, 0x08);
      }
-     else if (js_right != LOW && js_prev_ui2[JOY_RIGHT] == LOW) {
+  }
+  else if (js_right != LOW && js_prev[JOY_RIGHT] == LOW) {
+     if (ui_activated)
         circle_ui_key_interrupt(KEYCODE_Right, 0);
+     else {
+        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND,
+           port, ~0x08);
      }
-     if (js_fire == LOW && js_prev_ui2[JOY_FIRE] != LOW) {
+  }
+  if (js_fire == LOW && js_prev[JOY_FIRE] != LOW) {
+     if (ui_activated)
         circle_ui_key_interrupt(KEYCODE_Return, 1);
+     else {
+        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR,
+           port, 0x10);
      }
-     else if (js_fire != LOW && js_prev_ui2[JOY_FIRE] == LOW) {
+  }
+  else if (js_fire != LOW && js_prev[JOY_FIRE] == LOW) {
+     if (ui_activated)
         circle_ui_key_interrupt(KEYCODE_Return, 0);
+     else {
+        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND,
+           port, ~0x10);
      }
-
-     js_prev_ui2[JOY_UP] = js_up;
-     js_prev_ui2[JOY_DOWN] = js_down;
-     js_prev_ui2[JOY_LEFT] = js_left;
-     js_prev_ui2[JOY_RIGHT] = js_right;
-     js_prev_ui2[JOY_FIRE] = js_fire;
   }
 
-  int value = 0;
-  if (joystickPins2[JOY_UP]->Read() == LOW) {
-     value |= 0x1;
-  }
-  if (joystickPins2[JOY_DOWN]->Read() == LOW) {
-     value |= 0x2;
-  }
-  if (joystickPins2[JOY_LEFT]->Read() == LOW) {
-     value |= 0x4;
-  }
-  if (joystickPins2[JOY_RIGHT]->Read() == LOW) {
-     value |= 0x8;
-  }
-  if (joystickPins2[JOY_FIRE]->Read() == LOW) {
-     value |= 0x10;
-  }
-  circle_joy_gpio(1, value);
+  js_prev[JOY_UP] = js_up;
+  js_prev[JOY_DOWN] = js_down;
+  js_prev[JOY_LEFT] = js_left;
+  js_prev[JOY_RIGHT] = js_right;
+  js_prev[JOY_FIRE] = js_fire;
 }
 
 void CKernel::circle_lock_acquire() {

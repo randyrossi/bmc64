@@ -44,22 +44,61 @@
 
 #include "viceemulatorcore.h"
 
-#define GPIO_JOY_1_UP 17
-#define GPIO_JOY_1_DOWN 18
-#define GPIO_JOY_1_LEFT 27
-#define GPIO_JOY_1_RIGHT 22
-#define GPIO_JOY_1_FIRE 23
+#define GPIO_JOY_1_UP 17     // Pin 1
+#define GPIO_JOY_1_DOWN 18   // Pin 2
+#define GPIO_JOY_1_LEFT 27   // Pin 3
+#define GPIO_JOY_1_RIGHT 22  // Pin 4
+#define GPIO_JOY_1_FIRE 23   // Pin 6
 
-#define GPIO_JOY_2_UP 5
-#define GPIO_JOY_2_DOWN 6
-#define GPIO_JOY_2_LEFT 12
-#define GPIO_JOY_2_RIGHT 13
-#define GPIO_JOY_2_FIRE 19
+#define GPIO_JOY_2_UP 5      // Pin 1
+#define GPIO_JOY_2_DOWN 6    // Pin 2
+#define GPIO_JOY_2_LEFT 12   // Pin 3
+#define GPIO_JOY_2_RIGHT 13  // Pin 4
+#define GPIO_JOY_2_FIRE 19   // Pin 6
 
-#define NUM_GPIO_PINS 1
+#define NUM_GPIO_PINS 18
+
+// Special functions
 #define GPIO_MENU 16
 
-#define GPIO_MENU_INDEX 0
+#define GPIO_KBD_PB_0 17     // Same as GPIO_JOY_1_UP
+#define GPIO_KBD_PB_1 18     // Same as GPIO_JOY_1_DOWN
+#define GPIO_KBD_PB_2 27     // Same as GPIO_JOY_1_LEFT
+#define GPIO_KBD_PB_3 22     // Same as GPIO_JOY_1_RIGHT
+#define GPIO_KBD_PB_4 23     // Same as GPIO_JOY_1_FIRE
+#define GPIO_KBD_PB_5 24
+#define GPIO_KBD_PB_6 25
+#define GPIO_KBD_PB_7 8
+
+#define GPIO_KBD_PA_0 5      // Same as GPIO_JOY_2_UP
+#define GPIO_KBD_PA_1 6      // Same as GPIO_JOY_2_DOWN
+#define GPIO_KBD_PA_2 12     // Same as GPIO_JOY_2_LEFT
+#define GPIO_KBD_PA_3 13     // Same as GPIO_JOY_2_RIGHT
+#define GPIO_KBD_PA_4 19     // Same as GPIO_JOY_2_FIRE
+#define GPIO_KBD_PA_5 26
+#define GPIO_KBD_PA_6 20
+#define GPIO_KBD_PA_7 21
+#define GPIO_KBD_RESTORE 04
+
+// These are the indices of each pin in our gpio pin array
+#define GPIO_KBD_PA_0_INDEX 0
+#define GPIO_KBD_PA_1_INDEX 1
+#define GPIO_KBD_PA_2_INDEX 2
+#define GPIO_KBD_PA_3_INDEX 3
+#define GPIO_KBD_PA_4_INDEX 4
+#define GPIO_KBD_PA_5_INDEX 5
+#define GPIO_KBD_PA_6_INDEX 6
+#define GPIO_KBD_PA_7_INDEX 7
+#define GPIO_KBD_PB_0_INDEX 8
+#define GPIO_KBD_PB_1_INDEX 9
+#define GPIO_KBD_PB_2_INDEX 10
+#define GPIO_KBD_PB_3_INDEX 11
+#define GPIO_KBD_PB_4_INDEX 12
+#define GPIO_KBD_PB_5_INDEX 13
+#define GPIO_KBD_PB_6_INDEX 14
+#define GPIO_KBD_PB_7_INDEX 15
+#define GPIO_KBD_RESTORE_INDEX 16
+#define GPIO_MENU_INDEX 17
 
 // Used as indices into the hardwires joystick arrays
 #define JOY_UP 0
@@ -189,20 +228,56 @@ public:
 
 protected:
 	void SetupGPIO() {
-		gpioPins[GPIO_MENU_INDEX] = new CGPIOPin(GPIO_MENU, GPIOModeInputPullUp, &mGPIOManager);
+	   gpioPins[GPIO_MENU_INDEX] =
+              new CGPIOPin(GPIO_MENU, GPIOModeInputPullUp, &mGPIOManager);
 
-		// Configure joystick pins now
-		joystickPins1[JOY_UP] = new CGPIOPin(GPIO_JOY_1_UP, GPIOModeInputPullUp, &mGPIOManager);
-		joystickPins1[JOY_DOWN] = new CGPIOPin(GPIO_JOY_1_DOWN, GPIOModeInputPullUp, &mGPIOManager);
-		joystickPins1[JOY_LEFT] = new CGPIOPin(GPIO_JOY_1_LEFT, GPIOModeInputPullUp, &mGPIOManager);
-		joystickPins1[JOY_RIGHT] = new CGPIOPin(GPIO_JOY_1_RIGHT, GPIOModeInputPullUp, &mGPIOManager);
-		joystickPins1[JOY_FIRE] = new CGPIOPin(GPIO_JOY_1_FIRE, GPIOModeInputPullUp, &mGPIOManager);
+	   gpioPins[GPIO_KBD_PA_0_INDEX] =
+              new CGPIOPin(GPIO_KBD_PA_0, GPIOModeInputPullUp, &mGPIOManager);
+	   gpioPins[GPIO_KBD_PA_1_INDEX] =
+              new CGPIOPin(GPIO_KBD_PA_1, GPIOModeInputPullUp, &mGPIOManager);
+	   gpioPins[GPIO_KBD_PA_2_INDEX] =
+              new CGPIOPin(GPIO_KBD_PA_2, GPIOModeInputPullUp, &mGPIOManager);
+	   gpioPins[GPIO_KBD_PA_3_INDEX] =
+              new CGPIOPin(GPIO_KBD_PA_3, GPIOModeInputPullUp, &mGPIOManager);
+	   gpioPins[GPIO_KBD_PA_4_INDEX] =
+              new CGPIOPin(GPIO_KBD_PA_4, GPIOModeInputPullUp, &mGPIOManager);
+	   gpioPins[GPIO_KBD_PA_5_INDEX] =
+              new CGPIOPin(GPIO_KBD_PA_5, GPIOModeInputPullUp, &mGPIOManager);
+	   gpioPins[GPIO_KBD_PA_6_INDEX] =
+              new CGPIOPin(GPIO_KBD_PA_6, GPIOModeInputPullUp, &mGPIOManager);
+	   gpioPins[GPIO_KBD_PA_7_INDEX] =
+              new CGPIOPin(GPIO_KBD_PA_7, GPIOModeInputPullUp, &mGPIOManager);
 
-		joystickPins2[JOY_UP] = new CGPIOPin(GPIO_JOY_2_UP, GPIOModeInputPullUp, &mGPIOManager);
-		joystickPins2[JOY_DOWN] = new CGPIOPin(GPIO_JOY_2_DOWN, GPIOModeInputPullUp, &mGPIOManager);
-		joystickPins2[JOY_LEFT] = new CGPIOPin(GPIO_JOY_2_LEFT, GPIOModeInputPullUp, &mGPIOManager);
-		joystickPins2[JOY_RIGHT] = new CGPIOPin(GPIO_JOY_2_RIGHT, GPIOModeInputPullUp, &mGPIOManager);
-		joystickPins2[JOY_FIRE] = new CGPIOPin(GPIO_JOY_2_FIRE, GPIOModeInputPullUp, &mGPIOManager);
+	   gpioPins[GPIO_KBD_PB_0_INDEX] =
+              new CGPIOPin(GPIO_KBD_PB_0, GPIOModeInputPullUp, &mGPIOManager);
+	   gpioPins[GPIO_KBD_PB_1_INDEX] =
+              new CGPIOPin(GPIO_KBD_PB_1, GPIOModeInputPullUp, &mGPIOManager);
+	   gpioPins[GPIO_KBD_PB_2_INDEX] =
+              new CGPIOPin(GPIO_KBD_PB_2, GPIOModeInputPullUp, &mGPIOManager);
+	   gpioPins[GPIO_KBD_PB_3_INDEX] =
+              new CGPIOPin(GPIO_KBD_PB_3, GPIOModeInputPullUp, &mGPIOManager);
+	   gpioPins[GPIO_KBD_PB_4_INDEX] =
+              new CGPIOPin(GPIO_KBD_PB_4, GPIOModeInputPullUp, &mGPIOManager);
+	   gpioPins[GPIO_KBD_PB_5_INDEX] =
+              new CGPIOPin(GPIO_KBD_PB_5, GPIOModeInputPullUp, &mGPIOManager);
+	   gpioPins[GPIO_KBD_PB_6_INDEX] =
+              new CGPIOPin(GPIO_KBD_PB_6, GPIOModeInputPullUp, &mGPIOManager);
+	   gpioPins[GPIO_KBD_PB_7_INDEX] =
+              new CGPIOPin(GPIO_KBD_PB_7, GPIOModeInputPullUp, &mGPIOManager);
+
+	   joystickPins1[JOY_UP] = gpioPins[GPIO_KBD_PB_0_INDEX];
+	   joystickPins1[JOY_DOWN] = gpioPins[GPIO_KBD_PB_1_INDEX];
+	   joystickPins1[JOY_LEFT] = gpioPins[GPIO_KBD_PB_2_INDEX];
+	   joystickPins1[JOY_RIGHT] = gpioPins[GPIO_KBD_PB_3_INDEX];
+	   joystickPins1[JOY_FIRE] = gpioPins[GPIO_KBD_PB_4_INDEX];
+	   joystickPins2[JOY_UP] = gpioPins[GPIO_KBD_PA_0_INDEX];
+	   joystickPins2[JOY_DOWN] = gpioPins[GPIO_KBD_PA_1_INDEX];
+	   joystickPins2[JOY_LEFT] = gpioPins[GPIO_KBD_PA_2_INDEX];
+	   joystickPins2[JOY_RIGHT] = gpioPins[GPIO_KBD_PA_3_INDEX];
+	   joystickPins2[JOY_FIRE] = gpioPins[GPIO_KBD_PA_4_INDEX];
+
+	   gpioPins[GPIO_KBD_RESTORE_INDEX] =
+              new CGPIOPin(GPIO_KBD_RESTORE, GPIOModeInputPullUp, &mGPIOManager);
 	}
 
         ViceEmulatorCore   mEmulatorCore;

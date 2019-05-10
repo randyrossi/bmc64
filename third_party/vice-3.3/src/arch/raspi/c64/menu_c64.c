@@ -86,3 +86,9 @@ int get_color_tint() {
    resources_get_int("VICIIColorTint", &value);
    return value;
 }
+
+int circle_use_real_keyboard(void) {
+   // TODO: Make configurable in the menu. When true, make sure control ports
+   // 0 and 1 have GPIO_0 and GPIO_1 only as possible selections.
+   return 1;
+}

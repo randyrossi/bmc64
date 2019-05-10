@@ -31,28 +31,6 @@
 
 int joy_arch_init(void);
 
-#define JOYDEV_NONE      0
-#define JOYDEV_NUMPAD    1
-#define JOYDEV_KEYSET1   2
-#define JOYDEV_KEYSET2   3
-#define JOYDEV_ANALOG_0  4
-#define JOYDEV_ANALOG_1  5
-#define JOYDEV_ANALOG_2  6
-#define JOYDEV_ANALOG_3  7
-#define JOYDEV_ANALOG_4  8
-#define JOYDEV_ANALOG_5  9
-#define JOYDEV_DIGITAL_0 10
-#define JOYDEV_DIGITAL_1 11
-#define JOYDEV_USB_0     12
-#define JOYDEV_USB_1     13
-#define JOYDEV_GPIO_0    14
-#define JOYDEV_GPIO_1    15
-#define JOYDEV_CURS_SP   16
-#define JOYDEV_NUMS_1    17
-#define JOYDEV_NUMS_2    18
-#define JOYDEV_CURS_LC   19
-#define JOYDEV_MOUSE     20
-
 extern void joystick_close(void);
 extern void joystick(void);
 extern void old_joystick_init(void);
@@ -67,37 +45,7 @@ extern int joy_num_axes[2];
 extern int joy_num_hats[2];
 extern int joy_num_buttons[2];
 
-// Types of queued joystick events for calls into emulator API
-#define PENDING_EMU_JOY_TYPE_ABSOLUTE 0
-#define PENDING_EMU_JOY_TYPE_AND 1
-#define PENDING_EMU_JOY_TYPE_OR 2
-
 int joy_key_up(unsigned int device, int key);
 int joy_key_down(unsigned int device, int key);
-
-struct axis_config {
-   int use;
-   int neutral;
-   int min;
-   int max;
-   int dir;
-};
-
-struct hat_config {
-   int use;
-   int dir[9]; // DIR_XX_INDEX
-};
-
-// We maintain two joystick devices that can moved
-// to different ports.
-struct joydev_config {
-   // Which port does this device belong to?
-   int port;
-   int device;
-
-   // Relevant for usb devices
-   struct axis_config axes[4];
-   struct hat_config hats[2];
-};
 
 #endif

@@ -435,13 +435,6 @@ void vsyncarch_postsync(void){
 
   circle_check_gpio();
 
-  if (joydevs[0].device == JOYDEV_GPIO_0 || joydevs[1].device == JOYDEV_GPIO_0) {
-     circle_poll_joysticks(0, 0);
-  }
-  if (joydevs[0].device == JOYDEV_GPIO_1 || joydevs[1].device == JOYDEV_GPIO_1) {
-     circle_poll_joysticks(1, 0);
-  }
-
   int reset_demo = 0;
 
   // Do key press/releases and joy latches on the main loop.

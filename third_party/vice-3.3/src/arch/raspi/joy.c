@@ -357,24 +357,6 @@ void circle_joy_usb(unsigned int device, int value) {
      }
 }
 
-// This is always called off the main loop, so it's safe to call
-// directly into the emulator API from here.
-void circle_joy_gpio(unsigned int device, int value) {
-    if (device == 0 && joydevs[0].device == JOYDEV_GPIO_0) {
-       joystick_set_value_absolute(joydevs[0].port, value);
-       demo_reset_timeout();
-    } else if (device == 0 && joydevs[1].device == JOYDEV_GPIO_0) {
-       joystick_set_value_absolute(joydevs[1].port, value);
-       demo_reset_timeout();
-    } else if (device == 1 && joydevs[0].device == JOYDEV_GPIO_1) {
-       joystick_set_value_absolute(joydevs[0].port, value);
-       demo_reset_timeout();
-    } else if (device == 1 && joydevs[1].device == JOYDEV_GPIO_1) {
-       joystick_set_value_absolute(joydevs[1].port, value);
-       demo_reset_timeout();
-    }
-}
-
 // Setup stuff
 int joy_arch_init(void) {
    return 0;
