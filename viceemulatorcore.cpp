@@ -25,74 +25,59 @@ extern "C" {
 
 #include "third_party/vice-3.3/src/resid/filter.h"
 
-ViceEmulatorCore::ViceEmulatorCore (CMemorySystem *pMemorySystem) : 
-   CMultiCoreSupport (pMemorySystem), launch_(false) {
-}
+ViceEmulatorCore::ViceEmulatorCore(CMemorySystem *pMemorySystem)
+    : CMultiCoreSupport(pMemorySystem), launch_(false) {}
 
-ViceEmulatorCore::~ViceEmulatorCore (void) {
-}
+ViceEmulatorCore::~ViceEmulatorCore(void) {}
 
 void ViceEmulatorCore::RunMainVice() {
-    printf ("Core waiting for launch\n");
-    bool waiting = true;
-    while (waiting) {
-      m_Lock.Acquire();
-      if (launch_) waiting = false;
-      m_Lock.Release();
-    }
+  printf("Core waiting for launch\n");
+  bool waiting = true;
+  while (waiting) {
+    m_Lock.Acquire();
+    if (launch_)
+      waiting = false;
+    m_Lock.Release();
+  }
 
-    // Call Vice's main_program
+  // Call Vice's main_program
 
-    // Use -soundsync 0 option for 'flexible'
-    // sound sync.
+  // Use -soundsync 0 option for 'flexible'
+  // sound sync.
 
-    // Use -refresh 1 option to turn off the 'auto'
-    // refresh which screws up badly after some time.
-    // The vertical blank really messes up vice's
-    // algorithm that decides to skip frames. Might
-    // want to go back to using the open gl hook.
-    // See arch/raspi/videoarch.c
+  // Use -refresh 1 option to turn off the 'auto'
+  // refresh which screws up badly after some time.
+  // The vertical blank really messes up vice's
+  // algorithm that decides to skip frames. Might
+  // want to go back to using the open gl hook.
+  // See arch/raspi/videoarch.c
 
-    printf ("Starting emulator main loop\n");
+  printf("Starting emulator main loop\n");
 
 #if defined(RASPI_C64) || defined(RASPI_C128)
-    int argc = 11;
-    char *argv[] = {
-      (char*)"vice",
-      timing_option_,
-      (char*)"-sounddev",
-      (char*)"raspi",
-      (char*)"-soundoutput",
-      (char*)"1",
-      (char*)"-soundsync",
-      (char*)"0",
-      (char*)"-refresh",
-      (char*)"1",
+  int argc = 11;
+  char *argv[] = {
+      (char *)"vice", timing_option_, (char *)"-sounddev", (char *)"raspi",
+      (char *)"-soundoutput", (char *)"1", (char *)"-soundsync", (char *)"0",
+      (char *)"-refresh", (char *)"1",
       // Unless we disable the video cache, vsync is messed up
-      (char*)"+VICIIvcache",
-    };
+      (char *)"+VICIIvcache",
+  };
 #elif defined(RASPI_VIC20)
-    int argc = 11;
-    char *argv[] = {
-      (char*)"vice",
-      timing_option_,
-      (char*)"-sounddev",
-      (char*)"raspi",
-      (char*)"-soundoutput",
-      (char*)"1",
-      (char*)"-soundsync",
-      (char*)"0",
-      (char*)"-refresh",
-      (char*)"1",
+  int argc = 11;
+  char *argv[] = {
+      (char *)"vice", timing_option_, (char *)"-sounddev", (char *)"raspi",
+      (char *)"-soundoutput", (char *)"1", (char *)"-soundsync", (char *)"0",
+      (char *)"-refresh", (char *)"1",
       // Unless we disable the video cache, vsync is messed up
-      (char*)"+VICvcache",
-    };
+      (char *)"+VICvcache",
+  };
 #else
 #error "RASPI_[model] NOT DEFINED"
 #endif
 
-    main_program(argc, argv);
-    main_exit();
+  main_program(argc, argv);
+  main_exit();
 }
 
 // Initializing the filters for each SID model takes quite a bit.
@@ -102,36 +87,31 @@ void ViceEmulatorCore::RunMainVice() {
 // around to initializing the filters, they are already done and opening
 // ReSid is very quick at that point.  See resid/filter.cc for
 // modifications done for BMC64.
-void ViceEmulatorCore::ComputeResidFilter(int model) {
-   reSID::Filter f(model);
-}
+void ViceEmulatorCore::ComputeResidFilter(int model) { reSID::Filter f(model); }
 
-void ViceEmulatorCore::Run (unsigned nCore)
-{
-  assert (nCore > 0);
+void ViceEmulatorCore::Run(unsigned nCore) {
+  assert(nCore > 0);
   switch (nCore) {
-    case 1:
-       RunMainVice();
-       break;
-    case 2:
-       // Core 2 will initialize 6581 filter data. Then sleep.
-       ComputeResidFilter(0);
-       break;
-    case 3:
-       // Core 3 will initialize 8580 filter data. Then sleep.
-       ComputeResidFilter(1);
-       break;
+  case 1:
+    RunMainVice();
+    break;
+  case 2:
+    // Core 2 will initialize 6581 filter data. Then sleep.
+    ComputeResidFilter(0);
+    break;
+  case 3:
+    // Core 3 will initialize 8580 filter data. Then sleep.
+    ComputeResidFilter(1);
+    break;
   }
 
-  printf ("Core %d idle\n", nCore);
+  printf("Core %d idle\n", nCore);
   asm("dsb\n\t"
       "1: wfi\n\t"
-      "b 1b\n\t"
-  );
-
+      "b 1b\n\t");
 }
 
-void ViceEmulatorCore::LaunchEmulator(char* timing_option) {
+void ViceEmulatorCore::LaunchEmulator(char *timing_option) {
   strncpy(timing_option_, timing_option, 8);
   m_Lock.Acquire();
   launch_ = true;

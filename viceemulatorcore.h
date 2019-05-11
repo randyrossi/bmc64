@@ -24,23 +24,22 @@ extern "C" {
 #include "third_party/vice-3.3/src/arch/raspi/circle.h"
 }
 
-class ViceEmulatorCore : public CMultiCoreSupport
-{
+class ViceEmulatorCore : public CMultiCoreSupport {
 public:
-	ViceEmulatorCore (CMemorySystem *pMemorySystem);
-	~ViceEmulatorCore (void);
+  ViceEmulatorCore(CMemorySystem *pMemorySystem);
+  ~ViceEmulatorCore(void);
 
-	void Run (unsigned nCore) override;
+  void Run(unsigned nCore) override;
 
-        void LaunchEmulator(char* timing_option);
+  void LaunchEmulator(char *timing_option);
 
 private:
-	bool launch_;
-	char timing_option_[8];
-	CSpinLock m_Lock;
+  bool launch_;
+  char timing_option_[8];
+  CSpinLock m_Lock;
 
-	void RunMainVice();
-	void ComputeResidFilter(int model);
+  void RunMainVice();
+  void ComputeResidFilter(int model);
 };
 
 #endif

@@ -22,90 +22,86 @@
 #include "vicescreen.h"
 #include "vicesound.h"
 #include <circle/actled.h>
-#include <circle/devicenameservice.h>
-#include <circle/serial.h>
-#include <circle/exceptionhandler.h>
-#include <circle/interrupt.h>
-#include <circle/timer.h>
-#include <circle/logger.h>
-#include <circle/types.h>
-#include <circle/usertimer.h>
-#include <circle/usb/usbkeyboard.h>
-#include <circle/usb/usbgamepad.h>
-#include <circle/input/mouse.h>
 #include <circle/cputhrottle.h>
+#include <circle/devicenameservice.h>
+#include <circle/exceptionhandler.h>
+#include <circle/input/mouse.h>
+#include <circle/interrupt.h>
+#include <circle/logger.h>
+#include <circle/serial.h>
 #include <circle/spinlock.h>
+#include <circle/timer.h>
+#include <circle/types.h>
+#include <circle/usb/usbgamepad.h>
+#include <circle/usb/usbkeyboard.h>
+#include <circle/usertimer.h>
 #include <stdint.h>
 #include <vc4/vchiq/vchiqdevice.h>
 
 extern "C" {
 
-#include "third_party/vice-3.3/src/main.h"
 #include "third_party/vice-3.3/src/arch/raspi/circle.h"
 #include "third_party/vice-3.3/src/arch/raspi/keycodes.h"
-
+#include "third_party/vice-3.3/src/main.h"
 }
 
-class CKernel : public ViceStdioApp
-{
+class CKernel : public ViceStdioApp {
 public:
-        CKernel (void);
+  CKernel(void);
 
-	bool Initialize(void) override;
-        TShutdownMode Run (void);
-        
-        static void MouseStatusHandler (unsigned nButtons,
-                                        int nPosX, int nPosY);
-        static void KeyStatusHandlerRaw (unsigned char ucModifiers, 
-                                         const unsigned char RawKeys[6]);
-        static void GamePadStatusHandler (unsigned nDeviceIndex,
-                                         const TGamePadState *pState);
+  bool Initialize(void) override;
+  TShutdownMode Run(void);
 
-        ssize_t vice_write (int fd, const void * buf, size_t count);
-        int circle_get_machine_timing();
-        uint8_t* circle_get_fb();
-        int circle_get_fb_pitch();
-        void circle_sleep(long delay);
-        void circle_set_palette(uint8_t index, uint16_t rgb565);
-        void circle_update_palette();
-        int circle_get_display_w();
-        int circle_get_display_h();
-        unsigned long circle_get_ticks();
-        void circle_set_fb_y(int loc);
-        void circle_wait_vsync();
+  static void MouseStatusHandler(unsigned nButtons, int nPosX, int nPosY);
+  static void KeyStatusHandlerRaw(unsigned char ucModifiers,
+                                  const unsigned char RawKeys[6]);
+  static void GamePadStatusHandler(unsigned nDeviceIndex,
+                                   const TGamePadState *pState);
 
-        int circle_sound_init(const char *param, int *speed, 
-                              int *fragsize, int *fragnr, int *channels);
-	int circle_sound_write(int16_t *pbuf, size_t nr);
-	void circle_sound_close(void);
-	int circle_sound_suspend(void);
-	int circle_sound_resume(void);
-	int circle_sound_bufferspace(void);
-	void circle_yield(void);
-	void circle_check_gpio();
-	void circle_lock_acquire();
-	void circle_lock_release();
-	void circle_boot_complete();
-	int circle_cycles_per_second();
+  ssize_t vice_write(int fd, const void *buf, size_t count);
+  int circle_get_machine_timing();
+  uint8_t *circle_get_fb();
+  int circle_get_fb_pitch();
+  void circle_sleep(long delay);
+  void circle_set_palette(uint8_t index, uint16_t rgb565);
+  void circle_update_palette();
+  int circle_get_display_w();
+  int circle_get_display_h();
+  unsigned long circle_get_ticks();
+  void circle_set_fb_y(int loc);
+  void circle_wait_vsync();
+
+  int circle_sound_init(const char *param, int *speed, int *fragsize,
+                        int *fragnr, int *channels);
+  int circle_sound_write(int16_t *pbuf, size_t nr);
+  void circle_sound_close(void);
+  int circle_sound_suspend(void);
+  int circle_sound_resume(void);
+  int circle_sound_bufferspace(void);
+  void circle_yield(void);
+  void circle_check_gpio();
+  void circle_lock_acquire();
+  void circle_lock_release();
+  void circle_boot_complete();
+  int circle_cycles_per_second();
 
 private:
-        void InitSound();
-        void SetupUSBKeyboard();
-        void SetupUSBMouse();
-        int GetGpioPinState(int pinIndex);
-	void ScanKeyboardAndJoysticks();
-	void ReadJoysticks(int device, bool assignable);
+  void InitSound();
+  void SetupUSBKeyboard();
+  void SetupUSBMouse();
+  int GetGpioPinState(int pinIndex);
+  void ScanKeyboardAndJoysticks();
+  void ReadJoysticks(int device, bool assignable);
 
-        static bool uiShift;
+  static bool uiShift;
 
-        CScheduler mScheduler;
-        CVCHIQDevice  mVCHIQ;
-	ViceSound *mViceSound;
-        CCPUThrottle mCPUThrottle;
-        CSpinLock m_Lock;
+  CScheduler mScheduler;
+  CVCHIQDevice mVCHIQ;
+  ViceSound *mViceSound;
+  CCPUThrottle mCPUThrottle;
+  CSpinLock m_Lock;
 
-        int gpio_debounce_state[NUM_GPIO_PINS];
+  int gpio_debounce_state[NUM_GPIO_PINS];
 };
 
 #endif
-

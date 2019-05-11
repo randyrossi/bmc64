@@ -16,28 +16,26 @@
 #include "kernel.h"
 #include <circle/startup.h>
 
-int main (void)
-{
-  // cannot return here because some destructors used in CKernel are not implemented
+int main(void) {
+  // cannot return here because some destructors used in CKernel are not
+  // implemented
 
   CKernel Kernel;
-  if (!Kernel.Initialize ())
-  {
-    halt ();
+  if (!Kernel.Initialize()) {
+    halt();
     return EXIT_HALT;
   }
 
-  ViceApp::TShutdownMode ShutdownMode = Kernel.Run ();
+  ViceApp::TShutdownMode ShutdownMode = Kernel.Run();
 
-  switch (ShutdownMode)
-  {
-    case ViceApp::ShutdownReboot:
-      reboot ();
-      return EXIT_REBOOT;
+  switch (ShutdownMode) {
+  case ViceApp::ShutdownReboot:
+    reboot();
+    return EXIT_REBOOT;
 
-    case ViceApp::ShutdownHalt:
-    default:
-      halt ();
-      return EXIT_HALT;
+  case ViceApp::ShutdownHalt:
+  default:
+    halt();
+    return EXIT_HALT;
   }
 }
