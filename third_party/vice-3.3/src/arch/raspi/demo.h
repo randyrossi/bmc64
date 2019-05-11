@@ -40,13 +40,13 @@ extern int raspi_demo_mode;
 #define MODE_UNINTERRUPTABLE 1
 
 struct demo_entry {
-   int operation;
-   char file[256];
-   long timeout;
-   int mode;
-   int joyswap;
+  int operation;
+  char file[256];
+  long timeout;
+  int mode;
+  int joyswap;
 
-   struct demo_entry* next;
+  struct demo_entry *next;
 };
 
 void demo_check(void);

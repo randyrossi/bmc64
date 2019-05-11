@@ -31,58 +31,50 @@
 
 unsigned long calculate_timing(double fps) {
   if (fps >= 49 && fps <= 51) {
-     return C64_PAL_CYCLES_PER_LINE * C64_PAL_SCREEN_LINES * fps;
+    return C64_PAL_CYCLES_PER_LINE * C64_PAL_SCREEN_LINES * fps;
   } else if (fps >= 59 && fps <= 61) {
-     return C64_NTSC_CYCLES_PER_LINE * C64_NTSC_SCREEN_LINES * fps;
+    return C64_NTSC_CYCLES_PER_LINE * C64_NTSC_SCREEN_LINES * fps;
   } else {
-     return 0;
+    return 0;
   }
 }
 
 void set_color_brightness(int value) {
-   resources_set_int("VICIIColorBrightness", value);
+  resources_set_int("VICIIColorBrightness", value);
 }
 
 void set_color_contrast(int value) {
-   resources_set_int("VICIIColorContrast", value);
+  resources_set_int("VICIIColorContrast", value);
 }
 
-void set_color_gamma(int value) {
-   resources_set_int("VICIIColorGamma", value);
-}
+void set_color_gamma(int value) { resources_set_int("VICIIColorGamma", value); }
 
-void set_color_tint(int value) {
-   resources_set_int("VICIIColorTint", value);
-}
+void set_color_tint(int value) { resources_set_int("VICIIColorTint", value); }
 
-void set_video_cache(int value) {
-   resources_set_int("VICIIVideoCache", value);
-}
+void set_video_cache(int value) { resources_set_int("VICIIVideoCache", value); }
 
-void set_hw_scale(int value) {
-   resources_set_int("VICIIHwScale", value);
-}
+void set_hw_scale(int value) { resources_set_int("VICIIHwScale", value); }
 
 int get_color_brightness() {
-   int value;
-   resources_get_int("VICIIColorBrightness", &value);
-   return value;
+  int value;
+  resources_get_int("VICIIColorBrightness", &value);
+  return value;
 }
 
 int get_color_contrast() {
-   int value;
-   resources_get_int("VICIIColorContrast", &value);
-   return value;
+  int value;
+  resources_get_int("VICIIColorContrast", &value);
+  return value;
 }
 
 int get_color_gamma() {
-   int value;
-   resources_get_int("VICIIColorGamma", &value);
-   return value;
+  int value;
+  resources_get_int("VICIIColorGamma", &value);
+  return value;
 }
 
 int get_color_tint() {
-   int value;
-   resources_get_int("VICIIColorTint", &value);
-   return value;
+  int value;
+  resources_get_int("VICIIColorTint", &value);
+  return value;
 }

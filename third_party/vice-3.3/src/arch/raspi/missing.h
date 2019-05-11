@@ -27,14 +27,14 @@
 #ifndef VICE_RASPI_MISSING_H
 #define VICE_RASPI_MISSING_H
 
-#include "video.h"
-#include "videoarch.h"
+#include "monitor.h"
 #include "palette.h"
 #include "uiapi.h"
-#include "monitor.h"
+#include "video.h"
+#include "videoarch.h"
 #include "viewport.h"
 
-char* ui_get_file(const char *format, ...);
+char *ui_get_file(const char *format, ...);
 char *uimon_get_in(char **p1, const char *p2);
 char video_canvas_can_resize(struct video_canvas_s *canvas);
 int archdep_rtc_get_centisecond(void);
@@ -77,14 +77,18 @@ int vic20ui_init_early(void);
 int vic20ui_init(void);
 int video_arch_cmdline_options_init(void);
 int video_arch_resources_init(void);
-int video_canvas_refresh_dx9(video_canvas_t *canvas, unsigned int xs, unsigned int ys, unsigned int xi, unsigned int yi, unsigned int w, unsigned int h);
+int video_canvas_refresh_dx9(video_canvas_t *canvas, unsigned int xs,
+                             unsigned int ys, unsigned int xi, unsigned int yi,
+                             unsigned int w, unsigned int h);
 int video_init(void);
 int vsid_ui_init(void);
 struct console_s *uimon_window_open(void);
 struct console_s *uimon_window_resume(void);
 ui_jam_action_t ui_jam_dialog(const char *format, ...);
 video_canvas_t *video_canvas_create_ddraw(video_canvas_t *canvas);
-video_canvas_t *video_canvas_create_dx9(video_canvas_t *canvas, unsigned int *width, unsigned int *height);
+video_canvas_t *video_canvas_create_dx9(video_canvas_t *canvas,
+                                        unsigned int *width,
+                                        unsigned int *height);
 void archdep_signals_init(int do_core_dumps);
 void c128ui_shutdown(void);
 void c64dtvui_shutdown(void);
@@ -102,8 +106,10 @@ void sdl_ui_init_finalize(void);
 void signals_init(int do_core_dumps);
 void tui_error(const char *format, ...);
 void tui_init(void);
-void ui_display_drive_current_image(unsigned int drive_number, const char *image);
-void ui_display_drive_track(unsigned int drive_number, unsigned int drive_base, unsigned int half_track_number);
+void ui_display_drive_current_image(unsigned int drive_number,
+                                    const char *image);
+void ui_display_drive_track(unsigned int drive_number, unsigned int drive_base,
+                            unsigned int half_track_number);
 void ui_display_event_time(unsigned int current, unsigned int total);
 void ui_display_joyport(uint8_t *joyport);
 void ui_display_playback(int playback_status, char *version);
@@ -125,7 +131,10 @@ void vic20ui_shutdown(void);
 void video_arch_resources_shutdown(void);
 void video_canvas_destroy_ddraw(video_canvas_t *canvas);
 void video_canvas_destroy(struct video_canvas_s *canvas);
-void video_canvas_refresh_ddraw(video_canvas_t *canvas, unsigned int xs, unsigned int ys, unsigned int xi, unsigned int yi, unsigned int w, unsigned int h);
+void video_canvas_refresh_ddraw(video_canvas_t *canvas, unsigned int xs,
+                                unsigned int ys, unsigned int xi,
+                                unsigned int yi, unsigned int w,
+                                unsigned int h);
 void video_canvas_resize(struct video_canvas_s *canvas, char resize_canvas);
 void video_canvas_set_palette_ddraw_8bit(video_canvas_t *canvas);
 void video_shutdown_dx9(void);

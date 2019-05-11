@@ -217,7 +217,7 @@
 extern int osd_active;
 
 // Called at initialzation
-void build_menu(struct menu_item* root);
+void build_menu(struct menu_item *root);
 
 int menu_get_keyboard_type(void);
 void menu_swap_joysticks(void);

@@ -27,4 +27,3 @@
 #define VICE_ARCHAPI_PRIVATE_API
 #include "archapi.h"
 #undef VICE_ARCHAPI_PRIVATE_API
-

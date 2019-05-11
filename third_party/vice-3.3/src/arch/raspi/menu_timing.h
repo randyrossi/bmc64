@@ -29,7 +29,7 @@
 #ifndef VICE_MENU_TIMING_H
 #define VICE_MENU_TIMING_H
 
-void build_timing_menu(struct menu_item* parent);
+void build_timing_menu(struct menu_item *parent);
 void hdmi_timing_hook(void);
 
 #endif

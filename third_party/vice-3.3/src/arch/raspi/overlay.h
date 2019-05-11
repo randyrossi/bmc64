@@ -33,9 +33,9 @@
 extern unsigned int overlay_showing;
 
 // Holds overlay graphics buffer
-extern uint8_t* overlay_buf;
+extern uint8_t *overlay_buf;
 
-uint8_t* overlay_init(int width, int height);
+uint8_t *overlay_init(int width, int height);
 void overlay_check(void);
 void overlay_activate(void);
 void overlay_warp_changed(int warp);

@@ -26,64 +26,65 @@
 
 #include "menu_tape_osd.h"
 
+#include "datasette.h"
+#include "menu.h"
+#include "ui.h"
+#include <dirent.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <dirent.h>
 #include <string.h>
-#include <math.h>
-#include "ui.h"
-#include "menu.h"
-#include "datasette.h"
 
-static void popped(struct menu_item* item) {
-   osd_active = 0;
-}
+static void popped(struct menu_item *item) { osd_active = 0; }
 
-static void menu_item_changed(struct menu_item* item) {
-  switch (item->id) {  
-      case MENU_TAPE_START:
-         datasette_control(DATASETTE_CONTROL_START);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_TAPE_STOP:
-         datasette_control(DATASETTE_CONTROL_STOP);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_TAPE_REWIND:
-         datasette_control(DATASETTE_CONTROL_REWIND);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_TAPE_FASTFWD:
-         datasette_control(DATASETTE_CONTROL_FORWARD);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_TAPE_RECORD:
-         datasette_control(DATASETTE_CONTROL_RECORD);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_TAPE_RESET:
-         datasette_control(DATASETTE_CONTROL_RESET);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_TAPE_RESET_COUNTER:
-         datasette_control(DATASETTE_CONTROL_RESET_COUNTER);
-         ui_pop_all_and_toggle();
-         return;
-      default:
-         break;
+static void menu_item_changed(struct menu_item *item) {
+  switch (item->id) {
+  case MENU_TAPE_START:
+    datasette_control(DATASETTE_CONTROL_START);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_TAPE_STOP:
+    datasette_control(DATASETTE_CONTROL_STOP);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_TAPE_REWIND:
+    datasette_control(DATASETTE_CONTROL_REWIND);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_TAPE_FASTFWD:
+    datasette_control(DATASETTE_CONTROL_FORWARD);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_TAPE_RECORD:
+    datasette_control(DATASETTE_CONTROL_RECORD);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_TAPE_RESET:
+    datasette_control(DATASETTE_CONTROL_RESET);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_TAPE_RESET_COUNTER:
+    datasette_control(DATASETTE_CONTROL_RESET_COUNTER);
+    ui_pop_all_and_toggle();
+    return;
+  default:
+    break;
   }
 }
 
 void show_tape_osd_menu(void) {
   // We only show OSD when the emulator is running. (not in the trap)
   if (ui_activated) {
-     if (osd_active) { ui_pop_all_and_toggle(); osd_active = 0;}
-     return;
+    if (osd_active) {
+      ui_pop_all_and_toggle();
+      osd_active = 0;
+    }
+    return;
   }
-  struct menu_item* root = ui_push_menu(7, 7);
+  struct menu_item *root = ui_push_menu(7, 7);
   root->on_value_changed = popped;
 
-  struct menu_item* child;
+  struct menu_item *child;
   child = ui_menu_add_button(MENU_TAPE_START, root, "PLAY");
   child->on_value_changed = menu_item_changed;
   child = ui_menu_add_button(MENU_TAPE_STOP, root, "STOP");

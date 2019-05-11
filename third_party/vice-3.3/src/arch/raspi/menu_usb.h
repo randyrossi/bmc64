@@ -29,6 +29,6 @@
 #ifndef VICE_MENU_USB_H
 #define VICE_MENU_USB_H
 
-void build_usb_menu(int dev, struct menu_item* parent);
+void build_usb_menu(int dev, struct menu_item *parent);
 
 #endif

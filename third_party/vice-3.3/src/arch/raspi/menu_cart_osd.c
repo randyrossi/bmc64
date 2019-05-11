@@ -26,53 +26,54 @@
 
 #include "menu_cart_osd.h"
 
+#include "cartridge.h"
+#include "keyboard.h"
+#include "menu.h"
+#include "ui.h"
+#include <dirent.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <dirent.h>
 #include <string.h>
-#include <math.h>
-#include "ui.h"
-#include "menu.h"
-#include "keyboard.h"
-#include "cartridge.h"
 
-static void popped(struct menu_item* item) {
-   osd_active = 0;
-}
+static void popped(struct menu_item *item) { osd_active = 0; }
 
-static void menu_item_changed(struct menu_item* item) {
-  switch (item->id) {  
-      case MENU_SAVE_EASYFLASH:
-         if (cartridge_flush_image(CARTRIDGE_EASYFLASH) < 0) {
-            ui_pop_menu();
-            ui_error("Problem saving");
-            // Treat this as OSD too
-            osd_active = 1;
-         } else {
-            ui_pop_all_and_toggle();
-         }
-         break;
-      case MENU_CART_FREEZE:
-         keyboard_clear_keymatrix();
-         cartridge_trigger_freeze();
-         ui_pop_all_and_toggle();
-         break;
-      default:
-         break;
+static void menu_item_changed(struct menu_item *item) {
+  switch (item->id) {
+  case MENU_SAVE_EASYFLASH:
+    if (cartridge_flush_image(CARTRIDGE_EASYFLASH) < 0) {
+      ui_pop_menu();
+      ui_error("Problem saving");
+      // Treat this as OSD too
+      osd_active = 1;
+    } else {
+      ui_pop_all_and_toggle();
+    }
+    break;
+  case MENU_CART_FREEZE:
+    keyboard_clear_keymatrix();
+    cartridge_trigger_freeze();
+    ui_pop_all_and_toggle();
+    break;
+  default:
+    break;
   }
 }
 
 void show_cart_osd_menu(void) {
   // We only show OSD when the emulator is running. (not in the trap)
   if (ui_activated) {
-     if (osd_active) { ui_pop_all_and_toggle(); osd_active = 0; }
-     return;
+    if (osd_active) {
+      ui_pop_all_and_toggle();
+      osd_active = 0;
+    }
+    return;
   }
 
-  struct menu_item* root = ui_push_menu(20, 2);
+  struct menu_item *root = ui_push_menu(20, 2);
   root->on_value_changed = popped;
 
-  struct menu_item* child;
+  struct menu_item *child;
   child = ui_menu_add_button(MENU_SAVE_EASYFLASH, root, "Save EasyFlash Now");
   child->on_value_changed = menu_item_changed;
   child = ui_menu_add_button(MENU_CART_FREEZE, root, "Cartridge Freeze");

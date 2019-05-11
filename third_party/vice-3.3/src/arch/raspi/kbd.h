@@ -31,9 +31,9 @@
 #include "keycodes.h"
 
 struct key_combo_state_s {
-   long second_key; // the 2nd key to press to invoke this combo
-   int invoked;     // set when the combo is completed
-   int function;    // what to do
+  long second_key; // the 2nd key to press to invoke this combo
+  int invoked;     // set when the combo is completed
+  int function;    // what to do
 };
 
 typedef struct key_combo_state_s key_combo_state_t;

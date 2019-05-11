@@ -28,7 +28,6 @@
 
 #include "util.h"
 
-char *archdep_default_resource_file_name(void)
-{
-    return util_concat(archdep_boot_path(), "/vice.ini", NULL);
+char *archdep_default_resource_file_name(void) {
+  return util_concat(archdep_boot_path(), "/vice.ini", NULL);
 }

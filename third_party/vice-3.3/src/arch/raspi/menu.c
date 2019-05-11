@@ -26,37 +26,37 @@
 
 #include "menu.h"
 
+#include <assert.h>
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <dirent.h>
 #include <string.h>
-#include <assert.h>
 
 #include "attach.h"
-#include "cartridge.h"
-#include "machine.h"
-#include "tape.h"
-#include "keyboard.h"
-#include "ui.h"
-#include "text.h"
-#include "joy.h"
-#include "joyport.h"
-#include "resources.h"
 #include "autostart.h"
-#include "util.h"
+#include "cartridge.h"
 #include "datasette.h"
-#include "menu_usb.h"
-#include "menu_timing.h"
-#include "menu_tape_osd.h"
-#include "menu_cart_osd.h"
-#include "menu_confirm_osd.h"
-#include "sid.h"
 #include "demo.h"
 #include "drive.h"
-#include "overlay.h"
+#include "joy.h"
+#include "joyport.h"
 #include "kbd.h"
+#include "keyboard.h"
+#include "machine.h"
+#include "menu_cart_osd.h"
+#include "menu_confirm_osd.h"
+#include "menu_tape_osd.h"
+#include "menu_timing.h"
+#include "menu_usb.h"
+#include "overlay.h"
 #include "raspi_machine.h"
 #include "raspi_util.h"
+#include "resources.h"
+#include "sid.h"
+#include "tape.h"
+#include "text.h"
+#include "ui.h"
+#include "util.h"
 
 // For filename filters
 #define FILTER_NONE 0
@@ -68,8 +68,8 @@
 extern struct joydev_config joydevs[2];
 
 // These can be saved
-struct menu_item* port_1_menu_item;
-struct menu_item* port_2_menu_item;
+struct menu_item *port_1_menu_item;
+struct menu_item *port_2_menu_item;
 int usb_pref_0;
 int usb_pref_1;
 int usb_x_axis_0;
@@ -118,33 +118,32 @@ int pot_y_high_value;
 int pot_y_low_value;
 
 const int num_disk_ext = 13;
-static char disk_filt_ext[13][5] =
-    {".d64",".d67",".d71",".d80",".d81",".d82",
-     ".d1m",".d2m",".d4m",".g64",".g41",".p64",
-     ".x64"};
+static char disk_filt_ext[13][5] = {".d64", ".d67", ".d71", ".d80", ".d81",
+                                    ".d82", ".d1m", ".d2m", ".d4m", ".g64",
+                                    ".g41", ".p64", ".x64"};
 
 const int num_tape_ext = 2;
-static char tape_filt_ext[2][5] = { ".t64",".tap" };
+static char tape_filt_ext[2][5] = {".t64", ".tap"};
 
 const int num_cart_ext = 2;
-static char cart_filt_ext[2][5] = { ".crt",".bin" };
+static char cart_filt_ext[2][5] = {".crt", ".bin"};
 
 const int num_snap_ext = 1;
-static char snap_filt_ext[1][5] = { ".vsf" };
+static char snap_filt_ext[1][5] = {".vsf"};
 
-#define TEST_FILTER_MACRO(funcname, numvar, filtarray) \
-static int funcname(char *name) { \
-   int include = 0; \
-   int len = strlen(name); \
-   int i; \
-   for (i = 0 ; i < numvar; i++) { \
-      if (len > 4 && !strcasecmp(name + len - 4, filtarray[i])) { \
-         include = 1; \
-         break; \
-      } \
-   } \
-   return include; \
-}
+#define TEST_FILTER_MACRO(funcname, numvar, filtarray)                         \
+  static int funcname(char *name) {                                            \
+    int include = 0;                                                           \
+    int len = strlen(name);                                                    \
+    int i;                                                                     \
+    for (i = 0; i < numvar; i++) {                                             \
+      if (len > 4 && !strcasecmp(name + len - 4, filtarray[i])) {              \
+        include = 1;                                                           \
+        break;                                                                 \
+      }                                                                        \
+    }                                                                          \
+    return include;                                                            \
+  }
 
 // For file type dialogs. Determines what dir we start in. Used
 // as index into default_dir_names and current_dir_names.
@@ -162,8 +161,7 @@ static void check_real_keyboard_settings(void);
 // each type of file.
 // TODO: Make these start dirs configurable.
 static const char default_dir_names[NUM_DIR_TYPES][16] = {
-   "/", "/disks", "/tapes", "/carts", "/snapshots", "/roms"
-};
+    "/", "/disks", "/tapes", "/carts", "/snapshots", "/roms"};
 
 // Keep track of current directory for each type of file.
 static char current_dir_names[NUM_DIR_TYPES][256];
@@ -175,35 +173,35 @@ TEST_FILTER_MACRO(test_cart_name, num_cart_ext, cart_filt_ext);
 TEST_FILTER_MACRO(test_snap_name, num_snap_ext, snap_filt_ext);
 
 // Clears the file menu and populates it with files.
-static void list_files(struct menu_item* parent, int dir_type,
-                          int filter, int menu_id) {
+static void list_files(struct menu_item *parent, int dir_type, int filter,
+                       int menu_id) {
   DIR *dp;
   struct dirent *ep;
   int i;
   int include;
 
   char *currentDir = current_dir_names[dir_type];
-  dp = opendir (currentDir);
+  dp = opendir(currentDir);
   if (dp == NULL) {
-     strcpy (dir_scratch, "(");
-     strcat (dir_scratch, currentDir);
-     strcat (dir_scratch, " Not Found - Using /)");
+    strcpy(dir_scratch, "(");
+    strcat(dir_scratch, currentDir);
+    strcat(dir_scratch, " Not Found - Using /)");
 
-     // Fall back to root
-     strcpy(current_dir_names[dir_type], "/");
-     currentDir = current_dir_names[dir_type];
-     dp = opendir (currentDir);
-     ui_menu_add_button(MENU_TEXT, parent, dir_scratch);
-     if (dp == NULL) {
-        return;
-     }
+    // Fall back to root
+    strcpy(current_dir_names[dir_type], "/");
+    currentDir = current_dir_names[dir_type];
+    dp = opendir(currentDir);
+    ui_menu_add_button(MENU_TEXT, parent, dir_scratch);
+    if (dp == NULL) {
+      return;
+    }
   }
 
   ui_menu_add_button(MENU_TEXT, parent, currentDir);
   ui_menu_add_divider(parent);
 
-  if (strcmp(currentDir,"/") != 0) {
-     ui_menu_add_button(menu_id, parent, "..")->sub_id = MENU_SUB_UP_DIR;
+  if (strcmp(currentDir, "/") != 0) {
+    ui_menu_add_button(menu_id, parent, "..")->sub_id = MENU_SUB_UP_DIR;
   }
 
   // Make two buckets
@@ -221,11 +219,11 @@ static void list_files(struct menu_item* parent, int dir_type,
 
   // TODO : Prefetch and order dirs at top
   if (dp != NULL) {
-    while (ep = readdir (dp)) {
+    while (ep = readdir(dp)) {
       if (ep->d_type & DT_DIR) {
-        ui_menu_add_button_with_value(
-           menu_id, &dirs_root, ep->d_name, 0, ep->d_name, "(dir)")
-              ->sub_id = MENU_SUB_ENTER_DIR;
+        ui_menu_add_button_with_value(menu_id, &dirs_root, ep->d_name, 0,
+                                      ep->d_name, "(dir)")
+            ->sub_id = MENU_SUB_ENTER_DIR;
       } else {
         include = 0;
         if (filter == FILTER_DISK) {
@@ -243,15 +241,15 @@ static void list_files(struct menu_item* parent, int dir_type,
           // Button name will be filename but it will be truncated
           // due to menu width.  Actual filename will be stored in
           // str_value which is never displayed except for text fields.
-          struct menu_item* new_button = ui_menu_add_button(
-             menu_id, &files_root, ep->d_name);
+          struct menu_item *new_button =
+              ui_menu_add_button(menu_id, &files_root, ep->d_name);
           new_button->sub_id = MENU_SUB_PICK_FILE;
-          strncpy(new_button->str_value, ep->d_name, MAX_STR_VAL_LEN-1);
+          strncpy(new_button->str_value, ep->d_name, MAX_STR_VAL_LEN - 1);
         }
       }
     }
 
-    (void) closedir (dp);
+    (void)closedir(dp);
   }
 
   struct menu_item *dfc = dirs_root.first_child;
@@ -272,601 +270,605 @@ static void list_files(struct menu_item* parent, int dir_type,
 }
 
 static void show_files(int dir_type, int filter, int menu_id) {
-   // Show files
-   struct menu_item* file_root = ui_push_menu(-1, -1);
-   if (menu_id == MENU_SAVE_SNAP_FILE) {
-      ui_menu_add_text_field(menu_id, file_root, "Enter name:", "");
-   }
-   list_files(file_root, dir_type, filter, menu_id);
+  // Show files
+  struct menu_item *file_root = ui_push_menu(-1, -1);
+  if (menu_id == MENU_SAVE_SNAP_FILE) {
+    ui_menu_add_text_field(menu_id, file_root, "Enter name:", "");
+  }
+  list_files(file_root, dir_type, filter, menu_id);
 }
 
 static void show_about() {
-   struct menu_item* about_root = ui_push_menu(32, 8);
+  struct menu_item *about_root = ui_push_menu(32, 8);
 
-   switch (machine_class) {
-     case VICE_MACHINE_C64:
-        ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.7");
-        ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C64 Emulator");
-        break;
-     case VICE_MACHINE_C128:
-        ui_menu_add_button(MENU_TEXT, about_root, "BMC128 v1.7");
-        ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C128 Emulator");
-        break;
-     case VICE_MACHINE_VIC20:
-        ui_menu_add_button(MENU_TEXT, about_root, "BMVC20 v1.7");
-        ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal Vic20 Emulator");
-        break;
-     default:
-        ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal ??? Emulator");
-        break;
-   }
-   ui_menu_add_button(MENU_TEXT, about_root, "For the Rasbperry Pi 2/3");
-   ui_menu_add_divider(about_root);
-   ui_menu_add_button(MENU_TEXT, about_root, "https://github.com/");
-   ui_menu_add_button(MENU_TEXT, about_root, "         randyrossi/bmc64");
+  switch (machine_class) {
+  case VICE_MACHINE_C64:
+    ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.7");
+    ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C64 Emulator");
+    break;
+  case VICE_MACHINE_C128:
+    ui_menu_add_button(MENU_TEXT, about_root, "BMC128 v1.7");
+    ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C128 Emulator");
+    break;
+  case VICE_MACHINE_VIC20:
+    ui_menu_add_button(MENU_TEXT, about_root, "BMVC20 v1.7");
+    ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal Vic20 Emulator");
+    break;
+  default:
+    ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal ??? Emulator");
+    break;
+  }
+  ui_menu_add_button(MENU_TEXT, about_root, "For the Rasbperry Pi 2/3");
+  ui_menu_add_divider(about_root);
+  ui_menu_add_button(MENU_TEXT, about_root, "https://github.com/");
+  ui_menu_add_button(MENU_TEXT, about_root, "         randyrossi/bmc64");
 }
 
 static void show_license() {
-   int i;
-   struct menu_item* license_root = ui_push_menu(-1, -1);
-   for (i=0;i<510;i++) {
-      ui_menu_add_button(MENU_TEXT, license_root, license[i]);
-   }
+  int i;
+  struct menu_item *license_root = ui_push_menu(-1, -1);
+  for (i = 0; i < 510; i++) {
+    ui_menu_add_button(MENU_TEXT, license_root, license[i]);
+  }
 }
 
 static void configure_usb(int dev) {
-   struct menu_item* usb_root = ui_push_menu(-1, -1);
-   build_usb_menu(dev, usb_root);
+  struct menu_item *usb_root = ui_push_menu(-1, -1);
+  build_usb_menu(dev, usb_root);
 }
 
 static void configure_timing() {
-   struct menu_item* timing_root = ui_push_menu(-1, -1);
-   build_timing_menu(timing_root);
+  struct menu_item *timing_root = ui_push_menu(-1, -1);
+  build_timing_menu(timing_root);
 }
 
 static void drive_change_model() {
-   struct menu_item* model_root = ui_push_menu(12, 8);
-   struct menu_item* item;
+  struct menu_item *model_root = ui_push_menu(12, 8);
+  struct menu_item *item;
 
-   int current_drive_type;
-   resources_get_int_sprintf("Drive%iType", &current_drive_type, unit);
+  int current_drive_type;
+  resources_get_int_sprintf("Drive%iType", &current_drive_type, unit);
 
-   item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "None");
-   item->value = DRIVE_TYPE_NONE;
-   if (current_drive_type == DRIVE_TYPE_NONE) {
-     strcat(item->displayed_value," (*)");
-   }
+  item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "None");
+  item->value = DRIVE_TYPE_NONE;
+  if (current_drive_type == DRIVE_TYPE_NONE) {
+    strcat(item->displayed_value, " (*)");
+  }
 
-   if (drive_check_type(DRIVE_TYPE_1541, unit-8) > 0) {
-     item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1541");
-     item->value = DRIVE_TYPE_1541;
-     if (current_drive_type == DRIVE_TYPE_1541) {
-        strcat(item->displayed_value," (*)");
-     }
-   }
-   if (drive_check_type(DRIVE_TYPE_1541II, unit-8) > 0) {
-     item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1541II");
-     item->value = DRIVE_TYPE_1541II;
-     if (current_drive_type == DRIVE_TYPE_1541II) {
-        strcat(item->displayed_value," (*)");
-     }
-   }
-   if (drive_check_type(DRIVE_TYPE_1571, unit-8) > 0) {
-     item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1571");
-     item->value = DRIVE_TYPE_1571;
-     if (current_drive_type == DRIVE_TYPE_1571) {
-        strcat(item->displayed_value," (*)");
-     }
-   }
-   if (drive_check_type(DRIVE_TYPE_1581, unit-8) > 0) {
-     item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1581");
-     item->value = DRIVE_TYPE_1581;
-     if (current_drive_type == DRIVE_TYPE_1581) {
-        strcat(item->displayed_value," (*)");
-     }
-   }
+  if (drive_check_type(DRIVE_TYPE_1541, unit - 8) > 0) {
+    item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1541");
+    item->value = DRIVE_TYPE_1541;
+    if (current_drive_type == DRIVE_TYPE_1541) {
+      strcat(item->displayed_value, " (*)");
+    }
+  }
+  if (drive_check_type(DRIVE_TYPE_1541II, unit - 8) > 0) {
+    item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1541II");
+    item->value = DRIVE_TYPE_1541II;
+    if (current_drive_type == DRIVE_TYPE_1541II) {
+      strcat(item->displayed_value, " (*)");
+    }
+  }
+  if (drive_check_type(DRIVE_TYPE_1571, unit - 8) > 0) {
+    item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1571");
+    item->value = DRIVE_TYPE_1571;
+    if (current_drive_type == DRIVE_TYPE_1571) {
+      strcat(item->displayed_value, " (*)");
+    }
+  }
+  if (drive_check_type(DRIVE_TYPE_1581, unit - 8) > 0) {
+    item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1581");
+    item->value = DRIVE_TYPE_1581;
+    if (current_drive_type == DRIVE_TYPE_1581) {
+      strcat(item->displayed_value, " (*)");
+    }
+  }
 }
 
-static void ui_set_hotkeys()
-{
-   kbd_set_hotkey_function(0, 0, BTN_ASSIGN_UNDEF);
-   kbd_set_hotkey_function(1, 0, BTN_ASSIGN_UNDEF);
-   kbd_set_hotkey_function(2, 0, BTN_ASSIGN_UNDEF);
-   kbd_set_hotkey_function(3, 0, BTN_ASSIGN_UNDEF);
+static void ui_set_hotkeys() {
+  kbd_set_hotkey_function(0, 0, BTN_ASSIGN_UNDEF);
+  kbd_set_hotkey_function(1, 0, BTN_ASSIGN_UNDEF);
+  kbd_set_hotkey_function(2, 0, BTN_ASSIGN_UNDEF);
+  kbd_set_hotkey_function(3, 0, BTN_ASSIGN_UNDEF);
 
-   // Apply hotkey selections to keyboard handler
-   if (hotkey_cf1_item->value > 0) {
-      kbd_set_hotkey_function(0, KEYCODE_F1,
-         hotkey_cf1_item->choice_ints[hotkey_cf1_item->value]);
-   }
-   if (hotkey_cf3_item->value > 0) {
-      kbd_set_hotkey_function(1, KEYCODE_F3,
-         hotkey_cf3_item->choice_ints[hotkey_cf3_item->value]);
-   }
-   if (hotkey_cf5_item->value > 0) {
-      kbd_set_hotkey_function(2, KEYCODE_F5,
-         hotkey_cf5_item->choice_ints[hotkey_cf5_item->value]);
-   }
-   if (hotkey_cf7_item->value > 0) {
-      kbd_set_hotkey_function(3, KEYCODE_F7,
-         hotkey_cf7_item->choice_ints[hotkey_cf7_item->value]);
-   }
+  // Apply hotkey selections to keyboard handler
+  if (hotkey_cf1_item->value > 0) {
+    kbd_set_hotkey_function(
+        0, KEYCODE_F1, hotkey_cf1_item->choice_ints[hotkey_cf1_item->value]);
+  }
+  if (hotkey_cf3_item->value > 0) {
+    kbd_set_hotkey_function(
+        1, KEYCODE_F3, hotkey_cf3_item->choice_ints[hotkey_cf3_item->value]);
+  }
+  if (hotkey_cf5_item->value > 0) {
+    kbd_set_hotkey_function(
+        2, KEYCODE_F5, hotkey_cf5_item->choice_ints[hotkey_cf5_item->value]);
+  }
+  if (hotkey_cf7_item->value > 0) {
+    kbd_set_hotkey_function(
+        3, KEYCODE_F7, hotkey_cf7_item->choice_ints[hotkey_cf7_item->value]);
+  }
 }
 
-static void ui_set_joy_items()
-{
-   int joydev;
-   int i;
-   for (joydev =0 ; joydev < 2; joydev++) {
-      struct menu_item* dst;
+static void ui_set_joy_items() {
+  int joydev;
+  int i;
+  for (joydev = 0; joydev < 2; joydev++) {
+    struct menu_item *dst;
 
-      if (joydevs[joydev].port == 1) {
-         dst = port_1_menu_item;
-      } else if (joydevs[joydev].port == 2) {
-         dst = port_2_menu_item;
-      } else {
-         continue;
+    if (joydevs[joydev].port == 1) {
+      dst = port_1_menu_item;
+    } else if (joydevs[joydev].port == 2) {
+      dst = port_2_menu_item;
+    } else {
+      continue;
+    }
+
+    // Find which choice matches the device selected and
+    // make sure the menu item matches
+    for (i = 0; i < dst->num_choices; i++) {
+      if (dst->choice_ints[i] == joydevs[joydev].device) {
+        dst->value = i;
+        break;
       }
+    }
+  }
 
-      // Find which choice matches the device selected and
-      // make sure the menu item matches
-      for (i=0;i<dst->num_choices;i++) {
-        if (dst->choice_ints[i] == joydevs[joydev].device) {
-           dst->value = i;
-           break;
-        }
-      }
-   }
+  int value = port_1_menu_item->value;
+  if (port_1_menu_item->choice_ints[value] == JOYDEV_NONE) {
+    resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
+  } else if (port_1_menu_item->choice_ints[value] == JOYDEV_MOUSE) {
+    resources_set_int("JoyPort1Device", JOYPORT_ID_MOUSE_1351);
+  } else {
+    resources_set_int("JoyPort1Device", JOYPORT_ID_JOYSTICK);
+  }
 
-   int value = port_1_menu_item->value;
-   if (port_1_menu_item->choice_ints[value] == JOYDEV_NONE) {
-      resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
-   } else if (port_1_menu_item->choice_ints[value] == JOYDEV_MOUSE) {
-      resources_set_int("JoyPort1Device", JOYPORT_ID_MOUSE_1351);
-   } else {
-      resources_set_int("JoyPort1Device", JOYPORT_ID_JOYSTICK);
-   }
-
-   value = port_2_menu_item->value;
-   if (port_2_menu_item->choice_ints[value] == JOYDEV_NONE) {
-      resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
-   } else if (port_2_menu_item->choice_ints[value] == JOYDEV_MOUSE) {
-      resources_set_int("JoyPort2Device", JOYPORT_ID_MOUSE_1351);
-   } else {
-      resources_set_int("JoyPort2Device", JOYPORT_ID_JOYSTICK);
-   }
+  value = port_2_menu_item->value;
+  if (port_2_menu_item->choice_ints[value] == JOYDEV_NONE) {
+    resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
+  } else if (port_2_menu_item->choice_ints[value] == JOYDEV_MOUSE) {
+    resources_set_int("JoyPort2Device", JOYPORT_ID_MOUSE_1351);
+  } else {
+    resources_set_int("JoyPort2Device", JOYPORT_ID_JOYSTICK);
+  }
 }
 
 static int viceSidEngineToBmcChoice(int viceEngine) {
-   switch (viceEngine) {
-      case SID_ENGINE_FASTSID:
-         return MENU_SID_ENGINE_FAST;
-      case SID_ENGINE_RESID:
-         return MENU_SID_ENGINE_RESID;
-      default:
-         return MENU_SID_ENGINE_RESID;
-   }
+  switch (viceEngine) {
+  case SID_ENGINE_FASTSID:
+    return MENU_SID_ENGINE_FAST;
+  case SID_ENGINE_RESID:
+    return MENU_SID_ENGINE_RESID;
+  default:
+    return MENU_SID_ENGINE_RESID;
+  }
 }
 
-
 static int viceSidModelToBmcChoice(int viceModel) {
-   switch (viceModel) {
-      case SID_MODEL_6581:
-         return MENU_SID_MODEL_6581;
-      case SID_MODEL_8580:
-         return MENU_SID_MODEL_8580;
-      default:
-         return MENU_SID_MODEL_6581;
-   }
+  switch (viceModel) {
+  case SID_MODEL_6581:
+    return MENU_SID_MODEL_6581;
+  case SID_MODEL_8580:
+    return MENU_SID_MODEL_8580;
+  default:
+    return MENU_SID_MODEL_6581;
+  }
 }
 
 static int save_settings() {
-   int i;
+  int i;
 
-   FILE *fp;
-   switch (machine_class) {
-     case VICE_MACHINE_C64:
-        fp = fopen("/settings.txt","w");
-        break;
-     case VICE_MACHINE_C128:
-        fp = fopen("/settings-c128.txt","w");
-        break;
-     case VICE_MACHINE_VIC20:
-        fp = fopen("/settings-vic20.txt","w");
-        break;
-     default:
-        printf ("ERROR: Unhandled machine\n");
-        return 1;
-   }
+  FILE *fp;
+  switch (machine_class) {
+  case VICE_MACHINE_C64:
+    fp = fopen("/settings.txt", "w");
+    break;
+  case VICE_MACHINE_C128:
+    fp = fopen("/settings-c128.txt", "w");
+    break;
+  case VICE_MACHINE_VIC20:
+    fp = fopen("/settings-vic20.txt", "w");
+    break;
+  default:
+    printf("ERROR: Unhandled machine\n");
+    return 1;
+  }
 
-   int r = resources_save(NULL);
-   if (r < 0) {
-      printf ("resource_save failed with %d\n",r);
-      return 1;
-   }
+  int r = resources_save(NULL);
+  if (r < 0) {
+    printf("resource_save failed with %d\n", r);
+    return 1;
+  }
 
-   if (fp == NULL) return 1;
+  if (fp == NULL)
+    return 1;
 
-   fprintf(fp,"port_1=%d\n",port_1_menu_item->value);
-   fprintf(fp,"port_2=%d\n",port_2_menu_item->value);
-   fprintf(fp,"usb_0=%d\n",usb_pref_0);
-   fprintf(fp,"usb_1=%d\n",usb_pref_1);
-   fprintf(fp,"usb_x_0=%d\n",usb_x_axis_0);
-   fprintf(fp,"usb_y_0=%d\n",usb_y_axis_0);
-   fprintf(fp,"usb_x_1=%d\n",usb_x_axis_1);
-   fprintf(fp,"usb_y_1=%d\n",usb_y_axis_1);
-   fprintf(fp,"usb_x_t_0=%d\n",(int)(usb_x_thresh_0*100.0f));
-   fprintf(fp,"usb_y_t_0=%d\n",(int)(usb_y_thresh_0*100.0f));
-   fprintf(fp,"usb_x_t_1=%d\n",(int)(usb_x_thresh_1*100.0f));
-   fprintf(fp,"usb_y_t_1=%d\n",(int)(usb_y_thresh_1*100.0f));
-   fprintf(fp,"palette=%d\n",palette_item->value);
-   fprintf(fp,"keyboard_type=%d\n",keyboard_type_item->value);
+  fprintf(fp, "port_1=%d\n", port_1_menu_item->value);
+  fprintf(fp, "port_2=%d\n", port_2_menu_item->value);
+  fprintf(fp, "usb_0=%d\n", usb_pref_0);
+  fprintf(fp, "usb_1=%d\n", usb_pref_1);
+  fprintf(fp, "usb_x_0=%d\n", usb_x_axis_0);
+  fprintf(fp, "usb_y_0=%d\n", usb_y_axis_0);
+  fprintf(fp, "usb_x_1=%d\n", usb_x_axis_1);
+  fprintf(fp, "usb_y_1=%d\n", usb_y_axis_1);
+  fprintf(fp, "usb_x_t_0=%d\n", (int)(usb_x_thresh_0 * 100.0f));
+  fprintf(fp, "usb_y_t_0=%d\n", (int)(usb_y_thresh_0 * 100.0f));
+  fprintf(fp, "usb_x_t_1=%d\n", (int)(usb_x_thresh_1 * 100.0f));
+  fprintf(fp, "usb_y_t_1=%d\n", (int)(usb_y_thresh_1 * 100.0f));
+  fprintf(fp, "palette=%d\n", palette_item->value);
+  fprintf(fp, "keyboard_type=%d\n", keyboard_type_item->value);
 
-   for (i=0;i<16;i++) {
-      fprintf(fp,"usb_btn_0=%d\n",usb_0_button_assignments[i]);
-   }
-   for (i=0;i<16;i++) {
-      fprintf(fp,"usb_btn_1=%d\n",usb_1_button_assignments[i]);
-   }
-   fprintf(fp,"hotkey_cf1=%d\n",hotkey_cf1_item->value);
-   fprintf(fp,"hotkey_cf3=%d\n",hotkey_cf3_item->value);
-   fprintf(fp,"hotkey_cf5=%d\n",hotkey_cf5_item->value);
-   fprintf(fp,"hotkey_cf7=%d\n",hotkey_cf7_item->value);
-   fprintf(fp,"overlay=%d\n",overlay_item->value);
-   fprintf(fp,"tapereset=%d\n",tape_reset_with_machine_item->value);
-   fprintf(fp,"reset_confirm=%d\n", reset_confirm_item->value);
+  for (i = 0; i < 16; i++) {
+    fprintf(fp, "usb_btn_0=%d\n", usb_0_button_assignments[i]);
+  }
+  for (i = 0; i < 16; i++) {
+    fprintf(fp, "usb_btn_1=%d\n", usb_1_button_assignments[i]);
+  }
+  fprintf(fp, "hotkey_cf1=%d\n", hotkey_cf1_item->value);
+  fprintf(fp, "hotkey_cf3=%d\n", hotkey_cf3_item->value);
+  fprintf(fp, "hotkey_cf5=%d\n", hotkey_cf5_item->value);
+  fprintf(fp, "hotkey_cf7=%d\n", hotkey_cf7_item->value);
+  fprintf(fp, "overlay=%d\n", overlay_item->value);
+  fprintf(fp, "tapereset=%d\n", tape_reset_with_machine_item->value);
+  fprintf(fp, "reset_confirm=%d\n", reset_confirm_item->value);
 
-   int drive_type;
+  int drive_type;
 
-   resources_get_int_sprintf("Drive%iType", &drive_type, 8);
-   fprintf(fp,"drive_type_8=%d\n",drive_type);
-   resources_get_int_sprintf("Drive%iType", &drive_type, 9);
-   fprintf(fp,"drive_type_9=%d\n",drive_type);
-   resources_get_int_sprintf("Drive%iType", &drive_type, 10);
-   fprintf(fp,"drive_type_10=%d\n",drive_type);
-   resources_get_int_sprintf("Drive%iType", &drive_type, 11);
-   fprintf(fp,"drive_type_11=%d\n",drive_type);
+  resources_get_int_sprintf("Drive%iType", &drive_type, 8);
+  fprintf(fp, "drive_type_8=%d\n", drive_type);
+  resources_get_int_sprintf("Drive%iType", &drive_type, 9);
+  fprintf(fp, "drive_type_9=%d\n", drive_type);
+  resources_get_int_sprintf("Drive%iType", &drive_type, 10);
+  fprintf(fp, "drive_type_10=%d\n", drive_type);
+  resources_get_int_sprintf("Drive%iType", &drive_type, 11);
+  fprintf(fp, "drive_type_11=%d\n", drive_type);
 
-   fprintf(fp,"pot_x_high=%d\n",pot_x_high_value);
-   fprintf(fp,"pot_x_low=%d\n",pot_x_low_value);
-   fprintf(fp,"pot_y_high=%d\n",pot_y_high_value);
-   fprintf(fp,"pot_y_low=%d\n",pot_y_low_value);
+  fprintf(fp, "pot_x_high=%d\n", pot_x_high_value);
+  fprintf(fp, "pot_x_low=%d\n", pot_x_low_value);
+  fprintf(fp, "pot_y_high=%d\n", pot_y_high_value);
+  fprintf(fp, "pot_y_low=%d\n", pot_y_low_value);
 
-   fclose(fp);
+  fclose(fp);
 
-   return 0;
+  return 0;
 }
 
 // Make joydev reflect menu choice
 static void ui_set_joy_devs() {
-   if (joydevs[0].port == 1)
-     joydevs[0].device = port_1_menu_item->choice_ints[port_1_menu_item->value];
-   else if (joydevs[0].port == 2)
-     joydevs[0].device = port_2_menu_item->choice_ints[port_2_menu_item->value];
+  if (joydevs[0].port == 1)
+    joydevs[0].device = port_1_menu_item->choice_ints[port_1_menu_item->value];
+  else if (joydevs[0].port == 2)
+    joydevs[0].device = port_2_menu_item->choice_ints[port_2_menu_item->value];
 
-   if (joydevs[1].port == 1)
-     joydevs[1].device = port_1_menu_item->choice_ints[port_1_menu_item->value];
-   else if (joydevs[1].port == 2)
-     joydevs[1].device = port_2_menu_item->choice_ints[port_2_menu_item->value];
+  if (joydevs[1].port == 1)
+    joydevs[1].device = port_1_menu_item->choice_ints[port_1_menu_item->value];
+  else if (joydevs[1].port == 2)
+    joydevs[1].device = port_2_menu_item->choice_ints[port_2_menu_item->value];
 }
 
 static void load_settings() {
 
-   int tmp_value;
+  int tmp_value;
 
-   resources_get_int("SidEngine", &tmp_value);
-   sid_engine_item->value = viceSidEngineToBmcChoice(tmp_value);
+  resources_get_int("SidEngine", &tmp_value);
+  sid_engine_item->value = viceSidEngineToBmcChoice(tmp_value);
 
-   resources_get_int("SidModel", &tmp_value);
-   sid_model_item->value = viceSidModelToBmcChoice(tmp_value);
+  resources_get_int("SidModel", &tmp_value);
+  sid_model_item->value = viceSidModelToBmcChoice(tmp_value);
 
-   resources_get_int("SidFilters", &sid_filter_item->value);
-   resources_get_int("DriveSoundEmulation", &drive_sounds_item->value);
-   resources_get_int("DriveSoundEmulationVolume", &drive_sounds_vol_item->value );
-   brightness_item->value = get_color_brightness();
-   contrast_item->value = get_color_contrast();
-   gamma_item->value = get_color_gamma();
-   tint_item->value = get_color_tint();
-   video_color_setting_changed();
+  resources_get_int("SidFilters", &sid_filter_item->value);
+  resources_get_int("DriveSoundEmulation", &drive_sounds_item->value);
+  resources_get_int("DriveSoundEmulationVolume", &drive_sounds_vol_item->value);
+  brightness_item->value = get_color_brightness();
+  contrast_item->value = get_color_contrast();
+  gamma_item->value = get_color_gamma();
+  tint_item->value = get_color_tint();
+  video_color_setting_changed();
 
-   // Default pot values for buttons
-   pot_x_high_value = 192;
-   pot_x_low_value = 64;
-   pot_y_high_value = 192;
-   pot_y_low_value = 64;
+  // Default pot values for buttons
+  pot_x_high_value = 192;
+  pot_x_low_value = 64;
+  pot_y_high_value = 192;
+  pot_y_low_value = 64;
 
-   FILE *fp;
-   switch (machine_class) {
-     case VICE_MACHINE_C64:
-        fp = fopen("/settings.txt","r");
-        break;
-     case VICE_MACHINE_C128:
-        fp = fopen("/settings-c128.txt","r");
-        break;
-     case VICE_MACHINE_VIC20:
-        fp = fopen("/settings-vic20.txt","r");
-        break;
-     default:
-        printf ("ERROR: Unhandled machine\n");
-        return;
-   }
+  FILE *fp;
+  switch (machine_class) {
+  case VICE_MACHINE_C64:
+    fp = fopen("/settings.txt", "r");
+    break;
+  case VICE_MACHINE_C128:
+    fp = fopen("/settings-c128.txt", "r");
+    break;
+  case VICE_MACHINE_VIC20:
+    fp = fopen("/settings-vic20.txt", "r");
+    break;
+  default:
+    printf("ERROR: Unhandled machine\n");
+    return;
+  }
 
-   if (fp == NULL) return;
+  if (fp == NULL)
+    return;
 
-   char name_value[80];
-   int value;
-   int usb_btn_0_i = 0;
-   int usb_btn_1_i = 0;
-   while (1) {
-      name_value[0] = '\0';
-      // Looks like circle-stdlib doesn't support something like %s=%d
-      int st = fscanf(fp,"%s", name_value);
-      if (name_value[0] == '\0' || st == EOF || feof(fp)) break;
-      char *name = strtok(name_value, "=");
-      if (name == NULL) break;
-      char *value_str = strtok(NULL, "=");
-      if (value_str == NULL) break;
-      value = atoi(value_str);
+  char name_value[80];
+  int value;
+  int usb_btn_0_i = 0;
+  int usb_btn_1_i = 0;
+  while (1) {
+    name_value[0] = '\0';
+    // Looks like circle-stdlib doesn't support something like %s=%d
+    int st = fscanf(fp, "%s", name_value);
+    if (name_value[0] == '\0' || st == EOF || feof(fp))
+      break;
+    char *name = strtok(name_value, "=");
+    if (name == NULL)
+      break;
+    char *value_str = strtok(NULL, "=");
+    if (value_str == NULL)
+      break;
+    value = atoi(value_str);
 
-      if (strcmp(name,"port_1")==0) {
-         port_1_menu_item->value = value;
-      } else if (strcmp(name,"port_2")==0) {
-         port_2_menu_item->value = value;
-      } else if (strcmp(name,"usb_0")==0) {
-         usb_pref_0 = value;
-      } else if (strcmp(name,"usb_1")==0) {
-         usb_pref_1 = value;
-      } else if (strcmp(name,"usb_x_0")==0) {
-         usb_x_axis_0 = value;
-      } else if (strcmp(name,"usb_y_0")==0) {
-         usb_y_axis_0 = value;
-      } else if (strcmp(name,"usb_x_1")==0) {
-         usb_x_axis_1 = value;
-      } else if (strcmp(name,"usb_y_1")==0) {
-         usb_y_axis_1 = value;
-      } else if (strcmp(name,"usb_x_t_0")==0) {
-         usb_x_thresh_0 = ((float)value) / 100.0f;
-      } else if (strcmp(name,"usb_y_t_0")==0) {
-         usb_y_thresh_0 = ((float)value) / 100.0f;
-      } else if (strcmp(name,"usb_x_t_1")==0) {
-         usb_x_thresh_1 = ((float)value) / 100.0f;
-      } else if (strcmp(name,"usb_y_t_1")==0) {
-         usb_y_thresh_1 = ((float)value) / 100.0f;
-      } else if (strcmp(name,"palette")==0) {
-         palette_item->value = value;
-         video_canvas_change_palette(palette_item->value);
+    if (strcmp(name, "port_1") == 0) {
+      port_1_menu_item->value = value;
+    } else if (strcmp(name, "port_2") == 0) {
+      port_2_menu_item->value = value;
+    } else if (strcmp(name, "usb_0") == 0) {
+      usb_pref_0 = value;
+    } else if (strcmp(name, "usb_1") == 0) {
+      usb_pref_1 = value;
+    } else if (strcmp(name, "usb_x_0") == 0) {
+      usb_x_axis_0 = value;
+    } else if (strcmp(name, "usb_y_0") == 0) {
+      usb_y_axis_0 = value;
+    } else if (strcmp(name, "usb_x_1") == 0) {
+      usb_x_axis_1 = value;
+    } else if (strcmp(name, "usb_y_1") == 0) {
+      usb_y_axis_1 = value;
+    } else if (strcmp(name, "usb_x_t_0") == 0) {
+      usb_x_thresh_0 = ((float)value) / 100.0f;
+    } else if (strcmp(name, "usb_y_t_0") == 0) {
+      usb_y_thresh_0 = ((float)value) / 100.0f;
+    } else if (strcmp(name, "usb_x_t_1") == 0) {
+      usb_x_thresh_1 = ((float)value) / 100.0f;
+    } else if (strcmp(name, "usb_y_t_1") == 0) {
+      usb_y_thresh_1 = ((float)value) / 100.0f;
+    } else if (strcmp(name, "palette") == 0) {
+      palette_item->value = value;
+      video_canvas_change_palette(palette_item->value);
+    } else if (strcmp(name, "keyboard_type") == 0) {
+      keyboard_type_item->value = value;
+    } else if (strcmp(name, "usb_btn_0") == 0) {
+      usb_0_button_assignments[usb_btn_0_i] = value;
+      usb_btn_0_i++;
+      if (usb_btn_0_i >= 16) {
+        usb_btn_0_i = 0;
       }
-      else if (strcmp(name,"keyboard_type")==0) {
-         keyboard_type_item->value = value;
-      } else if (strcmp(name,"usb_btn_0")==0) {
-         usb_0_button_assignments[usb_btn_0_i] = value;
-         usb_btn_0_i++;
-         if (usb_btn_0_i >= 16) {
-            usb_btn_0_i = 0;
-         }
-      } else if (strcmp(name,"usb_btn_1")==0) {
-         usb_1_button_assignments[usb_btn_1_i] = value;
-         usb_btn_1_i++;
-         if (usb_btn_1_i >= 16) {
-            usb_btn_1_i = 0;
-         }
-      } else if (strcmp(name,"alt_f12")==0) {
-         // Old. Equivalent to cf7 = Menu
-         hotkey_cf7_item->value = HOTKEY_CHOICE_MENU;
-      } else if (strcmp(name,"overlay")==0) {
-         overlay_item->value = value;
-      } else if (strcmp(name,"tapereset")==0) {
-         tape_reset_with_machine_item->value = value;
-      } else if (strcmp(name,"pot_x_high")==0) {
-         pot_x_high_value = value;
-      } else if (strcmp(name,"pot_x_low")==0) {
-         pot_x_low_value = value;
-      } else if (strcmp(name,"pot_y_high")==0) {
-         pot_y_high_value = value;
-      } else if (strcmp(name,"pot_y_low")==0) {
-         pot_y_low_value = value;
-      } else if (strcmp(name,"hotkey_cf1")==0) {
-         hotkey_cf1_item->value = value;
-      } else if (strcmp(name,"hotkey_cf3")==0) {
-         hotkey_cf3_item->value = value;
-      } else if (strcmp(name,"hotkey_cf5")==0) {
-         hotkey_cf5_item->value = value;
-      } else if (strcmp(name,"hotkey_cf7")==0) {
-         hotkey_cf7_item->value = value;
-      } else if (strcmp(name,"reset_confirm")==0) {
-         reset_confirm_item->value = value;
+    } else if (strcmp(name, "usb_btn_1") == 0) {
+      usb_1_button_assignments[usb_btn_1_i] = value;
+      usb_btn_1_i++;
+      if (usb_btn_1_i >= 16) {
+        usb_btn_1_i = 0;
       }
-   }
-   fclose(fp);
+    } else if (strcmp(name, "alt_f12") == 0) {
+      // Old. Equivalent to cf7 = Menu
+      hotkey_cf7_item->value = HOTKEY_CHOICE_MENU;
+    } else if (strcmp(name, "overlay") == 0) {
+      overlay_item->value = value;
+    } else if (strcmp(name, "tapereset") == 0) {
+      tape_reset_with_machine_item->value = value;
+    } else if (strcmp(name, "pot_x_high") == 0) {
+      pot_x_high_value = value;
+    } else if (strcmp(name, "pot_x_low") == 0) {
+      pot_x_low_value = value;
+    } else if (strcmp(name, "pot_y_high") == 0) {
+      pot_y_high_value = value;
+    } else if (strcmp(name, "pot_y_low") == 0) {
+      pot_y_low_value = value;
+    } else if (strcmp(name, "hotkey_cf1") == 0) {
+      hotkey_cf1_item->value = value;
+    } else if (strcmp(name, "hotkey_cf3") == 0) {
+      hotkey_cf3_item->value = value;
+    } else if (strcmp(name, "hotkey_cf5") == 0) {
+      hotkey_cf5_item->value = value;
+    } else if (strcmp(name, "hotkey_cf7") == 0) {
+      hotkey_cf7_item->value = value;
+    } else if (strcmp(name, "reset_confirm") == 0) {
+      reset_confirm_item->value = value;
+    }
+  }
+  fclose(fp);
 }
 
 void menu_swap_joysticks() {
-   int tmp = joydevs[0].device;
-   joydevs[0].device = joydevs[1].device;
-   joydevs[1].device = tmp;
-   joyswap = 1 - joyswap;
-   overlay_joyswap_changed(joyswap);
-   ui_set_joy_items();
-   check_real_keyboard_settings();
+  int tmp = joydevs[0].device;
+  joydevs[0].device = joydevs[1].device;
+  joydevs[1].device = tmp;
+  joyswap = 1 - joyswap;
+  overlay_joyswap_changed(joyswap);
+  ui_set_joy_items();
+  check_real_keyboard_settings();
 }
 
-static char* fullpath(int dir_type, char* name) {
-   strcpy(dir_scratch, current_dir_names[dir_type]);
-   strcat(dir_scratch, "/");
-   strcat(dir_scratch, name);
-   return dir_scratch;
+static char *fullpath(int dir_type, char *name) {
+  strcpy(dir_scratch, current_dir_names[dir_type]);
+  strcat(dir_scratch, "/");
+  strcat(dir_scratch, name);
+  return dir_scratch;
 }
 
-static void select_file(struct menu_item* item) {
-   if (item->id == MENU_LOAD_SNAP_FILE) {
-      ui_info("Loading...");
-      if(machine_read_snapshot(fullpath(DIR_SNAPS, item->str_value),0) < 0) {
-          ui_pop_menu();
-          ui_error("Load snapshot failed");
-      } else {
-          ui_pop_all_and_toggle();
-      }
-   } else if (item->id == MENU_DISK_FILE) {
-         // Perform the attach
-         ui_info("Attaching...");
-         if (file_system_attach_disk(unit,
-                fullpath(DIR_DISKS, item->str_value)) < 0) {
-            ui_pop_menu();
-            ui_error("Failed to attach disk image");
-         } else {
-            ui_pop_all_and_toggle();
-         }
-   } else if (item->id == MENU_TAPE_FILE) {
-         ui_info("Attaching...");
-         if (tape_image_attach(1, fullpath(DIR_TAPES, item->str_value)) < 0) {
-            ui_pop_menu();
-            ui_error("Failed to attach tape image");
-         } else {
-            ui_pop_all_and_toggle();
-         }
-   } else if (item->id == MENU_CART_FILE) {
-         ui_info("Attaching...");
-         if (cartridge_attach_image(
-                 CARTRIDGE_CRT, fullpath(DIR_CARTS, item->str_value)) < 0) {
-            ui_pop_menu();
-            ui_error("Failed to attach cart image");
-         } else {
-            ui_pop_all_and_toggle();
-         }
-   } else if (item->id == MENU_CART_8K_FILE) {
-         ui_info("Attaching...");
-         if (cartridge_attach_image(CARTRIDGE_GENERIC_8KB,
-                fullpath(DIR_CARTS, item->str_value)) < 0) {
-            ui_pop_menu();
-            ui_error("Failed to attach cart image");
-         } else {
-            ui_pop_all_and_toggle();
-         }
-   } else if (item->id == MENU_CART_16K_FILE) {
-         ui_info("Attaching...");
-         if (cartridge_attach_image(CARTRIDGE_GENERIC_16KB,
-                fullpath(DIR_CARTS, item->str_value)) < 0) {
-            ui_pop_menu();
-            ui_error("Failed to attach cart image");
-         } else {
-            ui_pop_all_and_toggle();
-         }
-   } else if (item->id == MENU_CART_ULTIMAX_FILE) {
-         ui_info("Attaching...");
-         if (cartridge_attach_image(CARTRIDGE_ULTIMAX,
-                fullpath(DIR_CARTS, item->str_value)) < 0) {
-            ui_pop_menu();
-            ui_error("Failed to attach cart image");
-         } else {
-            ui_pop_all_and_toggle();
-         }
-   } else if (item->id == MENU_KERNAL_FILE) {
-         resources_set_string("KernalName", item->str_value);
-         ui_pop_all_and_toggle();
-   } else if (item->id == MENU_BASIC_FILE) {
-         resources_set_string("BasicName", item->str_value);
-         ui_pop_all_and_toggle();
-   } else if (item->id == MENU_CHARGEN_FILE) {
-         resources_set_string("ChargenName", item->str_value);
-         ui_pop_all_and_toggle();
-   } else if (item->id == MENU_AUTOSTART_FILE) {
-         ui_info("Starting...");
-         if (autostart_autodetect(fullpath(DIR_ROOT, item->str_value),
-                NULL, 0, AUTOSTART_MODE_RUN) < 0) {
-            ui_pop_menu();
-            ui_error("Failed to autostart file");
-         } else {
-            ui_pop_all_and_toggle();
-         }
-   }
+static void select_file(struct menu_item *item) {
+  if (item->id == MENU_LOAD_SNAP_FILE) {
+    ui_info("Loading...");
+    if (machine_read_snapshot(fullpath(DIR_SNAPS, item->str_value), 0) < 0) {
+      ui_pop_menu();
+      ui_error("Load snapshot failed");
+    } else {
+      ui_pop_all_and_toggle();
+    }
+  } else if (item->id == MENU_DISK_FILE) {
+    // Perform the attach
+    ui_info("Attaching...");
+    if (file_system_attach_disk(unit, fullpath(DIR_DISKS, item->str_value)) <
+        0) {
+      ui_pop_menu();
+      ui_error("Failed to attach disk image");
+    } else {
+      ui_pop_all_and_toggle();
+    }
+  } else if (item->id == MENU_TAPE_FILE) {
+    ui_info("Attaching...");
+    if (tape_image_attach(1, fullpath(DIR_TAPES, item->str_value)) < 0) {
+      ui_pop_menu();
+      ui_error("Failed to attach tape image");
+    } else {
+      ui_pop_all_and_toggle();
+    }
+  } else if (item->id == MENU_CART_FILE) {
+    ui_info("Attaching...");
+    if (cartridge_attach_image(CARTRIDGE_CRT,
+                               fullpath(DIR_CARTS, item->str_value)) < 0) {
+      ui_pop_menu();
+      ui_error("Failed to attach cart image");
+    } else {
+      ui_pop_all_and_toggle();
+    }
+  } else if (item->id == MENU_CART_8K_FILE) {
+    ui_info("Attaching...");
+    if (cartridge_attach_image(CARTRIDGE_GENERIC_8KB,
+                               fullpath(DIR_CARTS, item->str_value)) < 0) {
+      ui_pop_menu();
+      ui_error("Failed to attach cart image");
+    } else {
+      ui_pop_all_and_toggle();
+    }
+  } else if (item->id == MENU_CART_16K_FILE) {
+    ui_info("Attaching...");
+    if (cartridge_attach_image(CARTRIDGE_GENERIC_16KB,
+                               fullpath(DIR_CARTS, item->str_value)) < 0) {
+      ui_pop_menu();
+      ui_error("Failed to attach cart image");
+    } else {
+      ui_pop_all_and_toggle();
+    }
+  } else if (item->id == MENU_CART_ULTIMAX_FILE) {
+    ui_info("Attaching...");
+    if (cartridge_attach_image(CARTRIDGE_ULTIMAX,
+                               fullpath(DIR_CARTS, item->str_value)) < 0) {
+      ui_pop_menu();
+      ui_error("Failed to attach cart image");
+    } else {
+      ui_pop_all_and_toggle();
+    }
+  } else if (item->id == MENU_KERNAL_FILE) {
+    resources_set_string("KernalName", item->str_value);
+    ui_pop_all_and_toggle();
+  } else if (item->id == MENU_BASIC_FILE) {
+    resources_set_string("BasicName", item->str_value);
+    ui_pop_all_and_toggle();
+  } else if (item->id == MENU_CHARGEN_FILE) {
+    resources_set_string("ChargenName", item->str_value);
+    ui_pop_all_and_toggle();
+  } else if (item->id == MENU_AUTOSTART_FILE) {
+    ui_info("Starting...");
+    if (autostart_autodetect(fullpath(DIR_ROOT, item->str_value), NULL, 0,
+                             AUTOSTART_MODE_RUN) < 0) {
+      ui_pop_menu();
+      ui_error("Failed to autostart file");
+    } else {
+      ui_pop_all_and_toggle();
+    }
+  }
 }
 
 // Utility to determine current dir index from a menu file item
-static int menu_file_item_to_dir_index(struct menu_item* item) {
+static int menu_file_item_to_dir_index(struct menu_item *item) {
   int index;
   switch (item->id) {
-     case MENU_LOAD_SNAP_FILE:
-     case MENU_SAVE_SNAP_FILE:
-       return DIR_SNAPS;
-     case MENU_DISK_FILE:
-       return DIR_DISKS;
-     case MENU_TAPE_FILE:
-       return DIR_TAPES;
-     case MENU_CART_FILE:
-     case MENU_CART_8K_FILE:
-     case MENU_CART_16K_FILE:
-     case MENU_CART_ULTIMAX_FILE:
-       return DIR_CARTS;
-     case MENU_KERNAL_FILE:
-     case MENU_BASIC_FILE:
-     case MENU_CHARGEN_FILE:
-       return DIR_ROMS;
-     case MENU_AUTOSTART_FILE:
-       return DIR_ROOT;
-     default:
-       return -1;
+  case MENU_LOAD_SNAP_FILE:
+  case MENU_SAVE_SNAP_FILE:
+    return DIR_SNAPS;
+  case MENU_DISK_FILE:
+    return DIR_DISKS;
+  case MENU_TAPE_FILE:
+    return DIR_TAPES;
+  case MENU_CART_FILE:
+  case MENU_CART_8K_FILE:
+  case MENU_CART_16K_FILE:
+  case MENU_CART_ULTIMAX_FILE:
+    return DIR_CARTS;
+  case MENU_KERNAL_FILE:
+  case MENU_BASIC_FILE:
+  case MENU_CHARGEN_FILE:
+    return DIR_ROMS;
+  case MENU_AUTOSTART_FILE:
+    return DIR_ROOT;
+  default:
+    return -1;
   }
 }
 
 // Utility function to re-list same type of files given
 // a file item.
-static void relist_files(struct menu_item* item) {
+static void relist_files(struct menu_item *item) {
   switch (item->id) {
-     case MENU_LOAD_SNAP_FILE:
-       show_files(DIR_SNAPS, FILTER_SNAP, item->id);
-       break;
-     case MENU_SAVE_SNAP_FILE:
-       show_files(DIR_SNAPS, FILTER_SNAP, item->id);
-       break;
-     case MENU_DISK_FILE:
-       show_files(DIR_DISKS, FILTER_DISK, item->id);
-       break;
-     case MENU_TAPE_FILE:
-       show_files(DIR_TAPES, FILTER_TAPE, item->id);
-       break;
-     case MENU_CART_FILE:
-       show_files(DIR_CARTS, FILTER_CART, item->id);
-       break;
-     case MENU_CART_8K_FILE:
-     case MENU_CART_16K_FILE:
-     case MENU_CART_ULTIMAX_FILE:
-       show_files(DIR_CARTS, FILTER_NONE, item->id);
-       break;
-     case MENU_KERNAL_FILE:
-     case MENU_BASIC_FILE:
-     case MENU_CHARGEN_FILE:
-       show_files(DIR_ROMS, FILTER_NONE, item->id);
-       break;
-     case MENU_AUTOSTART_FILE:
-       show_files(DIR_ROOT, FILTER_NONE, item->id);
-       break;
-     default:
-       break;
+  case MENU_LOAD_SNAP_FILE:
+    show_files(DIR_SNAPS, FILTER_SNAP, item->id);
+    break;
+  case MENU_SAVE_SNAP_FILE:
+    show_files(DIR_SNAPS, FILTER_SNAP, item->id);
+    break;
+  case MENU_DISK_FILE:
+    show_files(DIR_DISKS, FILTER_DISK, item->id);
+    break;
+  case MENU_TAPE_FILE:
+    show_files(DIR_TAPES, FILTER_TAPE, item->id);
+    break;
+  case MENU_CART_FILE:
+    show_files(DIR_CARTS, FILTER_CART, item->id);
+    break;
+  case MENU_CART_8K_FILE:
+  case MENU_CART_16K_FILE:
+  case MENU_CART_ULTIMAX_FILE:
+    show_files(DIR_CARTS, FILTER_NONE, item->id);
+    break;
+  case MENU_KERNAL_FILE:
+  case MENU_BASIC_FILE:
+  case MENU_CHARGEN_FILE:
+    show_files(DIR_ROMS, FILTER_NONE, item->id);
+    break;
+  case MENU_AUTOSTART_FILE:
+    show_files(DIR_ROOT, FILTER_NONE, item->id);
+    break;
+  default:
+    break;
   }
 }
 
-static void up_dir(struct menu_item* item) {
+static void up_dir(struct menu_item *item) {
   int i;
   int dir_index = menu_file_item_to_dir_index(item);
-  if (dir_index < 0) return;
+  if (dir_index < 0)
+    return;
   // Remove last directory from current_dir_names
-  i = strlen(current_dir_names[dir_index])-1;
-  while (current_dir_names[dir_index][i] != '/' && i > 0) i--;
+  i = strlen(current_dir_names[dir_index]) - 1;
+  while (current_dir_names[dir_index][i] != '/' && i > 0)
+    i--;
   current_dir_names[dir_index][i] = '\0';
   if (strlen(current_dir_names[dir_index]) == 0) {
-     strcpy(current_dir_names[dir_index], "/");
+    strcpy(current_dir_names[dir_index], "/");
   }
   ui_pop_menu();
   relist_files(item);
 }
 
-static void enter_dir(struct menu_item* item) {
+static void enter_dir(struct menu_item *item) {
   int dir_index = menu_file_item_to_dir_index(item);
-  if (dir_index < 0) return;
+  if (dir_index < 0)
+    return;
   // Append this item's value to current dir
-  if (current_dir_names[dir_index][strlen(current_dir_names[dir_index])-1]
-          != '/') {
-     strcat(current_dir_names[dir_index], "/");
+  if (current_dir_names[dir_index][strlen(current_dir_names[dir_index]) - 1] !=
+      '/') {
+    strcat(current_dir_names[dir_index], "/");
   }
   strcat(current_dir_names[dir_index], item->str_value);
   ui_pop_menu();
@@ -881,418 +883,417 @@ static void toggle_warp(int value) {
 }
 
 static void check_real_keyboard_settings() {
-   // When a real keyboard is used, bank 1 must be port 1 and
-   // bank 2 must be port 2. So make sure we make the changes
-   // to current settings and disable those options.
-   struct menu_item* item = use_real_keyboard_item;
-   if (item->value) {
-      if (port_1_menu_item->choice_ints[port_1_menu_item->value] == JOYDEV_GPIO_1) {
-         port_1_menu_item->value = 3;
-         port_1_menu_item->choice_disabled[4] = 1;
-      }
-      if (port_2_menu_item->choice_ints[port_1_menu_item->value] == JOYDEV_GPIO_0) {
-         port_2_menu_item->value = 4;
-         port_2_menu_item->choice_disabled[3] = 1;
-      }
-      ui_set_joy_devs();
-   } else {
-      port_1_menu_item->choice_disabled[4] = 0;
-      port_2_menu_item->choice_disabled[3] = 0;
-   }
+  // When a real keyboard is used, bank 1 must be port 1 and
+  // bank 2 must be port 2. So make sure we make the changes
+  // to current settings and disable those options.
+  struct menu_item *item = use_real_keyboard_item;
+  if (item->value) {
+    if (port_1_menu_item->choice_ints[port_1_menu_item->value] ==
+        JOYDEV_GPIO_1) {
+      port_1_menu_item->value = 3;
+      port_1_menu_item->choice_disabled[4] = 1;
+    }
+    if (port_2_menu_item->choice_ints[port_1_menu_item->value] ==
+        JOYDEV_GPIO_0) {
+      port_2_menu_item->value = 4;
+      port_2_menu_item->choice_disabled[3] = 1;
+    }
+    ui_set_joy_devs();
+  } else {
+    port_1_menu_item->choice_disabled[4] = 0;
+    port_2_menu_item->choice_disabled[3] = 0;
+  }
 }
 
 // Interpret what menu item changed and make the change to vice
-static void menu_value_changed(struct menu_item* item) {
-   switch (item->id) {
-      case MENU_ATTACH_DISK_8:
-      case MENU_IECDEVICE_8:
-      case MENU_DRIVE_CHANGE_MODEL_8:
-         unit = 8;
-         break;
-      case MENU_ATTACH_DISK_9:
-      case MENU_IECDEVICE_9:
-      case MENU_DRIVE_CHANGE_MODEL_9:
-         unit = 9;
-         break;
-      case MENU_ATTACH_DISK_10:
-      case MENU_IECDEVICE_10:
-      case MENU_DRIVE_CHANGE_MODEL_10:
-         unit = 10;
-         break;
-      case MENU_ATTACH_DISK_11:
-      case MENU_IECDEVICE_11:
-      case MENU_DRIVE_CHANGE_MODEL_11:
-         unit = 11;
-         break;
-   }
+static void menu_value_changed(struct menu_item *item) {
+  switch (item->id) {
+  case MENU_ATTACH_DISK_8:
+  case MENU_IECDEVICE_8:
+  case MENU_DRIVE_CHANGE_MODEL_8:
+    unit = 8;
+    break;
+  case MENU_ATTACH_DISK_9:
+  case MENU_IECDEVICE_9:
+  case MENU_DRIVE_CHANGE_MODEL_9:
+    unit = 9;
+    break;
+  case MENU_ATTACH_DISK_10:
+  case MENU_IECDEVICE_10:
+  case MENU_DRIVE_CHANGE_MODEL_10:
+    unit = 10;
+    break;
+  case MENU_ATTACH_DISK_11:
+  case MENU_IECDEVICE_11:
+  case MENU_DRIVE_CHANGE_MODEL_11:
+    unit = 11;
+    break;
+  }
 
-   switch (item->id) {
-      case MENU_SAVE_SETTINGS:
-         if (save_settings()) {
-            ui_error("Problem saving");
-         } else {
-            ui_info("Settings saved");
-         }
-         return;
-      case MENU_COLOR_PALETTE:
-         video_canvas_change_palette(item->value);
-         return;
-      case MENU_AUTOSTART:
-         show_files(DIR_ROOT, FILTER_NONE, MENU_AUTOSTART_FILE);
-         return;
-      case MENU_SAVE_SNAP:
-         show_files(DIR_SNAPS, FILTER_SNAP, MENU_SAVE_SNAP_FILE);
-         return;
-      case MENU_LOAD_SNAP:
-         show_files(DIR_SNAPS, FILTER_SNAP, MENU_LOAD_SNAP_FILE);
-         return;
-      case MENU_IECDEVICE_8:
-      case MENU_IECDEVICE_9:
-      case MENU_IECDEVICE_10:
-      case MENU_IECDEVICE_11:
-         resources_set_int_sprintf("IECDevice%i", item->value, unit);
-         return;
-      case MENU_ATTACH_DISK_8:
-      case MENU_ATTACH_DISK_9:
-      case MENU_ATTACH_DISK_10:
-      case MENU_ATTACH_DISK_11:
-         show_files(DIR_DISKS, FILTER_DISK, MENU_DISK_FILE);
-         return;
-      case MENU_ATTACH_TAPE:
-         show_files(DIR_TAPES, FILTER_TAPE, MENU_TAPE_FILE);
-         return;
-      case MENU_ATTACH_CART:
-         show_files(DIR_CARTS, FILTER_CART, MENU_CART_FILE);
-         return;
-      case MENU_ATTACH_CART_8K:
-         show_files(DIR_CARTS, FILTER_NONE, MENU_CART_8K_FILE);
-         return;
-      case MENU_ATTACH_CART_16K:
-         show_files(DIR_CARTS, FILTER_NONE, MENU_CART_16K_FILE);
-         return;
-      case MENU_ATTACH_CART_ULTIMAX:
-         show_files(DIR_CARTS, FILTER_NONE, MENU_CART_ULTIMAX_FILE);
-         return;
-      case MENU_LOAD_KERNAL:
-         show_files(DIR_ROMS, FILTER_NONE, MENU_KERNAL_FILE);
-         return;
-      case MENU_LOAD_BASIC:
-         show_files(DIR_ROMS, FILTER_NONE, MENU_BASIC_FILE);
-         return;
-      case MENU_LOAD_CHARGEN:
-         show_files(DIR_ROMS, FILTER_NONE, MENU_CHARGEN_FILE);
-         return;
-      case MENU_MAKE_CART_DEFAULT:
-         cartridge_set_default();
-         ui_info("Remember to save..");
-         return;
-      case MENU_DETACH_DISK_8:
-         ui_info("Deatching...");
-         file_system_detach_disk(8);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_DETACH_DISK_9:
-         ui_info("Detaching...");
-         file_system_detach_disk(9);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_DETACH_DISK_10:
-         ui_info("Detaching...");
-         file_system_detach_disk(10);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_DETACH_DISK_11:
-         ui_info("Detaching...");
-         file_system_detach_disk(11);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_DETACH_TAPE:
-         ui_info("Detaching...");
-         tape_image_detach(1);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_DETACH_CART:
-         ui_info("Detaching...");
-         cartridge_detach_image(CARTRIDGE_CRT);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_SOFT_RESET:
-         resources_set_string_sprintf("FSDevice%iDir", "/", 8);
-         machine_trigger_reset(MACHINE_RESET_MODE_SOFT);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_HARD_RESET:
-         resources_set_string_sprintf("FSDevice%iDir", "/", 8);
-         machine_trigger_reset(MACHINE_RESET_MODE_HARD);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_ABOUT:
-         show_about();
-         return;
-      case MENU_LICENSE:
-         show_license();
-         return;
-      case MENU_CONFIGURE_USB_0:
-         configure_usb(0);
-         return;
-      case MENU_CONFIGURE_USB_1:
-         configure_usb(1);
-         return;
-      case MENU_WARP_MODE:
-         toggle_warp(item->value);
-         return;
-      case MENU_DEMO_MODE:
-         raspi_demo_mode = item->value;
-         demo_reset();
-         return;
-      case MENU_DRIVE_SOUND_EMULATION:
-         resources_set_int("DriveSoundEmulation", item->value);
-         return;
-      case MENU_DRIVE_SOUND_EMULATION_VOLUME:
-         resources_set_int("DriveSoundEmulationVolume", item->value);
-         return;
-      case MENU_COLOR_BRIGHTNESS:
-         set_color_brightness(item->value);
-         video_color_setting_changed();
-         return;
-      case MENU_COLOR_CONTRAST:
-         set_color_contrast(item->value);
-         video_color_setting_changed();
-         return;
-      case MENU_COLOR_GAMMA:
-         set_color_gamma(item->value);
-         video_color_setting_changed();
-         return;
-      case MENU_COLOR_TINT:
-         set_color_tint(item->value);
-         video_color_setting_changed();
-         return;
-      case MENU_COLOR_RESET:
-         brightness_item->value = 1000;
-         contrast_item->value = 1250;
-         gamma_item->value = 2200;
-         tint_item->value = 1000;
-         set_color_brightness(brightness_item->value);
-         set_color_contrast(contrast_item->value);
-         set_color_gamma(gamma_item->value);
-         set_color_tint(tint_item->value);
-         video_color_setting_changed();
-         return;
-      case MENU_SWAP_JOYSTICKS:
-         menu_swap_joysticks();
-         return;
-      case MENU_JOYSTICK_PORT_1:
-         // device in port 1 was changed
-         if (joydevs[0].port == 1) {
-            joydevs[0].device = item->choice_ints[item->value];
-         } else if (joydevs[1].port == 1) {
-            joydevs[1].device = item->choice_ints[item->value];
-         }
-         if (item->choice_ints[item->value] == JOYDEV_NONE) {
-            resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
-         } else if (item->choice_ints[item->value] == JOYDEV_MOUSE) {
-            resources_set_int("JoyPort1Device", JOYPORT_ID_MOUSE_1351);
-         } else {
-            resources_set_int("JoyPort1Device", JOYPORT_ID_JOYSTICK);
-         }
-         return;
-      case MENU_JOYSTICK_PORT_2:
-         // device in port 2 was changed
-         if (joydevs[0].port == 2) {
-            joydevs[0].device = item->choice_ints[item->value];
-         } else if (joydevs[1].port == 2) {
-            joydevs[1].device = item->choice_ints[item->value];
-         }
-         if (item->choice_ints[item->value] == JOYDEV_NONE) {
-            resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
-         } else if (item->choice_ints[item->value] == JOYDEV_MOUSE) {
-            resources_set_int("JoyPort2Device", JOYPORT_ID_MOUSE_1351);
-         } else {
-            resources_set_int("JoyPort2Device", JOYPORT_ID_JOYSTICK);
-         }
-         return;
-      case MENU_TAPE_START:
-         datasette_control(DATASETTE_CONTROL_START);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_TAPE_STOP:
-         datasette_control(DATASETTE_CONTROL_STOP);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_TAPE_REWIND:
-         datasette_control(DATASETTE_CONTROL_REWIND);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_TAPE_FASTFWD:
-         datasette_control(DATASETTE_CONTROL_FORWARD);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_TAPE_RECORD:
-         datasette_control(DATASETTE_CONTROL_RECORD);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_TAPE_RESET:
-         datasette_control(DATASETTE_CONTROL_RESET);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_TAPE_RESET_COUNTER:
-         datasette_control(DATASETTE_CONTROL_RESET_COUNTER);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_TAPE_RESET_WITH_MACHINE:
-         resources_set_int("DatasetteResetWithCPU",
-            tape_reset_with_machine_item->value);
-         return;
-      case MENU_SID_ENGINE:
-         resources_set_int("SidEngine", item->choice_ints[item->value]);
-         resources_set_int("SidResidSampling", 0);
-         return;
-      case MENU_SID_MODEL:
-         resources_set_int("SidModel", item->choice_ints[item->value]);
-         resources_set_int("SidResidSampling", 0);
-         return;
-      case MENU_SID_FILTER:
-         resources_set_int("SidFilters", item->value);
-         resources_set_int("SidResidSampling", 0);
-         return;
+  switch (item->id) {
+  case MENU_SAVE_SETTINGS:
+    if (save_settings()) {
+      ui_error("Problem saving");
+    } else {
+      ui_info("Settings saved");
+    }
+    return;
+  case MENU_COLOR_PALETTE:
+    video_canvas_change_palette(item->value);
+    return;
+  case MENU_AUTOSTART:
+    show_files(DIR_ROOT, FILTER_NONE, MENU_AUTOSTART_FILE);
+    return;
+  case MENU_SAVE_SNAP:
+    show_files(DIR_SNAPS, FILTER_SNAP, MENU_SAVE_SNAP_FILE);
+    return;
+  case MENU_LOAD_SNAP:
+    show_files(DIR_SNAPS, FILTER_SNAP, MENU_LOAD_SNAP_FILE);
+    return;
+  case MENU_IECDEVICE_8:
+  case MENU_IECDEVICE_9:
+  case MENU_IECDEVICE_10:
+  case MENU_IECDEVICE_11:
+    resources_set_int_sprintf("IECDevice%i", item->value, unit);
+    return;
+  case MENU_ATTACH_DISK_8:
+  case MENU_ATTACH_DISK_9:
+  case MENU_ATTACH_DISK_10:
+  case MENU_ATTACH_DISK_11:
+    show_files(DIR_DISKS, FILTER_DISK, MENU_DISK_FILE);
+    return;
+  case MENU_ATTACH_TAPE:
+    show_files(DIR_TAPES, FILTER_TAPE, MENU_TAPE_FILE);
+    return;
+  case MENU_ATTACH_CART:
+    show_files(DIR_CARTS, FILTER_CART, MENU_CART_FILE);
+    return;
+  case MENU_ATTACH_CART_8K:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_CART_8K_FILE);
+    return;
+  case MENU_ATTACH_CART_16K:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_CART_16K_FILE);
+    return;
+  case MENU_ATTACH_CART_ULTIMAX:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_CART_ULTIMAX_FILE);
+    return;
+  case MENU_LOAD_KERNAL:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_KERNAL_FILE);
+    return;
+  case MENU_LOAD_BASIC:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_BASIC_FILE);
+    return;
+  case MENU_LOAD_CHARGEN:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_CHARGEN_FILE);
+    return;
+  case MENU_MAKE_CART_DEFAULT:
+    cartridge_set_default();
+    ui_info("Remember to save..");
+    return;
+  case MENU_DETACH_DISK_8:
+    ui_info("Deatching...");
+    file_system_detach_disk(8);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_DETACH_DISK_9:
+    ui_info("Detaching...");
+    file_system_detach_disk(9);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_DETACH_DISK_10:
+    ui_info("Detaching...");
+    file_system_detach_disk(10);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_DETACH_DISK_11:
+    ui_info("Detaching...");
+    file_system_detach_disk(11);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_DETACH_TAPE:
+    ui_info("Detaching...");
+    tape_image_detach(1);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_DETACH_CART:
+    ui_info("Detaching...");
+    cartridge_detach_image(CARTRIDGE_CRT);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_SOFT_RESET:
+    resources_set_string_sprintf("FSDevice%iDir", "/", 8);
+    machine_trigger_reset(MACHINE_RESET_MODE_SOFT);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_HARD_RESET:
+    resources_set_string_sprintf("FSDevice%iDir", "/", 8);
+    machine_trigger_reset(MACHINE_RESET_MODE_HARD);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_ABOUT:
+    show_about();
+    return;
+  case MENU_LICENSE:
+    show_license();
+    return;
+  case MENU_CONFIGURE_USB_0:
+    configure_usb(0);
+    return;
+  case MENU_CONFIGURE_USB_1:
+    configure_usb(1);
+    return;
+  case MENU_WARP_MODE:
+    toggle_warp(item->value);
+    return;
+  case MENU_DEMO_MODE:
+    raspi_demo_mode = item->value;
+    demo_reset();
+    return;
+  case MENU_DRIVE_SOUND_EMULATION:
+    resources_set_int("DriveSoundEmulation", item->value);
+    return;
+  case MENU_DRIVE_SOUND_EMULATION_VOLUME:
+    resources_set_int("DriveSoundEmulationVolume", item->value);
+    return;
+  case MENU_COLOR_BRIGHTNESS:
+    set_color_brightness(item->value);
+    video_color_setting_changed();
+    return;
+  case MENU_COLOR_CONTRAST:
+    set_color_contrast(item->value);
+    video_color_setting_changed();
+    return;
+  case MENU_COLOR_GAMMA:
+    set_color_gamma(item->value);
+    video_color_setting_changed();
+    return;
+  case MENU_COLOR_TINT:
+    set_color_tint(item->value);
+    video_color_setting_changed();
+    return;
+  case MENU_COLOR_RESET:
+    brightness_item->value = 1000;
+    contrast_item->value = 1250;
+    gamma_item->value = 2200;
+    tint_item->value = 1000;
+    set_color_brightness(brightness_item->value);
+    set_color_contrast(contrast_item->value);
+    set_color_gamma(gamma_item->value);
+    set_color_tint(tint_item->value);
+    video_color_setting_changed();
+    return;
+  case MENU_SWAP_JOYSTICKS:
+    menu_swap_joysticks();
+    return;
+  case MENU_JOYSTICK_PORT_1:
+    // device in port 1 was changed
+    if (joydevs[0].port == 1) {
+      joydevs[0].device = item->choice_ints[item->value];
+    } else if (joydevs[1].port == 1) {
+      joydevs[1].device = item->choice_ints[item->value];
+    }
+    if (item->choice_ints[item->value] == JOYDEV_NONE) {
+      resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
+    } else if (item->choice_ints[item->value] == JOYDEV_MOUSE) {
+      resources_set_int("JoyPort1Device", JOYPORT_ID_MOUSE_1351);
+    } else {
+      resources_set_int("JoyPort1Device", JOYPORT_ID_JOYSTICK);
+    }
+    return;
+  case MENU_JOYSTICK_PORT_2:
+    // device in port 2 was changed
+    if (joydevs[0].port == 2) {
+      joydevs[0].device = item->choice_ints[item->value];
+    } else if (joydevs[1].port == 2) {
+      joydevs[1].device = item->choice_ints[item->value];
+    }
+    if (item->choice_ints[item->value] == JOYDEV_NONE) {
+      resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
+    } else if (item->choice_ints[item->value] == JOYDEV_MOUSE) {
+      resources_set_int("JoyPort2Device", JOYPORT_ID_MOUSE_1351);
+    } else {
+      resources_set_int("JoyPort2Device", JOYPORT_ID_JOYSTICK);
+    }
+    return;
+  case MENU_TAPE_START:
+    datasette_control(DATASETTE_CONTROL_START);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_TAPE_STOP:
+    datasette_control(DATASETTE_CONTROL_STOP);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_TAPE_REWIND:
+    datasette_control(DATASETTE_CONTROL_REWIND);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_TAPE_FASTFWD:
+    datasette_control(DATASETTE_CONTROL_FORWARD);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_TAPE_RECORD:
+    datasette_control(DATASETTE_CONTROL_RECORD);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_TAPE_RESET:
+    datasette_control(DATASETTE_CONTROL_RESET);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_TAPE_RESET_COUNTER:
+    datasette_control(DATASETTE_CONTROL_RESET_COUNTER);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_TAPE_RESET_WITH_MACHINE:
+    resources_set_int("DatasetteResetWithCPU",
+                      tape_reset_with_machine_item->value);
+    return;
+  case MENU_SID_ENGINE:
+    resources_set_int("SidEngine", item->choice_ints[item->value]);
+    resources_set_int("SidResidSampling", 0);
+    return;
+  case MENU_SID_MODEL:
+    resources_set_int("SidModel", item->choice_ints[item->value]);
+    resources_set_int("SidResidSampling", 0);
+    return;
+  case MENU_SID_FILTER:
+    resources_set_int("SidFilters", item->value);
+    resources_set_int("SidResidSampling", 0);
+    return;
 
-      case MENU_DRIVE_CHANGE_MODEL_8:
-      case MENU_DRIVE_CHANGE_MODEL_9:
-      case MENU_DRIVE_CHANGE_MODEL_10:
-      case MENU_DRIVE_CHANGE_MODEL_11:
-         drive_change_model();
-         return;
-      case MENU_DRIVE_SELECT:
-         resources_set_int_sprintf("Drive%iType", item->value, unit);
-         ui_pop_all_and_toggle();
-         return;
-      case MENU_CALC_TIMING:
-         configure_timing();
-         return;
-      case MENU_HOTKEY_CF1:
-         kbd_set_hotkey_function(0, KEYCODE_F1,
-            hotkey_cf1_item->choice_ints[hotkey_cf1_item->value]);
-         return;
-      case MENU_HOTKEY_CF3:
-         kbd_set_hotkey_function(1, KEYCODE_F3,
-            hotkey_cf3_item->choice_ints[hotkey_cf3_item->value]);
-         return;
-      case MENU_HOTKEY_CF5:
-         kbd_set_hotkey_function(2, KEYCODE_F5,
-            hotkey_cf5_item->choice_ints[hotkey_cf5_item->value]);
-         return;
-      case MENU_HOTKEY_CF7:
-         kbd_set_hotkey_function(3, KEYCODE_F7,
-            hotkey_cf7_item->choice_ints[hotkey_cf7_item->value]);
-         return;
-      case MENU_SAVE_EASYFLASH:
-         if (cartridge_flush_image(CARTRIDGE_EASYFLASH) < 0) {
-            ui_error("Problem saving");
-         } else {
-            ui_pop_all_and_toggle();
-         }
-         break;
-      case MENU_CART_FREEZE:
-         keyboard_clear_keymatrix();
-         cartridge_trigger_freeze();
-         ui_pop_all_and_toggle();
-         break;
-      case MENU_REAL_KEYBOARD:
-         check_real_keyboard_settings();
-         return;
-   }
+  case MENU_DRIVE_CHANGE_MODEL_8:
+  case MENU_DRIVE_CHANGE_MODEL_9:
+  case MENU_DRIVE_CHANGE_MODEL_10:
+  case MENU_DRIVE_CHANGE_MODEL_11:
+    drive_change_model();
+    return;
+  case MENU_DRIVE_SELECT:
+    resources_set_int_sprintf("Drive%iType", item->value, unit);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_CALC_TIMING:
+    configure_timing();
+    return;
+  case MENU_HOTKEY_CF1:
+    kbd_set_hotkey_function(
+        0, KEYCODE_F1, hotkey_cf1_item->choice_ints[hotkey_cf1_item->value]);
+    return;
+  case MENU_HOTKEY_CF3:
+    kbd_set_hotkey_function(
+        1, KEYCODE_F3, hotkey_cf3_item->choice_ints[hotkey_cf3_item->value]);
+    return;
+  case MENU_HOTKEY_CF5:
+    kbd_set_hotkey_function(
+        2, KEYCODE_F5, hotkey_cf5_item->choice_ints[hotkey_cf5_item->value]);
+    return;
+  case MENU_HOTKEY_CF7:
+    kbd_set_hotkey_function(
+        3, KEYCODE_F7, hotkey_cf7_item->choice_ints[hotkey_cf7_item->value]);
+    return;
+  case MENU_SAVE_EASYFLASH:
+    if (cartridge_flush_image(CARTRIDGE_EASYFLASH) < 0) {
+      ui_error("Problem saving");
+    } else {
+      ui_pop_all_and_toggle();
+    }
+    break;
+  case MENU_CART_FREEZE:
+    keyboard_clear_keymatrix();
+    cartridge_trigger_freeze();
+    ui_pop_all_and_toggle();
+    break;
+  case MENU_REAL_KEYBOARD:
+    check_real_keyboard_settings();
+    return;
+  }
 
-   // Only items that were for file selection/nav should have these set...
-   if (item->sub_id == MENU_SUB_PICK_FILE) {
-      select_file(item);
-   } else if (item->sub_id == MENU_SUB_UP_DIR) {
-      up_dir(item);
-   } else if (item->sub_id == MENU_SUB_ENTER_DIR) {
-      enter_dir(item);
-   }
+  // Only items that were for file selection/nav should have these set...
+  if (item->sub_id == MENU_SUB_PICK_FILE) {
+    select_file(item);
+  } else if (item->sub_id == MENU_SUB_UP_DIR) {
+    up_dir(item);
+  } else if (item->sub_id == MENU_SUB_ENTER_DIR) {
+    enter_dir(item);
+  }
 
-   // Handle saving snapshots.
-   if (item->id == MENU_SAVE_SNAP_FILE) {
-      char *fname = item->str_value;
-      if (item->type == TEXTFIELD) {
-         // Scrub the filename before passing it along
-         fname = item->str_value;
-         if (strlen(fname) == 0) {
-            ui_error("Empty filename");
-            return;
-         } else if (strlen(fname) > MAX_FN_NAME) {
-            ui_error("Too long");
-            return;
-         }
-         char* dot = strchr(fname, '.');
-         if (dot == NULL) {
-            if (strlen(fname) + 4 <= MAX_FN_NAME) {
-               strcat(fname, ".vsf");
-            } else {
-               ui_error("Too long");
-               return;
-            }
-         } else {
-            if ((dot[1] != 'v' && dot[1] != 'V') ||
-                (dot[2] != 's' && dot[2] != 'S') ||
-                (dot[3] != 'f' && dot[3] != 'F') ||
-                 dot[4] != '\0') {
-              ui_error("Need .VSF extension");
-              return;
-            }
-         }
+  // Handle saving snapshots.
+  if (item->id == MENU_SAVE_SNAP_FILE) {
+    char *fname = item->str_value;
+    if (item->type == TEXTFIELD) {
+      // Scrub the filename before passing it along
+      fname = item->str_value;
+      if (strlen(fname) == 0) {
+        ui_error("Empty filename");
+        return;
+      } else if (strlen(fname) > MAX_FN_NAME) {
+        ui_error("Too long");
+        return;
       }
-      ui_info("Saving...");
-      if(machine_write_snapshot(fullpath(DIR_SNAPS, fname), 1, 1, 0) < 0) {
-          ui_pop_menu();
-          ui_error("Save snapshot failed");
+      char *dot = strchr(fname, '.');
+      if (dot == NULL) {
+        if (strlen(fname) + 4 <= MAX_FN_NAME) {
+          strcat(fname, ".vsf");
+        } else {
+          ui_error("Too long");
+          return;
+        }
       } else {
-          ui_pop_all_and_toggle();
+        if ((dot[1] != 'v' && dot[1] != 'V') ||
+            (dot[2] != 's' && dot[2] != 'S') ||
+            (dot[3] != 'f' && dot[3] != 'F') || dot[4] != '\0') {
+          ui_error("Need .VSF extension");
+          return;
+        }
       }
-   }
+    }
+    ui_info("Saving...");
+    if (machine_write_snapshot(fullpath(DIR_SNAPS, fname), 1, 1, 0) < 0) {
+      ui_pop_menu();
+      ui_error("Save snapshot failed");
+    } else {
+      ui_pop_all_and_toggle();
+    }
+  }
 }
 
 // Returns what input preference user has for this usb device
-void circle_usb_pref(int device, int *usb_pref, int* x_axis, int *y_axis, float *x_thresh, float *y_thresh) {
-   if (device == 0) {
-      *usb_pref = usb_pref_0;
-      *x_axis = usb_x_axis_0;
-      *y_axis = usb_y_axis_0;
-      *x_thresh = usb_x_thresh_0;
-      *y_thresh = usb_y_thresh_0;
-   }
-   else if (device == 1) {
-      *usb_pref = usb_pref_1;
-      *x_axis = usb_x_axis_1;
-      *y_axis = usb_y_axis_1;
-      *x_thresh = usb_x_thresh_1;
-      *y_thresh = usb_y_thresh_1;
-   } else {
-      *usb_pref = -1;
-      *x_axis = -1;
-      *y_axis = -1;
-      *x_thresh = .50;
-      *y_thresh = .50;
-   }
+void circle_usb_pref(int device, int *usb_pref, int *x_axis, int *y_axis,
+                     float *x_thresh, float *y_thresh) {
+  if (device == 0) {
+    *usb_pref = usb_pref_0;
+    *x_axis = usb_x_axis_0;
+    *y_axis = usb_y_axis_0;
+    *x_thresh = usb_x_thresh_0;
+    *y_thresh = usb_y_thresh_0;
+  } else if (device == 1) {
+    *usb_pref = usb_pref_1;
+    *x_axis = usb_x_axis_1;
+    *y_axis = usb_y_axis_1;
+    *x_thresh = usb_x_thresh_1;
+    *y_thresh = usb_y_thresh_1;
+  } else {
+    *usb_pref = -1;
+    *x_axis = -1;
+    *y_axis = -1;
+    *x_thresh = .50;
+    *y_thresh = .50;
+  }
 }
 
-int menu_get_keyboard_type(void) {
-   return keyboard_type_item->value;
-}
+int menu_get_keyboard_type(void) { return keyboard_type_item->value; }
 
 // KEEP in sync with kernel.cpp, kbd.c, menu_usb.c
-static void set_hotkey_choices(struct menu_item* item) {
+static void set_hotkey_choices(struct menu_item *item) {
   item->num_choices = 12;
-  strcpy (item->choices[HOTKEY_CHOICE_NONE], "None");
-  strcpy (item->choices[HOTKEY_CHOICE_MENU], "Menu");
-  strcpy (item->choices[HOTKEY_CHOICE_WARP], "Warp");
-  strcpy (item->choices[HOTKEY_CHOICE_STATUS_TOGGLE], "Toggle Status");
-  strcpy (item->choices[HOTKEY_CHOICE_SWAP_PORTS], "Swap Ports");
-  strcpy (item->choices[HOTKEY_CHOICE_TAPE_MENU], "Tape OSD");
-  strcpy (item->choices[HOTKEY_CHOICE_CART_MENU], "Cart OSD");
-  strcpy (item->choices[HOTKEY_CHOICE_CART_FREEZE], "Cart Freeze");
-  strcpy (item->choices[HOTKEY_CHOICE_RESET_HARD], "Hard Reset");
-  strcpy (item->choices[HOTKEY_CHOICE_RESET_SOFT], "Soft Reset");
+  strcpy(item->choices[HOTKEY_CHOICE_NONE], "None");
+  strcpy(item->choices[HOTKEY_CHOICE_MENU], "Menu");
+  strcpy(item->choices[HOTKEY_CHOICE_WARP], "Warp");
+  strcpy(item->choices[HOTKEY_CHOICE_STATUS_TOGGLE], "Toggle Status");
+  strcpy(item->choices[HOTKEY_CHOICE_SWAP_PORTS], "Swap Ports");
+  strcpy(item->choices[HOTKEY_CHOICE_TAPE_MENU], "Tape OSD");
+  strcpy(item->choices[HOTKEY_CHOICE_CART_MENU], "Cart OSD");
+  strcpy(item->choices[HOTKEY_CHOICE_CART_FREEZE], "Cart Freeze");
+  strcpy(item->choices[HOTKEY_CHOICE_RESET_HARD], "Hard Reset");
+  strcpy(item->choices[HOTKEY_CHOICE_RESET_SOFT], "Soft Reset");
   item->choice_ints[HOTKEY_CHOICE_NONE] = BTN_ASSIGN_UNDEF;
   item->choice_ints[HOTKEY_CHOICE_MENU] = BTN_ASSIGN_MENU;
   item->choice_ints[HOTKEY_CHOICE_WARP] = BTN_ASSIGN_WARP;
@@ -1305,406 +1306,419 @@ static void set_hotkey_choices(struct menu_item* item) {
   item->choice_ints[HOTKEY_CHOICE_RESET_SOFT] = BTN_ASSIGN_RESET_SOFT;
 }
 
-void build_menu(struct menu_item* root) {
-   struct menu_item* parent;
-   struct menu_item* child;
-   int dev;
-   int i;
-   int j;
-   int tmp;
+void build_menu(struct menu_item *root) {
+  struct menu_item *parent;
+  struct menu_item *child;
+  int dev;
+  int i;
+  int j;
+  int tmp;
 
-   // TODO: This doesn't really belong here. Need to sort
-   // out init order of structs.
-   for (dev = 0; dev < 2; dev++ ) {
-      memset(&joydevs[dev], 0, sizeof(struct joydev_config));
-      joydevs[dev].port = dev + 1;
-      joydevs[dev].device = JOYDEV_NONE;
-   }
+  // TODO: This doesn't really belong here. Need to sort
+  // out init order of structs.
+  for (dev = 0; dev < 2; dev++) {
+    memset(&joydevs[dev], 0, sizeof(struct joydev_config));
+    joydevs[dev].port = dev + 1;
+    joydevs[dev].device = JOYDEV_NONE;
+  }
 
-   // TODO: Make these start dirs configurable.
-   for (i = 0; i < NUM_DIR_TYPES; i++) {
-      strcpy(current_dir_names[i], default_dir_names[i]);
-   }
+  // TODO: Make these start dirs configurable.
+  for (i = 0; i < NUM_DIR_TYPES; i++) {
+    strcpy(current_dir_names[i], default_dir_names[i]);
+  }
 
-   switch (machine_class) {
-     case VICE_MACHINE_C64:
-        strcpy(current_dir_names[DIR_ROMS], "/C64");
-        break;
-     case VICE_MACHINE_C128:
-        strcpy(current_dir_names[DIR_ROMS], "/C128");
-        break;
-     case VICE_MACHINE_VIC20:
-        strcpy(current_dir_names[DIR_ROMS], "/VIC20");
-        break;
-     default:
-        break;
-   }
+  switch (machine_class) {
+  case VICE_MACHINE_C64:
+    strcpy(current_dir_names[DIR_ROMS], "/C64");
+    break;
+  case VICE_MACHINE_C128:
+    strcpy(current_dir_names[DIR_ROMS], "/C128");
+    break;
+  case VICE_MACHINE_VIC20:
+    strcpy(current_dir_names[DIR_ROMS], "/VIC20");
+    break;
+  default:
+    break;
+  }
 
-   switch (circle_get_machine_timing()) {
-      case MACHINE_TIMING_NTSC_HDMI:
-         ui_menu_add_button(MENU_TEXT, root, "Timing: NTSC 60Hz HDMI");
-         break;
-      case MACHINE_TIMING_NTSC_COMPOSITE:
-         ui_menu_add_button(MENU_TEXT, root, "Timing: NTSC 60Hz Composite");
-         break;
-      case MACHINE_TIMING_NTSC_CUSTOM:
-         ui_menu_add_button(MENU_TEXT, root, "Timing: NTSC 60Hz Custom");
-         break;
-      case MACHINE_TIMING_PAL_HDMI:
-         ui_menu_add_button(MENU_TEXT, root, "Timing: PAL 50Hz HDMI");
-         break;
-      case MACHINE_TIMING_PAL_COMPOSITE:
-         ui_menu_add_button(MENU_TEXT, root, "Timing: PAL 50Hz Composite");
-         break;
-      case MACHINE_TIMING_PAL_CUSTOM:
-         ui_menu_add_button(MENU_TEXT, root, "Timing: PAL 50Hz Custom");
-         break;
-      default:
-         ui_menu_add_button(MENU_TEXT, root, "Timing: ERROR");
-         break;
-   }
+  switch (circle_get_machine_timing()) {
+  case MACHINE_TIMING_NTSC_HDMI:
+    ui_menu_add_button(MENU_TEXT, root, "Timing: NTSC 60Hz HDMI");
+    break;
+  case MACHINE_TIMING_NTSC_COMPOSITE:
+    ui_menu_add_button(MENU_TEXT, root, "Timing: NTSC 60Hz Composite");
+    break;
+  case MACHINE_TIMING_NTSC_CUSTOM:
+    ui_menu_add_button(MENU_TEXT, root, "Timing: NTSC 60Hz Custom");
+    break;
+  case MACHINE_TIMING_PAL_HDMI:
+    ui_menu_add_button(MENU_TEXT, root, "Timing: PAL 50Hz HDMI");
+    break;
+  case MACHINE_TIMING_PAL_COMPOSITE:
+    ui_menu_add_button(MENU_TEXT, root, "Timing: PAL 50Hz Composite");
+    break;
+  case MACHINE_TIMING_PAL_CUSTOM:
+    ui_menu_add_button(MENU_TEXT, root, "Timing: PAL 50Hz Custom");
+    break;
+  default:
+    ui_menu_add_button(MENU_TEXT, root, "Timing: ERROR");
+    break;
+  }
 
-   ui_menu_add_button(MENU_ABOUT, root, "About...");
-   ui_menu_add_button(MENU_LICENSE, root, "License...");
+  ui_menu_add_button(MENU_ABOUT, root, "About...");
+  ui_menu_add_button(MENU_LICENSE, root, "License...");
 
-   ui_menu_add_divider(root);
+  ui_menu_add_divider(root);
 
-   parent = ui_menu_add_folder(root, "ROMs...");
-      ui_menu_add_button(MENU_LOAD_KERNAL, parent, "Load Kernal ROM...");
-      ui_menu_add_button(MENU_LOAD_BASIC, parent, "Load Basic ROM...");
-      ui_menu_add_button(MENU_LOAD_CHARGEN, parent, "Load Chargen ROM...");
+  parent = ui_menu_add_folder(root, "ROMs...");
+  ui_menu_add_button(MENU_LOAD_KERNAL, parent, "Load Kernal ROM...");
+  ui_menu_add_button(MENU_LOAD_BASIC, parent, "Load Basic ROM...");
+  ui_menu_add_button(MENU_LOAD_CHARGEN, parent, "Load Chargen ROM...");
 
-   ui_menu_add_divider(root);
+  ui_menu_add_divider(root);
 
-   ui_menu_add_button(MENU_AUTOSTART, root, "Autostart Prg/Disk...");
+  ui_menu_add_button(MENU_AUTOSTART, root, "Autostart Prg/Disk...");
 
-   parent = ui_menu_add_folder(root, "Drive 8");
-      resources_get_int_sprintf("IECDevice%i", &tmp, 8);
-      ui_menu_add_toggle(MENU_IECDEVICE_8, parent, "IEC FileSystem", tmp);
-      ui_menu_add_button(MENU_ATTACH_DISK_8, parent, "Attach Disk...");
-      ui_menu_add_button(MENU_DETACH_DISK_8, parent, "Detach Disk");
-      ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_8, parent, "Change Model...");
+  parent = ui_menu_add_folder(root, "Drive 8");
+  resources_get_int_sprintf("IECDevice%i", &tmp, 8);
+  ui_menu_add_toggle(MENU_IECDEVICE_8, parent, "IEC FileSystem", tmp);
+  ui_menu_add_button(MENU_ATTACH_DISK_8, parent, "Attach Disk...");
+  ui_menu_add_button(MENU_DETACH_DISK_8, parent, "Detach Disk");
+  ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_8, parent, "Change Model...");
 
-   parent = ui_menu_add_folder(root, "Drive 9");
-      ui_menu_add_button(MENU_ATTACH_DISK_9, parent, "Attach Disk...");
-      ui_menu_add_button(MENU_DETACH_DISK_9, parent, "Detach Disk");
-      ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_9, parent, "Change Model...");
+  parent = ui_menu_add_folder(root, "Drive 9");
+  ui_menu_add_button(MENU_ATTACH_DISK_9, parent, "Attach Disk...");
+  ui_menu_add_button(MENU_DETACH_DISK_9, parent, "Detach Disk");
+  ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_9, parent, "Change Model...");
 
-   parent = ui_menu_add_folder(root, "Drive 10");
-      ui_menu_add_button(MENU_ATTACH_DISK_10, parent, "Attach Disk...");
-      ui_menu_add_button(MENU_DETACH_DISK_10, parent, "Detach Disk");
-      ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_10, parent, "Change Model...");
+  parent = ui_menu_add_folder(root, "Drive 10");
+  ui_menu_add_button(MENU_ATTACH_DISK_10, parent, "Attach Disk...");
+  ui_menu_add_button(MENU_DETACH_DISK_10, parent, "Detach Disk");
+  ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_10, parent, "Change Model...");
 
-   parent = ui_menu_add_folder(root, "Drive 11");
-      ui_menu_add_button(MENU_ATTACH_DISK_11, parent, "Attach Disk...");
-      ui_menu_add_button(MENU_DETACH_DISK_11, parent, "Detach Disk");
-      ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");
+  parent = ui_menu_add_folder(root, "Drive 11");
+  ui_menu_add_button(MENU_ATTACH_DISK_11, parent, "Attach Disk...");
+  ui_menu_add_button(MENU_DETACH_DISK_11, parent, "Detach Disk");
+  ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");
 
-   parent = ui_menu_add_folder(root, "Cartridge");
-      ui_menu_add_button(MENU_ATTACH_CART, parent, "Attach cart...");
-      ui_menu_add_button(MENU_ATTACH_CART_8K, parent, "Attach 8k raw...");
-      ui_menu_add_button(MENU_ATTACH_CART_16K, parent, "Attach 16 raw...");
-      ui_menu_add_button(MENU_ATTACH_CART_ULTIMAX, parent, "Attach Ultimax raw...");
-      ui_menu_add_button(MENU_TEXT, parent, "");
-      ui_menu_add_button(MENU_MAKE_CART_DEFAULT, parent, "Set current cart default (Need Save)");
-      ui_menu_add_button(MENU_SAVE_EASYFLASH, parent, "Save EasyFlash Now");
-      ui_menu_add_button(MENU_CART_FREEZE, parent, "Cartridge Freeze");
-      ui_menu_add_divider(parent);
+  parent = ui_menu_add_folder(root, "Cartridge");
+  ui_menu_add_button(MENU_ATTACH_CART, parent, "Attach cart...");
+  ui_menu_add_button(MENU_ATTACH_CART_8K, parent, "Attach 8k raw...");
+  ui_menu_add_button(MENU_ATTACH_CART_16K, parent, "Attach 16 raw...");
+  ui_menu_add_button(MENU_ATTACH_CART_ULTIMAX, parent, "Attach Ultimax raw...");
+  ui_menu_add_button(MENU_TEXT, parent, "");
+  ui_menu_add_button(MENU_MAKE_CART_DEFAULT, parent,
+                     "Set current cart default (Need Save)");
+  ui_menu_add_button(MENU_SAVE_EASYFLASH, parent, "Save EasyFlash Now");
+  ui_menu_add_button(MENU_CART_FREEZE, parent, "Cartridge Freeze");
+  ui_menu_add_divider(parent);
 
-   ui_menu_add_button(MENU_DETACH_CART, root, "Detach cartridge");
+  ui_menu_add_button(MENU_DETACH_CART, root, "Detach cartridge");
 
-   ui_menu_add_button(MENU_ATTACH_TAPE, root, "Attach tape image...");
-   ui_menu_add_button(MENU_DETACH_TAPE, root, "Detach tape image");
+  ui_menu_add_button(MENU_ATTACH_TAPE, root, "Attach tape image...");
+  ui_menu_add_button(MENU_DETACH_TAPE, root, "Detach tape image");
 
-   parent = ui_menu_add_folder(root, "Datasette controls (.tap)...");
-      ui_menu_add_button(MENU_TAPE_START, parent, "Play");
-      ui_menu_add_button(MENU_TAPE_STOP, parent, "Stop");
-      ui_menu_add_button(MENU_TAPE_REWIND, parent, "Rewind");
-      ui_menu_add_button(MENU_TAPE_FASTFWD, parent, "FastFwd");
-      ui_menu_add_button(MENU_TAPE_RECORD, parent, "Record");
-      ui_menu_add_button(MENU_TAPE_RESET, parent, "Reset");
-      ui_menu_add_button(MENU_TAPE_RESET_COUNTER, parent, "Reset Counter");
-      resources_get_int("DatasetteResetWithCPU", &tmp);
-      tape_reset_with_machine_item = ui_menu_add_toggle(
-          MENU_TAPE_RESET_WITH_MACHINE, parent,
-              "Reset Tape with Machine Reset", tmp);
+  parent = ui_menu_add_folder(root, "Datasette controls (.tap)...");
+  ui_menu_add_button(MENU_TAPE_START, parent, "Play");
+  ui_menu_add_button(MENU_TAPE_STOP, parent, "Stop");
+  ui_menu_add_button(MENU_TAPE_REWIND, parent, "Rewind");
+  ui_menu_add_button(MENU_TAPE_FASTFWD, parent, "FastFwd");
+  ui_menu_add_button(MENU_TAPE_RECORD, parent, "Record");
+  ui_menu_add_button(MENU_TAPE_RESET, parent, "Reset");
+  ui_menu_add_button(MENU_TAPE_RESET_COUNTER, parent, "Reset Counter");
+  resources_get_int("DatasetteResetWithCPU", &tmp);
+  tape_reset_with_machine_item =
+      ui_menu_add_toggle(MENU_TAPE_RESET_WITH_MACHINE, parent,
+                         "Reset Tape with Machine Reset", tmp);
 
-   ui_menu_add_divider(root);
+  ui_menu_add_divider(root);
 
-   parent = ui_menu_add_folder(root, "Snapshots");
-      ui_menu_add_button(MENU_LOAD_SNAP, parent, "Load Snapshot...");
-      ui_menu_add_button(MENU_SAVE_SNAP, parent, "Save Snapshot...");
+  parent = ui_menu_add_folder(root, "Snapshots");
+  ui_menu_add_button(MENU_LOAD_SNAP, parent, "Load Snapshot...");
+  ui_menu_add_button(MENU_SAVE_SNAP, parent, "Save Snapshot...");
 
-   parent = ui_menu_add_folder(root, "Video");
+  parent = ui_menu_add_folder(root, "Video");
 
-      palette_item = ui_menu_add_multiple_choice(MENU_COLOR_PALETTE, parent, "Color Palette");
-      palette_item->num_choices = 5;
-      palette_item->value = 1;
-      strcpy (palette_item->choices[0], "Default");
-      strcpy (palette_item->choices[1], "Vice");
-      strcpy (palette_item->choices[2], "C64hq");
-      strcpy (palette_item->choices[3], "Pepto-Ntsc");
-      strcpy (palette_item->choices[4], "Pepto-Pal");
+  palette_item =
+      ui_menu_add_multiple_choice(MENU_COLOR_PALETTE, parent, "Color Palette");
+  palette_item->num_choices = 5;
+  palette_item->value = 1;
+  strcpy(palette_item->choices[0], "Default");
+  strcpy(palette_item->choices[1], "Vice");
+  strcpy(palette_item->choices[2], "C64hq");
+  strcpy(palette_item->choices[3], "Pepto-Ntsc");
+  strcpy(palette_item->choices[4], "Pepto-Pal");
 
-      child = ui_menu_add_folder(parent, "Color Adjustments...");
+  child = ui_menu_add_folder(parent, "Color Adjustments...");
 
-         brightness_item = ui_menu_add_range(MENU_COLOR_BRIGHTNESS,
-             child, "Brightness", 0, 2000, 100, get_color_brightness());
-         contrast_item = ui_menu_add_range(MENU_COLOR_CONTRAST,
-             child, "Contrast", 0, 2000, 100, get_color_contrast());
-         gamma_item = ui_menu_add_range(MENU_COLOR_GAMMA,
-             child, "Gamma", 0, 4000, 100, get_color_gamma());
-         tint_item = ui_menu_add_range(MENU_COLOR_TINT,
-             child, "Tint", 0, 2000, 100, get_color_tint());
-         ui_menu_add_button(MENU_COLOR_RESET, child, "Reset");
+  brightness_item =
+      ui_menu_add_range(MENU_COLOR_BRIGHTNESS, child, "Brightness", 0, 2000,
+                        100, get_color_brightness());
+  contrast_item = ui_menu_add_range(MENU_COLOR_CONTRAST, child, "Contrast", 0,
+                                    2000, 100, get_color_contrast());
+  gamma_item = ui_menu_add_range(MENU_COLOR_GAMMA, child, "Gamma", 0, 4000, 100,
+                                 get_color_gamma());
+  tint_item = ui_menu_add_range(MENU_COLOR_TINT, child, "Tint", 0, 2000, 100,
+                                get_color_tint());
+  ui_menu_add_button(MENU_COLOR_RESET, child, "Reset");
 
-      ui_menu_add_button(MENU_CALC_TIMING, parent, "Custom HDMI mode timing calc...");
+  ui_menu_add_button(MENU_CALC_TIMING, parent,
+                     "Custom HDMI mode timing calc...");
 
-   parent = ui_menu_add_folder(root, "Sound");
-      // Resid by default
-      child = sid_engine_item = ui_menu_add_multiple_choice(
-          MENU_SID_ENGINE, parent,
-          "Sid Engine");
-      child->num_choices = 2;
-      child->value = MENU_SID_ENGINE_RESID;
-      strcpy (child->choices[MENU_SID_ENGINE_FAST], "Fast");
-      strcpy (child->choices[MENU_SID_ENGINE_RESID], "ReSid");
-      child->choice_ints[MENU_SID_ENGINE_FAST] = SID_ENGINE_FASTSID;
-      child->choice_ints[MENU_SID_ENGINE_RESID] = SID_ENGINE_RESID;
+  parent = ui_menu_add_folder(root, "Sound");
+  // Resid by default
+  child = sid_engine_item =
+      ui_menu_add_multiple_choice(MENU_SID_ENGINE, parent, "Sid Engine");
+  child->num_choices = 2;
+  child->value = MENU_SID_ENGINE_RESID;
+  strcpy(child->choices[MENU_SID_ENGINE_FAST], "Fast");
+  strcpy(child->choices[MENU_SID_ENGINE_RESID], "ReSid");
+  child->choice_ints[MENU_SID_ENGINE_FAST] = SID_ENGINE_FASTSID;
+  child->choice_ints[MENU_SID_ENGINE_RESID] = SID_ENGINE_RESID;
 
-      // 6581 by default
-      child = sid_model_item = ui_menu_add_multiple_choice(
-          MENU_SID_MODEL, parent,
-          "Sid Model");
-      child->num_choices = 2;
-      child->value = MENU_SID_MODEL_6581;
-      strcpy (child->choices[MENU_SID_MODEL_6581], "6581");
-      strcpy (child->choices[MENU_SID_MODEL_8580], "8580");
-      child->choice_ints[MENU_SID_MODEL_6581] = SID_MODEL_6581;
-      child->choice_ints[MENU_SID_MODEL_8580] = SID_MODEL_8580;
+  // 6581 by default
+  child = sid_model_item =
+      ui_menu_add_multiple_choice(MENU_SID_MODEL, parent, "Sid Model");
+  child->num_choices = 2;
+  child->value = MENU_SID_MODEL_6581;
+  strcpy(child->choices[MENU_SID_MODEL_6581], "6581");
+  strcpy(child->choices[MENU_SID_MODEL_8580], "8580");
+  child->choice_ints[MENU_SID_MODEL_6581] = SID_MODEL_6581;
+  child->choice_ints[MENU_SID_MODEL_8580] = SID_MODEL_8580;
 
-      // Filter on by default
-      child = sid_filter_item = ui_menu_add_toggle(
-          MENU_SID_FILTER, parent,
-          "Sid Filter", 0);
+  // Filter on by default
+  child = sid_filter_item =
+      ui_menu_add_toggle(MENU_SID_FILTER, parent, "Sid Filter", 0);
 
-   parent = ui_menu_add_folder(root, "Keyboard");
-      child = keyboard_type_item = ui_menu_add_multiple_choice(
-          MENU_KEYBOARD_TYPE, parent,
-          "Layout (Needs Save+Reboot)");
-      child->num_choices = 2;
-      child->value = KEYBOARD_TYPE_US;
-      strcpy (child->choices[KEYBOARD_TYPE_US], "US");
-      strcpy (child->choices[KEYBOARD_TYPE_UK], "UK");
+  parent = ui_menu_add_folder(root, "Keyboard");
+  child = keyboard_type_item = ui_menu_add_multiple_choice(
+      MENU_KEYBOARD_TYPE, parent, "Layout (Needs Save+Reboot)");
+  child->num_choices = 2;
+  child->value = KEYBOARD_TYPE_US;
+  strcpy(child->choices[KEYBOARD_TYPE_US], "US");
+  strcpy(child->choices[KEYBOARD_TYPE_UK], "UK");
 
-      if (machine_class == VICE_MACHINE_C64) {
-         child = use_real_keyboard_item = ui_menu_add_toggle(MENU_REAL_KEYBOARD,
-            parent, "Enable Real Keyboard", 0);
-      }
+  if (machine_class == VICE_MACHINE_C64) {
+    child = use_real_keyboard_item = ui_menu_add_toggle(
+        MENU_REAL_KEYBOARD, parent, "Enable Real Keyboard", 0);
+  }
 
-      child = hotkey_cf1_item = ui_menu_add_multiple_choice(
-          MENU_HOTKEY_CF1, parent,
-          "C= + F1 Hotkey");
-      child->value = HOTKEY_CHOICE_NONE;
-      set_hotkey_choices(hotkey_cf1_item);
-      child = hotkey_cf3_item = ui_menu_add_multiple_choice(
-          MENU_HOTKEY_CF3, parent,
-          "C= + F3 Hotkey");
-      child->value = HOTKEY_CHOICE_NONE;
-      set_hotkey_choices(hotkey_cf3_item);
-      child = hotkey_cf5_item = ui_menu_add_multiple_choice(
-          MENU_HOTKEY_CF5, parent,
-          "C= + F5 Hotkey");
-      child->value = HOTKEY_CHOICE_NONE;
-      set_hotkey_choices(hotkey_cf5_item);
-      child = hotkey_cf7_item = ui_menu_add_multiple_choice(
-          MENU_HOTKEY_CF7, parent,
-          "C= + F7 Hotkey");
-      child->value = HOTKEY_CHOICE_MENU;
-      set_hotkey_choices(hotkey_cf7_item);
+  child = hotkey_cf1_item =
+      ui_menu_add_multiple_choice(MENU_HOTKEY_CF1, parent, "C= + F1 Hotkey");
+  child->value = HOTKEY_CHOICE_NONE;
+  set_hotkey_choices(hotkey_cf1_item);
+  child = hotkey_cf3_item =
+      ui_menu_add_multiple_choice(MENU_HOTKEY_CF3, parent, "C= + F3 Hotkey");
+  child->value = HOTKEY_CHOICE_NONE;
+  set_hotkey_choices(hotkey_cf3_item);
+  child = hotkey_cf5_item =
+      ui_menu_add_multiple_choice(MENU_HOTKEY_CF5, parent, "C= + F5 Hotkey");
+  child->value = HOTKEY_CHOICE_NONE;
+  set_hotkey_choices(hotkey_cf5_item);
+  child = hotkey_cf7_item =
+      ui_menu_add_multiple_choice(MENU_HOTKEY_CF7, parent, "C= + F7 Hotkey");
+  child->value = HOTKEY_CHOICE_MENU;
+  set_hotkey_choices(hotkey_cf7_item);
 
-   parent = ui_menu_add_folder(root, "Joystick");
-      ui_menu_add_button(MENU_SWAP_JOYSTICKS, parent, "Swap Joystick Ports");
-      child = port_1_menu_item = ui_menu_add_multiple_choice(
-          MENU_JOYSTICK_PORT_1, parent,
-          "Joystick Port 1");
-      child->num_choices = 10;
-      child->value = 0;
-      strcpy (child->choices[0], "None"); child->choice_ints[0] = JOYDEV_NONE;
-      strcpy (child->choices[1], "USB Gamepad 1"); child->choice_ints[1] = JOYDEV_USB_0;
-      strcpy (child->choices[2], "USB Gamepad 2"); child->choice_ints[2] = JOYDEV_USB_1;
-      strcpy (child->choices[3], "GPIO Bank 1"); child->choice_ints[3] = JOYDEV_GPIO_0;
-      strcpy (child->choices[4], "GPIO Bank 2"); child->choice_ints[4] = JOYDEV_GPIO_1;
-      strcpy (child->choices[5], "CURS + SPACE"); child->choice_ints[5] = JOYDEV_CURS_SP;
-      strcpy (child->choices[6], "NUMPAD 64825"); child->choice_ints[6] = JOYDEV_NUMS_1;
-      strcpy (child->choices[7], "NUMPAD 17930"); child->choice_ints[7] = JOYDEV_NUMS_2;
-      strcpy (child->choices[8], "CURS + LCTRL"); child->choice_ints[8] = JOYDEV_CURS_LC;
-      strcpy (child->choices[9], "USB Mouse (1351)"); child->choice_ints[9] = JOYDEV_MOUSE;
+  parent = ui_menu_add_folder(root, "Joystick");
+  ui_menu_add_button(MENU_SWAP_JOYSTICKS, parent, "Swap Joystick Ports");
+  child = port_1_menu_item = ui_menu_add_multiple_choice(
+      MENU_JOYSTICK_PORT_1, parent, "Joystick Port 1");
+  child->num_choices = 10;
+  child->value = 0;
+  strcpy(child->choices[0], "None");
+  child->choice_ints[0] = JOYDEV_NONE;
+  strcpy(child->choices[1], "USB Gamepad 1");
+  child->choice_ints[1] = JOYDEV_USB_0;
+  strcpy(child->choices[2], "USB Gamepad 2");
+  child->choice_ints[2] = JOYDEV_USB_1;
+  strcpy(child->choices[3], "GPIO Bank 1");
+  child->choice_ints[3] = JOYDEV_GPIO_0;
+  strcpy(child->choices[4], "GPIO Bank 2");
+  child->choice_ints[4] = JOYDEV_GPIO_1;
+  strcpy(child->choices[5], "CURS + SPACE");
+  child->choice_ints[5] = JOYDEV_CURS_SP;
+  strcpy(child->choices[6], "NUMPAD 64825");
+  child->choice_ints[6] = JOYDEV_NUMS_1;
+  strcpy(child->choices[7], "NUMPAD 17930");
+  child->choice_ints[7] = JOYDEV_NUMS_2;
+  strcpy(child->choices[8], "CURS + LCTRL");
+  child->choice_ints[8] = JOYDEV_CURS_LC;
+  strcpy(child->choices[9], "USB Mouse (1351)");
+  child->choice_ints[9] = JOYDEV_MOUSE;
 
-      child = port_2_menu_item = ui_menu_add_multiple_choice(
-          MENU_JOYSTICK_PORT_2, parent,
-          "Joystick Port 2");
-      child->num_choices = 10;
-      child->value = 0;
-      strcpy (child->choices[0], "None"); child->choice_ints[0] = JOYDEV_NONE;
-      strcpy (child->choices[1], "USB Gamepad 1"); child->choice_ints[1] = JOYDEV_USB_0;
-      strcpy (child->choices[2], "USB Gamepad 2"); child->choice_ints[2] = JOYDEV_USB_1;
-      strcpy (child->choices[3], "GPIO Bank 1"); child->choice_ints[3] = JOYDEV_GPIO_0;
-      strcpy (child->choices[4], "GPIO Bank 2"); child->choice_ints[4] = JOYDEV_GPIO_1;
-      strcpy (child->choices[5], "CURS + SPACE"); child->choice_ints[5] = JOYDEV_CURS_SP;
-      strcpy (child->choices[6], "NUMPAD 64825"); child->choice_ints[6] = JOYDEV_NUMS_1;
-      strcpy (child->choices[7], "NUMPAD 17930"); child->choice_ints[7] = JOYDEV_NUMS_2;
-      strcpy (child->choices[8], "CURS + LCTRL"); child->choice_ints[8] = JOYDEV_CURS_LC;
-      strcpy (child->choices[9], "USB Mouse (1351)"); child->choice_ints[9] = JOYDEV_MOUSE;
+  child = port_2_menu_item = ui_menu_add_multiple_choice(
+      MENU_JOYSTICK_PORT_2, parent, "Joystick Port 2");
+  child->num_choices = 10;
+  child->value = 0;
+  strcpy(child->choices[0], "None");
+  child->choice_ints[0] = JOYDEV_NONE;
+  strcpy(child->choices[1], "USB Gamepad 1");
+  child->choice_ints[1] = JOYDEV_USB_0;
+  strcpy(child->choices[2], "USB Gamepad 2");
+  child->choice_ints[2] = JOYDEV_USB_1;
+  strcpy(child->choices[3], "GPIO Bank 1");
+  child->choice_ints[3] = JOYDEV_GPIO_0;
+  strcpy(child->choices[4], "GPIO Bank 2");
+  child->choice_ints[4] = JOYDEV_GPIO_1;
+  strcpy(child->choices[5], "CURS + SPACE");
+  child->choice_ints[5] = JOYDEV_CURS_SP;
+  strcpy(child->choices[6], "NUMPAD 64825");
+  child->choice_ints[6] = JOYDEV_NUMS_1;
+  strcpy(child->choices[7], "NUMPAD 17930");
+  child->choice_ints[7] = JOYDEV_NUMS_2;
+  strcpy(child->choices[8], "CURS + LCTRL");
+  child->choice_ints[8] = JOYDEV_CURS_LC;
+  strcpy(child->choices[9], "USB Mouse (1351)");
+  child->choice_ints[9] = JOYDEV_MOUSE;
 
-      ui_menu_add_button(MENU_CONFIGURE_USB_0, parent, "Configure USB Joy 1...");
-      ui_menu_add_button(MENU_CONFIGURE_USB_1, parent, "Configure USB Joy 2...");
+  ui_menu_add_button(MENU_CONFIGURE_USB_0, parent, "Configure USB Joy 1...");
+  ui_menu_add_button(MENU_CONFIGURE_USB_1, parent, "Configure USB Joy 2...");
 
-      usb_pref_0 = 0;
-      usb_pref_1 = 0;
-      usb_x_axis_0 = 0;
-      usb_y_axis_0 = 1;
-      usb_x_axis_1 = 0;
-      usb_y_axis_1 = 1;
-      usb_x_thresh_0 = .50;
-      usb_y_thresh_0 = .50;
-      usb_x_thresh_1 = .50;
-      usb_y_thresh_1 = .50;
-      for (j=0;j<16;j++) {
-         usb_0_button_assignments[j] = (j==0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
-         usb_1_button_assignments[j] = (j==0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
-         usb_0_button_bits[j] = 1 << j;
-         usb_1_button_bits[j] = 1 << j;
-      }
+  usb_pref_0 = 0;
+  usb_pref_1 = 0;
+  usb_x_axis_0 = 0;
+  usb_y_axis_0 = 1;
+  usb_x_axis_1 = 0;
+  usb_y_axis_1 = 1;
+  usb_x_thresh_0 = .50;
+  usb_y_thresh_0 = .50;
+  usb_x_thresh_1 = .50;
+  usb_y_thresh_1 = .50;
+  for (j = 0; j < 16; j++) {
+    usb_0_button_assignments[j] = (j == 0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
+    usb_1_button_assignments[j] = (j == 0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
+    usb_0_button_bits[j] = 1 << j;
+    usb_1_button_bits[j] = 1 << j;
+  }
 
-   ui_menu_add_divider(root);
+  ui_menu_add_divider(root);
 
+  parent = ui_menu_add_folder(root, "Prefs");
 
-   parent = ui_menu_add_folder(root, "Prefs");
+  drive_sounds_item = ui_menu_add_toggle(MENU_DRIVE_SOUND_EMULATION, parent,
+                                         "Drive sound emulation", 0);
+  drive_sounds_vol_item =
+      ui_menu_add_range(MENU_DRIVE_SOUND_EMULATION_VOLUME, parent,
+                        "Drive sound emulation volume", 0, 1000, 100, 1000);
 
-      drive_sounds_item = ui_menu_add_toggle(MENU_DRIVE_SOUND_EMULATION,
-         parent, "Drive sound emulation", 0);
-      drive_sounds_vol_item = ui_menu_add_range(MENU_DRIVE_SOUND_EMULATION_VOLUME,
-         parent, "Drive sound emulation volume", 0, 1000, 100, 1000);
+  overlay_item =
+      ui_menu_add_multiple_choice(MENU_OVERLAY, parent, "Show Status Bar");
+  overlay_item->num_choices = 3;
+  overlay_item->value = 0;
+  strcpy(overlay_item->choices[OVERLAY_NEVER], "Never");
+  strcpy(overlay_item->choices[OVERLAY_ALWAYS], "Always");
+  strcpy(overlay_item->choices[OVERLAY_ON_ACTIVITY], "On Activity");
 
-      overlay_item = ui_menu_add_multiple_choice(MENU_OVERLAY, parent, "Show Status Bar");
-      overlay_item->num_choices = 3;
-      overlay_item->value = 0;
-      strcpy (overlay_item->choices[OVERLAY_NEVER], "Never");
-      strcpy (overlay_item->choices[OVERLAY_ALWAYS], "Always");
-      strcpy (overlay_item->choices[OVERLAY_ON_ACTIVITY], "On Activity");
+  reset_confirm_item = ui_menu_add_toggle(MENU_RESET_CONFIRM, parent,
+                                          "Confirm Reset from Emulator", 1);
 
-      reset_confirm_item = ui_menu_add_toggle(MENU_RESET_CONFIRM, parent, "Confirm Reset from Emulator", 1);
+  warp_item = ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
 
-   warp_item = ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
+  // This is an undocumented feature for now. Keep invisible unless it
+  // is activated by cmdline.txt
+  if (raspi_demo_mode) {
+    ui_menu_add_toggle(MENU_DEMO_MODE, root, "Demo Mode", raspi_demo_mode);
+  }
 
-   // This is an undocumented feature for now. Keep invisible unless it
-   // is activated by cmdline.txt
-   if (raspi_demo_mode) {
-      ui_menu_add_toggle(MENU_DEMO_MODE, root, "Demo Mode", raspi_demo_mode);
-   }
+  parent = ui_menu_add_folder(root, "Reset");
+  ui_menu_add_button(MENU_SOFT_RESET, parent, "Soft Reset");
+  ui_menu_add_button(MENU_HARD_RESET, parent, "Hard Reset");
 
-   parent = ui_menu_add_folder(root, "Reset");
-      ui_menu_add_button(MENU_SOFT_RESET, parent, "Soft Reset");
-      ui_menu_add_button(MENU_HARD_RESET, parent, "Hard Reset");
+  ui_menu_add_button(MENU_SAVE_SETTINGS, root, "Save settings");
 
-   ui_menu_add_button(MENU_SAVE_SETTINGS, root, "Save settings");
+  ui_set_on_value_changed_callback(menu_value_changed);
 
-   ui_set_on_value_changed_callback(menu_value_changed);
+  load_settings();
+  ui_set_hotkeys();
+  ui_set_joy_devs();
 
-   load_settings();
-   ui_set_hotkeys();
-   ui_set_joy_devs();
+  // Always turn off resampling
+  resources_set_int("SidResidSampling", 0);
+  set_video_cache(0);
+  set_hw_scale(0);
 
-   // Always turn off resampling
-   resources_set_int("SidResidSampling", 0);
-   set_video_cache(0);
-   set_hw_scale(0);
-
-   // This can somehow get turned off. Make sure its always 1.
-   resources_set_int("Datasette", 1);
-   resources_set_int("Mouse", 1);
+  // This can somehow get turned off. Make sure its always 1.
+  resources_set_int("Datasette", 1);
+  resources_set_int("Mouse", 1);
 }
 
-int overlay_enabled(void) {
-   return overlay_item->value != OVERLAY_NEVER;
-}
+int overlay_enabled(void) { return overlay_item->value != OVERLAY_NEVER; }
 
 int overlay_forced(void) {
-   return overlay_item->value == OVERLAY_ALWAYS || force_overlay;
+  return overlay_item->value == OVERLAY_ALWAYS || force_overlay;
 }
 
 // Stuff to do when menu is activated
-void menu_about_to_activate() {
-}
+void menu_about_to_activate() {}
 
 // Stuff to do before going back to emulator
-void menu_about_to_deactivate() {
-}
+void menu_about_to_deactivate() {}
 
 // These are called on the main loop
 void menu_quick_func(int button_assignment) {
-   int value;
-   switch(button_assignment) {
-      case BTN_ASSIGN_WARP:
-         resources_get_int("WarpMode", &value);
-         toggle_warp(1 - value);
-         break;
-      case BTN_ASSIGN_SWAP_PORTS:
-         menu_swap_joysticks();
-         break;
-      case BTN_ASSIGN_STATUS_TOGGLE:
-         // Ignore this if it's already showing.
-         if (overlay_item->value == OVERLAY_ALWAYS) return;
+  int value;
+  switch (button_assignment) {
+  case BTN_ASSIGN_WARP:
+    resources_get_int("WarpMode", &value);
+    toggle_warp(1 - value);
+    break;
+  case BTN_ASSIGN_SWAP_PORTS:
+    menu_swap_joysticks();
+    break;
+  case BTN_ASSIGN_STATUS_TOGGLE:
+    // Ignore this if it's already showing.
+    if (overlay_item->value == OVERLAY_ALWAYS)
+      return;
 
-         if (overlay_showing || force_overlay) {
-            // Dismiss
-            force_overlay = 0;
-            overlay_force_timeout();
-         } else {
-            force_overlay = 1;
-         }
-         break;
-      case BTN_ASSIGN_TAPE_MENU:
-         show_tape_osd_menu();
-         break;
-      case BTN_ASSIGN_CART_MENU:
-         show_cart_osd_menu();
-         break;
-      case BTN_ASSIGN_CART_FREEZE:
-         keyboard_clear_keymatrix();
-         cartridge_trigger_freeze();
-         break;
-      case BTN_ASSIGN_RESET_HARD:
-         if (reset_confirm_item->value) {
-            // Will come back here with HARD2 if confirmed.
-            show_confirm_osd_menu(BTN_ASSIGN_RESET_HARD2);
-            return;
-         }
-         // fallthrough
-      case BTN_ASSIGN_RESET_HARD2:
-         resources_set_string_sprintf("FSDevice%iDir", "/", 8);
-         machine_trigger_reset(MACHINE_RESET_MODE_HARD);
-         break;
-      case BTN_ASSIGN_RESET_SOFT:
-         if (reset_confirm_item->value) {
-            // Will come back here with SOFT2 if confirmed.
-            show_confirm_osd_menu(BTN_ASSIGN_RESET_SOFT2);
-            return;
-         }
-         // fallthrough
-      case BTN_ASSIGN_RESET_SOFT2:
-         resources_set_string_sprintf("FSDevice%iDir", "/", 8);
-         machine_trigger_reset(MACHINE_RESET_MODE_SOFT);
-         break;
-      default:
-         break;
-   }
+    if (overlay_showing || force_overlay) {
+      // Dismiss
+      force_overlay = 0;
+      overlay_force_timeout();
+    } else {
+      force_overlay = 1;
+    }
+    break;
+  case BTN_ASSIGN_TAPE_MENU:
+    show_tape_osd_menu();
+    break;
+  case BTN_ASSIGN_CART_MENU:
+    show_cart_osd_menu();
+    break;
+  case BTN_ASSIGN_CART_FREEZE:
+    keyboard_clear_keymatrix();
+    cartridge_trigger_freeze();
+    break;
+  case BTN_ASSIGN_RESET_HARD:
+    if (reset_confirm_item->value) {
+      // Will come back here with HARD2 if confirmed.
+      show_confirm_osd_menu(BTN_ASSIGN_RESET_HARD2);
+      return;
+    }
+  // fallthrough
+  case BTN_ASSIGN_RESET_HARD2:
+    resources_set_string_sprintf("FSDevice%iDir", "/", 8);
+    machine_trigger_reset(MACHINE_RESET_MODE_HARD);
+    break;
+  case BTN_ASSIGN_RESET_SOFT:
+    if (reset_confirm_item->value) {
+      // Will come back here with SOFT2 if confirmed.
+      show_confirm_osd_menu(BTN_ASSIGN_RESET_SOFT2);
+      return;
+    }
+  // fallthrough
+  case BTN_ASSIGN_RESET_SOFT2:
+    resources_set_string_sprintf("FSDevice%iDir", "/", 8);
+    machine_trigger_reset(MACHINE_RESET_MODE_SOFT);
+    break;
+  default:
+    break;
+  }
 }
 
 int circle_use_real_keyboard(void) {
-   if (machine_class == VICE_MACHINE_C64) {
-      return use_real_keyboard_item->value;
-   }
-   return 0;
+  if (machine_class == VICE_MACHINE_C64) {
+    return use_real_keyboard_item->value;
+  }
+  return 0;
 }

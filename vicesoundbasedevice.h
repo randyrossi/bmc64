@@ -16,6 +16,7 @@
 #ifndef _vice_base_sound_device_h
 #define _vice_base_sound_device_h
 
+#include <stdint.h>
 #include <circle/interrupt.h>
 #include <circle/sched/synchronizationevent.h>
 #include <circle/soundbasedevice.h>

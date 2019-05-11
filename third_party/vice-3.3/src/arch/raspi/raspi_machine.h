@@ -29,7 +29,7 @@
 #include "videoarch.h"
 
 extern void set_refresh_rate(int timing, struct video_canvas_s *canvas);
-extern void set_video_font(struct VideoData* video_state);
+extern void set_video_font(struct VideoData *video_state);
 extern unsigned long calculate_timing(double fps);
 
 extern void set_color_brightness(int value);
@@ -43,4 +43,3 @@ extern int get_color_brightness(void);
 extern int get_color_contrast(void);
 extern int get_color_gamma(void);
 extern int get_color_tint(void);
-

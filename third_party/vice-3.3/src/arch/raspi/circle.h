@@ -83,51 +83,51 @@
 #define PENDING_EMU_JOY_TYPE_AND 1
 #define PENDING_EMU_JOY_TYPE_OR 2
 
-#define JOYDEV_NONE      0
-#define JOYDEV_NUMPAD    1
-#define JOYDEV_KEYSET1   2
-#define JOYDEV_KEYSET2   3
-#define JOYDEV_ANALOG_0  4
-#define JOYDEV_ANALOG_1  5
-#define JOYDEV_ANALOG_2  6
-#define JOYDEV_ANALOG_3  7
-#define JOYDEV_ANALOG_4  8
-#define JOYDEV_ANALOG_5  9
+#define JOYDEV_NONE 0
+#define JOYDEV_NUMPAD 1
+#define JOYDEV_KEYSET1 2
+#define JOYDEV_KEYSET2 3
+#define JOYDEV_ANALOG_0 4
+#define JOYDEV_ANALOG_1 5
+#define JOYDEV_ANALOG_2 6
+#define JOYDEV_ANALOG_3 7
+#define JOYDEV_ANALOG_4 8
+#define JOYDEV_ANALOG_5 9
 #define JOYDEV_DIGITAL_0 10
 #define JOYDEV_DIGITAL_1 11
-#define JOYDEV_USB_0     12
-#define JOYDEV_USB_1     13
-#define JOYDEV_GPIO_0    14
-#define JOYDEV_GPIO_1    15
-#define JOYDEV_CURS_SP   16
-#define JOYDEV_NUMS_1    17
-#define JOYDEV_NUMS_2    18
-#define JOYDEV_CURS_LC   19
-#define JOYDEV_MOUSE     20
+#define JOYDEV_USB_0 12
+#define JOYDEV_USB_1 13
+#define JOYDEV_GPIO_0 14
+#define JOYDEV_GPIO_1 15
+#define JOYDEV_CURS_SP 16
+#define JOYDEV_NUMS_1 17
+#define JOYDEV_NUMS_2 18
+#define JOYDEV_CURS_LC 19
+#define JOYDEV_MOUSE 20
 
 struct axis_config {
-   int use;
-   int neutral;
-   int min;
-   int max;
-   int dir;
+  int use;
+  int neutral;
+  int min;
+  int max;
+  int dir;
 };
 
 struct hat_config {
-   int use;
-   int dir[9]; // DIR_XX_INDEX
+  int use;
+  int dir[9]; // DIR_XX_INDEX
 };
 
 // We maintain two joystick devices that can moved
 // to different ports.
 struct joydev_config {
-   // Which port does this device belong to?
-   int port;
-   int device;
+  // Which port does this device belong to?
+  int port;
+  int device;
 
-   // Relevant for usb devices
-   struct axis_config axes[4];
-   struct hat_config hats[2];
+  // Relevant for usb devices
+  struct axis_config axes[4];
+  struct hat_config hats[2];
 };
 
 extern struct joydev_config joydevs[2];
@@ -141,7 +141,7 @@ extern int pot_y_low_value;
 typedef void (*raspi_key_handler)(long key);
 
 extern int circle_get_machine_timing();
-extern uint8_t* circle_get_fb();
+extern uint8_t *circle_get_fb();
 extern int circle_get_fb_pitch();
 extern void circle_sleep(long);
 extern void circle_set_palette(uint8_t, uint16_t);
@@ -154,19 +154,22 @@ extern void circle_wait_vsync();
 extern void circle_yield();
 extern void circle_check_gpio();
 
-extern void joy_set_gamepad_info(int num_pads, int num_buttons[2], int axes[2], int hats[2]);
+extern void joy_set_gamepad_info(int num_pads, int num_buttons[2], int axes[2],
+                                 int hats[2]);
 
 extern void circle_joy_usb(unsigned device, int value);
 extern void circle_emu_joy_interrupt(int type, int port, int value);
 
 extern int circle_joy_need_gpio(int device);
-extern void circle_usb_pref(int device, int *usb_pref, int* x_axis, int *y_axis, float *x_thresh, float *y_thresh);
+extern void circle_usb_pref(int device, int *usb_pref, int *x_axis, int *y_axis,
+                            float *x_thresh, float *y_thresh);
 extern int circle_ui_activated(void);
 extern void circle_ui_key_interrupt(long key, int pressed);
 extern void circle_emu_key_interrupt(long key, int pressed);
 
 extern int menu_wants_raw_usb(void);
-extern void menu_raw_usb(int device, unsigned buttons, const int hats[6], const int axes[16]);
+extern void menu_raw_usb(int device, unsigned buttons, const int hats[6],
+                         const int axes[16]);
 
 extern int circle_button_function(int dev, unsigned button_value);
 extern int circle_add_button_values(int dev, unsigned button_value);

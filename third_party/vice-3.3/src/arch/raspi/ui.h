@@ -30,100 +30,111 @@
 #include "videoarch.h"
 
 #define NUM_MENU_ROOTS 5
-#define MAX_CHOICES    20
-#define MAX_MENU_STR   36
-#define MAX_FN_NAME    20   // only limit for new file names
+#define MAX_CHOICES 20
+#define MAX_MENU_STR 36
+#define MAX_FN_NAME 20 // only limit for new file names
 
 #define MAX_STR_VAL_LEN 256 // should match max fn from ffconf.h
 #define MAX_DSP_VAL_LEN 32  // should be below display width
 
 // Special menu id for items that do nothing or have no action callback
-#define MENU_ID_DO_NOTHING -1 
+#define MENU_ID_DO_NOTHING -1
 
 typedef enum menu_item_type {
-   TOGGLE,          // true/false
-   CHECKBOX,        // on/off
-   MULTIPLE_CHOICE, // one selection among a list of options
-   BUTTON,          // an action with optional displayable value to hold
-   RANGE,           // something with a min, max and step
-   FOLDER,          // contains sub-items/folders
-   DIVIDER,         // just a line
-   TEXTFIELD,       // editable text field
+  TOGGLE,          // true/false
+  CHECKBOX,        // on/off
+  MULTIPLE_CHOICE, // one selection among a list of options
+  BUTTON,          // an action with optional displayable value to hold
+  RANGE,           // something with a min, max and step
+  FOLDER,          // contains sub-items/folders
+  DIVIDER,         // just a line
+  TEXTFIELD,       // editable text field
 } menu_item_type;
 
 struct menu_item {
-   // Client defined id.
-   int id;
+  // Client defined id.
+  int id;
 
-   // Client sub-identifier
-   int sub_id;
+  // Client sub-identifier
+  int sub_id;
 
-   menu_item_type type;
+  menu_item_type type;
 
-   // For all
-   char name[MAX_MENU_STR];
+  // For all
+  char name[MAX_MENU_STR];
 
-   // 0/1 for TOGGLE or CHECKBOX, or range value for RANGE
-   // index for MULTIPLE_CHOICE
-   // cursor position for TEXTFIELD
-   int value;
+  // 0/1 for TOGGLE or CHECKBOX, or range value for RANGE
+  // index for MULTIPLE_CHOICE
+  // cursor position for TEXTFIELD
+  int value;
 
-   // For MULTIPLE_CHOICE
-   int num_choices;
-   char choices[MAX_CHOICES][MAX_MENU_STR];
-   int choice_ints[MAX_CHOICES];
-   int choice_disabled[MAX_CHOICES];
+  // For MULTIPLE_CHOICE
+  int num_choices;
+  char choices[MAX_CHOICES][MAX_MENU_STR];
+  int choice_ints[MAX_CHOICES];
+  int choice_disabled[MAX_CHOICES];
 
-   // For RANGE
-   int min;
-   int max;
-   int step;
+  // For RANGE
+  int min;
+  int max;
+  int step;
 
-   // For FOLDER
-   int is_expanded;
-   struct menu_item* first_child;
+  // For FOLDER
+  int is_expanded;
+  struct menu_item *first_child;
 
-   // For all
-   struct menu_item* next;
+  // For all
+  struct menu_item *next;
 
-   // Always changing, not for external use.
-   int render_index;
+  // Always changing, not for external use.
+  int render_index;
 
-   // Scratch space for text
-   char scratch[64];
+  // Scratch space for text
+  char scratch[64];
 
-   // For buttons - optional values
-   // Also for TEXTFIELD, holds text
-   char str_value[MAX_STR_VAL_LEN];
-   char displayed_value[MAX_DSP_VAL_LEN];
+  // For buttons - optional values
+  // Also for TEXTFIELD, holds text
+  char str_value[MAX_STR_VAL_LEN];
+  char displayed_value[MAX_DSP_VAL_LEN];
 
-   // Optional menu item specific value changed function
-   void (*on_value_changed)(struct menu_item*);
+  // Optional menu item specific value changed function
+  void (*on_value_changed)(struct menu_item *);
 
-   // Optional mapping of button value to some other int for display
-   int (*map_value_func)(int);
+  // Optional mapping of button value to some other int for display
+  int (*map_value_func)(int);
 
-   // By default these are set to the full screen but can be overridden
-   // when pushing a new root node to paint smaller dialogs overtop the
-   // previous menu.
-   int menu_width;
-   int menu_height;
-   int menu_left;
-   int menu_top;
+  // By default these are set to the full screen but can be overridden
+  // when pushing a new root node to paint smaller dialogs overtop the
+  // previous menu.
+  int menu_width;
+  int menu_height;
+  int menu_left;
+  int menu_top;
 };
 
-struct menu_item* ui_menu_add_toggle(int id, struct menu_item *folder, char* name, int initial_state);
-struct menu_item* ui_menu_add_checkbox(int id, struct menu_item *folder, char* name, int initial_state);
-struct menu_item* ui_menu_add_multiple_choice(int id, struct menu_item *folder, char *name);
-struct menu_item* ui_menu_add_button(int id, struct menu_item *folder, char *name);
-struct menu_item* ui_menu_add_button_with_value(int id, struct menu_item *folder, char *name, int int_value, char* str_value, char* displayed_value);
-struct menu_item* ui_menu_add_range(int id, struct menu_item *folder, char *name, int min, int max, int step, int initial_value);
-struct menu_item* ui_menu_add_folder(struct menu_item *folder, char *name);
-struct menu_item* ui_menu_add_divider(struct menu_item *folder);
-struct menu_item* ui_menu_add_text_field(int id, struct menu_item *folder, char *name, char *value);
+struct menu_item *ui_menu_add_toggle(int id, struct menu_item *folder,
+                                     char *name, int initial_state);
+struct menu_item *ui_menu_add_checkbox(int id, struct menu_item *folder,
+                                       char *name, int initial_state);
+struct menu_item *ui_menu_add_multiple_choice(int id, struct menu_item *folder,
+                                              char *name);
+struct menu_item *ui_menu_add_button(int id, struct menu_item *folder,
+                                     char *name);
+struct menu_item *ui_menu_add_button_with_value(int id,
+                                                struct menu_item *folder,
+                                                char *name, int int_value,
+                                                char *str_value,
+                                                char *displayed_value);
+struct menu_item *ui_menu_add_range(int id, struct menu_item *folder,
+                                    char *name, int min, int max, int step,
+                                    int initial_value);
+struct menu_item *ui_menu_add_folder(struct menu_item *folder, char *name);
+struct menu_item *ui_menu_add_divider(struct menu_item *folder);
+struct menu_item *ui_menu_add_text_field(int id, struct menu_item *folder,
+                                         char *name, char *value);
 
 // Move ownership of all children from src onto dest
-void ui_add_all(struct menu_item* src, struct menu_item* dest);
+void ui_add_all(struct menu_item *src, struct menu_item *dest);
 
 // Stubs for vice calls. Unimplemented for now.
 void ui_pause_emulation(int flag);
@@ -132,25 +143,15 @@ int ui_emulation_is_paused(void);
 // Begin raspi ui code
 void ui_init_menu(void);
 
-void ui_draw_text_buf(const char* text,
-                 int x, int y,
-                 int color,
-                 uint8_t *dst, int dst_pitch);
-void ui_draw_text(const char* text,
-                 int x, int y,
-                 int color);
+void ui_draw_text_buf(const char *text, int x, int y, int color, uint8_t *dst,
+                      int dst_pitch);
+void ui_draw_text(const char *text, int x, int y, int color);
 
-void ui_draw_rect_buf(int x, int y,
-                 int w, int h,
-                 int color,
-                 int fill,
-                 uint8_t *dst, int dst_pitch);
-void ui_draw_rect(int x, int y,
-                 int w, int h,
-                 int color,
-                 int fill);
+void ui_draw_rect_buf(int x, int y, int w, int h, int color, int fill,
+                      uint8_t *dst, int dst_pitch);
+void ui_draw_rect(int x, int y, int w, int h, int color, int fill);
 
-int ui_text_width(const char* text);
+int ui_text_width(const char *text);
 
 void ui_check_key(void);
 
@@ -160,13 +161,13 @@ void ui_render_now(void);
 void ui_error(const char *format, ...);
 void ui_info(const char *format, ...);
 
-struct menu_item* ui_pop_menu(void);
+struct menu_item *ui_pop_menu(void);
 
 // Pass in -1,-1 for a full screen menu.
-struct menu_item* ui_push_menu(int w_chars, int h_chars);
+struct menu_item *ui_push_menu(int w_chars, int h_chars);
 
 void ui_set_on_value_changed_callback(
-    void (*on_value_changed)(struct menu_item*));
+    void (*on_value_changed)(struct menu_item *));
 
 void ui_check_key();
 
