@@ -431,9 +431,13 @@ static void ui_action(long action) {
             }
          }
          else if (cur->type == MULTIPLE_CHOICE) {
+            int orig = cur->value;
             cur->value -= 1;
             if (cur->value < 0) {
                cur->value = cur->num_choices - 1;
+            }
+            while (cur->choice_disabled[cur->value] && cur->value != orig) {
+               cur->value -=1;
             }
             do_on_value_changed(menu_cursor_item[current_menu]);
          } else if (cur->type == TOGGLE) {
@@ -457,9 +461,13 @@ static void ui_action(long action) {
             }
          }
          else if (cur->type == MULTIPLE_CHOICE) {
+            int orig = cur->value;
             cur->value += 1;
             if (cur->value >= cur->num_choices) {
                cur->value = 0;
+            }
+            while (cur->choice_disabled[cur->value] && cur->value != orig) {
+               cur->value +=1;
             }
             do_on_value_changed(menu_cursor_item[current_menu]);
          } else if (cur->type == TOGGLE) {
@@ -486,9 +494,13 @@ static void ui_action(long action) {
          } else if (cur->type == BUTTON) {
             do_on_value_changed(menu_cursor_item[current_menu]);
          } else if (cur->type == MULTIPLE_CHOICE) {
+            int orig = cur->value;
             cur->value += 1;
             if (cur->value >= cur->num_choices) {
                cur->value = 0;
+            }
+            while (cur->choice_disabled[cur->value] && cur->value != orig) {
+               cur->value +=1;
             }
             do_on_value_changed(menu_cursor_item[current_menu]);
          } else if (cur->type == TEXTFIELD) {

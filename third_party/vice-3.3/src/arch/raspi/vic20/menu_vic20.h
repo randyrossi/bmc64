@@ -37,5 +37,3 @@ int get_color_brightness(void);
 int get_color_contrast(void);
 int get_color_gamma(void);
 int get_color_tint(void);
-
-int circle_use_real_keyboard(void);

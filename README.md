@@ -146,6 +146,36 @@ GND           |GND          | 8 (GND)
 
 In the menu, select either GPIO1 or GPIO2 and assign it to one of the emulated ports.
 
+# Real C64 Keyboard
+
+DO NOT ATTEMPT THIS IF YOU ARE NOT COMFORTABLE WITH WIRING THINGS UP TO YOUR PI
+I TAKE NO RESPONSIBILITY IF YOU WIRE THINGS INCORRECTLY OR DAMAGE YOUR DEVICE
+
+You can also wire a real Commodore 64 keyboard directly to the Pi. Just like on the real machine, the joystick pins 1-4,6 from both GPIO Banks 1 & 2 above are shared with the keyboard matrix I/O pins.  The downside of this is the ports can not be swapped.  That is, GPIO Bank 1 must always be Port 1 and GPIO Bank 2 must always be Port 2.  You must enable key matrix scanning from the menu to use a real keyboard. (NOTE: If you disable real c64 keyboard support, the ports can be swapped.)
+
+CIA Port | Kybd Connector Pin # | GPIO Pin | Comments
+---------|----------------------|----------|------------------
+PA       |          20          |    5     | Also GPIO 2 Up
+PA       |          19          |    6     | Also GPIO 2 Down
+PA       |          18          |    12    | Also GPIO 2 Left
+PA       |          17          |    13    | Also GPIO 2 Right
+PA       |          16          |    19    | Also GPIO 2 Fire
+PA       |          15          |    26    |
+PA       |          14          |    20    |
+PA       |          13          |    21    |
+---------|----------------------|----------|------------------
+PB       |          12          |    17    | Also GPIO 1 Up
+PB       |          11          |    18    | Also GPIO 1 Down
+PB       |          10          |    27    | Also GPIO 1 Left
+PB       |           9          |    22    | Also GPIO 1 Right
+PB       |           8          |    23    | Also GPIO 1 Fire
+PB       |           7          |    24    |
+PB       |           6          |    25    |
+PB       |           5          |    8     |
+---------|----------------------|----------|------------------
+RESTORE  |           3          |    4     |
+GND      |           1          |    6     |
+
 # CPU Temperature
 
 IMPORTANT : BMC64 v1.0.6 through v1.4 were not properly putting the other 3 (unused) cores to a low powered mode and was causing CPU temperatures to rise close to or beyond automatic throttling limits. The CPU temperature on a RPi 3 Model B clocked at @1.2Ghz hit 70 degrees without a heat sync.  V1.5+ should not have this issue.  If you are experiencing heat issues (thermometer icon in top right corner), please update your installation to the latest version.

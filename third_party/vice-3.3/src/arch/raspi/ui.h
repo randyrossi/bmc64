@@ -72,6 +72,7 @@ struct menu_item {
    int num_choices;
    char choices[MAX_CHOICES][MAX_MENU_STR];
    int choice_ints[MAX_CHOICES];
+   int choice_disabled[MAX_CHOICES];
 
    // For RANGE
    int min;

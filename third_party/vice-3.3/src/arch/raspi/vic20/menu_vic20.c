@@ -86,8 +86,3 @@ int get_color_tint() {
    resources_get_int("VICColorTint", &value);
    return value;
 }
-
-int circle_use_real_keyboard(void) {
-   // No support for this on VIC20.
-   return 0;
-} 
