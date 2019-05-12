@@ -40,6 +40,7 @@ static unsigned char mod_states;
 
 // Real C64 keyboard matrix states
 static bool kbdMatrixStates[8][8];
+static int kbdRestoreState;
 
 extern "C" {
 int circle_get_machine_timing() {
@@ -176,6 +177,7 @@ CKernel::CKernel(void)
     gpio_debounce_state[i] = BTN_UP;
   }
 
+  kbdRestoreState = HIGH;
   for (int i = 0; i < 8; i++) {
     for (int j = 0; j < 8; j++) {
       kbdMatrixStates[i][j] = HIGH;
@@ -451,6 +453,16 @@ void CKernel::ScanKeyboardAndJoysticks() {
   ReadJoysticks(0, false);
   ReadJoysticks(1, false);
 
+  // For restore, there is no public API that triggers it so we will
+  // pass the keycode that will.
+  int restore = gpioPins[GPIO_KBD_RESTORE_INDEX]->Read();
+  if (restore == LOW && kbdRestoreState == HIGH) {
+     circle_key_pressed(KEYCODE_PageUp);
+  } else if (restore == HIGH && kbdRestoreState == LOW) {
+     circle_key_released(KEYCODE_PageUp);
+  }
+  kbdRestoreState = restore;
+
   // Keyboard scan
   for (int kbdPA = 0; kbdPA < 8; kbdPA++) {
     gpioPins[kbdPA]->SetMode(GPIOModeOutput);
@@ -458,10 +470,20 @@ void CKernel::ScanKeyboardAndJoysticks() {
     for (int kbdPB = 0; kbdPB < 8; kbdPB++) {
       // Read PBi line
       int val = gpioPins[kbdPB + 8]->Read();
+
+      int PA = kbdPA;
+      int PB = kbdPB;
+
+      if (PA == 0) PA = 7;
+      else if (PA == 7) PA = 0;
+
+      if (PB == 3) PB = 7;
+      else if (PB == 7) PB = 3;
+
       if (val == LOW && kbdMatrixStates[kbdPB][kbdPA] == HIGH) {
-        circle_keyboard_set_latch_keyarr(kbdPA, kbdPB, 1);
+        circle_keyboard_set_latch_keyarr(PA, PB, 1);
       } else if (val == HIGH && kbdMatrixStates[kbdPB][kbdPA] == LOW) {
-        circle_keyboard_set_latch_keyarr(kbdPA, kbdPB, 0);
+        circle_keyboard_set_latch_keyarr(PA, PB, 0);
       }
       kbdMatrixStates[kbdPB][kbdPA] = val;
     }

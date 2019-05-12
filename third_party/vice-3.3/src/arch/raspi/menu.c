@@ -511,6 +511,7 @@ static int save_settings() {
   fprintf(fp, "overlay=%d\n", overlay_item->value);
   fprintf(fp, "tapereset=%d\n", tape_reset_with_machine_item->value);
   fprintf(fp, "reset_confirm=%d\n", reset_confirm_item->value);
+  fprintf(fp, "real_kbd=%d\n", use_real_keyboard_item->value);
 
   int drive_type;
 
@@ -674,6 +675,8 @@ static void load_settings() {
       hotkey_cf7_item->value = value;
     } else if (strcmp(name, "reset_confirm") == 0) {
       reset_confirm_item->value = value;
+    } else if (strcmp(name, "real_kbd") == 0) {
+      use_real_keyboard_item->value = value;
     }
   }
   fclose(fp);
@@ -1632,6 +1635,7 @@ void build_menu(struct menu_item *root) {
   load_settings();
   ui_set_hotkeys();
   ui_set_joy_devs();
+  check_real_keyboard_settings();
 
   // Always turn off resampling
   resources_set_int("SidResidSampling", 0);
