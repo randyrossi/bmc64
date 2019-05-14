@@ -145,10 +145,3 @@
   * Added 1351 Mouse support via USB Mouse
   * Sorted files in directory listings
   * Added Reset Soft/Hard button/hotkey functions
-  * Added real C64 keyboard support.
-    Advantages: Eliminates need for Keyrah or USB keyboard
-                Saves up to 2 frames in response time from keyrah
-                keypress/joystick signals.
-                Can hold RUNSTOP and boot with Final Cart III plugged in
-    Drawbacks: Can't swap ports. Bank 0 must be port 1, Bank 1 must be port 2
-

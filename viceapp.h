@@ -60,6 +60,7 @@
 // Special functions
 #define GPIO_MENU 16
 
+// Keyboard matrix port B pins
 #define GPIO_KBD_PB_0 17 // Same as GPIO_JOY_1_UP
 #define GPIO_KBD_PB_1 18 // Same as GPIO_JOY_1_DOWN
 #define GPIO_KBD_PB_2 27 // Same as GPIO_JOY_1_LEFT
@@ -69,6 +70,7 @@
 #define GPIO_KBD_PB_6 25
 #define GPIO_KBD_PB_7 8
 
+// Keyboard matrix port A pins
 #define GPIO_KBD_PA_0 5  // Same as GPIO_JOY_2_UP
 #define GPIO_KBD_PA_1 6  // Same as GPIO_JOY_2_DOWN
 #define GPIO_KBD_PA_2 12 // Same as GPIO_JOY_2_LEFT
@@ -77,6 +79,8 @@
 #define GPIO_KBD_PA_5 26
 #define GPIO_KBD_PA_6 20
 #define GPIO_KBD_PA_7 21
+
+// Restore key pin
 #define GPIO_KBD_RESTORE 04
 
 // These are the indices of each pin in our gpio pin array

@@ -1501,10 +1501,12 @@ void build_menu(struct menu_item *root) {
   strcpy(child->choices[KEYBOARD_TYPE_US], "US");
   strcpy(child->choices[KEYBOARD_TYPE_UK], "UK");
 
+#ifdef 0
   if (machine_class == VICE_MACHINE_C64) {
     child = use_real_keyboard_item = ui_menu_add_toggle(
-        MENU_REAL_KEYBOARD, parent, "Enable Real Keyboard", 0);
+        MENU_REAL_KEYBOARD, parent, "Use Real Keyboard", 0);
   }
+#endif
 
   child = hotkey_cf1_item =
       ui_menu_add_multiple_choice(MENU_HOTKEY_CF1, parent, "C= + F1 Hotkey");
