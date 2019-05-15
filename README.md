@@ -12,7 +12,8 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
   * Low latency between input & audio/video
   * No shutdown sequence required, just power off
   * High compatibility thanks to VICE
-  * Can wire real Commodore/Atari joysticks via GPIO
+  * Can wire real Commodore/Atari Joysticks via GPIO (no PCB option)
+  * Can wire real C64 keyboard + Joysticks (requires a PCB)
   * Keyrah friendly
 
 # Limitations
@@ -128,12 +129,12 @@ In v1.0.5+, there is a configuration sub-menu that will help you configure your 
 
 Since v1.0.8, you can hold down keys or gamepad/joystick directions and the navigation action will auto-repeat.  This accelerates the longer you hold in the same direction.
 
-# GPIO Joystick Banks
+# GPIO Joystick Banks (No PCB required)
 
 DO NOT ATTEMPT THIS IF YOU ARE NOT COMFORTABLE WITH WIRING THINGS UP TO YOUR PI
 I TAKE NO RESPONSIBILITY IF YOU WIRE THINGS INCORRECTLY OR DAMAGE YOUR DEVICE
 
-It's possible to wire a real Commodore or Atari joystick directly to the Pi. The switches inside the joystick will ground the pins like they would on a real C64.  Wiring is as follows:
+It's possible to wire real Commodore or Atari joysticks directly to the Pi without a PCB. This mode requires the 'Use Keyboard/DB9 PCB' option in the Keyboard section of the menu to be disabled (Off). Each joystick gets its own set of GPIO pins, making it easy to hook up using nothing but jumpers and DB9 connectors.  (See the website for adapter instructions).  The switches inside the joystick will ground the pins like they would on a real C64.  Wiring is as follows:
 
 GPIO BANK 1   | GPIO BANK 2 | C64 JOY PIN
 --------------|-------------|-------------
@@ -145,6 +146,46 @@ GPIO23        |GPIO19       | 6 (Fire)
 GND           |GND          | 8 (GND)
 
 In the menu, select either GPIO1 or GPIO2 and assign it to one of the emulated ports.
+
+# Real C64 Keyboard + Joysticks (Requires PCB)
+
+DO NOT ATTEMPT THIS IF YOU ARE NOT COMFORTABLE WITH WIRING THINGS UP TO YOUR PI
+I TAKE NO RESPONSIBILITY IF YOU WIRE THINGS INCORRECTLY OR DAMAGE YOUR DEVICE
+
+You can also wire a real Commodore 64 keyboard and joystick ports to the Pi if you are willing to invest in making a PCB. This mode requires the 'Use Keyboard/DB9 PCB' option in the Keyboard section of the menu to be enabled.  The way the keyboard and joysticks are polled is different than in the option above so the wiring is different.  It requires a PCB, a 20 pin header and DB9 ports.
+
+C64 JOY PIN     | GPIO Pin | Comments
+----------------|----------|------------------
+1 (Both)        | 17       | Up
+2 (Both)        | 18       | Down
+3 (Both)        | 27       | Left
+4 (Both)        | 22       | Right
+6 (Both)        | 23       | Fire
+8 (Joy1)        | 2        | JS1_SELECT
+8 (Joy2)        | 3        | JS2_SELECT
+
+Kybd Connector Pin #  | GPIO Pin | Comments
+----------------------|----------|------------------
+          20          |    5     | PA
+          19          |    6     | PA
+          18          |    12    | PA
+          17          |    13    | PA
+          16          |    19    | PA
+          15          |    26    | PA
+          14          |    20    | PA
+          13          |    21    | PA
+----------------------|----------|------------------
+          12          |    17    | PB
+          11          |    18    | PB
+          10          |    27    | PB
+           9          |    22    | PB
+           8          |    23    | PB
+           7          |    24    | PB
+           6          |    25    | PB
+           5          |    8     | PB
+----------------------|----------|------------------
+           3          |    4     | RESTORE
+           1          |    6     | GND
 
 # CPU Temperature
 

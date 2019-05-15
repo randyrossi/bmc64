@@ -58,6 +58,11 @@
 #include "ui.h"
 #include "util.h"
 
+// This feature is hidden for now. Activated 'new' input method where
+// both keyboard and joysticks can be hooked up with a 'hat' or
+// separate board to eliminate USB keyboard.
+#define RASPI_NEW_INPUT 1
+
 // For filename filters
 #define FILTER_NONE 0
 #define FILTER_DISK 1
@@ -103,7 +108,7 @@ struct menu_item *gamma_item;
 struct menu_item *tint_item;
 struct menu_item *warp_item;
 struct menu_item *reset_confirm_item;
-struct menu_item *use_real_keyboard_item;
+struct menu_item *use_new_input_item;
 
 int osd_active;
 
@@ -154,8 +159,6 @@ static char snap_filt_ext[1][5] = {".vsf"};
 #define DIR_SNAPS 4
 #define DIR_ROMS 5
 #define NUM_DIR_TYPES 6
-
-static void check_real_keyboard_settings(void);
 
 // What directories to initialize file search dialogs with for
 // each type of file.
@@ -511,7 +514,9 @@ static int save_settings() {
   fprintf(fp, "overlay=%d\n", overlay_item->value);
   fprintf(fp, "tapereset=%d\n", tape_reset_with_machine_item->value);
   fprintf(fp, "reset_confirm=%d\n", reset_confirm_item->value);
-  fprintf(fp, "real_kbd=%d\n", use_real_keyboard_item->value);
+#ifdef RASPI_NEW_INPUT
+  fprintf(fp, "new_input=%d\n", use_new_input_item->value);
+#endif
 
   int drive_type;
 
@@ -675,8 +680,10 @@ static void load_settings() {
       hotkey_cf7_item->value = value;
     } else if (strcmp(name, "reset_confirm") == 0) {
       reset_confirm_item->value = value;
-    } else if (strcmp(name, "real_kbd") == 0) {
-      use_real_keyboard_item->value = value;
+    } else if (strcmp(name, "new_input") == 0) {
+#ifdef RASPI_NEW_INPUT
+      use_new_input_item->value = value;
+#endif
     }
   }
   fclose(fp);
@@ -689,7 +696,6 @@ void menu_swap_joysticks() {
   joyswap = 1 - joyswap;
   overlay_joyswap_changed(joyswap);
   ui_set_joy_items();
-  check_real_keyboard_settings();
 }
 
 static char *fullpath(int dir_type, char *name) {
@@ -883,29 +889,6 @@ static void toggle_warp(int value) {
   raspi_warp = value;
   overlay_warp_changed(value);
   warp_item->value = value;
-}
-
-static void check_real_keyboard_settings() {
-  // When a real keyboard is used, bank 1 must be port 1 and
-  // bank 2 must be port 2. So make sure we make the changes
-  // to current settings and disable those options.
-  struct menu_item *item = use_real_keyboard_item;
-  if (item->value) {
-    if (port_1_menu_item->choice_ints[port_1_menu_item->value] ==
-        JOYDEV_GPIO_1) {
-      port_1_menu_item->value = 3;
-      port_1_menu_item->choice_disabled[4] = 1;
-    }
-    if (port_2_menu_item->choice_ints[port_1_menu_item->value] ==
-        JOYDEV_GPIO_0) {
-      port_2_menu_item->value = 4;
-      port_2_menu_item->choice_disabled[3] = 1;
-    }
-    ui_set_joy_devs();
-  } else {
-    port_1_menu_item->choice_disabled[4] = 0;
-    port_2_menu_item->choice_disabled[3] = 0;
-  }
 }
 
 // Interpret what menu item changed and make the change to vice
@@ -1204,8 +1187,8 @@ static void menu_value_changed(struct menu_item *item) {
     cartridge_trigger_freeze();
     ui_pop_all_and_toggle();
     break;
-  case MENU_REAL_KEYBOARD:
-    check_real_keyboard_settings();
+  case MENU_NEW_INPUT:
+    // Nothing to do.
     return;
   }
 
@@ -1501,10 +1484,10 @@ void build_menu(struct menu_item *root) {
   strcpy(child->choices[KEYBOARD_TYPE_US], "US");
   strcpy(child->choices[KEYBOARD_TYPE_UK], "UK");
 
-#ifdef 0
+#ifdef RASPI_NEW_INPUT
   if (machine_class == VICE_MACHINE_C64) {
-    child = use_real_keyboard_item = ui_menu_add_toggle(
-        MENU_REAL_KEYBOARD, parent, "Use Real Keyboard", 0);
+    child = use_new_input_item = ui_menu_add_toggle(
+        MENU_NEW_INPUT, parent, "Use Keyboard/DB9 PCB", 0);
   }
 #endif
 
@@ -1637,7 +1620,6 @@ void build_menu(struct menu_item *root) {
   load_settings();
   ui_set_hotkeys();
   ui_set_joy_devs();
-  check_real_keyboard_settings();
 
   // Always turn off resampling
   resources_set_int("SidResidSampling", 0);
@@ -1722,9 +1704,11 @@ void menu_quick_func(int button_assignment) {
   }
 }
 
-int circle_use_real_keyboard(void) {
+int circle_use_new_input() {
+#ifdef RASPI_NEW_INPUT
   if (machine_class == VICE_MACHINE_C64) {
-    return use_real_keyboard_item->value;
+    return use_new_input_item->value;
   }
+#endif
   return 0;
 }

@@ -445,14 +445,7 @@ ViceApp::TShutdownMode CKernel::Run(void) {
   return ShutdownHalt;
 }
 
-// For a real C64 keyboard + joystick ports
-void CKernel::ScanKeyboardAndJoysticks() {
-
-  // When we're using a real C64 keyboard, ports cannot be assigned.
-  // The events must go to the 'native' port for that bank.
-  ReadJoysticks(0, false);
-  ReadJoysticks(1, false);
-
+void CKernel::ScanKeyboard() {
   // For restore, there is no public API that triggers it so we will
   // pass the keycode that will.
   int restore = gpioPins[GPIO_KBD_RESTORE_INDEX]->Read();
@@ -468,27 +461,144 @@ void CKernel::ScanKeyboardAndJoysticks() {
     gpioPins[kbdPA]->SetMode(GPIOModeOutput);
     gpioPins[kbdPA]->Write(LOW);
     for (int kbdPB = 0; kbdPB < 8; kbdPB++) {
-      // Read PBi line
+      // Read PB line
       int val = gpioPins[kbdPB + 8]->Read();
 
-      int PA = kbdPA;
-      int PB = kbdPB;
-
-      if (PA == 0) PA = 7;
-      else if (PA == 7) PA = 0;
-
-      if (PB == 3) PB = 7;
-      else if (PB == 7) PB = 3;
+      // NOTE: PA pins 7 and 0 are swapped out of order
+      // NOTE: PB pins 3 and 7 are swapped out of order
 
       if (val == LOW && kbdMatrixStates[kbdPB][kbdPA] == HIGH) {
-        circle_keyboard_set_latch_keyarr(PA, PB, 1);
+        circle_keyboard_set_latch_keyarr(kbdPA, kbdPB, 1);
       } else if (val == HIGH && kbdMatrixStates[kbdPB][kbdPA] == LOW) {
-        circle_keyboard_set_latch_keyarr(PA, PB, 0);
+        circle_keyboard_set_latch_keyarr(kbdPA, kbdPB, 0);
       }
       kbdMatrixStates[kbdPB][kbdPA] = val;
     }
     gpioPins[kbdPA]->SetMode(GPIOModeInputPullUp);
   }
+}
+
+// The 'new' way of reading joysticks compatible with real
+// keyboard hookup.  Requires circuit board and header.
+void CKernel::ReadJoystick(int device) {
+  static int js_prev_0[5] = {HIGH, HIGH, HIGH, HIGH, HIGH};
+  static int js_prev_1[5] = {HIGH, HIGH, HIGH, HIGH, HIGH};
+
+  int *js_prev;
+  CGPIOPin *js_selector;
+  int port = joydevs[device].port;
+  int ui_activated = circle_ui_activated();
+
+  // If ui is activated, don't bail if port assignment can't be done
+  // since the event will always go to the ui. We want the joystick to
+  // function in the ui even if the control port is not assigned to be
+  // gpio.
+  if (device == 0) {
+    js_prev = js_prev_0;
+    js_selector = gpioPins[GPIO_JS1_SELECT];
+    if (joydevs[0].device == JOYDEV_GPIO_0) {
+      port = joydevs[0].port;
+    } else if (joydevs[1].device == JOYDEV_GPIO_0) {
+      port = joydevs[1].port;
+    } else if (!ui_activated) {
+      return;
+    }
+  } else {
+    js_prev = js_prev_1;
+    js_selector = gpioPins[GPIO_JS2_SELECT];
+    if (joydevs[0].device == JOYDEV_GPIO_1) {
+      port = joydevs[0].port;
+    } else if (joydevs[1].device == JOYDEV_GPIO_1) {
+      port = joydevs[1].port;
+    } else if (!ui_activated) {
+      return;
+    }
+  }
+
+  // Drive the select pin low. Don't leave this routine
+  // before setting it as input-pullup again.
+  js_selector->SetMode(GPIOModeOutput);
+  js_selector->Write(LOW);
+
+  int js_up = joystickPins[JOY_UP]->Read();
+  int js_down = joystickPins[JOY_DOWN]->Read();
+  int js_left = joystickPins[JOY_LEFT]->Read();
+  int js_right = joystickPins[JOY_RIGHT]->Read();
+  int js_fire = joystickPins[JOY_FIRE]->Read();
+
+  if (js_up == LOW && js_prev[JOY_UP] != LOW) {
+    if (ui_activated)
+      circle_ui_key_interrupt(KEYCODE_Up, 1);
+    else {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x01);
+    }
+  } else if (js_up != LOW && js_prev[JOY_UP] == LOW) {
+    if (ui_activated)
+      circle_ui_key_interrupt(KEYCODE_Up, 0);
+    else {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x01);
+    }
+  }
+  if (js_down == LOW && js_prev[JOY_DOWN] != LOW) {
+    if (ui_activated)
+      circle_ui_key_interrupt(KEYCODE_Down, 1);
+    else {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x02);
+    }
+  } else if (js_down != LOW && js_prev[JOY_DOWN] == LOW) {
+    if (ui_activated)
+      circle_ui_key_interrupt(KEYCODE_Down, 0);
+    else {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x02);
+    }
+  }
+  if (js_left == LOW && js_prev[JOY_LEFT] != LOW) {
+    if (ui_activated)
+      circle_ui_key_interrupt(KEYCODE_Left, 1);
+    else {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x04);
+    }
+  } else if (js_left != LOW && js_prev[JOY_LEFT] == LOW) {
+    if (ui_activated)
+      circle_ui_key_interrupt(KEYCODE_Left, 0);
+    else {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x04);
+    }
+  }
+  if (js_right == LOW && js_prev[JOY_RIGHT] != LOW) {
+    if (ui_activated)
+      circle_ui_key_interrupt(KEYCODE_Right, 1);
+    else {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x08);
+    }
+  } else if (js_right != LOW && js_prev[JOY_RIGHT] == LOW) {
+    if (ui_activated)
+      circle_ui_key_interrupt(KEYCODE_Right, 0);
+    else {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x08);
+    }
+  }
+  if (js_fire == LOW && js_prev[JOY_FIRE] != LOW) {
+    if (ui_activated)
+      circle_ui_key_interrupt(KEYCODE_Return, 1);
+    else {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x10);
+    }
+  } else if (js_fire != LOW && js_prev[JOY_FIRE] == LOW) {
+    if (ui_activated)
+      circle_ui_key_interrupt(KEYCODE_Return, 0);
+    else {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x10);
+    }
+  }
+
+  js_prev[JOY_UP] = js_up;
+  js_prev[JOY_DOWN] = js_down;
+  js_prev[JOY_LEFT] = js_left;
+  js_prev[JOY_RIGHT] = js_right;
+  js_prev[JOY_FIRE] = js_fire;
+
+  js_selector->SetMode(GPIOModeInputPullUp);
 }
 
 ssize_t CKernel::vice_write(int fd, const void *buf, size_t count) {
@@ -738,26 +848,26 @@ void CKernel::circle_check_gpio() {
     circle_key_released(KEYCODE_F12);
   }
 
-  // Now do keyboard and/or joysticks.
-  if (circle_use_real_keyboard()) {
-    ScanKeyboardAndJoysticks();
+  if (circle_use_new_input()) {
+    // New way of reading GPIO keyboard and joysticks.
+    ScanKeyboard();
+    ReadJoystick(0);
+    ReadJoystick(1);
   } else {
-    ReadJoysticks(0, true);
-    ReadJoysticks(1, true);
+    // Old way of reading joysticks.
+    ReadJoystickOld(0);
+    ReadJoystickOld(1);
   }
 }
 
-// If assignable is true, means we will route the event to whatever
-// port the user assigned the bank of pins to mean. Otherwise, the event
-// must go to the 'native' port that bank of pins belongs to (when using
-// real c64 keyboards).  Note 'device' is overloaded here.  The argument
-// passed in is the index of the gpio bank we are about to poll.  While
-// joydevs[x].device is the type of device the user assigned to the control
-// port. So when gpio joys are assignable, we find which port the event
-// should go to based on this info.  If the joydev device type is not
-// one of the valid GPIO options (taking assignable into consideration),
-// then no events are sent.
-void CKernel::ReadJoysticks(int device, bool assignable) {
+// Read the 'old' GPIO Bank 1 & 2 configuration where each joystick
+// gets its own set of pins.  In retrospect, there was no need to
+// do this other than it makes hooking them up easy with DB9 connectors
+// and jumpers.  Keeping this for compatibility. Note 'device' is
+// overloaded here.  The argument passed in is the index of the gpio
+// bank we are about to poll.  While joydevs[x].device is the type of
+// device the user assigned to the control port.
+void CKernel::ReadJoystickOld(int device) {
   static int js_prev_0[5] = {HIGH, HIGH, HIGH, HIGH, HIGH};
   static int js_prev_1[5] = {HIGH, HIGH, HIGH, HIGH, HIGH};
 
@@ -772,30 +882,22 @@ void CKernel::ReadJoysticks(int device, bool assignable) {
   // gpio.
   if (device == 0) {
     js_prev = js_prev_0;
-    js_pins = joystickPins1;
-    if (assignable) {
-      if (joydevs[0].device == JOYDEV_GPIO_0) {
-        port = joydevs[0].port;
-      } else if (joydevs[1].device == JOYDEV_GPIO_0) {
-        port = joydevs[1].port;
-      } else if (!ui_activated) {
-        return;
-      }
-    } else if (joydevs[0].device != JOYDEV_GPIO_0 && !ui_activated) {
+    js_pins = oldJoystickPins1;
+    if (joydevs[0].device == JOYDEV_GPIO_0) {
+      port = joydevs[0].port;
+    } else if (joydevs[1].device == JOYDEV_GPIO_0) {
+      port = joydevs[1].port;
+    } else if (!ui_activated) {
       return;
     }
   } else {
     js_prev = js_prev_1;
-    js_pins = joystickPins2;
-    if (assignable) {
-      if (joydevs[0].device == JOYDEV_GPIO_1) {
-        port = joydevs[0].port;
-      } else if (joydevs[1].device == JOYDEV_GPIO_1) {
-        port = joydevs[1].port;
-      } else if (!ui_activated) {
-        return;
-      }
-    } else if (joydevs[1].device != JOYDEV_GPIO_1 && !ui_activated) {
+    js_pins = oldJoystickPins2;
+    if (joydevs[0].device == JOYDEV_GPIO_1) {
+      port = joydevs[0].port;
+    } else if (joydevs[1].device == JOYDEV_GPIO_1) {
+      port = joydevs[1].port;
+    } else if (!ui_activated) {
       return;
     }
   }

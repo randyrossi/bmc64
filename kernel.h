@@ -90,8 +90,9 @@ private:
   void SetupUSBKeyboard();
   void SetupUSBMouse();
   int GetGpioPinState(int pinIndex);
-  void ScanKeyboardAndJoysticks();
-  void ReadJoysticks(int device, bool assignable);
+  void ScanKeyboard();
+  void ReadJoystick(int device);
+  void ReadJoystickOld(int device);
 
   static bool uiShift;
 
