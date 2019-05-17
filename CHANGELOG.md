@@ -145,3 +145,4 @@
   * Added 1351 Mouse support via USB Mouse
   * Sorted files in directory listings
   * Added Reset Soft/Hard button/hotkey functions
+  * Removed GPIO 16 to activate menu (no need since key combos + usb are available)

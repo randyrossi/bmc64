@@ -89,7 +89,7 @@ private:
   void InitSound();
   void SetupUSBKeyboard();
   void SetupUSBMouse();
-  int GetGpioPinState(int pinIndex);
+  int ReadDebounced(int pinIndex);
   void ScanKeyboard();
   void ReadJoystick(int device);
   void ReadJoystickOld(int device);

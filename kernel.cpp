@@ -460,6 +460,7 @@ void CKernel::ScanKeyboard() {
   for (int kbdPA = 0; kbdPA < 8; kbdPA++) {
     gpioPins[kbdPA]->SetMode(GPIOModeOutput);
     gpioPins[kbdPA]->Write(LOW);
+    circle_sleep(10);
     for (int kbdPB = 0; kbdPB < 8; kbdPB++) {
       // Read PB line
       int val = gpioPins[kbdPB + 8]->Read();
@@ -495,7 +496,7 @@ void CKernel::ReadJoystick(int device) {
   // gpio.
   if (device == 0) {
     js_prev = js_prev_0;
-    js_selector = gpioPins[GPIO_JS1_SELECT];
+    js_selector = gpioPins[GPIO_JS1_SELECT_INDEX];
     if (joydevs[0].device == JOYDEV_GPIO_0) {
       port = joydevs[0].port;
     } else if (joydevs[1].device == JOYDEV_GPIO_0) {
@@ -505,7 +506,7 @@ void CKernel::ReadJoystick(int device) {
     }
   } else {
     js_prev = js_prev_1;
-    js_selector = gpioPins[GPIO_JS2_SELECT];
+    js_selector = gpioPins[GPIO_JS2_SELECT_INDEX];
     if (joydevs[0].device == JOYDEV_GPIO_1) {
       port = joydevs[0].port;
     } else if (joydevs[1].device == JOYDEV_GPIO_1) {
@@ -519,6 +520,7 @@ void CKernel::ReadJoystick(int device) {
   // before setting it as input-pullup again.
   js_selector->SetMode(GPIOModeOutput);
   js_selector->Write(LOW);
+  circle_sleep(10);
 
   int js_up = joystickPins[JOY_UP]->Read();
   int js_down = joystickPins[JOY_DOWN]->Read();
@@ -807,8 +809,7 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
   }
 }
 
-// This debounces the menu pin
-int CKernel::GetGpioPinState(int pinIndex) {
+int CKernel::ReadDebounced(int pinIndex) {
   CGPIOPin *pin = gpioPins[pinIndex];
   if (pin->Read() == LOW) {
     if (gpio_debounce_state[pinIndex] == BTN_PRESS) {
@@ -841,19 +842,17 @@ int CKernel::GetGpioPinState(int pinIndex) {
 // function. Also scans a real C64 keyboard and joysticks if enabled.
 // Otherwise, just scans gpio joysticks (which are swappable).
 void CKernel::circle_check_gpio() {
-  // Do any pins that have special functions.
-  // TODO: Make these assignable like usb buttons and hotkeys.
-  if (GetGpioPinState(GPIO_MENU_INDEX) == BTN_PRESS) {
-    circle_key_pressed(KEYCODE_F12);
-    circle_key_released(KEYCODE_F12);
-  }
-
-  if (circle_use_new_input()) {
+  if (circle_use_pcb()) {
     // New way of reading GPIO keyboard and joysticks.
     ScanKeyboard();
     ReadJoystick(0);
     ReadJoystick(1);
   } else {
+    // GPIO Pin 16 to activate menu is not supported anymore.
+    //if (ReadDebounced(GPIO_MENU_INDEX) == BTN_PRESS) {
+    //  circle_key_pressed(KEYCODE_F12);
+    //  circle_key_released(KEYCODE_F12);
+    //}
     // Old way of reading joysticks.
     ReadJoystickOld(0);
     ReadJoystickOld(1);

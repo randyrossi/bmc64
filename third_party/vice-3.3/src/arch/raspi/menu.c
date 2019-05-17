@@ -61,7 +61,7 @@
 // This feature is hidden for now. Activated 'new' input method where
 // both keyboard and joysticks can be hooked up with a 'hat' or
 // separate board to eliminate USB keyboard.
-#define RASPI_NEW_INPUT 1
+#define RASPI_SUPPORT_PCB 1
 
 // For filename filters
 #define FILTER_NONE 0
@@ -108,7 +108,7 @@ struct menu_item *gamma_item;
 struct menu_item *tint_item;
 struct menu_item *warp_item;
 struct menu_item *reset_confirm_item;
-struct menu_item *use_new_input_item;
+struct menu_item *use_pcb_item;
 
 int osd_active;
 
@@ -514,8 +514,8 @@ static int save_settings() {
   fprintf(fp, "overlay=%d\n", overlay_item->value);
   fprintf(fp, "tapereset=%d\n", tape_reset_with_machine_item->value);
   fprintf(fp, "reset_confirm=%d\n", reset_confirm_item->value);
-#ifdef RASPI_NEW_INPUT
-  fprintf(fp, "new_input=%d\n", use_new_input_item->value);
+#ifdef RASPI_SUPPORT_PCB
+  fprintf(fp, "pcb=%d\n", use_pcb_item->value);
 #endif
 
   int drive_type;
@@ -680,9 +680,9 @@ static void load_settings() {
       hotkey_cf7_item->value = value;
     } else if (strcmp(name, "reset_confirm") == 0) {
       reset_confirm_item->value = value;
-    } else if (strcmp(name, "new_input") == 0) {
-#ifdef RASPI_NEW_INPUT
-      use_new_input_item->value = value;
+    } else if (strcmp(name, "pcb") == 0) {
+#ifdef RASPI_SUPPORT_PCB
+      use_pcb_item->value = value;
 #endif
     }
   }
@@ -1187,9 +1187,6 @@ static void menu_value_changed(struct menu_item *item) {
     cartridge_trigger_freeze();
     ui_pop_all_and_toggle();
     break;
-  case MENU_NEW_INPUT:
-    // Nothing to do.
-    return;
   }
 
   // Only items that were for file selection/nav should have these set...
@@ -1484,10 +1481,10 @@ void build_menu(struct menu_item *root) {
   strcpy(child->choices[KEYBOARD_TYPE_US], "US");
   strcpy(child->choices[KEYBOARD_TYPE_UK], "UK");
 
-#ifdef RASPI_NEW_INPUT
+#ifdef RASPI_SUPPORT_PCB
   if (machine_class == VICE_MACHINE_C64) {
-    child = use_new_input_item = ui_menu_add_toggle(
-        MENU_NEW_INPUT, parent, "Use Keyboard/DB9 PCB", 0);
+    child = use_pcb_item = ui_menu_add_toggle(
+        MENU_USE_PCB, parent, "Use Keyboard/DB9 PCB", 0);
   }
 #endif
 
@@ -1704,10 +1701,10 @@ void menu_quick_func(int button_assignment) {
   }
 }
 
-int circle_use_new_input() {
-#ifdef RASPI_NEW_INPUT
+int circle_use_pcb() {
+#ifdef RASPI_SUPPORT_PCB
   if (machine_class == VICE_MACHINE_C64) {
-    return use_new_input_item->value;
+    return use_pcb_item->value;
   }
 #endif
   return 0;

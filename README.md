@@ -115,7 +115,7 @@ You can switch between 6581 and 8580 models as well as turn on/off the filter.  
 
 Use F12 to bring up the menu and ESC/RUNSTOP to exit.
 
-If you use a real commodore keyboard, you can use Commodore Key + F7 in place of F12. You can also wire a button between GPIO16 and GND to activate the menu or use gamepads with buttons configured for the menu.  Gamepads that have had a button configured to bring up the menu don't have to be assigned to a port to do that.  So even if you have DB9 joysticks wired, you should still be able to plug in a wired/wireless usb gamepad to trigger the menu if you want.
+If you use a real commodore keyboard, you can use Commodore Key + F7 in place of F12 (This key combination is configurable). You can also use gamepads with buttons configured for the menu.  Gamepads that have had a button configured to bring up the menu don't have to be assigned to a port to do that.  So even if you have DB9 joysticks wired, you should still be able to plug in a wired/wireless usb gamepad to trigger the menu if you want.
 
 For the Keyrah, if you find your '=' key doesn't work.  Try switching the keyboard type to 'UK'.  You must save and restart for this to take effect.
 
@@ -146,46 +146,6 @@ GPIO23        |GPIO19       | 6 (Fire)
 GND           |GND          | 8 (GND)
 
 In the menu, select either GPIO1 or GPIO2 and assign it to one of the emulated ports.
-
-# Real C64 Keyboard + Joysticks (Requires PCB)
-
-DO NOT ATTEMPT THIS IF YOU ARE NOT COMFORTABLE WITH WIRING THINGS UP TO YOUR PI
-I TAKE NO RESPONSIBILITY IF YOU WIRE THINGS INCORRECTLY OR DAMAGE YOUR DEVICE
-
-You can also wire a real Commodore 64 keyboard and joystick ports to the Pi if you are willing to invest in making a PCB. This mode requires the 'Use Keyboard/DB9 PCB' option in the Keyboard section of the menu to be enabled.  The way the keyboard and joysticks are polled is different than in the option above so the wiring is different.  It requires a PCB, a 20 pin header and DB9 ports.
-
-C64 JOY PIN     | GPIO Pin | Comments
-----------------|----------|------------------
-1 (Both)        | 17       | Up
-2 (Both)        | 18       | Down
-3 (Both)        | 27       | Left
-4 (Both)        | 22       | Right
-6 (Both)        | 23       | Fire
-8 (Joy1)        | 2        | JS1_SELECT
-8 (Joy2)        | 3        | JS2_SELECT
-
-Kybd Connector Pin #  | GPIO Pin | Comments
-----------------------|----------|------------------
-          20          |    5     | PA
-          19          |    6     | PA
-          18          |    12    | PA
-          17          |    13    | PA
-          16          |    19    | PA
-          15          |    26    | PA
-          14          |    20    | PA
-          13          |    21    | PA
-----------------------|----------|------------------
-          12          |    17    | PB
-          11          |    18    | PB
-          10          |    27    | PB
-           9          |    22    | PB
-           8          |    23    | PB
-           7          |    24    | PB
-           6          |    25    | PB
-           5          |    8     | PB
-----------------------|----------|------------------
-           3          |    4     | RESTORE
-           1          |    6     | GND
 
 # CPU Temperature
 

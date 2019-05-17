@@ -193,6 +193,6 @@ extern void circle_button_down(int pressed);
 extern void circle_emu_quick_func_interrupt(int button_assignment);
 
 extern void circle_keyboard_set_latch_keyarr(int row, int col, int value);
-extern int circle_use_new_input(void);
+extern int circle_use_pcb(void);
 
 #endif
