@@ -244,8 +244,6 @@ static int handle_key_combo_release(long key) {
       case BTN_ASSIGN_SWAP_PORTS:
       case BTN_ASSIGN_STATUS_TOGGLE:
       case BTN_ASSIGN_CART_FREEZE:
-      case BTN_ASSIGN_RESET_HARD:
-      case BTN_ASSIGN_RESET_SOFT:
         circle_emu_quick_func_interrupt(key_combo_states[i].function);
         key_combo_states[i].invoked = 0;
         return 1;
@@ -273,6 +271,8 @@ static void handle_key_combo_function() {
         ui_toggle_pending = 2;
         circle_lock_release();
         break;
+      case BTN_ASSIGN_RESET_HARD:
+      case BTN_ASSIGN_RESET_SOFT:
       case BTN_ASSIGN_TAPE_MENU:
       case BTN_ASSIGN_CART_MENU:
         circle_emu_quick_func_interrupt(key_combo_states[i].function);

@@ -421,6 +421,11 @@ static void ui_set_joy_items() {
   if (port_1_menu_item->choice_ints[value] == JOYDEV_NONE) {
     resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
   } else if (port_1_menu_item->choice_ints[value] == JOYDEV_MOUSE) {
+    if (port_2_menu_item->choice_ints[port_2_menu_item->value]
+        == JOYDEV_MOUSE) {
+       resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
+       port_2_menu_item->value = 0;
+    }
     resources_set_int("JoyPort1Device", JOYPORT_ID_MOUSE_1351);
   } else {
     resources_set_int("JoyPort1Device", JOYPORT_ID_JOYSTICK);
@@ -430,6 +435,11 @@ static void ui_set_joy_items() {
   if (port_2_menu_item->choice_ints[value] == JOYDEV_NONE) {
     resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
   } else if (port_2_menu_item->choice_ints[value] == JOYDEV_MOUSE) {
+    if (port_1_menu_item->choice_ints[port_1_menu_item->value]
+        == JOYDEV_MOUSE) {
+       resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
+       port_1_menu_item->value = 0;
+    }
     resources_set_int("JoyPort2Device", JOYPORT_ID_MOUSE_1351);
   } else {
     resources_set_int("JoyPort2Device", JOYPORT_ID_JOYSTICK);
@@ -690,6 +700,15 @@ static void load_settings() {
 }
 
 void menu_swap_joysticks() {
+  if (port_1_menu_item->choice_ints[port_1_menu_item->value]
+          == JOYDEV_MOUSE) {
+     resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
+  }
+  if (port_2_menu_item->choice_ints[port_2_menu_item->value]
+          == JOYDEV_MOUSE) {
+     resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
+  }
+
   int tmp = joydevs[0].device;
   joydevs[0].device = joydevs[1].device;
   joydevs[1].device = tmp;
@@ -1081,6 +1100,11 @@ static void menu_value_changed(struct menu_item *item) {
     if (item->choice_ints[item->value] == JOYDEV_NONE) {
       resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
     } else if (item->choice_ints[item->value] == JOYDEV_MOUSE) {
+      if (port_2_menu_item->choice_ints[port_2_menu_item->value]
+          == JOYDEV_MOUSE) {
+         resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
+         port_2_menu_item->value = 0;
+      }
       resources_set_int("JoyPort1Device", JOYPORT_ID_MOUSE_1351);
     } else {
       resources_set_int("JoyPort1Device", JOYPORT_ID_JOYSTICK);
@@ -1096,6 +1120,11 @@ static void menu_value_changed(struct menu_item *item) {
     if (item->choice_ints[item->value] == JOYDEV_NONE) {
       resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
     } else if (item->choice_ints[item->value] == JOYDEV_MOUSE) {
+      if (port_1_menu_item->choice_ints[port_1_menu_item->value]
+          == JOYDEV_MOUSE) {
+         resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
+         port_1_menu_item->value = 0;
+      }
       resources_set_int("JoyPort2Device", JOYPORT_ID_MOUSE_1351);
     } else {
       resources_set_int("JoyPort2Device", JOYPORT_ID_JOYSTICK);
@@ -1266,7 +1295,7 @@ int menu_get_keyboard_type(void) { return keyboard_type_item->value; }
 
 // KEEP in sync with kernel.cpp, kbd.c, menu_usb.c
 static void set_hotkey_choices(struct menu_item *item) {
-  item->num_choices = 12;
+  item->num_choices = 10;
   strcpy(item->choices[HOTKEY_CHOICE_NONE], "None");
   strcpy(item->choices[HOTKEY_CHOICE_MENU], "Menu");
   strcpy(item->choices[HOTKEY_CHOICE_WARP], "Warp");
