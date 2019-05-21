@@ -188,8 +188,8 @@ int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
 
   for (int i = 0; i < 16; i++) {
     circle_set_palette(i,
-                       COLOR16(p->entries[i].red >> 4, p->entries[i].green >> 4,
-                               p->entries[i].blue >> 4));
+                       COLOR16(p->entries[i].red >> 3, p->entries[i].green >> 3,
+                               p->entries[i].blue >> 3));
   }
   circle_update_palette();
 }
@@ -505,6 +505,6 @@ void main_exit(void) {
   y += 8;
 
   circle_set_palette(0, COLOR16(0, 0, 0));
-  circle_set_palette(1, COLOR16(255 >> 4, 255 >> 4, 255 >> 4));
+  circle_set_palette(1, COLOR16(255 >> 3, 255 >> 3, 255 >> 3));
   circle_update_palette();
 }

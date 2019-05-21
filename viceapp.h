@@ -45,25 +45,7 @@
 
 #define NUM_GPIO_PINS 19
 
-// Keyboard matrix port B pins - for PCB
-#define GPIO_KBD_PB_0 17
-#define GPIO_KBD_PB_1 27
-#define GPIO_KBD_PB_2 22
-#define GPIO_KBD_PB_3 5
-#define GPIO_KBD_PB_4 6
-#define GPIO_KBD_PB_5 13
-#define GPIO_KBD_PB_6 19
-#define GPIO_KBD_PB_7 26
-
 // Keyboard matrix port A pins - for PCB
-#define GPIO_KBD_PA_0 21
-#define GPIO_KBD_PA_1 20
-#define GPIO_KBD_PA_2 16
-#define GPIO_KBD_PA_3 12
-#define GPIO_KBD_PA_4 7
-#define GPIO_KBD_PA_5 8
-#define GPIO_KBD_PA_6 25
-#define GPIO_KBD_PA_7 24
 
 // Joystick select pins for PCB method
 #define GPIO_JS1_SELECT 23
@@ -73,46 +55,32 @@
 #define GPIO_KBD_RESTORE 4
 
 // These are the indices of each pin in our gpio pin array
-#define GPIO_KBD_PA_0_INDEX 7
-#define GPIO_KBD_PA_1_INDEX 1
-#define GPIO_KBD_PA_2_INDEX 2
-#define GPIO_KBD_PA_3_INDEX 3
-#define GPIO_KBD_PA_4_INDEX 4
-#define GPIO_KBD_PA_5_INDEX 5
-#define GPIO_KBD_PA_6_INDEX 6
-#define GPIO_KBD_PA_7_INDEX 0
-#define GPIO_KBD_PB_0_INDEX 8
-#define GPIO_KBD_PB_1_INDEX 9
-#define GPIO_KBD_PB_2_INDEX 10
-#define GPIO_KBD_PB_3_INDEX 15
-#define GPIO_KBD_PB_4_INDEX 12
-#define GPIO_KBD_PB_5_INDEX 13
-#define GPIO_KBD_PB_6_INDEX 14
-#define GPIO_KBD_PB_7_INDEX 11
 #define GPIO_KBD_RESTORE_INDEX 16
 #define GPIO_JS1_SELECT_INDEX 17
 #define GPIO_JS2_SELECT_INDEX 18
 
 // Make sure these always ref the right PIN even if the indices
 // above are changed.
-#define GPIO_JOY_UP_INDEX GPIO_KBD_PB_0_INDEX // must match GPIO 17
-#define GPIO_JOY_DOWN_INDEX GPIO_KBD_PB_1_INDEX // must match GPIO 27
-#define GPIO_JOY_LEFT_INDEX GPIO_KBD_PB_2_INDEX // must match GPIO 22
-#define GPIO_JOY_RIGHT_INDEX GPIO_KBD_PB_3_INDEX // must match GPIO 5 
-#define GPIO_JOY_FIRE_INDEX GPIO_KBD_PB_4_INDEX // must match GPIO 6 
+#define GPIO_JOY_UP_INDEX 8     // GPIO 17
+#define GPIO_JOY_DOWN_INDEX 9   // GPIO 27
+#define GPIO_JOY_LEFT_INDEX 10  // GPIO 22
+#define GPIO_JOY_RIGHT_INDEX 15 // GPIO 5
+#define GPIO_JOY_FIRE_INDEX 12  // GPIO 6
+
+#define GPIO_MENU_INDEX 2       // GPIO 16
 
 // These are for the non-PBC way of doing joysticks
-#define GPIO_OLD_JOY_1_UP_INDEX GPIO_KBD_PB_0_INDEX      // Pin 1 - 17
-#define GPIO_OLD_JOY_1_DOWN_INDEX GPIO_JS2_SELECT_INDEX  // Pin 2 - 18
-#define GPIO_OLD_JOY_1_LEFT_INDEX GPIO_KBD_PB_1_INDEX    // Pin 3 - 27
-#define GPIO_OLD_JOY_1_RIGHT_INDEX GPIO_KBD_PB_2_INDEX   // Pin 4 - 22
-#define GPIO_OLD_JOY_1_FIRE_INDEX GPIO_JS1_SELECT_INDEX  // Pin 6 - 23
+#define GPIO_DED_JOY_1_UP_INDEX 8     // GPIO 17
+#define GPIO_DED_JOY_1_DOWN_INDEX 18  // GPIO 18
+#define GPIO_DED_JOY_1_LEFT_INDEX 9   // GPIO 27
+#define GPIO_DED_JOY_1_RIGHT_INDEX 10 // GPIO 22
+#define GPIO_DED_JOY_1_FIRE_INDEX 17  // GPIO 23
 
-#define GPIO_OLD_JOY_2_UP_INDEX GPIO_KBD_PB_3_INDEX    // Pin 1 - 5
-#define GPIO_OLD_JOY_2_DOWN_INDEX GPIO_KBD_PB_4_INDEX  // Pin 2 - 6
-#define GPIO_OLD_JOY_2_LEFT_INDEX GPIO_KBD_PA_3_INDEX  // Pin 3 - 12
-#define GPIO_OLD_JOY_2_RIGHT_INDEX GPIO_KBD_PB_5_INDEX // Pin 4 - 13
-#define GPIO_OLD_JOY_2_FIRE_INDEX GPIO_KBD_PB_6_INDEX  // Pin 6 - 19
+#define GPIO_DED_JOY_2_UP_INDEX 15    // GPIO 5
+#define GPIO_DED_JOY_2_DOWN_INDEX 12  // GPIO 6
+#define GPIO_DED_JOY_2_LEFT_INDEX 3   // GPIO 12
+#define GPIO_DED_JOY_2_RIGHT_INDEX 13 // GPIO 13
+#define GPIO_DED_JOY_2_FIRE_INDEX 14  // GPIO 19
 
 // Used as indices into the joystickPins arrays
 #define JOY_UP 0
@@ -217,39 +185,39 @@ public:
 
 protected:
   void SetupGPIO() {
-    gpioPins[GPIO_KBD_PA_0_INDEX] =
-        new CGPIOPin(GPIO_KBD_PA_0, GPIOModeInputPullUp, &mGPIOManager);
-    gpioPins[GPIO_KBD_PA_1_INDEX] =
-        new CGPIOPin(GPIO_KBD_PA_1, GPIOModeInputPullUp, &mGPIOManager);
-    gpioPins[GPIO_KBD_PA_2_INDEX] =
-        new CGPIOPin(GPIO_KBD_PA_2, GPIOModeInputPullUp, &mGPIOManager);
-    gpioPins[GPIO_KBD_PA_3_INDEX] =
-        new CGPIOPin(GPIO_KBD_PA_3, GPIOModeInputPullUp, &mGPIOManager);
-    gpioPins[GPIO_KBD_PA_4_INDEX] =
-        new CGPIOPin(GPIO_KBD_PA_4, GPIOModeInputPullUp, &mGPIOManager);
-    gpioPins[GPIO_KBD_PA_5_INDEX] =
-        new CGPIOPin(GPIO_KBD_PA_5, GPIOModeInputPullUp, &mGPIOManager);
-    gpioPins[GPIO_KBD_PA_6_INDEX] =
-        new CGPIOPin(GPIO_KBD_PA_6, GPIOModeInputPullUp, &mGPIOManager);
-    gpioPins[GPIO_KBD_PA_7_INDEX] =
-        new CGPIOPin(GPIO_KBD_PA_7, GPIOModeInputPullUp, &mGPIOManager);
+    gpioPins[7] =
+        new CGPIOPin(21, GPIOModeInputPullUp, &mGPIOManager);
+    gpioPins[1] =
+        new CGPIOPin(20, GPIOModeInputPullUp, &mGPIOManager);
+    gpioPins[2] =
+        new CGPIOPin(16, GPIOModeInputPullUp, &mGPIOManager);
+    gpioPins[3] =
+        new CGPIOPin(12, GPIOModeInputPullUp, &mGPIOManager);
+    gpioPins[4] =
+        new CGPIOPin(7, GPIOModeInputPullUp, &mGPIOManager);
+    gpioPins[5] =
+        new CGPIOPin(8, GPIOModeInputPullUp, &mGPIOManager);
+    gpioPins[6] =
+        new CGPIOPin(25, GPIOModeInputPullUp, &mGPIOManager);
+    gpioPins[0] =
+        new CGPIOPin(24, GPIOModeInputPullUp, &mGPIOManager);
 
-    gpioPins[GPIO_KBD_PB_0_INDEX] =
-        new CGPIOPin(GPIO_KBD_PB_0, GPIOModeInputPullUp, &mGPIOManager);
-    gpioPins[GPIO_KBD_PB_1_INDEX] =
-        new CGPIOPin(GPIO_KBD_PB_1, GPIOModeInputPullUp, &mGPIOManager);
-    gpioPins[GPIO_KBD_PB_2_INDEX] =
-        new CGPIOPin(GPIO_KBD_PB_2, GPIOModeInputPullUp, &mGPIOManager);
-    gpioPins[GPIO_KBD_PB_3_INDEX] =
-        new CGPIOPin(GPIO_KBD_PB_3, GPIOModeInputPullUp, &mGPIOManager);
-    gpioPins[GPIO_KBD_PB_4_INDEX] =
-        new CGPIOPin(GPIO_KBD_PB_4, GPIOModeInputPullUp, &mGPIOManager);
-    gpioPins[GPIO_KBD_PB_5_INDEX] =
-        new CGPIOPin(GPIO_KBD_PB_5, GPIOModeInputPullUp, &mGPIOManager);
-    gpioPins[GPIO_KBD_PB_6_INDEX] =
-        new CGPIOPin(GPIO_KBD_PB_6, GPIOModeInputPullUp, &mGPIOManager);
-    gpioPins[GPIO_KBD_PB_7_INDEX] =
-        new CGPIOPin(GPIO_KBD_PB_7, GPIOModeInputPullUp, &mGPIOManager);
+    gpioPins[8] =
+        new CGPIOPin(17, GPIOModeInputPullUp, &mGPIOManager);
+    gpioPins[9] =
+        new CGPIOPin(27, GPIOModeInputPullUp, &mGPIOManager);
+    gpioPins[10] =
+        new CGPIOPin(22, GPIOModeInputPullUp, &mGPIOManager);
+    gpioPins[15] =
+        new CGPIOPin(5, GPIOModeInputPullUp, &mGPIOManager);
+    gpioPins[12] =
+        new CGPIOPin(6, GPIOModeInputPullUp, &mGPIOManager);
+    gpioPins[13] =
+        new CGPIOPin(13, GPIOModeInputPullUp, &mGPIOManager);
+    gpioPins[14] =
+        new CGPIOPin(19, GPIOModeInputPullUp, &mGPIOManager);
+    gpioPins[11] =
+        new CGPIOPin(26, GPIOModeInputPullUp, &mGPIOManager);
 
     gpioPins[GPIO_KBD_RESTORE_INDEX] =
         new CGPIOPin(GPIO_KBD_RESTORE, GPIOModeInputPullUp, &mGPIOManager);
@@ -264,17 +232,17 @@ protected:
     joystickPins[JOY_RIGHT] = gpioPins[GPIO_JOY_RIGHT_INDEX];
     joystickPins[JOY_FIRE] = gpioPins[GPIO_JOY_FIRE_INDEX];
 
-    oldJoystickPins1[JOY_UP] = gpioPins[GPIO_OLD_JOY_1_UP_INDEX];
-    oldJoystickPins1[JOY_DOWN] = gpioPins[GPIO_OLD_JOY_1_DOWN_INDEX];
-    oldJoystickPins1[JOY_LEFT] = gpioPins[GPIO_OLD_JOY_1_LEFT_INDEX];
-    oldJoystickPins1[JOY_RIGHT] = gpioPins[GPIO_OLD_JOY_1_RIGHT_INDEX];
-    oldJoystickPins1[JOY_FIRE] = gpioPins[GPIO_OLD_JOY_1_FIRE_INDEX];
+    dedicatedJoystickPins1[JOY_UP] = gpioPins[GPIO_DED_JOY_1_UP_INDEX];
+    dedicatedJoystickPins1[JOY_DOWN] = gpioPins[GPIO_DED_JOY_1_DOWN_INDEX];
+    dedicatedJoystickPins1[JOY_LEFT] = gpioPins[GPIO_DED_JOY_1_LEFT_INDEX];
+    dedicatedJoystickPins1[JOY_RIGHT] = gpioPins[GPIO_DED_JOY_1_RIGHT_INDEX];
+    dedicatedJoystickPins1[JOY_FIRE] = gpioPins[GPIO_DED_JOY_1_FIRE_INDEX];
 
-    oldJoystickPins2[JOY_UP] = gpioPins[GPIO_OLD_JOY_2_UP_INDEX];
-    oldJoystickPins2[JOY_DOWN] = gpioPins[GPIO_OLD_JOY_2_DOWN_INDEX];
-    oldJoystickPins2[JOY_LEFT] = gpioPins[GPIO_OLD_JOY_2_LEFT_INDEX];
-    oldJoystickPins2[JOY_RIGHT] = gpioPins[GPIO_OLD_JOY_2_RIGHT_INDEX];
-    oldJoystickPins2[JOY_FIRE] = gpioPins[GPIO_OLD_JOY_2_FIRE_INDEX];
+    dedicatedJoystickPins2[JOY_UP] = gpioPins[GPIO_DED_JOY_2_UP_INDEX];
+    dedicatedJoystickPins2[JOY_DOWN] = gpioPins[GPIO_DED_JOY_2_DOWN_INDEX];
+    dedicatedJoystickPins2[JOY_LEFT] = gpioPins[GPIO_DED_JOY_2_LEFT_INDEX];
+    dedicatedJoystickPins2[JOY_RIGHT] = gpioPins[GPIO_DED_JOY_2_RIGHT_INDEX];
+    dedicatedJoystickPins2[JOY_FIRE] = gpioPins[GPIO_DED_JOY_2_FIRE_INDEX];
   }
 
   ViceEmulatorCore mEmulatorCore;
@@ -283,8 +251,8 @@ protected:
   CLogger mLogger;
   CGPIOManager mGPIOManager;
 
-  CGPIOPin *oldJoystickPins1[5];
-  CGPIOPin *oldJoystickPins2[5];
+  CGPIOPin *dedicatedJoystickPins1[5];
+  CGPIOPin *dedicatedJoystickPins2[5];
   CGPIOPin *joystickPins[5];
   CGPIOPin *gpioPins[NUM_GPIO_PINS];
 };
