@@ -479,6 +479,7 @@ void CKernel::ReadJoystick(int device) {
   static int js_prev_1[5] = {HIGH, HIGH, HIGH, HIGH, HIGH};
 
   int *js_prev;
+  CGPIOPin **js_pins;
   CGPIOPin *js_selector;
   int port = 0;
   int ui_activated = circle_ui_activated();
@@ -490,6 +491,7 @@ void CKernel::ReadJoystick(int device) {
   if (device == 0) {
     js_prev = js_prev_0;
     js_selector = gpioPins[GPIO_JS1_SELECT_INDEX];
+    js_pins = joystickPins1;
     if (joydevs[0].device == JOYDEV_GPIO_0) {
       port = joydevs[0].port;
     } else if (joydevs[1].device == JOYDEV_GPIO_0) {
@@ -500,6 +502,7 @@ void CKernel::ReadJoystick(int device) {
   } else {
     js_prev = js_prev_1;
     js_selector = gpioPins[GPIO_JS2_SELECT_INDEX];
+    js_pins = joystickPins2;
     if (joydevs[0].device == JOYDEV_GPIO_1) {
       port = joydevs[0].port;
     } else if (joydevs[1].device == JOYDEV_GPIO_1) {
@@ -515,11 +518,11 @@ void CKernel::ReadJoystick(int device) {
   js_selector->Write(LOW);
   circle_sleep(10);
 
-  int js_up = joystickPins[JOY_UP]->Read();
-  int js_down = joystickPins[JOY_DOWN]->Read();
-  int js_left = joystickPins[JOY_LEFT]->Read();
-  int js_right = joystickPins[JOY_RIGHT]->Read();
-  int js_fire = joystickPins[JOY_FIRE]->Read();
+  int js_up = js_pins[JOY_UP]->Read();
+  int js_down = js_pins[JOY_DOWN]->Read();
+  int js_left = js_pins[JOY_LEFT]->Read();
+  int js_right = js_pins[JOY_RIGHT]->Read();
+  int js_fire = js_pins[JOY_FIRE]->Read();
 
   if (ui_activated) {
     if (js_up == LOW && js_prev[JOY_UP] != LOW) {
@@ -806,7 +809,7 @@ int CKernel::ReadDebounced(int pinIndex) {
 // Called from main emulation loop before pending event queues are
 // drained. Checks whether any of our gpio pins have triggered some
 // function. Also scans a real C64 keyboard and joysticks if enabled.
-// Otherwise, just scans gpio joysticks (which are swappable).
+// Otherwise, just scans gpio joysticks.
 void CKernel::circle_check_gpio() {
   if (circle_use_pcb()) {
     // PCB way of reading GPIO keyboard and joysticks.
@@ -824,7 +827,8 @@ void CKernel::circle_check_gpio() {
 }
 
 // Read the GPIO Bank 1 & 2 configuration where each joystick
-// gets its own set of pins. Note 'device' is overloaded here.
+// gets its own set of pins that get grounded like on the
+// real machine.  Note 'device' is overloaded here.
 // The argument passed in is the index of the gpio bank we
 // are about to poll.  While joydevs[x].device is the type of
 // device the user assigned to the control port.
