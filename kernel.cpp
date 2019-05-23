@@ -811,113 +811,16 @@ int CKernel::ReadDebounced(int pinIndex) {
 // function. Also scans a real C64 keyboard and joysticks if enabled.
 // Otherwise, just scans gpio joysticks.
 void CKernel::circle_check_gpio() {
-  if (circle_use_pcb()) {
-    // PCB way of reading GPIO keyboard and joysticks.
-    ScanKeyboard();
-    ReadJoystick(0);
-    ReadJoystick(1);
-  } else {
-    if (ReadDebounced(GPIO_MENU_INDEX) == BTN_PRESS) {
-      circle_key_pressed(KEYCODE_F12);
-      circle_key_released(KEYCODE_F12);
-    }
-    ReadJoystickDedicated(0);
-    ReadJoystickDedicated(1);
-  }
-}
+  ScanKeyboard();
+  ReadJoystick(0);
+  ReadJoystick(1);
 
-// Read the GPIO Bank 1 & 2 configuration where each joystick
-// gets its own set of pins that get grounded like on the
-// real machine.  Note 'device' is overloaded here.
-// The argument passed in is the index of the gpio bank we
-// are about to poll.  While joydevs[x].device is the type of
-// device the user assigned to the control port.
-void CKernel::ReadJoystickDedicated(int device) {
-  static int js_prev_0[5] = {HIGH, HIGH, HIGH, HIGH, HIGH};
-  static int js_prev_1[5] = {HIGH, HIGH, HIGH, HIGH, HIGH};
-
-  int *js_prev;
-  CGPIOPin **js_pins;
-  int port = 0;
-  int ui_activated = circle_ui_activated();
-
-  // If ui is activated, don't bail if port assignment can't be done
-  // since the event will always go to the ui. We want the joystick to
-  // function in the ui even if the control port is not assigned to be
-  // gpio.
-  if (device == 0) {
-    js_prev = js_prev_0;
-    js_pins = dedicatedJoystickPins1;
-    if (joydevs[0].device == JOYDEV_GPIO_0) {
-      port = joydevs[0].port;
-    } else if (joydevs[1].device == JOYDEV_GPIO_0) {
-      port = joydevs[1].port;
-    } else if (!ui_activated) {
-      return;
-    }
-  } else {
-    js_prev = js_prev_1;
-    js_pins = dedicatedJoystickPins2;
-    if (joydevs[0].device == JOYDEV_GPIO_1) {
-      port = joydevs[0].port;
-    } else if (joydevs[1].device == JOYDEV_GPIO_1) {
-      port = joydevs[1].port;
-    } else if (!ui_activated) {
-      return;
-    }
-  }
-
-  int js_up = js_pins[JOY_UP]->Read();
-  int js_down = js_pins[JOY_DOWN]->Read();
-  int js_left = js_pins[JOY_LEFT]->Read();
-  int js_right = js_pins[JOY_RIGHT]->Read();
-  int js_fire = js_pins[JOY_FIRE]->Read();
-
-  if (ui_activated) {
-    if (js_up == LOW && js_prev[JOY_UP] != LOW) {
-      circle_ui_key_interrupt(KEYCODE_Up, 1);
-    } else if (js_up != LOW && js_prev[JOY_UP] == LOW) {
-      circle_ui_key_interrupt(KEYCODE_Up, 0);
-    }
-
-    if (js_down == LOW && js_prev[JOY_DOWN] != LOW) {
-      circle_ui_key_interrupt(KEYCODE_Down, 1);
-    } else if (js_down != LOW && js_prev[JOY_DOWN] == LOW) {
-      circle_ui_key_interrupt(KEYCODE_Down, 0);
-    }
-
-    if (js_left == LOW && js_prev[JOY_LEFT] != LOW) {
-      circle_ui_key_interrupt(KEYCODE_Left, 1);
-    } else if (js_left != LOW && js_prev[JOY_LEFT] == LOW) {
-      circle_ui_key_interrupt(KEYCODE_Left, 0);
-    }
-
-    if (js_right == LOW && js_prev[JOY_RIGHT] != LOW) {
-      circle_ui_key_interrupt(KEYCODE_Right, 1);
-    } else if (js_right != LOW && js_prev[JOY_RIGHT] == LOW) {
-      circle_ui_key_interrupt(KEYCODE_Right, 0);
-    }
-
-    if (js_fire == LOW && js_prev[JOY_FIRE] != LOW) {
-      circle_ui_key_interrupt(KEYCODE_Return, 1);
-    } else if (js_fire != LOW && js_prev[JOY_FIRE] == LOW) {
-      circle_ui_key_interrupt(KEYCODE_Return, 0);
-    }
-
-    js_prev[JOY_UP] = js_up;
-    js_prev[JOY_DOWN] = js_down;
-    js_prev[JOY_LEFT] = js_left;
-    js_prev[JOY_RIGHT] = js_right;
-    js_prev[JOY_FIRE] = js_fire;
-  } else {
-    int val = 0;
-    if (js_up == LOW) val |= 0x01;
-    if (js_down == LOW) val |= 0x02;
-    if (js_left == LOW) val |= 0x04;
-    if (js_right == LOW) val |= 0x08;
-    if (js_fire == LOW) val |= 0x10;
-    circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, port, val);
-  }
+  // This pin is no longer used for menu. Keeping here as an example
+  // of how to debounce for a button.
+  //if (ReadDebounced(GPIO_MENU_INDEX) == BTN_PRESS) {
+  //  circle_key_pressed(KEYCODE_F12);
+  //  circle_key_released(KEYCODE_F12);
+  //}
 }
 
 void CKernel::circle_lock_acquire() { m_Lock.Acquire(); }

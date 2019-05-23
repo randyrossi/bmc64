@@ -134,7 +134,7 @@ Since v1.0.8, you can hold down keys or gamepad/joystick directions and the navi
 DO NOT ATTEMPT THIS IF YOU ARE NOT COMFORTABLE WITH WIRING THINGS UP TO YOUR PI
 I TAKE NO RESPONSIBILITY IF YOU WIRE THINGS INCORRECTLY OR DAMAGE YOUR DEVICE
 
-It's possible to wire real Commodore or Atari joysticks directly to the Pi without a PCB. This mode requires the 'Use Keyboard/DB9 PCB' option in the Keyboard section of the menu to be disabled (Off). Each joystick gets its own set of GPIO pins, making it easy to hook up using nothing but jumpers and DB9 connectors.  (See the website for adapter instructions).  The switches inside the joystick will ground the pins like they would on a real C64.  Wiring is as follows:
+It's possible to wire real Commodore or Atari joysticks directly to the Pi without a PCB. Each joystick gets its own set of GPIO pins, making it easy to hook up using nothing but jumpers and DB9 connectors.  (See the website for adapter instructions). Wiring is as follows:
 
 GPIO BANK 1   | GPIO BANK 2 | C64 JOY PIN
 --------------|-------------|-------------
@@ -143,9 +143,44 @@ GPIO18        |GPIO6        | 2 (Down)
 GPIO27        |GPIO12       | 3 (Left)
 GPIO22        |GPIO13       | 4 (Right)
 GPIO23        |GPIO19       | 6 (Fire)
-GND           |GND          | 8 (GND)
+GPIO7         |GPIO21       | 8 (GND)
 
 In the menu, select either GPIO1 or GPIO2 and assign it to one of the emulated ports.
+
+NOTE: Since v1.9, Pin 8 connections above were moved from GND to GPIO7 or GPIO21 for joysticks 1 & 2. This was necessary to be compatible with a real C64 keyboard hookup (described below).  If you have no intention on using a real C64 keyboard, you can continue to connect pins 8 to GND.  However, if you plan on using a real keyboard, you will have to switch the connections as described above (or just use the PCB).
+
+# Real Keyboard + Joysticks
+
+DO NOT ATTEMPT THIS IF YOU ARE NOT COMFORTABLE WITH WIRING THINGS UP TO YOUR PI
+I TAKE NO RESPONSIBILITY IF YOU WIRE THINGS INCORRECTLY OR DAMAGE YOUR DEVICE
+
+Since v1.9, you can hook up a real C64 keyboard + joysticks using a PCB (it is possible to breadboard the connections or create a custom ribbon cable since there are no components but a PCB is the preferred method).  A PCB is currently being worked on that will also incorporate a Power LED connector, power jack, switch and DB9 connectors in the right locations so you can mount it inside a C64 shell.
+
+Wiring is as follows:
+
+GPIO     |JSLABEL |KEYLABEL |C64 JOY PIN|KEYCON
+---------|--------|---------|-----------|------
+GPIO5    |J2_UP   |PA7      |1 (Up)     |KBD20
+GPIO6    |J2_DOWN |PA1      |2 (Down)   |KBD19
+GPIO12   |J2_LEFT |PA2      |3 (Left)   |KBD18
+GPIO13   |J2_RIGHT|PA3      |4 (Right)  |KBD17
+GPIO19   |J2_FIRE |PA4      |6 (Fire)   |KBD16
+GPIO16   |        |PA5      |           |KBD15
+GPIO26   |        |PA6      |           |KBD14
+GPIO20   |        |PA0      |           |KDB13
+GPIO21   |J2_SEL  |         |8 (GND)    |
+---------|--------|---------|-----------|------
+GPIO17   |J1_UP   |PB0      |1 (Up)     |KBD12
+GPIO18   |J1_DOWN |PB1      |2 (Down)   |KBD11
+GPIO27   |J1_LEFT |PB2      |3 (Left)   |KBD10
+GPIO22   |J1_RIGHT|PB7      |4 (Right)  |KBD9
+GPIO23   |J1_FIRE |PB4      |5 (Fire)   |KBD8
+GPIO24   |        |PB5      |           |KBD7
+GPIO25   |        |PB6      |           |KBD6
+GPIO8    |        |PB3      |           |KBD5
+GPIO7    |J1_SEL  |         |8 (GND)    |
+---------|--------|---------|-----------|------
+GPIO4    |        |RESTORE  |           |KDB3
 
 # CPU Temperature
 

@@ -92,7 +92,6 @@ private:
   int ReadDebounced(int pinIndex);
   void ScanKeyboard();
   void ReadJoystick(int device);
-  void ReadJoystickDedicated(int device);
 
   static bool uiShift;
 
