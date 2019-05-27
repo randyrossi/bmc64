@@ -160,25 +160,25 @@ Wiring is as follows:
 
 GPIO     |JSLABEL |KEYLABEL |C64 JOY PIN|KEYCON
 ---------|--------|---------|-----------|------
-GPIO5    |J2_UP   |PA7      |1 (Up)     |KBD20
-GPIO6    |J2_DOWN |PA1      |2 (Down)   |KBD19
-GPIO12   |J2_LEFT |PA2      |3 (Left)   |KBD18
-GPIO13   |J2_RIGHT|PA3      |4 (Right)  |KBD17
-GPIO19   |J2_FIRE |PA4      |6 (Fire)   |KBD16
-GPIO16   |        |PA5      |           |KBD15
-GPIO26   |        |PA6      |           |KBD14
-GPIO20   |        |PA0      |           |KDB13
+GPIO26   |J2_UP   |PA7      |1 (Up)     |KBD20
+GPIO20   |J2_DOWN |PA1      |2 (Down)   |KBD19
+GPIO19   |J2_LEFT |PA2      |3 (Left)   |KBD18
+GPIO16   |J2_RIGHT|PA3      |4 (Right)  |KBD17
+GPIO13   |J2_FIRE |PA4      |6 (Fire)   |KBD16
+GPIO06   |        |PA5      |           |KBD15
+GPIO12   |        |PA6      |           |KBD14
+GPIO05   |        |PA0      |           |KDB13
 GPIO21   |J2_SEL  |         |8 (GND)    |
 ---------|--------|---------|-----------|------
-GPIO17   |J1_UP   |PB0      |1 (Up)     |KBD12
-GPIO18   |J1_DOWN |PB1      |2 (Down)   |KBD11
-GPIO27   |J1_LEFT |PB2      |3 (Left)   |KBD10
-GPIO22   |J1_RIGHT|PB7      |4 (Right)  |KBD9
-GPIO23   |J1_FIRE |PB4      |5 (Fire)   |KBD8
-GPIO24   |        |PB5      |           |KBD7
-GPIO25   |        |PB6      |           |KBD6
-GPIO8    |        |PB3      |           |KBD5
-GPIO7    |J1_SEL  |         |8 (GND)    |
+GPIO08   |        |PB0      |           |KBD12
+GPIO25   |        |PB1      |           |KBD11
+GPIO24   |        |PB2      |           |KBD10
+GPIO22   |J1_UP   |PB7      |1 (Up)     |KBD9
+GPIO23   |J1_DOWN |PB4      |2 (Down)   |KBD8
+GPIO27   |J1_LEFT |PB5      |3 (Left)   |KBD7
+GPIO17   |J1_RIGHT|PB6      |4 (Right)  |KBD6
+GPIO18   |J1_FIRE |PB3      |6 (Fire)   |KBD5
+GPIO07   |J1_SEL  |         |8 (GND)    |
 ---------|--------|---------|-----------|------
 GPIO4    |        |RESTORE  |           |KDB3
 

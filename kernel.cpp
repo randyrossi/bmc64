@@ -472,15 +472,17 @@ void CKernel::ScanKeyboard() {
   }
 }
 
-// The 'pcb' way of reading joysticks compatible with real
-// keyboard hookup.  Requires circuit board and header.
-void CKernel::ReadJoystick(int device) {
+// Read joystick state. 
+// If usePcb is true, PCB layout for joysticks is used (where
+// selector is used to drive pins low instead of GND).  Otherwise,
+// the non-pcb way of reading joysticks is used.
+void CKernel::ReadJoystick(int device, bool usePcb) {
   static int js_prev_0[5] = {HIGH, HIGH, HIGH, HIGH, HIGH};
   static int js_prev_1[5] = {HIGH, HIGH, HIGH, HIGH, HIGH};
 
   int *js_prev;
   CGPIOPin **js_pins;
-  CGPIOPin *js_selector;
+  CGPIOPin *js_selector = NULL;
   int port = 0;
   int ui_activated = circle_ui_activated();
 
@@ -490,8 +492,13 @@ void CKernel::ReadJoystick(int device) {
   // gpio.
   if (device == 0) {
     js_prev = js_prev_0;
-    js_selector = gpioPins[GPIO_JS1_SELECT_INDEX];
-    js_pins = joystickPins1;
+    if (usePcb) {
+       js_selector = gpioPins[GPIO_JS1_SELECT_INDEX];
+       js_pins = joystickPins1;
+    } else {
+       js_pins = noPCBJoystickPins1;
+    }
+
     if (joydevs[0].device == JOYDEV_GPIO_0) {
       port = joydevs[0].port;
     } else if (joydevs[1].device == JOYDEV_GPIO_0) {
@@ -501,8 +508,13 @@ void CKernel::ReadJoystick(int device) {
     }
   } else {
     js_prev = js_prev_1;
-    js_selector = gpioPins[GPIO_JS2_SELECT_INDEX];
-    js_pins = joystickPins2;
+    if (usePcb) {
+       js_selector = gpioPins[GPIO_JS2_SELECT_INDEX];
+       js_pins = joystickPins2;
+    } else {
+       js_pins = noPCBJoystickPins2;
+    }
+
     if (joydevs[0].device == JOYDEV_GPIO_1) {
       port = joydevs[0].port;
     } else if (joydevs[1].device == JOYDEV_GPIO_1) {
@@ -512,11 +524,13 @@ void CKernel::ReadJoystick(int device) {
     }
   }
 
-  // Drive the select pin low. Don't leave this routine
-  // before setting it as input-pullup again.
-  js_selector->SetMode(GPIOModeOutput);
-  js_selector->Write(LOW);
-  circle_sleep(10);
+  if (usePcb) {
+    // Drive the select pin low. Don't leave this routine
+    // before setting it as input-pullup again.
+    js_selector->SetMode(GPIOModeOutput);
+    js_selector->Write(LOW);
+    circle_sleep(10);
+  }
 
   int js_up = js_pins[JOY_UP]->Read();
   int js_down = js_pins[JOY_DOWN]->Read();
@@ -569,7 +583,9 @@ void CKernel::ReadJoystick(int device) {
     circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, port, val);
   }
 
-  js_selector->SetMode(GPIOModeInputPullUp);
+  if (usePcb) {
+     js_selector->SetMode(GPIOModeInputPullUp);
+  }
 }
 
 ssize_t CKernel::vice_write(int fd, const void *buf, size_t count) {
@@ -811,16 +827,18 @@ int CKernel::ReadDebounced(int pinIndex) {
 // function. Also scans a real C64 keyboard and joysticks if enabled.
 // Otherwise, just scans gpio joysticks.
 void CKernel::circle_check_gpio() {
-  ScanKeyboard();
-  ReadJoystick(0);
-  ReadJoystick(1);
-
-  // This pin is no longer used for menu. Keeping here as an example
-  // of how to debounce for a button.
-  //if (ReadDebounced(GPIO_MENU_INDEX) == BTN_PRESS) {
-  //  circle_key_pressed(KEYCODE_F12);
-  //  circle_key_released(KEYCODE_F12);
-  //}
+  if (circle_use_pcb()) {
+     ScanKeyboard();
+     ReadJoystick(0, TRUE);
+     ReadJoystick(1, TRUE);
+  } else {
+    if (ReadDebounced(GPIO_MENU_INDEX) == BTN_PRESS) {
+      circle_key_pressed(KEYCODE_F12);
+      circle_key_released(KEYCODE_F12);
+    }
+    ReadJoystick(0, FALSE);
+    ReadJoystick(1, FALSE);
+  }
 }
 
 void CKernel::circle_lock_acquire() { m_Lock.Acquire(); }

@@ -58,10 +58,11 @@
 #include "ui.h"
 #include "util.h"
 
-// This feature is hidden for now. Activated 'new' input method where
-// both keyboard and joysticks can be hooked up with a 'hat' or
-// separate board to eliminate USB keyboard.
-#define RASPI_SUPPORT_PCB 1
+// This feature is hidden for now. Activated 'pcb' input method where
+// both keyboard and joysticks can be hooked up with a PCB or
+// to eliminate USB keyboard.  Power switch is actually a power switch
+// and the power port is actually power unlike the Keyrah.
+//#define RASPI_SUPPORT_PCB 1
 
 // For filename filters
 #define FILTER_NONE 0

@@ -91,7 +91,7 @@ private:
   void SetupUSBMouse();
   int ReadDebounced(int pinIndex);
   void ScanKeyboard();
-  void ReadJoystick(int device);
+  void ReadJoystick(int device, bool usePcb);
 
   static bool uiShift;
 
