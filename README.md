@@ -13,7 +13,6 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
   * No shutdown sequence required, just power off
   * High compatibility thanks to VICE
   * Can wire real Commodore/Atari Joysticks via GPIO (no PCB option)
-  * Can wire real C64 keyboard + Joysticks (requires a PCB)
   * Keyrah friendly
 
 # Limitations
@@ -134,7 +133,7 @@ Since v1.0.8, you can hold down keys or gamepad/joystick directions and the navi
 DO NOT ATTEMPT THIS IF YOU ARE NOT COMFORTABLE WITH WIRING THINGS UP TO YOUR PI
 I TAKE NO RESPONSIBILITY IF YOU WIRE THINGS INCORRECTLY OR DAMAGE YOUR DEVICE
 
-It's possible to wire real Commodore or Atari joysticks directly to the Pi without a PCB. This mode requires the 'Use Keyboard/DB9 PCB' option in the Keyboard section of the menu to be disabled (Off). Each joystick gets its own set of GPIO pins, making it easy to hook up using nothing but jumpers and DB9 connectors.  (See the website for adapter instructions).  The switches inside the joystick will ground the pins like they would on a real C64.  Wiring is as follows:
+It's possible to wire real Commodore or Atari joysticks directly to the Pi without a PCB. Each joystick gets its own set of GPIO pins, making it easy to hook up using nothing but jumpers and DB9 connectors.  (See the website for adapter instructions).  The switches inside the joystick will ground the pins like they would on a real C64.  Wiring is as follows:
 
 GPIO BANK 1   | GPIO BANK 2 | C64 JOY PIN
 --------------|-------------|-------------
