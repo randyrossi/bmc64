@@ -28,6 +28,7 @@
 
 #include "c128/c128.h"
 #include "resources.h"
+#include "cartridge.h"
 
 unsigned long calculate_timing(double fps) {
   if (fps >= 49 && fps <= 51) {
@@ -77,4 +78,8 @@ int get_color_tint() {
   int value;
   resources_get_int("VICIIColorTint", &value);
   return value;
+}
+
+void raspi_cartridge_trigger_freeze(void) {
+  cartridge_trigger_freeze();
 }

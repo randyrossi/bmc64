@@ -206,7 +206,6 @@ struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
   video_state.canvas = canvas;
   video_state.vis_h = canvas->draw_buffer->visible_height;
   video_state.vis_w = canvas->draw_buffer->visible_width;
-  printf("vis wh %d %d\n", video_state.vis_w, video_state.vis_h);
 
   int adj_x = 0;
   if (machine_class == VICE_MACHINE_VIC20) {
@@ -315,6 +314,12 @@ void vsyncarch_postsync(void) {
        video_state.dst + video_state.offscreen_buffer_y * video_state.dst_pitch,
        video_state.dst_pitch, video_state.dst_off_x, video_state.dst_off_y);
 
+  // This render will handle any OSDs we have. ODSs don't pause emulation.
+  if (ui_activated) {
+    ui_render_now();
+    ui_check_key();
+  }
+
   videoarch_swap();
 
   // Always draw overlay on visible buffer
@@ -325,12 +330,6 @@ void vsyncarch_postsync(void) {
              video_state.onscreen_buffer_y * video_state.dst_pitch,
          video_state.dst_pitch, video_state.dst_off_x,
          video_state.dst_off_y + video_state.vis_h - 10);
-  }
-
-  // This render will handle any OSDs we have. ODSs don't pause emulation.
-  if (ui_activated) {
-    ui_render_now();
-    ui_check_key();
   }
 
   video_ticks += video_tick_inc;

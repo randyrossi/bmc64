@@ -147,3 +147,8 @@
   * Added Reset Soft/Hard button/hotkey functions
   * Fixed 'half' brightness issue with color palette. 
     Colors were half intensity of what they should have been.
+
+## 1.9
+  * Fixed bug where POT Y Up/Down values could not be set
+  * Added real C64 keyboard/joystick PCB support
+  * Fixed bug with 'empty' USB button function selections

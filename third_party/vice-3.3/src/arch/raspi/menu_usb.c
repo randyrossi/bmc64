@@ -26,14 +26,16 @@
 
 #include "menu_usb.h"
 
-#include "joy.h"
-#include "menu.h"
-#include "ui.h"
 #include <dirent.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "joy.h"
+#include "machine.h"
+#include "menu.h"
+#include "ui.h"
 
 extern int usb_pref_0;
 extern int usb_pref_1;
@@ -198,6 +200,10 @@ static void add_button_choices(struct menu_item *tmp_item) {
   strcpy(tmp_item->choices[BTN_ASSIGN_CART_FREEZE], "Cart Freeze");
   strcpy(tmp_item->choices[BTN_ASSIGN_RESET_HARD], "Hard Reset");
   strcpy(tmp_item->choices[BTN_ASSIGN_RESET_SOFT], "Soft Reset");
+
+  if (machine_class != VICE_MACHINE_C64 && machine_class != VICE_MACHINE_C128) {
+    tmp_item->choice_disabled[BTN_ASSIGN_CART_FREEZE] = 1;
+  }
 }
 
 void build_usb_menu(int dev, struct menu_item *root) {
@@ -298,9 +304,9 @@ void build_usb_menu(int dev, struct menu_item *root) {
                                      255, 1, pot_x_high_value);
   potx_low_item = ui_menu_add_range(MENU_POTX_LOW, root, "POT X Down Value", 0,
                                     255, 1, pot_x_low_value);
-  poty_high_item = ui_menu_add_range(MENU_POTX_HIGH, root, "POT X Up Value", 0,
+  poty_high_item = ui_menu_add_range(MENU_POTY_HIGH, root, "POT Y Up Value", 0,
                                      255, 1, pot_y_high_value);
-  poty_low_item = ui_menu_add_range(MENU_POTX_LOW, root, "POT X Down Value", 0,
+  poty_low_item = ui_menu_add_range(MENU_POTY_LOW, root, "POT Y Down Value", 0,
                                     255, 1, pot_y_low_value);
 
   usb_pref_item->num_choices = 2;

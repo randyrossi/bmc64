@@ -48,7 +48,7 @@
 #define USB_PREF_HAT 1
 
 // Make sure does not exceed max choices in ui.h
-#define NUM_BUTTON_ASSIGNMENTS 19
+#define NUM_BUTTON_ASSIGNMENTS 17
 #define BTN_ASSIGN_UNDEF 0
 #define BTN_ASSIGN_FIRE 1
 #define BTN_ASSIGN_MENU 2
@@ -69,9 +69,10 @@
 #define BTN_ASSIGN_CART_MENU 13
 #define BTN_ASSIGN_CART_FREEZE 14
 #define BTN_ASSIGN_RESET_HARD 15
-#define BTN_ASSIGN_RESET_HARD2 16
-#define BTN_ASSIGN_RESET_SOFT 17
-#define BTN_ASSIGN_RESET_SOFT2 18
+#define BTN_ASSIGN_RESET_SOFT 16
+
+#define BTN_ASSIGN_RESET_HARD2 916
+#define BTN_ASSIGN_RESET_SOFT2 918
 
 // potx and poty occupy 8 bits in joy int values passed
 // to joy update calls

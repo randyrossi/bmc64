@@ -655,12 +655,18 @@ static void load_settings() {
     } else if (strcmp(name, "keyboard_type") == 0) {
       keyboard_type_item->value = value;
     } else if (strcmp(name, "usb_btn_0") == 0) {
+      if (value >= NUM_BUTTON_ASSIGNMENTS) {
+         value = NUM_BUTTON_ASSIGNMENTS - 1;
+      }
       usb_0_button_assignments[usb_btn_0_i] = value;
       usb_btn_0_i++;
       if (usb_btn_0_i >= 16) {
         usb_btn_0_i = 0;
       }
     } else if (strcmp(name, "usb_btn_1") == 0) {
+      if (value >= NUM_BUTTON_ASSIGNMENTS) {
+         value = NUM_BUTTON_ASSIGNMENTS - 1;
+      }
       usb_1_button_assignments[usb_btn_1_i] = value;
       usb_btn_1_i++;
       if (usb_btn_1_i >= 16) {
@@ -1214,7 +1220,7 @@ static void menu_value_changed(struct menu_item *item) {
     break;
   case MENU_CART_FREEZE:
     keyboard_clear_keymatrix();
-    cartridge_trigger_freeze();
+    raspi_cartridge_trigger_freeze();
     ui_pop_all_and_toggle();
     break;
   }
@@ -1317,6 +1323,10 @@ static void set_hotkey_choices(struct menu_item *item) {
   item->choice_ints[HOTKEY_CHOICE_CART_FREEZE] = BTN_ASSIGN_CART_FREEZE;
   item->choice_ints[HOTKEY_CHOICE_RESET_HARD] = BTN_ASSIGN_RESET_HARD;
   item->choice_ints[HOTKEY_CHOICE_RESET_SOFT] = BTN_ASSIGN_RESET_SOFT;
+
+  if (machine_class != VICE_MACHINE_C64 && machine_class != VICE_MACHINE_C128) {
+     item->choice_disabled[HOTKEY_CHOICE_CART_FREEZE] = 1;
+  }
 }
 
 void build_menu(struct menu_item *root) {
@@ -1423,7 +1433,11 @@ void build_menu(struct menu_item *root) {
   ui_menu_add_button(MENU_MAKE_CART_DEFAULT, parent,
                      "Set current cart default (Need Save)");
   ui_menu_add_button(MENU_SAVE_EASYFLASH, parent, "Save EasyFlash Now");
-  ui_menu_add_button(MENU_CART_FREEZE, parent, "Cartridge Freeze");
+
+  if (machine_class == VICE_MACHINE_C64 || machine_class == VICE_MACHINE_C128) {
+    ui_menu_add_button(MENU_CART_FREEZE, parent, "Cartridge Freeze");
+  }
+
   ui_menu_add_divider(parent);
 
   ui_menu_add_button(MENU_DETACH_CART, root, "Detach cartridge");
@@ -1702,7 +1716,7 @@ void menu_quick_func(int button_assignment) {
     break;
   case BTN_ASSIGN_CART_FREEZE:
     keyboard_clear_keymatrix();
-    cartridge_trigger_freeze();
+    raspi_cartridge_trigger_freeze();
     break;
   case BTN_ASSIGN_RESET_HARD:
     if (reset_confirm_item->value) {

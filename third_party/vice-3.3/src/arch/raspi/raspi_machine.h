@@ -43,3 +43,5 @@ extern int get_color_brightness(void);
 extern int get_color_contrast(void);
 extern int get_color_gamma(void);
 extern int get_color_tint(void);
+
+extern void raspi_cartridge_trigger_freeze(void);

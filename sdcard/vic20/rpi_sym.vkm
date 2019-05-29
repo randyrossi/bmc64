@@ -1,0 +1,118 @@
+# VICE keyboard mapping file
+#
+# A Keyboard map is read in as patch to the current map.
+#
+# File format:
+# - comment lines start with '#'
+# - keyword lines start with '!keyword'
+# - normal line has 'keysym/scancode row column shiftflag'
+#
+# Keywords and their lines are:
+# '!CLEAR'               clear whole table
+# '!INCLUDE filename'    read file as mapping file
+# '!LSHIFT row col'      left shift keyboard row/column
+# '!RSHIFT row col'      right shift keyboard row/column
+# '!VSHIFT shiftkey'     virtual shift key (RSHIFT or LSHIFT)
+# '!UNDEF keysym'        remove keysym from table
+#
+# Shiftflag can have the values:
+# 0      key is not shifted for this keysym/scancode
+# 1      key is shifted for this keysym/scancode
+# 2      left shift
+# 4      right shift
+# 8      key can be shifted or not with this keysym/scancode
+# 16     deshift key for this keysym/scancode
+# 32     another definition for this keysym/scancode follows
+#
+# Negative row values:
+# 'keysym -1 n' joystick #1, direction n
+# 'keysym -2 n' joystick #2, direction n
+# 'keysym -3 0' first RESTORE key
+# 'keysym -3 1' second RESTORE key
+# 'keysym -4 0' 40/80 column key
+# 'keysym -4 1' CAPS (ASCII/DIN) key
+#
+
+!CLEAR
+!LSHIFT 1 3
+!RSHIFT 6 4
+!VSHIFT RSHIFT
+!SHIFTL LSHIFT
+
+Tab 0 2 8       /* Tab = CTRL */
+Control_L 0 5 8 /* Control_L = Commodore Key */
+Alt_L 0 5 8     /* Alt_L = Commodore Key */
+BackSpace 7 0 8
+Down 7 3 8
+Escape 0 3 8    /* Run Stop */
+F1 7 4 8
+F2 7 4 1
+F3 7 5 8
+F4 7 5 1
+F5 7 6 8
+F6 7 6 1
+F7 7 7 8
+F8 7 7 1
+Home 6 7 8      /* Clr */
+Insert 6 0 8   /* Insert */
+Left 7 2 1
+Return 7 1 8
+Right 7 2 8
+Shift_L 1 3 2
+Shift_R 6 4 4
+Up 7 3 1
+at 5 6 8
+colon 5 5 8
+comma 5 3 8
+equal 6 5 8
+minus 5 7 8
+period 5 4 8
+plus 5 0 8
+semicolon 6 2 8
+slash 6 3 8
+space 0 4 8
+sterling 6 0 8
+asterisk 6 1 8
+arrowleft 0 1 8
+arrowup 6 6 8
+0 4 7 8
+1 0 0 8
+2 0 7 8
+3 1 0 8
+4 1 7 8
+5 2 0 8
+6 2 7 8
+7 3 0 8
+8 3 7 8
+9 4 0 8
+a 1 2 8
+b 3 4 8
+c 2 4 8
+d 2 2 8
+e 1 6 8
+f 2 5 8
+g 3 2 8
+h 3 5 8
+i 4 1 8
+j 4 2 8
+k 4 5 8
+l 5 2 8
+m 4 4 8
+n 4 3 8
+o 4 6 8
+p 5 1 8
+q 0 6 8
+r 2 1 8
+s 1 5 8
+t 2 6 8
+u 3 6 8
+v 3 3 8
+w 1 1 8
+x 2 3 8
+y 3 1 8
+z 1 4 8
+
+# Restore key mappings
+Delete -3 0
+Prior -3 1
+CapsLock 1 3 64

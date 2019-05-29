@@ -78,3 +78,7 @@ int get_color_tint() {
   resources_get_int("VICColorTint", &value);
   return value;
 }
+
+void raspi_cartridge_trigger_freeze(void) {
+  // Not available on this machine.
+}
