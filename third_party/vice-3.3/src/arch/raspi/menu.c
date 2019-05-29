@@ -65,11 +65,13 @@
 //#define RASPI_SUPPORT_PCB 1
 
 // For filename filters
-#define FILTER_NONE 0
-#define FILTER_DISK 1
-#define FILTER_CART 2
-#define FILTER_TAPE 3
-#define FILTER_SNAP 4
+typedef enum {
+   FILTER_NONE,
+   FILTER_DISK,
+   FILTER_CART,
+   FILTER_TAPE,
+   FILTER_SNAP,
+} FileFilter;
 
 extern struct joydev_config joydevs[2];
 
@@ -153,13 +155,15 @@ static char snap_filt_ext[1][5] = {".vsf"};
 
 // For file type dialogs. Determines what dir we start in. Used
 // as index into default_dir_names and current_dir_names.
-#define DIR_ROOT 0
-#define DIR_DISKS 1
-#define DIR_TAPES 2
-#define DIR_CARTS 3
-#define DIR_SNAPS 4
-#define DIR_ROMS 5
 #define NUM_DIR_TYPES 6
+typedef enum {
+   DIR_ROOT,
+   DIR_DISKS,
+   DIR_TAPES,
+   DIR_CARTS,
+   DIR_SNAPS,
+   DIR_ROMS,
+} DirType;
 
 // What directories to initialize file search dialogs with for
 // each type of file.
@@ -177,7 +181,7 @@ TEST_FILTER_MACRO(test_cart_name, num_cart_ext, cart_filt_ext);
 TEST_FILTER_MACRO(test_snap_name, num_snap_ext, snap_filt_ext);
 
 // Clears the file menu and populates it with files.
-static void list_files(struct menu_item *parent, int dir_type, int filter,
+static void list_files(struct menu_item *parent, DirType dir_type, FileFilter filter,
                        int menu_id) {
   DIR *dp;
   struct dirent *ep;
@@ -273,7 +277,7 @@ static void list_files(struct menu_item *parent, int dir_type, int filter,
   assert(files_root.first_child == NULL);
 }
 
-static void show_files(int dir_type, int filter, int menu_id) {
+static void show_files(DirType dir_type, FileFilter filter, int menu_id) {
   // Show files
   struct menu_item *file_root = ui_push_menu(-1, -1);
   if (menu_id == MENU_SAVE_SNAP_FILE) {
@@ -724,7 +728,7 @@ void menu_swap_joysticks() {
   ui_set_joy_items();
 }
 
-static char *fullpath(int dir_type, char *name) {
+static char *fullpath(DirType dir_type, char *name) {
   strcpy(dir_scratch, current_dir_names[dir_type]);
   strcat(dir_scratch, "/");
   strcat(dir_scratch, name);
