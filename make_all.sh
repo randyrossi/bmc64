@@ -11,11 +11,12 @@ echo Need arg pi2 or pi3
 exit
 fi
 
-if [ -f config.txt ]
+if [ -f sdcard/config.txt ]
 then
 echo Making everything...
 else
 echo Must be run from BMC64 root dir.
+exit
 fi
 
 SRC_DIR=`pwd`
@@ -91,6 +92,8 @@ make libarchdep
 make libhvsc
 cd ..
 make x64
+make x128
+make xvic
 cd ../..
 echo ==============================================================
 echo Link errors above are expected

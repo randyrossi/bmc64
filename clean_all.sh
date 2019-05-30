@@ -1,10 +1,11 @@
 #!/bin/bash
 
-if [ -f config.txt ]
+if [ -f sdcard/config.txt ]
 then
 echo Cleaning...
 else
 echo Must be run from BMC64 root dir.
+exit
 fi
 
 SRC_DIR=`pwd`
