@@ -738,7 +738,7 @@ static char *fullpath(DirType dir_type, char *name) {
   return dir_scratch;
 }
 
-static void c64_attach_cart(struct menu_item *item, int cart_type) {
+static void attach_cart(struct menu_item *item, int cart_type) {
   ui_info("Attaching...");
   if (cartridge_attach_image(cart_type,
             fullpath(DIR_CARTS, item->str_value)) < 0) {
@@ -803,16 +803,52 @@ static void select_file(struct menu_item *item) {
        }
        break;
      case MENU_C64_CART_FILE:
-       c64_attach_cart(item, CARTRIDGE_CRT);
+       attach_cart(item, CARTRIDGE_CRT);
        break;
      case MENU_C64_CART_8K_FILE:
-       c64_attach_cart(item, CARTRIDGE_GENERIC_8KB);
+       attach_cart(item, CARTRIDGE_GENERIC_8KB);
        break;
      case MENU_C64_CART_16K_FILE:
-       c64_attach_cart(item, CARTRIDGE_GENERIC_16KB);
+       attach_cart(item, CARTRIDGE_GENERIC_16KB);
        break;
      case MENU_C64_CART_ULTIMAX_FILE:
-       c64_attach_cart(item, CARTRIDGE_ULTIMAX);
+       attach_cart(item, CARTRIDGE_ULTIMAX);
+       break;
+     case MENU_VIC20_CART_DETECT_FILE:
+       attach_cart(item, CARTRIDGE_VIC20_DETECT);
+       break;
+     case MENU_VIC20_CART_GENERIC_FILE:
+       attach_cart(item, CARTRIDGE_VIC20_GENERIC);
+       break;
+     case MENU_VIC20_CART_16K_2000_FILE:
+       attach_cart(item, CARTRIDGE_VIC20_16KB_2000);
+       break;
+     case MENU_VIC20_CART_16K_4000_FILE:
+       attach_cart(item, CARTRIDGE_VIC20_16KB_4000);
+       break;
+     case MENU_VIC20_CART_16K_6000_FILE:
+       attach_cart(item, CARTRIDGE_VIC20_16KB_6000);
+       break;
+     case MENU_VIC20_CART_8K_A000_FILE:
+       attach_cart(item, CARTRIDGE_VIC20_8KB_A000);
+       break;
+     case MENU_VIC20_CART_4K_B000_FILE:
+       attach_cart(item, CARTRIDGE_VIC20_4KB_B000);
+       break;
+     case MENU_VIC20_CART_BEHRBONZ_FILE:
+       attach_cart(item, CARTRIDGE_VIC20_BEHRBONZ);
+       break;
+     case MENU_VIC20_CART_UM_FILE:
+       attach_cart(item, CARTRIDGE_VIC20_UM);
+       break;
+     case MENU_VIC20_CART_FP_FILE:
+       attach_cart(item, CARTRIDGE_VIC20_FP);
+       break;
+     case MENU_VIC20_CART_MEGACART_FILE:
+       attach_cart(item, CARTRIDGE_VIC20_MEGACART);
+       break;
+     case MENU_VIC20_CART_FINAL_EXPANSION_FILE:
+       attach_cart(item, CARTRIDGE_VIC20_FINAL_EXPANSION);
        break;
      default:
        break;
@@ -834,6 +870,18 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
   case MENU_C64_CART_8K_FILE:
   case MENU_C64_CART_16K_FILE:
   case MENU_C64_CART_ULTIMAX_FILE:
+  case MENU_VIC20_CART_DETECT_FILE:
+  case MENU_VIC20_CART_GENERIC_FILE:
+  case MENU_VIC20_CART_16K_2000_FILE:
+  case MENU_VIC20_CART_16K_4000_FILE:
+  case MENU_VIC20_CART_16K_6000_FILE:
+  case MENU_VIC20_CART_8K_A000_FILE:
+  case MENU_VIC20_CART_4K_B000_FILE:
+  case MENU_VIC20_CART_BEHRBONZ_FILE:
+  case MENU_VIC20_CART_UM_FILE:
+  case MENU_VIC20_CART_FP_FILE:
+  case MENU_VIC20_CART_MEGACART_FILE:
+  case MENU_VIC20_CART_FINAL_EXPANSION_FILE:
     return DIR_CARTS;
   case MENU_KERNAL_FILE:
   case MENU_BASIC_FILE:
@@ -868,6 +916,18 @@ static void relist_files(struct menu_item *item) {
   case MENU_C64_CART_8K_FILE:
   case MENU_C64_CART_16K_FILE:
   case MENU_C64_CART_ULTIMAX_FILE:
+  case MENU_VIC20_CART_DETECT_FILE:
+  case MENU_VIC20_CART_GENERIC_FILE:
+  case MENU_VIC20_CART_16K_2000_FILE:
+  case MENU_VIC20_CART_16K_4000_FILE:
+  case MENU_VIC20_CART_16K_6000_FILE:
+  case MENU_VIC20_CART_8K_A000_FILE:
+  case MENU_VIC20_CART_4K_B000_FILE:
+  case MENU_VIC20_CART_BEHRBONZ_FILE:
+  case MENU_VIC20_CART_UM_FILE:
+  case MENU_VIC20_CART_FP_FILE:
+  case MENU_VIC20_CART_MEGACART_FILE:
+  case MENU_VIC20_CART_FINAL_EXPANSION_FILE:
     show_files(DIR_CARTS, FILTER_NONE, item->id);
     break;
   case MENU_KERNAL_FILE:
@@ -992,6 +1052,42 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_C64_ATTACH_CART_ULTIMAX:
     show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_ULTIMAX_FILE);
+    return;
+  case MENU_VIC20_ATTACH_CART_DETECT:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_DETECT_FILE);
+    return;
+  case MENU_VIC20_ATTACH_CART_GENERIC:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_GENERIC_FILE);
+    return;
+  case MENU_VIC20_ATTACH_CART_16K_2000:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_16K_2000_FILE);
+    return;
+  case MENU_VIC20_ATTACH_CART_16K_4000:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_16K_4000_FILE);
+    return;
+  case MENU_VIC20_ATTACH_CART_16K_6000:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_16K_6000_FILE);
+    return;
+  case MENU_VIC20_ATTACH_CART_8K_A000:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_8K_A000_FILE);
+    return;
+  case MENU_VIC20_ATTACH_CART_4K_B000:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_4K_B000_FILE);
+    return;
+  case MENU_VIC20_ATTACH_CART_BEHRBONZ:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_BEHRBONZ_FILE);
+    return;
+  case MENU_VIC20_ATTACH_CART_UM:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_UM_FILE);
+    return;
+  case MENU_VIC20_ATTACH_CART_FP:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_FP_FILE);
+    return;
+  case MENU_VIC20_ATTACH_CART_MEGACART:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_MEGACART_FILE);
+    return;
+  case MENU_VIC20_ATTACH_CART_FINAL_EXPANSION:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_FINAL_EXPANSION_FILE);
     return;
   case MENU_LOAD_KERNAL:
     show_files(DIR_ROMS, FILTER_NONE, MENU_KERNAL_FILE);
@@ -1431,6 +1527,20 @@ void build_menu(struct menu_item *root) {
 
   parent = ui_menu_add_folder(root, "Cartridge");
   if (machine_class == VICE_MACHINE_VIC20) {
+    ui_menu_add_button(MENU_VIC20_ATTACH_CART_GENERIC, parent, "Attach generic cart...");
+    ui_menu_add_button(MENU_VIC20_ATTACH_CART_BEHRBONZ, parent, "Attach behrbonz cart...");
+    ui_menu_add_button(MENU_VIC20_ATTACH_CART_MEGACART, parent, "Attach megacart cart...");
+    ui_menu_add_button(MENU_VIC20_ATTACH_CART_FINAL_EXPANSION, parent, "Attach final expansion cart...");
+    ui_menu_add_button(MENU_VIC20_ATTACH_CART_UM, parent, "Attach UM cart...");
+    ui_menu_add_button(MENU_VIC20_ATTACH_CART_FP, parent, "Attach FP cart...");
+
+    parent = ui_menu_add_folder(root, "Add to generic cartridge");
+       ui_menu_add_button(MENU_VIC20_ATTACH_CART_DETECT, parent, "Smart attach...");
+       ui_menu_add_button(MENU_VIC20_ATTACH_CART_16K_2000, parent, "Attach 4/8/16k $2000...");
+       ui_menu_add_button(MENU_VIC20_ATTACH_CART_16K_4000, parent, "Attach 4/8/16k $4000...");
+       ui_menu_add_button(MENU_VIC20_ATTACH_CART_16K_6000, parent, "Attach 4/8k/16k $6000...");
+       ui_menu_add_button(MENU_VIC20_ATTACH_CART_8K_A000, parent, "Attach 4/8k $A000...");
+       ui_menu_add_button(MENU_VIC20_ATTACH_CART_4K_B000, parent, "Attach 4k $B000...");
 
   } else {
     ui_menu_add_button(MENU_C64_ATTACH_CART, parent, "Attach cart...");

@@ -28,6 +28,7 @@
 
 #include "datasette.h"
 #include "drive.h"
+#include "machine.h"
 #include "menu.h"
 #include "resources.h"
 #include "ui.h"
@@ -78,7 +79,12 @@ uint8_t *overlay_init(int width, int height) {
   overlay_buf_pitch = width;
 
   // Figure out inset that will center.
-  char *template = "8:   9:   10:   11:   T:000 STP   W:  J:12";
+  char *template;
+  if (machine_class == VICE_MACHINE_VIC20) {
+     template = "8:   9:   10:   11:   T:000 STP   W:  J:12";
+  } else {
+     template = "8:   9:   10:   11:   T:000 STP   W:  J:1";
+  }
   inset_x = width / 2 - (strlen(template) * 8) / 2;
   inset_y = 1;
 
