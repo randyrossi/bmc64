@@ -401,7 +401,7 @@ static void ui_set_hotkeys() {
 static void ui_set_joy_items() {
   int joydev;
   int i;
-  for (joydev = 0; joydev < 2; joydev++) {
+  for (joydev = 0; joydev < circle_num_joysticks(); joydev++) {
     struct menu_item *dst;
 
     if (joydevs[joydev].port == 1) {
@@ -436,18 +436,20 @@ static void ui_set_joy_items() {
     resources_set_int("JoyPort1Device", JOYPORT_ID_JOYSTICK);
   }
 
-  value = port_2_menu_item->value;
-  if (port_2_menu_item->choice_ints[value] == JOYDEV_NONE) {
-    resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
-  } else if (port_2_menu_item->choice_ints[value] == JOYDEV_MOUSE) {
-    if (port_1_menu_item->choice_ints[port_1_menu_item->value]
-        == JOYDEV_MOUSE) {
-       resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
-       port_1_menu_item->value = 0;
-    }
-    resources_set_int("JoyPort2Device", JOYPORT_ID_MOUSE_1351);
-  } else {
-    resources_set_int("JoyPort2Device", JOYPORT_ID_JOYSTICK);
+  if (circle_num_joysticks() > 1) {
+     value = port_2_menu_item->value;
+     if (port_2_menu_item->choice_ints[value] == JOYDEV_NONE) {
+       resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
+     } else if (port_2_menu_item->choice_ints[value] == JOYDEV_MOUSE) {
+       if (port_1_menu_item->choice_ints[port_1_menu_item->value]
+           == JOYDEV_MOUSE) {
+          resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
+          port_1_menu_item->value = 0;
+       }
+       resources_set_int("JoyPort2Device", JOYPORT_ID_MOUSE_1351);
+     } else {
+       resources_set_int("JoyPort2Device", JOYPORT_ID_JOYSTICK);
+     }
   }
 }
 
@@ -715,8 +717,9 @@ void menu_swap_joysticks() {
           == JOYDEV_MOUSE) {
      resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
   }
+
   if (port_2_menu_item->choice_ints[port_2_menu_item->value]
-          == JOYDEV_MOUSE) {
+       == JOYDEV_MOUSE) {
      resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
   }
 
@@ -735,87 +738,84 @@ static char *fullpath(DirType dir_type, char *name) {
   return dir_scratch;
 }
 
+static void c64_attach_cart(struct menu_item *item, int cart_type) {
+  ui_info("Attaching...");
+  if (cartridge_attach_image(cart_type,
+            fullpath(DIR_CARTS, item->str_value)) < 0) {
+     ui_pop_menu();
+     ui_error("Failed to attach cart image");
+  } else {
+     ui_pop_all_and_toggle();
+  }
+}
+
 static void select_file(struct menu_item *item) {
-  if (item->id == MENU_LOAD_SNAP_FILE) {
-    ui_info("Loading...");
-    if (machine_read_snapshot(fullpath(DIR_SNAPS, item->str_value), 0) < 0) {
-      ui_pop_menu();
-      ui_error("Load snapshot failed");
-    } else {
-      ui_pop_all_and_toggle();
-    }
-  } else if (item->id == MENU_DISK_FILE) {
-    // Perform the attach
-    ui_info("Attaching...");
-    if (file_system_attach_disk(unit, fullpath(DIR_DISKS, item->str_value)) <
-        0) {
-      ui_pop_menu();
-      ui_error("Failed to attach disk image");
-    } else {
-      ui_pop_all_and_toggle();
-    }
-  } else if (item->id == MENU_TAPE_FILE) {
-    ui_info("Attaching...");
-    if (tape_image_attach(1, fullpath(DIR_TAPES, item->str_value)) < 0) {
-      ui_pop_menu();
-      ui_error("Failed to attach tape image");
-    } else {
-      ui_pop_all_and_toggle();
-    }
-  } else if (item->id == MENU_CART_FILE) {
-    ui_info("Attaching...");
-    if (cartridge_attach_image(CARTRIDGE_CRT,
-                               fullpath(DIR_CARTS, item->str_value)) < 0) {
-      ui_pop_menu();
-      ui_error("Failed to attach cart image");
-    } else {
-      ui_pop_all_and_toggle();
-    }
-  } else if (item->id == MENU_CART_8K_FILE) {
-    ui_info("Attaching...");
-    if (cartridge_attach_image(CARTRIDGE_GENERIC_8KB,
-                               fullpath(DIR_CARTS, item->str_value)) < 0) {
-      ui_pop_menu();
-      ui_error("Failed to attach cart image");
-    } else {
-      ui_pop_all_and_toggle();
-    }
-  } else if (item->id == MENU_CART_16K_FILE) {
-    ui_info("Attaching...");
-    if (cartridge_attach_image(CARTRIDGE_GENERIC_16KB,
-                               fullpath(DIR_CARTS, item->str_value)) < 0) {
-      ui_pop_menu();
-      ui_error("Failed to attach cart image");
-    } else {
-      ui_pop_all_and_toggle();
-    }
-  } else if (item->id == MENU_CART_ULTIMAX_FILE) {
-    ui_info("Attaching...");
-    if (cartridge_attach_image(CARTRIDGE_ULTIMAX,
-                               fullpath(DIR_CARTS, item->str_value)) < 0) {
-      ui_pop_menu();
-      ui_error("Failed to attach cart image");
-    } else {
-      ui_pop_all_and_toggle();
-    }
-  } else if (item->id == MENU_KERNAL_FILE) {
-    resources_set_string("KernalName", item->str_value);
-    ui_pop_all_and_toggle();
-  } else if (item->id == MENU_BASIC_FILE) {
-    resources_set_string("BasicName", item->str_value);
-    ui_pop_all_and_toggle();
-  } else if (item->id == MENU_CHARGEN_FILE) {
-    resources_set_string("ChargenName", item->str_value);
-    ui_pop_all_and_toggle();
-  } else if (item->id == MENU_AUTOSTART_FILE) {
-    ui_info("Starting...");
-    if (autostart_autodetect(fullpath(DIR_ROOT, item->str_value), NULL, 0,
+  switch (item->id) {
+     case MENU_LOAD_SNAP_FILE:
+       ui_info("Loading...");
+       if (machine_read_snapshot(fullpath(DIR_SNAPS, item->str_value), 0) < 0) {
+         ui_pop_menu();
+         ui_error("Load snapshot failed");
+       } else {
+         ui_pop_all_and_toggle();
+       }
+       break;
+     case MENU_DISK_FILE:
+       // Perform the attach
+       ui_info("Attaching...");
+       if (file_system_attach_disk(unit, fullpath(DIR_DISKS, item->str_value)) <
+           0) {
+         ui_pop_menu();
+         ui_error("Failed to attach disk image");
+       } else {
+         ui_pop_all_and_toggle();
+       }
+       break;
+     case MENU_TAPE_FILE:
+       ui_info("Attaching...");
+       if (tape_image_attach(1, fullpath(DIR_TAPES, item->str_value)) < 0) {
+         ui_pop_menu();
+         ui_error("Failed to attach tape image");
+       } else {
+         ui_pop_all_and_toggle();
+       }
+       break;
+     case MENU_KERNAL_FILE:
+       resources_set_string("KernalName", item->str_value);
+       ui_pop_all_and_toggle();
+       break;
+     case MENU_BASIC_FILE:
+       resources_set_string("BasicName", item->str_value);
+       ui_pop_all_and_toggle();
+       break;
+     case MENU_CHARGEN_FILE:
+       resources_set_string("ChargenName", item->str_value);
+       ui_pop_all_and_toggle();
+       break;
+     case MENU_AUTOSTART_FILE:
+       ui_info("Starting...");
+       if (autostart_autodetect(fullpath(DIR_ROOT, item->str_value), NULL, 0,
                              AUTOSTART_MODE_RUN) < 0) {
-      ui_pop_menu();
-      ui_error("Failed to autostart file");
-    } else {
-      ui_pop_all_and_toggle();
-    }
+         ui_pop_menu();
+         ui_error("Failed to autostart file");
+       } else {
+         ui_pop_all_and_toggle();
+       }
+       break;
+     case MENU_C64_CART_FILE:
+       c64_attach_cart(item, CARTRIDGE_CRT);
+       break;
+     case MENU_C64_CART_8K_FILE:
+       c64_attach_cart(item, CARTRIDGE_GENERIC_8KB);
+       break;
+     case MENU_C64_CART_16K_FILE:
+       c64_attach_cart(item, CARTRIDGE_GENERIC_16KB);
+       break;
+     case MENU_C64_CART_ULTIMAX_FILE:
+       c64_attach_cart(item, CARTRIDGE_ULTIMAX);
+       break;
+     default:
+       break;
   }
 }
 
@@ -830,10 +830,10 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
     return DIR_DISKS;
   case MENU_TAPE_FILE:
     return DIR_TAPES;
-  case MENU_CART_FILE:
-  case MENU_CART_8K_FILE:
-  case MENU_CART_16K_FILE:
-  case MENU_CART_ULTIMAX_FILE:
+  case MENU_C64_CART_FILE:
+  case MENU_C64_CART_8K_FILE:
+  case MENU_C64_CART_16K_FILE:
+  case MENU_C64_CART_ULTIMAX_FILE:
     return DIR_CARTS;
   case MENU_KERNAL_FILE:
   case MENU_BASIC_FILE:
@@ -862,12 +862,12 @@ static void relist_files(struct menu_item *item) {
   case MENU_TAPE_FILE:
     show_files(DIR_TAPES, FILTER_TAPE, item->id);
     break;
-  case MENU_CART_FILE:
+  case MENU_C64_CART_FILE:
     show_files(DIR_CARTS, FILTER_CART, item->id);
     break;
-  case MENU_CART_8K_FILE:
-  case MENU_CART_16K_FILE:
-  case MENU_CART_ULTIMAX_FILE:
+  case MENU_C64_CART_8K_FILE:
+  case MENU_C64_CART_16K_FILE:
+  case MENU_C64_CART_ULTIMAX_FILE:
     show_files(DIR_CARTS, FILTER_NONE, item->id);
     break;
   case MENU_KERNAL_FILE:
@@ -981,17 +981,17 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_ATTACH_TAPE:
     show_files(DIR_TAPES, FILTER_TAPE, MENU_TAPE_FILE);
     return;
-  case MENU_ATTACH_CART:
-    show_files(DIR_CARTS, FILTER_CART, MENU_CART_FILE);
+  case MENU_C64_ATTACH_CART:
+    show_files(DIR_CARTS, FILTER_CART, MENU_C64_CART_FILE);
     return;
-  case MENU_ATTACH_CART_8K:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_CART_8K_FILE);
+  case MENU_C64_ATTACH_CART_8K:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_8K_FILE);
     return;
-  case MENU_ATTACH_CART_16K:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_CART_16K_FILE);
+  case MENU_C64_ATTACH_CART_16K:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_16K_FILE);
     return;
-  case MENU_ATTACH_CART_ULTIMAX:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_CART_ULTIMAX_FILE);
+  case MENU_C64_ATTACH_CART_ULTIMAX:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_ULTIMAX_FILE);
     return;
   case MENU_LOAD_KERNAL:
     show_files(DIR_ROMS, FILTER_NONE, MENU_KERNAL_FILE);
@@ -1329,6 +1329,7 @@ static void set_hotkey_choices(struct menu_item *item) {
   item->choice_ints[HOTKEY_CHOICE_RESET_SOFT] = BTN_ASSIGN_RESET_SOFT;
 
   if (machine_class != VICE_MACHINE_C64 && machine_class != VICE_MACHINE_C128) {
+     item->choice_disabled[HOTKEY_CHOICE_SWAP_PORTS] = 1;
      item->choice_disabled[HOTKEY_CHOICE_CART_FREEZE] = 1;
   }
 }
@@ -1429,16 +1430,21 @@ void build_menu(struct menu_item *root) {
   ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");
 
   parent = ui_menu_add_folder(root, "Cartridge");
-  ui_menu_add_button(MENU_ATTACH_CART, parent, "Attach cart...");
-  ui_menu_add_button(MENU_ATTACH_CART_8K, parent, "Attach 8k raw...");
-  ui_menu_add_button(MENU_ATTACH_CART_16K, parent, "Attach 16 raw...");
-  ui_menu_add_button(MENU_ATTACH_CART_ULTIMAX, parent, "Attach Ultimax raw...");
+  if (machine_class == VICE_MACHINE_VIC20) {
+
+  } else {
+    ui_menu_add_button(MENU_C64_ATTACH_CART, parent, "Attach cart...");
+    ui_menu_add_button(MENU_C64_ATTACH_CART_8K, parent, "Attach 8k raw...");
+    ui_menu_add_button(MENU_C64_ATTACH_CART_16K, parent, "Attach 16 raw...");
+    ui_menu_add_button(MENU_C64_ATTACH_CART_ULTIMAX, parent, "Attach Ultimax raw...");
+  }
+
   ui_menu_add_button(MENU_TEXT, parent, "");
   ui_menu_add_button(MENU_MAKE_CART_DEFAULT, parent,
                      "Set current cart default (Need Save)");
-  ui_menu_add_button(MENU_SAVE_EASYFLASH, parent, "Save EasyFlash Now");
 
   if (machine_class == VICE_MACHINE_C64 || machine_class == VICE_MACHINE_C128) {
+    ui_menu_add_button(MENU_SAVE_EASYFLASH, parent, "Save EasyFlash Now");
     ui_menu_add_button(MENU_CART_FREEZE, parent, "Cartridge Freeze");
   }
 
@@ -1554,7 +1560,11 @@ void build_menu(struct menu_item *root) {
   set_hotkey_choices(hotkey_cf7_item);
 
   parent = ui_menu_add_folder(root, "Joystick");
-  ui_menu_add_button(MENU_SWAP_JOYSTICKS, parent, "Swap Joystick Ports");
+
+  if (circle_num_joysticks() > 1) {
+      ui_menu_add_button(MENU_SWAP_JOYSTICKS, parent, "Swap Joystick Ports");
+  }
+
   child = port_1_menu_item = ui_menu_add_multiple_choice(
       MENU_JOYSTICK_PORT_1, parent, "Joystick Port 1");
   child->num_choices = 10;
@@ -1580,33 +1590,37 @@ void build_menu(struct menu_item *root) {
   strcpy(child->choices[9], "USB Mouse (1351)");
   child->choice_ints[9] = JOYDEV_MOUSE;
 
-  child = port_2_menu_item = ui_menu_add_multiple_choice(
-      MENU_JOYSTICK_PORT_2, parent, "Joystick Port 2");
-  child->num_choices = 10;
-  child->value = 0;
-  strcpy(child->choices[0], "None");
-  child->choice_ints[0] = JOYDEV_NONE;
-  strcpy(child->choices[1], "USB Gamepad 1");
-  child->choice_ints[1] = JOYDEV_USB_0;
-  strcpy(child->choices[2], "USB Gamepad 2");
-  child->choice_ints[2] = JOYDEV_USB_1;
-  strcpy(child->choices[3], "GPIO Bank 1");
-  child->choice_ints[3] = JOYDEV_GPIO_0;
-  strcpy(child->choices[4], "GPIO Bank 2");
-  child->choice_ints[4] = JOYDEV_GPIO_1;
-  strcpy(child->choices[5], "CURS + SPACE");
-  child->choice_ints[5] = JOYDEV_CURS_SP;
-  strcpy(child->choices[6], "NUMPAD 64825");
-  child->choice_ints[6] = JOYDEV_NUMS_1;
-  strcpy(child->choices[7], "NUMPAD 17930");
-  child->choice_ints[7] = JOYDEV_NUMS_2;
-  strcpy(child->choices[8], "CURS + LCTRL");
-  child->choice_ints[8] = JOYDEV_CURS_LC;
-  strcpy(child->choices[9], "USB Mouse (1351)");
-  child->choice_ints[9] = JOYDEV_MOUSE;
+  if (circle_num_joysticks() > 1) {
+    child = port_2_menu_item = ui_menu_add_multiple_choice(
+        MENU_JOYSTICK_PORT_2, parent, "Joystick Port 2");
+    child->num_choices = 10;
+    child->value = 0;
+    strcpy(child->choices[0], "None");
+    child->choice_ints[0] = JOYDEV_NONE;
+    strcpy(child->choices[1], "USB Gamepad 1");
+    child->choice_ints[1] = JOYDEV_USB_0;
+    strcpy(child->choices[2], "USB Gamepad 2");
+    child->choice_ints[2] = JOYDEV_USB_1;
+    strcpy(child->choices[3], "GPIO Bank 1");
+    child->choice_ints[3] = JOYDEV_GPIO_0;
+    strcpy(child->choices[4], "GPIO Bank 2");
+    child->choice_ints[4] = JOYDEV_GPIO_1;
+    strcpy(child->choices[5], "CURS + SPACE");
+    child->choice_ints[5] = JOYDEV_CURS_SP;
+    strcpy(child->choices[6], "NUMPAD 64825");
+    child->choice_ints[6] = JOYDEV_NUMS_1;
+    strcpy(child->choices[7], "NUMPAD 17930");
+    child->choice_ints[7] = JOYDEV_NUMS_2;
+    strcpy(child->choices[8], "CURS + LCTRL");
+    child->choice_ints[8] = JOYDEV_CURS_LC;
+    strcpy(child->choices[9], "USB Mouse (1351)");
+    child->choice_ints[9] = JOYDEV_MOUSE;
+  }
 
   ui_menu_add_button(MENU_CONFIGURE_USB_0, parent, "Configure USB Joy 1...");
-  ui_menu_add_button(MENU_CONFIGURE_USB_1, parent, "Configure USB Joy 2...");
+  if (circle_num_joysticks() > 1) {
+     ui_menu_add_button(MENU_CONFIGURE_USB_1, parent, "Configure USB Joy 2...");
+  }
 
   usb_pref_0 = 0;
   usb_pref_1 = 0;
@@ -1756,4 +1770,11 @@ int circle_use_pcb() {
   }
 #endif
   return 0;
+}
+
+int circle_num_joysticks(void) {
+  if (machine_class == VICE_MACHINE_VIC20) {
+    return 1;
+  }
+  return 2;
 }

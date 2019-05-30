@@ -160,7 +160,8 @@ int circle_cycles_per_sec() {
 bool CKernel::uiShift = false;
 
 CKernel::CKernel(void)
-    : ViceStdioApp("vice"), mVCHIQ(&mMemory, &mInterrupt), mViceSound(nullptr) {
+    : ViceStdioApp("vice"), mVCHIQ(&mMemory, &mInterrupt), mViceSound(nullptr),
+      mNumJoy(circle_num_joysticks()) {
   static_kernel = this;
   mod_states = 0;
   memset(key_states, 0, MAX_KEY_CODES * sizeof(bool));
@@ -830,14 +831,18 @@ void CKernel::circle_check_gpio() {
   if (circle_use_pcb()) {
      ScanKeyboard();
      ReadJoystick(0, TRUE);
-     ReadJoystick(1, TRUE);
+     if (mNumJoy > 1) {
+       ReadJoystick(1, TRUE);
+     }
   } else {
     if (ReadDebounced(GPIO_MENU_INDEX) == BTN_PRESS) {
       circle_key_pressed(KEYCODE_F12);
       circle_key_released(KEYCODE_F12);
     }
     ReadJoystick(0, FALSE);
-    ReadJoystick(1, FALSE);
+    if (mNumJoy > 1) {
+       ReadJoystick(1, FALSE);
+    }
   }
 }
 

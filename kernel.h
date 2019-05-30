@@ -100,6 +100,7 @@ private:
   ViceSound *mViceSound;
   CCPUThrottle mCPUThrottle;
   CSpinLock m_Lock;
+  int mNumJoy;
 
   int gpio_debounce_state[NUM_GPIO_PINS];
 };
