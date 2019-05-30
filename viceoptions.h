@@ -20,8 +20,10 @@
 #include <circle/bcmpropertytags.h>
 #include <circle/cputhrottle.h>
 
-#define DEFAULT_CANVAS_WIDTH 384
-#define DEFAULT_CANVAS_HEIGHT 272
+#define DEFAULT_VICII_CANVAS_WIDTH 384
+#define DEFAULT_VICII_CANVAS_HEIGHT 272
+#define DEFAULT_VIC_CANVAS_WIDTH 448
+#define DEFAULT_VIC_CANVAS_HEIGHT 284
 
 #define VOLUME_NAME_LEN 16
 
@@ -57,8 +59,10 @@ private:
   TPropertyTagCommandLine m_TagCommandLine;
   char *m_pOptions;
 
-  unsigned m_nCanvasWidth;
-  unsigned m_nCanvasHeight;
+  unsigned m_nVicIICanvasWidth;
+  unsigned m_nVicIICanvasHeight;
+  unsigned m_nVicCanvasWidth;
+  unsigned m_nVicCanvasHeight;
   unsigned m_nMachineTiming;
   bool m_bHideConsole;
   bool m_bDemoMode;

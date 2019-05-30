@@ -1,4 +1,4 @@
-hide_console=1 fast=true canvas_width=384 canvas_height=272 machine_timing=pal
+hide_console=1 fast=true vicii_canvas_width=384 vicii_canvas_height=272 vic_canvas_width=448 vic_canvas_height=284 machine_timing=pal
 
 # Kernel options must appear on a single line separated by spaces.
 #
