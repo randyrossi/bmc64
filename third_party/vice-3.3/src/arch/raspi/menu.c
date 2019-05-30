@@ -1323,6 +1323,21 @@ static void menu_value_changed(struct menu_item *item) {
     raspi_cartridge_trigger_freeze();
     ui_pop_all_and_toggle();
     break;
+  case MENU_VIC20_MEMORY_3K:
+    resources_set_int("RAMBlock0", item->value);
+    break;
+  case MENU_VIC20_MEMORY_8K_2000:
+    resources_set_int("RAMBlock1", item->value);
+    break;
+  case MENU_VIC20_MEMORY_8K_4000:
+    resources_set_int("RAMBlock2", item->value);
+    break;
+  case MENU_VIC20_MEMORY_8K_6000:
+    resources_set_int("RAMBlock3", item->value);
+    break;
+  case MENU_VIC20_MEMORY_8K_A000:
+    resources_set_int("RAMBlock5", item->value);
+    break;
   }
 
   // Only items that were for file selection/nav should have these set...
@@ -1636,6 +1651,34 @@ void build_menu(struct menu_item *root) {
   // Filter on by default
   child = sid_filter_item =
       ui_menu_add_toggle(MENU_SID_FILTER, parent, "Sid Filter", 0);
+
+  if (machine_class == VICE_MACHINE_VIC20) {
+     parent = ui_menu_add_folder(root, "Memory");
+
+     int block_value;
+     int blocks;
+     resources_get_int("RAMBlock0", &block_value);
+     blocks = block_value;
+     resources_get_int("RAMBlock1", &block_value);
+     blocks |= (block_value << 1);
+     resources_get_int("RAMBlock2", &block_value);
+     blocks |= (block_value << 2);
+     resources_get_int("RAMBlock3", &block_value);
+     blocks |= (block_value << 3);
+     resources_get_int("RAMBlock5", &block_value);
+     blocks |= (block_value << 5);
+
+     ui_menu_add_toggle(MENU_VIC20_MEMORY_3K, parent,
+                                         "3Kb ($0400)", blocks & VIC20_BLOCK_0 ? 1: 0);
+     ui_menu_add_toggle(MENU_VIC20_MEMORY_8K_2000, parent,
+                                         "8kb ($2000)", blocks & VIC20_BLOCK_1 ? 1: 0);
+     ui_menu_add_toggle(MENU_VIC20_MEMORY_8K_4000, parent,
+                                         "8kb ($4000)", blocks & VIC20_BLOCK_2 ? 1 : 0);
+     ui_menu_add_toggle(MENU_VIC20_MEMORY_8K_6000, parent,
+                                         "8kb ($6000)", blocks & VIC20_BLOCK_3 ? 1 : 0);
+     ui_menu_add_toggle(MENU_VIC20_MEMORY_8K_A000, parent,
+                                         "8kb ($A000)", blocks & VIC20_BLOCK_5 ? 1 : 0);
+  }
 
   parent = ui_menu_add_folder(root, "Keyboard");
   child = keyboard_type_item = ui_menu_add_multiple_choice(

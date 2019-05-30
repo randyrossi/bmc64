@@ -207,6 +207,12 @@ typedef enum {
    MENU_RESET_CONFIRM,
 
    MENU_USE_PCB,
+
+   MENU_VIC20_MEMORY_3K,
+   MENU_VIC20_MEMORY_8K_2000,
+   MENU_VIC20_MEMORY_8K_4000,
+   MENU_VIC20_MEMORY_8K_6000,
+   MENU_VIC20_MEMORY_8K_A000,
 } MenuID;
 
 typedef enum {
@@ -254,6 +260,14 @@ typedef enum {
    HOTKEY_CHOICE_RESET_HARD,
    HOTKEY_CHOICE_RESET_SOFT,
 } HotKeyChoice;
+
+enum {
+    VIC20_BLOCK_0 = 1,
+    VIC20_BLOCK_1 = 1 << 1,
+    VIC20_BLOCK_2 = 1 << 2,
+    VIC20_BLOCK_3 = 1 << 3,
+    VIC20_BLOCK_5 = 1 << 5
+};
 
 extern int osd_active;
 
