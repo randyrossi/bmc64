@@ -81,9 +81,9 @@ uint8_t *overlay_init(int width, int height) {
   // Figure out inset that will center.
   char *template;
   if (machine_class == VICE_MACHINE_VIC20) {
-     template = "8:   9:   10:   11:   T:000 STP   W:  J:12";
-  } else {
      template = "8:   9:   10:   11:   T:000 STP   W:  J:1";
+  } else {
+     template = "8:   9:   10:   11:   T:000 STP   W:  J:12";
   }
   inset_x = width / 2 - (strlen(template) * 8) / 2;
   inset_y = 1;
