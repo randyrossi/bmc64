@@ -211,6 +211,12 @@ struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
   if (machine_class == VICE_MACHINE_VIC20) {
     // TODO: I don't understand why this is necessary.
     adj_x = (video_state.vis_w - canvas->geometry->gfx_size.width) / 2;
+    int timing = circle_get_machine_timing();
+    if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
+        timing == MACHINE_TIMING_NTSC_HDMI ||
+        timing == MACHINE_TIMING_NTSC_CUSTOM) {
+       adj_x /= 2;
+    }
   }
 
   // Figure out what it takes to center our canvas on the display
