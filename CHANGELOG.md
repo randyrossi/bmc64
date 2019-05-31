@@ -156,4 +156,5 @@
     to distinguish between VIC20 and C64/C128 video chips. Done only as a
     convenience to use the same file system for both emulators.
     canvas_width,canvas_height still works but applies to vicii
+  * moved bootstat.txt into machine dirs so they can be different
 

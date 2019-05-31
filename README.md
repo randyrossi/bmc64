@@ -154,7 +154,7 @@ NOTE: Since v1.9, Pin 8 connections above were moved from GND to GPIO7 or GPIO21
 DO NOT ATTEMPT THIS IF YOU ARE NOT COMFORTABLE WITH WIRING THINGS UP TO YOUR PI
 I TAKE NO RESPONSIBILITY IF YOU WIRE THINGS INCORRECTLY OR DAMAGE YOUR DEVICE
 
-Since v1.9, you can hook up a real C64 keyboard + joysticks using a PCB (it is possible to breadboard the connections or create a custom ribbon cable since there are no components but a PCB is the preferred method).  A PCB is currently being worked on that will also incorporate a Power LED connector, power jack, switch and DB9 connectors in the right locations so you can mount it inside a C64 shell.
+You can hook up a real C64 keyboard and joysticks using a PCB (it is possible to breadboard the connections or create a custom ribbon cable since there are no components but a PCB is the preferred method).  A PCB is currently being worked on that will also incorporate a Power LED connector, power jack, switch and DB9 connectors in the right locations so you can mount it inside a C64 shell.
 
 Wiring is as follows:
 
