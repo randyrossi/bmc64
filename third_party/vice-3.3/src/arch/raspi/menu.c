@@ -792,6 +792,30 @@ static void select_file(struct menu_item *item) {
        resources_set_string("ChargenName", item->str_value);
        ui_pop_all_and_toggle();
        break;
+     case MENU_C128_LOAD_KERNAL_FILE:
+       resources_set_string("KernalIntName", item->str_value);
+       ui_pop_all_and_toggle();
+       break;
+     case MENU_C128_LOAD_BASIC_HI_FILE:
+       resources_set_string("BasicHiName", item->str_value);
+       ui_pop_all_and_toggle();
+       break;
+     case MENU_C128_LOAD_BASIC_LO_FILE:
+       resources_set_string("BasicLoName", item->str_value);
+       ui_pop_all_and_toggle();
+       break;
+     case MENU_C128_LOAD_CHARGEN_FILE:
+       resources_set_string("ChargenIntName", item->str_value);
+       ui_pop_all_and_toggle();
+       break;
+     case MENU_C128_LOAD_64_KERNAL_FILE:
+       resources_set_string("Kernal64Name", item->str_value);
+       ui_pop_all_and_toggle();
+       break;
+     case MENU_C128_LOAD_64_BASIC_FILE:
+       resources_set_string("Basic64Name", item->str_value);
+       ui_pop_all_and_toggle();
+       break;
      case MENU_AUTOSTART_FILE:
        ui_info("Starting...");
        if (autostart_autodetect(fullpath(DIR_ROOT, item->str_value), NULL, 0,
@@ -1097,6 +1121,24 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_LOAD_CHARGEN:
     show_files(DIR_ROMS, FILTER_NONE, MENU_CHARGEN_FILE);
+    return;
+  case MENU_C128_LOAD_KERNAL:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_KERNAL_FILE);
+    return;
+  case MENU_C128_LOAD_BASIC_HI:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_BASIC_HI_FILE);
+    return;
+  case MENU_C128_LOAD_BASIC_LO:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_BASIC_LO_FILE);
+    return;
+  case MENU_C128_LOAD_CHARGEN:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_CHARGEN_FILE);
+    return;
+  case MENU_C128_LOAD_64_KERNAL:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_64_KERNAL_FILE);
+    return;
+  case MENU_C128_LOAD_64_BASIC:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_64_BASIC_FILE);
     return;
   case MENU_MAKE_CART_DEFAULT:
     cartridge_set_default();
@@ -1510,9 +1552,19 @@ void build_menu(struct menu_item *root) {
   ui_menu_add_divider(root);
 
   parent = ui_menu_add_folder(root, "ROMs...");
-  ui_menu_add_button(MENU_LOAD_KERNAL, parent, "Load Kernal ROM...");
-  ui_menu_add_button(MENU_LOAD_BASIC, parent, "Load Basic ROM...");
-  ui_menu_add_button(MENU_LOAD_CHARGEN, parent, "Load Chargen ROM...");
+  if (machine_class == VICE_MACHINE_VIC20 ||
+         machine_class == VICE_MACHINE_C64) {
+     ui_menu_add_button(MENU_LOAD_KERNAL, parent, "Load Kernal ROM...");
+     ui_menu_add_button(MENU_LOAD_BASIC, parent, "Load Basic ROM...");
+     ui_menu_add_button(MENU_LOAD_CHARGEN, parent, "Load Chargen ROM...");
+  } else if (machine_class == VICE_MACHINE_C128) {
+     ui_menu_add_button(MENU_C128_LOAD_KERNAL, parent, "Load C128 Kernal ROM...");
+     ui_menu_add_button(MENU_C128_LOAD_BASIC_HI, parent, "Load C128 Basic HI ROM...");
+     ui_menu_add_button(MENU_C128_LOAD_BASIC_LO, parent, "Load C128 Basic LO ROM...");
+     ui_menu_add_button(MENU_C128_LOAD_CHARGEN, parent, "Load C128 Chargen ROM...");
+     ui_menu_add_button(MENU_C128_LOAD_64_KERNAL, parent, "Load C64 Kernal ROM...");
+     ui_menu_add_button(MENU_C128_LOAD_64_BASIC, parent, "Load C64 Basic ROM...");
+  }
 
   ui_menu_add_divider(root);
 
