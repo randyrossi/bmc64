@@ -291,15 +291,15 @@ static void show_about() {
 
   switch (machine_class) {
   case VICE_MACHINE_C64:
-    ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.8");
+    ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.9");
     ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C64 Emulator");
     break;
   case VICE_MACHINE_C128:
-    ui_menu_add_button(MENU_TEXT, about_root, "BMC128 v1.8");
+    ui_menu_add_button(MENU_TEXT, about_root, "BMC128 v1.9");
     ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C128 Emulator");
     break;
   case VICE_MACHINE_VIC20:
-    ui_menu_add_button(MENU_TEXT, about_root, "BMVC20 v1.8");
+    ui_menu_add_button(MENU_TEXT, about_root, "BMVIC20 v1.9");
     ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal Vic20 Emulator");
     break;
   default:
@@ -1549,7 +1549,7 @@ void build_menu(struct menu_item *root) {
     ui_menu_add_button(MENU_VIC20_ATTACH_CART_UM, parent, "Attach UM cart...");
     ui_menu_add_button(MENU_VIC20_ATTACH_CART_FP, parent, "Attach FP cart...");
 
-    parent = ui_menu_add_folder(root, "Add to generic cartridge");
+    parent = ui_menu_add_folder(parent, "Add to generic cartridge");
        ui_menu_add_button(MENU_VIC20_ATTACH_CART_DETECT, parent, "Smart attach...");
        ui_menu_add_button(MENU_VIC20_ATTACH_CART_16K_2000, parent, "Attach 4/8/16k $2000...");
        ui_menu_add_button(MENU_VIC20_ATTACH_CART_16K_4000, parent, "Attach 4/8/16k $4000...");
