@@ -38,6 +38,7 @@
 #include "datasette.h"
 #include "demo.h"
 #include "drive.h"
+#include "diskimage.h"
 #include "joy.h"
 #include "joyport.h"
 #include "kbd.h"
@@ -57,6 +58,7 @@
 #include "text.h"
 #include "ui.h"
 #include "util.h"
+#include "vdrive-internal.h"
 
 // This feature is hidden for now. Activated 'pcb' input method where
 // both keyboard and joysticks can be hooked up with a PCB or
@@ -181,7 +183,8 @@ TEST_FILTER_MACRO(test_cart_name, num_cart_ext, cart_filt_ext);
 TEST_FILTER_MACRO(test_snap_name, num_snap_ext, snap_filt_ext);
 
 // Clears the file menu and populates it with files.
-static void list_files(struct menu_item *parent, DirType dir_type, FileFilter filter,
+static void list_files(struct menu_item *parent,
+                       DirType dir_type, FileFilter filter,
                        int menu_id) {
   DIR *dp;
   struct dirent *ep;
@@ -280,8 +283,11 @@ static void list_files(struct menu_item *parent, DirType dir_type, FileFilter fi
 static void show_files(DirType dir_type, FileFilter filter, int menu_id) {
   // Show files
   struct menu_item *file_root = ui_push_menu(-1, -1);
-  if (menu_id == MENU_SAVE_SNAP_FILE) {
-    ui_menu_add_text_field(menu_id, file_root, "Enter name:", "");
+  if (menu_id == MENU_SAVE_SNAP_FILE ||
+      (menu_id >= MENU_CREATE_D64_FILE && menu_id <= MENU_CREATE_X64_FILE)) {
+    struct menu_item *file_name_item = ui_menu_add_text_field(
+       menu_id, file_root, "Enter name:", "");
+    file_name_item->sub_id = MENU_SUB_PICK_FILE;
   }
   list_files(file_root, dir_type, filter, menu_id);
 }
@@ -657,7 +663,6 @@ static void load_settings() {
       usb_y_thresh_1 = ((float)value) / 100.0f;
     } else if (strcmp(name, "palette") == 0) {
       palette_item->value = value;
-      video_canvas_change_palette(palette_item->value);
     } else if (strcmp(name, "keyboard_type") == 0) {
       keyboard_type_item->value = value;
     } else if (strcmp(name, "usb_btn_0") == 0) {
@@ -759,7 +764,7 @@ static void select_file(struct menu_item *item) {
        } else {
          ui_pop_all_and_toggle();
        }
-       break;
+       return;
      case MENU_DISK_FILE:
        // Perform the attach
        ui_info("Attaching...");
@@ -770,7 +775,7 @@ static void select_file(struct menu_item *item) {
        } else {
          ui_pop_all_and_toggle();
        }
-       break;
+       return;
      case MENU_TAPE_FILE:
        ui_info("Attaching...");
        if (tape_image_attach(1, fullpath(DIR_TAPES, item->str_value)) < 0) {
@@ -779,43 +784,43 @@ static void select_file(struct menu_item *item) {
        } else {
          ui_pop_all_and_toggle();
        }
-       break;
+       return;
      case MENU_KERNAL_FILE:
        resources_set_string("KernalName", item->str_value);
        ui_pop_all_and_toggle();
-       break;
+       return;
      case MENU_BASIC_FILE:
        resources_set_string("BasicName", item->str_value);
        ui_pop_all_and_toggle();
-       break;
+       return;
      case MENU_CHARGEN_FILE:
        resources_set_string("ChargenName", item->str_value);
        ui_pop_all_and_toggle();
-       break;
+       return;
      case MENU_C128_LOAD_KERNAL_FILE:
        resources_set_string("KernalIntName", item->str_value);
        ui_pop_all_and_toggle();
-       break;
+       return;
      case MENU_C128_LOAD_BASIC_HI_FILE:
        resources_set_string("BasicHiName", item->str_value);
        ui_pop_all_and_toggle();
-       break;
+       return;
      case MENU_C128_LOAD_BASIC_LO_FILE:
        resources_set_string("BasicLoName", item->str_value);
        ui_pop_all_and_toggle();
-       break;
+       return;
      case MENU_C128_LOAD_CHARGEN_FILE:
        resources_set_string("ChargenIntName", item->str_value);
        ui_pop_all_and_toggle();
-       break;
+       return;
      case MENU_C128_LOAD_64_KERNAL_FILE:
        resources_set_string("Kernal64Name", item->str_value);
        ui_pop_all_and_toggle();
-       break;
+       return;
      case MENU_C128_LOAD_64_BASIC_FILE:
        resources_set_string("Basic64Name", item->str_value);
        ui_pop_all_and_toggle();
-       break;
+       return;
      case MENU_AUTOSTART_FILE:
        ui_info("Starting...");
        if (autostart_autodetect(fullpath(DIR_ROOT, item->str_value), NULL, 0,
@@ -825,57 +830,195 @@ static void select_file(struct menu_item *item) {
        } else {
          ui_pop_all_and_toggle();
        }
-       break;
+       return;
      case MENU_C64_CART_FILE:
        attach_cart(item, CARTRIDGE_CRT);
-       break;
+       return;
      case MENU_C64_CART_8K_FILE:
        attach_cart(item, CARTRIDGE_GENERIC_8KB);
-       break;
+       return;
      case MENU_C64_CART_16K_FILE:
        attach_cart(item, CARTRIDGE_GENERIC_16KB);
-       break;
+       return;
      case MENU_C64_CART_ULTIMAX_FILE:
        attach_cart(item, CARTRIDGE_ULTIMAX);
-       break;
+       return;
      case MENU_VIC20_CART_DETECT_FILE:
        attach_cart(item, CARTRIDGE_VIC20_DETECT);
-       break;
+       return;
      case MENU_VIC20_CART_GENERIC_FILE:
        attach_cart(item, CARTRIDGE_VIC20_GENERIC);
-       break;
+       return;
      case MENU_VIC20_CART_16K_2000_FILE:
        attach_cart(item, CARTRIDGE_VIC20_16KB_2000);
-       break;
+       return;
      case MENU_VIC20_CART_16K_4000_FILE:
        attach_cart(item, CARTRIDGE_VIC20_16KB_4000);
-       break;
+       return;
      case MENU_VIC20_CART_16K_6000_FILE:
        attach_cart(item, CARTRIDGE_VIC20_16KB_6000);
-       break;
+       return;
      case MENU_VIC20_CART_8K_A000_FILE:
        attach_cart(item, CARTRIDGE_VIC20_8KB_A000);
-       break;
+       return;
      case MENU_VIC20_CART_4K_B000_FILE:
        attach_cart(item, CARTRIDGE_VIC20_4KB_B000);
-       break;
+       return;
      case MENU_VIC20_CART_BEHRBONZ_FILE:
        attach_cart(item, CARTRIDGE_VIC20_BEHRBONZ);
-       break;
+       return;
      case MENU_VIC20_CART_UM_FILE:
        attach_cart(item, CARTRIDGE_VIC20_UM);
-       break;
+       return;
      case MENU_VIC20_CART_FP_FILE:
        attach_cart(item, CARTRIDGE_VIC20_FP);
-       break;
+       return;
      case MENU_VIC20_CART_MEGACART_FILE:
        attach_cart(item, CARTRIDGE_VIC20_MEGACART);
-       break;
+       return;
      case MENU_VIC20_CART_FINAL_EXPANSION_FILE:
        attach_cart(item, CARTRIDGE_VIC20_FINAL_EXPANSION);
-       break;
+       return;
      default:
        break;
+  }
+
+  // Handle saving snapshots.
+  if (item->id == MENU_SAVE_SNAP_FILE) {
+    char *fname = item->str_value;
+    if (item->type == TEXTFIELD) {
+      // Scrub the filename before passing it along
+      fname = item->str_value;
+      if (strlen(fname) == 0) {
+        ui_error("Empty filename");
+        return;
+      } else if (strlen(fname) > MAX_FN_NAME) {
+        ui_error("Too long");
+        return;
+      }
+      char *dot = strchr(fname, '.');
+      if (dot == NULL) {
+        if (strlen(fname) + 4 <= MAX_FN_NAME) {
+          strcat(fname, ".vsf");
+        } else {
+          ui_error("Too long");
+          return;
+        }
+      } else {
+        if ((dot[1] != 'v' && dot[1] != 'V') ||
+            (dot[2] != 's' && dot[2] != 'S') ||
+            (dot[3] != 'f' && dot[3] != 'F') || dot[4] != '\0') {
+          ui_error("Need .VSF extension");
+          return;
+        }
+      }
+    }
+    ui_info("Saving...");
+    if (machine_write_snapshot(fullpath(DIR_SNAPS, fname), 1, 1, 0) < 0) {
+      ui_pop_menu();
+      ui_error("Save snapshot failed");
+    } else {
+      ui_pop_all_and_toggle();
+    }
+  }
+
+  // Handle creating empty disk
+  else if (item->id >= MENU_CREATE_D64_FILE && item->id <= MENU_CREATE_X64_FILE) {
+     char ext[5];
+     int image_type;
+     switch (item->id) {
+       case MENU_CREATE_D64_FILE:
+         image_type = DISK_IMAGE_TYPE_D64;
+         strcpy(ext, ".d64");
+         break;
+       case MENU_CREATE_D67_FILE:
+         image_type = DISK_IMAGE_TYPE_D67;
+         strcpy(ext, ".d67");
+         break;
+       case MENU_CREATE_D71_FILE:
+         image_type = DISK_IMAGE_TYPE_D71;
+         strcpy(ext, ".d71");
+         break;
+       case MENU_CREATE_D80_FILE:
+         image_type = DISK_IMAGE_TYPE_D80;
+         strcpy(ext, ".d80");
+         break;
+       case MENU_CREATE_D81_FILE:
+         image_type = DISK_IMAGE_TYPE_D81;
+         strcpy(ext, ".d81");
+         break;
+       case MENU_CREATE_D82_FILE:
+         image_type = DISK_IMAGE_TYPE_D82;
+         strcpy(ext, ".d82");
+         break;
+       case MENU_CREATE_D1M_FILE:
+         image_type = DISK_IMAGE_TYPE_D1M;
+         strcpy(ext, ".d1m");
+         break;
+       case MENU_CREATE_D2M_FILE:
+         image_type = DISK_IMAGE_TYPE_D2M;
+         strcpy(ext, ".d2m");
+         break;
+       case MENU_CREATE_D4M_FILE:
+         image_type = DISK_IMAGE_TYPE_D4M;
+         strcpy(ext, ".d4m");
+         break;
+       case MENU_CREATE_G64_FILE:
+         image_type = DISK_IMAGE_TYPE_G64;
+         strcpy(ext, ".g64");
+         break;
+       case MENU_CREATE_P64_FILE:
+         image_type = DISK_IMAGE_TYPE_P64;
+         strcpy(ext, ".p64");
+         break;
+       case MENU_CREATE_X64_FILE:
+         image_type = DISK_IMAGE_TYPE_X64;
+         strcpy(ext, ".x64");
+         break;
+       default:
+         return;
+     }
+
+    char *fname = item->str_value;
+    if (item->type == TEXTFIELD) {
+      // Scrub the filename before passing it along
+      fname = item->str_value;
+      if (strlen(fname) == 0) {
+        ui_error("Empty filename");
+        return;
+      } else if (strlen(fname) > MAX_FN_NAME) {
+        ui_error("Too long");
+        return;
+      }
+      char *dot = strchr(fname, '.');
+      if (dot == NULL) {
+        if (strlen(fname) + 4 <= MAX_FN_NAME) {
+          strcat(fname, ext);
+        } else {
+          ui_error("Too long");
+          return;
+        }
+      } else {
+        if (strncasecmp(dot, ext, 4) != 0) {
+          ui_error("Wrong extension");
+          return;
+        }
+      }
+    } else {
+      // Don't allow overwriting an existing file. Just ignore it.
+      return;
+    }
+
+    ui_info("Creating...");
+    if (vdrive_internal_create_format_disk_image(
+         fullpath(DIR_DISKS, fname), "DISK", image_type) < 0) {
+      ui_pop_menu();
+      ui_error("Create disk image failed");
+    } else {
+      ui_pop_menu();
+      ui_pop_menu();
+      ui_info("Disk Created");
+    }
   }
 }
 
@@ -887,6 +1030,18 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
   case MENU_SAVE_SNAP_FILE:
     return DIR_SNAPS;
   case MENU_DISK_FILE:
+  case MENU_CREATE_D64_FILE:
+  case MENU_CREATE_D67_FILE:
+  case MENU_CREATE_D71_FILE:
+  case MENU_CREATE_D80_FILE:
+  case MENU_CREATE_D81_FILE:
+  case MENU_CREATE_D82_FILE:
+  case MENU_CREATE_D1M_FILE:
+  case MENU_CREATE_D2M_FILE:
+  case MENU_CREATE_D4M_FILE:
+  case MENU_CREATE_G64_FILE:
+  case MENU_CREATE_P64_FILE:
+  case MENU_CREATE_X64_FILE:
     return DIR_DISKS;
   case MENU_TAPE_FILE:
     return DIR_TAPES;
@@ -929,6 +1084,18 @@ static void relist_files(struct menu_item *item) {
     show_files(DIR_SNAPS, FILTER_SNAP, item->id);
     break;
   case MENU_DISK_FILE:
+  case MENU_CREATE_D64_FILE:
+  case MENU_CREATE_D67_FILE:
+  case MENU_CREATE_D71_FILE:
+  case MENU_CREATE_D80_FILE:
+  case MENU_CREATE_D81_FILE:
+  case MENU_CREATE_D82_FILE:
+  case MENU_CREATE_D1M_FILE:
+  case MENU_CREATE_D2M_FILE:
+  case MENU_CREATE_D4M_FILE:
+  case MENU_CREATE_G64_FILE:
+  case MENU_CREATE_P64_FILE:
+  case MENU_CREATE_X64_FILE:
     show_files(DIR_DISKS, FILTER_DISK, item->id);
     break;
   case MENU_TAPE_FILE:
@@ -1050,6 +1217,44 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_LOAD_SNAP:
     show_files(DIR_SNAPS, FILTER_SNAP, MENU_LOAD_SNAP_FILE);
     return;
+
+  case MENU_CREATE_D64:
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D64_FILE);
+    return;
+  case MENU_CREATE_D67:
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D67_FILE);
+    return;
+  case MENU_CREATE_D71:
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D71_FILE);
+    return;
+  case MENU_CREATE_D80:
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D80_FILE);
+    return;
+  case MENU_CREATE_D81:
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D81_FILE);
+    return;
+  case MENU_CREATE_D82:
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D82_FILE);
+    return;
+  case MENU_CREATE_D1M:
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D1M_FILE);
+    return;
+  case MENU_CREATE_D2M:
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D2M_FILE);
+    return;
+  case MENU_CREATE_D4M:
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D4M_FILE);
+    return;
+  case MENU_CREATE_G64:
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_G64_FILE);
+    return;
+  case MENU_CREATE_P64:
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_P64_FILE);
+    return;
+  case MENU_CREATE_X64:
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_X64_FILE);
+    return;
+
   case MENU_IECDEVICE_8:
   case MENU_IECDEVICE_9:
   case MENU_IECDEVICE_10:
@@ -1359,75 +1564,39 @@ static void menu_value_changed(struct menu_item *item) {
     } else {
       ui_pop_all_and_toggle();
     }
-    break;
+    return;
   case MENU_CART_FREEZE:
     keyboard_clear_keymatrix();
     raspi_cartridge_trigger_freeze();
     ui_pop_all_and_toggle();
-    break;
+    return;
   case MENU_VIC20_MEMORY_3K:
     resources_set_int("RAMBlock0", item->value);
-    break;
+    return;
   case MENU_VIC20_MEMORY_8K_2000:
     resources_set_int("RAMBlock1", item->value);
-    break;
+    return;
   case MENU_VIC20_MEMORY_8K_4000:
     resources_set_int("RAMBlock2", item->value);
-    break;
+    return;
   case MENU_VIC20_MEMORY_8K_6000:
     resources_set_int("RAMBlock3", item->value);
-    break;
+    return;
   case MENU_VIC20_MEMORY_8K_A000:
     resources_set_int("RAMBlock5", item->value);
-    break;
+    return;
   }
 
   // Only items that were for file selection/nav should have these set...
   if (item->sub_id == MENU_SUB_PICK_FILE) {
     select_file(item);
+    return;
   } else if (item->sub_id == MENU_SUB_UP_DIR) {
     up_dir(item);
+    return;
   } else if (item->sub_id == MENU_SUB_ENTER_DIR) {
     enter_dir(item);
-  }
-
-  // Handle saving snapshots.
-  if (item->id == MENU_SAVE_SNAP_FILE) {
-    char *fname = item->str_value;
-    if (item->type == TEXTFIELD) {
-      // Scrub the filename before passing it along
-      fname = item->str_value;
-      if (strlen(fname) == 0) {
-        ui_error("Empty filename");
-        return;
-      } else if (strlen(fname) > MAX_FN_NAME) {
-        ui_error("Too long");
-        return;
-      }
-      char *dot = strchr(fname, '.');
-      if (dot == NULL) {
-        if (strlen(fname) + 4 <= MAX_FN_NAME) {
-          strcat(fname, ".vsf");
-        } else {
-          ui_error("Too long");
-          return;
-        }
-      } else {
-        if ((dot[1] != 'v' && dot[1] != 'V') ||
-            (dot[2] != 's' && dot[2] != 'S') ||
-            (dot[3] != 'f' && dot[3] != 'F') || dot[4] != '\0') {
-          ui_error("Need .VSF extension");
-          return;
-        }
-      }
-    }
-    ui_info("Saving...");
-    if (machine_write_snapshot(fullpath(DIR_SNAPS, fname), 1, 1, 0) < 0) {
-      ui_pop_menu();
-      ui_error("Save snapshot failed");
-    } else {
-      ui_pop_all_and_toggle();
-    }
+    return;
   }
 }
 
@@ -1489,6 +1658,8 @@ static void set_hotkey_choices(struct menu_item *item) {
 
 void build_menu(struct menu_item *root) {
   struct menu_item *parent;
+  struct menu_item *drive_parent;
+  struct menu_item *tape_parent;
   struct menu_item *child;
   int dev;
   int i;
@@ -1570,31 +1741,49 @@ void build_menu(struct menu_item *root) {
 
   ui_menu_add_button(MENU_AUTOSTART, root, "Autostart Prg/Disk...");
 
-  parent = ui_menu_add_folder(root, "Drive 8");
+  parent = ui_menu_add_folder(root, "Create empty Disk");
+    ui_menu_add_button(MENU_CREATE_D64, parent, "D64...");
+    ui_menu_add_button(MENU_CREATE_D67, parent, "D67...");
+    ui_menu_add_button(MENU_CREATE_D71, parent, "D71...");
+    ui_menu_add_button(MENU_CREATE_D80, parent, "D80...");
+    ui_menu_add_button(MENU_CREATE_D81, parent, "D81...");
+    ui_menu_add_button(MENU_CREATE_D82, parent, "D82...");
+    ui_menu_add_button(MENU_CREATE_D1M, parent, "D1M...");
+    ui_menu_add_button(MENU_CREATE_D2M, parent, "D2M...");
+    ui_menu_add_button(MENU_CREATE_D4M, parent, "D4M...");
+    ui_menu_add_button(MENU_CREATE_G64, parent, "G64...");
+    ui_menu_add_button(MENU_CREATE_P64, parent, "P64...");
+    ui_menu_add_button(MENU_CREATE_X64, parent, "X64...");
 
-  if (machine_class != VICE_MACHINE_VIC20) {
+  ui_menu_add_divider(root);
+
+  drive_parent = ui_menu_add_folder(root, "Drives");
+
+    parent = ui_menu_add_folder(drive_parent, "Drive 8");
+
+    if (machine_class != VICE_MACHINE_VIC20) {
      resources_get_int_sprintf("IECDevice%i", &tmp, 8);
      ui_menu_add_toggle(MENU_IECDEVICE_8, parent, "IEC FileSystem", tmp);
-  }
+    }
 
-  ui_menu_add_button(MENU_ATTACH_DISK_8, parent, "Attach Disk...");
-  ui_menu_add_button(MENU_DETACH_DISK_8, parent, "Detach Disk");
-  ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_8, parent, "Change Model...");
+    ui_menu_add_button(MENU_ATTACH_DISK_8, parent, "Attach Disk...");
+    ui_menu_add_button(MENU_DETACH_DISK_8, parent, "Detach Disk");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_8, parent, "Change Model...");
 
-  parent = ui_menu_add_folder(root, "Drive 9");
-  ui_menu_add_button(MENU_ATTACH_DISK_9, parent, "Attach Disk...");
-  ui_menu_add_button(MENU_DETACH_DISK_9, parent, "Detach Disk");
-  ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_9, parent, "Change Model...");
+    parent = ui_menu_add_folder(drive_parent, "Drive 9");
+    ui_menu_add_button(MENU_ATTACH_DISK_9, parent, "Attach Disk...");
+    ui_menu_add_button(MENU_DETACH_DISK_9, parent, "Detach Disk");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_9, parent, "Change Model...");
 
-  parent = ui_menu_add_folder(root, "Drive 10");
-  ui_menu_add_button(MENU_ATTACH_DISK_10, parent, "Attach Disk...");
-  ui_menu_add_button(MENU_DETACH_DISK_10, parent, "Detach Disk");
-  ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_10, parent, "Change Model...");
+    parent = ui_menu_add_folder(drive_parent, "Drive 10");
+    ui_menu_add_button(MENU_ATTACH_DISK_10, parent, "Attach Disk...");
+    ui_menu_add_button(MENU_DETACH_DISK_10, parent, "Detach Disk");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_10, parent, "Change Model...");
 
-  parent = ui_menu_add_folder(root, "Drive 11");
-  ui_menu_add_button(MENU_ATTACH_DISK_11, parent, "Attach Disk...");
-  ui_menu_add_button(MENU_DETACH_DISK_11, parent, "Detach Disk");
-  ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");
+    parent = ui_menu_add_folder(drive_parent, "Drive 11");
+    ui_menu_add_button(MENU_ATTACH_DISK_11, parent, "Attach Disk...");
+    ui_menu_add_button(MENU_DETACH_DISK_11, parent, "Detach Disk");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");
 
   parent = ui_menu_add_folder(root, "Cartridge");
   if (machine_class == VICE_MACHINE_VIC20) {
@@ -1620,6 +1809,7 @@ void build_menu(struct menu_item *root) {
     ui_menu_add_button(MENU_C64_ATTACH_CART_ULTIMAX, parent, "Attach Ultimax raw...");
   }
 
+  ui_menu_add_button(MENU_DETACH_CART, parent, "Detach cartridge");
   ui_menu_add_button(MENU_TEXT, parent, "");
   ui_menu_add_button(MENU_MAKE_CART_DEFAULT, parent,
                      "Set current cart default (Need Save)");
@@ -1629,24 +1819,22 @@ void build_menu(struct menu_item *root) {
     ui_menu_add_button(MENU_CART_FREEZE, parent, "Cartridge Freeze");
   }
 
-  ui_menu_add_divider(parent);
+  parent = ui_menu_add_folder(root, "Tape");
 
-  ui_menu_add_button(MENU_DETACH_CART, root, "Detach cartridge");
+    ui_menu_add_button(MENU_ATTACH_TAPE, parent, "Attach tape image...");
+    ui_menu_add_button(MENU_DETACH_TAPE, parent, "Detach tape image");
 
-  ui_menu_add_button(MENU_ATTACH_TAPE, root, "Attach tape image...");
-  ui_menu_add_button(MENU_DETACH_TAPE, root, "Detach tape image");
-
-  parent = ui_menu_add_folder(root, "Datasette controls (.tap)...");
-  ui_menu_add_button(MENU_TAPE_START, parent, "Play");
-  ui_menu_add_button(MENU_TAPE_STOP, parent, "Stop");
-  ui_menu_add_button(MENU_TAPE_REWIND, parent, "Rewind");
-  ui_menu_add_button(MENU_TAPE_FASTFWD, parent, "FastFwd");
-  ui_menu_add_button(MENU_TAPE_RECORD, parent, "Record");
-  ui_menu_add_button(MENU_TAPE_RESET, parent, "Reset");
-  ui_menu_add_button(MENU_TAPE_RESET_COUNTER, parent, "Reset Counter");
-  resources_get_int("DatasetteResetWithCPU", &tmp);
-  tape_reset_with_machine_item =
-      ui_menu_add_toggle(MENU_TAPE_RESET_WITH_MACHINE, parent,
+    tape_parent = ui_menu_add_folder(parent, "Datasette controls (.tap)...");
+    ui_menu_add_button(MENU_TAPE_START, tape_parent, "Play");
+    ui_menu_add_button(MENU_TAPE_STOP, tape_parent, "Stop");
+    ui_menu_add_button(MENU_TAPE_REWIND, tape_parent, "Rewind");
+    ui_menu_add_button(MENU_TAPE_FASTFWD, tape_parent, "FastFwd");
+    ui_menu_add_button(MENU_TAPE_RECORD, tape_parent, "Record");
+    ui_menu_add_button(MENU_TAPE_RESET, tape_parent, "Reset");
+    ui_menu_add_button(MENU_TAPE_RESET_COUNTER, tape_parent, "Reset Counter");
+    resources_get_int("DatasetteResetWithCPU", &tmp);
+    tape_reset_with_machine_item =
+      ui_menu_add_toggle(MENU_TAPE_RESET_WITH_MACHINE, tape_parent,
                          "Reset Tape with Machine Reset", tmp);
 
   ui_menu_add_divider(root);
@@ -1886,6 +2074,7 @@ void build_menu(struct menu_item *root) {
   ui_set_on_value_changed_callback(menu_value_changed);
 
   load_settings();
+  video_canvas_change_palette(palette_item->value);
   ui_set_hotkeys();
   ui_set_joy_devs();
 

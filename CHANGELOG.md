@@ -150,11 +150,12 @@
 
 ## 1.9
   * Fixed bug where POT Y Up/Down values could not be set
-  * Added real C64 keyboard/joystick PCB support
-  * Fixed bug with 'empty' USB button function selections
-  * cmdline.txt canvas_width,canvas_height changed to prefix vicii_ or vic_
-    to distinguish between VIC20 and C64/C128 video chips. Done only as a
-    convenience to use the same file system for both emulators.
+  * Fixed bug with some 'empty' USB button function menu options
+  * cmdline.txt canvas_width,canvas_height changed to prefix with 
+    vicii_ or vic_ to distinguish between VIC20 and C64/C128 video chips.
+    Done only as a convenience to use the same file system for both emulators.
     canvas_width,canvas_height still works but applies to vicii
-  * moved bootstat.txt into machine dirs so they can be different
-
+  * moved bootstat.txt into machine dirs so they can be different for machines
+  * Fixed C128 kernal/basic/chargen ROM load menu options
+  * Added menu item to create empty disks
+  * Reorg some menu items
