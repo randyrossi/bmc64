@@ -133,7 +133,7 @@
 #define BTN_DOWN    4
 
 // Deprecated GPIO menu pin. Can't be used with PCB.
-#define GPIO_MENU_INDEX  5     // GPIO 16
+#define GPIO_MENU_INDEX  3     // GPIO 16
 
 extern "C" {
 void circle_fs_ready();
@@ -232,28 +232,28 @@ protected:
 
     // Connector Pin 20 - PA7
     gpioPins[7] =
-        new CGPIOPin(24, GPIOModeInputPullUp, &mGPIOManager);
+        new CGPIOPin(26, GPIOModeInputPullUp, &mGPIOManager);
     // Connector Pin 19 - PA1
     gpioPins[1] =
-        new CGPIOPin(25, GPIOModeInputPullUp, &mGPIOManager);
+        new CGPIOPin(20, GPIOModeInputPullUp, &mGPIOManager);
     // Connector Pin 18 - PA2
     gpioPins[2] =
-        new CGPIOPin(8, GPIOModeInputPullUp, &mGPIOManager);
+        new CGPIOPin(19, GPIOModeInputPullUp, &mGPIOManager);
     // Connector Pin 17 - PA3
     gpioPins[3] =
-        new CGPIOPin(7, GPIOModeInputPullUp, &mGPIOManager);
+        new CGPIOPin(16, GPIOModeInputPullUp, &mGPIOManager);
     // Connector Pin 16 - PA4
     gpioPins[4] =
-        new CGPIOPin(12, GPIOModeInputPullUp, &mGPIOManager);
+        new CGPIOPin(13, GPIOModeInputPullUp, &mGPIOManager);
     // Connector Pin 15 - PA5
     gpioPins[5] =
-        new CGPIOPin(16, GPIOModeInputPullUp, &mGPIOManager);
+        new CGPIOPin(6, GPIOModeInputPullUp, &mGPIOManager);
     // Connector Pin 14 - PA6
     gpioPins[6] =
-        new CGPIOPin(20, GPIOModeInputPullUp, &mGPIOManager);
+        new CGPIOPin(12, GPIOModeInputPullUp, &mGPIOManager);
     // Connector Pin 13 - PA0
     gpioPins[0] =
-        new CGPIOPin(21, GPIOModeInputPullUp, &mGPIOManager);
+        new CGPIOPin(5, GPIOModeInputPullUp, &mGPIOManager);
 
     // PB - Always input-pullup for read during kbd scan or joy port 1
     // Note: Lines 3 and 7 are swapped. The order here is from
@@ -261,28 +261,28 @@ protected:
 
     // Connector Pin 12 - PB 0
     gpioPins[8] =
-        new CGPIOPin(26, GPIOModeInputPullUp, &mGPIOManager);
+        new CGPIOPin(8, GPIOModeInputPullUp, &mGPIOManager);
     // Connector Pin 11 - PB 1
     gpioPins[9] =
-        new CGPIOPin(19, GPIOModeInputPullUp, &mGPIOManager);
+        new CGPIOPin(25, GPIOModeInputPullUp, &mGPIOManager);
     // Connector Pin 10 - PB 2
     gpioPins[10] =
-        new CGPIOPin(13, GPIOModeInputPullUp, &mGPIOManager);
+        new CGPIOPin(24, GPIOModeInputPullUp, &mGPIOManager);
     // Connector Pin 9 - PB 7
     gpioPins[15] =
-        new CGPIOPin(6, GPIOModeInputPullUp, &mGPIOManager);
+        new CGPIOPin(22, GPIOModeInputPullUp, &mGPIOManager);
     // Connector Pin 8 - PB 4
     gpioPins[12] =
-        new CGPIOPin(5, GPIOModeInputPullUp, &mGPIOManager);
+        new CGPIOPin(23, GPIOModeInputPullUp, &mGPIOManager);
     // Connector Pin 7 - PB 5
     gpioPins[13] =
-        new CGPIOPin(22, GPIOModeInputPullUp, &mGPIOManager);
+        new CGPIOPin(27, GPIOModeInputPullUp, &mGPIOManager);
     // Connector Pin 6 - PB 6
     gpioPins[14] =
-        new CGPIOPin(27, GPIOModeInputPullUp, &mGPIOManager);
+        new CGPIOPin(17, GPIOModeInputPullUp, &mGPIOManager);
     // Connector Pin 5 - PB 3
     gpioPins[11] =
-        new CGPIOPin(17, GPIOModeInputPullUp, &mGPIOManager);
+        new CGPIOPin(18, GPIOModeInputPullUp, &mGPIOManager);
 
     // A few more special pins
     gpioPins[GPIO_KBD_RESTORE_INDEX] =
