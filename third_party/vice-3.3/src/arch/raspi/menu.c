@@ -1793,6 +1793,7 @@ void build_menu(struct menu_item *root) {
     ui_menu_add_button(MENU_VIC20_ATTACH_CART_FINAL_EXPANSION, parent, "Attach final expansion cart...");
     ui_menu_add_button(MENU_VIC20_ATTACH_CART_UM, parent, "Attach UM cart...");
     ui_menu_add_button(MENU_VIC20_ATTACH_CART_FP, parent, "Attach FP cart...");
+    ui_menu_add_button(MENU_DETACH_CART, parent, "Detach cartridge");
 
     parent = ui_menu_add_folder(parent, "Add to generic cartridge");
        ui_menu_add_button(MENU_VIC20_ATTACH_CART_DETECT, parent, "Smart attach...");
@@ -1807,9 +1808,9 @@ void build_menu(struct menu_item *root) {
     ui_menu_add_button(MENU_C64_ATTACH_CART_8K, parent, "Attach 8k raw...");
     ui_menu_add_button(MENU_C64_ATTACH_CART_16K, parent, "Attach 16 raw...");
     ui_menu_add_button(MENU_C64_ATTACH_CART_ULTIMAX, parent, "Attach Ultimax raw...");
+    ui_menu_add_button(MENU_DETACH_CART, parent, "Detach cartridge");
   }
 
-  ui_menu_add_button(MENU_DETACH_CART, parent, "Detach cartridge");
   ui_menu_add_button(MENU_TEXT, parent, "");
   ui_menu_add_button(MENU_MAKE_CART_DEFAULT, parent,
                      "Set current cart default (Need Save)");
