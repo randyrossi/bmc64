@@ -48,12 +48,6 @@ struct video_canvas_s {
 
 typedef struct video_canvas_s video_canvas_t;
 
-#define PALETTE_DEFAULT 0
-#define PALETTE_VICE 1
-#define PALETTE_C64HQ 2
-#define PALETTE_PEPTO_NTSC 3
-#define PALETTE_PEPTO_PAL 4
-
 // A global struct holding canvas, frame buffer details, state, etc.
 struct VideoData {
   struct video_canvas_s *canvas;

@@ -39,3 +39,4 @@ int get_color_gamma(void);
 int get_color_tint(void);
 
 void raspi_cartridge_trigger_freeze(void);
+struct menu_item* menu_build_palette_options(struct menu_item* parent);

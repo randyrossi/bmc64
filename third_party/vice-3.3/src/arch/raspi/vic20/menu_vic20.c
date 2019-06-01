@@ -26,8 +26,12 @@
 
 #include "menu_vic20.h"
 
+#include <memory.h>
+
 #include "resources.h"
 #include "vic20/vic20.h"
+#include "menu.h"
+#include "ui.h"
 
 unsigned long calculate_timing(double fps) {
   if (fps >= 49 && fps <= 51) {
@@ -81,4 +85,16 @@ int get_color_tint() {
 
 void raspi_cartridge_trigger_freeze(void) {
   // Not available on this machine.
+}
+
+struct menu_item* menu_build_palette_options(struct menu_item* parent) {
+  struct menu_item* palette_item =
+      ui_menu_add_multiple_choice(MENU_COLOR_PALETTE, parent, "Color Palette");
+  palette_item->num_choices = 4;
+  palette_item->value = 0;
+  strcpy(palette_item->choices[0], "Vice");
+  strcpy(palette_item->choices[1], "Colodore");
+  strcpy(palette_item->choices[2], "Mike-Ntsc");
+  strcpy(palette_item->choices[3], "Mike-Pal");
+  return palette_item;
 }

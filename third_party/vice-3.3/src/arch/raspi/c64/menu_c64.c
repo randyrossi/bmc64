@@ -26,9 +26,13 @@
 
 #include "menu_c64.h"
 
+#include <memory.h>
+
 #include "c64/c64.h"
 #include "resources.h"
 #include "cartridge.h"
+#include "menu.h"
+#include "ui.h"
 
 unsigned long calculate_timing(double fps) {
   if (fps >= 49 && fps <= 51) {
@@ -82,4 +86,17 @@ int get_color_tint() {
 
 void raspi_cartridge_trigger_freeze(void) {
   cartridge_trigger_freeze();
+}
+
+struct menu_item* menu_build_palette_options(struct menu_item* parent) {
+  struct menu_item* palette_item =
+      ui_menu_add_multiple_choice(MENU_COLOR_PALETTE, parent, "Color Palette");
+  palette_item->num_choices = 5;
+  palette_item->value = 1;
+  strcpy(palette_item->choices[0], "Default");
+  strcpy(palette_item->choices[1], "Vice");
+  strcpy(palette_item->choices[2], "C64hq");
+  strcpy(palette_item->choices[3], "Pepto-Ntsc");
+  strcpy(palette_item->choices[4], "Pepto-Pal");
+  return palette_item;
 }

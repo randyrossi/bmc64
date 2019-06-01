@@ -1845,15 +1845,7 @@ void build_menu(struct menu_item *root) {
 
   parent = ui_menu_add_folder(root, "Video");
 
-  palette_item =
-      ui_menu_add_multiple_choice(MENU_COLOR_PALETTE, parent, "Color Palette");
-  palette_item->num_choices = 5;
-  palette_item->value = 1;
-  strcpy(palette_item->choices[0], "Default");
-  strcpy(palette_item->choices[1], "Vice");
-  strcpy(palette_item->choices[2], "C64hq");
-  strcpy(palette_item->choices[3], "Pepto-Ntsc");
-  strcpy(palette_item->choices[4], "Pepto-Pal");
+  palette_item = menu_build_palette_options(parent);
 
   child = ui_menu_add_folder(parent, "Color Adjustments...");
 
