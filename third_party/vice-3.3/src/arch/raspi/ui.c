@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 volatile int ui_activated = 0;
 
@@ -251,6 +252,8 @@ static void ui_type_char(char ch) {
       str[cur->value] = ch;
       cur->value++;
     }
+  } else {
+    ui_find_first(ch);
   }
 }
 
@@ -340,6 +343,22 @@ static void ui_key_released(long key) {
     return;
   case KEYCODE_F12:
     ui_action(ACTION_Exit);
+    return;
+  case KEYCODE_Home:
+  case KEYCODE_F1:
+    ui_to_top();
+    return;
+  case KEYCODE_End:
+  case KEYCODE_F7:
+    ui_to_bottom();
+    return;
+  case KEYCODE_PageUp:
+  case KEYCODE_F3:
+    ui_page_up();
+    return;
+  case KEYCODE_PageDown:
+  case KEYCODE_F5:
+    ui_page_down();
     return;
   case KEYCODE_LeftShift:
     keyboard_shift &= ~1;
@@ -838,6 +857,40 @@ void ui_render_now(void) {
   }
 }
 
+static void ui_tc(struct menu_item *node, int *index) {
+  while (node != NULL) {
+    node->render_index = *index;
+
+    if (*index >= menu_window_top[current_menu] &&
+        *index < menu_window_bottom[current_menu]) {
+      if (*index == menu_cursor[current_menu]) {
+        menu_cursor_item[current_menu] = node;
+      }
+    }
+
+    *index = *index + 1;
+    if (node->type == FOLDER && node->is_expanded &&
+        node->first_child != NULL) {
+      ui_tc(node->first_child, index);
+    }
+    node = node->next;
+  }
+}
+
+static void ui_t(void) {
+  int index = 0;
+  struct menu_item *ptr = menu_roots[current_menu].first_child;
+
+  // menu text
+  ui_tc(ptr, &index);
+
+  max_index[current_menu] = index;
+
+  if (menu_cursor[current_menu] >= max_index[current_menu]) {
+    menu_cursor[current_menu] = max_index[current_menu] - 1;
+  }
+}
+
 static void ui_clear_child_menu(struct menu_item *node) {
   if (node != NULL && node->type == FOLDER) {
     ui_clear_child_menu(node->first_child);
@@ -946,4 +999,60 @@ void ui_info(const char *format, ...) {
   ui_menu_add_button(MENU_INFO_DIALOG, root, buffer);
   va_end(args);
   ui_render_single_frame();
+}
+
+int ui_num_menu_items(void) {
+  struct menu_item *menu = &menu_roots[current_menu];
+
+  struct menu_item *child = menu->first_child;
+  int count = 0;
+  while (child != NULL) {
+    count++;
+    child = child->next;
+  }
+  return count;
+}
+
+// These nav functions are really inefficient...but oh well.
+void ui_page_down() {
+  for (int n=0;n<menu_height_chars;n++) {
+    ui_action(ACTION_Down);
+  }
+}
+
+void ui_page_up() {
+  for (int n=0;n<menu_height_chars;n++) {
+    ui_action(ACTION_Up);
+  }
+}
+
+void ui_to_top() {
+  while (menu_cursor[current_menu] != 0) {
+    ui_action(ACTION_Up);
+  }
+}
+
+void ui_to_bottom() {
+  while (menu_cursor[current_menu] < max_index[current_menu] - 1) {
+    ui_action(ACTION_Down);
+  }
+}
+
+void ui_find_first(char letter) {
+
+  int start_index = menu_cursor[current_menu];
+
+  while(1) {
+    if (menu_cursor[current_menu] >= max_index[current_menu] - 1) {
+       ui_to_top();
+    } else {
+       ui_action(ACTION_Down);
+    }
+
+    if (menu_cursor[current_menu] == start_index) break;
+
+    ui_t();
+    char *name = menu_cursor_item[current_menu]->name;
+    if (name[0] != '\0' && tolower(name[0]) == letter) break;
+  }
 }

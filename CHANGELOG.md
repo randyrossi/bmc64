@@ -150,6 +150,7 @@
 
 ## 1.9
   * First release of BMVIC20 available
+  * Updates BMC128 available with a few fixes
   * cmdline.txt has changed and should be udpated:
 
     PSA:
@@ -172,4 +173,7 @@
   * Fixed bug with some 'empty' USB button function menu options
   * Added menu item to create empty disks
   * Reorg some menu items
-
+  * Added Home/PageUp/PageDown/End handling in menu (also F1/F3/F5/F7)
+    for real keyboard users
+  * Added first letter search in menus (press a letter and cursor will jump
+    to next occurrence of an item that starts with that letter).

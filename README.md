@@ -127,7 +127,7 @@ In v1.0.5+, there is a configuration sub-menu that will help you configure your 
 
 # Menu Navigation
 
-Since v1.0.8, you can hold down keys or gamepad/joystick directions and the navigation action will auto-repeat.  This accelerates the longer you hold in the same direction.
+Since v1.0.8, you can hold down keys or gamepad/joystick directions and the navigation action will auto-repeat.  This accelerates the longer you hold in the same direction.  Since v1.9, the Home, PageUp, PageDown, and End keys are supported in the menu.  The equivalent C64 keys are F1, F3, F5 and F7 respectively.  Also, pressing a letter will find the first menu item that has text starting with that letter for quick navigation of large lists.
 
 # GPIO Joystick Banks (No PCB required)
 
@@ -146,41 +146,6 @@ GPIO23        |GPIO19       | 6 (Fire)
 GPIO7         |GPIO21       | 8 (GND)
 
 In the menu, select either GPIO1 or GPIO2 and assign it to one of the emulated ports.
-
-NOTE: Since v1.9, Pin 8 connections above were moved from GND to GPIO7 or GPIO21 for joysticks 1 & 2. This was necessary to be compatible with a real C64 keyboard hookup (described below).  If you have no intention on using a real C64 keyboard, you can continue to connect pins 8 to GND.  However, if you plan on using a real keyboard, you will have to switch the connections as described above (or just use the PCB).
-
-# Real Keyboard + Joysticks
-
-DO NOT ATTEMPT THIS IF YOU ARE NOT COMFORTABLE WITH WIRING THINGS UP TO YOUR PI
-I TAKE NO RESPONSIBILITY IF YOU WIRE THINGS INCORRECTLY OR DAMAGE YOUR DEVICE
-
-You can hook up a real C64 keyboard and joysticks using a PCB (it is possible to breadboard the connections or create a custom ribbon cable since there are no components but a PCB is the preferred method).  A PCB is currently being worked on that will also incorporate a Power LED connector, power jack, switch and DB9 connectors in the right locations so you can mount it inside a C64 shell.
-
-Wiring is as follows:
-
-GPIO     |JSLABEL |KEYLABEL |C64 JOY PIN|KEYCON
----------|--------|---------|-----------|------
-GPIO26   |J2_UP   |PA7      |1 (Up)     |KBD20
-GPIO20   |J2_DOWN |PA1      |2 (Down)   |KBD19
-GPIO19   |J2_LEFT |PA2      |3 (Left)   |KBD18
-GPIO16   |J2_RIGHT|PA3      |4 (Right)  |KBD17
-GPIO13   |J2_FIRE |PA4      |6 (Fire)   |KBD16
-GPIO06   |        |PA5      |           |KBD15
-GPIO12   |        |PA6      |           |KBD14
-GPIO05   |        |PA0      |           |KDB13
-GPIO21   |J2_SEL  |         |8 (GND)    |
----------|--------|---------|-----------|------
-GPIO08   |        |PB0      |           |KBD12
-GPIO25   |        |PB1      |           |KBD11
-GPIO24   |        |PB2      |           |KBD10
-GPIO22   |J1_UP   |PB7      |1 (Up)     |KBD9
-GPIO23   |J1_DOWN |PB4      |2 (Down)   |KBD8
-GPIO27   |J1_LEFT |PB5      |3 (Left)   |KBD7
-GPIO17   |J1_RIGHT|PB6      |4 (Right)  |KBD6
-GPIO18   |J1_FIRE |PB3      |6 (Fire)   |KBD5
-GPIO07   |J1_SEL  |         |8 (GND)    |
----------|--------|---------|-----------|------
-GPIO4    |        |RESTORE  |           |KDB3
 
 # CPU Temperature
 
