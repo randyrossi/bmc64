@@ -56,6 +56,7 @@ struct VideoData {
   uint8_t *dst;
   int dst_pitch;
   // Dest offset when drawing into frame buffer
+  // NOTE: x must be multiple of 4
   int dst_off_x;
   int dst_off_y;
   int fb_w;
@@ -86,6 +87,9 @@ struct VideoData {
   int first_refresh;
   uint8_t *src;
   int src_pitch;
+  int src_off_x;
+  int src_off_y;
+  int overlay_y;
 };
 
 // Called when video canvas has been created.

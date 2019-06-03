@@ -2,6 +2,10 @@
 # Bare Metal Commodore 64 Emulator For The Raspberry Pi
 #
 
+# For VIC20, the following line makes the display look
+# better on CRTs
+#framebuffer_aspect=0x00050006
+
 # Uncomment either PAL or NTSC section below to suit
 # your needs. You MUST also edit cmdline.txt to match
 # the frequency of video you select here.

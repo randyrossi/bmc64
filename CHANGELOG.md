@@ -145,17 +145,31 @@
   * Added 1351 Mouse support via USB Mouse
   * Sorted files in directory listings
   * Added Reset Soft/Hard button/hotkey functions
-  * Fixed 'half' brightness issue with color palette. 
+  * Fixed 'half' brightness issue with color palette.
     Colors were half intensity of what they should have been.
 
 ## 1.9
+  * First release of BMVIC20 available
+  * cmdline.txt has changed and should be udpated:
+
+    PSA:
+
+    If you are in the habit of just updating the kernel file, best to update
+    cmdline.txt with this release.  canvas_height,canvas_width parameters
+    have been renamed to vicii_canvas_height, vicii_canvas_width to
+    distinguish between C64 and VIC20 (or other future) video chips that need
+    different sized frame buffers.  Also, I changed the way the emulated
+    display is drawn to fix some unused black border issues on both C64/C128
+    and VIC20 so the C64/C128 frame buffers are now a different size.  If
+    you find your video output is squished after this update,
+    best to confirm you are using the new cmdline.txt settings. This change
+    'zooms' the video in a bit so more of the screen is used.  It also looks
+    better on composite out.
+ 
+  * Moved bootstat.txt into machine dirs so they can be different for machines
+  * Fixed C128 kernal/basic/chargen ROM load menu options
   * Fixed bug where POT Y Up/Down values could not be set
   * Fixed bug with some 'empty' USB button function menu options
-  * cmdline.txt canvas_width,canvas_height changed to prefix with 
-    vicii_ or vic_ to distinguish between VIC20 and C64/C128 video chips.
-    Done only as a convenience to use the same file system for both emulators.
-    canvas_width,canvas_height still works but applies to vicii
-  * moved bootstat.txt into machine dirs so they can be different for machines
-  * Fixed C128 kernal/basic/chargen ROM load menu options
   * Added menu item to create empty disks
   * Reorg some menu items
+

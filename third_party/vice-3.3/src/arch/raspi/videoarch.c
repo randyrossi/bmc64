@@ -52,6 +52,8 @@
 #include <strings.h>
 #include <sys/time.h>
 
+#define OVERLAY_H 10
+
 // Keep video state shared between compilation units here
 struct VideoData video_state;
 
@@ -95,11 +97,9 @@ extern int pending_emu_quick_func;
 // Draw the src buffer into the dst buffer.
 void draw(uint8_t *src, int srcw, int srch, int src_pitch, uint8_t *dst,
           int dst_pitch, int dst_off_x, int dst_off_y) {
-  // x,y are coordinates in src canvas space
-  int x, y;
+  int y;
   for (y = 0; y < srch; y++) {
-    int gy = (y + dst_off_y);
-    int p1 = dst_off_x + gy * dst_pitch;
+    int p1 = dst_off_x + (y + dst_off_y) * dst_pitch;
     int yp = y * src_pitch;
     memcpy(dst + p1, src + yp, srcw);
   }
@@ -137,11 +137,41 @@ int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
   circle_update_palette();
 }
 
+// For real time video adjustments, should call this after every
+// parameter change.
+static void calc_top_left() {
+  video_state.top_left =
+     (video_state.canvas->geometry->first_displayed_line +
+     video_state.src_off_y) *
+     video_state.canvas->draw_buffer->draw_buffer_width +
+     video_state.canvas->geometry->extra_offscreen_border_left +
+     video_state.src_off_x;
+}
+
 struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
                                            unsigned int *width,
                                            unsigned int *height, int mapped) {
-  *width = circle_get_display_w();
-  *height = circle_get_display_h();
+
+  int border_w = 0;
+  int border_h = 0;
+  if (machine_class == VICE_MACHINE_VIC20) {
+    *width = 448;
+    *height = 284;
+    // Max border_w is 40
+    // Max border_h is 22
+    border_w = 10;
+    border_h = 20;
+  } else {
+    assert(machine_class == VICE_MACHINE_C64 ||
+           machine_class == VICE_MACHINE_C128);
+    *width = 384;
+    *height = 272;
+    // Max border_w is 32
+    // Max border_h is 23
+    border_w = 32;
+    border_h = 23;
+  }
+
   canvas->draw_buffer->canvas_physical_width = *width;
   canvas->draw_buffer->canvas_physical_height = *height;
   canvas->videoconfig->external_palette = 1;
@@ -149,22 +179,46 @@ struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
   video_state.canvas = canvas;
   video_state.vis_h = canvas->draw_buffer->visible_height;
   video_state.vis_w = canvas->draw_buffer->visible_width;
+  video_state.src_off_x = 0;
+  video_state.src_off_y = 0;
 
-  int adj_x = 0;
+  int timing = circle_get_machine_timing();
   if (machine_class == VICE_MACHINE_VIC20) {
-    // TODO: I don't understand why this is necessary.
-    adj_x = (video_state.vis_w - canvas->geometry->gfx_size.width) / 2;
-    int timing = circle_get_machine_timing();
+    video_state.vis_w = 22*8*2+border_w*2;
+    video_state.vis_h = 23*8+border_h*2;
     if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
         timing == MACHINE_TIMING_NTSC_HDMI ||
         timing == MACHINE_TIMING_NTSC_CUSTOM) {
-       adj_x /= 2;
+        video_state.src_off_x=40-border_w;
+        video_state.src_off_y=22-border_h;
+    } else {
+        video_state.src_off_x=96-border_w;
+        video_state.src_off_y=48-border_h;
     }
+    // Overlay will be 2 pixels under end of gfx area
+    video_state.overlay_y = 23*8+border_h+2;
+  } else {
+    assert(machine_class == VICE_MACHINE_C64 ||
+           machine_class == VICE_MACHINE_C128);
+    video_state.vis_w = 40*8+border_w*2;
+    video_state.vis_h = 25*8+border_h*2;
+    if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
+        timing == MACHINE_TIMING_NTSC_HDMI ||
+        timing == MACHINE_TIMING_NTSC_CUSTOM) {
+        video_state.src_off_x=32-border_w;
+        video_state.src_off_y=23-border_h;
+    } else {
+        video_state.src_off_x=32-border_w;
+        video_state.src_off_y=36-border_h;
+    }
+    // Overlay will be 2 pixels under end of gfx area
+    video_state.overlay_y = 25*8+border_h+2;
   }
 
   // Figure out what it takes to center our canvas on the display
   video_state.dst_off_x = (video_state.fb_w - video_state.vis_w) / 2;
   video_state.dst_off_y = (video_state.fb_h - video_state.vis_h) / 2;
+
   if (video_state.dst_off_x < 0) {
     // Truncate the source so we don't clobber our frame buffer limits.
     video_state.dst_off_x = 0;
@@ -176,11 +230,27 @@ struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
     video_state.vis_h = video_state.fb_h;
   }
 
-  video_state.top_left = canvas->geometry->first_displayed_line *
-                             canvas->draw_buffer->draw_buffer_width +
-                         canvas->geometry->extra_offscreen_border_left + adj_x;
+  // dst_off_x must be a multiple of 4
+  video_state.dst_off_x = video_state.dst_off_x / 4 * 4;
 
-  overlay_init(video_state.vis_w, 10);
+  printf ("VideoInfo: FB is %dx%d \n",
+           circle_get_display_w(),
+           circle_get_display_h());
+  printf ("VideoInfo: Emulated Display is %dx%d \n",
+           video_state.vis_w,
+           video_state.vis_h);
+
+  printf ("VideoInfo: Using (%d,%d) to center image\n",
+           video_state.dst_off_x,
+           video_state.dst_off_y);
+
+  printf ("VideoInfo: Src from (%d,%d) within emulated buffer\n",
+           video_state.src_off_x,
+           video_state.src_off_y);
+
+  calc_top_left();
+
+  overlay_init(video_state.vis_w, OVERLAY_H);
   return canvas;
 }
 
@@ -274,11 +344,11 @@ void vsyncarch_postsync(void) {
   // Always draw overlay on visible buffer
   if (overlay_forced() || (overlay_enabled() && overlay_showing)) {
     overlay_check();
-    draw(overlay_buf, video_state.vis_w, 10, video_state.vis_w,
+    draw(overlay_buf, video_state.vis_w, OVERLAY_H, video_state.vis_w,
          video_state.dst +
              video_state.onscreen_buffer_y * video_state.dst_pitch,
          video_state.dst_pitch, video_state.dst_off_x,
-         video_state.dst_off_y + video_state.vis_h - 10);
+         video_state.dst_off_y + video_state.overlay_y);
   }
 
   video_ticks += video_tick_inc;

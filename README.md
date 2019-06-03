@@ -209,7 +209,7 @@ A: I currently don't have much control over how the emulated display is scaled. 
 Things you can fiddle with for video:
 
    hdmi_mode in config.txt
-   framebuffer_aspect in config.txt (i.e. framebuffer_aspec=0x00070009 for 7:9)
+   framebuffer_aspect in config.txt (i.e. framebuffer_aspect=0x00070009 for 7:9)
    canvas_width canvas_height in cmdline.txt
 
 The default settings work fine for composite out.
