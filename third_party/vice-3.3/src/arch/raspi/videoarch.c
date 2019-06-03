@@ -207,68 +207,48 @@ struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
   // we include more border up to a certain max.
   int border_w;
   int border_h;
+  int gfx_w;
+  int gfx_h;
   if (machine_class == VICE_MACHINE_VIC20) {
     // This is graphics area without border for a Vic20
-    int gfx_w = 22*8*2;
-    int gfx_h = 23*8;
+    gfx_w = 22*8*2;
+    gfx_h = 23*8;
 
     // Don't change these.
     *width = 448;
     *height = 284;
-
-    border_w = fb_w - gfx_w;
-    if (border_w > max_border_w) border_w = max_border_w;
-
-    border_h = fb_h - gfx_h;
-    if (border_h > max_border_h) border_w = max_border_h;
   } else {
     assert(machine_class == VICE_MACHINE_C64 ||
            machine_class == VICE_MACHINE_C128);
     // This is graphics area without border for a C64/C128
-    int gfx_w = 40*8;
-    int gfx_h = 25*8;
+    gfx_w = 40*8;
+    gfx_h = 25*8;
 
     // Don't change these.
     *width = 384;
     *height = 272;
-
-    border_w = fb_w - gfx_w;
-    if (border_w > max_border_w) border_w = max_border_w;
-
-    border_h = fb_h - gfx_h;
-    if (border_h > max_border_h) border_h = max_border_h;
   }
+
+  border_w = (fb_w - gfx_w)/2;
+  if (border_w > max_border_w) border_w = max_border_w;
+
+  border_h = (fb_h - gfx_h)/2;
+  if (border_h > max_border_h) border_h = max_border_h;
 
   canvas->draw_buffer->canvas_physical_width = *width;
   canvas->draw_buffer->canvas_physical_height = *height;
   canvas->videoconfig->external_palette = 1;
   canvas->videoconfig->external_palette_name = "RASPI";
   video_state.canvas = canvas;
-  video_state.vis_h = canvas->draw_buffer->visible_height;
-  video_state.vis_w = canvas->draw_buffer->visible_width;
-  video_state.src_off_x = 0;
-  video_state.src_off_y = 0;
-
-  if (machine_class == VICE_MACHINE_VIC20) {
-    // For the VIC, the X pixels are doubled.
-    video_state.vis_w = 22*8*2+border_w*2;
-    video_state.vis_h = 23*8+border_h*2;
-    // This offsets our top left cutout to include the desired
-    // amount of border we determined above.
-    video_state.src_off_x=max_border_w-border_w;
-    video_state.src_off_y=max_border_h-border_h;
-  } else {
-    assert(machine_class == VICE_MACHINE_C64 ||
-           machine_class == VICE_MACHINE_C128);
-    video_state.vis_w = 40*8+border_w*2;
-    video_state.vis_h = 25*8+border_h*2;
-    // This offsets our top left cutout to include the desired
-    video_state.src_off_x=max_border_w-border_w;
-    video_state.src_off_y=max_border_h-border_h;
-  }
+  video_state.vis_w = gfx_w+border_w*2;
+  video_state.vis_h = gfx_h+border_h*2;
+  // This offsets our top left cutout to include the desired
+  // amount of border we determined above.
+  video_state.src_off_x=max_border_w-border_w;
+  video_state.src_off_y=max_border_h-border_h;
 
   // Overlay will be 2 pixels under end of gfx area
-  video_state.overlay_y = 23*8+border_h+2;
+  video_state.overlay_y = gfx_h+border_h+2;
 
   // Figure out what it takes to center our canvas on the display
   video_state.dst_off_x = (video_state.fb_w - video_state.vis_w) / 2;

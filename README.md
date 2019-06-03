@@ -4,20 +4,21 @@ __If you are using an older version, I strongly recommend you update to the late
 
 # BMC64
 
-BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio.
+BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio.  Two other Commodore builds are available as well; C128 and Vic20.
 
-# Features
+# BMC64 Features
   * Quick boot time (4.1 seconds!)
   * Frames are timed to vsync for true 50/60 hz smooth scrolling (no horizontal tearing!)
   * Low latency between input & audio/video
   * No shutdown sequence required, just power off
   * High compatibility thanks to VICE
   * Can wire real Commodore/Atari Joysticks via GPIO (no PCB option)
-  * Can wire real C64 keyboard + Joysticks (requires a PCB)
   * Keyrah friendly
 
 # Limitations
-  * USB gamepad support is limited
+  * USB gamepad support is limited. Not all gamepads will work.
+  * There is no network support.
+  * No VDC support for C128.
 
 This project uses VICE for emulation without any O/S (Linux) distribution installed on the Pi.  VICE (Versatile Commodore Emulator) platform dependencies are satisfied using circle-stdlib.
 
@@ -30,6 +31,8 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
 # Precompiled Images
 
   * https://accentual.com/bmc64
+  * https://accentual.com/bmc128
+  * https://accentual.com/bmvic20
 
 # Github Link
 
