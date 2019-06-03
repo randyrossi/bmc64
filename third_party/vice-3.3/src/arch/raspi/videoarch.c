@@ -152,24 +152,91 @@ struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
                                            unsigned int *width,
                                            unsigned int *height, int mapped) {
 
-  int border_w = 0;
-  int border_h = 0;
+  // This is the actual frame buffer area we have to
+  // draw into determined in config.txt.
+  // It's important these don't go below the values that
+  // would cause fb_w - gfx_w or fb_h - gfx_h to go
+  // negative.  Otherwise, we would start cutting into
+  // the graphics (non-border) area of the emulated display.
+  int fb_w = circle_get_display_w();
+  int fb_h = circle_get_display_h();
+
+  // These numbers are how many X,Y pixels it takes
+  // to reach the top left corner of the gfx area
+  // skipping over the border or any unused space
+  // in VICE's draw buffer. They are only relevant
+  // if the width/height of the canvas is set to the
+  // hard coded values we provide for *width,*height
+  // below.
+  // They are used to 'cut out' the gfx part and then
+  // adjusted to include more border if the user
+  // gives a large enough frame buffer.  The more space
+  // we have, the more border we include.  However, if
+  // we run out of border, the resulting image is then
+  // centered and black borders will start showing up.
+  int max_border_w;
+  int max_border_h;
+  int timing = circle_get_machine_timing();
   if (machine_class == VICE_MACHINE_VIC20) {
-    *width = 448;
-    *height = 284;
-    // Max border_w is 40
-    // Max border_h is 22
-    border_w = 10;
-    border_h = 20;
+    if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
+        timing == MACHINE_TIMING_NTSC_HDMI ||
+        timing == MACHINE_TIMING_NTSC_CUSTOM) {
+        max_border_w = 40;
+        max_border_h = 22;
+    } else {
+        max_border_w = 96;
+        max_border_h = 48;
+    }
   } else {
     assert(machine_class == VICE_MACHINE_C64 ||
            machine_class == VICE_MACHINE_C128);
+    if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
+        timing == MACHINE_TIMING_NTSC_HDMI ||
+        timing == MACHINE_TIMING_NTSC_CUSTOM) {
+        max_border_w = 32;
+        max_border_h = 23;
+    } else {
+        max_border_w = 32;
+        max_border_h = 36;
+    }
+  }
+
+  // border_w, border_h determine how much border we include
+  // in our 'cut out' of the emulated display buffer VICE gives
+  // us.  As the user provides larger frame buffer to draw into,
+  // we include more border up to a certain max.
+  int border_w;
+  int border_h;
+  if (machine_class == VICE_MACHINE_VIC20) {
+    // This is graphics area without border for a Vic20
+    int gfx_w = 22*8*2;
+    int gfx_h = 23*8;
+
+    // Don't change these.
+    *width = 448;
+    *height = 284;
+
+    border_w = fb_w - gfx_w;
+    if (border_w > max_border_w) border_w = max_border_w;
+
+    border_h = fb_h - gfx_h;
+    if (border_h > max_border_h) border_w = max_border_h;
+  } else {
+    assert(machine_class == VICE_MACHINE_C64 ||
+           machine_class == VICE_MACHINE_C128);
+    // This is graphics area without border for a C64/C128
+    int gfx_w = 40*8;
+    int gfx_h = 25*8;
+
+    // Don't change these.
     *width = 384;
     *height = 272;
-    // Max border_w is 32
-    // Max border_h is 23
-    border_w = 32;
-    border_h = 23;
+
+    border_w = fb_w - gfx_w;
+    if (border_w > max_border_w) border_w = max_border_w;
+
+    border_h = fb_h - gfx_h;
+    if (border_h > max_border_h) border_h = max_border_h;
   }
 
   canvas->draw_buffer->canvas_physical_width = *width;
@@ -182,38 +249,26 @@ struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
   video_state.src_off_x = 0;
   video_state.src_off_y = 0;
 
-  int timing = circle_get_machine_timing();
   if (machine_class == VICE_MACHINE_VIC20) {
+    // For the VIC, the X pixels are doubled.
     video_state.vis_w = 22*8*2+border_w*2;
     video_state.vis_h = 23*8+border_h*2;
-    if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
-        timing == MACHINE_TIMING_NTSC_HDMI ||
-        timing == MACHINE_TIMING_NTSC_CUSTOM) {
-        video_state.src_off_x=40-border_w;
-        video_state.src_off_y=22-border_h;
-    } else {
-        video_state.src_off_x=96-border_w;
-        video_state.src_off_y=48-border_h;
-    }
-    // Overlay will be 2 pixels under end of gfx area
-    video_state.overlay_y = 23*8+border_h+2;
+    // This offsets our top left cutout to include the desired
+    // amount of border we determined above.
+    video_state.src_off_x=max_border_w-border_w;
+    video_state.src_off_y=max_border_h-border_h;
   } else {
     assert(machine_class == VICE_MACHINE_C64 ||
            machine_class == VICE_MACHINE_C128);
     video_state.vis_w = 40*8+border_w*2;
     video_state.vis_h = 25*8+border_h*2;
-    if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
-        timing == MACHINE_TIMING_NTSC_HDMI ||
-        timing == MACHINE_TIMING_NTSC_CUSTOM) {
-        video_state.src_off_x=32-border_w;
-        video_state.src_off_y=23-border_h;
-    } else {
-        video_state.src_off_x=32-border_w;
-        video_state.src_off_y=36-border_h;
-    }
-    // Overlay will be 2 pixels under end of gfx area
-    video_state.overlay_y = 25*8+border_h+2;
+    // This offsets our top left cutout to include the desired
+    video_state.src_off_x=max_border_w-border_w;
+    video_state.src_off_y=max_border_h-border_h;
   }
+
+  // Overlay will be 2 pixels under end of gfx area
+  video_state.overlay_y = 23*8+border_h+2;
 
   // Figure out what it takes to center our canvas on the display
   video_state.dst_off_x = (video_state.fb_w - video_state.vis_w) / 2;
@@ -284,7 +339,7 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
   set_video_font(&video_state);
   video_state.palette_index = 0;
   video_state.offscreen_buffer_y = 0;
-  video_state.onscreen_buffer_y = circle_get_display_h();
+  video_state.onscreen_buffer_y = fb_h;
 }
 
 void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
@@ -322,7 +377,7 @@ void videoarch_swap() {
   // Swap buffer ptr for next frame.
   video_state.onscreen_buffer_y = video_state.offscreen_buffer_y;
   video_state.offscreen_buffer_y =
-      circle_get_display_h() - video_state.offscreen_buffer_y;
+      video_state.fb_h - video_state.offscreen_buffer_y;
 }
 
 void vsyncarch_postsync(void) {
