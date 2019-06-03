@@ -37,11 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BG_COLOR 14
-#define FG_COLOR 1
-
 #define BLACK 0
-#define WHITE 1
 #define GREEN 5
 #define RED 2
 #define LIGHT_GREEN 13
@@ -55,6 +51,8 @@ static int tape_controls_x;
 static int tape_motor_x;
 static int warp_x;
 static int joyswap_x;
+static int fg_color;
+static int bg_color;
 
 static int drive_led_types[DRIVE_NUM];
 static unsigned int current_drive_leds[DRIVE_NUM][2];
@@ -73,9 +71,25 @@ uint8_t *overlay_buf;
 
 // Create a new overlay buffer
 uint8_t *overlay_init(int width, int height) {
+  bg_color = 0;
+  fg_color = 1;
+  switch (machine_class) {
+     case VICE_MACHINE_VIC20:
+        bg_color = 3;
+        fg_color = 6;
+        break;
+     case VICE_MACHINE_C64:
+     case VICE_MACHINE_C128:
+        bg_color = 14;
+        fg_color = 1;
+        break;
+     default:
+        break;
+  }
+
   overlay_buf = (uint8_t *)malloc(width * height);
 
-  memset(overlay_buf, BG_COLOR, width * height);
+  memset(overlay_buf, bg_color, width * height);
   overlay_buf_pitch = width;
 
   // Figure out inset that will center.
@@ -88,7 +102,7 @@ uint8_t *overlay_init(int width, int height) {
   inset_x = width / 2 - (strlen(template) * 8) / 2;
   inset_y = 1;
 
-  ui_draw_text_buf(template, inset_x, inset_y, FG_COLOR, overlay_buf,
+  ui_draw_text_buf(template, inset_x, inset_y, fg_color, overlay_buf,
                    overlay_buf_pitch);
 
   // Positions relative to start of text (before inset)
@@ -102,7 +116,7 @@ uint8_t *overlay_init(int width, int height) {
   warp_x = 36 * 8;
   joyswap_x = 40 * 8;
 
-  ui_draw_text_buf("-", warp_x + inset_x, inset_y, WHITE, overlay_buf,
+  ui_draw_text_buf("-", warp_x + inset_x, inset_y, fg_color, overlay_buf,
                    overlay_buf_pitch);
 
   return overlay_buf;
@@ -123,9 +137,9 @@ void ui_enable_drive_status(ui_drive_enable_t state, int *drive_led_color) {
   for (i = 0; i < DRIVE_NUM; ++i) {
     if (overlay_buf) {
       ui_draw_rect_buf(drive_x[i] + 8 * 0 + inset_x, inset_y + 2, 6, 4,
-                       BG_COLOR, 1, overlay_buf, overlay_buf_pitch);
+                       bg_color, 1, overlay_buf, overlay_buf_pitch);
       ui_draw_rect_buf(drive_x[i] + 8 * 1 + inset_x, inset_y + 2, 6, 4,
-                       BG_COLOR, 1, overlay_buf, overlay_buf_pitch);
+                       bg_color, 1, overlay_buf, overlay_buf_pitch);
     }
     if (enabled & 1) {
       drive_led_types[i] = drive_led_color[i];
@@ -184,9 +198,9 @@ void ui_display_tape_counter(int counter) {
     overlay_activate();
     char tmp[16];
     sprintf(tmp, "%03d", counter % 1000);
-    ui_draw_rect_buf(tape_x + inset_x, inset_y, 8 * 3, 8, BG_COLOR, 1,
+    ui_draw_rect_buf(tape_x + inset_x, inset_y, 8 * 3, 8, bg_color, 1,
                      overlay_buf, overlay_buf_pitch);
-    ui_draw_text_buf(tmp, tape_x + inset_x, inset_y, WHITE, overlay_buf,
+    ui_draw_text_buf(tmp, tape_x + inset_x, inset_y, fg_color, overlay_buf,
                      overlay_buf_pitch);
     tape_counter = counter;
   }
@@ -198,10 +212,10 @@ void ui_display_tape_control_status(int control) {
     return;
 
   overlay_activate();
-  ui_draw_rect_buf(tape_controls_x + inset_x, inset_y, 8 * 3, 8, BG_COLOR, 1,
+  ui_draw_rect_buf(tape_controls_x + inset_x, inset_y, 8 * 3, 8, bg_color, 1,
                    overlay_buf, overlay_buf_pitch);
   const char *txt;
-  int col = WHITE;
+  int col = fg_color;
   switch (control) {
   case DATASETTE_CONTROL_STOP:
     txt = "STP";
@@ -233,7 +247,7 @@ void ui_display_tape_control_status(int control) {
 void ui_display_tape_motor_status(int motor) {
   if (!overlay_buf || !overlay_enabled())
     return;
-  int led = motor ? RED : BG_COLOR;
+  int led = motor ? RED : bg_color;
   ui_draw_rect_buf(tape_motor_x + inset_x, inset_y + 2, 6, 4, led,
                    1, // w,h,color,fill
                    overlay_buf, overlay_buf_pitch);
@@ -243,9 +257,9 @@ void overlay_warp_changed(int warp) {
   if (!overlay_buf || !overlay_enabled())
     return;
   overlay_activate();
-  ui_draw_rect_buf(warp_x + inset_x, inset_y, 8, 8, BG_COLOR, 1, overlay_buf,
+  ui_draw_rect_buf(warp_x + inset_x, inset_y, 8, 8, bg_color, 1, overlay_buf,
                    overlay_buf_pitch);
-  ui_draw_text_buf(warp ? "!" : "-", warp_x + inset_x, inset_y, WHITE,
+  ui_draw_text_buf(warp ? "!" : "-", warp_x + inset_x, inset_y, fg_color,
                    overlay_buf, overlay_buf_pitch);
 }
 
@@ -253,9 +267,9 @@ void overlay_joyswap_changed(int swap) {
   if (!overlay_buf || !overlay_enabled())
     return;
   overlay_activate();
-  ui_draw_rect_buf(joyswap_x + inset_x, inset_y, 8 * 2, 8, BG_COLOR, 1,
+  ui_draw_rect_buf(joyswap_x + inset_x, inset_y, 8 * 2, 8, bg_color, 1,
                    overlay_buf, overlay_buf_pitch);
-  ui_draw_text_buf(swap ? "21" : "12", joyswap_x + inset_x, inset_y, WHITE,
+  ui_draw_text_buf(swap ? "21" : "12", joyswap_x + inset_x, inset_y, fg_color,
                    overlay_buf, overlay_buf_pitch);
 }
 
