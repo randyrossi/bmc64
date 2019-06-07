@@ -117,11 +117,11 @@ The emulated resolutions are small and must be scaled up to the video mode's res
 
   * This is what the default scaling_kernel option (absent from config.txt) will look like:
 
-![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/scaling_kernel_8.png)
+![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/scaling_kernel_8.jpg)
 
   * This is what scaling_kernel=8 option will look like:
 
-![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/scaling_kernel_default.png)
+![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/scaling_kernel_default.jpg)
 
 # FileSystem/Drives
 
