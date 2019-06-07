@@ -115,13 +115,13 @@ The absolute minimum width/height for any machine is 320x200.
 
 The emulated resolutions are small and must be scaled up to the video mode's resolution.  You can tell the Pi to change the way it scales the video using the 'scaling_kernel' option in config.txt:
 
-  * This is what the default scaling_kernel option (absent from config.txt) will look like:
-
-![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/scaling_kernel_8.jpg)
-
-  * This is what scaling_kernel=8 option will look like:
+  * (Soft Look) This is what the default scaling_kernel option (absent from config.txt) will look like:
 
 ![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/scaling_kernel_default.jpg)
+
+  * (Pixel Perfect Look) This is what scaling_kernel=8 option will look like:
+
+![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/scaling_kernel_8.jpg)
 
 # FileSystem/Drives
 
