@@ -89,6 +89,7 @@ machine.  Most games gave the option of moving it using cursor keys or joystick 
 # Canvas Dimensions
 
 You can specify how much of the emulated display is visible via the *_canvas_width, *_canvas_height parameters in cmdline.txt.
+By increasing/decreasing the height/width, you can 'cut out' more of the border if it is unwanted.  Mostly, this is to adjust composite out especially for the VIC20.
 Here are some sample canvas dimensions configs:
 
 ## PAL
@@ -109,7 +110,7 @@ C64/C128 Composite | vicii_canvas_width=384, vicii_canvas_height=272 | (none)
 VIC20 HDMI | vic_canvas_width=400, vic_canvas_height=288 | framebuffer_aspect=0x00050006
 VIC20 Composite | vic_canvas_width=400, vic_canvas_height=288 | framebuffer_aspect=0x00050006
 
-The absolute minimum width/height for any machine is 320x200.
+The absolute minimum width/height for any machine is 320x240.  Width must be a multiple of 2.
 
 # Video Scaling Algorithm
 
