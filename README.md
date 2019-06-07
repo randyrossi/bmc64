@@ -38,9 +38,11 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
 
   * https://github.com/randyrossi/bmc64
 
-# Timing
+# Video + Timing C64/C128
 
-The machine config provided defaults to PAL 50hz for HDMI.  If you want to use composite out, you MUST change the machine_timing parameter in cmdline.txt to 'pal-composite'.  Otherwise, you will have audio synchronization issues.  You can change the machine to be NTSC if you want (see below).
+The machine is timed by the video mode you select. The default config provided defaults to 720p PAL 50hz on HDMI.  This is a 'safe' mode that should work on all monitors.
+
+If you want to use composite out, you MUST change the machine_timing parameter in cmdline.txt to 'pal-composite'.  Otherwise, you will have audio synchronization issues.  You can change the machine to be NTSC if you want (see below).
 
 Raspberry Pi Video Mode     | machine_timing | cycles_per_refresh
 ----------------------------|----------------|-------------------
@@ -48,17 +50,78 @@ hdmi_group=1,hdmi_mode=19   | pal-hdmi       | not required
 hdmi_group=1,hdmi_mode=4    | ntsc-hdmi      | not required
 sdtv_mode=18                | pal-composite  | not required
 sdtv_mode=16                | ntsc-composite | not required
+hdmi_group=2,hdmi_mode=87   | pal-custom or ntsc-custom | see below
 
-If you plan to use a custom HDMI mode to match the native resolution of your monitor, you will likely have to alter the machine's 'cycles_per_refresh' value to match the actual fps that mode outputs.  Custom HDMI modes may not be exactly 50 hz or 60 hz and that can cause audio sync issues.  A tool to calculate this number is provided under the 'Video' menu.  The test will take 10 minutes and will let you know what values you should add to cmdline.txt for machine_timing and cycles_per_refresh.  You only need to run the test once.
+You are free to experiment with different modes. It may be advantageous to set the video mode to match the native resolution of your monitor.  That way, it may have less processing to do and _may_ save on latency (not confirmed).  That can be accomplished with either a different hdmi_mode or a custom mode.
 
-Example: Custom 1360x768 50Hz HDMI Mode in config.txt
+If you plan to use a custom HDMI mode, you will have to alter the machine's 'cycles_per_refresh' value to match the actual fps that mode outputs.  Custom HDMI modes may not be exactly 50 hz or 60 hz and that can cause audio sync issues if you use the default value.  A tool to calculate this number is provided under the 'Video' menu.  The test will take 10 minutes and will let you know what values you should add to cmdline.txt for machine_timing and cycles_per_refresh.  You only need to run the test once for that mode.
+
+Example 1: Custom 768x544 50.125 hz PAL Mode
+
+    This mode will match the timing of the original machine (for the purists).
+
+    disable_overscan=1
+    hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
+    hdmi_group=2
+    hdmi_mode=87
+
+The test tool will tell you the actual frame rate for this mode is 50.125. You would then add the suggested cmdline.txt parameters:
+
+    machine_timing=pal-custom cycles_per_refresh=985257
+
+Example 2: Custom 1360x768 50Hz HDMI Mode
 
     disable_overscan=1
     hdmi_cvt=1360 768 50 3 0 0 0
     hdmi_group=2
     hdmi_mode=87
 
-The test tool will tell you the actual frame rate for this mode is 49.89. You would then add the suggested cmdline.txt parameters: machine_timing=pal-custom cycles_per_refresh=980670.
+The test tool will tell you the actual frame rate for this mode is 49.89. You would then add the suggested cmdline.txt parameters:
+
+    machine_timing=pal-custom cycles_per_refresh=980670
+
+# Video + Timing VIC20
+
+All of the above re: timing applies to BMVIC20 as well.  However, in my opinion, this machine is better configured to be an NTSC
+machine.  Most cartridges were made for NTSC and you will notice they position their screens poorly when inserted into a PAL
+machine.  Most games gave the option of moving it using cursor keys or joystick but this is annoying.
+
+# Canvas Dimensions
+
+You can specify how much of the emulated display is visible via the *_canvas_width, *_canvas_height parameters in cmdline.txt.
+Here are some sample canvas dimensions configs:
+
+## PAL
+
+Machine       | cmdline.txt | extra config.txt
+--------------|-------------|-------------------------------
+C64/C128 HDMI | vicii_canvas_width=384, vicii_canvas_height=272 | (none)
+C64/C128 Composite | vicii_canvas_width=384, vicii_canvas_height=272 | (none)
+VIC20 HDMI | vic_canvas_width=392, vic_canvas_height=288 | framebuffer_aspect=0x00050006
+VIC20 Composite | vic_canvas_width=392, vic_canvas_height=288 | framebuffer_aspect=0x00050006
+
+## NTSC
+
+Machine       | cmdline.txt | config.txt
+--------------|-------------|-------------
+C64/C128 HDMI | vicii_canvas_width=384, vicii_canvas_height=272 | (none)
+C64/C128 Composite | vicii_canvas_width=384, vicii_canvas_height=272 | (none)
+VIC20 HDMI | vic_canvas_width=400, vic_canvas_height=288 | framebuffer_aspect=0x00050006
+VIC20 Composite | vic_canvas_width=400, vic_canvas_height=288 | framebuffer_aspect=0x00050006
+
+The absolute minimum width/height for any machine is 320x200.
+
+# Video Scaling Algorithm
+
+The emulated resolutions are small and must be scaled up to the video mode's resolution.  You can tell the Pi to change the way it scales the video using the 'scaling_kernel' option in config.txt:
+
+  * This is what the default scaling_kernel option (absent from config.txt) will look like:
+
+![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/scaling_kernel_8.png)
+
+  * This is what scaling_kernel=8 option will look like:
+
+![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/scaling_kernel_default.png)
 
 # FileSystem/Drives
 
@@ -95,7 +158,7 @@ IMPORTANT: The files the Raspbery Pi itself needs to boot BMC64 must still resid
     cmdline.txt
     fixup.dat
 
-Directories and long filenames are supported as of v1.0.10. Previous versions, required all disks, tapes, cartridges, rom files etc to reside in the root directory.  This is no longer the case.  If you have an existing image, it is recommended you move your files to the following directory structure:
+Directories and long filenames are supported as of v1.0.10. Previous versions required all disks, tapes, cartridges, rom files etc to reside in the root directory.  This is no longer the case.  If you have an existing image, it is recommended you move your files to the following directory structure:
 
     C64/  <- for kernal, basic, chargen, disk roms, etc.
     snapshots/
