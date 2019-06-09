@@ -170,7 +170,6 @@ void ui_set_on_value_changed_callback(
     void (*on_value_changed)(struct menu_item *));
 
 void ui_check_key();
-int ui_num_menu_items(void);
 void ui_page_down(void);
 void ui_page_up(void);
 void ui_to_top(void);

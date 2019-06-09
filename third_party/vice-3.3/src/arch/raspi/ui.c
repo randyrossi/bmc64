@@ -857,7 +857,13 @@ void ui_render_now(void) {
   }
 }
 
-static void ui_tc(struct menu_item *node, int *index) {
+// This function will traverse recursively all nodes in the node list
+// starting at 'node'.  It fills in the render_index for each node as it
+// goes and records the node that matches the current cursor index into
+// menu_cursor_item.  No rendering is done here.  It used when
+// we need to find the node matching the cursor position, taking into
+// account all items that have been expanded/contracted.
+static void ui_traverse_children(struct menu_item *node, int *index) {
   while (node != NULL) {
     node->render_index = *index;
 
@@ -871,18 +877,21 @@ static void ui_tc(struct menu_item *node, int *index) {
     *index = *index + 1;
     if (node->type == FOLDER && node->is_expanded &&
         node->first_child != NULL) {
-      ui_tc(node->first_child, index);
+      ui_traverse_children(node->first_child, index);
     }
     node = node->next;
   }
 }
 
-static void ui_t(void) {
+// This function will traverse recursively all child nodes in the current
+// active menu. See ui_traverse_child for more details on when this
+// is useful.  It also records the max index for the current menu taking
+// into account all items that have been expanded/contracted.
+static void ui_traverse(void) {
   int index = 0;
   struct menu_item *ptr = menu_roots[current_menu].first_child;
 
-  // menu text
-  ui_tc(ptr, &index);
+  ui_traverse_children(ptr, &index);
 
   max_index[current_menu] = index;
 
@@ -1001,18 +1010,6 @@ void ui_info(const char *format, ...) {
   ui_render_single_frame();
 }
 
-int ui_num_menu_items(void) {
-  struct menu_item *menu = &menu_roots[current_menu];
-
-  struct menu_item *child = menu->first_child;
-  int count = 0;
-  while (child != NULL) {
-    count++;
-    child = child->next;
-  }
-  return count;
-}
-
 // These nav functions are really inefficient...but oh well.
 void ui_page_down() {
   for (int n=0;n<menu_height_chars;n++) {
@@ -1043,15 +1040,20 @@ void ui_find_first(char letter) {
   int start_index = menu_cursor[current_menu];
 
   while(1) {
+    // Move down or wrap around to the top if we hit the bottom.
     if (menu_cursor[current_menu] >= max_index[current_menu] - 1) {
        ui_to_top();
     } else {
        ui_action(ACTION_Down);
     }
 
+    // Did we get back to where we started? Bail.
     if (menu_cursor[current_menu] == start_index) break;
 
-    ui_t();
+    // We need to recompute max_index and the cursor after each move.
+    ui_traverse();
+
+    // Did this match our criteria? Bail.
     char *name = menu_cursor_item[current_menu]->name;
     if (name[0] != '\0' && tolower(name[0]) == letter) break;
   }
