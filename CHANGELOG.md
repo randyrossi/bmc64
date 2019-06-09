@@ -166,7 +166,7 @@
     best to confirm you are using the new cmdline.txt settings. This change
     'zooms' the video in a bit so more of the screen is used.  It also looks
     better on composite out.
- 
+
   * Moved bootstat.txt into machine dirs so they can be different for machines
   * Fixed C128 kernal/basic/chargen ROM load menu options
   * Fixed bug where POT Y Up/Down values could not be set
@@ -180,4 +180,5 @@
 
 ## 2.0
   * Fixed default values for bootstat for each machine
-  * Added Menu Back/Run Stop usb button for easier menu nav 
+  * Added Menu Back/Run Stop usb button for easier menu nav
+  * Handled real keyboard scan into ui

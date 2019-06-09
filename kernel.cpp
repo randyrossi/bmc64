@@ -30,9 +30,23 @@ CKernel *static_kernel = NULL;
 // Usb key states
 static bool key_states[MAX_KEY_CODES];
 static unsigned char mod_states;
+static bool uiLeftShift = false;
+static bool uiRightShift = false;
 
 // Real C64 keyboard matrix states
 static bool kbdMatrixStates[8][8];
+// These are only for translating row/col scans into equivalent USB codes
+// for the ui.
+static long kbdMatrixKeyCodes[8][8] = {
+ {KEYCODE_1, KEYCODE_3, KEYCODE_5, KEYCODE_7, KEYCODE_9, KEYCODE_Dash, KEYCODE_Insert, KEYCODE_Backspace},
+ {KEYCODE_BackQuote, KEYCODE_w, KEYCODE_r, KEYCODE_y, KEYCODE_i, KEYCODE_p, KEYCODE_RightBracket, KEYCODE_Return},
+ {KEYCODE_Tab, KEYCODE_a, KEYCODE_d, KEYCODE_g, KEYCODE_j, KEYCODE_l, KEYCODE_SingleQuote, KEYCODE_Right},
+ {KEYCODE_Escape, KEYCODE_LeftShift, KEYCODE_x, KEYCODE_v, KEYCODE_n, KEYCODE_Comma, KEYCODE_Slash, KEYCODE_Down},
+ {KEYCODE_Space, KEYCODE_z, KEYCODE_c, KEYCODE_b, KEYCODE_m, KEYCODE_Period, KEYCODE_RightShift, KEYCODE_F1},
+ {KEYCODE_LeftControl, KEYCODE_s, KEYCODE_f, KEYCODE_h, KEYCODE_k, KEYCODE_SemiColon, KEYCODE_BackSlash, KEYCODE_F3},
+ {KEYCODE_q, KEYCODE_e, KEYCODE_t, KEYCODE_u, KEYCODE_o, KEYCODE_LeftBracket, KEYCODE_Delete, KEYCODE_F5},
+ {KEYCODE_2, KEYCODE_4, KEYCODE_6, KEYCODE_8, KEYCODE_0, KEYCODE_Equals, KEYCODE_Home, KEYCODE_F7},
+};
 static int kbdRestoreState;
 
 extern "C" {
@@ -157,7 +171,6 @@ int circle_cycles_per_sec() {
 }
 };
 
-bool CKernel::uiShift = false;
 
 CKernel::CKernel(void)
     : ViceStdioApp("vice"), mVCHIQ(&mMemory, &mInterrupt), mViceSound(nullptr),
@@ -449,6 +462,8 @@ ViceApp::TShutdownMode CKernel::Run(void) {
 }
 
 void CKernel::ScanKeyboard() {
+  int ui_activated = circle_ui_activated();
+
   // For restore, there is no public API that triggers it so we will
   // pass the keycode that will.
   int restore = gpioPins[GPIO_KBD_RESTORE_INDEX]->Read();
@@ -471,10 +486,42 @@ void CKernel::ScanKeyboard() {
       // NOTE: PA pins 7 and 0 are swapped out of order
       // NOTE: PB pins 3 and 7 are swapped out of order
 
-      if (val == LOW && kbdMatrixStates[kbdPB][kbdPA] == HIGH) {
-        circle_keyboard_set_latch_keyarr(kbdPA, kbdPB, 1);
-      } else if (val == HIGH && kbdMatrixStates[kbdPB][kbdPA] == LOW) {
-        circle_keyboard_set_latch_keyarr(kbdPA, kbdPB, 0);
+      if (ui_activated) {
+        long keycode = kbdMatrixKeyCodes[kbdPB][kbdPA];
+        if (val == LOW && kbdMatrixStates[kbdPB][kbdPA] == HIGH) {
+          if (keycode == KEYCODE_LeftShift) {
+             uiLeftShift = true;
+          } else if (keycode == KEYCODE_RightShift) {
+             uiRightShift = true;
+          }
+
+          if (keycode == KEYCODE_Right && (uiLeftShift || uiRightShift)) {
+             circle_ui_key_interrupt(KEYCODE_Left, 1);
+          } else if (keycode == KEYCODE_Down && (uiLeftShift || uiRightShift)) {
+             circle_ui_key_interrupt(KEYCODE_Up, 1);
+          } else {
+             circle_ui_key_interrupt(keycode, 1);
+          }
+        } else if (val == HIGH && kbdMatrixStates[kbdPB][kbdPA] == LOW) {
+          if (keycode == KEYCODE_LeftShift) {
+             uiLeftShift = false;
+          } else if (keycode == KEYCODE_RightShift) {
+             uiRightShift = false;
+          }
+          if (keycode == KEYCODE_Right && (uiLeftShift || uiRightShift)) {
+             circle_ui_key_interrupt(KEYCODE_Left, 0);
+          } else if (keycode == KEYCODE_Down && (uiLeftShift || uiRightShift)) {
+             circle_ui_key_interrupt(KEYCODE_Up, 0);
+          } else {
+             circle_ui_key_interrupt(keycode, 0);
+          }
+        }
+      } else {
+        if (val == LOW && kbdMatrixStates[kbdPB][kbdPA] == HIGH) {
+          circle_keyboard_set_latch_keyarr(kbdPA, kbdPB, 1);
+        } else if (val == HIGH && kbdMatrixStates[kbdPB][kbdPA] == LOW) {
+          circle_keyboard_set_latch_keyarr(kbdPA, kbdPB, 0);
+        }
       }
       kbdMatrixStates[kbdPB][kbdPA] = val;
     }
@@ -715,13 +762,13 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
         break;
       case 1: // LeftShift
         if (circle_ui_activated()) {
-          uiShift = true;
+          uiLeftShift = true;
         }
         circle_key_pressed(KEYCODE_LeftShift);
         break;
       case 5: // RightShift
         if (circle_ui_activated()) {
-          uiShift = true;
+          uiRightShift = true;
         }
         circle_key_pressed(KEYCODE_RightShift);
         break;
@@ -738,13 +785,13 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
         break;
       case 1: // LeftShift
         if (circle_ui_activated()) {
-          uiShift = false;
+          uiLeftShift = false;
         }
         circle_key_released(KEYCODE_LeftShift);
         break;
       case 5: // RightShift
         if (circle_ui_activated()) {
-          uiShift = false;
+          uiRightShift = false;
         }
         circle_key_released(KEYCODE_RightShift);
         break;
@@ -776,9 +823,9 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
         // isn't navigable by keyrah with real C64 board. Keep
         // key_states below managing the state of the original key,
         // not the translated one.
-        if (uiShift && i == KEYCODE_Right) {
+        if ((uiLeftShift || uiRightShift) && i == KEYCODE_Right) {
           circle_key_released(KEYCODE_Left);
-        } else if (uiShift && i == KEYCODE_Down) {
+        } else if ((uiLeftShift || uiRightShift) && i == KEYCODE_Down) {
           circle_key_released(KEYCODE_Up);
         } else {
           circle_key_released(i);
@@ -789,9 +836,9 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
     } else if (key_states[i] == false && new_states[i] == true) {
       if (ui_activated) {
         // See above note on shift.
-        if (uiShift && i == KEYCODE_Right) {
+        if ((uiLeftShift || uiRightShift) && i == KEYCODE_Right) {
           circle_key_pressed(KEYCODE_Left);
-        } else if (uiShift && i == KEYCODE_Down) {
+        } else if ((uiLeftShift || uiRightShift) && i == KEYCODE_Down) {
           circle_key_pressed(KEYCODE_Up);
         } else {
           circle_key_pressed(i);
