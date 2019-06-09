@@ -212,6 +212,15 @@ static void handle_button_function(bool is_ui, int button_func) {
       circle_ui_key_interrupt(KEYCODE_Return, 0);
     }
     break;
+  case BTN_ASSIGN_RUN_STOP_BACK:
+    if (is_ui) {
+      circle_ui_key_interrupt(KEYCODE_Escape, 1);
+      circle_ui_key_interrupt(KEYCODE_Escape, 0);
+    } else {
+      circle_key_pressed(KEYCODE_Escape);
+      circle_key_released(KEYCODE_Escape);
+    }
+    break;
   // Don't try to handle dirs here even for ui. We want
   // repeat to work for those and button func is only
   // discovered on the down press anyway.

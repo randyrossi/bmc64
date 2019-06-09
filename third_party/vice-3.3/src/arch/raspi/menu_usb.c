@@ -200,6 +200,7 @@ static void add_button_choices(struct menu_item *tmp_item) {
   strcpy(tmp_item->choices[BTN_ASSIGN_CART_FREEZE], "Cart Freeze");
   strcpy(tmp_item->choices[BTN_ASSIGN_RESET_HARD], "Hard Reset");
   strcpy(tmp_item->choices[BTN_ASSIGN_RESET_SOFT], "Soft Reset");
+  strcpy(tmp_item->choices[BTN_ASSIGN_RUN_STOP_BACK], "Menu Back/RunStop");
 
   if (machine_class == VICE_MACHINE_VIC20) {
     tmp_item->choice_disabled[BTN_ASSIGN_SWAP_PORTS] = 1;

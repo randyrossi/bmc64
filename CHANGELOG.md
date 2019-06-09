@@ -177,3 +177,7 @@
     for real keyboard users
   * Added first letter search in menus (press a letter and cursor will jump
     to next occurrence of an item that starts with that letter).
+
+## 2.0
+  * Fixed default values for bootstat for each machine
+  * Added Menu Back/Run Stop usb button for easier menu nav 

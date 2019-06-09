@@ -1,7 +1,3 @@
-__IMPORTANT PSA: BMC64 v1.0.6 through v1.4 were not properly putting the other 3 (unused) cores to a low powered mode and was causing CPU temperatures to rise close to or beyond automatic throttling limits. I'm very sorry about this. I don't believe this pushed the devices beyond their limits, it was just a waste of heat. The Pi will automatically throttle itself if CPU temperature goes beyond a certain limit. If you saw thermometer icons in the top right corner of your screen, this is probably why. V1.5 or greater fixes this.__
-
-__If you are using an older version, I strongly recommend you update to the latest release.__
-
 # BMC64
 
 BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio.  Two other Commodore builds are available as well; C128 and Vic20.
