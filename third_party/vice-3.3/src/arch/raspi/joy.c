@@ -29,6 +29,7 @@
 #include "demo.h"
 #include "kbd.h"
 #include "menu.h"
+#include "menu_keyset.h"
 #include "ui.h"
 
 #include "joyport/joystick.h"
@@ -43,6 +44,7 @@ int joy_num_hats[2];
 struct joydev_config joydevs[2];
 
 // Called from ISR
+// Return non-zero if the event was handled.
 int joy_key_up(unsigned int device, int key) {
   if (circle_ui_activated()) {
     // When the ui is showing, we want these
@@ -87,31 +89,6 @@ int joy_key_up(unsigned int device, int key) {
       default:
         return 0;
       }
-    } else if (joydevs[device].device == JOYDEV_CURS_SP ||
-               joydevs[device].device == JOYDEV_CURS_LC) {
-      switch (key) {
-      case KEYCODE_Up:
-        circle_ui_key_interrupt(KEYCODE_Up, 0 /* up */);
-        return 1;
-      case KEYCODE_Down:
-        circle_ui_key_interrupt(KEYCODE_Down, 0 /* up */);
-        return 1;
-      case KEYCODE_Left:
-        circle_ui_key_interrupt(KEYCODE_Left, 0 /* up */);
-        return 1;
-      case KEYCODE_Right:
-        circle_ui_key_interrupt(KEYCODE_Right, 0 /* up */);
-        return 1;
-      case KEYCODE_Space:
-        if (joydevs[device].device == JOYDEV_CURS_SP) {
-          circle_ui_key_interrupt(KEYCODE_Return, 0 /* up */);
-          return 1;
-        }
-        break;
-      default:
-        // NOTE: Don't consume LeftControl when ui is up
-        return 0;
-      }
     }
     return 0;
   }
@@ -187,11 +164,63 @@ int joy_key_up(unsigned int device, int key) {
     default:
       return 0;
     }
+  } else if (joydevs[device].device == JOYDEV_KEYSET1) {
+    if (keyset_codes[0][KEYSET_UP] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x01);
+      return 1;
+    } else if (keyset_codes[0][KEYSET_DOWN] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x02);
+      return 1;
+    } else if (keyset_codes[0][KEYSET_LEFT] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x04);
+      return 1;
+    } else if (keyset_codes[0][KEYSET_RIGHT] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x08);
+      return 1;
+    } else if (keyset_codes[0][KEYSET_FIRE] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x10);
+      return 1;
+    } else if (keyset_codes[0][KEYSET_POTX] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~(pot_x_low_value << 5));
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, pot_x_high_value << 5);
+      return 1;
+    } else if (keyset_codes[0][KEYSET_POTY] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~(pot_y_low_value << 13));
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, pot_y_high_value << 13);
+      return 1;
+    }
+    return 0;
+  } else if (joydevs[device].device == JOYDEV_KEYSET2) {
+    if (keyset_codes[1][KEYSET_UP] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x01);
+      return 1;
+    } else if (keyset_codes[1][KEYSET_DOWN] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x02);
+      return 1;
+    } else if (keyset_codes[1][KEYSET_LEFT] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x04);
+      return 1;
+    } else if (keyset_codes[1][KEYSET_RIGHT] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x08);
+      return 1;
+    } else if (keyset_codes[1][KEYSET_FIRE] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x10);
+      return 1;
+    } else if (keyset_codes[1][KEYSET_POTX] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~(pot_x_low_value << 5));
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, pot_x_high_value << 5);
+      return 1;
+    } else if (keyset_codes[1][KEYSET_POTY] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~(pot_y_low_value << 13));
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, pot_y_high_value << 13);
+      return 1;
+    }
   }
   return 0;
 }
 
 // Called from ISR
+// Return non-zero if the event was handled.
 int joy_key_down(unsigned int device, int key) {
   if (circle_ui_activated()) {
     if (joydevs[device].device == JOYDEV_NUMS_1) {
@@ -234,32 +263,7 @@ int joy_key_down(unsigned int device, int key) {
       default:
         return 0;
       }
-    } else if (joydevs[device].device == JOYDEV_CURS_SP ||
-               joydevs[device].device == JOYDEV_CURS_LC) {
-      switch (key) {
-      case KEYCODE_Up:
-        circle_ui_key_interrupt(KEYCODE_Up, 1 /* down */);
-        return 1;
-      case KEYCODE_Down:
-        circle_ui_key_interrupt(KEYCODE_Down, 1 /* down */);
-        return 1;
-      case KEYCODE_Left:
-        circle_ui_key_interrupt(KEYCODE_Left, 1 /* down */);
-        return 1;
-      case KEYCODE_Right:
-        circle_ui_key_interrupt(KEYCODE_Right, 1 /* down */);
-        return 1;
-      case KEYCODE_Space:
-        if (joydevs[device].device == JOYDEV_CURS_SP) {
-          circle_ui_key_interrupt(KEYCODE_Return, 1 /* down */);
-          return 1;
-        }
-        break;
-      default:
-        // NOTE: Don't consume LeftControl when ui is up
-        return 0;
-      }
-    }
+    } 
     return 0;
   }
 
@@ -333,6 +337,57 @@ int joy_key_down(unsigned int device, int key) {
       break;
     default:
       return 0;
+    }
+  } else if (joydevs[device].device == JOYDEV_KEYSET1) {
+    if (keyset_codes[0][KEYSET_UP] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x01);
+      return 1;
+    } else if (keyset_codes[0][KEYSET_DOWN] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x02);
+      return 1;
+    } else if (keyset_codes[0][KEYSET_LEFT] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x04);
+      return 1;
+    } else if (keyset_codes[0][KEYSET_RIGHT] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x08);
+      return 1;
+    } else if (keyset_codes[0][KEYSET_FIRE] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x10);
+      return 1;
+    } else if (keyset_codes[0][KEYSET_POTX] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~(pot_x_high_value << 5));
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, pot_x_low_value << 5);
+      return 1;
+    } else if (keyset_codes[0][KEYSET_POTY] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~(pot_y_high_value << 13));
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, pot_y_low_value << 13);
+      return 1;
+    }
+    return 0;
+  } else if (joydevs[device].device == JOYDEV_KEYSET2) {
+    if (keyset_codes[1][KEYSET_UP] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x01);
+      return 1;
+    } else if (keyset_codes[1][KEYSET_DOWN] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x02);
+      return 1;
+    } else if (keyset_codes[1][KEYSET_LEFT] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x04);
+      return 1;
+    } else if (keyset_codes[1][KEYSET_RIGHT] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x08);
+      return 1;
+    } else if (keyset_codes[1][KEYSET_FIRE] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x10);
+      return 1;
+    } else if (keyset_codes[1][KEYSET_POTX] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~(pot_x_high_value << 5));
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, pot_x_low_value << 5);
+      return 1;
+    } else if (keyset_codes[1][KEYSET_POTY] == key) {
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~(pot_y_high_value << 13));
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, pot_y_low_value << 13);
+      return 1;
     }
   }
   return 0;

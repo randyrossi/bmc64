@@ -488,7 +488,7 @@ void CKernel::ScanKeyboard() {
 
       if (ui_activated) {
         long keycode = kbdMatrixKeyCodes[kbdPB][kbdPA];
-        if (val == LOW && kbdMatrixStates[kbdPB][kbdPA] == HIGH) {
+        if (val == LOW && kbdMatrixStates[kbdPA][kbdPB] == HIGH) {
           if (keycode == KEYCODE_LeftShift) {
              uiLeftShift = true;
           } else if (keycode == KEYCODE_RightShift) {
@@ -502,7 +502,7 @@ void CKernel::ScanKeyboard() {
           } else {
              circle_ui_key_interrupt(keycode, 1);
           }
-        } else if (val == HIGH && kbdMatrixStates[kbdPB][kbdPA] == LOW) {
+        } else if (val == HIGH && kbdMatrixStates[kbdPA][kbdPB] == LOW) {
           if (keycode == KEYCODE_LeftShift) {
              uiLeftShift = false;
           } else if (keycode == KEYCODE_RightShift) {
@@ -517,13 +517,16 @@ void CKernel::ScanKeyboard() {
           }
         }
       } else {
-        if (val == LOW && kbdMatrixStates[kbdPB][kbdPA] == HIGH) {
+        // TODO: Need to watch out for key combos here.  Hook into
+        // the handle functions directly in kbd.c so we can invoke the
+        // same hotkey funcs.
+        if (val == LOW && kbdMatrixStates[kbdPA][kbdPB] == HIGH) {
           circle_keyboard_set_latch_keyarr(kbdPA, kbdPB, 1);
-        } else if (val == HIGH && kbdMatrixStates[kbdPB][kbdPA] == LOW) {
+        } else if (val == HIGH && kbdMatrixStates[kbdPA][kbdPB] == LOW) {
           circle_keyboard_set_latch_keyarr(kbdPA, kbdPB, 0);
         }
       }
-      kbdMatrixStates[kbdPB][kbdPA] = val;
+      kbdMatrixStates[kbdPA][kbdPB] = val;
     }
     gpioPins[kbdPA]->SetMode(GPIOModeInputPullUp);
   }

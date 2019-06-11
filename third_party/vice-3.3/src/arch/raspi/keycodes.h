@@ -128,8 +128,12 @@
 #define KEYCODE_LeftShift 0x70
 #define KEYCODE_RightShift 0x71
 #define KEYCODE_LeftControl 0x72
-#define KEYCODE_RightControl 0x72
+#define KEYCODE_RightControl 0x73
 #define KEYCODE_LeftAlt 0x74
 #define KEYCODE_RightAlt 0x75
+
+extern int want_raw_keycode;
+
+char* keycode_to_string(long keycode);
 
 #endif

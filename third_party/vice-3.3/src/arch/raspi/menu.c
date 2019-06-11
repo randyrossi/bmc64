@@ -41,6 +41,7 @@
 #include "diskimage.h"
 #include "joy.h"
 #include "joyport.h"
+#include "joyport/joystick.h"
 #include "kbd.h"
 #include "keyboard.h"
 #include "machine.h"
@@ -49,6 +50,7 @@
 #include "menu_tape_osd.h"
 #include "menu_timing.h"
 #include "menu_usb.h"
+#include "menu_keyset.h"
 #include "overlay.h"
 #include "raspi_machine.h"
 #include "raspi_util.h"
@@ -64,7 +66,7 @@
 // both keyboard and joysticks can be hooked up with a PCB or
 // to eliminate USB keyboard.  Power switch is actually a power switch
 // and the power port is actually power unlike the Keyrah.
-//#define RASPI_SUPPORT_PCB 1
+#define RASPI_SUPPORT_PCB 1
 
 // For filename filters
 typedef enum {
@@ -94,6 +96,7 @@ int usb_0_button_assignments[16];
 int usb_1_button_assignments[16];
 int usb_0_button_bits[16]; // never change
 int usb_1_button_bits[16]; // never change
+long keyset_codes[2][7];
 struct menu_item *palette_item;
 struct menu_item *keyboard_type_item;
 struct menu_item *drive_sounds_item;
@@ -121,7 +124,7 @@ static int unit;
 static int joyswap;
 static int force_overlay;
 
-// Held here, exported for kernal to read
+// Held here, exported for menu_usb to read
 int pot_x_high_value;
 int pot_x_low_value;
 int pot_y_high_value;
@@ -329,6 +332,11 @@ static void show_license() {
 static void configure_usb(int dev) {
   struct menu_item *usb_root = ui_push_menu(-1, -1);
   build_usb_menu(dev, usb_root);
+}
+
+static void configure_keyset(int num) {
+  struct menu_item *keyset_root = ui_push_menu(-1, -1);
+  build_keyset_menu(num, keyset_root);
 }
 
 static void configure_timing() {
@@ -557,6 +565,22 @@ static int save_settings() {
   fprintf(fp, "pot_y_high=%d\n", pot_y_high_value);
   fprintf(fp, "pot_y_low=%d\n", pot_y_low_value);
 
+  fprintf(fp, "keyset_1_up=%d\n", keyset_codes[0][KEYSET_UP]);
+  fprintf(fp, "keyset_1_down=%d\n", keyset_codes[0][KEYSET_DOWN]);
+  fprintf(fp, "keyset_1_left=%d\n", keyset_codes[0][KEYSET_LEFT]);
+  fprintf(fp, "keyset_1_right=%d\n", keyset_codes[0][KEYSET_RIGHT]);
+  fprintf(fp, "keyset_1_fire=%d\n", keyset_codes[0][KEYSET_FIRE]);
+  fprintf(fp, "keyset_1_potx=%d\n", keyset_codes[0][KEYSET_POTX]);
+  fprintf(fp, "keyset_1_poty=%d\n", keyset_codes[0][KEYSET_POTY]);
+
+  fprintf(fp, "keyset_2_up=%d\n", keyset_codes[1][KEYSET_UP]);
+  fprintf(fp, "keyset_2_down=%d\n", keyset_codes[1][KEYSET_DOWN]);
+  fprintf(fp, "keyset_2_left=%d\n", keyset_codes[1][KEYSET_LEFT]);
+  fprintf(fp, "keyset_2_right=%d\n", keyset_codes[1][KEYSET_RIGHT]);
+  fprintf(fp, "keyset_2_fire=%d\n", keyset_codes[1][KEYSET_FIRE]);
+  fprintf(fp, "keyset_2_potx=%d\n", keyset_codes[1][KEYSET_POTX]);
+  fprintf(fp, "keyset_2_poty=%d\n", keyset_codes[1][KEYSET_POTY]);
+
   fclose(fp);
 
   return 0;
@@ -712,6 +736,34 @@ static void load_settings() {
 #ifdef RASPI_SUPPORT_PCB
       use_pcb_item->value = value;
 #endif
+    } else if (strcmp(name, "keyset_1_up") == 0) {
+      keyset_codes[0][KEYSET_UP] = value;
+    } else if (strcmp(name, "keyset_1_down") == 0) {
+      keyset_codes[0][KEYSET_DOWN] = value;
+    } else if (strcmp(name, "keyset_1_left") == 0) {
+      keyset_codes[0][KEYSET_LEFT] = value;
+    } else if (strcmp(name, "keyset_1_right") == 0) {
+      keyset_codes[0][KEYSET_RIGHT] = value;
+    } else if (strcmp(name, "keyset_1_fire") == 0) {
+      keyset_codes[0][KEYSET_FIRE] = value;
+    } else if (strcmp(name, "keyset_1_potx") == 0) {
+      keyset_codes[0][KEYSET_POTX] = value;
+    } else if (strcmp(name, "keyset_1_poty") == 0) {
+      keyset_codes[0][KEYSET_POTY] = value;
+    } else if (strcmp(name, "keyset_2_up") == 0) {
+      keyset_codes[1][KEYSET_UP] = value;
+    } else if (strcmp(name, "keyset_2_down") == 0) {
+      keyset_codes[1][KEYSET_DOWN] = value;
+    } else if (strcmp(name, "keyset_2_left") == 0) {
+      keyset_codes[1][KEYSET_LEFT] = value;
+    } else if (strcmp(name, "keyset_2_right") == 0) {
+      keyset_codes[1][KEYSET_RIGHT] = value;
+    } else if (strcmp(name, "keyset_2_fire") == 0) {
+      keyset_codes[1][KEYSET_FIRE] = value;
+    } else if (strcmp(name, "keyset_2_potx") == 0) {
+      keyset_codes[1][KEYSET_POTX] = value;
+    } else if (strcmp(name, "keyset_2_poty") == 0) {
+      keyset_codes[1][KEYSET_POTY] = value;
     }
   }
   fclose(fp);
@@ -1401,6 +1453,12 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_CONFIGURE_USB_1:
     configure_usb(1);
     return;
+  case MENU_CONFIGURE_KEYSET1:
+    configure_keyset(0);
+    return;
+  case MENU_CONFIGURE_KEYSET2:
+    configure_keyset(1);
+    return;
   case MENU_WARP_MODE:
     toggle_warp(item->value);
     return;
@@ -1949,15 +2007,15 @@ void build_menu(struct menu_item *root) {
   child->value = HOTKEY_CHOICE_MENU;
   set_hotkey_choices(hotkey_cf7_item);
 
-  parent = ui_menu_add_folder(root, "Joystick");
+  parent = ui_menu_add_folder(root, "Joyports");
 
   if (circle_num_joysticks() > 1) {
       ui_menu_add_button(MENU_SWAP_JOYSTICKS, parent, "Swap Joystick Ports");
   }
 
   child = port_1_menu_item = ui_menu_add_multiple_choice(
-      MENU_JOYSTICK_PORT_1, parent, "Joystick Port 1");
-  child->num_choices = 10;
+      MENU_JOYSTICK_PORT_1, parent, "Port 1");
+  child->num_choices = 12;
   child->value = 0;
   strcpy(child->choices[0], "None");
   child->choice_ints[0] = JOYDEV_NONE;
@@ -1979,11 +2037,15 @@ void build_menu(struct menu_item *root) {
   child->choice_ints[8] = JOYDEV_CURS_LC;
   strcpy(child->choices[9], "USB Mouse (1351)");
   child->choice_ints[9] = JOYDEV_MOUSE;
+  strcpy(child->choices[10], "Custom Keyset 1");
+  child->choice_ints[10] = JOYDEV_KEYSET1;
+  strcpy(child->choices[11], "Custom Keyset 2");
+  child->choice_ints[11] = JOYDEV_KEYSET2;
 
   if (circle_num_joysticks() > 1) {
     child = port_2_menu_item = ui_menu_add_multiple_choice(
-        MENU_JOYSTICK_PORT_2, parent, "Joystick Port 2");
-    child->num_choices = 10;
+        MENU_JOYSTICK_PORT_2, parent, "Port 2");
+    child->num_choices = 12;
     child->value = 0;
     strcpy(child->choices[0], "None");
     child->choice_ints[0] = JOYDEV_NONE;
@@ -2005,6 +2067,10 @@ void build_menu(struct menu_item *root) {
     child->choice_ints[8] = JOYDEV_CURS_LC;
     strcpy(child->choices[9], "USB Mouse (1351)");
     child->choice_ints[9] = JOYDEV_MOUSE;
+    strcpy(child->choices[10], "Custom Keyset 1");
+    child->choice_ints[10] = JOYDEV_KEYSET1;
+    strcpy(child->choices[11], "Custom Keyset 2");
+    child->choice_ints[11] = JOYDEV_KEYSET2;
   }
 
   ui_menu_add_button(MENU_CONFIGURE_USB_0, parent, "Configure USB Joy 1...");
@@ -2028,6 +2094,9 @@ void build_menu(struct menu_item *root) {
     usb_0_button_bits[j] = 1 << j;
     usb_1_button_bits[j] = 1 << j;
   }
+
+  ui_menu_add_button(MENU_CONFIGURE_KEYSET1, parent, "Configure Keyset 1...");
+  ui_menu_add_button(MENU_CONFIGURE_KEYSET2, parent, "Configure Keyset 2...");
 
   ui_menu_add_divider(root);
 
@@ -2070,6 +2139,9 @@ void build_menu(struct menu_item *root) {
   video_canvas_change_palette(palette_item->value);
   ui_set_hotkeys();
   ui_set_joy_devs();
+
+  joystick_set_potx(pot_x_high_value);
+  joystick_set_poty(pot_y_high_value);
 
   // Always turn off resampling
   resources_set_int("SidResidSampling", 0);

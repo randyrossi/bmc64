@@ -31,6 +31,7 @@
 #include "joy.h"
 #include "keyboard.h"
 #include "menu.h"
+#include "menu_keyset.h"
 #include "ui.h"
 #include <stdio.h>
 #include <string.h>
@@ -286,6 +287,10 @@ static void handle_key_combo_function() {
 }
 
 void circle_key_pressed(long key) {
+  if (want_raw_keycode) {
+    return;
+  }
+
   if (key == KEYCODE_LeftControl) {
     left_control_down = 1;
   }
@@ -294,14 +299,18 @@ void circle_key_pressed(long key) {
   if (joydevs[0].device == JOYDEV_NUMS_1 ||
       joydevs[0].device == JOYDEV_NUMS_2 ||
       joydevs[0].device == JOYDEV_CURS_SP ||
-      joydevs[0].device == JOYDEV_CURS_LC) {
+      joydevs[0].device == JOYDEV_CURS_LC ||
+      joydevs[0].device == JOYDEV_KEYSET1 ||
+      joydevs[0].device == JOYDEV_KEYSET2) {
     if (joy_key_down(0, key))
       return;
   }
   if (joydevs[1].device == JOYDEV_NUMS_1 ||
       joydevs[1].device == JOYDEV_NUMS_2 ||
       joydevs[1].device == JOYDEV_CURS_SP ||
-      joydevs[1].device == JOYDEV_CURS_LC) {
+      joydevs[1].device == JOYDEV_CURS_LC ||
+      joydevs[1].device == JOYDEV_KEYSET1 ||
+      joydevs[1].device == JOYDEV_KEYSET2) {
     if (joy_key_down(1, key))
       return;
   }
@@ -318,6 +327,11 @@ void circle_key_pressed(long key) {
 }
 
 void circle_key_released(long key) {
+  if (want_raw_keycode) {
+    keycode_for_keyset(key);
+    return;
+  }
+
   if (key == KEYCODE_LeftControl) {
     left_control_down = 0;
   }
@@ -341,14 +355,18 @@ void circle_key_released(long key) {
   if (joydevs[0].device == JOYDEV_NUMS_1 ||
       joydevs[0].device == JOYDEV_NUMS_2 ||
       joydevs[0].device == JOYDEV_CURS_SP ||
-      joydevs[0].device == JOYDEV_CURS_LC) {
+      joydevs[0].device == JOYDEV_CURS_LC ||
+      joydevs[0].device == JOYDEV_KEYSET1 ||
+      joydevs[0].device == JOYDEV_KEYSET2) {
     if (joy_key_up(0, key))
       return;
   }
   if (joydevs[1].device == JOYDEV_NUMS_1 ||
       joydevs[1].device == JOYDEV_NUMS_2 ||
       joydevs[1].device == JOYDEV_CURS_SP ||
-      joydevs[1].device == JOYDEV_CURS_LC) {
+      joydevs[1].device == JOYDEV_CURS_LC ||
+      joydevs[1].device == JOYDEV_KEYSET1 ||
+      joydevs[1].device == JOYDEV_KEYSET2) {
     if (joy_key_up(1, key))
       return;
   }

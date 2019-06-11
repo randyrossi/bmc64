@@ -39,6 +39,8 @@ libarch_a_SOURCES = \
 	joy.c \
 	kbd.h \
 	kbd.c \
+	keycodes.h \
+	keycodes.c \
 	mousedrv.h \
 	mousedrv.c \
 	missing.c \
@@ -48,6 +50,8 @@ libarch_a_SOURCES = \
 	videoarch.c \
 	menu.h \
 	menu.c \
+	menu_keyset.h \
+	menu_keyset.c \
 	menu_usb.h \
 	menu_usb.c \
 	menu_timing.h \
