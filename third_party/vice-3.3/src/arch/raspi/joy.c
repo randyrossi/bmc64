@@ -36,12 +36,17 @@
 #include <stdio.h>
 #include <string.h>
 
-int joy_num_pads = 0;
-int joy_num_buttons[2];
-int joy_num_axes[2];
-int joy_num_hats[2];
+// Global usb gamepad info.
+int joy_num_pads;
+int joy_num_buttons[MAX_USB_PADS];
+int joy_num_axes[MAX_USB_PADS];
+int joy_num_hats[MAX_USB_PADS];
 
-struct joydev_config joydevs[2];
+// Holds previous button states for the purpose of
+// reporting button functions press/release events.
+unsigned joy_prev_buttons[MAX_USB_PADS];
+
+struct joydev_config joydevs[MAX_JOY_PORTS];
 
 // Called from ISR
 // Return non-zero if the event was handled.
@@ -415,15 +420,17 @@ void circle_joy_usb(unsigned int device, int value) {
 // Setup stuff
 int joy_arch_init(void) { return 0; }
 
-void joy_set_gamepad_info(int num_pads, int num_buttons[2], int num_axes[2],
-                          int num_hats[2]) {
-  joy_num_pads = num_pads;
-  joy_num_axes[0] = num_axes[0];
-  joy_num_axes[1] = num_axes[1];
-  joy_num_hats[0] = num_hats[0];
-  joy_num_hats[1] = num_hats[1];
-  joy_num_buttons[0] = num_buttons[0];
-  joy_num_buttons[1] = num_buttons[1];
+void joy_set_gamepad_info(int num_pads,
+                          int num_buttons[MAX_USB_PADS],
+                          int num_axes[MAX_USB_PADS],
+                          int num_hats[MAX_USB_PADS]) {
+  joy_num_pads = MIN(num_pads , MAX_USB_PADS);
+  joy_num_axes[0] = MIN(num_axes[0] , MAX_USB_AXES);
+  joy_num_axes[1] = MIN(num_axes[1] , MAX_USB_AXES);
+  joy_num_hats[0] = MIN(num_hats[0] , MAX_USB_HATS);
+  joy_num_hats[1] = MIN(num_hats[1] , MAX_USB_HATS);
+  joy_num_buttons[0] = MIN(num_buttons[0] , MAX_USB_BUTTONS);
+  joy_num_buttons[1] = MIN(num_buttons[1] , MAX_USB_BUTTONS);
 }
 
 int circle_joy_need_gpio(int device) {

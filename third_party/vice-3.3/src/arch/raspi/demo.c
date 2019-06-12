@@ -57,7 +57,7 @@ static int demo_port_2_device;
 
 // TODO: Move this into joy.h and remove all extern declarations
 // elsewhere.
-extern struct joydev_config joydevs[2];
+extern struct joydev_config joydevs[MAX_JOY_PORTS];
 
 // TODO: This feature needs to be documented and more user friendly
 // (i.e. display errors when things go wrong)

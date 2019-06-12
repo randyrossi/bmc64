@@ -36,7 +36,7 @@
 #include <stdio.h>
 #include <string.h>
 
-extern struct joydev_config joydevs[2];
+extern struct joydev_config joydevs[MAX_JOY_PORTS];
 
 static int left_control_down = 0;
 

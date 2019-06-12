@@ -77,7 +77,7 @@ typedef enum {
    FILTER_SNAP,
 } FileFilter;
 
-extern struct joydev_config joydevs[2];
+extern struct joydev_config joydevs[MAX_JOY_PORTS];
 
 // These can be saved
 struct menu_item *port_1_menu_item;
@@ -92,10 +92,9 @@ float usb_x_thresh_0;
 float usb_y_thresh_0;
 float usb_x_thresh_1;
 float usb_y_thresh_1;
-int usb_0_button_assignments[16];
-int usb_1_button_assignments[16];
-int usb_0_button_bits[16]; // never change
-int usb_1_button_bits[16]; // never change
+int usb_0_button_assignments[MAX_USB_BUTTONS];
+int usb_1_button_assignments[MAX_USB_BUTTONS];
+int usb_button_bits[MAX_USB_BUTTONS]; // never change
 long keyset_codes[2][7];
 struct menu_item *palette_item;
 struct menu_item *keyboard_type_item;
@@ -532,10 +531,10 @@ static int save_settings() {
   fprintf(fp, "palette=%d\n", palette_item->value);
   fprintf(fp, "keyboard_type=%d\n", keyboard_type_item->value);
 
-  for (i = 0; i < 16; i++) {
+  for (i = 0; i < MAX_USB_BUTTONS; i++) {
     fprintf(fp, "usb_btn_0=%d\n", usb_0_button_assignments[i]);
   }
-  for (i = 0; i < 16; i++) {
+  for (i = 0; i < MAX_USB_BUTTONS; i++) {
     fprintf(fp, "usb_btn_1=%d\n", usb_1_button_assignments[i]);
   }
   fprintf(fp, "hotkey_cf1=%d\n", hotkey_cf1_item->value);
@@ -695,7 +694,7 @@ static void load_settings() {
       }
       usb_0_button_assignments[usb_btn_0_i] = value;
       usb_btn_0_i++;
-      if (usb_btn_0_i >= 16) {
+      if (usb_btn_0_i >= MAX_USB_BUTTONS) {
         usb_btn_0_i = 0;
       }
     } else if (strcmp(name, "usb_btn_1") == 0) {
@@ -704,7 +703,7 @@ static void load_settings() {
       }
       usb_1_button_assignments[usb_btn_1_i] = value;
       usb_btn_1_i++;
-      if (usb_btn_1_i >= 16) {
+      if (usb_btn_1_i >= MAX_USB_BUTTONS) {
         usb_btn_1_i = 0;
       }
     } else if (strcmp(name, "alt_f12") == 0) {
@@ -1726,7 +1725,7 @@ void build_menu(struct menu_item *root) {
 
   // TODO: This doesn't really belong here. Need to sort
   // out init order of structs.
-  for (dev = 0; dev < 2; dev++) {
+  for (dev = 0; dev < MAX_JOY_PORTS; dev++) {
     memset(&joydevs[dev], 0, sizeof(struct joydev_config));
     joydevs[dev].port = dev + 1;
     joydevs[dev].device = JOYDEV_NONE;
@@ -2088,11 +2087,10 @@ void build_menu(struct menu_item *root) {
   usb_y_thresh_0 = .50;
   usb_x_thresh_1 = .50;
   usb_y_thresh_1 = .50;
-  for (j = 0; j < 16; j++) {
+  for (j = 0; j < MAX_USB_BUTTONS; j++) {
     usb_0_button_assignments[j] = (j == 0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
     usb_1_button_assignments[j] = (j == 0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
-    usb_0_button_bits[j] = 1 << j;
-    usb_1_button_bits[j] = 1 << j;
+    usb_button_bits[j] = 1 << j;
   }
 
   ui_menu_add_button(MENU_CONFIGURE_KEYSET1, parent, "Configure Keyset 1...");

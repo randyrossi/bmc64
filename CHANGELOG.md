@@ -182,3 +182,5 @@
   * Fixed default values for bootstat for each machine
   * Added Menu Back/Run Stop usb button for easier menu nav
   * Handled real keyboard scan into ui
+  * Add custom keysets for joysticks
+  * Add cuttom key bindings for usb buttons

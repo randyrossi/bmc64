@@ -48,7 +48,7 @@ int ui_toggle_pending = 0;
 // One of the quick functions that can be invoked by button assignments
 int pending_emu_quick_func;
 
-extern struct joydev_config joydevs[2];
+extern struct joydev_config joydevs[MAX_JOY_PORTS];
 
 // Stubs for vice callbacks. Unimplemented for now.
 void ui_pause_emulation(int flag) {}

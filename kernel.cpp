@@ -201,44 +201,79 @@ bool CKernel::Initialize(void) {
 }
 
 // KEEP THIS IN SYNC WITH kbd.c
-static void handle_button_function(bool is_ui, int button_func) {
-  // KEEP THIS IN SYNC WITH kbd.c
-  switch (button_func) {
-  case BTN_ASSIGN_MENU:
-    circle_key_pressed(KEYCODE_F12);
-    circle_key_released(KEYCODE_F12);
-    break;
-  case BTN_ASSIGN_WARP:
-  case BTN_ASSIGN_SWAP_PORTS:
-  case BTN_ASSIGN_STATUS_TOGGLE:
-  case BTN_ASSIGN_TAPE_MENU:
-  case BTN_ASSIGN_CART_MENU:
-  case BTN_ASSIGN_CART_FREEZE:
-  case BTN_ASSIGN_RESET_HARD:
-  case BTN_ASSIGN_RESET_SOFT:
-    circle_emu_quick_func_interrupt(button_func);
-    break;
-  case BTN_ASSIGN_FIRE:
-    // Only need to handle ui fire here.
-    if (is_ui) {
-      circle_ui_key_interrupt(KEYCODE_Return, 1);
-      circle_ui_key_interrupt(KEYCODE_Return, 0);
-    }
-    break;
-  case BTN_ASSIGN_RUN_STOP_BACK:
-    if (is_ui) {
-      circle_ui_key_interrupt(KEYCODE_Escape, 1);
-      circle_ui_key_interrupt(KEYCODE_Escape, 0);
-    } else {
-      circle_key_pressed(KEYCODE_Escape);
-      circle_key_released(KEYCODE_Escape);
-    }
-    break;
-  // Don't try to handle dirs here even for ui. We want
-  // repeat to work for those and button func is only
-  // discovered on the down press anyway.
-  default:
-    break;
+static void handle_button_function(bool is_ui, int device, unsigned buttons) {
+  int button_num = 0;
+
+  int button_func;
+  int is_press;
+
+  while (circle_button_function(device, button_num, buttons,
+                                &button_func, &is_press) >= 0) {
+   // KEEP THIS IN SYNC WITH kbd.c
+   switch (button_func) {
+     case BTN_ASSIGN_MENU:
+       if (is_press) {
+          circle_key_pressed(KEYCODE_F12);
+       } else {
+          circle_key_released(KEYCODE_F12);
+       }
+       break;
+     case BTN_ASSIGN_WARP:
+     case BTN_ASSIGN_SWAP_PORTS:
+     case BTN_ASSIGN_STATUS_TOGGLE:
+     case BTN_ASSIGN_TAPE_MENU:
+     case BTN_ASSIGN_CART_MENU:
+     case BTN_ASSIGN_CART_FREEZE:
+     case BTN_ASSIGN_RESET_HARD:
+     case BTN_ASSIGN_RESET_SOFT:
+       if (is_press) {
+          circle_emu_quick_func_interrupt(button_func);
+       }
+       break;
+     case BTN_ASSIGN_FIRE:
+       // Only need to handle ui fire here.
+       if (is_ui) {
+         circle_ui_key_interrupt(KEYCODE_Return, is_press);
+       }
+       break;
+     case BTN_ASSIGN_RUN_STOP_BACK:
+       if (is_ui) {
+         circle_ui_key_interrupt(KEYCODE_Escape, is_press);
+       } else {
+         if (is_press) {
+            circle_key_pressed(KEYCODE_Escape);
+         } else {
+            circle_key_released(KEYCODE_Escape);
+         }
+       }
+       break;
+     // Only do direction button assignments for UI, joy is handled
+     // in circle_add_usb_values seperately.
+     case BTN_ASSIGN_UP:
+       if (is_ui) {
+         circle_ui_key_interrupt(KEYCODE_Up, is_press);
+       }
+       break;
+     case BTN_ASSIGN_DOWN:
+       if (is_ui) {
+         circle_ui_key_interrupt(KEYCODE_Down, is_press);
+       }
+       break;
+     case BTN_ASSIGN_LEFT:
+       if (is_ui) {
+         circle_ui_key_interrupt(KEYCODE_Left, is_press);
+       }
+       break;
+     case BTN_ASSIGN_RIGHT:
+       if (is_ui) {
+         circle_ui_key_interrupt(KEYCODE_Right, is_press);
+       }
+       break;
+     default:
+       break;
+   }
+
+   button_num++;
   }
 }
 
@@ -292,7 +327,6 @@ void CKernel::GamePadStatusHandler(unsigned nDeviceIndex,
       prev_dpad[nDeviceIndex] = dpad;
 
       // If the UI is activated, route to the menu.
-      int button_func = circle_button_function(nDeviceIndex, b);
       if (ui_activated) {
         if (dpad == 0 && old_dpad != 0) {
           circle_ui_key_interrupt(KEYCODE_Up, 1);
@@ -314,11 +348,11 @@ void CKernel::GamePadStatusHandler(unsigned nDeviceIndex,
         } else if (dpad != 2 && old_dpad == 2) {
           circle_ui_key_interrupt(KEYCODE_Right, 0);
         }
-        handle_button_function(true, button_func);
+        handle_button_function(true, nDeviceIndex, b);
         return;
       }
 
-      handle_button_function(false, button_func);
+      handle_button_function(false, nDeviceIndex, b);
 
       int value = 0;
       if (dpad < 8)
@@ -356,7 +390,7 @@ void CKernel::GamePadStatusHandler(unsigned nDeviceIndex,
       prev_axes_dirs[nDeviceIndex][3] = a_right;
       prev_buttons[nDeviceIndex] = b;
       // If the UI is activated, route to the menu.
-      int button_func = circle_button_function(nDeviceIndex, b);
+
       if (ui_activated) {
         if (a_up && !prev_a_up) {
           circle_ui_key_interrupt(KEYCODE_Up, 1);
@@ -378,11 +412,11 @@ void CKernel::GamePadStatusHandler(unsigned nDeviceIndex,
         } else if (!a_right && prev_a_right) {
           circle_ui_key_interrupt(KEYCODE_Right, 0);
         }
-        handle_button_function(true, button_func);
+        handle_button_function(true, nDeviceIndex, b);
         return;
       }
 
-      handle_button_function(false, button_func);
+      handle_button_function(false, nDeviceIndex, b);
 
       int value = 0;
       if (a_left)
