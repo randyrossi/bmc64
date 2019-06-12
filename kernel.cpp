@@ -230,8 +230,21 @@ static void handle_button_function(bool is_ui, int device, unsigned buttons) {
           circle_emu_quick_func_interrupt(button_func);
        }
        break;
+     case BTN_ASSIGN_CUSTOM_KEY_1:
+     case BTN_ASSIGN_CUSTOM_KEY_2:
+     case BTN_ASSIGN_CUSTOM_KEY_3:
+     case BTN_ASSIGN_CUSTOM_KEY_4:
+     case BTN_ASSIGN_CUSTOM_KEY_5:
+     case BTN_ASSIGN_CUSTOM_KEY_6:
+        if (is_press) {
+           circle_key_pressed(circle_key_binding(button_func - BTN_ASSIGN_CUSTOM_KEY_1));
+        } else {
+           circle_key_released(circle_key_binding(button_func - BTN_ASSIGN_CUSTOM_KEY_1));
+        }
+        break;
      case BTN_ASSIGN_FIRE:
-       // Only need to handle ui fire here.
+       // Only need to handle ui fire here. Actual joy fire is
+       // handled in circle_add_usb_values.
        if (is_ui) {
          circle_ui_key_interrupt(KEYCODE_Return, is_press);
        }

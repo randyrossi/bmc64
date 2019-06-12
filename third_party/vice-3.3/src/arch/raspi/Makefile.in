@@ -112,7 +112,8 @@ libarch_a_LIBADD =
 am_libarch_a_OBJECTS = archdep.$(OBJEXT) joy.$(OBJEXT) kbd.$(OBJEXT) \
 	keycodes.$(OBJEXT) mousedrv.$(OBJEXT) missing.$(OBJEXT) \
 	ui.$(OBJEXT) videoarch.$(OBJEXT) menu.$(OBJEXT) \
-	menu_keyset.$(OBJEXT) menu_usb.$(OBJEXT) menu_timing.$(OBJEXT) \
+	menu_keyset.$(OBJEXT) menu_key_binding.$(OBJEXT) \
+	menu_usb.$(OBJEXT) menu_timing.$(OBJEXT) \
 	menu_tape_osd.$(OBJEXT) menu_cart_osd.$(OBJEXT) \
 	menu_confirm_osd.$(OBJEXT) text.$(OBJEXT) demo.$(OBJEXT) \
 	overlay.$(OBJEXT) raspi_util.$(OBJEXT) font.$(OBJEXT)
@@ -489,6 +490,8 @@ libarch_a_SOURCES = \
 	menu.c \
 	menu_keyset.h \
 	menu_keyset.c \
+	menu_key_binding.h \
+	menu_key_binding.c \
 	menu_usb.h \
 	menu_usb.c \
 	menu_timing.h \
@@ -567,6 +570,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_cart_osd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_confirm_osd.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_key_binding.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_keyset.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_tape_osd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_timing.Po@am__quote@

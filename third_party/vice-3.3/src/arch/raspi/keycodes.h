@@ -132,8 +132,12 @@
 #define KEYCODE_LeftAlt 0x74
 #define KEYCODE_RightAlt 0x75
 
-extern int want_raw_keycode;
+// If not 0, will intercept all usb key events and
+// forward to this function.  Used to listen to keys
+// during keyset or key binding assignments.
+typedef void (*raw_keycode_func_t)(long key);
 
+extern raw_keycode_func_t raw_keycode_func;
 char* keycode_to_string(long keycode);
 
 #endif

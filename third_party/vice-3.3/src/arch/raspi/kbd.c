@@ -287,7 +287,8 @@ static void handle_key_combo_function() {
 }
 
 void circle_key_pressed(long key) {
-  if (want_raw_keycode) {
+  if (raw_keycode_func) {
+    // Just consume this.
     return;
   }
 
@@ -327,8 +328,8 @@ void circle_key_pressed(long key) {
 }
 
 void circle_key_released(long key) {
-  if (want_raw_keycode) {
-    keycode_for_keyset(key);
+  if (raw_keycode_func) {
+    raw_keycode_func(key);
     return;
   }
 

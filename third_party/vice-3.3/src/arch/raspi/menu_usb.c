@@ -35,7 +35,9 @@
 #include "joy.h"
 #include "machine.h"
 #include "menu.h"
+#include "menu_key_binding.h"
 #include "ui.h"
+#include "keycodes.h"
 
 extern int usb_pref_0;
 extern int usb_pref_1;
@@ -71,6 +73,8 @@ extern int pot_x_high_value;
 extern int pot_x_low_value;
 extern int pot_y_high_value;
 extern int pot_y_low_value;
+
+struct menu_item *define_bindings_item;
 
 // Set to one when we are listening for raw usb values for config
 int want_raw_usb = 0;
@@ -175,6 +179,9 @@ static void menu_usb_value_changed(struct menu_item *item) {
   case MENU_USB_1_Y_THRESH:
     usb_y_thresh_1 = ((float)item->value) / 100.0f;
     break;
+  case MENU_CONFIGURE_KEY_BINDINGS:
+    build_keybinding_menu(ui_push_menu(-1,-1));
+    break;
   default:
     break;
   }
@@ -205,13 +212,13 @@ static void add_button_choices(struct menu_item *tmp_item) {
   strcpy(tmp_item->choices[BTN_ASSIGN_RESET_SOFT], "Soft Reset");
 
   // More just for USB buttons
-  strcpy(tmp_item->choices[BTN_ASSIGN_RUN_STOP_BACK], "Menu Back/RunStop");
-  strcpy(tmp_item->choices[BTN_ASSIGN_CUSTOM_KEY_1], "Key Binding 1");
-  strcpy(tmp_item->choices[BTN_ASSIGN_CUSTOM_KEY_2], "Key Binding 2");
-  strcpy(tmp_item->choices[BTN_ASSIGN_CUSTOM_KEY_3], "Key Binding 3");
-  strcpy(tmp_item->choices[BTN_ASSIGN_CUSTOM_KEY_4], "Key Binding 4");
-  strcpy(tmp_item->choices[BTN_ASSIGN_CUSTOM_KEY_5], "Key Binding 5");
-  strcpy(tmp_item->choices[BTN_ASSIGN_CUSTOM_KEY_6], "Key Binding 6");
+  strcpy(tmp_item->choices[BTN_ASSIGN_RUN_STOP_BACK], "Menu Back");
+
+  char scratch[32];
+  for (int n = 0; n < 6; n++) {
+     sprintf (scratch, "Key Binding %d (%s)", n+1, keycode_to_string(key_bindings[n]));
+     strcpy(tmp_item->choices[BTN_ASSIGN_CUSTOM_KEY_1 + n], scratch);
+  }
 
   if (machine_class == VICE_MACHINE_VIC20) {
     tmp_item->choice_disabled[BTN_ASSIGN_SWAP_PORTS] = 1;
@@ -312,6 +319,10 @@ void build_usb_menu(int dev, struct menu_item *root) {
   }
 
   ui_menu_add_divider(root);
+  define_bindings_item =
+     ui_menu_add_button(MENU_CONFIGURE_KEY_BINDINGS, root, "Define Key Bindings");
+
+  ui_menu_add_divider(root);
   potx_high_item = ui_menu_add_range(MENU_POTX_HIGH, root, "POT X Up Value", 0,
                                      255, 1, pot_x_high_value);
   potx_low_item = ui_menu_add_range(MENU_POTX_LOW, root, "POT X Down Value", 0,
@@ -325,6 +336,7 @@ void build_usb_menu(int dev, struct menu_item *root) {
   strcpy(usb_pref_item->choices[0], "Analog Stick");
   strcpy(usb_pref_item->choices[1], "First Hat");
 
+  define_bindings_item->on_value_changed = menu_usb_value_changed;
   usb_pref_item->on_value_changed = menu_usb_value_changed;
   x_axis_item->on_value_changed = menu_usb_value_changed;
   y_axis_item->on_value_changed = menu_usb_value_changed;
@@ -353,13 +365,16 @@ void menu_raw_usb(int device, unsigned buttons, const int hats[MAX_USB_HATS],
 // Comapres the previous button state for 'button_num' with
 // the current state and will return a press or release event
 // for that button if the button has a button assignment.
-// if no button assignment is present or if there is no
+// If no button assignment is present or if there is no
 // change to the button state, btn_assignemnt will be set to
 // BTN_ASSIGN_UNDEF.  Otherwise, it will be set to the button
 // assignmnt and is_press will be set to 1 for a down event,
 // 0 for an up event.  Returns -1 when button_num has reached
 // or exceeded the number of buttons known to be available for
 // the given usb gamepad device.  Otherwise, returns 0.
+// Caller should keep calling this method until -1 is returned,
+// otherwise, previous button state will not be correctly
+// recorded.
 int circle_button_function(int device, int button_num, unsigned buttons,
                            int* btn_assignment, int* is_press) {
   if (button_num >= joy_num_buttons[device]) {
@@ -467,4 +482,8 @@ int circle_add_button_values(int dev, unsigned b) {
     }
   }
   return value;
+}
+
+long circle_key_binding(int slot) {
+  return key_bindings[slot];
 }

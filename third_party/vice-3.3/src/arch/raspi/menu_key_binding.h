@@ -1,5 +1,5 @@
 /*
- * menu_keyset.h
+ * menu_key_binding.h
  *
  * Written by
  *  Randy Rossi <randy.rossi@gmail.com>
@@ -26,18 +26,9 @@
 
 #include "ui.h"
 
-#ifndef VICE_MENU_KEYSET_H
-#define VICE_MENU_KEYSET_H
+#ifndef VICE_MENU_KEY_BINDING_H
+#define VICE_MENU_KEY_BINDING_H
 
-// Indices into keyset_codes array in menu.c
-#define KEYSET_UP 0
-#define KEYSET_DOWN 1
-#define KEYSET_LEFT 2
-#define KEYSET_RIGHT 3
-#define KEYSET_FIRE 4
-#define KEYSET_POTX 5
-#define KEYSET_POTY 6
-
-void build_keyset_menu(int num, struct menu_item *parent);
+void build_keybinding_menu(struct menu_item *parent);
 
 #endif

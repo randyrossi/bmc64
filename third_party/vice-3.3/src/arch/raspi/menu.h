@@ -259,6 +259,7 @@ typedef enum {
 
    MENU_CONFIGURE_KEYSET1,
    MENU_CONFIGURE_KEYSET2,
+   MENU_CONFIGURE_KEY_BINDINGS,
 } MenuID;
 
 typedef enum {
@@ -317,6 +318,7 @@ enum {
 
 extern int osd_active;
 extern long keyset_codes[2][7];
+extern long key_bindings[6];
 
 // Called at initialzation
 void build_menu(struct menu_item *root);

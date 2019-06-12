@@ -96,6 +96,7 @@ int usb_0_button_assignments[MAX_USB_BUTTONS];
 int usb_1_button_assignments[MAX_USB_BUTTONS];
 int usb_button_bits[MAX_USB_BUTTONS]; // never change
 long keyset_codes[2][7];
+long key_bindings[6];
 struct menu_item *palette_item;
 struct menu_item *keyboard_type_item;
 struct menu_item *drive_sounds_item;
@@ -580,6 +581,13 @@ static int save_settings() {
   fprintf(fp, "keyset_2_potx=%d\n", keyset_codes[1][KEYSET_POTX]);
   fprintf(fp, "keyset_2_poty=%d\n", keyset_codes[1][KEYSET_POTY]);
 
+  fprintf(fp, "key_binding_1=%d\n", key_bindings[0]);
+  fprintf(fp, "key_binding_2=%d\n", key_bindings[1]);
+  fprintf(fp, "key_binding_3=%d\n", key_bindings[2]);
+  fprintf(fp, "key_binding_4=%d\n", key_bindings[3]);
+  fprintf(fp, "key_binding_5=%d\n", key_bindings[4]);
+  fprintf(fp, "key_binding_6=%d\n", key_bindings[5]);
+
   fclose(fp);
 
   return 0;
@@ -763,6 +771,18 @@ static void load_settings() {
       keyset_codes[1][KEYSET_POTX] = value;
     } else if (strcmp(name, "keyset_2_poty") == 0) {
       keyset_codes[1][KEYSET_POTY] = value;
+    } else if (strcmp(name, "key_binding_1") == 0) {
+      key_bindings[0] = value;
+    } else if (strcmp(name, "key_binding_2") == 0) {
+      key_bindings[1] = value;
+    } else if (strcmp(name, "key_binding_3") == 0) {
+      key_bindings[2] = value;
+    } else if (strcmp(name, "key_binding_4") == 0) {
+      key_bindings[3] = value;
+    } else if (strcmp(name, "key_binding_5") == 0) {
+      key_bindings[4] = value;
+    } else if (strcmp(name, "key_binding_6") == 0) {
+      key_bindings[5] = value;
     }
   }
   fclose(fp);

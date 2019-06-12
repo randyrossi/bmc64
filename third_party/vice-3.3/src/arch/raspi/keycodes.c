@@ -26,6 +26,8 @@
 
 #include "keycodes.h"
 
+raw_keycode_func_t raw_keycode_func = 0;
+
 char* keycode_to_string(long keycode) {
   switch (keycode) {
     case KEYCODE_a:

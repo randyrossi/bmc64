@@ -52,6 +52,9 @@
 
 // Make sure does not exceed max choices in ui.h
 #define NUM_BUTTON_ASSIGNMENTS 24
+
+// NOTE: BTN_ASSIGN_* are used as indices into choice
+// arrays.
 #define BTN_ASSIGN_UNDEF 0
 #define BTN_ASSIGN_FIRE 1
 #define BTN_ASSIGN_MENU 2
@@ -84,7 +87,8 @@
 #define BTN_ASSIGN_CUSTOM_KEY_6 23
 
 // These are intermediate values not meant to
-// be directly assigned to buttons.
+// be directly assigned to buttons. Never used as
+// an index into anything.
 #define BTN_ASSIGN_RESET_HARD2 916
 #define BTN_ASSIGN_RESET_SOFT2 918
 
@@ -211,5 +215,6 @@ extern void circle_emu_quick_func_interrupt(int button_assignment);
 extern void circle_keyboard_set_latch_keyarr(int row, int col, int value);
 extern int circle_use_pcb(void);
 extern int circle_num_joysticks(void);
+extern long circle_key_binding(int slot);
 
 #endif

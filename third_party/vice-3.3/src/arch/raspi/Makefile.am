@@ -52,6 +52,8 @@ libarch_a_SOURCES = \
 	menu.c \
 	menu_keyset.h \
 	menu_keyset.c \
+	menu_key_binding.h \
+	menu_key_binding.c \
 	menu_usb.h \
 	menu_usb.c \
 	menu_timing.h \

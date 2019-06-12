@@ -34,8 +34,6 @@
 #include "menu.h"
 #include "ui.h"
 
-int want_raw_keycode = 0;
-
 static struct menu_item* up;
 static struct menu_item* down;
 static struct menu_item* left;
@@ -58,17 +56,17 @@ typedef enum {
   MENU_KEYSET_DEFINE_POTY,
 } KeysetMenuID;
 
-static void menu_usb_value_changed(struct menu_item *item) {
-  want_raw_keycode = 1;
-  item_waiting_for_key = item;
-  sprintf(item->displayed_value, "(waiting)");
-}
-
-void keycode_for_keyset(long keycode) {
+static void keycode_for_keyset(long keycode) {
   char* keyname = keycode_to_string(keycode);
   sprintf(item_waiting_for_key->displayed_value, "%s", keyname);
   keyset_codes[keyset_num][item_waiting_for_key->value] = keycode;
-  want_raw_keycode = 0;
+  raw_keycode_func = NULL;
+}
+
+static void menu_usb_value_changed(struct menu_item *item) {
+  raw_keycode_func = keycode_for_keyset;
+  item_waiting_for_key = item;
+  sprintf(item->displayed_value, "(waiting)");
 }
 
 void build_keyset_menu(int num, struct menu_item *root) {
