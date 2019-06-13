@@ -178,7 +178,12 @@ static const char default_dir_names[NUM_DIR_TYPES][16] = {
 
 // Keep track of current directory for each type of file.
 static char current_dir_names[NUM_DIR_TYPES][256];
-static char dir_scratch[256];
+
+// Temp storage for full path name concatenations.
+static char full_path_str[256];
+
+// Keep track of last known position in the file list.
+static int current_dir_pos[NUM_DIR_TYPES];
 
 TEST_FILTER_MACRO(test_disk_name, num_disk_ext, disk_filt_ext);
 TEST_FILTER_MACRO(test_tape_name, num_tape_ext, tape_filt_ext);
@@ -197,6 +202,7 @@ static void list_files(struct menu_item *parent,
   char *currentDir = current_dir_names[dir_type];
   dp = opendir(currentDir);
   if (dp == NULL) {
+    char dir_scratch[256];
     strcpy(dir_scratch, "(");
     strcat(dir_scratch, currentDir);
     strcat(dir_scratch, " Not Found - Using /)");
@@ -231,7 +237,6 @@ static void list_files(struct menu_item *parent,
   files_root.is_expanded = 1;
   files_root.name[0] = '\0';
 
-  // TODO : Prefetch and order dirs at top
   if (dp != NULL) {
     while (ep = readdir(dp)) {
       if (ep->d_type & DT_DIR) {
@@ -283,9 +288,22 @@ static void list_files(struct menu_item *parent,
   assert(files_root.first_child == NULL);
 }
 
-static void show_files(DirType dir_type, FileFilter filter, int menu_id) {
+static void files_cursor_listener(struct menu_item* parent,
+                                  int new_pos) {
+  // dir type is in value field
+  current_dir_pos[parent->value] = new_pos;
+}
+
+static void show_files(DirType dir_type, FileFilter filter, int menu_id,
+                       int reset_cur_pos) {
   // Show files
   struct menu_item *file_root = ui_push_menu(-1, -1);
+
+  // Keep the type of files this list is for in value field.
+  file_root->value = dir_type;
+
+  file_root->cursor_listener_func = files_cursor_listener;
+
   if (menu_id == MENU_SAVE_SNAP_FILE ||
       (menu_id >= MENU_CREATE_D64_FILE && menu_id <= MENU_CREATE_X64_FILE)) {
     struct menu_item *file_name_item = ui_menu_add_text_field(
@@ -293,6 +311,13 @@ static void show_files(DirType dir_type, FileFilter filter, int menu_id) {
     file_name_item->sub_id = MENU_SUB_PICK_FILE;
   }
   list_files(file_root, dir_type, filter, menu_id);
+
+  if (reset_cur_pos) {
+     current_dir_pos[dir_type] = 0;
+  } else {
+     // Position cursor to last known location for this dir type.
+     ui_set_cur_pos(current_dir_pos[dir_type]);
+  }
 }
 
 static void show_about() {
@@ -808,10 +833,10 @@ void menu_swap_joysticks() {
 }
 
 static char *fullpath(DirType dir_type, char *name) {
-  strcpy(dir_scratch, current_dir_names[dir_type]);
-  strcat(dir_scratch, "/");
-  strcat(dir_scratch, name);
-  return dir_scratch;
+  strcpy(full_path_str, current_dir_names[dir_type]);
+  strcat(full_path_str, "/");
+  strcat(full_path_str, name);
+  return full_path_str;
 }
 
 static void attach_cart(struct menu_item *item, int cart_type) {
@@ -1146,13 +1171,13 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
 
 // Utility function to re-list same type of files given
 // a file item.
-static void relist_files(struct menu_item *item) {
+static void relist_files_after_dir_change(struct menu_item *item) {
   switch (item->id) {
   case MENU_LOAD_SNAP_FILE:
-    show_files(DIR_SNAPS, FILTER_SNAP, item->id);
+    show_files(DIR_SNAPS, FILTER_SNAP, item->id, 1);
     break;
   case MENU_SAVE_SNAP_FILE:
-    show_files(DIR_SNAPS, FILTER_SNAP, item->id);
+    show_files(DIR_SNAPS, FILTER_SNAP, item->id, 1);
     break;
   case MENU_DISK_FILE:
   case MENU_CREATE_D64_FILE:
@@ -1167,13 +1192,13 @@ static void relist_files(struct menu_item *item) {
   case MENU_CREATE_G64_FILE:
   case MENU_CREATE_P64_FILE:
   case MENU_CREATE_X64_FILE:
-    show_files(DIR_DISKS, FILTER_DISK, item->id);
+    show_files(DIR_DISKS, FILTER_DISK, item->id, 1);
     break;
   case MENU_TAPE_FILE:
-    show_files(DIR_TAPES, FILTER_TAPE, item->id);
+    show_files(DIR_TAPES, FILTER_TAPE, item->id, 1);
     break;
   case MENU_C64_CART_FILE:
-    show_files(DIR_CARTS, FILTER_CART, item->id);
+    show_files(DIR_CARTS, FILTER_CART, item->id, 1);
     break;
   case MENU_C64_CART_8K_FILE:
   case MENU_C64_CART_16K_FILE:
@@ -1190,15 +1215,15 @@ static void relist_files(struct menu_item *item) {
   case MENU_VIC20_CART_FP_FILE:
   case MENU_VIC20_CART_MEGACART_FILE:
   case MENU_VIC20_CART_FINAL_EXPANSION_FILE:
-    show_files(DIR_CARTS, FILTER_NONE, item->id);
+    show_files(DIR_CARTS, FILTER_NONE, item->id, 1);
     break;
   case MENU_KERNAL_FILE:
   case MENU_BASIC_FILE:
   case MENU_CHARGEN_FILE:
-    show_files(DIR_ROMS, FILTER_NONE, item->id);
+    show_files(DIR_ROMS, FILTER_NONE, item->id, 1);
     break;
   case MENU_AUTOSTART_FILE:
-    show_files(DIR_ROOT, FILTER_NONE, item->id);
+    show_files(DIR_ROOT, FILTER_NONE, item->id, 1);
     break;
   default:
     break;
@@ -1219,7 +1244,7 @@ static void up_dir(struct menu_item *item) {
     strcpy(current_dir_names[dir_index], "/");
   }
   ui_pop_menu();
-  relist_files(item);
+  relist_files_after_dir_change(item);
 }
 
 static void enter_dir(struct menu_item *item) {
@@ -1233,7 +1258,7 @@ static void enter_dir(struct menu_item *item) {
   }
   strcat(current_dir_names[dir_index], item->str_value);
   ui_pop_menu();
-  relist_files(item);
+  relist_files_after_dir_change(item);
 }
 
 static void toggle_warp(int value) {
@@ -1280,50 +1305,49 @@ static void menu_value_changed(struct menu_item *item) {
     video_canvas_change_palette(item->value);
     return;
   case MENU_AUTOSTART:
-    show_files(DIR_ROOT, FILTER_NONE, MENU_AUTOSTART_FILE);
+    show_files(DIR_ROOT, FILTER_NONE, MENU_AUTOSTART_FILE, 0);
     return;
   case MENU_SAVE_SNAP:
-    show_files(DIR_SNAPS, FILTER_SNAP, MENU_SAVE_SNAP_FILE);
+    show_files(DIR_SNAPS, FILTER_SNAP, MENU_SAVE_SNAP_FILE, 0);
     return;
   case MENU_LOAD_SNAP:
-    show_files(DIR_SNAPS, FILTER_SNAP, MENU_LOAD_SNAP_FILE);
+    show_files(DIR_SNAPS, FILTER_SNAP, MENU_LOAD_SNAP_FILE, 0);
     return;
-
   case MENU_CREATE_D64:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D64_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D64_FILE, 0);
     return;
   case MENU_CREATE_D67:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D67_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D67_FILE, 0);
     return;
   case MENU_CREATE_D71:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D71_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D71_FILE, 0);
     return;
   case MENU_CREATE_D80:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D80_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D80_FILE, 0);
     return;
   case MENU_CREATE_D81:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D81_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D81_FILE, 0);
     return;
   case MENU_CREATE_D82:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D82_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D82_FILE, 0);
     return;
   case MENU_CREATE_D1M:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D1M_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D1M_FILE, 0);
     return;
   case MENU_CREATE_D2M:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D2M_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D2M_FILE, 0);
     return;
   case MENU_CREATE_D4M:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D4M_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D4M_FILE, 0);
     return;
   case MENU_CREATE_G64:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_G64_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_G64_FILE, 0);
     return;
   case MENU_CREATE_P64:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_P64_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_P64_FILE, 0);
     return;
   case MENU_CREATE_X64:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_X64_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_X64_FILE, 0);
     return;
 
   case MENU_IECDEVICE_8:
@@ -1336,85 +1360,85 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_ATTACH_DISK_9:
   case MENU_ATTACH_DISK_10:
   case MENU_ATTACH_DISK_11:
-    show_files(DIR_DISKS, FILTER_DISK, MENU_DISK_FILE);
+    show_files(DIR_DISKS, FILTER_DISK, MENU_DISK_FILE, 0);
     return;
   case MENU_ATTACH_TAPE:
-    show_files(DIR_TAPES, FILTER_TAPE, MENU_TAPE_FILE);
+    show_files(DIR_TAPES, FILTER_TAPE, MENU_TAPE_FILE, 0);
     return;
   case MENU_C64_ATTACH_CART:
-    show_files(DIR_CARTS, FILTER_CART, MENU_C64_CART_FILE);
+    show_files(DIR_CARTS, FILTER_CART, MENU_C64_CART_FILE, 0);
     return;
   case MENU_C64_ATTACH_CART_8K:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_8K_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_8K_FILE, 0);
     return;
   case MENU_C64_ATTACH_CART_16K:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_16K_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_16K_FILE, 0);
     return;
   case MENU_C64_ATTACH_CART_ULTIMAX:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_ULTIMAX_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_ULTIMAX_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_DETECT:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_DETECT_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_DETECT_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_GENERIC:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_GENERIC_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_GENERIC_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_16K_2000:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_16K_2000_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_16K_2000_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_16K_4000:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_16K_4000_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_16K_4000_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_16K_6000:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_16K_6000_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_16K_6000_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_8K_A000:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_8K_A000_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_8K_A000_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_4K_B000:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_4K_B000_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_4K_B000_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_BEHRBONZ:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_BEHRBONZ_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_BEHRBONZ_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_UM:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_UM_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_UM_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_FP:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_FP_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_FP_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_MEGACART:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_MEGACART_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_MEGACART_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_FINAL_EXPANSION:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_FINAL_EXPANSION_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_FINAL_EXPANSION_FILE, 0);
     return;
   case MENU_LOAD_KERNAL:
-    show_files(DIR_ROMS, FILTER_NONE, MENU_KERNAL_FILE);
+    show_files(DIR_ROMS, FILTER_NONE, MENU_KERNAL_FILE, 0);
     return;
   case MENU_LOAD_BASIC:
-    show_files(DIR_ROMS, FILTER_NONE, MENU_BASIC_FILE);
+    show_files(DIR_ROMS, FILTER_NONE, MENU_BASIC_FILE, 0);
     return;
   case MENU_LOAD_CHARGEN:
-    show_files(DIR_ROMS, FILTER_NONE, MENU_CHARGEN_FILE);
+    show_files(DIR_ROMS, FILTER_NONE, MENU_CHARGEN_FILE, 0);
     return;
   case MENU_C128_LOAD_KERNAL:
-    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_KERNAL_FILE);
+    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_KERNAL_FILE, 0);
     return;
   case MENU_C128_LOAD_BASIC_HI:
-    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_BASIC_HI_FILE);
+    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_BASIC_HI_FILE, 0);
     return;
   case MENU_C128_LOAD_BASIC_LO:
-    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_BASIC_LO_FILE);
+    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_BASIC_LO_FILE, 0);
     return;
   case MENU_C128_LOAD_CHARGEN:
-    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_CHARGEN_FILE);
+    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_CHARGEN_FILE, 0);
     return;
   case MENU_C128_LOAD_64_KERNAL:
-    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_64_KERNAL_FILE);
+    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_64_KERNAL_FILE, 0);
     return;
   case MENU_C128_LOAD_64_BASIC:
-    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_64_BASIC_FILE);
+    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_64_BASIC_FILE, 0);
     return;
   case MENU_MAKE_CART_DEFAULT:
     cartridge_set_default();

@@ -184,3 +184,4 @@
   * Handled real keyboard scan into ui
   * Add custom keysets for joysticks
   * Add cuttom key bindings for usb buttons
+  * Remember last cursor position in file lists

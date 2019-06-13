@@ -110,6 +110,8 @@ struct menu_item {
   int menu_height;
   int menu_left;
   int menu_top;
+
+  void (*cursor_listener_func)(struct menu_item* parent, int);
 };
 
 struct menu_item *ui_menu_add_toggle(int id, struct menu_item *folder,
@@ -175,6 +177,7 @@ void ui_page_up(void);
 void ui_to_top(void);
 void ui_to_bottom(void);
 void ui_find_first(char letter);
+void ui_set_cur_pos(int pos);
 
 volatile int ui_activated;
 

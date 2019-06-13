@@ -424,13 +424,23 @@ void ui_pop_all_and_toggle() {
   ui_toggle();
 }
 
+static void cursor_pos_updated() {
+  // Tell listener
+  if (menu_roots[current_menu].cursor_listener_func) {
+     menu_roots[current_menu].cursor_listener_func(&menu_roots[current_menu],
+                                                   menu_cursor[current_menu]);
+  }
+}
+
 static void ui_action(long action) {
   struct menu_item *cur = menu_cursor_item[current_menu];
   switch (action) {
   case ACTION_Up:
     menu_cursor[current_menu]--;
+    cursor_pos_updated();
     if (menu_cursor[current_menu] < 0) {
       menu_cursor[current_menu] = 0;
+      cursor_pos_updated();
     }
     if (menu_cursor[current_menu] <= (menu_window_top[current_menu] - 1)) {
       menu_window_top[current_menu]--;
@@ -439,8 +449,10 @@ static void ui_action(long action) {
     break;
   case ACTION_Down:
     menu_cursor[current_menu]++;
+    cursor_pos_updated();
     if (menu_cursor[current_menu] >= max_index[current_menu]) {
       menu_cursor[current_menu] = max_index[current_menu] - 1;
+      cursor_pos_updated();
     }
     if (menu_cursor[current_menu] >= menu_window_bottom[current_menu]) {
       menu_window_top[current_menu]++;
@@ -854,6 +866,7 @@ void ui_render_now(void) {
 
   if (menu_cursor[current_menu] >= max_index[current_menu]) {
     menu_cursor[current_menu] = max_index[current_menu] - 1;
+    cursor_pos_updated();
   }
 }
 
@@ -897,6 +910,7 @@ static void ui_traverse(void) {
 
   if (menu_cursor[current_menu] >= max_index[current_menu]) {
     menu_cursor[current_menu] = max_index[current_menu] - 1;
+    cursor_pos_updated();
   }
 }
 
@@ -1056,5 +1070,18 @@ void ui_find_first(char letter) {
     // Did this match our criteria? Bail.
     char *name = menu_cursor_item[current_menu]->name;
     if (name[0] != '\0' && tolower(name[0]) == letter) break;
+  }
+}
+
+// Meant to be called immediately after a menu push to position
+// the cursor to a known location. Also useful after a call to
+// ui_to_top() to do the same.
+void ui_set_cur_pos(int pos) {
+  while(menu_cursor[current_menu] < pos && 
+        menu_cursor[current_menu] < max_index[current_menu] - 1) {
+    ui_action(ACTION_Down);
+
+    // We need to recompute max_index and the cursor after each move.
+    ui_traverse();
   }
 }
