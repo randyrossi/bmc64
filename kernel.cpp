@@ -237,9 +237,11 @@ static void handle_button_function(bool is_ui, int device, unsigned buttons) {
      case BTN_ASSIGN_CUSTOM_KEY_5:
      case BTN_ASSIGN_CUSTOM_KEY_6:
         if (is_press) {
-           circle_key_pressed(circle_key_binding(button_func - BTN_ASSIGN_CUSTOM_KEY_1));
+           circle_key_pressed(
+               circle_key_binding(button_func - BTN_ASSIGN_CUSTOM_KEY_1));
         } else {
-           circle_key_released(circle_key_binding(button_func - BTN_ASSIGN_CUSTOM_KEY_1));
+           circle_key_released(
+               circle_key_binding(button_func - BTN_ASSIGN_CUSTOM_KEY_1));
         }
         break;
      case BTN_ASSIGN_FIRE:
