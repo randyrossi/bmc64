@@ -216,7 +216,7 @@ static void add_button_choices(struct menu_item *tmp_item) {
 
   char scratch[32];
   for (int n = 0; n < 6; n++) {
-     sprintf (scratch, "Key Binding %d (%s)", n+1, keycode_to_string(key_bindings[n]));
+     sprintf (scratch, "Key %d (%s)", n+1, keycode_to_string(key_bindings[n]));
      strcpy(tmp_item->choices[BTN_ASSIGN_CUSTOM_KEY_1 + n], scratch);
   }
 
@@ -387,23 +387,21 @@ int circle_button_function(int device, int button_num, unsigned buttons,
   if ((prev_buttons & usb_button_bits[button_num]) &&
       !(buttons & usb_button_bits[button_num])) {
     // Was down, now up.
+    *is_press = 0;
     if (device == 0) {
        *btn_assignment = usb_0_button_assignments[button_num];
-       *is_press = 0;
     } else {
        *btn_assignment = usb_1_button_assignments[button_num];
-       *is_press = 0;
     }
     return 0;
   } else if (!(prev_buttons & usb_button_bits[button_num]) &&
               (buttons & usb_button_bits[button_num])) {
     // Was up, now down.
+    *is_press = 1;
     if (device == 0) {
        *btn_assignment = usb_0_button_assignments[button_num];
-       *is_press = 1;
     } else {
        *btn_assignment = usb_1_button_assignments[button_num];
-       *is_press = 1;
     }
     return 0;
   }
