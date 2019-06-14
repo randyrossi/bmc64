@@ -63,6 +63,9 @@ struct menu_item *raw_buttons_item;
 struct menu_item *raw_hats_item[MAX_USB_HATS];
 struct menu_item *raw_axes_item[MAX_USB_AXES];
 
+struct menu_item *usb_0_btn_assign_item;
+struct menu_item *usb_1_btn_assign_item;
+
 // For pot x y as buttons
 struct menu_item *potx_high_item;
 struct menu_item *potx_low_item;
@@ -103,7 +106,7 @@ static void show_usb_monitor(int device) {
 
   struct menu_item *root = ui_push_menu(-1, -1);
   // We need to get notified of pop to turn off monitoring
-  root->on_value_changed = raw_popped;
+  root->on_popped_off = raw_popped;
 
   raw_buttons_item =
       ui_menu_add_button_with_value(MENU_TEXT, root, "Button #", 0, "", "");
@@ -123,7 +126,20 @@ static void show_usb_monitor(int device) {
   }
 }
 
+// Called after key bindings menu was popped. Need to update the choice descriptions
+// in the menu items so it reflects potential changes.
+static void update_key_binding_descriptions(struct menu_item *root) {
+  char scratch[32];
+  for (int n = 0; n < 6; n++) {
+     sprintf (scratch, "Key %d (%s)", n+1, keycode_to_string(key_bindings[n]));
+     strcpy(usb_0_btn_assign_item->choices[BTN_ASSIGN_CUSTOM_KEY_1 + n], scratch);
+     strcpy(usb_1_btn_assign_item->choices[BTN_ASSIGN_CUSTOM_KEY_1 + n], scratch);
+  }
+}
+
 static void menu_usb_value_changed(struct menu_item *item) {
+  struct menu_item* tmp_item;
+
   switch (item->id) {
   case MENU_USB_0_PREF:
     usb_pref_0 = item->value;
@@ -180,7 +196,9 @@ static void menu_usb_value_changed(struct menu_item *item) {
     usb_y_thresh_1 = ((float)item->value) / 100.0f;
     break;
   case MENU_CONFIGURE_KEY_BINDINGS:
-    build_keybinding_menu(ui_push_menu(-1,-1));
+    tmp_item = ui_push_menu(-1,-1);
+    build_keybinding_menu(tmp_item);
+    tmp_item->on_popped_off = update_key_binding_descriptions;
     break;
   default:
     break;
@@ -270,7 +288,7 @@ void build_usb_menu(int dev, struct menu_item *root) {
 
     for (i = 0; i < joy_num_buttons[0]; i++) {
       sprintf(scratch, "Button %d Function", i);
-      tmp_item =
+      tmp_item = usb_0_btn_assign_item =
           ui_menu_add_multiple_choice(MENU_USB_0_BTN_ASSIGN, root, scratch);
       add_button_choices(tmp_item);
       tmp_item->value = usb_0_button_assignments[i];
@@ -308,7 +326,7 @@ void build_usb_menu(int dev, struct menu_item *root) {
 
     for (i = 0; i < joy_num_buttons[1]; i++) {
       sprintf(scratch, "Button %d Function", i);
-      tmp_item =
+      tmp_item = usb_1_btn_assign_item =
           ui_menu_add_multiple_choice(MENU_USB_1_BTN_ASSIGN, root, scratch);
       tmp_item->num_choices = NUM_BUTTON_ASSIGNMENTS;
       add_button_choices(tmp_item);

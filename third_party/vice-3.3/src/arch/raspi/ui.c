@@ -78,7 +78,7 @@ int pending_ui_key_tail = 0;
 volatile long pending_ui_key[16];
 volatile int pending_ui_key_pressed[16];
 
-// Callback for events that happen on menu items
+// Global callback for events that happen on menu items
 void (*on_value_changed)(struct menu_item *) = NULL;
 
 // Key presses turn into these. Some actions are repeatable and
@@ -937,9 +937,14 @@ struct menu_item *ui_pop_menu(void) {
   ui_clear_menu(current_menu);
   current_menu--;
 
-  if (menu_to_pop->on_value_changed) {
+  if (menu_to_pop->on_popped_off) {
     // Notify pop happened
-    menu_to_pop->on_value_changed(menu_to_pop);
+    menu_to_pop->on_popped_off(menu_to_pop);
+  }
+
+  if (menu_roots[current_menu].on_popped_to) {
+    // Notify pop happened
+    menu_to_pop->on_popped_to(&menu_roots[current_menu]);
   }
 
   if (current_menu < 0) {
@@ -965,6 +970,8 @@ struct menu_item *ui_push_menu(int w_chars, int h_chars) {
 
   // Client must set callback on each push so clear here.
   menu_roots[current_menu].on_value_changed = NULL;
+  menu_roots[current_menu].on_popped_off = NULL;
+  menu_roots[current_menu].on_popped_to = NULL;
 
   // Set dimensions
   int menu_width = w_chars * 8;
@@ -1084,4 +1091,21 @@ void ui_set_cur_pos(int pos) {
     // We need to recompute max_index and the cursor after each move.
     ui_traverse();
   }
+}
+
+struct menu_item* ui_find_item_by_id(struct menu_item *node, int id) {
+  if (node == NULL) {
+    return NULL;
+  }
+
+  while (node != NULL) {
+    if (node->id == id) return node;
+    if (node->type == FOLDER) {
+       struct menu_item *found = ui_find_item_by_id(node->first_child, id);
+       if (found) return found;
+    }
+    node = node->next;
+  }
+
+  return NULL;
 }

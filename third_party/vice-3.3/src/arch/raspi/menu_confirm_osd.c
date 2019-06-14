@@ -61,7 +61,7 @@ void show_confirm_osd_menu(int func) {
     return;
   }
   struct menu_item *root = ui_push_menu(8, 2);
-  root->on_value_changed = popped;
+  root->on_popped_off = popped;
 
   struct menu_item *child;
   child = ui_menu_add_button(MENU_CONFIRM_OK, root, "OK");

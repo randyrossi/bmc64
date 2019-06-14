@@ -114,7 +114,7 @@ static void calc_popped(struct menu_item *item) {
 // Begin running the test
 static void run_calc() {
   struct menu_item *root = ui_push_menu(30, 1);
-  root->on_value_changed = calc_popped;
+  root->on_popped_off = calc_popped;
   g_countdown_item = ui_menu_add_button(MENU_TEXT, root, "Seconds remaining:");
   hdmi_timing_active = 1;
   hdmi_timing_start = circle_get_ticks();

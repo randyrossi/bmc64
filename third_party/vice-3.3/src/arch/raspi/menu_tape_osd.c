@@ -82,7 +82,7 @@ void show_tape_osd_menu(void) {
     return;
   }
   struct menu_item *root = ui_push_menu(7, 7);
-  root->on_value_changed = popped;
+  root->on_popped_off = popped;
 
   struct menu_item *child;
   child = ui_menu_add_button(MENU_TAPE_START, root, "PLAY");
