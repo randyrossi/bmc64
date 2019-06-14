@@ -52,20 +52,7 @@ You are free to experiment with different modes. It may be advantageous to set t
 
 If you plan to use a custom HDMI mode, you will have to alter the machine's 'cycles_per_second' value to match the actual fps that mode outputs.  Custom HDMI modes may not be exactly 50 hz or 60 hz and that can cause audio sync issues if you use the default value.  A tool to calculate this number is provided under the 'Video' menu.  The test will take 10 minutes and will let you know what values you should add to cmdline.txt for machine_timing and cycles_per_second.  You only need to run the test once for that mode.
 
-Example 1: Custom 768x544 50.125 hz PAL Mode
-
-    This mode will match the timing of the original machine (for the purists) but may not be compatible with all monitors
-
-    disable_overscan=1
-    hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
-    hdmi_group=2
-    hdmi_mode=87
-
-The test tool will tell you the actual frame rate for this mode is 50.125. You would then add the suggested cmdline.txt parameters:
-
-    machine_timing=pal-custom cycles_per_second=985257
-
-Example 2: Custom 1360x768 50Hz HDMI Mode
+Example: Custom 1360x768 50Hz HDMI Mode
 
     disable_overscan=1
     hdmi_cvt=1360 768 50 3 0 0 0
@@ -189,6 +176,27 @@ There is a configuration sub-menu that will help you configure your usb gamepads
 
 You can hold down keys or gamepad/joystick directions and the navigation action will auto-repeat.  This accelerates the longer you hold in the same direction.  The Home, PageUp, PageDown, and End keys are supported in the menu as well.  The equivalent C64 keys are F1, F3, F5 and F7 respectively.  Also, pressing a letter will find the first menu item that has text starting with that letter for quick navigation of large lists.
 
+# Joyport Configuration
+
+Joyports (2 for C64/C128, 1 for VIC20) can be configured to use the following devices:
+
+Device | Description 
+-------|------------
+None | No device active for the port
+USB Gamepad 1 | First USB gamepad detected
+USB Gamepad 2 | Second USB gamepad detected
+GPIO Bank 1 | GPIO Pins as described previously
+GPIO Bank 2 | GPIO Pins as described previously
+1351 Mouse | First USB mouse detected
+Keyrah Keys 1 | Numeric keypad keys 64825 compatible with Keyrah
+Keyrah Keys 2 | Numeric keypad keys 17930 compatible with Keyrah
+Cursor + Space | Cursor keys for directions, space for fire
+Cursor + LCtrl | Cursor keys for directions, left control for fire
+Custom Keyset 1 | Custom keyset 1
+Custom Ketset 2 | Custom keyset 1
+
+You can define custom keysets in the menu under the Joyport sub-menu.
+
 # USB Button / Hotkey Function Mapping
 
 You can assign functions to USB buttons or HotKey Combinations. HotKey combinations are LeftControl + F1,3,5,7. Not all functions are available as HotKey assignemnts.  The functions available are:
@@ -200,8 +208,8 @@ Down | Equivalent to Joystick Down | USB
 Left | Equivalent to Joystick Left | USB
 Right | Equivalent to Joystick Right | USB
 Fire | Equivalent to Joystick Fire Button | USB
-POT X | Equivalent to Joystick 2nd Button (For some games) | USB
-POT Y | Equivalent to Joystick 3rd Button (For some games) | USB
+POT X | Equivalent to Joystick 2nd Button (for some games) | USB
+POT Y | Equivalent to Joystick 3rd Button (for some games) | USB
 Menu | Enter/Exit Menu | USB+HotKey
 Menu Back | Navigate to previous menu | USB+HotKey
 Warp | Toggle warp mode | USB+HotKey
@@ -273,7 +281,20 @@ A: Most video options are fixed right now to make sure video is rendered properl
 
 Q: Hey, isn't the real thing running at 50.125Hz?
 
-A: Yes, the original machine ran at 50.125Hz for PAL and 59.826Hz for NTSC. So, yeah, you'll be about 0.25% off in terms of timing.
+A: Yes, the original machine ran at 50.125Hz for PAL and 59.826Hz for NTSC. So, yeah, you'll be about 0.25% off in terms of timing.  If you really want 50.125Hz, you can try this custom HDMI mode (only applies to HDMI):
+
+Custom 768x544 50.125 hz PAL Mode
+
+    This mode will match the timing of the original machine (for the purists) but may not be compatible with all monitors:
+
+    disable_overscan=1
+    hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
+    hdmi_group=2
+    hdmi_mode=87
+
+The test tool will tell you the actual frame rate for this mode is 50.125. You would then add the suggested cmdline.txt parameters:
+
+    machine_timing=pal-custom cycles_per_second=985257
 
 Q: Audio is not coming out of HDMI/Analog jack when I expect it to. Why?
 
