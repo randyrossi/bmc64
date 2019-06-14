@@ -199,7 +199,7 @@ You can define custom keysets in the menu under the Joyport sub-menu.
 
 # USB Button / Hotkey Function Mapping
 
-You can assign functions to USB buttons or HotKey Combinations. HotKey combinations are LeftControl + F1,3,5,7. Not all functions are available as HotKey assignemnts.  The functions available are:
+You can assign functions to USB buttons or HotKey Combinations. HotKey combinations are LeftControl + F1,3,5,7. Not all functions are available as HotKey assignments.  The functions available are:
 
 Function | Description | Availability
 ---------|-------------|-------------
@@ -265,13 +265,14 @@ A: Yes, you must edit BOTH config.txt and cmdline.txt.
 
 Q: Why does the video look soft/stretched/dark?
 
-A: I currently don't have much control over how the emulated display is scaled. I'm relying on the Pi to scale a small canvas up to whatever resolution your hdmi mode is set to and I've noticed it looks 'soft' sometimes.  Also, some monitors seem to stretch the canvas to full width rather than keep the aspect ratio.  You can change the hdmi mode and frame buffer aspect ratio in config.txt to suit your needs. Just keep in mind that NTSC machine timing must have a 60hz mode and PAL machine timing must have a 50hz mode.  This isn't something you normally care about in an emulator but because the machine is actually timed to the vertical blank signal of the video device, it matters.  I also recommend changing the mode to match your monitor/TV's native resolution.  That should avoid any unnecessary extra processing your monitor/TV might do which can add lag.  Also, place your Monitor/TV into 'Game' mode if possible.
+A: By default, the scaling_kernel option softens the scaled image.  You can change this (see above).  Also, some monitors seem to stretch the canvas to full width rather than keep the aspect ratio.  You can change the hdmi mode and frame buffer aspect ratio in config.txt to suit your needs. Just keep in mind that NTSC machine timing must have a 60hz mode and PAL machine timing must have a 50hz mode.  This isn't something you normally care about in an emulator but because the machine is actually timed to the vertical blank signal of the video device, it matters.  I also recommend changing the mode to match your monitor/TV's native resolution.  That should avoid any unnecessary extra processing your monitor/TV might do which can add lag.  Also, place your Monitor/TV into 'Game' mode if possible.
 
 Things you can fiddle with for video:
 
    hdmi_mode in config.txt
    framebuffer_aspect in config.txt (i.e. framebuffer_aspect=0x00070009 for 7:9)
-   canvas_width canvas_height in cmdline.txt
+   scaling_kernel (google for available algorithms)
+   vicii_canvas_width vicii_canvas_height in cmdline.txt (vic_ prefix for vic20)
 
 The default settings work fine for composite out.
 
