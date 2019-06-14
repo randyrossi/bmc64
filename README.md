@@ -1,6 +1,6 @@
 # BMC64
 
-BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio.  Two other Commodore builds are available as well; C128 and Vic20.
+BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio. Two other Commodore builds are available as well; C128 and Vic20.
 
 # BMC64 Features
   * Quick boot time (4.1 seconds!)
@@ -36,7 +36,7 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
 
 # Video + Timing C64/C128
 
-The machine is timed by the video mode you select. The default config provided defaults to 720p PAL 50hz on HDMI.  This is a 'safe' mode that should work on all monitors.
+The machine is timed by the video mode you select. The default config provided defaults to 720p PAL 50hz on HDMI.  This is a 'safe' mode that should work on all monitors.  For HDMI, you should choose either a 50hz or 60hz mode.
 
 If you want to use composite out, you MUST change the machine_timing parameter in cmdline.txt to 'pal-composite'.  Otherwise, you will have audio synchronization issues.  You can change the machine to be NTSC if you want (see below).
 
@@ -54,7 +54,7 @@ If you plan to use a custom HDMI mode, you will have to alter the machine's 'cyc
 
 Example 1: Custom 768x544 50.125 hz PAL Mode
 
-    This mode will match the timing of the original machine (for the purists).
+    This mode will match the timing of the original machine (for the purists) but may not be compatible with all monitors
 
     disable_overscan=1
     hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
@@ -78,9 +78,7 @@ The test tool will tell you the actual frame rate for this mode is 49.89. You wo
 
 # Video + Timing VIC20
 
-All of the above re: timing applies to BMVIC20 as well.  However, in my opinion, this machine is better configured to be an NTSC
-machine.  Most cartridges were made for NTSC and you will notice they position their screens poorly when inserted into a PAL
-machine.  Most games gave the option of moving it using cursor keys or joystick but this is annoying.
+All of the above re: timing applies to BMVIC20 as well.  However, in my opinion, this machine is better configured to be an NTSC machine.  Most cartridges were made for NTSC and you will notice they position their screens poorly when inserted into a PAL machine.  Most games gave the option of moving it using cursor keys or joystick but this is annoying.
 
 # Canvas Dimensions
 
@@ -91,8 +89,8 @@ Here are some sample canvas dimensions configs:
 
 Machine       | cmdline.txt | extra config.txt
 --------------|-------------|-------------------------------
-C64/C128 HDMI | vicii_canvas_width=384, vicii_canvas_height=272 | (none)
-C64/C128 Composite | vicii_canvas_width=384, vicii_canvas_height=272 | (none)
+C64/C128 HDMI | vicii_canvas_width=384, vicii_canvas_height=288 | (none)
+C64/C128 Composite | vicii_canvas_width=384, vicii_canvas_height=288 | (none)
 VIC20 HDMI | vic_canvas_width=392, vic_canvas_height=288 | framebuffer_aspect=0x00050006
 VIC20 Composite | vic_canvas_width=392, vic_canvas_height=288 | framebuffer_aspect=0x00050006
 
@@ -105,7 +103,7 @@ C64/C128 Composite | vicii_canvas_width=384, vicii_canvas_height=272 | (none)
 VIC20 HDMI | vic_canvas_width=400, vic_canvas_height=288 | framebuffer_aspect=0x00050006
 VIC20 Composite | vic_canvas_width=400, vic_canvas_height=288 | framebuffer_aspect=0x00050006
 
-The absolute minimum width/height for any machine is 320x200.
+The absolute minimum width/height for any machine is 320x240. Width must be a multiple of 2.
 
 # Video Scaling Algorithm
 
@@ -163,7 +161,7 @@ Directories and long filenames are supported as of v1.0.10. Previous versions re
     carts/
     tmp/
 
-You can make drive 8 an IECDevice for the root directory of the SDcard. However, I don't recommend loading programs this way. The SDcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk operations anyway.  It's mostly used for testing purposes.
+(C64/C128 only): You can make drive 8 an IECDevice for the root directory of the SDcard. However, I don't recommend loading programs this way. The SDcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk operations anyway.  It's mostly used for testing purposes.
 
 # Sound
 
@@ -185,11 +183,39 @@ For the Keyrah, if you find your '=' key doesn't work.  Try switching the keyboa
 
 As mentioned, gamepad support is limited.  Some gamepads advertise their dpads as analog sticks so if your dpad setting doesn't work and you want to use a dpad, try switching to analog.  Also, if the analog setting doesn't work, you may have to do some work to find the right axis # for both X and Y.  Usually, axis 0 and 1 are left stick X and Y axes but not always.  My cheap 'Kiwitata' gamepads are 3 & 4.  If your gamepad has two sticks, try 2 & 3 for right X/Y.
 
-In v1.0.5+, there is a configuration sub-menu that will help you configure your usb gamepads.  You can monitor the raw usb values using 'Monitor raw USB data' men option.  The only way to escape from this menu is ESC/RUNSTOP.
+There is a configuration sub-menu that will help you configure your usb gamepads.  You can monitor the raw usb values using 'Monitor raw USB data' men option.  The only way to escape from this menu is ESC/RUNSTOP.
 
 # Menu Navigation
 
-Since v1.0.8, you can hold down keys or gamepad/joystick directions and the navigation action will auto-repeat.  This accelerates the longer you hold in the same direction.  Since v1.9, the Home, PageUp, PageDown, and End keys are supported in the menu.  The equivalent C64 keys are F1, F3, F5 and F7 respectively.  Also, pressing a letter will find the first menu item that has text starting with that letter for quick navigation of large lists.
+You can hold down keys or gamepad/joystick directions and the navigation action will auto-repeat.  This accelerates the longer you hold in the same direction.  The Home, PageUp, PageDown, and End keys are supported in the menu as well.  The equivalent C64 keys are F1, F3, F5 and F7 respectively.  Also, pressing a letter will find the first menu item that has text starting with that letter for quick navigation of large lists.
+
+# USB Button / Hotkey Function Mapping
+
+You can assign functions to USB buttons or HotKey Combinations. HotKey combinations are LeftControl + F1,3,5,7. Not all functions are available as HotKey assignemnts.  The functions available are:
+
+Function | Description | Availability
+---------|-------------|-------------
+Up | Equivalent to Joystick Up | USB
+Down | Equivalent to Joystick Down | USB
+Left | Equivalent to Joystick Left | USB
+Right | Equivalent to Joystick Right | USB
+Fire | Equivalent to Joystick Fire Button | USB
+POT X | Equivalent to Joystick 2nd Button (For some games) | USB
+POT Y | Equivalent to Joystick 3rd Button (For some games) | USB
+Menu | Enter/Exit Menu | USB+HotKey
+Menu Back | Navigate to previous menu | USB+HotKey
+Warp | Toggle warp mode | USB+HotKey
+Status | Toggle status bar | USB+HotKey
+Swap Ports | Swap joystick ports | USB+HotKey
+Tape OSD | Brings up tape on screen display options | USB+HotKey
+Cart OSD | Brings up cartridge on screen display options | USB+HotKey
+Cart Freeze | Triggers cartridge freeze function (if installed) | USB+HotKey
+Hard Reset | Hard resets the emulated machine | USB+HotKey
+Soft Reset | Soft resets the emulated machine | USB+HotKey
+Key 1-6 | Custom defined keystroke  | USB
+
+Custom defined keys (1-6) can be defined in the usb gamepad configuration screen.
+The Tape/Cart OSD functions display a dialog with access to some common functions without pausing emulation.
 
 # GPIO Joystick Banks (No PCB required)
 
