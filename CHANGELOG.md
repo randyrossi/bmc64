@@ -185,3 +185,4 @@
   * Add custom keysets for joysticks
   * Add cuttom key bindings for usb buttons
   * Remember last cursor position in file lists
+  * Fixed badling names cycles_per_refresh to cycles_per_second (old incorrect name still works)

@@ -34,7 +34,7 @@ ViceOptions::ViceOptions(void)
       m_nVicCanvasWidth(DEFAULT_VIC_FB_WIDTH),
       m_nVicCanvasHeight(DEFAULT_VIC_FB_HEIGHT),
       m_nMachineTiming(MACHINE_TIMING_PAL_HDMI), m_bHideConsole(true),
-      m_bDemoMode(false), m_nCyclesPerRefresh(0),
+      m_bDemoMode(false), m_nCyclesPerSecond(0),
       m_audioOut(VCHIQSoundDestinationAuto) {
   s_pThis = this;
 
@@ -118,8 +118,9 @@ ViceOptions::ViceOptions(void)
       m_disk_partition = atoi(pValue);
       if (m_disk_partition < 0)
         m_disk_partition = 0;
-    } else if (strcmp(pOption, "cycles_per_refresh") == 0) {
-      m_nCyclesPerRefresh = atol(pValue);
+    } else if (strcmp(pOption, "cycles_per_refresh") == 0 || strcmp(pOption, "cycles_per_second")) {
+      // This was named incorrectly in earlier versions. Keeping the old bad name working.
+      m_nCyclesPerSecond = atol(pValue);
     } else if (strcmp(pOption, "audio_out") == 0) {
       if (strcmp(pValue, "hdmi") == 0 || strcmp(pValue, "ntsc-hdmi") == 0) {
         m_audioOut = VCHIQSoundDestinationHDMI;
@@ -132,10 +133,10 @@ ViceOptions::ViceOptions(void)
   }
 
   if (m_nMachineTiming == MACHINE_TIMING_PAL_CUSTOM &&
-      m_nCyclesPerRefresh == 0) {
+      m_nCyclesPerSecond == 0) {
     m_nMachineTiming = MACHINE_TIMING_PAL_HDMI;
   } else if (m_nMachineTiming == MACHINE_TIMING_NTSC_CUSTOM &&
-             m_nCyclesPerRefresh == 0) {
+             m_nCyclesPerSecond == 0) {
     m_nMachineTiming = MACHINE_TIMING_NTSC_HDMI;
   }
 }
@@ -170,8 +171,8 @@ int ViceOptions::GetDiskPartition(void) const { return m_disk_partition; }
 
 const char *ViceOptions::GetDiskVolume(void) const { return m_disk_volume; }
 
-unsigned long ViceOptions::GetCyclesPerRefresh(void) const {
-  return m_nCyclesPerRefresh;
+unsigned long ViceOptions::GetCyclesPerSecond(void) const {
+  return m_nCyclesPerSecond;
 }
 
 TVCHIQSoundDestination ViceOptions::GetAudioOut(void) const {

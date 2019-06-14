@@ -40,7 +40,7 @@ The machine is timed by the video mode you select. The default config provided d
 
 If you want to use composite out, you MUST change the machine_timing parameter in cmdline.txt to 'pal-composite'.  Otherwise, you will have audio synchronization issues.  You can change the machine to be NTSC if you want (see below).
 
-Raspberry Pi Video Mode     | machine_timing | cycles_per_refresh
+Raspberry Pi Video Mode     | machine_timing | cycles_per_second
 ----------------------------|----------------|-------------------
 hdmi_group=1,hdmi_mode=19   | pal-hdmi       | not required
 hdmi_group=1,hdmi_mode=4    | ntsc-hdmi      | not required
@@ -50,7 +50,7 @@ hdmi_group=2,hdmi_mode=87   | pal-custom or ntsc-custom | see below
 
 You are free to experiment with different modes. It may be advantageous to set the video mode to match the native resolution of your monitor.  That way, it may have less processing to do and _may_ save on latency (not confirmed).  That can be accomplished with either a different hdmi_mode or a custom mode.
 
-If you plan to use a custom HDMI mode, you will have to alter the machine's 'cycles_per_refresh' value to match the actual fps that mode outputs.  Custom HDMI modes may not be exactly 50 hz or 60 hz and that can cause audio sync issues if you use the default value.  A tool to calculate this number is provided under the 'Video' menu.  The test will take 10 minutes and will let you know what values you should add to cmdline.txt for machine_timing and cycles_per_refresh.  You only need to run the test once for that mode.
+If you plan to use a custom HDMI mode, you will have to alter the machine's 'cycles_per_second' value to match the actual fps that mode outputs.  Custom HDMI modes may not be exactly 50 hz or 60 hz and that can cause audio sync issues if you use the default value.  A tool to calculate this number is provided under the 'Video' menu.  The test will take 10 minutes and will let you know what values you should add to cmdline.txt for machine_timing and cycles_per_second.  You only need to run the test once for that mode.
 
 Example 1: Custom 768x544 50.125 hz PAL Mode
 
@@ -63,7 +63,7 @@ Example 1: Custom 768x544 50.125 hz PAL Mode
 
 The test tool will tell you the actual frame rate for this mode is 50.125. You would then add the suggested cmdline.txt parameters:
 
-    machine_timing=pal-custom cycles_per_refresh=985257
+    machine_timing=pal-custom cycles_per_second=985257
 
 Example 2: Custom 1360x768 50Hz HDMI Mode
 
@@ -74,7 +74,7 @@ Example 2: Custom 1360x768 50Hz HDMI Mode
 
 The test tool will tell you the actual frame rate for this mode is 49.89. You would then add the suggested cmdline.txt parameters:
 
-    machine_timing=pal-custom cycles_per_refresh=980670
+    machine_timing=pal-custom cycles_per_second=980670
 
 # Video + Timing VIC20
 

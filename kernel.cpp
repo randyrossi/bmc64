@@ -971,7 +971,7 @@ int CKernel::circle_cycles_per_second() {
     // calculated. This keeps audio buffer to a minimum using ReSid.
     return 1018804;
   } else if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_CUSTOM) {
-    return mViceOptions.GetCyclesPerRefresh();
+    return mViceOptions.GetCyclesPerSecond();
   } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_HDMI) {
     // 50hz
     return 1107600;
@@ -981,7 +981,7 @@ int CKernel::circle_cycles_per_second() {
     // calculated.  This keep audio buffer to a minimum using ReSid.
     return 1109372;
   } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_CUSTOM) {
-    return mViceOptions.GetCyclesPerRefresh();
+    return mViceOptions.GetCyclesPerSecond();
   } else {
     return 1017900;
   }
@@ -997,7 +997,7 @@ int CKernel::circle_cycles_per_second() {
     // calculated. This keeps audio buffer to a minimum using ReSid.
     return 1026611;
   } else if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_CUSTOM) {
-    return mViceOptions.GetCyclesPerRefresh();
+    return mViceOptions.GetCyclesPerSecond();
   } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_HDMI) {
     // 50hz
     return 982800;
@@ -1007,7 +1007,7 @@ int CKernel::circle_cycles_per_second() {
     // calculated.  This keep audio buffer to a minimum using ReSid.
     return 984404;
   } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_CUSTOM) {
-    return mViceOptions.GetCyclesPerRefresh();
+    return mViceOptions.GetCyclesPerSecond();
   } else {
     return 982800;
   }

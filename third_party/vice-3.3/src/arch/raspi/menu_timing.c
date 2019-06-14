@@ -67,7 +67,7 @@ static char instructions[NUM_TIMING_LINES][40] = {
     "reported, edit cmdline.txt and",
     "change the machine_timing parameter",
     "to pal-custom or ntsc-custom, add",
-    "cycles_per_refresh=######## with the",
+    "cycles_per_second=######## with the",
     "value and restart.",
 };
 
@@ -100,7 +100,7 @@ static void calc_popped(struct menu_item *item) {
     ui_menu_add_divider(root);
     ui_menu_add_button(MENU_TEXT, root, timing_str);
     tmp_item = ui_menu_add_button(MENU_TEXT, root, "");
-    sprintf(tmp_item->name, "cycles_per_refresh=%d", calculate_timing(fps));
+    sprintf(tmp_item->name, "cycles_per_second=%d", calculate_timing(fps));
     ui_menu_add_divider(root);
     tmp_item = ui_menu_add_button(MENU_TEXT, root, "");
     sprintf(tmp_item->name, "Actual fps = %f", fps);
