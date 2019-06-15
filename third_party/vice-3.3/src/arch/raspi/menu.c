@@ -66,7 +66,7 @@
 // both keyboard and joysticks can be hooked up with a PCB or
 // to eliminate USB keyboard.  Power switch is actually a power switch
 // and the power port is actually power unlike the Keyrah.
-#define RASPI_SUPPORT_PCB 1
+//#define RASPI_SUPPORT_PCB 1
 
 // For filename filters
 typedef enum {
