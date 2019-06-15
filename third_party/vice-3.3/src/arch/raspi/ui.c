@@ -938,13 +938,13 @@ struct menu_item *ui_pop_menu(void) {
   current_menu--;
 
   if (menu_to_pop->on_popped_off) {
-    // Notify pop happened
-    menu_to_pop->on_popped_off(menu_to_pop);
+    // Notify pop happened (new_root/old_root)
+    menu_to_pop->on_popped_off(&menu_roots[current_menu], menu_to_pop);
   }
 
   if (menu_roots[current_menu].on_popped_to) {
-    // Notify pop happened
-    menu_to_pop->on_popped_to(&menu_roots[current_menu]);
+    // Notify pop happened (new_root/old_root)
+    menu_to_pop->on_popped_to(&menu_roots[current_menu], menu_to_pop);
   }
 
   if (current_menu < 0) {

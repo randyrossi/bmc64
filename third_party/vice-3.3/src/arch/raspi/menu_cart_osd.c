@@ -39,7 +39,10 @@
 #include "raspi_machine.h"
 #include "ui.h"
 
-static void popped(struct menu_item *item) { osd_active = 0; }
+static void popped(struct menu_item *new_root,
+                   struct menu_item *old_root) {
+  osd_active = 0;
+}
 
 static void menu_item_changed(struct menu_item *item) {
   switch (item->id) {

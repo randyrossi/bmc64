@@ -63,9 +63,6 @@ struct menu_item *raw_buttons_item;
 struct menu_item *raw_hats_item[MAX_USB_HATS];
 struct menu_item *raw_axes_item[MAX_USB_AXES];
 
-struct menu_item *usb_0_btn_assign_item;
-struct menu_item *usb_1_btn_assign_item;
-
 // For pot x y as buttons
 struct menu_item *potx_high_item;
 struct menu_item *potx_low_item;
@@ -91,7 +88,8 @@ static int map_button_value(int b) {
   return log2(b);
 }
 
-static void raw_popped(struct menu_item *item) {
+static void raw_popped(struct menu_item *new_root,
+                       struct menu_item* old_root) {
   // This is our raw monitor being popped.
   // Turn off raw monitoring.
   want_raw_usb = 0;
@@ -126,14 +124,24 @@ static void show_usb_monitor(int device) {
   }
 }
 
-// Called after key bindings menu was popped. Need to update the choice descriptions
-// in the menu items so it reflects potential changes.
-static void update_key_binding_descriptions(struct menu_item *root) {
+// Called after key bindings menu was popped. Need to update the choice
+// descriptions in the menu items so it reflects potential changes.
+static void update_key_binding_descriptions(struct menu_item *new_root,
+                                            struct menu_item *old_root) {
+  // new_root will be this menu's root
   char scratch[32];
-  for (int n = 0; n < 6; n++) {
-     sprintf (scratch, "Key %d (%s)", n+1, keycode_to_string(key_bindings[n]));
-     strcpy(usb_0_btn_assign_item->choices[BTN_ASSIGN_CUSTOM_KEY_1 + n], scratch);
-     strcpy(usb_1_btn_assign_item->choices[BTN_ASSIGN_CUSTOM_KEY_1 + n], scratch);
+  struct menu_item *child = new_root->first_child;
+  while (child != NULL) {
+     if (child->id == MENU_USB_1_BTN_ASSIGN ||
+         child->id == MENU_USB_0_BTN_ASSIGN) {
+        for (int n = 0; n < 6; n++) {
+           sprintf (scratch, "Key %d (%s)", n+1,
+              keycode_to_string(key_bindings[n]));
+           strcpy(child->choices[BTN_ASSIGN_CUSTOM_KEY_1 + n],
+              scratch);
+        }
+     }
+     child = child->next;
   }
 }
 
@@ -288,7 +296,7 @@ void build_usb_menu(int dev, struct menu_item *root) {
 
     for (i = 0; i < joy_num_buttons[0]; i++) {
       sprintf(scratch, "Button %d Function", i);
-      tmp_item = usb_0_btn_assign_item =
+      tmp_item =
           ui_menu_add_multiple_choice(MENU_USB_0_BTN_ASSIGN, root, scratch);
       add_button_choices(tmp_item);
       tmp_item->value = usb_0_button_assignments[i];
@@ -326,7 +334,7 @@ void build_usb_menu(int dev, struct menu_item *root) {
 
     for (i = 0; i < joy_num_buttons[1]; i++) {
       sprintf(scratch, "Button %d Function", i);
-      tmp_item = usb_1_btn_assign_item =
+      tmp_item =
           ui_menu_add_multiple_choice(MENU_USB_1_BTN_ASSIGN, root, scratch);
       tmp_item->num_choices = NUM_BUTTON_ASSIGNMENTS;
       add_button_choices(tmp_item);

@@ -52,8 +52,8 @@ static void menu_usb_value_changed(struct menu_item *item) {
 }
 
 void build_keybinding_menu(struct menu_item *root) {
+   char name[16];
    for (int i=0;i<6;i++) {
-     char name[16];
      sprintf (name, "Binding %d", i+1);
      binding[i] = ui_menu_add_button_with_value(
         MENU_TEXT, root, name, i, "",

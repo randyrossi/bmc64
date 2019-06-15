@@ -72,7 +72,8 @@ static char instructions[NUM_TIMING_LINES][40] = {
 };
 
 // When countdown dialog is popped, turn off the test
-static void calc_popped(struct menu_item *item) {
+static void calc_popped(struct menu_item *new_root,
+                        struct menu_item *old_root) {
 
   if (hdmi_timing_active) {
     // User bailed. Don't try to calculate anything.

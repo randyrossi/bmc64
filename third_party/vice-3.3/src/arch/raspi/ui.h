@@ -113,10 +113,16 @@ struct menu_item {
 
   void (*cursor_listener_func)(struct menu_item* parent, int);
 
-  // For menu roots only, called on menu being popped off the stack
-  void (*on_popped_off)(struct menu_item *);
+  // For menu roots only, called on menu being popped off the stack (old_root)
+  // By the time this is called, the popped root has already been cleared of
+  // all its children.
+  void (*on_popped_off)(struct menu_item* old_root,
+                        struct menu_item* new_root);
   // For menu roots only, called on the menu being made visible after a pop
-  void (*on_popped_to)(struct menu_item *);
+  // (new_root). By the time this is called, the popped root has already been
+  // cleared of all its children.
+  void (*on_popped_to)(struct menu_item* old_root,
+                       struct menu_item* new_root);
 };
 
 struct menu_item *ui_menu_add_toggle(int id, struct menu_item *folder,
