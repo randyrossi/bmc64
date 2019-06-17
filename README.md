@@ -239,7 +239,7 @@ GPIO18        |GPIO6        | 2 (Down)
 GPIO27        |GPIO12       | 3 (Left)
 GPIO22        |GPIO13       | 4 (Right)
 GPIO23        |GPIO19       | 6 (Fire)
-GPIO7         |GPIO21       | 8 (GND)
+GND           |GND          | 8 (GND)
 
 In the menu, select either GPIO1 or GPIO2 and assign it to one of the emulated ports.
 
