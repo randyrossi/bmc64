@@ -41,6 +41,7 @@
 #include "diskimage.h"
 #include "joy.h"
 #include "joyport.h"
+#include "joyport/joystick.h"
 #include "kbd.h"
 #include "keyboard.h"
 #include "machine.h"
@@ -49,6 +50,7 @@
 #include "menu_tape_osd.h"
 #include "menu_timing.h"
 #include "menu_usb.h"
+#include "menu_keyset.h"
 #include "overlay.h"
 #include "raspi_machine.h"
 #include "raspi_util.h"
@@ -75,7 +77,7 @@ typedef enum {
    FILTER_SNAP,
 } FileFilter;
 
-extern struct joydev_config joydevs[2];
+extern struct joydev_config joydevs[MAX_JOY_PORTS];
 
 // These can be saved
 struct menu_item *port_1_menu_item;
@@ -90,10 +92,11 @@ float usb_x_thresh_0;
 float usb_y_thresh_0;
 float usb_x_thresh_1;
 float usb_y_thresh_1;
-int usb_0_button_assignments[16];
-int usb_1_button_assignments[16];
-int usb_0_button_bits[16]; // never change
-int usb_1_button_bits[16]; // never change
+int usb_0_button_assignments[MAX_USB_BUTTONS];
+int usb_1_button_assignments[MAX_USB_BUTTONS];
+int usb_button_bits[MAX_USB_BUTTONS]; // never change
+long keyset_codes[2][7];
+long key_bindings[6];
 struct menu_item *palette_item;
 struct menu_item *keyboard_type_item;
 struct menu_item *drive_sounds_item;
@@ -121,7 +124,7 @@ static int unit;
 static int joyswap;
 static int force_overlay;
 
-// Held here, exported for kernal to read
+// Held here, exported for menu_usb to read
 int pot_x_high_value;
 int pot_x_low_value;
 int pot_y_high_value;
@@ -175,7 +178,12 @@ static const char default_dir_names[NUM_DIR_TYPES][16] = {
 
 // Keep track of current directory for each type of file.
 static char current_dir_names[NUM_DIR_TYPES][256];
-static char dir_scratch[256];
+
+// Temp storage for full path name concatenations.
+static char full_path_str[256];
+
+// Keep track of last known position in the file list.
+static int current_dir_pos[NUM_DIR_TYPES];
 
 TEST_FILTER_MACRO(test_disk_name, num_disk_ext, disk_filt_ext);
 TEST_FILTER_MACRO(test_tape_name, num_tape_ext, tape_filt_ext);
@@ -194,6 +202,7 @@ static void list_files(struct menu_item *parent,
   char *currentDir = current_dir_names[dir_type];
   dp = opendir(currentDir);
   if (dp == NULL) {
+    char dir_scratch[256];
     strcpy(dir_scratch, "(");
     strcat(dir_scratch, currentDir);
     strcat(dir_scratch, " Not Found - Using /)");
@@ -228,7 +237,6 @@ static void list_files(struct menu_item *parent,
   files_root.is_expanded = 1;
   files_root.name[0] = '\0';
 
-  // TODO : Prefetch and order dirs at top
   if (dp != NULL) {
     while (ep = readdir(dp)) {
       if (ep->d_type & DT_DIR) {
@@ -280,9 +288,22 @@ static void list_files(struct menu_item *parent,
   assert(files_root.first_child == NULL);
 }
 
-static void show_files(DirType dir_type, FileFilter filter, int menu_id) {
+static void files_cursor_listener(struct menu_item* parent,
+                                  int new_pos) {
+  // dir type is in value field
+  current_dir_pos[parent->value] = new_pos;
+}
+
+static void show_files(DirType dir_type, FileFilter filter, int menu_id,
+                       int reset_cur_pos) {
   // Show files
   struct menu_item *file_root = ui_push_menu(-1, -1);
+
+  // Keep the type of files this list is for in value field.
+  file_root->value = dir_type;
+
+  file_root->cursor_listener_func = files_cursor_listener;
+
   if (menu_id == MENU_SAVE_SNAP_FILE ||
       (menu_id >= MENU_CREATE_D64_FILE && menu_id <= MENU_CREATE_X64_FILE)) {
     struct menu_item *file_name_item = ui_menu_add_text_field(
@@ -290,6 +311,13 @@ static void show_files(DirType dir_type, FileFilter filter, int menu_id) {
     file_name_item->sub_id = MENU_SUB_PICK_FILE;
   }
   list_files(file_root, dir_type, filter, menu_id);
+
+  if (reset_cur_pos) {
+     current_dir_pos[dir_type] = 0;
+  } else {
+     // Position cursor to last known location for this dir type.
+     ui_set_cur_pos(current_dir_pos[dir_type]);
+  }
 }
 
 static void show_about() {
@@ -297,15 +325,15 @@ static void show_about() {
 
   switch (machine_class) {
   case VICE_MACHINE_C64:
-    ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.9");
+    ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v2.0");
     ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C64 Emulator");
     break;
   case VICE_MACHINE_C128:
-    ui_menu_add_button(MENU_TEXT, about_root, "BMC128 v1.9");
+    ui_menu_add_button(MENU_TEXT, about_root, "BMC128 v2.0");
     ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C128 Emulator");
     break;
   case VICE_MACHINE_VIC20:
-    ui_menu_add_button(MENU_TEXT, about_root, "BMVIC20 v1.9");
+    ui_menu_add_button(MENU_TEXT, about_root, "BMVIC20 v2.0");
     ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal Vic20 Emulator");
     break;
   default:
@@ -329,6 +357,11 @@ static void show_license() {
 static void configure_usb(int dev) {
   struct menu_item *usb_root = ui_push_menu(-1, -1);
   build_usb_menu(dev, usb_root);
+}
+
+static void configure_keyset(int num) {
+  struct menu_item *keyset_root = ui_push_menu(-1, -1);
+  build_keyset_menu(num, keyset_root);
 }
 
 static void configure_timing() {
@@ -524,10 +557,10 @@ static int save_settings() {
   fprintf(fp, "palette=%d\n", palette_item->value);
   fprintf(fp, "keyboard_type=%d\n", keyboard_type_item->value);
 
-  for (i = 0; i < 16; i++) {
+  for (i = 0; i < MAX_USB_BUTTONS; i++) {
     fprintf(fp, "usb_btn_0=%d\n", usb_0_button_assignments[i]);
   }
-  for (i = 0; i < 16; i++) {
+  for (i = 0; i < MAX_USB_BUTTONS; i++) {
     fprintf(fp, "usb_btn_1=%d\n", usb_1_button_assignments[i]);
   }
   fprintf(fp, "hotkey_cf1=%d\n", hotkey_cf1_item->value);
@@ -556,6 +589,29 @@ static int save_settings() {
   fprintf(fp, "pot_x_low=%d\n", pot_x_low_value);
   fprintf(fp, "pot_y_high=%d\n", pot_y_high_value);
   fprintf(fp, "pot_y_low=%d\n", pot_y_low_value);
+
+  fprintf(fp, "keyset_1_up=%d\n", keyset_codes[0][KEYSET_UP]);
+  fprintf(fp, "keyset_1_down=%d\n", keyset_codes[0][KEYSET_DOWN]);
+  fprintf(fp, "keyset_1_left=%d\n", keyset_codes[0][KEYSET_LEFT]);
+  fprintf(fp, "keyset_1_right=%d\n", keyset_codes[0][KEYSET_RIGHT]);
+  fprintf(fp, "keyset_1_fire=%d\n", keyset_codes[0][KEYSET_FIRE]);
+  fprintf(fp, "keyset_1_potx=%d\n", keyset_codes[0][KEYSET_POTX]);
+  fprintf(fp, "keyset_1_poty=%d\n", keyset_codes[0][KEYSET_POTY]);
+
+  fprintf(fp, "keyset_2_up=%d\n", keyset_codes[1][KEYSET_UP]);
+  fprintf(fp, "keyset_2_down=%d\n", keyset_codes[1][KEYSET_DOWN]);
+  fprintf(fp, "keyset_2_left=%d\n", keyset_codes[1][KEYSET_LEFT]);
+  fprintf(fp, "keyset_2_right=%d\n", keyset_codes[1][KEYSET_RIGHT]);
+  fprintf(fp, "keyset_2_fire=%d\n", keyset_codes[1][KEYSET_FIRE]);
+  fprintf(fp, "keyset_2_potx=%d\n", keyset_codes[1][KEYSET_POTX]);
+  fprintf(fp, "keyset_2_poty=%d\n", keyset_codes[1][KEYSET_POTY]);
+
+  fprintf(fp, "key_binding_1=%d\n", key_bindings[0]);
+  fprintf(fp, "key_binding_2=%d\n", key_bindings[1]);
+  fprintf(fp, "key_binding_3=%d\n", key_bindings[2]);
+  fprintf(fp, "key_binding_4=%d\n", key_bindings[3]);
+  fprintf(fp, "key_binding_5=%d\n", key_bindings[4]);
+  fprintf(fp, "key_binding_6=%d\n", key_bindings[5]);
 
   fclose(fp);
 
@@ -671,7 +727,7 @@ static void load_settings() {
       }
       usb_0_button_assignments[usb_btn_0_i] = value;
       usb_btn_0_i++;
-      if (usb_btn_0_i >= 16) {
+      if (usb_btn_0_i >= MAX_USB_BUTTONS) {
         usb_btn_0_i = 0;
       }
     } else if (strcmp(name, "usb_btn_1") == 0) {
@@ -680,7 +736,7 @@ static void load_settings() {
       }
       usb_1_button_assignments[usb_btn_1_i] = value;
       usb_btn_1_i++;
-      if (usb_btn_1_i >= 16) {
+      if (usb_btn_1_i >= MAX_USB_BUTTONS) {
         usb_btn_1_i = 0;
       }
     } else if (strcmp(name, "alt_f12") == 0) {
@@ -712,6 +768,46 @@ static void load_settings() {
 #ifdef RASPI_SUPPORT_PCB
       use_pcb_item->value = value;
 #endif
+    } else if (strcmp(name, "keyset_1_up") == 0) {
+      keyset_codes[0][KEYSET_UP] = value;
+    } else if (strcmp(name, "keyset_1_down") == 0) {
+      keyset_codes[0][KEYSET_DOWN] = value;
+    } else if (strcmp(name, "keyset_1_left") == 0) {
+      keyset_codes[0][KEYSET_LEFT] = value;
+    } else if (strcmp(name, "keyset_1_right") == 0) {
+      keyset_codes[0][KEYSET_RIGHT] = value;
+    } else if (strcmp(name, "keyset_1_fire") == 0) {
+      keyset_codes[0][KEYSET_FIRE] = value;
+    } else if (strcmp(name, "keyset_1_potx") == 0) {
+      keyset_codes[0][KEYSET_POTX] = value;
+    } else if (strcmp(name, "keyset_1_poty") == 0) {
+      keyset_codes[0][KEYSET_POTY] = value;
+    } else if (strcmp(name, "keyset_2_up") == 0) {
+      keyset_codes[1][KEYSET_UP] = value;
+    } else if (strcmp(name, "keyset_2_down") == 0) {
+      keyset_codes[1][KEYSET_DOWN] = value;
+    } else if (strcmp(name, "keyset_2_left") == 0) {
+      keyset_codes[1][KEYSET_LEFT] = value;
+    } else if (strcmp(name, "keyset_2_right") == 0) {
+      keyset_codes[1][KEYSET_RIGHT] = value;
+    } else if (strcmp(name, "keyset_2_fire") == 0) {
+      keyset_codes[1][KEYSET_FIRE] = value;
+    } else if (strcmp(name, "keyset_2_potx") == 0) {
+      keyset_codes[1][KEYSET_POTX] = value;
+    } else if (strcmp(name, "keyset_2_poty") == 0) {
+      keyset_codes[1][KEYSET_POTY] = value;
+    } else if (strcmp(name, "key_binding_1") == 0) {
+      key_bindings[0] = value;
+    } else if (strcmp(name, "key_binding_2") == 0) {
+      key_bindings[1] = value;
+    } else if (strcmp(name, "key_binding_3") == 0) {
+      key_bindings[2] = value;
+    } else if (strcmp(name, "key_binding_4") == 0) {
+      key_bindings[3] = value;
+    } else if (strcmp(name, "key_binding_5") == 0) {
+      key_bindings[4] = value;
+    } else if (strcmp(name, "key_binding_6") == 0) {
+      key_bindings[5] = value;
     }
   }
   fclose(fp);
@@ -737,10 +833,10 @@ void menu_swap_joysticks() {
 }
 
 static char *fullpath(DirType dir_type, char *name) {
-  strcpy(dir_scratch, current_dir_names[dir_type]);
-  strcat(dir_scratch, "/");
-  strcat(dir_scratch, name);
-  return dir_scratch;
+  strcpy(full_path_str, current_dir_names[dir_type]);
+  strcat(full_path_str, "/");
+  strcat(full_path_str, name);
+  return full_path_str;
 }
 
 static void attach_cart(struct menu_item *item, int cart_type) {
@@ -1075,13 +1171,13 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
 
 // Utility function to re-list same type of files given
 // a file item.
-static void relist_files(struct menu_item *item) {
+static void relist_files_after_dir_change(struct menu_item *item) {
   switch (item->id) {
   case MENU_LOAD_SNAP_FILE:
-    show_files(DIR_SNAPS, FILTER_SNAP, item->id);
+    show_files(DIR_SNAPS, FILTER_SNAP, item->id, 1);
     break;
   case MENU_SAVE_SNAP_FILE:
-    show_files(DIR_SNAPS, FILTER_SNAP, item->id);
+    show_files(DIR_SNAPS, FILTER_SNAP, item->id, 1);
     break;
   case MENU_DISK_FILE:
   case MENU_CREATE_D64_FILE:
@@ -1096,13 +1192,13 @@ static void relist_files(struct menu_item *item) {
   case MENU_CREATE_G64_FILE:
   case MENU_CREATE_P64_FILE:
   case MENU_CREATE_X64_FILE:
-    show_files(DIR_DISKS, FILTER_DISK, item->id);
+    show_files(DIR_DISKS, FILTER_DISK, item->id, 1);
     break;
   case MENU_TAPE_FILE:
-    show_files(DIR_TAPES, FILTER_TAPE, item->id);
+    show_files(DIR_TAPES, FILTER_TAPE, item->id, 1);
     break;
   case MENU_C64_CART_FILE:
-    show_files(DIR_CARTS, FILTER_CART, item->id);
+    show_files(DIR_CARTS, FILTER_CART, item->id, 1);
     break;
   case MENU_C64_CART_8K_FILE:
   case MENU_C64_CART_16K_FILE:
@@ -1119,15 +1215,15 @@ static void relist_files(struct menu_item *item) {
   case MENU_VIC20_CART_FP_FILE:
   case MENU_VIC20_CART_MEGACART_FILE:
   case MENU_VIC20_CART_FINAL_EXPANSION_FILE:
-    show_files(DIR_CARTS, FILTER_NONE, item->id);
+    show_files(DIR_CARTS, FILTER_NONE, item->id, 1);
     break;
   case MENU_KERNAL_FILE:
   case MENU_BASIC_FILE:
   case MENU_CHARGEN_FILE:
-    show_files(DIR_ROMS, FILTER_NONE, item->id);
+    show_files(DIR_ROMS, FILTER_NONE, item->id, 1);
     break;
   case MENU_AUTOSTART_FILE:
-    show_files(DIR_ROOT, FILTER_NONE, item->id);
+    show_files(DIR_ROOT, FILTER_NONE, item->id, 1);
     break;
   default:
     break;
@@ -1148,7 +1244,7 @@ static void up_dir(struct menu_item *item) {
     strcpy(current_dir_names[dir_index], "/");
   }
   ui_pop_menu();
-  relist_files(item);
+  relist_files_after_dir_change(item);
 }
 
 static void enter_dir(struct menu_item *item) {
@@ -1162,7 +1258,7 @@ static void enter_dir(struct menu_item *item) {
   }
   strcat(current_dir_names[dir_index], item->str_value);
   ui_pop_menu();
-  relist_files(item);
+  relist_files_after_dir_change(item);
 }
 
 static void toggle_warp(int value) {
@@ -1209,50 +1305,49 @@ static void menu_value_changed(struct menu_item *item) {
     video_canvas_change_palette(item->value);
     return;
   case MENU_AUTOSTART:
-    show_files(DIR_ROOT, FILTER_NONE, MENU_AUTOSTART_FILE);
+    show_files(DIR_ROOT, FILTER_NONE, MENU_AUTOSTART_FILE, 0);
     return;
   case MENU_SAVE_SNAP:
-    show_files(DIR_SNAPS, FILTER_SNAP, MENU_SAVE_SNAP_FILE);
+    show_files(DIR_SNAPS, FILTER_SNAP, MENU_SAVE_SNAP_FILE, 0);
     return;
   case MENU_LOAD_SNAP:
-    show_files(DIR_SNAPS, FILTER_SNAP, MENU_LOAD_SNAP_FILE);
+    show_files(DIR_SNAPS, FILTER_SNAP, MENU_LOAD_SNAP_FILE, 0);
     return;
-
   case MENU_CREATE_D64:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D64_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D64_FILE, 0);
     return;
   case MENU_CREATE_D67:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D67_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D67_FILE, 0);
     return;
   case MENU_CREATE_D71:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D71_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D71_FILE, 0);
     return;
   case MENU_CREATE_D80:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D80_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D80_FILE, 0);
     return;
   case MENU_CREATE_D81:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D81_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D81_FILE, 0);
     return;
   case MENU_CREATE_D82:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D82_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D82_FILE, 0);
     return;
   case MENU_CREATE_D1M:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D1M_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D1M_FILE, 0);
     return;
   case MENU_CREATE_D2M:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D2M_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D2M_FILE, 0);
     return;
   case MENU_CREATE_D4M:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D4M_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_D4M_FILE, 0);
     return;
   case MENU_CREATE_G64:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_G64_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_G64_FILE, 0);
     return;
   case MENU_CREATE_P64:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_P64_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_P64_FILE, 0);
     return;
   case MENU_CREATE_X64:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_X64_FILE);
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_X64_FILE, 0);
     return;
 
   case MENU_IECDEVICE_8:
@@ -1265,85 +1360,85 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_ATTACH_DISK_9:
   case MENU_ATTACH_DISK_10:
   case MENU_ATTACH_DISK_11:
-    show_files(DIR_DISKS, FILTER_DISK, MENU_DISK_FILE);
+    show_files(DIR_DISKS, FILTER_DISK, MENU_DISK_FILE, 0);
     return;
   case MENU_ATTACH_TAPE:
-    show_files(DIR_TAPES, FILTER_TAPE, MENU_TAPE_FILE);
+    show_files(DIR_TAPES, FILTER_TAPE, MENU_TAPE_FILE, 0);
     return;
   case MENU_C64_ATTACH_CART:
-    show_files(DIR_CARTS, FILTER_CART, MENU_C64_CART_FILE);
+    show_files(DIR_CARTS, FILTER_CART, MENU_C64_CART_FILE, 0);
     return;
   case MENU_C64_ATTACH_CART_8K:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_8K_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_8K_FILE, 0);
     return;
   case MENU_C64_ATTACH_CART_16K:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_16K_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_16K_FILE, 0);
     return;
   case MENU_C64_ATTACH_CART_ULTIMAX:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_ULTIMAX_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_ULTIMAX_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_DETECT:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_DETECT_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_DETECT_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_GENERIC:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_GENERIC_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_GENERIC_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_16K_2000:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_16K_2000_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_16K_2000_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_16K_4000:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_16K_4000_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_16K_4000_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_16K_6000:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_16K_6000_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_16K_6000_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_8K_A000:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_8K_A000_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_8K_A000_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_4K_B000:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_4K_B000_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_4K_B000_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_BEHRBONZ:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_BEHRBONZ_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_BEHRBONZ_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_UM:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_UM_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_UM_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_FP:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_FP_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_FP_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_MEGACART:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_MEGACART_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_MEGACART_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_FINAL_EXPANSION:
-    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_FINAL_EXPANSION_FILE);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_FINAL_EXPANSION_FILE, 0);
     return;
   case MENU_LOAD_KERNAL:
-    show_files(DIR_ROMS, FILTER_NONE, MENU_KERNAL_FILE);
+    show_files(DIR_ROMS, FILTER_NONE, MENU_KERNAL_FILE, 0);
     return;
   case MENU_LOAD_BASIC:
-    show_files(DIR_ROMS, FILTER_NONE, MENU_BASIC_FILE);
+    show_files(DIR_ROMS, FILTER_NONE, MENU_BASIC_FILE, 0);
     return;
   case MENU_LOAD_CHARGEN:
-    show_files(DIR_ROMS, FILTER_NONE, MENU_CHARGEN_FILE);
+    show_files(DIR_ROMS, FILTER_NONE, MENU_CHARGEN_FILE, 0);
     return;
   case MENU_C128_LOAD_KERNAL:
-    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_KERNAL_FILE);
+    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_KERNAL_FILE, 0);
     return;
   case MENU_C128_LOAD_BASIC_HI:
-    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_BASIC_HI_FILE);
+    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_BASIC_HI_FILE, 0);
     return;
   case MENU_C128_LOAD_BASIC_LO:
-    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_BASIC_LO_FILE);
+    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_BASIC_LO_FILE, 0);
     return;
   case MENU_C128_LOAD_CHARGEN:
-    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_CHARGEN_FILE);
+    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_CHARGEN_FILE, 0);
     return;
   case MENU_C128_LOAD_64_KERNAL:
-    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_64_KERNAL_FILE);
+    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_64_KERNAL_FILE, 0);
     return;
   case MENU_C128_LOAD_64_BASIC:
-    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_64_BASIC_FILE);
+    show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_64_BASIC_FILE, 0);
     return;
   case MENU_MAKE_CART_DEFAULT:
     cartridge_set_default();
@@ -1400,6 +1495,12 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_CONFIGURE_USB_1:
     configure_usb(1);
+    return;
+  case MENU_CONFIGURE_KEYSET1:
+    configure_keyset(0);
+    return;
+  case MENU_CONFIGURE_KEYSET2:
+    configure_keyset(1);
     return;
   case MENU_WARP_MODE:
     toggle_warp(item->value);
@@ -1668,7 +1769,7 @@ void build_menu(struct menu_item *root) {
 
   // TODO: This doesn't really belong here. Need to sort
   // out init order of structs.
-  for (dev = 0; dev < 2; dev++) {
+  for (dev = 0; dev < MAX_JOY_PORTS; dev++) {
     memset(&joydevs[dev], 0, sizeof(struct joydev_config));
     joydevs[dev].port = dev + 1;
     joydevs[dev].device = JOYDEV_NONE;
@@ -1949,15 +2050,15 @@ void build_menu(struct menu_item *root) {
   child->value = HOTKEY_CHOICE_MENU;
   set_hotkey_choices(hotkey_cf7_item);
 
-  parent = ui_menu_add_folder(root, "Joystick");
+  parent = ui_menu_add_folder(root, "Joyports");
 
   if (circle_num_joysticks() > 1) {
       ui_menu_add_button(MENU_SWAP_JOYSTICKS, parent, "Swap Joystick Ports");
   }
 
   child = port_1_menu_item = ui_menu_add_multiple_choice(
-      MENU_JOYSTICK_PORT_1, parent, "Joystick Port 1");
-  child->num_choices = 10;
+      MENU_JOYSTICK_PORT_1, parent, "Port 1");
+  child->num_choices = 12;
   child->value = 0;
   strcpy(child->choices[0], "None");
   child->choice_ints[0] = JOYDEV_NONE;
@@ -1979,11 +2080,15 @@ void build_menu(struct menu_item *root) {
   child->choice_ints[8] = JOYDEV_CURS_LC;
   strcpy(child->choices[9], "USB Mouse (1351)");
   child->choice_ints[9] = JOYDEV_MOUSE;
+  strcpy(child->choices[10], "Custom Keyset 1");
+  child->choice_ints[10] = JOYDEV_KEYSET1;
+  strcpy(child->choices[11], "Custom Keyset 2");
+  child->choice_ints[11] = JOYDEV_KEYSET2;
 
   if (circle_num_joysticks() > 1) {
     child = port_2_menu_item = ui_menu_add_multiple_choice(
-        MENU_JOYSTICK_PORT_2, parent, "Joystick Port 2");
-    child->num_choices = 10;
+        MENU_JOYSTICK_PORT_2, parent, "Port 2");
+    child->num_choices = 12;
     child->value = 0;
     strcpy(child->choices[0], "None");
     child->choice_ints[0] = JOYDEV_NONE;
@@ -2005,12 +2110,14 @@ void build_menu(struct menu_item *root) {
     child->choice_ints[8] = JOYDEV_CURS_LC;
     strcpy(child->choices[9], "USB Mouse (1351)");
     child->choice_ints[9] = JOYDEV_MOUSE;
+    strcpy(child->choices[10], "Custom Keyset 1");
+    child->choice_ints[10] = JOYDEV_KEYSET1;
+    strcpy(child->choices[11], "Custom Keyset 2");
+    child->choice_ints[11] = JOYDEV_KEYSET2;
   }
 
   ui_menu_add_button(MENU_CONFIGURE_USB_0, parent, "Configure USB Joy 1...");
-  if (circle_num_joysticks() > 1) {
-     ui_menu_add_button(MENU_CONFIGURE_USB_1, parent, "Configure USB Joy 2...");
-  }
+  ui_menu_add_button(MENU_CONFIGURE_USB_1, parent, "Configure USB Joy 2...");
 
   usb_pref_0 = 0;
   usb_pref_1 = 0;
@@ -2022,12 +2129,14 @@ void build_menu(struct menu_item *root) {
   usb_y_thresh_0 = .50;
   usb_x_thresh_1 = .50;
   usb_y_thresh_1 = .50;
-  for (j = 0; j < 16; j++) {
+  for (j = 0; j < MAX_USB_BUTTONS; j++) {
     usb_0_button_assignments[j] = (j == 0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
     usb_1_button_assignments[j] = (j == 0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
-    usb_0_button_bits[j] = 1 << j;
-    usb_1_button_bits[j] = 1 << j;
+    usb_button_bits[j] = 1 << j;
   }
+
+  ui_menu_add_button(MENU_CONFIGURE_KEYSET1, parent, "Configure Keyset 1...");
+  ui_menu_add_button(MENU_CONFIGURE_KEYSET2, parent, "Configure Keyset 2...");
 
   ui_menu_add_divider(root);
 
@@ -2070,6 +2179,9 @@ void build_menu(struct menu_item *root) {
   video_canvas_change_palette(palette_item->value);
   ui_set_hotkeys();
   ui_set_joy_devs();
+
+  joystick_set_potx(pot_x_high_value);
+  joystick_set_poty(pot_y_high_value);
 
   // Always turn off resampling
   resources_set_int("SidResidSampling", 0);

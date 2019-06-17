@@ -35,7 +35,9 @@
 #include "joy.h"
 #include "machine.h"
 #include "menu.h"
+#include "menu_key_binding.h"
 #include "ui.h"
+#include "keycodes.h"
 
 extern int usb_pref_0;
 extern int usb_pref_1;
@@ -47,16 +49,19 @@ extern float usb_x_thresh_0;
 extern float usb_y_thresh_0;
 extern float usb_x_thresh_1;
 extern float usb_y_thresh_1;
-extern int usb_0_button_assignments[16];
-extern int usb_1_button_assignments[16];
-extern int usb_0_button_bits[16];
-extern int usb_1_button_bits[16];
+extern int usb_0_button_assignments[MAX_USB_BUTTONS];
+extern int usb_1_button_assignments[MAX_USB_BUTTONS];
+
+// Pre-shifted values for button bits for logical ops.
+// Should find out whether this is more efficient than
+// just doing the shift in place.
+extern int usb_button_bits[MAX_USB_BUTTONS];
 
 extern volatile int ui_activated;
 
 struct menu_item *raw_buttons_item;
-struct menu_item *raw_hats_item[6];
-struct menu_item *raw_axes_item[16];
+struct menu_item *raw_hats_item[MAX_USB_HATS];
+struct menu_item *raw_axes_item[MAX_USB_AXES];
 
 // For pot x y as buttons
 struct menu_item *potx_high_item;
@@ -68,6 +73,8 @@ extern int pot_x_high_value;
 extern int pot_x_low_value;
 extern int pot_y_high_value;
 extern int pot_y_low_value;
+
+struct menu_item *define_bindings_item;
 
 // Set to one when we are listening for raw usb values for config
 int want_raw_usb = 0;
@@ -81,7 +88,8 @@ static int map_button_value(int b) {
   return log2(b);
 }
 
-static void raw_popped(struct menu_item *item) {
+static void raw_popped(struct menu_item *new_root,
+                       struct menu_item* old_root) {
   // This is our raw monitor being popped.
   // Turn off raw monitoring.
   want_raw_usb = 0;
@@ -96,7 +104,7 @@ static void show_usb_monitor(int device) {
 
   struct menu_item *root = ui_push_menu(-1, -1);
   // We need to get notified of pop to turn off monitoring
-  root->on_value_changed = raw_popped;
+  root->on_popped_off = raw_popped;
 
   raw_buttons_item =
       ui_menu_add_button_with_value(MENU_TEXT, root, "Button #", 0, "", "");
@@ -116,7 +124,30 @@ static void show_usb_monitor(int device) {
   }
 }
 
+// Called after key bindings menu was popped. Need to update the choice
+// descriptions in the menu items so it reflects potential changes.
+static void update_key_binding_descriptions(struct menu_item *new_root,
+                                            struct menu_item *old_root) {
+  // new_root will be this menu's root
+  char scratch[32];
+  struct menu_item *child = new_root->first_child;
+  while (child != NULL) {
+     if (child->id == MENU_USB_1_BTN_ASSIGN ||
+         child->id == MENU_USB_0_BTN_ASSIGN) {
+        for (int n = 0; n < 6; n++) {
+           sprintf (scratch, "Key %d (%s)", n+1,
+              keycode_to_string(key_bindings[n]));
+           strcpy(child->choices[BTN_ASSIGN_CUSTOM_KEY_1 + n],
+              scratch);
+        }
+     }
+     child = child->next;
+  }
+}
+
 static void menu_usb_value_changed(struct menu_item *item) {
+  struct menu_item* tmp_item;
+
   switch (item->id) {
   case MENU_USB_0_PREF:
     usb_pref_0 = item->value;
@@ -172,6 +203,11 @@ static void menu_usb_value_changed(struct menu_item *item) {
   case MENU_USB_1_Y_THRESH:
     usb_y_thresh_1 = ((float)item->value) / 100.0f;
     break;
+  case MENU_CONFIGURE_KEY_BINDINGS:
+    tmp_item = ui_push_menu(-1,-1);
+    build_keybinding_menu(tmp_item);
+    tmp_item->on_popped_off = update_key_binding_descriptions;
+    break;
   default:
     break;
   }
@@ -201,6 +237,15 @@ static void add_button_choices(struct menu_item *tmp_item) {
   strcpy(tmp_item->choices[BTN_ASSIGN_RESET_HARD], "Hard Reset");
   strcpy(tmp_item->choices[BTN_ASSIGN_RESET_SOFT], "Soft Reset");
 
+  // More just for USB buttons
+  strcpy(tmp_item->choices[BTN_ASSIGN_RUN_STOP_BACK], "Menu Back");
+
+  char scratch[32];
+  for (int n = 0; n < 6; n++) {
+     sprintf (scratch, "Key %d (%s)", n+1, keycode_to_string(key_bindings[n]));
+     strcpy(tmp_item->choices[BTN_ASSIGN_CUSTOM_KEY_1 + n], scratch);
+  }
+
   if (machine_class == VICE_MACHINE_VIC20) {
     tmp_item->choice_disabled[BTN_ASSIGN_SWAP_PORTS] = 1;
     tmp_item->choice_disabled[BTN_ASSIGN_CART_FREEZE] = 1;
@@ -214,7 +259,6 @@ void build_usb_menu(int dev, struct menu_item *root) {
   struct menu_item *x_thresh_item;
   struct menu_item *y_thresh_item;
   struct menu_item *tmp_item;
-  struct menu_item *usb_btn_item[16];
   char desc[40];
   char scratch[32];
   int i;
@@ -301,6 +345,10 @@ void build_usb_menu(int dev, struct menu_item *root) {
   }
 
   ui_menu_add_divider(root);
+  define_bindings_item =
+     ui_menu_add_button(MENU_CONFIGURE_KEY_BINDINGS, root, "Define Key Bindings");
+
+  ui_menu_add_divider(root);
   potx_high_item = ui_menu_add_range(MENU_POTX_HIGH, root, "POT X Up Value", 0,
                                      255, 1, pot_x_high_value);
   potx_low_item = ui_menu_add_range(MENU_POTX_LOW, root, "POT X Down Value", 0,
@@ -314,6 +362,7 @@ void build_usb_menu(int dev, struct menu_item *root) {
   strcpy(usb_pref_item->choices[0], "Analog Stick");
   strcpy(usb_pref_item->choices[1], "First Hat");
 
+  define_bindings_item->on_value_changed = menu_usb_value_changed;
   usb_pref_item->on_value_changed = menu_usb_value_changed;
   x_axis_item->on_value_changed = menu_usb_value_changed;
   y_axis_item->on_value_changed = menu_usb_value_changed;
@@ -323,8 +372,8 @@ void build_usb_menu(int dev, struct menu_item *root) {
 
 int menu_wants_raw_usb(void) { return ui_activated && want_raw_usb; }
 
-void menu_raw_usb(int device, unsigned buttons, const int hats[6],
-                  const int axes[16]) {
+void menu_raw_usb(int device, unsigned buttons, const int hats[MAX_USB_HATS],
+                  const int axes[MAX_USB_AXES]) {
   // Don't do too much here. This is from an isr.  Just set values for paint to
   // update.
   int i;
@@ -339,28 +388,53 @@ void menu_raw_usb(int device, unsigned buttons, const int hats[6],
   }
 }
 
-// Returns the first function found for the button if
-// it's bit is set (so only returns something on the
-// down event). Expects only one button to be on.
-// That is, only the function will be returned for
-// the first bit on it finds.
-int circle_button_function(int dev, unsigned b) {
-  int i;
-  if (dev == 0) {
-    for (i = 0; i < joy_num_buttons[dev]; i++) {
-      if (b & usb_0_button_bits[i]) {
-        return usb_0_button_assignments[i];
-      }
-    }
-    return BTN_ASSIGN_UNDEF;
+// Comapres the previous button state for 'button_num' with
+// the current state and will return a press or release event
+// for that button if the button has a button assignment.
+// If no button assignment is present or if there is no
+// change to the button state, btn_assignemnt will be set to
+// BTN_ASSIGN_UNDEF.  Otherwise, it will be set to the button
+// assignmnt and is_press will be set to 1 for a down event,
+// 0 for an up event.  Returns -1 when button_num has reached
+// or exceeded the number of buttons known to be available for
+// the given usb gamepad device.  Otherwise, returns 0.
+// Caller should keep calling this method until -1 is returned,
+// otherwise, previous button state will not be correctly
+// recorded.
+int circle_button_function(int device, int button_num, unsigned buttons,
+                           int* btn_assignment, int* is_press) {
+  if (button_num >= joy_num_buttons[device]) {
+     // No more buttons
+     joy_prev_buttons[device] = buttons;
+     return -1;
   }
 
-  for (i = 0; i < joy_num_buttons[dev]; i++) {
-    if (b & usb_1_button_bits[i]) {
-      return usb_1_button_assignments[i];
+  unsigned prev_buttons = joy_prev_buttons[device];
+  if ((prev_buttons & usb_button_bits[button_num]) &&
+      !(buttons & usb_button_bits[button_num])) {
+    // Was down, now up.
+    *is_press = 0;
+    if (device == 0) {
+       *btn_assignment = usb_0_button_assignments[button_num];
+    } else {
+       *btn_assignment = usb_1_button_assignments[button_num];
     }
+    return 0;
+  } else if (!(prev_buttons & usb_button_bits[button_num]) &&
+              (buttons & usb_button_bits[button_num])) {
+    // Was up, now down.
+    *is_press = 1;
+    if (device == 0) {
+       *btn_assignment = usb_0_button_assignments[button_num];
+    } else {
+       *btn_assignment = usb_1_button_assignments[button_num];
+    }
+    return 0;
   }
-  return BTN_ASSIGN_UNDEF;
+
+  *btn_assignment = BTN_ASSIGN_UNDEF;
+  *is_press = 0;
+  return 0;
 }
 
 int circle_add_button_values(int dev, unsigned b) {
@@ -368,7 +442,7 @@ int circle_add_button_values(int dev, unsigned b) {
   int value = (pot_x_high_value << 5) | (pot_y_high_value << 13);
   if (dev == 0) {
     for (i = 0; i < joy_num_buttons[dev]; i++) {
-      if (b & usb_0_button_bits[i]) {
+      if (b & usb_button_bits[i]) {
         int j = usb_0_button_assignments[i];
         switch (j) {
         case BTN_ASSIGN_FIRE:
@@ -402,7 +476,7 @@ int circle_add_button_values(int dev, unsigned b) {
 
   // TODO: Dedupe this later...
   for (i = 0; i < joy_num_buttons[dev]; i++) {
-    if (b & usb_1_button_bits[i]) {
+    if (b & usb_button_bits[i]) {
       int j = usb_1_button_assignments[i];
       switch (j) {
       case BTN_ASSIGN_FIRE:
@@ -432,4 +506,8 @@ int circle_add_button_values(int dev, unsigned b) {
     }
   }
   return value;
+}
+
+long circle_key_binding(int slot) {
+  return key_bindings[slot];
 }

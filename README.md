@@ -1,10 +1,6 @@
-__IMPORTANT PSA: BMC64 v1.0.6 through v1.4 were not properly putting the other 3 (unused) cores to a low powered mode and was causing CPU temperatures to rise close to or beyond automatic throttling limits. I'm very sorry about this. I don't believe this pushed the devices beyond their limits, it was just a waste of heat. The Pi will automatically throttle itself if CPU temperature goes beyond a certain limit. If you saw thermometer icons in the top right corner of your screen, this is probably why. V1.5 or greater fixes this.__
-
-__If you are using an older version, I strongly recommend you update to the latest release.__
-
 # BMC64
 
-BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio.  Two other Commodore builds are available as well; C128 and Vic20.
+BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio. Two other Commodore builds are available as well; C128 and Vic20.
 
 # BMC64 Features
   * Quick boot time (4.1 seconds!)
@@ -40,11 +36,11 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
 
 # Video + Timing C64/C128
 
-The machine is timed by the video mode you select. The default config provided defaults to 720p PAL 50hz on HDMI.  This is a 'safe' mode that should work on all monitors.
+The machine is timed by the video mode you select. The default config provided defaults to 720p PAL 50hz on HDMI.  This is a 'safe' mode that should work on all monitors.  For HDMI, you should choose either a 50hz or 60hz mode.
 
 If you want to use composite out, you MUST change the machine_timing parameter in cmdline.txt to 'pal-composite'.  Otherwise, you will have audio synchronization issues.  You can change the machine to be NTSC if you want (see below).
 
-Raspberry Pi Video Mode     | machine_timing | cycles_per_refresh
+Raspberry Pi Video Mode     | machine_timing | cycles_per_second
 ----------------------------|----------------|-------------------
 hdmi_group=1,hdmi_mode=19   | pal-hdmi       | not required
 hdmi_group=1,hdmi_mode=4    | ntsc-hdmi      | not required
@@ -54,22 +50,9 @@ hdmi_group=2,hdmi_mode=87   | pal-custom or ntsc-custom | see below
 
 You are free to experiment with different modes. It may be advantageous to set the video mode to match the native resolution of your monitor.  That way, it may have less processing to do and _may_ save on latency (not confirmed).  That can be accomplished with either a different hdmi_mode or a custom mode.
 
-If you plan to use a custom HDMI mode, you will have to alter the machine's 'cycles_per_refresh' value to match the actual fps that mode outputs.  Custom HDMI modes may not be exactly 50 hz or 60 hz and that can cause audio sync issues if you use the default value.  A tool to calculate this number is provided under the 'Video' menu.  The test will take 10 minutes and will let you know what values you should add to cmdline.txt for machine_timing and cycles_per_refresh.  You only need to run the test once for that mode.
+If you plan to use a custom HDMI mode, you will have to alter the machine's 'cycles_per_second' value to match the actual fps that mode outputs.  Custom HDMI modes may not be exactly 50 hz or 60 hz and that can cause audio sync issues if you use the default value.  A tool to calculate this number is provided under the 'Video' menu.  The test will take 10 minutes and will let you know what values you should add to cmdline.txt for machine_timing and cycles_per_second.  You only need to run the test once for that mode.
 
-Example 1: Custom 768x544 50.125 hz PAL Mode
-
-    This mode will match the timing of the original machine (for the purists).
-
-    disable_overscan=1
-    hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
-    hdmi_group=2
-    hdmi_mode=87
-
-The test tool will tell you the actual frame rate for this mode is 50.125. You would then add the suggested cmdline.txt parameters:
-
-    machine_timing=pal-custom cycles_per_refresh=985257
-
-Example 2: Custom 1360x768 50Hz HDMI Mode
+Example: Custom 1360x768 50Hz HDMI Mode
 
     disable_overscan=1
     hdmi_cvt=1360 768 50 3 0 0 0
@@ -78,13 +61,11 @@ Example 2: Custom 1360x768 50Hz HDMI Mode
 
 The test tool will tell you the actual frame rate for this mode is 49.89. You would then add the suggested cmdline.txt parameters:
 
-    machine_timing=pal-custom cycles_per_refresh=980670
+    machine_timing=pal-custom cycles_per_second=980670
 
 # Video + Timing VIC20
 
-All of the above re: timing applies to BMVIC20 as well.  However, in my opinion, this machine is better configured to be an NTSC
-machine.  Most cartridges were made for NTSC and you will notice they position their screens poorly when inserted into a PAL
-machine.  Most games gave the option of moving it using cursor keys or joystick but this is annoying.
+All of the above re: timing applies to BMVIC20 as well.  However, in my opinion, this machine is better configured to be an NTSC machine.  Most cartridges were made for NTSC and you will notice they position their screens poorly when inserted into a PAL machine.  Most games gave the option of moving it using cursor keys or joystick but this is annoying.
 
 # Canvas Dimensions
 
@@ -96,8 +77,8 @@ Here are some sample canvas dimensions configs:
 
 Machine       | cmdline.txt | extra config.txt
 --------------|-------------|-------------------------------
-C64/C128 HDMI | vicii_canvas_width=384, vicii_canvas_height=272 | (none)
-C64/C128 Composite | vicii_canvas_width=384, vicii_canvas_height=272 | (none)
+C64/C128 HDMI | vicii_canvas_width=384, vicii_canvas_height=288 | (none)
+C64/C128 Composite | vicii_canvas_width=384, vicii_canvas_height=288 | (none)
 VIC20 HDMI | vic_canvas_width=392, vic_canvas_height=288 | framebuffer_aspect=0x00050006
 VIC20 Composite | vic_canvas_width=392, vic_canvas_height=288 | framebuffer_aspect=0x00050006
 
@@ -110,7 +91,7 @@ C64/C128 Composite | vicii_canvas_width=384, vicii_canvas_height=272 | (none)
 VIC20 HDMI | vic_canvas_width=400, vic_canvas_height=288 | framebuffer_aspect=0x00050006
 VIC20 Composite | vic_canvas_width=400, vic_canvas_height=288 | framebuffer_aspect=0x00050006
 
-The absolute minimum width/height for any machine is 320x240.  Width must be a multiple of 2.
+The absolute minimum width/height for any machine is 320x240. Width must be a multiple of 2.
 
 # Video Scaling Algorithm
 
@@ -168,7 +149,7 @@ Directories and long filenames are supported as of v1.0.10. Previous versions re
     carts/
     tmp/
 
-You can make drive 8 an IECDevice for the root directory of the SDcard. However, I don't recommend loading programs this way. The SDcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk operations anyway.  It's mostly used for testing purposes.
+(C64/C128 only): You can make drive 8 an IECDevice for the root directory of the SDcard. However, I don't recommend loading programs this way. The SDcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk operations anyway.  It's mostly used for testing purposes.
 
 # Sound
 
@@ -190,11 +171,60 @@ For the Keyrah, if you find your '=' key doesn't work.  Try switching the keyboa
 
 As mentioned, gamepad support is limited.  Some gamepads advertise their dpads as analog sticks so if your dpad setting doesn't work and you want to use a dpad, try switching to analog.  Also, if the analog setting doesn't work, you may have to do some work to find the right axis # for both X and Y.  Usually, axis 0 and 1 are left stick X and Y axes but not always.  My cheap 'Kiwitata' gamepads are 3 & 4.  If your gamepad has two sticks, try 2 & 3 for right X/Y.
 
-In v1.0.5+, there is a configuration sub-menu that will help you configure your usb gamepads.  You can monitor the raw usb values using 'Monitor raw USB data' men option.  The only way to escape from this menu is ESC/RUNSTOP.
+There is a configuration sub-menu that will help you configure your usb gamepads.  You can monitor the raw usb values using 'Monitor raw USB data' men option.  The only way to escape from this menu is ESC/RUNSTOP.
 
 # Menu Navigation
 
-Since v1.0.8, you can hold down keys or gamepad/joystick directions and the navigation action will auto-repeat.  This accelerates the longer you hold in the same direction.  Since v1.9, the Home, PageUp, PageDown, and End keys are supported in the menu.  The equivalent C64 keys are F1, F3, F5 and F7 respectively.  Also, pressing a letter will find the first menu item that has text starting with that letter for quick navigation of large lists.
+You can hold down keys or gamepad/joystick directions and the navigation action will auto-repeat.  This accelerates the longer you hold in the same direction.  The Home, PageUp, PageDown, and End keys are supported in the menu as well.  The equivalent C64 keys are F1, F3, F5 and F7 respectively.  Also, pressing a letter will find the first menu item that has text starting with that letter for quick navigation of large lists.
+
+# Joyport Configuration
+
+Joyports (2 for C64/C128, 1 for VIC20) can be configured to use the following devices:
+
+Device | Description 
+-------|------------
+None | No device active for the port
+USB Gamepad 1 | First USB gamepad detected
+USB Gamepad 2 | Second USB gamepad detected
+GPIO Bank 1 | GPIO Pins as described previously
+GPIO Bank 2 | GPIO Pins as described previously
+1351 Mouse | First USB mouse detected
+Keyrah Keys 1 | Numeric keypad keys 64825 compatible with Keyrah
+Keyrah Keys 2 | Numeric keypad keys 17930 compatible with Keyrah
+Cursor + Space | Cursor keys for directions, space for fire
+Cursor + LCtrl | Cursor keys for directions, left control for fire
+Custom Keyset 1 | Custom keyset 1
+Custom Ketset 2 | Custom keyset 1
+
+You can define custom keysets in the menu under the Joyport sub-menu.
+
+# USB Button / Hotkey Function Mapping
+
+You can assign functions to USB buttons or HotKey Combinations. HotKey combinations are LeftControl + F1,3,5,7. Not all functions are available as HotKey assignments.  The functions available are:
+
+Function | Description | Availability
+---------|-------------|-------------
+Up | Equivalent to Joystick Up | USB
+Down | Equivalent to Joystick Down | USB
+Left | Equivalent to Joystick Left | USB
+Right | Equivalent to Joystick Right | USB
+Fire | Equivalent to Joystick Fire Button | USB
+POT X | Equivalent to Joystick 2nd Button (for some games) | USB
+POT Y | Equivalent to Joystick 3rd Button (for some games) | USB
+Menu | Enter/Exit Menu | USB+HotKey
+Menu Back | Navigate to previous menu | USB+HotKey
+Warp | Toggle warp mode | USB+HotKey
+Status | Toggle status bar | USB+HotKey
+Swap Ports | Swap joystick ports | USB+HotKey
+Tape OSD | Brings up tape on screen display options | USB+HotKey
+Cart OSD | Brings up cartridge on screen display options | USB+HotKey
+Cart Freeze | Triggers cartridge freeze function (if installed) | USB+HotKey
+Hard Reset | Hard resets the emulated machine | USB+HotKey
+Soft Reset | Soft resets the emulated machine | USB+HotKey
+Key 1-6 | Custom defined keystroke  | USB
+
+Custom defined keys (1-6) can be defined in the usb gamepad configuration screen.
+The Tape/Cart OSD functions display a dialog with access to some common functions without pausing emulation.
 
 # GPIO Joystick Banks (No PCB required)
 
@@ -210,7 +240,7 @@ GPIO18        |GPIO6        | 2 (Down)
 GPIO27        |GPIO12       | 3 (Left)
 GPIO22        |GPIO13       | 4 (Right)
 GPIO23        |GPIO19       | 6 (Fire)
-GPIO7         |GPIO21       | 8 (GND)
+GND           |GND          | 8 (GND)
 
 In the menu, select either GPIO1 or GPIO2 and assign it to one of the emulated ports.
 
@@ -236,13 +266,14 @@ A: Yes, you must edit BOTH config.txt and cmdline.txt.
 
 Q: Why does the video look soft/stretched/dark?
 
-A: I currently don't have much control over how the emulated display is scaled. I'm relying on the Pi to scale a small canvas up to whatever resolution your hdmi mode is set to and I've noticed it looks 'soft' sometimes.  Also, some monitors seem to stretch the canvas to full width rather than keep the aspect ratio.  You can change the hdmi mode and frame buffer aspect ratio in config.txt to suit your needs. Just keep in mind that NTSC machine timing must have a 60hz mode and PAL machine timing must have a 50hz mode.  This isn't something you normally care about in an emulator but because the machine is actually timed to the vertical blank signal of the video device, it matters.  I also recommend changing the mode to match your monitor/TV's native resolution.  That should avoid any unnecessary extra processing your monitor/TV might do which can add lag.  Also, place your Monitor/TV into 'Game' mode if possible.
+A: By default, the scaling_kernel option softens the scaled image.  You can change this (see above).  Also, some monitors seem to stretch the canvas to full width rather than keep the aspect ratio.  You can change the hdmi mode and frame buffer aspect ratio in config.txt to suit your needs. Just keep in mind that NTSC machine timing must have a 60hz mode and PAL machine timing must have a 50hz mode.  This isn't something you normally care about in an emulator but because the machine is actually timed to the vertical blank signal of the video device, it matters.  I also recommend changing the mode to match your monitor/TV's native resolution.  That should avoid any unnecessary extra processing your monitor/TV might do which can add lag.  Also, place your Monitor/TV into 'Game' mode if possible.
 
 Things you can fiddle with for video:
 
    hdmi_mode in config.txt
    framebuffer_aspect in config.txt (i.e. framebuffer_aspect=0x00070009 for 7:9)
-   canvas_width canvas_height in cmdline.txt
+   scaling_kernel (google for available algorithms)
+   vicii_canvas_width vicii_canvas_height in cmdline.txt (vic_ prefix for vic20)
 
 The default settings work fine for composite out.
 
@@ -252,7 +283,20 @@ A: Most video options are fixed right now to make sure video is rendered properl
 
 Q: Hey, isn't the real thing running at 50.125Hz?
 
-A: Yes, the original machine ran at 50.125Hz for PAL and 59.826Hz for NTSC. So, yeah, you'll be about 0.25% off in terms of timing.
+A: Yes, the original machine ran at 50.125Hz for PAL and 59.826Hz for NTSC. So, yeah, you'll be about 0.25% off in terms of timing.  If you really want 50.125Hz, you can try this custom HDMI mode (only applies to HDMI):
+
+Custom 768x544 50.125 hz PAL Mode
+
+    This mode will match the timing of the original machine (for the purists) but may not be compatible with all monitors:
+
+    disable_overscan=1
+    hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
+    hdmi_group=2
+    hdmi_mode=87
+
+The test tool will tell you the actual frame rate for this mode is 50.125. You would then add the suggested cmdline.txt parameters:
+
+    machine_timing=pal-custom cycles_per_second=985257
 
 Q: Audio is not coming out of HDMI/Analog jack when I expect it to. Why?
 

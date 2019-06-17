@@ -39,7 +39,10 @@
 #include "raspi_machine.h"
 #include "ui.h"
 
-static void popped(struct menu_item *item) { osd_active = 0; }
+static void popped(struct menu_item *new_root,
+                   struct menu_item *old_root) {
+  osd_active = 0;
+}
 
 static void menu_item_changed(struct menu_item *item) {
   switch (item->id) {
@@ -74,7 +77,7 @@ void show_cart_osd_menu(void) {
   }
 
   struct menu_item *root = ui_push_menu(20, 2);
-  root->on_value_changed = popped;
+  root->on_popped_off = popped;
 
   struct menu_item *child;
   if (machine_class == VICE_MACHINE_C64 || machine_class == VICE_MACHINE_C128) {

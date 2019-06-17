@@ -47,11 +47,11 @@
 //
 // 04             RESTORE  KDB3     16
 //
-// 26    J2_UP    PA7      KBD20    7
-// 20    J2_DOWN  PA1      KBD19    1
-// 19    J2_LEFT  PA2      KBD18    2
-// 16    J2_RIGHT PA3      KBD17    3
-// 13    J2_FIRE  PA4      KBD16    4
+// 26    J2_FIRE  PA7      KBD20    7
+// 20    J2_UP    PA1      KBD19    1
+// 19    J2_DOWN  PA2      KBD18    2
+// 16    J2_LEFT  PA3      KBD17    3
+// 13    J2_RIGHT PA4      KBD16    4
 // 06             PA5      KBD15    5
 // 12             PA6      KBD14    6
 // 05             PA0      KDB13    0
@@ -60,11 +60,11 @@
 // 08             PB0      KBD12    8
 // 25             PB1      KBD11    9
 // 24             PB2      KBD10   10
-// 22    J1_UP    PB7      KBD9    15
-// 23    J1_DOWN  PB4      KBD8    12
-// 27    J1_LEFT  PB5      KBD7    13
-// 17    J1_RIGHT PB6      KBD6    14
-// 18    J1_FIRE  PB3      KBD5    11
+// 22    J1_FIRE  PB7      KBD9    15
+// 23    J1_UP    PB4      KBD8    12
+// 27    J1_DOWN  PB5      KBD7    13
+// 17    J1_LEFT  PB6      KBD6    14
+// 18    J1_RIGHT PB3      KBD5    11
 // 07    J1_SEL                    17
 //
 // 14 TXD0
@@ -91,17 +91,17 @@
 
 // These are indices within the master gpio array for some
 // special pins we need to address. 
-#define GPIO_JOY_1_UP_INDEX     15
-#define GPIO_JOY_1_DOWN_INDEX   12
-#define GPIO_JOY_1_LEFT_INDEX   13
-#define GPIO_JOY_1_RIGHT_INDEX  14
-#define GPIO_JOY_1_FIRE_INDEX   11
+#define GPIO_JOY_1_UP_INDEX     12
+#define GPIO_JOY_1_DOWN_INDEX   13
+#define GPIO_JOY_1_LEFT_INDEX   14
+#define GPIO_JOY_1_RIGHT_INDEX  11
+#define GPIO_JOY_1_FIRE_INDEX   15
 
-#define GPIO_JOY_2_UP_INDEX     7
-#define GPIO_JOY_2_DOWN_INDEX   1
-#define GPIO_JOY_2_LEFT_INDEX   2
-#define GPIO_JOY_2_RIGHT_INDEX  3
-#define GPIO_JOY_2_FIRE_INDEX   4
+#define GPIO_JOY_2_UP_INDEX     1
+#define GPIO_JOY_2_DOWN_INDEX   2
+#define GPIO_JOY_2_LEFT_INDEX   3
+#define GPIO_JOY_2_RIGHT_INDEX  4
+#define GPIO_JOY_2_FIRE_INDEX   7
 
 #define GPIO_NOPCB_JOY_1_UP_INDEX     14  // GPIO 17
 #define GPIO_NOPCB_JOY_1_DOWN_INDEX   11  // GPIO 18

@@ -48,7 +48,7 @@ int ui_toggle_pending = 0;
 // One of the quick functions that can be invoked by button assignments
 int pending_emu_quick_func;
 
-extern struct joydev_config joydevs[2];
+extern struct joydev_config joydevs[MAX_JOY_PORTS];
 
 // Stubs for vice callbacks. Unimplemented for now.
 void ui_pause_emulation(int flag) {}
@@ -78,7 +78,7 @@ int pending_ui_key_tail = 0;
 volatile long pending_ui_key[16];
 volatile int pending_ui_key_pressed[16];
 
-// Callback for events that happen on menu items
+// Global callback for events that happen on menu items
 void (*on_value_changed)(struct menu_item *) = NULL;
 
 // Key presses turn into these. Some actions are repeatable and
@@ -424,13 +424,23 @@ void ui_pop_all_and_toggle() {
   ui_toggle();
 }
 
+static void cursor_pos_updated() {
+  // Tell listener
+  if (menu_roots[current_menu].cursor_listener_func) {
+     menu_roots[current_menu].cursor_listener_func(&menu_roots[current_menu],
+                                                   menu_cursor[current_menu]);
+  }
+}
+
 static void ui_action(long action) {
   struct menu_item *cur = menu_cursor_item[current_menu];
   switch (action) {
   case ACTION_Up:
     menu_cursor[current_menu]--;
+    cursor_pos_updated();
     if (menu_cursor[current_menu] < 0) {
       menu_cursor[current_menu] = 0;
+      cursor_pos_updated();
     }
     if (menu_cursor[current_menu] <= (menu_window_top[current_menu] - 1)) {
       menu_window_top[current_menu]--;
@@ -439,8 +449,10 @@ static void ui_action(long action) {
     break;
   case ACTION_Down:
     menu_cursor[current_menu]++;
+    cursor_pos_updated();
     if (menu_cursor[current_menu] >= max_index[current_menu]) {
       menu_cursor[current_menu] = max_index[current_menu] - 1;
+      cursor_pos_updated();
     }
     if (menu_cursor[current_menu] >= menu_window_bottom[current_menu]) {
       menu_window_top[current_menu]++;
@@ -854,10 +866,17 @@ void ui_render_now(void) {
 
   if (menu_cursor[current_menu] >= max_index[current_menu]) {
     menu_cursor[current_menu] = max_index[current_menu] - 1;
+    cursor_pos_updated();
   }
 }
 
-static void ui_tc(struct menu_item *node, int *index) {
+// This function will traverse recursively all nodes in the node list
+// starting at 'node'.  It fills in the render_index for each node as it
+// goes and records the node that matches the current cursor index into
+// menu_cursor_item.  No rendering is done here.  It used when
+// we need to find the node matching the cursor position, taking into
+// account all items that have been expanded/contracted.
+static void ui_traverse_children(struct menu_item *node, int *index) {
   while (node != NULL) {
     node->render_index = *index;
 
@@ -871,23 +890,27 @@ static void ui_tc(struct menu_item *node, int *index) {
     *index = *index + 1;
     if (node->type == FOLDER && node->is_expanded &&
         node->first_child != NULL) {
-      ui_tc(node->first_child, index);
+      ui_traverse_children(node->first_child, index);
     }
     node = node->next;
   }
 }
 
-static void ui_t(void) {
+// This function will traverse recursively all child nodes in the current
+// active menu. See ui_traverse_child for more details on when this
+// is useful.  It also records the max index for the current menu taking
+// into account all items that have been expanded/contracted.
+static void ui_traverse(void) {
   int index = 0;
   struct menu_item *ptr = menu_roots[current_menu].first_child;
 
-  // menu text
-  ui_tc(ptr, &index);
+  ui_traverse_children(ptr, &index);
 
   max_index[current_menu] = index;
 
   if (menu_cursor[current_menu] >= max_index[current_menu]) {
     menu_cursor[current_menu] = max_index[current_menu] - 1;
+    cursor_pos_updated();
   }
 }
 
@@ -914,9 +937,14 @@ struct menu_item *ui_pop_menu(void) {
   ui_clear_menu(current_menu);
   current_menu--;
 
-  if (menu_to_pop->on_value_changed) {
-    // Notify pop happened
-    menu_to_pop->on_value_changed(menu_to_pop);
+  if (menu_to_pop->on_popped_off) {
+    // Notify pop happened (new_root/old_root)
+    menu_to_pop->on_popped_off(&menu_roots[current_menu], menu_to_pop);
+  }
+
+  if (menu_roots[current_menu].on_popped_to) {
+    // Notify pop happened (new_root/old_root)
+    menu_to_pop->on_popped_to(&menu_roots[current_menu], menu_to_pop);
   }
 
   if (current_menu < 0) {
@@ -942,6 +970,8 @@ struct menu_item *ui_push_menu(int w_chars, int h_chars) {
 
   // Client must set callback on each push so clear here.
   menu_roots[current_menu].on_value_changed = NULL;
+  menu_roots[current_menu].on_popped_off = NULL;
+  menu_roots[current_menu].on_popped_to = NULL;
 
   // Set dimensions
   int menu_width = w_chars * 8;
@@ -1001,18 +1031,6 @@ void ui_info(const char *format, ...) {
   ui_render_single_frame();
 }
 
-int ui_num_menu_items(void) {
-  struct menu_item *menu = &menu_roots[current_menu];
-
-  struct menu_item *child = menu->first_child;
-  int count = 0;
-  while (child != NULL) {
-    count++;
-    child = child->next;
-  }
-  return count;
-}
-
 // These nav functions are really inefficient...but oh well.
 void ui_page_down() {
   for (int n=0;n<menu_height_chars;n++) {
@@ -1043,16 +1061,51 @@ void ui_find_first(char letter) {
   int start_index = menu_cursor[current_menu];
 
   while(1) {
+    // Move down or wrap around to the top if we hit the bottom.
     if (menu_cursor[current_menu] >= max_index[current_menu] - 1) {
        ui_to_top();
     } else {
        ui_action(ACTION_Down);
     }
 
+    // Did we get back to where we started? Bail.
     if (menu_cursor[current_menu] == start_index) break;
 
-    ui_t();
+    // We need to recompute max_index and the cursor after each move.
+    ui_traverse();
+
+    // Did this match our criteria? Bail.
     char *name = menu_cursor_item[current_menu]->name;
     if (name[0] != '\0' && tolower(name[0]) == letter) break;
   }
+}
+
+// Meant to be called immediately after a menu push to position
+// the cursor to a known location. Also useful after a call to
+// ui_to_top() to do the same.
+void ui_set_cur_pos(int pos) {
+  while(menu_cursor[current_menu] < pos && 
+        menu_cursor[current_menu] < max_index[current_menu] - 1) {
+    ui_action(ACTION_Down);
+
+    // We need to recompute max_index and the cursor after each move.
+    ui_traverse();
+  }
+}
+
+struct menu_item* ui_find_item_by_id(struct menu_item *node, int id) {
+  if (node == NULL) {
+    return NULL;
+  }
+
+  while (node != NULL) {
+    if (node->id == id) return node;
+    if (node->type == FOLDER) {
+       struct menu_item *found = ui_find_item_by_id(node->first_child, id);
+       if (found) return found;
+    }
+    node = node->next;
+  }
+
+  return NULL;
 }

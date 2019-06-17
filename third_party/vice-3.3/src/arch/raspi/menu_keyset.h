@@ -1,5 +1,5 @@
 /*
- * joy.h
+ * menu_keyset.h
  *
  * Written by
  *  Randy Rossi <randy.rossi@gmail.com>
@@ -24,35 +24,20 @@
  *
  */
 
-#ifndef VICE_JOY_H
-#define VICE_JOY_H
+#include "ui.h"
 
-#include "circle.h"
+#ifndef VICE_MENU_KEYSET_H
+#define VICE_MENU_KEYSET_H
 
-#define MAX_JOY_PORTS 2
-#define MAX_USB_BUTTONS 16
-#define MAX_USB_AXES 16
-#define MAX_USB_HATS 6
-#define MAX_USB_PADS 2
+// Indices into keyset_codes array in menu.c
+#define KEYSET_UP 0
+#define KEYSET_DOWN 1
+#define KEYSET_LEFT 2
+#define KEYSET_RIGHT 3
+#define KEYSET_FIRE 4
+#define KEYSET_POTX 5
+#define KEYSET_POTY 6
 
-int joy_arch_init(void);
-
-extern void joystick_close(void);
-extern void joystick(void);
-extern void old_joystick_init(void);
-extern void old_joystick_close(void);
-extern void old_joystick(void);
-extern void new_joystick_init(void);
-extern void new_joystick_close(void);
-extern void new_joystick(void);
-
-extern int joy_num_pads;
-extern int joy_num_axes[MAX_USB_PADS];
-extern int joy_num_hats[MAX_USB_PADS];
-extern int joy_num_buttons[MAX_USB_PADS];
-extern unsigned joy_prev_buttons[MAX_USB_PADS];
-
-int joy_key_up(unsigned int device, int key);
-int joy_key_down(unsigned int device, int key);
+void build_keyset_menu(int num, struct menu_item *parent);
 
 #endif

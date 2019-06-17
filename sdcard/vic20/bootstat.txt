@@ -8,7 +8,7 @@ stat,basic,8192
 stat,chargen,4096
 stat,d1541II,16384
 fail,rpi_pos.vkm,0
-fail,fliplist-C64.vfl,0
+fail,fliplist-VIC20.vfl,0
 fail,mps803,0
 fail,mps803.vpl,0
 fail,nl10-cbm,0

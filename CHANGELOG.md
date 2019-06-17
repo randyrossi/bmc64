@@ -166,7 +166,7 @@
     best to confirm you are using the new cmdline.txt settings. This change
     'zooms' the video in a bit so more of the screen is used.  It also looks
     better on composite out.
- 
+
   * Moved bootstat.txt into machine dirs so they can be different for machines
   * Fixed C128 kernal/basic/chargen ROM load menu options
   * Fixed bug where POT Y Up/Down values could not be set
@@ -177,3 +177,14 @@
     for real keyboard users
   * Added first letter search in menus (press a letter and cursor will jump
     to next occurrence of an item that starts with that letter).
+
+## 2.0
+  * Fixed default values for bootstat for each machine
+  * Added Menu Back/Run Stop usb button for easier menu nav from gamepad
+  * Handled real keyboard scan into ui
+  * Add custom keysets for joysticks
+  * Add cuttom key bindings for usb buttons
+  * Remember last cursor position in file lists
+  * Fixed badling named cycles_per_refresh to cycles_per_second
+    (but old name still works)
+  * Put canvas height back to 288 for C64

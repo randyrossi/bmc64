@@ -37,6 +37,9 @@
 
 #include <sys/types.h>
 
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
 #define MACHINE_TIMING_NTSC_HDMI 0
 #define MACHINE_TIMING_PAL_HDMI 1
 #define MACHINE_TIMING_NTSC_COMPOSITE 2
@@ -48,7 +51,10 @@
 #define USB_PREF_HAT 1
 
 // Make sure does not exceed max choices in ui.h
-#define NUM_BUTTON_ASSIGNMENTS 17
+#define NUM_BUTTON_ASSIGNMENTS 24
+
+// NOTE: BTN_ASSIGN_* are used as indices into choice
+// arrays.
 #define BTN_ASSIGN_UNDEF 0
 #define BTN_ASSIGN_FIRE 1
 #define BTN_ASSIGN_MENU 2
@@ -71,6 +77,18 @@
 #define BTN_ASSIGN_RESET_HARD 15
 #define BTN_ASSIGN_RESET_SOFT 16
 
+// More just for usb buttons
+#define BTN_ASSIGN_RUN_STOP_BACK 17
+#define BTN_ASSIGN_CUSTOM_KEY_1 18
+#define BTN_ASSIGN_CUSTOM_KEY_2 19
+#define BTN_ASSIGN_CUSTOM_KEY_3 20
+#define BTN_ASSIGN_CUSTOM_KEY_4 21
+#define BTN_ASSIGN_CUSTOM_KEY_5 22
+#define BTN_ASSIGN_CUSTOM_KEY_6 23
+
+// These are intermediate values not meant to
+// be directly assigned to buttons. Never used as
+// an index into anything.
 #define BTN_ASSIGN_RESET_HARD2 916
 #define BTN_ASSIGN_RESET_SOFT2 918
 
@@ -172,7 +190,8 @@ extern int menu_wants_raw_usb(void);
 extern void menu_raw_usb(int device, unsigned buttons, const int hats[6],
                          const int axes[16]);
 
-extern int circle_button_function(int dev, unsigned button_value);
+extern int circle_button_function(int device, int button_num, unsigned buttons,
+                                  int* btn_assignment, int* is_press);
 extern int circle_add_button_values(int dev, unsigned button_value);
 
 extern void circle_lock_acquire();
@@ -196,5 +215,6 @@ extern void circle_emu_quick_func_interrupt(int button_assignment);
 extern void circle_keyboard_set_latch_keyarr(int row, int col, int value);
 extern int circle_use_pcb(void);
 extern int circle_num_joysticks(void);
+extern long circle_key_binding(int slot);
 
 #endif

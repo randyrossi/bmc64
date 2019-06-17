@@ -78,3 +78,6 @@
 # Vice settings persist to vice.ini
 # Boot with Resid with key/joy delaytest attached as cart
  * Delay should still be ~80ms (was bug with rel < 1.6)
+* Custom keysets , test pot x works with SMB
+* Test button assignments for key bindings honor up/down
+* Button assignments for dirs should work in ui too

@@ -76,7 +76,7 @@ int raspi_warp = 0;
 static int raspi_boot_warp = 1;
 static int fix_sid = 0;
 
-extern struct joydev_config joydevs[2];
+extern struct joydev_config joydevs[MAX_JOY_PORTS];
 
 int pending_emu_key_head = 0;
 int pending_emu_key_tail = 0;

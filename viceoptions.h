@@ -47,7 +47,7 @@ public:
   bool GetDemoMode(void) const;
   int GetDiskPartition(void) const;
   const char *GetDiskVolume(void) const;
-  unsigned long GetCyclesPerRefresh(void) const;
+  unsigned long GetCyclesPerSecond(void) const;
   TVCHIQSoundDestination GetAudioOut(void) const;
 
   static ViceOptions *Get(void);
@@ -75,7 +75,7 @@ private:
   bool m_bDemoMode;
   int m_disk_partition;
   char m_disk_volume[VOLUME_NAME_LEN];
-  unsigned long m_nCyclesPerRefresh;
+  unsigned long m_nCyclesPerSecond;
   TVCHIQSoundDestination m_audioOut;
 
   static ViceOptions *s_pThis;

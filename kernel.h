@@ -39,7 +39,6 @@
 #include <vc4/vchiq/vchiqdevice.h>
 
 extern "C" {
-
 #include "third_party/vice-3.3/src/arch/raspi/circle.h"
 #include "third_party/vice-3.3/src/arch/raspi/keycodes.h"
 #include "third_party/vice-3.3/src/main.h"
@@ -92,8 +91,6 @@ private:
   int ReadDebounced(int pinIndex);
   void ScanKeyboard();
   void ReadJoystick(int device, bool usePcb);
-
-  static bool uiShift;
 
   CScheduler mScheduler;
   CVCHIQDevice mVCHIQ;

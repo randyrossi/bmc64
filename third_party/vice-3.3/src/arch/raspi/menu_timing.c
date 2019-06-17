@@ -67,12 +67,13 @@ static char instructions[NUM_TIMING_LINES][40] = {
     "reported, edit cmdline.txt and",
     "change the machine_timing parameter",
     "to pal-custom or ntsc-custom, add",
-    "cycles_per_refresh=######## with the",
+    "cycles_per_second=######## with the",
     "value and restart.",
 };
 
 // When countdown dialog is popped, turn off the test
-static void calc_popped(struct menu_item *item) {
+static void calc_popped(struct menu_item *new_root,
+                        struct menu_item *old_root) {
 
   if (hdmi_timing_active) {
     // User bailed. Don't try to calculate anything.
@@ -100,7 +101,7 @@ static void calc_popped(struct menu_item *item) {
     ui_menu_add_divider(root);
     ui_menu_add_button(MENU_TEXT, root, timing_str);
     tmp_item = ui_menu_add_button(MENU_TEXT, root, "");
-    sprintf(tmp_item->name, "cycles_per_refresh=%d", calculate_timing(fps));
+    sprintf(tmp_item->name, "cycles_per_second=%d", calculate_timing(fps));
     ui_menu_add_divider(root);
     tmp_item = ui_menu_add_button(MENU_TEXT, root, "");
     sprintf(tmp_item->name, "Actual fps = %f", fps);
@@ -114,7 +115,7 @@ static void calc_popped(struct menu_item *item) {
 // Begin running the test
 static void run_calc() {
   struct menu_item *root = ui_push_menu(30, 1);
-  root->on_value_changed = calc_popped;
+  root->on_popped_off = calc_popped;
   g_countdown_item = ui_menu_add_button(MENU_TEXT, root, "Seconds remaining:");
   hdmi_timing_active = 1;
   hdmi_timing_start = circle_get_ticks();

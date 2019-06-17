@@ -30,7 +30,7 @@
 #include "videoarch.h"
 
 #define NUM_MENU_ROOTS 5
-#define MAX_CHOICES 20
+#define MAX_CHOICES 32
 #define MAX_MENU_STR 36
 #define MAX_FN_NAME 20 // only limit for new file names
 
@@ -110,6 +110,19 @@ struct menu_item {
   int menu_height;
   int menu_left;
   int menu_top;
+
+  void (*cursor_listener_func)(struct menu_item* parent, int);
+
+  // For menu roots only, called on menu being popped off the stack (old_root)
+  // By the time this is called, the popped root has already been cleared of
+  // all its children.
+  void (*on_popped_off)(struct menu_item* old_root,
+                        struct menu_item* new_root);
+  // For menu roots only, called on the menu being made visible after a pop
+  // (new_root). By the time this is called, the popped root has already been
+  // cleared of all its children.
+  void (*on_popped_to)(struct menu_item* old_root,
+                       struct menu_item* new_root);
 };
 
 struct menu_item *ui_menu_add_toggle(int id, struct menu_item *folder,
@@ -166,16 +179,20 @@ struct menu_item *ui_pop_menu(void);
 // Pass in -1,-1 for a full screen menu.
 struct menu_item *ui_push_menu(int w_chars, int h_chars);
 
+// Sets the global on value changed function. Applies to all menu items
+// unless overridden by the item.
 void ui_set_on_value_changed_callback(
     void (*on_value_changed)(struct menu_item *));
 
 void ui_check_key();
-int ui_num_menu_items(void);
 void ui_page_down(void);
 void ui_page_up(void);
 void ui_to_top(void);
 void ui_to_bottom(void);
 void ui_find_first(char letter);
+void ui_set_cur_pos(int pos);
+
+struct menu_item* ui_find_item_by_id(struct menu_item *node, int id);
 
 volatile int ui_activated;
 
