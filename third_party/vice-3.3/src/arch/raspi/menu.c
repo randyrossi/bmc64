@@ -325,15 +325,15 @@ static void show_about() {
 
   switch (machine_class) {
   case VICE_MACHINE_C64:
-    ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v1.9");
+    ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v2.0");
     ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C64 Emulator");
     break;
   case VICE_MACHINE_C128:
-    ui_menu_add_button(MENU_TEXT, about_root, "BMC128 v1.9");
+    ui_menu_add_button(MENU_TEXT, about_root, "BMC128 v2.0");
     ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C128 Emulator");
     break;
   case VICE_MACHINE_VIC20:
-    ui_menu_add_button(MENU_TEXT, about_root, "BMVIC20 v1.9");
+    ui_menu_add_button(MENU_TEXT, about_root, "BMVIC20 v2.0");
     ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal Vic20 Emulator");
     break;
   default:
