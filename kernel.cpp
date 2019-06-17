@@ -939,18 +939,14 @@ void CKernel::circle_check_gpio() {
   if (circle_use_pcb()) {
      ScanKeyboard();
      ReadJoystick(0, TRUE);
-     if (mNumJoy > 1) {
-       ReadJoystick(1, TRUE);
-     }
+     ReadJoystick(1, TRUE);
   } else {
     if (ReadDebounced(GPIO_MENU_INDEX) == BTN_PRESS) {
       circle_key_pressed(KEYCODE_F12);
       circle_key_released(KEYCODE_F12);
     }
     ReadJoystick(0, FALSE);
-    if (mNumJoy > 1) {
-       ReadJoystick(1, FALSE);
-    }
+    ReadJoystick(1, FALSE);
   }
 }
 

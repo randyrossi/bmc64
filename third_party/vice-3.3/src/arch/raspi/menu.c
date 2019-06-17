@@ -2117,9 +2117,7 @@ void build_menu(struct menu_item *root) {
   }
 
   ui_menu_add_button(MENU_CONFIGURE_USB_0, parent, "Configure USB Joy 1...");
-  if (circle_num_joysticks() > 1) {
-     ui_menu_add_button(MENU_CONFIGURE_USB_1, parent, "Configure USB Joy 2...");
-  }
+  ui_menu_add_button(MENU_CONFIGURE_USB_1, parent, "Configure USB Joy 2...");
 
   usb_pref_0 = 0;
   usb_pref_1 = 0;

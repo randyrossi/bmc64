@@ -180,10 +180,11 @@
 
 ## 2.0
   * Fixed default values for bootstat for each machine
-  * Added Menu Back/Run Stop usb button for easier menu nav
+  * Added Menu Back/Run Stop usb button for easier menu nav from gamepad
   * Handled real keyboard scan into ui
   * Add custom keysets for joysticks
   * Add cuttom key bindings for usb buttons
   * Remember last cursor position in file lists
-  * Fixed badling names cycles_per_refresh to cycles_per_second (old incorrect name still works)
+  * Fixed badling named cycles_per_refresh to cycles_per_second
+    (but old name still works)
   * Put canvas height back to 288 for C64
