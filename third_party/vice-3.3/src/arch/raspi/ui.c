@@ -40,10 +40,12 @@
 #include <string.h>
 #include <ctype.h>
 
-volatile int ui_activated = 0;
+volatile int ui_activated;
+
+int ui_ctrl_down;
 
 // Countdown to toggle menu on/off
-int ui_toggle_pending = 0;
+int ui_toggle_pending;
 
 // One of the quick functions that can be invoked by button assignments
 int pending_emu_quick_func;
@@ -260,6 +262,9 @@ static void ui_type_char(char ch) {
 // Happens on main loop.
 static void ui_key_pressed(long key) {
   switch (key) {
+  case KEYCODE_LeftControl:
+    ui_ctrl_down = 1;
+    return;
   case KEYCODE_Up:
     ui_key_action = ACTION_Up;
     ui_key_ticks = INITIAL_ACTION_DELAY;
@@ -329,6 +334,9 @@ static void ui_key_pressed(long key) {
 // Happens on main loop. Process a key release for the ui.
 static void ui_key_released(long key) {
   switch (key) {
+  case KEYCODE_LeftControl:
+    ui_ctrl_down = 0;
+    return;
   case KEYCODE_Up:
   case KEYCODE_Down:
   case KEYCODE_Left:
@@ -344,21 +352,26 @@ static void ui_key_released(long key) {
   case KEYCODE_F12:
     ui_action(ACTION_Exit);
     return;
+  // Since FX keys are also used for hotkeys,
+  // best not to perform these ui functions if
+  // the cntrl key is down. It may trigger a
+  // hotkey function and we don't want these
+  // to happen as well.
   case KEYCODE_Home:
   case KEYCODE_F1:
-    ui_to_top();
+    if (!ui_ctrl_down) ui_to_top();
     return;
   case KEYCODE_End:
   case KEYCODE_F7:
-    ui_to_bottom();
+    if (!ui_ctrl_down) ui_to_bottom();
     return;
   case KEYCODE_PageUp:
   case KEYCODE_F3:
-    ui_page_up();
+    if (!ui_ctrl_down) ui_page_up();
     return;
   case KEYCODE_PageDown:
   case KEYCODE_F5:
-    ui_page_down();
+    if (!ui_ctrl_down) ui_page_down();
     return;
   case KEYCODE_LeftShift:
     keyboard_shift &= ~1;

@@ -532,10 +532,11 @@ void CKernel::ScanKeyboard() {
       // Read PB line
       int val = gpioPins[kbdPB + 8]->Read();
 
+      // My PA/PB to keycode matrix is transposed and I'm too lazy to fix
+      // it. Just swap PB and PA here for the keycode lookup.
+      long keycode = kbdMatrixKeyCodes[kbdPB][kbdPA];
+
       if (ui_activated) {
-        // My PA/PB to keycode matrix is transposed and I'm too lazy to fix
-        // it. Just swap PB and PA here for the keycode lookup.
-        long keycode = kbdMatrixKeyCodes[kbdPB][kbdPA];
         if (val == LOW && kbdMatrixStates[kbdPA][kbdPB] == HIGH) {
           if (keycode == KEYCODE_LeftShift) {
              uiLeftShift = true;
@@ -544,11 +545,11 @@ void CKernel::ScanKeyboard() {
           }
 
           if (keycode == KEYCODE_Right && (uiLeftShift || uiRightShift)) {
-             circle_ui_key_interrupt(KEYCODE_Left, 1);
+             circle_key_pressed(KEYCODE_Left);
           } else if (keycode == KEYCODE_Down && (uiLeftShift || uiRightShift)) {
-             circle_ui_key_interrupt(KEYCODE_Up, 1);
+             circle_key_pressed(KEYCODE_Up);
           } else {
-             circle_ui_key_interrupt(keycode, 1);
+             circle_key_pressed(keycode);
           }
         } else if (val == HIGH && kbdMatrixStates[kbdPA][kbdPB] == LOW) {
           if (keycode == KEYCODE_LeftShift) {
@@ -557,11 +558,11 @@ void CKernel::ScanKeyboard() {
              uiRightShift = false;
           }
           if (keycode == KEYCODE_Right && (uiLeftShift || uiRightShift)) {
-             circle_ui_key_interrupt(KEYCODE_Left, 0);
+             circle_key_released(KEYCODE_Left);
           } else if (keycode == KEYCODE_Down && (uiLeftShift || uiRightShift)) {
-             circle_ui_key_interrupt(KEYCODE_Up, 0);
+             circle_key_released(KEYCODE_Up);
           } else {
-             circle_ui_key_interrupt(keycode, 0);
+             circle_key_released(keycode);
           }
         }
       } else {
@@ -569,9 +570,9 @@ void CKernel::ScanKeyboard() {
         // the handle functions directly in kbd.c so we can invoke the
         // same hotkey funcs.
         if (val == LOW && kbdMatrixStates[kbdPA][kbdPB] == HIGH) {
-          circle_keyboard_set_latch_keyarr(kbdPA, kbdPB, 1);
+          circle_key_pressed(keycode);
         } else if (val == HIGH && kbdMatrixStates[kbdPA][kbdPB] == LOW) {
-          circle_keyboard_set_latch_keyarr(kbdPA, kbdPB, 0);
+          circle_key_released(keycode);
         }
       }
       kbdMatrixStates[kbdPA][kbdPB] = val;
