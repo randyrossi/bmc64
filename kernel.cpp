@@ -38,14 +38,14 @@ static bool kbdMatrixStates[8][8];
 // These are only for translating row/col scans into equivalent USB codes
 // for the ui.
 static long kbdMatrixKeyCodes[8][8] = {
- {KEYCODE_1, KEYCODE_3, KEYCODE_5, KEYCODE_7, KEYCODE_9, KEYCODE_Dash, KEYCODE_Insert, KEYCODE_Backspace},
- {KEYCODE_BackQuote, KEYCODE_w, KEYCODE_r, KEYCODE_y, KEYCODE_i, KEYCODE_p, KEYCODE_RightBracket, KEYCODE_Return},
- {KEYCODE_Tab, KEYCODE_a, KEYCODE_d, KEYCODE_g, KEYCODE_j, KEYCODE_l, KEYCODE_SingleQuote, KEYCODE_Right},
- {KEYCODE_Escape, KEYCODE_LeftShift, KEYCODE_x, KEYCODE_v, KEYCODE_n, KEYCODE_Comma, KEYCODE_Slash, KEYCODE_Down},
- {KEYCODE_Space, KEYCODE_z, KEYCODE_c, KEYCODE_b, KEYCODE_m, KEYCODE_Period, KEYCODE_RightShift, KEYCODE_F1},
- {KEYCODE_LeftControl, KEYCODE_s, KEYCODE_f, KEYCODE_h, KEYCODE_k, KEYCODE_SemiColon, KEYCODE_BackSlash, KEYCODE_F3},
- {KEYCODE_q, KEYCODE_e, KEYCODE_t, KEYCODE_u, KEYCODE_o, KEYCODE_LeftBracket, KEYCODE_Delete, KEYCODE_F5},
- {KEYCODE_2, KEYCODE_4, KEYCODE_6, KEYCODE_8, KEYCODE_0, KEYCODE_Equals, KEYCODE_Home, KEYCODE_F7},
+ {KEYCODE_Backspace, KEYCODE_3,         KEYCODE_5, KEYCODE_7, KEYCODE_9, KEYCODE_Dash,        KEYCODE_Insert,       KEYCODE_1},
+ {KEYCODE_Return,    KEYCODE_w,         KEYCODE_r, KEYCODE_y, KEYCODE_i, KEYCODE_p,           KEYCODE_RightBracket, KEYCODE_BackQuote},
+ {KEYCODE_Right,     KEYCODE_a,         KEYCODE_d, KEYCODE_g, KEYCODE_j, KEYCODE_l,           KEYCODE_SingleQuote,  KEYCODE_Tab},
+ {KEYCODE_F7,        KEYCODE_4,         KEYCODE_6, KEYCODE_8, KEYCODE_0, KEYCODE_Equals,      KEYCODE_Home,         KEYCODE_2},
+ {KEYCODE_F1,        KEYCODE_z,         KEYCODE_c, KEYCODE_b, KEYCODE_m, KEYCODE_Period,      KEYCODE_RightShift,   KEYCODE_Space},
+ {KEYCODE_F3,        KEYCODE_s,         KEYCODE_f, KEYCODE_h, KEYCODE_k, KEYCODE_SemiColon,   KEYCODE_BackSlash,    KEYCODE_LeftControl},
+ {KEYCODE_F5,        KEYCODE_e,         KEYCODE_t, KEYCODE_u, KEYCODE_o, KEYCODE_LeftBracket, KEYCODE_Delete,       KEYCODE_q},
+ {KEYCODE_Down,      KEYCODE_LeftShift, KEYCODE_x, KEYCODE_v, KEYCODE_n, KEYCODE_Comma,       KEYCODE_Slash,        KEYCODE_Escape},
 };
 static int kbdRestoreState;
 
@@ -532,10 +532,9 @@ void CKernel::ScanKeyboard() {
       // Read PB line
       int val = gpioPins[kbdPB + 8]->Read();
 
-      // NOTE: PA pins 7 and 0 are swapped out of order
-      // NOTE: PB pins 3 and 7 are swapped out of order
-
       if (ui_activated) {
+        // My PA/PB to keycode matrix is transposed and I'm too lazy to fix
+        // it. Just swap PB and PA here for the keycode lookup.
         long keycode = kbdMatrixKeyCodes[kbdPB][kbdPA];
         if (val == LOW && kbdMatrixStates[kbdPA][kbdPB] == HIGH) {
           if (keycode == KEYCODE_LeftShift) {
