@@ -1,5 +1,5 @@
 //
-// viceapp.c
+// viceapp.cpp
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
 // limitations under the License.
 
 #include "viceapp.h"
+
+#include "bcm_host.h"
 
 #if defined(RASPI_C64)
 int dflt_bootStatNum = 19;
@@ -89,6 +91,169 @@ int dflt_bootStatSize[] = {8192, 8192, 4096, 16384, 0, 0, 0, 0, 0, 0, 0,
   #error Unknown RASPI_ variant
 #endif
 
+//
+// ViceApp impl
+//
+
+bool ViceApp::Initialize(void) {
+  if (!mSerial.Initialize(115200)) {
+    return false;
+  }
+
+  // Initialize our replacement newlib stdio. Give it
+  // a pointer to our serial device so we can use printf
+  // to serial as soon as possible.
+  CGlueStdioInit(&mSerial);
+
+  if (!mInterrupt.Initialize()) {
+    return false;
+  }
+
+  return true;
+}
+
+//
+// ViceScreenApp impl
+//
+
+bool ViceScreenApp::Initialize(void) {
+  if (!ViceApp::Initialize()) {
+    return false;
+  }
+
+  if (!mScreen.Initialize()) {
+    return false;
+  }
+
+  if (!mLogger.Initialize(&mScreen)) {
+    return false;
+  }
+
+  if (!mEmulatorCore.Initialize()) {
+    return false;
+  }
+
+  if (!mTimer.Initialize()) {
+    return false;
+  }
+
+  if (!mGPIOManager.Initialize()) {
+    return false;
+  }
+
+  if (!mVCHIQ.Initialize()) {
+    return false;
+  }
+
+  SetupGPIO();
+
+  return true;
+}
+
+void ViceScreenApp::SetupGPIO() {
+  // PA - Set to output-low for when scanning each
+  // row. Otherwise set to input-pullup.
+  // Note: Lines 0 and 7 are swapped. The order here is
+  // from keyboard connector pins 20 down to 13.
+
+  // Connector Pin 20 - PA7
+  gpioPins[7] =
+      new CGPIOPin(26, GPIOModeInputPullUp, &mGPIOManager);
+  // Connector Pin 19 - PA1
+  gpioPins[1] =
+      new CGPIOPin(20, GPIOModeInputPullUp, &mGPIOManager);
+  // Connector Pin 18 - PA2
+  gpioPins[2] =
+      new CGPIOPin(19, GPIOModeInputPullUp, &mGPIOManager);
+  // Connector Pin 17 - PA3
+  gpioPins[3] =
+      new CGPIOPin(16, GPIOModeInputPullUp, &mGPIOManager);
+  // Connector Pin 16 - PA4
+  gpioPins[4] =
+      new CGPIOPin(13, GPIOModeInputPullUp, &mGPIOManager);
+  // Connector Pin 15 - PA5
+  gpioPins[5] =
+      new CGPIOPin(6, GPIOModeInputPullUp, &mGPIOManager);
+  // Connector Pin 14 - PA6
+  gpioPins[6] =
+      new CGPIOPin(12, GPIOModeInputPullUp, &mGPIOManager);
+  // Connector Pin 13 - PA0
+  gpioPins[0] =
+      new CGPIOPin(5, GPIOModeInputPullUp, &mGPIOManager);
+
+  // PB - Always input-pullup for read during kbd scan or joy port 1
+  // Note: Lines 3 and 7 are swapped. The order here is from
+  // keyboard connector pins 12 down to 5
+
+  // Connector Pin 12 - PB 0
+  gpioPins[8] =
+      new CGPIOPin(8, GPIOModeInputPullUp, &mGPIOManager);
+  // Connector Pin 11 - PB 1
+  gpioPins[9] =
+      new CGPIOPin(25, GPIOModeInputPullUp, &mGPIOManager);
+  // Connector Pin 10 - PB 2
+  gpioPins[10] =
+      new CGPIOPin(24, GPIOModeInputPullUp, &mGPIOManager);
+  // Connector Pin 9 - PB 7
+  gpioPins[15] =
+      new CGPIOPin(22, GPIOModeInputPullUp, &mGPIOManager);
+  // Connector Pin 8 - PB 4
+  gpioPins[12] =
+      new CGPIOPin(23, GPIOModeInputPullUp, &mGPIOManager);
+  // Connector Pin 7 - PB 5
+  gpioPins[13] =
+      new CGPIOPin(27, GPIOModeInputPullUp, &mGPIOManager);
+  // Connector Pin 6 - PB 6
+  gpioPins[14] =
+      new CGPIOPin(17, GPIOModeInputPullUp, &mGPIOManager);
+  // Connector Pin 5 - PB 3
+  gpioPins[11] =
+      new CGPIOPin(18, GPIOModeInputPullUp, &mGPIOManager);
+
+  // A few more special pins
+  gpioPins[GPIO_KBD_RESTORE_INDEX] =
+      new CGPIOPin(GPIO_KBD_RESTORE, GPIOModeInputPullUp, &mGPIOManager);
+  gpioPins[GPIO_JS1_SELECT_INDEX] =
+      new CGPIOPin(GPIO_JS1_SELECT, GPIOModeInputPullUp, &mGPIOManager);
+  gpioPins[GPIO_JS2_SELECT_INDEX] =
+      new CGPIOPin(GPIO_JS2_SELECT, GPIOModeInputPullUp, &mGPIOManager);
+
+  // Convenience arrays for joysticks
+  joystickPins1[JOY_UP] = gpioPins[GPIO_JOY_1_UP_INDEX];
+  joystickPins1[JOY_DOWN] = gpioPins[GPIO_JOY_1_DOWN_INDEX];
+  joystickPins1[JOY_LEFT] = gpioPins[GPIO_JOY_1_LEFT_INDEX];
+  joystickPins1[JOY_RIGHT] = gpioPins[GPIO_JOY_1_RIGHT_INDEX];
+  joystickPins1[JOY_FIRE] = gpioPins[GPIO_JOY_1_FIRE_INDEX];
+
+  joystickPins2[JOY_UP] = gpioPins[GPIO_JOY_2_UP_INDEX];
+  joystickPins2[JOY_DOWN] = gpioPins[GPIO_JOY_2_DOWN_INDEX];
+  joystickPins2[JOY_LEFT] = gpioPins[GPIO_JOY_2_LEFT_INDEX];
+  joystickPins2[JOY_RIGHT] = gpioPins[GPIO_JOY_2_RIGHT_INDEX];
+  joystickPins2[JOY_FIRE] = gpioPins[GPIO_JOY_2_FIRE_INDEX];
+
+  noPCBJoystickPins1[JOY_UP] = gpioPins[GPIO_NOPCB_JOY_1_UP_INDEX];
+  noPCBJoystickPins1[JOY_DOWN] = gpioPins[GPIO_NOPCB_JOY_1_DOWN_INDEX];
+  noPCBJoystickPins1[JOY_LEFT] = gpioPins[GPIO_NOPCB_JOY_1_LEFT_INDEX];
+  noPCBJoystickPins1[JOY_RIGHT] = gpioPins[GPIO_NOPCB_JOY_1_RIGHT_INDEX];
+  noPCBJoystickPins1[JOY_FIRE] = gpioPins[GPIO_NOPCB_JOY_1_FIRE_INDEX];
+
+  noPCBJoystickPins2[JOY_UP] = gpioPins[GPIO_NOPCB_JOY_2_UP_INDEX];
+  noPCBJoystickPins2[JOY_DOWN] = gpioPins[GPIO_NOPCB_JOY_2_DOWN_INDEX];
+  noPCBJoystickPins2[JOY_LEFT] = gpioPins[GPIO_NOPCB_JOY_2_LEFT_INDEX];
+  noPCBJoystickPins2[JOY_RIGHT] = gpioPins[GPIO_NOPCB_JOY_2_RIGHT_INDEX];
+  noPCBJoystickPins2[JOY_FIRE] = gpioPins[GPIO_NOPCB_JOY_2_FIRE_INDEX];
+}
+
+#define WIDTH 200
+#define HEIGHT 200
+#ifndef ALIGN_UP
+#define ALIGN_UP(x,y)  ((x + (y)-1) & ~((y)-1))
+#endif
+
+//
+// ViceStdioApp impl
+//
+
 void ViceStdioApp::InitBootStat() {
   FILE *fp;
 #if defined(RASPI_C64)
@@ -161,4 +326,80 @@ void ViceStdioApp::InitBootStat() {
 
 void ViceStdioApp::DisableBootStat() {
   CGlueStdioInitBootStat(0, nullptr, nullptr, nullptr);
+}
+
+bool ViceStdioApp::Initialize(void) {
+  if (!ViceScreenApp::Initialize()) {
+    return false;
+  }
+
+  if (!mEMMC.Initialize()) {
+    return false;
+  }
+
+  int partition = mViceOptions.GetDiskPartition();
+  int ss = 0;
+  if (partition > 4) {
+    // User is forcing a start sector by specifying
+    // a partition above 4. Tell glue code partition
+    // is 5 and this will set the start sector to what
+    // they provided when the disk is mounted.
+    ss = partition;
+    partition = 5;
+  }
+
+  // When mounting, fatfs gets ":" appended.  But StdioInit
+  // does not.
+  const char *volumeName = mViceOptions.GetDiskVolume();
+  char fatFsVol[VOLUME_NAME_LEN];
+  strncpy(fatFsVol, volumeName, VOLUME_NAME_LEN - 2);
+  strcat(fatFsVol, ":");
+
+  CGlueStdioSetPartitionForVolume(volumeName, partition, ss);
+
+  if (f_mount(&mFileSystem, fatFsVol, 1) != FR_OK) {
+    mLogger.Write(GetKernelName(), LogError, "Cannot mount partition: %s",
+                  fatFsVol);
+    return false;
+  }
+
+  InitBootStat();
+
+  // Now that emmc is initialized, launch
+  // the emulator main loop on CORE 1 before DWHCI.
+  char timing_option[8];
+  int timing_int = mViceOptions.GetMachineTiming();
+  if (timing_int == MACHINE_TIMING_NTSC_HDMI ||
+      timing_int == MACHINE_TIMING_NTSC_COMPOSITE) {
+    strcpy(timing_option, "-ntsc");
+  } else {
+    strcpy(timing_option, "-pal");
+  }
+
+  mEmulatorCore.LaunchEmulator(timing_option);
+
+  // This takes 1.5 seconds to init.
+  if (!mDWHCI.Initialize()) {
+    return false;
+  }
+
+  if (!mConsole.Initialize()) {
+    return false;
+  }
+
+  return true;
+}
+
+void ViceStdioApp::Cleanup(void) {
+  // When mounting, fatfs gets ":" appended.  But StdioInit
+  // does not.
+  const char *volumeName = mViceOptions.GetDiskVolume();
+  char fatFsVol[VOLUME_NAME_LEN];
+  strncpy(fatFsVol, volumeName, VOLUME_NAME_LEN - 2);
+  strcat(fatFsVol, ":");
+
+  if (f_mount(0, fatFsVol, 0) != FR_OK) {
+    mLogger.Write(GetKernelName(), LogError, "Cannot unmount drive");
+  }
+  ViceScreenApp::Cleanup();
 }

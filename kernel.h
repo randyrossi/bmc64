@@ -92,8 +92,6 @@ private:
   void ScanKeyboard();
   void ReadJoystick(int device, bool usePcb);
 
-  CScheduler mScheduler;
-  CVCHIQDevice mVCHIQ;
   ViceSound *mViceSound;
   CCPUThrottle mCPUThrottle;
   CSpinLock m_Lock;

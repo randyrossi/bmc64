@@ -173,7 +173,7 @@ int circle_cycles_per_sec() {
 
 
 CKernel::CKernel(void)
-    : ViceStdioApp("vice"), mVCHIQ(&mMemory, &mInterrupt), mViceSound(nullptr),
+    : ViceStdioApp("vice"), mViceSound(nullptr),
       mNumJoy(circle_num_joysticks()) {
   static_kernel = this;
   mod_states = 0;
@@ -738,14 +738,6 @@ int CKernel::circle_sound_init(const char *param, int *speed, int *fragsize,
   *channels = 1;
 
   if (!mViceSound) {
-    // After parallelizing circle + vice init routine, we have to init vchiq
-    // here on core 1 instead of the circle init on core 0.  Not sure why it
-    // fails but the device is not found otherwise.
-    if (!mVCHIQ.Initialize()) {
-      printf("ERROR: Could not init VCHIQ\n");
-      return 0;
-    }
-
     mViceSound = new ViceSound(&mVCHIQ, mViceOptions.GetAudioOut());
     mViceSound->Playback();
   }

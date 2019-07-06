@@ -19,6 +19,8 @@
 #include <circle/logger.h>
 #include <circle/sched/scheduler.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define VOLUME_TO_CHIP(volume) ((unsigned)-(((volume) << 8) / 100))
 
@@ -36,6 +38,9 @@ ViceSoundBaseDevice::ViceSoundBaseDevice(CVCHIQDevice *pVCHIQDevice,
   assert(Destination < VCHIQSoundDestinationUnknown);
 
   CDeviceNameService::Get()->AddDevice("sndvchiq", this, FALSE);
+
+  p_buffer = (s16*) malloc(sizeof(s16) * nChunkSize);
+  memset(p_buffer, 0, sizeof(s16) * nChunkSize);
 }
 
 ViceSoundBaseDevice::~ViceSoundBaseDevice(void) { assert(0); }
@@ -292,8 +297,7 @@ int ViceSoundBaseDevice::QueueMessage(VC_AUDIO_MSG_T *pMessage) {
 }
 
 int ViceSoundBaseDevice::WriteChunk(void) {
-  s16 Buffer[m_nChunkSize];
-  unsigned nWords = GetChunk(Buffer, m_nChunkSize);
+  unsigned nWords = GetChunk(p_buffer, m_nChunkSize);
   if (nWords == 0) {
     m_State = VCHIQSoundIdle;
 
@@ -319,7 +323,7 @@ int ViceSoundBaseDevice::WriteChunk(void) {
 
   m_nWritePos += nBytes;
 
-  u8 *pBuffer8 = (u8 *)Buffer;
+  u8 *pBuffer8 = (u8 *)p_buffer;
   while (nBytes > 0) {
     unsigned nBytesToQueue =
         nBytes <= Msg.u.write.max_packet ? nBytes : Msg.u.write.max_packet;

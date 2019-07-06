@@ -30,6 +30,7 @@ ViceSound::ViceSound(CVCHIQDevice *pVCHIQDevice,
     : ViceSoundBaseDevice(pVCHIQDevice, SAMPLE_RATE, CHUNK_SIZE, Destination) {
   src_pos = 0;
   src_size = 0;
+  src_buffer = 0;
   bytes_buffered = 0;
 }
 
@@ -54,6 +55,7 @@ unsigned ViceSound::AddChunk(s16 *pBuffer, unsigned nChunkSize) {
   // buffer and flush CHUNK_SIZE packets out of it for VC4.
   src_pos = 0;
   src_buffer = pBuffer;
+
   while (nChunkSize > 0) {
     // This triggers the GetChunk call below. Yeild not required.
     src_size = nChunkSize;
@@ -79,7 +81,7 @@ unsigned ViceSound::GetChunk(s16 *pBuffer, unsigned nChunkSize) {
     CScheduler::Get()->Yield();
   }
 
-  if (src_size == 0) {
+  if (src_buffer == 0 || src_size == 0) {
     // Nothing to give? Give a silent packet.
     memset(pBuffer, 0, FRAG_SIZE * BYTES_PER_SAMPLE);
     src_size = FRAG_SIZE;

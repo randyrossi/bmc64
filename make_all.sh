@@ -72,8 +72,25 @@ cd ..
 cd vc4/vchiq
 make clean
 make 
+cd ../..
 
-cd ../../../../../../..
+cd vc4/interface/bcm_host
+make
+cd ../../..
+
+cd vc4/interface/khronos
+make
+cd ../../..
+
+cd vc4/interface/vmcs_host
+make
+cd ../../..
+
+cd vc4/interface/vcos
+make
+cd ../../..
+
+cd ../../../../..
 cd third_party/vice-3.3
 
 if [ "$1" = "pi2" ]

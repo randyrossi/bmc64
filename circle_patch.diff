@@ -1,5 +1,5 @@
 diff --git a/addon/fatfs/ff.c b/addon/fatfs/ff.c
-index 290f577..8313de3 100644
+index 253440a..194e0cc 100644
 --- a/addon/fatfs/ff.c
 +++ b/addon/fatfs/ff.c
 @@ -224,6 +224,9 @@
@@ -82,11 +82,39 @@ index 6b80534..0e3e97a 100644
  #define BUG()		assert (0)
  
  void __warn (const char *file, const int line);
+diff --git a/addon/linux/types.h b/addon/linux/types.h
+index f5068b4..9fed785 100644
+--- a/addon/linux/types.h
++++ b/addon/linux/types.h
+@@ -4,7 +4,8 @@
+ #include <circle/types.h>
+ #include <stdint.h>
+ 
+-typedef unsigned long	loff_t;
++// BMC64 - Why is this defined twice in our build?
++//typedef unsigned long	loff_t;
+ typedef int		gfp_t;
+ typedef uintptr		dma_addr_t;
+ 
+diff --git a/addon/vc4/interface/khronos/common/khrn_int_common.h b/addon/vc4/interface/khronos/common/khrn_int_common.h
+index f8c1d59..487da4b 100644
+--- a/addon/vc4/interface/khronos/common/khrn_int_common.h
++++ b/addon/vc4/interface/khronos/common/khrn_int_common.h
+@@ -139,7 +139,8 @@ extern "C" {
+ #endif
+ 
+ #include "interface/vcos/vcos_assert.h"
+-#include <string.h> /* size_t */
++// BMC64 - Why does this cause the compiler to choke?
++//#include <string.h> /* size_t */
+ 
+ #ifdef _MSC_VER
+ #define INLINE __inline
 diff --git a/include/circle/memorymap.h b/include/circle/memorymap.h
-index 538c594..1182652 100644
+index d0ae6d0..1b9e735 100644
 --- a/include/circle/memorymap.h
 +++ b/include/circle/memorymap.h
-@@ -26,7 +26,7 @@
+@@ -30,7 +30,7 @@
  	#define MEGABYTE	0x100000
  #endif
  
@@ -96,7 +124,7 @@ index 538c594..1182652 100644
  #define ARM_MEM_SIZE		(MEM_SIZE - GPU_MEM_SIZE)	// normally overwritten
  
 diff --git a/include/circle/sysconfig.h b/include/circle/sysconfig.h
-index dd5c887..b914758 100644
+index 245e069..3747245 100644
 --- a/include/circle/sysconfig.h
 +++ b/include/circle/sysconfig.h
 @@ -34,7 +34,7 @@
@@ -117,16 +145,7 @@ index dd5c887..b914758 100644
  
  #endif
  
-@@ -98,7 +98,7 @@
- // counter (which is used without this option). It reduces the I/O load
- // too. This option cannot be used with QEMU.
- 
--//#define USE_PHYSICAL_COUNTER
-+#define USE_PHYSICAL_COUNTER
- 
- #endif
- 
-@@ -123,7 +123,7 @@
+@@ -124,7 +124,7 @@
  // system timing, because it triggers up to 8000 IRQs per second. For
  // compatibility with existing applications it is not set by default.
  
@@ -135,7 +154,7 @@ index dd5c887..b914758 100644
  
  #endif
  
-@@ -132,7 +132,7 @@
+@@ -142,7 +142,7 @@
  // this option is that the "SpeedFactor" of your system is displayed.
  // You can reduce the time needed for booting, if you disable this.
  
@@ -145,10 +164,10 @@ index dd5c887..b914758 100644
  ///////////////////////////////////////////////////////////////////////
  //
 diff --git a/lib/alloc.cpp b/lib/alloc.cpp
-index caafdff..5bb691e 100644
+index eb6fe49..f6e0776 100644
 --- a/lib/alloc.cpp
 +++ b/lib/alloc.cpp
-@@ -73,7 +73,7 @@ static unsigned       s_nBlockReserve = 0x40000;
+@@ -76,7 +76,7 @@ static unsigned       s_nBlockReserve = 0x40000;
  static unsigned char *s_pNextPage;
  static unsigned char *s_pPageLimit;
  
@@ -158,11 +177,11 @@ index caafdff..5bb691e 100644
  static TPageBucket s_PageBucket;
  
 diff --git a/lib/sysinit.cpp b/lib/sysinit.cpp
-index 700c43a..e1070f2 100644
+index c8ccb5b..2c65706 100644
 --- a/lib/sysinit.cpp
 +++ b/lib/sysinit.cpp
-@@ -148,19 +148,21 @@ void sysinit (void)
- 	vfpinit ();
+@@ -175,12 +175,15 @@ void sysinit (void)
+ #endif
  
  	// clear BSS
 -	extern unsigned char __bss_start;
@@ -172,24 +191,17 @@ index 700c43a..e1070f2 100644
 -		*pBSS = 0;
 -	}
 +        asm(
-+	"ldr	r1,	=__bss_start\n\t"
-+	"ldr	r2,	=_end\n\t"
-+	"mov	r3,	#0x00\n\t"
-+        "_clear_bss:\n\t"
-+	"cmp	r1,r2\n\t"
-+	"strne 	r3,[r1],#+4\n\t"
-+	"bne 	_clear_bss\n\t"
++        "ldr    r1,     =__bss_start\n\t"
++        "ldr    r2,     =_end\n\t"
++        "mov    r3,     #0x00\n\t"
++         "_clear_bss:\n\t"
++        "cmp    r1,r2\n\t"
++        "strne  r3,[r1],#+4\n\t"
++        "bne    _clear_bss\n\t"
 +        );
  
  	CMachineInfo MachineInfo;
  
- #if STDLIB_SUPPORT >= 2
- 	CMemorySystem Memory;
- #endif
--
- 	// call construtors of static objects
- 	extern void (*__init_start) (void);
- 	extern void (*__init_end) (void);
 diff --git a/lib/usb/usbdevicefactory.cpp b/lib/usb/usbdevicefactory.cpp
 index 541aba4..9694acb 100644
 --- a/lib/usb/usbdevicefactory.cpp

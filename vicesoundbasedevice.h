@@ -126,6 +126,7 @@ private:
 
   unsigned m_nWritePos;
   unsigned m_nCompletePos;
+  s16 *p_buffer;
 };
 
 #endif

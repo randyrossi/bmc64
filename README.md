@@ -360,9 +360,9 @@ These are the git hashes for the repos under circle-stdlib this project is known
 If the patches don't apply successfully, it's possible those projects have moved forward causing incompatibilities.
 If that happens, reset these repos using "git reset HASH --hard" commands in the following directories:
 
-    circle-stdlib ea6fd459838f40586e4c60adb7a0912222a227b5
-    libs/circle a5c693117e31a567fafd3e68880071f2f8c64977
-    libs/circle-newlib 8a313d45ad5d8c0e306ce8751b6e3d6d3ef46ab3
-    libs/mbedtls 60fbd5bdf05c223b641677204469b53c2ff39d4e
+    circle-stdlib dda16112cdb5470240cd51fb33bf72b311634340
+    libs/circle 641264ed56f0f621e4b681d5eefd6a19f8adfa5e
+    libs/circle-newlib 7565e4314b5915a0dc2a7745bd18c8f7833b3f5c
+    libs/mbedtls fb1972db23da39bd11d4f9c9ea6266eee665605b
 
 # Performance numbers can be found at https://accentual.com/bmc64

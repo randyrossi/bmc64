@@ -1,8 +1,8 @@
 diff --git a/configure b/configure
-index 363cc32..0341268 100755
+index a499969..be6a274 100755
 --- a/configure
 +++ b/configure
-@@ -150,7 +150,7 @@ ARCH=$(make -n -p -f libs/circle/Rules.mk CIRCLEHOME=libs/circle | grep ^ARCH |
+@@ -160,7 +160,7 @@ ARCH=$(make -n -p -f libs/circle/Rules.mk CIRCLEHOME=libs/circle | grep ^ARCH |
      sed -e "s/\$(FLOAT_ABI)/$FLOAT_ABI/" -e 's/ARCH = //')
  
  export \
@@ -61,11 +61,11 @@ diff --git a/libs/circle b/libs/circle
 --- a/libs/circle
 +++ b/libs/circle
 @@ -1 +1 @@
--Subproject commit a5c693117e31a567fafd3e68880071f2f8c64977
-+Subproject commit a5c693117e31a567fafd3e68880071f2f8c64977-dirty
+-Subproject commit 641264ed56f0f621e4b681d5eefd6a19f8adfa5e
++Subproject commit 641264ed56f0f621e4b681d5eefd6a19f8adfa5e-dirty
 diff --git a/libs/circle-newlib b/libs/circle-newlib
 --- a/libs/circle-newlib
 +++ b/libs/circle-newlib
 @@ -1 +1 @@
--Subproject commit 8a313d45ad5d8c0e306ce8751b6e3d6d3ef46ab3
-+Subproject commit 8a313d45ad5d8c0e306ce8751b6e3d6d3ef46ab3-dirty
+-Subproject commit 7565e4314b5915a0dc2a7745bd18c8f7833b3f5c
++Subproject commit 7565e4314b5915a0dc2a7745bd18c8f7833b3f5c-dirty
