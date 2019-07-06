@@ -28,6 +28,8 @@
 
 #include "c128/c128.h"
 #include "c128/c128mem.h"
+#include "vicii.h"
+#include "vdc/vdc.h"
 
 // This maps an ascii char to the charset's index in chargen rom
 static const uint8_t char_to_screen[256] = {
@@ -127,5 +129,13 @@ unsigned int *raspi_get_palette(int index) {
   default:
     return NULL;
   }
+}
+
+int is_vic(struct video_canvas_s *canvas) {
+  return canvas == vicii_get_canvas();
+}
+
+int is_vdc(struct video_canvas_s *canvas) {
+  return canvas == vdc_get_canvas();
 }
 

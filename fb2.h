@@ -26,7 +26,10 @@ public:
   // Get a pointer to raw pixel data for this frame buffer
   void* GetPixels();
 
-  // Send raw pixel data to vc mem and show it
+  // Indicates raw pixel data has a complete frame. Upload to vc resource.
+  void FrameReady();
+
+  // Show the resource that has the last completed frame.
   void SwapBuffers();
 
   // Show the framebuffer over top the first

@@ -160,18 +160,20 @@ extern int pot_y_low_value;
 typedef void (*raspi_key_handler)(long key);
 
 extern int circle_get_machine_timing();
-extern uint8_t *circle_get_fb();
-extern int circle_get_fb_pitch();
 extern void circle_sleep(long);
-extern void circle_set_palette(uint8_t, uint16_t);
-extern void circle_update_palette();
-extern int circle_get_display_w();
-extern int circle_get_display_h();
 extern unsigned long circle_get_ticks();
-extern void circle_set_fb_y(int);
 extern void circle_wait_vsync();
 extern void circle_yield();
 extern void circle_check_gpio();
+
+// For FB1
+extern uint8_t *circle_get_fb1();
+extern int circle_get_fb1_pitch();
+extern void circle_set_fb1_palette(uint8_t, uint16_t);
+extern void circle_update_fb1_palette();
+extern int circle_get_fb1_w();
+extern int circle_get_fb1_h();
+extern void circle_set_fb1_y(int);
 
 extern void joy_set_gamepad_info(int num_pads, int num_buttons[2], int axes[2],
                                  int hats[2]);

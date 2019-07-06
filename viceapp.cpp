@@ -244,12 +244,6 @@ void ViceScreenApp::SetupGPIO() {
   noPCBJoystickPins2[JOY_FIRE] = gpioPins[GPIO_NOPCB_JOY_2_FIRE_INDEX];
 }
 
-#define WIDTH 200
-#define HEIGHT 200
-#ifndef ALIGN_UP
-#define ALIGN_UP(x,y)  ((x + (y)-1) & ~((y)-1))
-#endif
-
 //
 // ViceStdioApp impl
 //

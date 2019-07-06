@@ -130,11 +130,11 @@ int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
   canvas->palette = p;
 
   for (int i = 0; i < 16; i++) {
-    circle_set_palette(i,
+    circle_set_fb1_palette(i,
                        COLOR16(p->entries[i].red >> 3, p->entries[i].green >> 3,
                                p->entries[i].blue >> 3));
   }
-  circle_update_palette();
+  circle_update_fb1_palette();
 }
 
 // For real time video adjustments, should call this after every
@@ -148,18 +148,50 @@ static void calc_top_left() {
      video_state.src_off_x;
 }
 
+void video_arch_canvas_init(struct video_canvas_s *canvas) {
+  int i;
+
+  canvas->video_draw_buffer_callback = NULL;
+
+  uint8_t *fb = circle_get_fb1();
+  int fb_pitch = circle_get_fb1_pitch();
+  int h = circle_get_fb1_h();
+  bzero(fb, h * fb_pitch);
+
+  int timing = circle_get_machine_timing();
+  set_refresh_rate(timing, canvas);
+
+  video_state.first_refresh = 1;
+  video_state.dst_off_x = -1;
+  video_state.dst_off_y = -1;
+
+  video_freq = canvas->refreshrate * video_tick_inc;
+
+  int fb_w = circle_get_fb1_w();
+  int fb_h = circle_get_fb1_h();
+
+  video_state.canvas = canvas;
+  video_state.fb_w = fb_w;
+  video_state.fb_h = fb_h;
+  video_state.dst_pitch = fb_pitch;
+  video_state.dst = fb;
+  set_video_font(&video_state);
+  video_state.palette_index = 0;
+  video_state.offscreen_buffer_y = 0;
+  video_state.onscreen_buffer_y = fb_h;
+}
+
 struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
                                            unsigned int *width,
                                            unsigned int *height, int mapped) {
-
   // This is the actual frame buffer area we have to
   // draw into determined in config.txt.
   // It's important these don't go below the values that
   // would cause fb_w - gfx_w or fb_h - gfx_h to go
   // negative.  Otherwise, we would start cutting into
   // the graphics (non-border) area of the emulated display.
-  int fb_w = circle_get_display_w();
-  int fb_h = circle_get_display_h();
+  int fb_w = circle_get_fb1_w();
+  int fb_h = circle_get_fb1_h();
 
   // These numbers are how many X,Y pixels it takes
   // to reach the top left corner of the gfx area
@@ -269,8 +301,8 @@ struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
   video_state.dst_off_x = video_state.dst_off_x / 4 * 4;
 
   printf ("VideoInfo: FB is %dx%d \n",
-           circle_get_display_w(),
-           circle_get_display_h());
+           circle_get_fb1_w(),
+           circle_get_fb1_h());
   printf ("VideoInfo: Emulated Display is %dx%d \n",
            video_state.vis_w,
            video_state.vis_h);
@@ -287,39 +319,6 @@ struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
 
   overlay_init(video_state.vis_w, OVERLAY_H);
   return canvas;
-}
-
-void video_arch_canvas_init(struct video_canvas_s *canvas) {
-  int i;
-
-  canvas->video_draw_buffer_callback = NULL;
-
-  uint8_t *fb = circle_get_fb();
-  int fb_pitch = circle_get_fb_pitch();
-  int h = circle_get_display_h();
-  bzero(fb, h * fb_pitch);
-
-  int timing = circle_get_machine_timing();
-  set_refresh_rate(timing, canvas);
-
-  video_state.first_refresh = 1;
-  video_state.dst_off_x = -1;
-  video_state.dst_off_y = -1;
-
-  video_freq = canvas->refreshrate * video_tick_inc;
-
-  int fb_w = circle_get_display_w();
-  int fb_h = circle_get_display_h();
-
-  video_state.canvas = canvas;
-  video_state.fb_w = fb_w;
-  video_state.fb_h = fb_h;
-  video_state.dst_pitch = fb_pitch;
-  video_state.dst = fb;
-  set_video_font(&video_state);
-  video_state.palette_index = 0;
-  video_state.offscreen_buffer_y = 0;
-  video_state.onscreen_buffer_y = fb_h;
 }
 
 void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
@@ -353,7 +352,7 @@ void vsyncarch_presync(void) { kbdbuf_flush(); }
 
 void videoarch_swap() {
   // Show the region we just drew.
-  circle_set_fb_y(video_state.offscreen_buffer_y);
+  circle_set_fb1_y(video_state.offscreen_buffer_y);
   // Swap buffer ptr for next frame.
   video_state.onscreen_buffer_y = video_state.offscreen_buffer_y;
   video_state.offscreen_buffer_y =
@@ -531,9 +530,9 @@ void main_exit(void) {
   // to that effect.
 
   int i;
-  uint8_t *fb = circle_get_fb();
-  int fb_pitch = circle_get_fb_pitch();
-  int h = circle_get_display_h();
+  uint8_t *fb = circle_get_fb1();
+  int fb_pitch = circle_get_fb1_pitch();
+  int h = circle_get_fb1_h();
   bzero(fb, h * fb_pitch);
 
   video_state.font = (uint8_t *)&font8x8_basic;
@@ -557,7 +556,7 @@ void main_exit(void) {
                    fb_pitch);
   y += 8;
 
-  circle_set_palette(0, COLOR16(0, 0, 0));
-  circle_set_palette(1, COLOR16(255 >> 3, 255 >> 3, 255 >> 3));
-  circle_update_palette();
+  circle_set_fb1_palette(0, COLOR16(0, 0, 0));
+  circle_set_fb1_palette(1, COLOR16(255 >> 3, 255 >> 3, 255 >> 3));
+  circle_update_fb1_palette();
 }

@@ -58,17 +58,20 @@ public:
                                    const TGamePadState *pState);
 
   ssize_t vice_write(int fd, const void *buf, size_t count);
+
   int circle_get_machine_timing();
-  uint8_t *circle_get_fb();
-  int circle_get_fb_pitch();
   void circle_sleep(long delay);
-  void circle_set_palette(uint8_t index, uint16_t rgb565);
-  void circle_update_palette();
-  int circle_get_display_w();
-  int circle_get_display_h();
   unsigned long circle_get_ticks();
-  void circle_set_fb_y(int loc);
   void circle_wait_vsync();
+
+  uint8_t *circle_get_fb1();
+  int circle_get_fb1_pitch();
+  int circle_get_fb1_w();
+  int circle_get_fb1_h();
+  void circle_set_fb1_palette(uint8_t index, uint16_t rgb565);
+  void circle_update_fb1_palette();
+
+  void circle_set_fb1_y(int loc);
 
   int circle_sound_init(const char *param, int *speed, int *fragsize,
                         int *fragnr, int *channels);

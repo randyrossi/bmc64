@@ -142,26 +142,26 @@ void* FrameBuffer2::GetPixels() {
   return pixels_;
 }
 
-void FrameBuffer2::SwapBuffers() {
+void FrameBuffer2::FrameReady() {
   int ret;
-  DISPMANX_UPDATE_HANDLE_T dispman_update;
-
-  int offscreen_buf_num = 1 - buf_num_;
-
   vc_dispmanx_rect_set( &dst_rect_, 0, 0, width_, height_);
-
-  ret = vc_dispmanx_resource_write_data(dispman_resource_[offscreen_buf_num],
+  ret = vc_dispmanx_resource_write_data(dispman_resource_[1-buf_num_],
                                         IMG_TYPE,
                                         pitch_,
                                         pixels_,
                                         &dst_rect_);
   assert(ret == 0);
+}
+
+void FrameBuffer2::SwapBuffers() {
+  int ret;
+  DISPMANX_UPDATE_HANDLE_T dispman_update;
 
   dispman_update = vc_dispmanx_update_start(0);
   vc_dispmanx_element_change_source(dispman_update, dispman_element_,
-                                    dispman_resource_[offscreen_buf_num]);
+                                    dispman_resource_[1-buf_num_]);
   ret = vc_dispmanx_update_submit_sync(dispman_update);
   assert(ret == 0);
 
-  buf_num_ = offscreen_buf_num;
+  buf_num_ = 1-buf_num_;
 }

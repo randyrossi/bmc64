@@ -47,3 +47,7 @@ extern int get_color_tint(void);
 extern void raspi_cartridge_trigger_freeze(void);
 unsigned int *raspi_get_palette(int index);
 struct menu_item* menu_build_palette_options(struct menu_item* parent);
+
+int is_vic(struct video_canvas_s *canvas);
+int is_vdc(struct video_canvas_s *canvas);
+
