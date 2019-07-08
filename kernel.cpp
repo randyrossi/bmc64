@@ -169,12 +169,25 @@ int circle_cycles_per_sec() {
   // Always ok
   return static_kernel->circle_cycles_per_second();
 }
+
+void circle_create_fb2(int width, int height) {
+  static_kernel->circle_create_fb2(width, height);
+}
+
+void circle_show_fb2() {
+  static_kernel->circle_show_fb2();
+}
+
+void circle_hide_fb2() {
+  static_kernel->circle_hide_fb2();
+}
+
 };
 
 
 CKernel::CKernel(void)
     : ViceStdioApp("vice"), mViceSound(nullptr),
-      mNumJoy(circle_num_joysticks()) {
+      mNumJoy(circle_num_joysticks()), fb2(nullptr) {
   static_kernel = this;
   mod_states = 0;
   memset(key_states, 0, MAX_KEY_CODES * sizeof(bool));
@@ -1004,3 +1017,22 @@ int CKernel::circle_cycles_per_second() {
   }
 }
 #endif
+
+void CKernel::circle_create_fb2(int width, int height) {
+  if (fb2) {
+     delete fb2;
+  }
+  fb2 = new FrameBuffer2(width, height);   
+}
+
+void CKernel::circle_show_fb2() {
+  if (fb2) {
+    fb2->Show();
+  }
+}
+
+void CKernel::circle_hide_fb2() {
+  if (fb2) {
+    fb2->Hide();
+  }
+}

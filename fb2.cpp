@@ -19,16 +19,16 @@
 #define ALIGN_UP(x,y)  ((x + (y)-1) & ~((y)-1))
 #endif
 
-#define IMG_TYPE VC_IMAGE_RGB565
+#define IMG_TYPE VC_IMAGE_8BPP
 
 bool FrameBuffer2::init_ = false;
 
 FrameBuffer2::FrameBuffer2(int width, int height) : 
-        buf_num_(0), width_(width), height_(height) {
+        buf_num_(0), width_(width), height_(height), showing_(false) {
 
   int ret;
   DISPMANX_MODEINFO_T dispman_info;
-  pitch_ = ALIGN_UP(width * 2, 32);
+  pitch_ = ALIGN_UP(width, 32);
   //int aligned_height = ALIGN_UP(height, 16);
   uint32_t vc_image_ptr;
 
@@ -78,13 +78,10 @@ FrameBuffer2::FrameBuffer2(int width, int height) :
 
 FrameBuffer2::~FrameBuffer2(void) {
   int ret;
-  DISPMANX_UPDATE_HANDLE_T dispman_update;
 
-  dispman_update = vc_dispmanx_update_start(0);
-  ret = vc_dispmanx_element_remove(dispman_update, dispman_element_);
-  assert(ret == 0);
-  ret = vc_dispmanx_update_submit_sync(dispman_update);
-  assert(ret == 0);
+  if (showing_) {
+    Hide();
+  }
   ret = vc_dispmanx_resource_delete(dispman_resource_[0]);
   assert(ret == 0);
   ret = vc_dispmanx_resource_delete(dispman_resource_[1]);
@@ -110,6 +107,7 @@ void FrameBuffer2::Show() {
 
   ret = vc_dispmanx_update_submit_sync(dispman_update);
   assert( ret == 0 );
+  showing_ = true;
 }
 
 void FrameBuffer2::Hide() {
@@ -121,6 +119,7 @@ void FrameBuffer2::Hide() {
   assert(ret == 0);
   ret = vc_dispmanx_update_submit_sync(dispman_update);
   assert(ret == 0);
+  showing_ = false;
 }
 
 void FrameBuffer2::init() {

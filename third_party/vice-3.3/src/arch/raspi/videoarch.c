@@ -155,8 +155,9 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
 
   uint8_t *fb = circle_get_fb1();
   int fb_pitch = circle_get_fb1_pitch();
-  int h = circle_get_fb1_h();
-  bzero(fb, h * fb_pitch);
+  int fb_w = circle_get_fb1_w();
+  int fb_h = circle_get_fb1_h();
+  bzero(fb, fb_h * fb_pitch);
 
   int timing = circle_get_machine_timing();
   set_refresh_rate(timing, canvas);
@@ -166,9 +167,6 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
   video_state.dst_off_y = -1;
 
   video_freq = canvas->refreshrate * video_tick_inc;
-
-  int fb_w = circle_get_fb1_w();
-  int fb_h = circle_get_fb1_h();
 
   video_state.canvas = canvas;
   video_state.fb_w = fb_w;
@@ -301,8 +299,8 @@ struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
   video_state.dst_off_x = video_state.dst_off_x / 4 * 4;
 
   printf ("VideoInfo: FB is %dx%d \n",
-           circle_get_fb1_w(),
-           circle_get_fb1_h());
+           fb_w,
+           fb_h);
   printf ("VideoInfo: Emulated Display is %dx%d \n",
            video_state.vis_w,
            video_state.vis_h);

@@ -60,6 +60,8 @@ private:
   int width_;
   int height_;
   int pitch_;
+
+  bool showing_;
 };
 
 #endif

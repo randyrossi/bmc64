@@ -260,6 +260,8 @@ typedef enum {
    MENU_CONFIGURE_KEYSET1,
    MENU_CONFIGURE_KEYSET2,
    MENU_CONFIGURE_KEY_BINDINGS,
+
+   MENU_ACTIVE_DISPLAY,
 } MenuID;
 
 typedef enum {
@@ -315,6 +317,12 @@ enum {
     VIC20_BLOCK_3 = 1 << 3,
     VIC20_BLOCK_5 = 1 << 5
 };
+
+// Used as indices
+typedef enum {
+   MENU_ACTIVE_DISPLAY_VICII = 0,
+   MENU_ACTIVE_DISPLAY_VDC,
+} MenuActiveDisplay;
 
 extern int osd_active;
 extern long keyset_codes[2][7];

@@ -175,6 +175,11 @@ extern int circle_get_fb1_w();
 extern int circle_get_fb1_h();
 extern void circle_set_fb1_y(int);
 
+// For FB2
+extern void circle_create_fb2(int width, int height);
+extern void circle_show_fb2();
+extern void circle_hide_fb2();
+
 extern void joy_set_gamepad_info(int num_pads, int num_buttons[2], int axes[2],
                                  int hats[2]);
 

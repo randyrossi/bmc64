@@ -33,6 +33,8 @@ ViceOptions::ViceOptions(void)
       m_nVicIICanvasHeight(DEFAULT_VICII_FB_HEIGHT),
       m_nVicCanvasWidth(DEFAULT_VIC_FB_WIDTH),
       m_nVicCanvasHeight(DEFAULT_VIC_FB_HEIGHT),
+      m_nVDCCanvasWidth(DEFAULT_VDC_FB_WIDTH),
+      m_nVDCCanvasHeight(DEFAULT_VDC_FB_HEIGHT),
       m_nMachineTiming(MACHINE_TIMING_PAL_HDMI), m_bHideConsole(true),
       m_bDemoMode(false), m_nCyclesPerSecond(0),
       m_audioOut(VCHIQSoundDestinationAuto) {
@@ -82,6 +84,18 @@ ViceOptions::ViceOptions(void)
       if ((nValue = GetDecimal(pValue)) != INVALID_VALUE && MIN_VIC_FB_HEIGHT <= nValue &&
           nValue <= 1080) {
         m_nVicCanvasHeight = nValue;
+      }
+    } else if (strcmp(pOption, "vdc_canvas_width") == 0) {
+      unsigned nValue;
+      if ((nValue = GetDecimal(pValue)) != INVALID_VALUE && MIN_VDC_FB_WIDTH <= nValue &&
+          nValue <= 1980) {
+        m_nVDCCanvasWidth = nValue;
+      }
+    } else if (strcmp(pOption, "vdc_canvas_height") == 0) {
+      unsigned nValue;
+      if ((nValue = GetDecimal(pValue)) != INVALID_VALUE && MIN_VDC_FB_HEIGHT <= nValue &&
+          nValue <= 1080) {
+        m_nVDCCanvasHeight = nValue;
       }
     } else if (strcmp(pOption, "machine_timing") == 0) {
       if (strcmp(pValue, "ntsc") == 0 || strcmp(pValue, "ntsc-hdmi") == 0) {
@@ -157,6 +171,14 @@ unsigned ViceOptions::GetCanvasHeight(void) const {
 #else
     return m_nVicIICanvasHeight;
 #endif
+}
+
+unsigned ViceOptions::GetFB2Width(void) const {
+    return m_nVDCCanvasWidth;
+}
+
+unsigned ViceOptions::GetFB2Height(void) const {
+    return m_nVDCCanvasHeight;
 }
 
 unsigned ViceOptions::GetMachineTiming(void) const { return m_nMachineTiming; }

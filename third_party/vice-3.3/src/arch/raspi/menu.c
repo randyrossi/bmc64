@@ -117,6 +117,7 @@ struct menu_item *tint_item;
 struct menu_item *warp_item;
 struct menu_item *reset_confirm_item;
 struct menu_item *use_pcb_item;
+struct menu_item *active_display_item;
 
 int osd_active;
 
@@ -1759,6 +1760,7 @@ static void set_hotkey_choices(struct menu_item *item) {
 
 void build_menu(struct menu_item *root) {
   struct menu_item *parent;
+  struct menu_item *video_parent;
   struct menu_item *drive_parent;
   struct menu_item *tape_parent;
   struct menu_item *child;
@@ -1945,7 +1947,24 @@ void build_menu(struct menu_item *root) {
   ui_menu_add_button(MENU_LOAD_SNAP, parent, "Load Snapshot...");
   ui_menu_add_button(MENU_SAVE_SNAP, parent, "Save Snapshot...");
 
-  parent = ui_menu_add_folder(root, "Video");
+  video_parent = parent = ui_menu_add_folder(root, "Video");
+
+  if (machine_class == VICE_MACHINE_C128) {
+     // For C128, we split video options under video into VICII
+     // and VDC submenus since there are two displays.  Otherwise,
+     // when there is only one display, everything falls under
+     // video directly.
+     active_display_item = child =
+        ui_menu_add_multiple_choice(MENU_ACTIVE_DISPLAY, parent,
+           "Active Display");
+     child->num_choices = 2;
+     child->value = MENU_ACTIVE_DISPLAY_VICII;
+     strcpy(child->choices[MENU_SID_ENGINE_FAST], "VICII");
+     strcpy(child->choices[MENU_SID_ENGINE_RESID], "VDC");
+     // Someday, we can add "Both" as an option for Pi4
+
+     parent = ui_menu_add_folder(video_parent, "VICII");
+  }
 
   palette_item = menu_build_palette_options(parent);
 
@@ -1962,8 +1981,14 @@ void build_menu(struct menu_item *root) {
                                 get_color_tint());
   ui_menu_add_button(MENU_COLOR_RESET, child, "Reset");
 
-  ui_menu_add_button(MENU_CALC_TIMING, parent,
+  if (machine_class == VICE_MACHINE_C128) {
+     parent = ui_menu_add_folder(video_parent, "VDC");
+  }
+
+  ui_menu_add_button(MENU_CALC_TIMING, video_parent,
                      "Custom HDMI mode timing calc...");
+
+
 
   parent = ui_menu_add_folder(root, "Sound");
   // Resid by default

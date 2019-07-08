@@ -26,11 +26,17 @@
 #define DEFAULT_VIC_FB_WIDTH 392
 #define DEFAULT_VIC_FB_HEIGHT 240
 
+#define DEFAULT_VDC_FB_WIDTH 856
+#define DEFAULT_VDC_FB_HEIGHT 576
+
 #define MIN_VICII_FB_WIDTH 320
 #define MIN_VICII_FB_HEIGHT 240
 
 #define MIN_VIC_FB_WIDTH 352
 #define MIN_VIC_FB_HEIGHT 240
+
+#define MIN_VDC_FB_WIDTH 352
+#define MIN_VDC_FB_HEIGHT 240
 
 #define VOLUME_NAME_LEN 16
 
@@ -41,6 +47,8 @@ public:
 
   unsigned GetCanvasWidth(void) const;
   unsigned GetCanvasHeight(void) const;
+  unsigned GetFB2Width(void) const;
+  unsigned GetFB2Height(void) const;
   unsigned GetMachineTiming(void) const;
   bool GetHideConsole(void) const;
   void SetHideConsole(bool value);
@@ -70,6 +78,8 @@ private:
   unsigned m_nVicIICanvasHeight;
   unsigned m_nVicCanvasWidth;
   unsigned m_nVicCanvasHeight;
+  unsigned m_nVDCCanvasWidth;
+  unsigned m_nVDCCanvasHeight;
   unsigned m_nMachineTiming;
   bool m_bHideConsole;
   bool m_bDemoMode;

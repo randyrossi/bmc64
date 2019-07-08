@@ -38,6 +38,8 @@
 #include <stdint.h>
 #include <vc4/vchiq/vchiqdevice.h>
 
+#include "fb2.h"
+
 extern "C" {
 #include "third_party/vice-3.3/src/arch/raspi/circle.h"
 #include "third_party/vice-3.3/src/arch/raspi/keycodes.h"
@@ -70,8 +72,11 @@ public:
   int circle_get_fb1_h();
   void circle_set_fb1_palette(uint8_t index, uint16_t rgb565);
   void circle_update_fb1_palette();
-
   void circle_set_fb1_y(int loc);
+
+  void circle_create_fb2(int width, int height);
+  void circle_show_fb2();
+  void circle_hide_fb2();
 
   int circle_sound_init(const char *param, int *speed, int *fragsize,
                         int *fragnr, int *channels);
@@ -101,6 +106,8 @@ private:
   int mNumJoy;
 
   int gpio_debounce_state[NUM_GPIO_PINS];
+
+  FrameBuffer2 *fb2;
 };
 
 #endif
