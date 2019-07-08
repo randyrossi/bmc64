@@ -179,9 +179,10 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
   video_state.onscreen_buffer_y = fb_h;
 }
 
-struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
-                                           unsigned int *width,
-                                           unsigned int *height, int mapped) {
+static struct video_canvas_s *video_canvas_create_vic(
+       struct video_canvas_s *canvas,
+       unsigned int *width,
+       unsigned int *height, int mapped) {
   // This is the actual frame buffer area we have to
   // draw into determined in config.txt.
   // It's important these don't go below the values that
@@ -319,9 +320,24 @@ struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
   return canvas;
 }
 
-void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
-                          unsigned int ys, unsigned int xi, unsigned int yi,
-                          unsigned int w, unsigned int h) {
+struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
+                                           unsigned int *width,
+                                           unsigned int *height, int mapped) {
+  if (is_vic(canvas)) {
+     return video_canvas_create_vic(canvas, width, height, mapped);
+  } else {
+     // TODO: REMOVE LATER, TEMP FOR TESTING
+     *width = 856;
+     *height = 576;
+     circle_create_fb2(*width, *height); // change to vdc size
+     return canvas;
+  }
+}
+
+static void video_canvas_refresh_vic(
+        struct video_canvas_s *canvas, unsigned int xs,
+        unsigned int ys, unsigned int xi, unsigned int yi,
+        unsigned int w, unsigned int h) {
   video_state.src = canvas->draw_buffer->draw_buffer;
   video_state.src_pitch = canvas->draw_buffer->draw_buffer_width;
 
@@ -330,6 +346,16 @@ void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
     resources_set_int("WarpMode", 1);
     raspi_boot_warp = 1;
     video_state.first_refresh = 0;
+  }
+}
+
+void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
+                          unsigned int ys, unsigned int xi, unsigned int yi,
+                          unsigned int w, unsigned int h) {
+  if (is_vic(canvas)) {
+     video_canvas_refresh_vic(canvas, xs, ys, xi, yi, w, h);
+  } else {
+
   }
 }
 

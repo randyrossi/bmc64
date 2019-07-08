@@ -15,17 +15,24 @@
 
 #include "fb2.h"
 
+#include <stdio.h>
+
 #ifndef ALIGN_UP
 #define ALIGN_UP(x,y)  ((x + (y)-1) & ~((y)-1))
 #endif
 
 #define IMG_TYPE VC_IMAGE_8BPP
 
+#define RGB565(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
+static unsigned short pal[256] = {
+    RGB565(0,0,0),
+    RGB565(255,255,255),
+};
+
 bool FrameBuffer2::init_ = false;
 
 FrameBuffer2::FrameBuffer2(int width, int height) : 
         buf_num_(0), width_(width), height_(height), showing_(false) {
-
   int ret;
   DISPMANX_MODEINFO_T dispman_info;
   pitch_ = ALIGN_UP(width, 32);
@@ -37,7 +44,7 @@ FrameBuffer2::FrameBuffer2(int width, int height) :
   ret = vc_dispmanx_display_get_info(dispman_display_, &dispman_info);
   assert(ret == 0);
 
-  pixels_ = calloc(1, pitch_ * height);
+  pixels_ = (uint8_t*) calloc(1, pitch_ * height);
 
   dispman_resource_[0] = vc_dispmanx_resource_create(IMG_TYPE,
                                                      width,
@@ -50,6 +57,15 @@ FrameBuffer2::FrameBuffer2(int width, int height) :
                                                      &vc_image_ptr );
   assert(dispman_resource_[1]);
   vc_dispmanx_rect_set( &dst_rect_, 0, 0, width, height);
+
+
+  ret = vc_dispmanx_resource_set_palette(dispman_resource_[0],
+                                         pal, 0, sizeof pal );
+  assert( ret == 0 );
+
+  ret = vc_dispmanx_resource_set_palette(dispman_resource_[1],
+                                         pal, 0, sizeof pal );
+  assert( ret == 0 );
 
   ret = vc_dispmanx_resource_write_data(dispman_resource_[0],
                                         IMG_TYPE,
@@ -73,7 +89,6 @@ FrameBuffer2::FrameBuffer2(int width, int height) :
                                   0,
                                   dispman_info.width,
                                   dispman_info.height );
-
 }
 
 FrameBuffer2::~FrameBuffer2(void) {
@@ -127,7 +142,7 @@ void FrameBuffer2::init() {
      return;
 
   alpha_.flags = DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS;
-  alpha_.opacity = 120;
+  alpha_.opacity = 255;
   alpha_.mask = 0;
 
   bcm_host_init();

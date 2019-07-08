@@ -42,7 +42,7 @@ private:
   void init();
 
   // Raw pixel data. Not VC memory.
-  void* pixels_;
+  uint8_t* pixels_;
 
   DISPMANX_DISPLAY_HANDLE_T dispman_display_;
   DISPMANX_ELEMENT_HANDLE_T dispman_element_;

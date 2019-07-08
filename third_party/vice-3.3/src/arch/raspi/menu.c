@@ -1687,6 +1687,12 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_VIC20_MEMORY_8K_A000:
     resources_set_int("RAMBlock5", item->value);
     return;
+  case MENU_ACTIVE_DISPLAY:
+    if (item->value == MENU_ACTIVE_DISPLAY_VICII) {
+       circle_hide_fb2();
+    } else if (item->value == MENU_ACTIVE_DISPLAY_VDC) {
+       circle_show_fb2();
+    }
   }
 
   // Only items that were for file selection/nav should have these set...
@@ -1949,6 +1955,7 @@ void build_menu(struct menu_item *root) {
 
   video_parent = parent = ui_menu_add_folder(root, "Video");
 
+printf ("create video menu\n");
   if (machine_class == VICE_MACHINE_C128) {
      // For C128, we split video options under video into VICII
      // and VDC submenus since there are two displays.  Otherwise,
@@ -1959,8 +1966,8 @@ void build_menu(struct menu_item *root) {
            "Active Display");
      child->num_choices = 2;
      child->value = MENU_ACTIVE_DISPLAY_VICII;
-     strcpy(child->choices[MENU_SID_ENGINE_FAST], "VICII");
-     strcpy(child->choices[MENU_SID_ENGINE_RESID], "VDC");
+     strcpy(child->choices[MENU_ACTIVE_DISPLAY_VICII], "VICII");
+     strcpy(child->choices[MENU_ACTIVE_DISPLAY_VDC], "VDC");
      // Someday, we can add "Both" as an option for Pi4
 
      parent = ui_menu_add_folder(video_parent, "VICII");
@@ -1988,6 +1995,7 @@ void build_menu(struct menu_item *root) {
   ui_menu_add_button(MENU_CALC_TIMING, video_parent,
                      "Custom HDMI mode timing calc...");
 
+printf ("done create video menu\n");
 
 
   parent = ui_menu_add_folder(root, "Sound");
