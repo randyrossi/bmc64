@@ -76,12 +76,15 @@ public:
 
   // New FB2 stuff to replace the default frame buffer
   // TODO: Use an index here instead of 'fb2' convention
-  int circle_alloc_fb2(uint8_t **pixels, int width, int height, int *pitch);
-  void circle_free_fb2();
-  void circle_clear_fb2();
-  void circle_show_fb2();
-  void circle_hide_fb2();
-  void circle_frame_ready_fb2();
+  int circle_alloc_fb2(int layer, uint8_t **pixels,
+                       int width, int height, int *pitch);
+  void circle_free_fb2(int layer);
+  void circle_clear_fb2(int layer);
+  void circle_show_fb2(int layer);
+  void circle_hide_fb2(int layer);
+  void circle_frame_ready_fb2(int layer);
+  void circle_set_palette_fb2(int layer, uint8_t index, uint16_t rgb565);
+  void circle_update_palette_fb2(int layer);
 
   int circle_sound_init(const char *param, int *speed, int *fragsize,
                         int *fragnr, int *channels);
@@ -112,8 +115,7 @@ private:
 
   int gpio_debounce_state[NUM_GPIO_PINS];
 
-  // TODO: Have three of these eventually. VIC, VDC and UI
-  FrameBuffer2 fb2;
+  FrameBuffer2 fb2[FB_NUM_LAYERS];
 };
 
 #endif

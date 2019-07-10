@@ -171,7 +171,7 @@ static int draw_buffer_alloc(struct video_canvas_s *canvas, uint8_t **draw_buffe
                              unsigned int fb_width, unsigned int fb_height,
                              unsigned int *fb_pitch) {
    if (is_vdc(canvas)) {
-      return circle_alloc_fb2(draw_buffer, fb_width, fb_height, fb_pitch);
+      return circle_alloc_fb2(FB_LAYER_VDC, draw_buffer, fb_width, fb_height, fb_pitch);
    } else {
       // TODO: Will be VIC eventually but we should not get here for now
       assert(0);
@@ -180,7 +180,7 @@ static int draw_buffer_alloc(struct video_canvas_s *canvas, uint8_t **draw_buffe
 
 static void draw_buffer_free(struct video_canvas_s *canvas, uint8_t *draw_buffer) {
    if (is_vdc(canvas)) {
-      circle_free_fb2();
+      circle_free_fb2(FB_LAYER_VDC);
    } else {
       // TODO: Will be VIC eventually but we should not get here for now
       assert(0);
@@ -191,7 +191,7 @@ static void draw_buffer_clear(struct video_canvas_s *canvas, uint8_t *draw_buffe
                               uint8_t value, unsigned int fb_width,
                               unsigned int fb_height, unsigned int fb_pitch) {
    if (is_vdc(canvas)) {
-      circle_clear_fb2();
+      circle_clear_fb2(FB_LAYER_VDC);
    } else {
       // TODO: Will be VIC eventually but we should not get here for now
       assert(0);
@@ -445,7 +445,7 @@ void videoarch_swap() {
   video_state.onscreen_buffer_y = video_state.offscreen_buffer_y;
   video_state.offscreen_buffer_y =
       video_state.fb_h - video_state.offscreen_buffer_y;
-  circle_frame_ready_fb2();
+  circle_frame_ready_fb2(FB_LAYER_VDC);
 }
 
 void vsyncarch_postsync(void) {

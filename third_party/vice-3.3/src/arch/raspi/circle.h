@@ -47,6 +47,11 @@
 #define MACHINE_TIMING_PAL_CUSTOM 4
 #define MACHINE_TIMING_NTSC_CUSTOM 5
 
+#define FB_NUM_LAYERS 3
+#define FB_LAYER_VIC 0
+#define FB_LAYER_VDC 1
+#define FB_LAYER_UI  2
+
 #define USB_PREF_ANALOG 0
 #define USB_PREF_HAT 1
 
@@ -175,13 +180,15 @@ extern int circle_get_fb1_h();
 extern void circle_set_fb1_y(int);
 
 // For FB2
-extern int circle_alloc_fb2(uint8_t **pixels,
+extern int circle_alloc_fb2(int layer, uint8_t **pixels,
                             int width, int height, int *pitch);
-extern void circle_free_fb2();
-extern void circle_clear_fb2();
-extern void circle_show_fb2();
-extern void circle_hide_fb2();
-extern void circle_frame_ready_fb2();
+extern void circle_free_fb2(int layer);
+extern void circle_clear_fb2(int layer);
+extern void circle_show_fb2(int layer);
+extern void circle_hide_fb2(int layer);
+extern void circle_frame_ready_fb2(int layer);
+extern void circle_set_palette_fb2(int layer, uint8_t index, uint16_t rgb565);
+extern void circle_update_palette_fb2(int layer);
 
 extern void joy_set_gamepad_info(int num_pads, int num_buttons[2], int axes[2],
                                  int hats[2]);

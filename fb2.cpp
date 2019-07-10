@@ -47,7 +47,8 @@ static unsigned short pal[256] = {
 bool FrameBuffer2::initialized_ = false;
 DISPMANX_DISPLAY_HANDLE_T FrameBuffer2::dispman_display_;
 
-FrameBuffer2::FrameBuffer2() : showing_(false), allocated_(false) {
+FrameBuffer2::FrameBuffer2() :
+        layer_(0), showing_(false), allocated_(false) {
   alpha_.flags = DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS;
   alpha_.opacity = 255;
   alpha_.mask = 0;
@@ -161,7 +162,7 @@ void FrameBuffer2::Show() {
 
   dispman_element_ = vc_dispmanx_element_add(dispman_update,
                                             dispman_display_,
-                                            1,               // layer
+                                            layer_, // layer
                                             &dst_rect_,
                                             dispman_resource_,
                                             &src_rect_,
@@ -204,4 +205,20 @@ void FrameBuffer2::FrameReady() {
                                         pixels_,
                                         &dst_rect_);
   assert(ret == 0);
+}
+
+void FrameBuffer2::SetPalette(uint8_t index, uint16_t rgb565) {
+  pal[index] = rgb565;
+}
+
+void FrameBuffer2::UpdatePalette() {
+  if (!allocated_) return;
+
+  int ret = vc_dispmanx_resource_set_palette(dispman_resource_,
+                                             pal, 0, sizeof pal );
+  assert( ret == 0 );
+}
+
+void FrameBuffer2::SetLayer(int layer) {
+  layer_ = layer;
 }

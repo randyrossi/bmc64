@@ -23,6 +23,8 @@ public:
   FrameBuffer2();
   virtual ~FrameBuffer2();
 
+  void SetLayer(int layer);
+
   int Allocate(uint8_t **pixels, int width, int height, int *pitch);
   void Free();
   void Clear();
@@ -38,6 +40,12 @@ public:
 
   // Hide the framebuffer
   void Hide();
+
+  // Set one color of the indexed palette
+  void SetPalette(uint8_t index, uint16_t rgb565);
+
+  // Commit current palette to frame buffer
+  void UpdatePalette();
 
   static void Initialize();
 private:
@@ -58,6 +66,7 @@ private:
   int width_;
   int height_;
   int pitch_;
+  int layer_;
 
   int display_width_;
   int display_height_;

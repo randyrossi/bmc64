@@ -170,30 +170,38 @@ int circle_cycles_per_sec() {
   return static_kernel->circle_cycles_per_second();
 }
 
-int circle_alloc_fb2(uint8_t **pixels, int width, int height, int *pitch) {
-  return static_kernel->circle_alloc_fb2(pixels, width, height, pitch);
+int circle_alloc_fb2(int layer, uint8_t **pixels,
+                     int width, int height, int *pitch) {
+  return static_kernel->circle_alloc_fb2(layer, pixels, width, height, pitch);
 }
 
-void circle_free_fb2() {
-  static_kernel->circle_free_fb2();
+void circle_free_fb2(int layer) {
+  static_kernel->circle_free_fb2(layer);
 }
 
-void circle_clear_fb2() {
-  static_kernel->circle_clear_fb2();
+void circle_clear_fb2(int layer) {
+  static_kernel->circle_clear_fb2(layer);
 }
 
-void circle_show_fb2() {
-  static_kernel->circle_show_fb2();
+void circle_show_fb2(int layer) {
+  static_kernel->circle_show_fb2(layer);
 }
 
-void circle_hide_fb2() {
-  static_kernel->circle_hide_fb2();
+void circle_hide_fb2(int layer) {
+  static_kernel->circle_hide_fb2(layer);
 }
 
-void circle_frame_ready_fb2() {
-  static_kernel->circle_frame_ready_fb2();
+void circle_frame_ready_fb2(int layer) {
+  static_kernel->circle_frame_ready_fb2(layer);
 }
 
+void circle_set_palette_fb2(int layer, uint8_t index, uint16_t rgb565) {
+  static_kernel->circle_set_palette_fb2(layer, index, rgb565);
+}
+
+void circle_update_palette_fb2(int layer) {
+  static_kernel->circle_update_palette_fb2(layer);
+}
 };
 
 
@@ -215,6 +223,10 @@ CKernel::CKernel(void)
       kbdMatrixStates[i][j] = HIGH;
     }
   }
+
+  fb2[FB_LAYER_VIC].SetLayer(0);
+  fb2[FB_LAYER_VDC].SetLayer(1);
+  fb2[FB_LAYER_UI].SetLayer(2);
 }
 
 bool CKernel::Initialize(void) {
@@ -1030,27 +1042,36 @@ int CKernel::circle_cycles_per_second() {
 }
 #endif
 
-int CKernel::circle_alloc_fb2(uint8_t **pixels,
+int CKernel::circle_alloc_fb2(int layer, uint8_t **pixels,
                               int width, int height, int *pitch) {
-  return fb2.Allocate(pixels, width, height, pitch);  
+  return fb2[layer].Allocate(pixels, width, height, pitch);  
 }
 
-void CKernel::circle_free_fb2() {
-  fb2.Free();
+void CKernel::circle_free_fb2(int layer) {
+  fb2[layer].Free();
 }
 
-void CKernel::circle_clear_fb2() {
-  fb2.Clear();
+void CKernel::circle_clear_fb2(int layer) {
+  fb2[layer].Clear();
 }
 
-void CKernel::circle_show_fb2() {
-  fb2.Show();
+void CKernel::circle_show_fb2(int layer) {
+  fb2[layer].Show();
 }
 
-void CKernel::circle_hide_fb2() {
-  fb2.Hide();
+void CKernel::circle_hide_fb2(int layer) {
+  fb2[layer].Hide();
 }
 
-void CKernel::circle_frame_ready_fb2() {
-  fb2.FrameReady();
+void CKernel::circle_frame_ready_fb2(int layer) {
+  fb2[layer].FrameReady();
 }
+
+void CKernel::circle_set_palette_fb2(int layer, uint8_t index, uint16_t rgb565) {
+  fb2[layer].SetPalette(index, rgb565);
+}
+
+void CKernel::circle_update_palette_fb2(int layer) {
+  fb2[layer].UpdatePalette();
+}
+

@@ -1689,9 +1689,9 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_ACTIVE_DISPLAY:
     if (item->value == MENU_ACTIVE_DISPLAY_VICII) {
-       circle_hide_fb2();
+       circle_hide_fb2(FB_LAYER_VDC);
     } else if (item->value == MENU_ACTIVE_DISPLAY_VDC) {
-       circle_show_fb2();
+       circle_show_fb2(FB_LAYER_VDC);
     }
   }
 
