@@ -20,8 +20,12 @@
 
 class FrameBuffer2 {
 public:
-  FrameBuffer2(int width, int height);
-  virtual ~FrameBuffer2(void);
+  FrameBuffer2();
+  virtual ~FrameBuffer2();
+
+  int Allocate(uint8_t **pixels, int width, int height, int *pitch);
+  void Free();
+  void Clear();
 
   // Get a pointer to raw pixel data for this frame buffer
   void* GetPixels();
@@ -29,39 +33,37 @@ public:
   // Indicates raw pixel data has a complete frame. Upload to vc resource.
   void FrameReady();
 
-  // Show the resource that has the last completed frame.
-  void SwapBuffers();
-
   // Show the framebuffer over top the first
   void Show();
 
   // Hide the framebuffer
   void Hide();
 
+  static void Initialize();
 private:
-  void init();
 
   // Raw pixel data. Not VC memory.
   uint8_t* pixels_;
 
-  DISPMANX_DISPLAY_HANDLE_T dispman_display_;
+  static DISPMANX_DISPLAY_HANDLE_T dispman_display_;
   DISPMANX_ELEMENT_HANDLE_T dispman_element_;
-  DISPMANX_RESOURCE_HANDLE_T dispman_resource_[2];
+  DISPMANX_RESOURCE_HANDLE_T dispman_resource_;
 
   VC_RECT_T dst_rect_;
   VC_RECT_T src_rect_;
   VC_DISPMANX_ALPHA_T alpha_;
 
-  static bool init_;
-
-  // The buffer currently displayed
-  int buf_num_;
+  static bool initialized_;
 
   int width_;
   int height_;
   int pitch_;
 
+  int display_width_;
+  int display_height_;
+
   bool showing_;
+  bool allocated_;
 };
 
 #endif

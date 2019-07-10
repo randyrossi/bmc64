@@ -111,7 +111,11 @@ void raster_draw_buffer_ptr_update(raster_t *raster)
             && raster->geometry->screen_size.height <= raster->geometry->last_displayed_line ?
             raster->geometry->screen_size.height : 0
             ) + raster->current_line
+#ifdef RASPI_COMPILE
+           ) * raster->canvas->draw_buffer->draw_buffer_pitch
+#else
            ) * raster_calc_frame_buffer_width(raster)
+#endif
         + raster->geometry->extra_offscreen_border_left;
 }
 

@@ -54,8 +54,18 @@
 
 #define OVERLAY_H 10
 
+// Increments with each canvas being inited by vice
+int canvas_num;
+
 // Keep video state shared between compilation units here
+// TODO: Get rid of video_state and transition to canvas_state
 struct VideoData video_state;
+
+// One struct for each display (can be 2 for C128)
+struct CanvasState canvas_state[2];
+
+struct video_canvas_s *vdc_canvas;
+struct video_canvas_s *vic_canvas;
 
 // We tell vice our clock resolution is the actual vertical
 // refresh rate of the machine * some factor. We report our
@@ -105,6 +115,14 @@ void draw(uint8_t *src, int srcw, int srch, int src_pitch, uint8_t *dst,
   }
 }
 
+int is_vic(struct video_canvas_s *canvas) {
+  return canvas == vic_canvas;
+}
+
+int is_vdc(struct video_canvas_s *canvas) {
+  return canvas == vdc_canvas;
+}
+
 // Called by menu when palette changes
 void video_canvas_change_palette(int index) {
   if (!video_state.canvas)
@@ -148,35 +166,81 @@ static void calc_top_left() {
      video_state.src_off_x;
 }
 
+// Draw buffer bridge functions back to kernel
+static int draw_buffer_alloc(struct video_canvas_s *canvas, uint8_t **draw_buffer,
+                             unsigned int fb_width, unsigned int fb_height,
+                             unsigned int *fb_pitch) {
+   if (is_vdc(canvas)) {
+      return circle_alloc_fb2(draw_buffer, fb_width, fb_height, fb_pitch);
+   } else {
+      // TODO: Will be VIC eventually but we should not get here for now
+      assert(0);
+   }
+}
+
+static void draw_buffer_free(struct video_canvas_s *canvas, uint8_t *draw_buffer) {
+   if (is_vdc(canvas)) {
+      circle_free_fb2();
+   } else {
+      // TODO: Will be VIC eventually but we should not get here for now
+      assert(0);
+   }
+}
+
+static void draw_buffer_clear(struct video_canvas_s *canvas, uint8_t *draw_buffer,
+                              uint8_t value, unsigned int fb_width,
+                              unsigned int fb_height, unsigned int fb_pitch) {
+   if (is_vdc(canvas)) {
+      circle_clear_fb2();
+   } else {
+      // TODO: Will be VIC eventually but we should not get here for now
+      assert(0);
+   }
+}
+
+// Called for each canvas VICE wants to create.
+// For C128, first will be the VDC, followed by VIC.
+// For other machines, only one canvas is initialized.
 void video_arch_canvas_init(struct video_canvas_s *canvas) {
-  int i;
-
-  canvas->video_draw_buffer_callback = NULL;
-
-  uint8_t *fb = circle_get_fb1();
-  int fb_pitch = circle_get_fb1_pitch();
-  int fb_w = circle_get_fb1_w();
-  int fb_h = circle_get_fb1_h();
-  bzero(fb, fb_h * fb_pitch);
 
   int timing = circle_get_machine_timing();
   set_refresh_rate(timing, canvas);
 
-  video_state.first_refresh = 1;
-  video_state.dst_off_x = -1;
-  video_state.dst_off_y = -1;
+  if (machine_class == VICE_MACHINE_C128 && canvas_num == 1) {
+     vdc_canvas = canvas;
+     // Have our fb class allocate draw buffers
+     canvas_state[canvas_num].draw_buffer_callback.draw_buffer_alloc = draw_buffer_alloc;
+     canvas_state[canvas_num].draw_buffer_callback.draw_buffer_free = draw_buffer_free;
+     canvas_state[canvas_num].draw_buffer_callback.draw_buffer_clear = draw_buffer_clear;
+     canvas->video_draw_buffer_callback = &canvas_state[canvas_num].draw_buffer_callback;
+  } else {
+     canvas->video_draw_buffer_callback = NULL;
+     vic_canvas = canvas;
+     // TODO: Handle this when we transition to canvas_state for VICs
+     uint8_t *fb = circle_get_fb1();
+     int fb_pitch = circle_get_fb1_pitch();
+     int fb_w = circle_get_fb1_w();
+     int fb_h = circle_get_fb1_h();
+     bzero(fb, fb_h * fb_pitch);
 
-  video_freq = canvas->refreshrate * video_tick_inc;
+     video_state.first_refresh = 1;
+     video_state.dst_off_x = -1;
+     video_state.dst_off_y = -1;
 
-  video_state.canvas = canvas;
-  video_state.fb_w = fb_w;
-  video_state.fb_h = fb_h;
-  video_state.dst_pitch = fb_pitch;
-  video_state.dst = fb;
-  set_video_font(&video_state);
-  video_state.palette_index = 0;
-  video_state.offscreen_buffer_y = 0;
-  video_state.onscreen_buffer_y = fb_h;
+     video_freq = canvas->refreshrate * video_tick_inc;
+
+     video_state.canvas = canvas;
+     video_state.fb_w = fb_w;
+     video_state.fb_h = fb_h;
+     video_state.dst_pitch = fb_pitch;
+     video_state.dst = fb;
+     set_video_font(&video_state);
+     video_state.palette_index = 0;
+     video_state.offscreen_buffer_y = 0;
+     video_state.onscreen_buffer_y = fb_h;
+  }
+
+  canvas_num++;
 }
 
 static struct video_canvas_s *video_canvas_create_vic(
@@ -328,8 +392,9 @@ struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
   } else {
      // TODO: REMOVE LATER, TEMP FOR TESTING
      *width = 856;
-     *height = 576;
-     circle_create_fb2(*width, *height); // change to vdc size
+     *height = 312;
+     canvas->draw_buffer->canvas_physical_width = 856;
+     canvas->draw_buffer->canvas_physical_height = 312;
      return canvas;
   }
 }
@@ -355,7 +420,6 @@ void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
   if (is_vic(canvas)) {
      video_canvas_refresh_vic(canvas, xs, ys, xi, yi, w, h);
   } else {
-
   }
 }
 
@@ -381,6 +445,7 @@ void videoarch_swap() {
   video_state.onscreen_buffer_y = video_state.offscreen_buffer_y;
   video_state.offscreen_buffer_y =
       video_state.fb_h - video_state.offscreen_buffer_y;
+  circle_frame_ready_fb2();
 }
 
 void vsyncarch_postsync(void) {

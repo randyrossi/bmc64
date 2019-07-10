@@ -31,6 +31,7 @@
 
 #include "circle.h"
 #include "palette.h"
+#include "video.h"
 
 struct video_canvas_s {
   // Core fields required by vice.
@@ -85,11 +86,17 @@ struct VideoData {
 
   // TODO: Try getting rid of this.
   int first_refresh;
+
   uint8_t *src;
   int src_pitch;
   int src_off_x;
   int src_off_y;
   int overlay_y;
+};
+
+// TODO: Transition from VideoData to CanvasState
+struct CanvasState {
+  struct video_draw_buffer_callback_s draw_buffer_callback;
 };
 
 // Called when video canvas has been created.

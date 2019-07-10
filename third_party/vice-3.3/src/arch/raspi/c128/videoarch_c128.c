@@ -130,12 +130,3 @@ unsigned int *raspi_get_palette(int index) {
     return NULL;
   }
 }
-
-int is_vic(struct video_canvas_s *canvas) {
-  return canvas == vicii_get_canvas();
-}
-
-int is_vdc(struct video_canvas_s *canvas) {
-  return canvas == vdc_get_canvas();
-}
-

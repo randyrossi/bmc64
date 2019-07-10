@@ -156,8 +156,7 @@ extern int pot_x_low_value;
 extern int pot_y_high_value;
 extern int pot_y_low_value;
 
-// TODO: replace this with a direct call from kernel
-typedef void (*raspi_key_handler)(long key);
+
 
 extern int circle_get_machine_timing();
 extern void circle_sleep(long);
@@ -176,9 +175,13 @@ extern int circle_get_fb1_h();
 extern void circle_set_fb1_y(int);
 
 // For FB2
-extern void circle_create_fb2(int width, int height);
+extern int circle_alloc_fb2(uint8_t **pixels,
+                            int width, int height, int *pitch);
+extern void circle_free_fb2();
+extern void circle_clear_fb2();
 extern void circle_show_fb2();
 extern void circle_hide_fb2();
+extern void circle_frame_ready_fb2();
 
 extern void joy_set_gamepad_info(int num_pads, int num_buttons[2], int axes[2],
                                  int hats[2]);
