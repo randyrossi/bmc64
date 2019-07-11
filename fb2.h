@@ -69,7 +69,8 @@ private:
   DISPMANX_ELEMENT_HANDLE_T dispman_element_;
   DISPMANX_RESOURCE_HANDLE_T dispman_resource_;
 
-  VC_RECT_T dst_rect_;
+  VC_RECT_T scale_dst_rect_;
+  VC_RECT_T copy_dst_rect_;
   VC_RECT_T src_rect_;
   VC_DISPMANX_ALPHA_T alpha_;
 

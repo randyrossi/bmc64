@@ -341,4 +341,7 @@ void menu_about_to_deactivate(void);
 
 void menu_quick_func(int button_assignment);
 
+void menu_enable_osd(void);
+void menu_disable_osd(void);
+
 #endif

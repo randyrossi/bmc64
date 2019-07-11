@@ -421,10 +421,12 @@ static void ui_action_frame() {
 static void ui_render_single_frame() {
   ui_render_now();
   circle_frame_ready_fb2(FB_LAYER_UI);
+  circle_yield();
 }
 
 static void pause_trap(uint16_t addr, void *data) {
   menu_about_to_activate();
+  circle_show_fb2(FB_LAYER_UI);
   while (ui_activated) {
     circle_check_gpio();
     ui_check_key();
@@ -436,15 +438,13 @@ static void pause_trap(uint16_t addr, void *data) {
     hdmi_timing_hook();
   }
   menu_about_to_deactivate();
+  circle_hide_fb2(FB_LAYER_UI);
 }
 
 static void ui_toggle(void) {
   ui_activated = 1 - ui_activated;
   if (ui_activated) {
-    circle_show_fb2(FB_LAYER_UI);
     interrupt_maincpu_trigger_trap(pause_trap, 0);
-  } else {
-    circle_hide_fb2(FB_LAYER_UI);
   }
 }
 
@@ -876,6 +876,12 @@ static void ui_render_children(struct menu_item *node, int *index, int indent) {
     }
     node = node->next;
   }
+}
+
+// Make the UI layer fully transparent in preparation for an OSD to
+// be displayed.
+void ui_make_transparent(void) {
+  ui_draw_rect(0, 0, ui_fb_w, ui_fb_h, 16 /* transparent */, 1);
 }
 
 void ui_render_now(void) {

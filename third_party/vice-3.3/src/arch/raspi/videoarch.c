@@ -457,7 +457,6 @@ void videoarch_swap() {
   video_state.onscreen_buffer_y = video_state.offscreen_buffer_y;
   video_state.offscreen_buffer_y =
       video_state.fb_h - video_state.offscreen_buffer_y;
-  circle_frame_ready_fb2(FB_LAYER_VDC);
 }
 
 void vsyncarch_postsync(void) {
@@ -468,9 +467,14 @@ void vsyncarch_postsync(void) {
        video_state.dst + video_state.offscreen_buffer_y * video_state.dst_pitch,
        video_state.dst_pitch, video_state.dst_off_x, video_state.dst_off_y);
 
+  circle_frame_ready_fb2(FB_LAYER_VDC);
+
   // This render will handle any OSDs we have. ODSs don't pause emulation.
   if (ui_activated) {
+    // The only way we can be here and have ui_activated=1
+    // is for an osd to be enabled.
     ui_render_now();
+    circle_frame_ready_fb2(FB_LAYER_UI);
     ui_check_key();
   }
 
@@ -564,10 +568,9 @@ void vsyncarch_postsync(void) {
     }
     pending_emu_joy_head++;
   }
+  circle_lock_release();
 
   ui_handle_toggle_or_quick_func();
-
-  circle_lock_release();
 
   if (reset_demo) {
     demo_reset_timeout();

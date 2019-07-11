@@ -132,13 +132,13 @@ int FrameBuffer2::Allocate(uint8_t **pixels, int width, int height, int *pitch) 
   // Install the default palette
   UpdatePalette();
 
-  vc_dispmanx_rect_set( &dst_rect_, 0, 0, width, height);
+  vc_dispmanx_rect_set( &copy_dst_rect_, 0, 0, width, height);
 
   ret = vc_dispmanx_resource_write_data(dispman_resource_,
                                         IMG_TYPE,
                                         width,
                                         pixels_,
-                                        &dst_rect_ );
+                                        &copy_dst_rect_ );
   assert(ret == 0);
 
   // Define source rect
@@ -189,7 +189,7 @@ void FrameBuffer2::Show() {
   assert( dispman_update );
 
   // Stretch to full width/height of our display
-  vc_dispmanx_rect_set(&dst_rect_, 0,
+  vc_dispmanx_rect_set(&scale_dst_rect_, 0,
                                    0,
                                    display_width_,
                                    display_height_);
@@ -197,7 +197,7 @@ void FrameBuffer2::Show() {
   dispman_element_ = vc_dispmanx_element_add(dispman_update,
                                             dispman_display_,
                                             layer_, // layer
-                                            &dst_rect_,
+                                            &scale_dst_rect_,
                                             dispman_resource_,
                                             &src_rect_,
                                             DISPMANX_PROTECTION_NONE,
@@ -215,7 +215,6 @@ void FrameBuffer2::Hide() {
   DISPMANX_UPDATE_HANDLE_T dispman_update;
 
   if (!showing_) return;
-
   dispman_update = vc_dispmanx_update_start(0);
   ret = vc_dispmanx_element_remove(dispman_update, dispman_element_);
   assert(ret == 0);
@@ -230,16 +229,12 @@ void* FrameBuffer2::GetPixels() {
 
 void FrameBuffer2::FrameReady() {
   int ret;
-  vc_dispmanx_rect_set(&dst_rect_, 0,
-                                   0,
-                                   width_,
-                                   height_);
 
   ret = vc_dispmanx_resource_write_data(dispman_resource_,
                                         IMG_TYPE,
                                         width_,
                                         pixels_,
-                                        &dst_rect_);
+                                        &copy_dst_rect_);
   assert(ret == 0);
 }
 

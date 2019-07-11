@@ -41,7 +41,7 @@
 
 static void popped(struct menu_item *new_root,
                    struct menu_item *old_root) {
-  osd_active = 0;
+  menu_disable_osd();
 }
 
 static void menu_item_changed(struct menu_item *item) {
@@ -49,9 +49,9 @@ static void menu_item_changed(struct menu_item *item) {
   case MENU_SAVE_EASYFLASH:
     if (cartridge_flush_image(CARTRIDGE_EASYFLASH) < 0) {
       ui_pop_menu();
-      ui_error("Problem saving");
       // Treat this as OSD too
-      osd_active = 1;
+      menu_enable_osd();
+      ui_error("Problem saving");
     } else {
       ui_pop_all_and_toggle();
     }
@@ -71,7 +71,7 @@ void show_cart_osd_menu(void) {
   if (ui_activated) {
     if (osd_active) {
       ui_pop_all_and_toggle();
-      osd_active = 0;
+      menu_disable_osd();
     }
     return;
   }
@@ -90,7 +90,7 @@ void show_cart_osd_menu(void) {
   }
 
   // This will turn on ui rendering from the emuation side which will
-  // now see the OSD we just created.
+  // see the OSD we just created.
   ui_activated = 1;
-  osd_active = 1;
+  menu_enable_osd();
 }
