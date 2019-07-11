@@ -171,7 +171,8 @@ static int draw_buffer_alloc(struct video_canvas_s *canvas, uint8_t **draw_buffe
                              unsigned int fb_width, unsigned int fb_height,
                              unsigned int *fb_pitch) {
    if (is_vdc(canvas)) {
-      return circle_alloc_fb2(FB_LAYER_VDC, draw_buffer, fb_width, fb_height, fb_pitch);
+      return circle_alloc_fb2(FB_LAYER_VDC, draw_buffer,
+                              fb_width, fb_height, fb_pitch);
    } else {
       // TODO: Will be VIC eventually but we should not get here for now
       assert(0);
@@ -209,10 +210,14 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
   if (machine_class == VICE_MACHINE_C128 && canvas_num == 1) {
      vdc_canvas = canvas;
      // Have our fb class allocate draw buffers
-     canvas_state[canvas_num].draw_buffer_callback.draw_buffer_alloc = draw_buffer_alloc;
-     canvas_state[canvas_num].draw_buffer_callback.draw_buffer_free = draw_buffer_free;
-     canvas_state[canvas_num].draw_buffer_callback.draw_buffer_clear = draw_buffer_clear;
-     canvas->video_draw_buffer_callback = &canvas_state[canvas_num].draw_buffer_callback;
+     canvas_state[canvas_num].draw_buffer_callback.draw_buffer_alloc =
+         draw_buffer_alloc;
+     canvas_state[canvas_num].draw_buffer_callback.draw_buffer_free =
+         draw_buffer_free;
+     canvas_state[canvas_num].draw_buffer_callback.draw_buffer_clear =
+         draw_buffer_clear;
+     canvas->video_draw_buffer_callback =
+         &canvas_state[canvas_num].draw_buffer_callback;
   } else {
      canvas->video_draw_buffer_callback = NULL;
      vic_canvas = canvas;
@@ -384,18 +389,25 @@ static struct video_canvas_s *video_canvas_create_vic(
   return canvas;
 }
 
+static struct video_canvas_s *video_canvas_create_vdc(
+       struct video_canvas_s *canvas,
+       unsigned int *width,
+       unsigned int *height, int mapped) {
+  // TODO: REMOVE LATER, TEMP FOR TESTING
+  *width = 856;
+  *height = 312;
+  canvas->draw_buffer->canvas_physical_width = 856;
+  canvas->draw_buffer->canvas_physical_height = 312;
+  return canvas;
+}
+
 struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
                                            unsigned int *width,
                                            unsigned int *height, int mapped) {
   if (is_vic(canvas)) {
      return video_canvas_create_vic(canvas, width, height, mapped);
   } else {
-     // TODO: REMOVE LATER, TEMP FOR TESTING
-     *width = 856;
-     *height = 312;
-     canvas->draw_buffer->canvas_physical_width = 856;
-     canvas->draw_buffer->canvas_physical_height = 312;
-     return canvas;
+     return video_canvas_create_vdc(canvas, width, height, mapped);
   }
 }
 

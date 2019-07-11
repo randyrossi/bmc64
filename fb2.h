@@ -23,7 +23,14 @@ public:
   FrameBuffer2();
   virtual ~FrameBuffer2();
 
+  // Sets the layer for this frame buffer. Must be called before Allocate.
   void SetLayer(int layer);
+
+  // Tells this fb to use a palette with transparency.
+  // Must be called before Allocate.  If transparency is used, palette
+  // calls must use the 32 bit ARGB format.  Otherwise, the RGB565 format
+  // is used.
+  void SetTransparency(bool transparency);
 
   int Allocate(uint8_t **pixels, int width, int height, int *pitch);
   void Free();
@@ -41,8 +48,13 @@ public:
   // Hide the framebuffer
   void Hide();
 
-  // Set one color of the indexed palette
+  // Set one color of the indexed palette. Can only be called when
+  // transparency is false.
   void SetPalette(uint8_t index, uint16_t rgb565);
+
+  // Set one color of the indexed palette. Can only be called when
+  // transparency is true.
+  void SetPalette(uint8_t index, uint32_t rgba);
 
   // Commit current palette to frame buffer
   void UpdatePalette();
@@ -67,6 +79,7 @@ private:
   int height_;
   int pitch_;
   int layer_;
+  int transparency_;
 
   int display_width_;
   int display_height_;

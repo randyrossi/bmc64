@@ -225,8 +225,13 @@ CKernel::CKernel(void)
   }
 
   fb2[FB_LAYER_VIC].SetLayer(0);
+  fb2[FB_LAYER_VIC].SetTransparency(false);
+
   fb2[FB_LAYER_VDC].SetLayer(1);
+  fb2[FB_LAYER_VDC].SetTransparency(false);
+
   fb2[FB_LAYER_UI].SetLayer(2);
+  fb2[FB_LAYER_UI].SetTransparency(true);
 }
 
 bool CKernel::Initialize(void) {

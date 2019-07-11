@@ -75,7 +75,6 @@ public:
   void circle_set_fb1_y(int loc);
 
   // New FB2 stuff to replace the default frame buffer
-  // TODO: Use an index here instead of 'fb2' convention
   int circle_alloc_fb2(int layer, uint8_t **pixels,
                        int width, int height, int *pitch);
   void circle_free_fb2(int layer);

@@ -111,8 +111,16 @@ static void ui_action(long action);
 
 static int keyboard_shift = 0;
 
+static uint8_t* ui_fb;
+static int ui_fb_pitch;
+static int ui_fb_w;
+static int ui_fb_h;
+
 void ui_init_menu(void) {
   int i;
+
+  ui_fb_w = menu_width_chars * 8;
+  ui_fb_h = menu_height_chars * 8;
 
   ui_activated = 0;
   current_menu = -1;
@@ -127,6 +135,10 @@ void ui_init_menu(void) {
 
   // Root menu is never popped
   struct menu_item *root = ui_push_menu(-1, -1);
+
+  // This also loads our custom settings file. It's safe to have settings
+  // here that our videoarch code needs since this is called before any
+  // canvases are created.
   build_menu(root);
 
   ui_key_action = ACTION_None;
@@ -134,6 +146,10 @@ void ui_init_menu(void) {
   ui_key_ticks_next = 0;
   ui_key_ticks_repeats = 0;
   ui_key_ticks_repeats_next = 0;
+
+  // Let's create our UI frame buffer
+  circle_alloc_fb2(FB_LAYER_UI, &ui_fb, ui_fb_w, ui_fb_h, &ui_fb_pitch);
+  circle_clear_fb2(FB_LAYER_UI);
 }
 
 // Draw a single character at x,y coords into the offscreen area
@@ -144,19 +160,18 @@ static void ui_draw_char(uint8_t c, int pos_x, int pos_y, int color,
   uint8_t *font_pos;
   uint8_t *draw_pos;
 
-  // Destination is main frame buffer if not specified.
+  // Destination is our ui frame buffer if not specified.
   if (dst == NULL) {
-    // Always draw into off screen buffer.
-    dst_pitch = video_state.dst_pitch;
-    dst = video_state.dst + video_state.offscreen_buffer_y * dst_pitch;
-  }
+    dst_pitch = ui_fb_pitch;
+    dst = ui_fb;
 
-  // Don't draw out of bounds
-  if (pos_y < 0 || pos_y > video_state.fb_h - 8) {
-    return;
-  }
-  if (pos_x < 0 || pos_x > video_state.fb_w - 8) {
-    return;
+    // Don't draw out of bounds
+    if (pos_y < 0 || pos_y > ui_fb_h - 8) {
+      return;
+    }
+    if (pos_x < 0 || pos_x > ui_fb_w - 8) {
+      return;
+    }
   }
 
   font_pos = &(video_state.font[video_state.font_translate[c]]);
@@ -199,10 +214,10 @@ void ui_draw_rect_buf(int x, int y, int w, int h, int color, int fill,
                       uint8_t *dst, int dst_pitch) {
   int xx, yy, x2, y2;
 
-  // Destination is main frame buffer if not specified.
+  // Destination is ui frame buffer if not specified.
   if (dst == NULL) {
-    dst_pitch = video_state.dst_pitch;
-    dst = video_state.dst + video_state.offscreen_buffer_y * dst_pitch;
+    dst_pitch = ui_fb_pitch;
+    dst = ui_fb;
   }
   x2 = x + w;
   y2 = y + h;
@@ -405,7 +420,7 @@ static void ui_action_frame() {
 
 static void ui_render_single_frame() {
   ui_render_now();
-  videoarch_swap();
+  circle_frame_ready_fb2(FB_LAYER_UI);
 }
 
 static void pause_trap(uint16_t addr, void *data) {
@@ -426,7 +441,10 @@ static void pause_trap(uint16_t addr, void *data) {
 static void ui_toggle(void) {
   ui_activated = 1 - ui_activated;
   if (ui_activated) {
+    circle_show_fb2(FB_LAYER_UI);
     interrupt_maincpu_trigger_trap(pause_trap, 0);
+  } else {
+    circle_hide_fb2(FB_LAYER_UI);
   }
 }
 
@@ -991,8 +1009,8 @@ struct menu_item *ui_push_menu(int w_chars, int h_chars) {
   int menu_height = h_chars * 8;
   menu_roots[current_menu].menu_width = menu_width;
   menu_roots[current_menu].menu_height = menu_height;
-  menu_roots[current_menu].menu_left = (video_state.fb_w - menu_width) / 2;
-  menu_roots[current_menu].menu_top = (video_state.fb_h - menu_height) / 2;
+  menu_roots[current_menu].menu_left = (ui_fb_w - menu_width) / 2;
+  menu_roots[current_menu].menu_top = (ui_fb_h - menu_height) / 2;
 
   menu_cursor[current_menu] = 0;
   menu_window_top[current_menu] = 0;

@@ -1955,7 +1955,6 @@ void build_menu(struct menu_item *root) {
 
   video_parent = parent = ui_menu_add_folder(root, "Video");
 
-printf ("create video menu\n");
   if (machine_class == VICE_MACHINE_C128) {
      // For C128, we split video options under video into VICII
      // and VDC submenus since there are two displays.  Otherwise,
