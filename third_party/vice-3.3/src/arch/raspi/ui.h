@@ -170,9 +170,15 @@ void ui_check_key(void);
 
 void ui_pop_all_and_toggle(void);
 
+// Attach this to any OSD menu or dialog that should
+// disable the osd when its popped.
+void glob_osd_popped(struct menu_item *new_root,
+                     struct menu_item *old_root);
+
 void ui_make_transparent(void);
 void ui_render_now(void);
 void ui_error(const char *format, ...);
+void ui_error_osd(const char *format, ...);
 void ui_info(const char *format, ...);
 
 struct menu_item *ui_pop_menu(void);
@@ -192,6 +198,10 @@ void ui_to_top(void);
 void ui_to_bottom(void);
 void ui_find_first(char letter);
 void ui_set_cur_pos(int pos);
+
+void ui_enable_osd(void);
+void ui_disable_osd(void);
+void ui_dismiss_osd_if_active(void);
 
 struct menu_item* ui_find_item_by_id(struct menu_item *node, int id);
 

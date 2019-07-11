@@ -39,19 +39,12 @@
 #include "raspi_machine.h"
 #include "ui.h"
 
-static void popped(struct menu_item *new_root,
-                   struct menu_item *old_root) {
-  menu_disable_osd();
-}
-
 static void menu_item_changed(struct menu_item *item) {
   switch (item->id) {
   case MENU_SAVE_EASYFLASH:
     if (cartridge_flush_image(CARTRIDGE_EASYFLASH) < 0) {
       ui_pop_menu();
-      // Treat this as OSD too
-      menu_enable_osd();
-      ui_error("Problem saving");
+      ui_error_osd("Problem saving");
     } else {
       ui_pop_all_and_toggle();
     }
@@ -69,15 +62,12 @@ static void menu_item_changed(struct menu_item *item) {
 void show_cart_osd_menu(void) {
   // We only show OSD when the emulator is running. (not in the trap)
   if (ui_activated) {
-    if (osd_active) {
-      ui_pop_all_and_toggle();
-      menu_disable_osd();
-    }
+    ui_dismiss_osd_if_active();
     return;
   }
 
   struct menu_item *root = ui_push_menu(20, 2);
-  root->on_popped_off = popped;
+  root->on_popped_off = glob_osd_popped;
 
   struct menu_item *child;
   if (machine_class == VICE_MACHINE_C64 || machine_class == VICE_MACHINE_C128) {
@@ -92,5 +82,5 @@ void show_cart_osd_menu(void) {
   // This will turn on ui rendering from the emuation side which will
   // see the OSD we just created.
   ui_activated = 1;
-  menu_enable_osd();
+  ui_enable_osd();
 }

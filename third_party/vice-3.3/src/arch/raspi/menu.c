@@ -119,8 +119,6 @@ struct menu_item *reset_confirm_item;
 struct menu_item *use_pcb_item;
 struct menu_item *active_display_item;
 
-int osd_active;
-
 static int unit;
 static int joyswap;
 static int force_overlay;
@@ -2312,16 +2310,4 @@ int circle_num_joysticks(void) {
     return 1;
   }
   return 2;
-}
-
-void menu_enable_osd(void) {
-  osd_active = 1;
-  ui_make_transparent();
-  circle_frame_ready_fb2(FB_LAYER_UI);
-  circle_show_fb2(FB_LAYER_UI);
-}
-
-void menu_disable_osd(void) {
-  osd_active = 0;
-  circle_hide_fb2(FB_LAYER_UI);
 }

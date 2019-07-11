@@ -324,7 +324,6 @@ typedef enum {
    MENU_ACTIVE_DISPLAY_VDC,
 } MenuActiveDisplay;
 
-extern int osd_active;
 extern long keyset_codes[2][7];
 extern long key_bindings[6];
 
@@ -340,8 +339,5 @@ void menu_about_to_activate(void);
 void menu_about_to_deactivate(void);
 
 void menu_quick_func(int button_assignment);
-
-void menu_enable_osd(void);
-void menu_disable_osd(void);
 
 #endif

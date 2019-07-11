@@ -35,11 +35,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void popped(struct menu_item *new_root,
-                   struct menu_item *old_root) {
-  osd_active = 0;
-}
-
 static void menu_item_changed(struct menu_item *item) {
   switch (item->id) {
   case MENU_TAPE_START:
@@ -78,14 +73,11 @@ static void menu_item_changed(struct menu_item *item) {
 void show_tape_osd_menu(void) {
   // We only show OSD when the emulator is running. (not in the trap)
   if (ui_activated) {
-    if (osd_active) {
-      ui_pop_all_and_toggle();
-      osd_active = 0;
-    }
+    ui_dismiss_osd_if_active();
     return;
   }
   struct menu_item *root = ui_push_menu(7, 7);
-  root->on_popped_off = popped;
+  root->on_popped_off = glob_osd_popped;
 
   struct menu_item *child;
   child = ui_menu_add_button(MENU_TAPE_START, root, "PLAY");
@@ -106,5 +98,5 @@ void show_tape_osd_menu(void) {
   // This will turn on ui rendering from the emuation side which will
   // now see the OSD we just created.
   ui_activated = 1;
-  osd_active = 1;
+  ui_enable_osd();
 }

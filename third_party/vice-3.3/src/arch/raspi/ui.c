@@ -40,15 +40,15 @@
 #include <string.h>
 #include <ctype.h>
 
+// Is the UI layer enabled? (either OSD or MENU)
 volatile int ui_activated;
-
-int ui_ctrl_down;
-
 // Countdown to toggle menu on/off
 int ui_toggle_pending;
-
 // One of the quick functions that can be invoked by button assignments
 int pending_emu_quick_func;
+
+static int osd_active;
+static int ui_ctrl_down;
 
 extern struct joydev_config joydevs[MAX_JOY_PORTS];
 
@@ -61,24 +61,24 @@ const int menu_width_chars = 40;
 const int menu_height_chars = 25;
 
 // Stack of menu screens
-int current_menu = -1;
+static int current_menu = -1;
 struct menu_item menu_roots[NUM_MENU_ROOTS];
 
 // Where is our cursor in the menu?
-int menu_cursor[NUM_MENU_ROOTS];
+static int menu_cursor[NUM_MENU_ROOTS];
 struct menu_item *menu_cursor_item[NUM_MENU_ROOTS];
 
 // Sliding window marking start and stop of what we're showing.
-int menu_window_top[NUM_MENU_ROOTS];
-int menu_window_bottom[NUM_MENU_ROOTS];
+static int menu_window_top[NUM_MENU_ROOTS];
+static int menu_window_bottom[NUM_MENU_ROOTS];
 
 // The index of the last item + 1. Can't set cursor to this or higher.
-int max_index[NUM_MENU_ROOTS];
+static int max_index[NUM_MENU_ROOTS];
 
-int pending_ui_key_head = 0;
-int pending_ui_key_tail = 0;
-volatile long pending_ui_key[16];
-volatile int pending_ui_key_pressed[16];
+static int pending_ui_key_head = 0;
+static int pending_ui_key_tail = 0;
+static long pending_ui_key[16];
+static int pending_ui_key_pressed[16];
 
 // Global callback for events that happen on menu items
 void (*on_value_changed)(struct menu_item *) = NULL;
@@ -1046,8 +1046,31 @@ static struct menu_item *ui_push_dialog_header(int is_error) {
   return root;
 }
 
+// TODO: This is actually broken since we switched the UI
+// to have its own dedicated layer.  Need to force this to show
+// as an OSD if ui is not up, otherwise, user will never see this.
+// Need to test this case.
 void ui_error(const char *format, ...) {
   struct menu_item *root = ui_push_dialog_header(1);
+  char buffer[256];
+  va_list args;
+  va_start(args, format);
+  vsnprintf(buffer, 255, format, args);
+  ui_menu_add_button(MENU_ERROR_DIALOG, root, buffer);
+  va_end(args);
+  ui_render_single_frame();
+}
+
+void glob_osd_popped(struct menu_item *new_root,
+                     struct menu_item *old_root) {
+  ui_disable_osd();
+}
+
+// Similar to ui_error but as an OSD
+void ui_error_osd(const char *format, ...) {
+  ui_enable_osd();
+  struct menu_item *root = ui_push_dialog_header(1);
+  root->on_popped_off = glob_osd_popped;
   char buffer[256];
   va_list args;
   va_start(args, format);
@@ -1145,4 +1168,23 @@ struct menu_item* ui_find_item_by_id(struct menu_item *node, int id) {
   }
 
   return NULL;
+}
+
+void ui_enable_osd(void) {
+  osd_active = 1;
+  ui_make_transparent();
+  circle_frame_ready_fb2(FB_LAYER_UI);
+  circle_show_fb2(FB_LAYER_UI);
+}
+
+void ui_disable_osd(void) {
+  osd_active = 0;
+  circle_hide_fb2(FB_LAYER_UI);
+}
+
+void ui_dismiss_osd_if_active(void) {
+  if (osd_active) {
+     ui_pop_all_and_toggle();
+     ui_disable_osd();
+  }
 }
