@@ -42,11 +42,9 @@
 static void menu_item_changed(struct menu_item *item) {
   switch (item->id) {
   case MENU_SAVE_EASYFLASH:
+    ui_pop_all_and_toggle();
     if (cartridge_flush_image(CARTRIDGE_EASYFLASH) < 0) {
-      ui_pop_menu();
-      ui_error_osd("Problem saving");
-    } else {
-      ui_pop_all_and_toggle();
+      ui_error("Problem saving");
     }
     break;
   case MENU_CART_FREEZE:
@@ -81,6 +79,5 @@ void show_cart_osd_menu(void) {
 
   // This will turn on ui rendering from the emuation side which will
   // see the OSD we just created.
-  ui_activated = 1;
   ui_enable_osd();
 }

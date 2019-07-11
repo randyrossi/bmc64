@@ -188,3 +188,11 @@
   * Fixed badling named cycles_per_refresh to cycles_per_second
     (but old name still works)
   * Put canvas height back to 288 for C64
+
+## 2.1
+  * Major overhaul of how video is output
+    * Turned off default frame buffer and use dispmanx instead
+    * Added separate layers for VIC, VDC and UI
+    * Used VICE buffer alloc/free/clear callbacks to have VICE draw directly
+      into fb2's frame buffer
+    * Added transparency support to UI layer

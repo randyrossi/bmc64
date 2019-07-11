@@ -97,6 +97,5 @@ void show_tape_osd_menu(void) {
 
   // This will turn on ui rendering from the emuation side which will
   // now see the OSD we just created.
-  ui_activated = 1;
   ui_enable_osd();
 }

@@ -1032,10 +1032,6 @@ void ui_set_on_value_changed_callback(void (*callback)(struct menu_item *)) {
 int circle_ui_activated(void) { return ui_activated; }
 
 static struct menu_item *ui_push_dialog_header(int is_error) {
-  if (!ui_activated) {
-    ui_toggle();
-  }
-
   struct menu_item *root = ui_push_menu(30, 4);
   if (is_error) {
     ui_menu_add_button(MENU_ERROR_DIALOG, root, "Error");
@@ -1046,31 +1042,19 @@ static struct menu_item *ui_push_dialog_header(int is_error) {
   return root;
 }
 
-// TODO: This is actually broken since we switched the UI
-// to have its own dedicated layer.  Need to force this to show
-// as an OSD if ui is not up, otherwise, user will never see this.
-// Need to test this case.
-void ui_error(const char *format, ...) {
-  struct menu_item *root = ui_push_dialog_header(1);
-  char buffer[256];
-  va_list args;
-  va_start(args, format);
-  vsnprintf(buffer, 255, format, args);
-  ui_menu_add_button(MENU_ERROR_DIALOG, root, buffer);
-  va_end(args);
-  ui_render_single_frame();
-}
-
+// Attach this callback to any OSD dialog
 void glob_osd_popped(struct menu_item *new_root,
                      struct menu_item *old_root) {
   ui_disable_osd();
 }
 
-// Similar to ui_error but as an OSD
-void ui_error_osd(const char *format, ...) {
-  ui_enable_osd();
+void ui_error(const char *format, ...) {
   struct menu_item *root = ui_push_dialog_header(1);
-  root->on_popped_off = glob_osd_popped;
+  if (!ui_activated) {
+     // We were called without the UI being up. Make this an OSD.
+     ui_enable_osd();
+     root->on_popped_off = glob_osd_popped;
+  }
   char buffer[256];
   va_list args;
   va_start(args, format);
@@ -1082,6 +1066,11 @@ void ui_error_osd(const char *format, ...) {
 
 void ui_info(const char *format, ...) {
   struct menu_item *root = ui_push_dialog_header(0);
+  if (!ui_activated) {
+     // We were called without the UI being up. Make this an OSD.
+     ui_enable_osd();
+     root->on_popped_off = glob_osd_popped;
+  }
   char buffer[256];
   va_list args;
   va_start(args, format);
@@ -1172,6 +1161,7 @@ struct menu_item* ui_find_item_by_id(struct menu_item *node, int id) {
 
 void ui_enable_osd(void) {
   osd_active = 1;
+  ui_activated = 1;
   ui_make_transparent();
   circle_frame_ready_fb2(FB_LAYER_UI);
   circle_show_fb2(FB_LAYER_UI);
@@ -1179,6 +1169,9 @@ void ui_enable_osd(void) {
 
 void ui_disable_osd(void) {
   osd_active = 0;
+  // We don't set ui_activated to 0 here. We rely on
+  // pop and toggle to dismiss OSDs which does the
+  // right thing.
   circle_hide_fb2(FB_LAYER_UI);
 }
 

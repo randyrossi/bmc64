@@ -68,6 +68,5 @@ void show_confirm_osd_menu(int func) {
 
   // This will turn on ui rendering from the emuation side which will
   // now see the OSD we just created.
-  ui_activated = 1;
   ui_enable_osd();
 }
