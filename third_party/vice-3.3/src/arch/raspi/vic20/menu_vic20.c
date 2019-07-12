@@ -43,41 +43,49 @@ unsigned long calculate_timing(double fps) {
   }
 }
 
-void set_color_brightness(int value) {
+void set_color_brightness(int display_num, int value) {
   resources_set_int("VICColorBrightness", value);
 }
 
-void set_color_contrast(int value) {
+void set_color_contrast(int display_num, int value) {
   resources_set_int("VICColorContrast", value);
 }
 
-void set_color_gamma(int value) { resources_set_int("VICColorGamma", value); }
+void set_color_gamma(int display_num, int value) {
+  resources_set_int("VICColorGamma", value);
+}
 
-void set_color_tint(int value) { resources_set_int("VICColorTint", value); }
+void set_color_tint(int display_num, int value) {
+  resources_set_int("VICColorTint", value);
+}
 
-void set_video_cache(int value) { resources_set_int("VICVideoCache", value); }
+void set_video_cache(int value) {
+  resources_set_int("VICVideoCache", value);
+}
 
-void set_hw_scale(int value) { resources_set_int("VICHwScale", value); }
+void set_hw_scale(int value) {
+  resources_set_int("VICHwScale", value);
+}
 
-int get_color_brightness() {
+int get_color_brightness(int display_num) {
   int value;
   resources_get_int("VICColorBrightness", &value);
   return value;
 }
 
-int get_color_contrast() {
+int get_color_contrast(int display_num) {
   int value;
   resources_get_int("VICColorContrast", &value);
   return value;
 }
 
-int get_color_gamma() {
+int get_color_gamma(int display_num) {
   int value;
   resources_get_int("VICColorGamma", &value);
   return value;
 }
 
-int get_color_tint() {
+int get_color_tint(int display_num) {
   int value;
   resources_get_int("VICColorTint", &value);
   return value;
@@ -87,9 +95,9 @@ void raspi_cartridge_trigger_freeze(void) {
   // Not available on this machine.
 }
 
-struct menu_item* menu_build_palette_options(struct menu_item* parent) {
+struct menu_item* menu_build_palette_options(int menu_id, struct menu_item* parent) {
   struct menu_item* palette_item =
-      ui_menu_add_multiple_choice(MENU_COLOR_PALETTE, parent, "Color Palette");
+      ui_menu_add_multiple_choice(menu_id, parent, "Color Palette");
   palette_item->num_choices = 4;
   palette_item->value = 0;
   strcpy(palette_item->choices[0], "Vice");

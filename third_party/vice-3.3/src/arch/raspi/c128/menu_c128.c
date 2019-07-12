@@ -44,43 +44,83 @@ unsigned long calculate_timing(double fps) {
   }
 }
 
-void set_color_brightness(int value) {
-  resources_set_int("VICIIColorBrightness", value);
+void set_color_brightness(int display_num, int value) {
+  if (display_num == 0) {
+    resources_set_int("VICIIColorBrightness", value);
+  } else {
+    resources_set_int("VDCColorBrightness", value);
+  }
 }
 
-void set_color_contrast(int value) {
-  resources_set_int("VICIIColorContrast", value);
+void set_color_contrast(int display_num, int value) {
+  if (display_num == 0) {
+    resources_set_int("VICIIColorContrast", value);
+  } else {
+    resources_set_int("VDCColorContrast", value);
+  }
 }
 
-void set_color_gamma(int value) { resources_set_int("VICIIColorGamma", value); }
+void set_color_gamma(int display_num, int value) {
+  if (display_num == 0) {
+    resources_set_int("VICIIColorGamma", value);
+  } else {
+    resources_set_int("VDCColorGamma", value);
+  }
+}
 
-void set_color_tint(int value) { resources_set_int("VICIIColorTint", value); }
+void set_color_tint(int display_num, int value) {
+  if (display_num == 0) {
+    resources_set_int("VICIIColorTint", value);
+  } else {
+    resources_set_int("VDCColorTint", value);
+  }
+}
 
-void set_video_cache(int value) { resources_set_int("VICIIVideoCache", value); }
+void set_video_cache(int value) {
+  resources_set_int("VICIIVideoCache", value);
+}
 
-void set_hw_scale(int value) { resources_set_int("VICIIHwScale", value); }
+void set_hw_scale(int value) {
+  resources_set_int("VICIIHwScale", value);
+}
 
-int get_color_brightness() {
+int get_color_brightness(int display_num) {
   int value;
-  resources_get_int("VICIIColorBrightness", &value);
+  if (display_num == 0) {
+    resources_get_int("VICIIColorBrightness", &value);
+  } else {
+    resources_get_int("VDCColorBrightness", &value);
+  }
   return value;
 }
 
-int get_color_contrast() {
+int get_color_contrast(int display_num) {
   int value;
-  resources_get_int("VICIIColorContrast", &value);
+  if (display_num == 0) {
+    resources_get_int("VICIIColorContrast", &value);
+  } else {
+    resources_get_int("VDCColorContrast", &value);
+  }
   return value;
 }
 
-int get_color_gamma() {
+int get_color_gamma(int display_num) {
   int value;
-  resources_get_int("VICIIColorGamma", &value);
+  if (display_num == 0) {
+    resources_get_int("VICIIColorGamma", &value);
+  } else {
+    resources_get_int("VDCColorGamma", &value);
+  }
   return value;
 }
 
-int get_color_tint() {
+int get_color_tint(int display_num) {
   int value;
-  resources_get_int("VICIIColorTint", &value);
+  if (display_num == 0) {
+    resources_get_int("VICIIColorTint", &value);
+  } else {
+    resources_get_int("VDCColorTint", &value);
+  }
   return value;
 }
 
@@ -88,9 +128,9 @@ void raspi_cartridge_trigger_freeze(void) {
   cartridge_trigger_freeze();
 }
 
-struct menu_item* menu_build_palette_options(struct menu_item* parent) {
+struct menu_item* menu_build_palette_options(int menu_id, struct menu_item* parent) {
   struct menu_item* palette_item =
-      ui_menu_add_multiple_choice(MENU_COLOR_PALETTE, parent, "Color Palette");
+      ui_menu_add_multiple_choice(menu_id, parent, "Color Palette");
   palette_item->num_choices = 5;
   palette_item->value = 1;
   strcpy(palette_item->choices[0], "Default");

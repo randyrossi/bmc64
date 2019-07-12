@@ -97,7 +97,6 @@ int usb_1_button_assignments[MAX_USB_BUTTONS];
 int usb_button_bits[MAX_USB_BUTTONS]; // never change
 long keyset_codes[2][7];
 long key_bindings[6];
-struct menu_item *palette_item;
 struct menu_item *keyboard_type_item;
 struct menu_item *drive_sounds_item;
 struct menu_item *drive_sounds_vol_item;
@@ -110,10 +109,19 @@ struct menu_item *sid_model_item;
 struct menu_item *sid_filter_item;
 struct menu_item *overlay_item;
 struct menu_item *tape_reset_with_machine_item;
-struct menu_item *brightness_item;
-struct menu_item *contrast_item;
-struct menu_item *gamma_item;
-struct menu_item *tint_item;
+
+struct menu_item *palette_item_0;
+struct menu_item *brightness_item_0;
+struct menu_item *contrast_item_0;
+struct menu_item *gamma_item_0;
+struct menu_item *tint_item_0;
+
+struct menu_item *palette_item_1;
+struct menu_item *brightness_item_1;
+struct menu_item *contrast_item_1;
+struct menu_item *gamma_item_1;
+struct menu_item *tint_item_1;
+
 struct menu_item *warp_item;
 struct menu_item *reset_confirm_item;
 struct menu_item *use_pcb_item;
@@ -553,7 +561,10 @@ static int save_settings() {
   fprintf(fp, "usb_y_t_0=%d\n", (int)(usb_y_thresh_0 * 100.0f));
   fprintf(fp, "usb_x_t_1=%d\n", (int)(usb_x_thresh_1 * 100.0f));
   fprintf(fp, "usb_y_t_1=%d\n", (int)(usb_y_thresh_1 * 100.0f));
-  fprintf(fp, "palette=%d\n", palette_item->value);
+  fprintf(fp, "palette=%d\n", palette_item_0->value);
+  if (machine_class == VICE_MACHINE_C128) {
+    fprintf(fp, "palette2=%d\n", palette_item_1->value);
+  }
   fprintf(fp, "keyboard_type=%d\n", keyboard_type_item->value);
 
   for (i = 0; i < MAX_USB_BUTTONS; i++) {
@@ -643,11 +654,20 @@ static void load_settings() {
   resources_get_int("SidFilters", &sid_filter_item->value);
   resources_get_int("DriveSoundEmulation", &drive_sounds_item->value);
   resources_get_int("DriveSoundEmulationVolume", &drive_sounds_vol_item->value);
-  brightness_item->value = get_color_brightness();
-  contrast_item->value = get_color_contrast();
-  gamma_item->value = get_color_gamma();
-  tint_item->value = get_color_tint();
-  video_color_setting_changed();
+
+  brightness_item_0->value = get_color_brightness(0);
+  contrast_item_0->value = get_color_contrast(0);
+  gamma_item_0->value = get_color_gamma(0);
+  tint_item_0->value = get_color_tint(0);
+  video_color_setting_changed(0);
+
+  if (machine_class == VICE_MACHINE_C128) {
+    brightness_item_1->value = get_color_brightness(1);
+    contrast_item_1->value = get_color_contrast(1);
+    gamma_item_1->value = get_color_gamma(1);
+    tint_item_1->value = get_color_tint(1);
+    video_color_setting_changed(1);
+  }
 
   // Default pot values for buttons
   pot_x_high_value = 192;
@@ -717,7 +737,9 @@ static void load_settings() {
     } else if (strcmp(name, "usb_y_t_1") == 0) {
       usb_y_thresh_1 = ((float)value) / 100.0f;
     } else if (strcmp(name, "palette") == 0) {
-      palette_item->value = value;
+      palette_item_0->value = value;
+    } else if (strcmp(name, "palette2") == 0 && machine_class == VICE_MACHINE_C128) {
+      palette_item_1->value = value;
     } else if (strcmp(name, "keyboard_type") == 0) {
       keyboard_type_item->value = value;
     } else if (strcmp(name, "usb_btn_0") == 0) {
@@ -1300,8 +1322,11 @@ static void menu_value_changed(struct menu_item *item) {
       ui_info("Settings saved");
     }
     return;
-  case MENU_COLOR_PALETTE:
-    video_canvas_change_palette(item->value);
+  case MENU_COLOR_PALETTE_0:
+    video_canvas_change_palette(0, item->value);
+    return;
+  case MENU_COLOR_PALETTE_1:
+    video_canvas_change_palette(1, item->value);
     return;
   case MENU_AUTOSTART:
     show_files(DIR_ROOT, FILTER_NONE, MENU_AUTOSTART_FILE, 0);
@@ -1514,32 +1539,59 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_DRIVE_SOUND_EMULATION_VOLUME:
     resources_set_int("DriveSoundEmulationVolume", item->value);
     return;
-  case MENU_COLOR_BRIGHTNESS:
-    set_color_brightness(item->value);
-    video_color_setting_changed();
+  case MENU_COLOR_BRIGHTNESS_0:
+    set_color_brightness(0, item->value);
+    video_color_setting_changed(0);
     return;
-  case MENU_COLOR_CONTRAST:
-    set_color_contrast(item->value);
-    video_color_setting_changed();
+  case MENU_COLOR_CONTRAST_0:
+    set_color_contrast(0, item->value);
+    video_color_setting_changed(0);
     return;
-  case MENU_COLOR_GAMMA:
-    set_color_gamma(item->value);
-    video_color_setting_changed();
+  case MENU_COLOR_GAMMA_0:
+    set_color_gamma(0, item->value);
+    video_color_setting_changed(0);
     return;
-  case MENU_COLOR_TINT:
-    set_color_tint(item->value);
-    video_color_setting_changed();
+  case MENU_COLOR_TINT_0:
+    set_color_tint(0, item->value);
+    video_color_setting_changed(0);
     return;
-  case MENU_COLOR_RESET:
-    brightness_item->value = 1000;
-    contrast_item->value = 1250;
-    gamma_item->value = 2200;
-    tint_item->value = 1000;
-    set_color_brightness(brightness_item->value);
-    set_color_contrast(contrast_item->value);
-    set_color_gamma(gamma_item->value);
-    set_color_tint(tint_item->value);
-    video_color_setting_changed();
+  case MENU_COLOR_RESET_0:
+    brightness_item_0->value = 1000;
+    contrast_item_0->value = 1250;
+    gamma_item_0->value = 2200;
+    tint_item_0->value = 1000;
+    set_color_brightness(0, brightness_item_0->value);
+    set_color_contrast(0, contrast_item_0->value);
+    set_color_gamma(0, gamma_item_0->value);
+    set_color_tint(0, tint_item_0->value);
+    video_color_setting_changed(0);
+    return;
+  case MENU_COLOR_BRIGHTNESS_1:
+    set_color_brightness(1, item->value);
+    video_color_setting_changed(1);
+    return;
+  case MENU_COLOR_CONTRAST_1:
+    set_color_contrast(1, item->value);
+    video_color_setting_changed(1);
+    return;
+  case MENU_COLOR_GAMMA_1:
+    set_color_gamma(1, item->value);
+    video_color_setting_changed(1);
+    return;
+  case MENU_COLOR_TINT_1:
+    set_color_tint(1, item->value);
+    video_color_setting_changed(1);
+    return;
+  case MENU_COLOR_RESET_1:
+    brightness_item_1->value = 1000;
+    contrast_item_1->value = 1250;
+    gamma_item_1->value = 2200;
+    tint_item_1->value = 1000;
+    set_color_brightness(1, brightness_item_1->value);
+    set_color_contrast(1, contrast_item_1->value);
+    set_color_gamma(1, gamma_item_1->value);
+    set_color_tint(1, tint_item_1->value);
+    video_color_setting_changed(1);
     return;
   case MENU_SWAP_JOYSTICKS:
     menu_swap_joysticks();
@@ -1970,23 +2022,38 @@ void build_menu(struct menu_item *root) {
      parent = ui_menu_add_folder(video_parent, "VICII");
   }
 
-  palette_item = menu_build_palette_options(parent);
+  palette_item_0 = menu_build_palette_options(MENU_COLOR_PALETTE_0, parent);
 
   child = ui_menu_add_folder(parent, "Color Adjustments...");
 
-  brightness_item =
-      ui_menu_add_range(MENU_COLOR_BRIGHTNESS, child, "Brightness", 0, 2000,
-                        100, get_color_brightness());
-  contrast_item = ui_menu_add_range(MENU_COLOR_CONTRAST, child, "Contrast", 0,
-                                    2000, 100, get_color_contrast());
-  gamma_item = ui_menu_add_range(MENU_COLOR_GAMMA, child, "Gamma", 0, 4000, 100,
-                                 get_color_gamma());
-  tint_item = ui_menu_add_range(MENU_COLOR_TINT, child, "Tint", 0, 2000, 100,
-                                get_color_tint());
-  ui_menu_add_button(MENU_COLOR_RESET, child, "Reset");
+  brightness_item_0 =
+      ui_menu_add_range(MENU_COLOR_BRIGHTNESS_0, child, "Brightness", 0, 2000,
+                        100, get_color_brightness(0));
+  contrast_item_0 = ui_menu_add_range(MENU_COLOR_CONTRAST_0, child, "Contrast", 0,
+                                    2000, 100, get_color_contrast(0));
+  gamma_item_0 = ui_menu_add_range(MENU_COLOR_GAMMA_0, child, "Gamma", 0, 4000, 100,
+                                 get_color_gamma(0));
+  tint_item_0 = ui_menu_add_range(MENU_COLOR_TINT_0, child, "Tint", 0, 2000, 100,
+                                get_color_tint(0));
+  ui_menu_add_button(MENU_COLOR_RESET_0, child, "Reset");
 
   if (machine_class == VICE_MACHINE_C128) {
      parent = ui_menu_add_folder(video_parent, "VDC");
+
+     palette_item_1 = menu_build_palette_options(MENU_COLOR_PALETTE_1, parent);
+
+     child = ui_menu_add_folder(parent, "Color Adjustments...");
+
+     brightness_item_1 =
+         ui_menu_add_range(MENU_COLOR_BRIGHTNESS_1, child, "Brightness", 0, 2000,
+                           100, get_color_brightness(1));
+     contrast_item_1 = ui_menu_add_range(MENU_COLOR_CONTRAST_1, child, "Contrast", 0,
+                                       2000, 100, get_color_contrast(1));
+     gamma_item_1 = ui_menu_add_range(MENU_COLOR_GAMMA_1, child, "Gamma", 0, 4000,
+                                       100, get_color_gamma(1));
+     tint_item_1 = ui_menu_add_range(MENU_COLOR_TINT_1, child, "Tint", 0, 2000, 100,
+                                get_color_tint(1));
+     ui_menu_add_button(MENU_COLOR_RESET_1, child, "Reset");
   }
 
   ui_menu_add_button(MENU_CALC_TIMING, video_parent,
@@ -2206,7 +2273,10 @@ printf ("done create video menu\n");
   ui_set_on_value_changed_callback(menu_value_changed);
 
   load_settings();
-  video_canvas_change_palette(palette_item->value);
+  video_canvas_change_palette(0, palette_item_0->value);
+  if (machine_class == VICE_MACHINE_C128) {
+    video_canvas_change_palette(1, palette_item_1->value);
+  }
   ui_set_hotkeys();
   ui_set_joy_devs();
 

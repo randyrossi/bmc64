@@ -26,18 +26,18 @@
 
 unsigned long calculate_timing(double fps);
 
-void set_color_brightness(int value);
-void set_color_contrast(int value);
-void set_color_gamma(int value);
-void set_color_tint(int value);
+void set_color_brightness(int display_num, int value);
+void set_color_contrast(int display_num, int value);
+void set_color_gamma(int display_num, int value);
+void set_color_tint(int display_num, int value);
+
 void set_video_cache(int value);
 void set_hw_scale(int value);
 
-int get_color_brightness(void);
-int get_color_contrast(void);
-int get_color_gamma(void);
-int get_color_tint(void);
+int get_color_brightness(int display_num);
+int get_color_contrast(int display_num);
+int get_color_gamma(int display_num);
+int get_color_tint(int display_num);
 
 void raspi_cartridge_trigger_freeze(void);
-struct menu_item* menu_build_palette_options(struct menu_item* parent);
-
+struct menu_item* menu_build_palette_options(int menu_id, struct menu_item* parent);

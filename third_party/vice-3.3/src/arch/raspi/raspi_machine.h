@@ -32,21 +32,21 @@ extern void set_refresh_rate(int timing, struct video_canvas_s *canvas);
 extern void set_video_font(void);
 extern unsigned long calculate_timing(double fps);
 
-extern void set_color_brightness(int value);
-extern void set_color_contrast(int value);
-extern void set_color_gamma(int value);
-extern void set_color_tint(int value);
+extern void set_color_brightness(int display_num, int value);
+extern void set_color_contrast(int display_num, int value);
+extern void set_color_gamma(int display_num, int value);
+extern void set_color_tint(int display_num, int value);
 extern void set_video_cache(int value);
 extern void set_hw_scale(int value);
 
-extern int get_color_brightness(void);
-extern int get_color_contrast(void);
-extern int get_color_gamma(void);
-extern int get_color_tint(void);
+extern int get_color_brightness(int display_num);
+extern int get_color_contrast(int display_num);
+extern int get_color_gamma(int display_num);
+extern int get_color_tint(int display_num);
 
 extern void raspi_cartridge_trigger_freeze(void);
 unsigned int *raspi_get_palette(int index);
-struct menu_item* menu_build_palette_options(struct menu_item* parent);
+struct menu_item* menu_build_palette_options(int menu_id, struct menu_item* parent);
 
 int is_vic(struct video_canvas_s *canvas);
 int is_vdc(struct video_canvas_s *canvas);

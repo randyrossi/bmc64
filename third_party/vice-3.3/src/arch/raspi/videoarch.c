@@ -127,35 +127,44 @@ int is_vdc(struct video_canvas_s *canvas) {
 }
 
 // Called by menu when palette changes
-void video_canvas_change_palette(int index) {
-  if (!video_state.canvas)
+void video_canvas_change_palette(int display_num, int palette_index) {
+  if (!canvas_state[display_num].canvas)
     return;
 
-  video_state.palette_index = index;
+  canvas_state[display_num].palette_index = palette_index;
   // This will call set_palette below to get called after color controls
   // have been applied to the palette.
-  video_color_update_palette(video_state.canvas);
+  video_color_update_palette(canvas_state[display_num].canvas);
 }
 
 // Called when a color setting has changed
-void video_color_setting_changed() {
-  if (!video_state.canvas)
+void video_color_setting_changed(int display_num) {
+  if (!canvas_state[display_num].canvas)
     return;
 
   // This will call set_palette below to get called after color controls
   // have been applied to the palette.
-  video_color_update_palette(video_state.canvas);
+  video_color_update_palette(canvas_state[display_num].canvas);
 }
 
 int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
   canvas->palette = p;
 
-  for (int i = 0; i < 16; i++) {
-    circle_set_fb1_palette(i,
+  if (is_vic(canvas)) {
+    for (int i = 0; i < 16; i++) {
+      circle_set_fb1_palette(i,
                        COLOR16(p->entries[i].red >> 3, p->entries[i].green >> 3,
                                p->entries[i].blue >> 3));
+    }
+    circle_update_fb1_palette();
+  } else {
+    for (int i = 0; i < 16; i++) {
+      circle_set_palette_fb2(FB_LAYER_VDC, i,
+                       COLOR16(p->entries[i].red >> 3, p->entries[i].green >> 3,
+                               p->entries[i].blue >> 3));
+    }
+    circle_update_palette_fb2(FB_LAYER_VDC);
   }
-  circle_update_fb1_palette();
 }
 
 // For real time video adjustments, should call this after every
@@ -401,6 +410,8 @@ static struct video_canvas_s *video_canvas_create_vdc(
   *height = 312;
   canvas->draw_buffer->canvas_physical_width = 856;
   canvas->draw_buffer->canvas_physical_height = 312;
+  canvas->videoconfig->external_palette = 1;
+  canvas->videoconfig->external_palette_name = "RASPI2";
   return canvas;
 }
 
@@ -408,8 +419,10 @@ struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
                                            unsigned int *width,
                                            unsigned int *height, int mapped) {
   if (is_vic(canvas)) {
+     canvas_state[0].canvas = canvas;
      return video_canvas_create_vic(canvas, width, height, mapped);
   } else {
+     canvas_state[1].canvas = canvas;
      return video_canvas_create_vdc(canvas, width, height, mapped);
   }
 }
@@ -619,7 +632,13 @@ void circle_emu_quick_func_interrupt(int button_assignment) {
 // memory.
 palette_t *raspi_video_load_palette(int num_entries, char *name) {
   palette_t *palette = palette_create(16, NULL);
-  unsigned int *pal = raspi_get_palette(video_state.palette_index);
+  unsigned int *pal;
+  // RASPI2 is for VDC
+  if (strcmp(name, "RASPI2") == 0) {
+     pal = raspi_get_palette(canvas_state[1].palette_index);
+  } else {
+     pal = raspi_get_palette(canvas_state[0].palette_index);
+  }
   for (int i = 0; i < num_entries; i++) {
     palette->entries[i].red = pal[i * 3];
     palette->entries[i].green = pal[i * 3 + 1];

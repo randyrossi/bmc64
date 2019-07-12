@@ -92,7 +92,9 @@ struct VideoData {
 
 // TODO: Transition from VideoData to CanvasState
 struct CanvasState {
+  struct video_canvas_s *canvas;
   struct video_draw_buffer_callback_s draw_buffer_callback;
+  int palette_index;
 };
 
 // Called when video canvas has been created.
@@ -107,7 +109,7 @@ void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
 
 int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p);
 
-void video_canvas_change_palette(int index);
+void video_canvas_change_palette(int display_num, int palette_index);
 
 void video_arch_canvas_init(struct video_canvas_s *canvas);
 
@@ -139,7 +141,7 @@ extern int raspi_warp;
 void circle_emu_joy_interrupt(int type, int port, int value);
 
 // Called by menu after color setting changed (brightness, contrast...)
-void video_color_setting_changed(void);
+void video_color_setting_changed(int display_num);
 
 palette_t *raspi_video_load_palette(int num_entries, char *name);
 void main_exit(void);
