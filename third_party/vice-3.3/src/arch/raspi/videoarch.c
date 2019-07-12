@@ -57,10 +57,6 @@
 // Increments with each canvas being inited by vice
 int canvas_num;
 
-// Keep video state shared between compilation units here
-// TODO: Get rid of video_state and transition to canvas_state
-struct VideoData video_state;
-
 // One struct for each display (can be 2 for C128)
 struct CanvasState canvas_state[2];
 
@@ -69,6 +65,8 @@ struct video_canvas_s *vic_canvas;
 
 uint8_t *video_font;
 uint16_t video_font_translate[256];
+
+static int first_refresh;
 
 // We tell vice our clock resolution is the actual vertical
 // refresh rate of the machine * some factor. We report our
@@ -149,33 +147,20 @@ void video_color_setting_changed(int display_num) {
 
 int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
   canvas->palette = p;
+  int layer;
 
   if (is_vic(canvas)) {
-    for (int i = 0; i < 16; i++) {
-      circle_set_fb1_palette(i,
-                       COLOR16(p->entries[i].red >> 3, p->entries[i].green >> 3,
-                               p->entries[i].blue >> 3));
-    }
-    circle_update_fb1_palette();
+    layer = FB_LAYER_VIC;
   } else {
-    for (int i = 0; i < 16; i++) {
-      circle_set_palette_fb2(FB_LAYER_VDC, i,
-                       COLOR16(p->entries[i].red >> 3, p->entries[i].green >> 3,
-                               p->entries[i].blue >> 3));
-    }
-    circle_update_palette_fb2(FB_LAYER_VDC);
+    layer = FB_LAYER_VDC;
   }
-}
 
-// For real time video adjustments, should call this after every
-// parameter change.
-static void calc_top_left() {
-  video_state.top_left =
-     (video_state.canvas->geometry->first_displayed_line +
-     video_state.src_off_y) *
-     video_state.canvas->draw_buffer->draw_buffer_width +
-     video_state.canvas->geometry->extra_offscreen_border_left +
-     video_state.src_off_x;
+  for (int i = 0; i < 16; i++) {
+    circle_set_palette_fb2(layer, i,
+                     COLOR16(p->entries[i].red >> 3, p->entries[i].green >> 3,
+                             p->entries[i].blue >> 3));
+  }
+  circle_update_palette_fb2(layer);
 }
 
 // Draw buffer bridge functions back to kernel
@@ -186,8 +171,8 @@ static int draw_buffer_alloc(struct video_canvas_s *canvas, uint8_t **draw_buffe
       return circle_alloc_fb2(FB_LAYER_VDC, draw_buffer,
                               fb_width, fb_height, fb_pitch);
    } else {
-      // TODO: Will be VIC eventually but we should not get here for now
-      assert(0);
+      return circle_alloc_fb2(FB_LAYER_VIC, draw_buffer,
+                              fb_width, fb_height, fb_pitch);
    }
 }
 
@@ -195,8 +180,7 @@ static void draw_buffer_free(struct video_canvas_s *canvas, uint8_t *draw_buffer
    if (is_vdc(canvas)) {
       circle_free_fb2(FB_LAYER_VDC);
    } else {
-      // TODO: Will be VIC eventually but we should not get here for now
-      assert(0);
+      circle_free_fb2(FB_LAYER_VIC);
    }
 }
 
@@ -206,8 +190,7 @@ static void draw_buffer_clear(struct video_canvas_s *canvas, uint8_t *draw_buffe
    if (is_vdc(canvas)) {
       circle_clear_fb2(FB_LAYER_VDC);
    } else {
-      // TODO: Will be VIC eventually but we should not get here for now
-      assert(0);
+      circle_clear_fb2(FB_LAYER_VIC);
    }
 }
 
@@ -215,47 +198,26 @@ static void draw_buffer_clear(struct video_canvas_s *canvas, uint8_t *draw_buffe
 // For C128, first will be the VDC, followed by VIC.
 // For other machines, only one canvas is initialized.
 void video_arch_canvas_init(struct video_canvas_s *canvas) {
-
-  int timing = circle_get_machine_timing();
-  set_refresh_rate(timing, canvas);
-
   if (machine_class == VICE_MACHINE_C128 && canvas_num == 1) {
      vdc_canvas = canvas;
-     // Have our fb class allocate draw buffers
-     canvas_state[canvas_num].draw_buffer_callback.draw_buffer_alloc =
-         draw_buffer_alloc;
-     canvas_state[canvas_num].draw_buffer_callback.draw_buffer_free =
-         draw_buffer_free;
-     canvas_state[canvas_num].draw_buffer_callback.draw_buffer_clear =
-         draw_buffer_clear;
-     canvas->video_draw_buffer_callback =
-         &canvas_state[canvas_num].draw_buffer_callback;
   } else {
-     canvas->video_draw_buffer_callback = NULL;
-     vic_canvas = canvas;
-     // TODO: Handle this when we transition to canvas_state for VICs
-     uint8_t *fb = circle_get_fb1();
-     int fb_pitch = circle_get_fb1_pitch();
-     int fb_w = circle_get_fb1_w();
-     int fb_h = circle_get_fb1_h();
-     bzero(fb, fb_h * fb_pitch);
-
-     video_state.first_refresh = 1;
-     video_state.dst_off_x = -1;
-     video_state.dst_off_y = -1;
-
-     video_freq = canvas->refreshrate * video_tick_inc;
-
-     video_state.canvas = canvas;
-     video_state.fb_w = fb_w;
-     video_state.fb_h = fb_h;
-     video_state.dst_pitch = fb_pitch;
-     video_state.dst = fb;
+     int timing = circle_get_machine_timing();
+     set_refresh_rate(timing, canvas);
+     first_refresh = 1;
      set_video_font();
-     video_state.palette_index = 0;
-     video_state.offscreen_buffer_y = 0;
-     video_state.onscreen_buffer_y = fb_h;
+     vic_canvas = canvas;
+     video_freq = canvas->refreshrate * video_tick_inc;
   }
+
+  // Have our fb class allocate draw buffers
+  canvas_state[canvas_num].draw_buffer_callback.draw_buffer_alloc =
+     draw_buffer_alloc;
+  canvas_state[canvas_num].draw_buffer_callback.draw_buffer_free =
+     draw_buffer_free;
+  canvas_state[canvas_num].draw_buffer_callback.draw_buffer_clear =
+     draw_buffer_clear;
+  canvas->video_draw_buffer_callback =
+     &canvas_state[canvas_num].draw_buffer_callback;
 
   canvas_num++;
 }
@@ -264,140 +226,22 @@ static struct video_canvas_s *video_canvas_create_vic(
        struct video_canvas_s *canvas,
        unsigned int *width,
        unsigned int *height, int mapped) {
-  // This is the actual frame buffer area we have to
-  // draw into determined in config.txt.
-  // It's important these don't go below the values that
-  // would cause fb_w - gfx_w or fb_h - gfx_h to go
-  // negative.  Otherwise, we would start cutting into
-  // the graphics (non-border) area of the emulated display.
-  int fb_w = circle_get_fb1_w();
-  int fb_h = circle_get_fb1_h();
-
-  // These numbers are how many X,Y pixels it takes
-  // to reach the top left corner of the gfx area
-  // skipping over the border or any unused space
-  // in VICE's draw buffer. They are only relevant
-  // if the width/height of the canvas is set to the
-  // hard coded values we provide for *width,*height
-  // below.
-  // They are used to 'cut out' the gfx part and then
-  // adjusted to include more border if the user
-  // gives a large enough frame buffer.  The more space
-  // we have, the more border we include.  However, if
-  // we run out of border, the resulting image is then
-  // centered and black borders will start showing up.
-  int max_border_w;
-  int max_border_h;
-  int timing = circle_get_machine_timing();
   if (machine_class == VICE_MACHINE_VIC20) {
-    if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
-        timing == MACHINE_TIMING_NTSC_HDMI ||
-        timing == MACHINE_TIMING_NTSC_CUSTOM) {
-        max_border_w = 40;
-        max_border_h = 22;
-    } else {
-        max_border_w = 96;
-        max_border_h = 48;
-    }
-  } else {
-    assert(machine_class == VICE_MACHINE_C64 ||
-           machine_class == VICE_MACHINE_C128);
-    if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
-        timing == MACHINE_TIMING_NTSC_HDMI ||
-        timing == MACHINE_TIMING_NTSC_CUSTOM) {
-        max_border_w = 32;
-        max_border_h = 23;
-    } else {
-        max_border_w = 32;
-        max_border_h = 36;
-    }
-  }
-
-  // border_w, border_h determine how much border we include
-  // in our 'cut out' of the emulated display buffer VICE gives
-  // us.  As the user provides larger frame buffer to draw into,
-  // we include more border up to a certain max.
-  int border_w;
-  int border_h;
-  int gfx_w;
-  int gfx_h;
-  if (machine_class == VICE_MACHINE_VIC20) {
-    // This is graphics area without border for a Vic20
-    gfx_w = 22*8*2;
-    gfx_h = 23*8;
-
-    // Don't change these.
     *width = 448;
     *height = 284;
   } else {
     assert(machine_class == VICE_MACHINE_C64 ||
            machine_class == VICE_MACHINE_C128);
-    // This is graphics area without border for a C64/C128
-    gfx_w = 40*8;
-    gfx_h = 25*8;
-
-    // Don't change these.
     *width = 384;
     *height = 272;
   }
-
-  border_w = (fb_w - gfx_w)/2;
-  if (border_w > max_border_w) border_w = max_border_w;
-
-  border_h = (fb_h - gfx_h)/2;
-  if (border_h > max_border_h) border_h = max_border_h;
-
   canvas->draw_buffer->canvas_physical_width = *width;
   canvas->draw_buffer->canvas_physical_height = *height;
   canvas->videoconfig->external_palette = 1;
   canvas->videoconfig->external_palette_name = "RASPI";
-  video_state.canvas = canvas;
-  video_state.vis_w = gfx_w+border_w*2;
-  video_state.vis_h = gfx_h+border_h*2;
-  // This offsets our top left cutout to include the desired
-  // amount of border we determined above.
-  video_state.src_off_x=max_border_w-border_w;
-  video_state.src_off_y=max_border_h-border_h;
 
-  // Overlay will be 2 pixels under end of gfx area
-  video_state.overlay_y = gfx_h+border_h+2;
+  //overlay_init(video_state.vis_w, OVERLAY_H);
 
-  // Figure out what it takes to center our canvas on the display
-  video_state.dst_off_x = (video_state.fb_w - video_state.vis_w) / 2;
-  video_state.dst_off_y = (video_state.fb_h - video_state.vis_h) / 2;
-
-  if (video_state.dst_off_x < 0) {
-    // Truncate the source so we don't clobber our frame buffer limits.
-    video_state.dst_off_x = 0;
-    video_state.vis_w = video_state.fb_w;
-  }
-  if (video_state.dst_off_y < 0) {
-    // Truncate the source so we don't clobber our frame buffer limits.
-    video_state.dst_off_y = 0;
-    video_state.vis_h = video_state.fb_h;
-  }
-
-  // dst_off_x must be a multiple of 4
-  video_state.dst_off_x = video_state.dst_off_x / 4 * 4;
-
-  printf ("VideoInfo: FB is %dx%d \n",
-           fb_w,
-           fb_h);
-  printf ("VideoInfo: Emulated Display is %dx%d \n",
-           video_state.vis_w,
-           video_state.vis_h);
-
-  printf ("VideoInfo: Using (%d,%d) to center image\n",
-           video_state.dst_off_x,
-           video_state.dst_off_y);
-
-  printf ("VideoInfo: Src from (%d,%d) within emulated buffer\n",
-           video_state.src_off_x,
-           video_state.src_off_y);
-
-  calc_top_left();
-
-  overlay_init(video_state.vis_w, OVERLAY_H);
   return canvas;
 }
 
@@ -408,8 +252,8 @@ static struct video_canvas_s *video_canvas_create_vdc(
   // TODO: REMOVE LATER, TEMP FOR TESTING
   *width = 856;
   *height = 312;
-  canvas->draw_buffer->canvas_physical_width = 856;
-  canvas->draw_buffer->canvas_physical_height = 312;
+  canvas->draw_buffer->canvas_physical_width = *width;
+  canvas->draw_buffer->canvas_physical_height = *height;
   canvas->videoconfig->external_palette = 1;
   canvas->videoconfig->external_palette_name = "RASPI2";
   return canvas;
@@ -427,27 +271,18 @@ struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
   }
 }
 
-static void video_canvas_refresh_vic(
-        struct video_canvas_s *canvas, unsigned int xs,
-        unsigned int ys, unsigned int xi, unsigned int yi,
-        unsigned int w, unsigned int h) {
-  video_state.src = canvas->draw_buffer->draw_buffer;
-  video_state.src_pitch = canvas->draw_buffer->draw_buffer_width;
-
-  // TODO: Try to get rid of this
-  if (video_state.first_refresh == 1) {
-    resources_set_int("WarpMode", 1);
-    raspi_boot_warp = 1;
-    video_state.first_refresh = 0;
-  }
-}
-
 void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
                           unsigned int ys, unsigned int xi, unsigned int yi,
                           unsigned int w, unsigned int h) {
+  // We draw full frames each time so there's little to do here. Just turn on
+  // boot warp on first refresh.
   if (is_vic(canvas)) {
-     video_canvas_refresh_vic(canvas, xs, ys, xi, yi, w, h);
-  } else {
+     if (first_refresh == 1) {
+        circle_show_fb2(FB_LAYER_VIC);
+        resources_set_int("WarpMode", 1);
+        raspi_boot_warp = 1;
+        first_refresh = 0;
+     }
   }
 }
 
@@ -466,24 +301,13 @@ void vsyncarch_init(void) {
 
 void vsyncarch_presync(void) { kbdbuf_flush(); }
 
-void videoarch_swap() {
-  // Show the region we just drew.
-  circle_set_fb1_y(video_state.offscreen_buffer_y);
-  // Swap buffer ptr for next frame.
-  video_state.onscreen_buffer_y = video_state.offscreen_buffer_y;
-  video_state.offscreen_buffer_y =
-      video_state.fb_h - video_state.offscreen_buffer_y;
-}
-
 void vsyncarch_postsync(void) {
   // Sync with display's vertical blank signal.
 
-  draw(video_state.src + video_state.top_left, video_state.vis_w,
-       video_state.vis_h, video_state.src_pitch,
-       video_state.dst + video_state.offscreen_buffer_y * video_state.dst_pitch,
-       video_state.dst_pitch, video_state.dst_off_x, video_state.dst_off_y);
-
-  circle_frame_ready_fb2(FB_LAYER_VDC);
+  circle_frame_ready_fb2(FB_LAYER_VIC);
+  if (machine_class == VICE_MACHINE_C128) {
+     circle_frame_ready_fb2(FB_LAYER_VDC);
+  }
 
   // This render will handle any OSDs we have. ODSs don't pause emulation.
   if (ui_activated) {
@@ -494,16 +318,17 @@ void vsyncarch_postsync(void) {
     ui_check_key();
   }
 
-  videoarch_swap();
-
   // Always draw overlay on visible buffer
   if (overlay_forced() || (overlay_enabled() && overlay_showing)) {
     overlay_check();
+    // TODO Fix the overlay
+/*
     draw(overlay_buf, video_state.vis_w, OVERLAY_H, video_state.vis_w,
          video_state.dst +
              video_state.onscreen_buffer_y * video_state.dst_pitch,
          video_state.dst_pitch, video_state.dst_off_x,
          video_state.dst_off_y + video_state.overlay_y);
+*/
   }
 
   video_ticks += video_tick_inc;

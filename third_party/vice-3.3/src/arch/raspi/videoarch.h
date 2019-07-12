@@ -49,48 +49,6 @@ struct video_canvas_s {
 
 typedef struct video_canvas_s video_canvas_t;
 
-// A global struct holding canvas, frame buffer details, state, etc.
-struct VideoData {
-  struct video_canvas_s *canvas;
-
-  // Information about our dest frame buffer
-  uint8_t *dst;
-  int dst_pitch;
-  // Dest offset when drawing into frame buffer
-  // NOTE: x must be multiple of 4
-  int dst_off_x;
-  int dst_off_y;
-  int fb_w;
-  int fb_h;
-
-  // Information about our source pixel buffer
-  int top_left; // points to top left pixel in emulator canvas
-  int vis_w;
-  int vis_h;
-
-  // This keeps track of the y offset for the region in our virtual
-  // frame buffer that is NOT visible at the moment. It toggles
-  // back and forth between 0 and 2x our physical vertical height.
-  // The idea is, we wait for vsync before telling the video hardware
-  // to show the pixels we just wrote, avoiding horizontal tearing.
-  int offscreen_buffer_y;
-
-  // Just the opposite of the above. Will point to on screen buffer.
-  int onscreen_buffer_y;
-
-  int palette_index;
-
-  // TODO: Try getting rid of this.
-  int first_refresh;
-
-  uint8_t *src;
-  int src_pitch;
-  int src_off_x;
-  int src_off_y;
-  int overlay_y;
-};
-
-// TODO: Transition from VideoData to CanvasState
 struct CanvasState {
   struct video_canvas_s *canvas;
   struct video_draw_buffer_callback_s draw_buffer_callback;
@@ -126,10 +84,6 @@ void videoarch_swap(void);
 // Draws a single vice frame into our framebuffer
 void draw(uint8_t *src, int srcw, int srch, int src_pitch, uint8_t *dst,
           int dst_pitch, int off_x, int off_y);
-
-// Make our video state visible
-// TODO GET RID OF THIS
-extern struct VideoData video_state;
 
 extern uint8_t *video_font;
 extern uint16_t video_font_translate[256];

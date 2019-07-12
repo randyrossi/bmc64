@@ -47,10 +47,11 @@
 #define MACHINE_TIMING_PAL_CUSTOM 4
 #define MACHINE_TIMING_NTSC_CUSTOM 5
 
-#define FB_NUM_LAYERS 3
+#define FB_NUM_LAYERS 4
 #define FB_LAYER_VIC 0
 #define FB_LAYER_VDC 1
-#define FB_LAYER_UI  2
+#define FB_LAYER_OVERLAY  2
+#define FB_LAYER_UI  3
 
 #define USB_PREF_ANALOG 0
 #define USB_PREF_HAT 1
