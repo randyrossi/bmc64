@@ -68,10 +68,6 @@ struct VideoData {
   int vis_w;
   int vis_h;
 
-  // Used for printing chars to the frame buffer
-  uint8_t *font;
-  uint16_t font_translate[256];
-
   // This keeps track of the y offset for the region in our virtual
   // frame buffer that is NOT visible at the moment. It toggles
   // back and forth between 0 and 2x our physical vertical height.
@@ -130,7 +126,11 @@ void draw(uint8_t *src, int srcw, int srch, int src_pitch, uint8_t *dst,
           int dst_pitch, int off_x, int off_y);
 
 // Make our video state visible
+// TODO GET RID OF THIS
 extern struct VideoData video_state;
+
+extern uint8_t *video_font;
+extern uint16_t video_font_translate[256];
 
 // Make sure ui also sets this when turning on/off warp
 extern int raspi_warp;

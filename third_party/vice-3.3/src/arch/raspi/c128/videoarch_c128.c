@@ -101,11 +101,11 @@ void set_refresh_rate(int timing, struct video_canvas_s *canvas) {
   }
 }
 
-void set_video_font(struct VideoData *video_data) {
+void set_video_font(void) {
   int i;
-  video_data->font = mem_chargen_rom + 0x800;
+  video_font = mem_chargen_rom + 0x800;
   for (i = 0; i < 256; ++i) {
-    video_data->font_translate[i] = 8 * char_to_screen[i];
+    video_font_translate[i] = 8 * char_to_screen[i];
   }
 }
 

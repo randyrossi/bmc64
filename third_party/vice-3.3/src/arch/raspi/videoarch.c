@@ -67,6 +67,9 @@ struct CanvasState canvas_state[2];
 struct video_canvas_s *vdc_canvas;
 struct video_canvas_s *vic_canvas;
 
+uint8_t *video_font;
+uint16_t video_font_translate[256];
+
 // We tell vice our clock resolution is the actual vertical
 // refresh rate of the machine * some factor. We report our
 // tick count when asked for the current time which is incremented
@@ -239,7 +242,7 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
      video_state.fb_h = fb_h;
      video_state.dst_pitch = fb_pitch;
      video_state.dst = fb;
-     set_video_font(&video_state);
+     set_video_font();
      video_state.palette_index = 0;
      video_state.offscreen_buffer_y = 0;
      video_state.onscreen_buffer_y = fb_h;
@@ -630,7 +633,7 @@ palette_t *raspi_video_load_palette(int num_entries, char *name) {
 // than the frame buffer which is guaranteed to be available.
 void main_exit(void) {
   // We should never get here.  If we do, it's probably
-  // becasue essential roms are missing.  So display a message
+  // because essential roms are missing.  So display a message
   // to that effect.
 
   int i;
@@ -639,9 +642,9 @@ void main_exit(void) {
   int h = circle_get_fb1_h();
   bzero(fb, h * fb_pitch);
 
-  video_state.font = (uint8_t *)&font8x8_basic;
+  video_font = (uint8_t *)&font8x8_basic;
   for (i = 0; i < 256; ++i) {
-    video_state.font_translate[i] = (8 * (i & 0x7f));
+    video_font_translate[i] = (8 * (i & 0x7f));
   }
 
   int x = 0;

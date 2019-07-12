@@ -174,7 +174,7 @@ static void ui_draw_char(uint8_t c, int pos_x, int pos_y, int color,
     }
   }
 
-  font_pos = &(video_state.font[video_state.font_translate[c]]);
+  font_pos = &(video_font[video_font_translate[c]]);
   draw_pos = &(dst[pos_x + pos_y * dst_pitch]);
 
   for (y = 0; y < 8; ++y) {
