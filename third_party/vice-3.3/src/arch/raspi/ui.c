@@ -119,8 +119,8 @@ static int ui_fb_h;
 void ui_init_menu(void) {
   int i;
 
-  ui_fb_w = menu_width_chars * 8;
-  ui_fb_h = menu_height_chars * 8;
+  ui_fb_w = menu_width_chars * 8 + 32;
+  ui_fb_h = menu_height_chars * 8 + 32;
 
   ui_activated = 0;
   current_menu = -1;
@@ -888,6 +888,9 @@ void ui_render_now(void) {
   int index = 0;
   int indent = 0;
   struct menu_item *ptr = menu_roots[current_menu].first_child;
+
+  // Start with transparent
+  ui_draw_rect(0, 0, ui_fb_w, ui_fb_h, 16 /* transparent */, 1);
 
   // black background
   ui_draw_rect(ptr->menu_left, ptr->menu_top, ptr->menu_width, ptr->menu_height,

@@ -59,6 +59,15 @@ public:
   // Commit current palette to frame buffer
   void UpdatePalette();
 
+  // Sets the region within the frame buffer to scale. Takes effect
+  // on the next call to Show()
+  void SetSrcRect(int x, int y, int w, int h);
+
+  // Use -1 to stretch X/Y to display's dimensions
+  // Otherwise, stretch to a rectangle with the given aspect
+  // ratio until one dimension is filled.
+  void SetAspect(double ratio);
+
   static void Initialize();
 private:
 
@@ -71,6 +80,8 @@ private:
 
   VC_RECT_T scale_dst_rect_;
   VC_RECT_T copy_dst_rect_;
+
+  // Defines the region within the frame buffer we are scaling
   VC_RECT_T src_rect_;
   VC_DISPMANX_ALPHA_T alpha_;
 
@@ -81,9 +92,22 @@ private:
   int pitch_;
   int layer_;
   int transparency_;
+  double aspect_;
 
   int display_width_;
   int display_height_;
+
+  int src_x_;
+  int src_y_;
+  int src_w_;
+  int src_h_;
+
+  // Computed from aspect_, defines the region within our display's
+  // bounds for the scaled buffer
+  int dst_x_;
+  int dst_y_;
+  int dst_w_;
+  int dst_h_;
 
   bool showing_;
   bool allocated_;
