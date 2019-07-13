@@ -53,6 +53,27 @@ struct CanvasState {
   struct video_canvas_s *canvas;
   struct video_draw_buffer_callback_s draw_buffer_callback;
   int palette_index;
+  // Just the gfx area (no border)
+  int gfx_w;
+  int gfx_h;
+  // How much border is available
+  int max_border_w;
+  int max_border_h;
+  // How much of the border we want to see
+  int border_w;
+  int border_h;
+
+  int src_off_x;
+  int src_off_y;
+  // The total visiible pixels in each dimension
+  int vis_w;
+  int vis_h;
+  // For our src region
+  int top;
+  int left;
+
+  // Where does the status overlay show up?
+  int overlay_y;
 };
 
 // Called when video canvas has been created.

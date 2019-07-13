@@ -202,6 +202,14 @@ void circle_set_palette_fb2(int layer, uint8_t index, uint16_t rgb565) {
 void circle_update_palette_fb2(int layer) {
   static_kernel->circle_update_palette_fb2(layer);
 }
+
+void circle_set_aspect_fb2(int layer, double aspect) {
+  static_kernel->circle_set_aspect_fb2(layer, aspect);
+}
+
+void circle_set_src_rect_fb2(int layer, int x, int y, int w, int h) {
+  static_kernel->circle_set_src_rect_fb2(layer, x,y,w,h);
+}
 };
 
 
@@ -1079,5 +1087,13 @@ void CKernel::circle_set_palette_fb2(int layer, uint8_t index, uint16_t rgb565) 
 
 void CKernel::circle_update_palette_fb2(int layer) {
   fb2[layer].UpdatePalette();
+}
+
+void CKernel::circle_set_aspect_fb2(int layer, double aspect) {
+  fb2[layer].SetAspect(aspect);
+}
+
+void CKernel::circle_set_src_rect_fb2(int layer, int x, int y, int w, int h) {
+  fb2[layer].SetSrcRect(x,y,w,h);
 }
 

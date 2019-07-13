@@ -63,6 +63,9 @@ struct CanvasState canvas_state[2];
 struct video_canvas_s *vdc_canvas;
 struct video_canvas_s *vic_canvas;
 
+static int vdc_canvas_index;
+static int vic_canvas_index;
+
 uint8_t *video_font;
 uint16_t video_font_translate[256];
 
@@ -171,6 +174,9 @@ static int draw_buffer_alloc(struct video_canvas_s *canvas, uint8_t **draw_buffe
       return circle_alloc_fb2(FB_LAYER_VDC, draw_buffer,
                               fb_width, fb_height, fb_pitch);
    } else {
+      // Status overlay will only appear on VIC canvas for now.
+      overlay_init(fb_width, OVERLAY_H);
+
       return circle_alloc_fb2(FB_LAYER_VIC, draw_buffer,
                               fb_width, fb_height, fb_pitch);
    }
@@ -200,12 +206,14 @@ static void draw_buffer_clear(struct video_canvas_s *canvas, uint8_t *draw_buffe
 void video_arch_canvas_init(struct video_canvas_s *canvas) {
   if (machine_class == VICE_MACHINE_C128 && canvas_num == 1) {
      vdc_canvas = canvas;
+     vdc_canvas_index = canvas_num;
   } else {
      int timing = circle_get_machine_timing();
      set_refresh_rate(timing, canvas);
      first_refresh = 1;
      set_video_font();
      vic_canvas = canvas;
+     vic_canvas_index = canvas_num;
      video_freq = canvas->refreshrate * video_tick_inc;
   }
 
@@ -229,18 +237,81 @@ static struct video_canvas_s *video_canvas_create_vic(
   if (machine_class == VICE_MACHINE_VIC20) {
     *width = 448;
     *height = 284;
+    canvas_state[vic_canvas_index].gfx_w = 22*8*2;
+    canvas_state[vic_canvas_index].gfx_h = 23*8;
   } else {
     assert(machine_class == VICE_MACHINE_C64 ||
            machine_class == VICE_MACHINE_C128);
     *width = 384;
     *height = 272;
+    canvas_state[vic_canvas_index].gfx_w = 40*8;
+    canvas_state[vic_canvas_index].gfx_h = 25*8;
   }
+
   canvas->draw_buffer->canvas_physical_width = *width;
   canvas->draw_buffer->canvas_physical_height = *height;
   canvas->videoconfig->external_palette = 1;
   canvas->videoconfig->external_palette_name = "RASPI";
 
-  //overlay_init(video_state.vis_w, OVERLAY_H);
+  int timing = circle_get_machine_timing();
+  if (machine_class == VICE_MACHINE_VIC20) {
+    if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
+        timing == MACHINE_TIMING_NTSC_HDMI ||
+        timing == MACHINE_TIMING_NTSC_CUSTOM) {
+        canvas_state[vic_canvas_index].max_border_w = 40;
+        canvas_state[vic_canvas_index].max_border_h = 22;
+    } else {
+        canvas_state[vic_canvas_index].max_border_w = 96;
+        canvas_state[vic_canvas_index].max_border_h = 48;
+    }
+  } else {
+    assert(machine_class == VICE_MACHINE_C64 ||
+           machine_class == VICE_MACHINE_C128);
+    if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
+        timing == MACHINE_TIMING_NTSC_HDMI ||
+        timing == MACHINE_TIMING_NTSC_CUSTOM) {
+        canvas_state[vic_canvas_index].max_border_w = 32;
+        canvas_state[vic_canvas_index].max_border_h = 23;
+    } else {
+        canvas_state[vic_canvas_index].max_border_w = 32;
+        canvas_state[vic_canvas_index].max_border_h = 36;
+    }
+  }
+
+  // TODO : Turn these into ZOOM settings. For now, show full border.
+  canvas_state[vic_canvas_index].border_w = canvas_state[vic_canvas_index].max_border_w;
+  canvas_state[vic_canvas_index].border_h = canvas_state[vic_canvas_index].max_border_h;
+  // END TODO
+
+  canvas_state[vic_canvas_index].vis_w =
+     canvas_state[vic_canvas_index].gfx_w +
+        canvas_state[vic_canvas_index].border_w*2;
+  canvas_state[vic_canvas_index].vis_h =
+     canvas_state[vic_canvas_index].gfx_h +
+        canvas_state[vic_canvas_index].border_h*2;
+
+  canvas_state[vic_canvas_index].src_off_x =
+     canvas_state[vic_canvas_index].max_border_w -
+         canvas_state[vic_canvas_index].border_w;
+
+  canvas_state[vic_canvas_index].src_off_y =
+     canvas_state[vic_canvas_index].max_border_h -
+         canvas_state[vic_canvas_index].border_h;
+
+  canvas_state[vic_canvas_index].left =
+     canvas->geometry->extra_offscreen_border_left +
+         canvas_state[vic_canvas_index].src_off_x;
+
+  canvas_state[vic_canvas_index].top =
+     canvas->geometry->first_displayed_line +
+         canvas_state[vic_canvas_index].src_off_y;
+
+  // Cut out is defined by top,left,vis_w,vis_h
+
+  canvas_state[vic_canvas_index].overlay_y =
+     canvas_state[vic_canvas_index].top +
+          canvas_state[vic_canvas_index].max_border_h +
+              canvas_state[vic_canvas_index].gfx_h + 2;
 
   return canvas;
 }
@@ -278,6 +349,11 @@ void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
   // boot warp on first refresh.
   if (is_vic(canvas)) {
      if (first_refresh == 1) {
+        circle_set_src_rect_fb2(FB_LAYER_VIC,
+           canvas_state[vic_canvas_index].left,
+           canvas_state[vic_canvas_index].top,
+           canvas_state[vic_canvas_index].vis_w,
+           canvas_state[vic_canvas_index].vis_h);
         circle_show_fb2(FB_LAYER_VIC);
         resources_set_int("WarpMode", 1);
         raspi_boot_warp = 1;
@@ -321,14 +397,18 @@ void vsyncarch_postsync(void) {
   // Always draw overlay on visible buffer
   if (overlay_forced() || (overlay_enabled() && overlay_showing)) {
     overlay_check();
-    // TODO Fix the overlay
-/*
-    draw(overlay_buf, video_state.vis_w, OVERLAY_H, video_state.vis_w,
-         video_state.dst +
-             video_state.onscreen_buffer_y * video_state.dst_pitch,
-         video_state.dst_pitch, video_state.dst_off_x,
-         video_state.dst_off_y + video_state.overlay_y);
-*/
+
+    // Note: Overlay's pitch is the draw buffer's width, not the (possibly)
+    // adjusted actual pitch.
+    draw(
+        overlay_buf,
+        canvas_state[vic_canvas_index].canvas->draw_buffer->draw_buffer_width,
+        OVERLAY_H,
+        canvas_state[vic_canvas_index].canvas->draw_buffer->draw_buffer_width,
+        canvas_state[vic_canvas_index].canvas->draw_buffer->draw_buffer,
+        canvas_state[vic_canvas_index].canvas->draw_buffer->draw_buffer_pitch,
+        0,
+        canvas_state[vic_canvas_index].overlay_y);
   }
 
   video_ticks += video_tick_inc;

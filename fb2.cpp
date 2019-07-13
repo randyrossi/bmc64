@@ -188,7 +188,8 @@ void FrameBuffer2::Show() {
   if (showing_) return;
 
   // Define source rect
-  vc_dispmanx_rect_set(&src_rect_, src_x_, src_y_, src_w_ << 16, src_h_ << 16 );
+  vc_dispmanx_rect_set(&src_rect_,
+     src_x_ << 16, src_y_ << 16, src_w_ << 16, src_h_ << 16);
 
   dispman_update = vc_dispmanx_update_start(0);
   assert( dispman_update );
@@ -196,10 +197,10 @@ void FrameBuffer2::Show() {
   if (aspect_ == -1.0) {
      // Stretch to full width/height of our display
      vc_dispmanx_rect_set(&scale_dst_rect_,
-                          0,
-                          0,
-                          display_width_,
-                          display_height_);
+                       0,
+                       0,
+                       display_width_,
+                       display_height_);
   } else {
      int dst_w = display_width_;
      int dst_h = (double)display_width_ / aspect_;
@@ -208,6 +209,7 @@ void FrameBuffer2::Show() {
         dst_w = (double)display_height_ * aspect_;
      }
 
+     // Resulting image is centered
      int ox = (display_width_ - dst_w) / 2;
      int oy = (display_height_ - dst_h) / 2;
 
