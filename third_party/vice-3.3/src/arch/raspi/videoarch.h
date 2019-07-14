@@ -73,6 +73,7 @@ struct CanvasState {
   int left;
 
   // Where does the status overlay show up?
+  int overlay_x;
   int overlay_y;
 };
 

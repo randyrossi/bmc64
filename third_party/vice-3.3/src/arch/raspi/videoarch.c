@@ -183,9 +183,6 @@ static int draw_buffer_alloc(struct video_canvas_s *canvas, uint8_t **draw_buffe
       return circle_alloc_fb2(FB_LAYER_VDC, draw_buffer,
                               fb_width, fb_height, fb_pitch);
    } else {
-      // Status overlay will only appear on VIC canvas for now.
-      overlay_init(fb_width, OVERLAY_H);
-
       vic_enabled = 1;
       vic_showing = 0;
 
@@ -300,6 +297,8 @@ void apply_video_adjustments(int layer,
           canvas_state[index].max_border_h +
               canvas_state[index].gfx_h + 2;
 
+  canvas_state[index].overlay_x = canvas_state[index].left;
+
   circle_set_src_rect_fb2(layer,
            canvas_state[index].left,
            canvas_state[index].top,
@@ -354,6 +353,9 @@ static struct video_canvas_s *video_canvas_create_vic(
         canvas_state[vic_canvas_index].max_border_h = 36;
     }
   }
+
+  // Status overlay will only appear on VIC canvas for now.
+  overlay_init(*width, OVERLAY_H);
 
   return canvas;
 }
@@ -487,15 +489,16 @@ void vsyncarch_postsync(void) {
   if (overlay_forced() || (overlay_enabled() && overlay_showing)) {
     overlay_check();
 
-    // Note: Overlay's pitch is the draw buffer's width, not the (possibly)
-    // adjusted actual pitch.
+    // Note: We made the overlay as wide as the physical canvas, so use
+    // that for the overlay's width and pitch. 
+    struct video_canvas_s* canvas = canvas_state[vic_canvas_index].canvas;
     draw(
         overlay_buf,
-        canvas_state[vic_canvas_index].canvas->draw_buffer->draw_buffer_width,
+        canvas->draw_buffer->canvas_physical_width,
         OVERLAY_H,
-        canvas_state[vic_canvas_index].canvas->draw_buffer->draw_buffer_width,
-        canvas_state[vic_canvas_index].canvas->draw_buffer->draw_buffer,
-        canvas_state[vic_canvas_index].canvas->draw_buffer->draw_buffer_pitch,
+        canvas->draw_buffer->canvas_physical_width,
+        canvas->draw_buffer->draw_buffer + canvas_state[vic_canvas_index].overlay_x,
+        canvas->draw_buffer->draw_buffer_pitch,
         0,
         canvas_state[vic_canvas_index].overlay_y);
   }
