@@ -66,10 +66,17 @@ struct video_canvas_s *vic_canvas;
 static int vdc_canvas_index;
 static int vic_canvas_index;
 
+static int vic_enabled;
+static int vdc_enabled;
+
+static int vic_showing;
+static int vdc_showing;
+
 uint8_t *video_font;
 uint16_t video_font_translate[256];
 
-static int first_refresh;
+static int vic_first_refresh;
+static int vdc_first_refresh;
 
 // We tell vice our clock resolution is the actual vertical
 // refresh rate of the machine * some factor. We report our
@@ -171,11 +178,16 @@ static int draw_buffer_alloc(struct video_canvas_s *canvas, uint8_t **draw_buffe
                              unsigned int fb_width, unsigned int fb_height,
                              unsigned int *fb_pitch) {
    if (is_vdc(canvas)) {
+      vdc_enabled = 0;
+      vdc_showing = 0;
       return circle_alloc_fb2(FB_LAYER_VDC, draw_buffer,
                               fb_width, fb_height, fb_pitch);
    } else {
       // Status overlay will only appear on VIC canvas for now.
       overlay_init(fb_width, OVERLAY_H);
+
+      vic_enabled = 1;
+      vic_showing = 0;
 
       return circle_alloc_fb2(FB_LAYER_VIC, draw_buffer,
                               fb_width, fb_height, fb_pitch);
@@ -207,10 +219,11 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
   if (machine_class == VICE_MACHINE_C128 && canvas_num == 1) {
      vdc_canvas = canvas;
      vdc_canvas_index = canvas_num;
+     vdc_first_refresh = 1;
   } else {
      int timing = circle_get_machine_timing();
      set_refresh_rate(timing, canvas);
-     first_refresh = 1;
+     vic_first_refresh = 1;
      set_video_font();
      vic_canvas = canvas;
      vic_canvas_index = canvas_num;
@@ -228,6 +241,70 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
      &canvas_state[canvas_num].draw_buffer_callback;
 
   canvas_num++;
+}
+
+void apply_video_adjustments(int layer,
+                             double hzoom, double vzoom, double aspect) {
+  // Hide the layer. Can't show it here on the same loop so we have to
+  // allow ensure_video() to do it for us.  If the canvas is enabled, it
+  // will be shown again and our new settings will take effect.
+  int index;
+  struct video_canvas_s *canvas;
+
+  circle_hide_fb2(layer);
+  if (layer == FB_LAYER_VIC) {
+     vic_showing = 0;
+     index = vic_canvas_index;
+     canvas = vic_canvas;
+  } else {
+     assert (layer == FB_LAYER_VDC);
+     vdc_showing = 0;
+     index = vdc_canvas_index;
+     canvas = vdc_canvas;
+  }
+
+  circle_set_aspect_fb2(layer, aspect);
+
+  canvas_state[index].border_w =
+     canvas_state[index].max_border_w * hzoom;
+  canvas_state[index].border_h =
+     canvas_state[index].max_border_h * vzoom;
+
+  canvas_state[index].vis_w =
+     canvas_state[index].gfx_w +
+        canvas_state[index].border_w*2;
+  canvas_state[index].vis_h =
+     canvas_state[index].gfx_h +
+        canvas_state[index].border_h*2;
+
+  canvas_state[index].src_off_x =
+     canvas_state[index].max_border_w -
+         canvas_state[index].border_w;
+
+  canvas_state[index].src_off_y =
+     canvas_state[index].max_border_h -
+         canvas_state[index].border_h;
+
+  canvas_state[index].left =
+     canvas->geometry->extra_offscreen_border_left +
+         canvas_state[index].src_off_x;
+
+  canvas_state[index].top =
+     canvas->geometry->first_displayed_line +
+         canvas_state[index].src_off_y;
+
+  // Cut out is defined by top,left,vis_w,vis_h
+
+  canvas_state[index].overlay_y =
+     canvas_state[index].top +
+          canvas_state[index].max_border_h +
+              canvas_state[index].gfx_h + 2;
+
+  circle_set_src_rect_fb2(layer,
+           canvas_state[index].left,
+           canvas_state[index].top,
+           canvas_state[index].vis_w,
+           canvas_state[index].vis_h);
 }
 
 static struct video_canvas_s *video_canvas_create_vic(
@@ -278,55 +355,36 @@ static struct video_canvas_s *video_canvas_create_vic(
     }
   }
 
-  // TODO : Turn these into ZOOM settings. For now, show full border.
-  canvas_state[vic_canvas_index].border_w = canvas_state[vic_canvas_index].max_border_w;
-  canvas_state[vic_canvas_index].border_h = canvas_state[vic_canvas_index].max_border_h;
-  // END TODO
-
-  canvas_state[vic_canvas_index].vis_w =
-     canvas_state[vic_canvas_index].gfx_w +
-        canvas_state[vic_canvas_index].border_w*2;
-  canvas_state[vic_canvas_index].vis_h =
-     canvas_state[vic_canvas_index].gfx_h +
-        canvas_state[vic_canvas_index].border_h*2;
-
-  canvas_state[vic_canvas_index].src_off_x =
-     canvas_state[vic_canvas_index].max_border_w -
-         canvas_state[vic_canvas_index].border_w;
-
-  canvas_state[vic_canvas_index].src_off_y =
-     canvas_state[vic_canvas_index].max_border_h -
-         canvas_state[vic_canvas_index].border_h;
-
-  canvas_state[vic_canvas_index].left =
-     canvas->geometry->extra_offscreen_border_left +
-         canvas_state[vic_canvas_index].src_off_x;
-
-  canvas_state[vic_canvas_index].top =
-     canvas->geometry->first_displayed_line +
-         canvas_state[vic_canvas_index].src_off_y;
-
-  // Cut out is defined by top,left,vis_w,vis_h
-
-  canvas_state[vic_canvas_index].overlay_y =
-     canvas_state[vic_canvas_index].top +
-          canvas_state[vic_canvas_index].max_border_h +
-              canvas_state[vic_canvas_index].gfx_h + 2;
-
   return canvas;
 }
+
 
 static struct video_canvas_s *video_canvas_create_vdc(
        struct video_canvas_s *canvas,
        unsigned int *width,
        unsigned int *height, int mapped) {
-  // TODO: REMOVE LATER, TEMP FOR TESTING
+  assert(machine_class == VICE_MACHINE_C128);
+
   *width = 856;
   *height = 312;
+  canvas_state[vdc_canvas_index].gfx_w = 80*8;
+  canvas_state[vdc_canvas_index].gfx_h = 25*8;
   canvas->draw_buffer->canvas_physical_width = *width;
   canvas->draw_buffer->canvas_physical_height = *height;
   canvas->videoconfig->external_palette = 1;
   canvas->videoconfig->external_palette_name = "RASPI2";
+
+  int timing = circle_get_machine_timing();
+  if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
+      timing == MACHINE_TIMING_NTSC_HDMI ||
+      timing == MACHINE_TIMING_NTSC_CUSTOM) {
+      canvas_state[vdc_canvas_index].max_border_w = 112;
+      canvas_state[vdc_canvas_index].max_border_h = 14;
+  } else {
+      canvas_state[vdc_canvas_index].max_border_w = 112;
+      canvas_state[vdc_canvas_index].max_border_h = 38;
+  }
+
   return canvas;
 }
 
@@ -348,16 +406,17 @@ void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
   // We draw full frames each time so there's little to do here. Just turn on
   // boot warp on first refresh.
   if (is_vic(canvas)) {
-     if (first_refresh == 1) {
-        circle_set_src_rect_fb2(FB_LAYER_VIC,
-           canvas_state[vic_canvas_index].left,
-           canvas_state[vic_canvas_index].top,
-           canvas_state[vic_canvas_index].vis_w,
-           canvas_state[vic_canvas_index].vis_h);
-        circle_show_fb2(FB_LAYER_VIC);
+     if (vic_first_refresh == 1) {
+        // Apply current settings before ensure_video shows anything.
+        apply_video_adjustments(FB_LAYER_VIC, 1.0, 1.0, 1.0); // TODO set from menu
         resources_set_int("WarpMode", 1);
         raspi_boot_warp = 1;
-        first_refresh = 0;
+        vic_first_refresh = 0;
+     }
+  } else {
+     if (vdc_first_refresh == 1) {
+        apply_video_adjustments(FB_LAYER_VDC, 1.0, 1.0, 1.0); // TODO set from menu
+        vdc_first_refresh = 0;
      }
   }
 }
@@ -377,7 +436,37 @@ void vsyncarch_init(void) {
 
 void vsyncarch_presync(void) { kbdbuf_flush(); }
 
+void enable_vic(int enabled) {
+  vic_enabled = enabled;
+}
+
+void enable_vdc(int enabled) {
+  vdc_enabled = enabled;
+}
+
+// This makes sure we are showing what the enable flags say we should
+// be showing.
+void ensure_video(void) {
+  if (vic_enabled && !vic_showing) {
+     circle_show_fb2(FB_LAYER_VIC);
+     vic_showing = 1;
+  } else if (!vic_enabled && vic_showing) {
+     circle_hide_fb2(FB_LAYER_VIC);
+     vic_showing = 0;
+  }
+
+  if (vdc_enabled && !vdc_showing) {
+     circle_show_fb2(FB_LAYER_VDC);
+     vdc_showing = 1;
+  } else if (!vdc_enabled && vdc_showing) {
+     circle_hide_fb2(FB_LAYER_VDC);
+     vdc_showing = 0;
+  }
+}
+
 void vsyncarch_postsync(void) {
+  ensure_video();
+
   // Sync with display's vertical blank signal.
 
   circle_frame_ready_fb2(FB_LAYER_VIC);

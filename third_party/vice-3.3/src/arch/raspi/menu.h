@@ -271,6 +271,14 @@ typedef enum {
    MENU_CONFIGURE_KEY_BINDINGS,
 
    MENU_ACTIVE_DISPLAY,
+
+   MENU_H_ZOOM_0,
+   MENU_V_ZOOM_0,
+   MENU_STRETCH_0,
+
+   MENU_H_ZOOM_1,
+   MENU_V_ZOOM_1,
+   MENU_STRETCH_1,
 } MenuID;
 
 typedef enum {
@@ -326,6 +334,16 @@ enum {
     VIC20_BLOCK_3 = 1 << 3,
     VIC20_BLOCK_5 = 1 << 5
 };
+
+// Used as indices
+typedef enum {
+   MENU_STRETCH_FILL = 0,
+   MENU_STRETCH_ASPECT_1_1,
+   MENU_STRETCH_ASPECT_16_15,
+   MENU_STRETCH_ASPECT_6_5,
+   MENU_STRETCH_ASPECT_4_3,
+   MENU_STRETCH_ASPECT_5_3,
+} MenuStretch;
 
 // Used as indices
 typedef enum {

@@ -436,6 +436,7 @@ static void pause_trap(uint16_t addr, void *data) {
     ui_render_single_frame();
     circle_wait_vsync();
     hdmi_timing_hook();
+    ensure_video();
   }
   menu_about_to_deactivate();
   circle_hide_fb2(FB_LAYER_UI);

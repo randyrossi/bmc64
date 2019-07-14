@@ -127,6 +127,13 @@ struct menu_item *reset_confirm_item;
 struct menu_item *use_pcb_item;
 struct menu_item *active_display_item;
 
+struct menu_item *h_zoom_item_0;
+struct menu_item *v_zoom_item_0;
+struct menu_item *stretch_item_0;
+struct menu_item *h_zoom_item_1;
+struct menu_item *v_zoom_item_1;
+struct menu_item *stretch_item_1;
+
 static int unit;
 static int joyswap;
 static int force_overlay;
@@ -1289,6 +1296,41 @@ static void toggle_warp(int value) {
   warp_item->value = value;
 }
 
+static void do_video_settings(int layer,
+                              struct menu_item* h_item,
+                              struct menu_item* v_item,
+                              struct menu_item* a_item) {
+  double hz = (double)(100-h_item->value) / 100.0d;
+  double vz = (double)(100-v_item->value) / 100.0d;
+  double asp;
+  switch (a_item->value) {
+     case MENU_STRETCH_FILL:
+        asp = -1.0;
+        break;
+     case MENU_STRETCH_ASPECT_1_1:
+        asp = 1.0;
+        break;
+     case MENU_STRETCH_ASPECT_4_3:
+        asp = 4.0/3.0;
+        break;
+     case MENU_STRETCH_ASPECT_5_3:
+        asp = 5.0/3.0;
+        break;
+     case MENU_STRETCH_ASPECT_6_5:
+        asp = 6.0/5.0;
+        break;
+     case MENU_STRETCH_ASPECT_16_15:
+        asp = 16.0/15.0;
+        break;
+     default:
+        asp = 1.0;
+        break;
+  }
+
+  // Tell videoarch about these changes
+  apply_video_adjustments(layer, hz, vz, asp);
+}
+
 // Interpret what menu item changed and make the change to vice
 static void menu_value_changed(struct menu_item *item) {
   switch (item->id) {
@@ -1739,10 +1781,26 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_ACTIVE_DISPLAY:
     if (item->value == MENU_ACTIVE_DISPLAY_VICII) {
-       circle_hide_fb2(FB_LAYER_VDC);
+       enable_vic(1);
+       enable_vdc(0);
     } else if (item->value == MENU_ACTIVE_DISPLAY_VDC) {
-       circle_show_fb2(FB_LAYER_VDC);
+       enable_vdc(1);
+       enable_vic(0);
     }
+    break;
+  case MENU_H_ZOOM_0:
+  case MENU_V_ZOOM_0:
+  case MENU_STRETCH_0:
+    do_video_settings(FB_LAYER_VIC,
+        h_zoom_item_0, v_zoom_item_0, stretch_item_0);
+    break;
+  case MENU_H_ZOOM_1:
+  case MENU_V_ZOOM_1:
+  case MENU_STRETCH_1:
+    do_video_settings(FB_LAYER_VDC,
+        h_zoom_item_1, v_zoom_item_1, stretch_item_1);
+    break;
+  
   }
 
   // Only items that were for file selection/nav should have these set...
@@ -2014,7 +2072,7 @@ void build_menu(struct menu_item *root) {
         ui_menu_add_multiple_choice(MENU_ACTIVE_DISPLAY, parent,
            "Active Display");
      child->num_choices = 2;
-     child->value = MENU_ACTIVE_DISPLAY_VICII;
+     child->value = MENU_ACTIVE_DISPLAY_VICII; // TODO grab from settings?
      strcpy(child->choices[MENU_ACTIVE_DISPLAY_VICII], "VICII");
      strcpy(child->choices[MENU_ACTIVE_DISPLAY_VDC], "VDC");
      // Someday, we can add "Both" as an option for Pi4
@@ -2037,6 +2095,22 @@ void build_menu(struct menu_item *root) {
                                 get_color_tint(0));
   ui_menu_add_button(MENU_COLOR_RESET_0, child, "Reset");
 
+  h_zoom_item_0 =
+      ui_menu_add_range(MENU_H_ZOOM_0, parent, "H Zoom %", 0, 100, 1, 0);
+  v_zoom_item_0 =
+      ui_menu_add_range(MENU_V_ZOOM_0, parent, "V Zoom %", 0, 100, 1, 0);
+
+  child = stretch_item_0 =
+      ui_menu_add_multiple_choice(MENU_STRETCH_0, parent, "Aspect Ratio");
+  child->num_choices = 6;
+  child->value = 1;
+  strcpy(child->choices[MENU_STRETCH_FILL], "Fill");
+  strcpy(child->choices[MENU_STRETCH_ASPECT_1_1], "1:1");
+  strcpy(child->choices[MENU_STRETCH_ASPECT_16_15], "16:15");
+  strcpy(child->choices[MENU_STRETCH_ASPECT_6_5], "6:5");
+  strcpy(child->choices[MENU_STRETCH_ASPECT_4_3], "4:3");
+  strcpy(child->choices[MENU_STRETCH_ASPECT_5_3], "5:3");
+
   if (machine_class == VICE_MACHINE_C128) {
      parent = ui_menu_add_folder(video_parent, "VDC");
 
@@ -2054,6 +2128,22 @@ void build_menu(struct menu_item *root) {
      tint_item_1 = ui_menu_add_range(MENU_COLOR_TINT_1, child, "Tint", 0, 2000, 100,
                                 get_color_tint(1));
      ui_menu_add_button(MENU_COLOR_RESET_1, child, "Reset");
+
+     h_zoom_item_1 =
+         ui_menu_add_range(MENU_H_ZOOM_1, parent, "H Zoom %", 0, 100, 1, 0);
+     v_zoom_item_1 =
+         ui_menu_add_range(MENU_V_ZOOM_1, parent, "V Zoom %", 0, 100, 1, 0);
+
+     child = stretch_item_1 =
+         ui_menu_add_multiple_choice(MENU_STRETCH_1, parent, "Aspect Ratio");
+     child->num_choices = 6;
+     child->value = 1;
+     strcpy(child->choices[MENU_STRETCH_FILL], "Fill");
+     strcpy(child->choices[MENU_STRETCH_ASPECT_1_1], "1:1");
+     strcpy(child->choices[MENU_STRETCH_ASPECT_16_15], "16:15");
+     strcpy(child->choices[MENU_STRETCH_ASPECT_6_5], "6:5");
+     strcpy(child->choices[MENU_STRETCH_ASPECT_4_3], "4:3");
+     strcpy(child->choices[MENU_STRETCH_ASPECT_5_3], "5:3");
   }
 
   ui_menu_add_button(MENU_CALC_TIMING, video_parent,
