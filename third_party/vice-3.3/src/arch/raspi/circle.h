@@ -189,7 +189,7 @@ extern void circle_hide_fb2(int layer);
 extern void circle_frame_ready_fb2(int layer);
 extern void circle_set_palette_fb2(int layer, uint8_t index, uint16_t rgb565);
 extern void circle_update_palette_fb2(int layer);
-extern void circle_set_aspect_fb2(int layer, double aspect);
+extern void circle_set_aspect_fb2(int layer, double a);
 extern void circle_set_src_rect_fb2(int layer, int x, int y, int w, int h);
 
 extern void joy_set_gamepad_info(int num_pads, int num_buttons[2], int axes[2],

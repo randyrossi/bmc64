@@ -63,11 +63,8 @@ public:
   // on the next call to Show()
   void SetSrcRect(int x, int y, int w, int h);
 
-  // Use -1 to stretch X/Y to display's dimensions
-  // Otherwise, stretch to a rectangle with the given aspect
-  // ratio until one dimension is filled.  Resulting image is centered
-  // if one dimension is not filled.
-  void SetAspect(double ratio);
+  // The desired X:Y ratio of scaled image (i.e. 16:9 = 1.777)
+  void SetAspect(double aspect);
 
   static void Initialize();
 private:

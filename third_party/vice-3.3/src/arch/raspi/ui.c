@@ -604,22 +604,36 @@ void circle_ui_key_interrupt(long key, int pressed) {
 
 // Do key press/releases on the main loop
 void ui_check_key(void) {
+  static long process_ui_key[16];
+  static int process_ui_key_pressed[16];
+
   if (!ui_activated) {
     return;
   }
 
   // Process ui key event queue
+  // Don't hold on to the lock while we call ui handlers.  It causes
+  // locking problems with dispmanx calls. Take a copy, then process
+  // outside the queue lock.
   circle_lock_acquire();
+  int process_index = 0;
   while (pending_ui_key_head != pending_ui_key_tail) {
     int i = pending_ui_key_head & 0xf;
-    if (pending_ui_key_pressed[i]) {
-      ui_key_pressed(pending_ui_key[i]);
-    } else {
-      ui_key_released(pending_ui_key[i]);
-    }
+    process_ui_key[process_index] = pending_ui_key[i];
+    process_ui_key_pressed[process_index] = pending_ui_key_pressed[i];
+    process_index++;
     pending_ui_key_head++;
   }
   circle_lock_release();
+
+  // Now process the ui keys
+  for (int i=0;i<process_index;i++) {
+    if (process_ui_key_pressed[i]) {
+      ui_key_pressed(process_ui_key[i]);
+    } else {
+      ui_key_released(process_ui_key[i]);
+    }
+  }
 
   // Ui action frame tick
   ui_action_frame();
@@ -777,6 +791,7 @@ struct menu_item *ui_menu_add_range(int id, struct menu_item *folder,
   new_item->min = min;
   new_item->max = max;
   new_item->step = step;
+  new_item->divisor = 1;
   new_item->value = initial_value;
   append(folder, new_item);
   return new_item;
@@ -844,7 +859,12 @@ static void ui_render_children(struct menu_item *node, int *index, int indent) {
                                     ui_text_width("False"),
                        y, 1);
       } else if (node->type == RANGE) {
-        sprintf(node->scratch, "%d", node->value);
+        if (node->divisor == 1) {
+           sprintf(node->scratch, "%d", node->value);
+        } else {
+           sprintf(node->scratch, "%f",
+              (float)node->value / (float)node->divisor);
+        }
         ui_draw_text(node->scratch, node->menu_left + node->menu_width -
                                         ui_text_width(node->scratch),
                      y, 1);

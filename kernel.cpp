@@ -240,7 +240,6 @@ CKernel::CKernel(void)
 
   fb2[FB_LAYER_UI].SetLayer(2);
   fb2[FB_LAYER_UI].SetTransparency(true);
-  fb2[FB_LAYER_UI].SetAspect(1.0);
 }
 
 bool CKernel::Initialize(void) {

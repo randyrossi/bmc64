@@ -78,6 +78,7 @@ struct menu_item {
   int min;
   int max;
   int step;
+  int divisor;
 
   // For FOLDER
   int is_expanded;

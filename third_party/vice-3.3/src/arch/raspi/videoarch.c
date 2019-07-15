@@ -97,6 +97,9 @@ int raspi_warp = 0;
 static int raspi_boot_warp = 1;
 static int fix_sid = 0;
 
+static int vdc_map[] = {0, 12, 6, 14, 5, 13, 11, 3, 2, 10, 8, 4, 9, 7, 15, 1};
+
+
 extern struct joydev_config joydevs[MAX_JOY_PORTS];
 
 int pending_emu_key_head = 0;
@@ -112,8 +115,7 @@ int pending_emu_joy_type[128];
 
 extern int pending_emu_quick_func;
 
-#define COLOR16(red, green, blue)                                              \
-  (((red)&0x1F) << 11 | ((green)&0x1F) << 6 | ((blue)&0x1F))
+#define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
 // Draw the src buffer into the dst buffer.
 void draw(uint8_t *src, int srcw, int srch, int src_pitch, uint8_t *dst,
@@ -166,15 +168,20 @@ int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
   }
 
   for (int i = 0; i < 16; i++) {
+    int j = i;
+    if (layer == FB_LAYER_VDC) {
+       j = vdc_map[i];
+    }
     circle_set_palette_fb2(layer, i,
-                     COLOR16(p->entries[i].red >> 3, p->entries[i].green >> 3,
-                             p->entries[i].blue >> 3));
+                     COLOR16(p->entries[j].red, p->entries[j].green,
+                             p->entries[j].blue));
   }
   circle_update_palette_fb2(layer);
 }
 
 // Draw buffer bridge functions back to kernel
-static int draw_buffer_alloc(struct video_canvas_s *canvas, uint8_t **draw_buffer,
+static int draw_buffer_alloc(struct video_canvas_s *canvas,
+                             uint8_t **draw_buffer,
                              unsigned int fb_width, unsigned int fb_height,
                              unsigned int *fb_pitch) {
    if (is_vdc(canvas)) {
@@ -240,8 +247,7 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
   canvas_num++;
 }
 
-void apply_video_adjustments(int layer,
-                             double hzoom, double vzoom, double aspect) {
+void apply_video_adjustments(int layer, double hborder, double vborder, double aspect) {
   // Hide the layer. Can't show it here on the same loop so we have to
   // allow ensure_video() to do it for us.  If the canvas is enabled, it
   // will be shown again and our new settings will take effect.
@@ -263,9 +269,9 @@ void apply_video_adjustments(int layer,
   circle_set_aspect_fb2(layer, aspect);
 
   canvas_state[index].border_w =
-     canvas_state[index].max_border_w * hzoom;
+     canvas_state[index].max_border_w * hborder;
   canvas_state[index].border_h =
-     canvas_state[index].max_border_h * vzoom;
+     canvas_state[index].max_border_h * vborder;
 
   canvas_state[index].vis_w =
      canvas_state[index].gfx_w +
@@ -410,14 +416,14 @@ void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
   if (is_vic(canvas)) {
      if (vic_first_refresh == 1) {
         // Apply current settings before ensure_video shows anything.
-        apply_video_adjustments(FB_LAYER_VIC, 1.0, 1.0, 1.0); // TODO set from menu
+        apply_video_adjustments(FB_LAYER_VIC, 1.0, 1.0, 1.6); // TODO set from menu
         resources_set_int("WarpMode", 1);
         raspi_boot_warp = 1;
         vic_first_refresh = 0;
      }
   } else {
      if (vdc_first_refresh == 1) {
-        apply_video_adjustments(FB_LAYER_VDC, 1.0, 1.0, 1.0); // TODO set from menu
+        apply_video_adjustments(FB_LAYER_VDC, 1.0, 1.0, 1.6); // TODO set from menu
         vdc_first_refresh = 0;
      }
   }

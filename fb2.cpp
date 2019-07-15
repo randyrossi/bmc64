@@ -79,7 +79,7 @@ DISPMANX_DISPLAY_HANDLE_T FrameBuffer2::dispman_display_;
 
 FrameBuffer2::FrameBuffer2() :
         width_(0), height_(0), pitch_(0), layer_(0), transparency_(false),
-        aspect_(-1), showing_(false), allocated_(false) {
+        aspect_(1.6), showing_(false), allocated_(false) {
   alpha_.flags = DISPMANX_FLAGS_ALPHA_FROM_SOURCE;
   alpha_.opacity = 255;
   alpha_.mask = 0;
@@ -194,31 +194,23 @@ void FrameBuffer2::Show() {
   dispman_update = vc_dispmanx_update_start(0);
   assert( dispman_update );
 
-  if (aspect_ == -1.0) {
-     // Stretch to full width/height of our display
-     vc_dispmanx_rect_set(&scale_dst_rect_,
-                       0,
-                       0,
-                       display_width_,
-                       display_height_);
-  } else {
-     int dst_w = display_width_;
-     int dst_h = (double)display_width_ / aspect_;
-     if (dst_h > display_height_) {
-        dst_h = display_height_;
-        dst_w = (double)display_height_ * aspect_;
-     }
+  if (aspect_ <=0) aspect_ = 1.6;
 
-     // Resulting image is centered
-     int ox = (display_width_ - dst_w) / 2;
-     int oy = (display_height_ - dst_h) / 2;
-
-     vc_dispmanx_rect_set(&scale_dst_rect_,
-                          ox,
-                          oy,
-                          dst_w,
-                          dst_h);
+  int dst_h = display_height_;
+  int dst_w = (double)display_height_ * aspect_;
+  if (dst_w > display_width_) {
+     dst_w = display_width_;
   }
+
+  // Resulting image is centered
+  int ox = (display_width_ - dst_w) / 2;
+  int oy = (display_height_ - dst_h) / 2;
+
+  vc_dispmanx_rect_set(&scale_dst_rect_,
+                       ox,
+                       oy,
+                       dst_w,
+                       dst_h);
 
   dispman_element_ = vc_dispmanx_element_add(dispman_update,
                                             dispman_display_,
@@ -241,6 +233,7 @@ void FrameBuffer2::Hide() {
   DISPMANX_UPDATE_HANDLE_T dispman_update;
 
   if (!showing_) return;
+
   dispman_update = vc_dispmanx_update_start(0);
   ret = vc_dispmanx_element_remove(dispman_update, dispman_element_);
   assert(ret == 0);
@@ -303,7 +296,7 @@ void FrameBuffer2::SetSrcRect(int x, int y, int w, int h) {
   src_h_ = h;
 }
 
-// The desired X:Y ratio of scaled image (i.e. 16:9 = 1.777)
+// Set horizontal multiplier
 void FrameBuffer2::SetAspect(double aspect) {
   aspect_ = aspect;
 }
