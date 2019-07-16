@@ -49,6 +49,7 @@ int pending_emu_quick_func;
 
 static int osd_active;
 static int ui_ctrl_down;
+static int transparent_ui;
 
 extern struct joydev_config joydevs[MAX_JOY_PORTS];
 
@@ -276,6 +277,12 @@ static void ui_type_char(char ch) {
 
 // Happens on main loop.
 static void ui_key_pressed(long key) {
+  // Anything other than left/right will reset transparency
+  // on the ui.
+  if (key != KEYCODE_Left && key != KEYCODE_Right) {
+    transparent_ui = 0;
+  }
+
   switch (key) {
   case KEYCODE_LeftControl:
     ui_ctrl_down = 1;
@@ -913,9 +920,13 @@ void ui_render_now(void) {
   // Start with transparent
   ui_draw_rect(0, 0, ui_fb_w, ui_fb_h, 16 /* transparent */, 1);
 
-  // black background
-  ui_draw_rect(ptr->menu_left, ptr->menu_top, ptr->menu_width, ptr->menu_height,
-               0, 1);
+  // black background conditional upon mode
+  if (!transparent_ui) {
+     ui_draw_rect(ptr->menu_left, ptr->menu_top,
+                  ptr->menu_width, ptr->menu_height,
+                  0, 1);
+  }
+
   // border
   ui_draw_rect(ptr->menu_left - 1, ptr->menu_top - 1, ptr->menu_width + 2,
                ptr->menu_height + 2, 3, 0);
@@ -1204,4 +1215,8 @@ void ui_dismiss_osd_if_active(void) {
      ui_pop_all_and_toggle();
      ui_disable_osd();
   }
+}
+
+void ui_set_transparent(int v) {
+  transparent_ui = v;
 }

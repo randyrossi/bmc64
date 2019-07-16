@@ -129,4 +129,9 @@ void ensure_video(void);
 palette_t *raspi_video_load_palette(int num_entries, char *name);
 void main_exit(void);
 
+// If layer is visible right now, make the ui transparent. Used to
+// assist user in making video adjustments in real time (color, aspect ratio,
+// etc).
+void video_request_transparency(int layer);
+
 #endif

@@ -689,3 +689,12 @@ void main_exit(void) {
   circle_set_fb1_palette(1, COLOR16(255 >> 3, 255 >> 3, 255 >> 3));
   circle_update_fb1_palette();
 }
+
+void video_request_transparency(int layer) {
+  if (layer == FB_LAYER_VIC && vic_showing) {
+    ui_set_transparent(1);
+  }
+  else if (layer == FB_LAYER_VDC && vdc_showing) {
+    ui_set_transparent(1);
+  }
+}
