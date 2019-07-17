@@ -191,8 +191,8 @@ void circle_hide_fb2(int layer) {
   static_kernel->circle_hide_fb2(layer);
 }
 
-void circle_frame_ready_fb2(int layer) {
-  static_kernel->circle_frame_ready_fb2(layer);
+void circle_frames_ready_fb2(int layer1, int layer2, int sync) {
+  static_kernel->circle_frames_ready_fb2(layer1, layer2, sync);
 }
 
 void circle_set_palette_fb2(int layer, uint8_t index, uint16_t rgb565) {
@@ -1087,8 +1087,17 @@ void CKernel::circle_hide_fb2(int layer) {
   fb2[layer].Hide();
 }
 
-void CKernel::circle_frame_ready_fb2(int layer) {
-  fb2[layer].FrameReady();
+void CKernel::circle_frames_ready_fb2(int layer1, int layer2, int sync) {
+  // If we're going to sync to vblank, indicate this frame data should go
+  // to the offscreen resource.
+  fb2[layer1].FrameReady(sync);
+  if (layer2 >= 0) {
+     fb2[layer2].FrameReady(sync);
+  }
+  if (sync) {
+     // Flip the buffers and wait for vblank.
+     FrameBuffer2::SwapResources(&fb2[layer1], layer2 >= 0 ? &fb2[layer2] : nullptr);
+  }
 }
 
 void CKernel::circle_set_palette_fb2(int layer, uint8_t index, uint16_t rgb565) {

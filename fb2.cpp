@@ -79,7 +79,7 @@ DISPMANX_DISPLAY_HANDLE_T FrameBuffer2::dispman_display_;
 
 FrameBuffer2::FrameBuffer2() :
         width_(0), height_(0), pitch_(0), layer_(0), transparency_(false),
-        aspect_(1.6), valign_(0), halign_(0), showing_(false),
+        aspect_(1.6), valign_(0), halign_(0), rnum_(0), showing_(false),
         allocated_(false) {
   alpha_.flags = DISPMANX_FLAGS_ALPHA_FROM_SOURCE;
   alpha_.opacity = 255;
@@ -124,11 +124,16 @@ int FrameBuffer2::Allocate(uint8_t **pixels, int width, int height, int *pitch) 
 
   // Allocate the VC resources along with the frame buffer
 
-  dispman_resource_ = vc_dispmanx_resource_create(IMG_TYPE,
-                                                  width,
-                                                  height,
-                                                  &vc_image_ptr );
-  assert(dispman_resource_);
+  dispman_resource_[0] = vc_dispmanx_resource_create(IMG_TYPE,
+                                                     width,
+                                                     height,
+                                                     &vc_image_ptr );
+  dispman_resource_[1] = vc_dispmanx_resource_create(IMG_TYPE,
+                                                     width,
+                                                     height,
+                                                     &vc_image_ptr );
+  assert(dispman_resource_[0]);
+  assert(dispman_resource_[1]);
 
   // Install the default palette
   UpdatePalette();
@@ -162,7 +167,9 @@ void FrameBuffer2::Free() {
   pitch_ = 0;
   free(pixels_);
 
-  ret = vc_dispmanx_resource_delete(dispman_resource_);
+  ret = vc_dispmanx_resource_delete(dispman_resource_[0]);
+  assert(ret == 0);
+  ret = vc_dispmanx_resource_delete(dispman_resource_[1]);
   assert(ret == 0);
 
   allocated_ = false;
@@ -256,11 +263,12 @@ void FrameBuffer2::Show() {
   dispman_update = vc_dispmanx_update_start(0);
   assert( dispman_update );
 
+  rnum_ = 0;
   dispman_element_ = vc_dispmanx_element_add(dispman_update,
                                             dispman_display_,
                                             layer_, // layer
                                             &scale_dst_rect_,
-                                            dispman_resource_,
+                                            dispman_resource_[rnum_],
                                             &src_rect_,
                                             DISPMANX_PROTECTION_NONE,
                                             &alpha_,
@@ -290,12 +298,37 @@ void* FrameBuffer2::GetPixels() {
   return pixels_;
 }
 
-void FrameBuffer2::FrameReady() {
-  vc_dispmanx_resource_write_data(dispman_resource_,
+void FrameBuffer2::FrameReady(int to_offscreen) {
+  int rnum = to_offscreen ? 1 - rnum_ : rnum_;
+
+  // Copy data into either the offscreen resource (if swap) or the
+  // on screen resource (if !swap).
+  vc_dispmanx_resource_write_data(dispman_resource_[rnum],
                                   IMG_TYPE,
                                   width_,
                                   pixels_,
                                   &copy_dst_rect_);
+}
+
+// Private function to change the source of this frame buffer's
+// element to the off screen resource and toggle the resource
+// index in preparation for the off screen data to be shown.
+void FrameBuffer2::Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update) {
+  vc_dispmanx_element_change_source(dispman_update,
+                                    dispman_element_,
+                                    dispman_resource_[1-rnum_]);
+  rnum_ = 1 - rnum_;
+}
+
+// Static
+void FrameBuffer2::SwapResources(FrameBuffer2* fb1, FrameBuffer2* fb2) {
+  int ret;
+  DISPMANX_UPDATE_HANDLE_T dispman_update;
+  dispman_update = vc_dispmanx_update_start(0);
+  fb1->Swap(dispman_update);
+  if (fb2) fb2->Swap(dispman_update);
+  ret = vc_dispmanx_update_submit_sync(dispman_update);
+  assert(ret == 0);
 }
 
 void FrameBuffer2::SetPalette(uint8_t index, uint16_t rgb565) {
@@ -313,10 +346,14 @@ void FrameBuffer2::UpdatePalette() {
 
   int ret;
   if (transparency_) {
-     ret = vc_dispmanx_resource_set_palette(dispman_resource_,
+     ret = vc_dispmanx_resource_set_palette(dispman_resource_[0],
+                                            pal_argb, 0, sizeof pal_argb);
+     ret = vc_dispmanx_resource_set_palette(dispman_resource_[1],
                                             pal_argb, 0, sizeof pal_argb);
   } else {
-     ret = vc_dispmanx_resource_set_palette(dispman_resource_,
+     ret = vc_dispmanx_resource_set_palette(dispman_resource_[0],
+                                            pal_565, 0, sizeof pal_565);
+     ret = vc_dispmanx_resource_set_palette(dispman_resource_[1],
                                             pal_565, 0, sizeof pal_565);
   }
   assert( ret == 0 );

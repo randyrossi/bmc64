@@ -187,7 +187,7 @@ extern void circle_free_fb2(int layer);
 extern void circle_clear_fb2(int layer);
 extern void circle_show_fb2(int layer);
 extern void circle_hide_fb2(int layer);
-extern void circle_frame_ready_fb2(int layer);
+extern void circle_frames_ready_fb2(int layer1, int layer2, int sync);
 extern void circle_set_palette_fb2(int layer, uint8_t index, uint16_t rgb565);
 extern void circle_update_palette_fb2(int layer);
 extern void circle_set_aspect_fb2(int layer, double a);

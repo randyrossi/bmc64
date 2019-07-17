@@ -478,14 +478,14 @@ void vsyncarch_postsync(void) {
     // The only way we can be here and have ui_activated=1
     // is for an osd to be enabled.
     ui_render_now();
-    circle_frame_ready_fb2(FB_LAYER_UI);
+    circle_frames_ready_fb2(FB_LAYER_UI, -1 /* no 2nd layer */, 0 /* no sync */);
     ui_check_key();
   }
 
   if (overlay_forced() || (overlay_enabled() && overlay_showing)) {
     overlay_check();
     circle_show_fb2(FB_LAYER_STATUS);
-    circle_frame_ready_fb2(FB_LAYER_STATUS);
+    circle_frames_ready_fb2(FB_LAYER_STATUS, -1 /* no 2nd layer */, 0 /* no sync */);
   }
 
   video_ticks += video_tick_inc;
@@ -517,15 +517,10 @@ void vsyncarch_postsync(void) {
   }
   // END UGLY HACK
 
-  // Hold the frame until vsync unless warping
-  if (!raspi_boot_warp && !raspi_warp) {
-    circle_wait_vsync();
-  }
-
-  circle_frame_ready_fb2(FB_LAYER_VIC);
-  if (machine_class == VICE_MACHINE_C128) {
-     circle_frame_ready_fb2(FB_LAYER_VDC);
-  }
+  // Hold for vsync unless warping or in boot warp.
+  circle_frames_ready_fb2(FB_LAYER_VIC,
+                         machine_class == VICE_MACHINE_C128 ? FB_LAYER_VDC : -1,
+                         !raspi_boot_warp && !raspi_warp);
 
   circle_check_gpio();
 

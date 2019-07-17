@@ -39,8 +39,10 @@ public:
   // Get a pointer to raw pixel data for this frame buffer
   void* GetPixels();
 
-  // Indicates raw pixel data has a complete frame. Upload to vc resource.
-  void FrameReady();
+  // Indicates raw pixel data has a complete frame. Upload to the
+  // offscreen resource unless to_offscreen is 0, in which case
+  // the currently visible resource is the destination.
+  void FrameReady(int to_offscreen);
 
   // Show the framebuffer over top the first
   void Show();
@@ -78,15 +80,23 @@ public:
   // padding applies to LEFT or RIGHT only
   void SetHorizontalAlignment(int alignment, int padding);
 
+  // initializes the bcm_host interface
   static void Initialize();
+
+  // make off screen resources for fb1 (and optionally fb2) visible
+  // then swap destination resources in prep for next frame
+  static void SwapResources(FrameBuffer2* fb1, FrameBuffer2* fb2);
+
 private:
+
+  void Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update);
 
   // Raw pixel data. Not VC memory.
   uint8_t* pixels_;
 
   static DISPMANX_DISPLAY_HANDLE_T dispman_display_;
   DISPMANX_ELEMENT_HANDLE_T dispman_element_;
-  DISPMANX_RESOURCE_HANDLE_T dispman_resource_;
+  DISPMANX_RESOURCE_HANDLE_T dispman_resource_[2];
 
   VC_RECT_T scale_dst_rect_;
   VC_RECT_T copy_dst_rect_;
@@ -103,8 +113,12 @@ private:
   int layer_;
   int transparency_;
   double aspect_;
+  // -1 = top, 0 = center, 1 = bottom
   int valign_;
+  // -1 = left, 0 = center, 1 = right
   int halign_;
+  // Represents the resource currently visible
+  int rnum_;
 
   int display_width_;
   int display_height_;

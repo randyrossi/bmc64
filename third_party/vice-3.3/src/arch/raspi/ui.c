@@ -427,7 +427,7 @@ static void ui_action_frame() {
 
 static void ui_render_single_frame() {
   ui_render_now();
-  circle_frame_ready_fb2(FB_LAYER_UI);
+  circle_frames_ready_fb2(FB_LAYER_UI, -1 /* no 2nd layer */, 1 /* sync */);
   circle_yield();
 }
 
@@ -441,7 +441,6 @@ static void pause_trap(uint16_t addr, void *data) {
     ui_handle_toggle_or_quick_func();
 
     ui_render_single_frame();
-    circle_wait_vsync();
     hdmi_timing_hook();
     ensure_video();
   }
@@ -1198,7 +1197,7 @@ void ui_enable_osd(void) {
   osd_active = 1;
   ui_activated = 1;
   ui_make_transparent();
-  circle_frame_ready_fb2(FB_LAYER_UI);
+  circle_frames_ready_fb2(FB_LAYER_UI, -1 /* no 2nd layer */, 0 /* nosync */);
   circle_show_fb2(FB_LAYER_UI);
 }
 
