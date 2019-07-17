@@ -473,13 +473,6 @@ void ensure_video(void) {
 void vsyncarch_postsync(void) {
   ensure_video();
 
-  // Sync with display's vertical blank signal.
-
-  circle_frame_ready_fb2(FB_LAYER_VIC);
-  if (machine_class == VICE_MACHINE_C128) {
-     circle_frame_ready_fb2(FB_LAYER_VDC);
-  }
-
   // This render will handle any OSDs we have. ODSs don't pause emulation.
   if (ui_activated) {
     // The only way we can be here and have ui_activated=1
@@ -527,6 +520,11 @@ void vsyncarch_postsync(void) {
   // Hold the frame until vsync unless warping
   if (!raspi_boot_warp && !raspi_warp) {
     circle_wait_vsync();
+  }
+
+  circle_frame_ready_fb2(FB_LAYER_VIC);
+  if (machine_class == VICE_MACHINE_C128) {
+     circle_frame_ready_fb2(FB_LAYER_VDC);
   }
 
   circle_check_gpio();

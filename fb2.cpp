@@ -187,9 +187,6 @@ void FrameBuffer2::Show() {
   vc_dispmanx_rect_set(&src_rect_,
      src_x_ << 16, src_y_ << 16, src_w_ << 16, src_h_ << 16);
 
-  dispman_update = vc_dispmanx_update_start(0);
-  assert( dispman_update );
-
   int dst_w;
   int dst_h;
   assert (aspect_ != 0);
@@ -256,6 +253,9 @@ void FrameBuffer2::Show() {
                        dst_w,
                        dst_h);
 
+  dispman_update = vc_dispmanx_update_start(0);
+  assert( dispman_update );
+
   dispman_element_ = vc_dispmanx_element_add(dispman_update,
                                             dispman_display_,
                                             layer_, // layer
@@ -291,14 +291,11 @@ void* FrameBuffer2::GetPixels() {
 }
 
 void FrameBuffer2::FrameReady() {
-  int ret;
-
-  ret = vc_dispmanx_resource_write_data(dispman_resource_,
-                                        IMG_TYPE,
-                                        width_,
-                                        pixels_,
-                                        &copy_dst_rect_);
-  assert(ret == 0);
+  vc_dispmanx_resource_write_data(dispman_resource_,
+                                  IMG_TYPE,
+                                  width_,
+                                  pixels_,
+                                  &copy_dst_rect_);
 }
 
 void FrameBuffer2::SetPalette(uint8_t index, uint16_t rgb565) {
