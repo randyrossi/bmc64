@@ -52,8 +52,6 @@
 #include <strings.h>
 #include <sys/time.h>
 
-#define OVERLAY_H 10
-
 // Increments with each canvas being inited by vice
 int canvas_num;
 
@@ -98,7 +96,6 @@ static int raspi_boot_warp = 1;
 static int fix_sid = 0;
 
 static int vdc_map[] = {0, 12, 6, 14, 5, 13, 11, 3, 2, 10, 8, 4, 9, 7, 15, 1};
-
 
 extern struct joydev_config joydevs[MAX_JOY_PORTS];
 
@@ -185,14 +182,9 @@ static int draw_buffer_alloc(struct video_canvas_s *canvas,
                              unsigned int fb_width, unsigned int fb_height,
                              unsigned int *fb_pitch) {
    if (is_vdc(canvas)) {
-      vdc_enabled = 0;
-      vdc_showing = 0;
       return circle_alloc_fb2(FB_LAYER_VDC, draw_buffer,
                               fb_width, fb_height, fb_pitch);
    } else {
-      vic_enabled = 1;
-      vic_showing = 0;
-
       return circle_alloc_fb2(FB_LAYER_VIC, draw_buffer,
                               fb_width, fb_height, fb_pitch);
    }
@@ -224,6 +216,8 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
      vdc_canvas = canvas;
      vdc_canvas_index = canvas_num;
      vdc_first_refresh = 1;
+     vdc_enabled = 0;
+     vdc_showing = 0;
   } else {
      int timing = circle_get_machine_timing();
      set_refresh_rate(timing, canvas);
@@ -232,6 +226,8 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
      vic_canvas = canvas;
      vic_canvas_index = canvas_num;
      video_freq = canvas->refreshrate * video_tick_inc;
+     vic_enabled = 1;
+     vic_showing = 0;
   }
 
   // Have our fb class allocate draw buffers
@@ -247,7 +243,8 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
   canvas_num++;
 }
 
-void apply_video_adjustments(int layer, double hborder, double vborder, double aspect) {
+void apply_video_adjustments(int layer,
+      double hborder, double vborder, double aspect) {
   // Hide the layer. Can't show it here on the same loop so we have to
   // allow ensure_video() to do it for us.  If the canvas is enabled, it
   // will be shown again and our new settings will take effect.
@@ -360,12 +357,8 @@ static struct video_canvas_s *video_canvas_create_vic(
     }
   }
 
-  // Status overlay will only appear on VIC canvas for now.
-  overlay_init(*width, OVERLAY_H);
-
   return canvas;
 }
-
 
 static struct video_canvas_s *video_canvas_create_vdc(
        struct video_canvas_s *canvas,
@@ -416,14 +409,19 @@ void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
   if (is_vic(canvas)) {
      if (vic_first_refresh == 1) {
         // Apply current settings before ensure_video shows anything.
-        apply_video_adjustments(FB_LAYER_VIC, 1.0, 1.0, 1.6); // TODO set from menu
+        // TODO set from menu
+        apply_video_adjustments(FB_LAYER_VIC, 1.0, 1.0, 1.6);
         resources_set_int("WarpMode", 1);
         raspi_boot_warp = 1;
         vic_first_refresh = 0;
+
+        overlay_init(vic_canvas->draw_buffer->canvas_physical_width,
+                     vic_canvas->draw_buffer->canvas_physical_height);
      }
   } else {
      if (vdc_first_refresh == 1) {
-        apply_video_adjustments(FB_LAYER_VDC, 1.0, 1.0, 1.6); // TODO set from menu
+        // TODO set from menu
+        apply_video_adjustments(FB_LAYER_VDC, 1.0, 1.0, 1.6);
         vdc_first_refresh = 0;
      }
   }
@@ -491,22 +489,10 @@ void vsyncarch_postsync(void) {
     ui_check_key();
   }
 
-  // Always draw overlay on visible buffer
   if (overlay_forced() || (overlay_enabled() && overlay_showing)) {
     overlay_check();
-
-    // Note: We made the overlay as wide as the physical canvas, so use
-    // that for the overlay's width and pitch. 
-    struct video_canvas_s* canvas = canvas_state[vic_canvas_index].canvas;
-    draw(
-        overlay_buf,
-        canvas->draw_buffer->canvas_physical_width,
-        OVERLAY_H,
-        canvas->draw_buffer->canvas_physical_width,
-        canvas->draw_buffer->draw_buffer + canvas_state[vic_canvas_index].overlay_x,
-        canvas->draw_buffer->draw_buffer_pitch,
-        0,
-        canvas_state[vic_canvas_index].overlay_y);
+    circle_show_fb2(FB_LAYER_STATUS);
+    circle_frame_ready_fb2(FB_LAYER_STATUS);
   }
 
   video_ticks += video_tick_inc;

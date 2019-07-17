@@ -79,7 +79,8 @@ DISPMANX_DISPLAY_HANDLE_T FrameBuffer2::dispman_display_;
 
 FrameBuffer2::FrameBuffer2() :
         width_(0), height_(0), pitch_(0), layer_(0), transparency_(false),
-        aspect_(1.6), showing_(false), allocated_(false) {
+        aspect_(1.6), valign_(0), halign_(0), showing_(false),
+        allocated_(false) {
   alpha_.flags = DISPMANX_FLAGS_ALPHA_FROM_SOURCE;
   alpha_.opacity = 255;
   alpha_.mask = 0;
@@ -134,11 +135,6 @@ int FrameBuffer2::Allocate(uint8_t **pixels, int width, int height, int *pitch) 
 
   vc_dispmanx_rect_set( &copy_dst_rect_, 0, 0, width, height);
 
-  ret = vc_dispmanx_resource_write_data(dispman_resource_,
-                                        IMG_TYPE,
-                                        width,
-                                        pixels_,
-                                        &copy_dst_rect_ );
   assert(ret == 0);
 
   // Default our src region to the entire buffer.
@@ -153,7 +149,7 @@ int FrameBuffer2::Allocate(uint8_t **pixels, int width, int height, int *pitch) 
 void FrameBuffer2::Clear() {
   assert (allocated_);
 
-  memset(pixels_, 0, height_ * pitch_);
+  memset(pixels_, 0, height_ * pitch_ * BYTES_PER_PIXEL);
 }
 
 void FrameBuffer2::Free() {
@@ -194,17 +190,65 @@ void FrameBuffer2::Show() {
   dispman_update = vc_dispmanx_update_start(0);
   assert( dispman_update );
 
-  if (aspect_ <=0) aspect_ = 1.6;
-
-  int dst_h = display_height_;
-  int dst_w = (double)display_height_ * aspect_;
-  if (dst_w > display_width_) {
+  int dst_w;
+  int dst_h;
+  assert (aspect_ != 0);
+  if (aspect_ < 0) {
+     // Stretch horizontally to fill width and then set height based on
+     // aspect ratio.
      dst_w = display_width_;
+     dst_h = (double)display_width_ / -aspect_;
+     if (dst_h > display_height_) {
+        dst_h = display_height_;
+     }
+  } else {
+     // Stretch vertically to fill height and then set width based on
+     // aspect ratio.
+     dst_h = display_height_;
+     dst_w = (double)display_height_ * aspect_;
+     if (dst_w > display_width_) {
+        dst_w = display_width_;
+     }
   }
 
   // Resulting image is centered
-  int ox = (display_width_ - dst_w) / 2;
-  int oy = (display_height_ - dst_h) / 2;
+  int oy;
+  switch (valign_) {
+     case 0:
+        // Center
+        oy = (display_height_ - dst_h) / 2;
+        break;
+     case -1:
+        // Top
+        oy = 0;
+        break;
+     case 1:
+        // Bottom
+        oy = display_height_ - dst_h;
+        break;
+     default:
+        oy = 0;
+        break;
+  }
+
+  int ox;
+  switch (halign_) {
+     case 0:
+        // Center
+        ox = (display_width_ - dst_w) / 2;
+        break;
+     case -1:
+        // Left
+        ox = 0;
+        break;
+     case 1:
+        // Right
+        ox = display_width_ - dst_w;
+        break;
+     default:
+        ox = 0;
+        break;
+  }
 
   vc_dispmanx_rect_set(&scale_dst_rect_,
                        ox,
@@ -299,4 +343,12 @@ void FrameBuffer2::SetSrcRect(int x, int y, int w, int h) {
 // Set horizontal multiplier
 void FrameBuffer2::SetAspect(double aspect) {
   aspect_ = aspect;
+}
+
+void FrameBuffer2::SetVerticalAlignment(int alignment, int padding) {
+  valign_ = alignment;
+}
+
+void FrameBuffer2::SetHorizontalAlignment(int alignment, int padding) {
+  halign_ = alignment;
 }

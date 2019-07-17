@@ -64,7 +64,19 @@ public:
   void SetSrcRect(int x, int y, int w, int h);
 
   // The desired X:Y ratio of scaled image (i.e. 16:9 = 1.777)
+  // If positive, the src region height is scaled up to the height of the
+  // frame buffer and the width is determined by height * aspect.
+  // If negative, the src region width is scaled up to the width of the
+  // frame buffer and the height is determiend by width / aspect.
   void SetAspect(double aspect);
+
+  // alignment can be -1 = ALIGN TOP, 0 = CENTER, 1 = ALIGN BOTTOM
+  // padding applies to TOP or BOTTOM only
+  void SetVerticalAlignment(int alignment, int padding);
+
+  // alignment can be -1 = ALIGN LEFT, 0 = CENTER, 1 = ALIGN RIGHT
+  // padding applies to LEFT or RIGHT only
+  void SetHorizontalAlignment(int alignment, int padding);
 
   static void Initialize();
 private:
@@ -91,6 +103,8 @@ private:
   int layer_;
   int transparency_;
   double aspect_;
+  int valign_;
+  int halign_;
 
   int display_width_;
   int display_height_;

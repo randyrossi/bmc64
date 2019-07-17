@@ -2129,9 +2129,6 @@ void build_menu(struct menu_item *root) {
   ui_menu_add_button(MENU_CALC_TIMING, video_parent,
                      "Custom HDMI mode timing calc...");
 
-printf ("done create video menu\n");
-
-
   parent = ui_menu_add_folder(root, "Sound");
   // Resid by default
   child = sid_engine_item =

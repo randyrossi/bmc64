@@ -47,10 +47,11 @@
 #define MACHINE_TIMING_PAL_CUSTOM 4
 #define MACHINE_TIMING_NTSC_CUSTOM 5
 
-#define FB_NUM_LAYERS 3
-#define FB_LAYER_VIC 0
-#define FB_LAYER_VDC 1
-#define FB_LAYER_UI  2
+#define FB_NUM_LAYERS   4
+#define FB_LAYER_VIC    0
+#define FB_LAYER_VDC    1
+#define FB_LAYER_STATUS 2
+#define FB_LAYER_UI     3
 
 #define USB_PREF_ANALOG 0
 #define USB_PREF_HAT 1
@@ -191,6 +192,8 @@ extern void circle_set_palette_fb2(int layer, uint8_t index, uint16_t rgb565);
 extern void circle_update_palette_fb2(int layer);
 extern void circle_set_aspect_fb2(int layer, double a);
 extern void circle_set_src_rect_fb2(int layer, int x, int y, int w, int h);
+extern void circle_set_valign_fb2(int layer, int align, int padding);
+extern void circle_set_halign_fb2(int layer, int align, int padding);
 
 extern void joy_set_gamepad_info(int num_pads, int num_buttons[2], int axes[2],
                                  int hats[2]);

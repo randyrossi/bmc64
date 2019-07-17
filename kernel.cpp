@@ -210,6 +210,14 @@ void circle_set_aspect_fb2(int layer, double aspect) {
 void circle_set_src_rect_fb2(int layer, int x, int y, int w, int h) {
   static_kernel->circle_set_src_rect_fb2(layer, x,y,w,h);
 }
+
+void circle_set_valign_fb2(int layer, int align, int padding) {
+  static_kernel->circle_set_valign_fb2(layer, align, padding);
+}
+
+void circle_set_halign_fb2(int layer, int align, int padding) {
+  static_kernel->circle_set_halign_fb2(layer, align, padding);
+}
 };
 
 
@@ -238,7 +246,10 @@ CKernel::CKernel(void)
   fb2[FB_LAYER_VDC].SetLayer(1);
   fb2[FB_LAYER_VDC].SetTransparency(false);
 
-  fb2[FB_LAYER_UI].SetLayer(2);
+  fb2[FB_LAYER_STATUS].SetLayer(2);
+  fb2[FB_LAYER_STATUS].SetTransparency(true);
+
+  fb2[FB_LAYER_UI].SetLayer(3);
   fb2[FB_LAYER_UI].SetTransparency(true);
 }
 
@@ -1096,3 +1107,10 @@ void CKernel::circle_set_src_rect_fb2(int layer, int x, int y, int w, int h) {
   fb2[layer].SetSrcRect(x,y,w,h);
 }
 
+void CKernel::circle_set_valign_fb2(int layer, int align, int padding) {
+  fb2[layer].SetVerticalAlignment(align, padding);
+}
+
+void CKernel::circle_set_halign_fb2(int layer, int align, int padding) {
+  fb2[layer].SetHorizontalAlignment(align, padding);
+}

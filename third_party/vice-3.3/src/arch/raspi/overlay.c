@@ -58,8 +58,6 @@ static int drive_led_types[DRIVE_NUM];
 static unsigned int current_drive_leds[DRIVE_NUM][2];
 static int tape_counter = -1;
 
-static int overlay_buf_pitch;
-
 static unsigned long overlay_delay = 0;
 static unsigned long overlay_start = 0;
 
@@ -68,6 +66,9 @@ static int inset_y;
 
 unsigned int overlay_showing = 0;
 uint8_t *overlay_buf;
+static int overlay_buf_pitch;
+
+#define OVERLAY_HEIGHT 10
 
 // Create a new overlay buffer
 uint8_t *overlay_init(int width, int height) {
@@ -87,10 +88,11 @@ uint8_t *overlay_init(int width, int height) {
         break;
   }
 
-  overlay_buf = (uint8_t *)malloc(width * height);
-
-  memset(overlay_buf, bg_color, width * height);
-  overlay_buf_pitch = width;
+  circle_alloc_fb2(FB_LAYER_STATUS,
+                   &overlay_buf, width, OVERLAY_HEIGHT, &overlay_buf_pitch);
+  circle_set_aspect_fb2(FB_LAYER_STATUS, -(double)width/(double)OVERLAY_HEIGHT);
+  circle_set_valign_fb2(FB_LAYER_STATUS, 1, 0); // NEEDS TO COME FROM SETTINGS
+  memset(overlay_buf, bg_color, overlay_buf_pitch * OVERLAY_HEIGHT);
 
   // Figure out inset that will center.
   char *template;

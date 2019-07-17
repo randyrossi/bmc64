@@ -54,12 +54,22 @@
 #include "video.h"
 #include "viewport.h"
 
+#ifdef RASPI_COMPILE
+#ifndef ALIGN_UP
+#define ALIGN_UP(x,y)  ((x + (y)-1) & ~((y)-1))
+#endif
+#endif
 
 static int raster_calc_frame_buffer_width(raster_t *raster)
 {
-    return raster->geometry->screen_size.width
+    int width = raster->geometry->screen_size.width
            + raster->geometry->extra_offscreen_border_left
            + raster->geometry->extra_offscreen_border_right;
+#ifdef RASPI_COMPILE
+    return ALIGN_UP(width, 32);
+#else
+    return width;
+#endif
 }
 
 static int raster_draw_buffer_alloc(video_canvas_t *canvas,
@@ -111,11 +121,7 @@ void raster_draw_buffer_ptr_update(raster_t *raster)
             && raster->geometry->screen_size.height <= raster->geometry->last_displayed_line ?
             raster->geometry->screen_size.height : 0
             ) + raster->current_line
-#ifdef RASPI_COMPILE
-           ) * raster->canvas->draw_buffer->draw_buffer_pitch
-#else
            ) * raster_calc_frame_buffer_width(raster)
-#endif
         + raster->geometry->extra_offscreen_border_left;
 }
 
