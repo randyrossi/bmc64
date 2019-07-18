@@ -64,7 +64,6 @@ static unsigned long overlay_start = 0;
 static int inset_x;
 static int inset_y;
 
-unsigned int overlay_showing = 0;
 uint8_t *overlay_buf;
 static int overlay_buf_pitch;
 
@@ -126,14 +125,24 @@ uint8_t *overlay_init(int width, int height) {
 
 // Some activity means overlay should show (if menu option set)
 void overlay_activate() {
+  if (!overlay_buf) return;
+
   overlay_start = circle_get_ticks();
   overlay_delay = 5 * TICKS_PER_SECOND;
-  overlay_showing = 1;
+  if (!overlay_never()) {
+     overlay_enabled = 1;
+  }
 }
 
 // Called by VICE to enable a drive status lights
 void ui_enable_drive_status(ui_drive_enable_t state, int *drive_led_color) {
+  if (!overlay_buf)
+    return;
+
   overlay_activate();
+
+  if (!overlay_enabled) return;
+
   int i, enabled = state;
 
   for (i = 0; i < DRIVE_NUM; ++i) {
@@ -160,10 +169,13 @@ void ui_enable_drive_status(ui_drive_enable_t state, int *drive_led_color) {
 
 // Show drive led
 void ui_display_drive_led(int drive, unsigned int pwm1, unsigned int pwm2) {
-  if (!overlay_buf || !overlay_enabled())
+  if (!overlay_buf)
     return;
 
   overlay_activate();
+
+  if (!overlay_enabled) return;
+
   for (int i = 0; i < 2; i++) {
     unsigned int pwm = i == 0 ? pwm1 : pwm2;
     int led_color = drive_led_types[drive] & (1 << i);
@@ -193,11 +205,14 @@ void ui_display_drive_led(int drive, unsigned int pwm1, unsigned int pwm2) {
 
 // Show tape counter text
 void ui_display_tape_counter(int counter) {
-  if (!overlay_buf || !overlay_enabled())
+  if (!overlay_buf)
     return;
 
   if (counter != tape_counter) {
     overlay_activate();
+
+    if (!overlay_enabled) return;
+
     char tmp[16];
     sprintf(tmp, "%03d", counter % 1000);
     ui_draw_rect_buf(tape_x + inset_x, inset_y, 8 * 3, 8, bg_color, 1,
@@ -210,10 +225,13 @@ void ui_display_tape_counter(int counter) {
 
 // Show tape control text
 void ui_display_tape_control_status(int control) {
-  if (!overlay_buf || !overlay_enabled())
+  if (!overlay_buf)
     return;
 
   overlay_activate();
+
+  if (!overlay_enabled) return;
+
   ui_draw_rect_buf(tape_controls_x + inset_x, inset_y, 8 * 3, 8, bg_color, 1,
                    overlay_buf, overlay_buf_pitch);
   const char *txt;
@@ -247,8 +265,13 @@ void ui_display_tape_control_status(int control) {
 
 // Draw tape motor status light
 void ui_display_tape_motor_status(int motor) {
-  if (!overlay_buf || !overlay_enabled())
+  if (!overlay_buf)
     return;
+
+  overlay_activate();
+
+  if (!overlay_enabled) return;
+
   int led = motor ? RED : bg_color;
   ui_draw_rect_buf(tape_motor_x + inset_x, inset_y + 2, 6, 4, led,
                    1, // w,h,color,fill
@@ -256,9 +279,13 @@ void ui_display_tape_motor_status(int motor) {
 }
 
 void overlay_warp_changed(int warp) {
-  if (!overlay_buf || !overlay_enabled())
+  if (!overlay_buf)
     return;
+
   overlay_activate();
+
+  if (!overlay_enabled) return;
+
   ui_draw_rect_buf(warp_x + inset_x, inset_y, 8, 8, bg_color, 1, overlay_buf,
                    overlay_buf_pitch);
   ui_draw_text_buf(warp ? "!" : "-", warp_x + inset_x, inset_y, fg_color,
@@ -266,9 +293,13 @@ void overlay_warp_changed(int warp) {
 }
 
 void overlay_joyswap_changed(int swap) {
-  if (!overlay_buf || !overlay_enabled())
+  if (!overlay_buf)
     return;
+
   overlay_activate();
+
+  if (!overlay_enabled) return;
+
   ui_draw_rect_buf(joyswap_x + inset_x, inset_y, 8 * 2, 8, bg_color, 1,
                    overlay_buf, overlay_buf_pitch);
   ui_draw_text_buf(swap ? "21" : "12", joyswap_x + inset_x, inset_y, fg_color,
@@ -278,9 +309,17 @@ void overlay_joyswap_changed(int swap) {
 // Checks whether a showing overlay due to activity should no longer be showing
 void overlay_check(void) {
   // Rollover safe way of checking duration
-  if (overlay_showing && circle_get_ticks() - overlay_start >= overlay_delay) {
-    overlay_showing = 0;
+  if (overlay_enabled && circle_get_ticks() - overlay_start >= overlay_delay) {
+      overlay_dismiss();
   }
 }
 
-void overlay_force_timeout(void) { overlay_showing = 0; }
+void overlay_dismiss(void) {
+  if (!overlay_always()) {
+     overlay_enabled = 0;
+  }
+}
+
+void overlay_force_enabled(void) {
+  overlay_enabled = 1;
+}

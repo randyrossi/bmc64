@@ -113,6 +113,9 @@ extern uint16_t video_font_translate[256];
 // Make sure ui also sets this when turning on/off warp
 extern int raspi_warp;
 
+extern int overlay_enabled;
+extern int overlay_showing;
+
 // May be called from an ISR to change joy value for emulator
 void circle_emu_joy_interrupt(int type, int port, int value);
 

@@ -370,8 +370,8 @@ void build_menu(struct menu_item *root);
 
 int menu_get_keyboard_type(void);
 void menu_swap_joysticks(void);
-int overlay_enabled(void);
-int overlay_forced(void);
+int overlay_never(void);
+int overlay_always(void);
 
 void menu_about_to_activate(void);
 void menu_about_to_deactivate(void);

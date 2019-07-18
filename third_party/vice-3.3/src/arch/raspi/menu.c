@@ -137,7 +137,7 @@ struct menu_item *aspect_item_1;
 
 static int unit;
 static int joyswap;
-static int force_overlay;
+static int overlay_forced;
 
 // Held here, exported for menu_usb to read
 int pot_x_high_value;
@@ -1797,7 +1797,14 @@ static void menu_value_changed(struct menu_item *item) {
         v_border_item_1,
         aspect_item_1);
     break;
-  
+  case MENU_OVERLAY:
+    overlay_forced = 0;
+    if (item->value == 1) {
+      overlay_enabled = 1;
+    } else {
+      overlay_enabled = 0;
+    }
+    break;
   }
 
   // Only items that were for file selection/nav should have these set...
@@ -2363,10 +2370,12 @@ void build_menu(struct menu_item *root) {
   resources_set_int("Mouse", 1);
 }
 
-int overlay_enabled(void) { return overlay_item->value != OVERLAY_NEVER; }
+int overlay_never(void) {
+  return overlay_item->value == OVERLAY_NEVER;
+}
 
-int overlay_forced(void) {
-  return overlay_item->value == OVERLAY_ALWAYS || force_overlay;
+int overlay_always(void) {
+  return overlay_item->value == OVERLAY_ALWAYS || overlay_forced;
 }
 
 // Stuff to do when menu is activated
@@ -2391,12 +2400,13 @@ void menu_quick_func(int button_assignment) {
     if (overlay_item->value == OVERLAY_ALWAYS)
       return;
 
-    if (overlay_showing || force_overlay) {
+    if (overlay_showing || overlay_forced) {
       // Dismiss
-      force_overlay = 0;
-      overlay_force_timeout();
+      overlay_forced = 0;
+      overlay_dismiss();
     } else {
-      force_overlay = 1;
+      overlay_forced = 1;
+      overlay_force_enabled();
     }
     break;
   case BTN_ASSIGN_TAPE_MENU:

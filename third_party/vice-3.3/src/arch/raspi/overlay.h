@@ -29,9 +29,6 @@
 
 #include <sys/types.h>
 
-// Indicates whether overlay is showing due to activity
-extern unsigned int overlay_showing;
-
 // Holds overlay graphics buffer
 extern uint8_t *overlay_buf;
 
@@ -40,6 +37,7 @@ void overlay_check(void);
 void overlay_activate(void);
 void overlay_warp_changed(int warp);
 void overlay_joyswap_changed(int swap);
-void overlay_force_timeout(void);
+void overlay_dismiss(void);
+void overlay_force_enabled(void);
 
 #endif

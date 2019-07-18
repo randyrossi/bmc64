@@ -66,9 +66,11 @@ static int vic_canvas_index;
 
 static int vic_enabled;
 static int vdc_enabled;
+int overlay_enabled;
 
 static int vic_showing;
 static int vdc_showing;
+int overlay_showing;
 
 uint8_t *video_font;
 uint16_t video_font_translate[256];
@@ -468,6 +470,14 @@ void ensure_video(void) {
      circle_hide_fb2(FB_LAYER_VDC);
      vdc_showing = 0;
   }
+
+  if (overlay_enabled && !overlay_showing) {
+     circle_show_fb2(FB_LAYER_STATUS);
+     overlay_showing = 1;
+  } else if (!overlay_enabled && overlay_showing) {
+     circle_hide_fb2(FB_LAYER_STATUS);
+     overlay_showing = 0;
+  }
 }
 
 void vsyncarch_postsync(void) {
@@ -482,9 +492,8 @@ void vsyncarch_postsync(void) {
     ui_check_key();
   }
 
-  if (overlay_forced() || (overlay_enabled() && overlay_showing)) {
+  if (overlay_showing) {
     overlay_check();
-    circle_show_fb2(FB_LAYER_STATUS);
     circle_frames_ready_fb2(FB_LAYER_STATUS, -1 /* no 2nd layer */, 0 /* no sync */);
   }
 
