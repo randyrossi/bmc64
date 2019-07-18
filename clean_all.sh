@@ -16,6 +16,8 @@ git status | grep 'deleted:.*doc' | sed 's/deleted:/git checkout /' | sh
 
 cd $SRC_DIR/third_party/circle-stdlib
 find . -name 'config.cache' -exec rm {} \;
+rm -rf build
+make clean
 
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon
 
@@ -31,14 +33,33 @@ cd vc4/vchiq
 make clean
 cd ..
 
+cd interface/bcm_host
+make clean
+cd ..
+
+cd khronos
+make clean
+cd ..
+
+cd vcos
+make clean
+cd ..
+
+cd vmcs_host
+make clean
+cd ..
+
 cd $SRC_DIR/third_party/circle-stdlib
-
 rm -rf build
-
 git reset --hard
+
 cd libs/circle-newlib
 git reset --hard
+
 cd ../circle
+git reset --hard
+
+cd ../mbedtls
 git reset --hard
 
 cd $SRC_DIR

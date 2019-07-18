@@ -480,8 +480,9 @@ static void ui_set_joy_items() {
   if (port_1_menu_item->choice_ints[value] == JOYDEV_NONE) {
     resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
   } else if (port_1_menu_item->choice_ints[value] == JOYDEV_MOUSE) {
-    if (port_2_menu_item->choice_ints[port_2_menu_item->value]
-        == JOYDEV_MOUSE) {
+    if (circle_num_joysticks() > 1 &&
+        port_2_menu_item->choice_ints[port_2_menu_item->value]
+            == JOYDEV_MOUSE) {
        resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
        port_2_menu_item->value = 0;
     }
@@ -638,15 +639,17 @@ static int save_settings() {
 
 // Make joydev reflect menu choice
 static void ui_set_joy_devs() {
-  if (joydevs[0].port == 1)
+  if (joydevs[0].port == 1) {
     joydevs[0].device = port_1_menu_item->choice_ints[port_1_menu_item->value];
-  else if (joydevs[0].port == 2)
+  } else if (circle_num_joysticks() > 1 && joydevs[0].port == 2) {
     joydevs[0].device = port_2_menu_item->choice_ints[port_2_menu_item->value];
+  }
 
-  if (joydevs[1].port == 1)
+  if (joydevs[1].port == 1) {
     joydevs[1].device = port_1_menu_item->choice_ints[port_1_menu_item->value];
-  else if (joydevs[1].port == 2)
+  } else if (circle_num_joysticks() > 1 && joydevs[1].port == 2) {
     joydevs[1].device = port_2_menu_item->choice_ints[port_2_menu_item->value];
+  }
 }
 
 static void load_settings() {
