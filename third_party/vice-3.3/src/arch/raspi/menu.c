@@ -1362,18 +1362,19 @@ static void do_video_settings(int layer,
          // full screen for this layer
          lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = 0;
      } else {
-         if (pip_location_item->value == 0) {
+         zlayer = 1;
+         if (pip_location_item->value == MENU_PIP_TOP_LEFT) {
            // top left quad
-           lpad = .05d; rpad = .25d; tpad = .05d; bpad = .25d; zlayer = 1;
-         } else if (pip_location_item->value == 1) {
+           lpad = .05d; rpad = .65d; tpad = .05d; bpad = .65d;
+         } else if (pip_location_item->value == MENU_PIP_TOP_RIGHT) {
            // top right quad
-           lpad = .25d; rpad = .05d; tpad = .05d; bpad = .25d; zlayer = 1;
-         } else if (pip_location_item->value == 2) {
+           lpad = .65d; rpad = .05d; tpad = .05d; bpad = .65d;
+         } else if (pip_location_item->value == MENU_PIP_BOTTOM_RIGHT) {
            // bottom right quad
-           lpad = .25d; rpad = .05d; tpad = .25d; bpad = .05d; zlayer = 1;
-         } else if (pip_location_item->value == 3) {
+           lpad = .65d; rpad = .05d; tpad = .65d; bpad = .05d;
+         } else if (pip_location_item->value == MENU_PIP_BOTTOM_LEFT) {
            // bottom left quad
-           lpad = .05d; rpad = .25d; tpad = .25d; bpad = .05d; zlayer = 1;
+           lpad = .05d; rpad = .65d; tpad = .65d; bpad = .05d;
          }
      }
   } else {
@@ -1854,22 +1855,24 @@ static void menu_value_changed(struct menu_item *item) {
     resources_set_int("RAMBlock5", item->value);
     return;
   case MENU_ACTIVE_DISPLAY:
-    if (item->value == MENU_ACTIVE_DISPLAY_VICII) {
+  case MENU_PIP_LOCATION:
+  case MENU_PIP_SWAPPED:
+    if (active_display_item->value == MENU_ACTIVE_DISPLAY_VICII) {
        enable_vic(1);
        enable_vdc(0);
        do_video_settings(FB_LAYER_VIC,
            h_border_item_0,
            v_border_item_0,
            aspect_item_0);
-    } else if (item->value == MENU_ACTIVE_DISPLAY_VDC) {
+    } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_VDC) {
        enable_vdc(1);
        enable_vic(0);
        do_video_settings(FB_LAYER_VDC,
            h_border_item_1,
            v_border_item_1,
            aspect_item_1);
-    } else if (item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE ||
-               item->value == MENU_ACTIVE_DISPLAY_PIP) {
+    } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE ||
+               active_display_item->value == MENU_ACTIVE_DISPLAY_PIP) {
        enable_vdc(1);
        enable_vic(1);
        do_video_settings(FB_LAYER_VIC,
@@ -1954,7 +1957,7 @@ int menu_get_keyboard_type(void) { return keyboard_type_item->value; }
 
 // KEEP in sync with kernel.cpp, kbd.c, menu_usb.c
 static void set_hotkey_choices(struct menu_item *item) {
-  item->num_choices = 10;
+  item->num_choices = 13;
   strcpy(item->choices[HOTKEY_CHOICE_NONE], "None");
   strcpy(item->choices[HOTKEY_CHOICE_MENU], "Menu");
   strcpy(item->choices[HOTKEY_CHOICE_WARP], "Warp");
@@ -1975,10 +1978,19 @@ static void set_hotkey_choices(struct menu_item *item) {
   item->choice_ints[HOTKEY_CHOICE_CART_FREEZE] = BTN_ASSIGN_CART_FREEZE;
   item->choice_ints[HOTKEY_CHOICE_RESET_HARD] = BTN_ASSIGN_RESET_HARD;
   item->choice_ints[HOTKEY_CHOICE_RESET_SOFT] = BTN_ASSIGN_RESET_SOFT;
+  item->choice_ints[HOTKEY_CHOICE_ACTIVE_DISPLAY] = BTN_ASSIGN_ACTIVE_DISPLAY;
+  item->choice_ints[HOTKEY_CHOICE_PIP_LOCATION] = BTN_ASSIGN_PIP_LOCATION;
+  item->choice_ints[HOTKEY_CHOICE_PIP_SWAP] = BTN_ASSIGN_PIP_SWAP;
 
   if (machine_class != VICE_MACHINE_C64 && machine_class != VICE_MACHINE_C128) {
      item->choice_disabled[HOTKEY_CHOICE_SWAP_PORTS] = 1;
      item->choice_disabled[HOTKEY_CHOICE_CART_FREEZE] = 1;
+  }
+
+  if ( machine_class != VICE_MACHINE_C128) {
+     item->choice_disabled[HOTKEY_CHOICE_ACTIVE_DISPLAY] = 1;
+     item->choice_disabled[HOTKEY_CHOICE_PIP_LOCATION] = 1;
+     item->choice_disabled[HOTKEY_CHOICE_PIP_SWAP] = 1;
   }
 }
 
@@ -2495,7 +2507,7 @@ void build_menu(struct menu_item *root) {
   if (machine_class == VICE_MACHINE_C128) {
      set_initial_video_adjustment_values(FB_LAYER_VDC,
         (double)(100-h_border_item_1->value) / 100.0d,
-        (double)(100-h_border_item_1->value) / 100.0d,
+        (double)(100-v_border_item_1->value) / 100.0d,
         (double)(aspect_item_1->value) / 100.0d,
         0.0d, 0.0d, 0.0d, 0.0d, 1);
   }
@@ -2585,6 +2597,24 @@ void menu_quick_func(int button_assignment) {
   case BTN_ASSIGN_RESET_SOFT2:
     resources_set_string_sprintf("FSDevice%iDir", "/", 8);
     machine_trigger_reset(MACHINE_RESET_MODE_SOFT);
+    break;
+  case BTN_ASSIGN_ACTIVE_DISPLAY:
+    active_display_item->value++;
+    if (active_display_item->value > 3) {
+       active_display_item->value = 0;
+    }
+    menu_value_changed(active_display_item);
+    break;
+  case BTN_ASSIGN_PIP_LOCATION:
+    pip_location_item->value++;
+    if (pip_location_item->value > 3) {
+       pip_location_item->value = 0;
+    }
+    menu_value_changed(pip_location_item);
+    break;
+  case BTN_ASSIGN_PIP_SWAP:
+    pip_swapped_item->value = 1 - pip_swapped_item->value;
+    menu_value_changed(pip_swapped_item);
     break;
   default:
     break;

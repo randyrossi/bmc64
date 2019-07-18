@@ -240,6 +240,11 @@ static void add_button_choices(struct menu_item *tmp_item) {
   // More just for USB buttons
   strcpy(tmp_item->choices[BTN_ASSIGN_RUN_STOP_BACK], "Menu Back");
 
+  // More for all
+  strcpy(tmp_item->choices[BTN_ASSIGN_ACTIVE_DISPLAY], "Change Active Display");
+  strcpy(tmp_item->choices[BTN_ASSIGN_PIP_LOCATION], "Change PIP Location");
+  strcpy(tmp_item->choices[BTN_ASSIGN_PIP_SWAP], "Swap PIP");
+
   char scratch[32];
   for (int n = 0; n < 6; n++) {
      sprintf (scratch, "Key %d (%s)", n+1, keycode_to_string(key_bindings[n]));
@@ -249,6 +254,12 @@ static void add_button_choices(struct menu_item *tmp_item) {
   if (machine_class == VICE_MACHINE_VIC20) {
     tmp_item->choice_disabled[BTN_ASSIGN_SWAP_PORTS] = 1;
     tmp_item->choice_disabled[BTN_ASSIGN_CART_FREEZE] = 1;
+  }
+
+  if (machine_class != VICE_MACHINE_C128) {
+    tmp_item->choice_disabled[BTN_ASSIGN_ACTIVE_DISPLAY] = 1;
+    tmp_item->choice_disabled[BTN_ASSIGN_PIP_LOCATION] = 1;
+    tmp_item->choice_disabled[BTN_ASSIGN_PIP_SWAP] = 1;
   }
 }
 

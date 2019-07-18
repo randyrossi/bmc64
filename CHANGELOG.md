@@ -190,9 +190,15 @@
   * Put canvas height back to 288 for C64
 
 ## 2.1
-  * Major overhaul of how video is output
-    * Turned off default frame buffer and use dispmanx instead
-    * Added separate layers for VIC, VDC and UI
+  * Major overhaul of how video is handled
+    * Added C128 VDC support with VIC/VDC toggle as well as
+      PIP and SIDE-BY-SIDE display options
+    * Added separate layers for VIC, VDC, UI and STATUS bar using dispmanx API
+    * Can adjust video canvas border trim and aspect ratio in real time now
+      (all *_canvas_width, *_canvas_height params removed from cmdline.txt)
     * Used VICE buffer alloc/free/clear callbacks to have VICE draw directly
       into fb2's frame buffer
     * Added transparency support to UI layer
+    * UI is made transparent while video adjustments made to show user what
+      is changing
+    * Added status bar padding to adjust location of status bar

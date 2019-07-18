@@ -266,7 +266,7 @@ void FrameBuffer2::Show() {
 
   vc_dispmanx_rect_set(&scale_dst_rect_,
                        ox + lpad_abs,
-                       oy + rpad_abs,
+                       oy + tpad_abs,
                        dst_w,
                        dst_h);
 

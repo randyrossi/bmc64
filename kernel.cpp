@@ -300,6 +300,9 @@ static void handle_button_function(bool is_ui, int device, unsigned buttons) {
      case BTN_ASSIGN_CART_FREEZE:
      case BTN_ASSIGN_RESET_HARD:
      case BTN_ASSIGN_RESET_SOFT:
+     case BTN_ASSIGN_ACTIVE_DISPLAY:
+     case BTN_ASSIGN_PIP_LOCATION:
+     case BTN_ASSIGN_PIP_SWAP:
        if (is_press) {
           circle_emu_quick_func_interrupt(button_func);
        }
