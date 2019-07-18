@@ -20,23 +20,11 @@
 #include <circle/bcmpropertytags.h>
 #include <circle/cputhrottle.h>
 
-#define DEFAULT_VICII_FB_WIDTH 384
-#define DEFAULT_VICII_FB_HEIGHT 246
+#define DEFAULT_FB1_WIDTH 640
+#define DEFAULT_FB1_HEIGHT 480
 
-#define DEFAULT_VIC_FB_WIDTH 392
-#define DEFAULT_VIC_FB_HEIGHT 240
-
-#define DEFAULT_VDC_FB_WIDTH 856
-#define DEFAULT_VDC_FB_HEIGHT 312
-
-#define MIN_VICII_FB_WIDTH 320
-#define MIN_VICII_FB_HEIGHT 240
-
-#define MIN_VIC_FB_WIDTH 352
-#define MIN_VIC_FB_HEIGHT 240
-
-#define MIN_VDC_FB_WIDTH 640
-#define MIN_VDC_FB_HEIGHT 240
+#define MIN_FB1_WIDTH 320
+#define MIN_FB1_HEIGHT 240
 
 #define VOLUME_NAME_LEN 16
 
@@ -45,10 +33,8 @@ public:
   ViceOptions(void);
   ~ViceOptions(void);
 
-  unsigned GetCanvasWidth(void) const;
-  unsigned GetCanvasHeight(void) const;
-  unsigned GetFB2Width(void) const;
-  unsigned GetFB2Height(void) const;
+  unsigned GetFB1Width(void) const;
+  unsigned GetFB1Height(void) const;
   unsigned GetMachineTiming(void) const;
   bool GetHideConsole(void) const;
   void SetHideConsole(bool value);
@@ -74,12 +60,8 @@ private:
   TPropertyTagCommandLine m_TagCommandLine;
   char *m_pOptions;
 
-  unsigned m_nVicIICanvasWidth;
-  unsigned m_nVicIICanvasHeight;
-  unsigned m_nVicCanvasWidth;
-  unsigned m_nVicCanvasHeight;
-  unsigned m_nVDCCanvasWidth;
-  unsigned m_nVDCCanvasHeight;
+  unsigned m_nFB1Width;
+  unsigned m_nFB1Height;
   unsigned m_nMachineTiming;
   bool m_bHideConsole;
   bool m_bDemoMode;

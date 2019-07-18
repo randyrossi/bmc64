@@ -29,12 +29,8 @@ extern "C" {
 ViceOptions *ViceOptions::s_pThis = 0;
 
 ViceOptions::ViceOptions(void)
-    : m_nVicIICanvasWidth(DEFAULT_VICII_FB_WIDTH),
-      m_nVicIICanvasHeight(DEFAULT_VICII_FB_HEIGHT),
-      m_nVicCanvasWidth(DEFAULT_VIC_FB_WIDTH),
-      m_nVicCanvasHeight(DEFAULT_VIC_FB_HEIGHT),
-      m_nVDCCanvasWidth(DEFAULT_VDC_FB_WIDTH),
-      m_nVDCCanvasHeight(DEFAULT_VDC_FB_HEIGHT),
+    : m_nFB1Width(DEFAULT_FB1_WIDTH),
+      m_nFB1Height(DEFAULT_FB1_HEIGHT),
       m_nMachineTiming(MACHINE_TIMING_PAL_HDMI), m_bHideConsole(true),
       m_bDemoMode(false), m_nCyclesPerSecond(0),
       m_audioOut(VCHIQSoundDestinationAuto) {
@@ -61,41 +57,17 @@ ViceOptions::ViceOptions(void)
   while ((pOption = GetToken()) != 0) {
     char *pValue = GetOptionValue(pOption);
 
-    if (strcmp(pOption, "canvas_width") == 0 || strcmp(pOption, "vicii_canvas_width") == 0) {
+    if (strcmp(pOption, "canvas_width") == 0) {
       unsigned nValue;
-      if ((nValue = GetDecimal(pValue)) != INVALID_VALUE && MIN_VICII_FB_WIDTH <= nValue &&
+      if ((nValue = GetDecimal(pValue)) != INVALID_VALUE && MIN_FB1_WIDTH <= nValue &&
           nValue <= 1980) {
-        m_nVicIICanvasWidth = nValue;
+        m_nFB1Width = nValue;
       }
-    } else if (strcmp(pOption, "canvas_height") == 0 || strcmp(pOption, "vicii_canvas_height") == 0) {
+    } else if (strcmp(pOption, "canvas_height") == 0) {
       unsigned nValue;
-      if ((nValue = GetDecimal(pValue)) != INVALID_VALUE && MIN_VICII_FB_HEIGHT <= nValue &&
+      if ((nValue = GetDecimal(pValue)) != INVALID_VALUE && MIN_FB1_HEIGHT <= nValue &&
           nValue <= 1080) {
-        m_nVicIICanvasHeight = nValue;
-      }
-    } else if (strcmp(pOption, "vic_canvas_width") == 0) {
-      unsigned nValue;
-      if ((nValue = GetDecimal(pValue)) != INVALID_VALUE && MIN_VIC_FB_WIDTH <= nValue &&
-          nValue <= 1980) {
-        m_nVicCanvasWidth = nValue;
-      }
-    } else if (strcmp(pOption, "vic_canvas_height") == 0) {
-      unsigned nValue;
-      if ((nValue = GetDecimal(pValue)) != INVALID_VALUE && MIN_VIC_FB_HEIGHT <= nValue &&
-          nValue <= 1080) {
-        m_nVicCanvasHeight = nValue;
-      }
-    } else if (strcmp(pOption, "vdc_canvas_width") == 0) {
-      unsigned nValue;
-      if ((nValue = GetDecimal(pValue)) != INVALID_VALUE && MIN_VDC_FB_WIDTH <= nValue &&
-          nValue <= 1980) {
-        m_nVDCCanvasWidth = nValue;
-      }
-    } else if (strcmp(pOption, "vdc_canvas_height") == 0) {
-      unsigned nValue;
-      if ((nValue = GetDecimal(pValue)) != INVALID_VALUE && MIN_VDC_FB_HEIGHT <= nValue &&
-          nValue <= 1080) {
-        m_nVDCCanvasHeight = nValue;
+        m_nFB1Height = nValue;
       }
     } else if (strcmp(pOption, "machine_timing") == 0) {
       if (strcmp(pValue, "ntsc") == 0 || strcmp(pValue, "ntsc-hdmi") == 0) {
@@ -157,28 +129,12 @@ ViceOptions::ViceOptions(void)
 
 ViceOptions::~ViceOptions(void) { s_pThis = 0; }
 
-unsigned ViceOptions::GetCanvasWidth(void) const {
-#if defined(RASPI_VIC20)
-    return m_nVicCanvasWidth;
-#else
-    return m_nVicIICanvasWidth;
-#endif
+unsigned ViceOptions::GetFB1Width(void) const {
+    return m_nFB1Width;
 }
 
-unsigned ViceOptions::GetCanvasHeight(void) const {
-#if defined(RASPI_VIC20)
-    return m_nVicCanvasHeight;
-#else
-    return m_nVicIICanvasHeight;
-#endif
-}
-
-unsigned ViceOptions::GetFB2Width(void) const {
-    return m_nVDCCanvasWidth;
-}
-
-unsigned ViceOptions::GetFB2Height(void) const {
-    return m_nVDCCanvasHeight;
+unsigned ViceOptions::GetFB1Height(void) const {
+    return m_nFB1Height;
 }
 
 unsigned ViceOptions::GetMachineTiming(void) const { return m_nMachineTiming; }

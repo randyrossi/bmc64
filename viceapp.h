@@ -172,7 +172,7 @@ class ViceScreenApp : public ViceApp {
 public:
   ViceScreenApp(const char *kernel)
       : ViceApp(kernel), mEmulatorCore(&mMemory),
-        mScreen(mViceOptions.GetCanvasWidth(), mViceOptions.GetCanvasHeight()),
+        mScreen(mViceOptions.GetFB1Width(), mViceOptions.GetFB1Height()),
         mTimer(&mInterrupt), mLogger(mOptions.GetLogLevel(), &mTimer),
         mGPIOManager(&mInterrupt), mVCHIQ(&mMemory, &mInterrupt) {}
 

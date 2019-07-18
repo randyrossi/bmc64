@@ -67,10 +67,23 @@ The test tool will tell you the actual frame rate for this mode is 49.89. You wo
 
 All of the above re: timing applies to BMVIC20 as well.  However, in my opinion, this machine is better configured to be an NTSC machine.  Most cartridges were made for NTSC and you will notice they position their screens poorly when inserted into a PAL machine.  Most games gave the option of moving it using cursor keys or joystick but this is annoying.
 
-# Canvas Dimensions
+# Canvas Dimensions (NEW)
 
-You can specify how much of the emulated display is visible via the *_canvas_width, *_canvas_height parameters in cmdline.txt.
+Since v2.1, the virtual display dimensions are adjusted dynamically from the menu. Under 'Video', you will find Horizontal Border Trim %, Vertical Border Trim % and Aspect Ratio controls for each virtual display available.  Displays are scaled as follows:
+
+      1. The amount of border to trim is removed from top/botom and left/right edges.
+      2. The resulting image is stretched vertically to fill the Y dimension.
+      3. The width is then calculated according to the aspect ratio setting.
+
+Using the three settings available, you should be able to customize how much border is available as well as the aspect ratio of the final image.  Reasonable defaults are provided.  
+
+NOTE: v2.1 and onward will ignore any vic_canvas_* or vicii_canvas_* kernel parameters.  The scaling_kernel option is still applicable.
+
+# Canvas Dimensions (Old way, Versions < 2.1)
+
+*Old* On versions prior to 2.1, you can specify how much of the emulated display is visible via the *_canvas_width, *_canvas_height parameters in cmdline.txt.
 By increasing/decreasing the height/width, you can 'cut out' more of the border if it is unwanted.  Mostly, this is to adjust composite out especially for the VIC20.
+
 Here are some sample canvas dimensions configs:
 
 ## PAL
