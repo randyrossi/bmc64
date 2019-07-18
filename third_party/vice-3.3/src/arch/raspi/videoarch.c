@@ -81,10 +81,20 @@ static int vdc_first_refresh;
 static double initial_vic_h_border_trim;
 static double initial_vic_v_border_trim;
 static double initial_vic_aspect = 1.45d;
+static double initial_vic_lpad;
+static double initial_vic_rpad;
+static double initial_vic_tpad;
+static double initial_vic_bpad;
+static int initial_vic_zlayer;
 
 static double initial_vdc_h_border_trim;
 static double initial_vdc_v_border_trim;
 static double initial_vdc_aspect = 1.45d;
+static double initial_vdc_lpad;
+static double initial_vdc_rpad;
+static double initial_vdc_tpad;
+static double initial_vdc_bpad;
+static int initial_vdc_zlayer;
 
 static int initial_status_padding;
 
@@ -259,15 +269,27 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
 // Any real time adjustments should be made via
 // apply_video_adjustments
 void set_initial_video_adjustment_values(int layer,
-      double hborder, double vborder, double aspect) {
+      double hborder, double vborder, double aspect,
+      double lpad, double rpad, double tpad, double bpad,
+      int zlayer) {
   if (layer == FB_LAYER_VIC) {
      initial_vic_h_border_trim = hborder;
      initial_vic_v_border_trim = hborder;
      initial_vic_aspect = aspect;
+     initial_vic_lpad = lpad;
+     initial_vic_rpad = rpad;
+     initial_vic_tpad = tpad;
+     initial_vic_bpad = bpad;
+     initial_vic_zlayer = zlayer;
   } else if (layer == FB_LAYER_VDC) {
      initial_vdc_h_border_trim = hborder;
      initial_vdc_v_border_trim = hborder;
      initial_vdc_aspect = aspect;
+     initial_vdc_lpad = lpad;
+     initial_vdc_rpad = rpad;
+     initial_vdc_tpad = tpad;
+     initial_vdc_bpad = bpad;
+     initial_vdc_zlayer = zlayer;
   }
 }
 
@@ -276,7 +298,9 @@ void set_initial_status_padding(int padding) {
 }
 
 void apply_video_adjustments(int layer,
-      double hborder, double vborder, double aspect) {
+      double hborder, double vborder, double aspect,
+      double lpad, double rpad, double tpad, double bpad,
+      int zlayer) {
   // Hide the layer. Can't show it here on the same loop so we have to
   // allow ensure_video() to do it for us.  If the canvas is enabled, it
   // will be shown again and our new settings will take effect.
@@ -294,6 +318,9 @@ void apply_video_adjustments(int layer,
      index = vdc_canvas_index;
      canvas = vdc_canvas;
   }
+
+  circle_set_zlayer_fb2(layer, zlayer);
+  circle_set_padding_fb2(layer, lpad, rpad, tpad, bpad);
 
   circle_set_aspect_fb2(layer, aspect);
 
@@ -443,7 +470,10 @@ void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
         // Apply current settings before ensure_video shows anything.
         apply_video_adjustments(FB_LAYER_VIC,
             initial_vic_h_border_trim, initial_vic_v_border_trim,
-            initial_vic_aspect);
+            initial_vic_aspect,
+            initial_vic_lpad, initial_vic_rpad,
+            initial_vic_tpad, initial_vic_bpad,
+            initial_vic_zlayer);
         resources_set_int("WarpMode", 1);
         raspi_boot_warp = 1;
         vic_first_refresh = 0;
@@ -456,7 +486,10 @@ void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
      if (vdc_first_refresh == 1) {
         apply_video_adjustments(FB_LAYER_VDC,
             initial_vdc_h_border_trim, initial_vdc_v_border_trim,
-            initial_vdc_aspect);
+            initial_vdc_aspect,
+            initial_vdc_lpad, initial_vic_rpad,
+            initial_vdc_tpad, initial_vic_bpad,
+            initial_vdc_zlayer);
         vdc_first_refresh = 0;
      }
   }

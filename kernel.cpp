@@ -218,6 +218,19 @@ void circle_set_valign_fb2(int layer, int align, int padding) {
 void circle_set_halign_fb2(int layer, int align, int padding) {
   static_kernel->circle_set_halign_fb2(layer, align, padding);
 }
+
+void circle_set_padding_fb2(int layer, double lpad, double rpad, double tpad, double bpad) {
+  static_kernel->circle_set_padding_fb2(layer, lpad, rpad, tpad, bpad);
+}
+
+void circle_set_zlayer_fb2(int layer, int zlayer) {
+  static_kernel->circle_set_zlayer_fb2(layer, zlayer);
+}
+
+int circle_get_zlayer_fb2(int layer) {
+  return static_kernel->circle_get_zlayer_fb2(layer);
+}
+
 };
 
 
@@ -1118,4 +1131,16 @@ void CKernel::circle_set_valign_fb2(int layer, int align, int padding) {
 
 void CKernel::circle_set_halign_fb2(int layer, int align, int padding) {
   fb2[layer].SetHorizontalAlignment(align, padding);
+}
+
+void CKernel::circle_set_padding_fb2(int layer, double lpad, double rpad, double tpad, double bpad) {
+  fb2[layer].SetPadding(lpad, rpad, tpad, bpad);
+}
+
+void CKernel::circle_set_zlayer_fb2(int layer, int zlayer) {
+  fb2[layer].SetLayer(zlayer);
+}
+
+int CKernel::circle_get_zlayer_fb2(int layer) {
+  return fb2[layer].GetLayer();
 }

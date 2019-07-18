@@ -25,6 +25,7 @@ public:
 
   // Sets the layer for this frame buffer. Must be called before Allocate.
   void SetLayer(int layer);
+  int GetLayer(void);
 
   // Tells this fb to use a palette with transparency.
   // Must be called before Allocate.  If transparency is used, palette
@@ -80,6 +81,10 @@ public:
   // padding applies to LEFT or RIGHT only.
   void SetHorizontalAlignment(int alignment, int padding);
 
+  // Takes some space away from the full screen when determining destination rect
+  // Used to force a fb into a smaller space (for things like PIP or side-by-side.
+  void SetPadding(double leftPadding, double rightPadding, double topPadding, double bottomPadding);
+
   // initializes the bcm_host interface
   static void Initialize();
 
@@ -121,6 +126,14 @@ private:
   int hpadding_;
   // Represents the resource currently visible
   int rnum_;
+
+  // Used to take away some available display area
+  // before deciding what the dest rect coords should be. Expressed
+  // as percentage of available area.
+  double leftPadding_;
+  double rightPadding_;
+  double topPadding_;
+  double bottomPadding_;
 
   int display_width_;
   int display_height_;

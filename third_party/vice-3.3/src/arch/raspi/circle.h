@@ -194,6 +194,9 @@ extern void circle_set_aspect_fb2(int layer, double a);
 extern void circle_set_src_rect_fb2(int layer, int x, int y, int w, int h);
 extern void circle_set_valign_fb2(int layer, int align, int padding);
 extern void circle_set_halign_fb2(int layer, int align, int padding);
+extern void circle_set_padding_fb2(int layer, double lpad, double rpad, double tpad, double bpad);
+extern void circle_set_zlayer_fb2(int layer, int zlayer);
+extern int circle_get_zlayer_fb2(int layer);
 
 extern void joy_set_gamepad_info(int num_pads, int num_buttons[2], int axes[2],
                                  int hats[2]);

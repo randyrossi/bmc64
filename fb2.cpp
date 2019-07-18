@@ -80,7 +80,8 @@ DISPMANX_DISPLAY_HANDLE_T FrameBuffer2::dispman_display_;
 FrameBuffer2::FrameBuffer2() :
         width_(0), height_(0), pitch_(0), layer_(0), transparency_(false),
         aspect_(1.6), valign_(0), vpadding_(0), halign_(0), hpadding_(0),
-        rnum_(0), showing_(false), allocated_(false) {
+        rnum_(0), leftPadding_(0), rightPadding_(0), topPadding_(0),
+        bottomPadding_(), showing_(false), allocated_(false) {
   alpha_.flags = DISPMANX_FLAGS_ALPHA_FROM_SOURCE;
   alpha_.opacity = 255;
   alpha_.mask = 0;
@@ -197,21 +198,30 @@ void FrameBuffer2::Show() {
   int dst_w;
   int dst_h;
   assert (aspect_ != 0);
+
+  int lpad_abs = display_width_ * leftPadding_;
+  int rpad_abs = display_width_ * rightPadding_;
+  int tpad_abs = display_height_ * topPadding_;
+  int bpad_abs = display_height_ * bottomPadding_;
+
+  int avail_width = display_width_ - lpad_abs - rpad_abs;
+  int avail_height = display_height_ - tpad_abs - bpad_abs;
+
   if (aspect_ < 0) {
      // Stretch horizontally to fill width and then set height based on
      // aspect ratio.
-     dst_w = display_width_;
-     dst_h = (double)display_width_ / -aspect_;
-     if (dst_h > display_height_) {
-        dst_h = display_height_;
+     dst_w = avail_width;
+     dst_h = (double)avail_width / -aspect_;
+     if (dst_h > avail_height) {
+        dst_h = avail_height;
      }
   } else {
      // Stretch vertically to fill height and then set width based on
      // aspect ratio.
-     dst_h = display_height_;
-     dst_w = (double)display_height_ * aspect_;
-     if (dst_w > display_width_) {
-        dst_w = display_width_;
+     dst_h = avail_height;
+     dst_w = (double)avail_height * aspect_;
+     if (dst_w > avail_width) {
+        dst_w = avail_width;
      }
   }
 
@@ -220,7 +230,7 @@ void FrameBuffer2::Show() {
   switch (valign_) {
      case 0:
         // Center
-        oy = (display_height_ - dst_h) / 2;
+        oy = (avail_height - dst_h) / 2;
         break;
      case -1:
         // Top
@@ -228,7 +238,7 @@ void FrameBuffer2::Show() {
         break;
      case 1:
         // Bottom
-        oy = display_height_ - dst_h - vpadding_;
+        oy = avail_height - dst_h - vpadding_;
         break;
      default:
         oy = 0;
@@ -239,7 +249,7 @@ void FrameBuffer2::Show() {
   switch (halign_) {
      case 0:
         // Center
-        ox = (display_width_ - dst_w) / 2;
+        ox = (avail_width - dst_w) / 2;
         break;
      case -1:
         // Left
@@ -247,7 +257,7 @@ void FrameBuffer2::Show() {
         break;
      case 1:
         // Right
-        ox = display_width_ - dst_w - hpadding_;
+        ox = avail_width - dst_w - hpadding_;
         break;
      default:
         ox = 0;
@@ -255,8 +265,8 @@ void FrameBuffer2::Show() {
   }
 
   vc_dispmanx_rect_set(&scale_dst_rect_,
-                       ox,
-                       oy,
+                       ox + lpad_abs,
+                       oy + rpad_abs,
                        dst_w,
                        dst_h);
 
@@ -363,6 +373,10 @@ void FrameBuffer2::SetLayer(int layer) {
   layer_ = layer;
 }
 
+int FrameBuffer2::GetLayer() {
+  return layer_;
+}
+
 void FrameBuffer2::SetTransparency(bool transparency) {
   transparency_ = transparency;
 }
@@ -387,4 +401,14 @@ void FrameBuffer2::SetVerticalAlignment(int alignment, int padding) {
 void FrameBuffer2::SetHorizontalAlignment(int alignment, int padding) {
   halign_ = alignment;
   hpadding_ = padding;
+}
+
+void FrameBuffer2::SetPadding(double leftPadding,
+                              double rightPadding,
+                              double topPadding,
+                              double bottomPadding) {
+  leftPadding_ = leftPadding;
+  rightPadding_ = rightPadding;
+  topPadding_ = topPadding;
+  bottomPadding_ = bottomPadding;
 }

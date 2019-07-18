@@ -86,6 +86,9 @@ public:
   void circle_set_src_rect_fb2(int layer, int x, int y, int w, int h);
   void circle_set_valign_fb2(int layer, int align, int padding);
   void circle_set_halign_fb2(int layer, int align, int padding);
+  void circle_set_padding_fb2(int layer, double lpad, double rpad, double tpad, double bpad);
+  void circle_set_zlayer_fb2(int layer, int zlayer);
+  int circle_get_zlayer_fb2(int layer);
 
   int circle_sound_init(const char *param, int *speed, int *fragsize,
                         int *fragnr, int *channels);

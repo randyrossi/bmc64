@@ -281,6 +281,8 @@ typedef enum {
    MENU_ASPECT_1,
 
    MENU_OVERLAY_PADDING,
+   MENU_PIP_LOCATION,
+   MENU_PIP_SWAPPED,
 } MenuID;
 
 typedef enum {
@@ -362,7 +364,16 @@ typedef enum {
 typedef enum {
    MENU_ACTIVE_DISPLAY_VICII = 0,
    MENU_ACTIVE_DISPLAY_VDC,
+   MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE,
+   MENU_ACTIVE_DISPLAY_PIP,
 } MenuActiveDisplay;
+
+typedef enum {
+   MENU_PIP_TOP_LEFT = 0,
+   MENU_PIP_TOP_RIGHT,
+   MENU_PIP_BOTTOM_RIGHT,
+   MENU_PIP_BOTTOM_LEFT
+} MenuPipLocation;
 
 extern long keyset_codes[2][7];
 extern long key_bindings[6];

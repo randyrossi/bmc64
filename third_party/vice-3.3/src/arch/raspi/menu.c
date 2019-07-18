@@ -143,6 +143,9 @@ struct menu_item *h_border_item_1;
 struct menu_item *v_border_item_1;
 struct menu_item *aspect_item_1;
 
+struct menu_item *pip_location_item;
+struct menu_item *pip_swapped_item;
+
 static int unit;
 static int joyswap;
 static int overlay_forced;
@@ -1336,12 +1339,60 @@ static void do_video_settings(int layer,
                               struct menu_item* hborder_item,
                               struct menu_item* vborder_item,
                               struct menu_item* aspect_item) {
+
+  double lpad;
+  double rpad;
+  double tpad;
+  double bpad;
+  int zlayer;
+
+  if ((active_display_item->value == MENU_ACTIVE_DISPLAY_VICII && layer == FB_LAYER_VIC) ||
+      (active_display_item->value == MENU_ACTIVE_DISPLAY_VDC && layer == FB_LAYER_VDC)) {
+     lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = layer == FB_LAYER_VIC ? 0 : 1;
+  } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE) {
+     // VIC on the left, VDC on the right, always, no swapping
+     if (layer == FB_LAYER_VIC) {
+         lpad = 0; rpad = .50d; tpad = 0; bpad = 0; zlayer = 0;
+     } else {
+         lpad = .50d; rpad = 0; tpad = 0; bpad = 0; zlayer = 1;
+     }
+  } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_PIP) {
+     if ((layer == FB_LAYER_VIC && pip_swapped_item->value == 0) ||
+         (layer == FB_LAYER_VDC && pip_swapped_item->value == 1)) {
+         // full screen for this layer
+         lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = 0;
+     } else {
+         if (pip_location_item->value == 0) {
+           // top left quad
+           lpad = .05d; rpad = .25d; tpad = .05d; bpad = .25d; zlayer = 1;
+         } else if (pip_location_item->value == 1) {
+           // top right quad
+           lpad = .25d; rpad = .05d; tpad = .05d; bpad = .25d; zlayer = 1;
+         } else if (pip_location_item->value == 2) {
+           // bottom right quad
+           lpad = .25d; rpad = .05d; tpad = .25d; bpad = .05d; zlayer = 1;
+         } else if (pip_location_item->value == 3) {
+           // bottom left quad
+           lpad = .05d; rpad = .25d; tpad = .25d; bpad = .05d; zlayer = 1;
+         }
+     }
+  } else {
+     return;
+  }
+
   double h = (double)(100-hborder_item->value) / 100.0d;
   double v = (double)(100-vborder_item->value) / 100.0d;
   double a = (double)(aspect_item->value) / 100.0d;
 
+  if (active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE) {
+     // For side-by-side, it makes more sense to fill horizontal then scale
+     // vertical since we just cut horizontal in half. So pass in negative
+     // aspect.
+     a = -a;
+  }
+
   // Tell videoarch about these changes
-  apply_video_adjustments(layer, h, v, a);
+  apply_video_adjustments(layer, h, v, a, lpad, rpad, tpad, bpad, zlayer);
 }
 
 // Interpret what menu item changed and make the change to vice
@@ -1806,9 +1857,29 @@ static void menu_value_changed(struct menu_item *item) {
     if (item->value == MENU_ACTIVE_DISPLAY_VICII) {
        enable_vic(1);
        enable_vdc(0);
+       do_video_settings(FB_LAYER_VIC,
+           h_border_item_0,
+           v_border_item_0,
+           aspect_item_0);
     } else if (item->value == MENU_ACTIVE_DISPLAY_VDC) {
        enable_vdc(1);
        enable_vic(0);
+       do_video_settings(FB_LAYER_VDC,
+           h_border_item_1,
+           v_border_item_1,
+           aspect_item_1);
+    } else if (item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE ||
+               item->value == MENU_ACTIVE_DISPLAY_PIP) {
+       enable_vdc(1);
+       enable_vic(1);
+       do_video_settings(FB_LAYER_VIC,
+           h_border_item_0,
+           v_border_item_0,
+           aspect_item_0);
+       do_video_settings(FB_LAYER_VDC,
+           h_border_item_1,
+           v_border_item_1,
+           aspect_item_1);
     }
     break;
   case MENU_H_BORDER_0:
@@ -2110,11 +2181,26 @@ void build_menu(struct menu_item *root) {
      active_display_item = child =
         ui_menu_add_multiple_choice(MENU_ACTIVE_DISPLAY, parent,
            "Active Display");
-     child->num_choices = 2;
-     child->value = MENU_ACTIVE_DISPLAY_VICII; // TODO grab from settings?
+     child->num_choices = 4;
+     child->value = MENU_ACTIVE_DISPLAY_VICII;
      strcpy(child->choices[MENU_ACTIVE_DISPLAY_VICII], "VICII");
      strcpy(child->choices[MENU_ACTIVE_DISPLAY_VDC], "VDC");
-     // Someday, we can add "Both" as an option for Pi4
+     strcpy(child->choices[MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE], "Side-By-Side");
+     strcpy(child->choices[MENU_ACTIVE_DISPLAY_PIP], "PIP");
+     // Someday, we can add "Both" as an option for Pi4?
+
+     pip_location_item = child =
+        ui_menu_add_multiple_choice(MENU_PIP_LOCATION, parent,
+           "PIP Location");
+     child->num_choices = 4;
+     child->value = MENU_PIP_TOP_RIGHT;
+     strcpy(child->choices[MENU_PIP_TOP_LEFT], "Top Left");
+     strcpy(child->choices[MENU_PIP_TOP_RIGHT], "Top Right");
+     strcpy(child->choices[MENU_PIP_BOTTOM_RIGHT], "Bottom Right");
+     strcpy(child->choices[MENU_PIP_BOTTOM_LEFT], "Bottom Left");
+
+     pip_swapped_item =
+        ui_menu_add_toggle(MENU_PIP_SWAPPED, parent, "Swap PIP", 0);
 
      parent = ui_menu_add_folder(video_parent, "VICII");
   }
@@ -2403,12 +2489,15 @@ void build_menu(struct menu_item *root) {
   set_initial_video_adjustment_values(FB_LAYER_VIC,
      (double)(100-h_border_item_0->value) / 100.0d,
      (double)(100-v_border_item_0->value) / 100.0d,
-     (double)(aspect_item_0->value) / 100.0d);
+     (double)(aspect_item_0->value) / 100.0d,
+     0.0d, 0.0d, 0.0d, 0.0d, 0);
+
   if (machine_class == VICE_MACHINE_C128) {
      set_initial_video_adjustment_values(FB_LAYER_VDC,
         (double)(100-h_border_item_1->value) / 100.0d,
         (double)(100-h_border_item_1->value) / 100.0d,
-        (double)(aspect_item_1->value) / 100.0d);
+        (double)(aspect_item_1->value) / 100.0d,
+        0.0d, 0.0d, 0.0d, 0.0d, 1);
   }
 
   set_initial_status_padding(overlay_padding_item->value);
