@@ -32,12 +32,13 @@
 // Holds overlay graphics buffer
 extern uint8_t *overlay_buf;
 
-uint8_t *overlay_init(int width, int height);
+uint8_t *overlay_init(int width, int height, int padding);
 void overlay_check(void);
 void overlay_activate(void);
 void overlay_warp_changed(int warp);
 void overlay_joyswap_changed(int swap);
 void overlay_dismiss(void);
 void overlay_force_enabled(void);
+void overlay_change_padding(int padding);
 
 #endif

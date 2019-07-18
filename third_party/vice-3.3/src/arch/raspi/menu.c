@@ -68,6 +68,13 @@
 // and the power port is actually power unlike the Keyrah.
 //#define RASPI_SUPPORT_PCB 1
 
+#define DEFAULT_ASPECT_0 145
+#define DEFAULT_ASPECT_1 145
+#define DEFAULT_H_BORDER_TRIM_0 0
+#define DEFAULT_H_BORDER_TRIM_1 0
+#define DEFAULT_V_BORDER_TRIM_0 0
+#define DEFAULT_V_BORDER_TRIM_1 0
+
 // For filename filters
 typedef enum {
    FILTER_NONE,
@@ -108,6 +115,7 @@ struct menu_item *sid_engine_item;
 struct menu_item *sid_model_item;
 struct menu_item *sid_filter_item;
 struct menu_item *overlay_item;
+struct menu_item *overlay_padding_item;
 struct menu_item *tape_reset_with_machine_item;
 
 struct menu_item *palette_item_0;
@@ -587,11 +595,20 @@ static int save_settings() {
   fprintf(fp, "hotkey_cf5=%d\n", hotkey_cf5_item->value);
   fprintf(fp, "hotkey_cf7=%d\n", hotkey_cf7_item->value);
   fprintf(fp, "overlay=%d\n", overlay_item->value);
+  fprintf(fp, "overlay_padding=%d\n", overlay_padding_item->value);
   fprintf(fp, "tapereset=%d\n", tape_reset_with_machine_item->value);
   fprintf(fp, "reset_confirm=%d\n", reset_confirm_item->value);
 #ifdef RASPI_SUPPORT_PCB
   fprintf(fp, "pcb=%d\n", use_pcb_item->value);
 #endif
+  fprintf(fp, "h_border_trim_0=%d\n", h_border_item_0->value);
+  fprintf(fp, "v_border_trim_0=%d\n", v_border_item_0->value);
+  fprintf(fp, "aspect_0=%d\n", aspect_item_0->value);
+  if (machine_class == VICE_MACHINE_C128) {
+     fprintf(fp, "h_border_trim_1=%d\n", h_border_item_1->value);
+     fprintf(fp, "v_border_trim_1=%d\n", v_border_item_1->value);
+     fprintf(fp, "aspect_1=%d\n", aspect_item_1->value);
+  }
 
   int drive_type;
 
@@ -776,6 +793,8 @@ static void load_settings() {
       hotkey_cf7_item->value = HOTKEY_CHOICE_MENU;
     } else if (strcmp(name, "overlay") == 0) {
       overlay_item->value = value;
+    } else if (strcmp(name, "overlay_padding") == 0) {
+      overlay_padding_item->value = value;
     } else if (strcmp(name, "tapereset") == 0) {
       tape_reset_with_machine_item->value = value;
     } else if (strcmp(name, "pot_x_high") == 0) {
@@ -840,6 +859,18 @@ static void load_settings() {
       key_bindings[4] = value;
     } else if (strcmp(name, "key_binding_6") == 0) {
       key_bindings[5] = value;
+    } else if (strcmp(name, "h_border_trim_0") == 0) {
+      h_border_item_0->value = value;
+    } else if (strcmp(name, "v_border_trim_0") == 0) {
+      v_border_item_0->value = value;
+    } else if (strcmp(name, "aspect_0") == 0) {
+      aspect_item_0->value = value;
+    } else if (strcmp(name, "h_border_trim_1") == 0 && machine_class == VICE_MACHINE_C128) {
+      h_border_item_1->value = value;
+    } else if (strcmp(name, "v_border_trim_1") == 0 && machine_class == VICE_MACHINE_C128) {
+      v_border_item_1->value = value;
+    } else if (strcmp(name, "aspect_1") == 0 && machine_class == VICE_MACHINE_C128) {
+      aspect_item_1->value = value;
     }
   }
   fclose(fp);
@@ -1806,6 +1837,9 @@ static void menu_value_changed(struct menu_item *item) {
       overlay_enabled = 0;
     }
     break;
+  case MENU_OVERLAY_PADDING:
+    overlay_change_padding(item->value);
+    break;
   }
 
   // Only items that were for file selection/nav should have these set...
@@ -2101,12 +2135,14 @@ void build_menu(struct menu_item *root) {
   ui_menu_add_button(MENU_COLOR_RESET_0, child, "Reset");
 
   h_border_item_0 =
-      ui_menu_add_range(MENU_H_BORDER_0, parent, "H Border Trim %", 0, 100, 1, 0);
+      ui_menu_add_range(MENU_H_BORDER_0, parent, "H Border Trim %",
+          0, 100, 1, DEFAULT_H_BORDER_TRIM_0);
   v_border_item_0 =
-      ui_menu_add_range(MENU_V_BORDER_0, parent, "V Border Trim %", 0, 100, 1, 0);
+      ui_menu_add_range(MENU_V_BORDER_0, parent, "V Border Trim %",
+          0, 100, 1, DEFAULT_V_BORDER_TRIM_0);
   child = aspect_item_0 =
       ui_menu_add_range(MENU_ASPECT_0, parent, "Aspect Ratio",
-           100, 180, 1, 160); // default to 1.6
+           100, 180, 1, DEFAULT_ASPECT_0);
   child->divisor = 100;
 
   if (machine_class == VICE_MACHINE_C128) {
@@ -2128,12 +2164,14 @@ void build_menu(struct menu_item *root) {
      ui_menu_add_button(MENU_COLOR_RESET_1, child, "Reset");
 
      h_border_item_1 =
-         ui_menu_add_range(MENU_H_BORDER_1, parent, "H Border Trim %", 0, 100, 1, 0);
+         ui_menu_add_range(MENU_H_BORDER_1, parent, "H Border Trim %",
+             0, 100, 1, DEFAULT_H_BORDER_TRIM_1);
      v_border_item_1 =
-         ui_menu_add_range(MENU_V_BORDER_1, parent, "V Border Trim %", 0, 100, 1, 0);
+         ui_menu_add_range(MENU_V_BORDER_1, parent, "V Border Trim %",
+             0, 100, 1, DEFAULT_V_BORDER_TRIM_1);
      child = aspect_item_1 =
          ui_menu_add_range(MENU_ASPECT_1, parent, "Aspect Ratio",
-              100, 180, 1, 160); // default to 1.6
+              100, 180, 1, DEFAULT_ASPECT_1);
      child->divisor = 100;
   }
 
@@ -2331,6 +2369,10 @@ void build_menu(struct menu_item *root) {
   strcpy(overlay_item->choices[OVERLAY_ALWAYS], "Always");
   strcpy(overlay_item->choices[OVERLAY_ON_ACTIVITY], "On Activity");
 
+  overlay_padding_item =
+      ui_menu_add_range(MENU_OVERLAY_PADDING, parent, "Status Bar Padding",
+          0, 64, 1, 0);
+
   reset_confirm_item = ui_menu_add_toggle(MENU_RESET_CONFIRM, parent,
                                           "Confirm Reset from Emulator", 1);
 
@@ -2357,6 +2399,19 @@ void build_menu(struct menu_item *root) {
   }
   ui_set_hotkeys();
   ui_set_joy_devs();
+
+  set_initial_video_adjustment_values(FB_LAYER_VIC,
+     (double)(100-h_border_item_0->value) / 100.0d,
+     (double)(100-v_border_item_0->value) / 100.0d,
+     (double)(aspect_item_0->value) / 100.0d);
+  if (machine_class == VICE_MACHINE_C128) {
+     set_initial_video_adjustment_values(FB_LAYER_VDC,
+        (double)(100-h_border_item_1->value) / 100.0d,
+        (double)(100-h_border_item_1->value) / 100.0d,
+        (double)(aspect_item_1->value) / 100.0d);
+  }
+
+  set_initial_status_padding(overlay_padding_item->value);
 
   joystick_set_potx(pot_x_high_value);
   joystick_set_poty(pot_y_high_value);

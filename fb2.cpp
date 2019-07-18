@@ -79,8 +79,8 @@ DISPMANX_DISPLAY_HANDLE_T FrameBuffer2::dispman_display_;
 
 FrameBuffer2::FrameBuffer2() :
         width_(0), height_(0), pitch_(0), layer_(0), transparency_(false),
-        aspect_(1.6), valign_(0), halign_(0), rnum_(0), showing_(false),
-        allocated_(false) {
+        aspect_(1.6), valign_(0), vpadding_(0), halign_(0), hpadding_(0),
+        rnum_(0), showing_(false), allocated_(false) {
   alpha_.flags = DISPMANX_FLAGS_ALPHA_FROM_SOURCE;
   alpha_.opacity = 255;
   alpha_.mask = 0;
@@ -224,11 +224,11 @@ void FrameBuffer2::Show() {
         break;
      case -1:
         // Top
-        oy = 0;
+        oy = vpadding_;
         break;
      case 1:
         // Bottom
-        oy = display_height_ - dst_h;
+        oy = display_height_ - dst_h - vpadding_;
         break;
      default:
         oy = 0;
@@ -243,11 +243,11 @@ void FrameBuffer2::Show() {
         break;
      case -1:
         // Left
-        ox = 0;
+        ox = hpadding_;
         break;
      case 1:
         // Right
-        ox = display_width_ - dst_w;
+        ox = display_width_ - dst_w - hpadding_;
         break;
      default:
         ox = 0;
@@ -381,8 +381,10 @@ void FrameBuffer2::SetAspect(double aspect) {
 
 void FrameBuffer2::SetVerticalAlignment(int alignment, int padding) {
   valign_ = alignment;
+  vpadding_ = padding;
 }
 
 void FrameBuffer2::SetHorizontalAlignment(int alignment, int padding) {
   halign_ = alignment;
+  hpadding_ = padding;
 }

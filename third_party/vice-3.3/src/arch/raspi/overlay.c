@@ -70,7 +70,7 @@ static int overlay_buf_pitch;
 #define OVERLAY_HEIGHT 10
 
 // Create a new overlay buffer
-uint8_t *overlay_init(int width, int height) {
+uint8_t *overlay_init(int width, int height, int padding) {
   bg_color = 0;
   fg_color = 1;
   switch (machine_class) {
@@ -89,8 +89,12 @@ uint8_t *overlay_init(int width, int height) {
 
   circle_alloc_fb2(FB_LAYER_STATUS,
                    &overlay_buf, width, OVERLAY_HEIGHT, &overlay_buf_pitch);
+  // Use negative aspect here so our overlay is stretched to the full
+  // horizontal resolution rather than vertical.
   circle_set_aspect_fb2(FB_LAYER_STATUS, -(double)width/(double)OVERLAY_HEIGHT);
-  circle_set_valign_fb2(FB_LAYER_STATUS, 1, 0); // NEEDS TO COME FROM SETTINGS
+  // We want our status bar to show up at the bottom of the screen with
+  // padding set by user.
+  circle_set_valign_fb2(FB_LAYER_STATUS, 1 /* BOTTOM */, padding);
   memset(overlay_buf, bg_color, overlay_buf_pitch * OVERLAY_HEIGHT);
 
   // Figure out inset that will center.
@@ -322,4 +326,10 @@ void overlay_dismiss(void) {
 
 void overlay_force_enabled(void) {
   overlay_enabled = 1;
+}
+
+void overlay_change_padding(int padding) {
+  circle_hide_fb2(FB_LAYER_STATUS);
+  overlay_showing = 0;
+  circle_set_valign_fb2(FB_LAYER_STATUS, 1 /* BOTTOM */, padding);
 }

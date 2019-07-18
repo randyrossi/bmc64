@@ -279,6 +279,8 @@ typedef enum {
    MENU_H_BORDER_1,
    MENU_V_BORDER_1,
    MENU_ASPECT_1,
+
+   MENU_OVERLAY_PADDING,
 } MenuID;
 
 typedef enum {

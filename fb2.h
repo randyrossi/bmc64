@@ -73,11 +73,11 @@ public:
   void SetAspect(double aspect);
 
   // alignment can be -1 = ALIGN TOP, 0 = CENTER, 1 = ALIGN BOTTOM
-  // padding applies to TOP or BOTTOM only
+  // padding applies to TOP or BOTTOM only.
   void SetVerticalAlignment(int alignment, int padding);
 
   // alignment can be -1 = ALIGN LEFT, 0 = CENTER, 1 = ALIGN RIGHT
-  // padding applies to LEFT or RIGHT only
+  // padding applies to LEFT or RIGHT only.
   void SetHorizontalAlignment(int alignment, int padding);
 
   // initializes the bcm_host interface
@@ -115,8 +115,10 @@ private:
   double aspect_;
   // -1 = top, 0 = center, 1 = bottom
   int valign_;
+  int vpadding_;
   // -1 = left, 0 = center, 1 = right
   int halign_;
+  int hpadding_;
   // Represents the resource currently visible
   int rnum_;
 
