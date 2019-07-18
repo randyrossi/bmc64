@@ -204,6 +204,7 @@ void ui_disable_osd(void);
 void ui_dismiss_osd_if_active(void);
 
 void ui_set_transparent(int v);
+void ui_set_render_current_item_only(int v);
 
 struct menu_item* ui_find_item_by_id(struct menu_item *node, int id);
 

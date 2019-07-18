@@ -1300,6 +1300,7 @@ static void toggle_warp(int value) {
   warp_item->value = value;
 }
 
+// Tell videoarch the new settings made from the menu.
 static void do_video_settings(int layer,
                               struct menu_item* hborder_item,
                               struct menu_item* vborder_item,
@@ -1346,11 +1347,11 @@ static void menu_value_changed(struct menu_item *item) {
     }
     return;
   case MENU_COLOR_PALETTE_0:
-    video_request_transparency(FB_LAYER_VIC);
+    video_canvas_reveal_temp(FB_LAYER_VIC);
     video_canvas_change_palette(0, item->value);
     return;
   case MENU_COLOR_PALETTE_1:
-    video_request_transparency(FB_LAYER_VDC);
+    video_canvas_reveal_temp(FB_LAYER_VDC);
     video_canvas_change_palette(1, item->value);
     return;
   case MENU_AUTOSTART:
@@ -1565,22 +1566,22 @@ static void menu_value_changed(struct menu_item *item) {
     resources_set_int("DriveSoundEmulationVolume", item->value);
     return;
   case MENU_COLOR_BRIGHTNESS_0:
-    video_request_transparency(FB_LAYER_VIC);
+    video_canvas_reveal_temp(FB_LAYER_VIC);
     set_color_brightness(0, item->value);
     video_color_setting_changed(0);
     return;
   case MENU_COLOR_CONTRAST_0:
-    video_request_transparency(FB_LAYER_VIC);
+    video_canvas_reveal_temp(FB_LAYER_VIC);
     set_color_contrast(0, item->value);
     video_color_setting_changed(0);
     return;
   case MENU_COLOR_GAMMA_0:
-    video_request_transparency(FB_LAYER_VIC);
+    video_canvas_reveal_temp(FB_LAYER_VIC);
     set_color_gamma(0, item->value);
     video_color_setting_changed(0);
     return;
   case MENU_COLOR_TINT_0:
-    video_request_transparency(FB_LAYER_VIC);
+    video_canvas_reveal_temp(FB_LAYER_VIC);
     set_color_tint(0, item->value);
     video_color_setting_changed(0);
     return;
@@ -1596,22 +1597,22 @@ static void menu_value_changed(struct menu_item *item) {
     video_color_setting_changed(0);
     return;
   case MENU_COLOR_BRIGHTNESS_1:
-    video_request_transparency(FB_LAYER_VDC);
+    video_canvas_reveal_temp(FB_LAYER_VDC);
     set_color_brightness(1, item->value);
     video_color_setting_changed(1);
     return;
   case MENU_COLOR_CONTRAST_1:
-    video_request_transparency(FB_LAYER_VDC);
+    video_canvas_reveal_temp(FB_LAYER_VDC);
     set_color_contrast(1, item->value);
     video_color_setting_changed(1);
     return;
   case MENU_COLOR_GAMMA_1:
-    video_request_transparency(FB_LAYER_VDC);
+    video_canvas_reveal_temp(FB_LAYER_VDC);
     set_color_gamma(1, item->value);
     video_color_setting_changed(1);
     return;
   case MENU_COLOR_TINT_1:
-    video_request_transparency(FB_LAYER_VDC);
+    video_canvas_reveal_temp(FB_LAYER_VDC);
     set_color_tint(1, item->value);
     video_color_setting_changed(1);
     return;
@@ -1782,7 +1783,7 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_H_BORDER_0:
   case MENU_V_BORDER_0:
   case MENU_ASPECT_0:
-    video_request_transparency(FB_LAYER_VIC);
+    video_canvas_reveal_temp(FB_LAYER_VIC);
     do_video_settings(FB_LAYER_VIC,
         h_border_item_0,
         v_border_item_0,
@@ -1791,7 +1792,7 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_H_BORDER_1:
   case MENU_V_BORDER_1:
   case MENU_ASPECT_1:
-    video_request_transparency(FB_LAYER_VDC);
+    video_canvas_reveal_temp(FB_LAYER_VDC);
     do_video_settings(FB_LAYER_VDC,
         h_border_item_1,
         v_border_item_1,

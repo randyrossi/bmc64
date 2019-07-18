@@ -49,7 +49,8 @@ int pending_emu_quick_func;
 
 static int osd_active;
 static int ui_ctrl_down;
-static int transparent_ui;
+static int ui_transparent;
+static int ui_render_current_item_only;
 
 extern struct joydev_config joydevs[MAX_JOY_PORTS];
 
@@ -278,9 +279,12 @@ static void ui_type_char(char ch) {
 // Happens on main loop.
 static void ui_key_pressed(long key) {
   // Anything other than left/right will reset transparency
-  // on the ui.
+  // and render current item only flags. They are applicable
+  // only while the user is on the item they were triggered
+  // for.
   if (key != KEYCODE_Left && key != KEYCODE_Right) {
-    transparent_ui = 0;
+    ui_transparent = 0;
+    ui_render_current_item_only = 0;
   }
 
   switch (key) {
@@ -840,59 +844,65 @@ static void ui_render_children(struct menu_item *node, int *index, int indent) {
         menu_cursor_item[current_menu] = node;
       }
 
-      ui_draw_text(node->name, node->menu_left + (indent + 1) * 8, y, 1);
-      if (node->type == FOLDER) {
-        if (node->is_expanded)
-          ui_draw_text("-", node->menu_left + (indent)*8, y, 1);
-        else
-          ui_draw_text("+", node->menu_left + (indent)*8, y, 1);
-      } else if (node->type == TOGGLE) {
-        if (node->value)
-          ui_draw_text("On",
-                       node->menu_left + node->menu_width - ui_text_width("On"),
+      // Sometimes, we only want to render the current item. Like when we
+      // are adjusting things that affect video and we want to see the display
+      // underneath the menu while we are making changes.
+      if (!ui_render_current_item_only || *index == menu_cursor[current_menu]) {
+
+        ui_draw_text(node->name, node->menu_left + (indent + 1) * 8, y, 1);
+        if (node->type == FOLDER) {
+          if (node->is_expanded)
+            ui_draw_text("-", node->menu_left + (indent)*8, y, 1);
+          else
+            ui_draw_text("+", node->menu_left + (indent)*8, y, 1);
+        } else if (node->type == TOGGLE) {
+          if (node->value)
+            ui_draw_text("On",
+                         node->menu_left + node->menu_width - ui_text_width("On"),
+                         y, 1);
+          else
+            ui_draw_text("Off", node->menu_left + node->menu_width -
+                                    ui_text_width("Off"),
+                         y, 1);
+        } else if (node->type == CHECKBOX) {
+          if (node->value)
+            ui_draw_text("True", node->menu_left + node->menu_width -
+                                     ui_text_width("True"),
+                         y, 1);
+          else
+            ui_draw_text("False", node->menu_left + node->menu_width -
+                                      ui_text_width("False"),
+                         y, 1);
+        } else if (node->type == RANGE) {
+          if (node->divisor == 1) {
+             sprintf(node->scratch, "%d", node->value);
+          } else {
+             sprintf(node->scratch, "%f",
+                (float)node->value / (float)node->divisor);
+          }
+          ui_draw_text(node->scratch, node->menu_left + node->menu_width -
+                                          ui_text_width(node->scratch),
                        y, 1);
-        else
-          ui_draw_text("Off", node->menu_left + node->menu_width -
-                                  ui_text_width("Off"),
+        } else if (node->type == MULTIPLE_CHOICE) {
+          ui_draw_text(node->choices[node->value],
+                       node->menu_left + node->menu_width -
+                           ui_text_width(node->choices[node->value]),
                        y, 1);
-      } else if (node->type == CHECKBOX) {
-        if (node->value)
-          ui_draw_text("True", node->menu_left + node->menu_width -
-                                   ui_text_width("True"),
+        } else if (node->type == DIVIDER) {
+          ui_draw_rect(node->menu_left, y + 3, node->menu_width, 2, 3, 1);
+        } else if (node->type == BUTTON) {
+          char *dsp_string = get_button_display_str(node);
+          ui_draw_text(dsp_string, node->menu_left + node->menu_width -
+                                       ui_text_width(dsp_string),
                        y, 1);
-        else
-          ui_draw_text("False", node->menu_left + node->menu_width -
-                                    ui_text_width("False"),
-                       y, 1);
-      } else if (node->type == RANGE) {
-        if (node->divisor == 1) {
-           sprintf(node->scratch, "%d", node->value);
-        } else {
-           sprintf(node->scratch, "%f",
-              (float)node->value / (float)node->divisor);
+        } else if (node->type == TEXTFIELD) {
+          // draw cursor underneath text
+          ui_draw_rect(node->menu_left + ui_text_width(node->name) + 8 +
+                           node->value * 8,
+                       y, 8, 8, 3, 1);
+          ui_draw_text(node->str_value,
+                       node->menu_left + ui_text_width(node->name) + 8, y, 1);
         }
-        ui_draw_text(node->scratch, node->menu_left + node->menu_width -
-                                        ui_text_width(node->scratch),
-                     y, 1);
-      } else if (node->type == MULTIPLE_CHOICE) {
-        ui_draw_text(node->choices[node->value],
-                     node->menu_left + node->menu_width -
-                         ui_text_width(node->choices[node->value]),
-                     y, 1);
-      } else if (node->type == DIVIDER) {
-        ui_draw_rect(node->menu_left, y + 3, node->menu_width, 2, 3, 1);
-      } else if (node->type == BUTTON) {
-        char *dsp_string = get_button_display_str(node);
-        ui_draw_text(dsp_string, node->menu_left + node->menu_width -
-                                     ui_text_width(dsp_string),
-                     y, 1);
-      } else if (node->type == TEXTFIELD) {
-        // draw cursor underneath text
-        ui_draw_rect(node->menu_left + ui_text_width(node->name) + 8 +
-                         node->value * 8,
-                     y, 8, 8, 3, 1);
-        ui_draw_text(node->str_value,
-                     node->menu_left + ui_text_width(node->name) + 8, y, 1);
       }
     }
 
@@ -920,7 +930,7 @@ void ui_render_now(void) {
   ui_draw_rect(0, 0, ui_fb_w, ui_fb_h, 16 /* transparent */, 1);
 
   // black background conditional upon mode
-  if (!transparent_ui) {
+  if (!ui_transparent) {
      ui_draw_rect(ptr->menu_left, ptr->menu_top,
                   ptr->menu_width, ptr->menu_height,
                   0, 1);
@@ -1167,7 +1177,7 @@ void ui_find_first(char letter) {
 // the cursor to a known location. Also useful after a call to
 // ui_to_top() to do the same.
 void ui_set_cur_pos(int pos) {
-  while(menu_cursor[current_menu] < pos && 
+  while(menu_cursor[current_menu] < pos &&
         menu_cursor[current_menu] < max_index[current_menu] - 1) {
     ui_action(ACTION_Down);
 
@@ -1217,5 +1227,9 @@ void ui_dismiss_osd_if_active(void) {
 }
 
 void ui_set_transparent(int v) {
-  transparent_ui = v;
+  ui_transparent = v;
+}
+
+void ui_set_render_current_item_only(int v) {
+  ui_render_current_item_only = v;
 }

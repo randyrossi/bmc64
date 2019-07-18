@@ -132,9 +132,11 @@ void ensure_video(void);
 palette_t *raspi_video_load_palette(int num_entries, char *name);
 void main_exit(void);
 
-// If layer is visible right now, make the ui transparent. Used to
-// assist user in making video adjustments in real time (color, aspect ratio,
-// etc).
-void video_request_transparency(int layer);
+// If layer is visible right now, make the ui transparent and tell the
+// ui only to render the current item. This is used to assist the user
+// in making video adjustments in real time (color, aspect ratio,
+// etc). Only takes effect while the user remains on the current menu
+// item.
+void video_canvas_reveal_temp(int layer);
 
 #endif
