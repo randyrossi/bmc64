@@ -32,7 +32,7 @@ ViceOptions::ViceOptions(void)
     : m_nFB1Width(DEFAULT_FB1_WIDTH),
       m_nFB1Height(DEFAULT_FB1_HEIGHT),
       m_nMachineTiming(MACHINE_TIMING_PAL_HDMI), m_bHideConsole(true),
-      m_bDemoMode(false), m_nCyclesPerSecond(0),
+      m_bDemoMode(false), m_bSerialEnabled(false), m_nCyclesPerSecond(0),
       m_audioOut(VCHIQSoundDestinationAuto) {
   s_pThis = this;
 
@@ -96,6 +96,12 @@ ViceOptions::ViceOptions(void)
       } else {
         m_bDemoMode = false;
       }
+    } else if (strcmp(pOption, "serial") == 0) {
+      if (strcmp(pValue, "1") == 0) {
+        m_bSerialEnabled = true;
+      } else {
+        m_bSerialEnabled = false;
+      }
     } else if (strcmp(pOption, "disk_volume") == 0) {
       if (strlen(pValue) > 0) {
         strncpy(m_disk_volume, pValue, VOLUME_NAME_LEN - 1);
@@ -144,6 +150,8 @@ bool ViceOptions::GetHideConsole(void) const { return m_bHideConsole; }
 void ViceOptions::SetHideConsole(bool value) { m_bHideConsole = value; }
 
 bool ViceOptions::GetDemoMode(void) const { return m_bDemoMode; }
+
+bool ViceOptions::SerialEnabled(void) const { return m_bSerialEnabled; }
 
 int ViceOptions::GetDiskPartition(void) const { return m_disk_partition; }
 

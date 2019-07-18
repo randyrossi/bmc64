@@ -39,6 +39,7 @@ public:
   bool GetHideConsole(void) const;
   void SetHideConsole(bool value);
   bool GetDemoMode(void) const;
+  bool SerialEnabled(void) const;
   int GetDiskPartition(void) const;
   const char *GetDiskVolume(void) const;
   unsigned long GetCyclesPerSecond(void) const;
@@ -65,6 +66,7 @@ private:
   unsigned m_nMachineTiming;
   bool m_bHideConsole;
   bool m_bDemoMode;
+  bool m_bSerialEnabled;
   int m_disk_partition;
   char m_disk_volume[VOLUME_NAME_LEN];
   unsigned long m_nCyclesPerSecond;

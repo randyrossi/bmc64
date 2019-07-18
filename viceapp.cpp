@@ -103,7 +103,7 @@ bool ViceApp::Initialize(void) {
   // Initialize our replacement newlib stdio. Give it
   // a pointer to our serial device so we can use printf
   // to serial as soon as possible.
-  CGlueStdioInit(&mSerial);
+  CGlueStdioInit(mViceOptions.SerialEnabled() ? &mSerial : nullptr);
 
   if (!mInterrupt.Initialize()) {
     return false;

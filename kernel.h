@@ -59,8 +59,6 @@ public:
   static void GamePadStatusHandler(unsigned nDeviceIndex,
                                    const TGamePadState *pState);
 
-  ssize_t vice_write(int fd, const void *buf, size_t count);
-
   int circle_get_machine_timing();
   void circle_sleep(long delay);
   unsigned long circle_get_ticks();

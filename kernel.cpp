@@ -758,10 +758,6 @@ void CKernel::ReadJoystick(int device, bool usePcb) {
   }
 }
 
-ssize_t CKernel::vice_write(int fd, const void *buf, size_t count) {
-  return mSerial.Write(buf, count);
-}
-
 int CKernel::circle_get_machine_timing() {
   // See circle.h for valid values
   return mViceOptions.GetMachineTiming();
