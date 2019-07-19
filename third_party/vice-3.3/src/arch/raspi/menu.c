@@ -68,12 +68,17 @@
 // and the power port is actually power unlike the Keyrah.
 //#define RASPI_SUPPORT_PCB 1
 
-#define DEFAULT_ASPECT_0 145
-#define DEFAULT_ASPECT_1 145
-#define DEFAULT_H_BORDER_TRIM_0 0
-#define DEFAULT_H_BORDER_TRIM_1 0
-#define DEFAULT_V_BORDER_TRIM_0 0
-#define DEFAULT_V_BORDER_TRIM_1 0
+#define DEFAULT_VICII_ASPECT 145
+#define DEFAULT_VICII_H_BORDER_TRIM 0
+#define DEFAULT_VICII_V_BORDER_TRIM 0
+
+#define DEFAULT_VIC_ASPECT 145
+#define DEFAULT_VIC_H_BORDER_TRIM 70
+#define DEFAULT_VIC_V_BORDER_TRIM 60
+
+#define DEFAULT_VDC_ASPECT 145
+#define DEFAULT_VDC_H_BORDER_TRIM 60
+#define DEFAULT_VDC_V_BORDER_TRIM 60
 
 // For filename filters
 typedef enum {
@@ -1346,46 +1351,52 @@ static void do_video_settings(int layer,
   double bpad;
   int zlayer;
 
-  if ((active_display_item->value == MENU_ACTIVE_DISPLAY_VICII && layer == FB_LAYER_VIC) ||
-      (active_display_item->value == MENU_ACTIVE_DISPLAY_VDC && layer == FB_LAYER_VDC)) {
-     lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = layer == FB_LAYER_VIC ? 0 : 1;
-  } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE) {
-     // VIC on the left, VDC on the right, always, no swapping
-     if (layer == FB_LAYER_VIC) {
-         lpad = 0; rpad = .50d; tpad = 0; bpad = 0; zlayer = 0;
-     } else {
-         lpad = .50d; rpad = 0; tpad = 0; bpad = 0; zlayer = 1;
-     }
-  } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_PIP) {
-     if ((layer == FB_LAYER_VIC && pip_swapped_item->value == 0) ||
-         (layer == FB_LAYER_VDC && pip_swapped_item->value == 1)) {
-         // full screen for this layer
-         lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = 0;
-     } else {
-         zlayer = 1;
-         if (pip_location_item->value == MENU_PIP_TOP_LEFT) {
-           // top left quad
-           lpad = .05d; rpad = .65d; tpad = .05d; bpad = .65d;
-         } else if (pip_location_item->value == MENU_PIP_TOP_RIGHT) {
-           // top right quad
-           lpad = .65d; rpad = .05d; tpad = .05d; bpad = .65d;
-         } else if (pip_location_item->value == MENU_PIP_BOTTOM_RIGHT) {
-           // bottom right quad
-           lpad = .65d; rpad = .05d; tpad = .65d; bpad = .05d;
-         } else if (pip_location_item->value == MENU_PIP_BOTTOM_LEFT) {
-           // bottom left quad
-           lpad = .05d; rpad = .65d; tpad = .65d; bpad = .05d;
-         }
-     }
+  if (machine_class == VICE_MACHINE_C128) {
+     if ((active_display_item->value == MENU_ACTIVE_DISPLAY_VICII && layer == FB_LAYER_VIC) ||
+         (active_display_item->value == MENU_ACTIVE_DISPLAY_VDC && layer == FB_LAYER_VDC)) {
+        lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = layer == FB_LAYER_VIC ? 0 : 1;
+     } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE) {
+        // VIC on the left, VDC on the right, always, no swapping
+        if (layer == FB_LAYER_VIC) {
+            lpad = 0; rpad = .50d; tpad = 0; bpad = 0; zlayer = 0;
+        } else {
+            lpad = .50d; rpad = 0; tpad = 0; bpad = 0; zlayer = 1;
+        }
+     } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_PIP) {
+        if ((layer == FB_LAYER_VIC && pip_swapped_item->value == 0) ||
+            (layer == FB_LAYER_VDC && pip_swapped_item->value == 1)) {
+            // full screen for this layer
+            lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = 0;
+        } else {
+            zlayer = 1;
+            if (pip_location_item->value == MENU_PIP_TOP_LEFT) {
+              // top left quad
+              lpad = .05d; rpad = .65d; tpad = .05d; bpad = .65d;
+            } else if (pip_location_item->value == MENU_PIP_TOP_RIGHT) {
+              // top right quad
+              lpad = .65d; rpad = .05d; tpad = .05d; bpad = .65d;
+            } else if (pip_location_item->value == MENU_PIP_BOTTOM_RIGHT) {
+              // bottom right quad
+              lpad = .65d; rpad = .05d; tpad = .65d; bpad = .05d;
+            } else if (pip_location_item->value == MENU_PIP_BOTTOM_LEFT) {
+              // bottom left quad
+              lpad = .05d; rpad = .65d; tpad = .65d; bpad = .05d;
+            }
+        }
+    } else {
+        return;
+    }
   } else {
-     return;
+     // Only 1 display for this machine. Full screen.
+     lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = 0;
   }
 
   double h = (double)(100-hborder_item->value) / 100.0d;
   double v = (double)(100-vborder_item->value) / 100.0d;
   double a = (double)(aspect_item->value) / 100.0d;
 
-  if (active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE) {
+  if (machine_class == VICE_MACHINE_C128 &&
+          active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE) {
      // For side-by-side, it makes more sense to fill horizontal then scale
      // vertical since we just cut horizontal in half. So pass in negative
      // aspect.
@@ -2235,15 +2246,28 @@ void build_menu(struct menu_item *root) {
                                 get_color_tint(0));
   ui_menu_add_button(MENU_COLOR_RESET_0, child, "Reset");
 
+  int defaultHBorderTrim;
+  int defaultVBorderTrim;
+  int defaultAspect;
+  if (machine_class == VICE_MACHINE_VIC20) {
+     defaultHBorderTrim = DEFAULT_VIC_H_BORDER_TRIM;
+     defaultVBorderTrim = DEFAULT_VIC_V_BORDER_TRIM;
+     defaultAspect = DEFAULT_VIC_ASPECT;
+  } else {
+     defaultHBorderTrim = DEFAULT_VICII_H_BORDER_TRIM;
+     defaultVBorderTrim = DEFAULT_VICII_V_BORDER_TRIM;
+     defaultAspect = DEFAULT_VIC_ASPECT;
+  }
+
   h_border_item_0 =
       ui_menu_add_range(MENU_H_BORDER_0, parent, "H Border Trim %",
-          0, 100, 1, DEFAULT_H_BORDER_TRIM_0);
+          0, 100, 1, defaultHBorderTrim);
   v_border_item_0 =
       ui_menu_add_range(MENU_V_BORDER_0, parent, "V Border Trim %",
-          0, 100, 1, DEFAULT_V_BORDER_TRIM_0);
+          0, 100, 1, defaultVBorderTrim);
   child = aspect_item_0 =
       ui_menu_add_range(MENU_ASPECT_0, parent, "Aspect Ratio",
-           100, 180, 1, DEFAULT_ASPECT_0);
+           100, 180, 1, defaultAspect);
   child->divisor = 100;
 
   if (machine_class == VICE_MACHINE_C128) {
@@ -2266,13 +2290,13 @@ void build_menu(struct menu_item *root) {
 
      h_border_item_1 =
          ui_menu_add_range(MENU_H_BORDER_1, parent, "H Border Trim %",
-             0, 100, 1, DEFAULT_H_BORDER_TRIM_1);
+             0, 100, 1, DEFAULT_VDC_H_BORDER_TRIM);
      v_border_item_1 =
          ui_menu_add_range(MENU_V_BORDER_1, parent, "V Border Trim %",
-             0, 100, 1, DEFAULT_V_BORDER_TRIM_1);
+             0, 100, 1, DEFAULT_VDC_V_BORDER_TRIM);
      child = aspect_item_1 =
          ui_menu_add_range(MENU_ASPECT_1, parent, "Aspect Ratio",
-              100, 180, 1, DEFAULT_ASPECT_1);
+              100, 180, 1, DEFAULT_VDC_ASPECT);
      child->divisor = 100;
   }
 
