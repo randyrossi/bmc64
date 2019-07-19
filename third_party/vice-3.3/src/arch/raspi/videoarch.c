@@ -245,10 +245,10 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
   canvas_num++;
 }
 
-void video_init_overlay(int padding) {
+void video_init_overlay(int padding, int c40_80_state) {
   overlay_init(vic_canvas->draw_buffer->canvas_physical_width,
                vic_canvas->draw_buffer->canvas_physical_height,
-               padding);
+               padding, c40_80_state);
 }
 
 void apply_video_adjustments(int layer,

@@ -32,7 +32,7 @@
 // Holds overlay graphics buffer
 extern uint8_t *overlay_buf;
 
-uint8_t *overlay_init(int width, int height, int padding);
+uint8_t *overlay_init(int width, int height, int padding, int c40_80_state);
 void overlay_check(void);
 void overlay_activate(void);
 void overlay_warp_changed(int warp);
@@ -40,5 +40,6 @@ void overlay_joyswap_changed(int swap);
 void overlay_dismiss(void);
 void overlay_force_enabled(void);
 void overlay_change_padding(int padding);
+void overlay_40_80_columns_changed(int value);
 
 #endif

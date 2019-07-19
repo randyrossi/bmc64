@@ -51,6 +51,7 @@ static int tape_controls_x;
 static int tape_motor_x;
 static int warp_x;
 static int joyswap_x;
+static int columns_x;
 static int fg_color;
 static int bg_color;
 
@@ -70,7 +71,7 @@ static int overlay_buf_pitch;
 #define OVERLAY_HEIGHT 10
 
 // Create a new overlay buffer
-uint8_t *overlay_init(int width, int height, int padding) {
+uint8_t *overlay_init(int width, int height, int padding, int c40_80_state) {
   bg_color = 0;
   fg_color = 1;
   switch (machine_class) {
@@ -100,9 +101,11 @@ uint8_t *overlay_init(int width, int height, int padding) {
   // Figure out inset that will center.
   char *template;
   if (machine_class == VICE_MACHINE_VIC20) {
-     template = "8:   9:   10:   11:   T:000 STP   W:  J:1";
+     template = "8:  9:  10:  11:  T:000 STP   W:  J:1";
+  } else if (machine_class == VICE_MACHINE_C128) {
+     template = "8:  9:  10:  11:  T:000 STP   W:  J:12 C:  ";
   } else {
-     template = "8:   9:   10:   11:   T:000 STP   W:  J:12";
+     template = "8:  9:  10:  11:  T:000 STP   W:  J:12";
   }
   inset_x = width / 2 - (strlen(template) * 8) / 2;
   inset_y = 1;
@@ -112,17 +115,20 @@ uint8_t *overlay_init(int width, int height, int padding) {
 
   // Positions relative to start of text (before inset)
   drive_x[0] = 2 * 8;
-  drive_x[1] = 7 * 8;
-  drive_x[2] = 13 * 8;
-  drive_x[3] = 19 * 8;
-  tape_x = 24 * 8;
-  tape_controls_x = 28 * 8;
-  tape_motor_x = 32 * 8;
-  warp_x = 36 * 8;
-  joyswap_x = 40 * 8;
+  drive_x[1] = 6 * 8;
+  drive_x[2] = 11 * 8;
+  drive_x[3] = 16 * 8;
+  tape_x = 20 * 8;
+  tape_controls_x = 24 * 8;
+  tape_motor_x = 28 * 8;
+  warp_x = 32 * 8;
+  joyswap_x = 36 * 8;
+  columns_x = 41 * 8;
 
   ui_draw_text_buf("-", warp_x + inset_x, inset_y, fg_color, overlay_buf,
                    overlay_buf_pitch);
+
+  overlay_40_80_columns_changed(c40_80_state);
 
   return overlay_buf;
 }
@@ -153,19 +159,19 @@ void ui_enable_drive_status(ui_drive_enable_t state, int *drive_led_color) {
     if (overlay_buf) {
       ui_draw_rect_buf(drive_x[i] + 8 * 0 + inset_x, inset_y + 2, 6, 4,
                        bg_color, 1, overlay_buf, overlay_buf_pitch);
-      ui_draw_rect_buf(drive_x[i] + 8 * 1 + inset_x, inset_y + 2, 6, 4,
-                       bg_color, 1, overlay_buf, overlay_buf_pitch);
+      // The second LED never seems to go on.  Removing it.
+      //ui_draw_rect_buf(drive_x[i] + 8 * 1 + inset_x, inset_y + 2, 6, 4,
+      //                 bg_color, 1, overlay_buf, overlay_buf_pitch);
     }
     if (enabled & 1) {
       drive_led_types[i] = drive_led_color[i];
       current_drive_leds[i][0] = 0;
       current_drive_leds[i][1] = 0;
-      if (overlay_buf) {
-        ui_draw_rect_buf(drive_x[i] + 8 * 0 + inset_x, inset_y + 2, 6, 4, BLACK,
-                         1, overlay_buf, overlay_buf_pitch);
-        ui_draw_rect_buf(drive_x[i] + 8 * 1 + inset_x, inset_y + 2, 6, 4, BLACK,
-                         1, overlay_buf, overlay_buf_pitch);
-      }
+      ui_draw_rect_buf(drive_x[i] + 8 * 0 + inset_x, inset_y + 2, 6, 4, BLACK,
+                       1, overlay_buf, overlay_buf_pitch);
+      // The second LED never seems to go on.  Removing it.
+      //ui_draw_rect_buf(drive_x[i] + 8 * 1 + inset_x, inset_y + 2, 6, 4, BLACK,
+      //                 1, overlay_buf, overlay_buf_pitch);
     }
     enabled >>= 1;
   }
@@ -332,4 +338,18 @@ void overlay_change_padding(int padding) {
   circle_hide_fb2(FB_LAYER_STATUS);
   overlay_showing = 0;
   circle_set_valign_fb2(FB_LAYER_STATUS, 1 /* BOTTOM */, padding);
+}
+
+void overlay_40_80_columns_changed(int value) {
+  if (!overlay_buf)
+    return;
+
+  overlay_activate();
+
+  if (!overlay_enabled) return;
+
+  ui_draw_rect_buf(columns_x + inset_x, inset_y, 8 * 2, 8, bg_color, 1,
+                   overlay_buf, overlay_buf_pitch);
+  ui_draw_text_buf(value ? "40" : "80", columns_x + inset_x, inset_y, fg_color,
+                   overlay_buf, overlay_buf_pitch);
 }

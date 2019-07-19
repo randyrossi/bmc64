@@ -283,6 +283,8 @@ typedef enum {
    MENU_OVERLAY_PADDING,
    MENU_PIP_LOCATION,
    MENU_PIP_SWAPPED,
+
+   MENU_40_80_COLUMN,
 } MenuID;
 
 typedef enum {
@@ -332,6 +334,7 @@ typedef enum {
    HOTKEY_CHOICE_ACTIVE_DISPLAY,
    HOTKEY_CHOICE_PIP_LOCATION,
    HOTKEY_CHOICE_PIP_SWAP,
+   HOTKEY_CHOICE_40_80_COLUMN,
 } HotKeyChoice;
 
 enum {

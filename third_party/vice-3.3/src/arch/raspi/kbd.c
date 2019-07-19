@@ -258,6 +258,7 @@ static int handle_key_combo_release(long key) {
       case BTN_ASSIGN_ACTIVE_DISPLAY:
       case BTN_ASSIGN_PIP_LOCATION:
       case BTN_ASSIGN_PIP_SWAP:
+      case BTN_ASSIGN_40_80_COLUMN:
         circle_emu_quick_func_interrupt(key_combo_states[i].function);
         key_combo_states[i].invoked = 0;
         return 1;

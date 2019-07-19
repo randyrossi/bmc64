@@ -193,6 +193,7 @@
   * Major overhaul of how video is handled
     * Added C128 VDC support with VIC/VDC toggle as well as
       PIP and SIDE-BY-SIDE display options
+    * C128 40/80 Column Key
     * Added separate layers for VIC, VDC, UI and STATUS bar using dispmanx API
     * Can adjust video canvas border trim and aspect ratio in real time now
       (all *_canvas_width, *_canvas_height params removed from cmdline.txt)

@@ -235,6 +235,10 @@ Cart Freeze | Triggers cartridge freeze function (if installed) | USB+HotKey
 Hard Reset | Hard resets the emulated machine | USB+HotKey
 Soft Reset | Soft resets the emulated machine | USB+HotKey
 Key 1-6 | Custom defined keystroke  | USB
+Change Display | Switches VICII/VDC Displays | USB+Hotkey (C128 Only)
+Change PIP Location | Moves PIP Location | USB+Hotkey (C128 Only)
+Swap PIP | Swaps PIP Displays | USB+Hotkey (C128 Only)
+40/80 Column | Toggles 40/80 Column Key | USB+Hotkey (C128 Only)
 
 Custom defined keys (1-6) can be defined in the usb gamepad configuration screen.
 The Tape/Cart OSD functions display a dialog with access to some common functions without pausing emulation.

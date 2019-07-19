@@ -244,6 +244,7 @@ static void add_button_choices(struct menu_item *tmp_item) {
   strcpy(tmp_item->choices[BTN_ASSIGN_ACTIVE_DISPLAY], "Change Active Display");
   strcpy(tmp_item->choices[BTN_ASSIGN_PIP_LOCATION], "Change PIP Location");
   strcpy(tmp_item->choices[BTN_ASSIGN_PIP_SWAP], "Swap PIP");
+  strcpy(tmp_item->choices[BTN_ASSIGN_40_80_COLUMN], "40/80 Column Key");
 
   char scratch[32];
   for (int n = 0; n < 6; n++) {
@@ -260,6 +261,7 @@ static void add_button_choices(struct menu_item *tmp_item) {
     tmp_item->choice_disabled[BTN_ASSIGN_ACTIVE_DISPLAY] = 1;
     tmp_item->choice_disabled[BTN_ASSIGN_PIP_LOCATION] = 1;
     tmp_item->choice_disabled[BTN_ASSIGN_PIP_SWAP] = 1;
+    tmp_item->choice_disabled[BTN_ASSIGN_40_80_COLUMN] = 1;
   }
 }
 

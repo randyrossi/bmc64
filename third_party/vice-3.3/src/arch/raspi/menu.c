@@ -151,6 +151,8 @@ struct menu_item *aspect_item_1;
 struct menu_item *pip_location_item;
 struct menu_item *pip_swapped_item;
 
+struct menu_item *c40_80_column_item;
+
 static int unit;
 static int joyswap;
 static int overlay_forced;
@@ -703,6 +705,7 @@ static void load_settings() {
     gamma_item_1->value = get_color_gamma(1);
     tint_item_1->value = get_color_tint(1);
     video_color_setting_changed(1);
+    resources_get_int("C128ColumnKey", &c40_80_column_item->value);
   }
 
   // Default pot values for buttons
@@ -1925,6 +1928,10 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_OVERLAY_PADDING:
     overlay_change_padding(item->value);
     break;
+  case MENU_40_80_COLUMN:
+    resources_set_int("C128ColumnKey", item->value);
+    overlay_40_80_columns_changed(item->value);
+    break;
   }
 
   // Only items that were for file selection/nav should have these set...
@@ -1968,7 +1975,7 @@ int menu_get_keyboard_type(void) { return keyboard_type_item->value; }
 
 // KEEP in sync with kernel.cpp, kbd.c, menu_usb.c
 static void set_hotkey_choices(struct menu_item *item) {
-  item->num_choices = 13;
+  item->num_choices = 14;
   strcpy(item->choices[HOTKEY_CHOICE_NONE], "None");
   strcpy(item->choices[HOTKEY_CHOICE_MENU], "Menu");
   strcpy(item->choices[HOTKEY_CHOICE_WARP], "Warp");
@@ -1982,6 +1989,7 @@ static void set_hotkey_choices(struct menu_item *item) {
   strcpy(item->choices[HOTKEY_CHOICE_ACTIVE_DISPLAY], "Change Active Display");
   strcpy(item->choices[HOTKEY_CHOICE_PIP_LOCATION], "Change PIP Location");
   strcpy(item->choices[HOTKEY_CHOICE_PIP_SWAP], "Swap PIP");
+  strcpy(item->choices[HOTKEY_CHOICE_40_80_COLUMN], "40/80 Column");
   item->choice_ints[HOTKEY_CHOICE_NONE] = BTN_ASSIGN_UNDEF;
   item->choice_ints[HOTKEY_CHOICE_MENU] = BTN_ASSIGN_MENU;
   item->choice_ints[HOTKEY_CHOICE_WARP] = BTN_ASSIGN_WARP;
@@ -1995,6 +2003,7 @@ static void set_hotkey_choices(struct menu_item *item) {
   item->choice_ints[HOTKEY_CHOICE_ACTIVE_DISPLAY] = BTN_ASSIGN_ACTIVE_DISPLAY;
   item->choice_ints[HOTKEY_CHOICE_PIP_LOCATION] = BTN_ASSIGN_PIP_LOCATION;
   item->choice_ints[HOTKEY_CHOICE_PIP_SWAP] = BTN_ASSIGN_PIP_SWAP;
+  item->choice_ints[HOTKEY_CHOICE_40_80_COLUMN] = BTN_ASSIGN_40_80_COLUMN;
 
   if (machine_class != VICE_MACHINE_C64 && machine_class != VICE_MACHINE_C128) {
      item->choice_disabled[HOTKEY_CHOICE_SWAP_PORTS] = 1;
@@ -2005,6 +2014,7 @@ static void set_hotkey_choices(struct menu_item *item) {
      item->choice_disabled[HOTKEY_CHOICE_ACTIVE_DISPLAY] = 1;
      item->choice_disabled[HOTKEY_CHOICE_PIP_LOCATION] = 1;
      item->choice_disabled[HOTKEY_CHOICE_PIP_SWAP] = 1;
+     item->choice_disabled[HOTKEY_CHOICE_40_80_COLUMN] = 1;
   }
 }
 
@@ -2364,6 +2374,11 @@ void build_menu(struct menu_item *root) {
   strcpy(child->choices[KEYBOARD_TYPE_US], "US");
   strcpy(child->choices[KEYBOARD_TYPE_UK], "UK");
 
+  if (machine_class == VICE_MACHINE_C128) {
+     c40_80_column_item = ui_menu_add_toggle(
+        MENU_40_80_COLUMN, parent, "40/80 Column", 1 /* default 40 col */);
+  }
+
 #ifdef RASPI_SUPPORT_PCB
   if (machine_class == VICE_MACHINE_C64) {
     child = use_pcb_item = ui_menu_add_toggle(
@@ -2539,7 +2554,7 @@ void build_menu(struct menu_item *root) {
         0.0d, 0.0d, 0.0d, 0.0d, 1);
   }
 
-  video_init_overlay(overlay_padding_item->value);
+  video_init_overlay(overlay_padding_item->value, c40_80_column_item->value);
 
   joystick_set_potx(pot_x_high_value);
   joystick_set_poty(pot_y_high_value);
@@ -2642,6 +2657,10 @@ void menu_quick_func(int button_assignment) {
   case BTN_ASSIGN_PIP_SWAP:
     pip_swapped_item->value = 1 - pip_swapped_item->value;
     menu_value_changed(pip_swapped_item);
+    break;
+  case BTN_ASSIGN_40_80_COLUMN:
+    c40_80_column_item->value = 1 - c40_80_column_item->value;
+    menu_value_changed(c40_80_column_item);
     break;
   default:
     break;
