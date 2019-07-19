@@ -121,12 +121,14 @@ bool ViceScreenApp::Initialize(void) {
     return false;
   }
 
-  if (!mScreen.Initialize()) {
-    return false;
-  }
-
-  if (!mLogger.Initialize(&mScreen)) {
-    return false;
+  if (mViceOptions.SerialEnabled()) {
+     if (!mLogger.Initialize(&mSerial)) {
+        return false;
+     }
+  } else {
+     if (!mLogger.Initialize(&mNullDevice)) {
+        return false;
+     }
   }
 
   if (!mEmulatorCore.Initialize()) {
@@ -376,10 +378,6 @@ bool ViceStdioApp::Initialize(void) {
 
   // This takes 1.5 seconds to init.
   if (!mDWHCI.Initialize()) {
-    return false;
-  }
-
-  if (!mConsole.Initialize()) {
     return false;
   }
 

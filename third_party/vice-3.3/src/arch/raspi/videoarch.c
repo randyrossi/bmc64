@@ -711,12 +711,16 @@ void main_exit(void) {
   // We should never get here.  If we do, it's probably
   // because essential roms are missing.  So display a message
   // to that effect.
-
   int i;
-  uint8_t *fb = circle_get_fb1();
-  int fb_pitch = circle_get_fb1_pitch();
-  int h = circle_get_fb1_h();
-  bzero(fb, h * fb_pitch);
+  uint8_t *fb;
+  int fb_pitch;
+  int fb_width = 320;
+  int fb_height = 240;
+
+  circle_alloc_fb2(FB_LAYER_VIC, &fb,
+                      fb_width, fb_height, &fb_pitch);
+  circle_clear_fb2(FB_LAYER_VIC);
+  circle_show_fb2(FB_LAYER_VIC);
 
   video_font = (uint8_t *)&font8x8_basic;
   for (i = 0; i < 256; ++i) {
@@ -739,9 +743,10 @@ void main_exit(void) {
                    fb_pitch);
   y += 8;
 
-  circle_set_fb1_palette(0, COLOR16(0, 0, 0));
-  circle_set_fb1_palette(1, COLOR16(255 >> 3, 255 >> 3, 255 >> 3));
-  circle_update_fb1_palette();
+  circle_set_palette_fb2(FB_LAYER_VIC, 0, COLOR16(0, 0, 0));
+  circle_set_palette_fb2(FB_LAYER_VIC, 1, COLOR16(255, 255, 255));
+  circle_update_palette_fb2(FB_LAYER_VIC);
+  circle_frames_ready_fb2(FB_LAYER_VIC, -1, 0);
 }
 
 // These will revert back to 0 when the user moves off the

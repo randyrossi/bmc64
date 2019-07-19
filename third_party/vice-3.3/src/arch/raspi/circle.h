@@ -176,15 +176,6 @@ extern void circle_wait_vsync();
 extern void circle_yield();
 extern void circle_check_gpio();
 
-// For FB1
-extern uint8_t *circle_get_fb1();
-extern int circle_get_fb1_pitch();
-extern void circle_set_fb1_palette(uint8_t, uint16_t);
-extern void circle_update_fb1_palette();
-extern int circle_get_fb1_w();
-extern int circle_get_fb1_h();
-extern void circle_set_fb1_y(int);
-
 // For FB2
 extern int circle_alloc_fb2(int layer, uint8_t **pixels,
                             int width, int height, int *pitch);

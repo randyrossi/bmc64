@@ -54,56 +54,14 @@ int circle_get_machine_timing() {
   return static_kernel->circle_get_machine_timing();
 }
 
-// circle hooks, these will disappear when we move away from circle
-uint8_t *circle_get_fb1() {
-  // Frame buffer guaranteed to be ready before vice can call this
-  // so this is okay.
-  return static_kernel->circle_get_fb1();
-}
-
-int circle_get_fb1_pitch() {
-  // Frame buffer guaranteed to be ready before vice can call this.
-  return static_kernel->circle_get_fb1_pitch();
-}
-
 void circle_sleep(long delay) {
   // Timer guaranteed to be ready before vice can call this.
   return static_kernel->circle_sleep(delay);
 }
 
-void circle_set_fb1_palette(uint8_t index, uint16_t rgb565) {
-  // Screen guaranteed to be ready before vice can call this.
-  return static_kernel->circle_set_fb1_palette(index, rgb565);
-}
-
-void circle_update_fb1_palette() {
-  // Screen guaranteed to be ready before vice can call this.
-  return static_kernel->circle_update_fb1_palette();
-}
-
-int circle_get_fb1_w() {
-  // Screen guaranteed to be ready before vice can call this.
-  return static_kernel->circle_get_fb1_w();
-}
-
-int circle_get_fb1_h() {
-  // Screen guaranteed to be ready before vice can call this.
-  return static_kernel->circle_get_fb1_h();
-}
-
 unsigned long circle_get_ticks() {
   // Timer guaranteed to be ready before vice can call this.
   return static_kernel->circle_get_ticks();
-}
-
-void circle_set_fb1_y(int loc) {
-  // Screen guaranteed to be ready before vice can call this.
-  static_kernel->circle_set_fb1_y(loc);
-}
-
-void circle_wait_vsync() {
-  // Screen guaranteed to be ready before vice can call this.
-  static_kernel->circle_wait_vsync();
 }
 
 int circle_sound_bufferspace() {
@@ -782,27 +740,6 @@ int CKernel::circle_get_machine_timing() {
 void CKernel::circle_sleep(long delay) { mTimer.SimpleusDelay(delay); }
 
 unsigned long CKernel::circle_get_ticks() { return mTimer.GetClockTicks(); }
-
-void CKernel::circle_wait_vsync() { mScreen.WaitForVerticalSync(); }
-
-// For FB1
-
-uint8_t *CKernel::circle_get_fb1() { return (uint8_t *)mScreen.GetBuffer(); }
-
-int CKernel::circle_get_fb1_pitch() { return mScreen.GetPitch(); }
-
-void CKernel::circle_set_fb1_palette(uint8_t index, uint16_t rgb565) {
-  mScreen.SetPalette(index, rgb565);
-}
-
-void CKernel::circle_update_fb1_palette() { mScreen.UpdatePalette(); }
-
-int CKernel::circle_get_fb1_w() { return mScreen.GetWidth(); }
-
-int CKernel::circle_get_fb1_h() { return mScreen.GetHeight(); }
-
-void CKernel::circle_set_fb1_y(int loc) { mScreen.SetVirtualOffset(0, loc); }
-
 
 // Called from VICE: Core 1
 int CKernel::circle_sound_init(const char *param, int *speed, int *fragsize,

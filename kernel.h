@@ -19,7 +19,6 @@
 #include "viceapp.h"
 #include <setjmp.h>
 
-#include "vicescreen.h"
 #include "vicesound.h"
 #include <circle/actled.h>
 #include <circle/cputhrottle.h>

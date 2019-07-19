@@ -17,7 +17,6 @@
 #define _viceapp_h
 
 #include "viceoptions.h"
-#include "vicescreen.h"
 #include <SDCard/emmc.h>
 #include <circle/actled.h>
 #include <circle/devicenameservice.h>
@@ -91,7 +90,7 @@
 // Keyboard pins PB0-7 (Pins 12-5 ) are indices 8-15 (but PB lines 3,7 swapped)
 
 // These are indices within the master gpio array for some
-// special pins we need to address. 
+// special pins we need to address.
 #define GPIO_JOY_1_UP_INDEX     12
 #define GPIO_JOY_1_DOWN_INDEX   13
 #define GPIO_JOY_1_LEFT_INDEX   14
@@ -172,8 +171,8 @@ class ViceScreenApp : public ViceApp {
 public:
   ViceScreenApp(const char *kernel)
       : ViceApp(kernel), mEmulatorCore(&mMemory),
-        mScreen(mViceOptions.GetFB1Width(), mViceOptions.GetFB1Height()),
-        mTimer(&mInterrupt), mLogger(mOptions.GetLogLevel(), &mTimer),
+        mTimer(&mInterrupt),
+        mLogger(mOptions.GetLogLevel(), &mTimer),
         mGPIOManager(&mInterrupt), mVCHIQ(&mMemory, &mInterrupt) {}
 
   virtual bool Initialize(void);
@@ -182,7 +181,6 @@ protected:
   void SetupGPIO();
 
   ViceEmulatorCore mEmulatorCore;
-  CViceScreenDevice mScreen;
   CTimer mTimer;
   CLogger mLogger;
   CScheduler mScheduler;
@@ -200,7 +198,8 @@ class ViceStdioApp : public ViceScreenApp {
 public:
   ViceStdioApp(const char *kernel)
       : ViceScreenApp(kernel), mDWHCI(&mInterrupt, &mTimer),
-        mEMMC(&mInterrupt, &mTimer, &mActLED), mConsole(&mScreen) {}
+        mEMMC(&mInterrupt, &mTimer, &mActLED)
+        {}
 
   virtual bool Initialize(void);
   virtual void Cleanup(void);
@@ -221,7 +220,6 @@ protected:
   CDWHCIDevice mDWHCI;
   CEMMCDevice mEMMC;
   FATFS mFileSystem;
-  CConsole mConsole;
 
   int mBootStatWhat[MAX_BOOTSTAT_LINES];
   char *mBootStatFile[MAX_BOOTSTAT_LINES];
