@@ -877,7 +877,8 @@ static void ui_render_children(struct menu_item *node, int *index, int indent) {
           if (node->divisor == 1) {
              sprintf(node->scratch, "%d", node->value);
           } else {
-             sprintf(node->scratch, "%f",
+             // TODO: Don't assume 2 decimal places. Use divisor.
+             sprintf(node->scratch, "%.2f",
                 (float)node->value / (float)node->divisor);
           }
           ui_draw_text(node->scratch, node->menu_left + node->menu_width -

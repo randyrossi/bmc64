@@ -78,26 +78,6 @@ uint16_t video_font_translate[256];
 static int vic_first_refresh;
 static int vdc_first_refresh;
 
-static double initial_vic_h_border_trim;
-static double initial_vic_v_border_trim;
-static double initial_vic_aspect = 1.45d;
-static double initial_vic_lpad;
-static double initial_vic_rpad;
-static double initial_vic_tpad;
-static double initial_vic_bpad;
-static int initial_vic_zlayer;
-
-static double initial_vdc_h_border_trim;
-static double initial_vdc_v_border_trim;
-static double initial_vdc_aspect = 1.45d;
-static double initial_vdc_lpad;
-static double initial_vdc_rpad;
-static double initial_vdc_tpad;
-static double initial_vdc_bpad;
-static int initial_vdc_zlayer;
-
-static int initial_status_padding;
-
 // We tell vice our clock resolution is the actual vertical
 // refresh rate of the machine * some factor. We report our
 // tick count when asked for the current time which is incremented
@@ -265,36 +245,10 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
   canvas_num++;
 }
 
-// Just tells videoarch what the initial values should be.
-// Any real time adjustments should be made via
-// apply_video_adjustments
-void set_initial_video_adjustment_values(int layer,
-      double hborder, double vborder, double aspect,
-      double lpad, double rpad, double tpad, double bpad,
-      int zlayer) {
-  if (layer == FB_LAYER_VIC) {
-     initial_vic_h_border_trim = hborder;
-     initial_vic_v_border_trim = hborder;
-     initial_vic_aspect = aspect;
-     initial_vic_lpad = lpad;
-     initial_vic_rpad = rpad;
-     initial_vic_tpad = tpad;
-     initial_vic_bpad = bpad;
-     initial_vic_zlayer = zlayer;
-  } else if (layer == FB_LAYER_VDC) {
-     initial_vdc_h_border_trim = hborder;
-     initial_vdc_v_border_trim = hborder;
-     initial_vdc_aspect = aspect;
-     initial_vdc_lpad = lpad;
-     initial_vdc_rpad = rpad;
-     initial_vdc_tpad = tpad;
-     initial_vdc_bpad = bpad;
-     initial_vdc_zlayer = zlayer;
-  }
-}
-
-void set_initial_status_padding(int padding) {
-  initial_status_padding = padding;
+void video_init_overlay(int padding) {
+  overlay_init(vic_canvas->draw_buffer->canvas_physical_width,
+               vic_canvas->draw_buffer->canvas_physical_height,
+               padding);
 }
 
 void apply_video_adjustments(int layer,
@@ -467,29 +421,14 @@ void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
   // boot warp on first refresh.
   if (is_vic(canvas)) {
      if (vic_first_refresh == 1) {
-        // Apply current settings before ensure_video shows anything.
-        apply_video_adjustments(FB_LAYER_VIC,
-            initial_vic_h_border_trim, initial_vic_v_border_trim,
-            initial_vic_aspect,
-            initial_vic_lpad, initial_vic_rpad,
-            initial_vic_tpad, initial_vic_bpad,
-            initial_vic_zlayer);
         resources_set_int("WarpMode", 1);
         raspi_boot_warp = 1;
         vic_first_refresh = 0;
 
-        overlay_init(vic_canvas->draw_buffer->canvas_physical_width,
-                     vic_canvas->draw_buffer->canvas_physical_height,
-                     initial_status_padding);
      }
   } else {
      if (vdc_first_refresh == 1) {
-        apply_video_adjustments(FB_LAYER_VDC,
-            initial_vdc_h_border_trim, initial_vdc_v_border_trim,
-            initial_vdc_aspect,
-            initial_vdc_lpad, initial_vic_rpad,
-            initial_vdc_tpad, initial_vic_bpad,
-            initial_vdc_zlayer);
+        // Nothing to do.  Consider removing.
         vdc_first_refresh = 0;
      }
   }

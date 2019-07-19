@@ -122,8 +122,7 @@ void circle_emu_joy_interrupt(int type, int port, int value);
 // Called by menu after color setting changed (brightness, contrast...)
 void video_color_setting_changed(int display_num);
 
-void set_initial_video_adjustment_values(int layer, double hborder, double vborder, double aspect, double lpad, double rpad, double tpad, double bpad, int zlayer);
-void set_initial_status_padding(int padding);
+void video_init_overlay(int padding);
 
 void apply_video_adjustments(int layer, double hborder, double vborder, double aspect, double lpad, double rpad, double tpad, double bpad, int zlayer);
 

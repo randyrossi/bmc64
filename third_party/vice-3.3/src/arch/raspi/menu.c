@@ -2501,21 +2501,21 @@ void build_menu(struct menu_item *root) {
   ui_set_hotkeys();
   ui_set_joy_devs();
 
-  set_initial_video_adjustment_values(FB_LAYER_VIC,
+  apply_video_adjustments(FB_LAYER_VIC,
      (double)(100-h_border_item_0->value) / 100.0d,
      (double)(100-v_border_item_0->value) / 100.0d,
      (double)(aspect_item_0->value) / 100.0d,
      0.0d, 0.0d, 0.0d, 0.0d, 0);
 
   if (machine_class == VICE_MACHINE_C128) {
-     set_initial_video_adjustment_values(FB_LAYER_VDC,
+     apply_video_adjustments(FB_LAYER_VDC,
         (double)(100-h_border_item_1->value) / 100.0d,
         (double)(100-v_border_item_1->value) / 100.0d,
         (double)(aspect_item_1->value) / 100.0d,
         0.0d, 0.0d, 0.0d, 0.0d, 1);
   }
 
-  set_initial_status_padding(overlay_padding_item->value);
+  video_init_overlay(overlay_padding_item->value);
 
   joystick_set_potx(pot_x_high_value);
   joystick_set_poty(pot_y_high_value);
