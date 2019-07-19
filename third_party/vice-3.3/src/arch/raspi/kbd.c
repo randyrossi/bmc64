@@ -189,6 +189,8 @@ signed long kbd_arch_keyname_to_keynum(char *keyname) {
     return (long)KEYCODE_Tab;
   } else if (strcmp(keyname, "Control_L") == 0) {
     return (long)KEYCODE_LeftControl;
+  } else if (strcmp(keyname, "Control_R") == 0) {
+    return (long)KEYCODE_RightControl;
   } else if (strcmp(keyname, "Alt_L") == 0) {
     return (long)KEYCODE_LeftAlt;
   } else if (strcmp(keyname, "Escape") == 0) {
@@ -211,6 +213,14 @@ signed long kbd_arch_keyname_to_keynum(char *keyname) {
     return (long)KEYCODE_F7;
   } else if (strcmp(keyname, "F8") == 0) {
     return (long)KEYCODE_F8;
+  } else if (strcmp(keyname, "F9") == 0) {
+    return (long)KEYCODE_F9;
+  } else if (strcmp(keyname, "F10") == 0) {
+    return (long)KEYCODE_F10;
+  } else if (strcmp(keyname, "F11") == 0) {
+    return (long)KEYCODE_F11;
+  } else if (strcmp(keyname, "ScrollLock") == 0) {
+    return (long)KEYCODE_ScrollLock;
   }
 
   return 0;
