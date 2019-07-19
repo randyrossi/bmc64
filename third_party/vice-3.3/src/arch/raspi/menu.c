@@ -1968,6 +1968,9 @@ static void set_hotkey_choices(struct menu_item *item) {
   strcpy(item->choices[HOTKEY_CHOICE_CART_FREEZE], "Cart Freeze");
   strcpy(item->choices[HOTKEY_CHOICE_RESET_HARD], "Hard Reset");
   strcpy(item->choices[HOTKEY_CHOICE_RESET_SOFT], "Soft Reset");
+  strcpy(item->choices[HOTKEY_CHOICE_ACTIVE_DISPLAY], "Change Active Display");
+  strcpy(item->choices[HOTKEY_CHOICE_PIP_LOCATION], "Change PIP Location");
+  strcpy(item->choices[HOTKEY_CHOICE_PIP_SWAP], "Swap PIP");
   item->choice_ints[HOTKEY_CHOICE_NONE] = BTN_ASSIGN_UNDEF;
   item->choice_ints[HOTKEY_CHOICE_MENU] = BTN_ASSIGN_MENU;
   item->choice_ints[HOTKEY_CHOICE_WARP] = BTN_ASSIGN_WARP;
