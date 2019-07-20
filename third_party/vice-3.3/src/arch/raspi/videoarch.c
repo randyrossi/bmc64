@@ -171,11 +171,11 @@ int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
     if (layer == FB_LAYER_VDC) {
        j = vdc_map[i];
     }
-    circle_set_palette_fb2(layer, i,
+    circle_set_palette_fbl(layer, i,
                      COLOR16(p->entries[j].red, p->entries[j].green,
                              p->entries[j].blue));
   }
-  circle_update_palette_fb2(layer);
+  circle_update_palette_fbl(layer);
 }
 
 // Draw buffer bridge functions back to kernel
@@ -184,19 +184,19 @@ static int draw_buffer_alloc(struct video_canvas_s *canvas,
                              unsigned int fb_width, unsigned int fb_height,
                              unsigned int *fb_pitch) {
    if (is_vdc(canvas)) {
-      return circle_alloc_fb2(FB_LAYER_VDC, draw_buffer,
+      return circle_alloc_fbl(FB_LAYER_VDC, draw_buffer,
                               fb_width, fb_height, fb_pitch);
    } else {
-      return circle_alloc_fb2(FB_LAYER_VIC, draw_buffer,
+      return circle_alloc_fbl(FB_LAYER_VIC, draw_buffer,
                               fb_width, fb_height, fb_pitch);
    }
 }
 
 static void draw_buffer_free(struct video_canvas_s *canvas, uint8_t *draw_buffer) {
    if (is_vdc(canvas)) {
-      circle_free_fb2(FB_LAYER_VDC);
+      circle_free_fbl(FB_LAYER_VDC);
    } else {
-      circle_free_fb2(FB_LAYER_VIC);
+      circle_free_fbl(FB_LAYER_VIC);
    }
 }
 
@@ -204,9 +204,9 @@ static void draw_buffer_clear(struct video_canvas_s *canvas, uint8_t *draw_buffe
                               uint8_t value, unsigned int fb_width,
                               unsigned int fb_height, unsigned int fb_pitch) {
    if (is_vdc(canvas)) {
-      circle_clear_fb2(FB_LAYER_VDC);
+      circle_clear_fbl(FB_LAYER_VDC);
    } else {
-      circle_clear_fb2(FB_LAYER_VIC);
+      circle_clear_fbl(FB_LAYER_VIC);
    }
 }
 
@@ -261,7 +261,7 @@ void apply_video_adjustments(int layer,
   int index;
   struct video_canvas_s *canvas;
 
-  circle_hide_fb2(layer);
+  circle_hide_fbl(layer);
   if (layer == FB_LAYER_VIC) {
      vic_showing = 0;
      index = vic_canvas_index;
@@ -273,10 +273,10 @@ void apply_video_adjustments(int layer,
      canvas = vdc_canvas;
   }
 
-  circle_set_zlayer_fb2(layer, zlayer);
-  circle_set_padding_fb2(layer, lpad, rpad, tpad, bpad);
+  circle_set_zlayer_fbl(layer, zlayer);
+  circle_set_padding_fbl(layer, lpad, rpad, tpad, bpad);
 
-  circle_set_aspect_fb2(layer, aspect);
+  circle_set_aspect_fbl(layer, aspect);
 
   canvas_state[index].border_w =
      canvas_state[index].max_border_w * hborder;
@@ -315,7 +315,7 @@ void apply_video_adjustments(int layer,
 
   canvas_state[index].overlay_x = canvas_state[index].left;
 
-  circle_set_src_rect_fb2(layer,
+  circle_set_src_rect_fbl(layer,
            canvas_state[index].left,
            canvas_state[index].top,
            canvas_state[index].vis_w,
@@ -461,26 +461,26 @@ void enable_vdc(int enabled) {
 // be showing.
 void ensure_video(void) {
   if (vic_enabled && !vic_showing) {
-     circle_show_fb2(FB_LAYER_VIC);
+     circle_show_fbl(FB_LAYER_VIC);
      vic_showing = 1;
   } else if (!vic_enabled && vic_showing) {
-     circle_hide_fb2(FB_LAYER_VIC);
+     circle_hide_fbl(FB_LAYER_VIC);
      vic_showing = 0;
   }
 
   if (vdc_enabled && !vdc_showing) {
-     circle_show_fb2(FB_LAYER_VDC);
+     circle_show_fbl(FB_LAYER_VDC);
      vdc_showing = 1;
   } else if (!vdc_enabled && vdc_showing) {
-     circle_hide_fb2(FB_LAYER_VDC);
+     circle_hide_fbl(FB_LAYER_VDC);
      vdc_showing = 0;
   }
 
   if (overlay_enabled && !overlay_showing) {
-     circle_show_fb2(FB_LAYER_STATUS);
+     circle_show_fbl(FB_LAYER_STATUS);
      overlay_showing = 1;
   } else if (!overlay_enabled && overlay_showing) {
-     circle_hide_fb2(FB_LAYER_STATUS);
+     circle_hide_fbl(FB_LAYER_STATUS);
      overlay_showing = 0;
   }
 }
@@ -493,13 +493,13 @@ void vsyncarch_postsync(void) {
     // The only way we can be here and have ui_activated=1
     // is for an osd to be enabled.
     ui_render_now();
-    circle_frames_ready_fb2(FB_LAYER_UI, -1 /* no 2nd layer */, 0 /* no sync */);
+    circle_frames_ready_fbl(FB_LAYER_UI, -1 /* no 2nd layer */, 0 /* no sync */);
     ui_check_key();
   }
 
   if (overlay_showing) {
     overlay_check();
-    circle_frames_ready_fb2(FB_LAYER_STATUS, -1 /* no 2nd layer */, 0 /* no sync */);
+    circle_frames_ready_fbl(FB_LAYER_STATUS, -1 /* no 2nd layer */, 0 /* no sync */);
   }
 
   video_ticks += video_tick_inc;
@@ -532,7 +532,7 @@ void vsyncarch_postsync(void) {
   // END UGLY HACK
 
   // Hold for vsync unless warping or in boot warp.
-  circle_frames_ready_fb2(FB_LAYER_VIC,
+  circle_frames_ready_fbl(FB_LAYER_VIC,
                          machine_class == VICE_MACHINE_C128 ? FB_LAYER_VDC : -1,
                          !raspi_boot_warp && !raspi_warp);
 
@@ -656,10 +656,10 @@ void main_exit(void) {
   int fb_width = 320;
   int fb_height = 240;
 
-  circle_alloc_fb2(FB_LAYER_VIC, &fb,
+  circle_alloc_fbl(FB_LAYER_VIC, &fb,
                       fb_width, fb_height, &fb_pitch);
-  circle_clear_fb2(FB_LAYER_VIC);
-  circle_show_fb2(FB_LAYER_VIC);
+  circle_clear_fbl(FB_LAYER_VIC);
+  circle_show_fbl(FB_LAYER_VIC);
 
   video_font = (uint8_t *)&font8x8_basic;
   for (i = 0; i < 256; ++i) {
@@ -682,10 +682,10 @@ void main_exit(void) {
                    fb_pitch);
   y += 8;
 
-  circle_set_palette_fb2(FB_LAYER_VIC, 0, COLOR16(0, 0, 0));
-  circle_set_palette_fb2(FB_LAYER_VIC, 1, COLOR16(255, 255, 255));
-  circle_update_palette_fb2(FB_LAYER_VIC);
-  circle_frames_ready_fb2(FB_LAYER_VIC, -1, 0);
+  circle_set_palette_fbl(FB_LAYER_VIC, 0, COLOR16(0, 0, 0));
+  circle_set_palette_fbl(FB_LAYER_VIC, 1, COLOR16(255, 255, 255));
+  circle_update_palette_fbl(FB_LAYER_VIC);
+  circle_frames_ready_fbl(FB_LAYER_VIC, -1, 0);
 }
 
 // These will revert back to 0 when the user moves off the

@@ -150,8 +150,8 @@ void ui_init_menu(void) {
   ui_key_ticks_repeats_next = 0;
 
   // Let's create our UI frame buffer
-  circle_alloc_fb2(FB_LAYER_UI, &ui_fb, ui_fb_w, ui_fb_h, &ui_fb_pitch);
-  circle_clear_fb2(FB_LAYER_UI);
+  circle_alloc_fbl(FB_LAYER_UI, &ui_fb, ui_fb_w, ui_fb_h, &ui_fb_pitch);
+  circle_clear_fbl(FB_LAYER_UI);
 }
 
 // Draw a single character at x,y coords into the offscreen area
@@ -431,13 +431,13 @@ static void ui_action_frame() {
 
 static void ui_render_single_frame() {
   ui_render_now();
-  circle_frames_ready_fb2(FB_LAYER_UI, -1 /* no 2nd layer */, 1 /* sync */);
+  circle_frames_ready_fbl(FB_LAYER_UI, -1 /* no 2nd layer */, 1 /* sync */);
   circle_yield();
 }
 
 static void pause_trap(uint16_t addr, void *data) {
   menu_about_to_activate();
-  circle_show_fb2(FB_LAYER_UI);
+  circle_show_fbl(FB_LAYER_UI);
   while (ui_activated) {
     circle_check_gpio();
     ui_check_key();
@@ -449,7 +449,7 @@ static void pause_trap(uint16_t addr, void *data) {
     ensure_video();
   }
   menu_about_to_deactivate();
-  circle_hide_fb2(FB_LAYER_UI);
+  circle_hide_fbl(FB_LAYER_UI);
 }
 
 static void ui_toggle(void) {
@@ -1209,8 +1209,8 @@ void ui_enable_osd(void) {
   osd_active = 1;
   ui_activated = 1;
   ui_make_transparent();
-  circle_frames_ready_fb2(FB_LAYER_UI, -1 /* no 2nd layer */, 0 /* nosync */);
-  circle_show_fb2(FB_LAYER_UI);
+  circle_frames_ready_fbl(FB_LAYER_UI, -1 /* no 2nd layer */, 0 /* nosync */);
+  circle_show_fbl(FB_LAYER_UI);
 }
 
 void ui_disable_osd(void) {
@@ -1218,7 +1218,7 @@ void ui_disable_osd(void) {
   // We don't set ui_activated to 0 here. We rely on
   // pop and toggle to dismiss OSDs which does the
   // right thing.
-  circle_hide_fb2(FB_LAYER_UI);
+  circle_hide_fbl(FB_LAYER_UI);
 }
 
 void ui_dismiss_osd_if_active(void) {

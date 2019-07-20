@@ -1,5 +1,5 @@
 //
-// fb2.h
+// fbl.h
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@
 
 #include "bcm_host.h"
 
-class FrameBuffer2 {
+// A wrapper that manages a single dispmanx layer and
+// indexed frame buffer.
+class FrameBufferLayer {
 public:
-  FrameBuffer2();
-  virtual ~FrameBuffer2();
+  FrameBufferLayer();
+  virtual ~FrameBufferLayer();
 
   // Sets the layer for this frame buffer. Must be called before Allocate.
   void SetLayer(int layer);
@@ -90,7 +92,7 @@ public:
 
   // make off screen resources for fb1 (and optionally fb2) visible
   // then swap destination resources in prep for next frame
-  static void SwapResources(FrameBuffer2* fb1, FrameBuffer2* fb2);
+  static void SwapResources(FrameBufferLayer* fb1, FrameBufferLayer* fb2);
 
 private:
 

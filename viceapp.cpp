@@ -15,7 +15,7 @@
 
 #include "viceapp.h"
 
-#include "fb2.h"
+#include "fbl.h"
 
 #if defined(RASPI_C64)
 int dflt_bootStatNum = 19;
@@ -149,7 +149,7 @@ bool ViceScreenApp::Initialize(void) {
 
   SetupGPIO();
 
-  FrameBuffer2::Initialize();
+  FrameBufferLayer::Initialize();
 
   return true;
 }

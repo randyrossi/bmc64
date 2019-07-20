@@ -128,65 +128,65 @@ int circle_cycles_per_sec() {
   return static_kernel->circle_cycles_per_second();
 }
 
-int circle_alloc_fb2(int layer, uint8_t **pixels,
+int circle_alloc_fbl(int layer, uint8_t **pixels,
                      int width, int height, int *pitch) {
-  return static_kernel->circle_alloc_fb2(layer, pixels, width, height, pitch);
+  return static_kernel->circle_alloc_fbl(layer, pixels, width, height, pitch);
 }
 
-void circle_free_fb2(int layer) {
-  static_kernel->circle_free_fb2(layer);
+void circle_free_fbl(int layer) {
+  static_kernel->circle_free_fbl(layer);
 }
 
-void circle_clear_fb2(int layer) {
-  static_kernel->circle_clear_fb2(layer);
+void circle_clear_fbl(int layer) {
+  static_kernel->circle_clear_fbl(layer);
 }
 
-void circle_show_fb2(int layer) {
-  static_kernel->circle_show_fb2(layer);
+void circle_show_fbl(int layer) {
+  static_kernel->circle_show_fbl(layer);
 }
 
-void circle_hide_fb2(int layer) {
-  static_kernel->circle_hide_fb2(layer);
+void circle_hide_fbl(int layer) {
+  static_kernel->circle_hide_fbl(layer);
 }
 
-void circle_frames_ready_fb2(int layer1, int layer2, int sync) {
-  static_kernel->circle_frames_ready_fb2(layer1, layer2, sync);
+void circle_frames_ready_fbl(int layer1, int layer2, int sync) {
+  static_kernel->circle_frames_ready_fbl(layer1, layer2, sync);
 }
 
-void circle_set_palette_fb2(int layer, uint8_t index, uint16_t rgb565) {
-  static_kernel->circle_set_palette_fb2(layer, index, rgb565);
+void circle_set_palette_fbl(int layer, uint8_t index, uint16_t rgb565) {
+  static_kernel->circle_set_palette_fbl(layer, index, rgb565);
 }
 
-void circle_update_palette_fb2(int layer) {
-  static_kernel->circle_update_palette_fb2(layer);
+void circle_update_palette_fbl(int layer) {
+  static_kernel->circle_update_palette_fbl(layer);
 }
 
-void circle_set_aspect_fb2(int layer, double aspect) {
-  static_kernel->circle_set_aspect_fb2(layer, aspect);
+void circle_set_aspect_fbl(int layer, double aspect) {
+  static_kernel->circle_set_aspect_fbl(layer, aspect);
 }
 
-void circle_set_src_rect_fb2(int layer, int x, int y, int w, int h) {
-  static_kernel->circle_set_src_rect_fb2(layer, x,y,w,h);
+void circle_set_src_rect_fbl(int layer, int x, int y, int w, int h) {
+  static_kernel->circle_set_src_rect_fbl(layer, x,y,w,h);
 }
 
-void circle_set_valign_fb2(int layer, int align, int padding) {
-  static_kernel->circle_set_valign_fb2(layer, align, padding);
+void circle_set_valign_fbl(int layer, int align, int padding) {
+  static_kernel->circle_set_valign_fbl(layer, align, padding);
 }
 
-void circle_set_halign_fb2(int layer, int align, int padding) {
-  static_kernel->circle_set_halign_fb2(layer, align, padding);
+void circle_set_halign_fbl(int layer, int align, int padding) {
+  static_kernel->circle_set_halign_fbl(layer, align, padding);
 }
 
-void circle_set_padding_fb2(int layer, double lpad, double rpad, double tpad, double bpad) {
-  static_kernel->circle_set_padding_fb2(layer, lpad, rpad, tpad, bpad);
+void circle_set_padding_fbl(int layer, double lpad, double rpad, double tpad, double bpad) {
+  static_kernel->circle_set_padding_fbl(layer, lpad, rpad, tpad, bpad);
 }
 
-void circle_set_zlayer_fb2(int layer, int zlayer) {
-  static_kernel->circle_set_zlayer_fb2(layer, zlayer);
+void circle_set_zlayer_fbl(int layer, int zlayer) {
+  static_kernel->circle_set_zlayer_fbl(layer, zlayer);
 }
 
-int circle_get_zlayer_fb2(int layer) {
-  return static_kernel->circle_get_zlayer_fb2(layer);
+int circle_get_zlayer_fbl(int layer) {
+  return static_kernel->circle_get_zlayer_fbl(layer);
 }
 
 };
@@ -211,17 +211,17 @@ CKernel::CKernel(void)
     }
   }
 
-  fb2[FB_LAYER_VIC].SetLayer(0);
-  fb2[FB_LAYER_VIC].SetTransparency(false);
+  fbl[FB_LAYER_VIC].SetLayer(0);
+  fbl[FB_LAYER_VIC].SetTransparency(false);
 
-  fb2[FB_LAYER_VDC].SetLayer(1);
-  fb2[FB_LAYER_VDC].SetTransparency(false);
+  fbl[FB_LAYER_VDC].SetLayer(1);
+  fbl[FB_LAYER_VDC].SetTransparency(false);
 
-  fb2[FB_LAYER_STATUS].SetLayer(2);
-  fb2[FB_LAYER_STATUS].SetTransparency(true);
+  fbl[FB_LAYER_STATUS].SetLayer(2);
+  fbl[FB_LAYER_STATUS].SetTransparency(true);
 
-  fb2[FB_LAYER_UI].SetLayer(3);
-  fb2[FB_LAYER_UI].SetTransparency(true);
+  fbl[FB_LAYER_UI].SetLayer(3);
+  fbl[FB_LAYER_UI].SetTransparency(true);
 }
 
 bool CKernel::Initialize(void) {
@@ -1016,72 +1016,73 @@ int CKernel::circle_cycles_per_second() {
 }
 #endif
 
-int CKernel::circle_alloc_fb2(int layer, uint8_t **pixels,
+int CKernel::circle_alloc_fbl(int layer, uint8_t **pixels,
                               int width, int height, int *pitch) {
-  return fb2[layer].Allocate(pixels, width, height, pitch);  
+  return fbl[layer].Allocate(pixels, width, height, pitch);  
 }
 
-void CKernel::circle_free_fb2(int layer) {
-  fb2[layer].Free();
+void CKernel::circle_free_fbl(int layer) {
+  fbl[layer].Free();
 }
 
-void CKernel::circle_clear_fb2(int layer) {
-  fb2[layer].Clear();
+void CKernel::circle_clear_fbl(int layer) {
+  fbl[layer].Clear();
 }
 
-void CKernel::circle_show_fb2(int layer) {
-  fb2[layer].Show();
+void CKernel::circle_show_fbl(int layer) {
+  fbl[layer].Show();
 }
 
-void CKernel::circle_hide_fb2(int layer) {
-  fb2[layer].Hide();
+void CKernel::circle_hide_fbl(int layer) {
+  fbl[layer].Hide();
 }
 
-void CKernel::circle_frames_ready_fb2(int layer1, int layer2, int sync) {
+void CKernel::circle_frames_ready_fbl(int layer1, int layer2, int sync) {
   // If we're going to sync to vblank, indicate this frame data should go
   // to the offscreen resource.
-  fb2[layer1].FrameReady(sync);
+  fbl[layer1].FrameReady(sync);
   if (layer2 >= 0) {
-     fb2[layer2].FrameReady(sync);
+     fbl[layer2].FrameReady(sync);
   }
   if (sync) {
      // Flip the buffers and wait for vblank.
-     FrameBuffer2::SwapResources(&fb2[layer1], layer2 >= 0 ? &fb2[layer2] : nullptr);
+     FrameBufferLayer::SwapResources(
+         &fbl[layer1], layer2 >= 0 ? &fbl[layer2] : nullptr);
   }
 }
 
-void CKernel::circle_set_palette_fb2(int layer, uint8_t index, uint16_t rgb565) {
-  fb2[layer].SetPalette(index, rgb565);
+void CKernel::circle_set_palette_fbl(int layer, uint8_t index, uint16_t rgb565) {
+  fbl[layer].SetPalette(index, rgb565);
 }
 
-void CKernel::circle_update_palette_fb2(int layer) {
-  fb2[layer].UpdatePalette();
+void CKernel::circle_update_palette_fbl(int layer) {
+  fbl[layer].UpdatePalette();
 }
 
-void CKernel::circle_set_aspect_fb2(int layer, double aspect) {
-  fb2[layer].SetAspect(aspect);
+void CKernel::circle_set_aspect_fbl(int layer, double aspect) {
+  fbl[layer].SetAspect(aspect);
 }
 
-void CKernel::circle_set_src_rect_fb2(int layer, int x, int y, int w, int h) {
-  fb2[layer].SetSrcRect(x,y,w,h);
+void CKernel::circle_set_src_rect_fbl(int layer, int x, int y, int w, int h) {
+  fbl[layer].SetSrcRect(x,y,w,h);
 }
 
-void CKernel::circle_set_valign_fb2(int layer, int align, int padding) {
-  fb2[layer].SetVerticalAlignment(align, padding);
+void CKernel::circle_set_valign_fbl(int layer, int align, int padding) {
+  fbl[layer].SetVerticalAlignment(align, padding);
 }
 
-void CKernel::circle_set_halign_fb2(int layer, int align, int padding) {
-  fb2[layer].SetHorizontalAlignment(align, padding);
+void CKernel::circle_set_halign_fbl(int layer, int align, int padding) {
+  fbl[layer].SetHorizontalAlignment(align, padding);
 }
 
-void CKernel::circle_set_padding_fb2(int layer, double lpad, double rpad, double tpad, double bpad) {
-  fb2[layer].SetPadding(lpad, rpad, tpad, bpad);
+void CKernel::circle_set_padding_fbl(int layer, double lpad, double rpad, double tpad, double bpad) {
+  fbl[layer].SetPadding(lpad, rpad, tpad, bpad);
 }
 
-void CKernel::circle_set_zlayer_fb2(int layer, int zlayer) {
-  fb2[layer].SetLayer(zlayer);
+void CKernel::circle_set_zlayer_fbl(int layer, int zlayer) {
+  fbl[layer].SetLayer(zlayer);
 }
 
-int CKernel::circle_get_zlayer_fb2(int layer) {
-  return fb2[layer].GetLayer();
+int CKernel::circle_get_zlayer_fbl(int layer) {
+  return fbl[layer].GetLayer();
 }

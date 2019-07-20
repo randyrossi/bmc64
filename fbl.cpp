@@ -1,5 +1,5 @@
 //
-// fb2.cpp
+// fbl.cpp
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "fb2.h"
+#include "fbl.h"
 
 #include <stdio.h>
 
@@ -74,10 +74,10 @@ static uint32_t pal_argb[256] = {
   ARGB(0x00, 0x00, 0x00, 0x00),
 };
 
-bool FrameBuffer2::initialized_ = false;
-DISPMANX_DISPLAY_HANDLE_T FrameBuffer2::dispman_display_;
+bool FrameBufferLayer::initialized_ = false;
+DISPMANX_DISPLAY_HANDLE_T FrameBufferLayer::dispman_display_;
 
-FrameBuffer2::FrameBuffer2() :
+FrameBufferLayer::FrameBufferLayer() :
         width_(0), height_(0), pitch_(0), layer_(0), transparency_(false),
         aspect_(1.6), valign_(0), vpadding_(0), halign_(0), hpadding_(0),
         rnum_(0), leftPadding_(0), rightPadding_(0), topPadding_(0),
@@ -87,8 +87,17 @@ FrameBuffer2::FrameBuffer2() :
   alpha_.mask = 0;
 }
 
+FrameBufferLayer::~FrameBufferLayer() {
+  if (showing_) {
+    Hide();
+  }
+  if (allocated_) {
+    Free();
+  }
+}
+
 // static
-void FrameBuffer2::Initialize() {
+void FrameBufferLayer::Initialize() {
   if (initialized_)
      return;
 
@@ -99,7 +108,7 @@ void FrameBuffer2::Initialize() {
   initialized_ = true;
 }
 
-int FrameBuffer2::Allocate(uint8_t **pixels, int width, int height, int *pitch) {
+int FrameBufferLayer::Allocate(uint8_t **pixels, int width, int height, int *pitch) {
   int ret;
   DISPMANX_MODEINFO_T dispman_info;
   uint32_t vc_image_ptr;
@@ -152,13 +161,13 @@ int FrameBuffer2::Allocate(uint8_t **pixels, int width, int height, int *pitch) 
   return 0;
 }
 
-void FrameBuffer2::Clear() {
+void FrameBufferLayer::Clear() {
   assert (allocated_);
 
   memset(pixels_, 0, height_ * pitch_ * BYTES_PER_PIXEL);
 }
 
-void FrameBuffer2::Free() {
+void FrameBufferLayer::Free() {
   int ret;
 
   if (!allocated_) return;
@@ -176,16 +185,7 @@ void FrameBuffer2::Free() {
   allocated_ = false;
 }
 
-FrameBuffer2::~FrameBuffer2() {
-  if (showing_) {
-    Hide();
-  }
-  if (allocated_) {
-    Free();
-  }
-}
-
-void FrameBuffer2::Show() {
+void FrameBufferLayer::Show() {
   int ret;
   DISPMANX_UPDATE_HANDLE_T dispman_update;
 
@@ -290,7 +290,7 @@ void FrameBuffer2::Show() {
   showing_ = true;
 }
 
-void FrameBuffer2::Hide() {
+void FrameBufferLayer::Hide() {
   int ret;
   DISPMANX_UPDATE_HANDLE_T dispman_update;
 
@@ -304,11 +304,11 @@ void FrameBuffer2::Hide() {
   showing_ = false;
 }
 
-void* FrameBuffer2::GetPixels() {
+void* FrameBufferLayer::GetPixels() {
   return pixels_;
 }
 
-void FrameBuffer2::FrameReady(int to_offscreen) {
+void FrameBufferLayer::FrameReady(int to_offscreen) {
   int rnum = to_offscreen ? 1 - rnum_ : rnum_;
 
   // Copy data into either the offscreen resource (if swap) or the
@@ -323,7 +323,7 @@ void FrameBuffer2::FrameReady(int to_offscreen) {
 // Private function to change the source of this frame buffer's
 // element to the off screen resource and toggle the resource
 // index in preparation for the off screen data to be shown.
-void FrameBuffer2::Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update) {
+void FrameBufferLayer::Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update) {
   vc_dispmanx_element_change_source(dispman_update,
                                     dispman_element_,
                                     dispman_resource_[1-rnum_]);
@@ -331,7 +331,7 @@ void FrameBuffer2::Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update) {
 }
 
 // Static
-void FrameBuffer2::SwapResources(FrameBuffer2* fb1, FrameBuffer2* fb2) {
+void FrameBufferLayer::SwapResources(FrameBufferLayer* fb1, FrameBufferLayer* fb2) {
   int ret;
   DISPMANX_UPDATE_HANDLE_T dispman_update;
   dispman_update = vc_dispmanx_update_start(0);
@@ -341,17 +341,17 @@ void FrameBuffer2::SwapResources(FrameBuffer2* fb1, FrameBuffer2* fb2) {
   assert(ret == 0);
 }
 
-void FrameBuffer2::SetPalette(uint8_t index, uint16_t rgb565) {
+void FrameBufferLayer::SetPalette(uint8_t index, uint16_t rgb565) {
   assert(!transparency_);
   pal_565[index] = rgb565;
 }
 
-void FrameBuffer2::SetPalette(uint8_t index, uint32_t argb) {
+void FrameBufferLayer::SetPalette(uint8_t index, uint32_t argb) {
   assert(transparency_);
   pal_argb[index] = argb;
 }
 
-void FrameBuffer2::UpdatePalette() {
+void FrameBufferLayer::UpdatePalette() {
   if (!allocated_) return;
 
   int ret;
@@ -369,19 +369,19 @@ void FrameBuffer2::UpdatePalette() {
   assert( ret == 0 );
 }
 
-void FrameBuffer2::SetLayer(int layer) {
+void FrameBufferLayer::SetLayer(int layer) {
   layer_ = layer;
 }
 
-int FrameBuffer2::GetLayer() {
+int FrameBufferLayer::GetLayer() {
   return layer_;
 }
 
-void FrameBuffer2::SetTransparency(bool transparency) {
+void FrameBufferLayer::SetTransparency(bool transparency) {
   transparency_ = transparency;
 }
 
-void FrameBuffer2::SetSrcRect(int x, int y, int w, int h) {
+void FrameBufferLayer::SetSrcRect(int x, int y, int w, int h) {
   src_x_ = x;
   src_y_ = y;
   src_w_ = w;
@@ -389,21 +389,21 @@ void FrameBuffer2::SetSrcRect(int x, int y, int w, int h) {
 }
 
 // Set horizontal multiplier
-void FrameBuffer2::SetAspect(double aspect) {
+void FrameBufferLayer::SetAspect(double aspect) {
   aspect_ = aspect;
 }
 
-void FrameBuffer2::SetVerticalAlignment(int alignment, int padding) {
+void FrameBufferLayer::SetVerticalAlignment(int alignment, int padding) {
   valign_ = alignment;
   vpadding_ = padding;
 }
 
-void FrameBuffer2::SetHorizontalAlignment(int alignment, int padding) {
+void FrameBufferLayer::SetHorizontalAlignment(int alignment, int padding) {
   halign_ = alignment;
   hpadding_ = padding;
 }
 
-void FrameBuffer2::SetPadding(double leftPadding,
+void FrameBufferLayer::SetPadding(double leftPadding,
                               double rightPadding,
                               double topPadding,
                               double bottomPadding) {

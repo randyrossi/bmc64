@@ -37,7 +37,7 @@
 #include <stdint.h>
 #include <vc4/vchiq/vchiqdevice.h>
 
-#include "fb2.h"
+#include "fbl.h"
 
 extern "C" {
 #include "third_party/vice-3.3/src/arch/raspi/circle.h"
@@ -72,22 +72,22 @@ public:
   void circle_set_fb1_y(int loc);
 
   // New FB2 stuff to replace the default frame buffer
-  int circle_alloc_fb2(int layer, uint8_t **pixels,
+  int circle_alloc_fbl(int layer, uint8_t **pixels,
                        int width, int height, int *pitch);
-  void circle_free_fb2(int layer);
-  void circle_clear_fb2(int layer);
-  void circle_show_fb2(int layer);
-  void circle_hide_fb2(int layer);
-  void circle_frames_ready_fb2(int layer1, int layer2, int sync);
-  void circle_set_palette_fb2(int layer, uint8_t index, uint16_t rgb565);
-  void circle_update_palette_fb2(int layer);
-  void circle_set_aspect_fb2(int layer, double aspect);
-  void circle_set_src_rect_fb2(int layer, int x, int y, int w, int h);
-  void circle_set_valign_fb2(int layer, int align, int padding);
-  void circle_set_halign_fb2(int layer, int align, int padding);
-  void circle_set_padding_fb2(int layer, double lpad, double rpad, double tpad, double bpad);
-  void circle_set_zlayer_fb2(int layer, int zlayer);
-  int circle_get_zlayer_fb2(int layer);
+  void circle_free_fbl(int layer);
+  void circle_clear_fbl(int layer);
+  void circle_show_fbl(int layer);
+  void circle_hide_fbl(int layer);
+  void circle_frames_ready_fbl(int layer1, int layer2, int sync);
+  void circle_set_palette_fbl(int layer, uint8_t index, uint16_t rgb565);
+  void circle_update_palette_fbl(int layer);
+  void circle_set_aspect_fbl(int layer, double aspect);
+  void circle_set_src_rect_fbl(int layer, int x, int y, int w, int h);
+  void circle_set_valign_fbl(int layer, int align, int padding);
+  void circle_set_halign_fbl(int layer, int align, int padding);
+  void circle_set_padding_fbl(int layer, double lpad, double rpad, double tpad, double bpad);
+  void circle_set_zlayer_fbl(int layer, int zlayer);
+  int circle_get_zlayer_fbl(int layer);
 
   int circle_sound_init(const char *param, int *speed, int *fragsize,
                         int *fragnr, int *channels);
@@ -118,7 +118,7 @@ private:
 
   int gpio_debounce_state[NUM_GPIO_PINS];
 
-  FrameBuffer2 fb2[FB_NUM_LAYERS];
+  FrameBufferLayer fbl[FB_NUM_LAYERS];
 };
 
 #endif

@@ -88,14 +88,14 @@ uint8_t *overlay_init(int width, int height, int padding, int c40_80_state) {
         break;
   }
 
-  circle_alloc_fb2(FB_LAYER_STATUS,
+  circle_alloc_fbl(FB_LAYER_STATUS,
                    &overlay_buf, width, OVERLAY_HEIGHT, &overlay_buf_pitch);
   // Use negative aspect here so our overlay is stretched to the full
   // horizontal resolution rather than vertical.
-  circle_set_aspect_fb2(FB_LAYER_STATUS, -(double)width/(double)OVERLAY_HEIGHT);
+  circle_set_aspect_fbl(FB_LAYER_STATUS, -(double)width/(double)OVERLAY_HEIGHT);
   // We want our status bar to show up at the bottom of the screen with
   // padding set by user.
-  circle_set_valign_fb2(FB_LAYER_STATUS, 1 /* BOTTOM */, padding);
+  circle_set_valign_fbl(FB_LAYER_STATUS, 1 /* BOTTOM */, padding);
   memset(overlay_buf, bg_color, overlay_buf_pitch * OVERLAY_HEIGHT);
 
   // Figure out inset that will center.
@@ -335,9 +335,9 @@ void overlay_force_enabled(void) {
 }
 
 void overlay_change_padding(int padding) {
-  circle_hide_fb2(FB_LAYER_STATUS);
+  circle_hide_fbl(FB_LAYER_STATUS);
   overlay_showing = 0;
-  circle_set_valign_fb2(FB_LAYER_STATUS, 1 /* BOTTOM */, padding);
+  circle_set_valign_fbl(FB_LAYER_STATUS, 1 /* BOTTOM */, padding);
 }
 
 void overlay_40_80_columns_changed(int value) {

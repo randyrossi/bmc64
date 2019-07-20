@@ -178,22 +178,22 @@ extern void circle_yield();
 extern void circle_check_gpio();
 
 // For FB2
-extern int circle_alloc_fb2(int layer, uint8_t **pixels,
+extern int circle_alloc_fbl(int layer, uint8_t **pixels,
                             int width, int height, int *pitch);
-extern void circle_free_fb2(int layer);
-extern void circle_clear_fb2(int layer);
-extern void circle_show_fb2(int layer);
-extern void circle_hide_fb2(int layer);
-extern void circle_frames_ready_fb2(int layer1, int layer2, int sync);
-extern void circle_set_palette_fb2(int layer, uint8_t index, uint16_t rgb565);
-extern void circle_update_palette_fb2(int layer);
-extern void circle_set_aspect_fb2(int layer, double a);
-extern void circle_set_src_rect_fb2(int layer, int x, int y, int w, int h);
-extern void circle_set_valign_fb2(int layer, int align, int padding);
-extern void circle_set_halign_fb2(int layer, int align, int padding);
-extern void circle_set_padding_fb2(int layer, double lpad, double rpad, double tpad, double bpad);
-extern void circle_set_zlayer_fb2(int layer, int zlayer);
-extern int circle_get_zlayer_fb2(int layer);
+extern void circle_free_fbl(int layer);
+extern void circle_clear_fbl(int layer);
+extern void circle_show_fbl(int layer);
+extern void circle_hide_fbl(int layer);
+extern void circle_frames_ready_fbl(int layer1, int layer2, int sync);
+extern void circle_set_palette_fbl(int layer, uint8_t index, uint16_t rgb565);
+extern void circle_update_palette_fbl(int layer);
+extern void circle_set_aspect_fbl(int layer, double a);
+extern void circle_set_src_rect_fbl(int layer, int x, int y, int w, int h);
+extern void circle_set_valign_fbl(int layer, int align, int padding);
+extern void circle_set_halign_fbl(int layer, int align, int padding);
+extern void circle_set_padding_fbl(int layer, double lpad, double rpad, double tpad, double bpad);
+extern void circle_set_zlayer_fbl(int layer, int zlayer);
+extern int circle_get_zlayer_fbl(int layer);
 
 extern void joy_set_gamepad_info(int num_pads, int num_buttons[2], int axes[2],
                                  int hats[2]);
