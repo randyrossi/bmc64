@@ -285,7 +285,7 @@ void FrameBufferLayer::Show() {
                                             NULL,             // clamp
                                             DISPMANX_NO_ROTATE);
 
-  ret = vc_dispmanx_update_submit_sync(dispman_update);
+  ret = vc_dispmanx_update_submit(dispman_update, NULL, NULL);
   assert( ret == 0 );
   showing_ = true;
 }
@@ -299,7 +299,7 @@ void FrameBufferLayer::Hide() {
   dispman_update = vc_dispmanx_update_start(0);
   ret = vc_dispmanx_element_remove(dispman_update, dispman_element_);
   assert(ret == 0);
-  ret = vc_dispmanx_update_submit_sync(dispman_update);
+  ret = vc_dispmanx_update_submit(dispman_update, NULL, NULL);
   assert(ret == 0);
   showing_ = false;
 }
