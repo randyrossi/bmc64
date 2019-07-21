@@ -121,7 +121,7 @@ static int ui_fb_h;
 void ui_init_menu(void) {
   int i;
 
-  ui_fb_w = menu_width_chars * 8 + 32;
+  ui_fb_w = menu_width_chars * 8 + 48;
   ui_fb_h = menu_height_chars * 8 + 32;
 
   ui_activated = 0;
