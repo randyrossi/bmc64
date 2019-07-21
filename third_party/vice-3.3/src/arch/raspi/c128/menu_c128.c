@@ -33,6 +33,10 @@
 #include "cartridge.h"
 #include "menu.h"
 #include "ui.h"
+#include "overlay.h"
+
+// TODO: Should really move 40/80 stuff into here...
+extern struct menu_item *c40_80_column_item;
 
 unsigned long calculate_timing(double fps) {
   if (fps >= 49 && fps <= 51) {
@@ -139,4 +143,13 @@ struct menu_item* menu_build_palette_options(int menu_id, struct menu_item* pare
   strcpy(palette_item->choices[3], "Pepto-Ntsc");
   strcpy(palette_item->choices[4], "Pepto-Pal");
   return palette_item;
+}
+
+// We added a hook for this 'cause there appeared to be no way
+// to get this notification from VICE
+void column4080_key_toggled(void) {
+  int v;
+  resources_get_int("C128ColumnKey", &v);
+  c40_80_column_item->value = v;
+  overlay_40_80_columns_changed(v);
 }

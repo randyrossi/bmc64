@@ -2375,8 +2375,9 @@ void build_menu(struct menu_item *root) {
   strcpy(child->choices[KEYBOARD_TYPE_UK], "UK");
 
   if (machine_class == VICE_MACHINE_C128) {
-     c40_80_column_item = ui_menu_add_toggle(
-        MENU_40_80_COLUMN, parent, "40/80 Column", 1 /* default 40 col */);
+     c40_80_column_item = ui_menu_add_toggle_labels(
+        MENU_40_80_COLUMN, parent, "40/80 Column", 1 /* default 40 col */,
+        "Down","Up");
   }
 
 #ifdef RASPI_SUPPORT_PCB

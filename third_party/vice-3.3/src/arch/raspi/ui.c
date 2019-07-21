@@ -757,6 +757,16 @@ struct menu_item *ui_menu_add_toggle(int id, struct menu_item *folder,
   return new_item;
 }
 
+struct menu_item *ui_menu_add_toggle_labels(int id, struct menu_item *folder,
+                                     char *name, int initial_state,
+                                     char *custom_0, char *custom_1) {
+  struct menu_item *new_item =
+     ui_menu_add_toggle(id, folder, name, initial_state);
+  strcpy(new_item->custom_toggle_label[0], custom_0);
+  strcpy(new_item->custom_toggle_label[1], custom_1);
+  return new_item;
+}
+
 struct menu_item *ui_menu_add_checkbox(int id, struct menu_item *folder,
                                        char *name, int initial_state) {
   struct menu_item *new_item = ui_new_item(folder, name, id);
@@ -857,14 +867,26 @@ static void ui_render_children(struct menu_item *node, int *index, int indent) {
           else
             ui_draw_text("+", node->menu_left + (indent)*8, y, 1);
         } else if (node->type == TOGGLE) {
-          if (node->value)
-            ui_draw_text("On",
-                         node->menu_left + node->menu_width - ui_text_width("On"),
-                         y, 1);
-          else
-            ui_draw_text("Off", node->menu_left + node->menu_width -
-                                    ui_text_width("Off"),
-                         y, 1);
+          if (node->value) {
+            if (node->custom_toggle_label[1][0] == '\0') {
+               ui_draw_text("On",
+                         node->menu_left + node->menu_width -
+                         ui_text_width("On"), y, 1);
+            } else {
+               ui_draw_text(node->custom_toggle_label[1],
+                         node->menu_left + node->menu_width -
+                         ui_text_width(node->custom_toggle_label[1]), y, 1);
+            }
+          } else {
+            if (node->custom_toggle_label[0][0] == '\0') {
+               ui_draw_text("Off", node->menu_left + node->menu_width -
+                         ui_text_width("Off"), y, 1);
+            } else {
+               ui_draw_text(node->custom_toggle_label[0],
+                         node->menu_left + node->menu_width -
+                         ui_text_width(node->custom_toggle_label[0]), y, 1);
+            }
+          }
         } else if (node->type == CHECKBOX) {
           if (node->value)
             ui_draw_text("True", node->menu_left + node->menu_width -

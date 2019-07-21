@@ -85,4 +85,8 @@ extern void machine_autostart_reset_c64(void);
 extern void machine_tape_init_c64(void);
 extern void machine_tape_init_c128(void);
 
+#ifdef RASPI_COMPILE
+extern void column4080_key_toggled(void);
+#endif
+
 #endif

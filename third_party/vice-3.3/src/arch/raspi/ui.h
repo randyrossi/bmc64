@@ -93,6 +93,8 @@ struct menu_item {
   // Scratch space for text
   char scratch[64];
 
+  char custom_toggle_label[2][32];
+
   // For buttons - optional values
   // Also for TEXTFIELD, holds text
   char str_value[MAX_STR_VAL_LEN];
@@ -128,6 +130,9 @@ struct menu_item {
 
 struct menu_item *ui_menu_add_toggle(int id, struct menu_item *folder,
                                      char *name, int initial_state);
+struct menu_item *ui_menu_add_toggle_labels(int id, struct menu_item *folder,
+                                     char *name, int initial_state,
+                                     char *custom_0, char *custom_1);
 struct menu_item *ui_menu_add_checkbox(int id, struct menu_item *folder,
                                        char *name, int initial_state);
 struct menu_item *ui_menu_add_multiple_choice(int id, struct menu_item *folder,

@@ -130,6 +130,9 @@ static void mmu_toggle_column4080_key(void)
 {
     mmu_column4080_key = !mmu_column4080_key;
     resources_set_int("C128ColumnKey", mmu_column4080_key);
+#ifdef RASPI_COMPILE
+    column4080_key_toggled();
+#endif
     log_message(mmu_log, "40/80 column key %s.", (mmu_column4080_key) ? "released" : "pressed");
 }
 
