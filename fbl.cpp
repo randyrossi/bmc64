@@ -81,7 +81,7 @@ FrameBufferLayer::FrameBufferLayer() :
         width_(0), height_(0), pitch_(0), layer_(0), transparency_(false),
         aspect_(1.6), valign_(0), vpadding_(0), halign_(0), hpadding_(0),
         rnum_(0), leftPadding_(0), rightPadding_(0), topPadding_(0),
-        bottomPadding_(), showing_(false), allocated_(false) {
+        bottomPadding_(0), showing_(false), allocated_(false) {
   alpha_.flags = DISPMANX_FLAGS_ALPHA_FROM_SOURCE;
   alpha_.opacity = 255;
   alpha_.mask = 0;
@@ -324,14 +324,15 @@ void FrameBufferLayer::FrameReady(int to_offscreen) {
 // element to the off screen resource and toggle the resource
 // index in preparation for the off screen data to be shown.
 void FrameBufferLayer::Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update) {
+  rnum_ = 1 - rnum_;
   vc_dispmanx_element_change_source(dispman_update,
                                     dispman_element_,
-                                    dispman_resource_[1-rnum_]);
-  rnum_ = 1 - rnum_;
+                                    dispman_resource_[rnum_]);
 }
 
 // Static
-void FrameBufferLayer::SwapResources(FrameBufferLayer* fb1, FrameBufferLayer* fb2) {
+void FrameBufferLayer::SwapResources(FrameBufferLayer* fb1,
+                                     FrameBufferLayer* fb2) {
   int ret;
   DISPMANX_UPDATE_HANDLE_T dispman_update;
   dispman_update = vc_dispmanx_update_start(0);
