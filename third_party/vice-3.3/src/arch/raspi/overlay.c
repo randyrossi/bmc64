@@ -128,7 +128,9 @@ uint8_t *overlay_init(int width, int height, int padding, int c40_80_state) {
   ui_draw_text_buf("-", warp_x + inset_x, inset_y, fg_color, overlay_buf,
                    overlay_buf_pitch);
 
-  overlay_40_80_columns_changed(c40_80_state);
+  if (machine_class == VICE_MACHINE_C128) {
+     overlay_40_80_columns_changed(c40_80_state);
+  }
 
   return overlay_buf;
 }
