@@ -14,7 +14,6 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
 # Limitations
   * USB gamepad support is limited. Not all gamepads will work.
   * There is no network support.
-  * No VDC support for C128.
 
 This project uses VICE for emulation without any O/S (Linux) distribution installed on the Pi.  VICE (Versatile Commodore Emulator) platform dependencies are satisfied using circle-stdlib.
 
@@ -86,7 +85,7 @@ By increasing/decreasing the height/width, you can 'cut out' more of the border 
 
 Here are some sample canvas dimensions configs:
 
-## PAL
+### PAL
 
 Machine       | cmdline.txt | extra config.txt
 --------------|-------------|-------------------------------
@@ -95,7 +94,7 @@ C64/C128 Composite | vicii_canvas_width=384, vicii_canvas_height=288 | (none)
 VIC20 HDMI | vic_canvas_width=392, vic_canvas_height=288 | framebuffer_aspect=0x00050006
 VIC20 Composite | vic_canvas_width=392, vic_canvas_height=288 | framebuffer_aspect=0x00050006
 
-## NTSC
+### NTSC
 
 Machine       | cmdline.txt | config.txt
 --------------|-------------|-------------
@@ -179,6 +178,8 @@ Use F12 to bring up the menu and ESC/RUNSTOP to exit.
 If you use a real commodore keyboard, you can use Commodore Key + F7 in place of F12 (This key combination is configurable). You can also use gamepads with buttons configured for the menu.  Gamepads that have had a button configured to bring up the menu don't have to be assigned to a port to do that.  So even if you have DB9 joysticks wired, you should still be able to plug in a wired/wireless usb gamepad to trigger the menu if you want.
 
 For the Keyrah, if you find your '=' key doesn't work.  Try switching the keyboard type to 'UK'.  You must save and restart for this to take effect.
+
+(F11 is the 40/80 Column Key for C128)
 
 # Gamepad config
 
