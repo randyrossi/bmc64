@@ -25,19 +25,24 @@ extern "C" {
 
 #include "third_party/vice-3.3/src/resid/filter.h"
 
-ViceEmulatorCore::ViceEmulatorCore(CMemorySystem *pMemorySystem)
-    : CMultiCoreSupport(pMemorySystem), launch_(false) {}
+ViceEmulatorCore::ViceEmulatorCore(CMemorySystem *pMemorySystem) :
+#ifdef ARM_ALLOW_MULTI_CORE
+       CMultiCoreSupport(pMemorySystem),
+#endif
+       launch_(false) {}
 
 ViceEmulatorCore::~ViceEmulatorCore(void) {}
 
-void ViceEmulatorCore::RunMainVice() {
-  printf("Core waiting for launch\n");
-  bool waiting = true;
-  while (waiting) {
-    m_Lock.Acquire();
-    if (launch_)
-      waiting = false;
-    m_Lock.Release();
+void ViceEmulatorCore::RunMainVice(bool wait) {
+  if (wait) {
+     printf("Core waiting for launch\n");
+     bool waiting = true;
+     while (waiting) {
+       m_Lock.Acquire();
+       if (launch_)
+         waiting = false;
+       m_Lock.Release();
+     }
   }
 
   // Call Vice's main_program
@@ -93,7 +98,7 @@ void ViceEmulatorCore::Run(unsigned nCore) {
   assert(nCore > 0);
   switch (nCore) {
   case 1:
-    RunMainVice();
+    RunMainVice(true);
     break;
   case 2:
     // Core 2 will initialize 6581 filter data. Then sleep.
@@ -105,15 +110,21 @@ void ViceEmulatorCore::Run(unsigned nCore) {
     break;
   }
 
+#ifdef ARM_ALLOW_MULTI_CORE
   printf("Core %d idle\n", nCore);
   asm("dsb\n\t"
       "1: wfi\n\t"
       "b 1b\n\t");
+#endif
 }
 
 void ViceEmulatorCore::LaunchEmulator(char *timing_option) {
   strncpy(timing_option_, timing_option, 8);
+#ifdef ARM_ALLOW_MULTI_CORE
   m_Lock.Acquire();
   launch_ = true;
   m_Lock.Release();
+#else
+  RunMainVice(false);
+#endif
 }

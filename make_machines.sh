@@ -3,11 +3,14 @@
 if [ "$1" = "pi3" ]
 then
 KERNEL=kernel8-32.img
+elif [ "$1" = "pi0" ]
+then
+KERNEL=kernel.img
 elif [ "$1" = "pi2" ]
 then
 KERNEL=kernel7.img
 else
-echo "Need pi2 or pi3 arg"
+echo "Need arg [pi2|pi3|pi0]"
 exit
 fi
 

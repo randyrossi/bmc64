@@ -45,10 +45,10 @@ index 0ea1923..d5cf197 100644
  
  stub_warning(_getpid)
 diff --git a/libgloss/circle/io.cpp b/libgloss/circle/io.cpp
-index 23720b6..d9555b1 100644
+index 23720b6..07f05c3 100644
 --- a/libgloss/circle/io.cpp
 +++ b/libgloss/circle/io.cpp
-@@ -1,385 +1,810 @@
+@@ -1,385 +1,822 @@
  #include "config.h"
  #include <_ansi.h>
  #include <_syslist.h>
@@ -69,6 +69,15 @@ index 23720b6..d9555b1 100644
 -#include <circle/fs/fat/fatfs.h>
 -#include <circle/input/console.h>
 -#include <circle/string.h>
++// Pi0 build fails unless we define these. But why??
++#ifndef S_IREAD
++#define S_IREAD         0000400
++#endif
++#ifndef S_IWRITE
++#define S_IWRITE        0000200
++#endif
++// End Pi0 hack
++
  #include "circle_glue.h"
  #include <assert.h>
  
@@ -148,18 +157,18 @@ index 23720b6..d9555b1 100644
 +
 +static void reverse(char *x, int begin, int end) {
 +  char c;
++
++  if (begin >= end)
++    return;
++
++  c = *(x + begin);
++  *(x + begin) = *(x + end);
++  *(x + end) = c;
  
 -        TFindCurrentEntry mCurrentEntry;
 -        struct dirent mEntry;
 -        unsigned int mFirstRead : 1;
 -        unsigned int mOpen : 1;
-+  if (begin >= end)
-+    return;
- 
-+  c = *(x + begin);
-+  *(x + begin) = *(x + end);
-+  *(x + end) = c;
-+
 +  reverse(x, ++begin, --end);
 +}
 +
@@ -176,7 +185,7 @@ index 23720b6..d9555b1 100644
 +
 +  reverse(dst, 0, strlen(dst) - 1);
 +}
-+
+ 
 +CSerialDevice *g_serial;
 +
 +static void logm(const char *msg) {
@@ -427,7 +436,7 @@ index 23720b6..d9555b1 100644
 +    unsigned total = 0;
 +    if (f_lseek(&file.file, 0) != FR_OK) {
 +       return -1;
-     }
++    }
 +    while (true) {
 +      unsigned int num_read;
 +      if (f_read(&file.file, file.readBuf, READ_BUF_SIZE, &num_read) != FR_OK) {
@@ -453,7 +462,7 @@ index 23720b6..d9555b1 100644
 +      memcpy(file.contents + total, file.readBuf, num_read);
 +      total += num_read;
 +      file.size = total;
-+    }
+     }
 +  }
 +  return 0;
  }
@@ -910,12 +919,9 @@ index 23720b6..d9555b1 100644
 -        }
 +  return result;
 +}
- 
--        auto &slot = dirTab[slotNum];
++
 +extern "C" void rewinddir(DIR *dir) { f_rewinddir(dir); }
- 
--        slot.mOpen = 1;
--        slot.mFirstRead = 1;
++
 +extern "C" int closedir(DIR *dir) {
 +  CircleDir *c_dir = FindCircleDirFromDIR(dir);
 +  if (c_dir == nullptr) {
@@ -923,14 +929,17 @@ index 23720b6..d9555b1 100644
 +    return -1;
 +  }
  
--        return &slot;
+-        auto &slot = dirTab[slotNum];
 +  c_dir->in_use = 0;
-+
+ 
+-        slot.mOpen = 1;
+-        slot.mFirstRead = 1;
 +  if (f_closedir(dir) != FR_OK) {
 +    errno = EIO;
 +    return -1;
 +  }
-+
+ 
+-        return &slot;
 +  return 0;
  }
  
@@ -1029,6 +1038,8 @@ index 23720b6..d9555b1 100644
  
 -extern "C" int
 -readdir_r (DIR *__restrict dir, dirent *__restrict de, dirent **__restrict ode)
+-{
+-        int result;
 +extern "C" int _DEFUN(_lseek, (fildes, ptr, dir),
 +                      int fildes _AND int ptr _AND int dir) {
 +
@@ -1067,11 +1078,6 @@ index 23720b6..d9555b1 100644
 +
 +  return file.position;
 +}
-+
-+int chdir (const char *path)
- {
--        int result;
-+  int i;
  
 -        if (dir->mOpen)
 -        {
@@ -1082,6 +1088,11 @@ index 23720b6..d9555b1 100644
 -        {
 -                *ode = nullptr;
 -                result = EBADF;
++extern "C" int
++_DEFUN (chdir, (path),
++        const char *path) {
++  int i;
++
 +  if (path == nullptr) {
 +     errno = EIO;
 +     return -1;
@@ -1129,7 +1140,9 @@ index 23720b6..d9555b1 100644
 +}
  
 -        return result;
-+char *getwd(char *buf) {
++extern "C" char *
++_DEFUN (getwd, (buf),
++        char *buf) {
 +   if (buf) {
 +      strcpy(buf, currentDir);
 +      if (strlen(buf) > 1 && buf[strlen(buf)-1] == '/') {

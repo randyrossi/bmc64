@@ -15,9 +15,10 @@ make clean
 git status | grep 'deleted:.*doc' | sed 's/deleted:/git checkout /' | sh
 
 cd $SRC_DIR/third_party/circle-stdlib
-find . -name 'config.cache' -exec rm {} \;
+find . -name 'config.cache' -exec rm -f {} \;
 rm -rf build
 make clean
+make mrproper
 
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon
 

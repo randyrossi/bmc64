@@ -535,6 +535,9 @@ ViceApp::TShutdownMode CKernel::Run(void) {
   // Tell vice what we found
   joy_set_gamepad_info(num_pads, num_buttons, num_axes, num_hats);
 
+#ifndef ARM_ALLOW_MULTI_CORE
+  mEmulatorCore.LaunchEmulator(mTimingOption);
+#else
   // This core will do nothing but service interrupts from
   // usb or gpio.
   printf("Core 0 idle\n");
@@ -542,7 +545,7 @@ ViceApp::TShutdownMode CKernel::Run(void) {
   asm("dsb\n\t"
       "1: wfi\n\t"
       "b 1b\n\t");
-
+#endif
   return ShutdownHalt;
 }
 
