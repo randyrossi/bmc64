@@ -224,6 +224,7 @@ protected:
   int mBootStatWhat[MAX_BOOTSTAT_LINES];
   char *mBootStatFile[MAX_BOOTSTAT_LINES];
   int mBootStatSize[MAX_BOOTSTAT_LINES];
+  char mTimingOption[8];
 };
 
 #endif

@@ -365,16 +365,17 @@ bool ViceStdioApp::Initialize(void) {
 
   // Now that emmc is initialized, launch
   // the emulator main loop on CORE 1 before DWHCI.
-  char timing_option[8];
   int timing_int = mViceOptions.GetMachineTiming();
   if (timing_int == MACHINE_TIMING_NTSC_HDMI ||
       timing_int == MACHINE_TIMING_NTSC_COMPOSITE) {
-    strcpy(timing_option, "-ntsc");
+    strcpy(mTimingOption, "-ntsc");
   } else {
-    strcpy(timing_option, "-pal");
+    strcpy(mTimingOption, "-pal");
   }
 
-  mEmulatorCore.LaunchEmulator(timing_option);
+#ifdef ARM_ALLOW_MULTI_CORE
+  mEmulatorCore.LaunchEmulator(mTimingOption);
+#endif
 
   // This takes 1.5 seconds to init.
   if (!mDWHCI.Initialize()) {
