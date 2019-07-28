@@ -203,3 +203,7 @@
     * UI is made transparent while video adjustments made to show user what
       is changing
     * Added status bar padding to adjust location of status bar
+
+## 2.2
+  * Minor regression on audio latency fixed. Badly placed previous fix was
+    causing extra frame delay.
