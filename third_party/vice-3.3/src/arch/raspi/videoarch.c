@@ -252,6 +252,7 @@ void video_init_overlay(int padding, int c40_80_state) {
 }
 
 void apply_video_adjustments(int layer,
+      int hcenter, int vcenter,
       double hborder, double vborder, double aspect,
       double lpad, double rpad, double tpad, double bpad,
       int zlayer) {
@@ -320,6 +321,9 @@ void apply_video_adjustments(int layer,
            canvas_state[index].top,
            canvas_state[index].vis_w,
            canvas_state[index].vis_h);
+
+  circle_set_center_offset(layer,
+           hcenter, vcenter);          
 }
 
 static struct video_canvas_s *video_canvas_create_vic(

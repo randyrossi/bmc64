@@ -80,6 +80,7 @@ DISPMANX_DISPLAY_HANDLE_T FrameBufferLayer::dispman_display_;
 FrameBufferLayer::FrameBufferLayer() :
         width_(0), height_(0), pitch_(0), layer_(0), transparency_(false),
         aspect_(1.6), valign_(0), vpadding_(0), halign_(0), hpadding_(0),
+        h_center_offset_(0), v_center_offset_(0),
         rnum_(0), leftPadding_(0), rightPadding_(0), topPadding_(0),
         bottomPadding_(0), showing_(false), allocated_(false) {
   alpha_.flags = DISPMANX_FLAGS_ALPHA_FROM_SOURCE;
@@ -230,7 +231,7 @@ void FrameBufferLayer::Show() {
   switch (valign_) {
      case 0:
         // Center
-        oy = (avail_height - dst_h) / 2;
+        oy = (avail_height - dst_h) / 2 + v_center_offset_;
         break;
      case -1:
         // Top
@@ -249,7 +250,7 @@ void FrameBufferLayer::Show() {
   switch (halign_) {
      case 0:
         // Center
-        ox = (avail_width - dst_w) / 2;
+        ox = (avail_width - dst_w) / 2 + h_center_offset_;
         break;
      case -1:
         // Left
@@ -412,4 +413,9 @@ void FrameBufferLayer::SetPadding(double leftPadding,
   rightPadding_ = rightPadding;
   topPadding_ = topPadding;
   bottomPadding_ = bottomPadding;
+}
+
+void FrameBufferLayer::SetCenterOffset(int cx, int cy) {
+  h_center_offset_ = cx;
+  v_center_offset_ = cy;
 }

@@ -189,6 +189,7 @@ extern void circle_set_palette_fbl(int layer, uint8_t index, uint16_t rgb565);
 extern void circle_update_palette_fbl(int layer);
 extern void circle_set_aspect_fbl(int layer, double a);
 extern void circle_set_src_rect_fbl(int layer, int x, int y, int w, int h);
+extern void circle_set_center_offset(int layer, int cx, int cy);
 extern void circle_set_valign_fbl(int layer, int align, int padding);
 extern void circle_set_halign_fbl(int layer, int align, int padding);
 extern void circle_set_padding_fbl(int layer, double lpad, double rpad, double tpad, double bpad);

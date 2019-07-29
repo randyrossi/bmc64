@@ -82,6 +82,7 @@ public:
   void circle_set_palette_fbl(int layer, uint8_t index, uint16_t rgb565);
   void circle_update_palette_fbl(int layer);
   void circle_set_aspect_fbl(int layer, double aspect);
+  void circle_set_center_offset(int layer, int cx, int cy);
   void circle_set_src_rect_fbl(int layer, int x, int y, int w, int h);
   void circle_set_valign_fbl(int layer, int align, int padding);
   void circle_set_halign_fbl(int layer, int align, int padding);
