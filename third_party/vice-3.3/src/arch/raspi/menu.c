@@ -1428,6 +1428,9 @@ static void do_video_settings(int layer,
 
   // Tell videoarch about these changes
   apply_video_adjustments(layer, hc, vc, h, v, a, lpad, rpad, tpad, bpad, zlayer);
+  if (layer == FB_LAYER_VIC) {
+     apply_video_adjustments(FB_LAYER_UI, hc, vc, h, v, a, lpad, rpad, tpad, bpad, zlayer);
+  }
 }
 
 // Interpret what menu item changed and make the change to vice
@@ -2590,6 +2593,15 @@ void build_menu(struct menu_item *root) {
   ui_set_joy_devs();
 
   apply_video_adjustments(FB_LAYER_VIC,
+     h_center_item_0->value,
+     v_center_item_0->value,
+     (double)(100-h_border_item_0->value) / 100.0d,
+     (double)(100-v_border_item_0->value) / 100.0d,
+     (double)(aspect_item_0->value) / 100.0d,
+     0.0d, 0.0d, 0.0d, 0.0d, 0);
+
+  // Menu gets the same adjustments
+  apply_video_adjustments(FB_LAYER_UI,
      h_center_item_0->value,
      v_center_item_0->value,
      (double)(100-h_border_item_0->value) / 100.0d,

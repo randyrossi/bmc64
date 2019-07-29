@@ -334,7 +334,7 @@ void circle_key_pressed(long key) {
     return;
   }
 
-  if (ui_activated) {
+  if (ui_enabled) {
     circle_ui_key_interrupt(key, 1 /* down */);
   } else {
     circle_emu_key_interrupt(key, 1 /* down */);
@@ -352,7 +352,7 @@ void circle_key_released(long key) {
   }
 
   if (key == KEYCODE_F12) {
-    if (ui_activated) {
+    if (ui_enabled) {
       // Let the ui handle the menu action as it sees fit.
       circle_ui_key_interrupt(key, 0 /* up */);
     } else {
@@ -390,7 +390,7 @@ void circle_key_released(long key) {
     return;
   }
 
-  if (ui_activated) {
+  if (ui_enabled) {
     circle_ui_key_interrupt(key, 0 /* up */);
   } else {
     circle_emu_key_interrupt(key, 0 /* up */);

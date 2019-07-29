@@ -41,7 +41,8 @@
 #include <ctype.h>
 
 // Is the UI layer enabled? (either OSD or MENU)
-volatile int ui_activated;
+volatile int ui_enabled;
+int ui_showing;
 // Countdown to toggle menu on/off
 int ui_toggle_pending;
 // One of the quick functions that can be invoked by button assignments
@@ -125,7 +126,8 @@ void ui_init_menu(void) {
   ui_fb_w = menu_width_chars * 8 + 64;
   ui_fb_h = menu_height_chars * 8 + 32;
 
-  ui_activated = 0;
+  ui_enabled = 0;
+  ui_showing = 0;
   current_menu = -1;
 
   // Init menu roots
@@ -439,7 +441,7 @@ static void ui_render_single_frame() {
 static void pause_trap(uint16_t addr, void *data) {
   menu_about_to_activate();
   circle_show_fbl(FB_LAYER_UI);
-  while (ui_activated) {
+  while (ui_enabled) {
     circle_check_gpio();
     ui_check_key();
 
@@ -454,8 +456,8 @@ static void pause_trap(uint16_t addr, void *data) {
 }
 
 static void ui_toggle(void) {
-  ui_activated = 1 - ui_activated;
-  if (ui_activated) {
+  ui_enabled = 1 - ui_enabled;
+  if (ui_enabled) {
     interrupt_maincpu_trigger_trap(pause_trap, 0);
   }
 }
@@ -619,7 +621,7 @@ void ui_check_key(void) {
   static long process_ui_key[16];
   static int process_ui_key_pressed[16];
 
-  if (!ui_activated) {
+  if (!ui_enabled) {
     return;
   }
 
@@ -1098,7 +1100,7 @@ void ui_set_on_value_changed_callback(void (*callback)(struct menu_item *)) {
   on_value_changed = callback;
 }
 
-int circle_ui_activated(void) { return ui_activated; }
+int circle_ui_activated(void) { return ui_enabled; }
 
 static struct menu_item *ui_push_dialog_header(int is_error) {
   struct menu_item *root = ui_push_menu(30, 4);
@@ -1119,7 +1121,7 @@ void glob_osd_popped(struct menu_item *new_root,
 
 void ui_error(const char *format, ...) {
   struct menu_item *root = ui_push_dialog_header(1);
-  if (!ui_activated) {
+  if (!ui_enabled) {
      // We were called without the UI being up. Make this an OSD.
      ui_enable_osd();
      root->on_popped_off = glob_osd_popped;
@@ -1135,7 +1137,7 @@ void ui_error(const char *format, ...) {
 
 void ui_info(const char *format, ...) {
   struct menu_item *root = ui_push_dialog_header(0);
-  if (!ui_activated) {
+  if (!ui_enabled) {
      // We were called without the UI being up. Make this an OSD.
      ui_enable_osd();
      root->on_popped_off = glob_osd_popped;
@@ -1230,7 +1232,7 @@ struct menu_item* ui_find_item_by_id(struct menu_item *node, int id) {
 
 void ui_enable_osd(void) {
   osd_active = 1;
-  ui_activated = 1;
+  ui_enabled = 1;
   ui_make_transparent();
   circle_frames_ready_fbl(FB_LAYER_UI, -1 /* no 2nd layer */, 0 /* nosync */);
   circle_show_fbl(FB_LAYER_UI);
@@ -1238,7 +1240,7 @@ void ui_enable_osd(void) {
 
 void ui_disable_osd(void) {
   osd_active = 0;
-  // We don't set ui_activated to 0 here. We rely on
+  // We don't set ui_enabled to 0 here. We rely on
   // pop and toggle to dismiss OSDs which does the
   // right thing.
   circle_hide_fbl(FB_LAYER_UI);

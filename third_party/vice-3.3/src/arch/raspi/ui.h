@@ -213,7 +213,8 @@ void ui_set_render_current_item_only(int v);
 
 struct menu_item* ui_find_item_by_id(struct menu_item *node, int id);
 
-volatile int ui_activated;
+extern volatile int ui_enabled;
+extern int ui_showing;
 
 void ui_handle_toggle_or_quick_func(void);
 
