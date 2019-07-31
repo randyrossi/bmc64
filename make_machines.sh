@@ -1,12 +1,14 @@
 #!/bin/bash
 
-if [ "$1" = "pi3" ]
+BOARD = $1
+
+if [ "$BOARD" = "pi3" ]
 then
 KERNEL=kernel8-32.img
-elif [ "$1" = "pi0" ]
+elif [ "$BOARD" = "pi0" ]
 then
 KERNEL=kernel.img
-elif [ "$1" = "pi2" ]
+elif [ "$BOARD" = "pi2" ]
 then
 KERNEL=kernel7.img
 else
@@ -21,13 +23,13 @@ make xvic
 cd ../..
 
 make clean
-make -f Makefile-C64
+BOARD=$BOARD make -f Makefile-C64
 cp $KERNEL ${KERNEL}.c64
 
 make clean
-make -f Makefile-C128
+BOARD=$BOARD make -f Makefile-C128
 cp $KERNEL ${KERNEL}.c128
 
 make clean
-make -f Makefile-VIC20
+BOARD=$BOARD make -f Makefile-VIC20
 cp $KERNEL ${KERNEL}.vic20

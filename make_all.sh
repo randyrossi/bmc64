@@ -1,12 +1,14 @@
 #!/bin/bash
 
-if [ "$1" = "pi2" ]
+BOARD=$1
+
+if [ "$BOARD" = "pi2" ]
 then
 echo Making for pi2
-elif [ "$1" = "pi3" ]
+elif [ "$BOARD" = "pi3" ]
 then
 echo Making for pi3
-elif [ "$1" = "pi0" ]
+elif [ "$BOARD" = "pi0" ]
 then
 echo Making for pi0
 else
@@ -37,7 +39,7 @@ patch -p1 < ../../../../circle_newlib_patch.diff
 
 cd ../circle
 
-if [ "$1" = "pi0" ]
+if [ "$BOARD" = "pi0" ]
 then
 cat ../../../../circle_patch.diff | sed 's@+#define ARM_ALLOW_MULTI_CORE@+//#define ARM_ALLOW_MULTI_CORE@' | patch -p1
 else
@@ -51,20 +53,20 @@ echo ==============================================================
 
 cd ../..
 
-if [ "$1" = "pi2" ]
+if [ "$BOARD" = "pi2" ]
 then
 cat ../../circle_stdlib_patch.diff  | sed 's/-std=c++14//' | patch -p1
 ./configure -n --raspberrypi=2
-elif [ "$1" = "pi0" ]
+elif [ "$BOARD" = "pi0" ]
 then
 cat ../../circle_stdlib_patch.diff | patch -p1
 ./configure -n --raspberrypi=1
-elif [ "$1" = "pi3" ]
+elif [ "$BOARD" = "pi3" ]
 then
 cat ../../circle_stdlib_patch.diff  | patch -p1
 ./configure -n --raspberrypi=3 --prefix=arm-linux-gnueabihf-
 else
-echo "I don't know what to do for $1"
+echo "I don't know what to do for $BOARD"
 exit
 fi
 
@@ -110,14 +112,14 @@ cd ../../..
 cd ../../../../..
 cd third_party/vice-3.3
 
-if [ "$1" = "pi0" ]
+if [ "$BOARD" = "pi0" ]
 then
-cd src/resid
+cd src/teensy-resid
 CIRCLE_HOME="$SRC/third_party/circle-stdlib" ARM_HOME="$HOME/gcc-arm-none-eabi-7-2018-q2-update" CXXFLAGS="-std=c++11 -funsafe-math-optimizations -fno-exceptions -fno-rtti -nostdinc++ -ffreestanding -nostdlib -DAARCH=32 -march=armv6k -mtune=arm1176jzf-s -marm -mfpu=vfp -mfloat-abi=hard --specs=nosys.specs -O2 -I$CIRCLE_HOME/install/arm-none-circle/include/ -I$ARM_HOME/lib/gcc/arm-none-eabi/7.3.1/include -I$ARM_HOME/lib/gcc/arm-none-eabi/7.3.1/include-fixed" LDFLAGS="-L$CIRCLE_HOME/install/arm-none-circle/lib" ./configure --host=arm-none-eabi
 cd ../..
 
 CIRCLE_HOME="$SRC_DIR/third_party/circle-stdlib" ARM_HOME="$HOME/gcc-arm-none-eabi-7-2018-q2-update" LDFLAGS="-L$CIRCLE_HOME/install/arm-none-circle/lib" CXXFLAGS="-std=c++11 -O3 -ffreestanding -DAARCH=32 -march=armv6k -mtune=arm1176jzf-s -marm -mfpu=vfp -mfloat-abi=hard -fno-exceptions -fno-rtti -nostdinc++ --specs=nosys.specs" CFLAGS="-O3 -I$CIRCLE_HOME/install/arm-none-circle/include/ -I$ARM_HOME/lib/gcc/arm-none-eabi/7.3.1/include -I$ARM_HOME/lib/gcc/arm-none-eabi/7.3.1/include-fixed -I$CIRCLE_HOME/libs/circle/addon/fatfs -fno-exceptions --specs=nosys.specs -mfloat-abi=hard -ffreestanding -nostdlib -march=armv6k -mtune=arm1176jzf-s -marm -mfpu=vfp -nostdinc" ./configure --host=arm-none-eabi --disable-realdevice --disable-ipv6 --disable-ssi2001 --disable-catweasel --disable-hardsid --disable-parsid --disable-portaudio --disable-ahi --disable-bundle --disable-lame --disable-rs232 --disable-midi --disable-hidmgr --disable-hidutils --without-oss --without-alsa --without-pulse --without-zlib --disable-sdlui --disable-sdlui2 --enable-raspiui
-elif [ "$1" = "pi2" ]
+elif [ "$BOARD" = "pi2" ]
 then
 cd src/resid
 CIRCLE_HOME="$SRC/third_party/circle-stdlib" ARM_HOME="$HOME/gcc-arm-none-eabi-7-2018-q2-update" CXXFLAGS="-std=c++11 -funsafe-math-optimizations -fno-exceptions -fno-rtti -nostdinc++ -mfloat-abi=hard -ffreestanding -nostdlib -march=armv7-a -marm -mfpu=neon-vfpv4 --specs=nosys.specs -O2 -I$CIRCLE_HOME/install/arm-none-circle/include/ -I$ARM_HOME/lib/gcc/arm-none-eabi/7.3.1/include -I$ARM_HOME/lib/gcc/arm-none-eabi/7.3.1/include-fixed" LDFLAGS="-L$CIRCLE_HOME/install/arm-none-circle/lib" ./configure --host=arm-none-eabi
@@ -141,4 +143,4 @@ echo Link errors above are expected
 echo ==============================================================
 
 make clean
-make -f Makefile-C64
+BOARD=$BOARD make -f Makefile-C64
