@@ -1372,6 +1372,11 @@ static void do_video_settings(int layer,
   double bpad;
   int zlayer;
 
+  int hc = hcenter_item->value;
+  int vc = vcenter_item->value;
+  int vid_hc = hc;
+  int vid_vc = vc;
+
   if (machine_class == VICE_MACHINE_C128) {
      if ((active_display_item->value == MENU_ACTIVE_DISPLAY_VICII && layer == FB_LAYER_VIC) ||
          (active_display_item->value == MENU_ACTIVE_DISPLAY_VDC && layer == FB_LAYER_VDC)) {
@@ -1383,6 +1388,9 @@ static void do_video_settings(int layer,
         } else {
             lpad = .50d; rpad = 0; tpad = 0; bpad = 0; zlayer = 1;
         }
+        // Always ignore centering in this mode
+        vid_hc = 0;
+        vid_vc = 0;
      } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_PIP) {
         if ((layer == FB_LAYER_VIC && pip_swapped_item->value == 0) ||
             (layer == FB_LAYER_VDC && pip_swapped_item->value == 1)) {
@@ -1403,6 +1411,9 @@ static void do_video_settings(int layer,
               // bottom left quad
               lpad = .05d; rpad = .65d; tpad = .65d; bpad = .05d;
             }
+            // Always ignore centering in this mode
+            vid_hc = 0;
+            vid_vc = 0;
         }
     } else {
         return;
@@ -1412,24 +1423,23 @@ static void do_video_settings(int layer,
      lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = 0;
   }
 
-  int hc = hcenter_item->value;
-  int vc = vcenter_item->value;
   double h = (double)(100-hborder_item->value) / 100.0d;
   double v = (double)(100-vborder_item->value) / 100.0d;
   double a = (double)(aspect_item->value) / 100.0d;
 
+  double vid_a = a;
   if (machine_class == VICE_MACHINE_C128 &&
           active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE) {
      // For side-by-side, it makes more sense to fill horizontal then scale
      // vertical since we just cut horizontal in half. So pass in negative
      // aspect.
-     a = -a;
+     vid_a = -a;
   }
 
   // Tell videoarch about these changes
-  apply_video_adjustments(layer, hc, vc, h, v, a, lpad, rpad, tpad, bpad, zlayer);
+  apply_video_adjustments(layer, vid_hc, vid_vc, h, v, vid_a, lpad, rpad, tpad, bpad, zlayer);
   if (layer == FB_LAYER_VIC) {
-     apply_video_adjustments(FB_LAYER_UI, hc, vc, h, v, a, lpad, rpad, tpad, bpad, zlayer);
+     apply_video_adjustments(FB_LAYER_UI, hc, vc, h, v, a, 0, 0, 0, 0, 3);
   }
 }
 
@@ -2607,7 +2617,7 @@ void build_menu(struct menu_item *root) {
      (double)(100-h_border_item_0->value) / 100.0d,
      (double)(100-v_border_item_0->value) / 100.0d,
      (double)(aspect_item_0->value) / 100.0d,
-     0.0d, 0.0d, 0.0d, 0.0d, 0);
+     0.0d, 0.0d, 0.0d, 0.0d, 3);
 
   if (machine_class == VICE_MACHINE_C128) {
      apply_video_adjustments(FB_LAYER_VDC,
