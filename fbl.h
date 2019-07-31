@@ -75,6 +75,8 @@ public:
   // frame buffer and the height is determiend by width / aspect.
   void SetAspect(double aspect);
 
+  void SetCenterOffset(int cx, int cy);
+
   // alignment can be -1 = ALIGN TOP, 0 = CENTER, 1 = ALIGN BOTTOM
   // padding applies to TOP or BOTTOM only.
   void SetVerticalAlignment(int alignment, int padding);
@@ -126,6 +128,10 @@ private:
   // -1 = left, 0 = center, 1 = right
   int halign_;
   int hpadding_;
+
+  int h_center_offset_;
+  int v_center_offset_;
+
   // Represents the resource currently visible
   int rnum_;
 

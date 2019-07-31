@@ -140,10 +140,14 @@ struct menu_item *reset_confirm_item;
 struct menu_item *use_pcb_item;
 struct menu_item *active_display_item;
 
+struct menu_item *h_center_item_0;
+struct menu_item *v_center_item_0;
 struct menu_item *h_border_item_0;
 struct menu_item *v_border_item_0;
 struct menu_item *aspect_item_0;
 
+struct menu_item *h_center_item_1;
+struct menu_item *v_center_item_1;
 struct menu_item *h_border_item_1;
 struct menu_item *v_border_item_1;
 struct menu_item *aspect_item_1;
@@ -611,10 +615,14 @@ static int save_settings() {
 #ifdef RASPI_SUPPORT_PCB
   fprintf(fp, "pcb=%d\n", use_pcb_item->value);
 #endif
+  fprintf(fp, "h_center_0=%d\n", h_center_item_0->value);
+  fprintf(fp, "v_center_0=%d\n", v_center_item_0->value);
   fprintf(fp, "h_border_trim_0=%d\n", h_border_item_0->value);
   fprintf(fp, "v_border_trim_0=%d\n", v_border_item_0->value);
   fprintf(fp, "aspect_0=%d\n", aspect_item_0->value);
   if (machine_class == VICE_MACHINE_C128) {
+     fprintf(fp, "h_center_1=%d\n", h_center_item_1->value);
+     fprintf(fp, "v_center_1=%d\n", v_center_item_1->value);
      fprintf(fp, "h_border_trim_1=%d\n", h_border_item_1->value);
      fprintf(fp, "v_border_trim_1=%d\n", v_border_item_1->value);
      fprintf(fp, "aspect_1=%d\n", aspect_item_1->value);
@@ -870,12 +878,20 @@ static void load_settings() {
       key_bindings[4] = value;
     } else if (strcmp(name, "key_binding_6") == 0) {
       key_bindings[5] = value;
+    } else if (strcmp(name, "h_center_0") == 0) {
+      h_center_item_0->value = value;
+    } else if (strcmp(name, "v_center_0") == 0) {
+      v_center_item_0->value = value;
     } else if (strcmp(name, "h_border_trim_0") == 0) {
       h_border_item_0->value = value;
     } else if (strcmp(name, "v_border_trim_0") == 0) {
       v_border_item_0->value = value;
     } else if (strcmp(name, "aspect_0") == 0) {
       aspect_item_0->value = value;
+    } else if (strcmp(name, "h_center_1") == 0 && machine_class == VICE_MACHINE_C128) {
+      h_center_item_1->value = value;
+    } else if (strcmp(name, "v_center_1") == 0 && machine_class == VICE_MACHINE_C128) {
+      v_center_item_1->value = value;
     } else if (strcmp(name, "h_border_trim_1") == 0 && machine_class == VICE_MACHINE_C128) {
       h_border_item_1->value = value;
     } else if (strcmp(name, "v_border_trim_1") == 0 && machine_class == VICE_MACHINE_C128) {
@@ -1344,6 +1360,8 @@ static void toggle_warp(int value) {
 
 // Tell videoarch the new settings made from the menu.
 static void do_video_settings(int layer,
+                              struct menu_item* hcenter_item,
+                              struct menu_item* vcenter_item,
                               struct menu_item* hborder_item,
                               struct menu_item* vborder_item,
                               struct menu_item* aspect_item) {
@@ -1394,6 +1412,8 @@ static void do_video_settings(int layer,
      lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = 0;
   }
 
+  int hc = hcenter_item->value;
+  int vc = vcenter_item->value;
   double h = (double)(100-hborder_item->value) / 100.0d;
   double v = (double)(100-vborder_item->value) / 100.0d;
   double a = (double)(aspect_item->value) / 100.0d;
@@ -1407,7 +1427,10 @@ static void do_video_settings(int layer,
   }
 
   // Tell videoarch about these changes
-  apply_video_adjustments(layer, h, v, a, lpad, rpad, tpad, bpad, zlayer);
+  apply_video_adjustments(layer, hc, vc, h, v, a, lpad, rpad, tpad, bpad, zlayer);
+  if (layer == FB_LAYER_VIC) {
+     apply_video_adjustments(FB_LAYER_UI, hc, vc, h, v, a, lpad, rpad, tpad, bpad, zlayer);
+  }
 }
 
 // Interpret what menu item changed and make the change to vice
@@ -1875,6 +1898,8 @@ static void menu_value_changed(struct menu_item *item) {
        enable_vic(1);
        enable_vdc(0);
        do_video_settings(FB_LAYER_VIC,
+           h_center_item_0,
+           v_center_item_0,
            h_border_item_0,
            v_border_item_0,
            aspect_item_0);
@@ -1882,6 +1907,8 @@ static void menu_value_changed(struct menu_item *item) {
        enable_vdc(1);
        enable_vic(0);
        do_video_settings(FB_LAYER_VDC,
+           h_center_item_1,
+           v_center_item_1,
            h_border_item_1,
            v_border_item_1,
            aspect_item_1);
@@ -1890,29 +1917,41 @@ static void menu_value_changed(struct menu_item *item) {
        enable_vdc(1);
        enable_vic(1);
        do_video_settings(FB_LAYER_VIC,
+           h_center_item_0,
+           v_center_item_0,
            h_border_item_0,
            v_border_item_0,
            aspect_item_0);
        do_video_settings(FB_LAYER_VDC,
+           h_center_item_1,
+           v_center_item_1,
            h_border_item_1,
            v_border_item_1,
            aspect_item_1);
     }
     break;
+  case MENU_H_CENTER_0:
+  case MENU_V_CENTER_0:
   case MENU_H_BORDER_0:
   case MENU_V_BORDER_0:
   case MENU_ASPECT_0:
     video_canvas_reveal_temp(FB_LAYER_VIC);
     do_video_settings(FB_LAYER_VIC,
+        h_center_item_0,
+        v_center_item_0,
         h_border_item_0,
         v_border_item_0,
         aspect_item_0);
     break;
+  case MENU_H_CENTER_1:
+  case MENU_V_CENTER_1:
   case MENU_H_BORDER_1:
   case MENU_V_BORDER_1:
   case MENU_ASPECT_1:
     video_canvas_reveal_temp(FB_LAYER_VDC);
     do_video_settings(FB_LAYER_VDC,
+        h_center_item_1,
+        v_center_item_1,
         h_border_item_1,
         v_border_item_1,
         aspect_item_1);
@@ -2269,6 +2308,12 @@ void build_menu(struct menu_item *root) {
      defaultAspect = DEFAULT_VIC_ASPECT;
   }
 
+  h_center_item_0 =
+      ui_menu_add_range(MENU_H_CENTER_0, parent, "H Center",
+          -48, 48, 1, 0);
+  v_center_item_0 =
+      ui_menu_add_range(MENU_V_CENTER_0, parent, "V Center",
+          -48, 48, 1, 0);
   h_border_item_0 =
       ui_menu_add_range(MENU_H_BORDER_0, parent, "H Border Trim %",
           0, 100, 1, defaultHBorderTrim);
@@ -2298,6 +2343,12 @@ void build_menu(struct menu_item *root) {
                                 get_color_tint(1));
      ui_menu_add_button(MENU_COLOR_RESET_1, child, "Reset");
 
+     h_center_item_1 =
+         ui_menu_add_range(MENU_H_CENTER_1, parent, "H Center",
+             -48, 48, 1, 0);
+     v_center_item_1 =
+         ui_menu_add_range(MENU_V_CENTER_1, parent, "V Center",
+             -48, 48, 1, 0);
      h_border_item_1 =
          ui_menu_add_range(MENU_H_BORDER_1, parent, "H Border Trim %",
              0, 100, 1, DEFAULT_VDC_H_BORDER_TRIM);
@@ -2542,6 +2593,17 @@ void build_menu(struct menu_item *root) {
   ui_set_joy_devs();
 
   apply_video_adjustments(FB_LAYER_VIC,
+     h_center_item_0->value,
+     v_center_item_0->value,
+     (double)(100-h_border_item_0->value) / 100.0d,
+     (double)(100-v_border_item_0->value) / 100.0d,
+     (double)(aspect_item_0->value) / 100.0d,
+     0.0d, 0.0d, 0.0d, 0.0d, 0);
+
+  // Menu gets the same adjustments
+  apply_video_adjustments(FB_LAYER_UI,
+     h_center_item_0->value,
+     v_center_item_0->value,
      (double)(100-h_border_item_0->value) / 100.0d,
      (double)(100-v_border_item_0->value) / 100.0d,
      (double)(aspect_item_0->value) / 100.0d,
@@ -2549,6 +2611,8 @@ void build_menu(struct menu_item *root) {
 
   if (machine_class == VICE_MACHINE_C128) {
      apply_video_adjustments(FB_LAYER_VDC,
+        h_center_item_1->value,
+        v_center_item_1->value,
         (double)(100-h_border_item_1->value) / 100.0d,
         (double)(100-v_border_item_1->value) / 100.0d,
         (double)(aspect_item_1->value) / 100.0d,

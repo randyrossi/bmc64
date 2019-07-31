@@ -165,6 +165,10 @@ void circle_set_aspect_fbl(int layer, double aspect) {
   static_kernel->circle_set_aspect_fbl(layer, aspect);
 }
 
+void circle_set_center_offset(int layer, int cx, int cy) {
+  static_kernel->circle_set_center_offset(layer, cx, cy);
+}
+
 void circle_set_src_rect_fbl(int layer, int x, int y, int w, int h) {
   static_kernel->circle_set_src_rect_fbl(layer, x,y,w,h);
 }
@@ -1064,6 +1068,10 @@ void CKernel::circle_update_palette_fbl(int layer) {
 
 void CKernel::circle_set_aspect_fbl(int layer, double aspect) {
   fbl[layer].SetAspect(aspect);
+}
+
+void CKernel::circle_set_center_offset(int layer, int cx, int cy) {
+  fbl[layer].SetCenterOffset(cx, cy);
 }
 
 void CKernel::circle_set_src_rect_fbl(int layer, int x, int y, int w, int h) {

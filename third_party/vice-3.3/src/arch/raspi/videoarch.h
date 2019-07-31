@@ -124,7 +124,10 @@ void video_color_setting_changed(int display_num);
 
 void video_init_overlay(int padding, int c40_80_state);
 
-void apply_video_adjustments(int layer, double hborder, double vborder, double aspect, double lpad, double rpad, double tpad, double bpad, int zlayer);
+void apply_video_adjustments(int layer, int hcenter, int vcenter,
+                             double hborder, double vborder,
+                             double aspect, double lpad, double rpad,
+                             double tpad, double bpad, int zlayer);
 
 void enable_vic(int enabled);
 void enable_vdc(int enabled);

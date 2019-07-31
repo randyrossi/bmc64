@@ -252,6 +252,7 @@ void video_init_overlay(int padding, int c40_80_state) {
 }
 
 void apply_video_adjustments(int layer,
+      int hcenter, int vcenter,
       double hborder, double vborder, double aspect,
       double lpad, double rpad, double tpad, double bpad,
       int zlayer) {
@@ -266,11 +267,17 @@ void apply_video_adjustments(int layer,
      vic_showing = 0;
      index = vic_canvas_index;
      canvas = vic_canvas;
-  } else {
+  } else if (layer == FB_LAYER_VDC) {
      assert (layer == FB_LAYER_VDC);
      vdc_showing = 0;
      index = vdc_canvas_index;
      canvas = vdc_canvas;
+  } else if (layer == FB_LAYER_UI) {
+     index = -1;
+     ui_showing = 0;
+     canvas = 0;
+  } else {
+     assert(0);
   }
 
   circle_set_zlayer_fbl(layer, zlayer);
@@ -278,48 +285,55 @@ void apply_video_adjustments(int layer,
 
   circle_set_aspect_fbl(layer, aspect);
 
-  canvas_state[index].border_w =
-     canvas_state[index].max_border_w * hborder;
-  canvas_state[index].border_h =
-     canvas_state[index].max_border_h * vborder;
+  if (index >= 0 && canvas) {
+    canvas_state[index].border_w =
+       canvas_state[index].max_border_w * hborder;
+    canvas_state[index].border_h =
+       canvas_state[index].max_border_h * vborder;
 
-  canvas_state[index].vis_w =
-     canvas_state[index].gfx_w +
-        canvas_state[index].border_w*2;
-  canvas_state[index].vis_h =
-     canvas_state[index].gfx_h +
-        canvas_state[index].border_h*2;
+    canvas_state[index].vis_w =
+       canvas_state[index].gfx_w +
+          canvas_state[index].border_w*2;
+    canvas_state[index].vis_h =
+       canvas_state[index].gfx_h +
+          canvas_state[index].border_h*2;
 
-  canvas_state[index].src_off_x =
-     canvas_state[index].max_border_w -
-         canvas_state[index].border_w;
+    canvas_state[index].src_off_x =
+       canvas_state[index].max_border_w -
+           canvas_state[index].border_w;
 
-  canvas_state[index].src_off_y =
-     canvas_state[index].max_border_h -
-         canvas_state[index].border_h;
+    canvas_state[index].src_off_y =
+       canvas_state[index].max_border_h -
+           canvas_state[index].border_h;
 
-  canvas_state[index].left =
-     canvas->geometry->extra_offscreen_border_left +
-         canvas_state[index].src_off_x;
+    canvas_state[index].left =
+       canvas->geometry->extra_offscreen_border_left +
+           canvas_state[index].src_off_x;
 
-  canvas_state[index].top =
-     canvas->geometry->first_displayed_line +
-         canvas_state[index].src_off_y;
+    canvas_state[index].top =
+       canvas->geometry->first_displayed_line +
+           canvas_state[index].src_off_y;
 
-  // Cut out is defined by top,left,vis_w,vis_h
+    // Cut out is defined by top,left,vis_w,vis_h
 
-  canvas_state[index].overlay_y =
-     canvas_state[index].top +
-          canvas_state[index].max_border_h +
-              canvas_state[index].gfx_h + 2;
+    canvas_state[index].overlay_y =
+       canvas_state[index].top +
+            canvas_state[index].max_border_h +
+                canvas_state[index].gfx_h + 2;
 
-  canvas_state[index].overlay_x = canvas_state[index].left;
+    canvas_state[index].overlay_x = canvas_state[index].left;
+  }
 
-  circle_set_src_rect_fbl(layer,
+  if (layer != FB_LAYER_UI) {
+     circle_set_src_rect_fbl(layer,
            canvas_state[index].left,
            canvas_state[index].top,
            canvas_state[index].vis_w,
            canvas_state[index].vis_h);
+  }
+
+  circle_set_center_offset(layer,
+           hcenter, vcenter);          
 }
 
 static struct video_canvas_s *video_canvas_create_vic(
@@ -483,14 +497,19 @@ void ensure_video(void) {
      circle_hide_fbl(FB_LAYER_STATUS);
      overlay_showing = 0;
   }
+
+  if (ui_enabled && !ui_showing) {
+     circle_show_fbl(FB_LAYER_UI);
+     ui_showing = 1;
+  }
 }
 
 void vsyncarch_postsync(void) {
   ensure_video();
 
   // This render will handle any OSDs we have. ODSs don't pause emulation.
-  if (ui_activated) {
-    // The only way we can be here and have ui_activated=1
+  if (ui_enabled) {
+    // The only way we can be here and have ui_enabled=1
     // is for an osd to be enabled.
     ui_render_now();
     circle_frames_ready_fbl(FB_LAYER_UI, -1 /* no 2nd layer */, 0 /* no sync */);
