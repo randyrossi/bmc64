@@ -1310,6 +1310,12 @@ static void relist_files_after_dir_change(struct menu_item *item) {
   case MENU_KERNAL_FILE:
   case MENU_BASIC_FILE:
   case MENU_CHARGEN_FILE:
+  case MENU_C128_LOAD_KERNAL_FILE:
+  case MENU_C128_LOAD_BASIC_HI_FILE:
+  case MENU_C128_LOAD_BASIC_LO_FILE:
+  case MENU_C128_LOAD_CHARGEN_FILE:
+  case MENU_C128_LOAD_64_KERNAL_FILE:
+  case MENU_C128_LOAD_64_BASIC_FILE:
     show_files(DIR_ROMS, FILTER_NONE, item->id, 1);
     break;
   case MENU_AUTOSTART_FILE:
