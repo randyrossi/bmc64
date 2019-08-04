@@ -23,6 +23,7 @@
 #include "siddefs.h"
 //#include "spline.h"
 #include "filter6581.h"
+#include "filter8580.h"
 
 RESID_NAMESPACE_START
 
@@ -128,7 +129,7 @@ public:
   Filter();
 
   void enable_filter(bool enable);
- // void set_chip_model(chip_model model);
+  void set_chip_model(chip_model model);
 
   RESID_INLINE
   void clock(sound_sample voice1, sound_sample voice2, sound_sample voice3,
@@ -190,13 +191,17 @@ protected:
   sound_sample w0, w0_ceil_1, w0_ceil_dt;
   sound_sample _1024_div_Q;
 
+  // NOTE: f0_6581,f0_8580,f0_points_6581,f0_point_8580
+  // were commented out since we pre-generate the table
+  // and include filter6581.h and filter8580 instead.
+  // See filter.cc for how this was done.
+
   // Cutoff frequency tables.
   // FC is an 11 bit register.
   //sound_sample f0_6581[2048];
   //sound_sample f0_8580[2048];
   //sound_sample* f0;
-	//const sound_sample* f0 = filter6581;
-	const short* f0 = filter6581;
+  const short* f0;
   //const static fc_point f0_points_6581[];
 		
   //const static fc_point f0_points_8580[];

@@ -538,4 +538,6 @@ const reg8 wave8580__ST[] =
 /* 0xff8: */  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 };
 
+const reg8* getwave8580__ST() { return &wave8580__ST[0]; }
+
 RESID_NAMESPACE_STOP

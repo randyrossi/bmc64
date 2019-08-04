@@ -38,7 +38,7 @@ public:
   WaveformGenerator();
 
   void set_sync_source(WaveformGenerator*);
-  //void set_chip_model(chip_model model);
+  void set_chip_model(chip_model model);
 
   RESID_INLINE void clock();
   RESID_INLINE void clock(cycle_count delta_t);

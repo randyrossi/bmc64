@@ -44,7 +44,7 @@ public:
 
   void enable_filter(bool enable);
   void set_sampling_parameter(float pass_freq);
-  //void set_chip_model(chip_model model);
+  void set_chip_model(chip_model model);
 
   RESID_INLINE void clock(sound_sample Vi);
   RESID_INLINE void clock(cycle_count delta_t, sound_sample Vi);

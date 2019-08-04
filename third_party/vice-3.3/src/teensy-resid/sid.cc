@@ -79,14 +79,12 @@ SID::~SID()
 // ----------------------------------------------------------------------------
 void SID::set_chip_model(chip_model model)
 {
-/*
   voice[0].set_chip_model(model);
   voice[1].set_chip_model(model);
   voice[2].set_chip_model(model);
 
   filter.set_chip_model(model);
   extfilt.set_chip_model(model);
-*/
 }
 
 // ----------------------------------------------------------------------------
@@ -129,7 +127,7 @@ int SID::output()
   //const int half = range >> 1;
   int sample = extfilt.output()/((4095*255 >> 7)*3*15*2/range);
 	
-	 asm ("ssat %0, #16, %1" : "=r" (sample) : "r" (sample)); 
+  asm ("ssat %0, #16, %1" : "=r" (sample) : "r" (sample)); 
 	
 /*
   if (sample >= half) {

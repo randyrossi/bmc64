@@ -30,12 +30,8 @@ ExternalFilter::ExternalFilter()
   reset();
   enable_filter(true);
   set_sampling_parameter(15915.6);
-  //set_chip_model(MOS6581);
-	{//instead:
-	mixer_DC = ((((0x800 - 0x380) + 0x800)*0xff*3 - 0xfff*0xff/18) >> 7)*0x0f;
-	}
+  set_chip_model(MOS6581);
 }
-
 
 // ----------------------------------------------------------------------------
 // Enable filter.
@@ -68,7 +64,6 @@ void ExternalFilter::set_sampling_parameter(float pass_freq)
 // ----------------------------------------------------------------------------
 // Set chip model.
 // ----------------------------------------------------------------------------
-/*
 void ExternalFilter::set_chip_model(chip_model model)
 {
   if (model == MOS6581) {
@@ -82,7 +77,6 @@ void ExternalFilter::set_chip_model(chip_model model)
     mixer_DC = 0;
   }
 }
-*/
 
 // ----------------------------------------------------------------------------
 // SID reset.

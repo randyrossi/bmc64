@@ -26,6 +26,10 @@ reg8* getwave6581__ST();
 reg8* getwave6581_P_T();
 reg8* getwave6581_PS_();
 reg8* getwave6581_PST();
+reg8* getwave8580__ST();
+reg8* getwave8580_P_T();
+reg8* getwave8580_PS_();
+reg8* getwave8580_PST();
 
 // ----------------------------------------------------------------------------
 // Constructor.
@@ -34,13 +38,7 @@ WaveformGenerator::WaveformGenerator()
 {
   sync_source = this;
 
- // set_chip_model(MOS6581);
- {//instead:
-  wave__ST = getwave6581__ST();
-  wave_P_T = getwave6581_P_T();
-  wave_PS_ = getwave6581_PS_();
-  wave_PST = getwave6581_PST();
- }
+  set_chip_model(MOS6581);
   reset();
 }
 
@@ -58,23 +56,21 @@ void WaveformGenerator::set_sync_source(WaveformGenerator* source)
 // ----------------------------------------------------------------------------
 // Set chip model.
 // ----------------------------------------------------------------------------
-/*
 void WaveformGenerator::set_chip_model(chip_model model)
 {
   if (model == MOS6581) {
-    wave__ST = &wave6581__ST[0];
-    wave_P_T = &wave6581_P_T[0];
-    wave_PS_ = &wave6581_PS_[0];
-    wave_PST = &wave6581_PST[0];
+    wave__ST = getwave6581__ST();
+    wave_P_T = getwave6581_P_T();
+    wave_PS_ = getwave6581_PS_();
+    wave_PST = getwave6581_PST();
   } 
   else {
-    wave__ST = &wave8580__ST[0];
-    wave_P_T = &wave8580_P_T[0];
-    wave_PS_ = &wave8580_PS_[0];
-    wave_PST = &wave8580_PST[0];
+    wave__ST = getwave8580__ST();
+    wave_P_T = getwave8580_P_T();
+    wave_PS_ = getwave8580_PS_();
+    wave_PST = getwave8580_PST();
   }
 }
-*/
 
 // ----------------------------------------------------------------------------
 // Register functions.

@@ -538,4 +538,6 @@ const reg8 wave8580_PST[] =
 /* 0xff8: */  0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 };
 
+const reg8* getwave8580_PST() { return &wave8580_PST[0]; }
+
 RESID_NAMESPACE_STOP

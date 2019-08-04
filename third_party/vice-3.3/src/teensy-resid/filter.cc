@@ -19,6 +19,7 @@
 
 #define __FILTER_CC__
 #include "filter.h"
+//#include <stdio.h>
 
 RESID_NAMESPACE_START
 
@@ -81,6 +82,7 @@ const fc_point Filter::f0_points_6581[] =
   { 2047, 18000 }    // 0xff 0x07 - repeated end point
 };
 */
+
 /*
 const fc_point Filter::f0_points_8580[] =
 {
@@ -135,27 +137,25 @@ Filter::Filter()
   Vnf = 0;
 
   enable_filter(true);
-/*	
+/*
   // Create mappings from FC to cutoff frequency.
   interpolate(f0_points_6581, f0_points_6581
 	      + sizeof(f0_points_6581)/sizeof(*f0_points_6581) - 1,
 	      PointPlotter<sound_sample>(f0_6581), 1.0);
-			
+
   interpolate(f0_points_8580, f0_points_8580
 	      + sizeof(f0_points_8580)/sizeof(*f0_points_8580) - 1,
 	      PointPlotter<sound_sample>(f0_8580), 1.0);
-*/
-//  set_chip_model(MOS6581);
-{//instead:
-	    mixer_DC = -0xfff*0xff/18 >> 7;
 
-    //f0 = f0_6581;
-   // f0_points = f0_points_6581;		
-   // f0_count = sizeof(f0_points_6581)/sizeof(*f0_points_6581);
-		set_w0();
-    set_Q();
-}
-		
+  // This is how filter6581.h and filter8581.h were created.
+  int cc = 0;
+  for (int i=0;i<2048;i++) {
+     printf ("0x%04x,",f0_8580[i]);
+     cc++; if (cc == 16) { cc=0; printf ("\n"); }
+  }
+*/
+
+  set_chip_model(MOS6581);
 }
 
 
@@ -171,7 +171,6 @@ void Filter::enable_filter(bool enable)
 // ----------------------------------------------------------------------------
 // Set chip model.
 // ----------------------------------------------------------------------------
-/*
 void Filter::set_chip_model(chip_model model)
 {
   if (model == MOS6581) {
@@ -187,23 +186,23 @@ void Filter::set_chip_model(chip_model model)
 
     mixer_DC = -0xfff*0xff/18 >> 7;
 
-    f0 = f0_6581;
-    f0_points = f0_points_6581;
-    f0_count = sizeof(f0_points_6581)/sizeof(*f0_points_6581);
+    f0 = filter6581; // was f0_6581
+    //f0_points = f0_points_6581;
+    //f0_count = sizeof(f0_points_6581)/sizeof(*f0_points_6581);
+
   }
   else {
     // No DC offsets in the MOS8580.
     mixer_DC = 0;
 
-    f0 = f0_8580;
-    f0_points = f0_points_8580;
-    f0_count = sizeof(f0_points_8580)/sizeof(*f0_points_8580);
+    f0 = filter8580; // was f0_8580
+    //f0_points = f0_points_8580;
+    //f0_count = sizeof(f0_points_8580)/sizeof(*f0_points_8580);
   }
 
   set_w0();
   set_Q();
 }
-*/
 
 
 // ----------------------------------------------------------------------------

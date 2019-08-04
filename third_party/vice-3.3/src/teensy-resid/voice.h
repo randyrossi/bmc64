@@ -31,7 +31,7 @@ class Voice
 public:
   Voice();
 
-//  void set_chip_model(chip_model model);
+  void set_chip_model(chip_model model);
   void set_sync_source(Voice*);
   void reset();
   void mute(bool enable);
