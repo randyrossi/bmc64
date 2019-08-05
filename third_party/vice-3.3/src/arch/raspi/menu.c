@@ -68,6 +68,14 @@
 // and the power port is actually power unlike the Keyrah.
 //#define RASPI_SUPPORT_PCB 1
 
+#define VERSION_STRING "2.2"
+
+#ifdef RASPI_LITE
+#define VARIANT_STRING "-Lite"
+#else
+#define VARIANT_STRING ""
+#endif
+
 #define DEFAULT_VICII_ASPECT 145
 #define DEFAULT_VICII_H_BORDER_TRIM 0
 #define DEFAULT_VICII_V_BORDER_TRIM 0
@@ -359,25 +367,37 @@ static void show_files(DirType dir_type, FileFilter filter, int menu_id,
 
 static void show_about() {
   struct menu_item *about_root = ui_push_menu(32, 8);
+  char title[16];
+  char desc[32];
 
   switch (machine_class) {
   case VICE_MACHINE_C64:
-    ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v2.2");
-    ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C64 Emulator");
+    snprintf (title, 15, "%s%s %s", "BMC64", VARIANT_STRING, VERSION_STRING);
+    strncpy (desc, "A Bare Metal C64 Emulator", 31);
     break;
   case VICE_MACHINE_C128:
-    ui_menu_add_button(MENU_TEXT, about_root, "BMC128 v2.2");
-    ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C128 Emulator");
+    snprintf (title, 15, "%s%s %s", "BMC128", VARIANT_STRING, VERSION_STRING);
+    strncpy (desc, "A Bare Metal C128 Emulator", 31);
     break;
   case VICE_MACHINE_VIC20:
-    ui_menu_add_button(MENU_TEXT, about_root, "BMVIC20 v2.2");
-    ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal Vic20 Emulator");
+    snprintf (title, 15, "%s%s %s", "BMVIC20", VARIANT_STRING, VERSION_STRING);
+    strncpy (desc, "A Bare Metal VIC20 Emulator", 31);
     break;
   default:
-    ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal ??? Emulator");
+    strncpy (title, "ERROR", 15);
+    strncpy (desc, "Unknown Emulator", 31);
     break;
   }
+
+  ui_menu_add_button(MENU_TEXT, about_root, title);
+  ui_menu_add_button(MENU_TEXT, about_root, desc);
+
+#ifdef RASPI_LITE
+  ui_menu_add_button(MENU_TEXT, about_root, "For the Rasbperry Pi Zero");
+#else
   ui_menu_add_button(MENU_TEXT, about_root, "For the Rasbperry Pi 2/3");
+#endif
+
   ui_menu_add_divider(about_root);
   ui_menu_add_button(MENU_TEXT, about_root, "https://github.com/");
   ui_menu_add_button(MENU_TEXT, about_root, "         randyrossi/bmc64");
@@ -698,8 +718,10 @@ static void load_settings() {
   sid_model_item->value = viceSidModelToBmcChoice(tmp_value);
 
   resources_get_int("SidFilters", &sid_filter_item->value);
+#ifndef RASPI_LITE
   resources_get_int("DriveSoundEmulation", &drive_sounds_item->value);
   resources_get_int("DriveSoundEmulationVolume", &drive_sounds_vol_item->value);
+#endif
 
   brightness_item_0->value = get_color_brightness(0);
   contrast_item_0->value = get_color_contrast(0);
@@ -2563,11 +2585,13 @@ void build_menu(struct menu_item *root) {
 
   parent = ui_menu_add_folder(root, "Prefs");
 
+#ifndef RASPI_LITE
   drive_sounds_item = ui_menu_add_toggle(MENU_DRIVE_SOUND_EMULATION, parent,
                                          "Drive sound emulation", 0);
   drive_sounds_vol_item =
       ui_menu_add_range(MENU_DRIVE_SOUND_EMULATION_VOLUME, parent,
                         "Drive sound emulation volume", 0, 1000, 100, 1000);
+#endif
 
   overlay_item =
       ui_menu_add_multiple_choice(MENU_OVERLAY, parent, "Show Status Bar");
@@ -2644,6 +2668,11 @@ void build_menu(struct menu_item *root) {
   resources_set_int("SidResidSampling", 0);
   set_video_cache(0);
   set_hw_scale(0);
+
+#ifdef RASPI_LITE
+  resources_set_int("DriveSoundEmulation", 0);
+  resources_set_int("DriveSoundEmulationVolume", 0);
+#endif
 
   // This can somehow get turned off. Make sure its always 1.
   resources_set_int("Datasette", 1);

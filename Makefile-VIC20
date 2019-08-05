@@ -8,6 +8,7 @@ CFLAGS += "-DRASPI_VIC20"
 
 ifeq ($(BOARD),pi0)
 RESID_IMPL = $(VICE)/teensy-resid/libresid.a
+CFLAGS += "-DRASPI_LITE"
 else
 RESID_IMPL = $(VICE)/resid/libresid.a
 endif

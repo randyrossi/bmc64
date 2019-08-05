@@ -2,10 +2,6 @@
 # Bare Metal Commodore 64 Emulator For The Raspberry Pi
 #
 
-# For VIC20, the following line makes the display look
-# better on CRTs
-#framebuffer_aspect=0x00050006
-
 # Uncomment either PAL or NTSC section below to suit
 # your needs. You MUST also edit cmdline.txt to match
 # the frequency of video you select here.
@@ -51,3 +47,24 @@ gpu_mem=64
 disable_splash=1
 boot_delay=0
 
+# FOR RASBPERRY PI 1 USERS ONLY USING BMC64-LITE
+# 
+# Some demos/games will simply not perform well at the
+# default 700mhz clock rate. This will be evident as
+# the audio/video stutters under heavy load. These 
+# settings will improve performance in the majority
+# of cases, but there will still be some situations
+# where the emulator will struggle. If you are not
+# comfortable with overclocking your Pi, consider
+# using bmc64 on Pi2 or Pi3. These are considered
+# fairly safe settings but I take no responsibility
+# for any damage caused to your device by using them.
+# Please see the documentation at the github site
+# for more info.
+#arm_freq=1000
+#core_freq=350
+#sdram_freq=500
+#sdram_schmoo=0x02000020
+#over_voltage=2
+#sdram_over_voltage=2
+#temp_limit=75

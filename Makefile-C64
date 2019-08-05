@@ -8,6 +8,7 @@ VICE = third_party/vice-3.3/src
 
 ifeq ($(BOARD),pi0)
 RESID_IMPL = $(VICE)/teensy-resid/libresid.a
+CFLAGS += "-DRASPI_LITE"
 else
 RESID_IMPL = $(VICE)/resid/libresid.a
 endif
