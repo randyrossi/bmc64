@@ -32,6 +32,7 @@ VICE_ARG_WITH_LIST(png,           [  --without-png           do not use the PNG 
 VICE_ARG_WITH_LIST(gif,           [  --without-gif           do not use the GIF screenshot sustem])
 VICE_ARG_WITH_LIST(zlib,          [  --without-zlib          do not use the zlib support])
 VICE_ARG_ENABLE_LIST(raspiui,     [  --enable-raspiui        enables Bare Metal Raspberry Pi UI support])
+VICE_ARG_ENABLE_LIST(raspilite,     [  --enable-raspilite      builds Bare Metal Raspberry Pi Lite version])
 VICE_ARG_ENABLE_LIST(sdlui,       [  --enable-sdlui          enables SDL UI support])
 VICE_ARG_ENABLE_LIST(sdlui2,      [  --enable-sdlui2         enables SDL2 UI support])
 VICE_ARG_ENABLE_LIST(native-gtk3ui,[  --enable-native-gtk3ui  enables native GTK3 UI support])
@@ -2194,6 +2195,7 @@ if test x"$is_unix" = "xyes" -o x"$is_beos" = "xyes"; then
   fi
 elif test x"$is_raspi" = "xyes"; then
   AM_CONDITIONAL(RASPI_COMPILE, true)
+  AM_CONDITIONAL(RASPI_LITE, true)
   AM_CONDITIONAL(HAVE_RAWDRIVE, false)
   AM_CONDITIONAL(UNIX_COMPILE, false)
   AM_CONDITIONAL(UNIX_SKYOS_COMPILE, false)
@@ -2225,6 +2227,10 @@ elif test x"$is_raspi" = "xyes"; then
   ARCH_INCLUDES="-I\$(top_srcdir)/src/arch/raspi"
   AC_DEFINE(RASPI_COMPILE,,[Are we compiling for bare metal raspberry pi?])
   SOUND_DRIVERS="$SOUND_DRIVERS soundraspi.o"
+
+  if test x"$enable_raspilite" = "xyes"; then
+    AC_DEFINE(RASPI_LITE,,[Compile lite version of bare metal raspberry pi?])
+  fi
 
 elif test x"$is_win32" = "xyes" ; then
   AC_DEFINE(HAVE_DYNLIB_SUPPORT,,[Support for dynamic library loading.])
@@ -3945,6 +3951,7 @@ elif test x"$is_win32" = "xyes"; then
   fi
 
   AM_CONDITIONAL(RASPI_COMPILE, false)
+  AM_CONDITIONAL(RASPI_LITE, false)
   AM_CONDITIONAL(WIN32_COMPILE, true)
   AM_CONDITIONAL(UNIX_COMPILE, false)
   AM_CONDITIONAL(UNIX_SKYOS_COMPILE, false)

@@ -40,6 +40,24 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifdef RASPI_LITE
+
+#define BG_COLOR 6
+#define FG_COLOR 14
+#define HILITE_COLOR 2
+#define BORDER_COLOR 3
+#define TRANSPARENT_COLOR 16
+
+#else
+
+#define BG_COLOR 0
+#define FG_COLOR 1
+#define HILITE_COLOR 2
+#define BORDER_COLOR 3
+#define TRANSPARENT_COLOR 16
+
+#endif
+
 // Is the UI layer enabled? (either OSD or MENU)
 volatile int ui_enabled;
 int ui_showing;
@@ -854,7 +872,7 @@ static void ui_render_children(struct menu_item *node, int *index, int indent) {
         *index < menu_window_bottom[current_menu]) {
       int y = (*index - menu_window_top[current_menu]) * 8 + node->menu_top;
       if (*index == menu_cursor[current_menu]) {
-        ui_draw_rect(node->menu_left, y, node->menu_width, 8, 2, 1);
+        ui_draw_rect(node->menu_left, y, node->menu_width, 8, HILITE_COLOR, 1);
         menu_cursor_item[current_menu] = node;
       }
 
@@ -863,42 +881,42 @@ static void ui_render_children(struct menu_item *node, int *index, int indent) {
       // underneath the menu while we are making changes.
       if (!ui_render_current_item_only || *index == menu_cursor[current_menu]) {
 
-        ui_draw_text(node->name, node->menu_left + (indent + 1) * 8, y, 1);
+        ui_draw_text(node->name, node->menu_left + (indent + 1) * 8, y, FG_COLOR);
         if (node->type == FOLDER) {
           if (node->is_expanded)
-            ui_draw_text("-", node->menu_left + (indent)*8, y, 1);
+            ui_draw_text("-", node->menu_left + (indent)*8, y, FG_COLOR);
           else
-            ui_draw_text("+", node->menu_left + (indent)*8, y, 1);
+            ui_draw_text("+", node->menu_left + (indent)*8, y, FG_COLOR);
         } else if (node->type == TOGGLE) {
           if (node->value) {
             if (node->custom_toggle_label[1][0] == '\0') {
                ui_draw_text("On",
                          node->menu_left + node->menu_width -
-                         ui_text_width("On"), y, 1);
+                         ui_text_width("On"), y, FG_COLOR);
             } else {
                ui_draw_text(node->custom_toggle_label[1],
                          node->menu_left + node->menu_width -
-                         ui_text_width(node->custom_toggle_label[1]), y, 1);
+                         ui_text_width(node->custom_toggle_label[1]), y, FG_COLOR);
             }
           } else {
             if (node->custom_toggle_label[0][0] == '\0') {
                ui_draw_text("Off", node->menu_left + node->menu_width -
-                         ui_text_width("Off"), y, 1);
+                         ui_text_width("Off"), y, FG_COLOR);
             } else {
                ui_draw_text(node->custom_toggle_label[0],
                          node->menu_left + node->menu_width -
-                         ui_text_width(node->custom_toggle_label[0]), y, 1);
+                         ui_text_width(node->custom_toggle_label[0]), y, FG_COLOR);
             }
           }
         } else if (node->type == CHECKBOX) {
           if (node->value)
             ui_draw_text("True", node->menu_left + node->menu_width -
                                      ui_text_width("True"),
-                         y, 1);
+                         y, FG_COLOR);
           else
             ui_draw_text("False", node->menu_left + node->menu_width -
                                       ui_text_width("False"),
-                         y, 1);
+                         y, FG_COLOR);
         } else if (node->type == RANGE) {
           if (node->divisor == 1) {
              sprintf(node->scratch, "%d", node->value);
@@ -909,26 +927,26 @@ static void ui_render_children(struct menu_item *node, int *index, int indent) {
           }
           ui_draw_text(node->scratch, node->menu_left + node->menu_width -
                                           ui_text_width(node->scratch),
-                       y, 1);
+                       y, FG_COLOR);
         } else if (node->type == MULTIPLE_CHOICE) {
           ui_draw_text(node->choices[node->value],
                        node->menu_left + node->menu_width -
                            ui_text_width(node->choices[node->value]),
-                       y, 1);
+                       y, FG_COLOR);
         } else if (node->type == DIVIDER) {
-          ui_draw_rect(node->menu_left, y + 3, node->menu_width, 2, 3, 1);
+          ui_draw_rect(node->menu_left, y + 3, node->menu_width, 2, BORDER_COLOR, 1);
         } else if (node->type == BUTTON) {
           char *dsp_string = get_button_display_str(node);
           ui_draw_text(dsp_string, node->menu_left + node->menu_width -
                                        ui_text_width(dsp_string),
-                       y, 1);
+                       y, FG_COLOR);
         } else if (node->type == TEXTFIELD) {
           // draw cursor underneath text
           ui_draw_rect(node->menu_left + ui_text_width(node->name) + 8 +
                            node->value * 8,
-                       y, 8, 8, 3, 1);
+                       y, 8, 8, BORDER_COLOR, 1);
           ui_draw_text(node->str_value,
-                       node->menu_left + ui_text_width(node->name) + 8, y, 1);
+                       node->menu_left + ui_text_width(node->name) + 8, y, FG_COLOR);
         }
       }
     }
@@ -945,7 +963,7 @@ static void ui_render_children(struct menu_item *node, int *index, int indent) {
 // Make the UI layer fully transparent in preparation for an OSD to
 // be displayed.
 void ui_make_transparent(void) {
-  ui_draw_rect(0, 0, ui_fb_w, ui_fb_h, 16 /* transparent */, 1);
+  ui_draw_rect(0, 0, ui_fb_w, ui_fb_h, TRANSPARENT_COLOR, 1);
 }
 
 void ui_render_now(void) {
@@ -954,18 +972,18 @@ void ui_render_now(void) {
   struct menu_item *ptr = menu_roots[current_menu].first_child;
 
   // Start with transparent
-  ui_draw_rect(0, 0, ui_fb_w, ui_fb_h, 16 /* transparent */, 1);
+  ui_draw_rect(0, 0, ui_fb_w, ui_fb_h, TRANSPARENT_COLOR, 1);
 
-  // black background conditional upon mode
+  // background conditional upon mode
   if (!ui_transparent) {
      ui_draw_rect(ptr->menu_left, ptr->menu_top,
                   ptr->menu_width, ptr->menu_height,
-                  0, 1);
+                  BG_COLOR, 1);
   }
 
   // border
   ui_draw_rect(ptr->menu_left - 1, ptr->menu_top - 1, ptr->menu_width + 2,
-               ptr->menu_height + 2, 3, 0);
+               ptr->menu_height + 2, BORDER_COLOR, 0);
 
   // menu text
   ui_render_children(ptr, &index, indent);

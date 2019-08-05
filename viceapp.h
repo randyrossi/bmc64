@@ -28,6 +28,7 @@
 #include <circle/koptions.h>
 #include <circle/logger.h>
 #include <circle/sched/scheduler.h>
+#include <circle/machineinfo.h>
 #include <circle/memory.h>
 #include <circle/net/netsubsystem.h>
 #include <circle/nulldevice.h>
@@ -186,6 +187,7 @@ protected:
   CScheduler mScheduler;
   CGPIOManager mGPIOManager;
   CVCHIQDevice mVCHIQ;
+  CMachineInfo mMachineInfo;
 
   CGPIOPin *joystickPins1[5];
   CGPIOPin *joystickPins2[5];
