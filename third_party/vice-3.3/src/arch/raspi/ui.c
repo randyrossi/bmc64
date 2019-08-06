@@ -43,9 +43,9 @@
 #ifdef RASPI_LITE
 
 #define BG_COLOR 6
-#define FG_COLOR 14
+#define FG_COLOR 3
 #define HILITE_COLOR 2
-#define BORDER_COLOR 3
+#define BORDER_COLOR 14
 #define TRANSPARENT_COLOR 16
 
 #else
@@ -177,8 +177,8 @@ void ui_init_menu(void) {
 
 // Draw a single character at x,y coords into the offscreen area
 static void ui_draw_char(uint8_t c, int pos_x, int pos_y, int color,
-                         uint8_t *dst, int dst_pitch) {
-  int x, y;
+                         uint8_t *dst, int dst_pitch, int stretch) {
+  int x, y, s;
   uint8_t fontchar;
   uint8_t *font_pos;
   uint8_t *draw_pos;
@@ -189,10 +189,10 @@ static void ui_draw_char(uint8_t c, int pos_x, int pos_y, int color,
     dst = ui_fb;
 
     // Don't draw out of bounds
-    if (pos_y < 0 || pos_y > ui_fb_h - 8) {
+    if (pos_y < 0 || pos_y > ui_fb_h - 8*stretch) {
       return;
     }
-    if (pos_x < 0 || pos_x > ui_fb_w - 8) {
+    if (pos_x < 0 || pos_x > ui_fb_w - 8*stretch) {
       return;
     }
   }
@@ -200,36 +200,38 @@ static void ui_draw_char(uint8_t c, int pos_x, int pos_y, int color,
   font_pos = &(video_font[video_font_translate[c]]);
   draw_pos = &(dst[pos_x + pos_y * dst_pitch]);
 
-  for (y = 0; y < 8; ++y) {
+  for (y = 0; y < 8*stretch; ++y) {
     fontchar = *font_pos;
     for (x = 0; x < 8; ++x) {
       if (fontchar & (0x80 >> x)) {
-        draw_pos[x] = color;
+        for (s = 0; s < stretch; s++) {
+           draw_pos[x*stretch+s] = color;
+        }
       }
     }
-    ++font_pos;
+    if (y % stretch == stretch-1) ++font_pos;
     draw_pos += dst_pitch;
   }
 }
 
 // Draw a string of text at location x,y. Does not word wrap.
 void ui_draw_text_buf(const char *text, int x, int y, int color, uint8_t *dst,
-                      int dst_pitch) {
+                      int dst_pitch, int stretch) {
   int i;
   int x2 = x;
   for (i = 0; i < strlen(text); i++) {
     if (text[i] == '\n') {
-      y = y + 8;
+      y = y + 8*stretch;
       x2 = x;
     } else {
-      ui_draw_char(text[i], x2, y, color, dst, dst_pitch);
-      x2 = x2 + 8;
+      ui_draw_char(text[i], x2, y, color, dst, dst_pitch, stretch);
+      x2 = x2 + 8*stretch;
     }
   }
 }
 
 void ui_draw_text(const char *text, int x, int y, int color) {
-  ui_draw_text_buf(text, x, y, color, NULL, 0);
+  ui_draw_text_buf(text, x, y, color, NULL, 0, 1);
 }
 
 // Draw a rectangle at x/y of given w/h into the offscreen area

@@ -246,9 +246,9 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
 }
 
 void video_init_overlay(int padding, int c40_80_state) {
-  overlay_init(vic_canvas->draw_buffer->canvas_physical_width,
-               vic_canvas->draw_buffer->canvas_physical_height,
-               padding, c40_80_state);
+  // Enough room for keyboard + scaled status bar (3x)
+  // keyboard = 1024x368 + 3x8 height of status bar font + 3x1 top pad + 3x1 bot pad
+  overlay_init(1024, 398, padding, c40_80_state);
 }
 
 void apply_video_adjustments(int layer,
@@ -688,18 +688,18 @@ void main_exit(void) {
 
   int x = 0;
   int y = 3;
-  ui_draw_text_buf("Emulator failed to start.", x, y, 1, fb, fb_pitch);
+  ui_draw_text_buf("Emulator failed to start.", x, y, 1, fb, fb_pitch, 1);
   y += 8;
   ui_draw_text_buf("This most likely means you are missing", x, y, 1, fb,
-                   fb_pitch);
+                   fb_pitch, 1);
   y += 8;
   ui_draw_text_buf("ROM files. Or you have specified an", x, y, 1, fb,
-                   fb_pitch);
+                   fb_pitch, 1);
   y += 8;
-  ui_draw_text_buf("invalid kernal, chargen or basic", x, y, 1, fb, fb_pitch);
+  ui_draw_text_buf("invalid kernal, chargen or basic", x, y, 1, fb, fb_pitch, 1);
   y += 8;
   ui_draw_text_buf("ROM in vice.ini.  See documentation.", x, y, 1, fb,
-                   fb_pitch);
+                   fb_pitch, 1);
   y += 8;
 
   circle_set_palette_fbl(FB_LAYER_VIC, 0, COLOR16(0, 0, 0));

@@ -42,8 +42,18 @@
 #define RED 2
 #define LIGHT_GREEN 13
 #define LIGHT_RED 10
+#define TRANSPARENT 16
 
 #define TICKS_PER_SECOND 1000000L
+
+// These were added when we switch to hi-res overlay
+// Existing coordinated are scaled up 4x so we get
+// large letters for the status bar but get higher res
+// for keyboard overlay.
+#define SCALE_XY 2
+
+// Font advance both horizontal and vertical
+#define FONT_ADVANCE (8*SCALE_XY)
 
 static int drive_x[4];
 static int tape_x;
@@ -68,7 +78,6 @@ static int inset_y;
 uint8_t *overlay_buf;
 static int overlay_buf_pitch;
 
-#define OVERLAY_HEIGHT 10
 
 // Create a new overlay buffer
 uint8_t *overlay_init(int width, int height, int padding, int c40_80_state) {
@@ -89,14 +98,25 @@ uint8_t *overlay_init(int width, int height, int padding, int c40_80_state) {
   }
 
   circle_alloc_fbl(FB_LAYER_STATUS,
-                   &overlay_buf, width, OVERLAY_HEIGHT, &overlay_buf_pitch);
+                   &overlay_buf, width, height, &overlay_buf_pitch);
   // Use negative aspect here so our overlay is stretched to the full
   // horizontal resolution rather than vertical.
-  circle_set_aspect_fbl(FB_LAYER_STATUS, -(double)width/(double)OVERLAY_HEIGHT);
+  circle_set_aspect_fbl(FB_LAYER_STATUS, -(double)width/(double)height);
   // We want our status bar to show up at the bottom of the screen with
   // padding set by user.
   circle_set_valign_fbl(FB_LAYER_STATUS, 1 /* BOTTOM */, padding);
-  memset(overlay_buf, bg_color, overlay_buf_pitch * OVERLAY_HEIGHT);
+
+  // Start with complete transparent overlay
+  memset(overlay_buf, TRANSPARENT, overlay_buf_pitch * height);
+
+  // Status bar height is the font height + 2 pixels padding above and
+  // below then scaled.
+  int status_bar_height = FONT_ADVANCE + 2 * SCALE_XY;
+
+  // Now draw the bg for the status bar
+  ui_draw_rect_buf(0, height - status_bar_height,
+                   width, status_bar_height,
+                   bg_color, 1, overlay_buf, overlay_buf_pitch);
 
   // Figure out inset that will center.
   char *template;
@@ -107,26 +127,26 @@ uint8_t *overlay_init(int width, int height, int padding, int c40_80_state) {
   } else {
      template = "8:  9:  10:  11:  T:000 STP   W:  J:12";
   }
-  inset_x = width / 2 - (strlen(template) * 8) / 2;
-  inset_y = 1;
+  inset_x = width / 2 - (strlen(template) * FONT_ADVANCE) / 2;
+  inset_y = height - status_bar_height + 1*SCALE_XY;
 
   ui_draw_text_buf(template, inset_x, inset_y, fg_color, overlay_buf,
-                   overlay_buf_pitch);
+                   overlay_buf_pitch, SCALE_XY);
 
   // Positions relative to start of text (before inset)
-  drive_x[0] = 2 * 8;
-  drive_x[1] = 6 * 8;
-  drive_x[2] = 11 * 8;
-  drive_x[3] = 16 * 8;
-  tape_x = 20 * 8;
-  tape_controls_x = 24 * 8;
-  tape_motor_x = 28 * 8;
-  warp_x = 32 * 8;
-  joyswap_x = 36 * 8;
-  columns_x = 41 * 8;
+  drive_x[0] = 2 * FONT_ADVANCE;
+  drive_x[1] = 6 * FONT_ADVANCE;
+  drive_x[2] = 11 * FONT_ADVANCE; 
+  drive_x[3] = 16 * FONT_ADVANCE;
+  tape_x = 20 * FONT_ADVANCE;
+  tape_controls_x = 24 * FONT_ADVANCE;
+  tape_motor_x = 28 * FONT_ADVANCE;
+  warp_x = 32 * FONT_ADVANCE;
+  joyswap_x = 36 * FONT_ADVANCE;
+  columns_x = 41 * FONT_ADVANCE;
 
   ui_draw_text_buf("-", warp_x + inset_x, inset_y, fg_color, overlay_buf,
-                   overlay_buf_pitch);
+                   overlay_buf_pitch, SCALE_XY);
 
   if (machine_class == VICE_MACHINE_C128) {
      overlay_40_80_columns_changed(c40_80_state);
@@ -159,20 +179,20 @@ void ui_enable_drive_status(ui_drive_enable_t state, int *drive_led_color) {
 
   for (i = 0; i < DRIVE_NUM; ++i) {
     if (overlay_buf) {
-      ui_draw_rect_buf(drive_x[i] + 8 * 0 + inset_x, inset_y + 2, 6, 4,
+      ui_draw_rect_buf(drive_x[i] + FONT_ADVANCE * 0 + inset_x, inset_y + 2, 6*SCALE_XY, 4*SCALE_XY,
                        bg_color, 1, overlay_buf, overlay_buf_pitch);
       // The second LED never seems to go on.  Removing it.
-      //ui_draw_rect_buf(drive_x[i] + 8 * 1 + inset_x, inset_y + 2, 6, 4,
+      //ui_draw_rect_buf(drive_x[i] + FONT_ADVANCE * 1 + inset_x, inset_y + 2, 6*SCALE_XY, 4*SCALE_XY,
       //                 bg_color, 1, overlay_buf, overlay_buf_pitch);
     }
     if (enabled & 1) {
       drive_led_types[i] = drive_led_color[i];
       current_drive_leds[i][0] = 0;
       current_drive_leds[i][1] = 0;
-      ui_draw_rect_buf(drive_x[i] + 8 * 0 + inset_x, inset_y + 2, 6, 4, BLACK,
+      ui_draw_rect_buf(drive_x[i] + FONT_ADVANCE * 0 + inset_x, inset_y + 2*SCALE_XY, 6*SCALE_XY, 4*SCALE_XY, BLACK,
                        1, overlay_buf, overlay_buf_pitch);
       // The second LED never seems to go on.  Removing it.
-      //ui_draw_rect_buf(drive_x[i] + 8 * 1 + inset_x, inset_y + 2, 6, 4, BLACK,
+      //ui_draw_rect_buf(drive_x[i] + FONT_ADVANCE * 1 + inset_x, inset_y + 2*SCALE_XY, 6*SCALE_XY, 4*SCALE_XY, BLACK,
       //                 1, overlay_buf, overlay_buf_pitch);
     }
     enabled >>= 1;
@@ -188,7 +208,8 @@ void ui_display_drive_led(int drive, unsigned int pwm1, unsigned int pwm2) {
 
   if (!overlay_enabled) return;
 
-  for (int i = 0; i < 2; i++) {
+  // Was i < 2, disabled 2nd LED since it never seems to turn on.
+  for (int i = 0; i < 1; i++) {
     unsigned int pwm = i == 0 ? pwm1 : pwm2;
     int led_color = drive_led_types[drive] & (1 << i);
     int led;
@@ -209,8 +230,8 @@ void ui_display_drive_led(int drive, unsigned int pwm1, unsigned int pwm2) {
     }
 
     // draw only 4 pixels in height and 6 wide (centered in cell)
-    ui_draw_rect_buf(drive_x[drive] + 8 * i + inset_x, inset_y + 2, // x,y
-                     6, 4, led, 1,                    // w,h,color,fill
+    ui_draw_rect_buf(drive_x[drive] + FONT_ADVANCE * i + inset_x, inset_y + 2 * SCALE_XY, // x,y
+                     6 * SCALE_XY, 4 * SCALE_XY, led, 1,                    // w,h,color,fill
                      overlay_buf, overlay_buf_pitch); // dest
   }
 }
@@ -227,10 +248,10 @@ void ui_display_tape_counter(int counter) {
 
     char tmp[16];
     sprintf(tmp, "%03d", counter % 1000);
-    ui_draw_rect_buf(tape_x + inset_x, inset_y, 8 * 3, 8, bg_color, 1,
+    ui_draw_rect_buf(tape_x + inset_x, inset_y, FONT_ADVANCE * 3, FONT_ADVANCE, bg_color, 1,
                      overlay_buf, overlay_buf_pitch);
     ui_draw_text_buf(tmp, tape_x + inset_x, inset_y, fg_color, overlay_buf,
-                     overlay_buf_pitch);
+                     overlay_buf_pitch, SCALE_XY);
     tape_counter = counter;
   }
 }
@@ -244,7 +265,7 @@ void ui_display_tape_control_status(int control) {
 
   if (!overlay_enabled) return;
 
-  ui_draw_rect_buf(tape_controls_x + inset_x, inset_y, 8 * 3, 8, bg_color, 1,
+  ui_draw_rect_buf(tape_controls_x + inset_x, inset_y, FONT_ADVANCE * 3, FONT_ADVANCE, bg_color, 1,
                    overlay_buf, overlay_buf_pitch);
   const char *txt;
   int col = fg_color;
@@ -272,7 +293,7 @@ void ui_display_tape_control_status(int control) {
   }
 
   ui_draw_text_buf(txt, tape_controls_x + inset_x, inset_y, col, overlay_buf,
-                   overlay_buf_pitch);
+                   overlay_buf_pitch, SCALE_XY);
 }
 
 // Draw tape motor status light
@@ -285,7 +306,7 @@ void ui_display_tape_motor_status(int motor) {
   if (!overlay_enabled) return;
 
   int led = motor ? RED : bg_color;
-  ui_draw_rect_buf(tape_motor_x + inset_x, inset_y + 2, 6, 4, led,
+  ui_draw_rect_buf(tape_motor_x + inset_x, inset_y + 2 * SCALE_XY, 6 * SCALE_XY, 4 * SCALE_XY, led,
                    1, // w,h,color,fill
                    overlay_buf, overlay_buf_pitch);
 }
@@ -298,10 +319,10 @@ void overlay_warp_changed(int warp) {
 
   if (!overlay_enabled) return;
 
-  ui_draw_rect_buf(warp_x + inset_x, inset_y, 8, 8, bg_color, 1, overlay_buf,
+  ui_draw_rect_buf(warp_x + inset_x, inset_y, FONT_ADVANCE, FONT_ADVANCE, bg_color, 1, overlay_buf,
                    overlay_buf_pitch);
   ui_draw_text_buf(warp ? "!" : "-", warp_x + inset_x, inset_y, fg_color,
-                   overlay_buf, overlay_buf_pitch);
+                   overlay_buf, overlay_buf_pitch, SCALE_XY);
 }
 
 void overlay_joyswap_changed(int swap) {
@@ -312,10 +333,10 @@ void overlay_joyswap_changed(int swap) {
 
   if (!overlay_enabled) return;
 
-  ui_draw_rect_buf(joyswap_x + inset_x, inset_y, 8 * 2, 8, bg_color, 1,
+  ui_draw_rect_buf(joyswap_x + inset_x, inset_y, FONT_ADVANCE * 2, FONT_ADVANCE, bg_color, 1,
                    overlay_buf, overlay_buf_pitch);
   ui_draw_text_buf(swap ? "21" : "12", joyswap_x + inset_x, inset_y, fg_color,
-                   overlay_buf, overlay_buf_pitch);
+                   overlay_buf, overlay_buf_pitch, SCALE_XY);
 }
 
 // Checks whether a showing overlay due to activity should no longer be showing
@@ -350,8 +371,8 @@ void overlay_40_80_columns_changed(int value) {
 
   if (!overlay_enabled) return;
 
-  ui_draw_rect_buf(columns_x + inset_x, inset_y, 8 * 2, 8, bg_color, 1,
+  ui_draw_rect_buf(columns_x + inset_x, inset_y, FONT_ADVANCE * 2, FONT_ADVANCE, bg_color, 1,
                    overlay_buf, overlay_buf_pitch);
   ui_draw_text_buf(value ? "40" : "80", columns_x + inset_x, inset_y, fg_color,
-                   overlay_buf, overlay_buf_pitch);
+                   overlay_buf, overlay_buf_pitch, SCALE_XY);
 }

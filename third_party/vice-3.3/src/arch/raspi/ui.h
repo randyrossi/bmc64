@@ -163,7 +163,7 @@ int ui_emulation_is_paused(void);
 void ui_init_menu(void);
 
 void ui_draw_text_buf(const char *text, int x, int y, int color, uint8_t *dst,
-                      int dst_pitch);
+                      int dst_pitch, int stretch);
 void ui_draw_text(const char *text, int x, int y, int color);
 
 void ui_draw_rect_buf(int x, int y, int w, int h, int color, int fill,
