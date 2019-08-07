@@ -160,6 +160,9 @@ private:
 
   bool showing_;
   bool allocated_;
+
+  uint16_t pal_565_[256];
+  uint32_t pal_argb_[256];
 };
 
 #endif

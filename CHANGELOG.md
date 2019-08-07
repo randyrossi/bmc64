@@ -214,3 +214,4 @@
   * Fixed navigation bug inside C128 rom files list, couldn't navigate out
   * Removed 2nd LED for drive status lights (never seemed to activate)
   * Added bmc64-lite build for PiZero
+  * Made palettes independent for each layer

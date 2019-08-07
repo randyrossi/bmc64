@@ -157,6 +157,10 @@ void circle_set_palette_fbl(int layer, uint8_t index, uint16_t rgb565) {
   static_kernel->circle_set_palette_fbl(layer, index, rgb565);
 }
 
+void circle_set_palette32_fbl(int layer, uint8_t index, uint32_t argb) {
+  static_kernel->circle_set_palette32_fbl(layer, index, argb);
+}
+
 void circle_update_palette_fbl(int layer) {
   static_kernel->circle_update_palette_fbl(layer);
 }
@@ -1060,6 +1064,10 @@ void CKernel::circle_frames_ready_fbl(int layer1, int layer2, int sync) {
 
 void CKernel::circle_set_palette_fbl(int layer, uint8_t index, uint16_t rgb565) {
   fbl[layer].SetPalette(index, rgb565);
+}
+
+void CKernel::circle_set_palette32_fbl(int layer, uint8_t index, uint32_t argb) {
+  fbl[layer].SetPalette(index, argb);
 }
 
 void CKernel::circle_update_palette_fbl(int layer) {
