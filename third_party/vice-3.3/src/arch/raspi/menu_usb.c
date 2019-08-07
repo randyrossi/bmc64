@@ -243,6 +243,7 @@ static void add_button_choices(struct menu_item *tmp_item) {
   strcpy(tmp_item->choices[BTN_ASSIGN_PIP_LOCATION], "Change PIP Location");
   strcpy(tmp_item->choices[BTN_ASSIGN_PIP_SWAP], "Swap PIP");
   strcpy(tmp_item->choices[BTN_ASSIGN_40_80_COLUMN], "40/80 Column Key");
+  strcpy(tmp_item->choices[BTN_ASSIGN_VKBD_TOGGLE], "Virtual Keyboard");
 
   char scratch[32];
   for (int n = 0; n < 6; n++) {

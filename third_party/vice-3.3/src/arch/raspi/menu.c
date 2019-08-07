@@ -127,8 +127,8 @@ struct menu_item *hotkey_cf7_item;
 struct menu_item *sid_engine_item;
 struct menu_item *sid_model_item;
 struct menu_item *sid_filter_item;
-struct menu_item *overlay_item;
-struct menu_item *overlay_padding_item;
+struct menu_item *statusbar_item;
+struct menu_item *statusbar_padding_item;
 struct menu_item *tape_reset_with_machine_item;
 
 struct menu_item *palette_item_0;
@@ -167,7 +167,7 @@ struct menu_item *c40_80_column_item;
 
 static int unit;
 static int joyswap;
-static int overlay_forced;
+static int statusbar_forced;
 
 // Held here, exported for menu_usb to read
 int pot_x_high_value;
@@ -628,8 +628,9 @@ static int save_settings() {
   fprintf(fp, "hotkey_cf3=%d\n", hotkey_cf3_item->value);
   fprintf(fp, "hotkey_cf5=%d\n", hotkey_cf5_item->value);
   fprintf(fp, "hotkey_cf7=%d\n", hotkey_cf7_item->value);
-  fprintf(fp, "overlay=%d\n", overlay_item->value);
-  fprintf(fp, "overlay_padding=%d\n", overlay_padding_item->value);
+  // Can't change the 'overlay_*' names, legacy.
+  fprintf(fp, "overlay=%d\n", statusbar_item->value);
+  fprintf(fp, "overlay_padding=%d\n", statusbar_padding_item->value);
   fprintf(fp, "tapereset=%d\n", tape_reset_with_machine_item->value);
   fprintf(fp, "reset_confirm=%d\n", reset_confirm_item->value);
 #ifdef RASPI_SUPPORT_PCB
@@ -832,10 +833,10 @@ static void load_settings() {
     } else if (strcmp(name, "alt_f12") == 0) {
       // Old. Equivalent to cf7 = Menu
       hotkey_cf7_item->value = HOTKEY_CHOICE_MENU;
-    } else if (strcmp(name, "overlay") == 0) {
-      overlay_item->value = value;
-    } else if (strcmp(name, "overlay_padding") == 0) {
-      overlay_padding_item->value = value;
+    } else if (strcmp(name, "overlay") == 0) { // legacy name
+      statusbar_item->value = value;
+    } else if (strcmp(name, "overlay_padding") == 0) { // legacy name
+      statusbar_padding_item->value = value;
     } else if (strcmp(name, "tapereset") == 0) {
       tape_reset_with_machine_item->value = value;
     } else if (strcmp(name, "pot_x_high") == 0) {
@@ -1995,11 +1996,11 @@ static void menu_value_changed(struct menu_item *item) {
         aspect_item_1);
     break;
   case MENU_OVERLAY:
-    overlay_forced = 0;
+    statusbar_forced = 0;
     if (item->value == 1) {
-      overlay_enabled = 1;
+      overlay_statusbar_enable();
     } else {
-      overlay_enabled = 0;
+      overlay_statusbar_disable();
     }
     break;
   case MENU_OVERLAY_PADDING:
@@ -2052,7 +2053,7 @@ int menu_get_keyboard_type(void) { return keyboard_type_item->value; }
 
 // KEEP in sync with kernel.cpp, kbd.c, menu_usb.c
 static void set_hotkey_choices(struct menu_item *item) {
-  item->num_choices = 14;
+  item->num_choices = 15;
   strcpy(item->choices[HOTKEY_CHOICE_NONE], "None");
   strcpy(item->choices[HOTKEY_CHOICE_MENU], "Menu");
   strcpy(item->choices[HOTKEY_CHOICE_WARP], "Warp");
@@ -2067,6 +2068,7 @@ static void set_hotkey_choices(struct menu_item *item) {
   strcpy(item->choices[HOTKEY_CHOICE_PIP_LOCATION], "Change PIP Location");
   strcpy(item->choices[HOTKEY_CHOICE_PIP_SWAP], "Swap PIP");
   strcpy(item->choices[HOTKEY_CHOICE_40_80_COLUMN], "40/80 Column");
+  strcpy(item->choices[HOTKEY_CHOICE_VKBD_TOGGLE], "Virtual Keyboard");
   item->choice_ints[HOTKEY_CHOICE_NONE] = BTN_ASSIGN_UNDEF;
   item->choice_ints[HOTKEY_CHOICE_MENU] = BTN_ASSIGN_MENU;
   item->choice_ints[HOTKEY_CHOICE_WARP] = BTN_ASSIGN_WARP;
@@ -2081,6 +2083,7 @@ static void set_hotkey_choices(struct menu_item *item) {
   item->choice_ints[HOTKEY_CHOICE_PIP_LOCATION] = BTN_ASSIGN_PIP_LOCATION;
   item->choice_ints[HOTKEY_CHOICE_PIP_SWAP] = BTN_ASSIGN_PIP_SWAP;
   item->choice_ints[HOTKEY_CHOICE_40_80_COLUMN] = BTN_ASSIGN_40_80_COLUMN;
+  item->choice_ints[HOTKEY_CHOICE_VKBD_TOGGLE] = BTN_ASSIGN_VKBD_TOGGLE;
 
   if (machine_class != VICE_MACHINE_C64 && machine_class != VICE_MACHINE_C128) {
      item->choice_disabled[HOTKEY_CHOICE_SWAP_PORTS] = 1;
@@ -2593,15 +2596,15 @@ void build_menu(struct menu_item *root) {
                         "Drive sound emulation volume", 0, 1000, 100, 1000);
 #endif
 
-  overlay_item =
+  statusbar_item =
       ui_menu_add_multiple_choice(MENU_OVERLAY, parent, "Show Status Bar");
-  overlay_item->num_choices = 3;
-  overlay_item->value = 0;
-  strcpy(overlay_item->choices[OVERLAY_NEVER], "Never");
-  strcpy(overlay_item->choices[OVERLAY_ALWAYS], "Always");
-  strcpy(overlay_item->choices[OVERLAY_ON_ACTIVITY], "On Activity");
+  statusbar_item->num_choices = 3;
+  statusbar_item->value = 0;
+  strcpy(statusbar_item->choices[OVERLAY_NEVER], "Never");
+  strcpy(statusbar_item->choices[OVERLAY_ALWAYS], "Always");
+  strcpy(statusbar_item->choices[OVERLAY_ON_ACTIVITY], "On Activity");
 
-  overlay_padding_item =
+  statusbar_padding_item =
       ui_menu_add_range(MENU_OVERLAY_PADDING, parent, "Status Bar Padding",
           0, 64, 1, 0);
 
@@ -2659,7 +2662,7 @@ void build_menu(struct menu_item *root) {
         0.0d, 0.0d, 0.0d, 0.0d, 1);
   }
 
-  video_init_overlay(overlay_padding_item->value, c40_80_column_item->value);
+  video_init_overlay(statusbar_padding_item->value, c40_80_column_item->value);
 
   joystick_set_potx(pot_x_high_value);
   joystick_set_poty(pot_y_high_value);
@@ -2679,12 +2682,12 @@ void build_menu(struct menu_item *root) {
   resources_set_int("Mouse", 1);
 }
 
-int overlay_never(void) {
-  return overlay_item->value == OVERLAY_NEVER;
+int statusbar_never(void) {
+  return statusbar_item->value == OVERLAY_NEVER;
 }
 
-int overlay_always(void) {
-  return overlay_item->value == OVERLAY_ALWAYS || overlay_forced;
+int statusbar_always(void) {
+  return statusbar_item->value == OVERLAY_ALWAYS || statusbar_forced;
 }
 
 // Stuff to do when menu is activated
@@ -2704,18 +2707,25 @@ void menu_quick_func(int button_assignment) {
   case BTN_ASSIGN_SWAP_PORTS:
     menu_swap_joysticks();
     break;
+  case BTN_ASSIGN_VKBD_TOGGLE:
+    if (vkbd_showing) {
+       vkbd_disable();
+    } else {
+       vkbd_enable();
+    }
+    break;
   case BTN_ASSIGN_STATUS_TOGGLE:
     // Ignore this if it's already showing.
-    if (overlay_item->value == OVERLAY_ALWAYS)
+    if (statusbar_item->value == OVERLAY_ALWAYS)
       return;
 
-    if (overlay_showing || overlay_forced) {
+    if (statusbar_showing || statusbar_forced) {
       // Dismiss
-      overlay_forced = 0;
-      overlay_dismiss();
+      statusbar_forced = 0;
+      overlay_statusbar_dismiss();
     } else {
-      overlay_forced = 1;
-      overlay_force_enabled();
+      statusbar_forced = 1;
+      overlay_statusbar_enable();
     }
     break;
   case BTN_ASSIGN_TAPE_MENU:

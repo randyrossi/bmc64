@@ -57,7 +57,7 @@
 #define USB_PREF_HAT 1
 
 // Make sure does not exceed max choices in ui.h
-#define NUM_BUTTON_ASSIGNMENTS 28
+#define NUM_BUTTON_ASSIGNMENTS 29
 
 // NOTE: BTN_ASSIGN_* are used as indices into choice
 // arrays.
@@ -97,6 +97,7 @@
 #define BTN_ASSIGN_PIP_LOCATION 25
 #define BTN_ASSIGN_PIP_SWAP 26
 #define BTN_ASSIGN_40_80_COLUMN 27
+#define BTN_ASSIGN_VKBD_TOGGLE 28
 
 // These are intermediate values not meant to
 // be directly assigned to buttons. Never used as

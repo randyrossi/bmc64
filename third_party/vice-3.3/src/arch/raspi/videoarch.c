@@ -66,11 +66,9 @@ static int vic_canvas_index;
 
 static int vic_enabled;
 static int vdc_enabled;
-int overlay_enabled;
 
 static int vic_showing;
 static int vdc_showing;
-int overlay_showing;
 
 uint8_t *video_font;
 uint16_t video_font_translate[256];
@@ -246,9 +244,7 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
 }
 
 void video_init_overlay(int padding, int c40_80_state) {
-  // Enough room for keyboard + scaled status bar (3x)
-  // keyboard = 1024x368 + 3x8 height of status bar font + 3x1 top pad + 3x1 bot pad
-  overlay_init(1024, 398, padding, c40_80_state);
+  overlay_init(padding, c40_80_state);
 }
 
 void apply_video_adjustments(int layer,
@@ -490,12 +486,28 @@ void ensure_video(void) {
      vdc_showing = 0;
   }
 
-  if (overlay_enabled && !overlay_showing) {
-     circle_show_fbl(FB_LAYER_STATUS);
-     overlay_showing = 1;
-  } else if (!overlay_enabled && overlay_showing) {
-     circle_hide_fbl(FB_LAYER_STATUS);
-     overlay_showing = 0;
+  if ((statusbar_enabled && !statusbar_showing) ||
+         (vkbd_enabled && !vkbd_showing)) {
+     if (statusbar_enabled && !statusbar_showing) {
+        statusbar_showing = 1;
+     }
+     if (vkbd_enabled && !vkbd_showing) {
+        vkbd_showing = 1;
+     }
+     if (statusbar_showing || vkbd_showing) {
+        circle_show_fbl(FB_LAYER_STATUS);
+     }
+  } else if ((!statusbar_enabled && statusbar_showing) ||
+                 (!vkbd_enabled && vkbd_showing)) {
+     if (!statusbar_enabled && statusbar_showing) {
+        statusbar_showing = 0;
+     }
+     if (!vkbd_enabled && vkbd_showing) {
+        vkbd_showing = 0;
+     }
+     if (!statusbar_showing && !vkbd_showing) {
+        circle_hide_fbl(FB_LAYER_STATUS);
+     }
   }
 
   if (ui_enabled && !ui_showing) {
@@ -516,7 +528,7 @@ void vsyncarch_postsync(void) {
     ui_check_key();
   }
 
-  if (overlay_showing) {
+  if (statusbar_showing || vkbd_showing) {
     overlay_check();
     circle_frames_ready_fbl(FB_LAYER_STATUS, -1 /* no 2nd layer */, 0 /* no sync */);
   }

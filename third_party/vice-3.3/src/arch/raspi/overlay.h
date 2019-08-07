@@ -29,17 +29,33 @@
 
 #include <sys/types.h>
 
+#define OVERLAY_WIDTH 896
+#define OVERLAY_HEIGHT 240
+
 // Holds overlay graphics buffer
 extern uint8_t *overlay_buf;
 
-uint8_t *overlay_init(int width, int height, int padding, int c40_80_state);
+extern int vkbd_enabled;
+extern int vkbd_showing;
+
+extern int statusbar_enabled;
+extern int statusbar_showing;
+
+uint8_t *overlay_init(int padding, int c40_80_state);
 void overlay_check(void);
 void overlay_activate(void);
 void overlay_warp_changed(int warp);
 void overlay_joyswap_changed(int swap);
-void overlay_dismiss(void);
-void overlay_force_enabled(void);
+void overlay_statusbar_dismiss(void);
+void overlay_statusbar_enable(void);
+void overlay_statusbar_disable(void);
 void overlay_change_padding(int padding);
 void overlay_40_80_columns_changed(int value);
-
+void vkbd_nav_up(void);
+void vkbd_nav_down(void);
+void vkbd_nav_left(void);
+void vkbd_nav_right(void);
+void vkbd_enable(void);
+void vkbd_disable(void);
+void vkbd_nav_press(int pressed);
 #endif

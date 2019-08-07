@@ -24,7 +24,15 @@
  *
  */
 
+// TODO : Add a dirty bit so we don't upload the frame buffer to dispmanx
+//        each frame while the overlay is showing something. This is a waste
+//        since the overlay doesn't draw anything unless something has changed.
+
 #include "overlay.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "datasette.h"
 #include "drive.h"
@@ -33,9 +41,8 @@
 #include "resources.h"
 #include "ui.h"
 #include "uiapi.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "virtual_keyboard.h"
+#include "circle.h"
 
 #define ARGB(a,r,g,b) ((uint32_t)((uint8_t)(a)<<24 | (uint8_t)(r)<<16 | (uint8_t)(g)<<8 | (uint8_t)(b)))
 
@@ -50,6 +57,10 @@
 // Font advance both horizontal and vertical
 #define FONT_ADVANCE (8*SCALE_XY)
 
+// Status bar height is the font height + 2 pixels padding above and
+// below then scaled.
+#define STATUS_BAR_HEIGHT (FONT_ADVANCE + 2 * SCALE_XY)
+
 static int drive_x[4];
 static int tape_x;
 static int tape_controls_x;
@@ -62,8 +73,8 @@ static int drive_led_types[DRIVE_NUM];
 static unsigned int current_drive_leds[DRIVE_NUM][2];
 static int tape_counter = -1;
 
-static unsigned long overlay_delay = 0;
-static unsigned long overlay_start = 0;
+static unsigned long statusbar_delay = 0;
+static unsigned long statusbar_start = 0;
 
 static int inset_x;
 static int inset_y;
@@ -80,6 +91,7 @@ static int overlay_buf_pitch;
 #define LIGHT_GREEN_COLOR 6
 #define TRANSPARENT_COLOR 7
 
+// Defines the first 8 overlay palette entries
 static uint32_t overlay_palette[8] = {
   ARGB(0xFF, 0x6c, 0x5e, 0xb5), // bg
   ARGB(0xFF, 0xFF, 0xFF, 0xFF), // fg
@@ -91,31 +103,60 @@ static uint32_t overlay_palette[8] = {
   ARGB(0x00, 0x00, 0x00, 0x00), // transparent
 };
 
+// The index into the virtual keyboard of the cursor
+int vkbd_cursor;
+
+int vkbd_enabled;
+int vkbd_showing;
+
+int statusbar_enabled;
+int statusbar_showing;
+
+static int last_c480_80_state;
+static char *template;
+
+static void draw_statusbar() {
+  // Now draw the bg for the status bar
+  ui_draw_rect_buf(0, OVERLAY_HEIGHT - STATUS_BAR_HEIGHT,
+                   OVERLAY_WIDTH, STATUS_BAR_HEIGHT,
+                   BG_COLOR, 1, overlay_buf, overlay_buf_pitch);
+
+
+  ui_draw_text_buf(template, inset_x, inset_y, FG_COLOR, overlay_buf,
+                   overlay_buf_pitch, SCALE_XY);
+
+  ui_draw_text_buf("-", warp_x + inset_x, inset_y, FG_COLOR, overlay_buf,
+                   overlay_buf_pitch, SCALE_XY);
+
+  if (machine_class == VICE_MACHINE_C128) {
+     overlay_40_80_columns_changed(last_c480_80_state);
+  }
+}
+
+static void clear_statusbar() {
+  ui_draw_rect_buf(0, OVERLAY_HEIGHT - STATUS_BAR_HEIGHT,
+                   OVERLAY_WIDTH, STATUS_BAR_HEIGHT,
+                   TRANSPARENT_COLOR, 1, overlay_buf, overlay_buf_pitch);
+}
+
 // Create a new overlay buffer
-uint8_t *overlay_init(int width, int height, int padding, int c40_80_state) {
+uint8_t *overlay_init(int padding, int c40_80_state) {
+  last_c480_80_state = c40_80_state;
   circle_alloc_fbl(FB_LAYER_STATUS,
-                   &overlay_buf, width, height, &overlay_buf_pitch);
+                   &overlay_buf, OVERLAY_WIDTH, OVERLAY_HEIGHT,
+                   &overlay_buf_pitch);
   // Use negative aspect here so our overlay is stretched to the full
   // horizontal resolution rather than vertical.
-  circle_set_aspect_fbl(FB_LAYER_STATUS, -(double)width/(double)height);
+  circle_set_aspect_fbl(FB_LAYER_STATUS,
+      -(double)OVERLAY_WIDTH/(double)OVERLAY_HEIGHT);
   // We want our status bar to show up at the bottom of the screen with
   // padding set by user.
   circle_set_valign_fbl(FB_LAYER_STATUS, 1 /* BOTTOM */, padding);
 
   // Start with complete transparent overlay
-  memset(overlay_buf, TRANSPARENT_COLOR, overlay_buf_pitch * height);
+  memset(overlay_buf, TRANSPARENT_COLOR, overlay_buf_pitch * OVERLAY_HEIGHT);
 
-  // Status bar height is the font height + 2 pixels padding above and
-  // below then scaled.
-  int status_bar_height = FONT_ADVANCE + 2 * SCALE_XY;
-
-  // Now draw the bg for the status bar
-  ui_draw_rect_buf(0, height - status_bar_height,
-                   width, status_bar_height,
-                   BG_COLOR, 1, overlay_buf, overlay_buf_pitch);
-
-  // Figure out inset that will center.
-  char *template;
+  // Figure out inset that will center our template.
   if (machine_class == VICE_MACHINE_VIC20) {
      template = "8:  9:  10:  11:  T:000 STP   W:  J:1";
   } else if (machine_class == VICE_MACHINE_C128) {
@@ -123,16 +164,14 @@ uint8_t *overlay_init(int width, int height, int padding, int c40_80_state) {
   } else {
      template = "8:  9:  10:  11:  T:000 STP   W:  J:12";
   }
-  inset_x = width / 2 - (strlen(template) * FONT_ADVANCE) / 2;
-  inset_y = height - 1 - status_bar_height + 1*SCALE_XY;
 
-  ui_draw_text_buf(template, inset_x, inset_y, FG_COLOR, overlay_buf,
-                   overlay_buf_pitch, SCALE_XY);
+  inset_x = OVERLAY_WIDTH / 2 - (strlen(template) * FONT_ADVANCE) / 2;
+  inset_y = OVERLAY_HEIGHT - 1 - STATUS_BAR_HEIGHT + 1*SCALE_XY;
 
   // Positions relative to start of text (before inset)
   drive_x[0] = 2 * FONT_ADVANCE;
   drive_x[1] = 6 * FONT_ADVANCE;
-  drive_x[2] = 11 * FONT_ADVANCE; 
+  drive_x[2] = 11 * FONT_ADVANCE;
   drive_x[3] = 16 * FONT_ADVANCE;
   tape_x = 20 * FONT_ADVANCE;
   tape_controls_x = 24 * FONT_ADVANCE;
@@ -140,13 +179,6 @@ uint8_t *overlay_init(int width, int height, int padding, int c40_80_state) {
   warp_x = 32 * FONT_ADVANCE;
   joyswap_x = 36 * FONT_ADVANCE;
   columns_x = 41 * FONT_ADVANCE;
-
-  ui_draw_text_buf("-", warp_x + inset_x, inset_y, FG_COLOR, overlay_buf,
-                   overlay_buf_pitch, SCALE_XY);
-
-  if (machine_class == VICE_MACHINE_C128) {
-     overlay_40_80_columns_changed(c40_80_state);
-  }
 
   // Setup colors for this layer
   for (int p = 0; p < 8; p++) {
@@ -157,14 +189,24 @@ uint8_t *overlay_init(int width, int height, int padding, int c40_80_state) {
   return overlay_buf;
 }
 
-// Some activity means overlay should show (if menu option set)
-void overlay_activate() {
+void overlay_statusbar_enable(void) {
+  statusbar_enabled = 1;
+  draw_statusbar();
+}
+
+void overlay_statusbar_disable(void) {
+  statusbar_enabled = 0;
+  clear_statusbar();
+}
+
+// Some activity means statusbar should show (if menu option set)
+static void statusbar_triggered_by_activity() {
   if (!overlay_buf) return;
 
-  overlay_start = circle_get_ticks();
-  overlay_delay = 5 * TICKS_PER_SECOND;
-  if (!overlay_never()) {
-     overlay_enabled = 1;
+  statusbar_start = circle_get_ticks();
+  statusbar_delay = 5 * TICKS_PER_SECOND;
+  if (!statusbar_never()) {
+     overlay_statusbar_enable();
   }
 }
 
@@ -173,9 +215,9 @@ void ui_enable_drive_status(ui_drive_enable_t state, int *drive_led_color) {
   if (!overlay_buf)
     return;
 
-  overlay_activate();
+  statusbar_triggered_by_activity();
 
-  if (!overlay_enabled) return;
+  if (!statusbar_enabled) return;
 
   int i, enabled = state;
 
@@ -206,9 +248,9 @@ void ui_display_drive_led(int drive, unsigned int pwm1, unsigned int pwm2) {
   if (!overlay_buf)
     return;
 
-  overlay_activate();
+  statusbar_triggered_by_activity();
 
-  if (!overlay_enabled) return;
+  if (!statusbar_enabled) return;
 
   // Was i < 2, disabled 2nd LED since it never seems to turn on.
   for (int i = 0; i < 1; i++) {
@@ -244,9 +286,9 @@ void ui_display_tape_counter(int counter) {
     return;
 
   if (counter != tape_counter) {
-    overlay_activate();
+    statusbar_triggered_by_activity();
 
-    if (!overlay_enabled) return;
+    if (!statusbar_enabled) return;
 
     char tmp[16];
     sprintf(tmp, "%03d", counter % 1000);
@@ -263,9 +305,9 @@ void ui_display_tape_control_status(int control) {
   if (!overlay_buf)
     return;
 
-  overlay_activate();
+  statusbar_triggered_by_activity();
 
-  if (!overlay_enabled) return;
+  if (!statusbar_enabled) return;
 
   ui_draw_rect_buf(tape_controls_x + inset_x, inset_y, FONT_ADVANCE * 3, FONT_ADVANCE, BG_COLOR, 1,
                    overlay_buf, overlay_buf_pitch);
@@ -303,9 +345,9 @@ void ui_display_tape_motor_status(int motor) {
   if (!overlay_buf)
     return;
 
-  overlay_activate();
+  statusbar_triggered_by_activity();
 
-  if (!overlay_enabled) return;
+  if (!statusbar_enabled) return;
 
   int led = motor ? RED_COLOR : BG_COLOR;
   ui_draw_rect_buf(tape_motor_x + inset_x, inset_y + 2 * SCALE_XY, 6 * SCALE_XY, 4 * SCALE_XY, led,
@@ -317,9 +359,9 @@ void overlay_warp_changed(int warp) {
   if (!overlay_buf)
     return;
 
-  overlay_activate();
+  statusbar_triggered_by_activity();
 
-  if (!overlay_enabled) return;
+  if (!statusbar_enabled) return;
 
   ui_draw_rect_buf(warp_x + inset_x, inset_y, FONT_ADVANCE, FONT_ADVANCE, BG_COLOR, 1, overlay_buf,
                    overlay_buf_pitch);
@@ -331,9 +373,9 @@ void overlay_joyswap_changed(int swap) {
   if (!overlay_buf)
     return;
 
-  overlay_activate();
+  statusbar_triggered_by_activity();
 
-  if (!overlay_enabled) return;
+  if (!statusbar_enabled) return;
 
   ui_draw_rect_buf(joyswap_x + inset_x, inset_y, FONT_ADVANCE * 2, FONT_ADVANCE, BG_COLOR, 1,
                    overlay_buf, overlay_buf_pitch);
@@ -344,24 +386,21 @@ void overlay_joyswap_changed(int swap) {
 // Checks whether a showing overlay due to activity should no longer be showing
 void overlay_check(void) {
   // Rollover safe way of checking duration
-  if (overlay_enabled && circle_get_ticks() - overlay_start >= overlay_delay) {
-      overlay_dismiss();
+  if (statusbar_enabled && circle_get_ticks() - statusbar_start >= statusbar_delay) {
+      overlay_statusbar_dismiss();
   }
 }
 
-void overlay_dismiss(void) {
-  if (!overlay_always()) {
-     overlay_enabled = 0;
+void overlay_statusbar_dismiss(void) {
+  if (!statusbar_always()) {
+     overlay_statusbar_disable();
   }
-}
-
-void overlay_force_enabled(void) {
-  overlay_enabled = 1;
 }
 
 void overlay_change_padding(int padding) {
   circle_hide_fbl(FB_LAYER_STATUS);
-  overlay_showing = 0;
+  statusbar_showing = 0;
+  vkbd_showing = 0;
   circle_set_valign_fbl(FB_LAYER_STATUS, 1 /* BOTTOM */, padding);
 }
 
@@ -369,12 +408,79 @@ void overlay_40_80_columns_changed(int value) {
   if (!overlay_buf)
     return;
 
-  overlay_activate();
+  statusbar_triggered_by_activity();
 
-  if (!overlay_enabled) return;
+  if (!statusbar_enabled) return;
 
   ui_draw_rect_buf(columns_x + inset_x, inset_y, FONT_ADVANCE * 2, FONT_ADVANCE, BG_COLOR, 1,
                    overlay_buf, overlay_buf_pitch);
   ui_draw_text_buf(value ? "40" : "80", columns_x + inset_x, inset_y, FG_COLOR,
                    overlay_buf, overlay_buf_pitch, SCALE_XY);
+
+  last_c480_80_state = value;
 }
+
+static void overlay_clear_virtual_keyboard() {
+  int cx = (OVERLAY_WIDTH - VKBD_WIDTH) / 2;
+  int cy = (OVERLAY_HEIGHT - VKBD_HEIGHT) / 2;
+
+  // Clear background for keyboard
+  ui_draw_rect_buf(cx-1, cy-1, VKBD_WIDTH+2, VKBD_HEIGHT+2,
+                   TRANSPARENT_COLOR, 1, overlay_buf, overlay_buf_pitch);
+
+}
+
+static void overlay_draw_virtual_keyboard() {
+  // Draw keys
+  int cx = (OVERLAY_WIDTH - VKBD_WIDTH) / 2;
+  int cy = (OVERLAY_HEIGHT - VKBD_HEIGHT) / 2;
+
+  // Clear background for keyboard
+  ui_draw_rect_buf(cx-1, cy-1, VKBD_WIDTH+2, VKBD_HEIGHT+2,
+                   BG_COLOR, 1, overlay_buf, overlay_buf_pitch);
+
+  for (int i=0; i < NUM_KEYS; i++) {
+     // Show current key
+     int color = (i == vkbd_cursor ? GREEN_COLOR : FG_COLOR);
+
+     ui_draw_rect_buf(vkbd[i].x+cx, vkbd[i].y+cy, vkbd[i].w, vkbd[i].h,
+                      color, 0, overlay_buf, overlay_buf_pitch);
+  }
+}
+
+void vkbd_enable() {
+   vkbd_enabled = 1;
+   overlay_draw_virtual_keyboard();
+}
+
+void vkbd_disable() {
+   vkbd_enabled = 0;
+   overlay_clear_virtual_keyboard();
+}
+
+void vkbd_nav_up(void) {
+   vkbd_cursor = vkbd[vkbd_cursor].up;
+   overlay_draw_virtual_keyboard();
+}
+
+void vkbd_nav_down(void) {
+   vkbd_cursor = vkbd[vkbd_cursor].down;
+   overlay_draw_virtual_keyboard();
+}
+
+void vkbd_nav_left(void) {
+   vkbd_cursor = vkbd[vkbd_cursor].left;
+   overlay_draw_virtual_keyboard();
+}
+
+void vkbd_nav_right(void) {
+   vkbd_cursor = vkbd[vkbd_cursor].right;
+   overlay_draw_virtual_keyboard();
+}
+
+void vkbd_nav_press(int pressed) {
+   //circle_keyboard_set_latch_keyarr(vkbd[vkbd_cursor].row,
+   //                                 vkbd[vkbd_cursor].col,
+   //                                 pressed);
+}
+

@@ -270,6 +270,7 @@ static void handle_button_function(bool is_ui, int device, unsigned buttons) {
      case BTN_ASSIGN_PIP_LOCATION:
      case BTN_ASSIGN_PIP_SWAP:
      case BTN_ASSIGN_40_80_COLUMN:
+     case BTN_ASSIGN_VKBD_TOGGLE:
        if (is_press) {
           circle_emu_quick_func_interrupt(button_func);
        }

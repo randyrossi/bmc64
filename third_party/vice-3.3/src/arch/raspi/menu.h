@@ -339,6 +339,7 @@ typedef enum {
    HOTKEY_CHOICE_PIP_LOCATION,
    HOTKEY_CHOICE_PIP_SWAP,
    HOTKEY_CHOICE_40_80_COLUMN,
+   HOTKEY_CHOICE_VKBD_TOGGLE,
 } HotKeyChoice;
 
 enum {
@@ -393,8 +394,8 @@ void build_menu(struct menu_item *root);
 
 int menu_get_keyboard_type(void);
 void menu_swap_joysticks(void);
-int overlay_never(void);
-int overlay_always(void);
+int statusbar_never(void);
+int statusbar_always(void);
 
 void menu_about_to_activate(void);
 void menu_about_to_deactivate(void);
