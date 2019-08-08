@@ -43,6 +43,7 @@
 #include "uiapi.h"
 #include "virtual_keyboard.h"
 #include "circle.h"
+#include "keycodes.h"
 
 #define ARGB(a,r,g,b) ((uint32_t)((uint8_t)(a)<<24 | (uint8_t)(r)<<16 | (uint8_t)(g)<<8 | (uint8_t)(b)))
 
@@ -443,9 +444,8 @@ static void overlay_draw_virtual_keyboard() {
   for (int i=0; i < NUM_KEYS; i++) {
      // Show current key
      int color = (i == vkbd_cursor ? GREEN_COLOR : FG_COLOR);
-
      ui_draw_rect_buf(vkbd[i].x+cx, vkbd[i].y+cy, vkbd[i].w, vkbd[i].h,
-                      color, 0, overlay_buf, overlay_buf_pitch);
+                      color, vkbd[i].state, overlay_buf, overlay_buf_pitch);
   }
 }
 
@@ -480,9 +480,30 @@ void vkbd_nav_right(void) {
 }
 
 void vkbd_nav_press(int pressed) {
-   circle_keyboard_set_latch_keyarr(vkbd[vkbd_cursor].col,
+   if (vkbd[vkbd_cursor].toggle) {
+      // Only toggle on the press
+      if (pressed) {
+        vkbd[vkbd_cursor].state = 1 - vkbd[vkbd_cursor].state;
+        circle_keyboard_set_latch_keyarr(vkbd[vkbd_cursor].col,
+                                    vkbd[vkbd_cursor].row,
+                                    vkbd[vkbd_cursor].state);
+      }
+   } else {
+      // Handle restore special case
+      if (vkbd[vkbd_cursor].row == 0 && vkbd[vkbd_cursor].col == -3) {
+         if (pressed) {
+            circle_key_pressed(KEYCODE_PageUp);
+         } else {
+            circle_key_released(KEYCODE_PageUp);
+         }
+      } else {
+        circle_keyboard_set_latch_keyarr(vkbd[vkbd_cursor].col,
                                     vkbd[vkbd_cursor].row,
                                     pressed);
+      }
+      vkbd[vkbd_cursor].state = pressed;
+   }
    vkbd_press = pressed;
+   overlay_draw_virtual_keyboard();
 }
 
