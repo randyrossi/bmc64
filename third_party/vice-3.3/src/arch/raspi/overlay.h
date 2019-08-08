@@ -37,6 +37,7 @@ extern uint8_t *overlay_buf;
 
 extern int vkbd_enabled;
 extern int vkbd_showing;
+extern int vkbd_press;
 
 extern int statusbar_enabled;
 extern int statusbar_showing;

@@ -570,27 +570,41 @@ void vsyncarch_postsync(void) {
   while (pending_emu_joy_head != pending_emu_joy_tail) {
     int i = pending_emu_joy_head & 0x7f;
     reset_demo = 1;
-    switch (pending_emu_joy_type[i]) {
-    case PENDING_EMU_JOY_TYPE_ABSOLUTE:
-      joystick_set_value_absolute(pending_emu_joy_port[i],
+    if (vkbd_enabled) {
+      int value = pending_emu_joy_value[i];
+      switch (pending_emu_joy_type[i]) {
+      case PENDING_EMU_JOY_TYPE_ABSOLUTE:
+        if (value & 0x1) vkbd_nav_up();
+        else if (value & 0x2 && !vkbd_press) vkbd_nav_down();
+        else if (value & 0x4 && !vkbd_press) vkbd_nav_left();
+        else if (value & 0x8 && !vkbd_press) vkbd_nav_right();
+        else if (value & 0x10 && !vkbd_press) vkbd_nav_press(1);
+        else if (!(value & 0x10) && vkbd_press) vkbd_nav_press(0);
+        break;
+      }
+    } else {
+      switch (pending_emu_joy_type[i]) {
+      case PENDING_EMU_JOY_TYPE_ABSOLUTE:
+        joystick_set_value_absolute(pending_emu_joy_port[i],
                                   pending_emu_joy_value[i] & 0x1f);
-      joystick_set_potx((pending_emu_joy_value[i] & POTX_BIT_MASK) >> 5);
-      joystick_set_poty((pending_emu_joy_value[i] & POTY_BIT_MASK) >> 13);
-      break;
-    case PENDING_EMU_JOY_TYPE_AND:
-      joystick_set_value_and(pending_emu_joy_port[i],
+        joystick_set_potx((pending_emu_joy_value[i] & POTX_BIT_MASK) >> 5);
+        joystick_set_poty((pending_emu_joy_value[i] & POTY_BIT_MASK) >> 13);
+        break;
+      case PENDING_EMU_JOY_TYPE_AND:
+        joystick_set_value_and(pending_emu_joy_port[i],
                              pending_emu_joy_value[i] & 0x1f);
-      joystick_set_potx_and((pending_emu_joy_value[i] & POTX_BIT_MASK) >> 5);
-      joystick_set_poty_and((pending_emu_joy_value[i] & POTY_BIT_MASK) >> 13);
-      break;
-    case PENDING_EMU_JOY_TYPE_OR:
-      joystick_set_value_or(pending_emu_joy_port[i],
+        joystick_set_potx_and((pending_emu_joy_value[i] & POTX_BIT_MASK) >> 5);
+        joystick_set_poty_and((pending_emu_joy_value[i] & POTY_BIT_MASK) >> 13);
+        break;
+      case PENDING_EMU_JOY_TYPE_OR:
+        joystick_set_value_or(pending_emu_joy_port[i],
                             pending_emu_joy_value[i] & 0x1f);
-      joystick_set_potx_or((pending_emu_joy_value[i] & POTX_BIT_MASK) >> 5);
-      joystick_set_poty_or((pending_emu_joy_value[i] & POTY_BIT_MASK) >> 13);
-      break;
-    default:
-      break;
+        joystick_set_potx_or((pending_emu_joy_value[i] & POTX_BIT_MASK) >> 5);
+        joystick_set_poty_or((pending_emu_joy_value[i] & POTY_BIT_MASK) >> 13);
+        break;
+      default:
+        break;
+      }
     }
     pending_emu_joy_head++;
   }

@@ -108,6 +108,7 @@ int vkbd_cursor;
 
 int vkbd_enabled;
 int vkbd_showing;
+int vkbd_press;
 
 int statusbar_enabled;
 int statusbar_showing;
@@ -479,8 +480,9 @@ void vkbd_nav_right(void) {
 }
 
 void vkbd_nav_press(int pressed) {
-   //circle_keyboard_set_latch_keyarr(vkbd[vkbd_cursor].row,
-   //                                 vkbd[vkbd_cursor].col,
-   //                                 pressed);
+   circle_keyboard_set_latch_keyarr(vkbd[vkbd_cursor].col,
+                                    vkbd[vkbd_cursor].row,
+                                    pressed);
+   vkbd_press = pressed;
 }
 
