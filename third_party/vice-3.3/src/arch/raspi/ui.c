@@ -177,7 +177,8 @@ void ui_init_menu(void) {
 
 // Draw a single character at x,y coords into the offscreen area
 static void ui_draw_char(uint8_t c, int pos_x, int pos_y, int color,
-                         uint8_t *dst, int dst_pitch, int stretch) {
+                         uint8_t *dst, int dst_pitch, int stretch,
+                         int translate) {
   int x, y, s;
   uint8_t fontchar;
   uint8_t *font_pos;
@@ -197,7 +198,11 @@ static void ui_draw_char(uint8_t c, int pos_x, int pos_y, int color,
     }
   }
 
-  font_pos = &(video_font[video_font_translate[c]]);
+  if (translate) {
+     font_pos = &(video_font[video_font_translate[c]]);
+  } else {
+     font_pos = &(video_font[c*8]);
+  }
   draw_pos = &(dst[pos_x + pos_y * dst_pitch]);
 
   for (y = 0; y < 8*stretch; ++y) {
@@ -224,10 +229,16 @@ void ui_draw_text_buf(const char *text, int x, int y, int color, uint8_t *dst,
       y = y + 8*stretch;
       x2 = x;
     } else {
-      ui_draw_char(text[i], x2, y, color, dst, dst_pitch, stretch);
+      ui_draw_char(text[i], x2, y, color, dst, dst_pitch, stretch, 1);
       x2 = x2 + 8*stretch;
     }
   }
+}
+
+// No font translation from ascii to petscii
+void ui_draw_char_raw(const char singlechar, int x, int y, int color,
+                      uint8_t *dst, int dst_pitch, int stretch) {
+   ui_draw_char(singlechar, x, y, color, dst, dst_pitch, stretch, 0);
 }
 
 void ui_draw_text(const char *text, int x, int y, int color) {

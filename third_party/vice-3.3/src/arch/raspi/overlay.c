@@ -454,8 +454,102 @@ static void overlay_draw_virtual_keyboard() {
   for (int i=0; i < NUM_KEYS; i++) {
      // Show current key
      int color = (i == vkbd_cursor ? GREEN_COLOR : FG_COLOR);
+
+     if (vkbd[i].state) {
+        ui_draw_rect_buf(vkbd[i].x+cx, vkbd[i].y+cy, vkbd[i].w, vkbd[i].h,
+                      GREEN_COLOR, 1 /* fill */, overlay_buf, overlay_buf_pitch);
+     }
      ui_draw_rect_buf(vkbd[i].x+cx, vkbd[i].y+cy, vkbd[i].w, vkbd[i].h,
-                      color, vkbd[i].state, overlay_buf, overlay_buf_pitch);
+                      color, 0 /* fill */, overlay_buf, overlay_buf_pitch);
+
+     int labelx = (vkbd[i].x+cx + vkbd[i].w / 2);
+     int labely = (vkbd[i].y+cy + vkbd[i].h / 2);
+     if (vkbd[i].code >= 0) {
+        // Center our 2x scaled character
+        labelx -= 8;
+        labely -= 8;
+        ui_draw_char_raw(vkbd[i].code, labelx, labely,
+                      FG_COLOR, overlay_buf,
+                      overlay_buf_pitch, 2);
+     } else {
+        
+        switch (vkbd[i].code) {
+          case VKBD_KEY_HOME:
+             labelx -= (8*3)/2;
+             labely -= 4;
+             ui_draw_text_buf("HOM", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             break;
+          case VKBD_DEL:
+             labelx -= (8*3)/2;
+             labely -= 4;
+             ui_draw_text_buf("DEL", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             break;
+          case VKBD_F1:
+             labelx -= (8*2)/2;
+             labely -= 4;
+             ui_draw_text_buf("F1", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             break;
+          case VKBD_F3:
+             labelx -= (8*2)/2;
+             labely -= 4;
+             ui_draw_text_buf("F3", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             break;
+          case VKBD_F5:
+             labelx -= (8*2)/2;
+             labely -= 4;
+             ui_draw_text_buf("F5", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             break;
+          case VKBD_F7:
+             labelx -= (8*2)/2;
+             labely -= 4;
+             ui_draw_text_buf("F7", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             break;
+          case VKBD_CNTRL:
+             labelx -= (8*3)/2;
+             labely -= 4;
+             ui_draw_text_buf("CTL", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             break;
+          case VKBD_RESTORE:
+             labelx -= (8*3)/2;
+             labely -= 4;
+             ui_draw_text_buf("RES", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             break;
+          case VKBD_RUNSTOP:
+             labelx -= (8*3)/2;
+             labely -= 4;
+             ui_draw_text_buf("RST", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             break;
+          case VKBD_SHIFTLOCK:
+             labelx -= (8*3)/2;
+             labely -= 4;
+             ui_draw_text_buf("LCK", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             break;
+          case VKBD_RETURN:
+             labelx -= (8*2)/2;
+             labely -= 4;
+             ui_draw_text_buf("RET", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             break;
+          case VKBD_COMMODORE:
+             labelx -= (8*2)/2;
+             labely -= 4;
+             ui_draw_text_buf("C=", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             break;
+          case VKBD_SHIFT:
+             labelx -= (8*3)/2;
+             labely -= 4;
+             ui_draw_text_buf("SHF", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             break;
+          case VKBD_CURSDOWN:
+          case VKBD_CURSRIGHT:
+             labelx -= (8*3)/2;
+             labely -= 4;
+             ui_draw_text_buf("CRS", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             break;
+
+          default:
+             break;
+        }
+     }
   }
   overlay_dirty = 1;
 }
