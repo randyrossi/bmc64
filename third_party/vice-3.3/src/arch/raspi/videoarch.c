@@ -243,8 +243,8 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
   canvas_num++;
 }
 
-void video_init_overlay(int padding, int c40_80_state) {
-  overlay_init(padding, c40_80_state);
+void video_init_overlay(int padding, int c40_80_state, int vkbd_transparency) {
+  overlay_init(padding, c40_80_state, vkbd_transparency);
 }
 
 void apply_video_adjustments(int layer,

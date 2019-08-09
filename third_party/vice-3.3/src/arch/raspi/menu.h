@@ -289,6 +289,7 @@ typedef enum {
    MENU_PIP_SWAPPED,
 
    MENU_40_80_COLUMN,
+   MENU_VKBD_TRANSPARENCY,
 } MenuID;
 
 typedef enum {

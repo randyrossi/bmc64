@@ -44,7 +44,7 @@ extern int overlay_dirty;
 extern int statusbar_enabled;
 extern int statusbar_showing;
 
-uint8_t *overlay_init(int padding, int c40_80_state);
+uint8_t *overlay_init(int padding, int c40_80_state, int vkbd_transparency);
 void overlay_check(void);
 void overlay_activate(void);
 void overlay_warp_changed(int warp);
@@ -53,6 +53,7 @@ void overlay_statusbar_dismiss(void);
 void overlay_statusbar_enable(void);
 void overlay_statusbar_disable(void);
 void overlay_change_padding(int padding);
+void overlay_change_vkbd_transparency(int transparency);
 void overlay_40_80_columns_changed(int value);
 void vkbd_nav_up(void);
 void vkbd_nav_down(void);

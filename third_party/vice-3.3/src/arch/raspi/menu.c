@@ -130,6 +130,7 @@ struct menu_item *sid_filter_item;
 struct menu_item *statusbar_item;
 struct menu_item *statusbar_padding_item;
 struct menu_item *tape_reset_with_machine_item;
+struct menu_item *vkbd_transparency_item;
 
 struct menu_item *palette_item_0;
 struct menu_item *brightness_item_0;
@@ -631,6 +632,7 @@ static int save_settings() {
   // Can't change the 'overlay_*' names, legacy.
   fprintf(fp, "overlay=%d\n", statusbar_item->value);
   fprintf(fp, "overlay_padding=%d\n", statusbar_padding_item->value);
+  fprintf(fp, "vkbd_trans=%d\n", vkbd_transparency_item->value);
   fprintf(fp, "tapereset=%d\n", tape_reset_with_machine_item->value);
   fprintf(fp, "reset_confirm=%d\n", reset_confirm_item->value);
 #ifdef RASPI_SUPPORT_PCB
@@ -837,6 +839,8 @@ static void load_settings() {
       statusbar_item->value = value;
     } else if (strcmp(name, "overlay_padding") == 0) { // legacy name
       statusbar_padding_item->value = value;
+    } else if (strcmp(name, "vkbd_trans") == 0) {
+      vkbd_transparency_item->value = value;
     } else if (strcmp(name, "tapereset") == 0) {
       tape_reset_with_machine_item->value = value;
     } else if (strcmp(name, "pot_x_high") == 0) {
@@ -2006,6 +2010,9 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_OVERLAY_PADDING:
     overlay_change_padding(item->value);
     break;
+  case MENU_VKBD_TRANSPARENCY:
+    overlay_change_vkbd_transparency(item->value);
+    break;
   case MENU_40_80_COLUMN:
     resources_set_int("C128ColumnKey", item->value);
     overlay_40_80_columns_changed(item->value);
@@ -2608,6 +2615,10 @@ void build_menu(struct menu_item *root) {
       ui_menu_add_range(MENU_OVERLAY_PADDING, parent, "Status Bar Padding",
           0, 64, 1, 0);
 
+  vkbd_transparency_item =
+      ui_menu_add_range(MENU_VKBD_TRANSPARENCY, parent, "Keyboard Transparency %",
+          0, 50, 1, 0);
+
   reset_confirm_item = ui_menu_add_toggle(MENU_RESET_CONFIRM, parent,
                                           "Confirm Reset from Emulator", 1);
 
@@ -2662,7 +2673,9 @@ void build_menu(struct menu_item *root) {
         0.0d, 0.0d, 0.0d, 0.0d, 1);
   }
 
-  video_init_overlay(statusbar_padding_item->value, c40_80_column_item->value);
+  video_init_overlay(statusbar_padding_item->value,
+                     c40_80_column_item->value,
+                     vkbd_transparency_item->value);
 
   joystick_set_potx(pot_x_high_value);
   joystick_set_poty(pot_y_high_value);

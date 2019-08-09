@@ -119,7 +119,7 @@ void circle_emu_joy_interrupt(int type, int port, int value);
 // Called by menu after color setting changed (brightness, contrast...)
 void video_color_setting_changed(int display_num);
 
-void video_init_overlay(int padding, int c40_80_state);
+void video_init_overlay(int padding, int c40_80_state, int vkbd_transparency);
 
 void apply_video_adjustments(int layer, int hcenter, int vcenter,
                              double hborder, double vborder,

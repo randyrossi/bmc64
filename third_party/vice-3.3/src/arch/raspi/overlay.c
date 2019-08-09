@@ -87,9 +87,13 @@ static int overlay_buf_pitch;
 #define LIGHT_RED_COLOR 5
 #define LIGHT_GREEN_COLOR 6
 #define TRANSPARENT_COLOR 7
+#define VKBD_FG_COLOR 8
+#define VKBD_BG_COLOR 9
+
+#define NUM_COLORS 11
 
 // Defines the first 8 overlay palette entries
-static uint32_t overlay_palette[8] = {
+static uint32_t overlay_palette[NUM_COLORS] = {
   ARGB(0xFF, 0x6c, 0x5e, 0xb5), // bg
   ARGB(0xFF, 0xFF, 0xFF, 0xFF), // fg
   ARGB(0xFF, 0x00, 0x00, 0x00), // black
@@ -98,6 +102,8 @@ static uint32_t overlay_palette[8] = {
   ARGB(0xFF, 0x9a, 0x67, 0x59), // light red
   ARGB(0xFF, 0x9a, 0xd2, 0x84), // light green
   ARGB(0x00, 0x00, 0x00, 0x00), // transparent
+  ARGB(0xFF, 0xFF, 0xFF, 0xFF), // vkbd fg
+  ARGB(0xFF, 0x30, 0x30, 0x30), // vkbd bg
 };
 
 // The index into the virtual keyboard of the cursor
@@ -142,7 +148,7 @@ static void clear_statusbar() {
 }
 
 // Create a new overlay buffer
-uint8_t *overlay_init(int padding, int c40_80_state) {
+uint8_t *overlay_init(int padding, int c40_80_state, int vkbd_transparency) {
   last_c480_80_state = c40_80_state;
   circle_alloc_fbl(FB_LAYER_STATUS,
                    &overlay_buf, OVERLAY_WIDTH, OVERLAY_HEIGHT,
@@ -183,7 +189,7 @@ uint8_t *overlay_init(int padding, int c40_80_state) {
   columns_x = 41 * FONT_ADVANCE;
 
   // Setup colors for this layer
-  for (int p = 0; p < 8; p++) {
+  for (int p = 0; p < NUM_COLORS; p++) {
      circle_set_palette32_fbl(FB_LAYER_STATUS, p, overlay_palette[p]);
   }
   circle_update_palette_fbl(FB_LAYER_STATUS);
@@ -414,6 +420,24 @@ void overlay_change_padding(int padding) {
   circle_set_valign_fbl(FB_LAYER_STATUS, 1 /* BOTTOM */, padding);
 }
 
+void overlay_change_vkbd_transparency(int transparency) {
+  uint8_t alpha = (255 * (100-transparency)) / 100;
+
+  uint32_t val = overlay_palette[VKBD_BG_COLOR];
+  val = (val & ((1<<24)-1)) | alpha << 24;
+  circle_set_palette32_fbl(FB_LAYER_STATUS,
+                           VKBD_BG_COLOR,
+                           val);
+
+  val = overlay_palette[VKBD_FG_COLOR];
+  val = (val & ((1<<24)-1)) | alpha << 24;
+  circle_set_palette32_fbl(FB_LAYER_STATUS,
+                           VKBD_FG_COLOR,
+                           val);
+
+  circle_update_palette_fbl(FB_LAYER_STATUS);
+}
+
 void overlay_40_80_columns_changed(int value) {
   if (!overlay_buf)
     return;
@@ -449,11 +473,11 @@ static void overlay_draw_virtual_keyboard() {
 
   // Clear background for keyboard
   ui_draw_rect_buf(cx-1, cy-1, VKBD_WIDTH+2, VKBD_HEIGHT+2,
-                   BG_COLOR, 1, overlay_buf, overlay_buf_pitch);
+                   VKBD_BG_COLOR, 1, overlay_buf, overlay_buf_pitch);
 
   for (int i=0; i < NUM_KEYS; i++) {
      // Show current key
-     int color = (i == vkbd_cursor ? GREEN_COLOR : FG_COLOR);
+     int color = (i == vkbd_cursor ? LIGHT_GREEN_COLOR : VKBD_FG_COLOR);
 
      if (vkbd[i].state) {
         ui_draw_rect_buf(vkbd[i].x+cx, vkbd[i].y+cy, vkbd[i].w, vkbd[i].h,
@@ -461,6 +485,11 @@ static void overlay_draw_virtual_keyboard() {
      }
      ui_draw_rect_buf(vkbd[i].x+cx, vkbd[i].y+cy, vkbd[i].w, vkbd[i].h,
                       color, 0 /* fill */, overlay_buf, overlay_buf_pitch);
+     if (i == vkbd_cursor) {
+        // Thicker on the inside for cursor
+        ui_draw_rect_buf(vkbd[i].x+cx+1, vkbd[i].y+cy+1, vkbd[i].w-2, vkbd[i].h-2,
+                      color, 0 /* fill */, overlay_buf, overlay_buf_pitch);
+     }
 
      int labelx = (vkbd[i].x+cx + vkbd[i].w / 2);
      int labely = (vkbd[i].y+cy + vkbd[i].h / 2);
@@ -469,7 +498,7 @@ static void overlay_draw_virtual_keyboard() {
         labelx -= 8;
         labely -= 8;
         ui_draw_char_raw(vkbd[i].code, labelx, labely,
-                      FG_COLOR, overlay_buf,
+                      VKBD_FG_COLOR, overlay_buf,
                       overlay_buf_pitch, 2);
      } else {
         
@@ -477,73 +506,73 @@ static void overlay_draw_virtual_keyboard() {
           case VKBD_KEY_HOME:
              labelx -= (8*3)/2;
              labely -= 4;
-             ui_draw_text_buf("HOM", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             ui_draw_text_buf("HOM", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_DEL:
              labelx -= (8*3)/2;
              labely -= 4;
-             ui_draw_text_buf("DEL", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             ui_draw_text_buf("DEL", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_F1:
              labelx -= (8*2)/2;
              labely -= 4;
-             ui_draw_text_buf("F1", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             ui_draw_text_buf("F1", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_F3:
              labelx -= (8*2)/2;
              labely -= 4;
-             ui_draw_text_buf("F3", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             ui_draw_text_buf("F3", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_F5:
              labelx -= (8*2)/2;
              labely -= 4;
-             ui_draw_text_buf("F5", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             ui_draw_text_buf("F5", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_F7:
              labelx -= (8*2)/2;
              labely -= 4;
-             ui_draw_text_buf("F7", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             ui_draw_text_buf("F7", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_CNTRL:
              labelx -= (8*3)/2;
              labely -= 4;
-             ui_draw_text_buf("CTL", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             ui_draw_text_buf("CTL", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_RESTORE:
              labelx -= (8*3)/2;
              labely -= 4;
-             ui_draw_text_buf("RES", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             ui_draw_text_buf("RES", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_RUNSTOP:
              labelx -= (8*3)/2;
              labely -= 4;
-             ui_draw_text_buf("RST", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             ui_draw_text_buf("RST", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_SHIFTLOCK:
              labelx -= (8*3)/2;
              labely -= 4;
-             ui_draw_text_buf("LCK", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             ui_draw_text_buf("LCK", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_RETURN:
              labelx -= (8*2)/2;
              labely -= 4;
-             ui_draw_text_buf("RET", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             ui_draw_text_buf("RET", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_COMMODORE:
              labelx -= (8*2)/2;
              labely -= 4;
-             ui_draw_text_buf("C=", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             ui_draw_text_buf("C=", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_SHIFT:
              labelx -= (8*3)/2;
              labely -= 4;
-             ui_draw_text_buf("SHF", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             ui_draw_text_buf("SHF", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_CURSDOWN:
           case VKBD_CURSRIGHT:
              labelx -= (8*3)/2;
              labely -= 4;
-             ui_draw_text_buf("CRS", labelx, labely, FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             ui_draw_text_buf("CRS", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
 
           default:
