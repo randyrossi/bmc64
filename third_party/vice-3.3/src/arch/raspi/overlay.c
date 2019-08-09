@@ -24,10 +24,6 @@
  *
  */
 
-// TODO : Add a dirty bit so we don't upload the frame buffer to dispmanx
-//        each frame while the overlay is showing something. This is a waste
-//        since the overlay doesn't draw anything unless something has changed.
-
 #include "overlay.h"
 
 #include <stdio.h>
@@ -117,6 +113,8 @@ int statusbar_showing;
 static int last_c480_80_state;
 static char *template;
 
+int overlay_dirty;
+
 static void draw_statusbar() {
   // Now draw the bg for the status bar
   ui_draw_rect_buf(0, OVERLAY_HEIGHT - STATUS_BAR_HEIGHT,
@@ -133,12 +131,14 @@ static void draw_statusbar() {
   if (machine_class == VICE_MACHINE_C128) {
      overlay_40_80_columns_changed(last_c480_80_state);
   }
+  overlay_dirty = 1;
 }
 
 static void clear_statusbar() {
   ui_draw_rect_buf(0, OVERLAY_HEIGHT - STATUS_BAR_HEIGHT,
                    OVERLAY_WIDTH, STATUS_BAR_HEIGHT,
                    TRANSPARENT_COLOR, 1, overlay_buf, overlay_buf_pitch);
+  overlay_dirty = 1;
 }
 
 // Create a new overlay buffer
@@ -188,6 +188,7 @@ uint8_t *overlay_init(int padding, int c40_80_state) {
   }
   circle_update_palette_fbl(FB_LAYER_STATUS);
 
+  overlay_dirty = 1;
   return overlay_buf;
 }
 
@@ -243,6 +244,7 @@ void ui_enable_drive_status(ui_drive_enable_t state, int *drive_led_color) {
     }
     enabled >>= 1;
   }
+  overlay_dirty = 1;
 }
 
 // Show drive led
@@ -280,6 +282,7 @@ void ui_display_drive_led(int drive, unsigned int pwm1, unsigned int pwm2) {
                      6 * SCALE_XY, 4 * SCALE_XY, led, 1,                    // w,h,color,fill
                      overlay_buf, overlay_buf_pitch); // dest
   }
+  overlay_dirty = 1;
 }
 
 // Show tape counter text
@@ -299,6 +302,7 @@ void ui_display_tape_counter(int counter) {
     ui_draw_text_buf(tmp, tape_x + inset_x, inset_y, FG_COLOR, overlay_buf,
                      overlay_buf_pitch, SCALE_XY);
     tape_counter = counter;
+    overlay_dirty = 1;
   }
 }
 
@@ -340,6 +344,7 @@ void ui_display_tape_control_status(int control) {
 
   ui_draw_text_buf(txt, tape_controls_x + inset_x, inset_y, col, overlay_buf,
                    overlay_buf_pitch, SCALE_XY);
+  overlay_dirty = 1;
 }
 
 // Draw tape motor status light
@@ -355,6 +360,7 @@ void ui_display_tape_motor_status(int motor) {
   ui_draw_rect_buf(tape_motor_x + inset_x, inset_y + 2 * SCALE_XY, 6 * SCALE_XY, 4 * SCALE_XY, led,
                    1, // w,h,color,fill
                    overlay_buf, overlay_buf_pitch);
+  overlay_dirty = 1;
 }
 
 void overlay_warp_changed(int warp) {
@@ -369,6 +375,7 @@ void overlay_warp_changed(int warp) {
                    overlay_buf_pitch);
   ui_draw_text_buf(warp ? "!" : "-", warp_x + inset_x, inset_y, FG_COLOR,
                    overlay_buf, overlay_buf_pitch, SCALE_XY);
+  overlay_dirty = 1;
 }
 
 void overlay_joyswap_changed(int swap) {
@@ -383,6 +390,7 @@ void overlay_joyswap_changed(int swap) {
                    overlay_buf, overlay_buf_pitch);
   ui_draw_text_buf(swap ? "21" : "12", joyswap_x + inset_x, inset_y, FG_COLOR,
                    overlay_buf, overlay_buf_pitch, SCALE_XY);
+  overlay_dirty = 1;
 }
 
 // Checks whether a showing overlay due to activity should no longer be showing
@@ -420,6 +428,7 @@ void overlay_40_80_columns_changed(int value) {
                    overlay_buf, overlay_buf_pitch, SCALE_XY);
 
   last_c480_80_state = value;
+  overlay_dirty = 1;
 }
 
 static void overlay_clear_virtual_keyboard() {
@@ -430,6 +439,7 @@ static void overlay_clear_virtual_keyboard() {
   ui_draw_rect_buf(cx-1, cy-1, VKBD_WIDTH+2, VKBD_HEIGHT+2,
                    TRANSPARENT_COLOR, 1, overlay_buf, overlay_buf_pitch);
 
+  overlay_dirty = 1;
 }
 
 static void overlay_draw_virtual_keyboard() {
@@ -447,6 +457,7 @@ static void overlay_draw_virtual_keyboard() {
      ui_draw_rect_buf(vkbd[i].x+cx, vkbd[i].y+cy, vkbd[i].w, vkbd[i].h,
                       color, vkbd[i].state, overlay_buf, overlay_buf_pitch);
   }
+  overlay_dirty = 1;
 }
 
 void vkbd_enable() {

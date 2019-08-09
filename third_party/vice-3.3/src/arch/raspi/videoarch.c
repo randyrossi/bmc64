@@ -530,7 +530,10 @@ void vsyncarch_postsync(void) {
 
   if (statusbar_showing || vkbd_showing) {
     overlay_check();
-    circle_frames_ready_fbl(FB_LAYER_STATUS, -1 /* no 2nd layer */, 0 /* no sync */);
+    if (overlay_dirty) {
+       circle_frames_ready_fbl(FB_LAYER_STATUS, -1 /* no 2nd layer */, 0 /* no sync */);
+       overlay_dirty = 0;
+    }
   }
 
   video_ticks += video_tick_inc;
