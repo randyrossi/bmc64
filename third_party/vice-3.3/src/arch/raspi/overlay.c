@@ -135,7 +135,12 @@ static void draw_statusbar() {
                    overlay_buf_pitch, SCALE_XY);
 
   if (machine_class == VICE_MACHINE_C128) {
-     overlay_40_80_columns_changed(last_c480_80_state);
+     ui_draw_rect_buf(columns_x + inset_x, inset_y,
+                      FONT_ADVANCE * 2, FONT_ADVANCE, BG_COLOR, 1,
+                      overlay_buf, overlay_buf_pitch);
+     ui_draw_text_buf(last_c480_80_state ? "40" : "80",
+                      columns_x + inset_x, inset_y,
+                      FG_COLOR, overlay_buf, overlay_buf_pitch, SCALE_XY);
   }
   overlay_dirty = 1;
 }
