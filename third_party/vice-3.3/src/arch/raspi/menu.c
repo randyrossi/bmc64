@@ -68,7 +68,7 @@
 // and the power port is actually power unlike the Keyrah.
 //#define RASPI_SUPPORT_PCB 1
 
-#define VERSION_STRING "2.2"
+#define VERSION_STRING "2.3"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"

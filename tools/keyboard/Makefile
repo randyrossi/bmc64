@@ -1,6 +1,7 @@
 all:
 	javac Keyboard.java
-	java Keyboard > virtual_keyboard.h
+	java Keyboard c64 > virtual_keyboard_c64.h
+	java Keyboard vic20 > virtual_keyboard_vic20.h
 	
 clean:
-	rm *.class virtual_keyboard.h
+	rm *.class virtual_keyboard_*.h
