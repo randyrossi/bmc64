@@ -35,5 +35,7 @@ libarch_vic20_a_SOURCES = \
 	archdep_vic20.c \
 	videoarch_vic20.h \
 	videoarch_vic20.c \
+	virtual_keyboard_vic20.h \
+	virtual_keyboard_vic20.c \
 	menu_vic20.h \
 	menu_vic20.c

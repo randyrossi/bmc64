@@ -110,7 +110,8 @@ am__v_AR_1 =
 libarch_c64_a_AR = $(AR) $(ARFLAGS)
 libarch_c64_a_LIBADD =
 am_libarch_c64_a_OBJECTS = archdep_c64.$(OBJEXT) \
-	videoarch_c64.$(OBJEXT) menu_c64.$(OBJEXT)
+	videoarch_c64.$(OBJEXT) virtual_keyboard_c64.$(OBJEXT) \
+	menu_c64.$(OBJEXT)
 libarch_c64_a_OBJECTS = $(am_libarch_c64_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -426,6 +427,8 @@ libarch_c64_a_SOURCES = \
 	archdep_c64.c \
 	videoarch_c64.h \
 	videoarch_c64.c \
+	virtual_keyboard_c64.h \
+	virtual_keyboard_c64.c \
 	menu_c64.h \
 	menu_c64.c
 
@@ -480,6 +483,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archdep_c64.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_c64.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/videoarch_c64.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/virtual_keyboard_c64.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

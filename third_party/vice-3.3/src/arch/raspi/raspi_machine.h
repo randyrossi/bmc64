@@ -28,6 +28,44 @@
 
 #include "videoarch.h"
 
+struct vkbd_key {
+  int x;
+  int y;
+  int w;
+  int h;
+  int row;
+  int col;
+  int layout_row;
+  int layout_col;
+  int toggle;
+  int code;
+  int up;
+  int down;
+  int left;
+  int right;
+  int state;
+};
+
+// special code values for keys
+#define VKBD_KEY_HOME -2
+#define VKBD_DEL -3
+#define VKBD_F1 -4
+#define VKBD_F3 -5
+#define VKBD_F5 -6
+#define VKBD_F7 -7
+#define VKBD_CNTRL -8
+#define VKBD_RESTORE -9
+#define VKBD_RUNSTOP -10
+#define VKBD_SHIFTLOCK -11
+#define VKBD_RETURN -12
+#define VKBD_COMMODORE -13
+#define VKBD_SHIFT -14
+#define VKBD_CURSDOWN -15
+#define VKBD_CURSRIGHT -16
+#define VKBD_SPACE -17
+
+typedef struct vkbd_key* vkbd_key_array;
+
 extern void set_refresh_rate(int timing, struct video_canvas_s *canvas);
 extern void set_video_font(void);
 extern unsigned long calculate_timing(double fps);
@@ -45,9 +83,13 @@ extern int get_color_gamma(int display_num);
 extern int get_color_tint(int display_num);
 
 extern void raspi_cartridge_trigger_freeze(void);
-unsigned int *raspi_get_palette(int index);
-struct menu_item* menu_build_palette_options(int menu_id, struct menu_item* parent);
+extern unsigned int *raspi_get_palette(int index);
+extern struct menu_item* menu_build_palette_options(int menu_id, struct menu_item* parent);
 
-int is_vic(struct video_canvas_s *canvas);
-int is_vdc(struct video_canvas_s *canvas);
+extern int is_vic(struct video_canvas_s *canvas);
+extern int is_vdc(struct video_canvas_s *canvas);
 
+extern vkbd_key_array get_vkbd();
+extern int get_vkbd_width(void);
+extern int get_vkbd_height(void);
+extern int get_vkbd_size(void);

@@ -110,7 +110,8 @@ am__v_AR_1 =
 libarch_c128_a_AR = $(AR) $(ARFLAGS)
 libarch_c128_a_LIBADD =
 am_libarch_c128_a_OBJECTS = archdep_c128.$(OBJEXT) \
-	videoarch_c128.$(OBJEXT) menu_c128.$(OBJEXT)
+	videoarch_c128.$(OBJEXT) virtual_keyboard_c128.$(OBJEXT) \
+	menu_c128.$(OBJEXT)
 libarch_c128_a_OBJECTS = $(am_libarch_c128_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -426,6 +427,8 @@ libarch_c128_a_SOURCES = \
 	archdep_c128.c \
 	videoarch_c128.h \
 	videoarch_c128.c \
+	virtual_keyboard_c128.h \
+	virtual_keyboard_c128.c \
 	menu_c128.h \
 	menu_c128.c
 
@@ -480,6 +483,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archdep_c128.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_c128.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/videoarch_c128.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/virtual_keyboard_c128.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

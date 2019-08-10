@@ -33,11 +33,11 @@
 #include "datasette.h"
 #include "drive.h"
 #include "machine.h"
+#include "raspi_machine.h"
 #include "menu.h"
 #include "resources.h"
 #include "ui.h"
 #include "uiapi.h"
-#include "virtual_keyboard.h"
 #include "circle.h"
 #include "keycodes.h"
 
@@ -456,11 +456,14 @@ void overlay_40_80_columns_changed(int value) {
 }
 
 static void overlay_clear_virtual_keyboard() {
-  int cx = (OVERLAY_WIDTH - VKBD_WIDTH) / 2;
-  int cy = (OVERLAY_HEIGHT - VKBD_HEIGHT) / 2;
+  int vkbd_width = get_vkbd_width();
+  int vkbd_height = get_vkbd_height();
+
+  int cx = (OVERLAY_WIDTH - vkbd_width) / 2;
+  int cy = (OVERLAY_HEIGHT - vkbd_height) / 2;
 
   // Clear background for keyboard
-  ui_draw_rect_buf(cx-1, cy-1, VKBD_WIDTH+2, VKBD_HEIGHT+2,
+  ui_draw_rect_buf(cx-1, cy-1, vkbd_width+2, vkbd_height+2,
                    TRANSPARENT_COLOR, 1, overlay_buf, overlay_buf_pitch);
 
   overlay_dirty = 1;
@@ -468,14 +471,17 @@ static void overlay_clear_virtual_keyboard() {
 
 static void overlay_draw_virtual_keyboard() {
   // Draw keys
-  int cx = (OVERLAY_WIDTH - VKBD_WIDTH) / 2;
-  int cy = (OVERLAY_HEIGHT - VKBD_HEIGHT) / 2;
+  int vkbd_width = get_vkbd_width();
+  int vkbd_height = get_vkbd_height();
+  int cx = (OVERLAY_WIDTH - vkbd_width) / 2;
+  int cy = (OVERLAY_HEIGHT - vkbd_height) / 2;
 
   // Clear background for keyboard
-  ui_draw_rect_buf(cx-1, cy-1, VKBD_WIDTH+2, VKBD_HEIGHT+2,
+  ui_draw_rect_buf(cx-1, cy-1, vkbd_width+2, vkbd_height+2,
                    VKBD_BG_COLOR, 1, overlay_buf, overlay_buf_pitch);
 
-  for (int i=0; i < NUM_KEYS; i++) {
+  vkbd_key_array vkbd = get_vkbd();
+  for (int i=0; i < get_vkbd_size(); i++) {
      // Show current key
      int color = (i == vkbd_cursor ? LIGHT_GREEN_COLOR : VKBD_FG_COLOR);
 
@@ -594,26 +600,31 @@ void vkbd_disable() {
 }
 
 void vkbd_nav_up(void) {
+   vkbd_key_array vkbd = get_vkbd();
    vkbd_cursor = vkbd[vkbd_cursor].up;
    overlay_draw_virtual_keyboard();
 }
 
 void vkbd_nav_down(void) {
+   vkbd_key_array vkbd = get_vkbd();
    vkbd_cursor = vkbd[vkbd_cursor].down;
    overlay_draw_virtual_keyboard();
 }
 
 void vkbd_nav_left(void) {
+   vkbd_key_array vkbd = get_vkbd();
    vkbd_cursor = vkbd[vkbd_cursor].left;
    overlay_draw_virtual_keyboard();
 }
 
 void vkbd_nav_right(void) {
+   vkbd_key_array vkbd = get_vkbd();
    vkbd_cursor = vkbd[vkbd_cursor].right;
    overlay_draw_virtual_keyboard();
 }
 
 void vkbd_nav_press(int pressed) {
+   vkbd_key_array vkbd = get_vkbd();
    if (vkbd[vkbd_cursor].toggle) {
       // Only toggle on the press
       if (pressed) {
