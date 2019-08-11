@@ -26,6 +26,8 @@
 CKernel *static_kernel = NULL;
 
 #define MAX_KEY_CODES 128
+#define TICKS_PER_SECOND 1000000L
+
 
 // Usb key states
 static bool key_states[MAX_KEY_CODES];
@@ -337,9 +339,24 @@ static void handle_button_function(bool is_ui, int device, unsigned buttons) {
   }
 }
 
+#if 0 // COUNT INVOCATIONS PER SECOND
+static unsigned long entry_delay = 5 * TICKS_PER_SECOND;
+static unsigned long entry_start = 0;
+static long invoked;
+#endif
+
 // Interrupt handler. Make this quick.
 void CKernel::GamePadStatusHandler(unsigned nDeviceIndex,
                                    const TGamePadState *pState) {
+
+#if 0 // COUNT INVOCATIONS PER SECOND
+invoked++;
+if (static_kernel->circle_get_ticks() - entry_start >= entry_delay) {
+   printf ("%ld\n", invoked / 5);
+   invoked = 0;
+   entry_start = static_kernel->circle_get_ticks();
+}
+#endif
 
   static int dpad_to_joy[8] = {0x01, 0x09, 0x08, 0x0a, 0x02, 0x06, 0x04, 0x05};
 

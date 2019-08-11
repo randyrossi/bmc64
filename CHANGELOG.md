@@ -209,6 +209,7 @@
     causing extra frame delay.
 
 ## 2.3
+  * Add virtual keyboard
   * Added vertical/horizontal positioning menu options
   * Applied video settings to menu so it is made visible same as VIC display
   * Fixed navigation bug inside C128 rom files list, couldn't navigate out

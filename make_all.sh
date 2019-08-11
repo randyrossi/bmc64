@@ -42,6 +42,7 @@ cd ../circle
 if [ "$BOARD" = "pi0" ]
 then
 cat ../../../../circle_patch.diff | sed 's@+#define ARM_ALLOW_MULTI_CORE@+//#define ARM_ALLOW_MULTI_CORE@' | patch -p1
+perl -pi -e 's@#define USE_PHYSICAL_COUNTER@//#define USE_PHYSICAL_COUNTER@' ./include/circle/sysconfig.h
 else
 patch -p1 < ../../../../circle_patch.diff
 fi
@@ -70,7 +71,13 @@ echo "I don't know what to do for $BOARD"
 exit
 fi
 
+# For pi0, we turn on our HID report throttle
+if [ "$BOARD" = "pi0" ]
+then
+CFLAGS=-DBMC64_REPORT_THROTTLE make -j4
+else
 make -j4
+fi
 
 echo ==============================================================
 echo BUILD ADDONS
