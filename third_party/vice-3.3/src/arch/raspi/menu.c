@@ -2060,7 +2060,7 @@ int menu_get_keyboard_type(void) { return keyboard_type_item->value; }
 
 // KEEP in sync with kernel.cpp, kbd.c, menu_usb.c
 static void set_hotkey_choices(struct menu_item *item) {
-  item->num_choices = 15;
+  item->num_choices = 14;
   strcpy(item->choices[HOTKEY_CHOICE_NONE], "None");
   strcpy(item->choices[HOTKEY_CHOICE_MENU], "Menu");
   strcpy(item->choices[HOTKEY_CHOICE_WARP], "Warp");
@@ -2075,7 +2075,6 @@ static void set_hotkey_choices(struct menu_item *item) {
   strcpy(item->choices[HOTKEY_CHOICE_PIP_LOCATION], "Change PIP Location");
   strcpy(item->choices[HOTKEY_CHOICE_PIP_SWAP], "Swap PIP");
   strcpy(item->choices[HOTKEY_CHOICE_40_80_COLUMN], "40/80 Column");
-  strcpy(item->choices[HOTKEY_CHOICE_VKBD_TOGGLE], "Virtual Keyboard");
   item->choice_ints[HOTKEY_CHOICE_NONE] = BTN_ASSIGN_UNDEF;
   item->choice_ints[HOTKEY_CHOICE_MENU] = BTN_ASSIGN_MENU;
   item->choice_ints[HOTKEY_CHOICE_WARP] = BTN_ASSIGN_WARP;
@@ -2090,7 +2089,6 @@ static void set_hotkey_choices(struct menu_item *item) {
   item->choice_ints[HOTKEY_CHOICE_PIP_LOCATION] = BTN_ASSIGN_PIP_LOCATION;
   item->choice_ints[HOTKEY_CHOICE_PIP_SWAP] = BTN_ASSIGN_PIP_SWAP;
   item->choice_ints[HOTKEY_CHOICE_40_80_COLUMN] = BTN_ASSIGN_40_80_COLUMN;
-  item->choice_ints[HOTKEY_CHOICE_VKBD_TOGGLE] = BTN_ASSIGN_VKBD_TOGGLE;
 
   if (machine_class != VICE_MACHINE_C64 && machine_class != VICE_MACHINE_C128) {
      item->choice_disabled[HOTKEY_CHOICE_SWAP_PORTS] = 1;
