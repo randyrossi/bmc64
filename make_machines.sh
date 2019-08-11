@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BOARD = $1
+BOARD=$1
 
 if [ "$BOARD" = "pi3" ]
 then
