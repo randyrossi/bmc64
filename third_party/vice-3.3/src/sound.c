@@ -1430,6 +1430,7 @@ double sound_flush()
                                         snddata.clkfactor);
         if (SOUNDCLK_CONSTANT(cycles_per_rfsh) / snddata.clkstep
             >= snddata.bufsize) {
+printf ("%f %f\n", SOUNDCLK_CONSTANT(cycles_per_rfsh), snddata.clkstep);
             if (suspend_time > 0) {
                 suspendsound("running too slow");
             } else {

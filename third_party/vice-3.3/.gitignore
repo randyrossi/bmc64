@@ -315,3 +315,6 @@ src/arch/raspi/vic20/.deps
 src/scpu64/libscpu64.a
 src/c64/libc64scpu64.a
 src/viciisc/libviciisc.a
+src/teensy-resid/.deps/
+src/teensy-resid/libresid.a
+
