@@ -1428,9 +1428,14 @@ double sound_flush()
         }
         snddata.clkstep = SOUNDCLK_MULT(snddata.origclkstep,
                                         snddata.clkfactor);
+#ifdef RASPI_LITE
+// Not sure why this happens only on Pi0. Overclocking unstable?
+if (snddata.clkstep < 1) {
+  snddata.clkstep = SOUNDCLK_CONSTANT(cycles_per_sec) / sample_rate;
+}
+#endif
         if (SOUNDCLK_CONSTANT(cycles_per_rfsh) / snddata.clkstep
             >= snddata.bufsize) {
-printf ("%f %f\n", SOUNDCLK_CONSTANT(cycles_per_rfsh), snddata.clkstep);
             if (suspend_time > 0) {
                 suspendsound("running too slow");
             } else {

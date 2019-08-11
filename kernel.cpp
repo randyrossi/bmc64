@@ -807,7 +807,7 @@ int CKernel::circle_sound_bufferspace(void) {
   if (mViceSound) {
     return mViceSound->BufferSpaceBytes();
   }
-  return 0;
+  return FRAG_SIZE * NUM_FRAGS;
 }
 
 void CKernel::circle_yield(void) { CScheduler::Get()->Yield(); }
