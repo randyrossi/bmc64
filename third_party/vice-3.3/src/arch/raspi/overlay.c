@@ -641,11 +641,7 @@ void vkbd_nav_press(int pressed) {
    } else {
       // Handle restore special case
       if (vkbd[vkbd_cursor].row == 0 && vkbd[vkbd_cursor].col == -3) {
-         if (pressed) {
-            circle_key_pressed(KEYCODE_PageUp);
-         } else {
-            circle_key_released(KEYCODE_PageUp);
-         }
+         circle_emu_key_locked(KEYCODE_PageUp, pressed);
       } else {
         circle_keyboard_set_latch_keyarr(vkbd[vkbd_cursor].col,
                                     vkbd[vkbd_cursor].row,

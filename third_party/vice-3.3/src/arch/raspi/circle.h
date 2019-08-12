@@ -210,6 +210,7 @@ extern void circle_usb_pref(int device, int *usb_pref, int *x_axis, int *y_axis,
 extern int circle_ui_activated(void);
 extern void circle_ui_key_interrupt(long key, int pressed);
 extern void circle_emu_key_interrupt(long key, int pressed);
+extern void circle_emu_key_locked(long key, int pressed);
 
 extern int menu_wants_raw_usb(void);
 extern void menu_raw_usb(int device, unsigned buttons, const int hats[6],

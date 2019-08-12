@@ -658,6 +658,14 @@ void circle_emu_key_interrupt(long key, int pressed) {
   circle_lock_release();
 }
 
+// Same as above except can call while already holding the lock
+void circle_emu_key_locked(long key, int pressed) {
+  int i = pending_emu_key_tail & 0xf;
+  pending_emu_key[i] = key;
+  pending_emu_key_pressed[i] = pressed;
+  pending_emu_key_tail++;
+}
+
 // queue a joy latch change for the main loop
 void circle_emu_joy_interrupt(int type, int port, int value) {
   circle_lock_acquire();
