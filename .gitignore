@@ -1,4 +1,8 @@
 kernel.o
+kernel.elf
+kernel.img
+kernel.lst
+kernel.map
 kernel7.elf
 kernel7.img
 kernel7.lst

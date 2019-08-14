@@ -259,6 +259,7 @@ static int handle_key_combo_release(long key) {
       case BTN_ASSIGN_PIP_LOCATION:
       case BTN_ASSIGN_PIP_SWAP:
       case BTN_ASSIGN_40_80_COLUMN:
+      case BTN_ASSIGN_VKBD_TOGGLE:
         circle_emu_quick_func_interrupt(key_combo_states[i].function);
         key_combo_states[i].invoked = 0;
         return 1;
@@ -334,7 +335,7 @@ void circle_key_pressed(long key) {
     return;
   }
 
-  if (ui_activated) {
+  if (ui_enabled) {
     circle_ui_key_interrupt(key, 1 /* down */);
   } else {
     circle_emu_key_interrupt(key, 1 /* down */);
@@ -352,7 +353,7 @@ void circle_key_released(long key) {
   }
 
   if (key == KEYCODE_F12) {
-    if (ui_activated) {
+    if (ui_enabled) {
       // Let the ui handle the menu action as it sees fit.
       circle_ui_key_interrupt(key, 0 /* up */);
     } else {
@@ -390,7 +391,7 @@ void circle_key_released(long key) {
     return;
   }
 
-  if (ui_activated) {
+  if (ui_enabled) {
     circle_ui_key_interrupt(key, 0 /* up */);
   } else {
     circle_emu_key_interrupt(key, 0 /* up */);

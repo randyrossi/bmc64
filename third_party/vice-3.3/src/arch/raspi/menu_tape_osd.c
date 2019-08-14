@@ -72,7 +72,7 @@ static void menu_item_changed(struct menu_item *item) {
 
 void show_tape_osd_menu(void) {
   // We only show OSD when the emulator is running. (not in the trap)
-  if (ui_activated) {
+  if (ui_enabled) {
     ui_dismiss_osd_if_active();
     return;
   }

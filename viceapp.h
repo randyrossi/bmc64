@@ -28,6 +28,7 @@
 #include <circle/koptions.h>
 #include <circle/logger.h>
 #include <circle/sched/scheduler.h>
+#include <circle/machineinfo.h>
 #include <circle/memory.h>
 #include <circle/net/netsubsystem.h>
 #include <circle/nulldevice.h>
@@ -186,6 +187,7 @@ protected:
   CScheduler mScheduler;
   CGPIOManager mGPIOManager;
   CVCHIQDevice mVCHIQ;
+  CMachineInfo mMachineInfo;
 
   CGPIOPin *joystickPins1[5];
   CGPIOPin *joystickPins2[5];
@@ -224,6 +226,7 @@ protected:
   int mBootStatWhat[MAX_BOOTSTAT_LINES];
   char *mBootStatFile[MAX_BOOTSTAT_LINES];
   int mBootStatSize[MAX_BOOTSTAT_LINES];
+  char mTimingOption[8];
 };
 
 #endif

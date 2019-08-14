@@ -26,6 +26,8 @@
 CKernel *static_kernel = NULL;
 
 #define MAX_KEY_CODES 128
+#define TICKS_PER_SECOND 1000000L
+
 
 // Usb key states
 static bool key_states[MAX_KEY_CODES];
@@ -157,12 +159,20 @@ void circle_set_palette_fbl(int layer, uint8_t index, uint16_t rgb565) {
   static_kernel->circle_set_palette_fbl(layer, index, rgb565);
 }
 
+void circle_set_palette32_fbl(int layer, uint8_t index, uint32_t argb) {
+  static_kernel->circle_set_palette32_fbl(layer, index, argb);
+}
+
 void circle_update_palette_fbl(int layer) {
   static_kernel->circle_update_palette_fbl(layer);
 }
 
 void circle_set_aspect_fbl(int layer, double aspect) {
   static_kernel->circle_set_aspect_fbl(layer, aspect);
+}
+
+void circle_set_center_offset(int layer, int cx, int cy) {
+  static_kernel->circle_set_center_offset(layer, cx, cy);
 }
 
 void circle_set_src_rect_fbl(int layer, int x, int y, int w, int h) {
@@ -262,6 +272,7 @@ static void handle_button_function(bool is_ui, int device, unsigned buttons) {
      case BTN_ASSIGN_PIP_LOCATION:
      case BTN_ASSIGN_PIP_SWAP:
      case BTN_ASSIGN_40_80_COLUMN:
+     case BTN_ASSIGN_VKBD_TOGGLE:
        if (is_press) {
           circle_emu_quick_func_interrupt(button_func);
        }
@@ -328,9 +339,24 @@ static void handle_button_function(bool is_ui, int device, unsigned buttons) {
   }
 }
 
+#if 0 // COUNT INVOCATIONS PER SECOND
+static unsigned long entry_delay = 5 * TICKS_PER_SECOND;
+static unsigned long entry_start = 0;
+static long invoked;
+#endif
+
 // Interrupt handler. Make this quick.
 void CKernel::GamePadStatusHandler(unsigned nDeviceIndex,
                                    const TGamePadState *pState) {
+
+#if 0 // COUNT INVOCATIONS PER SECOND
+invoked++;
+if (static_kernel->circle_get_ticks() - entry_start >= entry_delay) {
+   printf ("%ld\n", invoked / 5);
+   invoked = 0;
+   entry_start = static_kernel->circle_get_ticks();
+}
+#endif
 
   static int dpad_to_joy[8] = {0x01, 0x09, 0x08, 0x0a, 0x02, 0x06, 0x04, 0x05};
 
@@ -535,6 +561,9 @@ ViceApp::TShutdownMode CKernel::Run(void) {
   // Tell vice what we found
   joy_set_gamepad_info(num_pads, num_buttons, num_axes, num_hats);
 
+#ifndef ARM_ALLOW_MULTI_CORE
+  mEmulatorCore.LaunchEmulator(mTimingOption);
+#else
   // This core will do nothing but service interrupts from
   // usb or gpio.
   printf("Core 0 idle\n");
@@ -542,7 +571,7 @@ ViceApp::TShutdownMode CKernel::Run(void) {
   asm("dsb\n\t"
       "1: wfi\n\t"
       "b 1b\n\t");
-
+#endif
   return ShutdownHalt;
 }
 
@@ -778,7 +807,7 @@ int CKernel::circle_sound_bufferspace(void) {
   if (mViceSound) {
     return mViceSound->BufferSpaceBytes();
   }
-  return 0;
+  return FRAG_SIZE * NUM_FRAGS;
 }
 
 void CKernel::circle_yield(void) { CScheduler::Get()->Yield(); }
@@ -1055,12 +1084,20 @@ void CKernel::circle_set_palette_fbl(int layer, uint8_t index, uint16_t rgb565) 
   fbl[layer].SetPalette(index, rgb565);
 }
 
+void CKernel::circle_set_palette32_fbl(int layer, uint8_t index, uint32_t argb) {
+  fbl[layer].SetPalette(index, argb);
+}
+
 void CKernel::circle_update_palette_fbl(int layer) {
   fbl[layer].UpdatePalette();
 }
 
 void CKernel::circle_set_aspect_fbl(int layer, double aspect) {
   fbl[layer].SetAspect(aspect);
+}
+
+void CKernel::circle_set_center_offset(int layer, int cx, int cy) {
+  fbl[layer].SetCenterOffset(cx, cy);
 }
 
 void CKernel::circle_set_src_rect_fbl(int layer, int x, int y, int w, int h) {

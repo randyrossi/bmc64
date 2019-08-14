@@ -162,12 +162,20 @@ int ui_emulation_is_paused(void);
 // Begin raspi ui code
 void ui_init_menu(void);
 
+// Draws a single character with no ascii to petscii translation
+void ui_draw_char_raw(const char singlechar, int x, int y, int color,
+                      uint8_t *dst, int dst_pitch, int stretch);
+
+// Draws a string with ascii to petscii translation into the provided buffer
 void ui_draw_text_buf(const char *text, int x, int y, int color, uint8_t *dst,
-                      int dst_pitch);
+                      int dst_pitch, int stretch);
+
+// Draws a string with ascii to petscii translation into the menu buffer
 void ui_draw_text(const char *text, int x, int y, int color);
 
 void ui_draw_rect_buf(int x, int y, int w, int h, int color, int fill,
                       uint8_t *dst, int dst_pitch);
+
 void ui_draw_rect(int x, int y, int w, int h, int color, int fill);
 
 int ui_text_width(const char *text);
@@ -213,7 +221,8 @@ void ui_set_render_current_item_only(int v);
 
 struct menu_item* ui_find_item_by_id(struct menu_item *node, int id);
 
-volatile int ui_activated;
+extern volatile int ui_enabled;
+extern int ui_showing;
 
 void ui_handle_toggle_or_quick_func(void);
 

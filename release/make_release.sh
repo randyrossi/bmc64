@@ -1,6 +1,10 @@
 #!/bin/bash
 
-export VERSION=1.9
+export VERSION=2.1
+
+SRC_PI0=bmc64-pi0-v39
+SRC_PI2=bmc64-pi2-v39
+SRC_PI3=bmc64-pi3-v39
 
 if [ "$1" = "c64" ]
 then
@@ -43,14 +47,15 @@ sudo mount -t vfat /dev/loop0 stage_dir
 sudo cp -R common_release_files/* stage_dir/
 sudo cp -R ${MACHINE_L}_release_files/* stage_dir/
 
-sudo cp ../bmc64-pi2/kernel7.img.${MACHINE_L} stage_dir/kernel7.img
-sudo cp ../bmc64-pi3/sdcard/config.txt stage_dir
-sudo cp ../bmc64-pi3/sdcard/cmdline.txt stage_dir
-sudo cp ../bmc64-pi3/sdcard/$MACHINE_L/rpi_sym.vkm stage_dir/$MACHINE_U
-sudo cp ../bmc64-pi3/sdcard/$MACHINE_L/bootstat.txt stage_dir/$MACHINE_U
-sudo cp ../bmc64-pi3/kernel8-32.img.${MACHINE_L} stage_dir/kernel8-32.img
-sudo cp ../bmc64-pi3/LICENSE stage_dir
-sudo cp ../bmc64-pi3/README.md stage_dir
+sudo cp ../${SRC_PI0}/kernel.img.${MACHINE_L} stage_dir/kernel.img
+sudo cp ../${SRC_PI2}/kernel7.img.${MACHINE_L} stage_dir/kernel7.img
+sudo cp ../${SRC_PI3}/sdcard/config.txt stage_dir
+sudo cp ../${SRC_PI3}/sdcard/cmdline.txt stage_dir
+sudo cp ../${SRC_PI3}/sdcard/$MACHINE_L/rpi_sym.vkm stage_dir/$MACHINE_U
+sudo cp ../${SRC_PI3}/sdcard/$MACHINE_L/bootstat.txt stage_dir/$MACHINE_U
+sudo cp ../${SRC_PI3}/kernel8-32.img.${MACHINE_L} stage_dir/kernel8-32.img
+sudo cp ../${SRC_PI3}/LICENSE stage_dir
+sudo cp ../${SRC_PI3}/README.md stage_dir
 
 cd stage_dir
 zip -r ../bm${MACHINE_L}-${VERSION}.files.zip .

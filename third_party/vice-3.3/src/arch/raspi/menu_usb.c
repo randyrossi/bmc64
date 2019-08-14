@@ -57,8 +57,6 @@ extern int usb_1_button_assignments[MAX_USB_BUTTONS];
 // just doing the shift in place.
 extern int usb_button_bits[MAX_USB_BUTTONS];
 
-extern volatile int ui_activated;
-
 struct menu_item *raw_buttons_item;
 struct menu_item *raw_hats_item[MAX_USB_HATS];
 struct menu_item *raw_axes_item[MAX_USB_AXES];
@@ -245,6 +243,7 @@ static void add_button_choices(struct menu_item *tmp_item) {
   strcpy(tmp_item->choices[BTN_ASSIGN_PIP_LOCATION], "Change PIP Location");
   strcpy(tmp_item->choices[BTN_ASSIGN_PIP_SWAP], "Swap PIP");
   strcpy(tmp_item->choices[BTN_ASSIGN_40_80_COLUMN], "40/80 Column Key");
+  strcpy(tmp_item->choices[BTN_ASSIGN_VKBD_TOGGLE], "Virtual Keyboard");
 
   char scratch[32];
   for (int n = 0; n < 6; n++) {
@@ -383,7 +382,7 @@ void build_usb_menu(int dev, struct menu_item *root) {
   y_thresh_item->on_value_changed = menu_usb_value_changed;
 }
 
-int menu_wants_raw_usb(void) { return ui_activated && want_raw_usb; }
+int menu_wants_raw_usb(void) { return ui_enabled && want_raw_usb; }
 
 void menu_raw_usb(int device, unsigned buttons, const int hats[MAX_USB_HATS],
                   const int axes[MAX_USB_AXES]) {

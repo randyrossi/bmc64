@@ -35,5 +35,7 @@ libarch_c128_a_SOURCES = \
 	archdep_c128.c \
 	videoarch_c128.h \
 	videoarch_c128.c \
+	virtual_keyboard_c128.h \
+	virtual_keyboard_c128.c \
 	menu_c128.h \
 	menu_c128.c

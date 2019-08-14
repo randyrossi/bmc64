@@ -272,10 +272,14 @@ typedef enum {
 
    MENU_ACTIVE_DISPLAY,
 
+   MENU_H_CENTER_0,
+   MENU_V_CENTER_0,
    MENU_H_BORDER_0,
    MENU_V_BORDER_0,
    MENU_ASPECT_0,
 
+   MENU_H_CENTER_1,
+   MENU_V_CENTER_1,
    MENU_H_BORDER_1,
    MENU_V_BORDER_1,
    MENU_ASPECT_1,
@@ -285,6 +289,7 @@ typedef enum {
    MENU_PIP_SWAPPED,
 
    MENU_40_80_COLUMN,
+   MENU_VKBD_TRANSPARENCY,
 } MenuID;
 
 typedef enum {
@@ -389,8 +394,8 @@ void build_menu(struct menu_item *root);
 
 int menu_get_keyboard_type(void);
 void menu_swap_joysticks(void);
-int overlay_never(void);
-int overlay_always(void);
+int statusbar_never(void);
+int statusbar_always(void);
 
 void menu_about_to_activate(void);
 void menu_about_to_deactivate(void);

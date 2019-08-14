@@ -28,7 +28,7 @@
 #define RGB565(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 #define ARGB(a,r,g,b) ((uint32_t)((uint8_t)(a)<<24 | (uint8_t)(r)<<16 | (uint8_t)(g)<<8 | (uint8_t)(b)))
 
-// Palette used for canvases with no transparency
+// Default palette used for canvases with no transparency
 static uint16_t pal_565[256] = {
   RGB565(0x00, 0x00, 0x00),
   RGB565(0xFF, 0xFF, 0xFF),
@@ -48,7 +48,7 @@ static uint16_t pal_565[256] = {
   RGB565(0x95, 0x95, 0x95),
 };
 
-// Palette used for canvases with transparency. This palette
+// Default palette used for canvases with transparency. This palette
 // is identical to pal_565 except we include an additional
 // entry for a fully transparent pixel (index 16).
 static uint32_t pal_argb[256] = {
@@ -80,11 +80,15 @@ DISPMANX_DISPLAY_HANDLE_T FrameBufferLayer::dispman_display_;
 FrameBufferLayer::FrameBufferLayer() :
         width_(0), height_(0), pitch_(0), layer_(0), transparency_(false),
         aspect_(1.6), valign_(0), vpadding_(0), halign_(0), hpadding_(0),
+        h_center_offset_(0), v_center_offset_(0),
         rnum_(0), leftPadding_(0), rightPadding_(0), topPadding_(0),
         bottomPadding_(0), showing_(false), allocated_(false) {
   alpha_.flags = DISPMANX_FLAGS_ALPHA_FROM_SOURCE;
   alpha_.opacity = 255;
   alpha_.mask = 0;
+
+  memcpy (pal_565_, pal_565, sizeof(pal_565));
+  memcpy (pal_argb_, pal_argb, sizeof(pal_565));
 }
 
 FrameBufferLayer::~FrameBufferLayer() {
@@ -230,7 +234,7 @@ void FrameBufferLayer::Show() {
   switch (valign_) {
      case 0:
         // Center
-        oy = (avail_height - dst_h) / 2;
+        oy = (avail_height - dst_h) / 2 + v_center_offset_;
         break;
      case -1:
         // Top
@@ -249,7 +253,7 @@ void FrameBufferLayer::Show() {
   switch (halign_) {
      case 0:
         // Center
-        ox = (avail_width - dst_w) / 2;
+        ox = (avail_width - dst_w) / 2 + h_center_offset_;
         break;
      case -1:
         // Left
@@ -344,12 +348,12 @@ void FrameBufferLayer::SwapResources(FrameBufferLayer* fb1,
 
 void FrameBufferLayer::SetPalette(uint8_t index, uint16_t rgb565) {
   assert(!transparency_);
-  pal_565[index] = rgb565;
+  pal_565_[index] = rgb565;
 }
 
 void FrameBufferLayer::SetPalette(uint8_t index, uint32_t argb) {
   assert(transparency_);
-  pal_argb[index] = argb;
+  pal_argb_[index] = argb;
 }
 
 void FrameBufferLayer::UpdatePalette() {
@@ -358,14 +362,14 @@ void FrameBufferLayer::UpdatePalette() {
   int ret;
   if (transparency_) {
      ret = vc_dispmanx_resource_set_palette(dispman_resource_[0],
-                                            pal_argb, 0, sizeof pal_argb);
+                                            pal_argb_, 0, sizeof pal_argb_);
      ret = vc_dispmanx_resource_set_palette(dispman_resource_[1],
-                                            pal_argb, 0, sizeof pal_argb);
+                                            pal_argb_, 0, sizeof pal_argb_);
   } else {
      ret = vc_dispmanx_resource_set_palette(dispman_resource_[0],
-                                            pal_565, 0, sizeof pal_565);
+                                            pal_565_, 0, sizeof pal_565_);
      ret = vc_dispmanx_resource_set_palette(dispman_resource_[1],
-                                            pal_565, 0, sizeof pal_565);
+                                            pal_565_, 0, sizeof pal_565_);
   }
   assert( ret == 0 );
 }
@@ -412,4 +416,9 @@ void FrameBufferLayer::SetPadding(double leftPadding,
   rightPadding_ = rightPadding;
   topPadding_ = topPadding;
   bottomPadding_ = bottomPadding;
+}
+
+void FrameBufferLayer::SetCenterOffset(int cx, int cy) {
+  h_center_offset_ = cx;
+  v_center_offset_ = cy;
 }

@@ -113,18 +113,18 @@ extern uint16_t video_font_translate[256];
 // Make sure ui also sets this when turning on/off warp
 extern int raspi_warp;
 
-extern int overlay_enabled;
-extern int overlay_showing;
-
 // May be called from an ISR to change joy value for emulator
 void circle_emu_joy_interrupt(int type, int port, int value);
 
 // Called by menu after color setting changed (brightness, contrast...)
 void video_color_setting_changed(int display_num);
 
-void video_init_overlay(int padding, int c40_80_state);
+void video_init_overlay(int padding, int c40_80_state, int vkbd_transparency);
 
-void apply_video_adjustments(int layer, double hborder, double vborder, double aspect, double lpad, double rpad, double tpad, double bpad, int zlayer);
+void apply_video_adjustments(int layer, int hcenter, int vcenter,
+                             double hborder, double vborder,
+                             double aspect, double lpad, double rpad,
+                             double tpad, double bpad, int zlayer);
 
 void enable_vic(int enabled);
 void enable_vdc(int enabled);

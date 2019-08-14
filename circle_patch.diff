@@ -163,6 +163,38 @@ index 245e069..3747245 100644
  
  ///////////////////////////////////////////////////////////////////////
  //
+diff --git a/include/circle/usb/usbhiddevice.h b/include/circle/usb/usbhiddevice.h
+index 4e7f682..c8173b7 100644
+--- a/include/circle/usb/usbhiddevice.h
++++ b/include/circle/usb/usbhiddevice.h
+@@ -25,12 +25,15 @@
+ #include <circle/usb/usbrequest.h>
+ #include <circle/usb/usbhostcontroller.h>
+ #include <circle/types.h>
++//#ifdef BMC64_REPORT_THROTTLE
++//#include <circle/timer.h>
++//#endif
+ 
+ class CUSBHIDDevice : public CUSBFunction
+ {
+ public:
+ 	// nMaxReportSize can be handed-over here or to Configure()
+-	CUSBHIDDevice (CUSBFunction *pFunction, unsigned nMaxReportSize = 0);
++	CUSBHIDDevice (CUSBFunction *pFunction, unsigned nMaxReportSize = 0, bool bThrottleReports = false);
+ 	~CUSBHIDDevice (void);
+ 
+ 	boolean Configure (unsigned nMaxReportSize = 0);
+@@ -68,6 +71,10 @@ private:
+ 	CUSBRequest *m_pURB;
+ 
+ 	u8 *m_pReportBuffer;
++
++	bool m_bThrottleReports;
++        CTimer* pTimer;
++        unsigned long nTimerStart;
+ };
+ 
+ #endif
 diff --git a/lib/alloc.cpp b/lib/alloc.cpp
 index eb6fe49..f6e0776 100644
 --- a/lib/alloc.cpp
@@ -215,3 +247,78 @@ index 541aba4..9694acb 100644
  	}
  	else if (pName->Compare ("ven424-7800") == 0)
  	{
+diff --git a/lib/usb/usbgamepad.cpp b/lib/usb/usbgamepad.cpp
+index ff011e8..c6a0e8f 100644
+--- a/lib/usb/usbgamepad.cpp
++++ b/lib/usb/usbgamepad.cpp
+@@ -32,8 +32,14 @@ unsigned CUSBGamePadDevice::s_nDeviceNumber = 1;
+ static const char FromUSBPad[] = "usbpad";
+ static const char DevicePrefix[] = "upad";
+ 
++#ifdef BMC64_REPORT_THROTTLE
++#define THROTTLE_FLAG true
++#else
++#define THROTTLE_FLAG false
++#endif
++
+ CUSBGamePadDevice::CUSBGamePadDevice (CUSBFunction *pFunction)
+-:	CUSBHIDDevice (pFunction),
++:	CUSBHIDDevice (pFunction, 0, THROTTLE_FLAG),
+ 	m_pStatusHandler (0),
+ 	m_usReportSize (0),
+ 	m_nDeviceNumber (0)	// not assigned
+diff --git a/lib/usb/usbhiddevice.cpp b/lib/usb/usbhiddevice.cpp
+index 2893a86..9aac786 100644
+--- a/lib/usb/usbhiddevice.cpp
++++ b/lib/usb/usbhiddevice.cpp
+@@ -25,19 +25,23 @@
+ 
+ static const char FromUSBHID[] = "usbhid";
+ 
+-CUSBHIDDevice::CUSBHIDDevice (CUSBFunction *pFunction, unsigned nMaxReportSize)
++CUSBHIDDevice::CUSBHIDDevice (CUSBFunction *pFunction, unsigned nMaxReportSize, bool bThrottleReports)
+ :	CUSBFunction (pFunction),
+ 	m_nMaxReportSize (nMaxReportSize),
+ 	m_pReportEndpoint (0),
+ 	m_pEndpointOut (0),
+ 	m_pURB (0),
+-	m_pReportBuffer (0)
++	m_pReportBuffer (0),
++        m_bThrottleReports (bThrottleReports)
+ {
+ 	if (m_nMaxReportSize > 0)
+ 	{
+ 		m_pReportBuffer = new u8[m_nMaxReportSize];
+ 		assert (m_pReportBuffer != 0);
+ 	}
++
++        pTimer = CTimer::Get();
++        nTimerStart = pTimer->GetClockTicks();
+ }
+ 
+ CUSBHIDDevice::~CUSBHIDDevice (void)
+@@ -214,14 +218,18 @@ void CUSBHIDDevice::CompletionRoutine (CUSBRequest *pURB)
+ 	assert (pURB != 0);
+ 	assert (m_pURB == pURB);
+ 
+-	if (pURB->GetStatus () != 0)
+-	{
++        if (!m_bThrottleReports || (pTimer->GetClockTicks() - nTimerStart >= 20000L)) {
++           nTimerStart = pTimer->GetClockTicks();
++
++	  if (pURB->GetStatus () != 0)
++	  {
+ 		ReportHandler (m_pReportBuffer, pURB->GetResultLength ());
+-	}
+-	else
+-	{
++	  }
++	  else
++	  {
+ 		ReportHandler (0, 0);
+-	}
++	  }
++        }
+ 
+ 	delete m_pURB;
+ 	m_pURB = 0;

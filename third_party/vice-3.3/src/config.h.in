@@ -784,6 +784,9 @@
 /* Are we compiling for bare metal raspberry pi? */
 #undef RASPI_COMPILE
 
+/* Compile lite version of bare metal raspberry pi? */
+#undef RASPI_LITE
+
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE
 

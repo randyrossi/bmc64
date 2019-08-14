@@ -57,7 +57,7 @@
 #define USB_PREF_HAT 1
 
 // Make sure does not exceed max choices in ui.h
-#define NUM_BUTTON_ASSIGNMENTS 28
+#define NUM_BUTTON_ASSIGNMENTS 29
 
 // NOTE: BTN_ASSIGN_* are used as indices into choice
 // arrays.
@@ -97,6 +97,7 @@
 #define BTN_ASSIGN_PIP_LOCATION 25
 #define BTN_ASSIGN_PIP_SWAP 26
 #define BTN_ASSIGN_40_80_COLUMN 27
+#define BTN_ASSIGN_VKBD_TOGGLE 28
 
 // These are intermediate values not meant to
 // be directly assigned to buttons. Never used as
@@ -186,9 +187,11 @@ extern void circle_show_fbl(int layer);
 extern void circle_hide_fbl(int layer);
 extern void circle_frames_ready_fbl(int layer1, int layer2, int sync);
 extern void circle_set_palette_fbl(int layer, uint8_t index, uint16_t rgb565);
+extern void circle_set_palette32_fbl(int layer, uint8_t index, uint32_t argb);
 extern void circle_update_palette_fbl(int layer);
 extern void circle_set_aspect_fbl(int layer, double a);
 extern void circle_set_src_rect_fbl(int layer, int x, int y, int w, int h);
+extern void circle_set_center_offset(int layer, int cx, int cy);
 extern void circle_set_valign_fbl(int layer, int align, int padding);
 extern void circle_set_halign_fbl(int layer, int align, int padding);
 extern void circle_set_padding_fbl(int layer, double lpad, double rpad, double tpad, double bpad);
@@ -207,6 +210,7 @@ extern void circle_usb_pref(int device, int *usb_pref, int *x_axis, int *y_axis,
 extern int circle_ui_activated(void);
 extern void circle_ui_key_interrupt(long key, int pressed);
 extern void circle_emu_key_interrupt(long key, int pressed);
+extern void circle_emu_key_locked(long key, int pressed);
 
 extern int menu_wants_raw_usb(void);
 extern void menu_raw_usb(int device, unsigned buttons, const int hats[6],

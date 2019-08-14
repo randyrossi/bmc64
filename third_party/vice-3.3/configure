@@ -754,6 +754,8 @@ UNIX_SKYOS_COMPILE_FALSE
 UNIX_SKYOS_COMPILE_TRUE
 UNIX_COMPILE_FALSE
 UNIX_COMPILE_TRUE
+RASPI_LITE_FALSE
+RASPI_LITE_TRUE
 RASPI_COMPILE_FALSE
 RASPI_COMPILE_TRUE
 NATIVE_TOOLS_COMPILER
@@ -970,6 +972,7 @@ with_png
 with_gif
 with_zlib
 enable_raspiui
+enable_raspilite
 enable_sdlui
 enable_sdlui2
 enable_native_gtk3ui
@@ -1671,6 +1674,7 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-raspiui        enables Bare Metal Raspberry Pi UI support
+  --enable-raspilite      builds Bare Metal Raspberry Pi Lite version
   --enable-sdlui          enables SDL UI support
   --enable-sdlui2         enables SDL2 UI support
   --enable-native-gtk3ui  enables native GTK3 UI support
@@ -3029,6 +3033,14 @@ if test "${enable_raspiui+set}" = set; then :
 fi
 
 vice_arg_enable_list="$vice_arg_enable_list raspiui"
+
+
+# Check whether --enable-raspilite was given.
+if test "${enable_raspilite+set}" = set; then :
+  enableval=$enable_raspilite;
+fi
+
+vice_arg_enable_list="$vice_arg_enable_list raspilite"
 
 
 # Check whether --enable-sdlui was given.
@@ -14373,6 +14385,14 @@ else
   RASPI_COMPILE_FALSE=
 fi
 
+   if true; then
+  RASPI_LITE_TRUE=
+  RASPI_LITE_FALSE='#'
+else
+  RASPI_LITE_TRUE='#'
+  RASPI_LITE_FALSE=
+fi
+
    if false; then
   HAVE_RAWDRIVE_TRUE=
   HAVE_RAWDRIVE_FALSE='#'
@@ -14574,6 +14594,12 @@ fi
 $as_echo "#define RASPI_COMPILE /**/" >>confdefs.h
 
   SOUND_DRIVERS="$SOUND_DRIVERS soundraspi.o"
+
+  if test x"$enable_raspilite" = "xyes"; then
+
+$as_echo "#define RASPI_LITE /**/" >>confdefs.h
+
+  fi
 
 elif test x"$is_win32" = "xyes" ; then
 
@@ -21404,6 +21430,14 @@ else
   RASPI_COMPILE_FALSE=
 fi
 
+   if false; then
+  RASPI_LITE_TRUE=
+  RASPI_LITE_FALSE='#'
+else
+  RASPI_LITE_TRUE='#'
+  RASPI_LITE_FALSE=
+fi
+
    if true; then
   WIN32_COMPILE_TRUE=
   WIN32_COMPILE_FALSE='#'
@@ -22525,6 +22559,10 @@ if test -z "${RASPI_COMPILE_TRUE}" && test -z "${RASPI_COMPILE_FALSE}"; then
   as_fn_error $? "conditional \"RASPI_COMPILE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${RASPI_LITE_TRUE}" && test -z "${RASPI_LITE_FALSE}"; then
+  as_fn_error $? "conditional \"RASPI_LITE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${HAVE_RAWDRIVE_TRUE}" && test -z "${HAVE_RAWDRIVE_FALSE}"; then
   as_fn_error $? "conditional \"HAVE_RAWDRIVE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -22875,6 +22913,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${RASPI_COMPILE_TRUE}" && test -z "${RASPI_COMPILE_FALSE}"; then
   as_fn_error $? "conditional \"RASPI_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${RASPI_LITE_TRUE}" && test -z "${RASPI_LITE_FALSE}"; then
+  as_fn_error $? "conditional \"RASPI_LITE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${WIN32_COMPILE_TRUE}" && test -z "${WIN32_COMPILE_FALSE}"; then

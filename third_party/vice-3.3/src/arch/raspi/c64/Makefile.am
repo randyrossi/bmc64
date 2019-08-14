@@ -35,5 +35,7 @@ libarch_c64_a_SOURCES = \
 	archdep_c64.c \
 	videoarch_c64.h \
 	videoarch_c64.c \
+	virtual_keyboard_c64.h \
+	virtual_keyboard_c64.c \
 	menu_c64.h \
 	menu_c64.c

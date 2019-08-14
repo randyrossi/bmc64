@@ -68,6 +68,14 @@
 // and the power port is actually power unlike the Keyrah.
 //#define RASPI_SUPPORT_PCB 1
 
+#define VERSION_STRING "2.3"
+
+#ifdef RASPI_LITE
+#define VARIANT_STRING "-Lite"
+#else
+#define VARIANT_STRING ""
+#endif
+
 #define DEFAULT_VICII_ASPECT 145
 #define DEFAULT_VICII_H_BORDER_TRIM 0
 #define DEFAULT_VICII_V_BORDER_TRIM 0
@@ -119,9 +127,10 @@ struct menu_item *hotkey_cf7_item;
 struct menu_item *sid_engine_item;
 struct menu_item *sid_model_item;
 struct menu_item *sid_filter_item;
-struct menu_item *overlay_item;
-struct menu_item *overlay_padding_item;
+struct menu_item *statusbar_item;
+struct menu_item *statusbar_padding_item;
 struct menu_item *tape_reset_with_machine_item;
+struct menu_item *vkbd_transparency_item;
 
 struct menu_item *palette_item_0;
 struct menu_item *brightness_item_0;
@@ -140,10 +149,14 @@ struct menu_item *reset_confirm_item;
 struct menu_item *use_pcb_item;
 struct menu_item *active_display_item;
 
+struct menu_item *h_center_item_0;
+struct menu_item *v_center_item_0;
 struct menu_item *h_border_item_0;
 struct menu_item *v_border_item_0;
 struct menu_item *aspect_item_0;
 
+struct menu_item *h_center_item_1;
+struct menu_item *v_center_item_1;
 struct menu_item *h_border_item_1;
 struct menu_item *v_border_item_1;
 struct menu_item *aspect_item_1;
@@ -155,7 +168,7 @@ struct menu_item *c40_80_column_item;
 
 static int unit;
 static int joyswap;
-static int overlay_forced;
+static int statusbar_forced;
 
 // Held here, exported for menu_usb to read
 int pot_x_high_value;
@@ -355,25 +368,37 @@ static void show_files(DirType dir_type, FileFilter filter, int menu_id,
 
 static void show_about() {
   struct menu_item *about_root = ui_push_menu(32, 8);
+  char title[16];
+  char desc[32];
 
   switch (machine_class) {
   case VICE_MACHINE_C64:
-    ui_menu_add_button(MENU_TEXT, about_root, "BMC64 v2.2");
-    ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C64 Emulator");
+    snprintf (title, 15, "%s%s %s", "BMC64", VARIANT_STRING, VERSION_STRING);
+    strncpy (desc, "A Bare Metal C64 Emulator", 31);
     break;
   case VICE_MACHINE_C128:
-    ui_menu_add_button(MENU_TEXT, about_root, "BMC128 v2.2");
-    ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal C128 Emulator");
+    snprintf (title, 15, "%s%s %s", "BMC128", VARIANT_STRING, VERSION_STRING);
+    strncpy (desc, "A Bare Metal C128 Emulator", 31);
     break;
   case VICE_MACHINE_VIC20:
-    ui_menu_add_button(MENU_TEXT, about_root, "BMVIC20 v2.2");
-    ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal Vic20 Emulator");
+    snprintf (title, 15, "%s%s %s", "BMVIC20", VARIANT_STRING, VERSION_STRING);
+    strncpy (desc, "A Bare Metal VIC20 Emulator", 31);
     break;
   default:
-    ui_menu_add_button(MENU_TEXT, about_root, "A Bare Metal ??? Emulator");
+    strncpy (title, "ERROR", 15);
+    strncpy (desc, "Unknown Emulator", 31);
     break;
   }
+
+  ui_menu_add_button(MENU_TEXT, about_root, title);
+  ui_menu_add_button(MENU_TEXT, about_root, desc);
+
+#ifdef RASPI_LITE
+  ui_menu_add_button(MENU_TEXT, about_root, "For the Rasbperry Pi Zero");
+#else
   ui_menu_add_button(MENU_TEXT, about_root, "For the Rasbperry Pi 2/3");
+#endif
+
   ui_menu_add_divider(about_root);
   ui_menu_add_button(MENU_TEXT, about_root, "https://github.com/");
   ui_menu_add_button(MENU_TEXT, about_root, "         randyrossi/bmc64");
@@ -604,17 +629,23 @@ static int save_settings() {
   fprintf(fp, "hotkey_cf3=%d\n", hotkey_cf3_item->value);
   fprintf(fp, "hotkey_cf5=%d\n", hotkey_cf5_item->value);
   fprintf(fp, "hotkey_cf7=%d\n", hotkey_cf7_item->value);
-  fprintf(fp, "overlay=%d\n", overlay_item->value);
-  fprintf(fp, "overlay_padding=%d\n", overlay_padding_item->value);
+  // Can't change the 'overlay_*' names, legacy.
+  fprintf(fp, "overlay=%d\n", statusbar_item->value);
+  fprintf(fp, "overlay_padding=%d\n", statusbar_padding_item->value);
+  fprintf(fp, "vkbd_trans=%d\n", vkbd_transparency_item->value);
   fprintf(fp, "tapereset=%d\n", tape_reset_with_machine_item->value);
   fprintf(fp, "reset_confirm=%d\n", reset_confirm_item->value);
 #ifdef RASPI_SUPPORT_PCB
   fprintf(fp, "pcb=%d\n", use_pcb_item->value);
 #endif
+  fprintf(fp, "h_center_0=%d\n", h_center_item_0->value);
+  fprintf(fp, "v_center_0=%d\n", v_center_item_0->value);
   fprintf(fp, "h_border_trim_0=%d\n", h_border_item_0->value);
   fprintf(fp, "v_border_trim_0=%d\n", v_border_item_0->value);
   fprintf(fp, "aspect_0=%d\n", aspect_item_0->value);
   if (machine_class == VICE_MACHINE_C128) {
+     fprintf(fp, "h_center_1=%d\n", h_center_item_1->value);
+     fprintf(fp, "v_center_1=%d\n", v_center_item_1->value);
      fprintf(fp, "h_border_trim_1=%d\n", h_border_item_1->value);
      fprintf(fp, "v_border_trim_1=%d\n", v_border_item_1->value);
      fprintf(fp, "aspect_1=%d\n", aspect_item_1->value);
@@ -690,8 +721,10 @@ static void load_settings() {
   sid_model_item->value = viceSidModelToBmcChoice(tmp_value);
 
   resources_get_int("SidFilters", &sid_filter_item->value);
+#ifndef RASPI_LITE
   resources_get_int("DriveSoundEmulation", &drive_sounds_item->value);
   resources_get_int("DriveSoundEmulationVolume", &drive_sounds_vol_item->value);
+#endif
 
   brightness_item_0->value = get_color_brightness(0);
   contrast_item_0->value = get_color_contrast(0);
@@ -802,10 +835,12 @@ static void load_settings() {
     } else if (strcmp(name, "alt_f12") == 0) {
       // Old. Equivalent to cf7 = Menu
       hotkey_cf7_item->value = HOTKEY_CHOICE_MENU;
-    } else if (strcmp(name, "overlay") == 0) {
-      overlay_item->value = value;
-    } else if (strcmp(name, "overlay_padding") == 0) {
-      overlay_padding_item->value = value;
+    } else if (strcmp(name, "overlay") == 0) { // legacy name
+      statusbar_item->value = value;
+    } else if (strcmp(name, "overlay_padding") == 0) { // legacy name
+      statusbar_padding_item->value = value;
+    } else if (strcmp(name, "vkbd_trans") == 0) {
+      vkbd_transparency_item->value = value;
     } else if (strcmp(name, "tapereset") == 0) {
       tape_reset_with_machine_item->value = value;
     } else if (strcmp(name, "pot_x_high") == 0) {
@@ -870,12 +905,20 @@ static void load_settings() {
       key_bindings[4] = value;
     } else if (strcmp(name, "key_binding_6") == 0) {
       key_bindings[5] = value;
+    } else if (strcmp(name, "h_center_0") == 0) {
+      h_center_item_0->value = value;
+    } else if (strcmp(name, "v_center_0") == 0) {
+      v_center_item_0->value = value;
     } else if (strcmp(name, "h_border_trim_0") == 0) {
       h_border_item_0->value = value;
     } else if (strcmp(name, "v_border_trim_0") == 0) {
       v_border_item_0->value = value;
     } else if (strcmp(name, "aspect_0") == 0) {
       aspect_item_0->value = value;
+    } else if (strcmp(name, "h_center_1") == 0 && machine_class == VICE_MACHINE_C128) {
+      h_center_item_1->value = value;
+    } else if (strcmp(name, "v_center_1") == 0 && machine_class == VICE_MACHINE_C128) {
+      v_center_item_1->value = value;
     } else if (strcmp(name, "h_border_trim_1") == 0 && machine_class == VICE_MACHINE_C128) {
       h_border_item_1->value = value;
     } else if (strcmp(name, "v_border_trim_1") == 0 && machine_class == VICE_MACHINE_C128) {
@@ -1294,6 +1337,12 @@ static void relist_files_after_dir_change(struct menu_item *item) {
   case MENU_KERNAL_FILE:
   case MENU_BASIC_FILE:
   case MENU_CHARGEN_FILE:
+  case MENU_C128_LOAD_KERNAL_FILE:
+  case MENU_C128_LOAD_BASIC_HI_FILE:
+  case MENU_C128_LOAD_BASIC_LO_FILE:
+  case MENU_C128_LOAD_CHARGEN_FILE:
+  case MENU_C128_LOAD_64_KERNAL_FILE:
+  case MENU_C128_LOAD_64_BASIC_FILE:
     show_files(DIR_ROMS, FILTER_NONE, item->id, 1);
     break;
   case MENU_AUTOSTART_FILE:
@@ -1344,6 +1393,8 @@ static void toggle_warp(int value) {
 
 // Tell videoarch the new settings made from the menu.
 static void do_video_settings(int layer,
+                              struct menu_item* hcenter_item,
+                              struct menu_item* vcenter_item,
                               struct menu_item* hborder_item,
                               struct menu_item* vborder_item,
                               struct menu_item* aspect_item) {
@@ -1353,6 +1404,11 @@ static void do_video_settings(int layer,
   double tpad;
   double bpad;
   int zlayer;
+
+  int hc = hcenter_item->value;
+  int vc = vcenter_item->value;
+  int vid_hc = hc;
+  int vid_vc = vc;
 
   if (machine_class == VICE_MACHINE_C128) {
      if ((active_display_item->value == MENU_ACTIVE_DISPLAY_VICII && layer == FB_LAYER_VIC) ||
@@ -1365,6 +1421,9 @@ static void do_video_settings(int layer,
         } else {
             lpad = .50d; rpad = 0; tpad = 0; bpad = 0; zlayer = 1;
         }
+        // Always ignore centering in this mode
+        vid_hc = 0;
+        vid_vc = 0;
      } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_PIP) {
         if ((layer == FB_LAYER_VIC && pip_swapped_item->value == 0) ||
             (layer == FB_LAYER_VDC && pip_swapped_item->value == 1)) {
@@ -1385,6 +1444,9 @@ static void do_video_settings(int layer,
               // bottom left quad
               lpad = .05d; rpad = .65d; tpad = .65d; bpad = .05d;
             }
+            // Always ignore centering in this mode
+            vid_hc = 0;
+            vid_vc = 0;
         }
     } else {
         return;
@@ -1398,16 +1460,20 @@ static void do_video_settings(int layer,
   double v = (double)(100-vborder_item->value) / 100.0d;
   double a = (double)(aspect_item->value) / 100.0d;
 
+  double vid_a = a;
   if (machine_class == VICE_MACHINE_C128 &&
           active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE) {
      // For side-by-side, it makes more sense to fill horizontal then scale
      // vertical since we just cut horizontal in half. So pass in negative
      // aspect.
-     a = -a;
+     vid_a = -a;
   }
 
   // Tell videoarch about these changes
-  apply_video_adjustments(layer, h, v, a, lpad, rpad, tpad, bpad, zlayer);
+  apply_video_adjustments(layer, vid_hc, vid_vc, h, v, vid_a, lpad, rpad, tpad, bpad, zlayer);
+  if (layer == FB_LAYER_VIC) {
+     apply_video_adjustments(FB_LAYER_UI, hc, vc, h, v, a, 0, 0, 0, 0, 3);
+  }
 }
 
 // Interpret what menu item changed and make the change to vice
@@ -1875,6 +1941,8 @@ static void menu_value_changed(struct menu_item *item) {
        enable_vic(1);
        enable_vdc(0);
        do_video_settings(FB_LAYER_VIC,
+           h_center_item_0,
+           v_center_item_0,
            h_border_item_0,
            v_border_item_0,
            aspect_item_0);
@@ -1882,6 +1950,8 @@ static void menu_value_changed(struct menu_item *item) {
        enable_vdc(1);
        enable_vic(0);
        do_video_settings(FB_LAYER_VDC,
+           h_center_item_1,
+           v_center_item_1,
            h_border_item_1,
            v_border_item_1,
            aspect_item_1);
@@ -1890,43 +1960,58 @@ static void menu_value_changed(struct menu_item *item) {
        enable_vdc(1);
        enable_vic(1);
        do_video_settings(FB_LAYER_VIC,
+           h_center_item_0,
+           v_center_item_0,
            h_border_item_0,
            v_border_item_0,
            aspect_item_0);
        do_video_settings(FB_LAYER_VDC,
+           h_center_item_1,
+           v_center_item_1,
            h_border_item_1,
            v_border_item_1,
            aspect_item_1);
     }
     break;
+  case MENU_H_CENTER_0:
+  case MENU_V_CENTER_0:
   case MENU_H_BORDER_0:
   case MENU_V_BORDER_0:
   case MENU_ASPECT_0:
     video_canvas_reveal_temp(FB_LAYER_VIC);
     do_video_settings(FB_LAYER_VIC,
+        h_center_item_0,
+        v_center_item_0,
         h_border_item_0,
         v_border_item_0,
         aspect_item_0);
     break;
+  case MENU_H_CENTER_1:
+  case MENU_V_CENTER_1:
   case MENU_H_BORDER_1:
   case MENU_V_BORDER_1:
   case MENU_ASPECT_1:
     video_canvas_reveal_temp(FB_LAYER_VDC);
     do_video_settings(FB_LAYER_VDC,
+        h_center_item_1,
+        v_center_item_1,
         h_border_item_1,
         v_border_item_1,
         aspect_item_1);
     break;
   case MENU_OVERLAY:
-    overlay_forced = 0;
+    statusbar_forced = 0;
     if (item->value == 1) {
-      overlay_enabled = 1;
+      overlay_statusbar_enable();
     } else {
-      overlay_enabled = 0;
+      overlay_statusbar_disable();
     }
     break;
   case MENU_OVERLAY_PADDING:
     overlay_change_padding(item->value);
+    break;
+  case MENU_VKBD_TRANSPARENCY:
+    overlay_change_vkbd_transparency(item->value);
     break;
   case MENU_40_80_COLUMN:
     resources_set_int("C128ColumnKey", item->value);
@@ -2269,6 +2354,12 @@ void build_menu(struct menu_item *root) {
      defaultAspect = DEFAULT_VIC_ASPECT;
   }
 
+  h_center_item_0 =
+      ui_menu_add_range(MENU_H_CENTER_0, parent, "H Center",
+          -48, 48, 1, 0);
+  v_center_item_0 =
+      ui_menu_add_range(MENU_V_CENTER_0, parent, "V Center",
+          -48, 48, 1, 0);
   h_border_item_0 =
       ui_menu_add_range(MENU_H_BORDER_0, parent, "H Border Trim %",
           0, 100, 1, defaultHBorderTrim);
@@ -2298,6 +2389,12 @@ void build_menu(struct menu_item *root) {
                                 get_color_tint(1));
      ui_menu_add_button(MENU_COLOR_RESET_1, child, "Reset");
 
+     h_center_item_1 =
+         ui_menu_add_range(MENU_H_CENTER_1, parent, "H Center",
+             -48, 48, 1, 0);
+     v_center_item_1 =
+         ui_menu_add_range(MENU_V_CENTER_1, parent, "V Center",
+             -48, 48, 1, 0);
      h_border_item_1 =
          ui_menu_add_range(MENU_H_BORDER_1, parent, "H Border Trim %",
              0, 100, 1, DEFAULT_VDC_H_BORDER_TRIM);
@@ -2496,23 +2593,29 @@ void build_menu(struct menu_item *root) {
 
   parent = ui_menu_add_folder(root, "Prefs");
 
+#ifndef RASPI_LITE
   drive_sounds_item = ui_menu_add_toggle(MENU_DRIVE_SOUND_EMULATION, parent,
                                          "Drive sound emulation", 0);
   drive_sounds_vol_item =
       ui_menu_add_range(MENU_DRIVE_SOUND_EMULATION_VOLUME, parent,
                         "Drive sound emulation volume", 0, 1000, 100, 1000);
+#endif
 
-  overlay_item =
+  statusbar_item =
       ui_menu_add_multiple_choice(MENU_OVERLAY, parent, "Show Status Bar");
-  overlay_item->num_choices = 3;
-  overlay_item->value = 0;
-  strcpy(overlay_item->choices[OVERLAY_NEVER], "Never");
-  strcpy(overlay_item->choices[OVERLAY_ALWAYS], "Always");
-  strcpy(overlay_item->choices[OVERLAY_ON_ACTIVITY], "On Activity");
+  statusbar_item->num_choices = 3;
+  statusbar_item->value = 0;
+  strcpy(statusbar_item->choices[OVERLAY_NEVER], "Never");
+  strcpy(statusbar_item->choices[OVERLAY_ALWAYS], "Always");
+  strcpy(statusbar_item->choices[OVERLAY_ON_ACTIVITY], "On Activity");
 
-  overlay_padding_item =
+  statusbar_padding_item =
       ui_menu_add_range(MENU_OVERLAY_PADDING, parent, "Status Bar Padding",
           0, 64, 1, 0);
+
+  vkbd_transparency_item =
+      ui_menu_add_range(MENU_VKBD_TRANSPARENCY, parent, "Keyboard Transparency %",
+          0, 50, 1, 0);
 
   reset_confirm_item = ui_menu_add_toggle(MENU_RESET_CONFIRM, parent,
                                           "Confirm Reset from Emulator", 1);
@@ -2542,20 +2645,35 @@ void build_menu(struct menu_item *root) {
   ui_set_joy_devs();
 
   apply_video_adjustments(FB_LAYER_VIC,
+     h_center_item_0->value,
+     v_center_item_0->value,
      (double)(100-h_border_item_0->value) / 100.0d,
      (double)(100-v_border_item_0->value) / 100.0d,
      (double)(aspect_item_0->value) / 100.0d,
      0.0d, 0.0d, 0.0d, 0.0d, 0);
 
+  // Menu gets the same adjustments
+  apply_video_adjustments(FB_LAYER_UI,
+     h_center_item_0->value,
+     v_center_item_0->value,
+     (double)(100-h_border_item_0->value) / 100.0d,
+     (double)(100-v_border_item_0->value) / 100.0d,
+     (double)(aspect_item_0->value) / 100.0d,
+     0.0d, 0.0d, 0.0d, 0.0d, 3);
+
   if (machine_class == VICE_MACHINE_C128) {
      apply_video_adjustments(FB_LAYER_VDC,
+        h_center_item_1->value,
+        v_center_item_1->value,
         (double)(100-h_border_item_1->value) / 100.0d,
         (double)(100-v_border_item_1->value) / 100.0d,
         (double)(aspect_item_1->value) / 100.0d,
         0.0d, 0.0d, 0.0d, 0.0d, 1);
   }
 
-  video_init_overlay(overlay_padding_item->value, c40_80_column_item->value);
+  video_init_overlay(statusbar_padding_item->value,
+                     c40_80_column_item->value,
+                     vkbd_transparency_item->value);
 
   joystick_set_potx(pot_x_high_value);
   joystick_set_poty(pot_y_high_value);
@@ -2565,17 +2683,22 @@ void build_menu(struct menu_item *root) {
   set_video_cache(0);
   set_hw_scale(0);
 
+#ifdef RASPI_LITE
+  resources_set_int("DriveSoundEmulation", 0);
+  resources_set_int("DriveSoundEmulationVolume", 0);
+#endif
+
   // This can somehow get turned off. Make sure its always 1.
   resources_set_int("Datasette", 1);
   resources_set_int("Mouse", 1);
 }
 
-int overlay_never(void) {
-  return overlay_item->value == OVERLAY_NEVER;
+int statusbar_never(void) {
+  return statusbar_item->value == OVERLAY_NEVER;
 }
 
-int overlay_always(void) {
-  return overlay_item->value == OVERLAY_ALWAYS || overlay_forced;
+int statusbar_always(void) {
+  return statusbar_item->value == OVERLAY_ALWAYS || statusbar_forced;
 }
 
 // Stuff to do when menu is activated
@@ -2595,18 +2718,25 @@ void menu_quick_func(int button_assignment) {
   case BTN_ASSIGN_SWAP_PORTS:
     menu_swap_joysticks();
     break;
+  case BTN_ASSIGN_VKBD_TOGGLE:
+    if (vkbd_showing) {
+       vkbd_disable();
+    } else {
+       vkbd_enable();
+    }
+    break;
   case BTN_ASSIGN_STATUS_TOGGLE:
     // Ignore this if it's already showing.
-    if (overlay_item->value == OVERLAY_ALWAYS)
+    if (statusbar_item->value == OVERLAY_ALWAYS)
       return;
 
-    if (overlay_showing || overlay_forced) {
+    if (statusbar_showing || statusbar_forced) {
       // Dismiss
-      overlay_forced = 0;
-      overlay_dismiss();
+      statusbar_forced = 0;
+      overlay_statusbar_dismiss();
     } else {
-      overlay_forced = 1;
-      overlay_force_enabled();
+      statusbar_forced = 1;
+      overlay_statusbar_enable();
     }
     break;
   case BTN_ASSIGN_TAPE_MENU:
