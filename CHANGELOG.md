@@ -216,3 +216,7 @@
   * Removed 2nd LED for drive status lights (never seemed to activate)
   * Added bmc64-lite build for PiZero
   * Made palettes independent for each layer
+
+## 2.4
+  * Fixed HOME/DEL/Pound keys for Vic20 Virtual Keyboard
+  * Show PETSCII chars when virtual keyboard shift/commodore held

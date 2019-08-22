@@ -113,6 +113,11 @@ int vkbd_enabled;
 int vkbd_showing;
 int vkbd_press;
 
+int vkbd_lshift_down;
+int vkbd_rshift_down;
+int vkbd_commodore_down;
+int vkbd_cntrl_down;
+
 int statusbar_enabled;
 int statusbar_showing;
 
@@ -508,41 +513,55 @@ static void overlay_draw_virtual_keyboard() {
         // Center our 2x scaled character
         labelx -= 8;
         labely -= 8;
-        ui_draw_char_raw(vkbd[i].code, labelx, labely,
+        int code;
+        if (vkbd_lshift_down || vkbd_rshift_down) {
+           code = vkbd[i].shift_code;
+        } else if (vkbd_commodore_down) {
+           code = vkbd[i].comm_code;
+        } else {
+           code = vkbd[i].code;
+        }
+        ui_draw_char_raw(code, labelx, labely,
                       VKBD_FG_COLOR, overlay_buf,
                       overlay_buf_pitch, 2);
      } else {
-        
+        char *label;
         switch (vkbd[i].code) {
           case VKBD_KEY_HOME:
              labelx -= (8*3)/2;
              labely -= 4;
-             ui_draw_text_buf("HOM", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             label = (vkbd_commodore_down || vkbd_lshift_down || vkbd_rshift_down) ? "CLR" : "HOM";
+             ui_draw_text_buf(label, labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_DEL:
              labelx -= (8*3)/2;
              labely -= 4;
-             ui_draw_text_buf("DEL", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             label = (vkbd_commodore_down || vkbd_lshift_down || vkbd_rshift_down) ? "INS" : "DEL";
+             ui_draw_text_buf(label, labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_F1:
              labelx -= (8*2)/2;
              labely -= 4;
-             ui_draw_text_buf("F1", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             label = (vkbd_commodore_down || vkbd_lshift_down || vkbd_rshift_down) ? "F2" : "F1";
+             ui_draw_text_buf(label, labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_F3:
              labelx -= (8*2)/2;
              labely -= 4;
-             ui_draw_text_buf("F3", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             label = (vkbd_commodore_down || vkbd_lshift_down || vkbd_rshift_down) ? "F4" : "F3";
+             ui_draw_text_buf(label, labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_F5:
              labelx -= (8*2)/2;
              labely -= 4;
-             ui_draw_text_buf("F5", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             label = (vkbd_commodore_down || vkbd_lshift_down || vkbd_rshift_down) ? "F6" : "F5";
+             ui_draw_text_buf(label, labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_F7:
              labelx -= (8*2)/2;
              labely -= 4;
-             ui_draw_text_buf("F7", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             label = (vkbd_commodore_down || vkbd_lshift_down || vkbd_rshift_down) ? "F8" : "F7";
+             ui_draw_text_buf(label, labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_CNTRL:
              labelx -= (8*3)/2;
@@ -565,7 +584,7 @@ static void overlay_draw_virtual_keyboard() {
              ui_draw_text_buf("LCK", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
           case VKBD_RETURN:
-             labelx -= (8*2)/2;
+             labelx -= (8*3)/2;
              labely -= 4;
              ui_draw_text_buf("RET", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
@@ -574,7 +593,8 @@ static void overlay_draw_virtual_keyboard() {
              labely -= 4;
              ui_draw_text_buf("C=", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
-          case VKBD_SHIFT:
+          case VKBD_LSHIFT:
+          case VKBD_RSHIFT:
              labelx -= (8*3)/2;
              labely -= 4;
              ui_draw_text_buf("SHF", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
@@ -637,15 +657,24 @@ void vkbd_nav_press(int pressed) {
         circle_keyboard_set_latch_keyarr(vkbd[vkbd_cursor].col,
                                     vkbd[vkbd_cursor].row,
                                     vkbd[vkbd_cursor].state);
+        if (vkbd[vkbd_cursor].code == VKBD_LSHIFT) {
+           vkbd_lshift_down = vkbd[vkbd_cursor].state;
+        } else if (vkbd[vkbd_cursor].code == VKBD_RSHIFT) {
+           vkbd_rshift_down = vkbd[vkbd_cursor].state;
+        } else if (vkbd[vkbd_cursor].code == VKBD_COMMODORE) {
+           vkbd_commodore_down = vkbd[vkbd_cursor].state;
+        } else if (vkbd[vkbd_cursor].code == VKBD_CNTRL) {
+           vkbd_cntrl_down = vkbd[vkbd_cursor].state;
+        }
       }
    } else {
       // Handle restore special case
       if (vkbd[vkbd_cursor].row == 0 && vkbd[vkbd_cursor].col == -3) {
          circle_emu_key_locked(KEYCODE_PageUp, pressed);
       } else {
-        circle_keyboard_set_latch_keyarr(vkbd[vkbd_cursor].col,
-                                    vkbd[vkbd_cursor].row,
-                                    pressed);
+         circle_keyboard_set_latch_keyarr(vkbd[vkbd_cursor].col,
+                                          vkbd[vkbd_cursor].row,
+                                          pressed);
       }
       vkbd[vkbd_cursor].state = pressed;
    }

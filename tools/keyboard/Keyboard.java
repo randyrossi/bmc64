@@ -10,6 +10,8 @@ class Key {
    String label;
    int index;
    int code;
+   int shift_code;
+   int comm_code;
 }
 
 public class Keyboard //extends Frame
@@ -29,19 +31,26 @@ public class Keyboard //extends Frame
   static int HOME = -2;
   static int DEL = -3;
   static int F1 = -4;
-  static int F3 = -5;
-  static int F5 = -6;
-  static int F7 = -7;
-  static int CNTRL = -8;
-  static int RESTORE = -9;
-  static int RUNSTOP = -10;
-  static int SHIFTLOCK = -11;
-  static int RETURN = -12;
-  static int COMMODORE = -13;
-  static int SHIFT = -14;
-  static int CURSDOWN = -15;
-  static int CURSRIGHT = -16;
-  static int SPACE = -17;
+  static int F2 = -5;
+  static int F3 = -6;
+  static int F4 = -7;
+  static int F5 = -8;
+  static int F6 = -9;
+  static int F7 = -10;
+  static int F8 = -11;
+  static int CNTRL = -12;
+  static int RESTORE = -13;
+  static int RUNSTOP = -14;
+  static int SHIFTLOCK = -15;
+  static int RETURN = -16;
+  static int COMMODORE = -17;
+  static int LSHIFT = -18;
+  static int RSHIFT = -19;
+  static int CURSDOWN = -20;
+  static int CURSRIGHT = -21;
+  static int SPACE = -22;
+  static int CLR = -23;
+  static int INS = -24;
 
   int code[][] = {
     {31,49,50,51,52,53,54,55,56,57,48,43,45,28,HOME,DEL},
@@ -54,11 +63,49 @@ public class Keyboard //extends Frame
     {RETURN,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
     {F5,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
     {COMMODORE,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {SHIFT,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {LSHIFT,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
     {26,24,3,22,2,14,13,44,46,47,-1,-1,-1,-1,-1,-1},
-    {SHIFT,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {RSHIFT,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
     {CURSDOWN,CURSRIGHT,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
     {F7,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {SPACE,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+  };
+
+  int shift_code[][] = {
+    {31,33,34,35,36,37,38,39,40,41,48,91,93,105,CLR,INS},
+    {F2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {CNTRL,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {17+0x40,23+0x40,5+0x40,18+0x40,20+0x40,25+0x40,21+0x40,9+0x40,15+0x40,16+0x40,122,64,94,-1,-1,-1},
+    {RESTORE,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {F4,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {RUNSTOP,SHIFTLOCK,1+0x40,19+0x40,4+0x40,6+0x40,7+0x40,8+0x40,10+0x40,11+0x40,12+0x40,27,29,61,-1,-1},
+    {RETURN,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {F6,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {COMMODORE,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {LSHIFT,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {26+0x40,24+0x40,3+0x40,22+0x40,2+0x40,14+0x40,13+0x40,60,62,63,-1,-1,-1,-1,-1,-1},
+    {RSHIFT,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {CURSDOWN,CURSRIGHT,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {F8,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {SPACE,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+  };
+
+  int comm_code[][] = {
+    {31,49,50,51,52,53,54,55,56,57,48,43,45,28,CLR,INS},
+    {F2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {CNTRL,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {107,115,113,114,99,119,120,98,121,111,100,95,94,-1,-1,-1},
+    {RESTORE,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {F4,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {RUNSTOP,SHIFTLOCK,112,110,108,123,101,116,117,97,118,27,29,61,-1,-1},
+    {RETURN,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {F6,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {COMMODORE,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {LSHIFT,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {109,125,124,126,127,106,103,60,62,63,-1,-1,-1,-1,-1,-1},
+    {RSHIFT,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {CURSDOWN,CURSRIGHT,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {F8,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
     {SPACE,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
   };
 
@@ -101,7 +148,7 @@ public class Keyboard //extends Frame
   };
 
   String vic20_row_col_vals[][] = {
-    {"01", "00","07","10","17","20","27","30","37","40","47","50","57","67","70","00"},
+    {"01","00","07","10","17","20","27","30","37","40","47","50","57","60","67","70"},
     {"74"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "},
     {"02"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "},
     {"06","11","16","21","26","31","36","41","46","51","56","61","66"," "," "," "},
@@ -142,6 +189,8 @@ public class Keyboard //extends Frame
     System.out.println("  int layout_col;");
     System.out.println("  int toggle;");
     System.out.println("  int code;");
+    System.out.println("  int shift_code;");
+    System.out.println("  int comm_code;");
     System.out.println("  int up;");
     System.out.println("  int down;");
     System.out.println("  int left;");
@@ -225,6 +274,8 @@ public class Keyboard //extends Frame
          k.index = total;
          k.toggle = toggle;
          k.code = code[i][j];
+         k.shift_code = shift_code[i][j];
+         k.comm_code = comm_code[i][j];
          keys.add(k);
 
          layout_col++; total++; total_in_row++;
@@ -285,6 +336,8 @@ public class Keyboard //extends Frame
        System.out.print(k.layout_col+" ,");
        System.out.print(k.toggle+" ,");
        System.out.print(k.code+" ,");
+       System.out.print(k.shift_code+" ,");
+       System.out.print(k.comm_code+" ,");
        System.out.print(k.up+" ,");
        System.out.print(k.down+" ,");
        System.out.print(k.left+" ,");
@@ -323,10 +376,13 @@ public class Keyboard //extends Frame
     System.out.println("#define VKBD_SHIFTLOCK "+SHIFTLOCK);
     System.out.println("#define VKBD_RETURN "+RETURN);
     System.out.println("#define VKBD_COMMODORE "+COMMODORE);
-    System.out.println("#define VKBD_SHIFT "+SHIFT);
+    System.out.println("#define VKBD_LSHIFT "+LSHIFT);
+    System.out.println("#define VKBD_RSHIFT "+RSHIFT);
     System.out.println("#define VKBD_CURSDOWN "+CURSDOWN);
     System.out.println("#define VKBD_CURSRIGHT "+CURSRIGHT);
     System.out.println("#define VKBD_SPACE "+SPACE);
+    System.out.println("#define VKBD_CLR "+CLR);
+    System.out.println("#define VKBD_INS "+INS);
     System.out.println("#endif  // VIRTUAL_KEYBOARD_H");
   }
 }

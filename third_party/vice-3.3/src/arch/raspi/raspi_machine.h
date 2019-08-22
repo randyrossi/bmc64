@@ -39,6 +39,8 @@ struct vkbd_key {
   int layout_col;
   int toggle;
   int code;
+  int shift_code;
+  int comm_code;
   int up;
   int down;
   int left;
@@ -50,19 +52,22 @@ struct vkbd_key {
 #define VKBD_KEY_HOME -2
 #define VKBD_DEL -3
 #define VKBD_F1 -4
-#define VKBD_F3 -5
-#define VKBD_F5 -6
-#define VKBD_F7 -7
-#define VKBD_CNTRL -8
-#define VKBD_RESTORE -9
-#define VKBD_RUNSTOP -10
-#define VKBD_SHIFTLOCK -11
-#define VKBD_RETURN -12
-#define VKBD_COMMODORE -13
-#define VKBD_SHIFT -14
-#define VKBD_CURSDOWN -15
-#define VKBD_CURSRIGHT -16
-#define VKBD_SPACE -17
+#define VKBD_F3 -6
+#define VKBD_F5 -8
+#define VKBD_F7 -10
+#define VKBD_CNTRL -12
+#define VKBD_RESTORE -13
+#define VKBD_RUNSTOP -14
+#define VKBD_SHIFTLOCK -15
+#define VKBD_RETURN -16
+#define VKBD_COMMODORE -17
+#define VKBD_LSHIFT -18
+#define VKBD_RSHIFT -19
+#define VKBD_CURSDOWN -20
+#define VKBD_CURSRIGHT -21
+#define VKBD_SPACE -22
+#define VKBD_CLR -23
+#define VKBD_INS -24
 
 typedef struct vkbd_key* vkbd_key_array;
 
