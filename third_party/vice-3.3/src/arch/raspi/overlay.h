@@ -62,4 +62,5 @@ void vkbd_nav_right(void);
 void vkbd_enable(void);
 void vkbd_disable(void);
 void vkbd_nav_press(int pressed);
+void vkbd_sync_event(long key, int pressed);
 #endif

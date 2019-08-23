@@ -66,9 +66,17 @@ static int warp_x;
 static int joyswap_x;
 static int columns_x;
 
-static int drive_led_types[DRIVE_NUM];
-static unsigned int current_drive_leds[DRIVE_NUM][2];
-static int tape_counter = -1;
+// Last known state for all status items
+static int drive_led_colors[DRIVE_NUM];
+static ui_drive_enable_t drive_state;
+static int drive_enabled[DRIVE_NUM];
+static int drive_pwm1[DRIVE_NUM];
+static int drive_pwm2[DRIVE_NUM];
+static int tape_counter = 0;
+static int tape_control = DATASETTE_CONTROL_STOP;
+static int tape_motor = 0;
+static int warp_state = 0;
+static int swap_state = 0;
 
 static unsigned long statusbar_delay = 0;
 static unsigned long statusbar_start = 0;
@@ -126,6 +134,14 @@ static char *template;
 
 int overlay_dirty;
 
+static void draw_drive_status(ui_drive_enable_t state, int *drive_led_color);
+static void draw_drive_led(int drive, unsigned int pwm1, unsigned int pwm2);
+static void draw_tape_counter(int counter);
+static void draw_tape_control_status(int control);
+static void draw_tape_motor_status(int motor);
+static void draw_warp(int warp);
+static void draw_joyswap(int swap);
+
 static void draw_statusbar() {
   // Now draw the bg for the status bar
   ui_draw_rect_buf(0, OVERLAY_HEIGHT - STATUS_BAR_HEIGHT,
@@ -138,6 +154,16 @@ static void draw_statusbar() {
 
   ui_draw_text_buf("-", warp_x + inset_x, inset_y, FG_COLOR, overlay_buf,
                    overlay_buf_pitch, SCALE_XY);
+
+  draw_drive_status(drive_state, drive_led_colors);
+  for (int d=0;d<DRIVE_NUM;d++) {
+     draw_drive_led(d, drive_pwm1[d], drive_pwm2[d]);
+  }
+  draw_tape_counter(tape_counter);
+  draw_tape_control_status(tape_control);
+  draw_tape_motor_status(tape_motor);
+  draw_warp(warp_state);
+  draw_joyswap(swap_state);
 
   if (machine_class == VICE_MACHINE_C128) {
      ui_draw_rect_buf(columns_x + inset_x, inset_y,
@@ -176,11 +202,11 @@ uint8_t *overlay_init(int padding, int c40_80_state, int vkbd_transparency) {
 
   // Figure out inset that will center our template.
   if (machine_class == VICE_MACHINE_VIC20) {
-     template = "8:  9:  10:  11:  T:000 STP   W:  J:1";
+     template = "8:  9:  10:  11:  T:    STP   W:  J: ";
   } else if (machine_class == VICE_MACHINE_C128) {
-     template = "8:  9:  10:  11:  T:000 STP   W:  J:12 C:  ";
+     template = "8:  9:  10:  11:  T:    STP   W:  J:   C:  ";
   } else {
-     template = "8:  9:  10:  11:  T:000 STP   W:  J:12";
+     template = "8:  9:  10:  11:  T:    STP   W:  J:  ";
   }
 
   inset_x = OVERLAY_WIDTH / 2 - (strlen(template) * FONT_ADVANCE) / 2;
@@ -229,53 +255,55 @@ static void statusbar_triggered_by_activity() {
   }
 }
 
-// Called by VICE to enable a drive status lights
-void ui_enable_drive_status(ui_drive_enable_t state, int *drive_led_color) {
-  if (!overlay_buf)
-    return;
-
-  statusbar_triggered_by_activity();
-
-  if (!statusbar_enabled) return;
-
+static void draw_drive_status(ui_drive_enable_t state, int *drive_led_color) {
   int i, enabled = state;
 
   for (i = 0; i < DRIVE_NUM; ++i) {
-    if (overlay_buf) {
-      ui_draw_rect_buf(drive_x[i] + FONT_ADVANCE * 0 + inset_x, inset_y + 2, 6*SCALE_XY, 4*SCALE_XY,
-                       BG_COLOR, 1, overlay_buf, overlay_buf_pitch);
-      // The second LED never seems to go on.  Removing it.
-      //ui_draw_rect_buf(drive_x[i] + FONT_ADVANCE * 1 + inset_x, inset_y + 2, 6*SCALE_XY, 4*SCALE_XY,
-      //                 BG_COLOR, 1, overlay_buf, overlay_buf_pitch);
-    }
+    ui_draw_rect_buf(drive_x[i] + FONT_ADVANCE * 0 + inset_x, inset_y + 2,
+       6*SCALE_XY, 4*SCALE_XY, BG_COLOR, 1, overlay_buf, overlay_buf_pitch);
+    // The second LED never seems to go on.  Removing it.
+    //ui_draw_rect_buf(drive_x[i] + FONT_ADVANCE * 1 + inset_x,
+    //   inset_y + 2, 6*SCALE_XY, 4*SCALE_XY,
+    //                 BG_COLOR, 1, overlay_buf, overlay_buf_pitch);
+
     if (enabled & 1) {
-      drive_led_types[i] = drive_led_color[i];
-      current_drive_leds[i][0] = 0;
-      current_drive_leds[i][1] = 0;
-      ui_draw_rect_buf(drive_x[i] + FONT_ADVANCE * 0 + inset_x, inset_y + 2*SCALE_XY, 6*SCALE_XY, 4*SCALE_XY, BLACK_COLOR,
-                       1, overlay_buf, overlay_buf_pitch);
+      drive_enabled[i] = 1;
+      drive_led_colors[i] = drive_led_color[i];
+      ui_draw_rect_buf(drive_x[i] + FONT_ADVANCE * 0 + inset_x,
+         inset_y + 2*SCALE_XY, 6*SCALE_XY, 4*SCALE_XY, BLACK_COLOR,
+            1, overlay_buf, overlay_buf_pitch);
       // The second LED never seems to go on.  Removing it.
-      //ui_draw_rect_buf(drive_x[i] + FONT_ADVANCE * 1 + inset_x, inset_y + 2*SCALE_XY, 6*SCALE_XY, 4*SCALE_XY, BLACK_COLOR,
+      //ui_draw_rect_buf(drive_x[i] + FONT_ADVANCE * 1 + inset_x,
+      //   inset_y + 2*SCALE_XY, 6*SCALE_XY, 4*SCALE_XY, BLACK_COLOR,
       //                 1, overlay_buf, overlay_buf_pitch);
+    } else {
+      drive_enabled[i] = 0;
     }
     enabled >>= 1;
   }
   overlay_dirty = 1;
 }
 
-// Show drive led
-void ui_display_drive_led(int drive, unsigned int pwm1, unsigned int pwm2) {
+// Called by VICE to enable a drive status lights
+void ui_enable_drive_status(ui_drive_enable_t state, int *drive_led_color) {
+  drive_state = state;
   if (!overlay_buf)
     return;
 
   statusbar_triggered_by_activity();
 
   if (!statusbar_enabled) return;
+  draw_drive_status(state, drive_led_color);
+}
+
+static void draw_drive_led(int drive, unsigned int pwm1, unsigned int pwm2) {
+  if (!drive_enabled[drive])
+     return;
 
   // Was i < 2, disabled 2nd LED since it never seems to turn on.
   for (int i = 0; i < 1; i++) {
     unsigned int pwm = i == 0 ? pwm1 : pwm2;
-    int led_color = drive_led_types[drive] & (1 << i);
+    int led_color = drive_led_colors[drive] & (1 << i);
     int led;
     if (led_color) {
       if (pwm < 333)
@@ -294,15 +322,43 @@ void ui_display_drive_led(int drive, unsigned int pwm1, unsigned int pwm2) {
     }
 
     // draw only 4 pixels in height and 6 wide (centered in cell)
-    ui_draw_rect_buf(drive_x[drive] + FONT_ADVANCE * i + inset_x, inset_y + 2 * SCALE_XY, // x,y
-                     6 * SCALE_XY, 4 * SCALE_XY, led, 1,                    // w,h,color,fill
-                     overlay_buf, overlay_buf_pitch); // dest
+    ui_draw_rect_buf(drive_x[drive] + FONT_ADVANCE * i + inset_x,
+       inset_y + 2 * SCALE_XY, // x,y
+         6 * SCALE_XY, 4 * SCALE_XY, led, 1, // w,h,color,fill
+            overlay_buf, overlay_buf_pitch); // dest
   }
+  overlay_dirty = 1;
+}
+
+// Show drive led
+void ui_display_drive_led(int drive, unsigned int pwm1, unsigned int pwm2) {
+  drive_pwm1[drive] = pwm1;
+  drive_pwm2[drive] = pwm2;
+
+  if (!overlay_buf)
+    return;
+
+  statusbar_triggered_by_activity();
+
+  if (!statusbar_enabled) return;
+  draw_drive_led(drive, pwm1, pwm2);
+}
+
+static void draw_tape_counter(int counter) {
+  char tmp[16];
+  sprintf(tmp, "%03d", counter % 1000);
+  ui_draw_rect_buf(tape_x + inset_x, inset_y,
+     FONT_ADVANCE * 3, FONT_ADVANCE, BG_COLOR, 1,
+        overlay_buf, overlay_buf_pitch);
+  ui_draw_text_buf(tmp, tape_x + inset_x, inset_y,
+     FG_COLOR, overlay_buf, overlay_buf_pitch, SCALE_XY);
   overlay_dirty = 1;
 }
 
 // Show tape counter text
 void ui_display_tape_counter(int counter) {
+  tape_counter = counter;
+
   if (!overlay_buf)
     return;
 
@@ -310,29 +366,14 @@ void ui_display_tape_counter(int counter) {
     statusbar_triggered_by_activity();
 
     if (!statusbar_enabled) return;
-
-    char tmp[16];
-    sprintf(tmp, "%03d", counter % 1000);
-    ui_draw_rect_buf(tape_x + inset_x, inset_y, FONT_ADVANCE * 3, FONT_ADVANCE, BG_COLOR, 1,
-                     overlay_buf, overlay_buf_pitch);
-    ui_draw_text_buf(tmp, tape_x + inset_x, inset_y, FG_COLOR, overlay_buf,
-                     overlay_buf_pitch, SCALE_XY);
-    tape_counter = counter;
-    overlay_dirty = 1;
+    draw_tape_counter(counter);
   }
 }
 
-// Show tape control text
-void ui_display_tape_control_status(int control) {
-  if (!overlay_buf)
-    return;
-
-  statusbar_triggered_by_activity();
-
-  if (!statusbar_enabled) return;
-
-  ui_draw_rect_buf(tape_controls_x + inset_x, inset_y, FONT_ADVANCE * 3, FONT_ADVANCE, BG_COLOR, 1,
-                   overlay_buf, overlay_buf_pitch);
+static void draw_tape_control_status(int control) {
+  ui_draw_rect_buf(tape_controls_x + inset_x, inset_y,
+     FONT_ADVANCE * 3, FONT_ADVANCE, BG_COLOR, 1,
+        overlay_buf, overlay_buf_pitch);
   const char *txt;
   int col = FG_COLOR;
   switch (control) {
@@ -363,8 +404,10 @@ void ui_display_tape_control_status(int control) {
   overlay_dirty = 1;
 }
 
-// Draw tape motor status light
-void ui_display_tape_motor_status(int motor) {
+// Show tape control text
+void ui_display_tape_control_status(int control) {
+  tape_control = control;
+
   if (!overlay_buf)
     return;
 
@@ -372,14 +415,22 @@ void ui_display_tape_motor_status(int motor) {
 
   if (!statusbar_enabled) return;
 
+  draw_tape_control_status(control);
+}
+
+static void draw_tape_motor_status(int motor) {
   int led = motor ? RED_COLOR : BG_COLOR;
-  ui_draw_rect_buf(tape_motor_x + inset_x, inset_y + 2 * SCALE_XY, 6 * SCALE_XY, 4 * SCALE_XY, led,
-                   1, // w,h,color,fill
-                   overlay_buf, overlay_buf_pitch);
+  ui_draw_rect_buf(tape_motor_x + inset_x,
+     inset_y + 2 * SCALE_XY, 6 * SCALE_XY, 4 * SCALE_XY, led,
+        1, // w,h,color,fill
+           overlay_buf, overlay_buf_pitch);
   overlay_dirty = 1;
 }
 
-void overlay_warp_changed(int warp) {
+// Draw tape motor status light
+void ui_display_tape_motor_status(int motor) {
+  tape_motor = motor;
+
   if (!overlay_buf)
     return;
 
@@ -387,26 +438,49 @@ void overlay_warp_changed(int warp) {
 
   if (!statusbar_enabled) return;
 
-  ui_draw_rect_buf(warp_x + inset_x, inset_y, FONT_ADVANCE, FONT_ADVANCE, BG_COLOR, 1, overlay_buf,
-                   overlay_buf_pitch);
+  draw_tape_motor_status(motor);
+}
+
+static void draw_warp(int warp) {
+  ui_draw_rect_buf(warp_x + inset_x, inset_y,
+     FONT_ADVANCE, FONT_ADVANCE, BG_COLOR, 1, overlay_buf,
+        overlay_buf_pitch);
   ui_draw_text_buf(warp ? "!" : "-", warp_x + inset_x, inset_y, FG_COLOR,
                    overlay_buf, overlay_buf_pitch, SCALE_XY);
   overlay_dirty = 1;
 }
 
-void overlay_joyswap_changed(int swap) {
+void overlay_warp_changed(int warp) {
+  warp_state = warp;
+
   if (!overlay_buf)
     return;
 
   statusbar_triggered_by_activity();
 
   if (!statusbar_enabled) return;
+  draw_warp(warp);
+}
 
-  ui_draw_rect_buf(joyswap_x + inset_x, inset_y, FONT_ADVANCE * 2, FONT_ADVANCE, BG_COLOR, 1,
-                   overlay_buf, overlay_buf_pitch);
+static void draw_joyswap(int swap) {
+  ui_draw_rect_buf(joyswap_x + inset_x, inset_y,
+     FONT_ADVANCE * 2, FONT_ADVANCE, BG_COLOR, 1,
+        overlay_buf, overlay_buf_pitch);
   ui_draw_text_buf(swap ? "21" : "12", joyswap_x + inset_x, inset_y, FG_COLOR,
                    overlay_buf, overlay_buf_pitch, SCALE_XY);
   overlay_dirty = 1;
+}
+
+void overlay_joyswap_changed(int swap) {
+  swap_state = swap;
+
+  if (!overlay_buf)
+    return;
+
+  statusbar_triggered_by_activity();
+
+  if (!statusbar_enabled) return;
+  draw_joyswap(swap);
 }
 
 // Checks whether a showing overlay due to activity should no longer be showing
@@ -682,3 +756,18 @@ void vkbd_nav_press(int pressed) {
    overlay_draw_virtual_keyboard();
 }
 
+// Call to keep virtual keyboard state in sync with
+// what happens from USB or GPIO keyboard.  Should only
+// be called while vkbd is up.
+void vkbd_sync_event(long key, int pressed) {
+   if (key == KEYCODE_LeftShift) {
+      vkbd_lshift_down = pressed;
+   } else if (key == KEYCODE_RightShift) {
+      vkbd_rshift_down = pressed;
+   } else if (key == KEYCODE_LeftControl) {
+      vkbd_commodore_down = pressed;
+   } else if (key == KEYCODE_Tab) {
+      vkbd_cntrl_down = pressed;
+   }
+   overlay_draw_virtual_keyboard();
+}

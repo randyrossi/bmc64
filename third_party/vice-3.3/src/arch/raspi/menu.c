@@ -68,7 +68,7 @@
 // and the power port is actually power unlike the Keyrah.
 //#define RASPI_SUPPORT_PCB 1
 
-#define VERSION_STRING "2.3"
+#define VERSION_STRING "2.3.1"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -2478,10 +2478,8 @@ void build_menu(struct menu_item *root) {
   }
 
 #ifdef RASPI_SUPPORT_PCB
-  if (machine_class == VICE_MACHINE_C64) {
-    child = use_pcb_item = ui_menu_add_toggle(
-        MENU_USE_PCB, parent, "Use Keyboard/DB9 PCB", 0);
-  }
+  child = use_pcb_item = ui_menu_add_toggle(
+      MENU_USE_PCB, parent, "Use Keyboard/DB9 PCB", 0);
 #endif
 
   child = hotkey_cf1_item =

@@ -562,6 +562,12 @@ void vsyncarch_postsync(void) {
   while (pending_emu_key_head != pending_emu_key_tail) {
     int i = pending_emu_key_head & 0xf;
     reset_demo = 1;
+    if (vkbd_enabled) {
+      // Kind of nice to have virtual keyboard's state
+      // stay in sync with changes happening from USB
+      // key events.
+      vkbd_sync_event(pending_emu_key[i], pending_emu_key_pressed[i]);
+    }
     if (pending_emu_key_pressed[i]) {
       keyboard_key_pressed(pending_emu_key[i]);
     } else {
