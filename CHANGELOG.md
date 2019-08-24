@@ -217,6 +217,7 @@
   * Added bmc64-lite build for PiZero
   * Made palettes independent for each layer
 
-## 2.4
+## 2.3.1
+  * Fixed regression with status bar, showing old/default values
   * Fixed HOME/DEL/Pound keys for Vic20 Virtual Keyboard
   * Show PETSCII chars when virtual keyboard shift/commodore held
