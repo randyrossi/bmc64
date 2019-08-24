@@ -47,6 +47,5 @@ extern void kbd_initialize_numpad_joykeys(int *joykeys);
 void kbd_set_hotkey_function(unsigned int slot, long key, int function);
 
 #define KBD_PORT_PREFIX "rpi"
-#define NUM_KEY_COMBOS 4
 
 #endif
