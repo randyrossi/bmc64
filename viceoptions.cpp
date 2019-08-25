@@ -102,10 +102,6 @@ ViceOptions::ViceOptions(void)
       } else {
         m_bSerialEnabled = false;
       }
-    } else if (strcmp(pOption, "disk_volume") == 0) {
-      if (strlen(pValue) > 0) {
-        strncpy(m_disk_volume, pValue, VOLUME_NAME_LEN - 1);
-      }
     } else if (strcmp(pOption, "disk_partition") == 0) {
       m_disk_partition = atoi(pValue);
       if (m_disk_partition < 0)

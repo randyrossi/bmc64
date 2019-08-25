@@ -219,9 +219,12 @@ typedef enum {
 // What directories to initialize file search dialogs with for
 // each type of file.
 // TODO: Make these start dirs configurable.
+static const char default_volume_name[8] = "SD:";
 static const char default_dir_names[NUM_DIR_TYPES][16] = {
     "/", "/disks", "/tapes", "/carts", "/snapshots", "/roms"};
 
+// Keep track of the current volume
+static char current_volume_name[8] = "";
 // Keep track of current directory for each type of file.
 static char current_dir_names[NUM_DIR_TYPES][256];
 
@@ -236,6 +239,18 @@ TEST_FILTER_MACRO(test_tape_name, num_tape_ext, tape_filt_ext);
 TEST_FILTER_MACRO(test_cart_name, num_cart_ext, cart_filt_ext);
 TEST_FILTER_MACRO(test_snap_name, num_snap_ext, snap_filt_ext);
 
+static char *fullpath(DirType dir_type, char *name) {
+  strcpy(full_path_str, current_volume_name);
+  strcat(full_path_str, current_dir_names[dir_type]);
+  // Put a trailing slash unless we are at the root
+  if (current_dir_names[dir_type][strlen(
+      current_dir_names[dir_type])-1] != '/'){
+    strcat(full_path_str, "/");
+  }
+  strcat(full_path_str, name);
+  return full_path_str;
+}
+
 // Clears the file menu and populates it with files.
 static void list_files(struct menu_item *parent,
                        DirType dir_type, FileFilter filter,
@@ -245,28 +260,35 @@ static void list_files(struct menu_item *parent,
   int i;
   int include;
 
-  char *currentDir = current_dir_names[dir_type];
-  dp = opendir(currentDir);
+  dp = opendir(fullpath(dir_type,""));
   if (dp == NULL) {
     char dir_scratch[256];
     strcpy(dir_scratch, "(");
-    strcat(dir_scratch, currentDir);
+    strcat(dir_scratch, current_volume_name);
+    strcat(dir_scratch, current_dir_names[dir_type]);
     strcat(dir_scratch, " Not Found - Using /)");
 
     // Fall back to root
     strcpy(current_dir_names[dir_type], "/");
-    currentDir = current_dir_names[dir_type];
-    dp = opendir(currentDir);
+    dp = opendir(fullpath(dir_type,""));
     ui_menu_add_button(MENU_TEXT, parent, dir_scratch);
     if (dp == NULL) {
       return;
     }
   }
+ 
+  // Volume selection item
 
-  ui_menu_add_button(MENU_TEXT, parent, currentDir);
+  // Current directory item
+  ui_menu_add_button(MENU_TEXT, parent, fullpath(dir_type,""));
   ui_menu_add_divider(parent);
 
-  if (strcmp(currentDir, "/") != 0) {
+  // Put together a string that represents the root of this volume
+  char current_root[16];
+  strcpy (current_root, current_volume_name);
+  strcat (current_root, "/");
+
+  if (strcmp(fullpath(dir_type,""), current_root) != 0) {
     ui_menu_add_button(menu_id, parent, "..")->sub_id = MENU_SUB_UP_DIR;
   }
 
@@ -947,13 +969,6 @@ void menu_swap_joysticks() {
   joyswap = 1 - joyswap;
   overlay_joyswap_changed(joyswap);
   ui_set_joy_items();
-}
-
-static char *fullpath(DirType dir_type, char *name) {
-  strcpy(full_path_str, current_dir_names[dir_type]);
-  strcat(full_path_str, "/");
-  strcat(full_path_str, name);
-  return full_path_str;
 }
 
 static void attach_cart(struct menu_item *item, int cart_type) {
@@ -2123,6 +2138,7 @@ void build_menu(struct menu_item *root) {
   }
 
   // TODO: Make these start dirs configurable.
+  strcpy(current_volume_name, default_volume_name);
   for (i = 0; i < NUM_DIR_TYPES; i++) {
     strcpy(current_dir_names[i], default_dir_names[i]);
   }
@@ -2189,21 +2205,6 @@ void build_menu(struct menu_item *root) {
 
   ui_menu_add_button(MENU_AUTOSTART, root, "Autostart Prg/Disk...");
 
-  parent = ui_menu_add_folder(root, "Create empty Disk");
-    ui_menu_add_button(MENU_CREATE_D64, parent, "D64...");
-    ui_menu_add_button(MENU_CREATE_D67, parent, "D67...");
-    ui_menu_add_button(MENU_CREATE_D71, parent, "D71...");
-    ui_menu_add_button(MENU_CREATE_D80, parent, "D80...");
-    ui_menu_add_button(MENU_CREATE_D81, parent, "D81...");
-    ui_menu_add_button(MENU_CREATE_D82, parent, "D82...");
-    ui_menu_add_button(MENU_CREATE_D1M, parent, "D1M...");
-    ui_menu_add_button(MENU_CREATE_D2M, parent, "D2M...");
-    ui_menu_add_button(MENU_CREATE_D4M, parent, "D4M...");
-    ui_menu_add_button(MENU_CREATE_G64, parent, "G64...");
-    ui_menu_add_button(MENU_CREATE_P64, parent, "P64...");
-    ui_menu_add_button(MENU_CREATE_X64, parent, "X64...");
-
-  ui_menu_add_divider(root);
 
   drive_parent = ui_menu_add_folder(root, "Drives");
 
@@ -2232,6 +2233,20 @@ void build_menu(struct menu_item *root) {
     ui_menu_add_button(MENU_ATTACH_DISK_11, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_11, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");
+
+    parent = ui_menu_add_folder(drive_parent, "Create empty Disk");
+      ui_menu_add_button(MENU_CREATE_D64, parent, "D64...");
+      ui_menu_add_button(MENU_CREATE_D67, parent, "D67...");
+      ui_menu_add_button(MENU_CREATE_D71, parent, "D71...");
+      ui_menu_add_button(MENU_CREATE_D80, parent, "D80...");
+      ui_menu_add_button(MENU_CREATE_D81, parent, "D81...");
+      ui_menu_add_button(MENU_CREATE_D82, parent, "D82...");
+      ui_menu_add_button(MENU_CREATE_D1M, parent, "D1M...");
+      ui_menu_add_button(MENU_CREATE_D2M, parent, "D2M...");
+      ui_menu_add_button(MENU_CREATE_D4M, parent, "D4M...");
+      ui_menu_add_button(MENU_CREATE_G64, parent, "G64...");
+      ui_menu_add_button(MENU_CREATE_P64, parent, "P64...");
+      ui_menu_add_button(MENU_CREATE_X64, parent, "X64...");
 
   parent = ui_menu_add_folder(root, "Cartridge");
   if (machine_class == VICE_MACHINE_VIC20) {
