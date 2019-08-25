@@ -357,12 +357,12 @@ static void draw_tape_counter(int counter) {
 
 // Show tape counter text
 void ui_display_tape_counter(int counter) {
-  tape_counter = counter;
-
-  if (!overlay_buf)
-    return;
-
   if (counter != tape_counter) {
+    tape_counter = counter;
+
+    if (!overlay_buf)
+      return;
+
     statusbar_triggered_by_activity();
 
     if (!statusbar_enabled) return;
