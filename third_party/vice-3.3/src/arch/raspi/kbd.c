@@ -38,9 +38,17 @@
 
 extern struct joydev_config joydevs[MAX_JOY_PORTS];
 
-static int left_control_down = 0;
+#define NUM_KEY_COMBOS 8
 
-key_combo_state_t key_combo_states[4];
+// TODO: These should really come from the sym file.
+// Can't assume these are always correct.
+#define COMMODORE_KEY_CODE KEYCODE_LeftControl
+#define CONTROL_KEY_CODE KEYCODE_Tab
+
+static int commodore_down = 0;
+static int control_down = 0;
+
+key_combo_state_t key_combo_states[NUM_KEY_COMBOS];
 
 void kbd_arch_init(void) {}
 
@@ -233,10 +241,22 @@ void kbd_initialize_numpad_joykeys(int *joykeys) {}
 // Return 1 if press is consumed
 static int handle_key_combo_press(long key) {
   int i;
-  for (i = 0; i < NUM_KEY_COMBOS; i++) {
-    if (key_combo_states[i].second_key == key && left_control_down) {
-      key_combo_states[i].invoked = 1;
-      return 1;
+  // CBM Commodore key checks
+  if (commodore_down) {
+    for (i = 0; i < 4; i++) {
+      if (key_combo_states[i].second_key == key) {
+        key_combo_states[i].invoked = 1;
+        return 1;
+      }
+    }
+  }
+  // CBM Control key checks
+  if (control_down) {
+    for (i = 4; i < 8; i++) {
+      if (key_combo_states[i].second_key == key) {
+        key_combo_states[i].invoked = 1;
+        return 1;
+      }
     }
   }
   return 0;
@@ -259,7 +279,6 @@ static int handle_key_combo_release(long key) {
       case BTN_ASSIGN_PIP_LOCATION:
       case BTN_ASSIGN_PIP_SWAP:
       case BTN_ASSIGN_40_80_COLUMN:
-      case BTN_ASSIGN_VKBD_TOGGLE:
         circle_emu_quick_func_interrupt(key_combo_states[i].function);
         key_combo_states[i].invoked = 0;
         return 1;
@@ -292,7 +311,6 @@ static void handle_key_combo_function() {
       case BTN_ASSIGN_TAPE_MENU:
       case BTN_ASSIGN_CART_MENU:
         circle_emu_quick_func_interrupt(key_combo_states[i].function);
-        key_combo_states[i].invoked = 0;
         break;
       default:
         break;
@@ -307,8 +325,10 @@ void circle_key_pressed(long key) {
     return;
   }
 
-  if (key == KEYCODE_LeftControl) {
-    left_control_down = 1;
+  if (key == COMMODORE_KEY_CODE) {
+    commodore_down = 1;
+  } else if (key == CONTROL_KEY_CODE) {
+    control_down = 1;
   }
 
   // Intercept keys meant to become joystick values
@@ -348,8 +368,10 @@ void circle_key_released(long key) {
     return;
   }
 
-  if (key == KEYCODE_LeftControl) {
-    left_control_down = 0;
+  if (key == COMMODORE_KEY_CODE) {
+    commodore_down = 0;
+  } else if (key == CONTROL_KEY_CODE) {
+    control_down = 0;
   }
 
   if (key == KEYCODE_F12) {
@@ -398,8 +420,8 @@ void circle_key_released(long key) {
   }
 
   // Check hotkey combo here
-  if (key == KEYCODE_LeftControl) {
-    // We invoke the hot key func here after the left control is released
+  if (key == COMMODORE_KEY_CODE || key == CONTROL_KEY_CODE) {
+    // We invoke the hot key func here after the modifier key is released
     // so emulator is not left in a weird state.
     handle_key_combo_function();
   }

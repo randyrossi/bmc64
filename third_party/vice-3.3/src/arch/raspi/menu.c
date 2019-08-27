@@ -125,6 +125,10 @@ struct menu_item *hotkey_cf1_item;
 struct menu_item *hotkey_cf3_item;
 struct menu_item *hotkey_cf5_item;
 struct menu_item *hotkey_cf7_item;
+struct menu_item *hotkey_tf1_item;
+struct menu_item *hotkey_tf3_item;
+struct menu_item *hotkey_tf5_item;
+struct menu_item *hotkey_tf7_item;
 struct menu_item *sid_engine_item;
 struct menu_item *sid_model_item;
 struct menu_item *sid_filter_item;
@@ -539,6 +543,10 @@ static void ui_set_hotkeys() {
   kbd_set_hotkey_function(1, 0, BTN_ASSIGN_UNDEF);
   kbd_set_hotkey_function(2, 0, BTN_ASSIGN_UNDEF);
   kbd_set_hotkey_function(3, 0, BTN_ASSIGN_UNDEF);
+  kbd_set_hotkey_function(4, 0, BTN_ASSIGN_UNDEF);
+  kbd_set_hotkey_function(5, 0, BTN_ASSIGN_UNDEF);
+  kbd_set_hotkey_function(6, 0, BTN_ASSIGN_UNDEF);
+  kbd_set_hotkey_function(7, 0, BTN_ASSIGN_UNDEF);
 
   // Apply hotkey selections to keyboard handler
   if (hotkey_cf1_item->value > 0) {
@@ -556,6 +564,22 @@ static void ui_set_hotkeys() {
   if (hotkey_cf7_item->value > 0) {
     kbd_set_hotkey_function(
         3, KEYCODE_F7, hotkey_cf7_item->choice_ints[hotkey_cf7_item->value]);
+  }
+  if (hotkey_tf1_item->value > 0) {
+    kbd_set_hotkey_function(
+        4, KEYCODE_F1, hotkey_tf1_item->choice_ints[hotkey_tf1_item->value]);
+  }
+  if (hotkey_tf3_item->value > 0) {
+    kbd_set_hotkey_function(
+        5, KEYCODE_F3, hotkey_tf3_item->choice_ints[hotkey_tf3_item->value]);
+  }
+  if (hotkey_tf5_item->value > 0) {
+    kbd_set_hotkey_function(
+        6, KEYCODE_F5, hotkey_tf5_item->choice_ints[hotkey_tf5_item->value]);
+  }
+  if (hotkey_tf7_item->value > 0) {
+    kbd_set_hotkey_function(
+        7, KEYCODE_F7, hotkey_tf7_item->choice_ints[hotkey_tf7_item->value]);
   }
 }
 
@@ -693,6 +717,10 @@ static int save_settings() {
   fprintf(fp, "hotkey_cf3=%d\n", hotkey_cf3_item->value);
   fprintf(fp, "hotkey_cf5=%d\n", hotkey_cf5_item->value);
   fprintf(fp, "hotkey_cf7=%d\n", hotkey_cf7_item->value);
+  fprintf(fp, "hotkey_tf1=%d\n", hotkey_tf1_item->value);
+  fprintf(fp, "hotkey_tf3=%d\n", hotkey_tf3_item->value);
+  fprintf(fp, "hotkey_tf5=%d\n", hotkey_tf5_item->value);
+  fprintf(fp, "hotkey_tf7=%d\n", hotkey_tf7_item->value);
   // Can't change the 'overlay_*' names, legacy.
   fprintf(fp, "overlay=%d\n", statusbar_item->value);
   fprintf(fp, "overlay_padding=%d\n", statusbar_padding_item->value);
@@ -923,6 +951,14 @@ static void load_settings() {
       hotkey_cf5_item->value = value;
     } else if (strcmp(name, "hotkey_cf7") == 0) {
       hotkey_cf7_item->value = value;
+    } else if (strcmp(name, "hotkey_tf1") == 0) {
+      hotkey_tf1_item->value = value;
+    } else if (strcmp(name, "hotkey_tf3") == 0) {
+      hotkey_tf3_item->value = value;
+    } else if (strcmp(name, "hotkey_tf5") == 0) {
+      hotkey_tf5_item->value = value;
+    } else if (strcmp(name, "hotkey_tf7") == 0) {
+      hotkey_tf7_item->value = value;
     } else if (strcmp(name, "reset_confirm") == 0) {
       reset_confirm_item->value = value;
     } else if (strcmp(name, "pcb") == 0) {
@@ -1557,6 +1593,14 @@ static void menu_machine_reset(int type, int pop) {
   }
 }
 
+static void do_easy_flash() {
+    if (cartridge_flush_image(CARTRIDGE_EASYFLASH) < 0) {
+      ui_error("Problem saving");
+    } else {
+      ui_pop_all_and_toggle();
+    }
+}
+
 // Interpret what menu item changed and make the change to vice
 static void menu_value_changed(struct menu_item *item) {
   switch (item->id) {
@@ -1994,12 +2038,24 @@ static void menu_value_changed(struct menu_item *item) {
     kbd_set_hotkey_function(
         3, KEYCODE_F7, hotkey_cf7_item->choice_ints[hotkey_cf7_item->value]);
     return;
+  case MENU_HOTKEY_TF1:
+    kbd_set_hotkey_function(
+        4, KEYCODE_F1, hotkey_tf1_item->choice_ints[hotkey_tf1_item->value]);
+    return;
+  case MENU_HOTKEY_TF3:
+    kbd_set_hotkey_function(
+        5, KEYCODE_F3, hotkey_tf3_item->choice_ints[hotkey_tf3_item->value]);
+    return;
+  case MENU_HOTKEY_TF5:
+    kbd_set_hotkey_function(
+        6, KEYCODE_F5, hotkey_tf5_item->choice_ints[hotkey_tf5_item->value]);
+    return;
+  case MENU_HOTKEY_TF7:
+    kbd_set_hotkey_function(
+        7, KEYCODE_F7, hotkey_tf7_item->choice_ints[hotkey_tf7_item->value]);
+    return;
   case MENU_SAVE_EASYFLASH:
-    if (cartridge_flush_image(CARTRIDGE_EASYFLASH) < 0) {
-      ui_error("Problem saving");
-    } else {
-      ui_pop_all_and_toggle();
-    }
+    do_easy_flash();
     return;
   case MENU_CART_FREEZE:
     keyboard_clear_keymatrix();
@@ -2629,6 +2685,26 @@ void build_menu(struct menu_item *root) {
       ui_menu_add_multiple_choice(MENU_HOTKEY_CF7, parent, "C= + F7 Hotkey");
   child->value = HOTKEY_CHOICE_MENU;
   set_hotkey_choices(hotkey_cf7_item);
+  child = hotkey_tf1_item =
+      ui_menu_add_multiple_choice(MENU_HOTKEY_TF1, parent,
+         "CTRL + F1 Hotkey");
+  child->value = HOTKEY_CHOICE_NONE;
+  set_hotkey_choices(hotkey_tf1_item);
+  child = hotkey_tf3_item =
+      ui_menu_add_multiple_choice(MENU_HOTKEY_TF3, parent,
+         "CTRL + F3 Hotkey");
+  child->value = HOTKEY_CHOICE_NONE;
+  set_hotkey_choices(hotkey_tf3_item);
+  child = hotkey_tf5_item =
+      ui_menu_add_multiple_choice(MENU_HOTKEY_TF5, parent,
+         "CTRL + F5 Hotkey");
+  child->value = HOTKEY_CHOICE_NONE;
+  set_hotkey_choices(hotkey_tf5_item);
+  child = hotkey_tf7_item =
+      ui_menu_add_multiple_choice(MENU_HOTKEY_TF7, parent,
+         "CTRL + F7 Hotkey");
+  child->value = HOTKEY_CHOICE_MENU;
+  set_hotkey_choices(hotkey_tf7_item);
 
   parent = ui_menu_add_folder(root, "Joyports");
 

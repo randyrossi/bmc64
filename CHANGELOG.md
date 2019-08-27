@@ -221,3 +221,6 @@
   * Fixed regression with status bar, showing old/default values
   * Fixed HOME/DEL/Pound keys for Vic20 Virtual Keyboard
   * Show PETSCII chars when virtual keyboard shift/commodore held
+
+## 2.4
+  * Added CTRL + F[1,3,5,7] Programmable Hotkeys
