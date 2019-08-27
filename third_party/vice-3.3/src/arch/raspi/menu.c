@@ -2902,6 +2902,17 @@ void build_menu(struct menu_item *root) {
   resources_set_int("FileSystemDevice9", 1);
   resources_set_int("FileSystemDevice10", 1);
   resources_set_int("FileSystemDevice11", 1);
+
+  // Restore last iec dirs for all drives
+  const char *tmpf;
+  resources_get_string_sprintf("FSDevice%iDir", &tmpf, 8);
+  strcpy (last_iec_dir[0], tmpf);
+  resources_get_string_sprintf("FSDevice%iDir", &tmpf, 9);
+  strcpy (last_iec_dir[1], tmpf);
+  resources_get_string_sprintf("FSDevice%iDir", &tmpf, 10);
+  strcpy (last_iec_dir[2], tmpf);
+  resources_get_string_sprintf("FSDevice%iDir", &tmpf, 11);
+  strcpy (last_iec_dir[3], tmpf);
 }
 
 int statusbar_never(void) {
