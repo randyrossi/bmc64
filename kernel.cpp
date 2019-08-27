@@ -199,6 +199,18 @@ int circle_get_zlayer_fbl(int layer) {
   return static_kernel->circle_get_zlayer_fbl(layer);
 }
 
+void circle_find_usb(int (*usb)[3]) {
+  return static_kernel->circle_find_usb(usb);
+}
+
+int circle_mount_usb(int usb) {
+  return static_kernel->circle_mount_usb(usb);
+}
+
+int circle_unmount_usb(int usb) {
+  return static_kernel->circle_unmount_usb(usb);
+}
+
 };
 
 

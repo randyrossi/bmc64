@@ -355,7 +355,7 @@ bool ViceStdioApp::Initialize(void) {
 
   CGlueStdioSetPartitionForVolume(volumeName, partition, ss);
 
-  if (f_mount(&mFileSystem, fatFsVol, 1) != FR_OK) {
+  if (f_mount(&mFileSystemSD, fatFsVol, 1) != FR_OK) {
     mLogger.Write(GetKernelName(), LogError, "Cannot mount partition: %s",
                   fatFsVol);
     return false;
@@ -397,4 +397,59 @@ void ViceStdioApp::Cleanup(void) {
     mLogger.Write(GetKernelName(), LogError, "Cannot unmount drive");
   }
   ViceScreenApp::Cleanup();
+}
+
+void ViceStdioApp::circle_find_usb(int (*usb)[3]) {
+  CDevice* usb1 = CDeviceNameService::Get()->GetDevice ("umsd1", TRUE);
+  (*usb)[0] = usb1 ? 1 : 0;
+  CDevice* usb2 = CDeviceNameService::Get()->GetDevice ("umsd2", TRUE);
+  (*usb)[1] = usb2 ? 1 : 0;
+  CDevice* usb3 = CDeviceNameService::Get()->GetDevice ("umsd3", TRUE);
+  (*usb)[2] = usb3 ? 1 : 0;
+}
+
+int ViceStdioApp::circle_mount_usb(int usb) {
+  int status;
+  switch (usb) {
+     case 0:
+       status = f_mount(&mFileSystemUSB1, "USB:", 1);
+       break;
+     case 1:
+       status = f_mount(&mFileSystemUSB1, "USB2:", 1);
+       break;
+     case 2:
+       status = f_mount(&mFileSystemUSB1, "USB3:", 1);
+       break;
+     default: return 0;
+  }
+
+  if (status != FR_OK) {
+    mLogger.Write(GetKernelName(), LogError, "Cannot mount usb %d", usb);
+    return 0;
+  }
+
+  return 1;
+}
+
+int ViceStdioApp::circle_unmount_usb(int usb) {
+  int status;
+  switch (usb) {
+     case 0:
+       status = f_mount(0, "USB:", 1);
+       break;
+     case 1:
+       status = f_mount(0, "USB2:", 1);
+       break;
+     case 2:
+       status = f_mount(0, "USB3:", 1);
+       break;
+     default: return 0;
+  }
+
+  if (status != FR_OK) {
+    mLogger.Write(GetKernelName(), LogError, "Cannot unmount usb %d", usb);
+    return 0;
+  }
+
+  return 1;
 }

@@ -243,4 +243,8 @@ extern int circle_use_pcb(void);
 extern int circle_num_joysticks(void);
 extern long circle_key_binding(int slot);
 
+extern void circle_find_usb(int (*usb)[3]);
+extern int circle_mount_usb(int usb);
+extern int circle_unmount_usb(int usb);
+
 #endif

@@ -206,6 +206,10 @@ public:
   virtual bool Initialize(void);
   virtual void Cleanup(void);
 
+  void circle_find_usb(int (*usb)[3]);
+  int circle_mount_usb(int usb);
+  int circle_unmount_usb(int usb);
+
 private:
   // Must be called after fatfs/stdio has been initialized
   // This routine loads the bootstat.txt file and passes the
@@ -221,7 +225,10 @@ protected:
 
   CDWHCIDevice mDWHCI;
   CEMMCDevice mEMMC;
-  FATFS mFileSystem;
+  FATFS mFileSystemSD;
+  FATFS mFileSystemUSB1;
+  FATFS mFileSystemUSB2;
+  FATFS mFileSystemUSB3;
 
   int mBootStatWhat[MAX_BOOTSTAT_LINES];
   char *mBootStatFile[MAX_BOOTSTAT_LINES];

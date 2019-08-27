@@ -69,6 +69,7 @@ typedef enum {
    MENU_ATTACH_TAPE,
    MENU_DETACH_TAPE,
 
+   MENU_IEC_DIR,
    MENU_DISK_FILE,
    MENU_TAPE_FILE,
    MENU_C64_CART_FILE,
@@ -109,6 +110,11 @@ typedef enum {
    MENU_IECDEVICE_9,
    MENU_IECDEVICE_10,
    MENU_IECDEVICE_11,
+
+   MENU_IECDIR_8,
+   MENU_IECDIR_9,
+   MENU_IECDIR_10,
+   MENU_IECDIR_11,
 
    MENU_COLOR_PALETTE_0,
    MENU_COLOR_PALETTE_1,
@@ -295,8 +301,11 @@ typedef enum {
 typedef enum {
    MENU_SUB_NONE,
    MENU_SUB_PICK_FILE,
+   MENU_SUB_PICK_DIR,
    MENU_SUB_UP_DIR,
    MENU_SUB_ENTER_DIR,
+   MENU_SUB_CHANGE_VOLUME,
+   MENU_SUB_SELECT_VOLUME,
 } MenuSubID;
 
 // Used as saved values. Don't reorg.
@@ -385,6 +394,13 @@ typedef enum {
    MENU_PIP_BOTTOM_RIGHT,
    MENU_PIP_BOTTOM_LEFT
 } MenuPipLocation;
+
+typedef enum {
+   MENU_VOLUME_SD = 0,
+   MENU_VOLUME_USB1,
+   MENU_VOLUME_USB2,
+   MENU_VOLUME_USB3
+} MenuVolume;
 
 extern long keyset_codes[2][7];
 extern long key_bindings[6];

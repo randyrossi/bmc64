@@ -95,6 +95,7 @@ typedef enum {
    FILTER_CART,
    FILTER_TAPE,
    FILTER_SNAP,
+   FILTER_DIRS,
 } FileFilter;
 
 extern struct joydev_config joydevs[MAX_JOY_PORTS];
@@ -206,7 +207,7 @@ static char snap_filt_ext[1][5] = {".vsf"};
 
 // For file type dialogs. Determines what dir we start in. Used
 // as index into default_dir_names and current_dir_names.
-#define NUM_DIR_TYPES 6
+#define NUM_DIR_TYPES 7
 typedef enum {
    DIR_ROOT,
    DIR_DISKS,
@@ -214,6 +215,7 @@ typedef enum {
    DIR_CARTS,
    DIR_SNAPS,
    DIR_ROMS,
+   DIR_IEC,
 } DirType;
 
 // What directories to initialize file search dialogs with for
@@ -221,12 +223,18 @@ typedef enum {
 // TODO: Make these start dirs configurable.
 static const char default_volume_name[8] = "SD:";
 static const char default_dir_names[NUM_DIR_TYPES][16] = {
-    "/", "/disks", "/tapes", "/carts", "/snapshots", "/roms"};
+    "/", "/disks", "/tapes", "/carts", "/snapshots", "/roms", "/"};
 
 // Keep track of the current volume
 static char current_volume_name[8] = "";
 // Keep track of current directory for each type of file.
 static char current_dir_names[NUM_DIR_TYPES][256];
+// Keep track of last iec dirs for each drive
+static char last_iec_dir[4][256];
+
+static int usb1_mounted;
+static int usb2_mounted;
+static int usb3_mounted;
 
 // Temp storage for full path name concatenations.
 static char full_path_str[256];
@@ -262,26 +270,26 @@ static void list_files(struct menu_item *parent,
 
   dp = opendir(fullpath(dir_type,""));
   if (dp == NULL) {
-    char dir_scratch[256];
-    strcpy(dir_scratch, "(");
-    strcat(dir_scratch, current_volume_name);
-    strcat(dir_scratch, current_dir_names[dir_type]);
-    strcat(dir_scratch, " Not Found - Using /)");
-
     // Fall back to root
     strcpy(current_dir_names[dir_type], "/");
     dp = opendir(fullpath(dir_type,""));
-    ui_menu_add_button(MENU_TEXT, parent, dir_scratch);
     if (dp == NULL) {
       return;
     }
   }
- 
-  // Volume selection item
 
-  // Current directory item
-  ui_menu_add_button(MENU_TEXT, parent, fullpath(dir_type,""));
+  // Current directory item, also action to change disk drive
+  ui_menu_add_button(menu_id, parent, fullpath(dir_type,""))->
+     sub_id = MENU_SUB_SELECT_VOLUME;
   ui_menu_add_divider(parent);
+
+  // When we are picking dirs, include a button to select the current dir.
+  if (filter == FILTER_DIRS) {
+    struct menu_item *new_button =
+         ui_menu_add_button(menu_id, parent, "(Use this dir)");
+    new_button->sub_id = MENU_SUB_PICK_DIR;
+    ui_menu_add_divider(parent);
+  }
 
   // Put together a string that represents the root of this volume
   char current_root[16];
@@ -321,6 +329,8 @@ static void list_files(struct menu_item *parent,
           include = test_cart_name(ep->d_name);
         } else if (filter == FILTER_SNAP) {
           include = test_snap_name(ep->d_name);
+        } else if (filter == FILTER_DIRS) {
+          include = 0;
         } else if (filter == FILTER_NONE) {
           include = 1;
         }
@@ -447,6 +457,38 @@ static void configure_keyset(int num) {
 static void configure_timing() {
   struct menu_item *timing_root = ui_push_menu(-1, -1);
   build_timing_menu(timing_root);
+}
+
+// Show a pop up menu with the available drive volumes.
+// The item's id will be passed along to every item created
+// here. The action to perform is dicatated by sub_id.
+static void filesystem_change_volume(struct menu_item *item) {
+  struct menu_item *vol_root = ui_push_menu(12, 8);
+  struct menu_item *item2;
+
+  // SD card is always available
+  item2 = ui_menu_add_button(item->id, vol_root, "SD");
+  item2->sub_id = MENU_SUB_CHANGE_VOLUME;
+  item2->value = MENU_VOLUME_SD;
+
+  int available[3];
+  circle_find_usb(&available);
+
+  if (available[0]) {
+    item2 = ui_menu_add_button(item->id, vol_root, "USB1");
+    item2->sub_id = MENU_SUB_CHANGE_VOLUME;
+    item2->value = MENU_VOLUME_USB1;
+  }
+  if (available[1]) {
+    item2 = ui_menu_add_button(item->id, vol_root, "USB2");
+    item2->sub_id = MENU_SUB_CHANGE_VOLUME;
+    item2->value = MENU_VOLUME_USB2;
+  }
+  if (available[2]) {
+    item2 = ui_menu_add_button(item->id, vol_root, "USB3");
+    item2->sub_id = MENU_SUB_CHANGE_VOLUME;
+    item2->value = MENU_VOLUME_USB3;
+  }
 }
 
 static void drive_change_model() {
@@ -984,6 +1026,12 @@ static void attach_cart(struct menu_item *item, int cart_type) {
 
 static void select_file(struct menu_item *item) {
   switch (item->id) {
+     case MENU_IEC_DIR:
+       resources_set_string_sprintf("FSDevice%iDir",
+          fullpath(DIR_IEC, ""), unit);
+       strcpy(last_iec_dir[unit-8], fullpath(DIR_IEC, ""));
+       ui_pop_menu();
+       return;
      case MENU_LOAD_SNAP_FILE:
        ui_info("Loading...");
        if (machine_read_snapshot(fullpath(DIR_SNAPS, item->str_value), 0) < 0) {
@@ -1296,6 +1344,8 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
     return DIR_ROMS;
   case MENU_AUTOSTART_FILE:
     return DIR_ROOT;
+  case MENU_IEC_DIR:
+    return DIR_IEC;
   default:
     return -1;
   }
@@ -1362,6 +1412,9 @@ static void relist_files_after_dir_change(struct menu_item *item) {
     break;
   case MENU_AUTOSTART_FILE:
     show_files(DIR_ROOT, FILTER_NONE, item->id, 1);
+    break;
+  case MENU_IEC_DIR:
+    show_files(DIR_IEC, FILTER_DIRS, item->id, 1);
     break;
   default:
     break;
@@ -1491,26 +1544,43 @@ static void do_video_settings(int layer,
   }
 }
 
+static void menu_machine_reset(int type, int pop) {
+  // The IEC dir may have been changed by the emulated machine. On reset,
+  // we reset back to the last dir set by the user.
+  resources_set_string_sprintf("FSDevice%iDir", last_iec_dir[0], 8);
+  resources_set_string_sprintf("FSDevice%iDir", last_iec_dir[1], 9);
+  resources_set_string_sprintf("FSDevice%iDir", last_iec_dir[2], 10);
+  resources_set_string_sprintf("FSDevice%iDir", last_iec_dir[3], 11);
+  machine_trigger_reset(type);
+  if (pop) {
+     ui_pop_all_and_toggle();
+  }
+}
+
 // Interpret what menu item changed and make the change to vice
 static void menu_value_changed(struct menu_item *item) {
   switch (item->id) {
   case MENU_ATTACH_DISK_8:
   case MENU_IECDEVICE_8:
+  case MENU_IECDIR_8:
   case MENU_DRIVE_CHANGE_MODEL_8:
     unit = 8;
     break;
   case MENU_ATTACH_DISK_9:
   case MENU_IECDEVICE_9:
+  case MENU_IECDIR_9:
   case MENU_DRIVE_CHANGE_MODEL_9:
     unit = 9;
     break;
   case MENU_ATTACH_DISK_10:
   case MENU_IECDEVICE_10:
+  case MENU_IECDIR_10:
   case MENU_DRIVE_CHANGE_MODEL_10:
     unit = 10;
     break;
   case MENU_ATTACH_DISK_11:
   case MENU_IECDEVICE_11:
+  case MENU_IECDIR_11:
   case MENU_DRIVE_CHANGE_MODEL_11:
     unit = 11;
     break;
@@ -1583,6 +1653,12 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_IECDEVICE_10:
   case MENU_IECDEVICE_11:
     resources_set_int_sprintf("IECDevice%i", item->value, unit);
+    return;
+  case MENU_IECDIR_8:
+  case MENU_IECDIR_9:
+  case MENU_IECDIR_10:
+  case MENU_IECDIR_11:
+    show_files(DIR_IEC, FILTER_DIRS, MENU_IEC_DIR, 0);
     return;
   case MENU_ATTACH_DISK_8:
   case MENU_ATTACH_DISK_9:
@@ -1703,14 +1779,10 @@ static void menu_value_changed(struct menu_item *item) {
     ui_pop_all_and_toggle();
     return;
   case MENU_SOFT_RESET:
-    resources_set_string_sprintf("FSDevice%iDir", "/", 8);
-    machine_trigger_reset(MACHINE_RESET_MODE_SOFT);
-    ui_pop_all_and_toggle();
+    menu_machine_reset(MACHINE_RESET_MODE_SOFT, 1 /* pop */);
     return;
   case MENU_HARD_RESET:
-    resources_set_string_sprintf("FSDevice%iDir", "/", 8);
-    machine_trigger_reset(MACHINE_RESET_MODE_HARD);
-    ui_pop_all_and_toggle();
+    menu_machine_reset(MACHINE_RESET_MODE_HARD, 1 /* pop */);
     return;
   case MENU_ABOUT:
     show_about();
@@ -2035,7 +2107,7 @@ static void menu_value_changed(struct menu_item *item) {
   }
 
   // Only items that were for file selection/nav should have these set...
-  if (item->sub_id == MENU_SUB_PICK_FILE) {
+  if (item->sub_id == MENU_SUB_PICK_FILE || item->sub_id == MENU_SUB_PICK_DIR) {
     select_file(item);
     return;
   } else if (item->sub_id == MENU_SUB_UP_DIR) {
@@ -2043,6 +2115,35 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   } else if (item->sub_id == MENU_SUB_ENTER_DIR) {
     enter_dir(item);
+    return;
+  } else if (item->sub_id == MENU_SUB_SELECT_VOLUME) {
+    // Since this is a pop up before a dir change, we must pop
+    // the existing file list.
+    ui_pop_menu();
+    filesystem_change_volume(item);
+    return;
+  } else if (item->sub_id == MENU_SUB_CHANGE_VOLUME) {
+    switch (item->value) {
+       case MENU_VOLUME_SD:
+           strcpy (current_volume_name, "SD:");
+           break;
+       case MENU_VOLUME_USB1:
+           strcpy (current_volume_name, "USB:");
+           if (!usb1_mounted) { circle_mount_usb(0); usb1_mounted = 1; }
+           break;
+       case MENU_VOLUME_USB2:
+           strcpy (current_volume_name, "USB2:");
+           if (!usb2_mounted) { circle_mount_usb(1); usb2_mounted = 1; }
+           break;
+       case MENU_VOLUME_USB3:
+           strcpy (current_volume_name, "USB3:");
+           if (!usb3_mounted) { circle_mount_usb(2); usb3_mounted = 1; }
+           break;
+       default:
+           break;
+    }
+    ui_pop_menu();
+    relist_files_after_dir_change(item);
     return;
   }
 }
@@ -2213,23 +2314,38 @@ void build_menu(struct menu_item *root) {
     if (machine_class != VICE_MACHINE_VIC20) {
      resources_get_int_sprintf("IECDevice%i", &tmp, 8);
      ui_menu_add_toggle(MENU_IECDEVICE_8, parent, "IEC FileSystem", tmp);
+     ui_menu_add_button(MENU_IECDIR_8, parent, "Select IEC Dir...");
     }
-
     ui_menu_add_button(MENU_ATTACH_DISK_8, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_8, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_8, parent, "Change Model...");
 
     parent = ui_menu_add_folder(drive_parent, "Drive 9");
+    if (machine_class != VICE_MACHINE_VIC20) {
+     resources_get_int_sprintf("IECDevice%i", &tmp, 9);
+     ui_menu_add_toggle(MENU_IECDEVICE_9, parent, "IEC FileSystem", tmp);
+     ui_menu_add_button(MENU_IECDIR_9, parent, "Select IEC Dir...");
+    }
     ui_menu_add_button(MENU_ATTACH_DISK_9, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_9, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_9, parent, "Change Model...");
 
     parent = ui_menu_add_folder(drive_parent, "Drive 10");
+    if (machine_class != VICE_MACHINE_VIC20) {
+     resources_get_int_sprintf("IECDevice%i", &tmp, 10);
+     ui_menu_add_toggle(MENU_IECDEVICE_10, parent, "IEC FileSystem", tmp);
+     ui_menu_add_button(MENU_IECDIR_10, parent, "Select IEC Dir...");
+    }
     ui_menu_add_button(MENU_ATTACH_DISK_10, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_10, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_10, parent, "Change Model...");
 
     parent = ui_menu_add_folder(drive_parent, "Drive 11");
+    if (machine_class != VICE_MACHINE_VIC20) {
+     resources_get_int_sprintf("IECDevice%i", &tmp, 11);
+     ui_menu_add_toggle(MENU_IECDEVICE_11, parent, "IEC FileSystem", tmp);
+     ui_menu_add_button(MENU_IECDIR_11, parent, "Select IEC Dir...");
+    }
     ui_menu_add_button(MENU_ATTACH_DISK_11, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_11, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");
@@ -2704,6 +2820,12 @@ void build_menu(struct menu_item *root) {
   // This can somehow get turned off. Make sure its always 1.
   resources_set_int("Datasette", 1);
   resources_set_int("Mouse", 1);
+
+  // For now, all our drives will always be file system devices.
+  resources_set_int("FileSystemDevice8", 1);
+  resources_set_int("FileSystemDevice9", 1);
+  resources_set_int("FileSystemDevice10", 1);
+  resources_set_int("FileSystemDevice11", 1);
 }
 
 int statusbar_never(void) {
@@ -2770,8 +2892,7 @@ void menu_quick_func(int button_assignment) {
     }
   // fallthrough
   case BTN_ASSIGN_RESET_HARD2:
-    resources_set_string_sprintf("FSDevice%iDir", "/", 8);
-    machine_trigger_reset(MACHINE_RESET_MODE_HARD);
+    menu_machine_reset(MACHINE_RESET_MODE_HARD, 0 /* no pop */);
     break;
   case BTN_ASSIGN_RESET_SOFT:
     if (reset_confirm_item->value) {
@@ -2781,8 +2902,7 @@ void menu_quick_func(int button_assignment) {
     }
   // fallthrough
   case BTN_ASSIGN_RESET_SOFT2:
-    resources_set_string_sprintf("FSDevice%iDir", "/", 8);
-    machine_trigger_reset(MACHINE_RESET_MODE_SOFT);
+    menu_machine_reset(MACHINE_RESET_MODE_SOFT, 0 /* no pop */);
     break;
   case BTN_ASSIGN_ACTIVE_DISPLAY:
     active_display_item->value++;
