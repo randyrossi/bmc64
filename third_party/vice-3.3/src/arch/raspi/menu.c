@@ -62,12 +62,6 @@
 #include "util.h"
 #include "vdrive-internal.h"
 
-// This feature is hidden for now. Activated 'pcb' input method where
-// both keyboard and joysticks can be hooked up with a PCB or
-// to eliminate USB keyboard.  Power switch is actually a power switch
-// and the power port is actually power unlike the Keyrah.
-//#define RASPI_SUPPORT_PCB 1
-
 #define VERSION_STRING "2.3.1"
 
 #ifdef RASPI_LITE
@@ -151,7 +145,7 @@ struct menu_item *tint_item_1;
 
 struct menu_item *warp_item;
 struct menu_item *reset_confirm_item;
-struct menu_item *use_pcb_item;
+struct menu_item *gpio_config_item;
 struct menu_item *active_display_item;
 
 struct menu_item *h_center_item_0;
@@ -729,9 +723,7 @@ static int save_settings() {
   fprintf(fp, "vkbd_trans=%d\n", vkbd_transparency_item->value);
   fprintf(fp, "tapereset=%d\n", tape_reset_with_machine_item->value);
   fprintf(fp, "reset_confirm=%d\n", reset_confirm_item->value);
-#ifdef RASPI_SUPPORT_PCB
-  fprintf(fp, "pcb=%d\n", use_pcb_item->value);
-#endif
+  fprintf(fp, "gpio_config=%d\n", gpio_config_item->value);
   fprintf(fp, "h_center_0=%d\n", h_center_item_0->value);
   fprintf(fp, "v_center_0=%d\n", v_center_item_0->value);
   fprintf(fp, "h_border_trim_0=%d\n", h_border_item_0->value);
@@ -963,10 +955,8 @@ static void load_settings() {
       hotkey_tf7_item->value = value;
     } else if (strcmp(name, "reset_confirm") == 0) {
       reset_confirm_item->value = value;
-    } else if (strcmp(name, "pcb") == 0) {
-#ifdef RASPI_SUPPORT_PCB
-      use_pcb_item->value = value;
-#endif
+    } else if (strcmp(name, "gpio_config") == 0) {
+      gpio_config_item->value = value;
     } else if (strcmp(name, "keyset_1_up") == 0) {
       keyset_codes[0][KEYSET_UP] = value;
     } else if (strcmp(name, "keyset_1_down") == 0) {
@@ -2665,11 +2655,6 @@ void build_menu(struct menu_item *root) {
         "Down","Up");
   }
 
-#ifdef RASPI_SUPPORT_PCB
-  child = use_pcb_item = ui_menu_add_toggle(
-      MENU_USE_PCB, parent, "Use Keyboard/DB9 PCB", 0);
-#endif
-
   child = hotkey_cf1_item =
       ui_menu_add_multiple_choice(MENU_HOTKEY_CF1, parent, "C= + F1 Hotkey");
   child->value = HOTKEY_CHOICE_NONE;
@@ -2825,6 +2810,10 @@ void build_menu(struct menu_item *root) {
 
   reset_confirm_item = ui_menu_add_toggle(MENU_RESET_CONFIRM, parent,
                                           "Confirm Reset from Emulator", 1);
+
+  gpio_config_item = ui_menu_add_toggle_labels(
+      MENU_GPIO_CONFIG, parent, "GPIO Config", 0,
+      "No-PCB","PCB");
 
   warp_item = ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
 
@@ -3020,12 +3009,7 @@ void menu_quick_func(int button_assignment) {
 }
 
 int circle_use_pcb() {
-#ifdef RASPI_SUPPORT_PCB
-  if (machine_class == VICE_MACHINE_C64) {
-    return use_pcb_item->value;
-  }
-#endif
-  return 0;
+  return gpio_config_item->value;
 }
 
 int circle_num_joysticks(void) {

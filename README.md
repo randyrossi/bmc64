@@ -165,7 +165,7 @@ Directories and long filenames are supported as of v1.0.10. Previous versions re
 
 Since v2.4, you can mount up to 3 USB thumb drives and load cartridges, tapes, disks etc from them.  However, keep in mind that if you save your settings with custom kernels or attached cartridges that were loaded from a USB drive, they will not load on boot.  That's because all USB drives are lazy mounted on the first access via any file dialog.  For custom kernels or saved cartridges, it's best to load those from the SD card.
 
-## IEC Mode
+## IEC Mode (C64/C128 Only)
 
 You can make any drive an IECDevice and select the directory you want to mount from the 'Disks' menu. However, I don't recommend loading programs this way. The SDcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk operations anyway.  It's mostly used for testing purposes.
 

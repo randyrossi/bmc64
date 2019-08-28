@@ -35,10 +35,9 @@ static unsigned char mod_states;
 static bool uiLeftShift = false;
 static bool uiRightShift = false;
 
-// Real C64 keyboard matrix states
+// Real keyboard matrix states
 static bool kbdMatrixStates[8][8];
-// These are only for translating row/col scans into equivalent USB codes
-// for the ui.
+// These for translating row/col scans into equivalent keycodes.
 static long kbdMatrixKeyCodes[8][8] = {
  {KEYCODE_Backspace, KEYCODE_3,         KEYCODE_5, KEYCODE_7, KEYCODE_9, KEYCODE_Dash,        KEYCODE_Insert,       KEYCODE_1},
  {KEYCODE_Return,    KEYCODE_w,         KEYCODE_r, KEYCODE_y, KEYCODE_i, KEYCODE_p,           KEYCODE_RightBracket, KEYCODE_BackQuote},
