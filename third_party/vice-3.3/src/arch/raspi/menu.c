@@ -283,8 +283,10 @@ static void list_files(struct menu_item *parent,
   }
 
   // Current directory item, also action to change disk drive
-  ui_menu_add_button(menu_id, parent, fullpath(dir_type,""))->
-     sub_id = MENU_SUB_SELECT_VOLUME;
+  struct menu_item* cur_dir = ui_menu_add_button(
+     menu_id, parent, fullpath(dir_type,""));
+  cur_dir->sub_id = MENU_SUB_SELECT_VOLUME;
+  cur_dir->symbol = 31;  // left arrow
   ui_menu_add_divider(parent);
 
   // When we are picking dirs, include a button to select the current dir.
@@ -2173,9 +2175,6 @@ static void menu_value_changed(struct menu_item *item) {
     enter_dir(item);
     return;
   } else if (item->sub_id == MENU_SUB_SELECT_VOLUME) {
-    // Since this is a pop up before a dir change, we must pop
-    // the existing file list.
-    ui_pop_menu();
     filesystem_change_volume(item);
     return;
   } else if (item->sub_id == MENU_SUB_CHANGE_VOLUME) {
@@ -2198,6 +2197,8 @@ static void menu_value_changed(struct menu_item *item) {
        default:
            break;
     }
+    // Need to pop both change volume popup and old file list
+    ui_pop_menu();
     ui_pop_menu();
     relist_files_after_dir_change(item);
     return;

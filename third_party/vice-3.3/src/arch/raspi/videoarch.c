@@ -523,7 +523,7 @@ void vsyncarch_postsync(void) {
   if (ui_enabled) {
     // The only way we can be here and have ui_enabled=1
     // is for an osd to be enabled.
-    ui_render_now();
+    ui_render_now(-1); // only render top most menu
     circle_frames_ready_fbl(FB_LAYER_UI, -1 /* no 2nd layer */, 0 /* no sync */);
     ui_check_key();
   }

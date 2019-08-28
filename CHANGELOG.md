@@ -224,3 +224,9 @@
 
 ## 2.4
   * Added CTRL + F[1,3,5,7] Programmable Hotkeys
+  * Added ability to mount up to 3 USB drives
+       * Default drive is SD: but USB1, USB2, USB3 can be selected
+         by selecting the first item in any files dialog.
+  * Added ability to set IEC mode on all drives, not just 8
+  * Added selection of IEC dir
+  * Paint menus stacked on top of each other like they used to be

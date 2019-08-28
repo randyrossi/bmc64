@@ -63,6 +63,9 @@ struct menu_item {
   // For all
   char name[MAX_MENU_STR];
 
+  // Symbol on left edge
+  int symbol;
+
   // 0/1 for TOGGLE or CHECKBOX, or range value for RANGE
   // index for MULTIPLE_CHOICE
   // cursor position for TEXTFIELD
@@ -190,7 +193,7 @@ void glob_osd_popped(struct menu_item *new_root,
                      struct menu_item *old_root);
 
 void ui_make_transparent(void);
-void ui_render_now(void);
+void ui_render_now(int menu_stack_index);
 void ui_error(const char *format, ...);
 void ui_info(const char *format, ...);
 

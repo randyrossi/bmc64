@@ -470,7 +470,12 @@ static void ui_action_frame() {
 }
 
 static void ui_render_single_frame() {
-  ui_render_now();
+  // Start with transparent
+  ui_draw_rect(0, 0, ui_fb_w, ui_fb_h, TRANSPARENT_COLOR, 1);
+
+  for (int msi=0;msi<=current_menu;msi++) {
+     ui_render_now(msi);
+  }
   circle_frames_ready_fbl(FB_LAYER_UI, -1 /* no 2nd layer */, 1 /* sync */);
   circle_yield();
 }
@@ -882,25 +887,35 @@ struct menu_item *ui_menu_add_text_field(int id, struct menu_item *folder,
   return new_item;
 }
 
-static void ui_render_children(struct menu_item *node, int *index, int indent) {
+static void ui_render_children(struct menu_item *node,
+                               int stack_index, int *index, int indent) {
   while (node != NULL) {
     node->render_index = *index;
 
     // Render a row
-    if (*index >= menu_window_top[current_menu] &&
-        *index < menu_window_bottom[current_menu]) {
-      int y = (*index - menu_window_top[current_menu]) * 8 + node->menu_top;
-      if (*index == menu_cursor[current_menu]) {
+    if (*index >= menu_window_top[stack_index] &&
+        *index < menu_window_bottom[stack_index]) {
+      int y = (*index - menu_window_top[stack_index]) * 8 + node->menu_top;
+      if (*index == menu_cursor[stack_index]) {
         ui_draw_rect(node->menu_left, y, node->menu_width, 8, HILITE_COLOR, 1);
-        menu_cursor_item[current_menu] = node;
+        menu_cursor_item[stack_index] = node;
+      }
+
+      // Special symbol drawn on left edge
+      if (node->symbol) {
+          ui_draw_char_raw(node->symbol,
+              node->menu_left+indent*8, y, FG_COLOR, NULL, 0, 1);
       }
 
       // Sometimes, we only want to render the current item. Like when we
       // are adjusting things that affect video and we want to see the display
       // underneath the menu while we are making changes.
-      if (!ui_render_current_item_only || *index == menu_cursor[current_menu]) {
+      if (!ui_render_current_item_only ||
+          *index == menu_cursor[stack_index]) {
 
-        ui_draw_text(node->name, node->menu_left + (indent + 1) * 8, y, FG_COLOR);
+        ui_draw_text(node->name,
+           node->menu_left + (indent + 1) * 8, y, FG_COLOR);
+
         if (node->type == FOLDER) {
           if (node->is_expanded)
             ui_draw_text("-", node->menu_left + (indent)*8, y, FG_COLOR);
@@ -915,7 +930,8 @@ static void ui_render_children(struct menu_item *node, int *index, int indent) {
             } else {
                ui_draw_text(node->custom_toggle_label[1],
                          node->menu_left + node->menu_width -
-                         ui_text_width(node->custom_toggle_label[1]), y, FG_COLOR);
+                         ui_text_width(node->custom_toggle_label[1]), y,
+                                       FG_COLOR);
             }
           } else {
             if (node->custom_toggle_label[0][0] == '\0') {
@@ -924,7 +940,8 @@ static void ui_render_children(struct menu_item *node, int *index, int indent) {
             } else {
                ui_draw_text(node->custom_toggle_label[0],
                          node->menu_left + node->menu_width -
-                         ui_text_width(node->custom_toggle_label[0]), y, FG_COLOR);
+                         ui_text_width(node->custom_toggle_label[0]), y,
+                                       FG_COLOR);
             }
           }
         } else if (node->type == CHECKBOX) {
@@ -965,7 +982,8 @@ static void ui_render_children(struct menu_item *node, int *index, int indent) {
                            node->value * 8,
                        y, 8, 8, BORDER_COLOR, 1);
           ui_draw_text(node->str_value,
-                       node->menu_left + ui_text_width(node->name) + 8, y, FG_COLOR);
+                       node->menu_left + ui_text_width(node->name) + 8, y,
+                       FG_COLOR);
         }
       }
     }
@@ -973,7 +991,7 @@ static void ui_render_children(struct menu_item *node, int *index, int indent) {
     *index = *index + 1;
     if (node->type == FOLDER && node->is_expanded &&
         node->first_child != NULL) {
-      ui_render_children(node->first_child, index, indent + 1);
+      ui_render_children(node->first_child, stack_index, index, indent + 1);
     }
     node = node->next;
   }
@@ -985,13 +1003,17 @@ void ui_make_transparent(void) {
   ui_draw_rect(0, 0, ui_fb_w, ui_fb_h, TRANSPARENT_COLOR, 1);
 }
 
-void ui_render_now(void) {
+void ui_render_now(int menu_stack_index) {
   int index = 0;
   int indent = 0;
-  struct menu_item *ptr = menu_roots[current_menu].first_child;
 
-  // Start with transparent
-  ui_draw_rect(0, 0, ui_fb_w, ui_fb_h, TRANSPARENT_COLOR, 1);
+  if (menu_stack_index == -1) {
+    menu_stack_index = current_menu;
+    // When rendering only the top most menu, clear with transparent color
+    ui_draw_rect(0, 0, ui_fb_w, ui_fb_h, TRANSPARENT_COLOR, 1);
+  }
+
+  struct menu_item *ptr = menu_roots[menu_stack_index].first_child;
 
   // background conditional upon mode
   if (!ui_transparent) {
@@ -1005,12 +1027,12 @@ void ui_render_now(void) {
                ptr->menu_height + 2, BORDER_COLOR, 0);
 
   // menu text
-  ui_render_children(ptr, &index, indent);
+  ui_render_children(ptr, menu_stack_index, &index, indent);
 
-  max_index[current_menu] = index;
+  max_index[menu_stack_index] = index;
 
-  if (menu_cursor[current_menu] >= max_index[current_menu]) {
-    menu_cursor[current_menu] = max_index[current_menu] - 1;
+  if (menu_cursor[menu_stack_index] >= max_index[menu_stack_index]) {
+    menu_cursor[menu_stack_index] = max_index[menu_stack_index] - 1;
     cursor_pos_updated();
   }
 }
