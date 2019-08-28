@@ -222,7 +222,7 @@ You can define custom keysets in the menu under the Joyport sub-menu.
 
 # USB Button / Hotkey Function Mapping
 
-You can assign functions to USB buttons or HotKey Combinations. HotKey combinations are LeftControl + F1,3,5,7. Not all functions are available as HotKey assignments.  The functions available are:
+You can assign functions to USB buttons or HotKey Combinations. HotKey combinations are LeftControl(Commodore) + F1,3,5,7 or Tab(Cntrl) + F1,3,5,7. Not all functions are available as HotKey assignments.  The functions available are:
 
 Function | Description | Availability
 ---------|-------------|-------------
@@ -252,7 +252,18 @@ Swap PIP | Swaps PIP Displays | USB+Hotkey (C128 Only)
 Custom defined keys (1-6) can be defined in the usb gamepad configuration screen.
 The Tape/Cart OSD functions display a dialog with access to some common functions without pausing emulation.
 
-# GPIO Joystick Banks (No PCB required)
+# GPIO Configurations
+
+Since v2.4, there are two GPIO configurations to chose from : Non-PCB or PCB
+
+## GPIO Menu Button (Non-PCB config only)
+
+DO NOT ATTEMPT THIS IF YOU ARE NOT COMFORTABLE WITH WIRING THINGS UP TO YOUR PI
+I TAKE NO RESPONSIBILITY IF YOU WIRE THINGS INCORRECTLY OR DAMAGE YOUR DEVICE
+
+You can wire a button between GPIO16 and GND to have a physical menu activation button.  Fow now, this is the only physical button available.  I may add navigation buttons like Up, Down, Left, Right, and Back at some point.
+
+## GPIO Joystick Banks (Non-PCB config only)
 
 DO NOT ATTEMPT THIS IF YOU ARE NOT COMFORTABLE WITH WIRING THINGS UP TO YOUR PI
 I TAKE NO RESPONSIBILITY IF YOU WIRE THINGS INCORRECTLY OR DAMAGE YOUR DEVICE
@@ -269,6 +280,42 @@ GPIO23        |GPIO19       | 6 (Fire)
 GND           |GND          | 8 (GND)
 
 In the menu, select either GPIO1 or GPIO2 and assign it to one of the emulated ports.
+NOTE: There are no analog inputs so paddles won't function.
+
+## GPIO Keyboard and Joysticks (PCB config)
+
+The PCB GPIO config option enables real keyboard and joystick scanning code meant to be used with a PCB specifically designed for BMC64.  The PCB design is available at https://upverter.com/design/rrossi/bmc64  (It is possible to breadboard these connections using jumpers but that would mean a mess of wires inside your C64 shell)
+
+The PIN configuration for joysticks is different than what was described above for the Non-PCB GPIO config option.  So if you turn this on, the GPIO joysticks you wired directly to the PI's header will not work unless you re-wire them as described below.
+
+GPIO | C64 JOY PIN  | KEYBOARD CONNECTOR
+-----|--------------|-------------------
+GND  |              | KBD1 (GND)
+ 04  |              | KDB3 (Restore)
+-----|--------------|-------------------
+ 26  | 6 (J2_FIRE)  | KBD20
+ 20  | 1 (J2_UP)    | KBD19
+ 19  | 2 (J2_DOWN)  | KBD18
+ 16  | 3 (J2_LEFT)  | KBD17
+ 13  | 4 (J2_RIGHT) | KBD16
+ 06  |              | KBD15
+ 12  |              | KBD14
+ 05  |              | KDB13
+ 21  | GND (J2_SEL) | 
+-----|--------------|-------------------
+ 08  |              | KBD12
+ 25  |              | KBD11
+ 24  |              | KBD10
+ 22  | 6 (J1_FIRE)  | KBD9
+ 23  | 1 (J1_UP)    | KBD8
+ 27  | 2 (J1_DOWN)  | KBD7
+ 17  | 3 (J1_LEFT)  | KBD6
+ 18  | 4 (J1_RIGHT) | KBD5
+ 07  | GND (J1_SEL) |
+
+NOTE: There are no analog inputs so paddles won't function.
+
+Both real VIC20 and C64 keyboards should work in all emulated machines.  However, the additional keys found on the C128's keyboard are not accessible.
 
 # CPU Temperature
 
