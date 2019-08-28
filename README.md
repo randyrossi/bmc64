@@ -284,9 +284,9 @@ NOTE: There are no analog inputs so paddles won't function.
 
 ## GPIO Keyboard and Joysticks (PCB config)
 
-The PCB GPIO config option enables real keyboard and joystick scanning code meant to be used with a PCB specifically designed for BMC64.  The PCB design is available at https://upverter.com/design/rrossi/bmc64  (It is possible to breadboard these connections using jumpers but that would mean a mess of wires inside your C64 shell)
+The PCB GPIO config option enables real keyboard and joystick scanning code meant to be used with a PCB specifically designed for BMC64.  The PCB design is available at https://upverter.com/design/rrossi/bmc64  It is possible to breadboard these connections using jumpers but that would mean a mess of wires inside your C64 shell.  The PCB is meant to mount your DB9 joystick ports, a power switch and power connector in the right spots as well as provide power for the shell's LED.
 
-The PIN configuration for joysticks is different than what was described above for the Non-PCB GPIO config option.  So if you turn this on, the GPIO joysticks you wired directly to the PI's header will not work unless you re-wire them as described below.
+The PIN configuration for joysticks is different than what was described above for the Non-PCB GPIO config option.  So if you turn this option on, the GPIO joysticks you wired directly to the PI's header will not work unless you re-wire them as described below.
 
 GPIO | C64 JOY PIN  | KEYBOARD CONNECTOR
 -----|--------------|-------------------
