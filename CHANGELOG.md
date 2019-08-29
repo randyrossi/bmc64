@@ -223,10 +223,16 @@
   * Show PETSCII chars when virtual keyboard shift/commodore held
 
 ## 2.4
+  * Activated real keyboard and joystick scan for PCB
+  * Added GPIO Config PCB or No-PCB options + documentation
   * Added CTRL + F[1,3,5,7] Programmable Hotkeys
-  * Added ability to mount up to 3 USB drives
+  * Added ability to mount up to 3 USB thumb drives
        * Default drive is SD: but USB1, USB2, USB3 can be selected
          by selecting the first item in any files dialog.
+       * Only the first partition will be mounted
   * Added ability to set IEC mode on all drives, not just 8
   * Added selection of IEC dir
   * Paint menus stacked on top of each other like they used to be
+  * Fixed tape counter not updating properly (again)
+
+

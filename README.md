@@ -313,7 +313,9 @@ GND  |              | KBD1 (GND)
 
 NOTE: There are no analog inputs so paddles won't function.
 
-Both real VIC20 and C64 keyboards should work in all emulated machines.  However, the additional keys found on the C128's keyboard are not accessible.
+Both real VIC20 and C64 keyboards should work in all emulated machines.  However, the additional keys found on the C128's keyboard are not available.
+
+(One cool side-effect of using a real keyboard is if you boot the C128 and hold down the commodore key, it will boot into 64 mode like the real thing! That's something I could never get to work with USB keyboards.)
 
 # CPU Temperature
 
