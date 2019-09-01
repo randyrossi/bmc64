@@ -8,7 +8,8 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
   * Low latency between input & audio/video
   * No shutdown sequence required, just power off
   * High compatibility thanks to VICE
-  * Can wire real Commodore/Atari Joysticks via GPIO (no PCB option)
+  * Can wire real Commodore/Atari Joysticks via GPIO (Config 1 or 2)
+  * Can wire real Commodore Keyboad via GPIO (Config 2)
   * Keyrah friendly
 
 # Limitations
@@ -254,21 +255,16 @@ The Tape/Cart OSD functions display a dialog with access to some common function
 
 # GPIO Configurations
 
-Since v2.4, there are two GPIO configurations to chose from : Non-PCB or PCB
+Since v2.4, there are two GPIO configurations to chose from : Config 1 / Config 2
 
-## GPIO Menu Button (Non-PCB config only)
+## GPIO Config 1 : Menu Button and Joysticks
 
 DO NOT ATTEMPT THIS IF YOU ARE NOT COMFORTABLE WITH WIRING THINGS UP TO YOUR PI
 I TAKE NO RESPONSIBILITY IF YOU WIRE THINGS INCORRECTLY OR DAMAGE YOUR DEVICE
 
 You can wire a button between GPIO16 and GND to have a physical menu activation button.  Fow now, this is the only physical button available.  I may add navigation buttons like Up, Down, Left, Right, and Back at some point.
 
-## GPIO Joystick Banks (Non-PCB config only)
-
-DO NOT ATTEMPT THIS IF YOU ARE NOT COMFORTABLE WITH WIRING THINGS UP TO YOUR PI
-I TAKE NO RESPONSIBILITY IF YOU WIRE THINGS INCORRECTLY OR DAMAGE YOUR DEVICE
-
-It's possible to wire real Commodore or Atari joysticks directly to the Pi without a PCB. Each joystick gets its own set of GPIO pins, making it easy to hook up using nothing but jumpers and DB9 connectors.  (See the website for adapter instructions). Wiring is as follows:
+It's possible to wire real Commodore or Atari joysticks directly to the Pi. You can do it without a PCB if you want. Each joystick gets its own set of GPIO pins, making it easy to hook up using nothing but jumpers and DB9 connectors.  (See the website for adapter instructions). Wiring is as follows:
 
 GPIO BANK 1   | GPIO BANK 2 | C64 JOY PIN
 --------------|-------------|-------------
@@ -279,14 +275,14 @@ GPIO22        |GPIO13       | 4 (Right)
 GPIO23        |GPIO19       | 6 (Fire)
 GND           |GND          | 8 (GND)
 
-In the menu, select either GPIO1 or GPIO2 and assign it to one of the emulated ports.
+In Joyports the menu, select either GPIO1 or GPIO2 and assign it to one of the emulated ports.
 NOTE: There are no analog inputs so paddles won't function.
 
-## GPIO Keyboard and Joysticks (PCB config)
+## GPIO Config 2 : Pure GPIO Keyboard and Joysticks
 
-The PCB GPIO config option enables real keyboard and joystick scanning code meant to be used with a PCB specifically designed for BMC64.  The PCB design is available at https://upverter.com/design/rrossi/bmc64  It is possible to breadboard these connections using jumpers but that would mean a mess of wires inside your C64 shell.  The PCB is meant to mount your DB9 joystick ports, a power switch and power connector in the right spots as well as provide power for the shell's LED.
+This GPIO config option enables real keyboard and joystick scanning code purely from GPIO connections.  It can be used with a PCB specifically designed for BMC64.  The PCB design is available at https://upverter.com/design/rrossi/bmc64  It is possible to breadboard these connections using jumpers but that would mean a mess of wires inside your C64 shell.  The PCB is meant to mount your DB9 joystick ports, a power switch and power connector in the right spots as well as provide power for the shell's LED.
 
-The PIN configuration for joysticks is different than what was described above for the Non-PCB GPIO config option.  So if you turn this option on, the GPIO joysticks you wired directly to the PI's header will not work unless you re-wire them as described below.
+The PIN configuration for joysticks is different than what was described above for the GPIO Config 1 option.  So if you turn this option on, the GPIO joysticks you wired directly to the PI's header will not work unless you re-wire them as described below.
 
 GPIO | C64 JOY PIN  | KEYBOARD CONNECTOR
 -----|--------------|-------------------
