@@ -2813,7 +2813,7 @@ void build_menu(struct menu_item *root) {
 
   gpio_config_item = ui_menu_add_toggle_labels(
       MENU_GPIO_CONFIG, parent, "GPIO Config", 0,
-      "No-PCB","PCB");
+      "Config 1","Config 2");
 
   warp_item = ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
 
