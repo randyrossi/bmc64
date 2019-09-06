@@ -1,5 +1,5 @@
 /*
- * menu_vic20.h
+ * archdep_plus4.c
  *
  * Written by
  *  Randy Rossi <randy.rossi@gmail.com>
@@ -24,21 +24,10 @@
  *
  */
 
-unsigned long calculate_timing(double fps);
+#include "archdep_plus4.h"
 
-void set_color_brightness(int display_num, int value);
-void set_color_contrast(int display_num, int value);
-void set_color_gamma(int display_num, int value);
-void set_color_tint(int display_num, int value);
+#include "util.h"
 
-void set_video_cache(int value);
-void set_hw_scale(int value);
-
-int get_color_brightness(int display_num);
-int get_color_contrast(int display_num);
-int get_color_gamma(int display_num);
-int get_color_tint(int display_num);
-
-void raspi_cartridge_trigger_freeze(void);
-struct menu_item* menu_build_palette_options(int menu_id, struct menu_item* parent);
-void menu_build_machine(struct menu_item* parent);
+char *archdep_default_resource_file_name(void) {
+  return util_concat(archdep_boot_path(), "/vice.ini", NULL);
+}

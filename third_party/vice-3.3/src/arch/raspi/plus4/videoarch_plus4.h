@@ -1,5 +1,5 @@
 /*
- * menu_vic20.h
+ * videoarch_vic20.h
  *
  * Written by
  *  Randy Rossi <randy.rossi@gmail.com>
@@ -24,21 +24,8 @@
  *
  */
 
-unsigned long calculate_timing(double fps);
+#include "arch/raspi/videoarch.h"
 
-void set_color_brightness(int display_num, int value);
-void set_color_contrast(int display_num, int value);
-void set_color_gamma(int display_num, int value);
-void set_color_tint(int display_num, int value);
-
-void set_video_cache(int value);
-void set_hw_scale(int value);
-
-int get_color_brightness(int display_num);
-int get_color_contrast(int display_num);
-int get_color_gamma(int display_num);
-int get_color_tint(int display_num);
-
-void raspi_cartridge_trigger_freeze(void);
-struct menu_item* menu_build_palette_options(int menu_id, struct menu_item* parent);
-void menu_build_machine(struct menu_item* parent);
+void set_refresh_rate(int timing, struct video_canvas_s *canvas);
+void set_video_font(void);
+unsigned int *raspi_get_palette(int index);

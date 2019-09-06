@@ -18,75 +18,13 @@
 #include "fbl.h"
 
 #if defined(RASPI_C64)
-int dflt_bootStatNum = 19;
-
-int dflt_bootStatWhat[] = {
-    BOOTSTAT_WHAT_STAT, BOOTSTAT_WHAT_STAT, BOOTSTAT_WHAT_STAT,
-    BOOTSTAT_WHAT_STAT, BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL,
-    BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL,
-    BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL,
-    BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL,
-    BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL,
-    BOOTSTAT_WHAT_FAIL,
-};
-
-const char *dflt_bootStatFile[] = {
-    "kernal",           "basic",   "chargen",    "d1541II",  "rpi_pos.vkm",
-    "fliplist-C64.vfl", "mps803",  "mps803.vpl", "nl10-cbm", "1520.vpl",
-    "dos1540",          "dos1570", "dos2000",
-    "dos4000",          "dos2031", "dos2040",    "dos3040",  "dos4040",
-    "dos1001",
-};
-int dflt_bootStatSize[] = {8192, 8192, 4096, 16384, 0, 0, 0, 0, 0, 0, 0,
-                           0,    0,    0,    0,     0, 0, 0, 0};
+#include "bootstat_c64.h"
 #elif defined(RASPI_C128)
-int dflt_bootStatNum = 21;
-
-int dflt_bootStatWhat[] = {
-    BOOTSTAT_WHAT_STAT, BOOTSTAT_WHAT_STAT, BOOTSTAT_WHAT_STAT,
-    BOOTSTAT_WHAT_STAT, BOOTSTAT_WHAT_STAT, BOOTSTAT_WHAT_STAT,
-    BOOTSTAT_WHAT_STAT, BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL,
-    BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL,
-    BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL,
-    BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL,
-    BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL,
-    BOOTSTAT_WHAT_FAIL,
-};
-
-const char *dflt_bootStatFile[] = {
-    "kernal",     "kernal64", "basic64",    "basichi", "basiclo",
-    "chargen",    "d1541II",  "rpi_pos.vkm",
-    "fliplist-C128.vfl", "mps803",  "mps803.vpl", "nl10-cbm", "1520.vpl",
-    "dos1540",          "dos1570", "dos2000",
-    "dos4000",          "dos2031", "dos2040",    "dos3040",  "dos4040",
-    "dos1001",
-};
-int dflt_bootStatSize[] = {16384, 8192, 8192, 16384, 16384,
-                           4096, 16384, 0, 0, 0, 0, 0, 0, 0,
-                           0,    0,    0,    0,     0, 0, 0, 0};
-
+#include "bootstat_c128.h"
 #elif defined(RASPI_VIC20)
-int dflt_bootStatNum = 19;
-
-int dflt_bootStatWhat[] = {
-    BOOTSTAT_WHAT_STAT, BOOTSTAT_WHAT_STAT, BOOTSTAT_WHAT_STAT,
-    BOOTSTAT_WHAT_STAT, BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL,
-    BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL,
-    BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL,
-    BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL,
-    BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL, BOOTSTAT_WHAT_FAIL,
-    BOOTSTAT_WHAT_FAIL,
-};
-
-const char *dflt_bootStatFile[] = {
-    "kernal",           "basic",   "chargen",    "d1541II",  "rpi_pos.vkm",
-    "fliplist-C64.vfl", "mps803",  "mps803.vpl", "nl10-cbm", "1520.vpl",
-    "dos1540",          "dos1570", "dos2000",
-    "dos4000",          "dos2031", "dos2040",    "dos3040",  "dos4040",
-    "dos1001",
-};
-int dflt_bootStatSize[] = {8192, 8192, 4096, 16384, 0, 0, 0, 0, 0, 0, 0,
-                           0,    0,    0,    0,     0, 0, 0, 0};
+#include "bootstat_vic20.h"
+#elif defined(RASPI_PLUS4)
+#include "bootstat_plus4.h"
 #else
   #error Unknown RASPI_ variant
 #endif
@@ -260,6 +198,10 @@ void ViceStdioApp::InitBootStat() {
   fp = fopen("/C128/bootstat.txt", "r");
 #elif defined(RASPI_VIC20)
   fp = fopen("/VIC20/bootstat.txt", "r");
+#elif defined(RASPI_PLUS4)
+  fp = fopen("/PLUS4/bootstat.txt", "r");
+#else
+  #error Unknown RASPI_ variant
 #endif
 
   if (fp == NULL) {

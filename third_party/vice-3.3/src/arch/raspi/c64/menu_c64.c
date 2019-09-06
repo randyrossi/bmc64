@@ -108,3 +108,10 @@ struct menu_item* menu_build_palette_options(int menu_id, struct menu_item* pare
   strcpy(palette_item->choices[4], "Pepto-Pal");
   return palette_item;
 }
+
+void menu_build_machine(struct menu_item* parent) {
+  struct menu_item* roms_parent = ui_menu_add_folder(parent, "ROMs...");
+  ui_menu_add_button(MENU_LOAD_KERNAL, roms_parent, "Load Kernal ROM...");
+  ui_menu_add_button(MENU_LOAD_BASIC, roms_parent, "Load Basic ROM...");
+  ui_menu_add_button(MENU_LOAD_CHARGEN, roms_parent, "Load Chargen ROM...");
+}

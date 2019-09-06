@@ -61,6 +61,9 @@ struct CanvasState canvas_state[2];
 struct video_canvas_s *vdc_canvas;
 struct video_canvas_s *vic_canvas;
 
+// NOTE: For Plus/4, the vic_* variables are actually ted.
+// Maybe rename to pri_?
+
 static int vdc_canvas_index;
 static int vic_canvas_index;
 
@@ -114,17 +117,6 @@ extern int pending_emu_quick_func;
 
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
-// Draw the src buffer into the dst buffer.
-void draw(uint8_t *src, int srcw, int srch, int src_pitch, uint8_t *dst,
-          int dst_pitch, int dst_off_x, int dst_off_y) {
-  int y;
-  for (y = 0; y < srch; y++) {
-    int p1 = dst_off_x + (y + dst_off_y) * dst_pitch;
-    int yp = y * src_pitch;
-    memcpy(dst + p1, src + yp, srcw);
-  }
-}
-
 int is_vic(struct video_canvas_s *canvas) {
   return canvas == vic_canvas;
 }
@@ -160,19 +152,21 @@ int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
 
   if (is_vic(canvas)) {
     layer = FB_LAYER_VIC;
+    for (int i = 0; i < p->num_entries; i++) {
+      circle_set_palette_fbl(layer, i,
+                     COLOR16(p->entries[i].red, p->entries[i].green,
+                             p->entries[i].blue));
+    }
   } else {
     layer = FB_LAYER_VDC;
-  }
-
-  for (int i = 0; i < 16; i++) {
-    int j = i;
-    if (layer == FB_LAYER_VDC) {
-       j = vdc_map[i];
-    }
-    circle_set_palette_fbl(layer, i,
+    for (int i = 0; i < 16; i++) {
+      int j = vdc_map[i];
+      circle_set_palette_fbl(layer, i,
                      COLOR16(p->entries[j].red, p->entries[j].green,
                              p->entries[j].blue));
+    }
   }
+
   circle_update_palette_fbl(layer);
 }
 
@@ -222,7 +216,6 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
      int timing = circle_get_machine_timing();
      set_refresh_rate(timing, canvas);
      vic_first_refresh = 1;
-     set_video_font();
      vic_canvas = canvas;
      vic_canvas_index = canvas_num;
      video_freq = canvas->refreshrate * video_tick_inc;
@@ -341,6 +334,11 @@ static struct video_canvas_s *video_canvas_create_vic(
     *height = 284;
     canvas_state[vic_canvas_index].gfx_w = 22*8*2;
     canvas_state[vic_canvas_index].gfx_h = 23*8;
+  } else if (machine_class == VICE_MACHINE_PLUS4) {
+    *width = 384;
+    *height = 288;
+    canvas_state[vic_canvas_index].gfx_w = 40*8;
+    canvas_state[vic_canvas_index].gfx_h = 25*8;
   } else {
     assert(machine_class == VICE_MACHINE_C64 ||
            machine_class == VICE_MACHINE_C128);
@@ -365,6 +363,16 @@ static struct video_canvas_s *video_canvas_create_vic(
     } else {
         canvas_state[vic_canvas_index].max_border_w = 96;
         canvas_state[vic_canvas_index].max_border_h = 48;
+    }
+  } else if (machine_class == VICE_MACHINE_PLUS4) {
+    if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
+        timing == MACHINE_TIMING_NTSC_HDMI ||
+        timing == MACHINE_TIMING_NTSC_CUSTOM) {
+        canvas_state[vic_canvas_index].max_border_w = 32;
+        canvas_state[vic_canvas_index].max_border_h = 16;
+    } else {
+        canvas_state[vic_canvas_index].max_border_w = 32;
+        canvas_state[vic_canvas_index].max_border_h = 40;
     }
   } else {
     assert(machine_class == VICE_MACHINE_C64 ||
@@ -434,8 +442,8 @@ void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
         resources_set_int("WarpMode", 1);
         raspi_boot_warp = 1;
         vic_first_refresh = 0;
-
      }
+        set_video_font(); // !!! FIX THIS
   } else {
      if (vdc_first_refresh == 1) {
         // Nothing to do.  Consider removing.
@@ -690,7 +698,8 @@ void circle_emu_quick_func_interrupt(int button_assignment) {
 // Called by our special hook in vice to load palettes from
 // memory.
 palette_t *raspi_video_load_palette(int num_entries, char *name) {
-  palette_t *palette = palette_create(16, NULL);
+printf ("RANDY PALETTE %d\n",num_entries);
+  palette_t *palette = palette_create(num_entries, NULL);
   unsigned int *pal;
   // RASPI2 is for VDC
   if (strcmp(name, "RASPI2") == 0) {

@@ -74,7 +74,10 @@ int mui_init(void) { return 0; }
 int petui_init_early(void) { return 0; }
 int petui_init(void) { return 0; }
 int plus4ui_init_early(void) { return 0; }
-int plus4ui_init(void) { return 0; }
+int plus4ui_init(void) {
+  ui_init_menu();
+  return 0;
+}
 int scpu64ui_init_early(void) { return 0; }
 int scpu64ui_init(void) { return 0; }
 int ui_cmdline_options_init(void) { return 0; }

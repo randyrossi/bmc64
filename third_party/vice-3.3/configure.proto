@@ -4252,6 +4252,7 @@ AC_OUTPUT([Makefile
            src/arch/raspi/c64/Makefile
            src/arch/raspi/c128/Makefile
            src/arch/raspi/vic20/Makefile
+           src/arch/raspi/plus4/Makefile
            src/arch/sdl/Makefile
            src/arch/sdl/qnx4/Makefile
            src/arch/sdl/sortix-files/Makefile

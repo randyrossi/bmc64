@@ -9,7 +9,7 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
   * No shutdown sequence required, just power off
   * High compatibility thanks to VICE
   * Can wire real Commodore/Atari Joysticks via GPIO (Config 1 or 2)
-  * Can wire real Commodore Keyboad via GPIO (Config 2)
+  * Can wire real Commodore Keyboard via GPIO (Config 2)
   * Keyrah friendly
 
 # Limitations

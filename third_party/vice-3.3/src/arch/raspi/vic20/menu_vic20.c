@@ -106,3 +106,36 @@ struct menu_item* menu_build_palette_options(int menu_id, struct menu_item* pare
   strcpy(palette_item->choices[3], "Mike-Pal");
   return palette_item;
 }
+
+void menu_build_machine(struct menu_item* parent) {
+  struct menu_item* roms_parent = ui_menu_add_folder(parent, "ROMs...");
+  ui_menu_add_button(MENU_LOAD_KERNAL, roms_parent, "Load Kernal ROM...");
+  ui_menu_add_button(MENU_LOAD_BASIC, roms_parent, "Load Basic ROM...");
+  ui_menu_add_button(MENU_LOAD_CHARGEN, roms_parent, "Load Chargen ROM...");
+
+  struct menu_item* mem_parent = ui_menu_add_folder(parent, "Memory");
+
+  int block_value;
+  int blocks;
+  resources_get_int("RAMBlock0", &block_value);
+  blocks = block_value;
+  resources_get_int("RAMBlock1", &block_value);
+  blocks |= (block_value << 1);
+  resources_get_int("RAMBlock2", &block_value);
+  blocks |= (block_value << 2);
+  resources_get_int("RAMBlock3", &block_value);
+  blocks |= (block_value << 3);
+  resources_get_int("RAMBlock5", &block_value);
+  blocks |= (block_value << 5);
+
+  ui_menu_add_toggle(MENU_VIC20_MEMORY_3K, mem_parent,
+                                         "3Kb ($0400)", blocks & VIC20_BLOCK_0 ? 1: 0);
+  ui_menu_add_toggle(MENU_VIC20_MEMORY_8K_2000, mem_parent,
+                                         "8kb ($2000)", blocks & VIC20_BLOCK_1 ? 1: 0);
+  ui_menu_add_toggle(MENU_VIC20_MEMORY_8K_4000, mem_parent,
+                                         "8kb ($4000)", blocks & VIC20_BLOCK_2 ? 1 : 0);
+  ui_menu_add_toggle(MENU_VIC20_MEMORY_8K_6000, mem_parent,
+                                         "8kb ($6000)", blocks & VIC20_BLOCK_3 ? 1 : 0);
+  ui_menu_add_toggle(MENU_VIC20_MEMORY_8K_A000, mem_parent,
+                                         "8kb ($A000)", blocks & VIC20_BLOCK_5 ? 1 : 0);
+}

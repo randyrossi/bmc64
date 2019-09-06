@@ -20,6 +20,7 @@ cd third_party/vice-3.3
 make x64
 make x128
 make xvic
+make xplus4
 cd ../..
 
 make clean
@@ -33,3 +34,7 @@ cp $KERNEL ${KERNEL}.c128
 make clean
 BOARD=$BOARD make -f Makefile-VIC20
 cp $KERNEL ${KERNEL}.vic20
+
+make clean
+BOARD=$BOARD make -f Makefile-Plus4
+cp $KERNEL ${KERNEL}.plus4

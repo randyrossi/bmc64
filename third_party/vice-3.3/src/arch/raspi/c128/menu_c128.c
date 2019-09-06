@@ -153,3 +153,13 @@ void column4080_key_toggled(void) {
   c40_80_column_item->value = v;
   overlay_40_80_columns_changed(v);
 }
+
+void menu_build_machine(struct menu_item* parent) {
+  struct menu_item* roms_parent = ui_menu_add_folder(parent, "ROMs...");
+  ui_menu_add_button(MENU_C128_LOAD_KERNAL, roms_parent, "Load C128 Kernal ROM...");
+  ui_menu_add_button(MENU_C128_LOAD_BASIC_HI, roms_parent, "Load C128 Basic HI ROM...");
+  ui_menu_add_button(MENU_C128_LOAD_BASIC_LO, roms_parent, "Load C128 Basic LO ROM...");
+  ui_menu_add_button(MENU_C128_LOAD_CHARGEN, roms_parent, "Load C128 Chargen ROM...");
+  ui_menu_add_button(MENU_C128_LOAD_64_KERNAL, roms_parent, "Load C64 Kernal ROM...");
+  ui_menu_add_button(MENU_C128_LOAD_64_BASIC, roms_parent, "Load C64 Basic ROM...");
+}

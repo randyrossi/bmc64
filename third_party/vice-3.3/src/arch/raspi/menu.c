@@ -416,6 +416,10 @@ static void show_about() {
     snprintf (title, 15, "%s%s %s", "BMVIC20", VARIANT_STRING, VERSION_STRING);
     strncpy (desc, "A Bare Metal VIC20 Emulator", 31);
     break;
+  case VICE_MACHINE_PLUS4:
+    snprintf (title, 15, "%s%s %s", "BMPLUS4", VARIANT_STRING, VERSION_STRING);
+    strncpy (desc, "A Bare Metal PLUS/4 Emulator", 31);
+    break;
   default:
     strncpy (title, "ERROR", 15);
     strncpy (desc, "Unknown Emulator", 31);
@@ -671,6 +675,9 @@ static int save_settings() {
   case VICE_MACHINE_VIC20:
     fp = fopen("/settings-vic20.txt", "w");
     break;
+  case VICE_MACHINE_PLUS4:
+    fp = fopen("/settings-plus4.txt", "w");
+    break;
   default:
     printf("ERROR: Unhandled machine\n");
     return 1;
@@ -843,6 +850,9 @@ static void load_settings() {
     break;
   case VICE_MACHINE_VIC20:
     fp = fopen("/settings-vic20.txt", "r");
+    break;
+  case VICE_MACHINE_PLUS4:
+    fp = fopen("/settings-plus4.txt", "r");
     break;
   default:
     printf("ERROR: Unhandled machine\n");
@@ -2253,12 +2263,12 @@ static void set_hotkey_choices(struct menu_item *item) {
   item->choice_ints[HOTKEY_CHOICE_PIP_SWAP] = BTN_ASSIGN_PIP_SWAP;
   item->choice_ints[HOTKEY_CHOICE_40_80_COLUMN] = BTN_ASSIGN_40_80_COLUMN;
 
-  if (machine_class != VICE_MACHINE_C64 && machine_class != VICE_MACHINE_C128) {
+  if (machine_class == VICE_MACHINE_VIC20) {
      item->choice_disabled[HOTKEY_CHOICE_SWAP_PORTS] = 1;
      item->choice_disabled[HOTKEY_CHOICE_CART_FREEZE] = 1;
   }
 
-  if ( machine_class != VICE_MACHINE_C128) {
+  if (machine_class != VICE_MACHINE_C128) {
      item->choice_disabled[HOTKEY_CHOICE_ACTIVE_DISPLAY] = 1;
      item->choice_disabled[HOTKEY_CHOICE_PIP_LOCATION] = 1;
      item->choice_disabled[HOTKEY_CHOICE_PIP_SWAP] = 1;
@@ -2270,6 +2280,7 @@ void build_menu(struct menu_item *root) {
   struct menu_item *parent;
   struct menu_item *video_parent;
   struct menu_item *drive_parent;
+  struct menu_item *machine_parent;
   struct menu_item *tape_parent;
   struct menu_item *child;
   int dev;
@@ -2300,6 +2311,9 @@ void build_menu(struct menu_item *root) {
     break;
   case VICE_MACHINE_VIC20:
     strcpy(current_dir_names[DIR_ROMS], "/VIC20");
+    break;
+  case VICE_MACHINE_PLUS4:
+    strcpy(current_dir_names[DIR_ROMS], "/PLUS4");
     break;
   default:
     break;
@@ -2334,25 +2348,10 @@ void build_menu(struct menu_item *root) {
 
   ui_menu_add_divider(root);
 
-  parent = ui_menu_add_folder(root, "ROMs...");
-  if (machine_class == VICE_MACHINE_VIC20 ||
-         machine_class == VICE_MACHINE_C64) {
-     ui_menu_add_button(MENU_LOAD_KERNAL, parent, "Load Kernal ROM...");
-     ui_menu_add_button(MENU_LOAD_BASIC, parent, "Load Basic ROM...");
-     ui_menu_add_button(MENU_LOAD_CHARGEN, parent, "Load Chargen ROM...");
-  } else if (machine_class == VICE_MACHINE_C128) {
-     ui_menu_add_button(MENU_C128_LOAD_KERNAL, parent, "Load C128 Kernal ROM...");
-     ui_menu_add_button(MENU_C128_LOAD_BASIC_HI, parent, "Load C128 Basic HI ROM...");
-     ui_menu_add_button(MENU_C128_LOAD_BASIC_LO, parent, "Load C128 Basic LO ROM...");
-     ui_menu_add_button(MENU_C128_LOAD_CHARGEN, parent, "Load C128 Chargen ROM...");
-     ui_menu_add_button(MENU_C128_LOAD_64_KERNAL, parent, "Load C64 Kernal ROM...");
-     ui_menu_add_button(MENU_C128_LOAD_64_BASIC, parent, "Load C64 Basic ROM...");
-  }
-
-  ui_menu_add_divider(root);
-
   ui_menu_add_button(MENU_AUTOSTART, root, "Autostart Prg/Disk...");
 
+  machine_parent = ui_menu_add_folder(root, "Machine");
+    menu_build_machine(machine_parent);
 
   drive_parent = ui_menu_add_folder(root, "Drives");
 
@@ -2529,7 +2528,7 @@ void build_menu(struct menu_item *root) {
   } else {
      defaultHBorderTrim = DEFAULT_VICII_H_BORDER_TRIM;
      defaultVBorderTrim = DEFAULT_VICII_V_BORDER_TRIM;
-     defaultAspect = DEFAULT_VIC_ASPECT;
+     defaultAspect = DEFAULT_VICII_ASPECT;
   }
 
   h_center_item_0 =
@@ -2612,34 +2611,6 @@ void build_menu(struct menu_item *root) {
   // Filter on by default
   child = sid_filter_item =
       ui_menu_add_toggle(MENU_SID_FILTER, parent, "Sid Filter", 0);
-
-  if (machine_class == VICE_MACHINE_VIC20) {
-     parent = ui_menu_add_folder(root, "Memory");
-
-     int block_value;
-     int blocks;
-     resources_get_int("RAMBlock0", &block_value);
-     blocks = block_value;
-     resources_get_int("RAMBlock1", &block_value);
-     blocks |= (block_value << 1);
-     resources_get_int("RAMBlock2", &block_value);
-     blocks |= (block_value << 2);
-     resources_get_int("RAMBlock3", &block_value);
-     blocks |= (block_value << 3);
-     resources_get_int("RAMBlock5", &block_value);
-     blocks |= (block_value << 5);
-
-     ui_menu_add_toggle(MENU_VIC20_MEMORY_3K, parent,
-                                         "3Kb ($0400)", blocks & VIC20_BLOCK_0 ? 1: 0);
-     ui_menu_add_toggle(MENU_VIC20_MEMORY_8K_2000, parent,
-                                         "8kb ($2000)", blocks & VIC20_BLOCK_1 ? 1: 0);
-     ui_menu_add_toggle(MENU_VIC20_MEMORY_8K_4000, parent,
-                                         "8kb ($4000)", blocks & VIC20_BLOCK_2 ? 1 : 0);
-     ui_menu_add_toggle(MENU_VIC20_MEMORY_8K_6000, parent,
-                                         "8kb ($6000)", blocks & VIC20_BLOCK_3 ? 1 : 0);
-     ui_menu_add_toggle(MENU_VIC20_MEMORY_8K_A000, parent,
-                                         "8kb ($A000)", blocks & VIC20_BLOCK_5 ? 1 : 0);
-  }
 
   parent = ui_menu_add_folder(root, "Keyboard");
   child = keyboard_type_item = ui_menu_add_multiple_choice(

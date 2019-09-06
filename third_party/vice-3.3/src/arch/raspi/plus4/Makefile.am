@@ -1,4 +1,4 @@
-# Makefile.am for the raspi version of `libarch.a'.
+# Makefile.am for the raspi version of `libarch_plus4.a'.
 
 AM_CPPFLAGS = \
 	@ARCH_INCLUDES@ \
@@ -28,49 +28,14 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/imagecontents \
 	-I$(top_srcdir)/src
 
-SUBDIRS = c64 vic20 c128 plus4
+noinst_LIBRARIES = libarch_plus4.a
 
-noinst_LIBRARIES = libarch.a
-
-libarch_a_SOURCES = \
-	archdep.h \
-	archdep.c \
-	joy.h \
-	joy.c \
-	kbd.h \
-	kbd.c \
-	keycodes.h \
-	keycodes.c \
-	mousedrv.h \
-	mousedrv.c \
-	missing.c \
-	ui.h \
-	ui.c \
-	videoarch.h \
-	videoarch.c \
-	menu.h \
-	menu.c \
-	menu_keyset.h \
-	menu_keyset.c \
-	menu_key_binding.h \
-	menu_key_binding.c \
-	menu_usb.h \
-	menu_usb.c \
-	menu_timing.h \
-	menu_timing.c \
-	menu_tape_osd.h \
-	menu_tape_osd.c \
-	menu_cart_osd.h \
-	menu_cart_osd.c \
-	menu_confirm_osd.h \
-	menu_confirm_osd.c \
-	text.h \
-	text.c \
-	demo.h \
-	demo.c \
-	overlay.c \
-	overlay.h \
-	raspi_util.c \
-	raspi_util.h \
-	font.c \
-	font.h
+libarch_plus4_a_SOURCES = \
+	archdep_plus4.h \
+	archdep_plus4.c \
+	videoarch_plus4.h \
+	videoarch_plus4.c \
+	virtual_keyboard_plus4.h \
+	virtual_keyboard_plus4.c \
+	menu_plus4.h \
+	menu_plus4.c

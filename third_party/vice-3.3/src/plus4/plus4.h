@@ -28,14 +28,26 @@
 #ifndef VICE_PLUS4_H
 #define VICE_PLUS4_H
 
+#ifdef RASPI_COMPILE
+extern int circle_cycles_per_sec();
+#endif
+
+#ifdef RASPI_COMPILE
+#define PLUS4_PAL_CYCLES_PER_SEC  (circle_cycles_per_sec())
+#else
 #define PLUS4_PAL_CYCLES_PER_SEC  1773447
+#endif
 #define PLUS4_PAL_CYCLES_PER_LINE 114
 #define PLUS4_PAL_SCREEN_LINES    312
 #define PLUS4_PAL_CYCLES_PER_RFSH (PLUS4_PAL_SCREEN_LINES * PLUS4_PAL_CYCLES_PER_LINE)
 #define PLUS4_PAL_RFSH_PER_SEC    (1.0 / ((double)PLUS4_PAL_CYCLES_PER_RFSH \
                                           / (double)PLUS4_PAL_CYCLES_PER_SEC))
 
+#ifdef RASPI_COMPILE
+#define PLUS4_NTSC_CYCLES_PER_SEC  (circle_cycles_per_sec())
+#else
 #define PLUS4_NTSC_CYCLES_PER_SEC  1789772
+#endif
 #define PLUS4_NTSC_CYCLES_PER_LINE 114
 #define PLUS4_NTSC_SCREEN_LINES    262
 #define PLUS4_NTSC_CYCLES_PER_RFSH (PLUS4_NTSC_SCREEN_LINES * PLUS4_NTSC_CYCLES_PER_LINE)

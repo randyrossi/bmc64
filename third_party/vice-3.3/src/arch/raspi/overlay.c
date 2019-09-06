@@ -576,9 +576,10 @@ static void overlay_draw_virtual_keyboard() {
      ui_draw_rect_buf(vkbd[i].x+cx, vkbd[i].y+cy, vkbd[i].w, vkbd[i].h,
                       color, 0 /* fill */, overlay_buf, overlay_buf_pitch);
      if (i == vkbd_cursor) {
-        // Thicker on the inside for cursor
-        ui_draw_rect_buf(vkbd[i].x+cx+1, vkbd[i].y+cy+1, vkbd[i].w-2, vkbd[i].h-2,
-                      color, 0 /* fill */, overlay_buf, overlay_buf_pitch);
+        // Fill for cursor
+        ui_draw_rect_buf(vkbd[i].x+cx+1, vkbd[i].y+cy+1,
+                         vkbd[i].w-2, vkbd[i].h-2,
+                         color, 1 /* fill */, overlay_buf, overlay_buf_pitch);
      }
 
      int labelx = (vkbd[i].x+cx + vkbd[i].w / 2);

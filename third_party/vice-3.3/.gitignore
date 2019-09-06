@@ -302,6 +302,8 @@ src/video/Makefile
 src/video/libvideo.a
 src/c128/libc128.a
 src/c64/libc64c128.a
+src/plus4/libplus4.a
+src/plus4/Makefile
 src/vdc/libvdc.a
 src/vic20/cart/libmascuerade.a
 src/vic20/cart/libvic20cart.a
@@ -312,6 +314,8 @@ src/arch/raspi/c64/libarch_c64.a
 src/arch/raspi/c64/.deps
 src/arch/raspi/vic20/libarch_vic20.a
 src/arch/raspi/vic20/.deps
+src/arch/raspi/plus4/libarch_plus4.a
+src/arch/raspi/plus4/.deps
 src/scpu64/libscpu64.a
 src/c64/libc64scpu64.a
 src/viciisc/libviciisc.a

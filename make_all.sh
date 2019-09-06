@@ -150,6 +150,7 @@ cd ..
 make x64
 make x128
 make xvic
+make xplus4
 cd ../..
 echo ==============================================================
 echo Link errors above are expected

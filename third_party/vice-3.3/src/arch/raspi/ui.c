@@ -199,15 +199,12 @@ static void ui_draw_char(uint8_t c, int pos_x, int pos_y, int color,
   }
 
   if (translate) {
-     // Use translation table, which assumes chars are
-     // relative to pos 2048.
-     uint8_t* font = video_font + 0x800;
-     font_pos = &(font[video_font_translate[c]]);
+     // Use translation table.
+     font_pos = &(video_font[video_font_translate[c]]);
   } else {
      // Use raw codes, which assumes chars are relative
      // to 0
-     uint8_t* font = video_font;
-     font_pos = &(font[c*8]);
+     font_pos = &(video_font[c*8]);
   }
   draw_pos = &(dst[pos_x + pos_y * dst_pitch]);
 
