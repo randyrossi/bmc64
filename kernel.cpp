@@ -671,6 +671,7 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
   CGPIOPin **js_pins = NULL;
   CGPIOPin *js_selector = NULL;
   int port = 0;
+  int devd = 0;
   int ui_activated = circle_ui_activated();
 
   // If ui is activated, don't bail if port assignment can't be done
@@ -678,6 +679,16 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
   // function in the ui even if the control port is not assigned to be
   // gpio.
   if (device == 0) {
+    if (joydevs[0].device == JOYDEV_GPIO_0) {
+      port = joydevs[0].port;
+      devd = JOYDEV_GPIO_0;
+    } else if (joydevs[1].device == JOYDEV_GPIO_0) {
+      port = joydevs[1].port;
+      devd = JOYDEV_GPIO_0;
+    } else if (!ui_activated) {
+      return;
+    }
+
     js_prev = js_prev_0;
     switch (gpioConfig) {
        case 0:
@@ -693,15 +704,17 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
        default:
          assert(false);
     }
-
-    if (joydevs[0].device == JOYDEV_GPIO_0) {
+  } else {
+    if (joydevs[0].device == JOYDEV_GPIO_1) {
       port = joydevs[0].port;
-    } else if (joydevs[1].device == JOYDEV_GPIO_0) {
+      devd = JOYDEV_GPIO_1;
+    } else if (joydevs[1].device == JOYDEV_GPIO_1) {
       port = joydevs[1].port;
+      devd = JOYDEV_GPIO_1;
     } else if (!ui_activated) {
       return;
     }
-  } else {
+
     js_prev = js_prev_1;
     switch (gpioConfig) {
        case 0:
@@ -713,14 +726,6 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
          break;
        default:
          assert(false);
-    }
-
-    if (joydevs[0].device == JOYDEV_GPIO_1) {
-      port = joydevs[0].port;
-    } else if (joydevs[1].device == JOYDEV_GPIO_1) {
-      port = joydevs[1].port;
-    } else if (!ui_activated) {
-      return;
     }
   }
 
@@ -780,7 +785,7 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
     if (js_left == LOW) val |= 0x04;
     if (js_right == LOW) val |= 0x08;
     if (js_fire == LOW) val |= 0x10;
-    circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, port, val);
+    circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, port, devd, val);
   }
 
   if (gpioConfig == 1) {

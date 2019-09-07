@@ -115,6 +115,7 @@
 #define PENDING_EMU_JOY_TYPE_AND 1
 #define PENDING_EMU_JOY_TYPE_OR 2
 
+#define JOYDEV_NUM_JOYDEVS 21
 #define JOYDEV_NONE 0
 #define JOYDEV_NUMPAD 1
 #define JOYDEV_KEYSET1 2
@@ -202,9 +203,8 @@ extern void joy_set_gamepad_info(int num_pads, int num_buttons[2], int axes[2],
                                  int hats[2]);
 
 extern void circle_joy_usb(unsigned device, int value);
-extern void circle_emu_joy_interrupt(int type, int port, int value);
+extern void circle_emu_joy_interrupt(int type, int port, int device, int value);
 
-extern int circle_joy_need_gpio(int device);
 extern void circle_usb_pref(int device, int *usb_pref, int *x_axis, int *y_axis,
                             float *x_thresh, float *y_thresh);
 extern int circle_ui_activated(void);

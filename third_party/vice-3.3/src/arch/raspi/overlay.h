@@ -29,6 +29,8 @@
 
 #include <sys/types.h>
 
+#include "circle.h"
+
 #define OVERLAY_WIDTH 896
 #define OVERLAY_HEIGHT 240
 
@@ -37,7 +39,7 @@ extern uint8_t *overlay_buf;
 
 extern int vkbd_enabled;
 extern int vkbd_showing;
-extern int vkbd_press;
+extern int vkbd_press[JOYDEV_NUM_JOYDEVS];
 
 extern int overlay_dirty;
 
@@ -61,6 +63,6 @@ void vkbd_nav_left(void);
 void vkbd_nav_right(void);
 void vkbd_enable(void);
 void vkbd_disable(void);
-void vkbd_nav_press(int pressed);
+void vkbd_nav_press(int pressed, int device);
 void vkbd_sync_event(long key, int pressed);
 #endif

@@ -119,7 +119,7 @@ int vkbd_cursor;
 
 int vkbd_enabled;
 int vkbd_showing;
-int vkbd_press;
+int vkbd_press[JOYDEV_NUM_JOYDEVS];
 
 int vkbd_lshift_down;
 int vkbd_rshift_down;
@@ -742,7 +742,7 @@ void vkbd_nav_right(void) {
    overlay_draw_virtual_keyboard();
 }
 
-void vkbd_nav_press(int pressed) {
+void vkbd_nav_press(int pressed, int device) {
    vkbd_key_array vkbd = get_vkbd();
    if (vkbd[vkbd_cursor].toggle) {
       // Only toggle on the press
@@ -772,7 +772,7 @@ void vkbd_nav_press(int pressed) {
       }
       vkbd[vkbd_cursor].state = pressed;
    }
-   vkbd_press = pressed;
+   vkbd_press[device] = pressed;
    overlay_draw_virtual_keyboard();
 }
 

@@ -103,16 +103,25 @@ static int vdc_map[] = {0, 12, 6, 14, 5, 13, 11, 3, 2, 10, 8, 4, 9, 7, 15, 1};
 
 extern struct joydev_config joydevs[MAX_JOY_PORTS];
 
-int pending_emu_key_head = 0;
-int pending_emu_key_tail = 0;
-long pending_emu_key[16];
-int pending_emu_key_pressed[16];
+struct pending_emu_key_s {
+  int head;
+  int tail;
+  long key[16];
+  int pressed[16];
+};
 
-int pending_emu_joy_head = 0;
-int pending_emu_joy_tail = 0;
-int pending_emu_joy_value[128];
-int pending_emu_joy_port[128];
-int pending_emu_joy_type[128];
+struct pending_emu_key_s pending_emu_key;
+
+struct pending_emu_joy_s {
+  int head;
+  int tail;
+  int value[128];
+  int port[128];
+  int type[128];
+  int device[128];
+};
+
+struct pending_emu_joy_s pending_emu_joy;
 
 extern int pending_emu_quick_func;
 
@@ -568,63 +577,65 @@ void vsyncarch_postsync(void) {
 
   // Do key press/releases and joy latches on the main loop.
   circle_lock_acquire();
-  while (pending_emu_key_head != pending_emu_key_tail) {
-    int i = pending_emu_key_head & 0xf;
+  while (pending_emu_key.head != pending_emu_key.tail) {
+    int i = pending_emu_key.head & 0xf;
     reset_demo = 1;
     if (vkbd_enabled) {
       // Kind of nice to have virtual keyboard's state
       // stay in sync with changes happening from USB
       // key events.
-      vkbd_sync_event(pending_emu_key[i], pending_emu_key_pressed[i]);
+      vkbd_sync_event(pending_emu_key.key[i], pending_emu_key.pressed[i]);
     }
-    if (pending_emu_key_pressed[i]) {
-      keyboard_key_pressed(pending_emu_key[i]);
+    if (pending_emu_key.pressed[i]) {
+      keyboard_key_pressed(pending_emu_key.key[i]);
     } else {
-      keyboard_key_released(pending_emu_key[i]);
+      keyboard_key_released(pending_emu_key.key[i]);
     }
-    pending_emu_key_head++;
+    pending_emu_key.head++;
   }
 
-  while (pending_emu_joy_head != pending_emu_joy_tail) {
-    int i = pending_emu_joy_head & 0x7f;
+  while (pending_emu_joy.head != pending_emu_joy.tail) {
+    int i = pending_emu_joy.head & 0x7f;
     reset_demo = 1;
     if (vkbd_enabled) {
-      int value = pending_emu_joy_value[i];
-      switch (pending_emu_joy_type[i]) {
+      int value = pending_emu_joy.value[i];
+      int devd = pending_emu_joy.device[i];
+printf ("%d from %d\n",value,devd);
+      switch (pending_emu_joy.type[i]) {
       case PENDING_EMU_JOY_TYPE_ABSOLUTE:
         if (value & 0x1) vkbd_nav_up();
-        else if (value & 0x2 && !vkbd_press) vkbd_nav_down();
-        else if (value & 0x4 && !vkbd_press) vkbd_nav_left();
-        else if (value & 0x8 && !vkbd_press) vkbd_nav_right();
-        else if (value & 0x10 && !vkbd_press) vkbd_nav_press(1);
-        else if (!(value & 0x10) && vkbd_press) vkbd_nav_press(0);
+        else if (value & 0x2 && !vkbd_press[devd]) vkbd_nav_down();
+        else if (value & 0x4 && !vkbd_press[devd]) vkbd_nav_left();
+        else if (value & 0x8 && !vkbd_press[devd]) vkbd_nav_right();
+        else if (value & 0x10 && !vkbd_press[devd]) vkbd_nav_press(1, devd);
+        else if (!(value & 0x10) && vkbd_press[devd]) vkbd_nav_press(0, devd);
         break;
       }
     } else {
-      switch (pending_emu_joy_type[i]) {
+      switch (pending_emu_joy.type[i]) {
       case PENDING_EMU_JOY_TYPE_ABSOLUTE:
-        joystick_set_value_absolute(pending_emu_joy_port[i],
-                                  pending_emu_joy_value[i] & 0x1f);
-        joystick_set_potx((pending_emu_joy_value[i] & POTX_BIT_MASK) >> 5);
-        joystick_set_poty((pending_emu_joy_value[i] & POTY_BIT_MASK) >> 13);
+        joystick_set_value_absolute(pending_emu_joy.port[i],
+                                  pending_emu_joy.value[i] & 0x1f);
+        joystick_set_potx((pending_emu_joy.value[i] & POTX_BIT_MASK) >> 5);
+        joystick_set_poty((pending_emu_joy.value[i] & POTY_BIT_MASK) >> 13);
         break;
       case PENDING_EMU_JOY_TYPE_AND:
-        joystick_set_value_and(pending_emu_joy_port[i],
-                             pending_emu_joy_value[i] & 0x1f);
-        joystick_set_potx_and((pending_emu_joy_value[i] & POTX_BIT_MASK) >> 5);
-        joystick_set_poty_and((pending_emu_joy_value[i] & POTY_BIT_MASK) >> 13);
+        joystick_set_value_and(pending_emu_joy.port[i],
+                             pending_emu_joy.value[i] & 0x1f);
+        joystick_set_potx_and((pending_emu_joy.value[i] & POTX_BIT_MASK) >> 5);
+        joystick_set_poty_and((pending_emu_joy.value[i] & POTY_BIT_MASK) >> 13);
         break;
       case PENDING_EMU_JOY_TYPE_OR:
-        joystick_set_value_or(pending_emu_joy_port[i],
-                            pending_emu_joy_value[i] & 0x1f);
-        joystick_set_potx_or((pending_emu_joy_value[i] & POTX_BIT_MASK) >> 5);
-        joystick_set_poty_or((pending_emu_joy_value[i] & POTY_BIT_MASK) >> 13);
+        joystick_set_value_or(pending_emu_joy.port[i],
+                            pending_emu_joy.value[i] & 0x1f);
+        joystick_set_potx_or((pending_emu_joy.value[i] & POTX_BIT_MASK) >> 5);
+        joystick_set_poty_or((pending_emu_joy.value[i] & POTY_BIT_MASK) >> 13);
         break;
       default:
         break;
       }
     }
-    pending_emu_joy_head++;
+    pending_emu_joy.head++;
   }
   circle_lock_release();
 
@@ -666,29 +677,30 @@ void vsyncarch_sleep(unsigned long delay) {
 // queue a key for press/release for the main loop
 void circle_emu_key_interrupt(long key, int pressed) {
   circle_lock_acquire();
-  int i = pending_emu_key_tail & 0xf;
-  pending_emu_key[i] = key;
-  pending_emu_key_pressed[i] = pressed;
-  pending_emu_key_tail++;
+  int i = pending_emu_key.tail & 0xf;
+  pending_emu_key.key[i] = key;
+  pending_emu_key.pressed[i] = pressed;
+  pending_emu_key.tail++;
   circle_lock_release();
 }
 
 // Same as above except can call while already holding the lock
 void circle_emu_key_locked(long key, int pressed) {
-  int i = pending_emu_key_tail & 0xf;
-  pending_emu_key[i] = key;
-  pending_emu_key_pressed[i] = pressed;
-  pending_emu_key_tail++;
+  int i = pending_emu_key.tail & 0xf;
+  pending_emu_key.key[i] = key;
+  pending_emu_key.pressed[i] = pressed;
+  pending_emu_key.tail++;
 }
 
 // queue a joy latch change for the main loop
-void circle_emu_joy_interrupt(int type, int port, int value) {
+void circle_emu_joy_interrupt(int type, int port, int device, int value) {
   circle_lock_acquire();
-  int i = pending_emu_joy_tail & 0x7f;
-  pending_emu_joy_type[i] = type;
-  pending_emu_joy_port[i] = port;
-  pending_emu_joy_value[i] = value;
-  pending_emu_joy_tail++;
+  int i = pending_emu_joy.tail & 0x7f;
+  pending_emu_joy.type[i] = type;
+  pending_emu_joy.port[i] = port;
+  pending_emu_joy.device[i] = device;
+  pending_emu_joy.value[i] = value;
+  pending_emu_joy.tail++;
   circle_lock_release();
 }
 

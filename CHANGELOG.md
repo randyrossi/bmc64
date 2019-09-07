@@ -234,5 +234,8 @@
   * Added selection of IEC dir
   * Paint menus stacked on top of each other like they used to be
   * Fixed tape counter not updating properly (again)
-
-
+## 2.5
+  * Added Plus/4
+  * Added WaveShare Game HAT GPIO support
+  * Navigate virtual keyboard with GP even if not set in a port
+  * Navigate virtual keyboard with GP when GPIO banks 1 or 2 set to any port

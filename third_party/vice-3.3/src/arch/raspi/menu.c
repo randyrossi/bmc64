@@ -2782,8 +2782,8 @@ void build_menu(struct menu_item *root) {
   reset_confirm_item = ui_menu_add_toggle(MENU_RESET_CONFIRM, parent,
                                           "Confirm Reset from Emulator", 1);
 
-  gpio_config_item = ui_menu_add_multiple_choice(MENU_GPIO_CONFIG, parent,
-           "GPIO Config");
+  child = gpio_config_item =
+      ui_menu_add_multiple_choice(MENU_GPIO_CONFIG, parent, "GPIO Config");
      child->num_choices = 3;
      child->value = 0;
      strcpy(child->choices[0], "#1 (Nav+Joy)");

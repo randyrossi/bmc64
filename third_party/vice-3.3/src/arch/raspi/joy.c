@@ -31,6 +31,7 @@
 #include "menu.h"
 #include "menu_keyset.h"
 #include "ui.h"
+#include "overlay.h"
 
 #include "joyport/joystick.h"
 #include <stdio.h>
@@ -99,125 +100,126 @@ int joy_key_up(unsigned int device, int key) {
   }
 
   int port = joydevs[device].port;
-  if (joydevs[device].device == JOYDEV_NUMS_1) {
+  int devd = joydevs[device].device;
+  if (devd == JOYDEV_NUMS_1) {
     switch (key) {
     case KEYCODE_KP8:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x01);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x01);
       return 1;
     case KEYCODE_KP2:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x02);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x02);
       return 1;
     case KEYCODE_KP4:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x04);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x04);
       return 1;
     case KEYCODE_KP6:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x08);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x08);
       return 1;
     case KEYCODE_KP5:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x10);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x10);
       return 1;
     default:
       return 0;
     }
-  } else if (joydevs[device].device == JOYDEV_NUMS_2) {
+  } else if (devd == JOYDEV_NUMS_2) {
     switch (key) {
     case KEYCODE_KP9:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x01);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x01);
       return 1;
     case KEYCODE_KP3:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x02);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x02);
       return 1;
     case KEYCODE_KP7:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x04);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x04);
       return 1;
     case KEYCODE_KP1:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x08);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x08);
       return 1;
     case KEYCODE_KP0:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x10);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x10);
       return 1;
     default:
       return 0;
     }
-  } else if (joydevs[device].device == JOYDEV_CURS_SP ||
-             joydevs[device].device == JOYDEV_CURS_LC) {
+  } else if (devd == JOYDEV_CURS_SP ||
+             devd == JOYDEV_CURS_LC) {
     switch (key) {
     case KEYCODE_Up:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x01);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x01);
       return 1;
     case KEYCODE_Down:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x02);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x02);
       return 1;
     case KEYCODE_Left:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x04);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x04);
       return 1;
     case KEYCODE_Right:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x08);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x08);
       return 1;
     case KEYCODE_Space:
-      if (joydevs[device].device == JOYDEV_CURS_SP) {
-        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x10);
+      if (devd == JOYDEV_CURS_SP) {
+        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x10);
         return 1;
       }
       break;
     case KEYCODE_LeftControl:
-      if (joydevs[device].device == JOYDEV_CURS_LC) {
-        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x10);
+      if (devd == JOYDEV_CURS_LC) {
+        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x10);
         return 1;
       }
       break;
     default:
       return 0;
     }
-  } else if (joydevs[device].device == JOYDEV_KEYSET1) {
+  } else if (devd == JOYDEV_KEYSET1) {
     if (keyset_codes[0][KEYSET_UP] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x01);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x01);
       return 1;
     } else if (keyset_codes[0][KEYSET_DOWN] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x02);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x02);
       return 1;
     } else if (keyset_codes[0][KEYSET_LEFT] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x04);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x04);
       return 1;
     } else if (keyset_codes[0][KEYSET_RIGHT] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x08);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x08);
       return 1;
     } else if (keyset_codes[0][KEYSET_FIRE] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x10);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x10);
       return 1;
     } else if (keyset_codes[0][KEYSET_POTX] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~(pot_x_low_value << 5));
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, pot_x_high_value << 5);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~(pot_x_low_value << 5));
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, pot_x_high_value << 5);
       return 1;
     } else if (keyset_codes[0][KEYSET_POTY] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~(pot_y_low_value << 13));
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, pot_y_high_value << 13);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~(pot_y_low_value << 13));
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, pot_y_high_value << 13);
       return 1;
     }
     return 0;
-  } else if (joydevs[device].device == JOYDEV_KEYSET2) {
+  } else if (devd == JOYDEV_KEYSET2) {
     if (keyset_codes[1][KEYSET_UP] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x01);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x01);
       return 1;
     } else if (keyset_codes[1][KEYSET_DOWN] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x02);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x02);
       return 1;
     } else if (keyset_codes[1][KEYSET_LEFT] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x04);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x04);
       return 1;
     } else if (keyset_codes[1][KEYSET_RIGHT] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x08);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x08);
       return 1;
     } else if (keyset_codes[1][KEYSET_FIRE] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~0x10);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~0x10);
       return 1;
     } else if (keyset_codes[1][KEYSET_POTX] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~(pot_x_low_value << 5));
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, pot_x_high_value << 5);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~(pot_x_low_value << 5));
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, pot_x_high_value << 5);
       return 1;
     } else if (keyset_codes[1][KEYSET_POTY] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~(pot_y_low_value << 13));
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, pot_y_high_value << 13);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~(pot_y_low_value << 13));
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, pot_y_high_value << 13);
       return 1;
     }
   }
@@ -273,125 +275,126 @@ int joy_key_down(unsigned int device, int key) {
   }
 
   int port = joydevs[device].port;
-  if (joydevs[device].device == JOYDEV_NUMS_1) {
+  int devd = joydevs[device].device;
+  if (devd == JOYDEV_NUMS_1) {
     switch (key) {
     case KEYCODE_KP8:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x01);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x01);
       return 1;
     case KEYCODE_KP2:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x02);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x02);
       return 1;
     case KEYCODE_KP4:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x04);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x04);
       return 1;
     case KEYCODE_KP6:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x08);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x08);
       return 1;
     case KEYCODE_KP5:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x10);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x10);
       return 1;
     default:
       return 0;
     }
-  } else if (joydevs[device].device == JOYDEV_NUMS_2) {
+  } else if (devd == JOYDEV_NUMS_2) {
     switch (key) {
     case KEYCODE_KP9:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x01);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x01);
       return 1;
     case KEYCODE_KP3:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x02);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x02);
       return 1;
     case KEYCODE_KP7:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x04);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x04);
       return 1;
     case KEYCODE_KP1:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x08);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x08);
       return 1;
     case KEYCODE_KP0:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x10);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x10);
       return 1;
     default:
       return 0;
     }
-  } else if (joydevs[device].device == JOYDEV_CURS_SP ||
-             joydevs[device].device == JOYDEV_CURS_LC) {
+  } else if (devd == JOYDEV_CURS_SP ||
+             devd == JOYDEV_CURS_LC) {
     switch (key) {
     case KEYCODE_Up:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x01);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x01);
       return 1;
     case KEYCODE_Down:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x02);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x02);
       return 1;
     case KEYCODE_Left:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x04);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x04);
       return 1;
     case KEYCODE_Right:
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x08);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x08);
       return 1;
     case KEYCODE_Space:
-      if (joydevs[device].device == JOYDEV_CURS_SP) {
-        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x10);
+      if (devd == JOYDEV_CURS_SP) {
+        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x10);
         return 1;
       }
       break;
     case KEYCODE_LeftControl:
-      if (joydevs[device].device == JOYDEV_CURS_LC) {
-        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x10);
+      if (devd == JOYDEV_CURS_LC) {
+        circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x10);
         return 1;
       }
       break;
     default:
       return 0;
     }
-  } else if (joydevs[device].device == JOYDEV_KEYSET1) {
+  } else if (devd == JOYDEV_KEYSET1) {
     if (keyset_codes[0][KEYSET_UP] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x01);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x01);
       return 1;
     } else if (keyset_codes[0][KEYSET_DOWN] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x02);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x02);
       return 1;
     } else if (keyset_codes[0][KEYSET_LEFT] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x04);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x04);
       return 1;
     } else if (keyset_codes[0][KEYSET_RIGHT] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x08);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x08);
       return 1;
     } else if (keyset_codes[0][KEYSET_FIRE] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x10);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x10);
       return 1;
     } else if (keyset_codes[0][KEYSET_POTX] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~(pot_x_high_value << 5));
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, pot_x_low_value << 5);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~(pot_x_high_value << 5));
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, pot_x_low_value << 5);
       return 1;
     } else if (keyset_codes[0][KEYSET_POTY] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~(pot_y_high_value << 13));
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, pot_y_low_value << 13);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~(pot_y_high_value << 13));
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, pot_y_low_value << 13);
       return 1;
     }
     return 0;
-  } else if (joydevs[device].device == JOYDEV_KEYSET2) {
+  } else if (devd == JOYDEV_KEYSET2) {
     if (keyset_codes[1][KEYSET_UP] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x01);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x01);
       return 1;
     } else if (keyset_codes[1][KEYSET_DOWN] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x02);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x02);
       return 1;
     } else if (keyset_codes[1][KEYSET_LEFT] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x04);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x04);
       return 1;
     } else if (keyset_codes[1][KEYSET_RIGHT] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x08);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x08);
       return 1;
     } else if (keyset_codes[1][KEYSET_FIRE] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, 0x10);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, 0x10);
       return 1;
     } else if (keyset_codes[1][KEYSET_POTX] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~(pot_x_high_value << 5));
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, pot_x_low_value << 5);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~(pot_x_high_value << 5));
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, pot_x_low_value << 5);
       return 1;
     } else if (keyset_codes[1][KEYSET_POTY] == key) {
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, ~(pot_y_high_value << 13));
-      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, pot_y_low_value << 13);
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_AND, port, devd, ~(pot_y_high_value << 13));
+      circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_OR, port, devd, pot_y_low_value << 13);
       return 1;
     }
   }
@@ -404,16 +407,21 @@ int joy_key_down(unsigned int device, int key) {
 void circle_joy_usb(unsigned int device, int value) {
   if (device == 0 && joydevs[0].device == JOYDEV_USB_0) {
     circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, joydevs[0].port,
-                             value);
+                             JOYDEV_USB_0, value);
   } else if (device == 0 && joydevs[1].device == JOYDEV_USB_0) {
     circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, joydevs[1].port,
-                             value);
+                             JOYDEV_USB_0, value);
   } else if (device == 1 && joydevs[0].device == JOYDEV_USB_1) {
     circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, joydevs[0].port,
-                             value);
+                             JOYDEV_USB_1, value);
   } else if (device == 1 && joydevs[1].device == JOYDEV_USB_1) {
     circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, joydevs[1].port,
-                             value);
+                             JOYDEV_USB_1, value);
+  } else if (vkbd_enabled) {
+    // The port doesn't really matter here since this will not go to the
+    // emulator. The value is ignored.
+    circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, 0,
+                             device ? JOYDEV_USB_1 : JOYDEV_USB_0, value);
   }
 }
 
@@ -431,16 +439,6 @@ void joy_set_gamepad_info(int num_pads,
   joy_num_hats[1] = MIN(num_hats[1] , MAX_USB_HATS);
   joy_num_buttons[0] = MIN(num_buttons[0] , MAX_USB_BUTTONS);
   joy_num_buttons[1] = MIN(num_buttons[1] , MAX_USB_BUTTONS);
-}
-
-int circle_joy_need_gpio(int device) {
-  if (device == 0) {
-    return joydevs[0].device == JOYDEV_GPIO_0 ||
-           joydevs[1].device == JOYDEV_GPIO_0;
-  } else {
-    return joydevs[0].device == JOYDEV_GPIO_1 ||
-           joydevs[1].device == JOYDEV_GPIO_1;
-  }
 }
 
 void joystick_close(void) {}
