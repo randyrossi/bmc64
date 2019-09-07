@@ -40,6 +40,10 @@ extern uint8_t *overlay_buf;
 extern int vkbd_enabled;
 extern int vkbd_showing;
 extern int vkbd_press[JOYDEV_NUM_JOYDEVS];
+extern int vkbd_up[JOYDEV_NUM_JOYDEVS];
+extern int vkbd_down[JOYDEV_NUM_JOYDEVS];
+extern int vkbd_left[JOYDEV_NUM_JOYDEVS];
+extern int vkbd_right[JOYDEV_NUM_JOYDEVS];
 
 extern int overlay_dirty;
 

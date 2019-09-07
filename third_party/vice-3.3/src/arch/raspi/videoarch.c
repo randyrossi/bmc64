@@ -600,14 +600,35 @@ void vsyncarch_postsync(void) {
     if (vkbd_enabled) {
       int value = pending_emu_joy.value[i];
       int devd = pending_emu_joy.device[i];
-printf ("%d from %d\n",value,devd);
       switch (pending_emu_joy.type[i]) {
       case PENDING_EMU_JOY_TYPE_ABSOLUTE:
-        if (value & 0x1) vkbd_nav_up();
-        else if (value & 0x2 && !vkbd_press[devd]) vkbd_nav_down();
-        else if (value & 0x4 && !vkbd_press[devd]) vkbd_nav_left();
-        else if (value & 0x8 && !vkbd_press[devd]) vkbd_nav_right();
-        else if (value & 0x10 && !vkbd_press[devd]) vkbd_nav_press(1, devd);
+        if (!vkbd_press[devd]) {
+           if (value & 0x1 && !vkbd_up[devd]) {
+             vkbd_up[devd] = 1;
+             vkbd_nav_up();
+           } else if (!(value & 0x1) && vkbd_up[devd]) {
+             vkbd_up[devd] = 0;
+           }
+           if (value & 0x2 && !vkbd_down[devd]) {
+             vkbd_down[devd] = 1;
+             vkbd_nav_down();
+           } else if (!(value & 0x2) && vkbd_down[devd]) {
+             vkbd_down[devd] = 0;
+           }
+           if (value & 0x4 && !vkbd_left[devd]) {
+             vkbd_left[devd] = 1;
+             vkbd_nav_left();
+           } else if (!(value & 0x4) && vkbd_left[devd]) {
+             vkbd_left[devd] = 0;
+           }
+           if (value & 0x8 && !vkbd_right[devd]) {
+             vkbd_right[devd] = 1;
+             vkbd_nav_right();
+           } else if (!(value & 0x8) && vkbd_right[devd]) {
+             vkbd_right[devd] = 0;
+           }
+        }
+        if (value & 0x10 && !vkbd_press[devd]) vkbd_nav_press(1, devd);
         else if (!(value & 0x10) && vkbd_press[devd]) vkbd_nav_press(0, devd);
         break;
       }

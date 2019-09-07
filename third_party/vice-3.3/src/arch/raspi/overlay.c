@@ -120,6 +120,10 @@ int vkbd_cursor;
 int vkbd_enabled;
 int vkbd_showing;
 int vkbd_press[JOYDEV_NUM_JOYDEVS];
+int vkbd_up[JOYDEV_NUM_JOYDEVS];
+int vkbd_down[JOYDEV_NUM_JOYDEVS];
+int vkbd_left[JOYDEV_NUM_JOYDEVS];
+int vkbd_right[JOYDEV_NUM_JOYDEVS];
 
 int vkbd_lshift_down;
 int vkbd_rshift_down;

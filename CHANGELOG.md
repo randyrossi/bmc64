@@ -241,3 +241,5 @@
   * Navigate virtual keyboard with GP when GPIO banks 1 or 2 set to any port
   * Menu reorg : +Machine, moved ROMs under
   * Add drive ROM change menu item
+  * Add parallel cable option on drives
+  * Fix GPIO virtual keyboard navigation too fast

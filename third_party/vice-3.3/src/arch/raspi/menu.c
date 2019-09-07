@@ -1651,24 +1651,28 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_IECDEVICE_8:
   case MENU_IECDIR_8:
   case MENU_DRIVE_CHANGE_MODEL_8:
+  case MENU_PARALLEL_8:
     unit = 8;
     break;
   case MENU_ATTACH_DISK_9:
   case MENU_IECDEVICE_9:
   case MENU_IECDIR_9:
   case MENU_DRIVE_CHANGE_MODEL_9:
+  case MENU_PARALLEL_9:
     unit = 9;
     break;
   case MENU_ATTACH_DISK_10:
   case MENU_IECDEVICE_10:
   case MENU_IECDIR_10:
   case MENU_DRIVE_CHANGE_MODEL_10:
+  case MENU_PARALLEL_10:
     unit = 10;
     break;
   case MENU_ATTACH_DISK_11:
   case MENU_IECDEVICE_11:
   case MENU_IECDIR_11:
   case MENU_DRIVE_CHANGE_MODEL_11:
+  case MENU_PARALLEL_11:
     unit = 11;
     break;
   }
@@ -1740,6 +1744,13 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_IECDEVICE_10:
   case MENU_IECDEVICE_11:
     resources_set_int_sprintf("IECDevice%i", item->value, unit);
+    return;
+  case MENU_PARALLEL_8:
+  case MENU_PARALLEL_9:
+  case MENU_PARALLEL_10:
+  case MENU_PARALLEL_11:
+    resources_set_int_sprintf("Drive%iParallelCable",
+       item->choice_ints[item->value], unit);
     return;
   case MENU_IECDIR_8:
   case MENU_IECDIR_9:
@@ -2332,6 +2343,43 @@ static void set_hotkey_choices(struct menu_item *item) {
   }
 }
 
+static void add_parallel_cable_option(struct menu_item* parent, int id, int drive) {
+  if (machine_class != VICE_MACHINE_C64 &&
+      machine_class != VICE_MACHINE_C128) {
+    return;
+  }
+
+  int tmp;
+  resources_get_int_sprintf("Drive%iParallelCable", &tmp, drive);
+
+  int index = 0;
+  switch (tmp) {
+    case DRIVE_PC_NONE:
+       index = 0; break;
+    case DRIVE_PC_STANDARD:
+       index = 1; break;
+    case DRIVE_PC_DD3:
+       index = 2; break;
+    case DRIVE_PC_FORMEL64:
+       index = 3; break;
+    default:
+       return;
+  }
+
+  struct menu_item* child =
+      ui_menu_add_multiple_choice(id, parent, "Parallel Cable");
+  child->num_choices = 4;
+  child->value = index;
+  strcpy(child->choices[0], "None");
+  strcpy(child->choices[1], "Standard");
+  strcpy(child->choices[2], "Dolphin DOS");
+  strcpy(child->choices[3], "Formel 64");
+  child->choice_ints[0] = DRIVE_PC_NONE;
+  child->choice_ints[1] = DRIVE_PC_STANDARD;
+  child->choice_ints[2] = DRIVE_PC_DD3;
+  child->choice_ints[3] = DRIVE_PC_FORMEL64;
+}
+
 void build_menu(struct menu_item *root) {
   struct menu_item *parent;
   struct menu_item *video_parent;
@@ -2418,6 +2466,7 @@ void build_menu(struct menu_item *root) {
      ui_menu_add_toggle(MENU_IECDEVICE_8, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_8, parent, "Select IEC Dir...");
     }
+    add_parallel_cable_option(parent, MENU_PARALLEL_8, 8);
     ui_menu_add_button(MENU_ATTACH_DISK_8, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_8, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_8, parent, "Change Model...");
@@ -2428,6 +2477,7 @@ void build_menu(struct menu_item *root) {
      ui_menu_add_toggle(MENU_IECDEVICE_9, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_9, parent, "Select IEC Dir...");
     }
+    add_parallel_cable_option(parent, MENU_PARALLEL_9, 9);
     ui_menu_add_button(MENU_ATTACH_DISK_9, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_9, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_9, parent, "Change Model...");
@@ -2438,6 +2488,7 @@ void build_menu(struct menu_item *root) {
      ui_menu_add_toggle(MENU_IECDEVICE_10, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_10, parent, "Select IEC Dir...");
     }
+    add_parallel_cable_option(parent, MENU_PARALLEL_10, 10);
     ui_menu_add_button(MENU_ATTACH_DISK_10, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_10, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_10, parent, "Change Model...");
@@ -2448,6 +2499,7 @@ void build_menu(struct menu_item *root) {
      ui_menu_add_toggle(MENU_IECDEVICE_11, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_11, parent, "Select IEC Dir...");
     }
+    add_parallel_cable_option(parent, MENU_PARALLEL_11, 11);
     ui_menu_add_button(MENU_ATTACH_DISK_11, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_11, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");
