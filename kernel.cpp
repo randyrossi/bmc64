@@ -688,8 +688,10 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
           js_pins = config_1_joystickPins1;
           break;
        case 2:
-          // TODO
+          js_pins = config_2_joystickPins;
           break;
+       default:
+         assert(false);
     }
 
     if (joydevs[0].device == JOYDEV_GPIO_0) {
@@ -709,9 +711,8 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
          js_selector = gpioPins[GPIO_JS2_SELECT_INDEX];
          js_pins = config_1_joystickPins2;
          break;
-       case 2:
-          // TODO
-         break;
+       default:
+         assert(false);
     }
 
     if (joydevs[0].device == JOYDEV_GPIO_1) {
@@ -1015,6 +1016,24 @@ void CKernel::circle_check_gpio() {
      break;
     case 2:
      // Waveshare Hat
+     if (ReadDebounced(GPIO_CONFIG_2_WAVESHARE_START_INDEX) == BTN_PRESS) {
+       circle_key_pressed(KEYCODE_F12);
+       circle_key_released(KEYCODE_F12);
+     }
+     if (ReadDebounced(GPIO_CONFIG_2_WAVESHARE_TL_INDEX) == BTN_PRESS) {
+       circle_key_pressed(KEYCODE_Escape);
+       circle_key_released(KEYCODE_Escape);
+     }
+     if (ReadDebounced(GPIO_CONFIG_2_WAVESHARE_TR_INDEX) == BTN_PRESS) {
+       circle_emu_quick_func_interrupt(BTN_ASSIGN_WARP);
+     }
+     if (ReadDebounced(GPIO_CONFIG_2_WAVESHARE_X_INDEX) == BTN_PRESS) {
+       circle_emu_quick_func_interrupt(BTN_ASSIGN_VKBD_TOGGLE);
+     }
+     if (ReadDebounced(GPIO_CONFIG_2_WAVESHARE_SELECT_INDEX) == BTN_PRESS) {
+       circle_emu_quick_func_interrupt(BTN_ASSIGN_STATUS_TOGGLE);
+     }
+     ReadJoystick(0, 2);
      break;
   }
 }

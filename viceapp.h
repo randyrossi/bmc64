@@ -126,6 +126,7 @@
 #define JOY_LEFT  2
 #define JOY_RIGHT 3
 #define JOY_FIRE  4
+#define JOY_POTX  5
 
 // For debouncing logic
 #define BTN_PRESS   1
@@ -135,6 +136,22 @@
 
 // Nav buttons only for config 0
 #define GPIO_CONFIG_0_MENU_INDEX  3     // GPIO 16
+
+// Buttons for Waveshare HAT
+// up, down, left, right, start, select, a,  b,  tr, y,  x,  tl
+// 5,  6,    13,  19,    21,    4,      26, 12, 23, 20, 16, 18
+#define GPIO_CONFIG_2_WAVESHARE_START_INDEX  18
+#define GPIO_CONFIG_2_WAVESHARE_SELECT_INDEX 16
+#define GPIO_CONFIG_2_WAVESHARE_UP_INDEX     0
+#define GPIO_CONFIG_2_WAVESHARE_DOWN_INDEX   5
+#define GPIO_CONFIG_2_WAVESHARE_LEFT_INDEX   4
+#define GPIO_CONFIG_2_WAVESHARE_RIGHT_INDEX  2
+#define GPIO_CONFIG_2_WAVESHARE_A_INDEX      7
+#define GPIO_CONFIG_2_WAVESHARE_B_INDEX      6
+#define GPIO_CONFIG_2_WAVESHARE_TR_INDEX     12
+#define GPIO_CONFIG_2_WAVESHARE_Y_INDEX      1
+#define GPIO_CONFIG_2_WAVESHARE_X_INDEX      3
+#define GPIO_CONFIG_2_WAVESHARE_TL_INDEX     11
 
 extern "C" {
 void circle_fs_ready();
@@ -189,10 +206,13 @@ protected:
   CVCHIQDevice mVCHIQ;
   CMachineInfo mMachineInfo;
 
-  CGPIOPin *config_1_joystickPins1[5];
-  CGPIOPin *config_1_joystickPins2[5];
   CGPIOPin *config_0_joystickPins1[5];
   CGPIOPin *config_0_joystickPins2[5];
+
+  CGPIOPin *config_1_joystickPins1[5];
+  CGPIOPin *config_1_joystickPins2[5];
+
+  CGPIOPin *config_2_joystickPins[5];
 
   CGPIOPin *gpioPins[NUM_GPIO_PINS];
 };
