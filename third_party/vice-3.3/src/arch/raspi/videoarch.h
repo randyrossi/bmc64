@@ -109,6 +109,7 @@ void draw(uint8_t *src, int srcw, int srch, int src_pitch, uint8_t *dst,
 
 extern uint8_t *video_font;
 extern uint16_t video_font_translate[256];
+extern uint8_t *raw_video_font;
 
 // Make sure ui also sets this when turning on/off warp
 extern int raspi_warp;

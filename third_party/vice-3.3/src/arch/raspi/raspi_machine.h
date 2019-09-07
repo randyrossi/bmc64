@@ -68,6 +68,9 @@ struct vkbd_key {
 #define VKBD_SPACE -22
 #define VKBD_CLR -23
 #define VKBD_INS -24
+#define VKBD_ESC -25
+#define VKBD_CURSUP -26
+#define VKBD_CURSLEFT -27
 
 typedef struct vkbd_key* vkbd_key_array;
 

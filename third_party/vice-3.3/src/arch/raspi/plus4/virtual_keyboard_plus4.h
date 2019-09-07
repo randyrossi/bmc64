@@ -4,7 +4,7 @@
 
 #include "raspi_machine.h"
 
-#define NUM_KEYS 66
+#define NUM_KEYS 67
 #define VKBD_WIDTH 512
 #define VKBD_HEIGHT 174
 

@@ -140,6 +140,7 @@ void set_refresh_rate(int timing, struct video_canvas_s *canvas) {
 void set_video_font(void) {
   int i;
   video_font = plus4memrom_kernal_rom + 0x1400;
+  raw_video_font = plus4memrom_kernal_rom + 0x1000;
   for (i = 0; i < 256; ++i) {
     video_font_translate[i] = 8 * char_to_screen[i];
   }

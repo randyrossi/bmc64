@@ -75,6 +75,7 @@ static int vdc_showing;
 
 uint8_t *video_font;
 uint16_t video_font_translate[256];
+uint8_t *raw_video_font;
 
 static int vic_first_refresh;
 static int vdc_first_refresh;

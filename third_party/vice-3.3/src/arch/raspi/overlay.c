@@ -602,6 +602,11 @@ static void overlay_draw_virtual_keyboard() {
      } else {
         char *label;
         switch (vkbd[i].code) {
+          case VKBD_ESC:
+             labelx -= (8*3)/2;
+             labely -= 4;
+             ui_draw_text_buf("ESC", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             break;
           case VKBD_KEY_HOME:
              labelx -= (8*3)/2;
              labely -= 4;
@@ -674,11 +679,25 @@ static void overlay_draw_virtual_keyboard() {
              labely -= 4;
              ui_draw_text_buf("SHF", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
+          case VKBD_CURSUP:
+             labelx -= (8*2)/2;
+             labely -= 4;
+             ui_draw_text_buf("UP", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             break;
           case VKBD_CURSDOWN:
+             labelx -= (8*3)/2;
+             labely -= 4;
+             ui_draw_text_buf("DWN", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             break;
+          case VKBD_CURSLEFT:
+             labelx -= (8*3)/2;
+             labely -= 4;
+             ui_draw_text_buf("LFT", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             break;
           case VKBD_CURSRIGHT:
              labelx -= (8*3)/2;
              labely -= 4;
-             ui_draw_text_buf("CRS", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
+             ui_draw_text_buf("RHT", labelx, labely, VKBD_FG_COLOR, overlay_buf, overlay_buf_pitch, 1);
              break;
 
           default:
