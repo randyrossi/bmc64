@@ -502,40 +502,50 @@ static void drive_change_model() {
   int current_drive_type;
   resources_get_int_sprintf("Drive%iType", &current_drive_type, unit);
 
-  item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "None");
+  item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "None");
   item->value = DRIVE_TYPE_NONE;
   if (current_drive_type == DRIVE_TYPE_NONE) {
     strcat(item->displayed_value, " (*)");
   }
 
   if (drive_check_type(DRIVE_TYPE_1541, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1541");
+    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1541");
     item->value = DRIVE_TYPE_1541;
     if (current_drive_type == DRIVE_TYPE_1541) {
       strcat(item->displayed_value, " (*)");
     }
   }
   if (drive_check_type(DRIVE_TYPE_1541II, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1541II");
+    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1541II");
     item->value = DRIVE_TYPE_1541II;
     if (current_drive_type == DRIVE_TYPE_1541II) {
       strcat(item->displayed_value, " (*)");
     }
   }
   if (drive_check_type(DRIVE_TYPE_1571, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1571");
+    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1571");
     item->value = DRIVE_TYPE_1571;
     if (current_drive_type == DRIVE_TYPE_1571) {
       strcat(item->displayed_value, " (*)");
     }
   }
   if (drive_check_type(DRIVE_TYPE_1581, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_SELECT, model_root, "1581");
+    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1581");
     item->value = DRIVE_TYPE_1581;
     if (current_drive_type == DRIVE_TYPE_1581) {
       strcat(item->displayed_value, " (*)");
     }
   }
+}
+
+static void drive_change_rom() {
+  struct menu_item *root = ui_push_menu(12, 8);
+  struct menu_item *item;
+
+  item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1541, root, "1541...");
+  item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1541II, root, "1541II...");
+  item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1571, root, "1571...");
+  item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1581, root, "1581...");
 }
 
 static void ui_set_hotkeys() {
@@ -1090,6 +1100,28 @@ static void select_file(struct menu_item *item) {
          ui_pop_all_and_toggle();
        }
        return;
+     case MENU_DRIVE_ROM_FILE_1541:
+     case MENU_DRIVE_ROM_FILE_1541II:
+     case MENU_DRIVE_ROM_FILE_1571:
+     case MENU_DRIVE_ROM_FILE_1581:
+       // Make the rom change. These can't be fullpath or VICE complains.
+       switch (item->id) {
+          case MENU_DRIVE_ROM_FILE_1541:
+             resources_set_string("DosName1541", item->str_value);
+             break;
+          case MENU_DRIVE_ROM_FILE_1541II:
+             resources_set_string("DosName1541ii", item->str_value);
+             break;
+          case MENU_DRIVE_ROM_FILE_1571:
+             resources_set_string("DosName1571", item->str_value);
+             break;
+          case MENU_DRIVE_ROM_FILE_1581:
+             resources_set_string("DosName1581", item->str_value);
+             break;
+       }
+       ui_pop_menu();
+       ui_pop_menu();
+       return;
      case MENU_TAPE_FILE:
        ui_info("Attaching...");
        if (tape_image_attach(1, fullpath(DIR_TAPES, item->str_value)) < 0) {
@@ -1099,6 +1131,7 @@ static void select_file(struct menu_item *item) {
          ui_pop_all_and_toggle();
        }
        return;
+     // NOTE: ROMs can't be fullpath or VICE complains.
      case MENU_KERNAL_FILE:
        resources_set_string("KernalName", item->str_value);
        ui_pop_all_and_toggle();
@@ -1379,6 +1412,10 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
   case MENU_KERNAL_FILE:
   case MENU_BASIC_FILE:
   case MENU_CHARGEN_FILE:
+  case MENU_DRIVE_ROM_FILE_1541:
+  case MENU_DRIVE_ROM_FILE_1541II:
+  case MENU_DRIVE_ROM_FILE_1571:
+  case MENU_DRIVE_ROM_FILE_1581:
     return DIR_ROMS;
   case MENU_AUTOSTART_FILE:
     return DIR_ROOT;
@@ -1446,6 +1483,10 @@ static void relist_files_after_dir_change(struct menu_item *item) {
   case MENU_C128_LOAD_CHARGEN_FILE:
   case MENU_C128_LOAD_64_KERNAL_FILE:
   case MENU_C128_LOAD_64_BASIC_FILE:
+  case MENU_DRIVE_ROM_FILE_1541:
+  case MENU_DRIVE_ROM_FILE_1541II:
+  case MENU_DRIVE_ROM_FILE_1571:
+  case MENU_DRIVE_ROM_FILE_1581:
     show_files(DIR_ROMS, FILTER_NONE, item->id, 1);
     break;
   case MENU_AUTOSTART_FILE:
@@ -1711,6 +1752,18 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_ATTACH_DISK_10:
   case MENU_ATTACH_DISK_11:
     show_files(DIR_DISKS, FILTER_DISK, MENU_DISK_FILE, 0);
+    return;
+  case MENU_DRIVE_CHANGE_ROM_1541:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_1541, 0);
+    return;
+  case MENU_DRIVE_CHANGE_ROM_1541II:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_1541II, 0);
+    return;
+  case MENU_DRIVE_CHANGE_ROM_1571:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_1571, 0);
+    return;
+  case MENU_DRIVE_CHANGE_ROM_1581:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_1581, 0);
     return;
   case MENU_ATTACH_TAPE:
     show_files(DIR_TAPES, FILTER_TAPE, MENU_TAPE_FILE, 0);
@@ -2017,7 +2070,10 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_DRIVE_CHANGE_MODEL_11:
     drive_change_model();
     return;
-  case MENU_DRIVE_SELECT:
+  case MENU_DRIVE_CHANGE_ROM:
+    drive_change_rom();
+    return;
+  case MENU_DRIVE_MODEL_SELECT:
     resources_set_int_sprintf("Drive%iType", item->value, unit);
     ui_pop_all_and_toggle();
     return;
@@ -2395,6 +2451,8 @@ void build_menu(struct menu_item *root) {
     ui_menu_add_button(MENU_ATTACH_DISK_11, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_11, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");
+
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM, drive_parent, "Change ROM...");
 
     parent = ui_menu_add_folder(drive_parent, "Create empty Disk");
       ui_menu_add_button(MENU_CREATE_D64, parent, "D64...");

@@ -239,3 +239,5 @@
   * Added WaveShare Game HAT GPIO support
   * Navigate virtual keyboard with GP even if not set in a port
   * Navigate virtual keyboard with GP when GPIO banks 1 or 2 set to any port
+  * Menu reorg : +Machine, moved ROMs under
+  * Add drive ROM change menu item
