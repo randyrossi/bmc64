@@ -658,15 +658,17 @@ void CKernel::ScanKeyboard() {
 }
 
 // Read joystick state. 
-// If usePcb is true, PCB layout for joysticks is used (where
-// selector is used to drive pins low instead of GND).  Otherwise,
-// the non-pcb way of reading joysticks is used.
-void CKernel::ReadJoystick(int device, bool usePcb) {
+// If gpioConfig is 0, the NavButtons+Joys config is used where pins can
+// be grounded.
+// If gpioConfig is 1, the Keyboard+Joys PCB config is used (where
+// selector is used to drive pins low instead of GND).
+// If gpioConfig is 2, the Waveshare HAT layout is used.
+void CKernel::ReadJoystick(int device, int gpioConfig) {
   static int js_prev_0[5] = {HIGH, HIGH, HIGH, HIGH, HIGH};
   static int js_prev_1[5] = {HIGH, HIGH, HIGH, HIGH, HIGH};
 
   int *js_prev;
-  CGPIOPin **js_pins;
+  CGPIOPin **js_pins = NULL;
   CGPIOPin *js_selector = NULL;
   int port = 0;
   int ui_activated = circle_ui_activated();
@@ -677,11 +679,17 @@ void CKernel::ReadJoystick(int device, bool usePcb) {
   // gpio.
   if (device == 0) {
     js_prev = js_prev_0;
-    if (usePcb) {
-       js_selector = gpioPins[GPIO_JS1_SELECT_INDEX];
-       js_pins = joystickPins1;
-    } else {
-       js_pins = noPCBJoystickPins1;
+    switch (gpioConfig) {
+       case 0:
+          js_pins = config_0_joystickPins1;
+          break;
+       case 1:
+          js_selector = gpioPins[GPIO_JS1_SELECT_INDEX];
+          js_pins = config_1_joystickPins1;
+          break;
+       case 2:
+          // TODO
+          break;
     }
 
     if (joydevs[0].device == JOYDEV_GPIO_0) {
@@ -693,11 +701,17 @@ void CKernel::ReadJoystick(int device, bool usePcb) {
     }
   } else {
     js_prev = js_prev_1;
-    if (usePcb) {
-       js_selector = gpioPins[GPIO_JS2_SELECT_INDEX];
-       js_pins = joystickPins2;
-    } else {
-       js_pins = noPCBJoystickPins2;
+    switch (gpioConfig) {
+       case 0:
+         js_pins = config_0_joystickPins2;
+         break;
+       case 1:
+         js_selector = gpioPins[GPIO_JS2_SELECT_INDEX];
+         js_pins = config_1_joystickPins2;
+         break;
+       case 2:
+          // TODO
+         break;
     }
 
     if (joydevs[0].device == JOYDEV_GPIO_1) {
@@ -709,7 +723,7 @@ void CKernel::ReadJoystick(int device, bool usePcb) {
     }
   }
 
-  if (usePcb) {
+  if (gpioConfig == 1) {
     // Drive the select pin low. Don't leave this routine
     // before setting it as input-pullup again.
     js_selector->SetMode(GPIOModeOutput);
@@ -768,7 +782,7 @@ void CKernel::ReadJoystick(int device, bool usePcb) {
     circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, port, val);
   }
 
-  if (usePcb) {
+  if (gpioConfig == 1) {
      js_selector->SetMode(GPIOModeInputPullUp);
   }
 }
@@ -982,17 +996,26 @@ int CKernel::ReadDebounced(int pinIndex) {
 // function. Also scans a real C64 keyboard and joysticks if enabled.
 // Otherwise, just scans gpio joysticks.
 void CKernel::circle_check_gpio() {
-  if (circle_use_pcb()) {
-     ScanKeyboard();
-     ReadJoystick(0, TRUE);
-     ReadJoystick(1, TRUE);
-  } else {
-    if (ReadDebounced(GPIO_MENU_INDEX) == BTN_PRESS) {
+  int gpio_config = circle_gpio_config();
+  switch(gpio_config) {
+    case 0:
+     // Nav Buttons + Real Joys
+     if (ReadDebounced(GPIO_CONFIG_0_MENU_INDEX) == BTN_PRESS) {
       circle_key_pressed(KEYCODE_F12);
       circle_key_released(KEYCODE_F12);
-    }
-    ReadJoystick(0, FALSE);
-    ReadJoystick(1, FALSE);
+     }
+     ReadJoystick(0, 0);
+     ReadJoystick(1, 0);
+     break;
+    case 1:
+     // Real Kyb + Joys
+     ScanKeyboard();
+     ReadJoystick(0, 1);
+     ReadJoystick(1, 1);
+     break;
+    case 2:
+     // Waveshare Hat
+     break;
   }
 }
 

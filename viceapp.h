@@ -80,7 +80,7 @@
 
 #define NUM_GPIO_PINS 19
 
-// Joystick select pins.
+// Joystick select pins for config 1.
 #define GPIO_JS1_SELECT  7
 #define GPIO_JS2_SELECT  21
 
@@ -92,29 +92,29 @@
 
 // These are indices within the master gpio array for some
 // special pins we need to address.
-#define GPIO_JOY_1_UP_INDEX     12
-#define GPIO_JOY_1_DOWN_INDEX   13
-#define GPIO_JOY_1_LEFT_INDEX   14
-#define GPIO_JOY_1_RIGHT_INDEX  11
-#define GPIO_JOY_1_FIRE_INDEX   15
+#define GPIO_CONFIG_1_JOY_1_UP_INDEX     12
+#define GPIO_CONFIG_1_JOY_1_DOWN_INDEX   13
+#define GPIO_CONFIG_1_JOY_1_LEFT_INDEX   14
+#define GPIO_CONFIG_1_JOY_1_RIGHT_INDEX  11
+#define GPIO_CONFIG_1_JOY_1_FIRE_INDEX   15
 
-#define GPIO_JOY_2_UP_INDEX     1
-#define GPIO_JOY_2_DOWN_INDEX   2
-#define GPIO_JOY_2_LEFT_INDEX   3
-#define GPIO_JOY_2_RIGHT_INDEX  4
-#define GPIO_JOY_2_FIRE_INDEX   7
+#define GPIO_CONFIG_1_JOY_2_UP_INDEX     1
+#define GPIO_CONFIG_1_JOY_2_DOWN_INDEX   2
+#define GPIO_CONFIG_1_JOY_2_LEFT_INDEX   3
+#define GPIO_CONFIG_1_JOY_2_RIGHT_INDEX  4
+#define GPIO_CONFIG_1_JOY_2_FIRE_INDEX   7
 
-#define GPIO_NOPCB_JOY_1_UP_INDEX     14  // GPIO 17
-#define GPIO_NOPCB_JOY_1_DOWN_INDEX   11  // GPIO 18
-#define GPIO_NOPCB_JOY_1_LEFT_INDEX   13  // GPIO 27
-#define GPIO_NOPCB_JOY_1_RIGHT_INDEX  15  // GPIO 22
-#define GPIO_NOPCB_JOY_1_FIRE_INDEX   12  // GPIO 23
+#define GPIO_CONFIG_0_JOY_1_UP_INDEX     14  // GPIO 17
+#define GPIO_CONFIG_0_JOY_1_DOWN_INDEX   11  // GPIO 18
+#define GPIO_CONFIG_0_JOY_1_LEFT_INDEX   13  // GPIO 27
+#define GPIO_CONFIG_0_JOY_1_RIGHT_INDEX  15  // GPIO 22
+#define GPIO_CONFIG_0_JOY_1_FIRE_INDEX   12  // GPIO 23
 
-#define GPIO_NOPCB_JOY_2_UP_INDEX      0  // GPIO 5
-#define GPIO_NOPCB_JOY_2_DOWN_INDEX    5  // GPIO 6
-#define GPIO_NOPCB_JOY_2_LEFT_INDEX    6  // GPIO 12
-#define GPIO_NOPCB_JOY_2_RIGHT_INDEX   4  // GPIO 13
-#define GPIO_NOPCB_JOY_2_FIRE_INDEX    2  // GPIO 19
+#define GPIO_CONFIG_0_JOY_2_UP_INDEX      0  // GPIO 5
+#define GPIO_CONFIG_0_JOY_2_DOWN_INDEX    5  // GPIO 6
+#define GPIO_CONFIG_0_JOY_2_LEFT_INDEX    6  // GPIO 12
+#define GPIO_CONFIG_0_JOY_2_RIGHT_INDEX   4  // GPIO 13
+#define GPIO_CONFIG_0_JOY_2_FIRE_INDEX    2  // GPIO 19
 
 #define GPIO_KBD_RESTORE_INDEX 16
 #define GPIO_JS1_SELECT_INDEX  17
@@ -133,8 +133,8 @@
 #define BTN_UP      3
 #define BTN_DOWN    4
 
-// Deprecated GPIO menu pin. Can't be used with PCB.
-#define GPIO_MENU_INDEX  3     // GPIO 16
+// Nav buttons only for config 0
+#define GPIO_CONFIG_0_MENU_INDEX  3     // GPIO 16
 
 extern "C" {
 void circle_fs_ready();
@@ -189,10 +189,11 @@ protected:
   CVCHIQDevice mVCHIQ;
   CMachineInfo mMachineInfo;
 
-  CGPIOPin *joystickPins1[5];
-  CGPIOPin *joystickPins2[5];
-  CGPIOPin *noPCBJoystickPins1[5];
-  CGPIOPin *noPCBJoystickPins2[5];
+  CGPIOPin *config_1_joystickPins1[5];
+  CGPIOPin *config_1_joystickPins2[5];
+  CGPIOPin *config_0_joystickPins1[5];
+  CGPIOPin *config_0_joystickPins2[5];
+
   CGPIOPin *gpioPins[NUM_GPIO_PINS];
 };
 

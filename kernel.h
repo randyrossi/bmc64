@@ -111,7 +111,7 @@ private:
   void SetupUSBMouse();
   int ReadDebounced(int pinIndex);
   void ScanKeyboard();
-  void ReadJoystick(int device, bool usePcb);
+  void ReadJoystick(int device, int gpioConfig);
 
   ViceSound *mViceSound;
   CCPUThrottle mCPUThrottle;

@@ -2782,9 +2782,13 @@ void build_menu(struct menu_item *root) {
   reset_confirm_item = ui_menu_add_toggle(MENU_RESET_CONFIRM, parent,
                                           "Confirm Reset from Emulator", 1);
 
-  gpio_config_item = ui_menu_add_toggle_labels(
-      MENU_GPIO_CONFIG, parent, "GPIO Config", 0,
-      "Config 1","Config 2");
+  gpio_config_item = ui_menu_add_multiple_choice(MENU_GPIO_CONFIG, parent,
+           "GPIO Config");
+     child->num_choices = 3;
+     child->value = 0;
+     strcpy(child->choices[0], "#1 (Nav+Joy)");
+     strcpy(child->choices[1], "#2 (Kyb+Joy)");
+     strcpy(child->choices[2], "#3 (Waveshare Hat)");
 
   warp_item = ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
 
@@ -2979,7 +2983,7 @@ void menu_quick_func(int button_assignment) {
   }
 }
 
-int circle_use_pcb() {
+int circle_gpio_config() {
   return gpio_config_item->value;
 }
 

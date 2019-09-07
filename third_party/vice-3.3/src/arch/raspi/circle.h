@@ -239,7 +239,7 @@ extern void circle_button_down(int pressed);
 extern void circle_emu_quick_func_interrupt(int button_assignment);
 
 extern void circle_keyboard_set_latch_keyarr(int row, int col, int value);
-extern int circle_use_pcb(void);
+extern int circle_gpio_config(void);
 extern int circle_num_joysticks(void);
 extern long circle_key_binding(int slot);
 
