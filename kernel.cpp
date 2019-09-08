@@ -1010,6 +1010,30 @@ void CKernel::circle_check_gpio() {
       circle_key_pressed(KEYCODE_F12);
       circle_key_released(KEYCODE_F12);
      }
+     if (ReadDebounced(GPIO_CONFIG_0_MENU_BACK_INDEX) == BTN_PRESS) {
+      circle_key_pressed(KEYCODE_Escape);
+      circle_key_released(KEYCODE_Escape);
+     }
+     if (ReadDebounced(GPIO_CONFIG_0_MENU_UP_INDEX) == BTN_PRESS) {
+      circle_key_pressed(KEYCODE_Up);
+      circle_key_released(KEYCODE_Up);
+     }
+     if (ReadDebounced(GPIO_CONFIG_0_MENU_DOWN_INDEX) == BTN_PRESS) {
+      circle_key_pressed(KEYCODE_Down);
+      circle_key_released(KEYCODE_Down);
+     }
+     if (ReadDebounced(GPIO_CONFIG_0_MENU_LEFT_INDEX) == BTN_PRESS) {
+      circle_key_pressed(KEYCODE_Left);
+      circle_key_released(KEYCODE_Left);
+     }
+     if (ReadDebounced(GPIO_CONFIG_0_MENU_RIGHT_INDEX) == BTN_PRESS) {
+      circle_key_pressed(KEYCODE_Right);
+      circle_key_released(KEYCODE_Right);
+     }
+     if (ReadDebounced(GPIO_CONFIG_0_MENU_ENTER_INDEX) == BTN_PRESS) {
+      circle_key_pressed(KEYCODE_Return);
+      circle_key_released(KEYCODE_Return);
+     }
      ReadJoystick(0, 0);
      ReadJoystick(1, 0);
      break;

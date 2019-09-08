@@ -135,7 +135,13 @@
 #define BTN_DOWN    4
 
 // Nav buttons only for config 0
-#define GPIO_CONFIG_0_MENU_INDEX  3     // GPIO 16
+#define GPIO_CONFIG_0_MENU_INDEX       3   // GPIO 16
+#define GPIO_CONFIG_0_MENU_BACK_INDEX  16  // GPIO 4
+#define GPIO_CONFIG_0_MENU_UP_INDEX    9   // GPIO 25
+#define GPIO_CONFIG_0_MENU_DOWN_INDEX  2   // GPIO 19
+#define GPIO_CONFIG_0_MENU_LEFT_INDEX  1   // GPIO 20
+#define GPIO_CONFIG_0_MENU_RIGHT_INDEX 18  // GPIO 21
+#define GPIO_CONFIG_0_MENU_ENTER_INDEX 10  // GPIO 24
 
 // Buttons for Waveshare HAT
 // up, down, left, right, start, select, a,  b,  tr, y,  x,  tl
