@@ -522,6 +522,13 @@ static void drive_change_model() {
       strcat(item->displayed_value, " (*)");
     }
   }
+  if (drive_check_type(DRIVE_TYPE_1551, unit - 8) > 0) {
+    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1551");
+    item->value = DRIVE_TYPE_1551;
+    if (current_drive_type == DRIVE_TYPE_1551) {
+      strcat(item->displayed_value, " (*)");
+    }
+  }
   if (drive_check_type(DRIVE_TYPE_1571, unit - 8) > 0) {
     item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1571");
     item->value = DRIVE_TYPE_1571;
@@ -544,6 +551,7 @@ static void drive_change_rom() {
 
   item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1541, root, "1541...");
   item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1541II, root, "1541II...");
+  item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1551, root, "1551...");
   item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1571, root, "1571...");
   item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1581, root, "1581...");
 }
@@ -1102,6 +1110,7 @@ static void select_file(struct menu_item *item) {
        return;
      case MENU_DRIVE_ROM_FILE_1541:
      case MENU_DRIVE_ROM_FILE_1541II:
+     case MENU_DRIVE_ROM_FILE_1551:
      case MENU_DRIVE_ROM_FILE_1571:
      case MENU_DRIVE_ROM_FILE_1581:
        // Make the rom change. These can't be fullpath or VICE complains.
@@ -1111,6 +1120,9 @@ static void select_file(struct menu_item *item) {
              break;
           case MENU_DRIVE_ROM_FILE_1541II:
              resources_set_string("DosName1541ii", item->str_value);
+             break;
+          case MENU_DRIVE_ROM_FILE_1551:
+             resources_set_string("DosName1551", item->str_value);
              break;
           case MENU_DRIVE_ROM_FILE_1571:
              resources_set_string("DosName1571", item->str_value);
@@ -1414,6 +1426,7 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
   case MENU_CHARGEN_FILE:
   case MENU_DRIVE_ROM_FILE_1541:
   case MENU_DRIVE_ROM_FILE_1541II:
+  case MENU_DRIVE_ROM_FILE_1551:
   case MENU_DRIVE_ROM_FILE_1571:
   case MENU_DRIVE_ROM_FILE_1581:
     return DIR_ROMS;
@@ -1485,6 +1498,7 @@ static void relist_files_after_dir_change(struct menu_item *item) {
   case MENU_C128_LOAD_64_BASIC_FILE:
   case MENU_DRIVE_ROM_FILE_1541:
   case MENU_DRIVE_ROM_FILE_1541II:
+  case MENU_DRIVE_ROM_FILE_1551:
   case MENU_DRIVE_ROM_FILE_1571:
   case MENU_DRIVE_ROM_FILE_1581:
     show_files(DIR_ROMS, FILTER_NONE, item->id, 1);
@@ -1769,6 +1783,9 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_DRIVE_CHANGE_ROM_1541II:
     show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_1541II, 0);
+    return;
+  case MENU_DRIVE_CHANGE_ROM_1551:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_1551, 0);
     return;
   case MENU_DRIVE_CHANGE_ROM_1571:
     show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_1571, 0);

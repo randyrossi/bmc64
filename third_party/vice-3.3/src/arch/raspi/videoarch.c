@@ -732,7 +732,6 @@ void circle_emu_quick_func_interrupt(int button_assignment) {
 // Called by our special hook in vice to load palettes from
 // memory.
 palette_t *raspi_video_load_palette(int num_entries, char *name) {
-printf ("RANDY PALETTE %d\n",num_entries);
   palette_t *palette = palette_create(num_entries, NULL);
   unsigned int *pal;
   // RASPI2 is for VDC
