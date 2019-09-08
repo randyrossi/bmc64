@@ -232,9 +232,11 @@ The Tape/Cart OSD functions display a dialog with access to some common function
 
 There are 3 GPIO configurations to chose from:
 
-Config 1 : Menu Nav Buttons + Real Joysticks
-Config 2 : Real Keyboard + Real Joysticks
-Config 3 : Waveshare Game HAT
+Config | Description
+-------|----------------------------------
+1      | Menu Nav Buttons + Real Joysticks (i.e. CPIO-64 PCB or jumpers)
+2      | Real Keyboard + Real Joysticks (BMC64 PCB)
+3      | Waveshare Game HAT
 
 ## GPIO Config 1 : Menu Nav Buttons and Joysticks
 
