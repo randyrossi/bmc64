@@ -28,7 +28,7 @@ const char *dflt_bootStatFile[] = {
     "chargen",
     "d1541II",
     "rpi_pos.vkm",
-    "fliplist-VIC20.vfl",i
+    "fliplist-VIC20.vfl",
     "mps803",
     "mps803.vpl",
     "nl10-cbm",
