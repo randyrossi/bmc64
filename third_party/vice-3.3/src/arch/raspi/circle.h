@@ -218,6 +218,7 @@ extern void menu_raw_usb(int device, unsigned buttons, const int hats[6],
 
 extern int circle_button_function(int device, int button_num, unsigned buttons,
                                   int* btn_assignment, int* is_press);
+extern int circle_add_pot_values(int *value, int potx, int poty);
 extern int circle_add_button_values(int dev, unsigned button_value);
 
 extern void circle_lock_acquire();

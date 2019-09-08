@@ -449,6 +449,19 @@ int circle_button_function(int device, int button_num, unsigned buttons,
   return 0;
 }
 
+int circle_add_pot_values(int *value, int potx, int poty) {
+  if (potx) {
+     *value |= (pot_x_low_value << 5);
+  } else {
+     *value |= (pot_x_high_value << 5);
+  }
+  if (poty) {
+     *value |= (pot_y_low_value << 13);
+  } else {
+     *value |= (pot_y_high_value << 13);
+  }
+}
+
 int circle_add_button_values(int dev, unsigned b) {
   int i;
   int value = (pot_x_high_value << 5) | (pot_y_high_value << 13);

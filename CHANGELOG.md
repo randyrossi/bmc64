@@ -234,6 +234,7 @@
   * Added selection of IEC dir
   * Paint menus stacked on top of each other like they used to be
   * Fixed tape counter not updating properly (again)
+
 ## 2.5
   * Added Plus/4
   * Added WaveShare Game HAT GPIO support
@@ -243,3 +244,4 @@
   * Add drive ROM change menu item
   * Add parallel cable option on drives
   * Fix GPIO virtual keyboard navigation too fast
+  * Added Menu navigation button options to GPIO config 1

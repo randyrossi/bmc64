@@ -1,6 +1,6 @@
 # BMC64
 
-BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio. Two other Commodore builds are available as well; C128 and Vic20.
+BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio. Three other Commodore builds are available as well; C128, Vic20 and Plus/4.
 
 # BMC64 Features
   * Quick boot time (4.1 seconds!)
@@ -8,9 +8,10 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
   * Low latency between input & audio/video
   * No shutdown sequence required, just power off
   * High compatibility thanks to VICE
-  * Can wire real Commodore/Atari Joysticks via GPIO (Config 1 or 2)
-  * Can wire real Commodore Keyboard via GPIO (Config 2)
-  * Keyrah friendly
+  * Easily wire real Commodore/Atari Joysticks and nav buttons via GPIO using jumpers (GPIO Config 1)
+  * Can use a real Commodore Keyboard and Joysticks via PCB (GPIO Config 2)
+  * Can use a Waveshare Game HAT (Pi2 or 3 Only) (GPIO Config 3)
+  * Works with the Keyrah
 
 # Limitations
   * USB gamepad support is limited. Not all gamepads will work.
@@ -29,12 +30,13 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
   * https://accentual.com/bmc64
   * https://accentual.com/bmc128
   * https://accentual.com/bmvic20
+  * https://accentual.com/bmplus4
 
 # Github Link
 
   * https://github.com/randyrossi/bmc64
 
-# Video + Timing C64/C128
+# Video + Timing
 
 The machine is timed by the video mode you select. The default config provided defaults to 720p PAL 50hz on HDMI.  This is a 'safe' mode that should work on all monitors.  For HDMI, you should choose either a 50hz or 60hz mode.
 
@@ -67,7 +69,7 @@ The test tool will tell you the actual frame rate for this mode is 49.89. You wo
 
 All of the above re: timing applies to BMVIC20 as well.  However, in my opinion, this machine is better configured to be an NTSC machine.  Most cartridges were made for NTSC and you will notice they position their screens poorly when inserted into a PAL machine.  Most games gave the option of moving it using cursor keys or joystick but this is annoying.
 
-# Canvas Dimensions (NEW)
+# Canvas Dimensions
 
 Since v2.1, the virtual display dimensions are adjusted dynamically from the menu. Under 'Video', you will find Horizontal Border Trim %, Vertical Border Trim % and Aspect Ratio controls for each virtual display available.  Displays are scaled as follows:
 
@@ -77,34 +79,7 @@ Since v2.1, the virtual display dimensions are adjusted dynamically from the men
 
 Using the three settings available, you should be able to customize how much border is available as well as the aspect ratio of the final image.  Reasonable defaults are provided.  
 
-NOTE: v2.1 and onward will ignore any vic_canvas_* or vicii_canvas_* kernel parameters.  The scaling_kernel option is still applicable.
-
-# Canvas Dimensions (Old way, Versions < 2.1)
-
-*Old* On versions prior to 2.1, you can specify how much of the emulated display is visible via the *_canvas_width, *_canvas_height parameters in cmdline.txt.
-By increasing/decreasing the height/width, you can 'cut out' more of the border if it is unwanted.  Mostly, this is to adjust composite out especially for the VIC20.
-
-Here are some sample canvas dimensions configs:
-
-### PAL
-
-Machine       | cmdline.txt | extra config.txt
---------------|-------------|-------------------------------
-C64/C128 HDMI | vicii_canvas_width=384, vicii_canvas_height=288 | (none)
-C64/C128 Composite | vicii_canvas_width=384, vicii_canvas_height=288 | (none)
-VIC20 HDMI | vic_canvas_width=392, vic_canvas_height=288 | framebuffer_aspect=0x00050006
-VIC20 Composite | vic_canvas_width=392, vic_canvas_height=288 | framebuffer_aspect=0x00050006
-
-### NTSC
-
-Machine       | cmdline.txt | config.txt
---------------|-------------|-------------
-C64/C128 HDMI | vicii_canvas_width=384, vicii_canvas_height=272 | (none)
-C64/C128 Composite | vicii_canvas_width=384, vicii_canvas_height=272 | (none)
-VIC20 HDMI | vic_canvas_width=400, vic_canvas_height=288 | framebuffer_aspect=0x00050006
-VIC20 Composite | vic_canvas_width=400, vic_canvas_height=288 | framebuffer_aspect=0x00050006
-
-The absolute minimum width/height for any machine is 320x240. Width must be a multiple of 2.
+NOTE: v2.1 and onward will ignore any vic_canvas_* or vicii_canvas_* kernel parameters.  The scaling_kernel option is still applicable.  If you are using a version lower than v2.1, consult the old documentation on how video cropping/sizing works.
 
 # Video Scaling Algorithm
 
@@ -209,8 +184,8 @@ Device | Description
 None | No device active for the port
 USB Gamepad 1 | First USB gamepad detected
 USB Gamepad 2 | Second USB gamepad detected
-GPIO Bank 1 | GPIO Pins as described previously
-GPIO Bank 2 | GPIO Pins as described previously
+GPIO Bank 1 | GPIO Pins as described below (GPIO Config dependent)
+GPIO Bank 2 | GPIO Pins as described below (GPIO Config dependent)
 1351 Mouse | First USB mouse detected
 Keyrah Keys 1 | Numeric keypad keys 64825 compatible with Keyrah
 Keyrah Keys 2 | Numeric keypad keys 17930 compatible with Keyrah
@@ -255,16 +230,30 @@ The Tape/Cart OSD functions display a dialog with access to some common function
 
 # GPIO Configurations
 
-Since v2.4, there are two GPIO configurations to chose from : Config 1 / Config 2
+There are 3 GPIO configurations to chose from:
 
-## GPIO Config 1 : Menu Button and Joysticks
+Config 1 : Menu Nav Buttons + Real Joysticks
+Config 2 : Real Keyboard + Real Joysticks
+Config 3 : Waveshare Game HAT
+
+## GPIO Config 1 : Menu Nav Buttons and Joysticks
 
 DO NOT ATTEMPT THIS IF YOU ARE NOT COMFORTABLE WITH WIRING THINGS UP TO YOUR PI
 I TAKE NO RESPONSIBILITY IF YOU WIRE THINGS INCORRECTLY OR DAMAGE YOUR DEVICE
 
-You can wire a button between GPIO16 and GND to have a physical menu activation button.  Fow now, this is the only physical button available.  I may add navigation buttons like Up, Down, Left, Right, and Back at some point.
+You can wire buttons between GPIO pins and GND to have a physical menu activation or navigation button.
 
-It's possible to wire real Commodore or Atari joysticks directly to the Pi. You can do it without a PCB if you want. Each joystick gets its own set of GPIO pins, making it easy to hook up using nothing but jumpers and DB9 connectors.  (See the website for adapter instructions). Wiring is as follows:
+GPIO   | Function
+-------|----------
+GPIO16 | Menu Toggle
+GPIO4  | Menu Back
+GPIO25 | Up
+GPIO19 | Down
+GPIO20 | Left
+GPIO21 | Right
+GPIO24 | Enter
+
+It's possible to wire real Commodore or Atari joysticks directly to the Pi using this config. You can do it without a PCB if you want. Each joystick gets its own set of GPIO pins, making it easy to hook up using nothing but jumpers and DB9 connectors.  (See http://accentual.com/bmc64/joystick.html). Wiring is as follows:
 
 GPIO BANK 1   | GPIO BANK 2 | C64 JOY PIN
 --------------|-------------|-------------
@@ -278,7 +267,7 @@ GND           |GND          | 8 (GND)
 In Joyports the menu, select either GPIO1 or GPIO2 and assign it to one of the emulated ports.
 NOTE: There are no analog inputs so paddles won't function.
 
-## GPIO Config 2 : Pure GPIO Keyboard and Joysticks
+## GPIO Config 2 : GPIO Keyboard and Joysticks
 
 This GPIO config option enables real keyboard and joystick scanning code purely from GPIO connections.  It can be used with a PCB specifically designed for BMC64.  The PCB design is available at https://upverter.com/design/rrossi/bmc64  It is possible to breadboard these connections using jumpers but that would mean a mess of wires inside your C64 shell.  The PCB is meant to mount your DB9 joystick ports, a power switch and power connector in the right spots as well as provide power for the shell's LED.
 
@@ -312,6 +301,31 @@ NOTE: There are no analog inputs so paddles won't function.
 Both real VIC20 and C64 keyboards should work in all emulated machines.  However, the additional keys found on the C128's keyboard are not available.
 
 (One cool side-effect of using a real keyboard is if you boot the C128 and hold down the commodore key, it will boot into 64 mode like the real thing! That's something I could never get to work with USB keyboards.)
+
+## GPIO Config 3 : Waveshare Game HAT
+
+This GPIO configuration will let you use a Waveshare Game HAT with BMC64. Set either port 1 or 2 on the virtual machine to GPIO Bank 1. GPIO Bank 2 has no function in this configuration.  But you can still plug in a USB gamepad and use that as a second joystick if you like.
+
+https://www.waveshare.com/game-hat.htm
+
+Buttons are mapped as follows:
+
+GPIO   | WAVESHARE BUTTON | BMC64 Function
+-------|------------------|---------------
+GPIO5  | Up               | Up
+GPIO6  | Down             | Down
+GPIO13 | Left             | Left
+GPIO19 | Right            | Right
+GPIO21 | Start            | Menu Toggle
+GPIO4  | Select           | Status Bar Toggle
+GPIO26 | A                | POTX
+GPIO12 | B                | Fire
+GPIO23 | Top Right        | Warp Toggle
+GPIO20 | Y                | POTY
+GPIO16 | X                | Virtual Keyboard Toggle
+GPIO18 | Top Left         | Menu Back
+
+NOTE: These button assignments are not configurable but may be in the future.
 
 # CPU Temperature
 

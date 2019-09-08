@@ -664,6 +664,7 @@ void CKernel::ScanKeyboard() {
 // selector is used to drive pins low instead of GND).
 // If gpioConfig is 2, the Waveshare HAT layout is used.
 void CKernel::ReadJoystick(int device, int gpioConfig) {
+  // For remembering button states for UI only
   static int js_prev_0[5] = {HIGH, HIGH, HIGH, HIGH, HIGH};
   static int js_prev_1[5] = {HIGH, HIGH, HIGH, HIGH, HIGH};
 
@@ -742,6 +743,8 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
   int js_left = js_pins[JOY_LEFT]->Read();
   int js_right = js_pins[JOY_RIGHT]->Read();
   int js_fire = js_pins[JOY_FIRE]->Read();
+  int js_potx = gpioConfig == 2 ? js_pins[JOY_POTX]->Read() : HIGH;
+  int js_poty = gpioConfig == 2 ? js_pins[JOY_POTY]->Read() : HIGH;
 
   if (ui_activated) {
     if (js_up == LOW && js_prev[JOY_UP] != LOW) {
@@ -778,6 +781,7 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
     js_prev[JOY_LEFT] = js_left;
     js_prev[JOY_RIGHT] = js_right;
     js_prev[JOY_FIRE] = js_fire;
+    // not necessary to remember pot values as they are not used for ui
   } else {
     int val = 0;
     if (js_up == LOW) val |= 0x01;
@@ -785,6 +789,7 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
     if (js_left == LOW) val |= 0x04;
     if (js_right == LOW) val |= 0x08;
     if (js_fire == LOW) val |= 0x10;
+    circle_add_pot_values(&val, js_potx == LOW, js_poty == LOW);
     circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, port, devd, val);
   }
 

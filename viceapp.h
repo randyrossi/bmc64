@@ -127,6 +127,7 @@
 #define JOY_RIGHT 3
 #define JOY_FIRE  4
 #define JOY_POTX  5
+#define JOY_POTY  6
 
 // For debouncing logic
 #define BTN_PRESS   1
@@ -218,7 +219,7 @@ protected:
   CGPIOPin *config_1_joystickPins1[5];
   CGPIOPin *config_1_joystickPins2[5];
 
-  CGPIOPin *config_2_joystickPins[5];
+  CGPIOPin *config_2_joystickPins[7]; // potx and poty included
 
   CGPIOPin *gpioPins[NUM_GPIO_PINS];
 };
