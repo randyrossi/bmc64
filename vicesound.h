@@ -57,7 +57,7 @@ public:
 
   /// \brief Starts playback
   /// \return Operation successful?
-  boolean Playback();
+  boolean Playback(int volume);
 
   /// \return Is playback running?
   boolean PlaybackActive(void) const;

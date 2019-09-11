@@ -123,6 +123,7 @@ struct menu_item *hotkey_tf1_item;
 struct menu_item *hotkey_tf3_item;
 struct menu_item *hotkey_tf5_item;
 struct menu_item *hotkey_tf7_item;
+struct menu_item *volume_item;
 struct menu_item *sid_engine_item;
 struct menu_item *sid_model_item;
 struct menu_item *sid_filter_item;
@@ -801,6 +802,8 @@ static int save_settings() {
   fprintf(fp, "key_binding_5=%d\n", key_bindings[4]);
   fprintf(fp, "key_binding_6=%d\n", key_bindings[5]);
 
+  fprintf(fp, "volume=%d\n", volume_item->value);
+
   fclose(fp);
 
   return 0;
@@ -1045,6 +1048,8 @@ static void load_settings() {
       v_border_item_1->value = value;
     } else if (strcmp(name, "aspect_1") == 0 && machine_class == VICE_MACHINE_C128) {
       aspect_item_1->value = value;
+    } else if (strcmp(name, "volume") == 0) {
+      volume_item->value = value;
     }
   }
   fclose(fp);
@@ -2246,6 +2251,9 @@ static void menu_value_changed(struct menu_item *item) {
     resources_set_int("C128ColumnKey", item->value);
     overlay_40_80_columns_changed(item->value);
     break;
+  case MENU_VOLUME:
+    circle_set_volume(item->value);
+    break;
   }
 
   // Only items that were for file selection/nav should have these set...
@@ -2715,6 +2723,10 @@ void build_menu(struct menu_item *root) {
                      "Custom HDMI mode timing calc...");
 
   parent = ui_menu_add_folder(root, "Sound");
+
+  volume_item = ui_menu_add_range(MENU_VOLUME, parent,
+      "Volume ", 0, 100, 1, 100);
+
   // Resid by default
   child = sid_engine_item =
       ui_menu_add_multiple_choice(MENU_SID_ENGINE, parent, "Sid Engine");
@@ -2934,6 +2946,9 @@ void build_menu(struct menu_item *root) {
   ui_set_on_value_changed_callback(menu_value_changed);
 
   load_settings();
+
+  circle_set_volume(volume_item->value);
+
   video_canvas_change_palette(0, palette_item_0->value);
   if (machine_class == VICE_MACHINE_C128) {
     video_canvas_change_palette(1, palette_item_1->value);

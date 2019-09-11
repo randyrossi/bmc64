@@ -104,6 +104,7 @@ public:
   void circle_lock_release();
   void circle_boot_complete();
   int circle_cycles_per_second();
+  void circle_set_volume(int value);
 
 private:
   void InitSound();
@@ -117,6 +118,7 @@ private:
   CCPUThrottle mCPUThrottle;
   CSpinLock m_Lock;
   int mNumJoy;
+  int mInitialVolume;
 
   int gpio_debounce_state[NUM_GPIO_PINS];
 

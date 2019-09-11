@@ -36,8 +36,9 @@ ViceSound::ViceSound(CVCHIQDevice *pVCHIQDevice,
 
 ViceSound::~ViceSound(void) {}
 
-boolean ViceSound::Playback() {
+boolean ViceSound::Playback(int volume) {
   assert(!IsActive());
+  SetVolume(volume);
   return Start();
 }
 

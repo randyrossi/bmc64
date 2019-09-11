@@ -68,6 +68,9 @@ public:
   /// \return Maximum value of one sample
   int GetRangeMax(void) const;
 
+  /// Set volume before start if desired
+  void SetVolume(int nVolume);
+
   /// \brief Connects to the VCHIQ sound service and starts sending sound data
   /// \return Operation successful?
   boolean Start(void);
@@ -127,6 +130,7 @@ private:
   unsigned m_nWritePos;
   unsigned m_nCompletePos;
   s16 *p_buffer;
+  int m_nVolume;
 };
 
 #endif

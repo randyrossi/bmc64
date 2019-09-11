@@ -33,7 +33,7 @@ ViceSoundBaseDevice::ViceSoundBaseDevice(CVCHIQDevice *pVCHIQDevice,
     : CSoundBaseDevice(SoundFormatSigned16, 0, nSampleRate),
       m_nSampleRate(nSampleRate), m_nChunkSize(nChunkSize),
       m_Destination(Destination), m_State(VCHIQSoundCreated), m_VCHIInstance(0),
-      m_hService(0) {
+      m_hService(0), m_nVolume(VCHIQ_SOUND_VOLUME_DEFAULT) {
   // assert (44100 <= nSampleRate && nSampleRate <= 48000);
   assert(Destination < VCHIQSoundDestinationUnknown);
 
@@ -48,6 +48,10 @@ ViceSoundBaseDevice::~ViceSoundBaseDevice(void) { assert(0); }
 int ViceSoundBaseDevice::GetRangeMin(void) const { return -32768; }
 
 int ViceSoundBaseDevice::GetRangeMax(void) const { return 32767; }
+
+void ViceSoundBaseDevice::SetVolume(int nVolume) {
+  m_nVolume = nVolume;
+}
 
 boolean ViceSoundBaseDevice::Start(void) {
   if (m_State > VCHIQSoundIdle) {
@@ -120,7 +124,7 @@ boolean ViceSoundBaseDevice::Start(void) {
 
     Msg.type = VC_AUDIO_MSG_TYPE_CONTROL;
     Msg.u.control.dest = m_Destination;
-    Msg.u.control.volume = VOLUME_TO_CHIP(VCHIQ_SOUND_VOLUME_DEFAULT);
+    Msg.u.control.volume = VOLUME_TO_CHIP(m_nVolume);
 
     nResult = CallMessage(&Msg);
     if (nResult != 0) {

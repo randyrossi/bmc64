@@ -35,6 +35,11 @@ static unsigned char mod_states;
 static bool uiLeftShift = false;
 static bool uiRightShift = false;
 
+static int vol_percent_to_vchiq(int percent) {
+  int range = VCHIQ_SOUND_VOLUME_MAX-(-2720);
+  return range * ((float)percent)/100.0 + (-2720);
+}
+
 // Real keyboard matrix states
 static bool kbdMatrixStates[8][8];
 // These for translating row/col scans into equivalent keycodes.
@@ -210,12 +215,15 @@ int circle_unmount_usb(int usb) {
   return static_kernel->circle_unmount_usb(usb);
 }
 
+void circle_set_volume(int value) {
+  static_kernel->circle_set_volume(value);
+}
 };
-
 
 CKernel::CKernel(void)
     : ViceStdioApp("vice"), mViceSound(nullptr),
-      mNumJoy(circle_num_joysticks()) {
+      mNumJoy(circle_num_joysticks()),
+      mInitialVolume(100) {
   static_kernel = this;
   mod_states = 0;
   memset(key_states, 0, MAX_KEY_CODES * sizeof(bool));
@@ -657,7 +665,7 @@ void CKernel::ScanKeyboard() {
   }
 }
 
-// Read joystick state. 
+// Read joystick state.
 // If gpioConfig is 0, the NavButtons+Joys config is used where pins can
 // be grounded.
 // If gpioConfig is 1, the Keyboard+Joys PCB config is used (where
@@ -818,7 +826,7 @@ int CKernel::circle_sound_init(const char *param, int *speed, int *fragsize,
 
   if (!mViceSound) {
     mViceSound = new ViceSound(&mVCHIQ, mViceOptions.GetAudioOut());
-    mViceSound->Playback();
+    mViceSound->Playback(vol_percent_to_vchiq(mInitialVolume));
   }
   return 0;
 }
@@ -1162,7 +1170,7 @@ int CKernel::circle_cycles_per_second() {
 
 int CKernel::circle_alloc_fbl(int layer, uint8_t **pixels,
                               int width, int height, int *pitch) {
-  return fbl[layer].Allocate(pixels, width, height, pitch);  
+  return fbl[layer].Allocate(pixels, width, height, pitch);
 }
 
 void CKernel::circle_free_fbl(int layer) {
@@ -1237,4 +1245,14 @@ void CKernel::circle_set_zlayer_fbl(int layer, int zlayer) {
 
 int CKernel::circle_get_zlayer_fbl(int layer) {
   return fbl[layer].GetLayer();
+}
+
+void CKernel::circle_set_volume(int value) {
+  // TODO: This is a race condition between two cores. Fix this.
+  if (mViceSound) {
+     mViceSound->SetControl(vol_percent_to_vchiq(value),
+                            mViceOptions.GetAudioOut());
+  } else {
+     mInitialVolume = value;
+  }
 }
