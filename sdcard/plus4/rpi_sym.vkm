@@ -38,9 +38,9 @@
 !RSHIFT 6 4
 !VSHIFT RSHIFT
 
-Tab 7 2 8       /* Tab = CTRL */
-Control_L 7 5 8 /* Control_L = Commodore Key */
-Alt_L 7 5 8     /* Alt_L = Commodore Key */
+Tab 7 2 8       /* CTRL */
+Control_L 7 5 8 /* Commodore Key */
+Alt_L 7 5 8     /* Commodore Key */
 BackSpace 0 0 8
 Down 5 0 8
 Escape 7 7 0    /* Run Stop */
@@ -60,20 +60,21 @@ Right 6 3 8
 Shift_L 1 7 2
 Shift_R 1 7 4
 Up 5 3 8
-at 0 7 8
-colon 5 5 8
-comma 5 7 8
-equal 6 5 8
-minus 5 6 8
-period 5 4 8
-plus 6 6 8
-semicolon 6 2 8
-slash 6 7 8
-space 7 4 8
-sterling 0 2 8
-asterisk 6 1 8
-arrowleft 6 4 8
-arrowup 6 6 8
+LeftBracket 0 7 8       /* at */
+SemiColon 5 5 8         /* colon */
+Comma 5 7 8             /* comma */
+BackSlash 6 5 8         /* equal */
+Pound 6 5 8             /* equal */
+Equals 5 6 8            /* minus */
+Period 5 4 8            /* period */
+Dash 6 6 8              /* plus */
+SingleQuote 6 2 8       /* semicolon */
+Slash 6 7 8             /* slash */
+Space 7 4 8             /* space */
+Insert 0 2 8            /* sterling */
+RightBracket 6 1 8      /* asterisk */
+BackQuote 6 4 8         /* arrowleft */
+Del 6 6 8               /* arrowup */
 0 4 3 8
 1 7 0 8
 2 7 3 8
@@ -112,6 +113,5 @@ y 3 1 8
 z 1 4 8
 
 # Restore key mappings
-Delete -3 0
-Prior -3 1
+PageUp -3 0
 CapsLock -4 1

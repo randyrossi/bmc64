@@ -125,12 +125,15 @@
 #define KEYCODE_Decimal 0x63
 #define KEYCODE_BackSlash2 0x64
 #define KEYCODE_Application 0x65
-#define KEYCODE_LeftShift 0x70
-#define KEYCODE_RightShift 0x71
-#define KEYCODE_LeftControl 0x72
-#define KEYCODE_RightControl 0x73
-#define KEYCODE_LeftAlt 0x74
-#define KEYCODE_RightAlt 0x75
+
+#define KEYCODE_LeftShift 0x100
+#define KEYCODE_RightShift 0x101
+#define KEYCODE_LeftControl 0x102
+#define KEYCODE_RightControl 0x103
+#define KEYCODE_LeftAlt 0x104
+#define KEYCODE_RightAlt 0x105
+#define KEYCODE_LeftSuper 0x106
+#define KEYCODE_RightSuper 0x107
 
 // If not 0, will intercept all usb key events and
 // forward to this function.  Used to listen to keys

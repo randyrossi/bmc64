@@ -903,8 +903,14 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
         }
         circle_key_pressed(KEYCODE_RightShift);
         break;
-      case 3: // LeftAlt
+      case 3: // LeftSuper
+        circle_key_pressed(KEYCODE_LeftSuper);
+        break;
+      case 2: // LeftAlt
         circle_key_pressed(KEYCODE_LeftAlt);
+        break;
+      case 6: // RightAlt
+        circle_key_pressed(KEYCODE_RightAlt);
         break;
       default:
         break;
@@ -926,8 +932,14 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
         }
         circle_key_released(KEYCODE_RightShift);
         break;
-      case 3: // LeftAlt
+      case 3: // LeftSuper
+        circle_key_released(KEYCODE_LeftSuper);
+        break;
+      case 2: // LeftAlt
         circle_key_released(KEYCODE_LeftAlt);
+        break;
+      case 6: // RightAlt
+        circle_key_released(KEYCODE_RightAlt);
         break;
       default:
         break;

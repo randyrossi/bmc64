@@ -62,6 +62,17 @@ void kbd_set_hotkey_function(unsigned int slot, long key, int function) {
 
 int kbd_arch_get_host_mapping(void) { return KBD_MAPPING_US; }
 
+// Tests keyname var against given string
+#define KCMP(x) (strcmp(keyname, x) == 0)
+
+// v2.5 made keycodes consistently BMC64 usb keycode
+// names rather than a mix of codes and c64 labels. But
+// to keep compatibility with existing files out there,
+// we still match the old names. The most unfortunate
+// one was "Delete" which has to stay. The new code is
+// "Del".
+#define LEGACY_KCMP(x) (strcmp(keyname, x) == 0)
+
 signed long kbd_arch_keyname_to_keynum(char *keyname) {
   if (strlen(keyname) == 1) {
     switch (keyname[0]) {
@@ -139,95 +150,101 @@ signed long kbd_arch_keyname_to_keynum(char *keyname) {
       return KEYCODE_0;
     }
     return 0;
-  } else if (strcmp(keyname, "Return") == 0) {
+  } else if (KCMP("Return")) {
     return (long)KEYCODE_Return;
-  } else if (strcmp(keyname, "BackSpace") == 0) {
+  } else if (KCMP("BackSpace")) {
     return (long)KEYCODE_Backspace;
-  } else if (strcmp(keyname, "Delete") == 0) {
+  } else if (KCMP("PageUp") || LEGACY_KCMP("Delete")) {
     return (long)KEYCODE_PageUp;
-  } else if (strcmp(keyname, "CapsLock") == 0) {
+  } else if (KCMP("CapsLock")) {
     return (long)KEYCODE_CapsLock;
-  } else if (strcmp(keyname, "Up") == 0) {
+  } else if (KCMP("Up")) {
     return (long)KEYCODE_Up;
-  } else if (strcmp(keyname, "Down") == 0) {
+  } else if (KCMP("Down")) {
     return (long)KEYCODE_Down;
-  } else if (strcmp(keyname, "Left") == 0) {
+  } else if (KCMP("Left")) {
     return (long)KEYCODE_Left;
-  } else if (strcmp(keyname, "Right") == 0) {
+  } else if (KCMP("Right")) {
     return (long)KEYCODE_Right;
-  } else if (strcmp(keyname, "Up") == 0) {
+  } else if (KCMP("Up")) {
     return (long)KEYCODE_Up;
-  } else if (strcmp(keyname, "comma") == 0) {
+  } else if (KCMP("Comma") || LEGACY_KCMP("comma")) {
     return (long)KEYCODE_Comma;
-  } else if (strcmp(keyname, "period") == 0) {
+  } else if (KCMP("Period") || LEGACY_KCMP("period")) {
     return (long)KEYCODE_Period;
-  } else if (strcmp(keyname, "space") == 0) {
+  } else if (KCMP("Space") || LEGACY_KCMP("space")) {
     return (long)KEYCODE_Space;
-  } else if (strcmp(keyname, "asterisk") == 0) {
+  } else if (KCMP("RightBracket") || LEGACY_KCMP("asterisk")) {
     return (long)KEYCODE_RightBracket;
-  } else if (strcmp(keyname, "arrowup") == 0) {
+  } else if (KCMP("Del") || LEGACY_KCMP("arrowup")) {
     return (long)KEYCODE_Delete;
-  } else if (strcmp(keyname, "Shift_L") == 0) {
+  } else if (KCMP("Shift_L")) {
     return (long)KEYCODE_LeftShift;
-  } else if (strcmp(keyname, "Shift_R") == 0) {
+  } else if (KCMP("Shift_R")) {
     return (long)KEYCODE_RightShift;
-  } else if (strcmp(keyname, "plus") == 0) {
+  } else if (KCMP("Dash") || LEGACY_KCMP("plus")) {
     return (long)KEYCODE_Dash;
-  } else if (strcmp(keyname, "arrowleft") == 0) {
+  } else if (KCMP("BackQuote") || LEGACY_KCMP("arrowleft")) {
     return (long)KEYCODE_BackQuote;
-  } else if (strcmp(keyname, "minus") == 0) {
+  } else if (KCMP("Equals") || LEGACY_KCMP("minus")) {
     return (long)KEYCODE_Equals;
-  } else if (strcmp(keyname, "colon") == 0) {
+  } else if (KCMP("SemiColon") || LEGACY_KCMP("colon")) {
     return (long)KEYCODE_SemiColon;
-  } else if (strcmp(keyname, "Home") == 0) {
+  } else if (KCMP("Home")) {
     return (long)KEYCODE_Home;
-  } else if (strcmp(keyname, "slash") == 0) {
+  } else if (KCMP("Slash") || LEGACY_KCMP("slash")) {
     return (long)KEYCODE_Slash;
-  } else if (strcmp(keyname, "equal") == 0 &&
+  } else if ((KCMP("BackSlash") || LEGACY_KCMP("equal")) &&
              menu_get_keyboard_type() == KEYBOARD_TYPE_US) {
     return (long)KEYCODE_BackSlash;
-  } else if (strcmp(keyname, "equal") == 0 &&
+  } else if ((KCMP("Pound") || LEGACY_KCMP("equal")) &&
              menu_get_keyboard_type() == KEYBOARD_TYPE_UK) {
     return (long)KEYCODE_Pound;
-  } else if (strcmp(keyname, "sterling") == 0) {
+  } else if (KCMP("Insert") || LEGACY_KCMP("sterling")) {
     return (long)KEYCODE_Insert;
-  } else if (strcmp(keyname, "semicolon") == 0) {
+  } else if (KCMP("SingleQuote") || LEGACY_KCMP("semicolon")) {
     return (long)KEYCODE_SingleQuote;
-  } else if (strcmp(keyname, "Tab") == 0) {
+  } else if (KCMP("Tab")) {
     return (long)KEYCODE_Tab;
-  } else if (strcmp(keyname, "Control_L") == 0) {
+  } else if (KCMP("Control_L")) {
     return (long)KEYCODE_LeftControl;
-  } else if (strcmp(keyname, "Control_R") == 0) {
+  } else if (KCMP("Control_R")) {
     return (long)KEYCODE_RightControl;
-  } else if (strcmp(keyname, "Alt_L") == 0) {
+  } else if (KCMP("Alt_L")) {
     return (long)KEYCODE_LeftAlt;
-  } else if (strcmp(keyname, "Escape") == 0) {
+  } else if (KCMP("Alt_R")) {
+    return (long)KEYCODE_RightAlt;
+  } else if (KCMP("Super_L")) {
+    return (long)KEYCODE_LeftSuper;
+  } else if (KCMP("Super_R")) {
+    return (long)KEYCODE_RightSuper;
+  } else if (KCMP("Escape")) {
     return (long)KEYCODE_Escape;
-  } else if (strcmp(keyname, "at") == 0) {
+  } else if (KCMP("LeftBracket") || LEGACY_KCMP("at")) {
     return (long)KEYCODE_LeftBracket;
-  } else if (strcmp(keyname, "F1") == 0) {
+  } else if (KCMP("F1")) {
     return (long)KEYCODE_F1;
-  } else if (strcmp(keyname, "F2") == 0) {
+  } else if (KCMP("F2")) {
     return (long)KEYCODE_F2;
-  } else if (strcmp(keyname, "F3") == 0) {
+  } else if (KCMP("F3")) {
     return (long)KEYCODE_F3;
-  } else if (strcmp(keyname, "F4") == 0) {
+  } else if (KCMP("F4")) {
     return (long)KEYCODE_F4;
-  } else if (strcmp(keyname, "F5") == 0) {
+  } else if (KCMP("F5")) {
     return (long)KEYCODE_F5;
-  } else if (strcmp(keyname, "F6") == 0) {
+  } else if (KCMP("F6")) {
     return (long)KEYCODE_F6;
-  } else if (strcmp(keyname, "F7") == 0) {
+  } else if (KCMP("F7")) {
     return (long)KEYCODE_F7;
-  } else if (strcmp(keyname, "F8") == 0) {
+  } else if (KCMP("F8")) {
     return (long)KEYCODE_F8;
-  } else if (strcmp(keyname, "F9") == 0) {
+  } else if (KCMP("F9")) {
     return (long)KEYCODE_F9;
-  } else if (strcmp(keyname, "F10") == 0) {
+  } else if (KCMP("F10")) {
     return (long)KEYCODE_F10;
-  } else if (strcmp(keyname, "F11") == 0) {
+  } else if (KCMP("F11")) {
     return (long)KEYCODE_F11;
-  } else if (strcmp(keyname, "ScrollLock") == 0) {
+  } else if (KCMP("ScrollLock")) {
     return (long)KEYCODE_ScrollLock;
   }
 

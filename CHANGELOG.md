@@ -245,3 +245,6 @@
   * Add parallel cable option on drives
   * Fix GPIO virtual keyboard navigation too fast
   * Added Menu navigation button options to GPIO config 1
+  * Added Volume control
+  * Fixed wrong keycode for Alt_L
+  * Cleaned up keycodes in rpi_sym.kym files

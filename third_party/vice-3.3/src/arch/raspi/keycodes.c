@@ -236,6 +236,10 @@ char* keycode_to_string(long keycode) {
        return "LeftAlt";
     case KEYCODE_RightAlt:
        return "RightAlt";
+    case KEYCODE_LeftSuper:
+       return "LeftSuper";
+    case KEYCODE_RightSuper:
+       return "RightSuper";
     default:
        return "undefined";
   }
