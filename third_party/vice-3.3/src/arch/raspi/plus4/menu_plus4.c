@@ -145,3 +145,16 @@ void menu_build_machine(struct menu_item* parent) {
     item->on_value_changed = menu_value_changed;
   }
 }
+
+struct menu_item* menu_build_cartridge(struct menu_item* root) {
+  struct menu_item* parent = ui_menu_add_folder(root, "Cartridge");
+  ui_menu_add_button(MENU_PLUS4_ATTACH_CART, parent, "Attach cart...");
+  ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C0_LO, parent, "Attach C0 LO...");
+  ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C0_HI, parent, "Attach C0 HI...");
+  ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C1_LO, parent, "Attach C1 LO...");
+  ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C1_HI, parent, "Attach C1 HI...");
+  ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C2_LO, parent, "Attach C2 LO...");
+  ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C2_HI, parent, "Attach C2 HI...");
+  ui_menu_add_button(MENU_DETACH_CART, parent, "Detach cartridge");
+  return parent;
+}

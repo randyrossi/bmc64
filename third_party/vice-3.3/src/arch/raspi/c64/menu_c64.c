@@ -115,3 +115,13 @@ void menu_build_machine(struct menu_item* parent) {
   ui_menu_add_button(MENU_LOAD_BASIC, roms_parent, "Load Basic ROM...");
   ui_menu_add_button(MENU_LOAD_CHARGEN, roms_parent, "Load Chargen ROM...");
 }
+
+struct menu_item* menu_build_cartridge(struct menu_item* root) {
+  struct menu_item* parent = ui_menu_add_folder(root, "Cartridge");
+  ui_menu_add_button(MENU_C64_ATTACH_CART, parent, "Attach cart...");
+  ui_menu_add_button(MENU_C64_ATTACH_CART_8K, parent, "Attach 8k raw...");
+  ui_menu_add_button(MENU_C64_ATTACH_CART_16K, parent, "Attach 16 raw...");
+  ui_menu_add_button(MENU_C64_ATTACH_CART_ULTIMAX, parent, "Attach Ultimax raw...");
+  ui_menu_add_button(MENU_DETACH_CART, parent, "Detach cartridge");
+  return parent;
+}

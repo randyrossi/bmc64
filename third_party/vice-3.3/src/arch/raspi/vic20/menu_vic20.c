@@ -139,3 +139,24 @@ void menu_build_machine(struct menu_item* parent) {
   ui_menu_add_toggle(MENU_VIC20_MEMORY_8K_A000, mem_parent,
                                          "8kb ($A000)", blocks & VIC20_BLOCK_5 ? 1 : 0);
 }
+
+struct menu_item* menu_build_cartridge(struct menu_item* root) {
+  struct menu_item* parent = ui_menu_add_folder(root, "Cartridge");
+
+  ui_menu_add_button(MENU_VIC20_ATTACH_CART_GENERIC, parent, "Attach generic cart...");
+  ui_menu_add_button(MENU_VIC20_ATTACH_CART_BEHRBONZ, parent, "Attach behrbonz cart...");
+  ui_menu_add_button(MENU_VIC20_ATTACH_CART_MEGACART, parent, "Attach megacart cart...");
+  ui_menu_add_button(MENU_VIC20_ATTACH_CART_FINAL_EXPANSION, parent, "Attach final expansion cart...");
+  ui_menu_add_button(MENU_VIC20_ATTACH_CART_UM, parent, "Attach UM cart...");
+  ui_menu_add_button(MENU_VIC20_ATTACH_CART_FP, parent, "Attach FP cart...");
+  ui_menu_add_button(MENU_DETACH_CART, parent, "Detach cartridge");
+
+  struct menu_item* p2 = ui_menu_add_folder(parent, "Add to generic cartridge");
+    ui_menu_add_button(MENU_VIC20_ATTACH_CART_DETECT, p2, "Smart attach...");
+    ui_menu_add_button(MENU_VIC20_ATTACH_CART_16K_2000, p2, "Attach 4/8/16k $2000...");
+    ui_menu_add_button(MENU_VIC20_ATTACH_CART_16K_4000, p2, "Attach 4/8/16k $4000...");
+    ui_menu_add_button(MENU_VIC20_ATTACH_CART_16K_6000, p2, "Attach 4/8k/16k $6000...");
+    ui_menu_add_button(MENU_VIC20_ATTACH_CART_8K_A000, p2, "Attach 4/8k $A000...");
+    ui_menu_add_button(MENU_VIC20_ATTACH_CART_4K_B000, p2, "Attach 4k $B000...");
+  return parent;
+}

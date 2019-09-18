@@ -103,3 +103,4 @@ extern int get_vkbd_height(void);
 extern int get_vkbd_size(void);
 
 extern void menu_build_machine(struct menu_item* parent);
+extern struct menu_item* menu_build_cartridge(struct menu_item* parent);

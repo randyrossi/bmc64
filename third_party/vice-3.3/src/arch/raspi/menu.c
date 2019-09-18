@@ -1243,6 +1243,27 @@ static void select_file(struct menu_item *item) {
      case MENU_VIC20_CART_FINAL_EXPANSION_FILE:
        attach_cart(item, CARTRIDGE_VIC20_FINAL_EXPANSION);
        return;
+     case MENU_PLUS4_CART_FILE:
+       attach_cart(item, CARTRIDGE_PLUS4_DETECT);
+       return;
+     case MENU_PLUS4_CART_C0_LO_FILE:
+       attach_cart(item, CARTRIDGE_PLUS4_16KB_C0LO);
+       return;
+     case MENU_PLUS4_CART_C0_HI_FILE:
+       attach_cart(item, CARTRIDGE_PLUS4_16KB_C0HI);
+       return;
+     case MENU_PLUS4_CART_C1_LO_FILE:
+       attach_cart(item, CARTRIDGE_PLUS4_16KB_C1LO);
+       return;
+     case MENU_PLUS4_CART_C1_HI_FILE:
+       attach_cart(item, CARTRIDGE_PLUS4_16KB_C1HI);
+       return;
+     case MENU_PLUS4_CART_C2_LO_FILE:
+       attach_cart(item, CARTRIDGE_PLUS4_16KB_C2LO);
+       return;
+     case MENU_PLUS4_CART_C2_HI_FILE:
+       attach_cart(item, CARTRIDGE_PLUS4_16KB_C2HI);
+       return;
      default:
        break;
   }
@@ -1848,6 +1869,27 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_VIC20_ATTACH_CART_FINAL_EXPANSION:
     show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_FINAL_EXPANSION_FILE, 0);
+    return;
+  case MENU_PLUS4_ATTACH_CART:
+    show_files(DIR_CARTS, FILTER_CART, MENU_PLUS4_CART_FILE, 0);
+    return;
+  case MENU_PLUS4_ATTACH_CART_C0_LO:
+    show_files(DIR_CARTS, FILTER_CART, MENU_PLUS4_CART_C0_LO_FILE, 0);
+    return;
+  case MENU_PLUS4_ATTACH_CART_C0_HI:
+    show_files(DIR_CARTS, FILTER_CART, MENU_PLUS4_CART_C0_HI_FILE, 0);
+    return;
+  case MENU_PLUS4_ATTACH_CART_C1_LO:
+    show_files(DIR_CARTS, FILTER_CART, MENU_PLUS4_CART_C1_LO_FILE, 0);
+    return;
+  case MENU_PLUS4_ATTACH_CART_C1_HI:
+    show_files(DIR_CARTS, FILTER_CART, MENU_PLUS4_CART_C1_HI_FILE, 0);
+    return;
+  case MENU_PLUS4_ATTACH_CART_C2_LO:
+    show_files(DIR_CARTS, FILTER_CART, MENU_PLUS4_CART_C2_LO_FILE, 0);
+    return;
+  case MENU_PLUS4_ATTACH_CART_C2_HI:
+    show_files(DIR_CARTS, FILTER_CART, MENU_PLUS4_CART_C2_HI_FILE, 0);
     return;
   case MENU_LOAD_KERNAL:
     show_files(DIR_ROMS, FILTER_NONE, MENU_KERNAL_FILE, 0);
@@ -2545,32 +2587,7 @@ void build_menu(struct menu_item *root) {
       ui_menu_add_button(MENU_CREATE_P64, parent, "P64...");
       ui_menu_add_button(MENU_CREATE_X64, parent, "X64...");
 
-  parent = ui_menu_add_folder(root, "Cartridge");
-  if (machine_class == VICE_MACHINE_VIC20) {
-    ui_menu_add_button(MENU_VIC20_ATTACH_CART_GENERIC, parent, "Attach generic cart...");
-    ui_menu_add_button(MENU_VIC20_ATTACH_CART_BEHRBONZ, parent, "Attach behrbonz cart...");
-    ui_menu_add_button(MENU_VIC20_ATTACH_CART_MEGACART, parent, "Attach megacart cart...");
-    ui_menu_add_button(MENU_VIC20_ATTACH_CART_FINAL_EXPANSION, parent, "Attach final expansion cart...");
-    ui_menu_add_button(MENU_VIC20_ATTACH_CART_UM, parent, "Attach UM cart...");
-    ui_menu_add_button(MENU_VIC20_ATTACH_CART_FP, parent, "Attach FP cart...");
-    ui_menu_add_button(MENU_DETACH_CART, parent, "Detach cartridge");
-
-    parent = ui_menu_add_folder(parent, "Add to generic cartridge");
-       ui_menu_add_button(MENU_VIC20_ATTACH_CART_DETECT, parent, "Smart attach...");
-       ui_menu_add_button(MENU_VIC20_ATTACH_CART_16K_2000, parent, "Attach 4/8/16k $2000...");
-       ui_menu_add_button(MENU_VIC20_ATTACH_CART_16K_4000, parent, "Attach 4/8/16k $4000...");
-       ui_menu_add_button(MENU_VIC20_ATTACH_CART_16K_6000, parent, "Attach 4/8k/16k $6000...");
-       ui_menu_add_button(MENU_VIC20_ATTACH_CART_8K_A000, parent, "Attach 4/8k $A000...");
-       ui_menu_add_button(MENU_VIC20_ATTACH_CART_4K_B000, parent, "Attach 4k $B000...");
-
-  } else {
-    ui_menu_add_button(MENU_C64_ATTACH_CART, parent, "Attach cart...");
-    ui_menu_add_button(MENU_C64_ATTACH_CART_8K, parent, "Attach 8k raw...");
-    ui_menu_add_button(MENU_C64_ATTACH_CART_16K, parent, "Attach 16 raw...");
-    ui_menu_add_button(MENU_C64_ATTACH_CART_ULTIMAX, parent, "Attach Ultimax raw...");
-    ui_menu_add_button(MENU_DETACH_CART, parent, "Detach cartridge");
-  }
-
+  parent = menu_build_cartridge(root);
   ui_menu_add_button(MENU_TEXT, parent, "");
   ui_menu_add_button(MENU_MAKE_CART_DEFAULT, parent,
                      "Set current cart default (Need Save)");
