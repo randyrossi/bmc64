@@ -1446,6 +1446,13 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
   case MENU_VIC20_CART_FP_FILE:
   case MENU_VIC20_CART_MEGACART_FILE:
   case MENU_VIC20_CART_FINAL_EXPANSION_FILE:
+  case MENU_PLUS4_CART_FILE:
+  case MENU_PLUS4_CART_C0_LO_FILE:
+  case MENU_PLUS4_CART_C0_HI_FILE:
+  case MENU_PLUS4_CART_C1_LO_FILE:
+  case MENU_PLUS4_CART_C1_HI_FILE:
+  case MENU_PLUS4_CART_C2_LO_FILE:
+  case MENU_PLUS4_CART_C2_HI_FILE:
     return DIR_CARTS;
   case MENU_KERNAL_FILE:
   case MENU_BASIC_FILE:
@@ -1511,6 +1518,13 @@ static void relist_files_after_dir_change(struct menu_item *item) {
   case MENU_VIC20_CART_FP_FILE:
   case MENU_VIC20_CART_MEGACART_FILE:
   case MENU_VIC20_CART_FINAL_EXPANSION_FILE:
+  case MENU_PLUS4_CART_FILE:
+  case MENU_PLUS4_CART_C0_LO_FILE:
+  case MENU_PLUS4_CART_C0_HI_FILE:
+  case MENU_PLUS4_CART_C1_LO_FILE:
+  case MENU_PLUS4_CART_C1_HI_FILE:
+  case MENU_PLUS4_CART_C2_LO_FILE:
+  case MENU_PLUS4_CART_C2_HI_FILE:
     show_files(DIR_CARTS, FILTER_NONE, item->id, 1);
     break;
   case MENU_KERNAL_FILE:
