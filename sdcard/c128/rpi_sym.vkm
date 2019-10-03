@@ -1,4 +1,5 @@
-# VICE keyboard mapping file
+# BMC64 keyboard mapping file suitable for both
+# USB and real C64 keyboards using GPIO
 #
 # A Keyboard map is read in as patch to the current map.
 #

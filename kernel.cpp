@@ -43,6 +43,18 @@ static int vol_percent_to_vchiq(int percent) {
 // Real keyboard matrix states
 static bool kbdMatrixStates[8][8];
 // These for translating row/col scans into equivalent keycodes.
+#if defined(RASPI_PLUS4)
+static long kbdMatrixKeyCodes[8][8] = {
+ {KEYCODE_Backspace,  KEYCODE_3,         KEYCODE_5, KEYCODE_7, KEYCODE_9, KEYCODE_Down,         KEYCODE_Left,         KEYCODE_1},
+ {KEYCODE_Return,     KEYCODE_w,         KEYCODE_r, KEYCODE_y, KEYCODE_i, KEYCODE_p,            KEYCODE_Dash,         KEYCODE_BackQuote},
+ {KEYCODE_BackSlash,  KEYCODE_a,         KEYCODE_d, KEYCODE_g, KEYCODE_j, KEYCODE_l,            KEYCODE_SingleQuote,  KEYCODE_Tab},
+ {KEYCODE_F4,         KEYCODE_4,         KEYCODE_6, KEYCODE_8, KEYCODE_0, KEYCODE_Up,           KEYCODE_Right,        KEYCODE_2},
+ {KEYCODE_F1,         KEYCODE_z,         KEYCODE_c, KEYCODE_b, KEYCODE_m, KEYCODE_Period,       KEYCODE_RightShift,   KEYCODE_Space},
+ {KEYCODE_F2,         KEYCODE_s,         KEYCODE_f, KEYCODE_h, KEYCODE_k, KEYCODE_SemiColon,    KEYCODE_RightBracket, KEYCODE_LeftControl},
+ {KEYCODE_F3,         KEYCODE_e,         KEYCODE_t, KEYCODE_u, KEYCODE_o, KEYCODE_LeftBracket,  KEYCODE_Equals,       KEYCODE_q},
+ {KEYCODE_Insert,     KEYCODE_LeftShift, KEYCODE_x, KEYCODE_v, KEYCODE_n, KEYCODE_Comma,        KEYCODE_Slash,        KEYCODE_Escape},
+};
+#else
 static long kbdMatrixKeyCodes[8][8] = {
  {KEYCODE_Backspace, KEYCODE_3,         KEYCODE_5, KEYCODE_7, KEYCODE_9, KEYCODE_Dash,        KEYCODE_Insert,       KEYCODE_1},
  {KEYCODE_Return,    KEYCODE_w,         KEYCODE_r, KEYCODE_y, KEYCODE_i, KEYCODE_p,           KEYCODE_RightBracket, KEYCODE_BackQuote},
@@ -53,6 +65,7 @@ static long kbdMatrixKeyCodes[8][8] = {
  {KEYCODE_F5,        KEYCODE_e,         KEYCODE_t, KEYCODE_u, KEYCODE_o, KEYCODE_LeftBracket, KEYCODE_Delete,       KEYCODE_q},
  {KEYCODE_Down,      KEYCODE_LeftShift, KEYCODE_x, KEYCODE_v, KEYCODE_n, KEYCODE_Comma,       KEYCODE_Slash,        KEYCODE_Escape},
 };
+#endif
 static int kbdRestoreState;
 
 extern "C" {
@@ -600,11 +613,19 @@ void CKernel::ScanKeyboard() {
   // For restore, there is no public API that triggers it so we will
   // pass the keycode that will.
   int restore = gpioPins[GPIO_KBD_RESTORE_INDEX]->Read();
+#if defined(RASPI_PLUS4)
+  if (restore == LOW && kbdRestoreState == HIGH) {
+     circle_key_pressed(KEYCODE_Home);
+  } else if (restore == HIGH && kbdRestoreState == LOW) {
+     circle_key_released(KEYCODE_Home);
+  }
+#else
   if (restore == LOW && kbdRestoreState == HIGH) {
      circle_key_pressed(KEYCODE_PageUp);
   } else if (restore == HIGH && kbdRestoreState == LOW) {
      circle_key_released(KEYCODE_PageUp);
   }
+#endif
   kbdRestoreState = restore;
 
   // Keyboard scan
