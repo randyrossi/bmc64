@@ -46,9 +46,9 @@ BackSpace 0 0 8
 Down 5 0 8
 Escape 7 7 0    /* Run Stop */
 F1 0 4 8
-F2 0 5 8
-F3 0 6 8
-F4 0 3 8
+F3 0 5 8
+F5 0 6 8
+F7 0 3 8
 Home 7 1 8      /* Clr */
 Left 6 0 8
 Return 0 1 8
