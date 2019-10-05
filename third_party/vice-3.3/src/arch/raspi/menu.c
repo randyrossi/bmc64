@@ -62,7 +62,7 @@
 #include "util.h"
 #include "vdrive-internal.h"
 
-#define VERSION_STRING "2.5"
+#define VERSION_STRING "2.5.1"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
