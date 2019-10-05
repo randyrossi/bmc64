@@ -3,7 +3,7 @@
 BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio. Three other Commodore builds are available as well; C128, Vic20 and Plus/4.
 
 # BMC64 Features
-  * Quick boot time (4.1 seconds!)
+  * Quick boot time (C64 in 4.1 seconds!)
   * Frames are timed to vsync for true 50/60 hz smooth scrolling (no horizontal tearing!)
   * Low latency between input & audio/video
   * No shutdown sequence required, just power off
@@ -11,7 +11,7 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
   * Easily wire real Commodore/Atari Joysticks and nav buttons via GPIO using jumpers (GPIO Config 1)
   * Can use a real Commodore Keyboard and Joysticks via PCB (GPIO Config 2)
   * Can use a Waveshare Game HAT (Pi2 or 3 Only) (GPIO Config 3)
-  * Works with the Keyrah
+  * Also works with the Keyrah
 
 # Limitations
   * USB gamepad support is limited. Not all gamepads will work.
@@ -159,11 +159,17 @@ You can switch between 6581 and 8580 models as well as turn on/off the filter.  
 
 Use F12 to bring up the menu and ESC/RUNSTOP to exit.
 
-If you use a real commodore keyboard, you can use Commodore Key + F7 in place of F12 (This key combination is configurable). You can also use gamepads with buttons configured for the menu.  Gamepads that have had a button configured to bring up the menu don't have to be assigned to a port to do that.  So even if you have DB9 joysticks wired, you should still be able to plug in a wired/wireless usb gamepad to trigger the menu if you want.
+If you use a real commodore keyboard (either Keyrah or GPIO via PCB), you can use Commodore Key + F7 in place of F12 (This key combination is configurable). You can also use gamepads with buttons configured for the menu.  Gamepads that have had a button configured to bring up the menu don't have to be assigned to a port to do that.  So even if you have DB9 joysticks wired, you should still be able to plug in a wired/wireless usb gamepad to trigger the menu if you want.
 
 For the Keyrah, if you find your '=' key doesn't work.  Try switching the keyboard type to 'UK'.  You must save and restart for this to take effect.
 
-(F11 is the 40/80 Column Key for C128)
+## Plus/4 Keyboard Notes
+
+If you use a real C64 keyboard via GPIO Config #2, please be aware that BMPLUS4 will use a positional mapping that will match the C16 layout.  So the labels of the keys you press will not always match what the emulator gets.  For example, the four separate cursor keys are located where the +, -, pound and CLR keys are on the C64.  A real C16 or Plus/4 keyboard is not supported using GPIO. How the provided USB mapping works (or doesn't) with a real C16 keyboard and Keyrah is not known.
+
+## C128 Keyboard Notes
+
+F11 is the 40/80 Column Key for C128
 
 # Gamepad config
 

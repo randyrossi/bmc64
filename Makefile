@@ -1,5 +1,5 @@
 #
-# Makefile
+# Makefile for a machine kernel image
 #
 
 CIRCLEHOME = third_party/circle-stdlib/libs/circle
@@ -7,8 +7,6 @@ NEWLIBDIR = third_party/circle-stdlib/install/arm-none-circle
 
 OBJS	= main.o kernel.o vicesound.o vicesoundbasedevice.o \
           viceoptions.o viceemulatorcore.o viceapp.o fbl.o
-
-# TODO Add subdir to kick off vice compilation
 
 include $(CIRCLEHOME)/Rules.mk
 

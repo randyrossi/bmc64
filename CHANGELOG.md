@@ -248,3 +248,8 @@
   * Added Volume control
   * Fixed wrong keycode for Alt_L
   * Cleaned up keycodes in rpi_sym.kym files
+
+## 2.5.1
+  * Fixed Vic20 cartridge menu
+  * Fixed Plus/4 cartridge menu
+  * Real keyboard matrix for Plus/4 to match C16 positional layout
