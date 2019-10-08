@@ -105,6 +105,7 @@ public:
   void circle_boot_complete();
   int circle_cycles_per_second();
   void circle_set_volume(int value);
+  int circle_get_model();
 
 private:
   void InitSound();

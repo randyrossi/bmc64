@@ -2,31 +2,14 @@
 # Bare Metal Commodore 64 Emulator For The Raspberry Pi
 #
 
-# Uncomment either PAL or NTSC section below to suit
-# your needs. You MUST also edit cmdline.txt to match
-# the frequency of video you select here.
-# PAL for 50hz modes
-# NTSC for 60hz modes.
-
-# -----------------------------------------------------
-# PAL CRT OR HDMI CONFIGURATION (720p@50hz)
-# NOTE: You MUST set machine_timing=pal in cmdline.txt
-#       if you want to use a 50hz video mode.
-# -----------------------------------------------------
+# NOTE: Since v3.0, the video settings here and the
+# accompanying cmdline.txt settings are configured by
+# machines.txt. See README.md for how to switch
+# machine configs.
 disable_overscan=1
 sdtv_mode=18
 hdmi_group=1
 hdmi_mode=19
-
-# -----------------------------------------------------
-# NTSC CRT OR HDMI CONFIGURATION (720p60hz)
-# NOTE: You MUST set machine_timing=ntsc in cmdline.txt
-#       if you want to use a 60hz video mode.
-# -----------------------------------------------------
-#disable_overscan=1
-#sdtv_mode=16
-#hdmi_group=1
-#hdmi_mode=4
 
 # -----------------------------------------------------
 # Optional settings follow
@@ -68,3 +51,10 @@ boot_delay=0
 #over_voltage=6
 #sdram_over_voltage=6
 #temp_limit=75
+
+# IMPORTANT: A kernel= parameter will appear here after
+# a machine switch to a kernel other than C64. This kernel
+# will be Pi model specific so the SDCard will no longer
+# boot on a model other than the one the switch took
+# place on . If you want to make the card bootable from any
+# Pi model again, simply switch back to C64.

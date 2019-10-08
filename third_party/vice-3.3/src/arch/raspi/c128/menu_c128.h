@@ -42,5 +42,6 @@ int get_color_tint(int display_num);
 void raspi_cartridge_trigger_freeze(void);
 struct menu_item* menu_build_palette_options(int menu_id, struct menu_item* parent);
 void menu_build_machine(struct menu_item* parent);
+struct menu_item* menu_build_cartridge(struct menu_item* root);
 
 void column4080_key_toggled(void);

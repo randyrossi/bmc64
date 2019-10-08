@@ -231,6 +231,10 @@ int circle_unmount_usb(int usb) {
 void circle_set_volume(int value) {
   static_kernel->circle_set_volume(value);
 }
+
+int circle_get_model() {
+  return static_kernel->circle_get_model();
+}
 };
 
 CKernel::CKernel(void)
@@ -1288,4 +1292,8 @@ void CKernel::circle_set_volume(int value) {
   } else {
      mInitialVolume = value;
   }
+}
+
+int CKernel::circle_get_model() {
+  return mMachineInfo.GetModelMajor();
 }

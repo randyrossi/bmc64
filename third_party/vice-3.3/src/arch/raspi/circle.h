@@ -248,5 +248,6 @@ extern void circle_find_usb(int (*usb)[3]);
 extern int circle_mount_usb(int usb);
 extern int circle_unmount_usb(int usb);
 extern void circle_set_volume(int value);
+extern int circle_get_model();
 
 #endif

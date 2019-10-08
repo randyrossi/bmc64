@@ -51,6 +51,7 @@
 #include "menu_timing.h"
 #include "menu_usb.h"
 #include "menu_keyset.h"
+#include "menu_switch.h"
 #include "overlay.h"
 #include "raspi_machine.h"
 #include "raspi_util.h"
@@ -62,7 +63,7 @@
 #include "util.h"
 #include "vdrive-internal.h"
 
-#define VERSION_STRING "2.5.1"
+#define VERSION_STRING "3.0"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -81,6 +82,11 @@
 #define DEFAULT_VDC_ASPECT 145
 #define DEFAULT_VDC_H_BORDER_TRIM 20
 #define DEFAULT_VDC_V_BORDER_TRIM 40
+
+#define SWITCH_MSG "NOTE: For machines other than C64, " \
+                   "the SDCard will only boot on the same Pi model the " \
+                   "switch occurred from. To boot on a different Pi model, " \
+                   "switch back to C64 first."
 
 // For filename filters
 typedef enum {
@@ -494,6 +500,17 @@ static void filesystem_change_volume(struct menu_item *item) {
     item2->sub_id = MENU_SUB_CHANGE_VOLUME;
     item2->value = MENU_VOLUME_USB3;
   }
+}
+
+static void confirm_dialog(int id, int value) {
+  struct menu_item *root = ui_push_menu(8, 2);
+
+  struct menu_item *child;
+  child = ui_menu_add_button(MENU_CONFIRM_OK, root, "OK");
+  child->value = value;
+  child->sub_id = id;
+
+  child = ui_menu_add_button(MENU_CONFIRM_CANCEL, root, "CANCEL");
 }
 
 static void drive_change_model() {
@@ -1700,6 +1717,9 @@ static void do_easy_flash() {
 
 // Interpret what menu item changed and make the change to vice
 static void menu_value_changed(struct menu_item *item) {
+  struct machine_entry* head;
+  int status = 0;
+
   switch (item->id) {
   case MENU_ATTACH_DISK_8:
   case MENU_IECDEVICE_8:
@@ -2310,6 +2330,34 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_VOLUME:
     circle_set_volume(item->value);
     break;
+  case MENU_SWITCH_MACHINE:
+    confirm_dialog(MENU_SWITCH_MACHINE, item->value);
+    break;
+  case MENU_CONFIRM_OK:
+    ui_pop_menu();
+    if (item->sub_id == MENU_SWITCH_MACHINE) {
+      load_machines(&head);
+      struct machine_entry* ptr = head;
+      status = 0;
+      while (ptr) {
+          if (ptr->id == item->value) {
+            status = apply_config(ptr, circle_get_model());
+            status |= apply_cmdline(ptr);
+            break;
+          }
+          ptr = ptr->next;
+      }
+      free_machines(head);
+      if (status) {
+         ui_error("Problem switching machine!");
+      } else {
+         ui_info_wrapped("Success - PLEASE REBOOT", SWITCH_MSG);
+      }
+    }
+    break;
+  case MENU_CONFIRM_CANCEL:
+    ui_pop_menu();
+    break;
   }
 
   // Only items that were for file selection/nav should have these set...
@@ -2461,6 +2509,46 @@ static void add_parallel_cable_option(struct menu_item* parent, int id, int driv
   child->choice_ints[3] = DRIVE_PC_FORMEL64;
 }
 
+static void menu_build_machine_switch(struct menu_item* parent) {
+  struct menu_item* holder = ui_menu_add_folder(parent, "Switch");
+
+  struct menu_item* vic20_r = ui_menu_add_folder(holder, "VIC20");
+  struct menu_item* c64_r = ui_menu_add_folder(holder, "C64");
+  struct menu_item* c128_r = ui_menu_add_folder(holder, "C128");
+  struct menu_item* plus4_r = ui_menu_add_folder(holder, "Plus/4");
+
+  struct machine_entry* head;
+  load_machines(&head);
+
+  struct machine_entry* ptr = head;
+  struct menu_item* item;
+  while (ptr) {
+    switch (ptr->class) {
+      case BMC64_MACHINE_CLASS_VIC20:
+         item = ui_menu_add_button(MENU_SWITCH_MACHINE, vic20_r, ptr->desc);
+         break;
+      case BMC64_MACHINE_CLASS_C64:
+         item = ui_menu_add_button(MENU_SWITCH_MACHINE, c64_r, ptr->desc);
+         break;
+      case BMC64_MACHINE_CLASS_C128:
+         item = ui_menu_add_button(MENU_SWITCH_MACHINE, c128_r, ptr->desc);
+         break;
+      case BMC64_MACHINE_CLASS_PLUS4:
+         item = ui_menu_add_button(MENU_SWITCH_MACHINE, plus4_r, ptr->desc);
+         break;
+      default:
+         item = NULL;
+         break;
+    }
+
+    item->value = ptr->id;
+
+    ptr=ptr->next;
+  }
+
+  free_machines(head);
+}
+
 void build_menu(struct menu_item *root) {
   struct menu_item *parent;
   struct menu_item *video_parent;
@@ -2547,6 +2635,7 @@ void build_menu(struct menu_item *root) {
 
   machine_parent = ui_menu_add_folder(root, "Machine");
     menu_build_machine(machine_parent);
+    menu_build_machine_switch(machine_parent);
 
   drive_parent = ui_menu_add_folder(root, "Drives");
 

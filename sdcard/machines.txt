@@ -1,0 +1,199 @@
+# BMC64 multi-machine configuration file.
+#
+# This file lets any BMC* kernel v3.0 or higher switch
+# between different machine types from the menu. Distributions
+# for v3.0 include all kernels for every machine type and Pi
+# model combo.
+#
+# Set both config.txt and cmdline.txt parameters inside each
+# section. These choices will appear in the emulator's
+# 'Switch Machine' menu.
+#
+# Format:
+# machines.txt = MachineDescription*
+#
+# MachineDescription = ([SectionHeader]"\n")(OptionLine\n*)*
+# SectionHeader = [Machine/TimingStandard/OutputType/ResolutionDesc]
+# Machine = VIC20|C64|C128|Plus4
+# TimingStandard = NTSC | PAL
+# OutputVideo = HDMI | Composite
+# ResolutionDesc = Any text (can be used to describe the video resolution)
+# OptionLine = "key=value\n"
+#
+# config.txt options available (See RPi documentation)
+# ----------------------------------------------------
+# disable_overscan
+# sdtv_mode
+# hdmi_group
+# hdmi_mode
+# hdmi_timing
+# hdmi_cvt
+# 
+# cmdline.txt options available (See README.md)
+# ----------------------------------------------------
+# machine_timing
+# cycles_per_second
+# audio_out
+
+#
+# NOTE: Always include a valid hdmi mode even for the composite
+# configs. This ensures you can switch back to HDMI even while
+# using a composite config.
+
+#
+# VIC20
+#
+
+[VIC20/NTSC/HDMI/720p@60Hz]
+disable_overscan=1
+sdtv_mode=16
+hdmi_group=1
+hdmi_mode=19
+machine_timing=ntsc-hdmi
+
+[VIC20/NTSC/Composite/576p@60Hz]
+disable_overscan=1
+sdtv_mode=16
+hdmi_group=1
+hdmi_mode=19
+machine_timing=ntsc-composite
+
+[VIC20/PAL/HDMI/720p@50Hz]
+disable_overscan=1
+sdtv_mode=18
+hdmi_group=1
+hdmi_mode=4
+machine_timing=pal-hdmi
+
+[VIC20/PAL/Composite/480p@50Hz]
+disable_overscan=1
+sdtv_mode=18
+hdmi_group=1
+hdmi_mode=4
+machine_timing=pal-composite
+
+# This matches the timing of the real machine but may
+# not work on all monitors.
+[VIC20/PAL/HDMI/768x544@50.125Hz]
+sdtv_mode=18
+hdmi_group=2
+hdmi_mode=87
+hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
+machine_timing=pal-custom
+cycles_per_second=985257
+
+#
+# C64
+#
+
+[C64/NTSC/HDMI/720p@60Hz]
+disable_overscan=1
+sdtv_mode=16
+hdmi_group=1
+hdmi_mode=19
+machine_timing=ntsc-hdmi
+
+[C64/NTSC/Composite/576p@60Hz]
+disable_overscan=1
+sdtv_mode=16
+hdmi_group=1
+hdmi_mode=19
+machine_timing=ntsc-composite
+
+[C64/PAL/HDMI/720p@50Hz]
+disable_overscan=1
+sdtv_mode=18
+hdmi_group=1
+hdmi_mode=4
+machine_timing=pal-hdmi
+
+[C64/PAL/Composite/480p@50Hz]
+disable_overscan=1
+sdtv_mode=18
+hdmi_group=1
+hdmi_mode=4
+machine_timing=pal-composite
+
+# This matches the timing of the real machine but may
+# not work on all monitors.
+[C64/PAL/HDMI/768x544@50.125Hz]
+sdtv_mode=18
+hdmi_group=2
+hdmi_mode=87
+hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
+machine_timing=pal-custom
+cycles_per_second=985257
+
+#
+# C128
+#
+
+[C128/NTSC/HDMI/720p@60Hz]
+disable_overscan=1
+sdtv_mode=16
+hdmi_group=1
+hdmi_mode=19
+machine_timing=ntsc-hdmi
+
+[C128/NTSC/Composite/576p@60Hz]
+disable_overscan=1
+sdtv_mode=16
+hdmi_group=1
+hdmi_mode=19
+machine_timing=ntsc-composite
+
+[C128/PAL/HDMI/720p@50Hz]
+disable_overscan=1
+sdtv_mode=18
+hdmi_group=1
+hdmi_mode=4
+machine_timing=pal-hdmi
+
+[C128/PAL/Composite/480p@50Hz]
+disable_overscan=1
+sdtv_mode=18
+hdmi_group=1
+hdmi_mode=4
+machine_timing=pal-composite
+
+# This matches the timing of the real machine but may
+# not work on all monitors.
+[C128/PAL/HDMI/768x544@50.125Hz]
+sdtv_mode=18
+hdmi_group=2
+hdmi_mode=87
+hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
+machine_timing=pal-custom
+cycles_per_second=985257
+
+#
+# PLUS/4 & C16
+#
+
+[PLUS4/NTSC/HDMI/720p@60Hz]
+disable_overscan=1
+sdtv_mode=16
+hdmi_group=1
+hdmi_mode=19
+machine_timing=ntsc-hdmi
+
+[PLUS4/NTSC/Composite/576p@60Hz]
+disable_overscan=1
+sdtv_mode=16
+hdmi_group=1
+hdmi_mode=19
+machine_timing=ntsc-composite
+
+[PLUS4/PAL/HDMI/720p@50Hz]
+disable_overscan=1
+sdtv_mode=18
+hdmi_group=1
+hdmi_mode=4
+machine_timing=pal-hdmi
+
+[PLUS4/PAL/Composite/480p@50Hz]
+disable_overscan=1
+sdtv_mode=18
+hdmi_group=1
+hdmi_mode=4
+machine_timing=pal-composite

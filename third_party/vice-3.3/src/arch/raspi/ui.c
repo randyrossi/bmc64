@@ -1205,6 +1205,42 @@ void ui_info(const char *format, ...) {
   ui_render_single_frame();
 }
 
+void ui_info_wrapped(char *title, const char *txt) {
+  struct menu_item *root = ui_push_menu(30, 8);
+  ui_menu_add_button(MENU_ERROR_DIALOG, root, title);
+
+  ui_menu_add_divider(root);
+  char buf[512];
+  char line[64];
+  strcpy (buf, txt);
+  line[0] = '\0';
+
+  int buf_pos = 0;
+  int line_pos = 0;
+  char* word = strtok(buf," ");
+  while (word) {
+     int word_len = strlen(word);
+     if (buf_pos + word_len < 512) {
+        if (line_pos + word_len < 30) {
+           strcat(line, word);
+           strcat(line, " ");
+           line_pos += word_len + 1;
+        } else {
+           ui_menu_add_button(MENU_INFO_DIALOG, root, line);
+           strcpy(line, word);
+           strcat(line, " ");
+           line_pos = word_len + 1;
+        }
+        buf_pos += word_len + 1;
+     }
+     word = strtok(NULL," ");
+  }
+  if (strlen(line) > 0) {
+     ui_menu_add_button(MENU_INFO_DIALOG, root, line);
+  }
+  ui_render_single_frame();
+}
+
 // These nav functions are really inefficient...but oh well.
 void ui_page_down() {
   for (int n=0;n<menu_height_chars;n++) {

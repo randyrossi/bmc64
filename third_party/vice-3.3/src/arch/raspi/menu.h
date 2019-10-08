@@ -343,6 +343,7 @@ typedef enum {
    MENU_PARALLEL_11,
 
    MENU_VOLUME,
+   MENU_SWITCH_MACHINE,
 } MenuID;
 
 typedef enum {

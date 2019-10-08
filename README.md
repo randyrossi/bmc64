@@ -27,20 +27,38 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
 
 # Precompiled Images
 
+  NOTE: Since V3.0, all machines are now bundled into one release for all Pi models. You can switch from the 'Machine' menu.
+
   * https://accentual.com/bmc64
-  * https://accentual.com/bmc128
-  * https://accentual.com/bmvic20
-  * https://accentual.com/bmplus4
 
 # Github Link
 
   * https://github.com/randyrossi/bmc64
 
-# Video + Timing
+# Machine Selection
 
-The machine is timed by the video mode you select. The default config provided defaults to 720p PAL 50hz on HDMI.  This is a 'safe' mode that should work on all monitors.  For HDMI, you should choose either a 50hz or 60hz mode.
+The default machine is a C64.  You can switch to VIC20, C128 and Plus/4 from the 'Machines->Switch' menu option.  A reboot is required after a switch. These configurations are defined in machines.txt. There you will find configurations for each machine type for NTSC/PAL over HDMI/Composite combinations.  Most video modes are 720p but you can change this (see below).
 
-If you want to use composite out, you MUST change the machine_timing parameter in cmdline.txt to 'pal-composite'.  Otherwise, you will have audio synchronization issues.  You can change the machine to be NTSC if you want (see below).
+# machines.txt (Video & Timing)
+
+The emulated machine is timed by the video mode you select. The default config provided uses 720p PAL 50hz on HDMI.  This is a 'safe' mode that should work on all monitors.  A 50.125hz custom mode is provided for the C64/Vic20/C128 machines that will match the timing of the real machine.  However, this mode may not work on all monitors.
+
+Inside machines.txt, you can change or add new machine configurations. These will show up in the Machines->Switch menu.
+
+Here is an example of a machine entry:
+
+    [C64/NTSC/HDMI/720p@60Hz]
+    disable_overscan=1
+    sdtv_mode=16
+    hdmi_group=1
+    hdmi_mode=19
+    machine_timing=ntsc-hdmi
+
+NOTE: Even though a config is intended to be used for HDMI or Composite (never both), you should always define both composite and hdmi parameters.
+
+For HDMI, you should choose either a 50hz or 60hz mode.
+
+If you want to use composite out, you MUST set machine_timing parameter to ntsc-composite or pal-composite and set the corresponding sdtv_mode. Otherwise, you will have audio synchronization issues.
 
 Raspberry Pi Video Mode     | machine_timing | cycles_per_second
 ----------------------------|----------------|-------------------
@@ -50,24 +68,46 @@ sdtv_mode=18                | pal-composite  | not required
 sdtv_mode=16                | ntsc-composite | not required
 hdmi_group=2,hdmi_mode=87   | pal-custom or ntsc-custom | see below
 
+## How to add your own custom HDMI mode
+
 You are free to experiment with different modes. It may be advantageous to set the video mode to match the native resolution of your monitor.  That way, it may have less processing to do and _may_ save on latency (not confirmed).  That can be accomplished with either a different hdmi_mode or a custom mode.
 
 If you plan to use a custom HDMI mode, you will have to alter the machine's 'cycles_per_second' value to match the actual fps that mode outputs.  Custom HDMI modes may not be exactly 50 hz or 60 hz and that can cause audio sync issues if you use the default value.  A tool to calculate this number is provided under the 'Video' menu.  The test will take 10 minutes and will let you know what values you should add to cmdline.txt for machine_timing and cycles_per_second.  You only need to run the test once for that mode.
 
-Example: Custom 1360x768 50Hz HDMI Mode
+Example: Making a custom 1360x768 50Hz HDMI Mode
+
+First change config.txt to the custom mode you want
 
     disable_overscan=1
-    hdmi_cvt=1360 768 50 3 0 0 0
+    sdtv_mode=18
     hdmi_group=2
     hdmi_mode=87
+    hdmi_cvt=1360 768 50 3 0 0 0
 
-The test tool will tell you the actual frame rate for this mode is 49.89. You would then add the suggested cmdline.txt parameters:
+In config.txt you would temporarily have:
+
+    fast=true machine_timing=pal-hdmi (remove any cycles_per_second settings)
+
+Boot, then run the test tool. The tool will tell you the actual frame rate for this mode is 49.89 and show you the machine_timing and cycles_per_second parameters to use:
 
     machine_timing=pal-custom cycles_per_second=980670
 
-# Video + Timing VIC20
+You would then define your machines.txt entry like this:
 
-All of the above re: timing applies to BMVIC20 as well.  However, in my opinion, this machine is better configured to be an NTSC machine.  Most cartridges were made for NTSC and you will notice they position their screens poorly when inserted into a PAL machine.  Most games gave the option of moving it using cursor keys or joystick but this is annoying.
+    [C64/PAL/HDMI/1360x768@49.89Hz]
+    disable_overscan=1
+    hdmi_cvt=1360 768 50 3 0 0 0
+    sdtv_mode=18
+    hdmi_group=2
+    hdmi_mode=87
+    machine_timing=pal-custom
+    cycles_per_second=980670
+
+And this option will show up in the Machine->Switch menu.
+
+# Video + Timing (VIC20, C128, Plus/4)
+
+All of the above re: timing applies to the other machines as well.  However, in my opinion, the VIC20 machine is better configured to be an NTSC machine.  Most cartridges were made for NTSC and you will notice they position their screens poorly when inserted into a PAL machine.  Most games gave the option of moving it using cursor keys or joystick but this is annoying.
 
 # Canvas Dimensions
 
@@ -127,6 +167,7 @@ IMPORTANT: The files the Raspbery Pi itself needs to boot BMC64 must still resid
     kernel*.img
     cmdline.txt
     fixup.dat
+    machines.txt
 
 Directories and long filenames are supported as of v1.0.10. Previous versions required all disks, tapes, cartridges, rom files etc to reside in the root directory.  This is no longer the case.  If you have an existing image, it is recommended you move your files to the following directory structure:
 
@@ -347,11 +388,7 @@ IMPORTANT : BMC64 v1.0.6 through v1.4 were not properly putting the other 3 (unu
 
 Q: Can I switch the machine to NTSC?
 
-A: Yes, you must edit BOTH config.txt and cmdline.txt.
-
-   In config.txt, select an hdmi_mode that is 60hz.
-   In cmdline.txt, change machine_timing to ntsc or ntsc-hdmi for HDMI
-   If using composite, machine_timing MUST be ntsc-composite.  Othersie you will get audio synchronization issues.
+A: Yes, in V3.0 or higher, do this from the Machine->Switch menu.
 
    Be aware that some demos/games will not run if the machine is NTSC.  If you mix those two settings, your machine will likely run fast/slow, not look good or have audio issues (or all of the above).
 
@@ -364,9 +401,6 @@ Things you can fiddle with for video:
    hdmi_mode in config.txt
    framebuffer_aspect in config.txt (i.e. framebuffer_aspect=0x00070009 for 7:9)
    scaling_kernel (google for available algorithms)
-   vicii_canvas_width vicii_canvas_height in cmdline.txt (vic_ prefix for vic20)
-
-The default settings work fine for composite out.
 
 Q: Can I change option 'X' in vice?
 
@@ -376,22 +410,19 @@ Q: Hey, isn't the real thing running at 50.125Hz?
 
 A: Yes, the original machine ran at 50.125Hz for PAL and 59.826Hz for NTSC. So, yeah, you'll be about 0.25% off in terms of timing.  If you really want 50.125Hz, you can try this custom HDMI mode (only applies to HDMI):
 
-Custom 768x544 50.125 hz PAL Mode
+    [C64/PAL/HDMI/768x544@50.125Hz]
+    sdtv_mode=18
+    hdmi_group=2
+    hdmi_mode=87
+    hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
+    machine_timing=pal-custom
+    cycles_per_second=985257
 
     This mode will match the timing of the original machine (for the purists) but may not be compatible with all monitors:
 
-    disable_overscan=1
-    hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
-    hdmi_group=2
-    hdmi_mode=87
-
-The test tool will tell you the actual frame rate for this mode is 50.125. You would then add the suggested cmdline.txt parameters:
-
-    machine_timing=pal-custom cycles_per_second=985257
-
 Q: Audio is not coming out of HDMI/Analog jack when I expect it to. Why?
 
-A. Sometimes the code that auto detects whether audio should be piped through HDMI vs analog jack doesn't work.  You can force audio to where you want it with a audio_out=hdmi or audio_out=analog cmdline.txt parameter.  The default is audio_out=auto.
+A. Sometimes the code that auto detects whether audio should be piped through HDMI vs analog jack doesn't work.  You can force audio to where you want it with a audio_out=hdmi or audio_out=analog parameter.  The default is audio_out=auto.  This ends up in cmdline.txt but you should set it in every machine config in machines.txt you want it to show up for.
 
 # Build Instructions
 
@@ -406,9 +437,9 @@ First get this repo:
 From the top level dir:
 
 ./clean_all.sh - will clean everything
-./make_all.sh [pi2|pi3] - build everything
+./make_all.sh [pi0|pi2|pi3] - build everything
 
-That should make a kernel7.img for RPI2, kernel8-32.img for RPI3
+That should make a kernel.img for RPI0, kernel7.img for RPI2, kernel8-32.img for RPI3
 
 NOTE: There is no incremental build and the make_all.sh script will likely fail if run without a clean_all.sh before.
 
@@ -423,12 +454,14 @@ What to put on the SDcard:
         dos1571 (optional)
         dos1581 (optional)
         rpi_sym.vkm
+    kernel.img (for Pi0)
     kernel7.img (for Pi2)
     kernel8-32.img (for Pi3)
     fixup.dat
     bootstat.txt
     config.txt
     cmdline.txt
+    machines.txt
     snapshots/
         (place snapshot files here)
     disks/

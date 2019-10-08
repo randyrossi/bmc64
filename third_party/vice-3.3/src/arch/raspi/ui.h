@@ -196,6 +196,7 @@ void ui_make_transparent(void);
 void ui_render_now(int menu_stack_index);
 void ui_error(const char *format, ...);
 void ui_info(const char *format, ...);
+void ui_info_wrapped(char* title, const char *txt);
 
 struct menu_item *ui_pop_menu(void);
 

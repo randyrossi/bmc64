@@ -1,16 +1,5 @@
-fast=true machine_timing=pal
+fast=true machine_timing=pal-hdmi
 
-# Kernel options must appear on a single line separated by spaces.
-#
-# machine_timing
-#
-# For 50hz modes (PAL)
-#    Set to 'pal' or 'pal-hdmi' when using an HDMI display
-#    Set to 'pal-composite' when using the Pi's composite out
-#
-# For 60hz modes (NTSC)
-#    Set to 'ntsc' or 'ntsc-hdmi' when using an HDMI display
-#    Set to 'ntsc-composite' when using the Pi's composite out
-#
-# If you try to use pal or pal-hdmi with composite out, you will get
-# audio synchronization issues with ReSid.
+# DO NOT EDIT - This file is no longer edited by hand. Use the
+# machines.txt to set both config.txt and cmdline.txt params for
+# each machine.  Refer to README.md for options.
