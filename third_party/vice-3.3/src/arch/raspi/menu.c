@@ -2487,46 +2487,56 @@ void build_menu(struct menu_item *root) {
     strcpy(current_dir_names[i], default_dir_names[i]);
   }
 
+  char machine_info_txt[64];
+  machine_info_txt[0] = '\0';
+
   switch (machine_class) {
   case VICE_MACHINE_C64:
+    strcat(machine_info_txt,"C64 ");
     strcpy(current_dir_names[DIR_ROMS], "/C64");
     break;
   case VICE_MACHINE_C128:
+    strcat(machine_info_txt,"C128 ");
     strcpy(current_dir_names[DIR_ROMS], "/C128");
     break;
   case VICE_MACHINE_VIC20:
+    strcat(machine_info_txt,"VIC20 ");
     strcpy(current_dir_names[DIR_ROMS], "/VIC20");
     break;
   case VICE_MACHINE_PLUS4:
+    strcat(machine_info_txt,"PLUS/4 ");
     strcpy(current_dir_names[DIR_ROMS], "/PLUS4");
     break;
   default:
+    strcat(machine_info_txt,"??? ");
     break;
   }
 
   switch (circle_get_machine_timing()) {
   case MACHINE_TIMING_NTSC_HDMI:
-    ui_menu_add_button(MENU_TEXT, root, "Timing: NTSC 60Hz HDMI");
+    strcat(machine_info_txt, "NTSC 60Hz HDMI");
     break;
   case MACHINE_TIMING_NTSC_COMPOSITE:
-    ui_menu_add_button(MENU_TEXT, root, "Timing: NTSC 60Hz Composite");
+    strcat(machine_info_txt, "NTSC 60Hz Composite");
     break;
   case MACHINE_TIMING_NTSC_CUSTOM:
-    ui_menu_add_button(MENU_TEXT, root, "Timing: NTSC 60Hz Custom");
+    strcat(machine_info_txt, "NTSC 60Hz Custom");
     break;
   case MACHINE_TIMING_PAL_HDMI:
-    ui_menu_add_button(MENU_TEXT, root, "Timing: PAL 50Hz HDMI");
+    strcat(machine_info_txt, "PAL 50Hz HDMI");
     break;
   case MACHINE_TIMING_PAL_COMPOSITE:
-    ui_menu_add_button(MENU_TEXT, root, "Timing: PAL 50Hz Composite");
+    strcat(machine_info_txt, "PAL 50Hz Composite");
     break;
   case MACHINE_TIMING_PAL_CUSTOM:
-    ui_menu_add_button(MENU_TEXT, root, "Timing: PAL 50Hz Custom");
+    strcat(machine_info_txt, "PAL 50Hz Custom");
     break;
   default:
-    ui_menu_add_button(MENU_TEXT, root, "Timing: ERROR");
+    strcat(machine_info_txt, "Error");
     break;
   }
+
+  ui_menu_add_button(MENU_TEXT, root, machine_info_txt);
 
   ui_menu_add_button(MENU_ABOUT, root, "About...");
   ui_menu_add_button(MENU_LICENSE, root, "License...");
