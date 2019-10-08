@@ -29,9 +29,7 @@ extern "C" {
 ViceOptions *ViceOptions::s_pThis = 0;
 
 ViceOptions::ViceOptions(void)
-    : m_nFB1Width(DEFAULT_FB1_WIDTH),
-      m_nFB1Height(DEFAULT_FB1_HEIGHT),
-      m_nMachineTiming(MACHINE_TIMING_PAL_HDMI), m_bHideConsole(true),
+    : m_nMachineTiming(MACHINE_TIMING_PAL_HDMI),
       m_bDemoMode(false), m_bSerialEnabled(false), m_nCyclesPerSecond(0),
       m_audioOut(VCHIQSoundDestinationAuto) {
   s_pThis = this;
@@ -57,19 +55,7 @@ ViceOptions::ViceOptions(void)
   while ((pOption = GetToken()) != 0) {
     char *pValue = GetOptionValue(pOption);
 
-    if (strcmp(pOption, "canvas_width") == 0) {
-      unsigned nValue;
-      if ((nValue = GetDecimal(pValue)) != INVALID_VALUE && MIN_FB1_WIDTH <= nValue &&
-          nValue <= 1980) {
-        m_nFB1Width = nValue;
-      }
-    } else if (strcmp(pOption, "canvas_height") == 0) {
-      unsigned nValue;
-      if ((nValue = GetDecimal(pValue)) != INVALID_VALUE && MIN_FB1_HEIGHT <= nValue &&
-          nValue <= 1080) {
-        m_nFB1Height = nValue;
-      }
-    } else if (strcmp(pOption, "machine_timing") == 0) {
+    if (strcmp(pOption, "machine_timing") == 0) {
       if (strcmp(pValue, "ntsc") == 0 || strcmp(pValue, "ntsc-hdmi") == 0) {
         m_nMachineTiming = MACHINE_TIMING_NTSC_HDMI;
       } else if (strcmp(pValue, "ntsc-composite") == 0) {
@@ -83,12 +69,6 @@ ViceOptions::ViceOptions(void)
         m_nMachineTiming = MACHINE_TIMING_PAL_COMPOSITE;
       } else if (strcmp(pValue, "pal-custom") == 0) {
         m_nMachineTiming = MACHINE_TIMING_PAL_CUSTOM;
-      }
-    } else if (strcmp(pOption, "hide_console") == 0) {
-      if (strcmp(pValue, "1") == 0) {
-        m_bHideConsole = true;
-      } else {
-        m_bHideConsole = false;
       }
     } else if (strcmp(pOption, "demo") == 0) {
       if (strcmp(pValue, "1") == 0) {
@@ -131,19 +111,7 @@ ViceOptions::ViceOptions(void)
 
 ViceOptions::~ViceOptions(void) { s_pThis = 0; }
 
-unsigned ViceOptions::GetFB1Width(void) const {
-    return m_nFB1Width;
-}
-
-unsigned ViceOptions::GetFB1Height(void) const {
-    return m_nFB1Height;
-}
-
 unsigned ViceOptions::GetMachineTiming(void) const { return m_nMachineTiming; }
-
-bool ViceOptions::GetHideConsole(void) const { return m_bHideConsole; }
-
-void ViceOptions::SetHideConsole(bool value) { m_bHideConsole = value; }
 
 bool ViceOptions::GetDemoMode(void) const { return m_bDemoMode; }
 
