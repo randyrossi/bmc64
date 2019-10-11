@@ -773,6 +773,21 @@ void main_exit(void) {
 
   int x = 0;
   int y = 3;
+  switch (machine_class) {
+    case VICE_MACHINE_VIC20:
+      ui_draw_text_buf("VIC20", x, y, 1, fb, fb_pitch, 1);
+      break;
+    case VICE_MACHINE_C64:
+      ui_draw_text_buf("C64", x, y, 1, fb, fb_pitch, 1);
+      break;
+    case VICE_MACHINE_C128:
+      ui_draw_text_buf("C128", x, y, 1, fb, fb_pitch, 1);
+      break;
+    case VICE_MACHINE_PLUS4:
+      ui_draw_text_buf("PLUS/4", x, y, 1, fb, fb_pitch, 1);
+      break;
+  }
+  y += 8;
   ui_draw_text_buf("Emulator failed to start.", x, y, 1, fb, fb_pitch, 1);
   y += 8;
   ui_draw_text_buf("This most likely means you are missing", x, y, 1, fb,
