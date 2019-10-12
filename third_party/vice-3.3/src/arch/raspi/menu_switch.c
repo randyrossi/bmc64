@@ -34,6 +34,17 @@
 
 #define OPTION_SCRATCH_LEN (KEY_LEN+1+VALUE_LEN+1)
 
+#define ERROR_1 1
+#define ERROR_2 2
+#define ERROR_3 4
+#define ERROR_4 8
+#define ERROR_5 16
+#define ERROR_6 32
+#define ERROR_7 64
+#define ERROR_8 128
+#define ERROR_9 256
+#define ERROR_10 512
+
 static int entry_id;
 
 static int next_id() {
@@ -59,9 +70,16 @@ static char* trim(char *txt) {
   return ltrim(txt);
 }
 
-static void copy_file(char* from, char* to) {
+static int copy_file(char* from, char* to) {
   FILE *fp = fopen(from,"r");
+  if (fp == NULL) {
+     return 1;
+  }
   FILE *fp2 = fopen(to,"w");
+  if (fp2 == NULL) {
+     fclose(fp);
+     return 1;
+  }
   int c = fgetc(fp);
   while (c != EOF) {
     fputc(c, fp2);
@@ -69,6 +87,7 @@ static void copy_file(char* from, char* to) {
   }
   fclose(fp);
   fclose(fp2);
+  return 0;
 }
 
 static int new_section(struct machine_entry** new_section, char* line) {
@@ -429,13 +448,13 @@ static int apply_override_m(char *line, struct machine_entry *head) {
 int apply_cmdline(struct machine_entry* head) {
   FILE* fp = fopen("/cmdline.txt","r");
   if (fp == NULL) {
-     return 1;
+     return ERROR_1;
   }
 
   FILE* fp2 = fopen("/cmdline.new","w");
   if (fp2 == NULL) {
      fclose(fp);
-     return 1;
+     return ERROR_2;
   }
 
   char line[CONFIG_TXT_LINE_LEN];
@@ -450,8 +469,13 @@ int apply_cmdline(struct machine_entry* head) {
   fclose(fp);
   fclose(fp2);
 
-  copy_file("/cmdline.new","/cmdline.txt");
-  return unlink("/cmdline.new");
+  if (copy_file("/cmdline.new","/cmdline.txt")) {
+     return ERROR_3;
+  }
+  if (unlink("/cmdline.new")) {
+     return ERROR_4;
+  }
+  return 0;
 }
 
 // Reads config.txt and creates config.txt.new, overwriting
@@ -471,7 +495,7 @@ int apply_config(struct machine_entry* head, int pi_model) {
        strcpy(kernel_name,"kernel8-32.img");
        break;
     default:
-       return 1;
+       return ERROR_5;
   }
 
   switch (head->class) {
@@ -488,18 +512,18 @@ int apply_config(struct machine_entry* head, int pi_model) {
         strcat(kernel_name,".plus4");
         break;
      default:
-        return 1;
+        return ERROR_6;
    }
 
   FILE* fp = fopen("/config.txt","r");
   if (fp == NULL) {
-     return 1;
+     return ERROR_7;
   }
 
   FILE* fp2 = fopen("/config.new","w");
   if (fp2 == NULL) {
      fclose(fp);
-     return 1;
+     return ERROR_8;
   }
 
   int is_custom = 0;
@@ -547,6 +571,11 @@ int apply_config(struct machine_entry* head, int pi_model) {
   fclose(fp);
   fclose(fp2);
 
-  copy_file("/config.new","/config.txt");
-  return unlink("/config.new");
+  if (copy_file("/config.new","/config.txt")) {
+    return ERROR_9;
+  }
+  if (unlink("/config.new")) {
+    return ERROR_10;
+  }
+  return 0;
 }

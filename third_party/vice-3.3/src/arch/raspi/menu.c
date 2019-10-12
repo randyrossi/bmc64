@@ -88,6 +88,10 @@
                    "switch occurred from. To boot on a different Pi model, " \
                    "switch back to C64 first."
 
+#define SWITCH_FAIL_MSG "Something went wrong. File a bug with the error " \
+                        "code above. You may have to manually edit " \
+                        "config.txt and/or cmdline.txt to restore boot."
+
 // For filename filters
 typedef enum {
    FILTER_NONE,
@@ -2349,7 +2353,9 @@ static void menu_value_changed(struct menu_item *item) {
       }
       free_machines(head);
       if (status) {
-         ui_error("Problem switching machine!");
+         char failcode[32];
+         sprintf (failcode, "FAILURE (CODE %d)", status);
+         ui_info_wrapped(failcode, SWITCH_FAIL_MSG);
       } else {
          ui_info_wrapped("Success - PLEASE REBOOT", SWITCH_MSG);
       }
