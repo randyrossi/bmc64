@@ -1983,7 +1983,7 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_DETACH_CART:
     ui_info("Detaching...");
-    cartridge_detach_image(CARTRIDGE_CRT);
+    cartridge_detach_image(CARTRIDGE_NONE);
     ui_pop_all_and_toggle();
     return;
   case MENU_SOFT_RESET:
