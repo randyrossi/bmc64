@@ -86,7 +86,7 @@ ViceOptions::ViceOptions(void)
       m_disk_partition = atoi(pValue);
       if (m_disk_partition < 0)
         m_disk_partition = 0;
-    } else if (strcmp(pOption, "cycles_per_refresh") == 0 || strcmp(pOption, "cycles_per_second")) {
+    } else if (strcmp(pOption, "cycles_per_refresh") == 0 || strcmp(pOption, "cycles_per_second") == 0) {
       // This was named incorrectly in earlier versions. Keeping the old bad name working.
       m_nCyclesPerSecond = atol(pValue);
     } else if (strcmp(pOption, "audio_out") == 0) {
