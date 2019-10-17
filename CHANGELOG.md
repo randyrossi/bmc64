@@ -253,3 +253,8 @@
   * Fixed Vic20 cartridge menu
   * Fixed Plus/4 cartridge menu
   * Real keyboard matrix for Plus/4 to match C16 positional layout
+
+## 3.0
+  * Unified C64, VIC20, C128 and PLUS/4 into one release
+  * Fixed cycles_per_second bug causing custom hdmi to not work
+  * Look for carts, tapes, disks etc in machine subdir first

@@ -1,6 +1,6 @@
 # BMC64
 
-BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio. Three other Commodore builds are available as well; C128, Vic20 and Plus/4.
+BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio. Three other Commodore machines are available as well; C128, Vic20 and Plus/4.
 
 # BMC64 Features
   * Quick boot time (C64 in 4.1 seconds!)
@@ -164,19 +164,14 @@ IMPORTANT: The files the Raspbery Pi itself needs to boot BMC64 must still resid
     bootcode.bin
     start.elf
     config.txt
-    kernel*.img
+    kernel*.img* <- all kernels must be in the root dir
     cmdline.txt
     fixup.dat
     machines.txt
 
-Directories and long filenames are supported as of v1.0.10. Previous versions required all disks, tapes, cartridges, rom files etc to reside in the root directory.  This is no longer the case.  If you have an existing image, it is recommended you move your files to the following directory structure:
+NOTE: Machine switching is currently NOT supported if you use any partition other than the first partition on the SDCard.
 
-    C64/  <- for kernal, basic, chargen, disk roms, etc.
-    snapshots/
-    disks/
-    tapes/
-    carts/
-    tmp/
+See 'What to put on the SDCard' for the directory structure expected.
 
 ## USB Drives
 
@@ -454,22 +449,75 @@ What to put on the SDcard:
         dos1571 (optional)
         dos1581 (optional)
         rpi_sym.vkm
-    kernel.img (for Pi0)
-    kernel7.img (for Pi2)
-    kernel8-32.img (for Pi3)
+    /C128
+        kernal
+	basichi
+	basiclo
+	charg64
+	chargen
+	kernal64
+	basic64
+	z80bios (optional)
+	d1541II (optional)
+        dos1571 (recommended)
+	rpi_sym.vkm
+        bootstat.txt
+    /VIC20
+	basic
+	chargen
+	kernal
+	d1541II
+	rpi_sym.vkm
+        bootstat.txt
+    /PLUS4
+	kernal
+	kernal.005
+	kernal.232
+	3plus1hi
+	3plus1lo
+	basic
+	c2lo.364
+	d1541II (optional)
+        dos1551 (recommended)
+	rpi_sym.vkm
+        bootstat.txt
+    kernel.img (C64 kernel for Pi0)
+    kernel7.img (C64 kernel for Pi2)
+    kernel8-32.img (C64 kernel for Pi3)
+    kernel.img.vic20
+    kernel7.img.vic20
+    kernel8-32.img.vic20
+    kernel.img.c128
+    kernel7.img.c128
+    kernel8-32.img.c128
+    kernel.img.plus4
+    kernel7.img.plus4
+    kernel8-32.img.plus4
     fixup.dat
     bootstat.txt
     config.txt
     cmdline.txt
     machines.txt
     snapshots/
-        (place snapshot files here)
+        C64/
+        C128/
+        VIC20/
+        PLUS4/
     disks/
-        (place .d64 or other disk files here)
+        C64/
+        C128/
+        VIC20/
+        PLUS4/
     tapes/
-        (place .tap files here)
+        C64/
+        C128/
+        VIC20/
+        PLUS4/
     carts/
-        (place .crt files here)
+        C64/
+        C128/
+        VIC20/
+        PLUS4/
     tmp/
         (used by the emulator sometimes)
 
