@@ -268,6 +268,19 @@ static char *fullpath(DirType dir_type, char *name) {
   return full_path_str;
 }
 
+// Remove one directory from the end of path
+static void remove_dir(char *path) {
+  int i;
+  // Remove last directory from current_dir_names
+  i = strlen(path) - 1;
+  while (path[i] != '/' && i > 0)
+    i--;
+  path[i] = '\0';
+  if (strlen(path) == 0) {
+    strcpy(path, "/");
+  }
+}
+
 // Clears the file menu and populates it with files.
 static void list_files(struct menu_item *parent,
                        DirType dir_type, FileFilter filter,
@@ -279,11 +292,15 @@ static void list_files(struct menu_item *parent,
 
   dp = opendir(fullpath(dir_type,""));
   if (dp == NULL) {
-    // Fall back to root
-    strcpy(current_dir_names[dir_type], "/");
+    // Machine dir may not be present. Try up one.
+    remove_dir(current_dir_names[dir_type]);
     dp = opendir(fullpath(dir_type,""));
     if (dp == NULL) {
-      return;
+      // File dir may not be present. Try up one.
+      remove_dir(current_dir_names[dir_type]);
+      if (dp == NULL) {
+        return;
+      }
     }
   }
 
@@ -2582,29 +2599,36 @@ void build_menu(struct menu_item *root) {
   }
 
   char machine_info_txt[64];
+  char machine_sub_dir[16];
   machine_info_txt[0] = '\0';
 
   switch (machine_class) {
   case VICE_MACHINE_C64:
     strcat(machine_info_txt,"C64 ");
-    strcpy(current_dir_names[DIR_ROMS], "/C64");
+    strcpy(machine_sub_dir, "/C64");
     break;
   case VICE_MACHINE_C128:
     strcat(machine_info_txt,"C128 ");
-    strcpy(current_dir_names[DIR_ROMS], "/C128");
+    strcpy(machine_sub_dir, "/C128");
     break;
   case VICE_MACHINE_VIC20:
     strcat(machine_info_txt,"VIC20 ");
-    strcpy(current_dir_names[DIR_ROMS], "/VIC20");
+    strcpy(machine_sub_dir, "/VIC20");
     break;
   case VICE_MACHINE_PLUS4:
     strcat(machine_info_txt,"PLUS/4 ");
-    strcpy(current_dir_names[DIR_ROMS], "/PLUS4");
+    strcpy(machine_sub_dir, "/PLUS4");
     break;
   default:
     strcat(machine_info_txt,"??? ");
     break;
   }
+
+  strcat(current_dir_names[DIR_DISKS],machine_sub_dir);
+  strcat(current_dir_names[DIR_TAPES],machine_sub_dir);
+  strcat(current_dir_names[DIR_CARTS],machine_sub_dir);
+  strcat(current_dir_names[DIR_SNAPS],machine_sub_dir);
+  strcpy(current_dir_names[DIR_ROMS], machine_sub_dir);
 
   switch (circle_get_machine_timing()) {
   case MACHINE_TIMING_NTSC_HDMI:
