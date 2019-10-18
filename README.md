@@ -419,6 +419,19 @@ Q: Audio is not coming out of HDMI/Analog jack when I expect it to. Why?
 
 A. Sometimes the code that auto detects whether audio should be piped through HDMI vs analog jack doesn't work.  You can force audio to where you want it with a audio_out=hdmi or audio_out=analog parameter.  The default is audio_out=auto.  This ends up in cmdline.txt but you should set it in every machine config in machines.txt you want it to show up for.
 
+Q: How do I get Dolphin DOS to work?
+
+From: http://rr.pokefinder.org/wiki/Dolphin_DOS
+
+In BMC64:
+
+    Use model 1541 with c1541-20-6.rom
+    Load kernel-20-1.rom
+    Use Parallel Cable : Standard
+
+In vice.ini:
+    Drive8RAM6000=1
+
 # Build Instructions
 
 Pre-reqs:
