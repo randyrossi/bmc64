@@ -446,18 +446,20 @@ First get this repo:
 From the top level dir:
 
 ./clean_all.sh - will clean everything
-./make_all.sh [pi0|pi2|pi3] - build everything
+./make_all.sh [pi0|pi2|pi3] - build third party libs (vice/circle) and a C64 image for a Pi model
+./make_machines.sh [pi0|pi2|pi3] - build all machines for a Pil model (depends on make_all.sh having been run once)
 
-That should make a kernel.img for RPI0, kernel7.img for RPI2, kernel8-32.img for RPI3
+The make_all.sh script will make kernel.img for RPI0, kernel7.img for RPI2, kernel8-32.img for RPI3
+The make_machines.sh script will make kernels for each machine with a suffix (.c64, .c128, .vic20, etc)
 
 NOTE: There is no incremental build and the make_all.sh script will likely fail if run without a clean_all.sh before.
 
 What to put on the SDcard:
 
     C64/
-        KERNAL
-        BASIC
-        CHARGEN
+        kernal
+        basic
+        chargen
         d1541II
         dos1541 (optional)
         dos1571 (optional)
