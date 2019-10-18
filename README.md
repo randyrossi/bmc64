@@ -430,6 +430,7 @@ In BMC64:
     Use Parallel Cable : Standard
 
 In vice.ini:
+
     Drive8RAM6000=1
 
 # Build Instructions
