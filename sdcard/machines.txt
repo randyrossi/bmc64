@@ -51,7 +51,7 @@ hdmi_group=1
 hdmi_mode=4
 machine_timing=ntsc-hdmi
 
-[VIC20/NTSC/Composite/576p@60Hz]
+[VIC20/NTSC/Composite/480p@60Hz]
 disable_overscan=1
 sdtv_mode=16
 hdmi_group=1
@@ -65,7 +65,7 @@ hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-hdmi
 
-[VIC20/PAL/Composite/480p@50Hz]
+[VIC20/PAL/Composite/576p@50Hz]
 disable_overscan=1
 sdtv_mode=18
 hdmi_group=1
@@ -93,7 +93,7 @@ hdmi_group=1
 hdmi_mode=4
 machine_timing=ntsc-hdmi
 
-[C64/NTSC/Composite/576p@60Hz]
+[C64/NTSC/Composite/480p@60Hz]
 disable_overscan=1
 sdtv_mode=16
 hdmi_group=1
@@ -107,7 +107,7 @@ hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-hdmi
 
-[C64/PAL/Composite/480p@50Hz]
+[C64/PAL/Composite/576p@50Hz]
 disable_overscan=1
 sdtv_mode=18
 hdmi_group=1
@@ -135,7 +135,7 @@ hdmi_group=1
 hdmi_mode=4
 machine_timing=ntsc-hdmi
 
-[C128/NTSC/Composite/576p@60Hz]
+[C128/NTSC/Composite/480p@60Hz]
 disable_overscan=1
 sdtv_mode=16
 hdmi_group=1
@@ -149,7 +149,7 @@ hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-hdmi
 
-[C128/PAL/Composite/480p@50Hz]
+[C128/PAL/Composite/576p@50Hz]
 disable_overscan=1
 sdtv_mode=18
 hdmi_group=1
@@ -177,7 +177,7 @@ hdmi_group=1
 hdmi_mode=4
 machine_timing=ntsc-hdmi
 
-[PLUS4/NTSC/Composite/576p@60Hz]
+[PLUS4/NTSC/Composite/480p@60Hz]
 disable_overscan=1
 sdtv_mode=16
 hdmi_group=1
@@ -191,7 +191,7 @@ hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-hdmi
 
-[PLUS4/PAL/Composite/480p@50Hz]
+[PLUS4/PAL/Composite/576p@50Hz]
 disable_overscan=1
 sdtv_mode=18
 hdmi_group=1
