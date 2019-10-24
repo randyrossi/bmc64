@@ -8,7 +8,7 @@ stat,kernal64,8192
 stat,basic64,8192
 stat,basichi,16384
 stat,basiclo,16384
-stat,chargen,4096
+stat,chargen,8192
 stat,d1541II,16384
 fail,rpi_pos.vkm,0
 fail,fliplist-C128.vfl,0
