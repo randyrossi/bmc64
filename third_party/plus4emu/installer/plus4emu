@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if test ! -f ~/.plus4emu/roms/p4kernal.rom
+then
+mkdir -p ~/.plus4emu/roms
+cp /usr/share/plus4emu/roms/* ~/.plus4emu/roms/
+p4makecfg "$HOME/.plus4emu"
+fi
+exec plus4emu.bin "$@"

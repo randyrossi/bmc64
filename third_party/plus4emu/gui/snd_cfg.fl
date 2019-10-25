@@ -1,0 +1,373 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0110 
+do_not_include_H_from_C 
+header_name {.hpp} 
+code_name {.cpp}
+decl {\#include "gui.hpp"} {selected
+} 
+
+decl {\#include <cmath>} {} 
+
+class Plus4EmuGUI_SoundConfigWindow {open
+} {
+  decl {Plus4EmuGUI& gui;} {}
+  Function {Plus4EmuGUI_SoundConfigWindow(Plus4EmuGUI& gui_) : gui(gui_)} {open
+  } {
+    Fl_Window window {
+      label {Sound settings}
+      callback {{
+  try {
+    gui.applyEmulatorConfiguration();
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+  updateWindow();
+  window->hide();
+}} open
+      xywh {434 223 400 450} type Double color 48 visible
+    } {
+      Fl_Group {} {open
+        xywh {10 10 380 185} box THIN_UP_BOX
+      } {
+        Fl_Choice soundDeviceValuator {
+          callback {{
+  if (o->value() >= 0) {
+    gui.config.sound.device = o->value() - 1;
+    gui.config.soundSettingsChanged = true;
+  }
+}} open
+          xywh {20 20 235 25} down_box BORDER_BOX align 8
+        } {}
+        Fl_Box {} {
+          label {Audio device}
+          xywh {265 20 115 25} align 20
+        }
+        Fl_Light_Button enableSoundValuator {
+          label {Enable sound output}
+          callback {{
+  gui.config.sound.enabled = (o->value() != 0);
+  gui.config.soundSettingsChanged = true;
+}}
+          xywh {20 55 170 25} color 50 selection_color 3
+        }
+        Fl_Light_Button soundHighQualityValuator {
+          label {High quality}
+          callback {{
+  gui.config.sound.highQuality = (o->value() != 0);
+  gui.config.soundSettingsChanged = true;
+}}
+          tooltip {Using high quality sample rate conversion reduces aliasing, but also increases CPU usage} xywh {20 90 170 25} color 50 selection_color 3
+        }
+        Fl_Value_Input soundSampleRateValuator {
+          label {Sample rate}
+          callback {{
+  gui.config.sound.sampleRate = o->clamp(o->value());
+  o->value(gui.config.sound.sampleRate);
+  gui.config.soundSettingsChanged = true;
+}}
+          xywh {20 125 75 25} align 8 when 4 minimum 11025 maximum 96000 step 1 value 48000
+          code0 {o->cursor_color(Fl_Color(3));}
+        }
+        Fl_Input soundOutputFileValuator {
+          callback {{
+  try {
+    gui.config["sound.file"] = o->value();
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+}}
+          tooltip {Record sound output to this file in 16 bit WAV format; if left blank, no sound file is written} xywh {20 160 205 25}
+          code0 {o->cursor_color(Fl_Color(3));}
+        }
+        Fl_Button {} {
+          label {@fileopen}
+          callback {{
+  try {
+    std::string tmp;
+    if (gui.browseFile(tmp, gui.soundFileDirectory,
+                       "Sound files\\t*.wav",
+                       Fl_Native_File_Chooser::BROWSE_SAVE_FILE,
+                       "Select sound output file")) {
+      gui.config["sound.file"] = tmp;
+      soundOutputFileValuator->value(gui.config.sound.file.c_str());
+    }
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+}}
+          xywh {230 160 25 25} color 50 selection_color 51 labelcolor 3
+        }
+        Fl_Box {} {
+          label {Audio output file}
+          xywh {265 160 115 25} align 20
+        }
+        Fl_Value_Slider soundLatencyValuator {
+          label Latency
+          callback {{
+  gui.config.sound.latency = o->value() / 1000.0;
+  gui.config.soundSettingsChanged = true;
+}}
+          tooltip {Audio output latency in milliseconds; smaller values improve the responsiveness of the emulator, but may cause the sound to skip} xywh {200 56 120 23} type Horizontal color 47 selection_color 52 align 8 minimum 5 maximum 500 step 1 value 70
+        }
+        Fl_Value_Input soundHWPeriodsValuator {
+          label {Hardware buffers}
+          callback {{
+  gui.config.sound.hwPeriods = int(o->clamp(o->value()) + 0.5);
+  o->value(double(gui.config.sound.hwPeriods));
+  gui.config.soundSettingsChanged = true;
+}}
+          tooltip {Number of sound card buffers; click and drag to change the value} xywh {200 90 35 25} align 8 when 4 minimum 2 maximum 16 step 1 value 16
+          code0 {o->cursor_color(Fl_Color(3));}
+        }
+        Fl_Value_Input soundSWPeriodsValuator {
+          label {Software buffers}
+          callback {{
+  gui.config.sound.swPeriods = int(o->clamp(o->value()) + 0.5);
+  o->value(double(gui.config.sound.swPeriods));
+  gui.config.soundSettingsChanged = true;
+}}
+          tooltip {Number of buffers in emulator ring buffer; click and drag to change the value} xywh {200 125 35 25} align 8 when 4 minimum 1 maximum 16 step 1 value 3
+          code0 {o->cursor_color(Fl_Color(3));}
+        }
+      }
+      Fl_Group {} {open
+        xywh {10 205 380 200} box THIN_UP_BOX
+      } {
+        Fl_Dial soundVolumeValuator {
+          label Volume
+          callback {{
+  gui.config.sound.volume = o->value();
+  gui.config.soundSettingsChanged = true;
+  soundVolumeValueDisplay->value(o->value());
+}}
+          xywh {25 215 35 35} box ROUND_UP_BOX color 52 selection_color 55 align 8 minimum 0.01 step 0.001 value 0.794
+        }
+        Fl_Value_Output soundVolumeValueDisplay {
+          callback {{
+  gui.config.sound.volume = o->value();
+  gui.config.soundSettingsChanged = true;
+  soundVolumeValuator->value(o->value());
+}}
+          tooltip {Note: you can click on and drag the value display for fine adjustment} xywh {20 255 45 20} color 7 selection_color 15 labelsize 13 align 8 minimum 0.01 step 0.001 value 0.794 textsize 13
+        }
+        Fl_Dial soundDCFilter1Valuator {
+          label { Highpass 1}
+          callback {{
+  gui.config.sound.dcBlockFilter1Freq = o->value();
+  gui.config.soundSettingsChanged = true;
+  soundDCFilter1ValueDisplay->value(o->value());
+}}
+          xywh {30 285 25 25} box ROUND_UP_BOX color 52 selection_color 55 align 8 minimum 1 maximum 1000 step 1 value 5
+        }
+        Fl_Value_Output soundDCFilter1ValueDisplay {
+          callback {{
+  gui.config.sound.dcBlockFilter1Freq = o->value();
+  gui.config.soundSettingsChanged = true;
+  soundDCFilter1Valuator->value(o->value());
+}}
+          tooltip {Note: you can click on and drag the value display for fine adjustment} xywh {20 315 45 20} color 7 selection_color 15 labelsize 13 align 8 minimum 1 maximum 1000 step 1 value 5 textsize 13
+        }
+        Fl_Dial soundDCFilter2Valuator {
+          label { Highpass 2}
+          callback {{
+  gui.config.sound.dcBlockFilter2Freq = o->value();
+  gui.config.soundSettingsChanged = true;
+  soundDCFilter2ValueDisplay->value(o->value());
+}}
+          xywh {30 345 25 25} box ROUND_UP_BOX color 52 selection_color 55 align 8 minimum 1 maximum 1000 step 1 value 15
+        }
+        Fl_Value_Output soundDCFilter2ValueDisplay {
+          callback {{
+  gui.config.sound.dcBlockFilter2Freq = o->value();
+  gui.config.soundSettingsChanged = true;
+  soundDCFilter2Valuator->value(o->value());
+}}
+          tooltip {Note: you can click on and drag the value display for fine adjustment} xywh {20 375 45 20} color 7 selection_color 15 labelsize 13 align 8 minimum 1 maximum 1000 step 1 value 15 textsize 13
+        }
+        Fl_Group {} {
+          label {Parametric equalizer} open
+          tooltip {Note: you can click on the sliders or value displays, and make fine adjustments by using the cursor keys or dragging, respectively} xywh {150 215 230 180} box THIN_UP_BOX align 21
+        } {
+          Fl_Choice soundEQModeValuator {
+            callback {{
+  if (o->value() >= 0) {
+    gui.config.sound.equalizer.mode = o->value() - 1;
+    gui.config.soundSettingsChanged = true;
+  }
+}} open
+            xywh {160 245 210 25} down_box BORDER_BOX align 8
+            code0 {o->add("Disabled|Peaking EQ|Low shelf|High shelf");}
+          } {}
+          Fl_Slider soundEQFrequencyValuator {
+            label Frequency
+            callback {{
+  gui.config.sound.equalizer.frequency = std::pow(100000.0, o->value());
+  gui.config.soundSettingsChanged = true;
+  soundEQFrequencyValueDisplay->value(gui.config.sound.equalizer.frequency);
+}}
+            xywh {210 285 85 23} type Horizontal color 47 selection_color 52 align 8 step 0.001 value 0.5
+          }
+          Fl_Value_Output soundEQFrequencyValueDisplay {
+            callback {{
+  gui.config.sound.equalizer.frequency = o->value();
+  gui.config.soundSettingsChanged = true;
+  soundEQFrequencyValuator->value(std::log(gui.config.sound.equalizer.frequency) / std::log(100000.0));
+}}
+            xywh {160 285 50 23} color 47 selection_color 15 minimum 1 maximum 100000 step 0.1 value 1000 textsize 10
+          }
+          Fl_Slider soundEQLevelValuator {
+            label {Level (dB)}
+            callback {{
+  gui.config.sound.equalizer.level = std::pow(10.0, o->value() / 20.0);
+  gui.config.soundSettingsChanged = true;
+  soundEQLevelValueDisplay->value(o->value());
+}}
+            xywh {210 323 85 23} type Horizontal color 47 selection_color 52 align 8 minimum -80 maximum 40 step 0.1
+          }
+          Fl_Value_Output soundEQLevelValueDisplay {
+            callback {{
+  gui.config.sound.equalizer.level = std::pow(10.0, o->value() / 20.0);
+  gui.config.soundSettingsChanged = true;
+  soundEQLevelValuator->value(o->value());
+}}
+            xywh {160 323 50 23} color 47 selection_color 15 minimum -80 maximum 40 step 0.1 textsize 10
+          }
+          Fl_Slider soundEQQValuator {
+            label Q
+            callback {{
+  gui.config.sound.equalizer.q = std::pow(100000.0, o->value()) * 0.001;
+  gui.config.soundSettingsChanged = true;
+  soundEQQValueDisplay->value(gui.config.sound.equalizer.q);
+}}
+            xywh {210 361 85 23} type Horizontal color 47 selection_color 52 align 8 step 0.001 value 0.5
+          }
+          Fl_Value_Output soundEQQValueDisplay {
+            callback {{
+  gui.config.sound.equalizer.q = o->value();
+  gui.config.soundSettingsChanged = true;
+  soundEQQValuator->value(std::log(gui.config.sound.equalizer.q * 1000.0) / std::log(100000.0));
+}}
+            xywh {160 361 50 23} color 47 selection_color 15 minimum 0.001 maximum 100 step 0.001 value 0.707 textsize 10
+          }
+        }
+      }
+      Fl_Button {} {
+        label Apply
+        callback {{
+  try {
+    gui.applyEmulatorConfiguration();
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+  updateWindow();
+}}
+        xywh {255 415 60 25} selection_color 50
+      }
+      Fl_Button {} {
+        label OK
+        callback {{
+  try {
+    gui.applyEmulatorConfiguration();
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+  updateWindow();
+  window->hide();
+}}
+        xywh {325 415 60 25} selection_color 50
+      }
+    }
+  }
+  Function {~Plus4EmuGUI_SoundConfigWindow()} {open
+  } {
+    code {{
+  delete window;
+}} {}
+  }
+  Function {show()} {open return_type void
+  } {
+    code {{
+  try {
+    soundDeviceValuator->value(-1);
+    {
+      std::vector< std::string >  sndDeviceList =
+          gui.audioOutput.getDeviceList();
+      size_t  i = size_t(soundDeviceValuator->size());
+      size_t  j = sndDeviceList.size();
+      i = (i > 0 ? (i - 1) : 0);
+      j = (j < 999 ? j : 999);
+      while (i > 0) {
+        i--;
+        soundDeviceValuator->remove(int(i));
+      }
+      for (i = 0; i <= j; i++) {
+        char    tmpBuf[4];
+        std::sprintf(&(tmpBuf[0]), "%d", int(i));
+        soundDeviceValuator->add(&(tmpBuf[0]), int(0), (Fl_Callback *) 0);
+      }
+      soundDeviceValuator->replace(0, "<none>");
+      for (i = 1; i <= j; i++)
+        soundDeviceValuator->replace(int(i), sndDeviceList[i - 1].c_str());
+    }
+    updateWindow();
+    window->show();
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+}} {}
+  }
+  Function {shown()} {open return_type bool
+  } {
+    code {{
+  return bool(window->shown());
+}} {}
+  }
+  Function {hide()} {open return_type void
+  } {
+    code {{
+  window->hide();
+}} {}
+  }
+  Function {updateWindow()} {open return_type void
+  } {
+    code {{
+  {
+    int   n = gui.config.sound.device + 1;
+    if (n >= 0 && (n + 1) < soundDeviceValuator->size())
+      soundDeviceValuator->value(n);
+    else
+      soundDeviceValuator->value(-1);
+  }
+  enableSoundValuator->value(gui.config.sound.enabled ? 1 : 0);
+  soundHighQualityValuator->value(gui.config.sound.highQuality ? 1 : 0);
+  soundSampleRateValuator->value(gui.config.sound.sampleRate);
+  soundOutputFileValuator->value(gui.config.sound.file.c_str());
+  soundLatencyValuator->value(gui.config.sound.latency * 1000.0);
+  soundHWPeriodsValuator->value(double(gui.config.sound.hwPeriods));
+  soundSWPeriodsValuator->value(double(gui.config.sound.swPeriods));
+  soundVolumeValuator->value(gui.config.sound.volume);
+  soundVolumeValueDisplay->value(gui.config.sound.volume);
+  soundDCFilter1Valuator->value(gui.config.sound.dcBlockFilter1Freq);
+  soundDCFilter1ValueDisplay->value(gui.config.sound.dcBlockFilter1Freq);
+  soundDCFilter2Valuator->value(gui.config.sound.dcBlockFilter2Freq);
+  soundDCFilter2ValueDisplay->value(gui.config.sound.dcBlockFilter2Freq);
+  if (gui.config.sound.equalizer.mode >= -1 &&
+      gui.config.sound.equalizer.mode <= 2)
+    soundEQModeValuator->value(gui.config.sound.equalizer.mode + 1);
+  else
+    soundEQModeValuator->value(-1);
+  soundEQFrequencyValuator->value(std::log(gui.config.sound.equalizer.frequency) / std::log(100000.0));
+  soundEQFrequencyValueDisplay->value(gui.config.sound.equalizer.frequency);
+  soundEQLevelValuator->value((std::log(gui.config.sound.equalizer.level) / std::log(10.0)) * 20.0);
+  soundEQLevelValueDisplay->value((std::log(gui.config.sound.equalizer.level) / std::log(10.0)) * 20.0);
+  soundEQQValuator->value(std::log(gui.config.sound.equalizer.q * 1000.0) / std::log(100000.0));
+  soundEQQValueDisplay->value(gui.config.sound.equalizer.q);
+}} {}
+  }
+} 

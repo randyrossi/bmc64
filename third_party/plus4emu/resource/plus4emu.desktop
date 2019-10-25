@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=plus4emu
+Comment=CBM+4 emulator
+Comment[hu]=Commodore+4 emulátor
+Exec=plus4emu
+Icon=Cbm4
+Categories=Game;Emulator;

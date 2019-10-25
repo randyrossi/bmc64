@@ -1,0 +1,5 @@
+Greg Ercolano      -- initial version for mac + win32, code maintainer
+Ian MacArthur      -- various fixes, additions, Makefile.fltkconfig
+Nathan Vander Wilt -- filter code for WIN32 and Mac, FLTK chooser
+Boris Mayer        -- various debugging
+Frederic Hoerni    -- fltk2 port

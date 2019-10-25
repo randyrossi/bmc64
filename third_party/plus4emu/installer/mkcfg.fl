@@ -1,0 +1,97 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0107 
+do_not_include_H_from_C 
+header_name {.hpp} 
+code_name {.cpp}
+decl {\#include "plus4emu.hpp"} {selected
+} 
+
+decl {\#include "mkcfg_fl.hpp"} {} 
+
+class Plus4EmuConfigInstallerGUI {open
+} {
+  decl {bool enableCfgInstall;} {public
+  }
+  decl {bool keyboardMapHU;} {public
+  }
+  Function {Plus4EmuConfigInstallerGUI()} {open
+  } {
+    code {{
+  enableCfgInstall = false;
+  keyboardMapHU = false;
+}} {}
+    Fl_Window mainWindow {
+      label {Reinstall plus4emu configuration files ?} open
+      xywh {296 333 370 95} type Double color 48 visible
+    } {
+      Fl_Check_Button {} {
+        label {Use Hungarian keyboard map}
+        callback {{
+  keyboardMapHU = (o->value() != 0);
+}}
+        xywh {10 15 25 25} down_box DOWN_BOX
+        code0 {o->value(0);}
+      }
+      Fl_Button {} {
+        label OK
+        callback {{
+  enableCfgInstall = true;
+  mainWindow->hide();
+}}
+        xywh {210 55 70 25} selection_color 50
+      }
+      Fl_Button {} {
+        label Cancel
+        callback {{
+  mainWindow->hide();
+}}
+        xywh {290 55 70 25} selection_color 50
+      }
+    }
+    Fl_Window errorWindow {
+      label Error open
+      xywh {302 467 280 150} type Double color 48 modal visible
+    } {
+      Fl_Box {} {
+        xywh {10 10 260 95} box THIN_UP_BOX
+      }
+      Fl_Box errorMessageText {
+        xywh {20 15 240 85} box FLAT_BOX align 144
+      }
+      Fl_Button {} {
+        label OK
+        callback {{
+  errorWindow->hide();
+}}
+        xywh {105 115 70 25} selection_color 50
+      }
+    }
+  }
+  Function {~Plus4EmuConfigInstallerGUI()} {open
+  } {
+    code {{
+  if (mainWindow->shown())
+    mainWindow->hide();
+  if (errorWindow->shown())
+    errorWindow->hide();
+  Fl::wait(0.0);
+  delete mainWindow;
+  delete errorWindow;
+}} {}
+  }
+  Function {errorMessage(const char *msg)} {open return_type void
+  } {
+    code {{
+  if (msg)
+    errorMessageText->copy_label(msg);
+  else
+    errorMessageText->label("");
+  errorWindow->set_modal();
+  errorWindow->show();
+  do {
+    Fl::wait(0.05);
+  } while (errorWindow->shown());
+  errorMessageText->label("");
+}} {}
+  }
+} 

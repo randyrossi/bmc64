@@ -1,0 +1,44 @@
+diff -r -d -U4 fltk-1.1.7.old/src/Fl.cxx fltk-1.1.7/src/Fl.cxx
+--- fltk-1.1.7.old/src/Fl.cxx	2006-01-15 03:26:54.000000000 +0100
++++ fltk-1.1.7/src/Fl.cxx	2007-05-29 11:49:49.000000000 +0200
+@@ -253,9 +253,8 @@
+     }
+   }
+ }
+ 
+-#if !defined(__APPLE__)
+ static void run_checks()
+ {
+   // checks are a bit messy so that add/remove and wait may be called
+   // from inside them without causing an infinite loop:
+@@ -267,9 +266,8 @@
+     }
+     next_check = first_check;
+   }
+ }
+-#endif // !__APPLE__
+ 
+ static char in_idle;
+ 
+ ////////////////////////////////////////////////////////////////
+@@ -289,9 +287,9 @@
+   return fl_wait(time_to_wait);
+ 
+ #elif defined(__APPLE__)
+ 
+-  flush();
++  run_checks();
+   if (idle) {
+     if (!in_idle) {
+       in_idle = 1;
+       idle();
+@@ -299,8 +297,9 @@
+     }
+     // the idle function may turn off idle, we can then wait:
+     if (idle) time_to_wait = 0.0;
+   }
++  flush();
+   return fl_wait(time_to_wait);
+ 
+ #else
+ 

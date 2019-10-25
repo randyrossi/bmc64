@@ -1,0 +1,373 @@
+Changes in version 1.2.11
+-------------------------
+
+  * PAL/NTSC emulation can now use custom GLSL shaders
+  * added new disable unit 8/9 buttons to the disk configuration window
+  * an empty D64 or D81 image is automatically created when trying to
+    open a file that does not exist
+  * disk and tape images can be opened from .zip format archives, the
+    first packed file with matching extension is temporarily extracted
+    and used in read-only mode
+  * added support for comments (beginning with ; or #) in the breakpoint
+    list
+  * fixed copying and pasting upper/lower case characters, added limited
+    support for PETSCII graphic characters
+  * fixed DigiBlaster bug, SID external input was muted by default
+  * fixed horizontal scroll bug in multicolor character mode
+  * minor fixes in 1551 and TED emulation
+  * fixed video breakpoints not working when the priority threshold is
+    not zero
+
+Changes in version 1.2.10.1
+---------------------------
+
+  * fixed preview bug in p4fliconv
+
+Changes in version 1.2.10
+-------------------------
+
+  * new configuration options for C64 compatible SID emulation
+  * updated SID emulation to use reSID 1.0 instead of 0.16
+  * video display improvements and bug fixes; the screen is no longer
+    blanked while the emulator is paused
+  * the debugger window is hidden only after a short delay when it is
+    closed, this fixes the flickering while using the step buttons
+  * the editor buffer in the monitor has been increased from 120 to 160
+    lines
+  * memory dump is now also shown in ASCII format
+  * new execute ('x') type of breakpoints, the ignore data reads button
+    has been removed
+  * in addition to the default hexadecimal format, it is also possible
+    to specify numbers in the monitor in binary (e.g. %1010), octal
+    (12o), and decimal (10l) format
+  * new "step" buttons for stepping to the 16-bit address at the top of
+    the stack ('Return') or any 16-bit address specified by the user
+    ('Step to')
+  * the debugger prints more detailed information about syntax and
+    runtime errors in Lua scripts, and there is a new button to insert
+    an empty breakpoint callback function
+  * it is possible to delete single breakpoints in Lua scripts by using
+    a negative priority value
+  * window icons have been implemented on non-Windows platforms if the
+    emulator is built with FLTK 1.3.3 or newer
+  * the debugger window has been made resizeable within a limited range
+  * audio output fixes and improvements, WASAPI is now supported on
+    Windows
+  * screenshots and printer output are saved in PNG format instead of
+    TGA
+  * various improvements and new features in the compress utility
+  * snapshot and demo files can be compressed in epcompress format
+  * added support for building with FLTK 1.3.x and Lua 5.2/5.3, and for
+    building 64-bit Windows binaries
+  * OpenGL has been made an optional dependency at compile time
+  * minor bug fixes
+
+Changes in version 1.2.9.2
+--------------------------
+
+  * minor bug fixes
+
+Changes in version 1.2.9.1
+--------------------------
+
+  * some improvements and optimizations in the p4fliconv and compress
+    utilities
+  * a few minor bugs have been fixed
+
+Changes in version 1.2.9
+------------------------
+
+  * added a C interface that allows using the emulator as a shared
+    library in other programs; the library and header file can be found
+    in the 'plus4lib' subdirectory of the binary packages, and a simple
+    example program with compile instructions is also included
+  * implemented IEC level MPS-801 printer emulation, in addition to the
+    previously existing hardware level MPS-802 emulation
+  * added a new button to the debugger GUI that makes it possible to
+    break only when a branch is taken (i.e. the opposite of 'Step over')
+  * more accurate PAL emulation in OpenGL mode when the display quality
+    is set to 3
+  * LED display is now also implemented for IEC level drive emulation
+  * the ROM images required by the emulator are included with the binary
+    packages, and no longer need to be downloaded separately
+  * fixed a bug in the 'Step over' function of the debugger
+  * fixed/improved support for D64 error information; this allows some
+    copy protected games that previously did not work to load correctly
+  * the 'compress' utility has two new compression methods, some new
+    options, and the original method is 3-5 times faster now while
+    producing identical files; also, compression support in 'p4fliconv'
+    is improved somewhat
+  * various minor bug fixes, optimizations, and other improvements
+
+Changes in version 1.2.8.1
+--------------------------
+
+  * fixed file overwrite (@) bug in IEC level drive emulation
+
+Changes in version 1.2.8
+------------------------
+
+  * new option for saving the printer output to a text file, either as
+    the raw characters sent to the printer, or converted to ASCII
+  * slightly improved compression when saving the printer output in TGA
+    format
+  * added Windows icons from the Plus/4 icon set by SVS
+  * when using the mouse to set the cursor position, the color of the
+    character under the cursor is now saved, set, and restored correctly
+  * minor utility and Windows installer improvements and fixes
+  * some optimizations in software video mode, and serial floppy drive
+    and printer emulation
+
+Changes in version 1.2.7
+------------------------
+
+  * added support for using the mouse to change the cursor position in
+    the emulated machine, and copying text to and pasting from the
+    clipboard; the following functions are available:
+      left click: sets the cursor position
+      right click: sets the cursor position, and copies the selected
+        word to the clipboard
+      ctrl + right click: sets the cursor position, and copies text from
+        the selected line to the clipboard
+      shift + right click: copies text from the whole screen to the
+        clipboard without changing the cursor position
+      middle click: sets the cursor position, and pastes text from the
+        clipboard
+      shift + middle click: pastes text from the clipboard without
+        changing the cursor position
+    Note that these are disabled when a display mode that hides the menu
+    bar and the mouse cursor is selected, or light pen emulation - which
+    also uses the mouse - is enabled.
+  * new command line option (-keybuf) for typing text of any length at
+    startup; the text can also be read from a file
+  * added machine configuration option to control the SID output volume;
+    this also affects the sound recorded to AVI files
+  * increased TED audio output level relative to the default SID output
+    level, for better accuracy in programs that use both types of sound
+    at the same time
+  * minor sound emulation fixes
+  * the process priority of the emulator can be changed from the GUI
+    (currently, this is only implemented on Windows)
+  * some utility improvements: 'compress' has more options now, and is
+    optimized somewhat for slightly better efficiency and speed;
+    'p4fliconv' automatically detects the use of the C64 palette in GIF
+    files and enables pixel exact reading mode, and there is a new
+    experimental hires conversion algorithm as well
+  * minor optimizations
+  * in OpenGL video mode, the vertical interlace effect is now also
+    displayed at quality 1 and 2, and quality 2 uses 32-bit textures for
+    improved color accuracy at the expense of being somewhat slower
+    (previously, both interlace and 32-bit textures were enabled only at
+    quality 3)
+  * fixed bug that prevented the emulator display from being correctly
+    redrawn when damaged on Windows in software video mode or OpenGL
+    with the quality set to 0
+  * a few Linux compile and link errors have been fixed
+
+Changes in version 1.2.6.1
+--------------------------
+
+  * fixed bug in changing the type of a floppy drive with no image file
+    selected
+  * fixed link errors when building from source code on Linux
+
+Changes in version 1.2.6
+------------------------
+
+  * implemented IEC level floppy drive emulation; this allows access to
+    a directory on the PC filesystem, and supports reading and writing
+    .prg, .p00, .s00, .u00, and .r00 files, and some commonly used CBM
+    DOS commands
+  * the debugger window now displays the current state of TED registers
+  * on Windows and MacOS X the native file selection dialog is used
+    instead of the FLTK one; also, the last PRG and screenshot file
+    selected is remembered by the dialogs
+  * various improvements have been made to the utilities
+  * changed the TED luminance table to (hopefully) match the colors of
+    the real machine more accurately
+  * when recording video to AVI files in RLE8 format, some TV emulation
+    color effects are now also captured using additional palette colors
+  * D64 files with any number of tracks from 35 to 42 are supported
+  * new/improved GUI keyboard shortcuts
+  * the old file I/O hack has been removed, since its functionality is
+    now replaced by the IEC level drive emulation
+  * added Gtk+ GUI theme (enabled with '-colorscheme 3' command line
+    option)
+  * some minor bugs have been fixed
+
+Changes in version 1.2.5.2
+--------------------------
+
+  * fixed some minor TED emulation bugs
+
+Changes in version 1.2.5.1
+--------------------------
+
+  * the full speed mode (Alt+W) now restores the original speed setting
+    when turned off
+  * added a "go to program counter" button to the disassembler in the
+    debugger
+  * some new utilities have been added
+  * a few minor bugs have been fixed
+
+Changes in version 1.2.5
+------------------------
+
+  * implemented Lua scripting in the debugger; this makes it possible to
+    write complex rules for breakpoints, but can have other uses as
+    well, since the script can read and write memory and CPU registers,
+    in addition to having access to the standard Lua library functions
+  * changed the debugger window layout so that there is a larger window
+    with only two tabs
+  * the disassembly view in the debugger now allows for paging backward,
+    and the disassembly and memory dump displays can also be scrolled
+    with the mouse wheel
+  * made the serial bus delay for the 1541 high timing accuracy mode
+    adjustable; while the default setting works with all the disk turbos
+    tested so far, this option may be useful for debugging purposes
+  * when using audio files as tape images, the signal read or written
+    can optionally be inverted for compatibility with other software
+  * the enabling of 6551 ACIA emulation is now configurable, rather than
+    being fixed to machine configurations with 64K or more RAM
+  * SID emulation and floppy drives with no disk image attached can be
+    disabled from the GUI menu to reduce CPU usage; previously, these
+    automatically enabled features could only be turned off by a forced
+    or hard reset
+  * added new GUI menu items for resetting floppy drives
+  * new command line option (-tape) for loading tape images on startup;
+    it has also been made possible to automatically load a file with
+    .prg, .p00, .d64, .d81, or .tap extension by using the file name as
+    a single command line argument
+  * minor bug fixes and optimizations
+
+Changes in version 1.2.4
+------------------------
+
+  * implemented the 6551 ACIA registers at $FD00-$FD0F, which are
+    automatically enabled for configurations with 64K or more RAM; this
+    is not complete yet, but the basic functionality works
+  * video recording can also be done in RLE8 format now, which allows
+    smaller file sizes than uncompressed YV12, at the expense of some TV
+    emulation effects not being captured
+  * added new command line option for selecting the GUI style and colors
+  * various minor improvements and bug fixes
+
+Changes in version 1.2.3
+------------------------
+
+  * video and sound output can be recorded to AVI files
+  * more accurate colors in NTSC mode
+  * TED sound emulation improvements
+  * added hue shift to the display configuration options
+  * minor optimizations in serial floppy drive and printer emulation
+  * the drive head position is now also shown on the LED display when
+    it is changing
+  * a few bug fixes
+
+Changes in version 1.2.2
+------------------------
+
+  * implemented Digi-Blaster emulation
+  * added limited support for error information in D64 files
+  * new option for setting SID model (6581 or 8580) to be emulated
+  * P00 format files can be loaded
+  * emulation speed percentage is now displayed on the title bar; it is
+    also possible to set half, double, etc. speed in the menu
+  * the head position (track, side, and sector) of all floppy drives
+    can be displayed in a window
+
+Changes in version 1.2.1
+------------------------
+
+  * TED emulation improvements; also fixed a bug introduced in version
+    1.1.1
+  * the frame rate in full speed mode is now limited to a maximum of
+    50 Hz to improve performance
+  * minor bug fixes
+
+Changes in version 1.2.0
+------------------------
+
+  * many improvements in the TV emulation; to enable all the new
+    features, use OpenGL mode and set the display quality to 3 (requires
+    OpenGL 2.0 or newer and shader support)
+  * added a tedmon-like monitor to the debugger; it supports all the
+    commands, including assemble, but there are also some improvements
+    and additional features (use ? to print the list of commands, or ? N
+    for help on command N)
+  * it is now possible to set breakpoints on TED video positions in the
+    debugger
+  * trace command in the monitor for logging CPU instructions to a text
+    file; when debugging the main CPU, the TED video position at the
+    first cycle of each opcode is also logged
+  * light pen emulation
+  * hardware level 1526/MPS-802 printer emulation
+  * the file I/O ROM module now also includes a tape turbo; to enable
+    it, set $0647 to $17, $27, $37, or $47 to select speed (from slowest
+    to fastest), and use device 7 when saving
+  * tape playback and recording can be sent to the sound output
+  * the RAM startup pattern has been made configurable
+  * minor TED emulation improvements
+  * various bug fixes
+
+Changes in version 1.1.3
+------------------------
+
+  * fixed bug in Hannes memory expansion emulation
+  * improved 6523 emulation in 1551 floppy drives
+  * minor bug fixes
+
+Changes in version 1.1.2
+------------------------
+
+  * fixed bug that caused the tape input signal to get stuck at high
+    level sometimes even after stopping or closing the tape
+  * optimized 1541 high timing accuracy mode
+  * adjusted reSID filter for different clock frequency in Plus/4
+
+Changes in version 1.1.1
+------------------------
+
+  * added new 1541 timing code that fixes some programs that previously
+    did not load, at the expense of higher CPU usage; it is enabled by
+    default, and can be turned on/off in the floppy configuration dialog
+  * more accurate emulation of television vertical synchronization
+  * MacOS X build fixes; also added patch for FLTK 1.1.7 which fixes the
+    check callback on OS X
+  * improvements and fixes in TED video shift register emulation
+  * fixed CPU I/O port data direction register ($0000)
+  * the ROM package now includes the 1541 DOS, rather than the 1541-II,
+    as the latter breaks some demos; the 1541-II can still be used by
+    loading dos15412.rom to ROM segment 10 in the machine configuration
+  * minor optimizations
+
+Changes in version 1.1.0
+------------------------
+
+  * implemented 1551 drive emulation
+  * added floppy drive LED display to the GUI (1541 is red, 1551 is
+    green, and 1581 is yellow)
+  * the debugger now allows for debugging floppy drives; the drives are
+    also mapped to the physical address range $180000-$1BFFFF
+  * fixed 1541 disk change detection
+  * keyboard map can be configured with the GUI
+  * external game devices like joysticks and gamepads are supported, and
+    can be assigned in the keyboard map like normal keys
+  * the 'step over' button in the debugger now also skips branch
+    instructions
+  * invalid opcodes that normally jam the CPU can be used as breakpoints
+    (with the priority assumed to be 3) that open the debugger, and the
+    execution of the program can continue as if there was a NOP
+    instruction
+  * added new command line options for loading disk image, snapshot, and
+    demo files on start-up; on Windows, D64 and D81 files are also
+    optionally associated with the emulator
+  * it is now possible to use WAV, AIFF, and other sound file formats as
+    tape images; these files can be read and written, however, new files
+    are created in plus4emu format
+  * blank video output is generated when the TED is disabled by setting
+    bit 5 of $FF07
+  * reduced horizontal texture resolution to 384 in OpenGL mode when the
+    quality is set to 0, for improved performance
+  * minor GUI improvements and fixes
+

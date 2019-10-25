@@ -1,0 +1,81 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0109 
+do_not_include_H_from_C 
+header_name {.hpp} 
+code_name {.cpp}
+decl {\#include "gui.hpp"} {selected
+} 
+
+decl {\#include <FL/Fl_Text_Buffer.H>} {} 
+
+class Plus4EmuGUI_AboutWindow {open
+} {
+  decl {Plus4EmuGUI& gui;} {}
+  decl {Fl_Text_Buffer *buf;} {}
+  Function {Plus4EmuGUI_AboutWindow(Plus4EmuGUI& gui_) : gui(gui_)} {open
+  } {
+    code {{
+  buf = new Fl_Text_Buffer();
+}} {}
+    Fl_Window window {
+      label {Copyright information} open
+      xywh {224 231 590 370} type Double color 48 visible
+    } {
+      Fl_Text_Display {} {
+        xywh {10 10 570 315} box DOWN_BOX textfont 4 textsize 13
+        code0 {o->buffer(buf);}
+      }
+      Fl_Button {} {
+        label OK
+        callback {{
+  window->hide();
+}}
+        xywh {260 335 70 25} selection_color 50
+      }
+    }
+    code {{
+  buf->append("                      plus4emu version 1.2.11\\n");
+  buf->append("\\n");
+  buf->append("Portable Commodore Plus/4 emulator\\n");
+  buf->append("Copyright \\302\\251 2003-2017 Istvan Varga <istvanv@users.sourceforge.net>\\n");
+  buf->append("  https://github.com/istvan-v/plus4emu/\\n");
+  buf->append("reSID 1.0 copyright \\302\\251 2010 by Dag Lem\\n");
+  buf->append("Fl_Native_File_Chooser 0.84 copyright \\302\\251 2004 by Greg Ercolano.\\n");
+  buf->append("dotconf 1.3 copyright \\302\\251 by Lukas Schr\\303\\266der and William Hubbs.\\n");
+  buf->append("\\n");
+  buf->append("This program is free software; you can redistribute it and/or modify\\n");
+  buf->append("it under the terms of the GNU General Public License as published by\\n");
+  buf->append("the Free Software Foundation; either version 2 of the License, or\\n");
+  buf->append("(at your option) any later version.\\n");
+  buf->append("\\n");
+  buf->append("This program is distributed in the hope that it will be useful,\\n");
+  buf->append("but WITHOUT ANY WARRANTY; without even the implied warranty of\\n");
+  buf->append("MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\\n");
+  buf->append("GNU General Public License for more details.\\n");
+  buf->append("\\n");
+  buf->append("You should have received a copy of the GNU General Public License\\n");
+  buf->append("along with this program; if not, write to the Free Software\\n");
+  buf->append("Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307\\n");
+  buf->append("USA\\n");
+}} {}
+  }
+  Function {~Plus4EmuGUI_AboutWindow()} {open
+  } {
+    code {{
+  delete window;
+  delete buf;
+}} {}
+  }
+  Function {show()} {open return_type void
+  } {
+    code {{
+  window->show();
+}} {}
+  }
+  Function {hide()} {open return_type void
+  } {
+    code {{
+  window->hide();
+}} {}
+  }
+} 

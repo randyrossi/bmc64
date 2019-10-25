@@ -1,0 +1,795 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0110 
+do_not_include_H_from_C 
+header_name {.hpp} 
+code_name {.cpp}
+decl {\#include "gui.hpp"} {selected
+} 
+
+decl {\#include "script.hpp"} {} 
+
+decl {\#include "debugger.hpp"} {} 
+
+decl {\#include <vector>} {} 
+
+decl {\#include <FL/Fl_Text_Buffer.H>} {} 
+
+class Plus4EmuGUI_DebugWindow {open
+} {
+  decl {friend class Plus4EmuGUIMonitor;} {public
+  }
+  decl {friend class Plus4EmuGUI_LuaScript;} {public
+  }
+  decl {Plus4EmuGUI& gui;} {}
+  decl {char windowTitle[64];} {}
+  decl {int savedWindowPositionX;} {}
+  decl {int savedWindowPositionY;} {}
+  decl {Fl_Widget *focusWidget;} {}
+  decl {Fl_Widget *prvTab;} {}
+  decl {uint32_t memoryDumpStartAddress;} {}
+  decl {uint32_t memoryDumpEndAddress;} {}
+  decl {uint32_t memoryDumpViewAddress;} {}
+  decl {uint32_t memoryDumpAddrDec;} {}
+  decl {uint32_t memoryDumpAddrInc;} {}
+  decl {bool memoryDumpCPUAddressMode;} {}
+  decl {bool memoryDumpASCIIFileFormat;} {}
+  decl {uint32_t disassemblyStartAddress;} {}
+  decl {uint32_t disassemblyViewAddress;} {}
+  decl {uint32_t disassemblyNextAddress;} {}
+  decl {Fl_Text_Buffer *bpEditBuffer;} {}
+  decl {Fl_Text_Buffer *scriptEditBuffer;} {}
+  decl {std::string breakPointLists[6];} {}
+  decl {std::string tmpBuffer;} {}
+  decl {Plus4EmuGUI_LuaScript luaScript;} {}
+  decl {uint8_t prvTEDRegisterState[32];} {}
+  decl {Plus4EmuGUI_DebugWindow(Plus4EmuGUI& gui_);} {public
+  }
+  decl {~Plus4EmuGUI_DebugWindow();} {public
+  }
+  decl {void show();} {public
+  }
+  decl {bool shown() const;} {public
+  }
+  decl {void hide();} {public
+  }
+  decl {void activate();} {public
+  }
+  decl {bool active() const;} {public
+  }
+  decl {void deactivate(double tt = 0.1);} {public
+  }
+  decl {bool breakPoint(int debugContext_, int type, uint16_t addr, uint8_t value);} {public
+  }
+  decl {void updateWindow();} {public
+  }
+  decl {char * printHexNumber(char *bufp, uint32_t n, size_t spaceCnt1, size_t nDigits, size_t spaceCnt2);} {}
+  decl {void dumpMemory(std::string& buf, uint32_t startAddr, uint32_t endAddr, uint32_t cursorAddr, bool showCursor, bool isCPUAddress);} {}
+  decl {void updateMemoryDumpDisplay();} {}
+  decl {long parseHexNumber(uint32_t& value, const char *s);} {}
+  decl {void parseMemoryDump(const char *s);} {}
+  decl {void updateDisassemblyDisplay();} {}
+  decl {uint32_t disassemblySearchBack(int insnCnt);} {}
+  decl {void applyBreakPointList();} {}
+  decl {void setDebugContext(int n);} {}
+  decl {static void breakPointCallback(void *userData, int debugContext_, int type, uint16_t addr, uint8_t value);} {public
+  }
+  decl {static void hideWindowCallback(void *userData);} {}
+  Function {createDebugWindow()} {open private return_type void
+  } {
+    Fl_Window window {
+      callback {{
+  if (breakPointEditor->changed()) {
+    breakPointEditor->clear_changed();
+    breakPointEditor->do_callback();
+  }
+  focusWidget = (Fl_Widget *) 0;
+  gui.vm.setSingleStepMode(0);
+  this->hide();
+}} open
+      xywh {146 98 960 720} type Double color 48 resizable size_range {920 700 1080 810} visible
+    } {
+      Fl_Tabs debugTabs {
+        callback {{
+  if (prvTab == monitorTab)
+    updateWindow();
+  prvTab = o->value();
+}} open
+        xywh {10 10 940 665}
+      } {
+        Fl_Group mainTab {
+          label {Page 1} open
+          xywh {10 35 940 640} box THIN_UP_BOX
+        } {
+          Fl_Group {} {open
+            xywh {20 45 515 245} box THIN_UP_BOX align 21
+          } {
+            Fl_Output cpuRegisterDisplay {
+              label {CPU registers}
+              xywh {30 70 345 80} type Multiline align 5 textfont 5 textcolor 2
+              code0 {o->cursor_color(FL_BACKGROUND2_COLOR);}
+            }
+            Fl_Output memoryPagingDisplay {
+              label {Memory paging}
+              xywh {385 70 140 80} type Multiline align 5 textfont 5 textcolor 2
+              code0 {o->cursor_color(FL_BACKGROUND2_COLOR);}
+            }
+            Fl_Output stackMemoryDumpDisplay {
+              label Stack
+              xywh {30 175 495 105} type Multiline align 5 textfont 5 textcolor 2
+              code0 {o->cursor_color(FL_BACKGROUND2_COLOR);}
+            }
+          }
+          Fl_Group {} {open
+            xywh {545 45 395 165} box THIN_UP_BOX align 21
+          } {
+            Fl_Output tedRegisterDisplay {
+              label {TED registers}
+              xywh {555 70 375 130} type Multiline align 5 textfont 5 textcolor 2
+              code0 {o->cursor_color(FL_BACKGROUND2_COLOR);}
+            }
+          }
+          Fl_Group {} {open
+            xywh {20 300 515 365} box THIN_UP_BOX align 21
+          } {
+            Fl_Input searchStringValuator {
+              label Search
+              callback {{
+  if (o->value()) {
+    try {
+      std::vector<std::string>  args;
+      {
+        std::string tmp("H ");
+        tmp += o->value();
+        Plus4EmuGUIMonitor::tokenizeString(args, tmp.c_str());
+      }
+      int32_t addr = monitor_->searchPattern(
+          args, 1, args.size() - 1,
+          memoryDumpViewAddress + 1U, memoryDumpViewAddress,
+          memoryDumpCPUAddressMode);
+      if (addr >= 0) {
+        memoryDumpViewAddress = uint32_t(addr);
+        updateMemoryDumpDisplay();
+      }
+      else
+        throw Plus4Emu::Exception("Search string not found");
+    }
+    catch (std::exception& e) {
+      gui.errorMessage(e.what());
+    }
+  }
+}}
+              tooltip {The search string can be specified with the syntax used by the H and SR monitor commands} xywh {30 325 375 25} align 5 when 10 textfont 4
+              code0 {o->cursor_color(Fl_Color(3));}
+            }
+            Fl_Button {} {
+              label {Find next}
+              callback {{
+  searchStringValuator->do_callback();
+}}
+              xywh {415 325 110 25} color 50 selection_color 51
+            }
+            Fl_Output memoryDumpDisplay {
+              label {Memory dump}
+              xywh {30 375 375 280} type Multiline align 5 textfont 5 textcolor 2
+              code0 {o->cursor_color(FL_BACKGROUND2_COLOR);}
+              class Plus4EmuGUI_ScrollableOutput
+            }
+            Fl_Light_Button {} {
+              label {CPU address}
+              callback {{
+  memoryDumpCPUAddressMode = (o->value() != 0);
+  updateMemoryDumpDisplay();
+}}
+              tooltip {Select if 16 bit CPU, or 22 bit physical addresses are to be used} xywh {415 375 110 25} value 1 color 50 selection_color 3
+            }
+            Fl_Input memoryDumpStartAddressValuator {
+              label {Start address}
+              callback {{
+  if (parseHexNumber(memoryDumpStartAddress, o->value()) > 0L) {
+    if (memoryDumpStartAddress != memoryDumpViewAddress) {
+      memoryDumpViewAddress = memoryDumpStartAddress;
+      updateMemoryDumpDisplay();
+    }
+  }
+}}
+              xywh {415 420 110 25} align 5 textfont 4
+              code0 {o->cursor_color(Fl_Color(3));}
+              code1 {o->value("0000");}
+            }
+            Fl_Input memoryDumpEndAddressValuator {
+              label {End address}
+              callback {{
+  parseHexNumber(memoryDumpEndAddress, o->value());
+  updateMemoryDumpDisplay();
+}}
+              tooltip {End address of memory dump (for file I/O only); this address is still included} xywh {415 465 110 25} align 5 textfont 4
+              code0 {o->cursor_color(Fl_Color(3));}
+              code1 {o->value("007F");}
+            }
+            Fl_Button memoryDumpPrvPageButton {
+              label {@<}
+              callback {{
+  if (o->value() != 0) {
+    memoryDumpAddrDec = 0x003FFF80U;
+  }
+  else {
+    memoryDumpViewAddress =
+        (memoryDumpViewAddress + memoryDumpAddrDec) & 0x003FFFFFU;
+    memoryDumpAddrDec = 0x003FFFC0U;
+    updateMemoryDumpDisplay();
+  }
+}}
+              tooltip {View previous page} xywh {415 510 35 25} color 50 selection_color 51 when 1
+            }
+            Fl_Button {} {
+              label {@|<}
+              callback {{
+  if (memoryDumpStartAddress != memoryDumpViewAddress) {
+    memoryDumpViewAddress = memoryDumpStartAddress;
+    updateMemoryDumpDisplay();
+  }
+}}
+              tooltip {Return to start address} xywh {455 510 30 25} color 50 selection_color 51
+            }
+            Fl_Button memoryDumpNxtPageButton {
+              label {@>}
+              callback {{
+  if (o->value() != 0) {
+    memoryDumpAddrInc = 0x00000080U;
+  }
+  else {
+    memoryDumpViewAddress =
+        (memoryDumpViewAddress + memoryDumpAddrInc) & 0x003FFFFFU;
+    memoryDumpAddrInc = 0x00000040U;
+    updateMemoryDumpDisplay();
+  }
+}}
+              tooltip {View next page} xywh {490 510 35 25} color 50 selection_color 51 when 1
+            }
+            Fl_Light_Button {} {
+              label {ASCII format}
+              callback {{
+  memoryDumpASCIIFileFormat = (o->value() != 0);
+}}
+              tooltip {Select if memory dump file format should be ASCII or binary} xywh {415 555 110 25} color 50 selection_color 3
+            }
+            Fl_Button {} {
+              label {Load from file}
+              callback {{
+  std::FILE *f = (std::FILE *) 0;
+  try {
+    std::string tmp;
+    if (gui.browseFile(tmp, gui.debuggerDirectory,
+                       "All files\\t*", Fl_Native_File_Chooser::BROWSE_FILE,
+                       "Load memory")) {
+      f = Plus4Emu::fileOpen(tmp.c_str(), "rb");
+      if (!f)
+        throw Plus4Emu::Exception("cannot open file");
+      if (memoryDumpASCIIFileFormat) {
+        tmp = "";
+        while (true) {
+          int   c = std::fgetc(f);
+          if (c == EOF)
+            break;
+          if (char(c) != '\\0')
+            tmp += char(c);
+        }
+        parseMemoryDump(tmp.c_str());
+      }
+      else {
+        uint32_t  addr = memoryDumpStartAddress;
+        uint32_t  addrMask = uint32_t(memoryDumpCPUAddressMode ? 0x00FFFFU : 0x3FFFFFU);
+        while (true) {
+          int   c = std::fgetc(f);
+          if (c == EOF)
+            break;
+          gui.vm.writeMemory(addr, uint8_t(c & 0xFF), memoryDumpCPUAddressMode);
+          if (((addr ^ memoryDumpEndAddress) & addrMask) == 0U)
+            break;
+          addr++;
+        }
+      }
+      std::fclose(f);
+    }
+  }
+  catch (std::exception& e) {
+    if (f)
+      std::fclose(f);
+    gui.errorMessage(e.what());
+  }
+  updateWindow();
+}}
+              xywh {415 590 110 25} color 50 selection_color 51
+            }
+            Fl_Button {} {
+              label {Save to file}
+              callback {{
+  std::FILE *f = (std::FILE *) 0;
+  try {
+    std::string tmp;
+    if (gui.browseFile(tmp, gui.debuggerDirectory,
+                       "All files\\t*",
+                       Fl_Native_File_Chooser::BROWSE_SAVE_FILE,
+                       "Save memory")) {
+      if (memoryDumpASCIIFileFormat)
+        f = Plus4Emu::fileOpen(tmp.c_str(), "w");
+      else
+        f = Plus4Emu::fileOpen(tmp.c_str(), "wb");
+      if (!f)
+        throw Plus4Emu::Exception("cannot open file");
+      if (memoryDumpASCIIFileFormat) {
+        dumpMemory(tmp, memoryDumpStartAddress, memoryDumpEndAddress,
+                   0U, false, memoryDumpCPUAddressMode);
+        tmp += '\\n';
+        for (size_t i = 0; i < tmp.length(); i++) {
+          if (std::fputc(tmp[i], f) == EOF)
+            throw Plus4Emu::Exception("error writing file - is the disk full ?");
+        }
+      }
+      else {
+        uint32_t  addr = memoryDumpStartAddress;
+        uint32_t  addrMask = uint32_t(memoryDumpCPUAddressMode ? 0x00FFFFU : 0x3FFFFFU);
+        while (true) {
+          uint8_t c = gui.vm.readMemory(addr, memoryDumpCPUAddressMode);
+          if (std::fputc(c, f) == EOF)
+            throw Plus4Emu::Exception("error writing file - is the disk full ?");
+          if (((addr ^ memoryDumpEndAddress) & addrMask) == 0U)
+            break;
+          addr++;
+        }
+      }
+      std::fclose(f);
+    }
+  }
+  catch (std::exception& e) {
+    if (f)
+      std::fclose(f);
+    gui.errorMessage(e.what());
+  }
+}}
+              xywh {415 625 110 25} color 50 selection_color 51
+            }
+          }
+          Fl_Group {} {open
+            xywh {545 220 395 445} box THIN_UP_BOX align 21
+          } {
+            Fl_Output disassemblyDisplay {
+              xywh {555 230 375 380} type Multiline align 5 textfont 5 textcolor 2
+              code0 {o->cursor_color(FL_BACKGROUND2_COLOR);}
+              class Plus4EmuGUI_ScrollableOutput
+            }
+            Fl_Input disassemblyStartAddressValuator {
+              label {Start address}
+              callback {{
+  if (parseHexNumber(disassemblyStartAddress, o->value()) > 0L)
+    disassemblyViewAddress = disassemblyStartAddress;
+  updateDisassemblyDisplay();
+}}
+              xywh {560 630 115 25} align 5 textfont 4
+              code0 {o->cursor_color(Fl_Color(3));}
+              code1 {o->value("0000");}
+            }
+            Fl_Button disassemblyPrvPageButton {
+              label {@<}
+              callback {{
+  disassemblyViewAddress = disassemblySearchBack(20);
+  updateDisassemblyDisplay();
+}}
+              tooltip {View previous page} xywh {685 630 55 25} color 50 selection_color 51
+            }
+            Fl_Button {} {
+              label {@|<}
+              callback {{
+  if (disassemblyViewAddress != disassemblyStartAddress) {
+    disassemblyViewAddress = disassemblyStartAddress;
+    updateDisassemblyDisplay();
+  }
+}}
+              tooltip {Return to start address} xywh {745 630 55 25} color 50 selection_color 51
+            }
+            Fl_Button disassemblyNxtPageButton {
+              label {@>}
+              callback {{
+  disassemblyViewAddress = disassemblyNextAddress;
+  updateDisassemblyDisplay();
+}}
+              tooltip {View next page} xywh {805 630 55 25} color 50 selection_color 51
+            }
+            Fl_Button {} {
+              label PC
+              callback {{
+  disassemblyViewAddress = gui.vm.getProgramCounter();
+  updateDisassemblyDisplay();
+}}
+              tooltip {View code at the program counter} xywh {870 630 55 25} color 50 selection_color 51
+            }
+          }
+        }
+        Fl_Group monitorTab {
+          label {Page 2} open
+          xywh {10 35 940 640} box THIN_UP_BOX hide
+        } {
+          Fl_Group {} {open
+            xywh {20 45 530 365} box THIN_UP_BOX align 21
+          } {
+            Fl_Text_Editor monitor_ {
+              tooltip {Type ? for a list of available monitor commands, or ? CMD for help on command CMD} xywh {30 55 510 345} when 0 textfont 5 textcolor 2
+              code0 {o->setDebugger(*this);}
+              code1 {o->cursor_style(Fl_Text_Display::BLOCK_CURSOR);}
+              code2 {o->cursor_color(Fl_Color(3));}
+              class Plus4EmuGUIMonitor
+            }
+          }
+          Fl_Group {} {open
+            xywh {560 45 380 365} box THIN_UP_BOX align 21
+          } {
+            Fl_Text_Editor breakPointEditor {
+              callback {{
+  applyBreakPointList();
+}}
+              tooltip {Enter watchpoint definitions, separated by spaces or newlines. Allowed formats include NNNN (memory, CPU address), and NNNN:NN (TED video position as Y:X); each N is a hexadecimal digit. Address ranges (separated by a - character) can also be specified. Use the following suffixes to check for read, write or execute access only, set priority, or ignore watchpoints depending on the program counter: r, w, x, p0, p1, p2, p3, i.} xywh {570 55 360 255} box DOWN_BOX align 5 textfont 4
+              code0 {o->cursor_color(Fl_Color(3));}
+              code1 {o->buffer(bpEditBuffer);}
+              code2 {o->scrollbar_align(FL_ALIGN_RIGHT);}
+            }
+            Fl_Value_Slider bpPriorityThresholdValuator {
+              label {Priority threshold}
+              callback {{
+  gui.config.debug.bpPriorityThreshold = int(o->value() + 0.5);
+  gui.config.debugSettingsChanged = true;
+  try {
+    gui.config.applySettings();
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+}}
+              xywh {575 331 145 23} type Horizontal color 47 selection_color 52 align 5 maximum 4 step 1
+            }
+            Fl_Light_Button breakOnInvalidOpcodeValuator {
+              label {Break on CPU jam}
+              callback {{
+  gui.config.debug.breakOnInvalidOpcode = (o->value() != 0);
+  gui.config.debugSettingsChanged = true;
+  try {
+    gui.config.applySettings();
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+}}
+              xywh {780 330 145 25} color 50 selection_color 3
+            }
+            Fl_Button {} {
+              label Apply
+              callback {{
+  applyBreakPointList();
+}}
+              tooltip {Reset watchpoints from text format definition} xywh {575 370 145 25} color 50 selection_color 51
+            }
+            Fl_Button {} {
+              label Load
+              callback {{
+  std::FILE *f = (std::FILE *) 0;
+  try {
+    std::string tmp;
+    if (gui.browseFile(tmp, gui.debuggerDirectory,
+                       "All files\\t*", Fl_Native_File_Chooser::BROWSE_FILE,
+                       "Load watchpoint definitions from file")) {
+      f = Plus4Emu::fileOpen(tmp.c_str(), "rb");
+      if (!f)
+        throw Plus4Emu::Exception("cannot open file");
+      tmp = "";
+      bool  crFlag = false;
+      while (true) {
+        int   c = std::fgetc(f);
+        if (crFlag) {
+          crFlag = false;
+          if (c == '\\n')
+            continue;
+        }
+        if (c == EOF)
+          break;
+        if (char(c) == '\\0')
+          continue;
+        if (c == '\\r') {
+          tmp += '\\n';
+          crFlag = true;
+        }
+        else
+          tmp += char(c);
+      }
+      std::fclose(f);
+      f = (std::FILE *) 0;
+      bpEditBuffer->text(tmp.c_str());
+      Plus4Emu::BreakPointList  bpList(tmp);
+      gui.vm.clearBreakPoints();
+      gui.vm.setBreakPoints(bpList);
+    }
+  }
+  catch (std::exception& e) {
+    if (f)
+      std::fclose(f);
+    gui.errorMessage(e.what());
+  }
+}}
+              xywh {780 370 65 25} color 50 selection_color 51
+            }
+            Fl_Button {} {
+              label Save
+              callback {{
+  std::FILE   *f = (std::FILE *) 0;
+  const char  *buf = (char *) 0;
+  try {
+    std::string tmp;
+    if (gui.browseFile(tmp, gui.debuggerDirectory,
+                       "All files\\t*",
+                       Fl_Native_File_Chooser::BROWSE_SAVE_FILE,
+                       "Save watchpoint definitions to file")) {
+      f = Plus4Emu::fileOpen(tmp.c_str(), "w");
+      if (!f)
+        throw Plus4Emu::Exception("cannot open file");
+      buf = bpEditBuffer->text();
+      if (!buf)
+        throw std::bad_alloc();
+      const char  *bufp = buf;
+      char        c = '\\0';
+      while ((*bufp) != '\\0') {
+        c = *(bufp++);
+        if (std::fputc(c, f) == EOF)
+          throw Plus4Emu::Exception("error writing file - is the disk full ?");
+      }
+      if (c != '\\n') {
+        if (std::fputc('\\n', f) == EOF)
+          throw Plus4Emu::Exception("error writing file - is the disk full ?");
+      }
+      std::free(const_cast<char *>(buf));
+      std::fclose(f);
+    }
+  }
+  catch (std::exception& e) {
+    if (buf)
+      std::free(const_cast<char *>(buf));
+    if (f)
+      std::fclose(f);
+    gui.errorMessage(e.what());
+  }
+}}
+              xywh {860 370 65 25} color 50 selection_color 51
+            }
+          }
+          Fl_Group {} {open
+            xywh {20 420 920 245} box THIN_UP_BOX align 21
+          } {
+            Fl_Text_Editor luaScriptEditor {
+              tooltip {Lua script editor (for documentation, see the README file)} xywh {30 430 740 225} box DOWN_BOX align 5 textfont 4
+              code0 {o->cursor_color(Fl_Color(3));}
+              code1 {o->buffer(scriptEditBuffer);}
+              code2 {o->scrollbar_align(FL_ALIGN_RIGHT);}
+            }
+            Fl_Button {} {
+              label {Load from file}
+              callback {{
+  std::FILE *f = (std::FILE *) 0;
+  try {
+    std::string tmp;
+    if (gui.browseFile(tmp, gui.debuggerDirectory,
+                       "Lua scripts\\t*.lua",
+                       Fl_Native_File_Chooser::BROWSE_FILE,
+                       "Load Lua script from file")) {
+      f = Plus4Emu::fileOpen(tmp.c_str(), "rb");
+      if (!f)
+        throw Plus4Emu::Exception("cannot open file");
+      tmp = "";
+      bool  crFlag = false;
+      while (true) {
+        int   c = std::fgetc(f);
+        if (crFlag) {
+          crFlag = false;
+          if (c == '\\n')
+            continue;
+        }
+        if (c == EOF)
+          break;
+        if (char(c) == '\\0')
+          continue;
+        if (c == '\\r') {
+          tmp += '\\n';
+          crFlag = true;
+        }
+        else
+          tmp += char(c);
+      }
+      std::fclose(f);
+      f = (std::FILE *) 0;
+      scriptEditBuffer->text(tmp.c_str());
+    }
+  }
+  catch (std::exception& e) {
+    if (f)
+      std::fclose(f);
+    gui.errorMessage(e.what());
+  }
+}}
+              xywh {780 435 145 25} color 50 selection_color 51
+            }
+            Fl_Button {} {
+              label {Save to file}
+              callback {{
+  std::FILE   *f = (std::FILE *) 0;
+  const char  *buf = (char *) 0;
+  try {
+    std::string tmp;
+    if (gui.browseFile(tmp, gui.debuggerDirectory,
+                       "Lua scripts\\t*.lua",
+                       Fl_Native_File_Chooser::BROWSE_SAVE_FILE,
+                       "Save Lua script to file")) {
+      f = Plus4Emu::fileOpen(tmp.c_str(), "w");
+      if (!f)
+        throw Plus4Emu::Exception("cannot open file");
+      buf = scriptEditBuffer->text();
+      if (!buf)
+        throw std::bad_alloc();
+      const char  *bufp = buf;
+      char        c = '\\0';
+      while ((*bufp) != '\\0') {
+        c = *(bufp++);
+        if (std::fputc(c, f) == EOF)
+          throw Plus4Emu::Exception("error writing file - is the disk full ?");
+      }
+      if (c != '\\n') {
+        if (std::fputc('\\n', f) == EOF)
+          throw Plus4Emu::Exception("error writing file - is the disk full ?");
+      }
+      std::free(const_cast<char *>(buf));
+      std::fclose(f);
+    }
+  }
+  catch (std::exception& e) {
+    if (buf)
+      std::free(const_cast<char *>(buf));
+    if (f)
+      std::fclose(f);
+    gui.errorMessage(e.what());
+  }
+}}
+              xywh {780 470 145 25} color 50 selection_color 51
+            }
+            Fl_Button {} {
+              label {Insert callback}
+              callback {{
+  try {
+    scriptEditBuffer->insert(luaScriptEditor->insert_position(),
+                             "\\nfunction breakPointCallback(d, t, a, v)\\n"
+                             "  return true\\n"
+                             "end\\n");
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+}}
+              tooltip {Insert breakpoint callback function template} xywh {780 530 145 25} color 50 selection_color 51
+            }
+            Fl_Button {} {
+              label Run
+              callback {{
+  const char  *buf = (char *) 0;
+  try {
+    buf = scriptEditBuffer->text();
+    if (!buf)
+      throw std::bad_alloc();
+    luaScript.loadScript(buf);
+    std::free(const_cast<char *>(buf));
+    buf = (char *) 0;
+    if (debugContextValuator->value() >= 0)
+      gui.vm.setDebugContext(debugContextValuator->value());
+    updateWindow();
+  }
+  catch (std::exception& e) {
+    if (buf)
+      std::free(const_cast<char *>(buf));
+    gui.errorMessage(e.what());
+  }
+}}
+              tooltip {Run or restart the Lua script, and enable the breakpoint callback if it is defined} xywh {780 590 145 25} color 50 selection_color 51
+            }
+            Fl_Button {} {
+              label Stop
+              callback {{
+  luaScript.closeScript();
+}}
+              tooltip {Disable the Lua breakpoint callback} xywh {780 625 145 25} color 50 selection_color 51
+            }
+          }
+        }
+      }
+      Fl_Choice debugContextValuator {
+        callback {{
+  if (o->value() >= 0) {
+    setDebugContext(o->value());
+    updateWindow();
+  }
+}} open
+        xywh {15 685 150 25} down_box BORDER_BOX align 8
+        code0 {o->add("Main CPU|Unit 8|Unit 9|Unit 10|Unit 11|Printer");}
+        code1 {o->value(gui.vm.getDebugContext());}
+      } {}
+      Fl_Button stepIntoButton {
+        label {Step into}
+        callback {{
+  focusWidget = stepButton;
+  gui.vm.setSingleStepMode(4);
+  this->deactivate();
+}}
+        xywh {330 685 80 25} selection_color 50
+      }
+      Fl_Button returnButton {
+        label Return
+        callback {{
+  focusWidget = stepButton;
+  gui.vm.setSingleStepMode(2);
+  uint16_t  tmp = gui.vm.getStackPointer();
+  uint32_t  tmp2 = gui.vm.readMemory(tmp, true)
+                   | (uint32_t(gui.vm.readMemory((tmp - 0xFF) | 0x0100, true))
+                      << 8);
+  gui.vm.setSingleStepModeNextAddress(int32_t(tmp2 + 1U));
+  this->deactivate();
+}}
+        xywh {420 685 80 25} selection_color 50
+      }
+      Fl_Button stepToButton {
+        label {Step to:}
+        callback {{
+  uint32_t  tmp = 0U;
+  if (parseHexNumber(tmp, stepToAddressValuator->value()) > 0L) {
+    focusWidget = stepButton;
+    gui.vm.setSingleStepMode(2);
+    gui.vm.setSingleStepModeNextAddress(int32_t(tmp));
+    this->deactivate();
+  }
+}}
+        xywh {510 685 80 25} selection_color 50
+      }
+      Fl_Input stepToAddressValuator {
+        callback {{
+  uint32_t  tmp = 0U;
+  parseHexNumber(tmp, o->value());
+  tmp = tmp & 0xFFFFU;
+  char    tmp2[16];
+  std::sprintf(&(tmp2[0]), "%04X", (unsigned int) tmp);
+  o->value(&(tmp2[0]));
+}}
+        xywh {595 685 70 25} textfont 4
+        code0 {o->cursor_color(Fl_Color(3));}
+        code1 {o->value("0000");}
+      }
+      Fl_Button stepOverButton {
+        label {Step over}
+        callback {{
+  focusWidget = stepButton;
+  gui.vm.setSingleStepMode(2);
+  this->deactivate();
+}}
+        xywh {685 685 80 25} selection_color 50
+      }
+      Fl_Button stepButton {
+        label Step
+        callback {{
+  focusWidget = stepButton;
+  gui.vm.setSingleStepMode(1);
+  this->deactivate();
+}}
+        xywh {775 685 80 25} selection_color 50
+      }
+      Fl_Button continueButton {
+        label Continue
+        callback {{
+  focusWidget = continueButton;
+  gui.vm.setSingleStepMode(0);
+  this->deactivate();
+}}
+        xywh {865 685 80 25} selection_color 50
+      }
+    }
+  }
+} 

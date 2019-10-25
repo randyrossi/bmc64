@@ -1,0 +1,597 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0110 
+do_not_include_H_from_C 
+header_name {.hpp} 
+code_name {.cpp}
+decl {\#include "gui.hpp"} {selected
+} 
+
+class Plus4EmuGUI_DisplayConfigWindow {open
+} {
+  decl {Plus4EmuGUI& gui;} {}
+  Function {Plus4EmuGUI_DisplayConfigWindow(Plus4EmuGUI& gui_) : gui(gui_)} {open
+  } {
+    Fl_Window window {
+      label {Display settings}
+      callback {{
+  try {
+    gui.applyEmulatorConfiguration();
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+  updateWindow();
+  window->hide();
+  if ((gui.displayMode & 1) == 0)
+    gui.emulatorWindow->cursor(FL_CURSOR_DEFAULT);
+  else
+    gui.emulatorWindow->cursor(FL_CURSOR_NONE);
+}} open
+      xywh {224 231 400 450} type Double color 48 visible
+    } {
+      Fl_Group {} {open
+        xywh {10 10 380 205} box THIN_UP_BOX
+      } {
+        Fl_Box {} {
+          xywh {10 10 90 45} box THIN_DOWN_BOX color 48 selection_color 48
+        }
+        Fl_Box {} {
+          tooltip {Note: you can click on and drag the value displays for fine adjustment} xywh {10 10 89 44} box FLAT_BOX color 48 selection_color 48
+        }
+        Fl_Box {} {
+          label Brightness
+          xywh {20 65 75 20} align 20
+        }
+        Fl_Dial globalBrightnessValuator {
+          label Global
+          callback {{
+  gui.config.display.brightness = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  globalBrightnessValueDisplay->value(o->value());
+}}
+          xywh {117 30 30 30} box ROUND_UP_BOX color 52 selection_color 55 align 1 minimum -0.5 maximum 0.5
+        }
+        Fl_Value_Output globalBrightnessValueDisplay {
+          callback {{
+  gui.config.display.brightness = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  globalBrightnessValuator->value(o->value());
+}}
+          xywh {110 65 45 20} color 7 selection_color 15 labelsize 13 minimum -0.5 maximum 0.5 textsize 13
+          code0 {o->precision(3);}
+        }
+        Fl_Dial redBrightnessValuator {
+          label Red
+          callback {{
+  gui.config.display.redBrightness = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  redBrightnessValueDisplay->value(o->value());
+}}
+          xywh {192 30 30 30} box ROUND_UP_BOX color 52 selection_color 55 align 1 minimum -0.5 maximum 0.5
+        }
+        Fl_Value_Output redBrightnessValueDisplay {
+          callback {{
+  gui.config.display.redBrightness = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  redBrightnessValuator->value(o->value());
+}}
+          xywh {185 65 45 20} color 7 selection_color 15 labelsize 13 minimum -0.5 maximum 0.5 textsize 13
+          code0 {o->precision(3);}
+        }
+        Fl_Dial greenBrightnessValuator {
+          label Green
+          callback {{
+  gui.config.display.greenBrightness = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  greenBrightnessValueDisplay->value(o->value());
+}}
+          xywh {267 30 30 30} box ROUND_UP_BOX color 52 selection_color 55 align 1 minimum -0.5 maximum 0.5
+        }
+        Fl_Value_Output greenBrightnessValueDisplay {
+          callback {{
+  gui.config.display.greenBrightness = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  greenBrightnessValuator->value(o->value());
+}}
+          xywh {260 65 45 20} color 7 selection_color 15 labelsize 13 minimum -0.5 maximum 0.5 textsize 13
+          code0 {o->precision(3);}
+        }
+        Fl_Dial blueBrightnessValuator {
+          label Blue
+          callback {{
+  gui.config.display.blueBrightness = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  blueBrightnessValueDisplay->value(o->value());
+}}
+          xywh {342 30 30 30} box ROUND_UP_BOX color 52 selection_color 55 align 1 minimum -0.5 maximum 0.5
+        }
+        Fl_Value_Output blueBrightnessValueDisplay {
+          callback {{
+  gui.config.display.blueBrightness = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  blueBrightnessValuator->value(o->value());
+}}
+          xywh {335 65 45 20} color 7 selection_color 15 labelsize 13 minimum -0.5 maximum 0.5 textsize 13
+          code0 {o->precision(3);}
+        }
+        Fl_Box {} {
+          label Contrast
+          xywh {20 125 75 20} align 20
+        }
+        Fl_Dial globalContrastValuator {
+          callback {{
+  gui.config.display.contrast = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  globalContrastValueDisplay->value(o->value());
+}}
+          xywh {117 90 30 30} box ROUND_UP_BOX color 52 selection_color 55 align 1 minimum 0.5 maximum 2 value 1
+        }
+        Fl_Value_Output globalContrastValueDisplay {
+          callback {{
+  gui.config.display.contrast = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  globalContrastValuator->value(o->value());
+}}
+          xywh {110 125 45 20} color 7 selection_color 15 labelsize 13 minimum 0.5 maximum 2 value 1 textsize 13
+          code0 {o->precision(3);}
+        }
+        Fl_Dial redContrastValuator {
+          callback {{
+  gui.config.display.redContrast = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  redContrastValueDisplay->value(o->value());
+}}
+          xywh {192 90 30 30} box ROUND_UP_BOX color 52 selection_color 55 align 1 minimum 0.5 maximum 2 value 1
+        }
+        Fl_Value_Output redContrastValueDisplay {
+          callback {{
+  gui.config.display.redContrast = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  redContrastValuator->value(o->value());
+}}
+          xywh {185 125 45 20} color 7 selection_color 15 labelsize 13 minimum 0.5 maximum 2 value 1 textsize 13
+          code0 {o->precision(3);}
+        }
+        Fl_Dial greenContrastValuator {
+          callback {{
+  gui.config.display.greenContrast = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  greenContrastValueDisplay->value(o->value());
+}}
+          xywh {267 90 30 30} box ROUND_UP_BOX color 52 selection_color 55 align 1 minimum 0.5 maximum 2 value 1
+        }
+        Fl_Value_Output greenContrastValueDisplay {
+          callback {{
+  gui.config.display.greenContrast = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  greenContrastValuator->value(o->value());
+}}
+          xywh {260 125 45 20} color 7 selection_color 15 labelsize 13 minimum 0.5 maximum 2 value 1 textsize 13
+          code0 {o->precision(3);}
+        }
+        Fl_Dial blueContrastValuator {
+          callback {{
+  gui.config.display.blueContrast = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  blueContrastValueDisplay->value(o->value());
+}}
+          xywh {342 90 30 30} box ROUND_UP_BOX color 52 selection_color 55 align 1 minimum 0.5 maximum 2 value 1
+        }
+        Fl_Value_Output blueContrastValueDisplay {
+          callback {{
+  gui.config.display.blueContrast = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  blueContrastValuator->value(o->value());
+}}
+          xywh {335 125 45 20} color 7 selection_color 15 labelsize 13 minimum 0.5 maximum 2 value 1 textsize 13
+          code0 {o->precision(3);}
+        }
+        Fl_Box {} {
+          label Gamma
+          xywh {20 185 75 20} align 20
+        }
+        Fl_Dial globalGammaValuator {
+          callback {{
+  gui.config.display.gamma = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  globalGammaValueDisplay->value(o->value());
+}}
+          xywh {117 150 30 30} box ROUND_UP_BOX color 52 selection_color 55 align 1 minimum 0.25 maximum 4 value 1
+        }
+        Fl_Value_Output globalGammaValueDisplay {
+          callback {{
+  gui.config.display.gamma = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  globalGammaValuator->value(o->value());
+}}
+          xywh {110 185 45 20} color 7 selection_color 15 labelsize 13 minimum 0.25 maximum 4 value 1 textsize 13
+          code0 {o->precision(3);}
+        }
+        Fl_Dial redGammaValuator {
+          callback {{
+  gui.config.display.redGamma = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  redGammaValueDisplay->value(o->value());
+}}
+          xywh {192 150 30 30} box ROUND_UP_BOX color 52 selection_color 55 align 1 minimum 0.25 maximum 4 value 1
+        }
+        Fl_Value_Output redGammaValueDisplay {
+          callback {{
+  gui.config.display.redGamma = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  redGammaValuator->value(o->value());
+}}
+          xywh {185 185 45 20} color 7 selection_color 15 labelsize 13 minimum 0.25 maximum 4 value 1 textsize 13
+          code0 {o->precision(3);}
+        }
+        Fl_Dial greenGammaValuator {
+          callback {{
+  gui.config.display.greenGamma = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  greenGammaValueDisplay->value(o->value());
+}}
+          xywh {267 150 30 30} box ROUND_UP_BOX color 52 selection_color 55 align 1 minimum 0.25 maximum 4 value 1
+        }
+        Fl_Value_Output greenGammaValueDisplay {
+          callback {{
+  gui.config.display.greenGamma = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  greenGammaValuator->value(o->value());
+}}
+          xywh {260 185 45 20} color 7 selection_color 15 labelsize 13 minimum 0.25 maximum 4 value 1 textsize 13
+          code0 {o->precision(3);}
+        }
+        Fl_Dial blueGammaValuator {
+          callback {{
+  gui.config.display.blueGamma = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  blueGammaValueDisplay->value(o->value());
+}}
+          xywh {342 150 30 30} box ROUND_UP_BOX color 52 selection_color 55 align 1 minimum 0.25 maximum 4 value 1
+        }
+        Fl_Value_Output blueGammaValueDisplay {
+          callback {{
+  gui.config.display.blueGamma = float(o->value());
+  gui.config.displaySettingsChanged = true;
+  blueGammaValuator->value(o->value());
+}}
+          xywh {335 185 45 20} color 7 selection_color 15 labelsize 13 minimum 0.25 maximum 4 value 1 textsize 13
+          code0 {o->precision(3);}
+        }
+      }
+      Fl_Tabs {} {open
+        xywh {10 225 380 180}
+      } {
+        Fl_Group {} {
+          label General open
+          xywh {10 248 380 157} box THIN_UP_BOX
+        } {
+          Fl_Light_Button enableDisplayValuator {
+            label {Enable display}
+            callback {{
+  gui.config.display.enabled = (o->value() != 0);
+  gui.config.displaySettingsChanged = true;
+}}
+            xywh {20 261 160 25} color 50 selection_color 3
+          }
+          Fl_Light_Button displayNTSCModeValuator {
+            label {NTSC standard}
+            callback {{
+  gui.config.display.ntscMode = (o->value() != 0);
+  gui.config.displaySettingsChanged = true;
+}}
+            xywh {20 296 160 25} color 50 selection_color 3
+          }
+          Fl_Choice displayBufferingModeValuator {
+            callback {{
+  if (o->value() >= 0 && o->value() <= 2) {
+    gui.config.display.bufferingMode = o->value();
+    gui.config.displaySettingsChanged = true;
+  }
+}} open
+            xywh {20 331 160 25} down_box BORDER_BOX
+            code0 {o->add("Single buffered mode|Double buffered mode|Resample to monitor refresh rate");}
+          } {}
+          Fl_Value_Slider displayQualityValuator {
+            label Quality
+            callback {{
+  gui.config.display.displayQuality = int(o->value() + 0.5);
+  gui.config.displaySettingsChanged = true;
+  updateWindow();
+}}
+            xywh {20 367 110 23} type Horizontal color 47 selection_color 52 align 8 maximum 3 step 1 value 1
+          }
+          Fl_Value_Slider displaySaturationValuator {
+            label Saturation
+            callback {{
+  gui.config.display.saturation = float(o->value());
+  gui.config.displaySettingsChanged = true;
+}}
+            xywh {195 263 120 21} type Horizontal color 47 selection_color 52 labelsize 12 align 8 maximum 2 value 1
+          }
+          Fl_Value_Slider displayFXParam1Valuator {
+            label {Line shade}
+            callback {{
+  gui.config.display.lineShade = float(o->value());
+  gui.config.displaySettingsChanged = true;
+}}
+            tooltip {Controls vertical filtering of scanlines when display quality is set to 3} xywh {195 298 120 21} type Horizontal color 47 selection_color 52 labelsize 12 align 8 value 0.8
+          }
+          Fl_Value_Slider displayFXParam3Valuator {
+            label {Motion blur}
+            callback {{
+  gui.config.display.motionBlur = float(o->value());
+  gui.config.displaySettingsChanged = true;
+}}
+            tooltip {Amount of temporal filtering in OpenGL / single buffered mode} xywh {195 333 120 21} type Horizontal color 47 selection_color 52 labelsize 12 align 8 maximum 0.95 value 0.25
+          }
+          Fl_Value_Input pixelAspectRatioValuator {
+            label {Pixel aspect ratio}
+            callback {{
+  gui.config.display.pixelAspectRatio = o->clamp(o->value());
+  o->value(gui.config.display.pixelAspectRatio);
+  gui.config.displaySettingsChanged = true;
+}}
+            tooltip {The assumed pixel aspect ratio of the screen; 1.0 means square pixels (the default), larger values make the display narrower, while smaller values result in a wider display. Type new value, or click and drag to change it.} xywh {195 366 50 25} align 8 when 4 minimum 0.5 maximum 2 step 0.001 value 1
+            code0 {o->cursor_color(Fl_Color(3));}
+          }
+        }
+        Fl_Group {} {
+          label Advanced open
+          xywh {10 248 380 157} box THIN_UP_BOX hide
+        } {
+          Fl_Input shaderSourcePALInput {
+            callback {{
+  try {
+    gui.config["display.shaderSourcePAL"] = o->value();
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+}}
+            xywh {20 261 235 25}
+          }
+          Fl_Button {} {
+            label {@fileopen}
+            callback {{
+  try {
+    std::string tmp;
+    if (gui.browseFile(tmp, gui.configDirectory,
+                       "GLSL fragment shaders\\t*.{glsl,frag}",
+                       Fl_Native_File_Chooser::BROWSE_FILE,
+                       "Select PAL shader source file")) {
+      shaderSourcePALInput->value(tmp.c_str());
+      shaderSourcePALInput->do_callback();
+    }
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+}}
+            xywh {260 261 25 25} labelcolor 3 align 16
+          }
+          Fl_Box {} {
+            label {PAL shader}
+            xywh {290 261 95 25} align 20
+          }
+          Fl_Input shaderSourceNTSCInput {
+            callback {{
+  try {
+    gui.config["display.shaderSourceNTSC"] = o->value();
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+}}
+            xywh {20 296 235 25}
+          }
+          Fl_Button {} {
+            label {@fileopen}
+            callback {{
+  try {
+    std::string tmp;
+    if (gui.browseFile(tmp, gui.configDirectory,
+                       "GLSL fragment shaders\\t*.{glsl,frag}",
+                       Fl_Native_File_Chooser::BROWSE_FILE,
+                       "Select NTSC shader source file")) {
+      shaderSourceNTSCInput->value(tmp.c_str());
+      shaderSourceNTSCInput->do_callback();
+    }
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+}}
+            xywh {260 296 25 25} labelcolor 3 align 16
+          }
+          Fl_Box {} {
+            label {NTSC shader}
+            xywh {290 296 95 25} align 20
+          }
+          Fl_Value_Slider displayHueShiftValuator {
+            label {Hue shift}
+            callback {{
+  gui.config.display.hueShift = float(o->value());
+  gui.config.displaySettingsChanged = true;
+}}
+            xywh {20 333 120 21} type Horizontal color 47 selection_color 52 labelsize 12 align 8 minimum -180 maximum 180 step 1
+          }
+          Fl_Value_Slider displayPALPhaseErrorValuator {
+            label {Phase error}
+            callback {{
+  gui.config.display.palPhaseError = float(o->value());
+  gui.config.displaySettingsChanged = true;
+}}
+            tooltip {PAL color phase error in degrees (OpenGL / quality 3 only)} xywh {200 333 110 21} type Horizontal color 47 selection_color 52 labelsize 12 align 8 minimum -30 maximum 30 step 1 value 8
+          }
+          Fl_Value_Slider displayFXParam2Valuator {
+            label {Blend scale}
+            callback {{
+  gui.config.display.blendScale = float(o->value());
+  gui.config.displaySettingsChanged = true;
+}}
+            tooltip {Scale factor applied to the RGB values displayed (OpenGL / single buffered mode only)} xywh {20 368 120 21} type Horizontal color 47 selection_color 52 labelsize 12 align 8 minimum 0.5 maximum 2 step 0.02 value 1
+          }
+        }
+      }
+      Fl_Button {} {
+        label {Reset default settings}
+        callback {{
+  gui.config.displaySettingsChanged = true;
+  gui.config.display.enabled = true;
+  gui.config.display.bufferingMode = 0;
+  gui.config.display.displayQuality = 1;
+  gui.config.display.brightness = 0.0f;
+  gui.config.display.contrast = 1.0f;
+  gui.config.display.gamma = 1.0f;
+  gui.config.display.hueShift = 0.0f;
+  gui.config.display.saturation = 1.0f;
+  gui.config.display.redBrightness = 0.0f;
+  gui.config.display.redContrast = 1.0f;
+  gui.config.display.redGamma = 1.0f;
+  gui.config.display.greenBrightness = 0.0f;
+  gui.config.display.greenContrast = 1.0f;
+  gui.config.display.greenGamma = 1.0f;
+  gui.config.display.blueBrightness = 0.0f;
+  gui.config.display.blueContrast = 1.0f;
+  gui.config.display.blueGamma = 1.0f;
+  gui.config.display.palPhaseError = 8.0f;
+  gui.config.display.lineShade = 0.8f;
+  gui.config.display.blendScale = 1.0f;
+  gui.config.display.motionBlur = 0.25f;
+  gui.config.display.pixelAspectRatio = 1.0f;
+  gui.config.display.shaderSourcePAL.clear();
+  gui.config.display.shaderSourceNTSC.clear();
+  updateWindow();
+}}
+        xywh {15 415 170 25} selection_color 50
+      }
+      Fl_Button {} {
+        label Apply
+        callback {{
+  try {
+    gui.applyEmulatorConfiguration();
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+  updateWindow();
+  if ((gui.displayMode & 1) == 0)
+    gui.emulatorWindow->cursor(FL_CURSOR_DEFAULT);
+  else
+    gui.emulatorWindow->cursor(FL_CURSOR_NONE);
+}}
+        xywh {255 415 60 25} selection_color 50
+      }
+      Fl_Button {} {
+        label OK
+        callback {{
+  try {
+    gui.applyEmulatorConfiguration();
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+  updateWindow();
+  window->hide();
+  if ((gui.displayMode & 1) == 0)
+    gui.emulatorWindow->cursor(FL_CURSOR_DEFAULT);
+  else
+    gui.emulatorWindow->cursor(FL_CURSOR_NONE);
+}}
+        xywh {325 415 60 25} selection_color 50
+      }
+    }
+  }
+  Function {~Plus4EmuGUI_DisplayConfigWindow()} {open
+  } {
+    code {{
+  delete window;
+}} {}
+  }
+  Function {show()} {open return_type void
+  } {
+    code {{
+  updateWindow();
+  window->show();
+}} {}
+  }
+  Function {shown()} {open return_type bool
+  } {
+    code {{
+  return bool(window->shown());
+}} {}
+  }
+  Function {hide()} {open return_type void
+  } {
+    code {{
+  window->hide();
+}} {}
+  }
+  Function {updateWindow()} {open return_type void
+  } {
+    code {{
+  globalBrightnessValuator->value(gui.config.display.brightness);
+  globalBrightnessValueDisplay->value(gui.config.display.brightness);
+  redBrightnessValuator->value(gui.config.display.redBrightness);
+  redBrightnessValueDisplay->value(gui.config.display.redBrightness);
+  greenBrightnessValuator->value(gui.config.display.greenBrightness);
+  greenBrightnessValueDisplay->value(gui.config.display.greenBrightness);
+  blueBrightnessValuator->value(gui.config.display.blueBrightness);
+  blueBrightnessValueDisplay->value(gui.config.display.blueBrightness);
+  globalContrastValuator->value(gui.config.display.contrast);
+  globalContrastValueDisplay->value(gui.config.display.contrast);
+  redContrastValuator->value(gui.config.display.redContrast);
+  redContrastValueDisplay->value(gui.config.display.redContrast);
+  greenContrastValuator->value(gui.config.display.greenContrast);
+  greenContrastValueDisplay->value(gui.config.display.greenContrast);
+  blueContrastValuator->value(gui.config.display.blueContrast);
+  blueContrastValueDisplay->value(gui.config.display.blueContrast);
+  globalGammaValuator->value(gui.config.display.gamma);
+  globalGammaValueDisplay->value(gui.config.display.gamma);
+  redGammaValuator->value(gui.config.display.redGamma);
+  redGammaValueDisplay->value(gui.config.display.redGamma);
+  greenGammaValuator->value(gui.config.display.greenGamma);
+  greenGammaValueDisplay->value(gui.config.display.greenGamma);
+  blueGammaValuator->value(gui.config.display.blueGamma);
+  blueGammaValueDisplay->value(gui.config.display.blueGamma);
+  enableDisplayValuator->value(int(gui.config.display.enabled));
+  displayNTSCModeValuator->value(int(gui.config.display.ntscMode));
+  if (gui.config.display.bufferingMode >= 0 &&
+      gui.config.display.bufferingMode <= 2)
+    displayBufferingModeValuator->value(gui.config.display.bufferingMode);
+  else
+    displayBufferingModeValuator->value(-1);
+  displayQualityValuator->value(double(gui.config.display.displayQuality));
+  switch (gui.config.display.displayQuality) {
+  case 0:
+    displayQualityValuator->tooltip("Quality 0 (OpenGL only): "
+                                    "low texture resolution, 16-bit RGB textures, "
+                                    "no texture filtering, no effects");
+    break;
+  case 1:
+    displayQualityValuator->tooltip("Quality 1 (OpenGL only): "
+                                    "low texture resolution, 16-bit RGB textures");
+    break;
+  case 2:
+    displayQualityValuator->tooltip("Quality 2 (OpenGL only): "
+                                    "high texture resolution, 32-bit RGB textures");
+    break;
+  case 3:
+    displayQualityValuator->tooltip("Quality 3 (OpenGL 2.x only, requires shader "
+                                    "support): high texture resolution, "
+                                    "32-bit YUV textures, full PAL emulation");
+    break;
+  }
+  pixelAspectRatioValuator->value(gui.config.display.pixelAspectRatio);
+  displaySaturationValuator->value(gui.config.display.saturation);
+  displayHueShiftValuator->value(gui.config.display.hueShift);
+  displayPALPhaseErrorValuator->value(gui.config.display.palPhaseError);
+  displayFXParam1Valuator->value(gui.config.display.lineShade);
+  displayFXParam2Valuator->value(gui.config.display.blendScale);
+  displayFXParam3Valuator->value(gui.config.display.motionBlur);
+  shaderSourcePALInput->value(gui.config.display.shaderSourcePAL.c_str());
+  shaderSourceNTSCInput->value(gui.config.display.shaderSourceNTSC.c_str());
+}} {}
+  }
+} 

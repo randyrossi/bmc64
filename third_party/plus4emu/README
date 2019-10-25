@@ -1,0 +1,907 @@
+plus4emu 1.2.11 beta
+====================
+
+plus4emu is an open source, portable emulator of the Commodore Plus/4
+computer, written in C++, and supporting Windows and POSIX platforms
+(32 bit Windows, 32 and 64 bit Linux, and MacOS X have been tested).
+It implements accurate, high quality hardware emulation, however, the
+system requirements are higher than that of most other emulators.
+
+Features
+========
+
+Plus/4 emulation
+----------------
+
+  * cycle exact emulation of the 7501/8501 CPU, with full support for
+    all documented and undocumented opcodes
+  * cycle exact TED 7360/8360 emulation with very high level of
+    compatibility, implements all documented video modes, PAL/NTSC mode
+    switching, accurate sound emulation, as well as all known display
+    artifacts; all registers can be read and written, and the internal
+    operation and timing is reproduced with very good accuracy
+  * RAM size can be 16, 32, 64, 256, or 1024 kilobytes (the latter two
+    using the Hannes memory expansion)
+  * up to 8 16 kilobyte banks of ROM can be loaded from external image
+    files; using custom ROM files for the emulated floppy drives and
+    printer is also possible
+  * limited emulation of the ACIA 6551 registers
+  * tape emulation with playback, recording, and setting tape position;
+    markers can be created for quick positioning to specific tape
+    locations (useful for tapes with multiple files); uses custom file
+    format which is PCM audio data with 1 to 8 bits of sample resolution
+    and variable sample rate, and header including the table of markers;
+    there is also limited (read only) support for the commonly used MTAP
+    file format, as well as read-write (although without markers)
+    support for sound files like WAV, AIFF, etc.
+  * hardware level emulation of the 1541, 1551, and 1581 floppy disk
+    drives, with support for D64 and D81 files; compatibility with 1541
+    and 1551 fast loaders is fairly good in recent versions of the
+    emulator
+  * IEC level 1551 floppy drive emulation for accessing .PRG, .P00,
+    .R00, .S00, and .U00 files on the PC filesystem; this also supports
+    the C, I, N, P, R, S, and V DOS commands
+  * light pen emulation (compatible with the Trojan Light Pen software)
+  * IEC level MPS-801 printer emulation
+  * hardware level 1526/MPS-802 printer emulation
+  * load and automatically start .PRG, .P00, .D64, .D81, or .TAP file on
+    start-up
+  * .PRG, .P00, .D64, and .D81 files can be associated with plus4emu on
+    Windows
+  * SID chip (MOS 6581 and 8580) emulation using version 1.0 of the
+    reSID library written by Dag Lem; the Digi-Blaster expansion by
+    Solder is also supported
+
+General
+-------
+
+  * graphical user interface using the FLTK library
+  * software (FLTK based) or OpenGL video, with resizable emulator
+    window, fullscreen mode, brightness/contrast/gamma can be set
+    globally or separately for red/green/blue channels, color
+    saturation control; additional features in OpenGL mode only: single
+    or double buffered (with synchronization to vertical refresh) mode,
+    linear texture filtering, and some display effects
+  * high quality television (PAL and NTSC) emulation; implements full
+    horizontal and vertical synchronization, blanking, equalization,
+    sync, and burst signals, interlace, and (if OpenGL 2.0 shaders are
+    available) separate luma/chroma filtering to emulate the blurredness
+    of the TV picture
+  * real time audio output uses the PortAudio library (v18 or v19), with
+    support for many native audio APIs (MME/DirectSound/ASIO on Windows,
+    OSS/ALSA/JACK on Linux, and CoreAudio on MacOS X); high quality
+    sample rate conversion with low aliasing; volume control, two first
+    order highpass filters with configurable cutoff frequency, and an
+    optional parametric equalizer can be applied to the audio signal
+  * recording audio output to a WAV format sound file
+  * recording video and sound output to an AVI format video file, with
+    RLE8 or uncompressed YV12 video at 24 to 60 frames per second, and
+    48000 Hz 16-bit PCM audio
+  * saving screenshots as 768x576 PNG format files
+  * saving and loading snapshots of the state of the emulated machine
+  * demo recording (snapshot combined with stream of keyboard events
+    which can be played back with accurate timing)
+  * GUI debugger with support for breakpoints/watchpoints, viewing the
+    current state of CPU registers and memory paging, displaying memory
+    dump or loading from or saving to a file in ASCII or binary format,
+    and disassembler with support for all undocumented 6502 opcodes.
+    The debugger also includes a TEDMON-like monitor with support for
+    all the commands, as well as some improvements and additional
+    features (assemble/disassemble offset, saving disassembly to a file,
+    physical (22 bit) memory addressing mode, undocumented CPU opcodes
+    in the assembler and disassembler, trace, search/replace pattern in
+    memory, and more).
+    It is also possible to debug the 6502 compatible CPUs in floppy
+    drives and printers.
+    The debugger supports scripting in the Lua language, to allow for
+    advanced uses like breakpoints with custom defined, complex set of
+    conditions.
+  * configurable keyboard map for the emulated machine; it is also
+    possible to use external game controller devices like joysticks and
+    gamepads
+  * mouse and clipboard support for setting the cursor position,
+    copying, and pasting text in the emulated machine:
+      left click: sets the cursor position
+      right click: sets the cursor position, and copies the selected
+        word to the clipboard
+      ctrl + right click: sets the cursor position, and copies text from
+        the selected line to the clipboard
+      shift + right click: copies text from the whole screen to the
+        clipboard without changing the cursor position
+      middle click: sets the cursor position, and pastes text from the
+        clipboard
+      shift + middle click: pastes text from the clipboard without
+        changing the cursor position
+  * the Plus/4 emulation can be used in other programs as a shared
+    library with a C interface; see the plus4lib/plus4emu.h header file
+    for details, and also plus4lib/sample.c for a simple example of
+    using the interface
+
+The emulator package also includes some utilities:
+
+  * (p4)compress - compresses Plus/4 .PRG and .P00 files with very good
+    compression ratio (CA65 assembler source code for the decompressor
+    is available)
+  * (p4)makecfg - reinstalls the configuration files of the emulator
+  * p4fliconv - converts JPEG and other format images to various Plus/4
+    video modes (hires/multicolor, FLI, interlace, etc.); it can be used
+    both from the command line, and as a GUI program which uses the
+    emulator for accurate previews. CA65 assembler sources for the FLI
+    viewer are also available.
+  * p4sconv - converts PixelShop .P4S images to any of the output
+    formats supported by p4fliconv
+  * (p4)tapconv - converts MTAP format tape files to the native plus4emu
+    tape format
+
+Installation
+============
+
+Linux
+-----
+
+On Linux and other POSIX platforms, the emulator is installed from the
+source code, available at the GitHub download page
+  https://github.com/istvan-v/plus4emu/releases/
+or the most recent state of the code can be downloaded from Git with the
+following command:
+  git clone https://github.com/istvan-v/plus4emu.git
+In addition to the standard development tools (a recent version of the
+GNU C/C++ compiler, binutils, etc.), you need the following packages:
+
+  * SCons (http://www.scons.org/)
+  * Python interpreter for running SCons
+  * FLTK 1.3.x (http://www.fltk.org/software.php?VERSION=1.3.4) or
+    1.1.x (http://www.fltk.org/software.php?VERSION=1.1.10)
+    NOTES:
+      * this library should be compiled with the --enable-threads
+        'configure' option - many Linux distributions include binaries
+        of the FLTK library built without --enable-threads, so you may
+        need to compile it from sources
+      * on MacOS X, FLTK 1.1.7 needs to be patched with the included
+        fltk-1.1.7-MacOSX.patch file
+  * PortAudio (http://www.portaudio.com/download.html), version 18 and
+    19 are supported, but v19 is recommended
+  * libsndfile (http://www.mega-nerd.com/libsndfile/#Download)
+  * SDL (http://www.libsdl.org/) 1.2 for joystick input (optional);
+    NOTE: on Linux, versions 1.2.10 and newer do not work if they are
+    statically linked and were built with video support (--enable-video)
+  * Lua (http://www.lua.org/ or http://www.luajit.org/) 5.1, 5.2, or 5.3
+    for scripting in the debugger (optional)
+
+Once these are installed, you can edit the file 'SConstruct' in the top
+level source directory for setting compiler flags etc., and run the
+command 'scons -j 4' for building the emulator. The resulting executable
+files (plus4emu and the utilities listed above) can be copied to any
+directory that is in the PATH; on MacOS X, an .app package is created in
+'plus4emu.app'.
+When installing the first time, you also need to set up configuration
+files and ROM images:
+
+  * copy all .rom files from the roms directory to ~/.plus4emu/roms (or,
+    in the case of MacOS X, ~/Library/Application Support/plus4emu/roms)
+  * after installing the ROM images, run 'plus4emu', and click OK to the
+    windows that pop up asking for the base directory of configuration
+    and data files, and if configuration files should be installed
+
+It is possible to reinstall configuration files later by running the
+'p4makecfg' utility.
+
+Alternatively, the emulator and all required files can be installed
+under ~/bin and ~/.local/share with the command 'scons install', which
+also runs p4makecfg.
+
+Windows
+-------
+
+A binary package with an installer is available at the GitHub download
+page:
+  https://github.com/istvan-v/plus4emu/releases/
+Older (pre-1.2.10) versions can be downloaded from SourceForge:
+  https://sourceforge.net/projects/plus4emu/files/
+To install, just run the executable, and follow the instructions.
+When asked if configuration files should be reinstalled, click 'OK'
+when installing the first time, but this step can be skipped in later
+installations to preserve the configuration.
+
+Usage
+=====
+
+Command line options
+--------------------
+
+  -h
+  -help
+  --help
+    print the list of available command line options
+  -cfg <FILENAME>
+    load an ASCII format configuration file on startup, and apply
+    settings
+  -prg <FILENAME>
+    load and run program file on startup
+  -disk <FILENAME>
+    load and automatically start disk image on startup
+  -tape <FILENAME>
+    load and automatically start tape image on startup
+  -snapshot <FILENAME>
+    load snapshot or demo file on startup
+  -keybuf <TEXT>
+    type TEXT on startup (can be any length, or @FILENAME to read from a
+    file)
+  -opengl
+    use OpenGL video driver (this is the default, and is recommended
+    when hardware accelerated OpenGL is available)
+  -no-opengl
+    use software video driver; this is slower than OpenGL when used at
+    high resolutions, and also disables many display effects, but should
+    work on all machines; however, it will use a color depth of 24 bits,
+    while in OpenGL mode the textures are 16 bit (R5G6B5) only, to
+    improve performance
+  -colorscheme <N>
+    select GUI color scheme N (0, 1, 2, or 3)
+  OPTION=VALUE
+    set configuration variable 'OPTION' to 'VALUE'; the available
+    variable names are the same as those used in ASCII format
+    configuration files
+  OPTION
+    set boolean configuration variable 'OPTION' to true
+  FILENAME
+    load and automatically start a file with .prg, .p00, .d64, .d81, or
+    .tap extension
+
+'File' menu
+-----------
+
+Configuration / Load from ASCII file
+
+  Select and load an ASCII format configuration file and apply the new
+  settings. If the configuration file does not include all the supported
+  options, those that are omitted are left unchanged.
+
+Configuration / Load from binary file
+
+  Load a plus4emu format binary file, which may be a previously saved
+  snapshot or demo, a binary format configuration file, or a program
+  file with plus4emu header.
+
+Configuration / Save as ASCII file
+
+  Save the current emulator configuration to an ASCII text file, which
+  can be edited with any text editor, and can be loaded at a later time.
+
+Configuration / Save
+
+  Save the current emulator configuration in binary format to the
+  default file (~/.plus4emu/plus4cfg.dat). This is also automatically
+  done when exiting the emulator.
+
+Configuration / Revert
+
+  Reload emulator configuration from ~/.plus4emu/plus4cfg.dat, and apply
+  the original settings.
+
+Save snapshot
+
+  Save a snapshot of the current state of the emulated machine to the
+  selected file. The snapshot will also include the current memory
+  configuration and ROM images, but clock frequency and timing settings
+  are not restored when loading a snapshot. The file format may be
+  subject to changes between different releases of the emulator. Note
+  that the state of any floppy drives is currently not saved, and the
+  drives are reset on loading a snapshot.
+
+Load snapshot (F7)
+
+  Load a plus4emu format binary file, which may be a previously saved
+  snapshot or demo, a binary format configuration file, or a program
+  file with plus4emu header.
+
+Quick snapshot / Set file name
+
+  Select file name for quick snapshots. The default is
+  ~/.plus4emu/qs_plus4.dat. This setting is not saved on exit.
+
+Quick snapshot / Save (Ctrl + F9)
+
+  Save snapshot to the quick snapshot file (see notes above).
+
+Quick snapshot / Load (Ctrl + F10)
+
+  Load the quick snapshot file if it exists.
+
+Record demo
+
+  Save snapshot (including clock frequency and timing settings) and
+  record keyboard events to the selected file until the recording is
+  stopped. The events can be replayed with accurate timing when the
+  file is loaded later. Note that the file format may change between
+  different releases of the emulator, and the timing may also be
+  incorrect when using a different version to play a demo file.
+
+Stop demo (Ctrl + F12)
+
+  Stop any currently running demo playback or recording.
+
+Load demo (F7)
+
+  Load a plus4emu format binary file, which may be a previously saved
+  snapshot or demo, a binary format configuration file, or a program
+  file with plus4emu header.
+
+Record audio / Start...
+
+  Write 16 bit signed PCM sound output to a WAV format sound file.
+
+Record audio / Stop
+
+  Close sound output file if it is currently being written.
+
+Record video / Start...
+
+  Open new AVI file for video recording. This increases the CPU usage
+  significantly, and since the data is written without compression, it
+  will take up a lot of disk space. If the size of the output file
+  reaches 2 GB, it is automatically closed, and the emulator asks for
+  a new file to continue the recording.
+  NOTE: the video and audio streams in the AVI file are not affected by
+  any of the display or sound configuration settings.
+
+Record video / Stop
+
+  Stop video capture, and close any AVI file that is currently being
+  written.
+
+Save screenshot (F6)
+
+  Save a screenshot in PNG format. The video output is captured
+  immediately after activating this menu item, and is saved at a
+  resolution of 768x576 without any processing (color correction,
+  effects, etc.).
+
+Quit (Shift + F12)
+
+  Exit the emulator.
+
+'Machine' menu
+--------------
+
+Reset / Reset (F11)
+
+  This has the same effect as using the reset button on the real
+  machine.
+
+Reset / Force reset (Ctrl + F11)
+
+  In addition to a normal reset, make sure that the emulated machine is
+  really restarted using the standard ROM reset routines, and do not
+  allow programs to disable reset by setting custom (RAM) handlers;
+  however, most of the RAM data is still preserved.
+  This option will also turn off automatically enabled extensions that
+  increase CPU usage, such as SID emulation and 1541/1551/1581 drives
+  with no disk opened.
+
+Reset / Reset clock frequencies
+
+  Reset clock frequency and timing settings to those specified in the
+  machine configuration; this is normally only useful after demo
+  playback, which may override the settings. The SID and ACIA
+  configuration, which may be changed by snapshot or demo loading, are
+  also reset.
+
+Reset / Reset machine configuration (Shift + F11)
+
+  Reset memory configuration (RAM size, ROM images), clock frequency,
+  and timing settings according to the machine configuration, and clear
+  all RAM data. Implies 'Force reset' and 'Reset clock frequencies'.
+  Reverting the configuration can be useful after snapshot loading or
+  demo playback, as these may change the settings.
+
+Quick configuration / Load config 1 (PageDown)
+
+  Load the configuration file ~/.plus4emu/p4vmcfg1.cfg, and apply the
+  new settings.
+
+Quick configuration / Load config 2 (PageUp)
+
+  Load the configuration file ~/.plus4emu/p4vmcfg2.cfg, and apply the
+  new settings.
+
+Quick configuration / Save config 1
+
+  Save the current clock frequency and timing settings to
+  ~/.plus4emu/p4vmcfg1.cfg.
+
+Quick configuration / Save config 2
+
+  Save the current clock frequency and timing settings to
+  ~/.plus4emu/p4vmcfg2.cfg.
+
+Printer / Disable printer
+Printer / MPS-801 (IEC level)
+Printer / MPS-802 (hardware level)
+Printer / MPS-802 (1525 mode)
+
+  If enabled, an MPS-801 or 1526/MPS-802 printer is emulated as device 4
+  on the serial bus. The MPS-802 printer emulation is implemented at the
+  hardware level for full compatibility with a real printer. On the
+  other hand, the IEC level MPS-801 emulation uses less CPU time, prints
+  faster, and supports printing graphics.
+
+Printer / View printer output
+
+  Shows the printer output in real time in a window. It is also possible
+  to save the page as a 520x736 (MPS-801) or 700x990 (MPS-802) 8-bit PNG
+  format image file. When the printing reaches the bottom of the page,
+  it stops, and the LED will flash; you can then save the page to a
+  file, click the 'Clear' button, and turn on and then off 'Form feed'
+  to continue printing.
+  In the case of MPS-801 emulation, the form feed button is ignored, so
+  it is enough to click the 'Clear' button to continue with printing the
+  next page; in this mode, there is also an input buffer of 128
+  kilobytes - until the buffer is full, the printing (and writing the
+  output to a text file if enabled) is not blocked on the Plus/4.
+  NOTE: it is recommended to close this window while using the debugger,
+  since it cannot display printer output then, and may slow down the
+  GUI.
+
+Enable light pen
+
+  Emulate a Trojan Light Pen connected to the first joystick port. Light
+  pen input is only generated when a mouse button is held down while the
+  mouse cursor is in the emulation display area.
+
+SID emulation / Enable
+
+  Turn on SID emulation, making the SID registers appear at FD40-FD5F
+  and FE80-FE9F; this increases the CPU usage of the emulator.
+  SID emulation is also automatically enabled when a byte is written to
+  the above mentioned address ranges, but some programs detect if a SID
+  card is present by only reading the registers, and in those cases
+  using this option is needed. SID emulation remains active until the
+  next use of 'Force reset' or 'Reset machine configuration', and
+  snapshot data includes SID state and whether it was enabled or not at
+  the time of saving the snapshot.
+
+SID emulation / Disable
+
+  Turn off SID emulation if it is currently enabled.
+
+'Options' menu
+--------------
+
+Display / Set size to 384x288
+Display / Set size to 768x576
+Display / Set size to 1152x864
+
+  Resize the emulator window to predefined width/height values; this has
+  no effect in fullscreen mode. While the window can also be resized
+  using the window manager, sizes that are integer multiples of the
+  actual screen resolution of the emulated machine may look better,
+  particularly when texture filtering is not used, and are also slightly
+  faster when using the software video driver.
+
+Display / Cycle display mode (F9)
+
+  Cycle between these four display modes:
+    window with no menu bar
+    window with menu bar (this is the default)
+    fullscreen with menu bar
+    fullscreen with no menu bar
+
+Sound / Increase volume
+
+  Increase sound output volume by about 2 dB.
+
+Sound / Decrease volume
+
+  Decrease sound output volume by about 2 dB.
+
+Floppy / Configure... (Alt + D)
+
+  Opens a dialog for setting up floppy drive emulation.
+  For each drive, an image file can be selected. If the file name is
+  left empty, that means having no disk in that particular drive.
+  It may also be possible to directly access a real 1581 800k disk by
+  using the /dev/fd* devices (on Linux) or \\.\A: (on Windows) as the
+  image file.
+  The file format must be either D64 or D81; the type is determined from
+  the file size. Opening a D64 file will enable 1541 or 1551 emulation
+  for that particular drive, while the 1581 will be emulated for D81
+  files.
+  Since these drives are emulated at the hardware level (with a 6502
+  CPU, etc.), enabling them increases the CPU usage. A drive will remain
+  active until a different type of image file is opened, or a snapshot
+  is loaded or 'Force reset' (or anything that implies it) is used while
+  there is no disk opened.
+  Setting the drive type of unit 8 or unit 9 to 1551, and leaving the
+  image file name empty enables IEC level 1551 drive emulation instead
+  of true (hardware level) drive emulation. This can be used to access
+  .PRG, .P00, .R00, .S00, and .U00 files in the currently selected
+  working directory, and also has the advantage of not increasing the
+  CPU usage.
+
+  New in version 1.2.11: if the specified image file does not exist, it
+  is automatically created as a formatted empty disk, with the format
+  (D64 or D81), disk name and ID determined from the file name and
+  extension. It is also possible to open disk and tape images archived
+  in .zip format, the first packed file with matching extension is
+  temporarily extracted and used in read-only mode.
+
+Floppy / Remove disk / Unit 8
+Floppy / Remove disk / Unit 9
+Floppy / Remove disk / Unit 10
+Floppy / Remove disk / Unit 11
+Floppy / Remove disk / All drives
+
+  These are just shortcuts for setting the image file name for a
+  specific floppy drive to an empty string.
+
+Floppy / Replace disk / Unit 8
+Floppy / Replace disk / Unit 9
+Floppy / Replace disk / Unit 10
+Floppy / Replace disk / Unit 11
+Floppy / Replace disk / All drives
+
+  Set the image file name for a specific (or all) floppy drive to an
+  empty string, and then set the original file name again. This is
+  mostly useful when accessing real floppy disks, after the disk is
+  changed.
+
+Floppy / Reset / Unit 8
+Floppy / Reset / Unit 9
+Floppy / Reset / Unit 10
+Floppy / Reset / Unit 11
+Floppy / Reset / All drives
+
+  Reset a specific (or all) floppy drive.
+
+Floppy / Disable unused drives
+
+  Turn off the emulation of all floppy drives that are currently active,
+  but have no disk image attached. This can be useful to reduce CPU
+  usage when a drive is no longer needed, without having to reset the
+  emulated machine. Using this option may also be needed to enable IEC
+  level drive emulation, which cannot be used while hardware level
+  emulation on the same unit is still active.
+
+Set working directory (Alt + Q)
+
+  Set the directory to be accessed by the IEC level drive emulation.
+  The filesystem access is read-only by default, but writing can be
+  enabled in the machine configuration.
+  This directory is also used by monitor commands that take a file name
+  argument.
+
+'Debug' menu
+------------
+
+Start debugger (Alt + M)
+
+  Shows the debugger window. Many functions in the debugger can be used
+  either in CPU addressing mode where the 16 bit address space of the
+  currently selected CPU can be accessed, or physical address mode that
+  allows access to all memory in the emulated system, regardless of any
+  memory banking or the debug context selected. The following table
+  shows the memory map in physical address mode; the 8-bit codes on the
+  left are used in the 'Memory paging' window:
+
+    00      000000-003FFF   Basic ROM
+    01      004000-007FFF   Kernal ROM
+    02, 03  008000-00FFFF   Function (3-plus-1) ROM
+    04, 05  010000-017FFF   Cartridge 1
+    06, 07  018000-01FFFF   Cartridge 2 (used by p4fileio.rom)
+    0A      028000-02BFFF   MPS-801 printer ROM (4K, repeated 4x)
+    0C      030000-033FFF   1526/MPS-802 printer ROM (8K, repeated 2x)
+    10      040000-043FFF   1541 floppy drive ROM
+    20      080000-083FFF   1551 floppy drive ROM
+    30, 31  0C0000-0C7FFF   1581 floppy drive ROM
+    40-43   100000-10FFFF   Main CPU address space
+    50-53   140000-14FFFF   Printer CPU address space (MPS-802 only)
+    60-63   180000-18FFFF   Floppy unit 8 CPU address space
+    64-67   190000-19FFFF   Floppy unit 9 CPU address space
+    68-6B   1A0000-1AFFFF   Floppy unit 10 CPU address space
+    6C-6F   1B0000-1BFFFF   Floppy unit 11 CPU address space
+    FF      3FC000-3FFFFF   RAM (16K)
+    FE-FF   3F8000-3FFFFF   RAM (32K)
+    FC-FF   3F0000-3FFFFF   RAM (64K; also the default bank for >64K)
+    F0-FF   3C0000-3FFFFF   RAM (256K)
+    C0-FF   300000-3FFFFF   RAM (1024K)
+
+    TED and I/O registers are not mapped into the RAM or ROM areas in
+    physical address mode.
+
+  The monitor commands are mostly similar to those in TEDMON, although
+  most commands - with the exception of G and TR - support CPU/physical
+  address mode switching, and the following have some improvements:
+
+    A       supports undocumented opcodes (using opcode names from
+            64doc.txt), $ characters and leading zeros are optional,
+            assemble offset can be used to write the code to a different
+            area than where it will actually run
+    D       can disassemble to a file, supports undocumented opcodes and
+            disassemble offset
+    F       it is possible to fill memory with a pattern of any length,
+            not just a single byte
+    H       more advanced pattern matching (specific bits or bytes can
+            be ignored); note that strings should be enclosed within
+            double quote characters
+    T       allows the source and destination areas to overlap
+
+  There are also these new commands:
+
+    ?       prints the list of available commands
+    ? CMD   prints help for command 'CMD'
+    AM      set/toggle CPU/physical address mode
+    AO      set/clear assemble and disassemble offset
+    I       prints the current monitor settings (address mode, etc.)
+    SR      search for and replace pattern in memory; uses the same
+            rules as the H command, and can also ignore (not change)
+            bits or bytes when writing the replacement pattern
+    TR      logs CPU instructions to a file until the debugger is opened
+            again, or the number of instructions exceeds a specified
+            limit
+    W       set debug context
+    X       same as the 'Continue' button
+    Y       same as the 'Step over' button
+    Z       same as the 'Step' button
+
+  Lua scripting
+  -------------
+
+  Starting from version 1.2.5, it is possible to run scripts written in
+  Lua from the debugger. This document only describes the use of scripts
+  in the emulator, and the new API functions added; for general
+  information about programming in Lua, see http://www.lua.org/docs.html
+
+  Clicking the 'Run' button will run the script, and also enable the
+  breakpoint callback function (see below) if it is defined. If there
+  are any syntax or runtime errors, the script is terminated, and the
+  breakpoint callback is disabled. After making any changes to the
+  script, you need to click 'Run' and restart the script for the changes
+  to take effect.
+
+  It is possible to define a breakpoint callback function in the script,
+  which will be automatically called whenever a breakpoint is triggered,
+  and the debugger window would be shown. This function has the
+  following syntax:
+
+    function breakPointCallback(debugContext, bpType, addr, value)
+      ...
+      return showWindow
+    end
+
+  where 'showWindow' is a boolean value, which, if true, will allow the
+  debugger window to be shown like normal, or have the emulated program
+  continue without any break if it is false. The four parameters passed
+  to the function are as follows:
+
+    debugContext
+
+      The debugging context from which the break was triggered. The
+      possible values are:
+        0: the main CPU
+        1: floppy drive / unit 8
+        2: floppy drive / unit 9
+        3: floppy drive / unit 10
+        4: floppy drive / unit 11
+        5: printer
+
+    bpType
+
+      The type of break, one of the following:
+        0: breakpoint at opcode read by the CPU
+        1: data read from memory
+        2: data written to memory
+        3: opcode read in single step mode; this happens when 'Step' or
+           'Step over' are being used, and if the breakpoint callback
+           function returns false, breaks will continue to occur until
+           true is returned
+        4: video breakpoint; the address is encoded in a special way in
+           this case (see below at setBreakPoint()), and the value is
+           not used
+
+    addr
+
+      This is the 16 bit address where the break occured.
+
+    value
+
+      The value or CPU opcode read from or written to memory. Not used
+      (always zero) by video breakpoints.
+
+  The breakpoint callback function will remain active until either a new
+  script is run which does not define one, or the 'Stop' button is
+  clicked.
+
+  NOTE: an infinite loop in the script will hang the emulator, and a
+  very frequently called and/or complex breakpoint callback may slow
+  down the emulation.
+
+  The following new functions are defined by the emulator for use in the
+  scripts:
+
+    AND(...)    OR(...)    XOR(...)    SHL(a, b)    SHR(a, b)
+
+      These simple helper functions implement bitwise operations that
+      are not available in the Lua language by default. AND, OR, and XOR
+      can take any number of integer arguments, and return the bitwise
+      AND, OR, and XOR of the values, respectively. In the case of zero
+      arguments, OR and XOR return zero, while AND returns -1.
+      SHL returns 'a' shifted to the left by 'b' bits, and SHR returns
+      'a' shifted to the right by 'b' bits. If 'b' is zero, the value is
+      not changed, while a negative 'b' will reverse the direction of
+      shifting. The result of shifting negative values to the right is
+      unspecified.
+
+    getDebugContext()
+
+      Returns the current debugging context, which can be one of the
+      following:
+
+        0: the main CPU
+        1: floppy drive / unit 8
+        2: floppy drive / unit 9
+        3: floppy drive / unit 10
+        4: floppy drive / unit 11
+        5: printer
+
+    setDebugContext(n)
+
+      Set the debugging context to 'n' (0 to 5, see above). It is
+      recommended to restore the original debugging context before the
+      script returns.
+
+    setBreakPoint(bptype, addr, priority)
+
+      Set a breakpoint or watchpoint at address 'addr' (0-0xFFFF) for
+      the current debugging context, with priority 'priority' (0 to 3).
+      'bptype' can be one of the following values:
+
+        0: any memory access (read, write or CPU opcode read)
+        1: memory read
+        2: memory write
+        3: any memory access, same as bptype == 0
+        4: video breakpoint, breaks at the TED video position defined by
+           'addr'; this is only allowed for the main CPU, and cannot be
+           set for floppy drives or printers. Bits 7 to 15 of the
+           address are the vertical position (which is compared against
+           the latched value of the vertical counter in the TED), and
+           bits 0 to 6 are the most significant bits of the horizontal
+           position (compared against the value that would be read from
+           $FF1E)
+        5: ignore other breakpoints if the program counter is at this
+           address (note: the priority parameter is ignored)
+        6: CPU opcode read
+
+      A 'priority' value of -1 will delete an existing breakpoint at the
+      specified address.
+      The read, write, execute, and ignore flags are combined if
+      multiple breakpoints are set at the same address, while the
+      priority will be the highest value specified.
+
+      NOTE: the changes made to the breakpoint list by the script are
+      not reflected in the breakpoint editor. To restore the previously
+      defined breakpoints, click the 'Apply' button.
+
+    clearBreakPoints()
+
+      Deletes all breakpoints that were previously defined for the
+      current debugging context.
+
+    getMemoryPage(n)
+
+      Returns the memory bank selected for $0000-$3FFF if 'n' is 0,
+      $4000-$7FFF if 'n' is 1, $8000-$BFFF if 'n' is 2, or $C000-$FFFF
+      if 'n' is 3. The returned value is a 8 bit integer, as described
+      above at the beginning of the debugger documentation.
+
+    readMemory(addr)
+
+      Read a byte from 'addr' (0 to 0xFFFF) in the address space of the
+      current debugging context.
+
+    writeMemory(addr, value)
+
+      Write 'value' to 'addr' (0 to 0xFFFF) in the address space of the
+      current debugging context.
+
+    readMemoryRaw(addr)
+
+      Read a byte from 'addr' (0 to 0x3FFFFF) in the "physical" address
+      space described above at the beginning of the debugger
+      documentation.
+
+    writeMemoryRaw(addr, value)
+
+      Write 'value' to 'addr' (0 to 0x3FFFFF) in the "physical" address
+      space described above at the beginning of the debugger
+      documentation.
+
+    getPC()    getSR()    getAC()    getXR()    getYR()    getSP()
+
+      These functions return the registers of the currently selected
+      CPU. PC is a 16 bit value, while the others are 8 bit.
+
+    setPC(n)   setSR(n)   setAC(n)   setXR(n)   setYR(n)   setSP(n)
+
+      Set registers of the currently selected CPU. 'n' should be a 16
+      bit value when setting PC, and 8 bit for the other registers. Note
+      that changing the program counter only takes effect after the
+      execution of the current instruction is completed.
+
+    loadProgram(fname)
+
+      Load PRG or P00 file 'fname', which must be a full path file name.
+      The current debugging context is ignored, and zeropage variables
+      at $2D-$32 and $9D-$9E are updated according to the file loaded.
+
+    saveProgram(fname)
+
+      Save the memory area defined by zeropage variables $2B-$2E to a
+      PRG file 'fname', which must be a full path file name. The current
+      debugging context is ignored, and the data is always read from
+      RAM, regardless of memory paging by $FF3E/$FF3F.
+
+    mprint(...)
+
+      Prints any number of strings or numbers to the monitor.
+      No separator characters are inserted between the arguments being
+      printed, and a newline character is automatically added at the end
+      of the message.
+
+  Example:
+
+    mprint("Running Lua script example...")
+    setDebugContext(0)
+    clearBreakPoints()
+    setBreakPoint(2, 0x0C00, 2)
+    setBreakPoint(2, 0x0C01, 2)
+    function breakPointCallback(d, t, a, v)
+      if (a == 0x0C00 and v == 0x00) or
+         (a == 0x0C01 and v == 0x01) then
+        return true
+      end
+      return false
+    end
+    mprint("done.")
+
+  This will break only when $00 is written to $0C00, or $01 is written
+  to $0C01.
+
+------------------------------------------------------------------------
+
+Copyright
+=========
+
+plus4emu is copyright © 2003-2017 by Istvan Varga
+<istvanv@users.sourceforge.net>.
+reSID 1.0 copyright © 2010 by Dag Lem.
+Fl_Native_File_Chooser 0.84 copyright © 2004 by Greg Ercolano.
+dotconf 1.3 copyright © by Lukas Schröder and William Hubbs.
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2 of the License, or (at your
+option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+
+Credits
+-------
+
+Thanks to:
+
+Hársfalvi Levente - testing the emulator and providing some hardware
+                    information
+MagerValp         - testing on MacOS X and contributing binaries
+Andrea Musuruane  - bug reports and fixes related to building the
+                    emulator on Fedora Linux
+Chronos / ACW     - TED and SID sound testing on the real machine
+SVS / FIRE        - Windows icons
+

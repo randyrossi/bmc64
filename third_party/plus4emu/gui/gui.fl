@@ -1,0 +1,426 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0109 
+do_not_include_H_from_C 
+header_name {.hpp} 
+code_name {.cpp}
+decl {\#include "gui.hpp"} {selected
+} 
+
+class Plus4EmuGUI {open
+} {
+  decl {friend class Plus4EmuGUI_DiskConfigWindow;} {public
+  }
+  decl {friend class Plus4EmuGUI_DisplayConfigWindow;} {public
+  }
+  decl {friend class Plus4EmuGUI_KbdConfigWindow;} {public
+  }
+  decl {friend class Plus4EmuGUI_SoundConfigWindow;} {public
+  }
+  decl {friend class Plus4EmuGUI_MachineConfigWindow;} {public
+  }
+  decl {friend class Plus4EmuGUI_DebugWindow;} {public
+  }
+  decl {friend class Plus4EmuGUIMonitor;} {public
+  }
+  decl {friend class Plus4EmuGUI_PrinterWindow;} {public
+  }
+  decl {friend class Plus4EmuGUI_AboutWindow;} {public
+  }
+  decl {Plus4Emu::VideoDisplay& display;} {}
+  decl {Plus4Emu::AudioOutput& audioOutput;} {}
+  decl {Plus4Emu::VirtualMachine& vm;} {}
+  decl {Plus4Emu::VMThread& vmThread;} {}
+  decl {Plus4Emu::EmulatorConfiguration& config;} {}
+  decl {Plus4Emu::FLTKDisplay_ *flDisplay;} {}
+  decl {Fl_Window *emulatorWindow;} {}
+  decl {uintptr_t mainThreadID;} {}
+  decl {int displayMode;} {}
+  decl {bool exitFlag;} {}
+  decl {bool errorFlag;} {}
+  decl {bool lightPenEnabled;} {}
+  decl {int oldWindowWidth;} {}
+  decl {int oldWindowHeight;} {}
+  decl {int oldDisplayMode;} {}
+  decl {int oldDemoStatus;} {}
+  decl {int32_t oldSpeedPercentage;} {}
+  decl {bool oldPauseFlag;} {}
+  decl {long oldTapeSampleRate;} {}
+  decl {int oldTapeSampleSize;} {}
+  decl {uint32_t oldFloppyDriveLEDState;} {}
+  decl {uint64_t oldFloppyDriveHeadPositions;} {}
+  decl {bool oldTapeReadOnlyFlag;} {}
+  decl {long oldTapePosition;} {}
+  decl {uint32_t functionKeyState;} {}
+  decl {int tapeButtonState;} {}
+  decl {int oldTapeButtonState;} {}
+  decl {std::string demoRecordFileName;} {}
+  decl {Plus4Emu::File *demoRecordFile;} {}
+  decl {std::string quickSnapshotFileName;} {}
+  decl {bool updateDisplayEntered;} {}
+  decl {bool debugWindowShowFlag;} {}
+  decl {bool debugWindowOpenFlag;} {}
+  decl {bool browseFileWindowShowFlag;} {}
+  decl {int browseFileStatus;} {}
+  decl {Fl_Native_File_Chooser *browseFileWindow;} {}
+  decl {Fl_Window *windowToShow;} {}
+  decl {std::string snapshotDirectory;} {}
+  decl {std::string demoDirectory;} {}
+  decl {std::string soundFileDirectory;} {}
+  decl {std::string configDirectory;} {}
+  decl {std::string loadFileDirectory;} {}
+  decl {std::string tapeImageDirectory;} {}
+  decl {std::string diskImageDirectory;} {}
+  decl {std::string romImageDirectory;} {}
+  decl {std::string prgFileDirectory;} {}
+  decl {std::string prgFileName;} {}
+  decl {std::string debuggerDirectory;} {}
+  decl {std::string screenshotDirectory;} {}
+  decl {std::string screenshotFileName;} {}
+  decl {Plus4Emu::ConfigurationDB guiConfig;} {}
+  decl {Plus4EmuGUI_DiskConfigWindow *diskConfigWindow;} {}
+  decl {Plus4EmuGUI_DisplayConfigWindow *displaySettingsWindow;} {}
+  decl {Plus4EmuGUI_KbdConfigWindow *keyboardConfigWindow;} {}
+  decl {Plus4EmuGUI_SoundConfigWindow *soundSettingsWindow;} {}
+  decl {Plus4EmuGUI_MachineConfigWindow *machineConfigWindow;} {}
+  decl {Plus4EmuGUI_DebugWindow *debugWindow;} {}
+  decl {Plus4EmuGUI_PrinterWindow *printerWindow;} {}
+  decl {Plus4EmuGUI_AboutWindow *aboutWindow;} {}
+  decl {Plus4Emu::JoystickInput joystickInput;} {}
+  decl {Plus4Emu::Timer statsTimer;} {}
+  decl {char windowTitleBuf[48];} {}
+  decl {unsigned int savedSpeedPercentage;} {}
+  decl {int cursorPositionX;} {}
+  decl {int cursorPositionY;} {}
+  decl {int printerType;} {}
+  decl {void init_();} {}
+  decl {void updateDisplay_windowTitle();} {}
+  decl {void updateDisplay_windowMode();} {}
+  decl {void updateDisplay_windowSize();} {}
+  decl {void updateDisplay_floppyStats(uint64_t newFloppyDriveHeadPositions);} {}
+  decl {void updateDisplay(double t = 0.025);} {public
+  }
+  decl {void errorMessage(const char *msg);} {public
+  }
+  decl {Fl_Menu_Item& getMenuItem(int n);} {}
+  decl {int getMenuItemIndex(int n);} {}
+  decl {void createMenus();} {}
+  decl {void run();} {public
+  }
+  decl {void resizeWindow(int w, int h);} {}
+  decl {int handleMouseEvent(int event);} {}
+  decl {static int handleFLTKEvent(void *userData, int event);} {}
+  decl {bool lockVMThread(size_t t = 2000);} {public
+  }
+  decl {void unlockVMThread();} {public
+  }
+  decl {bool browseFile(std::string& fileName, std::string& dirName, const char *pattern, int type, const char *title);} {public
+  }
+  decl {void writeFile(Plus4Emu::File& f, const char *fileName);} {public
+  }
+  decl {void applyEmulatorConfiguration(bool updateWindowFlag_ = false);} {public
+  }
+  decl {void updateMenu();} {}
+  decl {static void errorMessageCallback(void *userData, const char *msg);} {}
+  decl {static void fileNameCallback(void *userData, std::string& fileName);} {}
+  decl {static void fltkCheckCallback(void *userData);} {}
+  decl {static void screenshotCallback(void *userData, const unsigned char *buf, int w_, int h_);} {}
+  decl {static void pollJoystickInput(void *userData);} {}
+  decl {bool closeDemoFile(bool stopDemo_);} {}
+  decl {void saveQuickConfig(int n);} {}
+  decl {static void menuCallback_File_LoadFile(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_File_LoadConfig(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_File_SaveConfig(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_File_SaveMainCfg(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_File_RevertCfg(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_File_QSFileName(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_File_QSLoad(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_File_QSSave(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_File_SaveSnapshot(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_File_RecordDemo(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_File_StopDemo(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_File_RecordSound(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_File_StopSndRecord(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_File_RecordVideo(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_File_StopAVIRecord(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_File_Screenshot(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_File_LoadPRG(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_File_SavePRG(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_File_Quit(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_Pause(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_FullSpeed(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_Speed_10(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_Speed_25(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_Speed_50(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_Speed_100(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_Speed_200(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_Speed_400(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_OpenTape(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_TapePlay(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_TapeStop(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_TapeRecord(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_TapeRewind(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_TapePrvCP(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_TapeBwd10s(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_TapeBwd60s(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_TapeNxtCP(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_TapeFwd10s(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_TapeFwd60s(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_AddCP(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_DeleteCP(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_DeleteCPs(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_TapeClose(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_PrtShowWin(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_PrtSetType(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_PrtWrtFile(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_PrtASCII(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_Reset(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_ColdReset(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_ResetFreqs(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_ResetAll(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_EnableSID(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_DisableSID(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_EnableLP(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_QuickCfgL1(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_QuickCfgL2(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_QuickCfgS1(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_QuickCfgS2(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Machine_Configure(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_DpySize1(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_DpySize2(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_DpySize3(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_DpyMode(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_DpyConfig(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_SndIncVol(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_SndDecVol(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_SndConfig(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_FloppyRmA(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_FloppyRmB(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_FloppyRmC(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_FloppyRmD(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_FloppyRmv(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_FloppyRpA(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_FloppyRpB(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_FloppyRpC(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_FloppyRpD(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_FloppyRpl(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_FloppyRsA(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_FloppyRsB(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_FloppyRsC(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_FloppyRsD(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_FloppyRst(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_FloppyGC(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_FloppyCfg(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_PPriority(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_KbdConfig(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Options_FileIODir(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Debug_OpenDebugger(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Debug_DriveStats(Fl_Widget *o, void *v);} {}
+  decl {static void menuCallback_Help_About(Fl_Widget *o, void *v);} {}
+  Function {Plus4EmuGUI(Plus4Emu::VideoDisplay& display_, Plus4Emu::AudioOutput& audioOutput_, Plus4Emu::VirtualMachine& vm_, Plus4Emu::VMThread& vmThread_, Plus4Emu::EmulatorConfiguration& config_) : display(display_), audioOutput(audioOutput_), vm(vm_), vmThread(vmThread_), config(config_), joystickInput(true)} {open
+  } {
+    code {{
+  this->init_();
+}} {}
+    Fl_Window mainWindow {
+      label plus4emu open
+      xywh {248 54 400 360} type Single color 48 resizable
+      code0 {o->add(emulatorWindow);} size_range {384 348 1536 1182} visible
+    } {
+      Fl_Menu_Bar mainMenuBar {open
+        xywh {0 2 300 26} box FLAT_BOX color 48
+      } {}
+      Fl_Group diskStatusDisplayGroup {
+        label {Disk: } open
+        xywh {345 0 30 30} box PLASTIC_THIN_UP_BOX color 255 labelsize 12 align 4
+      } {
+        Fl_Box driveALEDDisplay {
+          xywh {351 2 18 5} box THIN_DOWN_BOX color 56
+        }
+        Fl_Box driveAHeadDisplay {
+          xywh {352 3 2 3} box FLAT_BOX color 255 hide
+        }
+        Fl_Box driveBLEDDisplay {
+          xywh {351 9 18 5} box THIN_DOWN_BOX color 56
+        }
+        Fl_Box driveBHeadDisplay {
+          xywh {352 10 2 3} box FLAT_BOX color 255 hide
+        }
+        Fl_Box driveCLEDDisplay {
+          xywh {351 16 18 5} box THIN_DOWN_BOX color 56
+        }
+        Fl_Box driveCHeadDisplay {
+          xywh {352 17 2 3} box FLAT_BOX color 255 hide
+        }
+        Fl_Box driveDLEDDisplay {
+          xywh {351 23 18 5} box THIN_DOWN_BOX color 56
+        }
+        Fl_Box driveDHeadDisplay {
+          xywh {352 24 2 3} box FLAT_BOX color 255 hide
+        }
+      }
+      Fl_Group statusDisplayGroup {open
+        xywh {40 330 360 30} color 48
+      } {
+        Fl_Box demoStatusDisplay1 {
+          label {Demo:}
+          xywh {50 335 50 20} color 48 labelsize 12 align 20
+        }
+        Fl_Box demoStatusDisplay2 {
+          xywh {97 335 20 20} box THIN_DOWN_BOX color 56 labelfont 5 labelsize 12 labelcolor 6 align 16
+        }
+        Fl_Box tapeInfoDisplay {
+          xywh {130 335 150 20} color 48 labelsize 12 align 16
+          code0 {o->label("Tape: none");}
+        }
+        Fl_Group tapePositionDisplay {open
+          xywh {290 335 100 20} box THIN_DOWN_BOX color 56 labelfont 4 labelsize 12 labelcolor 6 align 24
+        } {
+          Fl_Box tapeStatusDisplay {
+            xywh {290 335 20 20} color 56 labelfont 5 labelsize 12 labelcolor 6 align 24
+          }
+        }
+      }
+    }
+    Fl_Window errorMessageWindow {
+      label {plus4emu error} open
+      xywh {249 553 280 150} type Double color 48 modal visible
+    } {
+      Fl_Box {} {
+        xywh {10 10 260 95} box THIN_UP_BOX
+      }
+      Fl_Box errorMessageText {
+        xywh {20 15 240 85} box FLAT_BOX align 144
+      }
+      Fl_Button {} {
+        label OK
+        callback {errorMessageWindow->hide();}
+        xywh {105 115 70 25} selection_color 50
+      }
+    }
+    Fl_Window floppyStatsWindow {
+      label {Drive head positions} open
+      xywh {550 452 270 270} type Double color 48 visible
+    } {
+      Fl_Group {} {
+        label {Unit 8} open
+        xywh {10 10 250 50} box THIN_UP_BOX labelsize 13 align 21
+      } {
+        Fl_Value_Output driveATrackDisplay {
+          label Track
+          xywh {55 30 35 20} box THIN_DOWN_BOX color 48 selection_color 15 labelsize 12 minimum -1 maximum 127 value -1
+        }
+        Fl_Value_Output driveASideDisplay {
+          label Side
+          xywh {135 30 30 20} box THIN_DOWN_BOX color 48 selection_color 15 labelsize 12 minimum -1 maximum 127 value -1
+        }
+        Fl_Value_Output driveASectorDisplay {
+          label Sector
+          xywh {220 30 30 20} box THIN_DOWN_BOX color 48 selection_color 15 labelsize 12 minimum -1 maximum 127 value -1
+        }
+      }
+      Fl_Group {} {
+        label {Unit 9} open
+        xywh {10 65 250 50} box THIN_UP_BOX labelsize 13 align 21
+      } {
+        Fl_Value_Output driveBTrackDisplay {
+          label Track
+          xywh {55 85 35 20} box THIN_DOWN_BOX color 48 selection_color 15 labelsize 12 minimum -1 maximum 127 value -1
+        }
+        Fl_Value_Output driveBSideDisplay {
+          label Side
+          xywh {135 85 30 20} box THIN_DOWN_BOX color 48 selection_color 15 labelsize 12 minimum -1 maximum 127 value -1
+        }
+        Fl_Value_Output driveBSectorDisplay {
+          label Sector
+          xywh {220 85 30 20} box THIN_DOWN_BOX color 48 selection_color 15 labelsize 12 minimum -1 maximum 127 value -1
+        }
+      }
+      Fl_Group {} {
+        label {Unit 10} open
+        xywh {10 120 250 50} box THIN_UP_BOX labelsize 13 align 21
+      } {
+        Fl_Value_Output driveCTrackDisplay {
+          label Track
+          xywh {55 140 35 20} box THIN_DOWN_BOX color 48 selection_color 15 labelsize 12 minimum -1 maximum 127 value -1
+        }
+        Fl_Value_Output driveCSideDisplay {
+          label Side
+          xywh {135 140 30 20} box THIN_DOWN_BOX color 48 selection_color 15 labelsize 12 minimum -1 maximum 127 value -1
+        }
+        Fl_Value_Output driveCSectorDisplay {
+          label Sector
+          xywh {220 140 30 20} box THIN_DOWN_BOX color 48 selection_color 15 labelsize 12 minimum -1 maximum 127 value -1
+        }
+      }
+      Fl_Group {} {
+        label {Unit 11} open
+        xywh {10 175 250 50} box THIN_UP_BOX labelsize 13 align 21
+      } {
+        Fl_Value_Output driveDTrackDisplay {
+          label Track
+          xywh {55 195 35 20} box THIN_DOWN_BOX color 48 selection_color 15 labelsize 12 minimum -1 maximum 127 value -1
+        }
+        Fl_Value_Output driveDSideDisplay {
+          label Side
+          xywh {135 195 30 20} box THIN_DOWN_BOX color 48 selection_color 15 labelsize 12 minimum -1 maximum 127 value -1
+        }
+        Fl_Value_Output driveDSectorDisplay {
+          label Sector
+          xywh {220 195 30 20} box THIN_DOWN_BOX color 48 selection_color 15 labelsize 12 minimum -1 maximum 127 value -1
+        }
+      }
+      Fl_Button {} {
+        label OK
+        callback {{
+  floppyStatsWindow->hide();
+}}
+        xywh {100 235 70 25} selection_color 50
+      }
+    }
+    code {{
+  diskConfigWindow = new Plus4EmuGUI_DiskConfigWindow(*this);
+  displaySettingsWindow = new Plus4EmuGUI_DisplayConfigWindow(*this);
+  keyboardConfigWindow = new Plus4EmuGUI_KbdConfigWindow(*this);
+  soundSettingsWindow = new Plus4EmuGUI_SoundConfigWindow(*this);
+  machineConfigWindow = new Plus4EmuGUI_MachineConfigWindow(*this);
+  debugWindow = new Plus4EmuGUI_DebugWindow(*this);
+  printerWindow = new Plus4EmuGUI_PrinterWindow(*this);
+  aboutWindow = new Plus4EmuGUI_AboutWindow(*this);
+}} {}
+  }
+  Function {~Plus4EmuGUI()} {open
+  } {
+    code {{
+  debugWindow->hide();
+  vmThread.quit(true);
+  errorMessageWindow->hide();
+  diskConfigWindow->hide();
+  displaySettingsWindow->hide();
+  keyboardConfigWindow->hide();
+  soundSettingsWindow->hide();
+  machineConfigWindow->hide();
+  printerWindow->hide();
+  floppyStatsWindow->hide();
+  aboutWindow->hide();
+  mainWindow->hide();
+  Fl::remove_check(&fltkCheckCallback, (void *) this);
+  Fl::wait(0.0);
+  mainWindow->remove(*emulatorWindow);
+  delete errorMessageWindow;
+  delete browseFileWindow;
+  delete diskConfigWindow;
+  delete displaySettingsWindow;
+  delete keyboardConfigWindow;
+  delete soundSettingsWindow;
+  delete machineConfigWindow;
+  delete debugWindow;
+  delete printerWindow;
+  delete floppyStatsWindow;
+  delete aboutWindow;
+  delete mainWindow;
+  config.vm.speedPercentage = 100U;
+  config.sound.file = "";
+  config.tape.imageFile = "";
+}} {}
+  }
+} 

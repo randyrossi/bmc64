@@ -1,0 +1,39 @@
+
+#include <winver.h>
+
+VS_VERSION_INFO VERSIONINFO
+  FILEVERSION     1, 2, 11, 0
+  PRODUCTVERSION  1, 2, 11, 0
+  FILEFLAGSMASK   0
+  FILEFLAGS       0
+  FILEOS          VOS__WINDOWS32
+  FILETYPE        VFT_APP
+  FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904E4"
+    BEGIN
+      VALUE "Comments", "Home page: https://github.com/istvan-v/plus4emu/"
+      VALUE "CompanyName", "Istvan Varga"
+      VALUE "FileDescription", "plus4emu - Commodore Plus/4 and C16 emulator"
+      VALUE "FileVersion", "1.2.11.0"
+      VALUE "InternalName", "plus4emu"
+      VALUE "LegalCopyright", "Copyright (C) 2003-2017, GPL v2 or later"
+      VALUE "OriginalFilename", "plus4emu"
+      VALUE "ProductName", "Plus4Emu"
+      VALUE "ProductVersion", "1.2.11.0"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x0409, 0x04E4
+  END
+END
+
+101 ICON ".\\resource\\Cbm4.ico"
+102 ICON ".\\resource\\1551.ico"
+103 ICON ".\\resource\\Plus4Mon4.ico"
+104 ICON ".\\resource\\Plus4i.ico"
+105 ICON ".\\resource\\CbmFile.ico"
+

@@ -1,0 +1,890 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0107 
+do_not_include_H_from_C 
+header_name {.hpp} 
+code_name {.cpp}
+decl {\#include "gui.hpp"} {selected
+} 
+
+class Plus4EmuGUI_KbdDefineWindow {open : {public Fl_Double_Window}
+} {
+  decl {int keyCode_;} {public
+  }
+  Function {Plus4EmuGUI_KbdDefineWindow(int xx, int yy, int ww, int hh, const char *lbl_ = (char *) 0) : Fl_Double_Window(xx, yy, ww, hh, lbl_)} {open
+  } {
+    code {{
+  keyCode_ = -1;
+}} {}
+  }
+  Function {Plus4EmuGUI_KbdDefineWindow(int ww, int hh, const char *lbl_ = (char *) 0) : Fl_Double_Window(ww, hh, lbl_)} {open
+  } {
+    code {{
+  keyCode_ = -1;
+}} {}
+  }
+  Function {~Plus4EmuGUI_KbdDefineWindow()} {open return_type virtual
+  } {
+    code {{
+}} {}
+  }
+  Function {handle(int evt_)} {open return_type {virtual int}
+  } {
+    code {{
+  switch (evt_) {
+  case FL_FOCUS:
+  case FL_UNFOCUS:
+    return 1;
+  case FL_KEYUP:
+    return 1;
+  case FL_KEYDOWN:
+    keyCode_ = Fl::event_key();
+    return 1;
+  }
+  return 0;
+}} {}
+  }
+} 
+
+class Plus4EmuGUI_KbdConfigWindow {open
+} {
+  decl {Plus4EmuGUI& gui;} {}
+  Function {Plus4EmuGUI_KbdConfigWindow(Plus4EmuGUI& gui_) : gui(gui_)} {open
+  } {
+    Fl_Window window {
+      label {Configure keyboard map}
+      callback {{
+  try {
+    gui.applyEmulatorConfiguration();
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+  window->hide();
+}} open
+      xywh {135 144 515 395} type Double color 48 visible
+    } {
+      Fl_Group {} {open
+        xywh {10 10 495 200} box THIN_UP_BOX
+      } {
+        Fl_Button {} {
+          label {F1/F4}
+          callback {{
+  defineKey(0x04, "F1/F4");
+}}
+          xywh {55 20 45 20} color 53 selection_color 52 labelsize 11 labelcolor 56
+        }
+        Fl_Button {} {
+          label {F2/F5}
+          callback {{
+  defineKey(0x05, "F2/F5");
+}}
+          xywh {115 20 45 20} color 53 selection_color 52 labelsize 11 labelcolor 56
+        }
+        Fl_Button {} {
+          label {F3/F6}
+          callback {{
+  defineKey(0x06, "F3/F6");
+}}
+          xywh {175 20 45 20} color 53 selection_color 52 labelsize 11 labelcolor 56
+        }
+        Fl_Button {} {
+          label {Help/F7}
+          callback {{
+  defineKey(0x03, "Help/F7");
+}}
+          xywh {235 20 45 20} color 53 selection_color 52 labelsize 11 labelcolor 56
+        }
+        Fl_Button {} {
+          label Esc
+          callback {{
+  defineKey(0x34, "Esc");
+}}
+          xywh {20 55 25 25} color 54 selection_color 53 labelsize 11 labelcolor 56
+        }
+        Fl_Button {} {
+          label 1
+          callback {{
+  defineKey(0x38, "1");
+}}
+          xywh {50 55 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label 2
+          callback {{
+  defineKey(0x3B, "2");
+}}
+          xywh {80 55 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label 3
+          callback {{
+  defineKey(0x08, "3");
+}}
+          xywh {110 55 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label 4
+          callback {{
+  defineKey(0x0B, "4");
+}}
+          xywh {140 55 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label 5
+          callback {{
+  defineKey(0x10, "5");
+}}
+          xywh {170 55 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label 6
+          callback {{
+  defineKey(0x13, "6");
+}}
+          xywh {200 55 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label 7
+          callback {{
+  defineKey(0x18, "7");
+}}
+          xywh {230 55 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label 8
+          callback {{
+  defineKey(0x1B, "8");
+}}
+          xywh {260 55 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label 9
+          callback {{
+  defineKey(0x20, "9");
+}}
+          xywh {290 55 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label 0
+          callback {{
+  defineKey(0x23, "0");
+}}
+          xywh {320 55 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label {+}
+          callback {{
+  defineKey(0x36, "+");
+}}
+          xywh {350 55 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label {-}
+          callback {{
+  defineKey(0x2E, "-");
+}}
+          xywh {380 55 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label {=}
+          callback {{
+  defineKey(0x35, "=");
+}}
+          xywh {410 55 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label Hom
+          callback {{
+  defineKey(0x39, "Clear/Home");
+}}
+          xywh {440 55 25 25} color 54 selection_color 53 labelsize 11 labelcolor 56
+        }
+        Fl_Button {} {
+          label Del
+          callback {{
+  defineKey(0x00, "Inst/Del");
+}}
+          xywh {470 55 25 25} color 54 selection_color 53 labelsize 11 labelcolor 56
+        }
+        Fl_Button {} {
+          label Ctrl
+          callback {{
+  defineKey(0x3A, "Control");
+}}
+          xywh {20 85 40 25} color 54 selection_color 53 labelsize 11 labelcolor 56
+        }
+        Fl_Button {} {
+          label Q
+          callback {{
+  defineKey(0x3E, "Q");
+}}
+          xywh {65 85 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label W
+          callback {{
+  defineKey(0x09, "W");
+}}
+          xywh {95 85 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label E
+          callback {{
+  defineKey(0x0E, "E");
+}}
+          xywh {125 85 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label R
+          callback {{
+  defineKey(0x11, "R");
+}}
+          xywh {155 85 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label T
+          callback {{
+  defineKey(0x16, "T");
+}}
+          xywh {185 85 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label Y
+          callback {{
+  defineKey(0x19, "Y");
+}}
+          xywh {215 85 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label U
+          callback {{
+  defineKey(0x1E, "U");
+}}
+          xywh {245 85 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label I
+          callback {{
+  defineKey(0x21, "I");
+}}
+          xywh {275 85 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label O
+          callback {{
+  defineKey(0x26, "O");
+}}
+          xywh {305 85 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label P
+          callback {{
+  defineKey(0x29, "P");
+}}
+          xywh {335 85 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label {@@}
+          callback {{
+  defineKey(0x07, "@@");
+}}
+          xywh {365 85 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label {£}
+          callback {{
+  defineKey(0x02, "£");
+}}
+          xywh {395 85 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label {*}
+          callback {{
+  defineKey(0x31, "*");
+}}
+          xywh {425 85 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label Ctrl
+          callback {{
+  defineKey(0x3A, "Control");
+}}
+          xywh {455 85 40 25} color 54 selection_color 53 labelsize 11 labelcolor 56
+        }
+        Fl_Button {} {
+          label RS
+          callback {{
+  defineKey(0x3F, "Run/Stop");
+}}
+          xywh {20 115 25 25} color 54 selection_color 53 labelsize 11 labelcolor 56
+        }
+        Fl_Button {} {
+          label Shf
+          callback {{
+  defineKey(0x0F, "Shift");
+}}
+          xywh {50 115 25 25} color 54 selection_color 53 labelsize 11 labelcolor 56
+        }
+        Fl_Button {} {
+          label A
+          callback {{
+  defineKey(0x0A, "A");
+}}
+          xywh {80 115 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label S
+          callback {{
+  defineKey(0x0D, "S");
+}}
+          xywh {110 115 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label D
+          callback {{
+  defineKey(0x12, "D");
+}}
+          xywh {140 115 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label F
+          callback {{
+  defineKey(0x15, "F");
+}}
+          xywh {170 115 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label G
+          callback {{
+  defineKey(0x1A, "G");
+}}
+          xywh {200 115 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label H
+          callback {{
+  defineKey(0x1D, "H");
+}}
+          xywh {230 115 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label J
+          callback {{
+  defineKey(0x22, "J");
+}}
+          xywh {260 115 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label K
+          callback {{
+  defineKey(0x25, "K");
+}}
+          xywh {290 115 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label L
+          callback {{
+  defineKey(0x2A, "L");
+}}
+          xywh {320 115 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label {:}
+          callback {{
+  defineKey(0x2D, ":");
+}}
+          xywh {350 115 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label {;}
+          callback {{
+  defineKey(0x32, ";");
+}}
+          xywh {380 115 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label Return
+          callback {{
+  defineKey(0x01, "Return");
+}}
+          xywh {410 115 55 25} color 54 selection_color 53 labelsize 11 labelcolor 56
+        }
+        Fl_Button {} {
+          label {C=}
+          callback {{
+  defineKey(0x3D, "C=");
+}}
+          xywh {20 145 25 25} color 54 selection_color 53 labelsize 11 labelcolor 56
+        }
+        Fl_Button {} {
+          label Shift
+          callback {{
+  defineKey(0x0F, "Shift");
+}}
+          xywh {50 145 40 25} color 54 selection_color 53 labelsize 11 labelcolor 56
+        }
+        Fl_Button {} {
+          label Z
+          callback {{
+  defineKey(0x0C, "Z");
+}}
+          xywh {95 145 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label X
+          callback {{
+  defineKey(0x17, "X");
+}}
+          xywh {125 145 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label C
+          callback {{
+  defineKey(0x14, "C");
+}}
+          xywh {155 145 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label V
+          callback {{
+  defineKey(0x1F, "V");
+}}
+          xywh {185 145 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label B
+          callback {{
+  defineKey(0x1C, "B");
+}}
+          xywh {215 145 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label N
+          callback {{
+  defineKey(0x27, "N");
+}}
+          xywh {245 145 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label M
+          callback {{
+  defineKey(0x24, "M");
+}}
+          xywh {275 145 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label {,}
+          callback {{
+  defineKey(0x2F, ",");
+}}
+          xywh {305 145 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label {.}
+          callback {{
+  defineKey(0x2C, ".");
+}}
+          xywh {335 145 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label {/}
+          callback {{
+  defineKey(0x37, "/");
+}}
+          xywh {365 145 25 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label Shift
+          callback {{
+  defineKey(0x0F, "Shift");
+}}
+          xywh {395 145 40 25} color 54 selection_color 53 labelsize 11 labelcolor 56
+        }
+        Fl_Button {} {
+          label Space
+          callback {{
+  defineKey(0x3C, "Space");
+}}
+          xywh {125 175 265 25} color 54 selection_color 53 labelcolor 56
+        }
+        Fl_Button {} {
+          label {@>}
+          callback {{
+  defineKey(0x33, "Right");
+}}
+          xywh {480 170 15 15} box ROUND_UP_BOX color 53 selection_color 52 labelsize 11 labelcolor 56
+        }
+        Fl_Button {} {
+          label {@8>}
+          callback {{
+  defineKey(0x2B, "Up");
+}}
+          xywh {465 155 15 15} box ROUND_UP_BOX color 53 selection_color 52 labelsize 11 labelcolor 56
+        }
+        Fl_Button {} {
+          label {@4>}
+          callback {{
+  defineKey(0x30, "Left");
+}}
+          xywh {450 170 15 15} box ROUND_UP_BOX color 53 selection_color 52 labelsize 11 labelcolor 56
+        }
+        Fl_Button {} {
+          label {@2>}
+          callback {{
+  defineKey(0x28, "Down");
+}}
+          xywh {465 185 15 15} box ROUND_UP_BOX color 53 selection_color 52 labelsize 11 labelcolor 56
+        }
+      }
+      Fl_Group {} {open
+        xywh {10 220 265 130} box THIN_UP_BOX
+      } {
+        Fl_Light_Button joystickEnableValuator {
+          label {Enable joystick}
+          callback {{
+  gui.config.joystick.enableJoystick = (o->value() != 0);
+  gui.config.joystickSettingsChanged = true;
+}}
+          tooltip {Check to enable use of external joysticks and gamepads} xywh {20 230 115 20} color 50 selection_color 3 labelsize 12
+        }
+        Fl_Value_Slider joystickThresholdValuator {
+          callback {{
+  gui.config.joystick.axisThreshold = o->value();
+  gui.config.joystickSettingsChanged = true;
+}}
+          tooltip {Joystick threshold (controls sensitivity)} xywh {145 230 120 20} type Horizontal color 47 selection_color 52 labelsize 12 align 4 minimum 0.01 maximum 0.99 value 0.5
+        }
+        Fl_Light_Button joystickEnablePWMValuator {
+          label {Enable PWM}
+          callback {{
+  gui.config.joystick.enablePWM = (o->value() != 0);
+  gui.config.joystickSettingsChanged = true;
+}}
+          tooltip {Emulate analogue joystick by pulse width modulation} xywh {20 260 115 20} color 50 selection_color 3 labelsize 12
+        }
+        Fl_Value_Slider joystickPWMFrequencyValuator {
+          callback {{
+  gui.config.joystick.pwmFrequency = o->value();
+  gui.config.joystickSettingsChanged = true;
+}}
+          tooltip {Pulse width modulation frequency in Hz} xywh {145 260 120 20} type Horizontal color 47 selection_color 52 labelsize 12 align 4 minimum 1 maximum 100 step 0.5 value 17.5
+        }
+        Fl_Light_Button joystickEnableAutoFireValuator {
+          label {Enable auto fire}
+          callback {{
+  gui.config.joystick.enableAutoFire = (o->value() != 0);
+  gui.config.joystickSettingsChanged = true;
+}}
+          xywh {20 290 115 20} color 50 selection_color 3 labelsize 12
+        }
+        Fl_Value_Slider joystickAutoFireFreqValuator {
+          callback {{
+  gui.config.joystick.autoFireFrequency = o->value();
+  gui.config.joystickSettingsChanged = true;
+}}
+          tooltip {Auto fire frequency in Hz} xywh {145 290 120 20} type Horizontal color 47 selection_color 52 labelsize 12 align 4 minimum 0.5 maximum 50 step 0.5 value 8
+        }
+        Fl_Value_Slider joystickAutoFirePWValuator {
+          callback {{
+  gui.config.joystick.autoFirePulseWidth = o->value();
+  gui.config.joystickSettingsChanged = true;
+}}
+          tooltip {Auto fire pulse width} xywh {145 320 120 20} type Horizontal color 47 selection_color 52 labelsize 12 align 4 minimum 0.01 maximum 0.99 value 0.5
+        }
+      }
+      Fl_Group {} {
+        label {Joystick 1} open
+        xywh {285 220 105 130} box THIN_UP_BOX align 17
+      } {
+        Fl_Box {} {
+          xywh {290 245 95 95} box OVAL_FRAME color 56
+        }
+        Fl_Button {} {
+          label {@>}
+          callback {{
+  defineKey(0x53, "Joy 1 right");
+}}
+          xywh {355 283 20 20} box ROUND_UP_BOX color 50 selection_color 51 labelsize 12
+        }
+        Fl_Button {} {
+          label {@8>}
+          callback {{
+  defineKey(0x50, "Joy 1 up");
+}}
+          xywh {328 255 20 20} box ROUND_UP_BOX color 50 selection_color 51 labelsize 12
+        }
+        Fl_Button {} {
+          label {@4>}
+          callback {{
+  defineKey(0x52, "Joy 1 left");
+}}
+          xywh {300 283 20 20} box ROUND_UP_BOX color 50 selection_color 51 labelsize 12
+        }
+        Fl_Button {} {
+          label {@2>}
+          callback {{
+  defineKey(0x51, "Joy 1 down");
+}}
+          xywh {328 310 20 20} box ROUND_UP_BOX color 50 selection_color 51 labelsize 12
+        }
+        Fl_Button {} {
+          label Fire
+          callback {{
+  defineKey(0x56, "Joy 1 fire");
+}}
+          xywh {325 280 25 25} box ROUND_UP_BOX color 80 selection_color 88 labelsize 11 labelcolor 255
+        }
+      }
+      Fl_Group {} {
+        label {Joystick 2} open
+        xywh {400 220 105 130} box THIN_UP_BOX align 17
+      } {
+        Fl_Box {} {
+          xywh {405 245 95 95} box OVAL_FRAME color 56
+        }
+        Fl_Button {} {
+          label {@>}
+          callback {{
+  defineKey(0x4B, "Joy 2 right");
+}}
+          xywh {470 283 20 20} box ROUND_UP_BOX color 50 selection_color 51 labelsize 12
+        }
+        Fl_Button {} {
+          label {@8>}
+          callback {{
+  defineKey(0x48, "Joy 2 up");
+}}
+          xywh {443 255 20 20} box ROUND_UP_BOX color 50 selection_color 51 labelsize 12
+        }
+        Fl_Button {} {
+          label {@4>}
+          callback {{
+  defineKey(0x4A, "Joy 2 left");
+}}
+          xywh {415 283 20 20} box ROUND_UP_BOX color 50 selection_color 51 labelsize 12
+        }
+        Fl_Button {} {
+          label {@2>}
+          callback {{
+  defineKey(0x49, "Joy 2 down");
+}}
+          xywh {443 310 20 20} box ROUND_UP_BOX color 50 selection_color 51 labelsize 12
+        }
+        Fl_Button {} {
+          label Fire
+          callback {{
+  defineKey(0x4F, "Joy 2 fire");
+}}
+          xywh {440 280 25 25} box ROUND_UP_BOX color 80 selection_color 88 labelsize 11 labelcolor 255
+        }
+      }
+      Fl_Button {} {
+        label Apply
+        callback {{
+  try {
+    gui.applyEmulatorConfiguration();
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+}}
+        xywh {370 360 60 25} selection_color 50
+      }
+      Fl_Button {} {
+        label OK
+        callback {{
+  try {
+    gui.applyEmulatorConfiguration();
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+  window->hide();
+}}
+        xywh {440 360 60 25} selection_color 50
+      }
+      Fl_Button {} {
+        label Save
+        callback {{
+  try {
+    std::string tmp;
+    if (gui.browseFile(tmp, gui.configDirectory,
+                       "Configuration files\\t*.cfg",
+                       Fl_Native_File_Chooser::BROWSE_SAVE_FILE,
+                       "Save keyboard configuration as ASCII text file")) {
+      Plus4Emu::ConfigurationDB tmpCfg;
+      char    cvName[16];
+      for (int i = 0; i < 256; i++) {
+        std::sprintf(&(cvName[0]), "keyboard.%02X.%d",
+                     (unsigned int) (i >> 1), int(i & 1));
+        tmpCfg.createKey(&(cvName[0]), gui.config.keyboard[i >> 1][i & 1]);
+      }
+      gui.config.joystick.registerConfigurationVariables(tmpCfg);
+      tmpCfg.saveState(tmp.c_str(), false);
+    }
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+}}
+        xywh {170 360 60 25} selection_color 50
+      }
+      Fl_Button {} {
+        label Load
+        callback {{
+  gui.menuCallback_File_LoadConfig(o, (void *) &gui);
+}}
+        xywh {240 360 60 25} selection_color 50
+      }
+      Fl_Button {} {
+        label {Clear all}
+        callback {{
+  for (int i = 0; i < 256; i++)
+    setKeyMap(i, -1);
+}}
+        xywh {15 360 80 25} selection_color 50
+      }
+    }
+    Fl_Window defineKeyWindow {
+      label {Define key} open
+      xywh {182 585 220 120} type Double color 48
+      class Plus4EmuGUI_KbdDefineWindow visible
+    } {
+      Fl_Box {} {
+        xywh {10 10 200 100} box THIN_UP_BOX
+      }
+      Fl_Box defineKeyWindowText {
+        xywh {15 15 190 90} align 144
+      }
+    }
+  }
+  Function {~Plus4EmuGUI_KbdConfigWindow()} {open
+  } {
+    code {{
+  if (defineKeyWindow->shown() || window->shown()) {
+    if (defineKeyWindow->shown())
+      defineKeyWindow->hide();
+    if (window->shown())
+      window->hide();
+    Fl::wait(0.0);
+  }
+  gui.joystickInput.unlock();
+  delete defineKeyWindow;
+  delete window;
+}} {}
+  }
+  Function {show()} {open return_type void
+  } {
+    code {{
+  if (!window->shown())
+    updateWindow();
+  window->show();
+}} {}
+  }
+  Function {shown()} {open return_type bool
+  } {
+    code {{
+  return bool(window->shown());
+}} {}
+  }
+  Function {hide()} {open return_type void
+  } {
+    code {{
+  if (defineKeyWindow->shown())
+    defineKeyWindow->hide();
+  if (window->shown())
+    window->hide();
+  gui.joystickInput.unlock();
+}} {}
+  }
+  Function {setKeyMap(int n, int keyCode)} {open private return_type void
+  } {
+    code {{
+  int   oldKey = gui.config.keyboard[n >> 1][n & 1];
+  if (keyCode >= 0) {
+    keyCode = keyCode & 0xFFFF;
+    for (int i = 0; i < 256; i++) {
+      if (gui.config.keyboard[i >> 1][i & 1] == keyCode && i != n)
+        gui.config.keyboard[i >> 1][i & 1] = -1;
+    }
+    gui.config.keyboard[n >> 1][n & 1] = keyCode;
+  }
+  else
+    gui.config.keyboard[n >> 1][n & 1] = -1;
+  if (gui.config.keyboard[n >> 1][n & 1] != oldKey)
+    gui.config.keyboardMapChanged = true;
+}} {}
+  }
+  Function {defineKey(int n, const char *keyName)} {open private return_type void
+  } {
+    code {{
+  char    buf[256];
+  std::sprintf(&(buf[0]), "Press key for '%s', F9 for no key, F10 or F11 to keep "
+                          "the original key, or F12 to close this window", keyName);
+  defineKeyWindowText->copy_label(&(buf[0]));
+  defineKeyWindow->set_modal();
+  defineKeyWindow->show();
+  defineKeyWindow->keyCode_ = -1;
+  gui.joystickInput.lock();
+  gui.joystickInput.flushEvents();
+  do {
+    Fl::wait(0.05);
+    int   tmp = gui.joystickInput.getEvent(true, false);
+    if (tmp > 0)
+      defineKeyWindow->keyCode_ = tmp;
+  } while (defineKeyWindow->keyCode_ < 0 && defineKeyWindow->shown());
+  gui.joystickInput.unlock();
+  defineKeyWindowText->label("");
+  if (!defineKeyWindow->shown())
+    return;
+  if (defineKeyWindow->keyCode_ == (FL_F + 12)) {
+    defineKeyWindow->hide();
+    return;
+  }
+  if (defineKeyWindow->keyCode_ == (FL_F + 9))
+    setKeyMap(n << 1, -1);
+  else if (!(defineKeyWindow->keyCode_ == (FL_F + 10) ||
+             defineKeyWindow->keyCode_ == (FL_F + 11)))
+    setKeyMap(n << 1, defineKeyWindow->keyCode_);
+  std::sprintf(&(buf[0]),
+               "Press alternate key for '%s', F9 for no key, F10 or "
+               "F11 to keep the original key, or F12 to close this window", keyName);
+  defineKeyWindowText->copy_label(&(buf[0]));
+  defineKeyWindow->keyCode_ = -1;
+  gui.joystickInput.lock();
+  gui.joystickInput.flushEvents();
+  do {
+    Fl::wait(0.05);
+    int   tmp = gui.joystickInput.getEvent(true, false);
+    if (tmp > 0)
+      defineKeyWindow->keyCode_ = tmp;
+  } while (defineKeyWindow->keyCode_ < 0 && defineKeyWindow->shown());
+  gui.joystickInput.unlock();
+  defineKeyWindowText->label("");
+  if (!defineKeyWindow->shown())
+    return;
+  if (defineKeyWindow->keyCode_ == (FL_F + 12)) {
+    defineKeyWindow->hide();
+    return;
+  }
+  if (defineKeyWindow->keyCode_ == (FL_F + 9))
+    setKeyMap((n << 1) + 1, -1);
+  else if (!(defineKeyWindow->keyCode_ == (FL_F + 10) ||
+             defineKeyWindow->keyCode_ == (FL_F + 11)))
+    setKeyMap((n << 1) + 1, defineKeyWindow->keyCode_);
+  defineKeyWindow->hide();
+}} {}
+  }
+  Function {updateWindow()} {open return_type void
+  } {
+    code {{
+  joystickEnableValuator->value(gui.config.joystick.enableJoystick ? 1 : 0);
+  joystickThresholdValuator->value(gui.config.joystick.axisThreshold);
+  joystickEnablePWMValuator->value(gui.config.joystick.enablePWM ? 1 : 0);
+  joystickPWMFrequencyValuator->value(gui.config.joystick.pwmFrequency);
+  joystickEnableAutoFireValuator->value(gui.config.joystick.enableAutoFire ? 1 : 0);
+  joystickAutoFireFreqValuator->value(gui.config.joystick.autoFireFrequency);
+  joystickAutoFirePWValuator->value(gui.config.joystick.autoFirePulseWidth);
+}} {}
+  }
+} 

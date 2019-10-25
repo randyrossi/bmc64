@@ -1,0 +1,129 @@
+diff -rNU4 fltk-1.3.4-1.old/FL/Fl_Menu_Item.H fltk-1.3.4-1/FL/Fl_Menu_Item.H
+--- fltk-1.3.4-1.old/FL/Fl_Menu_Item.H	2014-09-06 21:03:43.000000000 +0200
++++ fltk-1.3.4-1/FL/Fl_Menu_Item.H	2016-09-09 19:17:25.358861189 +0200
+@@ -242,9 +242,9 @@
+     The argument \p is cast to void* and stored as the userdata()
+     for the menu item's callback function.
+     \see Fl_Callback_p Fl_MenuItem::callback() const
+    */
+-  void callback(Fl_Callback1*c, long p=0) {callback_=(Fl_Callback*)c; user_data_=(void*)(fl_intptr_t)p;}
++  void callback(Fl_Callback1*c, fl_intptr_t p=0) {callback_=(Fl_Callback*)c; user_data_=(void*)p;}
+ 
+   /**
+     Gets the user_data() argument that is sent to the callback function.
+   */
+@@ -258,17 +258,17 @@
+     For convenience you can also define the callback as taking a long
+     argument.  This method casts the stored userdata() argument to long
+     and returns it as a \e long value.
+   */
+-  long argument() const {return (long)(fl_intptr_t)user_data_;}
++  fl_intptr_t argument() const {return (fl_intptr_t)user_data_;}
+   /**
+     Sets the user_data() argument that is sent to the callback function.
+     For convenience you can also define the callback as taking a long
+     argument.  This method casts the given argument \p v to void*
+     and stores it in the menu item's userdata() member.
+     This may not be portable to some machines.
+   */
+-  void argument(long v) {user_data_ = (void*)(fl_intptr_t)v;}
++  void argument(fl_intptr_t v) {user_data_ = (void*)v;}
+ 
+   /** Gets what key combination shortcut will trigger the menu item. */
+   int shortcut() const {return shortcut_;}
+ 
+@@ -396,9 +396,9 @@
+     given value \p arg. long \p arg is cast to void* when calling
+     the callback.
+     You must first check that callback() is non-zero before calling this.
+   */
+-  void do_callback(Fl_Widget* o,long arg) const {callback_(o, (void*)(fl_intptr_t)arg);}
++  void do_callback(Fl_Widget* o,fl_intptr_t arg) const {callback_(o, (void*)arg);}
+ 
+   // back-compatibility, do not use:
+ 
+   /** back compatibility only \deprecated. */
+diff -rNU4 fltk-1.3.4-1.old/FL/Fl_Widget.H fltk-1.3.4-1/FL/Fl_Widget.H
+--- fltk-1.3.4-1.old/FL/Fl_Widget.H	2014-09-08 10:55:49.000000000 +0200
++++ fltk-1.3.4-1/FL/Fl_Widget.H	2016-09-09 19:18:23.929051355 +0200
+@@ -51,9 +51,9 @@
+ typedef Fl_Callback* Fl_Callback_p; // needed for BORLAND
+ /** One parameter callback type definition passing only the widget */
+ typedef void (Fl_Callback0)(Fl_Widget*);
+ /** Callback type definition passing the widget and a long data value */
+-typedef void (Fl_Callback1)(Fl_Widget*, long);
++typedef void (Fl_Callback1)(Fl_Widget*, fl_intptr_t);
+ 
+ /** This struct stores all information for a text or mixed graphics label.
+ 
+     \todo There is an aspiration that the Fl_Label type will become a widget by itself.
+@@ -583,9 +583,9 @@
+       Each widget has a single callback.
+       \param[in] cb new callback
+       \param[in] p user data
+    */
+-  void callback(Fl_Callback1*cb, long p=0) {callback_=(Fl_Callback*)cb; user_data_=(void*)(fl_intptr_t)p;}
++  void callback(Fl_Callback1*cb, fl_intptr_t p=0) {callback_=(Fl_Callback*)cb; user_data_=(void*)p;}
+ 
+   /** Gets the user data for this widget.
+       Gets the current user data (void *) argument that is passed to the callback function.
+       \return user data as a pointer
+@@ -601,15 +601,15 @@
+   /** Gets the current user data (long) argument that is passed to the callback function.
+       \todo The user data value must be implemented using \em intptr_t or similar
+       to avoid 64-bit machine incompatibilities.
+    */
+-  long argument() const {return (long)(fl_intptr_t)user_data_;}
++  fl_intptr_t argument() const {return (fl_intptr_t)user_data_;}
+ 
+   /** Sets the current user data (long) argument that is passed to the callback function.
+       \todo The user data value must be implemented using \em intptr_t or similar
+       to avoid 64-bit machine incompatibilities.
+    */
+-  void argument(long v) {user_data_ = (void*)(fl_intptr_t)v;}
++  void argument(fl_intptr_t v) {user_data_ = (void*)v;}
+ 
+   /** Returns the conditions under which the callback is called.
+ 
+       You can set the flags with when(uchar), the default value is
+@@ -865,9 +865,9 @@
+       \param[in] o call the callback with \p o as the widget argument
+       \param[in] arg call the callback with \p arg as the user data argument
+       \see callback()
+    */
+-  void do_callback(Fl_Widget* o,long arg) {do_callback(o,(void*)(fl_intptr_t)arg);}
++  void do_callback(Fl_Widget* o,fl_intptr_t arg) {do_callback(o,(void*)arg);}
+ 
+   // Causes a widget to invoke its callback function with arbitrary arguments.
+   // Documentation and implementation in Fl_Widget.cxx
+   void do_callback(Fl_Widget* o,void* arg=0);
+diff -rNU4 fltk-1.3.4-1.old/FL/forms.H fltk-1.3.4-1/FL/forms.H
+--- fltk-1.3.4-1.old/FL/forms.H	2014-10-29 21:17:38.000000000 +0100
++++ fltk-1.3.4-1/FL/forms.H	2016-09-09 19:18:59.912553222 +0200
+@@ -217,10 +217,10 @@
+   *x = o->x(); *y = o->y(); *w = o->w(); *h = o->h();}
+ inline void fl_get_object_position(Fl_Widget* o,int*x,int*y) {
+   *x = o->x(); *y = o->y();}
+ 
+-typedef void (*Forms_CB)(Fl_Widget*, long);
+-inline void fl_set_object_callback(Fl_Widget*o,Forms_CB c,long a) {o->callback(c,a);}
++typedef void (*Forms_CB)(Fl_Widget*, fl_intptr_t);
++inline void fl_set_object_callback(Fl_Widget*o,Forms_CB c,fl_intptr_t a) {o->callback(c,a);}
+ #define fl_set_call_back      fl_set_object_callback
+ inline void fl_call_object_callback(Fl_Widget* o) {o->do_callback();}
+ inline void fl_trigger_object(Fl_Widget* o) {o->do_callback();}
+ inline void fl_set_object_return(Fl_Widget* o, int v) {
+diff -rNU4 fltk-1.3.4-1.old/src/fl_ask.cxx fltk-1.3.4-1/src/fl_ask.cxx
+--- fltk-1.3.4-1.old/src/fl_ask.cxx	2014-08-21 14:13:47.000000000 +0200
++++ fltk-1.3.4-1/src/fl_ask.cxx	2016-09-09 19:20:11.968567569 +0200
+@@ -65,9 +65,9 @@
+ // callback (closing the window with the close button or menu).
+ // The first argument (Fl_Widget *) can either be an Fl_Button*
+ // pointer to one of the buttons or an Fl_Window* pointer to the
+ // message window (message_form).
+-static void button_cb(Fl_Widget *, long val) {
++static void button_cb(Fl_Widget *, fl_intptr_t val) {
+   ret_val = (int) val;
+   message_form->hide();
+ }
+ 

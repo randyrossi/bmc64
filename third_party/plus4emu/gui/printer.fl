@@ -1,0 +1,314 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0109 
+do_not_include_H_from_C 
+header_name {.hpp} 
+code_name {.cpp}
+decl {\#include "gui.hpp"} {selected
+} 
+
+decl {\#include <FL/Fl_Box.H>} {} 
+
+decl {\#include <FL/fl_draw.H>} {} 
+
+decl {\#include "pngwrite.hpp"} {} 
+
+class Plus4EmuGUI_PrinterDisplay {open : {public Fl_Box}
+} {
+  decl {Plus4EmuGUI_PrinterWindow *window;} {}
+  Function {Plus4EmuGUI_PrinterDisplay(int xx, int yy, int ww, int hh, const char *ll = 0) : Fl_Box(xx, yy, ww, hh, ll), window((Plus4EmuGUI_PrinterWindow *) 0)} {open
+  } {
+    code {{
+}} {}
+  }
+  Function {~Plus4EmuGUI_PrinterDisplay()} {open return_type virtual
+  } {
+    code {{
+}} {}
+  }
+  Function {draw()} {open protected return_type {virtual void}
+  } {
+    code {{
+  if (window)
+    window->drawPrinterOutput();
+  else
+    fl_rectf(this->x(), this->y(), this->w(), this->h(), 0, 0, 0);
+}} {}
+  }
+  Function {setWindow(Plus4EmuGUI_PrinterWindow *window_)} {open return_type void
+  } {
+    code {{
+  window = window_;
+}} {}
+  }
+} 
+
+class Plus4EmuGUI_PrinterWindow {open
+} {
+  decl {Plus4EmuGUI& gui;} {}
+  decl {Plus4Emu::Timer updateTimer;} {}
+  decl {int prvHeadPosX;} {}
+  decl {int prvHeadPosY;} {}
+  decl {uint8_t prvLEDState;} {}
+  decl {bool vmLockTimeoutFlag;} {}
+  Function {Plus4EmuGUI_PrinterWindow(Plus4EmuGUI& gui_) : gui(gui_), updateTimer(), prvHeadPosX(-2), prvHeadPosY(-2), prvLEDState(0x00), vmLockTimeoutFlag(false)} {open
+  } {
+    Fl_Window window {
+      label Printer
+      callback {{
+  window->hide();
+}} open
+      xywh {231 97 745 555} type Double color 48 visible
+    } {
+      Fl_Scroll printerDisplayScroll {open
+        xywh {10 10 725 500} box DOWN_BOX color 47
+      } {
+        Fl_Box printerDisplay {
+          xywh {13 12 700 990} box FLAT_BOX color 47
+          class Plus4EmuGUI_PrinterDisplay
+        }
+      }
+      Fl_Box printerLEDDisplay {
+        xywh {20 525 15 15} box ROUND_DOWN_BOX color 56
+      }
+      Fl_Light_Button {} {
+        label {Form feed}
+        callback {{
+  try {
+    if (gui.lockVMThread()) {
+      try {
+        gui.vm.setPrinterFormFeedOn(o->value() != 0);
+      }
+      catch (...) {
+        gui.unlockVMThread();
+        throw;
+      }
+      gui.unlockVMThread();
+    }
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+}}
+        xywh {55 520 100 25} selection_color 3
+      }
+      Fl_Button {} {
+        label {Save to file}
+        callback {{
+  savePrinterOutput();
+}}
+        xywh {165 520 100 25} selection_color 50
+      }
+      Fl_Button {} {
+        label Clear
+        callback {{
+  try {
+    if (gui.lockVMThread()) {
+      try {
+        gui.vm.clearPrinterOutput();
+        printerDisplayScroll->position(printerDisplayScroll->xposition(), 0);
+        printerDisplayScroll->redraw();
+      }
+      catch (...) {
+        gui.unlockVMThread();
+        throw;
+      }
+      gui.unlockVMThread();
+    }
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+}}
+        xywh {418 520 80 25} selection_color 50
+      }
+      Fl_Button {} {
+        label Close
+        callback {{
+  window->hide();
+}}
+        xywh {650 520 80 25} selection_color 50
+      }
+    }
+    code {{
+  printerDisplay->setWindow(this);
+}} {}
+  }
+  Function {~Plus4EmuGUI_PrinterWindow()} {open
+  } {
+    code {{
+  delete window;
+}} {}
+  }
+  Function {show()} {open return_type void
+  } {
+    code {{
+  window->show();
+}} {}
+  }
+  Function {hide()} {open return_type void
+  } {
+    code {{
+  window->hide();
+}} {}
+  }
+  Function {shown()} {open return_type bool
+  } {
+    code {{
+  return bool(window->shown());
+}} {}
+  }
+  Function {updateWindow(const Plus4Emu::VMThread::VMThreadStatus& vmThreadStatus)} {open return_type void
+  } {
+    code {{
+  if (vmThreadStatus.printerHeadPositionX == prvHeadPosX &&
+      vmThreadStatus.printerHeadPositionY == prvHeadPosY &&
+      vmThreadStatus.printerLEDState == prvLEDState &&
+      !(vmThreadStatus.printerOutputChanged || vmLockTimeoutFlag))
+    return;
+  if (updateTimer.getRealTime() < (vmLockTimeoutFlag ? 0.75 : 0.05))
+    return;
+  updateTimer.reset();
+  if (vmThreadStatus.printerLEDState == 0x00)
+    printerLEDDisplay->color(FL_BLACK);
+  else
+    printerLEDDisplay->color(Fl_Color(128));
+  printerLEDDisplay->redraw();
+  prvLEDState = vmThreadStatus.printerLEDState;
+  if (vmThreadStatus.printerOutputChanged ||
+      vmThreadStatus.printerHeadPositionX != prvHeadPosX ||
+      vmThreadStatus.printerHeadPositionY != prvHeadPosY ||
+      vmLockTimeoutFlag) {
+    int     scrollPosY = printerDisplayScroll->yposition();
+    if ((vmThreadStatus.printerHeadPositionY - scrollPosY) > 488) {
+      scrollPosY = vmThreadStatus.printerHeadPositionY - 488;
+      if (scrollPosY > 494)
+        scrollPosY = 494;
+      printerDisplayScroll->position(printerDisplayScroll->xposition(),
+                                     scrollPosY);
+      printerDisplayScroll->redraw();
+    }
+    printerDisplay->redraw();
+  }
+}} {}
+  }
+  Function {drawPrinterOutput()} {open return_type void
+  } {
+    code {{
+  if (gui.vmThread.lock(vmLockTimeoutFlag ? 75 : 250) == 0) {
+    vmLockTimeoutFlag = false;
+    try {
+      const uint8_t *pageBuf = (uint8_t *) 0;
+      int     pageWidth = 0;
+      int     pageHeight = 0;
+      gui.vm.getPrinterOutput(pageBuf, pageWidth, pageHeight);
+      int     headPosX = -1;
+      int     headPosY = -1;
+      gui.vm.getPrinterHeadPosition(headPosX, headPosY);
+      if (pageWidth <= 0 || pageHeight <= 0) {
+        // printer emulation is not enabled
+        fl_color(Fl_Color(47));
+        fl_rectf(printerDisplay->x(), printerDisplay->y(),
+                 printerDisplay->w(), printerDisplay->h());
+      }
+      else {
+        int     x0 =
+            printerDisplay->x() + ((printerDisplay->w() - pageWidth) / 2);
+        int     y0 = 12;
+        int     x1 = x0 + pageWidth;
+        int     y1 = 508;
+        int     y2 = 12 - printerDisplay->y();
+        if ((y2 + 496) > pageHeight)
+          y1 = y1 - ((y2 + 496) - pageHeight);
+        if (y1 < y0)
+          y1 = y0;
+        if (y1 > y0) {
+          if (x0 > printerDisplay->x()) {
+            fl_color(Fl_Color(47));
+            fl_rectf(printerDisplay->x(), y0,
+                     (x0 - printerDisplay->x()), (y1 - y0));
+          }
+          if (x1 < (printerDisplay->x() + printerDisplay->w())) {
+            fl_color(Fl_Color(47));
+            fl_rectf(x1, y0,
+                     ((printerDisplay->x() + printerDisplay->w()) - x1),
+                     (y1 - y0));
+          }
+          fl_draw_image_mono((const unsigned char *) &(pageBuf[y2 * pageWidth]),
+                             x0, y0, (x1 - x0), (y1 - y0));
+        }
+        if (y1 < 508) {
+          fl_color(Fl_Color(47));
+          fl_rectf(printerDisplay->x(), y1, printerDisplay->w(), (508 - y1));
+        }
+        if (headPosX >= 0 && headPosX < pageWidth &&
+            headPosY >= 0 && headPosY < pageHeight) {
+          y0 = headPosY + printerDisplay->y();
+          y1 = y0 + 8;
+          if (y0 < 12)
+            y0 = 12;
+          if (y1 > 508)
+            y1 = 508;
+          if (y1 > y0) {
+            fl_color(FL_BLUE);
+            fl_line(x0 + headPosX, y0, x0 + headPosX, y1 - 1);
+          }
+        }
+      }
+      prvHeadPosX = headPosX;
+      prvHeadPosY = headPosY;
+      gui.vm.clearPrinterOutputChangedFlag();
+    }
+    catch (...) {
+    }
+    gui.vmThread.unlock();
+  }
+  else {
+    vmLockTimeoutFlag = true;
+    fl_color(FL_BLACK);
+    fl_rectf(printerDisplay->x(), 12, printerDisplay->w(), 496);
+  }
+}} {}
+  }
+  Function {savePrinterOutput()} {open private return_type void
+  } {
+    code {{
+  try {
+    std::string fName = gui.screenshotFileName;
+    if (!gui.browseFile(fName, gui.screenshotDirectory, "PNG files\\t*.png",
+                        Fl_Native_File_Chooser::BROWSE_SAVE_FILE,
+                        "Save printer output"))
+      return;
+    gui.screenshotFileName = fName;
+    if (gui.lockVMThread()) {
+      try {
+        const uint8_t *buf = (uint8_t *) 0;
+        int     w_ = 0;
+        int     h_ = 0;
+        gui.vm.getPrinterOutput(buf, w_, h_);
+        if (buf == (uint8_t *) 0 || w_ <= 0 || h_ <= 0)
+          throw Plus4Emu::Exception("printer emulation is not enabled");
+        window->label("Saving PNG file...");
+        window->cursor(FL_CURSOR_WAIT);
+        Fl::redraw();
+        // should actually use Fl::flush() here, but only Fl::wait() does
+        // correctly update the display
+        Fl::wait(0.0);
+        Plus4Emu::writePNGImage(fName.c_str(), buf, w_, h_, 256, true, 32768);
+      }
+      catch (...) {
+        gui.unlockVMThread();
+        window->label("Printer");
+        window->cursor(FL_CURSOR_DEFAULT);
+        throw;
+      }
+      gui.unlockVMThread();
+      window->label("Printer");
+      window->cursor(FL_CURSOR_DEFAULT);
+    }
+  }
+  catch (std::exception& e) {
+    gui.errorMessage(e.what());
+  }
+}} {}
+  }
+} 
