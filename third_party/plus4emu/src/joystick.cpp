@@ -22,7 +22,9 @@
 #include "cfg_db.hpp"
 #include "joystick.hpp"
 
+#ifdef HAVE_SDL_H
 #include <SDL/SDL.h>
+#endif
 #include <cmath>
 
 namespace Plus4Emu {

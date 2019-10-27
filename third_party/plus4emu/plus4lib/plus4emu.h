@@ -51,7 +51,11 @@ typedef struct Plus4VM_ Plus4VM;
 #  endif
 #elif defined(__linux) || defined(__linux__)
 #  define PLUS4EMU_EXPORT   __attribute__ ((__visibility__ ("default")))
+#else
+   // Added for BMC64
+#  define PLUS4EMU_EXPORT   __attribute__ ((__visibility__ ("default")))
 #endif
+
 
 #ifdef __cplusplus
 extern "C" {

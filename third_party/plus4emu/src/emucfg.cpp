@@ -21,7 +21,6 @@
 #include "cfg_db.hpp"
 #include "emucfg.hpp"
 #include "system.hpp"
-#include "gldisp.hpp"
 
 template <typename T>
 static void configChangeCallback(void *userData,

@@ -27,11 +27,13 @@
 #  include <windef.h>
 #  include <winbase.h>
 #else
-#  include <pthread.h>
+//#  include <pthread.h>
+#  include <assert.h>
 #endif
 
 namespace Plus4Emu {
 
+#ifdef NEED_THREAD_LOCK
   class ThreadLock {
    private:
     struct ThreadLock_ {
@@ -59,6 +61,7 @@ namespace Plus4Emu {
     bool wait(size_t t);
     void notify();
   };
+#endif
 
   class Thread {
    private:
@@ -66,10 +69,10 @@ namespace Plus4Emu {
     HANDLE    thread_;
     static unsigned int __stdcall threadRoutine_(void *userData);
 #else
-    pthread_t thread_;
+    //pthread_t thread_;
     static void * threadRoutine_(void *userData);
 #endif
-    ThreadLock  threadLock_;
+    //ThreadLock  threadLock_;
     bool    isJoined_;
    protected:
     /*!
@@ -81,7 +84,8 @@ namespace Plus4Emu {
      */
     inline void wait()
     {
-      threadLock_.wait();
+      //threadLock_.wait();
+      assert(false);
     }
     /*!
      * Wait until start() is called by another thread (return value = true),
@@ -89,7 +93,9 @@ namespace Plus4Emu {
      */
     inline bool wait(size_t t)
     {
-      return threadLock_.wait(t);
+      assert(false);
+      return false;
+      //return threadLock_.wait(t);
     }
    public:
     Thread();
@@ -100,7 +106,8 @@ namespace Plus4Emu {
      */
     inline void start()
     {
-      threadLock_.notify();
+      assert(false);
+      //threadLock_.notify();
     }
     /*!
      * Wait until the child thread finishes (implies calling start() first,
@@ -115,7 +122,7 @@ namespace Plus4Emu {
 #ifdef WIN32
       CRITICAL_SECTION  mutex_;
 #else
-      pthread_mutex_t   mutex_;
+      //pthread_mutex_t   mutex_;
 #endif
       long    refCnt_;
     };
@@ -130,7 +137,8 @@ namespace Plus4Emu {
 #ifdef WIN32
       EnterCriticalSection(&(m->mutex_));
 #else
-      pthread_mutex_lock(&(m->mutex_));
+      //pthread_mutex_lock(&(m->mutex_));
+      assert(false);
 #endif
     }
     PLUS4EMU_INLINE void unlock()
@@ -138,7 +146,8 @@ namespace Plus4Emu {
 #ifdef WIN32
       LeaveCriticalSection(&(m->mutex_));
 #else
-      pthread_mutex_unlock(&(m->mutex_));
+      //pthread_mutex_unlock(&(m->mutex_));
+      assert(false);
 #endif
     }
   };

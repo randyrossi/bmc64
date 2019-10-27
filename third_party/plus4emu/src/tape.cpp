@@ -23,6 +23,7 @@
 #include "fileio.hpp"
 #include <cmath>
 #include <sndfile.h>
+#include "fileno_wrapper.h"
 
 static const char *c16TAPFileMagic = "C16-TAPE-RAW";
 
@@ -1011,7 +1012,7 @@ namespace Plus4Emu {
 #ifdef WIN32
              _fileno(f),
 #else
-             fileno(f),
+             plus4_fileno(f),
 #endif
              (isReadOnly ? SFM_READ : SFM_RDWR), &sfinfo, SF_FALSE);
     if (!sf)

@@ -28,7 +28,7 @@
 #else
 #  include <sys/time.h>
 #  include <unistd.h>
-#  include <pthread.h>
+//#  include <pthread.h>
 #  if defined(__linux) || defined(__linux__)
 #    include <sys/resource.h>
 #  endif
@@ -40,6 +40,7 @@
 
 namespace Plus4Emu {
 
+#ifdef NEED_THREAD_LOCK
   ThreadLock::ThreadLock(bool isSignaled)
   {
     st = new ThreadLock_;
@@ -150,6 +151,7 @@ namespace Plus4Emu {
     pthread_mutex_unlock(&(st->m));
 #endif
   }
+#endif
 
 #ifdef WIN32
   unsigned int __stdcall Thread::threadRoutine_(void *userData)
@@ -163,14 +165,14 @@ namespace Plus4Emu {
   void * Thread::threadRoutine_(void *userData)
   {
     Thread  *p = reinterpret_cast<Thread *>(userData);
-    p->threadLock_.wait();
+    //p->threadLock_.wait();
     p->run();
     return (void *) 0;
   }
 #endif
 
   Thread::Thread()
-    : threadLock_(false),
+    : //threadLock_(false),
       isJoined_(false)
   {
 #ifdef WIN32
@@ -179,9 +181,9 @@ namespace Plus4Emu {
     if (!thread_)
       throw std::bad_alloc();
 #else
-    if (pthread_create(&thread_, (pthread_attr_t *) 0,
-                       &Thread::threadRoutine_, this) != 0)
-      throw std::bad_alloc();
+    //if (pthread_create(&thread_, (pthread_attr_t *) 0,
+    //                   &Thread::threadRoutine_, this) != 0)
+    //  throw std::bad_alloc();
 #endif
   }
 
@@ -198,8 +200,9 @@ namespace Plus4Emu {
       WaitForSingleObject(thread_, INFINITE);
       CloseHandle(thread_);
 #else
-      void  *dummy;
-      pthread_join(thread_, &dummy);
+      assert(false);
+      //void  *dummy;
+      //pthread_join(thread_, &dummy);
 #endif
       isJoined_ = true;
     }
@@ -213,14 +216,14 @@ namespace Plus4Emu {
 #ifdef WIN32
       InitializeCriticalSection(&(m->mutex_));
 #else
-      pthread_mutexattr_t   attr;
-      if (pthread_mutexattr_init(&attr) != 0)
-        throw std::bad_alloc();
-      pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-      int   err = pthread_mutex_init(&(m->mutex_), &attr);
-      pthread_mutexattr_destroy(&attr);
-      if (err)
-        throw std::bad_alloc();
+      //pthread_mutexattr_t   attr;
+      //if (pthread_mutexattr_init(&attr) != 0)
+      //  throw std::bad_alloc();
+      //pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+      //int   err = pthread_mutex_init(&(m->mutex_), &attr);
+      //pthread_mutexattr_destroy(&attr);
+      //if (err)
+      // throw std::bad_alloc();
 #endif
     }
     catch (...) {
@@ -241,7 +244,7 @@ namespace Plus4Emu {
 #ifdef WIN32
       DeleteCriticalSection(&(m->mutex_));
 #else
-      pthread_mutex_destroy(&(m->mutex_));
+      //pthread_mutex_destroy(&(m->mutex_));
 #endif
       delete m;
     }
