@@ -24,16 +24,12 @@
  *
  */
 
-#ifndef VICE_CIRCLE_H
-#define VICE_CIRCLE_H
+#ifndef EMU_COMMON_H
+#define EMU_COMMON_H
 
-// The way we are organized for the time being is
-// for circle to embed vice.  This file defines the
-// types circle layer needs to know about to
-// give the vice layer what it needs and also the
-// functions circle layer need to provide for vice to
-// call back into it.  Vice types/includes should not be
-// added here.
+// This is an interface layer describing both functions
+// the kernel needs to invoke on the emulator and for the
+// emulator to use some facilities provided by the kernel.
 
 #include <sys/types.h>
 

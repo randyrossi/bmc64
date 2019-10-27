@@ -21,7 +21,7 @@
 #include <string.h>
 
 extern "C" {
-#include "third_party/vice-3.3/src/arch/raspi/circle.h"
+#include "third_party/common/circle.h"
 }
 
 #define INVALID_VALUE ((unsigned)-1)
