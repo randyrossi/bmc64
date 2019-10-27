@@ -22,6 +22,8 @@
 #include "dac.hpp"
 #include "spline.hpp"
 #include <cmath>
+#include <stdlib.h>
+#include <string.h>
 
 namespace Plus4 {
 
@@ -175,22 +177,49 @@ namespace Plus4 {
       return std::log(1 + x) - (((1 + x) - 1) - x) / (1 + x);
   }
 
-  Filter::model_filter_t Filter::model_filter[2];
+  Filter::model_filter_t* Filter::model_filter[2];
+
+  Filter::Filter() : Filter(-1) {
+  }
 
   // --------------------------------------------------------------------------
   // Constructor.
   // --------------------------------------------------------------------------
-  Filter::Filter()
+  Filter::Filter(int model)
   {
-    static bool class_init;
+    static bool class_init_0;
+    static bool class_init_1;
 
-    if (!class_init) {
+    if (!class_init_0 || !class_init_1) {
+
+      // BMC64: Technically this isn't right.  Core 1 is on its way to this
+      // method with a -1 argument.  Core 1 will skip over the init because
+      // core 2 and 3 have already been here.  Core 1's arrival is so late
+      // that any concurrency issues (i.e. reading the init flags while
+      // being written to) is not an issue.  Just something to be aware of.
+
+      if (model == -1 || model == 0) {
+         class_init_0 = true;
+      }
+      if (model == -1 || model == 1) {
+         class_init_1 = true;
+      }
+
       // Temporary table for op-amp transfer function.
       int* opamp = new int[1 << 16];
 
-      for (int m = 0; m < 2; m++) {
+      int start_model = 0;
+      int end_model = 2;
+      if (model != -1) {
+         start_model = model;
+         end_model = model+1;
+      }
+
+      for (int m = start_model; m < end_model; m++) {
+        model_filter[m] = (model_filter_t*) malloc(sizeof(model_filter_t));
+        memset(model_filter[m],0,sizeof(model_filter_t));
         model_filter_init_t& fi = model_filter_init[m];
-        model_filter_t& mf = model_filter[m];
+        model_filter_t& mf = *model_filter[m];
 
         // Convert op-amp voltage transfer to 16 bit values.
         double vmin = fi.opamp_voltage[0][0];
@@ -375,7 +404,7 @@ namespace Plus4 {
       // VCR - 6581 only.
       model_filter_init_t& fi = model_filter_init[0];
 
-      double N16 = model_filter[0].vo_N16;
+      double N16 = model_filter[0]->vo_N16;
       double vmin = N16*fi.opamp_voltage[0][0];
       double k = fi.k;
       double kVddt = N16*(k*(fi.Vdd - fi.Vth));
@@ -417,7 +446,6 @@ namespace Plus4 {
         vcr_n_Ids_term[kVg_Vx] = (unsigned short)(n_Is*log_term*log_term);
       }
 
-      class_init = true;
     }
 
     enable_filter(true);
@@ -444,7 +472,7 @@ namespace Plus4 {
   // --------------------------------------------------------------------------
   void Filter::adjust_filter_bias(double dac_bias)
   {
-    Vw_bias = int(dac_bias*model_filter[sid_model].vo_N16);
+    Vw_bias = int(dac_bias*model_filter[sid_model]->vo_N16);
     set_w0();
   }
 
@@ -529,7 +557,7 @@ namespace Plus4 {
   // Set filter cutoff frequency.
   void Filter::set_w0()
   {
-    model_filter_t& f = model_filter[sid_model];
+    model_filter_t& f = *model_filter[sid_model];
     int Vw = Vw_bias + f.f0_dac[fc];
     Vddt_Vw_2 = unsigned(f.kVddt - Vw)*unsigned(f.kVddt - Vw) >> 1;
 
