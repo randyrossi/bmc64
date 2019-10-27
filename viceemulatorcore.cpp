@@ -127,6 +127,10 @@ void ViceEmulatorCore::Run(unsigned nCore) {
 #endif
 }
 
+bool ViceEmulatorCore::Init(void) {
+  return Initialize();
+}
+
 void ViceEmulatorCore::LaunchEmulator(char *timing_option) {
   strncpy(timing_option_, timing_option, 8);
 #ifdef ARM_ALLOW_MULTI_CORE

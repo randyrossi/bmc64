@@ -43,7 +43,7 @@ static int vol_percent_to_vchiq(int percent) {
 // Real keyboard matrix states
 static bool kbdMatrixStates[8][8];
 // These for translating row/col scans into equivalent keycodes.
-#if defined(RASPI_PLUS4)
+#if defined(RASPI_PLUS4) | defined(RASPI_PLUS4EMU)
 static long kbdMatrixKeyCodes[8][8] = {
  {KEYCODE_Backspace,  KEYCODE_3,         KEYCODE_5, KEYCODE_7, KEYCODE_9, KEYCODE_Down,         KEYCODE_Left,         KEYCODE_1},
  {KEYCODE_Return,     KEYCODE_w,         KEYCODE_r, KEYCODE_y, KEYCODE_i, KEYCODE_p,            KEYCODE_Dash,         KEYCODE_BackQuote},
@@ -617,7 +617,7 @@ void CKernel::ScanKeyboard() {
   // For restore, there is no public API that triggers it so we will
   // pass the keycode that will.
   int restore = gpioPins[GPIO_KBD_RESTORE_INDEX]->Read();
-#if defined(RASPI_PLUS4)
+#if defined(RASPI_PLUS4) | defined(RASPI_PLUS4EMU)
   if (restore == LOW && kbdRestoreState == HIGH) {
      circle_key_pressed(KEYCODE_Home);
   } else if (restore == HIGH && kbdRestoreState == LOW) {
@@ -1123,7 +1123,7 @@ void CKernel::circle_lock_release() { m_Lock.Release(); }
 
 void CKernel::circle_boot_complete() { DisableBootStat(); }
 
-#if defined(RASPI_PLUS4)
+#if defined(RASPI_PLUS4) | defined(RASPI_PLUS4EMU)
 int CKernel::circle_cycles_per_second() {
   if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_HDMI) {
     // 60hz

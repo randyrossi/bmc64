@@ -42,7 +42,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(RASPI_PLUS4EMU)
+#include "plus4emulatorcore.h"
+#else
 #include "viceemulatorcore.h"
+#endif
 
 // GPIO  JSFUNC   KEYFUNC  KEYCON   gpioPins Index
 //
@@ -195,17 +199,23 @@ protected:
 class ViceScreenApp : public ViceApp {
 public:
   ViceScreenApp(const char *kernel)
-      : ViceApp(kernel), mEmulatorCore(&mMemory),
+      : ViceApp(kernel),
         mTimer(&mInterrupt),
         mLogger(mOptions.GetLogLevel(), &mTimer),
-        mGPIOManager(&mInterrupt), mVCHIQ(&mMemory, &mInterrupt) {}
+        mGPIOManager(&mInterrupt), mVCHIQ(&mMemory, &mInterrupt) {
+#if defined(RASPI_PLUS4EMU)
+     mEmulatorCore = new Plus4EmulatorCore(&mMemory);
+#else
+     mEmulatorCore = new ViceEmulatorCore(&mMemory);
+#endif
+  }
 
   virtual bool Initialize(void);
 
 protected:
   void SetupGPIO();
 
-  ViceEmulatorCore mEmulatorCore;
+  EmulatorCore *mEmulatorCore;
   CTimer mTimer;
   CLogger mLogger;
   CScheduler mScheduler;

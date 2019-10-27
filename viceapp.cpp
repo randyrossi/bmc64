@@ -23,7 +23,7 @@
 #include "bootstat_c128.h"
 #elif defined(RASPI_VIC20)
 #include "bootstat_vic20.h"
-#elif defined(RASPI_PLUS4)
+#elif defined(RASPI_PLUS4) | defined(RASPI_PLUS4EMU)
 #include "bootstat_plus4.h"
 #else
   #error Unknown RASPI_ variant
@@ -69,7 +69,7 @@ bool ViceScreenApp::Initialize(void) {
      }
   }
 
-  if (!mEmulatorCore.Initialize()) {
+  if (!mEmulatorCore->Init()) {
     return false;
   }
 
@@ -206,7 +206,7 @@ void ViceStdioApp::InitBootStat() {
   fp = fopen("/C128/bootstat.txt", "r");
 #elif defined(RASPI_VIC20)
   fp = fopen("/VIC20/bootstat.txt", "r");
-#elif defined(RASPI_PLUS4)
+#elif defined(RASPI_PLUS4) | defined(RASPI_PLUS4EMU)
   fp = fopen("/PLUS4/bootstat.txt", "r");
 #else
   #error Unknown RASPI_ variant
@@ -324,7 +324,7 @@ bool ViceStdioApp::Initialize(void) {
   }
 
 #ifdef ARM_ALLOW_MULTI_CORE
-  mEmulatorCore.LaunchEmulator(mTimingOption);
+  mEmulatorCore->LaunchEmulator(mTimingOption);
 #endif
 
   // This takes 1.5 seconds to init.

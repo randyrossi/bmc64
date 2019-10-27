@@ -1,5 +1,5 @@
 //
-// viceemulatorcore.h
+// plus4emulatorcore.h
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef viceemualtorcore_h
-#define viceemulatorcore_h
+#ifndef plus4emualtorcore_h
+#define plus4emulatorcore_h
 
 #include <circle/memory.h>
 #include <circle/multicore.h>
@@ -25,14 +25,14 @@ extern "C" {
 #include "third_party/vice-3.3/src/arch/raspi/circle.h"
 }
 
-class ViceEmulatorCore
+class Plus4EmulatorCore
 #ifdef ARM_ALLOW_MULTI_CORE
  : public CMultiCoreSupport, public EmulatorCore
 #endif
 {
 public:
-  ViceEmulatorCore(CMemorySystem *pMemorySystem);
-  ~ViceEmulatorCore(void);
+  Plus4EmulatorCore(CMemorySystem *pMemorySystem);
+  ~Plus4EmulatorCore(void);
 
   void Run(unsigned nCore)
 #ifdef ARM_ALLOW_MULTI_CORE
@@ -52,7 +52,7 @@ private:
   char timing_option_[8];
   CSpinLock m_Lock;
 
-  void RunMainVice(bool wait);
+  void RunMainPlus4(bool wait);
   void ComputeResidFilter(int model);
 };
 
