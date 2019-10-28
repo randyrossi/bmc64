@@ -51,7 +51,7 @@ void Plus4EmulatorCore::RunMainPlus4(bool wait) {
   int argc = 0;
   char *argv[] = {};
 
-  main(argc, argv);
+  main_program(argc, argv);
 }
 
 // Initializing the filters for each SID model takes quite a bit.

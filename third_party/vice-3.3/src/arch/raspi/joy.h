@@ -29,7 +29,6 @@
 
 #include "circle.h"
 
-#define MAX_JOY_PORTS 2
 #define MAX_USB_BUTTONS 16
 #define MAX_USB_AXES 16
 #define MAX_USB_HATS 6

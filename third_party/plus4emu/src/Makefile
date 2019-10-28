@@ -1,5 +1,6 @@
 include ../../circle-stdlib/Config.mk
 CIRCLE_STDLIB_HOME = ../../circle-stdlib
+include ../Config.mk
 
 TOP=..
 

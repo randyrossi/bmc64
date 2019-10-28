@@ -32,9 +32,12 @@
 // emulator to use some facilities provided by the kernel.
 
 #include <sys/types.h>
+#include <stdint.h>
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
+
+#define MAX_JOY_PORTS 2
 
 #define MACHINE_TIMING_NTSC_HDMI 0
 #define MACHINE_TIMING_PAL_HDMI 1

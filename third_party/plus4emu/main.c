@@ -65,7 +65,10 @@ static void resetMemoryConfiguration(void)
     errorMessage("cannot load p4kernal.rom");
 }
 
-int main(int argc, char **argv)
+// This is made to look like VICE's main entry point so our
+// Plus4Emu version of EmulatorCore can look more or less the same
+// as the Vice version.
+int main_program(int argc, char **argv)
 {
   int     quitFlag = 0;
 
@@ -115,3 +118,8 @@ int main(int argc, char **argv)
   return 0;
 }
 
+#ifdef HOST_BUILD
+int main(int argc, char *argv[]) {
+  main_program(argc, argv);
+}
+#endif

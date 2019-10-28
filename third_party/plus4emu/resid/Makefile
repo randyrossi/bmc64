@@ -1,4 +1,5 @@
 include ../../circle-stdlib/Config.mk
+include ../Config.mk
 
 OBJ = dac.o envelope.o extfilt.o filter.o pot.o sid.o version.o voice.o wave.o
 

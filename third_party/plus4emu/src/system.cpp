@@ -312,7 +312,8 @@ namespace Plus4Emu {
 #ifdef WIN32
     Sleep((unsigned int) (t * 1000.0 + 0.5));
 #else
-    usleep((unsigned int) (t * 1000000.0 + 0.5));
+    // TODO(BMC64) : Why does this not link?
+    //usleep((unsigned int) (t * 1000000.0 + 0.5));
 #endif
   }
 
@@ -435,7 +436,8 @@ namespace Plus4Emu {
       dirName = std::getenv("HOME");
     if ((int) dirName.size() == 0)
       dirName = ".";
-    mkdir(dirName.c_str(), 0700);
+    // TODO(BMC64) : Why does this not link?
+    //mkdir(dirName.c_str(), 0700);
     if (dirName[dirName.size() - 1] != '/')
       dirName += '/';
 #  ifndef __APPLE__
@@ -447,7 +449,8 @@ namespace Plus4Emu {
     mkdir(dirName.c_str(), 0750);
     dirName += "/plus4emu";
 #  endif
-    mkdir(dirName.c_str(), 0750);
+    // TODO(BMC64) : Why does this not link?
+    //mkdir(dirName.c_str(), 0750);
 #else
     getenv_UTF8(dirName, "USERPROFILE");
     stripString(dirName);
