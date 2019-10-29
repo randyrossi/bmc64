@@ -30,5 +30,6 @@
 #include "ui.h"
 
 void build_usb_menu(int dev, struct menu_item *parent);
+int add_pot_values(int *value, int potx, int poty);
 
 #endif

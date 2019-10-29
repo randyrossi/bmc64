@@ -70,11 +70,6 @@ struct menu_item *potx_low_item;
 struct menu_item *poty_high_item;
 struct menu_item *poty_low_item;
 
-extern int pot_x_high_value;
-extern int pot_x_low_value;
-extern int pot_y_high_value;
-extern int pot_y_low_value;
-
 struct menu_item *define_bindings_item;
 
 // Set to one when we are listening for raw usb values for config
@@ -456,7 +451,7 @@ int emu_button_function(int device, int button_num, unsigned buttons,
   return 0;
 }
 
-int emu_add_pot_values(int *value, int potx, int poty) {
+int add_pot_values(int *value, int potx, int poty) {
   if (potx) {
      *value |= (pot_x_low_value << 5);
   } else {

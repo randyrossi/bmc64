@@ -29,6 +29,9 @@
 #ifndef RASPI_MENU_H
 #define RASPI_MENU_H
 
+// Make sure does not exceed max choices in ui.h
+#define NUM_BUTTON_ASSIGNMENTS 29
+
 // Never used as values. Can be reorged.
 typedef enum {
    MENU_ABOUT,
@@ -452,6 +455,10 @@ typedef enum {
 
 extern long keyset_codes[2][7];
 extern long key_bindings[6];
+extern int pot_x_high_value;
+extern int pot_x_low_value;
+extern int pot_y_high_value;
+extern int pot_y_low_value;
 
 // Called at initialzation
 void build_menu(struct menu_item *root);

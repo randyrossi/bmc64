@@ -55,9 +55,6 @@
 #define USB_PREF_ANALOG 0
 #define USB_PREF_HAT 1
 
-// Make sure does not exceed max choices in ui.h
-#define NUM_BUTTON_ASSIGNMENTS 29
-
 // NOTE: BTN_ASSIGN_* are used as indices into choice
 // arrays.
 #define BTN_ASSIGN_UNDEF 0
@@ -103,16 +100,6 @@
 // an index into anything.
 #define BTN_ASSIGN_RESET_HARD2 916
 #define BTN_ASSIGN_RESET_SOFT2 918
-
-// potx and poty occupy 8 bits in joy int values passed
-// to joy update calls
-#define POTX_BIT_MASK 0x1fe0
-#define POTY_BIT_MASK 0x1fe000
-
-// Types of queued joystick events for calls into emulator API
-#define PENDING_EMU_JOY_TYPE_ABSOLUTE 0
-#define PENDING_EMU_JOY_TYPE_AND 1
-#define PENDING_EMU_JOY_TYPE_OR 2
 
 #define JOYDEV_NUM_JOYDEVS 21
 #define JOYDEV_NONE 0
@@ -162,23 +149,16 @@ struct joydev_config {
   struct hat_config hats[2];
 };
 
-extern struct joydev_config joydevs[2];
+extern struct joydev_config joydevs[MAX_JOY_PORTS];
 
-extern int pot_x_high_value;
-extern int pot_x_low_value;
-extern int pot_y_high_value;
-extern int pot_y_low_value;
-
-
-
+// -----------------------------------------------------------------------
+// Functions called from emulator layer into kernel layer
+// -----------------------------------------------------------------------
 extern int circle_get_machine_timing();
 extern void circle_sleep(long);
 extern unsigned long circle_get_ticks();
-extern void circle_wait_vsync();
 extern void circle_yield();
 extern void circle_check_gpio();
-
-// For FB2
 extern int circle_alloc_fbl(int layer, uint8_t **pixels,
                             int width, int height, int *pitch);
 extern void circle_free_fbl(int layer);
@@ -194,30 +174,19 @@ extern void circle_set_src_rect_fbl(int layer, int x, int y, int w, int h);
 extern void circle_set_center_offset(int layer, int cx, int cy);
 extern void circle_set_valign_fbl(int layer, int align, int padding);
 extern void circle_set_halign_fbl(int layer, int align, int padding);
-extern void circle_set_padding_fbl(int layer, double lpad, double rpad, double tpad, double bpad);
+extern void circle_set_padding_fbl(int layer, double lpad, double rpad,
+                                   double tpad, double bpad);
 extern void circle_set_zlayer_fbl(int layer, int zlayer);
 extern int circle_get_zlayer_fbl(int layer);
-
-
-
-extern void circle_emu_key_interrupt(long key, int pressed);
-extern void circle_emu_key_locked(long key, int pressed);
-
-
 extern void circle_lock_acquire();
 extern void circle_lock_release();
-
 extern void circle_boot_complete();
-
-
-
-extern void circle_keyboard_set_latch_keyarr(int row, int col, int value);
-
 extern void circle_find_usb(int (*usb)[3]);
 extern int circle_mount_usb(int usb);
 extern int circle_unmount_usb(int usb);
 extern void circle_set_volume(int value);
 extern int circle_get_model();
+
 
 // -----------------------------------------------------------------------
 // Functions called from kernel layer into emulator layer
@@ -228,10 +197,6 @@ extern int circle_get_model();
 // for that button if the button has a button assignment.
 extern int emu_button_function(int device, int button_num, unsigned buttons,
                                int* btn_assignment, int* is_press);
-
-// Ask emulator to logically OR in potx and poty values to the joystick
-// latch variable. These values are confirured and owned by the emulator.
-extern int emu_add_pot_values(int *value, int potx, int poty);
 
 // Ask emulator to logically OR in the joystick latch value associated
 // with a USB button assignment.  button_bit is the power of 2 representing
@@ -247,7 +212,13 @@ extern void emu_mouse_wheel_up(int pressed);
 extern void emu_mouse_wheel_down(int pressed);
 
 // Queue a joystick latch event for the main loop. Interrupt safe.
-extern void emu_joy_interrupt(int type, int port, int device, int value);
+extern void emu_joy_interrupt_abs(int port, int device,
+                                  int js_up,
+                                  int js_down,
+                                  int js_left,
+                                  int js_right,
+                                  int js_fire,
+                                  int pot_x, int pot_y);
 
 // Queue a quick function request for the main loop. Interrupt safe.
 extern void emu_quick_func_interrupt(int button_assignment);

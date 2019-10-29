@@ -39,6 +39,7 @@
 #include "menu.h"
 #include "menu_keyset.h"
 #include "ui.h"
+#include "videoarch.h"
 
 #define NUM_KEY_COMBOS 8
 
@@ -377,7 +378,7 @@ void emu_key_pressed(long key) {
   if (ui_enabled) {
     emu_ui_key_interrupt(key, 1 /* down */);
   } else {
-    circle_emu_key_interrupt(key, 1 /* down */);
+    key_interrupt(key, 1 /* down */);
   }
 }
 
@@ -400,7 +401,7 @@ void emu_key_released(long key) {
     } else {
       // When transitioning to the menu, make sure to give emulator
       // at least one pass through main loop after sending the up event.
-      circle_emu_key_interrupt(key, 0 /* up */);
+      key_interrupt(key, 0 /* up */);
       circle_lock_acquire();
       ui_toggle_pending = 2;
       circle_lock_release();
@@ -435,7 +436,7 @@ void emu_key_released(long key) {
   if (ui_enabled) {
     emu_ui_key_interrupt(key, 0 /* up */);
   } else {
-    circle_emu_key_interrupt(key, 0 /* up */);
+    key_interrupt(key, 0 /* up */);
   }
 
   // Check hotkey combo here
@@ -446,7 +447,7 @@ void emu_key_released(long key) {
   }
 }
 
-void circle_keyboard_set_latch_keyarr(int row, int col, int value) {
+void kbd_set_latch_keyarr(int row, int col, int value) {
   demo_reset_timeout();
   keyboard_set_keyarr(row, col, value);
 }

@@ -43,6 +43,7 @@
 #include "ui.h"
 #include "circle.h"
 #include "keycodes.h"
+#include "kbd.h"
 
 #define ARGB(a,r,g,b) ((uint32_t)((uint8_t)(a)<<24 | (uint8_t)(r)<<16 | (uint8_t)(g)<<8 | (uint8_t)(b)))
 
@@ -755,9 +756,9 @@ void vkbd_nav_press(int pressed, int device) {
       // Only toggle on the press
       if (pressed) {
         vkbd[vkbd_cursor].state = 1 - vkbd[vkbd_cursor].state;
-        circle_keyboard_set_latch_keyarr(vkbd[vkbd_cursor].col,
-                                    vkbd[vkbd_cursor].row,
-                                    vkbd[vkbd_cursor].state);
+        kbd_set_latch_keyarr(vkbd[vkbd_cursor].col,
+                             vkbd[vkbd_cursor].row,
+                             vkbd[vkbd_cursor].state);
         if (vkbd[vkbd_cursor].code == VKBD_LSHIFT) {
            vkbd_lshift_down = vkbd[vkbd_cursor].state;
         } else if (vkbd[vkbd_cursor].code == VKBD_RSHIFT) {
@@ -771,11 +772,11 @@ void vkbd_nav_press(int pressed, int device) {
    } else {
       // Handle restore special case
       if (vkbd[vkbd_cursor].row == 0 && vkbd[vkbd_cursor].col == -3) {
-         circle_emu_key_locked(KEYCODE_PageUp, pressed);
+         key_interrupt_locked(KEYCODE_PageUp, pressed);
       } else {
-         circle_keyboard_set_latch_keyarr(vkbd[vkbd_cursor].col,
-                                          vkbd[vkbd_cursor].row,
-                                          pressed);
+         kbd_set_latch_keyarr(vkbd[vkbd_cursor].col,
+                              vkbd[vkbd_cursor].row,
+                              pressed);
       }
       vkbd[vkbd_cursor].state = pressed;
    }

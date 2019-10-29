@@ -8,10 +8,6 @@ int emu_add_button_values(int dev, unsigned button_value) {
   return 0;
 }
 
-int emu_add_pot_values(int *value, int potx, int poty) {
-  return 0;
-}
-
 int emu_button_function(int device, int button_num, unsigned buttons,
                         int* btn_assignment, int* is_press) {
   return 0;
@@ -24,7 +20,14 @@ void emu_mouse_button_middle(int pressed) { }
 void emu_mouse_wheel_up(int pressed) { }
 void emu_mouse_wheel_down(int pressed) { }
 
-void emu_joy_interrupt(int type, int port, int device, int value) {
+void emu_joy_interrupt_abs(int port, int device,
+                           int js_up,
+                           int js_down,
+                           int js_left,
+                           int js_right,
+                           int js_fire,
+                           int pot_x,
+                           int pot_y) {
 }
 
 void emu_quick_func_interrupt(int button_assignment) {

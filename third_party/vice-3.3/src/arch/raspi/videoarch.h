@@ -33,6 +33,16 @@
 #include "palette.h"
 #include "video.h"
 
+// potx and poty occupy 8 bits in joy int values passed
+// to joy update calls
+#define POTX_BIT_MASK 0x1fe0
+#define POTY_BIT_MASK 0x1fe000
+
+// Types of queued joystick events for calls into emulator API
+#define PENDING_EMU_JOY_TYPE_ABSOLUTE 0
+#define PENDING_EMU_JOY_TYPE_AND 1
+#define PENDING_EMU_JOY_TYPE_OR 2
+
 struct video_canvas_s {
   // Core fields required by vice.
   unsigned int initialized;
@@ -135,5 +145,9 @@ void main_exit(void);
 // etc). Only takes effect while the user remains on the current menu
 // item.
 void video_canvas_reveal_temp(int layer);
+
+void joy_interrupt(int type, int port, int device, int value);
+void key_interrupt(long key, int pressed);
+void key_interrupt_locked(long key, int pressed);
 
 #endif

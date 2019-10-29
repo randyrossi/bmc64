@@ -816,14 +816,14 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
     js_prev[JOY_FIRE] = js_fire;
     // not necessary to remember pot values as they are not used for ui
   } else {
-    int val = 0;
-    if (js_up == LOW) val |= 0x01;
-    if (js_down == LOW) val |= 0x02;
-    if (js_left == LOW) val |= 0x04;
-    if (js_right == LOW) val |= 0x08;
-    if (js_fire == LOW) val |= 0x10;
-    emu_add_pot_values(&val, js_potx == LOW, js_poty == LOW);
-    emu_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, port, devd, val);
+    emu_joy_interrupt_abs(port, devd,
+                          js_up == LOW,
+                          js_down == LOW, 
+                          js_left == LOW, 
+                          js_right == LOW, 
+                          js_fire == LOW, 
+                          js_potx == LOW, 
+                          js_poty == LOW);
   }
 
   if (gpioConfig == 1) {

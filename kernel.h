@@ -61,7 +61,6 @@ public:
   int circle_get_machine_timing();
   void circle_sleep(long delay);
   unsigned long circle_get_ticks();
-  void circle_wait_vsync();
 
   uint8_t *circle_get_fb1();
   int circle_get_fb1_pitch();

@@ -51,6 +51,7 @@
 #include "joy.h"
 #include "kbd.h"
 #include "menu.h"
+#include "menu_usb.h"
 #include "menu_tape_osd.h"
 #include "overlay.h"
 #include "raspi_machine.h"
@@ -692,7 +693,7 @@ void vsyncarch_sleep(unsigned long delay) {
 }
 
 // queue a key for press/release for the main loop
-void circle_emu_key_interrupt(long key, int pressed) {
+void key_interrupt(long key, int pressed) {
   circle_lock_acquire();
   int i = pending_emu_key.tail & 0xf;
   pending_emu_key.key[i] = key;
@@ -702,15 +703,32 @@ void circle_emu_key_interrupt(long key, int pressed) {
 }
 
 // Same as above except can call while already holding the lock
-void circle_emu_key_locked(long key, int pressed) {
+void key_interrupt_locked(long key, int pressed) {
   int i = pending_emu_key.tail & 0xf;
   pending_emu_key.key[i] = key;
   pending_emu_key.pressed[i] = pressed;
   pending_emu_key.tail++;
 }
 
+void emu_joy_interrupt_abs(int port, int device,
+                           int js_up,
+                           int js_down,
+                           int js_left,
+                           int js_right,
+                           int js_fire,
+                           int pot_x, int pot_y) {
+  int val = 0;
+  if (js_up) val |= 0x01;
+  if (js_down) val |= 0x02;
+  if (js_left) val |= 0x04;
+  if (js_right) val |= 0x08;
+  if (js_fire) val |= 0x10;
+  add_pot_values(&val, pot_x, pot_y);
+  joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, port, device, val);
+}
+
 // Queue a joy latch change for the main loop
-void emu_joy_interrupt(int type, int port, int device, int value) {
+void joy_interrupt(int type, int port, int device, int value) {
   circle_lock_acquire();
   int i = pending_emu_joy.tail & 0x7f;
   pending_emu_joy.type[i] = type;

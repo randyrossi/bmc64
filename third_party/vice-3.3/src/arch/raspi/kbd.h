@@ -45,6 +45,7 @@ extern const char *kbd_arch_keynum_to_keyname(signed long keynum);
 extern void kbd_initialize_numpad_joykeys(int *joykeys);
 
 void kbd_set_hotkey_function(unsigned int slot, long key, int function);
+void kbd_set_latch_keyarr(int row, int col, int value);
 
 #define KBD_PORT_PREFIX "rpi"
 
