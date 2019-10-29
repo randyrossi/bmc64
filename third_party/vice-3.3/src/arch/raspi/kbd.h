@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef VICE_KBD_H
-#define VICE_KBD_H
+#ifndef RASPI_KBD_H
+#define RASPI_KBD_H
 
 #include "circle.h"
 #include "keycodes.h"

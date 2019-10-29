@@ -24,10 +24,8 @@
  *
  */
 
-#include "ui.h"
-
-#ifndef VICE_MENU_TAPE_OSD_H
-#define VICE_MENU_TAPE_OSD_H
+#ifndef RASPI_MENU_TAPE_OSD_H
+#define RASPI_MENU_TAPE_OSD_H
 
 void show_tape_osd_menu(void);
 

@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef VICE_OVERLAY_H
-#define VICE_OVERLAY_H
+#ifndef RASPI_OVERLAY_H
+#define RASPI_OVERLAY_H
 
 #include <sys/types.h>
 
@@ -69,4 +69,5 @@ void vkbd_enable(void);
 void vkbd_disable(void);
 void vkbd_nav_press(int pressed, int device);
 void vkbd_sync_event(long key, int pressed);
+
 #endif

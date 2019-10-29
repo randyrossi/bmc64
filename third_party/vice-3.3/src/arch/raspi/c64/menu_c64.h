@@ -23,6 +23,8 @@
  *  02111-1307  USA.
  *
  */
+#ifndef RASPI_MENU_C64_H
+#define RASPI_MENU_C64_H
 
 unsigned long calculate_timing(double fps);
 
@@ -43,3 +45,5 @@ void raspi_cartridge_trigger_freeze(void);
 struct menu_item* menu_build_palette_options(int menu_id, struct menu_item* parent);
 void menu_build_machine(struct menu_item* parent);
 struct menu_item* menu_build_cartridge(struct menu_item* root);
+
+#endif

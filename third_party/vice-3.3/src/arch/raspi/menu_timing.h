@@ -24,10 +24,10 @@
  *
  */
 
-#include "ui.h"
+#ifndef RASPI_MENU_TIMING_H
+#define RASPI_MENU_TIMING_H
 
-#ifndef VICE_MENU_TIMING_H
-#define VICE_MENU_TIMING_H
+#include "ui.h"
 
 void build_timing_menu(struct menu_item *parent);
 void hdmi_timing_hook(void);

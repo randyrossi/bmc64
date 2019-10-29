@@ -24,10 +24,8 @@
  *
  */
 
-#include "ui.h"
-
-#ifndef VICE_MENU_CONFIRM_OSD_H
-#define VICE_MENU_CONFIRM_OSD_H
+#ifndef RASPI_MENU_CONFIRM_OSD_H
+#define RASPI_MENU_CONFIRM_OSD_H
 
 void show_confirm_osd_menu(int func);
 

@@ -1,5 +1,5 @@
 /*
- * videoarch_vic20.h
+ * videoarch_c64.h
  *
  * Written by
  *  Randy Rossi <randy.rossi@gmail.com>
@@ -23,9 +23,14 @@
  *  02111-1307  USA.
  *
  */
+#ifndef RASPI_VIDEOARCH_C64_H
+#define RASPI_VIDEOARCH_C64_H
 
 #include "arch/raspi/videoarch.h"
 
 void set_refresh_rate(int timing, struct video_canvas_s *canvas);
-void set_video_font(void);
+void set_video_font(uint8_t **video_font, uint8_t **raw_video_font,
+                    uint16_t *video_font_translate);
 unsigned int *raspi_get_palette(int index);
+
+#endif

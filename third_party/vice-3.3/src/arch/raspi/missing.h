@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef VICE_RASPI_MISSING_H
-#define VICE_RASPI_MISSING_H
+#ifndef RASPI_MISSING_H
+#define RASPI_MISSING_H
 
 #include "monitor.h"
 #include "palette.h"
@@ -141,4 +141,5 @@ void video_shutdown_dx9(void);
 void video_shutdown(void);
 void vsyncarch_display_speed(double speed, double fps, int warp_enabled);
 void ui_display_volume(int vol);
+
 #endif

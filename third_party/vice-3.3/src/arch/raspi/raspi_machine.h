@@ -25,6 +25,8 @@
  */
 
 // Machine specific routines
+#ifndef RASPI_MACHINE_H
+#define RASPI_MACHINE_H
 
 #include "videoarch.h"
 
@@ -75,7 +77,8 @@ struct vkbd_key {
 typedef struct vkbd_key* vkbd_key_array;
 
 extern void set_refresh_rate(int timing, struct video_canvas_s *canvas);
-extern void set_video_font(void);
+extern void set_video_font(uint8_t **video_font, uint8_t **raw_video_font,
+                           uint16_t *video_font_translate);
 extern unsigned long calculate_timing(double fps);
 
 extern void set_color_brightness(int display_num, int value);
@@ -104,3 +107,5 @@ extern int get_vkbd_size(void);
 
 extern void menu_build_machine(struct menu_item* parent);
 extern struct menu_item* menu_build_cartridge(struct menu_item* parent);
+
+#endif

@@ -26,8 +26,8 @@
 
 #include "ui.h"
 
-#ifndef VICE_MENU_H
-#define VICE_MENU_H
+#ifndef RASPI_MENU_H
+#define RASPI_MENU_H
 
 // Never used as values. Can be reorged.
 typedef enum {

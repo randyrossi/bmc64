@@ -26,19 +26,22 @@
 
 #include "ui.h"
 
-#include "circle.h"
-#include "interrupt.h"
-#include "joy.h"
-#include "kbd.h"
-#include "menu.h"
-#include "menu_timing.h"
-#include "videoarch.h"
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
+// VICE includes
+#include "interrupt.h"
+
+// RASPI includes
+#include "circle.h"
+#include "joy.h"
+#include "kbd.h"
+#include "menu.h"
+#include "menu_timing.h"
 
 #ifdef RASPI_LITE
 
@@ -57,6 +60,10 @@
 #define TRANSPARENT_COLOR 16
 
 #endif
+
+uint8_t *video_font;
+uint16_t video_font_translate[256];
+uint8_t *raw_video_font;
 
 // Is the UI layer enabled? (either OSD or MENU)
 volatile int ui_enabled;
@@ -1350,3 +1357,8 @@ void ui_set_transparent(int v) {
 void ui_set_render_current_item_only(int v) {
   ui_render_current_item_only = v;
 }
+
+void ui_emu_quick_func_interrupt(int button_assignment) {
+  pending_emu_quick_func = button_assignment;
+}
+

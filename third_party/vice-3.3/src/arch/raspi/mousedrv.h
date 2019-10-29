@@ -24,11 +24,10 @@
  *
  */
 
-#ifndef VICE_MOUSEDRV_H
-#define VICE_MOUSEDRV_H
+#ifndef RASPI_MOUSEDRV_H
+#define RASPI_MOUSEDRV_H
 
 #include "types.h"
-
 #include "mouse.h"
 
 extern int mousedrv_resources_init(mouse_func_t *funcs);

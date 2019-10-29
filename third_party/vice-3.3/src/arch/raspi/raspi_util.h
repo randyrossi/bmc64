@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef VICE_RASPI_UTIL_H_
-#define VICE_RASPI_UTIL_H_
+#ifndef RASPI_UTIL_H_
+#define RASPI_UTIL_H_
 
 struct menu_item *sorted_merge(struct menu_item *a, struct menu_item *b);
 void split(struct menu_item *source, struct menu_item **frontRef,

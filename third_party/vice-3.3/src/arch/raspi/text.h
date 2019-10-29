@@ -23,8 +23,8 @@
  *  02111-1307  USA.
  *
  */
-#ifndef VICE_TEXT_H
-#define VICE_TEXT_H
+#ifndef RASPI_TEXT_H
+#define RASPI_TEXT_H
 
 #define NUM_LICENSE_LINES 510
 

@@ -24,15 +24,15 @@
  *
  */
 
-#ifndef VICE_UI_H_
-#define VICE_UI_H_
+#ifndef RASPI_UI_H_
+#define RASPI_UI_H_
 
-#include "videoarch.h"
+#include <stdint.h>
 
 #define NUM_MENU_ROOTS 5
-#define MAX_CHOICES 32
-#define MAX_MENU_STR 36
-#define MAX_FN_NAME 20 // only limit for new file names
+#define MAX_CHOICES    32
+#define MAX_MENU_STR   36
+#define MAX_FN_NAME    20 // only limit for new file names
 
 #define MAX_STR_VAL_LEN 256 // should match max fn from ffconf.h
 #define MAX_DSP_VAL_LEN 32  // should be below display width
@@ -225,6 +225,8 @@ void ui_set_render_current_item_only(int v);
 
 struct menu_item* ui_find_item_by_id(struct menu_item *node, int id);
 
+void ui_emu_quick_func_interrupt(int button_assignment);
+
 extern volatile int ui_enabled;
 extern int ui_showing;
 
@@ -235,5 +237,9 @@ void ui_handle_toggle_or_quick_func(void);
 // give emulator at least one frame to process the key events we send.
 // Should acquire lock around changing.
 extern int ui_toggle_pending;
+
+extern uint8_t *video_font;
+extern uint16_t video_font_translate[256];
+extern uint8_t *raw_video_font;
 
 #endif

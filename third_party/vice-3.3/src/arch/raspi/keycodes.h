@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef VICE_KEYCODES_H
-#define VICE_KEYCODES_H
+#ifndef RASPI_KEYCODES_H
+#define RASPI_KEYCODES_H
 
 #define KEYCODE_NONE 0x00
 #define KEYCODE_a 0x04

@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef VICE_JOY_H
-#define VICE_JOY_H
+#ifndef RASPI_JOY_H
+#define RASPI_JOY_H
 
 #include "circle.h"
 

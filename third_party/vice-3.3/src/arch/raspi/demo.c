@@ -1,5 +1,5 @@
 /*
- * videoarch.c
+ * demo.c
  *
  * Written by
  *  Randy Rossi <randy.rossi@gmail.com>

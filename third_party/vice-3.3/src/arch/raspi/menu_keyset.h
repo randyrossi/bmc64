@@ -24,10 +24,10 @@
  *
  */
 
-#include "ui.h"
+#ifndef RASPI_MENU_KEYSET_H
+#define RASPI_MENU_KEYSET_H
 
-#ifndef VICE_MENU_KEYSET_H
-#define VICE_MENU_KEYSET_H
+#include "ui.h"
 
 // Indices into keyset_codes array in menu.c
 #define KEYSET_UP 0

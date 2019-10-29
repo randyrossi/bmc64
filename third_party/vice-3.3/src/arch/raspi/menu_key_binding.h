@@ -24,10 +24,10 @@
  *
  */
 
-#include "ui.h"
+#ifndef RASPI_MENU_KEY_BINDING_H
+#define RASPI_MENU_KEY_BINDING_H
 
-#ifndef VICE_MENU_KEY_BINDING_H
-#define VICE_MENU_KEY_BINDING_H
+#include "ui.h"
 
 void build_keybinding_menu(struct menu_item *parent);
 

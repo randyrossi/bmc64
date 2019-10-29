@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef VICE_MENU_SWITCH_H
-#define VICE_MENU_SWITCH_H
+#ifndef RASPI_MENU_SWITCH_H
+#define RASPI_MENU_SWITCH_H
 
 #define CONFIG_TXT_LINE_LEN 128
 #define KEY_LEN 32

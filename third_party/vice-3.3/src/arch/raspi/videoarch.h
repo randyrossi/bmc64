@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef VICE_VIDEOARCH_H
-#define VICE_VIDEOARCH_H
+#ifndef RASPI_VIDEOARCH_H
+#define RASPI_VIDEOARCH_H
 
 #include "vice.h"
 
@@ -107,10 +107,6 @@ void videoarch_swap(void);
 void draw(uint8_t *src, int srcw, int srch, int src_pitch, uint8_t *dst,
           int dst_pitch, int off_x, int off_y);
 
-extern uint8_t *video_font;
-extern uint16_t video_font_translate[256];
-extern uint8_t *raw_video_font;
-
 // Make sure ui also sets this when turning on/off warp
 extern int raspi_warp;
 
@@ -129,6 +125,7 @@ void apply_video_adjustments(int layer, int hcenter, int vcenter,
 
 void enable_vic(int enabled);
 void enable_vdc(int enabled);
+
 // Makes sure whatever canvas should be visible actually is.
 void ensure_video(void);
 

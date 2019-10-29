@@ -23,6 +23,8 @@
  *  02111-1307  USA.
  *
  */
+#ifndef RASPI_MENU_C128_H
+#define RASPI_MENU_C128_H
 
 unsigned long calculate_timing(double fps);
 
@@ -45,3 +47,5 @@ void menu_build_machine(struct menu_item* parent);
 struct menu_item* menu_build_cartridge(struct menu_item* root);
 
 void column4080_key_toggled(void);
+
+#endif

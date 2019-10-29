@@ -24,10 +24,10 @@
  *
  */
 
-#include "ui.h"
+#ifndef RASPI_MENU_USB_H
+#define RASPI_MENU_USB_H
 
-#ifndef VICE_MENU_USB_H
-#define VICE_MENU_USB_H
+#include "ui.h"
 
 void build_usb_menu(int dev, struct menu_item *parent);
 

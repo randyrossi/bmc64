@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef VICE_DEMO_H
-#define VICE_DEMO_H
+#ifndef RASPI_DEMO_H
+#define RASPI_DEMO_H
 
 extern int raspi_demo_mode;
 

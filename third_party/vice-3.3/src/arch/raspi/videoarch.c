@@ -73,10 +73,6 @@ static int vdc_enabled;
 static int vic_showing;
 static int vdc_showing;
 
-uint8_t *video_font;
-uint16_t video_font_translate[256];
-uint8_t *raw_video_font;
-
 static int vic_first_refresh;
 static int vdc_first_refresh;
 
@@ -122,8 +118,6 @@ struct pending_emu_joy_s {
 };
 
 struct pending_emu_joy_s pending_emu_joy;
-
-extern int pending_emu_quick_func;
 
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
@@ -453,7 +447,7 @@ void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
         raspi_boot_warp = 1;
         vic_first_refresh = 0;
      }
-        set_video_font(); // !!! FIX THIS
+     set_video_font(&video_font, &raw_video_font, &video_font_translate[0]);
   } else {
      if (vdc_first_refresh == 1) {
         // Nothing to do.  Consider removing.
@@ -723,10 +717,6 @@ void circle_emu_joy_interrupt(int type, int port, int device, int value) {
   pending_emu_joy.value[i] = value;
   pending_emu_joy.tail++;
   circle_lock_release();
-}
-
-void circle_emu_quick_func_interrupt(int button_assignment) {
-  pending_emu_quick_func = button_assignment;
 }
 
 // Called by our special hook in vice to load palettes from

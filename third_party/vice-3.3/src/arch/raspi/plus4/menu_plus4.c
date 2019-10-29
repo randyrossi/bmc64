@@ -34,6 +34,7 @@
 #include "cartridge.h"
 #include "menu.h"
 #include "ui.h"
+#include "circle.h"
 
 static void menu_value_changed(struct menu_item *item) {
   plus4model_set(item->sub_id);
