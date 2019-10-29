@@ -34,6 +34,8 @@
 #define MAX_USB_HATS 6
 #define MAX_USB_PADS 2
 
+extern struct joydev_config joydevs[MAX_JOY_PORTS];
+
 int joy_arch_init(void);
 
 extern void joystick_close(void);

@@ -36,8 +36,6 @@
 #include <stdio.h>
 #include <string.h>
 
-extern struct joydev_config joydevs[MAX_JOY_PORTS];
-
 #define NUM_KEY_COMBOS 8
 
 // TODO: These should really come from the sym file.

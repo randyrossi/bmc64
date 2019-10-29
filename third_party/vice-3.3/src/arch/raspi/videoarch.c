@@ -97,8 +97,6 @@ static int fix_sid = 0;
 
 static int vdc_map[] = {0, 12, 6, 14, 5, 13, 11, 3, 2, 10, 8, 4, 9, 7, 15, 1};
 
-extern struct joydev_config joydevs[MAX_JOY_PORTS];
-
 struct pending_emu_key_s {
   int head;
   int tail;

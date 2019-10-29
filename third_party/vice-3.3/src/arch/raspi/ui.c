@@ -78,8 +78,6 @@ static int ui_ctrl_down;
 static int ui_transparent;
 static int ui_render_current_item_only;
 
-extern struct joydev_config joydevs[MAX_JOY_PORTS];
-
 // Stubs for vice callbacks. Unimplemented for now.
 void ui_pause_emulation(int flag) {}
 int ui_emulation_is_paused(void) { return 0; }
@@ -1358,7 +1356,7 @@ void ui_set_render_current_item_only(int v) {
   ui_render_current_item_only = v;
 }
 
-void ui_emu_quick_func_interrupt(int button_assignment) {
+void circle_emu_quick_func_interrupt(int button_assignment) {
   pending_emu_quick_func = button_assignment;
 }
 

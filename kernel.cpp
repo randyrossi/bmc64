@@ -887,16 +887,16 @@ void CKernel::MouseStatusHandler(unsigned nButtons, int deltaX, int deltaY) {
   circle_mouse_move(deltaX, deltaY);
 
   if ((prev_buttons & MOUSE_BUTTON_LEFT) && !(nButtons & MOUSE_BUTTON_LEFT)) {
-    circle_button_left(0);
+    circle_mouse_button_left(0);
   } else if (!(prev_buttons & MOUSE_BUTTON_LEFT) &&
              (nButtons & MOUSE_BUTTON_LEFT)) {
-    circle_button_left(1);
+    circle_mouse_button_left(1);
   }
   if ((prev_buttons & MOUSE_BUTTON_RIGHT) && !(nButtons & MOUSE_BUTTON_RIGHT)) {
-    circle_button_right(0);
+    circle_mouse_button_right(0);
   } else if (!(prev_buttons & MOUSE_BUTTON_RIGHT) &&
              (nButtons & MOUSE_BUTTON_RIGHT)) {
-    circle_button_right(1);
+    circle_mouse_button_right(1);
   }
   prev_buttons = nButtons;
 }

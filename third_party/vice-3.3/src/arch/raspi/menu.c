@@ -102,8 +102,6 @@ typedef enum {
    FILTER_DIRS,
 } FileFilter;
 
-extern struct joydev_config joydevs[MAX_JOY_PORTS];
-
 // These can be saved
 struct menu_item *port_1_menu_item;
 struct menu_item *port_2_menu_item;

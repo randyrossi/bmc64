@@ -61,12 +61,22 @@ void circle_mouse_move(int x, int y) {
   mouse_timestamp = vsyncarch_gettime();
 }
 
-void circle_button_left(int pressed) { mouse_funcs.mbl(pressed); }
+void circle_mouse_button_left(int pressed) {
+  mouse_funcs.mbl(pressed);
+}
 
-void circle_button_right(int pressed) { mouse_funcs.mbr(pressed); }
+void circle_mouse_button_right(int pressed) {
+  mouse_funcs.mbr(pressed);
+}
 
-void circle_button_middle(int pressed) { mouse_funcs.mbm(pressed); }
+void circle_mouse_button_middle(int pressed) {
+  mouse_funcs.mbm(pressed);
+}
 
-void circle_button_up(int pressed) { mouse_funcs.mbu(pressed); }
+void circle_mouse_button_up(int pressed) {
+  mouse_funcs.mbu(pressed);
+}
 
-void circle_button_down(int pressed) { mouse_funcs.mbd(pressed); }
+void circle_mouse_button_down(int pressed) {
+  mouse_funcs.mbd(pressed);
+}
