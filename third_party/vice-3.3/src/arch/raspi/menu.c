@@ -644,7 +644,7 @@ static void ui_set_hotkeys() {
 static void ui_set_joy_items() {
   int joydev;
   int i;
-  for (joydev = 0; joydev < circle_num_joysticks(); joydev++) {
+  for (joydev = 0; joydev < emu_get_num_joysticks(); joydev++) {
     struct menu_item *dst;
 
     if (joydevs[joydev].port == 1) {
@@ -669,7 +669,7 @@ static void ui_set_joy_items() {
   if (port_1_menu_item->choice_ints[value] == JOYDEV_NONE) {
     resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
   } else if (port_1_menu_item->choice_ints[value] == JOYDEV_MOUSE) {
-    if (circle_num_joysticks() > 1 &&
+    if (emu_get_num_joysticks() > 1 &&
         port_2_menu_item->choice_ints[port_2_menu_item->value]
             == JOYDEV_MOUSE) {
        resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
@@ -680,7 +680,7 @@ static void ui_set_joy_items() {
     resources_set_int("JoyPort1Device", JOYPORT_ID_JOYSTICK);
   }
 
-  if (circle_num_joysticks() > 1) {
+  if (emu_get_num_joysticks() > 1) {
      value = port_2_menu_item->value;
      if (port_2_menu_item->choice_ints[value] == JOYDEV_NONE) {
        resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
@@ -852,13 +852,13 @@ static int save_settings() {
 static void ui_set_joy_devs() {
   if (joydevs[0].port == 1) {
     joydevs[0].device = port_1_menu_item->choice_ints[port_1_menu_item->value];
-  } else if (circle_num_joysticks() > 1 && joydevs[0].port == 2) {
+  } else if (emu_get_num_joysticks() > 1 && joydevs[0].port == 2) {
     joydevs[0].device = port_2_menu_item->choice_ints[port_2_menu_item->value];
   }
 
   if (joydevs[1].port == 1) {
     joydevs[1].device = port_1_menu_item->choice_ints[port_1_menu_item->value];
-  } else if (circle_num_joysticks() > 1 && joydevs[1].port == 2) {
+  } else if (emu_get_num_joysticks() > 1 && joydevs[1].port == 2) {
     joydevs[1].device = port_2_menu_item->choice_ints[port_2_menu_item->value];
   }
 }
@@ -2426,8 +2426,8 @@ static void menu_value_changed(struct menu_item *item) {
 }
 
 // Returns what input preference user has for this usb device
-void circle_usb_pref(int device, int *usb_pref, int *x_axis, int *y_axis,
-                     float *x_thresh, float *y_thresh) {
+void emu_get_usb_pref(int device, int *usb_pref, int *x_axis, int *y_axis,
+                      float *x_thresh, float *y_thresh) {
   if (device == 0) {
     *usb_pref = usb_pref_0;
     *x_axis = usb_x_axis_0;
@@ -2965,7 +2965,7 @@ void build_menu(struct menu_item *root) {
 
   parent = ui_menu_add_folder(root, "Joyports");
 
-  if (circle_num_joysticks() > 1) {
+  if (emu_get_num_joysticks() > 1) {
       ui_menu_add_button(MENU_SWAP_JOYSTICKS, parent, "Swap Joystick Ports");
   }
 
@@ -2998,7 +2998,7 @@ void build_menu(struct menu_item *root) {
   strcpy(child->choices[11], "Custom Keyset 2");
   child->choice_ints[11] = JOYDEV_KEYSET2;
 
-  if (circle_num_joysticks() > 1) {
+  if (emu_get_num_joysticks() > 1) {
     child = port_2_menu_item = ui_menu_add_multiple_choice(
         MENU_JOYSTICK_PORT_2, parent, "Port 2");
     child->num_choices = 12;
@@ -3286,11 +3286,11 @@ void menu_quick_func(int button_assignment) {
   }
 }
 
-int circle_gpio_config() {
+int emu_get_gpio_config() {
   return gpio_config_item->value;
 }
 
-int circle_num_joysticks(void) {
+int emu_get_num_joysticks(void) {
   if (machine_class == VICE_MACHINE_VIC20) {
     return 1;
   }

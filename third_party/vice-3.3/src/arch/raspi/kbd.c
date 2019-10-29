@@ -298,7 +298,7 @@ static int handle_key_combo_release(long key) {
       case BTN_ASSIGN_PIP_LOCATION:
       case BTN_ASSIGN_PIP_SWAP:
       case BTN_ASSIGN_40_80_COLUMN:
-        circle_emu_quick_func_interrupt(key_combo_states[i].function);
+        emu_quick_func_interrupt(key_combo_states[i].function);
         key_combo_states[i].invoked = 0;
         return 1;
       default:
@@ -329,7 +329,7 @@ static void handle_key_combo_function() {
       case BTN_ASSIGN_RESET_SOFT:
       case BTN_ASSIGN_TAPE_MENU:
       case BTN_ASSIGN_CART_MENU:
-        circle_emu_quick_func_interrupt(key_combo_states[i].function);
+        emu_quick_func_interrupt(key_combo_states[i].function);
         break;
       default:
         break;
@@ -338,7 +338,7 @@ static void handle_key_combo_function() {
   }
 }
 
-void circle_key_pressed(long key) {
+void emu_key_pressed(long key) {
   if (raw_keycode_func) {
     // Just consume this.
     return;
@@ -375,13 +375,13 @@ void circle_key_pressed(long key) {
   }
 
   if (ui_enabled) {
-    circle_ui_key_interrupt(key, 1 /* down */);
+    emu_ui_key_interrupt(key, 1 /* down */);
   } else {
     circle_emu_key_interrupt(key, 1 /* down */);
   }
 }
 
-void circle_key_released(long key) {
+void emu_key_released(long key) {
   if (raw_keycode_func) {
     raw_keycode_func(key);
     return;
@@ -396,7 +396,7 @@ void circle_key_released(long key) {
   if (key == KEYCODE_F12) {
     if (ui_enabled) {
       // Let the ui handle the menu action as it sees fit.
-      circle_ui_key_interrupt(key, 0 /* up */);
+      emu_ui_key_interrupt(key, 0 /* up */);
     } else {
       // When transitioning to the menu, make sure to give emulator
       // at least one pass through main loop after sending the up event.
@@ -433,7 +433,7 @@ void circle_key_released(long key) {
   }
 
   if (ui_enabled) {
-    circle_ui_key_interrupt(key, 0 /* up */);
+    emu_ui_key_interrupt(key, 0 /* up */);
   } else {
     circle_emu_key_interrupt(key, 0 /* up */);
   }

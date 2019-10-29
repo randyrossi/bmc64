@@ -57,28 +57,28 @@ int mousedrv_get_y(void) { return mouse_y; }
 
 unsigned long mousedrv_get_timestamp(void) { return mouse_timestamp; }
 
-void circle_mouse_move(int x, int y) {
+void emu_mouse_move(int x, int y) {
   mouse_x += x;
   mouse_y -= y;
   mouse_timestamp = vsyncarch_gettime();
 }
 
-void circle_mouse_button_left(int pressed) {
+void emu_mouse_button_left(int pressed) {
   mouse_funcs.mbl(pressed);
 }
 
-void circle_mouse_button_right(int pressed) {
+void emu_mouse_button_right(int pressed) {
   mouse_funcs.mbr(pressed);
 }
 
-void circle_mouse_button_middle(int pressed) {
+void emu_mouse_button_middle(int pressed) {
   mouse_funcs.mbm(pressed);
 }
 
-void circle_mouse_button_up(int pressed) {
+void emu_mouse_wheel_up(int pressed) {
   mouse_funcs.mbu(pressed);
 }
 
-void circle_mouse_button_down(int pressed) {
+void emu_mouse_wheel_down(int pressed) {
   mouse_funcs.mbd(pressed);
 }

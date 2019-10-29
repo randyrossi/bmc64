@@ -40,11 +40,4 @@ extern int mousedrv_get_x(void);
 extern int mousedrv_get_y(void);
 extern unsigned long mousedrv_get_timestamp(void);
 
-extern void circle_mouse_move(int x, int y);
-extern void circle_button_left(int pressed);
-extern void circle_button_right(int pressed);
-extern void circle_button_middle(int pressed);
-extern void circle_button_up(int pressed);
-extern void circle_button_down(int pressed);
-
 #endif

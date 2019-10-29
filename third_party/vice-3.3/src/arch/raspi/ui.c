@@ -648,8 +648,8 @@ static void ui_action(long action) {
   }
 }
 
-// queue a key for press/release on the main loop
-void circle_ui_key_interrupt(long key, int pressed) {
+// queue a key for press/release on the UI loop
+void emu_ui_key_interrupt(long key, int pressed) {
   circle_lock_acquire();
   int i = pending_ui_key_tail & 0xf;
   pending_ui_key[i] = key;
@@ -1159,7 +1159,9 @@ void ui_set_on_value_changed_callback(void (*callback)(struct menu_item *)) {
   on_value_changed = callback;
 }
 
-int circle_ui_activated(void) { return ui_enabled; }
+int emu_is_ui_activated(void) {
+  return ui_enabled;
+}
 
 static struct menu_item *ui_push_dialog_header(int is_error) {
   struct menu_item *root = ui_push_menu(30, 4);
@@ -1356,7 +1358,7 @@ void ui_set_render_current_item_only(int v) {
   ui_render_current_item_only = v;
 }
 
-void circle_emu_quick_func_interrupt(int button_assignment) {
+void emu_quick_func_interrupt(int button_assignment) {
   pending_emu_quick_func = button_assignment;
 }
 

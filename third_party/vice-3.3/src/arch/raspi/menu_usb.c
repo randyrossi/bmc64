@@ -385,10 +385,14 @@ void build_usb_menu(int dev, struct menu_item *root) {
   y_thresh_item->on_value_changed = menu_usb_value_changed;
 }
 
-int menu_wants_raw_usb(void) { return ui_enabled && want_raw_usb; }
+int emu_wants_raw_usb(void) {
+  return ui_enabled && want_raw_usb;
+}
 
-void menu_raw_usb(int device, unsigned buttons, const int hats[MAX_USB_HATS],
-                  const int axes[MAX_USB_AXES]) {
+void emu_set_raw_usb(int device,
+                     unsigned buttons,
+                     const int hats[MAX_USB_HATS],
+                     const int axes[MAX_USB_AXES]) {
   // Don't do too much here. This is from an isr.  Just set values for paint to
   // update.
   int i;
@@ -403,7 +407,7 @@ void menu_raw_usb(int device, unsigned buttons, const int hats[MAX_USB_HATS],
   }
 }
 
-// Comapres the previous button state for 'button_num' with
+// Compares the previous button state for 'button_num' with
 // the current state and will return a press or release event
 // for that button if the button has a button assignment.
 // If no button assignment is present or if there is no
@@ -416,8 +420,8 @@ void menu_raw_usb(int device, unsigned buttons, const int hats[MAX_USB_HATS],
 // Caller should keep calling this method until -1 is returned,
 // otherwise, previous button state will not be correctly
 // recorded.
-int circle_button_function(int device, int button_num, unsigned buttons,
-                           int* btn_assignment, int* is_press) {
+int emu_button_function(int device, int button_num, unsigned buttons,
+                        int* btn_assignment, int* is_press) {
   if (button_num >= joy_num_buttons[device]) {
      // No more buttons
      joy_prev_buttons[device] = buttons;
@@ -452,7 +456,7 @@ int circle_button_function(int device, int button_num, unsigned buttons,
   return 0;
 }
 
-int circle_add_pot_values(int *value, int potx, int poty) {
+int emu_add_pot_values(int *value, int potx, int poty) {
   if (potx) {
      *value |= (pot_x_low_value << 5);
   } else {
@@ -465,7 +469,7 @@ int circle_add_pot_values(int *value, int potx, int poty) {
   }
 }
 
-int circle_add_button_values(int dev, unsigned b) {
+int emu_add_button_values(int dev, unsigned b) {
   int i;
   int value = (pot_x_high_value << 5) | (pot_y_high_value << 13);
   if (dev == 0) {
@@ -536,6 +540,6 @@ int circle_add_button_values(int dev, unsigned b) {
   return value;
 }
 
-long circle_key_binding(int slot) {
-  return key_bindings[slot];
+long emu_get_key_binding(int index) {
+  return key_bindings[index];
 }

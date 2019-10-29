@@ -62,7 +62,9 @@ static int demo_port_2_device;
 // TODO: This feature needs to be documented and more user friendly
 // (i.e. display errors when things go wrong)
 
-void circle_set_demo_mode(int is_demo) { raspi_demo_mode = is_demo; }
+void emu_set_demo_mode(int is_demo) {
+  raspi_demo_mode = is_demo;
+}
 
 // Trap to perform the operations
 static void pause_trap(uint16_t addr, void *data) {

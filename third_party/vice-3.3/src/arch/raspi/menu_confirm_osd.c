@@ -37,6 +37,7 @@
 #include "resources.h"
 
 // RASPI includes
+#include "circle.h"
 #include "menu.h"
 #include "ui.h"
 
@@ -44,7 +45,7 @@ static void menu_item_changed(struct menu_item *item) {
   switch (item->id) {
   case MENU_CONFIRM_OK:
     // Pass along to main loop as quick func invoke
-    circle_emu_quick_func_interrupt(item->value);
+    emu_quick_func_interrupt(item->value);
     ui_pop_all_and_toggle();
     return;
   case MENU_CONFIRM_CANCEL:

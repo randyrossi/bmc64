@@ -709,8 +709,8 @@ void circle_emu_key_locked(long key, int pressed) {
   pending_emu_key.tail++;
 }
 
-// queue a joy latch change for the main loop
-void circle_emu_joy_interrupt(int type, int port, int device, int value) {
+// Queue a joy latch change for the main loop
+void emu_joy_interrupt(int type, int port, int device, int value) {
   circle_lock_acquire();
   int i = pending_emu_joy.tail & 0x7f;
   pending_emu_joy.type[i] = type;

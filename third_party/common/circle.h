@@ -198,50 +198,20 @@ extern void circle_set_padding_fbl(int layer, double lpad, double rpad, double t
 extern void circle_set_zlayer_fbl(int layer, int zlayer);
 extern int circle_get_zlayer_fbl(int layer);
 
-extern void joy_set_gamepad_info(int num_pads, int num_buttons[2], int axes[2],
-                                 int hats[2]);
 
-extern void circle_joy_usb(unsigned device, int value);
-extern void circle_emu_joy_interrupt(int type, int port, int device, int value);
 
-extern void circle_usb_pref(int device, int *usb_pref, int *x_axis, int *y_axis,
-                            float *x_thresh, float *y_thresh);
-extern int circle_ui_activated(void);
-extern void circle_ui_key_interrupt(long key, int pressed);
 extern void circle_emu_key_interrupt(long key, int pressed);
 extern void circle_emu_key_locked(long key, int pressed);
 
-extern int menu_wants_raw_usb(void);
-extern void menu_raw_usb(int device, unsigned buttons, const int hats[6],
-                         const int axes[16]);
-
-extern int circle_button_function(int device, int button_num, unsigned buttons,
-                                  int* btn_assignment, int* is_press);
-extern int circle_add_pot_values(int *value, int potx, int poty);
-extern int circle_add_button_values(int dev, unsigned button_value);
 
 extern void circle_lock_acquire();
 extern void circle_lock_release();
 
-extern void circle_key_pressed(long key);
-extern void circle_key_released(long key);
-
-extern void circle_set_demo_mode(int is_demo);
 extern void circle_boot_complete();
 
-extern void circle_mouse_move(int x, int y);
-extern void circle_mouse_button_left(int pressed);
-extern void circle_mouse_button_right(int pressed);
-extern void circle_mouse_button_middle(int pressed);
-extern void circle_mouse_button_up(int pressed);
-extern void circle_mouse_button_down(int pressed);
 
-extern void circle_emu_quick_func_interrupt(int button_assignment);
 
 extern void circle_keyboard_set_latch_keyarr(int row, int col, int value);
-extern int circle_gpio_config(void);
-extern int circle_num_joysticks(void);
-extern long circle_key_binding(int slot);
 
 extern void circle_find_usb(int (*usb)[3]);
 extern int circle_mount_usb(int usb);
@@ -249,4 +219,83 @@ extern int circle_unmount_usb(int usb);
 extern void circle_set_volume(int value);
 extern int circle_get_model();
 
+// -----------------------------------------------------------------------
+// Functions called from kernel layer into emulator layer
+// -----------------------------------------------------------------------
+
+// Compares the previous button state for 'button_num' with
+// the current state and will return a press or release event
+// for that button if the button has a button assignment.
+extern int emu_button_function(int device, int button_num, unsigned buttons,
+                               int* btn_assignment, int* is_press);
+
+// Ask emulator to logically OR in potx and poty values to the joystick
+// latch variable. These values are confirured and owned by the emulator.
+extern int emu_add_pot_values(int *value, int potx, int poty);
+
+// Ask emulator to logically OR in the joystick latch value associated
+// with a USB button assignment.  button_bit is the power of 2 representing
+// the list of USB buttons discovered and held by usb_button_bits array.
+extern int emu_add_button_values(int device, unsigned button_bit);
+
+// Functions to trigger emulated mouse move and button events
+extern void emu_mouse_move(int x, int y);
+extern void emu_mouse_button_left(int pressed);
+extern void emu_mouse_button_right(int pressed);
+extern void emu_mouse_button_middle(int pressed);
+extern void emu_mouse_wheel_up(int pressed);
+extern void emu_mouse_wheel_down(int pressed);
+
+// Queue a joystick latch event for the main loop. Interrupt safe.
+extern void emu_joy_interrupt(int type, int port, int device, int value);
+
+// Queue a quick function request for the main loop. Interrupt safe.
+extern void emu_quick_func_interrupt(int button_assignment);
+
+// Ask emulator what the current gpio config index is.
+extern int emu_get_gpio_config(void);
+
+// Set a joystick latch value from a USB device. Interrupt safe.
+extern void emu_set_joy_usb_interrupt(unsigned device, int value);
+
+// Get the keycode binding for the given custom binding index.
+extern long emu_get_key_binding(int index);
+
+// Ask emulator to press/release keys by keycode.
+extern void emu_key_pressed(long keycode);
+extern void emu_key_released(long keycode);
+
+// Get number of virtual joysticks available in this emulator.
+extern int emu_get_num_joysticks(void);
+
+// Enable/disable demo mode for this emulator.
+extern void emu_set_demo_mode(int is_demo);
+
+// Test whether the UI is currently activated or not.
+extern int emu_is_ui_activated(void);
+
+// Send a key press/release to the UI. Should be called only when ui
+// is activated.
+extern void emu_ui_key_interrupt(long key, int pressed);
+
+// Gets usb preferences set by config for this USB device.
+extern void emu_get_usb_pref(int device, int *usb_pref,
+                             int *x_axis, int *y_axis,
+                             float *x_thresh, float *y_thresh);
+
+// Tell emulator about known gamepad configuration. Used after usb init.
+extern void emu_set_gamepad_info(int num_pads,
+                                 int num_buttons[2],
+                                 int axes[2],
+                                 int hats[2]);
+
+// Test whether emulator is in a config mode where it wants to receive
+// raw usb data.
+extern int emu_wants_raw_usb(void);
+
+// Send the emulator raw usb data. Used for configuring usb devices in menu.
+extern void emu_set_raw_usb(int device,
+                            unsigned buttons,
+                            const int hats[6],
+                            const int axes[16]);
 #endif

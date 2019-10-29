@@ -110,9 +110,6 @@ void draw(uint8_t *src, int srcw, int srch, int src_pitch, uint8_t *dst,
 // Make sure ui also sets this when turning on/off warp
 extern int raspi_warp;
 
-// May be called from an ISR to change joy value for emulator
-void circle_emu_joy_interrupt(int type, int port, int device, int value);
-
 // Called by menu after color setting changed (brightness, contrast...)
 void video_color_setting_changed(int display_num);
 

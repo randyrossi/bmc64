@@ -239,7 +239,7 @@ int circle_get_model() {
 
 CKernel::CKernel(void)
     : ViceStdioApp("vice"), mViceSound(nullptr),
-      mNumJoy(circle_num_joysticks()),
+      mNumJoy(emu_get_num_joysticks()),
       mInitialVolume(100) {
   static_kernel = this;
   mod_states = 0;
@@ -285,15 +285,15 @@ static void handle_button_function(bool is_ui, int device, unsigned buttons) {
   int button_func;
   int is_press;
 
-  while (circle_button_function(device, button_num, buttons,
-                                &button_func, &is_press) >= 0) {
+  while (emu_button_function(device, button_num, buttons,
+                             &button_func, &is_press) >= 0) {
    // KEEP THIS IN SYNC WITH kbd.c
    switch (button_func) {
      case BTN_ASSIGN_MENU:
        if (is_press) {
-          circle_key_pressed(KEYCODE_F12);
+          emu_key_pressed(KEYCODE_F12);
        } else {
-          circle_key_released(KEYCODE_F12);
+          emu_key_released(KEYCODE_F12);
        }
        break;
      case BTN_ASSIGN_WARP:
@@ -310,7 +310,7 @@ static void handle_button_function(bool is_ui, int device, unsigned buttons) {
      case BTN_ASSIGN_40_80_COLUMN:
      case BTN_ASSIGN_VKBD_TOGGLE:
        if (is_press) {
-          circle_emu_quick_func_interrupt(button_func);
+          emu_quick_func_interrupt(button_func);
        }
        break;
      case BTN_ASSIGN_CUSTOM_KEY_1:
@@ -320,28 +320,28 @@ static void handle_button_function(bool is_ui, int device, unsigned buttons) {
      case BTN_ASSIGN_CUSTOM_KEY_5:
      case BTN_ASSIGN_CUSTOM_KEY_6:
         if (is_press) {
-           circle_key_pressed(
-               circle_key_binding(button_func - BTN_ASSIGN_CUSTOM_KEY_1));
+           emu_key_pressed(
+               emu_get_key_binding(button_func - BTN_ASSIGN_CUSTOM_KEY_1));
         } else {
-           circle_key_released(
-               circle_key_binding(button_func - BTN_ASSIGN_CUSTOM_KEY_1));
+           emu_key_released(
+               emu_get_key_binding(button_func - BTN_ASSIGN_CUSTOM_KEY_1));
         }
         break;
      case BTN_ASSIGN_FIRE:
        // Only need to handle ui fire here. Actual joy fire is
        // handled in circle_add_usb_values.
        if (is_ui) {
-         circle_ui_key_interrupt(KEYCODE_Return, is_press);
+         emu_ui_key_interrupt(KEYCODE_Return, is_press);
        }
        break;
      case BTN_ASSIGN_RUN_STOP_BACK:
        if (is_ui) {
-         circle_ui_key_interrupt(KEYCODE_Escape, is_press);
+         emu_ui_key_interrupt(KEYCODE_Escape, is_press);
        } else {
          if (is_press) {
-            circle_key_pressed(KEYCODE_Escape);
+            emu_key_pressed(KEYCODE_Escape);
          } else {
-            circle_key_released(KEYCODE_Escape);
+            emu_key_released(KEYCODE_Escape);
          }
        }
        break;
@@ -349,22 +349,22 @@ static void handle_button_function(bool is_ui, int device, unsigned buttons) {
      // in circle_add_usb_values seperately.
      case BTN_ASSIGN_UP:
        if (is_ui) {
-         circle_ui_key_interrupt(KEYCODE_Up, is_press);
+         emu_ui_key_interrupt(KEYCODE_Up, is_press);
        }
        break;
      case BTN_ASSIGN_DOWN:
        if (is_ui) {
-         circle_ui_key_interrupt(KEYCODE_Down, is_press);
+         emu_ui_key_interrupt(KEYCODE_Down, is_press);
        }
        break;
      case BTN_ASSIGN_LEFT:
        if (is_ui) {
-         circle_ui_key_interrupt(KEYCODE_Left, is_press);
+         emu_ui_key_interrupt(KEYCODE_Left, is_press);
        }
        break;
      case BTN_ASSIGN_RIGHT:
        if (is_ui) {
-         circle_ui_key_interrupt(KEYCODE_Right, is_press);
+         emu_ui_key_interrupt(KEYCODE_Right, is_press);
        }
        break;
      default:
@@ -403,17 +403,17 @@ if (static_kernel->circle_get_ticks() - entry_start >= entry_delay) {
   if (nDeviceIndex >= 2)
     return;
 
-  if (menu_wants_raw_usb()) {
+  if (emu_wants_raw_usb()) {
     // Send the raw usb data and we're done.
     int axes[16];
     for (int i = 0; i < pState->naxes; i++) {
       axes[i] = pState->axes[i].value;
     }
-    menu_raw_usb(nDeviceIndex, pState->buttons, pState->hats, axes);
+    emu_set_raw_usb(nDeviceIndex, pState->buttons, pState->hats, axes);
     return;
   }
 
-  int ui_activated = circle_ui_activated();
+  int ui_activated = emu_is_ui_activated();
 
   unsigned b = pState->buttons;
 
@@ -423,8 +423,8 @@ if (static_kernel->circle_get_ticks() - entry_start >= entry_delay) {
   int axis_y;
   float thresh_x;
   float thresh_y;
-  circle_usb_pref(nDeviceIndex, &usb_pref, &axis_x, &axis_y, &thresh_x,
-                  &thresh_y);
+  emu_get_usb_pref(nDeviceIndex, &usb_pref, &axis_x, &axis_y, &thresh_x,
+                   &thresh_y);
 
   int max_index = axis_x;
   if (axis_y > max_index)
@@ -442,24 +442,24 @@ if (static_kernel->circle_get_ticks() - entry_start >= entry_delay) {
       // If the UI is activated, route to the menu.
       if (ui_activated) {
         if (dpad == 0 && old_dpad != 0) {
-          circle_ui_key_interrupt(KEYCODE_Up, 1);
+          emu_ui_key_interrupt(KEYCODE_Up, 1);
         } else if (dpad != 0 && old_dpad == 0) {
-          circle_ui_key_interrupt(KEYCODE_Up, 0);
+          emu_ui_key_interrupt(KEYCODE_Up, 0);
         }
         if (dpad == 4 && old_dpad != 4) {
-          circle_ui_key_interrupt(KEYCODE_Down, 1);
+          emu_ui_key_interrupt(KEYCODE_Down, 1);
         } else if (dpad != 4 && old_dpad == 4) {
-          circle_ui_key_interrupt(KEYCODE_Down, 0);
+          emu_ui_key_interrupt(KEYCODE_Down, 0);
         }
         if (dpad == 6 && old_dpad != 6) {
-          circle_ui_key_interrupt(KEYCODE_Left, 1);
+          emu_ui_key_interrupt(KEYCODE_Left, 1);
         } else if (dpad != 6 && old_dpad == 6) {
-          circle_ui_key_interrupt(KEYCODE_Left, 0);
+          emu_ui_key_interrupt(KEYCODE_Left, 0);
         }
         if (dpad == 2 && old_dpad != 2) {
-          circle_ui_key_interrupt(KEYCODE_Right, 1);
+          emu_ui_key_interrupt(KEYCODE_Right, 1);
         } else if (dpad != 2 && old_dpad == 2) {
-          circle_ui_key_interrupt(KEYCODE_Right, 0);
+          emu_ui_key_interrupt(KEYCODE_Right, 0);
         }
         handle_button_function(true, nDeviceIndex, b);
         return;
@@ -470,8 +470,8 @@ if (static_kernel->circle_get_ticks() - entry_start >= entry_delay) {
       int value = 0;
       if (dpad < 8)
         value |= dpad_to_joy[dpad];
-      value |= circle_add_button_values(nDeviceIndex, b);
-      circle_joy_usb(nDeviceIndex, value);
+      value |= emu_add_button_values(nDeviceIndex, b);
+      emu_set_joy_usb_interrupt(nDeviceIndex, value);
     }
   } else if (usb_pref == USB_PREF_ANALOG && pState->naxes > max_index) {
     // TODO: Do this just once at init
@@ -506,24 +506,24 @@ if (static_kernel->circle_get_ticks() - entry_start >= entry_delay) {
 
       if (ui_activated) {
         if (a_up && !prev_a_up) {
-          circle_ui_key_interrupt(KEYCODE_Up, 1);
+          emu_ui_key_interrupt(KEYCODE_Up, 1);
         } else if (!a_up && prev_a_up) {
-          circle_ui_key_interrupt(KEYCODE_Up, 0);
+          emu_ui_key_interrupt(KEYCODE_Up, 0);
         }
         if (a_down && !prev_a_down) {
-          circle_ui_key_interrupt(KEYCODE_Down, 1);
+          emu_ui_key_interrupt(KEYCODE_Down, 1);
         } else if (!a_down && prev_a_down) {
-          circle_ui_key_interrupt(KEYCODE_Down, 0);
+          emu_ui_key_interrupt(KEYCODE_Down, 0);
         }
         if (a_left && !prev_a_left) {
-          circle_ui_key_interrupt(KEYCODE_Left, 1);
+          emu_ui_key_interrupt(KEYCODE_Left, 1);
         } else if (!a_left && prev_a_left) {
-          circle_ui_key_interrupt(KEYCODE_Left, 0);
+          emu_ui_key_interrupt(KEYCODE_Left, 0);
         }
         if (a_right && !prev_a_right) {
-          circle_ui_key_interrupt(KEYCODE_Right, 1);
+          emu_ui_key_interrupt(KEYCODE_Right, 1);
         } else if (!a_right && prev_a_right) {
-          circle_ui_key_interrupt(KEYCODE_Right, 0);
+          emu_ui_key_interrupt(KEYCODE_Right, 0);
         }
         handle_button_function(true, nDeviceIndex, b);
         return;
@@ -540,8 +540,8 @@ if (static_kernel->circle_get_ticks() - entry_start >= entry_delay) {
         value |= 0x1;
       if (a_down)
         value |= 0x2;
-      value |= circle_add_button_values(nDeviceIndex, b);
-      circle_joy_usb(nDeviceIndex, value);
+      value |= emu_add_button_values(nDeviceIndex, b);
+      emu_set_joy_usb_interrupt(nDeviceIndex, value);
     }
   }
 }
@@ -566,7 +566,7 @@ ViceApp::TShutdownMode CKernel::Run(void) {
   SetupUSBKeyboard();
   SetupUSBMouse();
 
-  circle_set_demo_mode(mViceOptions.GetDemoMode());
+  emu_set_demo_mode(mViceOptions.GetDemoMode());
 
   unsigned num_pads = 0;
   int num_buttons[2] = {0, 0};
@@ -594,8 +594,8 @@ ViceApp::TShutdownMode CKernel::Run(void) {
     num_pads++;
   }
 
-  // Tell vice what we found
-  joy_set_gamepad_info(num_pads, num_buttons, num_axes, num_hats);
+  // Tell the emulator what we found
+  emu_set_gamepad_info(num_pads, num_buttons, num_axes, num_hats);
 
 #ifndef ARM_ALLOW_MULTI_CORE
   mEmulatorCore.LaunchEmulator(mTimingOption);
@@ -612,22 +612,22 @@ ViceApp::TShutdownMode CKernel::Run(void) {
 }
 
 void CKernel::ScanKeyboard() {
-  int ui_activated = circle_ui_activated();
+  int ui_activated = emu_is_ui_activated();
 
   // For restore, there is no public API that triggers it so we will
   // pass the keycode that will.
   int restore = gpioPins[GPIO_KBD_RESTORE_INDEX]->Read();
 #if defined(RASPI_PLUS4) | defined(RASPI_PLUS4EMU)
   if (restore == LOW && kbdRestoreState == HIGH) {
-     circle_key_pressed(KEYCODE_Home);
+     emu_key_pressed(KEYCODE_Home);
   } else if (restore == HIGH && kbdRestoreState == LOW) {
-     circle_key_released(KEYCODE_Home);
+     emu_key_released(KEYCODE_Home);
   }
 #else
   if (restore == LOW && kbdRestoreState == HIGH) {
-     circle_key_pressed(KEYCODE_PageUp);
+     emu_key_pressed(KEYCODE_PageUp);
   } else if (restore == HIGH && kbdRestoreState == LOW) {
-     circle_key_released(KEYCODE_PageUp);
+     emu_key_released(KEYCODE_PageUp);
   }
 #endif
   kbdRestoreState = restore;
@@ -654,11 +654,11 @@ void CKernel::ScanKeyboard() {
           }
 
           if (keycode == KEYCODE_Right && (uiLeftShift || uiRightShift)) {
-             circle_key_pressed(KEYCODE_Left);
+             emu_key_pressed(KEYCODE_Left);
           } else if (keycode == KEYCODE_Down && (uiLeftShift || uiRightShift)) {
-             circle_key_pressed(KEYCODE_Up);
+             emu_key_pressed(KEYCODE_Up);
           } else {
-             circle_key_pressed(keycode);
+             emu_key_pressed(keycode);
           }
         } else if (val == HIGH && kbdMatrixStates[kbdPA][kbdPB] == LOW) {
           if (keycode == KEYCODE_LeftShift) {
@@ -667,11 +667,11 @@ void CKernel::ScanKeyboard() {
              uiRightShift = false;
           }
           if (keycode == KEYCODE_Right && (uiLeftShift || uiRightShift)) {
-             circle_key_released(KEYCODE_Left);
+             emu_key_released(KEYCODE_Left);
           } else if (keycode == KEYCODE_Down && (uiLeftShift || uiRightShift)) {
-             circle_key_released(KEYCODE_Up);
+             emu_key_released(KEYCODE_Up);
           } else {
-             circle_key_released(keycode);
+             emu_key_released(keycode);
           }
         }
       } else {
@@ -679,9 +679,9 @@ void CKernel::ScanKeyboard() {
         // the handle functions directly in kbd.c so we can invoke the
         // same hotkey funcs.
         if (val == LOW && kbdMatrixStates[kbdPA][kbdPB] == HIGH) {
-          circle_key_pressed(keycode);
+          emu_key_pressed(keycode);
         } else if (val == HIGH && kbdMatrixStates[kbdPA][kbdPB] == LOW) {
-          circle_key_released(keycode);
+          emu_key_released(keycode);
         }
       }
       kbdMatrixStates[kbdPA][kbdPB] = val;
@@ -706,7 +706,7 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
   CGPIOPin *js_selector = NULL;
   int port = 0;
   int devd = 0;
-  int ui_activated = circle_ui_activated();
+  int ui_activated = emu_is_ui_activated();
 
   // If ui is activated, don't bail if port assignment can't be done
   // since the event will always go to the ui. We want the joystick to
@@ -781,33 +781,33 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
 
   if (ui_activated) {
     if (js_up == LOW && js_prev[JOY_UP] != LOW) {
-      circle_ui_key_interrupt(KEYCODE_Up, 1);
+      emu_ui_key_interrupt(KEYCODE_Up, 1);
     } else if (js_up != LOW && js_prev[JOY_UP] == LOW) {
-      circle_ui_key_interrupt(KEYCODE_Up, 0);
+      emu_ui_key_interrupt(KEYCODE_Up, 0);
     }
 
     if (js_down == LOW && js_prev[JOY_DOWN] != LOW) {
-      circle_ui_key_interrupt(KEYCODE_Down, 1);
+      emu_ui_key_interrupt(KEYCODE_Down, 1);
     } else if (js_down != LOW && js_prev[JOY_DOWN] == LOW) {
-      circle_ui_key_interrupt(KEYCODE_Down, 0);
+      emu_ui_key_interrupt(KEYCODE_Down, 0);
     }
 
     if (js_left == LOW && js_prev[JOY_LEFT] != LOW) {
-      circle_ui_key_interrupt(KEYCODE_Left, 1);
+      emu_ui_key_interrupt(KEYCODE_Left, 1);
     } else if (js_left != LOW && js_prev[JOY_LEFT] == LOW) {
-      circle_ui_key_interrupt(KEYCODE_Left, 0);
+      emu_ui_key_interrupt(KEYCODE_Left, 0);
     }
 
     if (js_right == LOW && js_prev[JOY_RIGHT] != LOW) {
-      circle_ui_key_interrupt(KEYCODE_Right, 1);
+      emu_ui_key_interrupt(KEYCODE_Right, 1);
     } else if (js_right != LOW && js_prev[JOY_RIGHT] == LOW) {
-      circle_ui_key_interrupt(KEYCODE_Right, 0);
+      emu_ui_key_interrupt(KEYCODE_Right, 0);
     }
 
     if (js_fire == LOW && js_prev[JOY_FIRE] != LOW) {
-      circle_ui_key_interrupt(KEYCODE_Return, 1);
+      emu_ui_key_interrupt(KEYCODE_Return, 1);
     } else if (js_fire != LOW && js_prev[JOY_FIRE] == LOW) {
-      circle_ui_key_interrupt(KEYCODE_Return, 0);
+      emu_ui_key_interrupt(KEYCODE_Return, 0);
     }
     js_prev[JOY_UP] = js_up;
     js_prev[JOY_DOWN] = js_down;
@@ -822,8 +822,8 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
     if (js_left == LOW) val |= 0x04;
     if (js_right == LOW) val |= 0x08;
     if (js_fire == LOW) val |= 0x10;
-    circle_add_pot_values(&val, js_potx == LOW, js_poty == LOW);
-    circle_emu_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, port, devd, val);
+    emu_add_pot_values(&val, js_potx == LOW, js_poty == LOW);
+    emu_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, port, devd, val);
   }
 
   if (gpioConfig == 1) {
@@ -884,19 +884,19 @@ void CKernel::circle_yield(void) { CScheduler::Get()->Yield(); }
 void CKernel::MouseStatusHandler(unsigned nButtons, int deltaX, int deltaY) {
   static unsigned int prev_buttons = {0};
 
-  circle_mouse_move(deltaX, deltaY);
+  emu_mouse_move(deltaX, deltaY);
 
   if ((prev_buttons & MOUSE_BUTTON_LEFT) && !(nButtons & MOUSE_BUTTON_LEFT)) {
-    circle_mouse_button_left(0);
+    emu_mouse_button_left(0);
   } else if (!(prev_buttons & MOUSE_BUTTON_LEFT) &&
              (nButtons & MOUSE_BUTTON_LEFT)) {
-    circle_mouse_button_left(1);
+    emu_mouse_button_left(1);
   }
   if ((prev_buttons & MOUSE_BUTTON_RIGHT) && !(nButtons & MOUSE_BUTTON_RIGHT)) {
-    circle_mouse_button_right(0);
+    emu_mouse_button_right(0);
   } else if (!(prev_buttons & MOUSE_BUTTON_RIGHT) &&
              (nButtons & MOUSE_BUTTON_RIGHT)) {
-    circle_mouse_button_right(1);
+    emu_mouse_button_right(1);
   }
   prev_buttons = nButtons;
 }
@@ -914,28 +914,28 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
     if ((ucModifiers & v) && !(mod_states & v)) {
       switch (i) {
       case 0: // LeftControl
-        circle_key_pressed(KEYCODE_LeftControl);
+        emu_key_pressed(KEYCODE_LeftControl);
         break;
       case 1: // LeftShift
-        if (circle_ui_activated()) {
+        if (emu_is_ui_activated()) {
           uiLeftShift = true;
         }
-        circle_key_pressed(KEYCODE_LeftShift);
+        emu_key_pressed(KEYCODE_LeftShift);
         break;
       case 5: // RightShift
-        if (circle_ui_activated()) {
+        if (emu_is_ui_activated()) {
           uiRightShift = true;
         }
-        circle_key_pressed(KEYCODE_RightShift);
+        emu_key_pressed(KEYCODE_RightShift);
         break;
       case 3: // LeftSuper
-        circle_key_pressed(KEYCODE_LeftSuper);
+        emu_key_pressed(KEYCODE_LeftSuper);
         break;
       case 2: // LeftAlt
-        circle_key_pressed(KEYCODE_LeftAlt);
+        emu_key_pressed(KEYCODE_LeftAlt);
         break;
       case 6: // RightAlt
-        circle_key_pressed(KEYCODE_RightAlt);
+        emu_key_pressed(KEYCODE_RightAlt);
         break;
       default:
         break;
@@ -943,28 +943,28 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
     } else if (!(ucModifiers & v) && (mod_states & v)) {
       switch (i) {
       case 0: // LeftControl
-        circle_key_released(KEYCODE_LeftControl);
+        emu_key_released(KEYCODE_LeftControl);
         break;
       case 1: // LeftShift
-        if (circle_ui_activated()) {
+        if (emu_is_ui_activated()) {
           uiLeftShift = false;
         }
-        circle_key_released(KEYCODE_LeftShift);
+        emu_key_released(KEYCODE_LeftShift);
         break;
       case 5: // RightShift
-        if (circle_ui_activated()) {
+        if (emu_is_ui_activated()) {
           uiRightShift = false;
         }
-        circle_key_released(KEYCODE_RightShift);
+        emu_key_released(KEYCODE_RightShift);
         break;
       case 3: // LeftSuper
-        circle_key_released(KEYCODE_LeftSuper);
+        emu_key_released(KEYCODE_LeftSuper);
         break;
       case 2: // LeftAlt
-        circle_key_released(KEYCODE_LeftAlt);
+        emu_key_released(KEYCODE_LeftAlt);
         break;
       case 6: // RightAlt
-        circle_key_released(KEYCODE_RightAlt);
+        emu_key_released(KEYCODE_RightAlt);
         break;
       default:
         break;
@@ -983,7 +983,7 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
   }
 
   // Compare previous to present and handle key press/release events.
-  int ui_activated = circle_ui_activated();
+  int ui_activated = emu_is_ui_activated();
   for (unsigned i = 1; i < MAX_KEY_CODES; i++) {
     if (key_states[i] == true && new_states[i] == false) {
       if (ui_activated) {
@@ -992,27 +992,27 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
         // key_states below managing the state of the original key,
         // not the translated one.
         if ((uiLeftShift || uiRightShift) && i == KEYCODE_Right) {
-          circle_key_released(KEYCODE_Left);
+          emu_key_released(KEYCODE_Left);
         } else if ((uiLeftShift || uiRightShift) && i == KEYCODE_Down) {
-          circle_key_released(KEYCODE_Up);
+          emu_key_released(KEYCODE_Up);
         } else {
-          circle_key_released(i);
+          emu_key_released(i);
         }
       } else {
-        circle_key_released(i);
+        emu_key_released(i);
       }
     } else if (key_states[i] == false && new_states[i] == true) {
       if (ui_activated) {
         // See above note on shift.
         if ((uiLeftShift || uiRightShift) && i == KEYCODE_Right) {
-          circle_key_pressed(KEYCODE_Left);
+          emu_key_pressed(KEYCODE_Left);
         } else if ((uiLeftShift || uiRightShift) && i == KEYCODE_Down) {
-          circle_key_pressed(KEYCODE_Up);
+          emu_key_pressed(KEYCODE_Up);
         } else {
-          circle_key_pressed(i);
+          emu_key_pressed(i);
         }
       } else {
-        circle_key_pressed(i);
+        emu_key_pressed(i);
       }
     }
     key_states[i] = new_states[i];
@@ -1052,37 +1052,37 @@ int CKernel::ReadDebounced(int pinIndex) {
 // function. Also scans a real C64 keyboard and joysticks if enabled.
 // Otherwise, just scans gpio joysticks.
 void CKernel::circle_check_gpio() {
-  int gpio_config = circle_gpio_config();
+  int gpio_config = emu_get_gpio_config();
   switch(gpio_config) {
     case 0:
      // Nav Buttons + Real Joys
      if (ReadDebounced(GPIO_CONFIG_0_MENU_INDEX) == BTN_PRESS) {
-      circle_key_pressed(KEYCODE_F12);
-      circle_key_released(KEYCODE_F12);
+      emu_key_pressed(KEYCODE_F12);
+      emu_key_released(KEYCODE_F12);
      }
      if (ReadDebounced(GPIO_CONFIG_0_MENU_BACK_INDEX) == BTN_PRESS) {
-      circle_key_pressed(KEYCODE_Escape);
-      circle_key_released(KEYCODE_Escape);
+      emu_key_pressed(KEYCODE_Escape);
+      emu_key_released(KEYCODE_Escape);
      }
      if (ReadDebounced(GPIO_CONFIG_0_MENU_UP_INDEX) == BTN_PRESS) {
-      circle_key_pressed(KEYCODE_Up);
-      circle_key_released(KEYCODE_Up);
+      emu_key_pressed(KEYCODE_Up);
+      emu_key_released(KEYCODE_Up);
      }
      if (ReadDebounced(GPIO_CONFIG_0_MENU_DOWN_INDEX) == BTN_PRESS) {
-      circle_key_pressed(KEYCODE_Down);
-      circle_key_released(KEYCODE_Down);
+      emu_key_pressed(KEYCODE_Down);
+      emu_key_released(KEYCODE_Down);
      }
      if (ReadDebounced(GPIO_CONFIG_0_MENU_LEFT_INDEX) == BTN_PRESS) {
-      circle_key_pressed(KEYCODE_Left);
-      circle_key_released(KEYCODE_Left);
+      emu_key_pressed(KEYCODE_Left);
+      emu_key_released(KEYCODE_Left);
      }
      if (ReadDebounced(GPIO_CONFIG_0_MENU_RIGHT_INDEX) == BTN_PRESS) {
-      circle_key_pressed(KEYCODE_Right);
-      circle_key_released(KEYCODE_Right);
+      emu_key_pressed(KEYCODE_Right);
+      emu_key_released(KEYCODE_Right);
      }
      if (ReadDebounced(GPIO_CONFIG_0_MENU_ENTER_INDEX) == BTN_PRESS) {
-      circle_key_pressed(KEYCODE_Return);
-      circle_key_released(KEYCODE_Return);
+      emu_key_pressed(KEYCODE_Return);
+      emu_key_released(KEYCODE_Return);
      }
      ReadJoystick(0, 0);
      ReadJoystick(1, 0);
@@ -1096,21 +1096,21 @@ void CKernel::circle_check_gpio() {
     case 2:
      // Waveshare Hat
      if (ReadDebounced(GPIO_CONFIG_2_WAVESHARE_START_INDEX) == BTN_PRESS) {
-       circle_key_pressed(KEYCODE_F12);
-       circle_key_released(KEYCODE_F12);
+       emu_key_pressed(KEYCODE_F12);
+       emu_key_released(KEYCODE_F12);
      }
      if (ReadDebounced(GPIO_CONFIG_2_WAVESHARE_TL_INDEX) == BTN_PRESS) {
-       circle_key_pressed(KEYCODE_Escape);
-       circle_key_released(KEYCODE_Escape);
+       emu_key_pressed(KEYCODE_Escape);
+       emu_key_released(KEYCODE_Escape);
      }
      if (ReadDebounced(GPIO_CONFIG_2_WAVESHARE_TR_INDEX) == BTN_PRESS) {
-       circle_emu_quick_func_interrupt(BTN_ASSIGN_WARP);
+       emu_quick_func_interrupt(BTN_ASSIGN_WARP);
      }
      if (ReadDebounced(GPIO_CONFIG_2_WAVESHARE_X_INDEX) == BTN_PRESS) {
-       circle_emu_quick_func_interrupt(BTN_ASSIGN_VKBD_TOGGLE);
+       emu_quick_func_interrupt(BTN_ASSIGN_VKBD_TOGGLE);
      }
      if (ReadDebounced(GPIO_CONFIG_2_WAVESHARE_SELECT_INDEX) == BTN_PRESS) {
-       circle_emu_quick_func_interrupt(BTN_ASSIGN_STATUS_TOGGLE);
+       emu_quick_func_interrupt(BTN_ASSIGN_STATUS_TOGGLE);
      }
      ReadJoystick(0, 2);
      break;
