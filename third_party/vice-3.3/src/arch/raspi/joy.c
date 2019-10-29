@@ -29,9 +29,6 @@
 #include <stdio.h>
 #include <string.h>
 
-// VICE includes
-#include "joyport/joystick.h"
-
 // RASPI includes
 #include "kbd.h"
 #include "menu.h"

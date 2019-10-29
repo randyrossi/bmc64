@@ -42,6 +42,7 @@
 #include "lib.h"
 #include "log.h"
 #include "machine.h"
+#include "keyboard.h"
 #include "util.h"
 #include "vicemaxpath.h"
 
@@ -274,3 +275,5 @@ char *archdep_extra_title_text(void) { return NULL; }
 void archdep_vice_exit(int excode) {}
 
 int archdep_vice_atexit(void (*function)(void)) { return 0; }
+
+int kbd_arch_get_host_mapping(void) { return KBD_MAPPING_US; }

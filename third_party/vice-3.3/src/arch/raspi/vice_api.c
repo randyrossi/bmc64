@@ -1,5 +1,5 @@
 /*
- * kbd.h
+ * vice_api.c - VICE specific impl of emu_api.h
  *
  * Written by
  *  Randy Rossi <randy.rossi@gmail.com>
@@ -24,28 +24,45 @@
  *
  */
 
-#ifndef RASPI_KBD_H
-#define RASPI_KBD_H
+#include "emu_api.h"
 
-#include "circle.h"
-#include "keycodes.h"
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 
-struct key_combo_state_s {
-  long second_key; // the 2nd key to press to invoke this combo
-  int invoked;     // set when the combo is completed
-  int function;    // what to do
-};
+// VICE includes
+#include "interrupt.h"
+#include "videoarch.h"
+#include "menu.h"
+#include "menu_timing.h"
+#include "ui.h"
+#include "keyboard.h"
+#include "demo.h"
 
-typedef struct key_combo_state_s key_combo_state_t;
+static void pause_trap(uint16_t addr, void *data) {
+  menu_about_to_activate();
+  circle_show_fbl(FB_LAYER_UI);
+  while (ui_enabled) {
+    circle_check_gpio();
+    ui_check_key();
 
-extern void kbd_arch_init(void);
-extern int kbd_arch_get_host_mapping(void);
-extern signed long kbd_arch_keyname_to_keynum(char *keyname);
-extern const char *kbd_arch_keynum_to_keyname(signed long keynum);
-extern void kbd_initialize_numpad_joykeys(int *joykeys);
+    ui_handle_toggle_or_quick_func();
 
-void kbd_set_hotkey_function(unsigned int slot, long key, int function);
+    ui_render_single_frame();
+    hdmi_timing_hook();
+    ensure_video();
+  }
+  menu_about_to_deactivate();
+  circle_hide_fbl(FB_LAYER_UI);
+}
 
-#define KBD_PORT_PREFIX "rpi"
+void emu_trap_main_loop(void) {
+  interrupt_maincpu_trigger_trap(pause_trap, 0);
+}
 
-#endif
+void kbd_set_latch_keyarr(int row, int col, int value) {
+  demo_reset_timeout();
+  keyboard_set_keyarr(row, col, value);
+}

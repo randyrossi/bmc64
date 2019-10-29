@@ -29,9 +29,6 @@
 #include <stdio.h>
 #include <string.h>
 
-// VICE includes
-#include "keyboard.h"
-
 // RASPI includes
 #include "circle.h"
 #include "demo.h"
@@ -62,8 +59,6 @@ void kbd_set_hotkey_function(unsigned int slot, long key, int function) {
   key_combo_states[slot].invoked = 0;
   key_combo_states[slot].function = function;
 }
-
-int kbd_arch_get_host_mapping(void) { return KBD_MAPPING_US; }
 
 // Tests keyname var against given string
 #define KCMP(x) (strcmp(keyname, x) == 0)
@@ -445,9 +440,4 @@ void emu_key_released(long key) {
     // so emulator is not left in a weird state.
     handle_key_combo_function();
   }
-}
-
-void kbd_set_latch_keyarr(int row, int col, int value) {
-  demo_reset_timeout();
-  keyboard_set_keyarr(row, col, value);
 }

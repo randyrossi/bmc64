@@ -142,4 +142,6 @@ extern const char *archdep_pref_path;
 /* define if the platform supports the monitor in a seperate window */
 #define ARCHDEP_SEPERATE_MONITOR_WINDOW
 
+int kbd_arch_get_host_mapping(void);
+
 #endif

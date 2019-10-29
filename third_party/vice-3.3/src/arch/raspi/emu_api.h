@@ -1,5 +1,5 @@
 /*
- * kbd.h
+ * emu_api.h - emulator specific API functions
  *
  * Written by
  *  Randy Rossi <randy.rossi@gmail.com>
@@ -24,28 +24,13 @@
  *
  */
 
-#ifndef RASPI_KBD_H
-#define RASPI_KBD_H
+#ifndef RASPI_VICE_API_H_
+#define RASPI_VICE_API_H_
 
-#include "circle.h"
-#include "keycodes.h"
+// Pause emulator main loop and run our ui loop. 
+void emu_trap_main_loop(void);
 
-struct key_combo_state_s {
-  long second_key; // the 2nd key to press to invoke this combo
-  int invoked;     // set when the combo is completed
-  int function;    // what to do
-};
-
-typedef struct key_combo_state_s key_combo_state_t;
-
-extern void kbd_arch_init(void);
-extern int kbd_arch_get_host_mapping(void);
-extern signed long kbd_arch_keyname_to_keynum(char *keyname);
-extern const char *kbd_arch_keynum_to_keyname(signed long keynum);
-extern void kbd_initialize_numpad_joykeys(int *joykeys);
-
-void kbd_set_hotkey_function(unsigned int slot, long key, int function);
-
-#define KBD_PORT_PREFIX "rpi"
+// Press/release key by row/col in keyboard matrix.
+void kbd_set_latch_keyarr(int row, int col, int value);
 
 #endif

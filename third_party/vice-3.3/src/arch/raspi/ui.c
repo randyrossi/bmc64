@@ -33,10 +33,8 @@
 #include <string.h>
 #include <ctype.h>
 
-// VICE includes
-#include "interrupt.h"
-
 // RASPI includes
+#include "emu_api.h"
 #include "circle.h"
 #include "joy.h"
 #include "kbd.h"
@@ -469,7 +467,7 @@ static void ui_action_frame() {
   }
 }
 
-static void ui_render_single_frame() {
+void ui_render_single_frame() {
   // Start with transparent
   ui_draw_rect(0, 0, ui_fb_w, ui_fb_h, TRANSPARENT_COLOR, 1);
 
@@ -480,27 +478,10 @@ static void ui_render_single_frame() {
   circle_yield();
 }
 
-static void pause_trap(uint16_t addr, void *data) {
-  menu_about_to_activate();
-  circle_show_fbl(FB_LAYER_UI);
-  while (ui_enabled) {
-    circle_check_gpio();
-    ui_check_key();
-
-    ui_handle_toggle_or_quick_func();
-
-    ui_render_single_frame();
-    hdmi_timing_hook();
-    ensure_video();
-  }
-  menu_about_to_deactivate();
-  circle_hide_fbl(FB_LAYER_UI);
-}
-
 static void ui_toggle(void) {
   ui_enabled = 1 - ui_enabled;
   if (ui_enabled) {
-    interrupt_maincpu_trigger_trap(pause_trap, 0);
+    emu_trap_main_loop();
   }
 }
 

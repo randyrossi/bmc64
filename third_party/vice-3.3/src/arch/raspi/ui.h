@@ -229,6 +229,7 @@ extern volatile int ui_enabled;
 extern int ui_showing;
 
 void ui_handle_toggle_or_quick_func(void);
+void ui_render_single_frame(void);
 
 // Used to ensure we process all key events before transitioning to
 // the ui. Can be set to 2 from an ISR to ensure handling from key queue and

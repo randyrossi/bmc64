@@ -38,6 +38,7 @@
 #include "uiapi.h"
 
 // RASPI includes
+#include "emu_api.h"
 #include "raspi_machine.h"
 #include "menu.h"
 #include "ui.h"
