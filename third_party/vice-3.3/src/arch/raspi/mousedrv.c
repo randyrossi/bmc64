@@ -26,8 +26,10 @@
 
 #include "mousedrv.h"
 
-#include "videoarch.h"
 #include <stdio.h>
+
+// RASPI includes
+#include "videoarch.h"
 
 static int mouse_x, mouse_y;
 static unsigned long mouse_timestamp = 0;

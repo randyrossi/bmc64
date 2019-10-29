@@ -26,12 +26,13 @@
 
 #include "missing.h"
 
-#include "ui.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <sys/time.h>
+
+#include "ui.h"
 
 // ------------------------------------------------------------------------
 // These are stubs to get things compiling. The vast majority of these

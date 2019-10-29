@@ -25,17 +25,21 @@
  *  02111-1307  USA.
  *
  */
-
 #include "demo.h"
-#include "attach.h"
-#include "cartridge.h"
-#include "circle.h"
-#include "interrupt.h"
-#include "joy.h"
-#include "machine.h"
-#include "menu.h"
+
 #include <stdlib.h>
 #include <string.h>
+
+// VICE includes
+#include "attach.h"
+#include "cartridge.h"
+#include "interrupt.h"
+#include "machine.h"
+
+// RASPI includes
+#include "circle.h"
+#include "joy.h"
+#include "menu.h"
 
 int raspi_demo_mode = 0;
 

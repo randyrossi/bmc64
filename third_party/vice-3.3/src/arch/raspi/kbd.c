@@ -26,15 +26,19 @@
 
 #include "kbd.h"
 
+#include <stdio.h>
+#include <string.h>
+
+// VICE includes
+#include "keyboard.h"
+
+// RASPI includes
 #include "circle.h"
 #include "demo.h"
 #include "joy.h"
-#include "keyboard.h"
 #include "menu.h"
 #include "menu_keyset.h"
 #include "ui.h"
-#include <stdio.h>
-#include <string.h>
 
 #define NUM_KEY_COMBOS 8
 

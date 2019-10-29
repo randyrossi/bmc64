@@ -1,5 +1,5 @@
 /*
- * demo.h
+ * font.h
  *
  * Written by
  *  Randy Rossi <randy.rossi@gmail.com>

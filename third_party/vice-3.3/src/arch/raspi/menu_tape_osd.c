@@ -26,14 +26,18 @@
 
 #include "menu_tape_osd.h"
 
-#include "datasette.h"
-#include "menu.h"
-#include "ui.h"
 #include <dirent.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+// VICE includes
+#include "datasette.h"
+
+// RASPI includes
+#include "menu.h"
+#include "ui.h"
 
 static void menu_item_changed(struct menu_item *item) {
   switch (item->id) {

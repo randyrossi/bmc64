@@ -30,14 +30,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+// VICE includes
 #include "datasette.h"
 #include "drive.h"
 #include "machine.h"
+#include "resources.h"
+#include "uiapi.h"
+
+// RASPI includes
 #include "raspi_machine.h"
 #include "menu.h"
-#include "resources.h"
 #include "ui.h"
-#include "uiapi.h"
 #include "circle.h"
 #include "keycodes.h"
 

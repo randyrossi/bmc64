@@ -26,16 +26,18 @@
 
 #include "joy.h"
 
-#include "demo.h"
+#include <stdio.h>
+#include <string.h>
+
+// VICE includes
+#include "joyport/joystick.h"
+
+// RASPI includes
 #include "kbd.h"
 #include "menu.h"
 #include "menu_keyset.h"
 #include "ui.h"
 #include "overlay.h"
-
-#include "joyport/joystick.h"
-#include <stdio.h>
-#include <string.h>
 
 // Global usb gamepad info.
 int joy_num_pads;

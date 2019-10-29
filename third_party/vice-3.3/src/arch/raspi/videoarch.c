@@ -26,31 +26,35 @@
 
 #include "videoarch.h"
 
-#include "demo.h"
-#include "font.h"
-#include "joy.h"
-#include "joyport/joystick.h"
-#include "kbd.h"
-#include "kbdbuf.h"
-#include "keyboard.h"
-#include "machine.h"
-#include "mem.h"
-#include "menu.h"
-#include "menu_tape_osd.h"
-#include "monitor.h"
-#include "overlay.h"
-#include "raspi_machine.h"
-#include "resources.h"
-#include "sid.h"
-#include "ui.h"
-#include "video.h"
-#include "viewport.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <sys/time.h>
+
+// VICE includes
+#include "joyport/joystick.h"
+#include "kbdbuf.h"
+#include "keyboard.h"
+#include "machine.h"
+#include "mem.h"
+#include "monitor.h"
+#include "resources.h"
+#include "sid.h"
+#include "video.h"
+#include "viewport.h"
+
+// RASPI includes
+#include "demo.h"
+#include "font.h"
+#include "joy.h"
+#include "kbd.h"
+#include "menu.h"
+#include "menu_tape_osd.h"
+#include "overlay.h"
+#include "raspi_machine.h"
+#include "ui.h"
 
 // Increments with each canvas being inited by vice
 int canvas_num;

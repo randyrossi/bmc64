@@ -32,8 +32,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "joy.h"
+// VICE includes
 #include "machine.h"
+
+// RASPI includes
+#include "joy.h"
 #include "menu.h"
 #include "menu_key_binding.h"
 #include "ui.h"

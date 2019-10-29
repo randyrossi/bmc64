@@ -32,9 +32,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+// VICE includes
 #include "cartridge.h"
 #include "keyboard.h"
 #include "machine.h"
+
+// RASPI includes
 #include "menu.h"
 #include "raspi_machine.h"
 #include "ui.h"

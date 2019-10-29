@@ -32,19 +32,28 @@
 #include <stdlib.h>
 #include <string.h>
 
+// VICE includes
 #include "attach.h"
 #include "autostart.h"
 #include "cartridge.h"
 #include "datasette.h"
-#include "demo.h"
 #include "drive.h"
 #include "diskimage.h"
-#include "joy.h"
 #include "joyport.h"
 #include "joyport/joystick.h"
-#include "kbd.h"
 #include "keyboard.h"
 #include "machine.h"
+#include "resources.h"
+#include "sid.h"
+#include "tape.h"
+#include "text.h"
+#include "util.h"
+#include "vdrive-internal.h"
+
+// RASPI Includes
+#include "demo.h"
+#include "joy.h"
+#include "kbd.h"
 #include "menu_cart_osd.h"
 #include "menu_confirm_osd.h"
 #include "menu_tape_osd.h"
@@ -52,16 +61,10 @@
 #include "menu_usb.h"
 #include "menu_keyset.h"
 #include "menu_switch.h"
-#include "overlay.h"
 #include "raspi_machine.h"
+#include "overlay.h"
 #include "raspi_util.h"
-#include "resources.h"
-#include "sid.h"
-#include "tape.h"
-#include "text.h"
 #include "ui.h"
-#include "util.h"
-#include "vdrive-internal.h"
 
 #define VERSION_STRING "3.0"
 

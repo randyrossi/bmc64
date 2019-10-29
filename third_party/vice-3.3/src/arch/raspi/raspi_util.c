@@ -25,9 +25,11 @@
  */
 #include "raspi_util.h"
 
-#include "ui.h"
 #include <stdio.h>
 #include <string.h>
+
+// RASPI includes
+#include "ui.h"
 
 struct menu_item *sorted_merge(struct menu_item *a, struct menu_item *b) {
   struct menu_item *result = NULL;

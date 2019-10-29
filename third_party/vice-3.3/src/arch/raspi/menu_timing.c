@@ -26,14 +26,16 @@
 
 #include "menu_timing.h"
 
-#include "menu.h"
-#include "raspi_machine.h"
-#include "ui.h"
 #include <dirent.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+// RASPI includes
+#include "menu.h"
+#include "raspi_machine.h"
+#include "ui.h"
 
 static struct menu_item *g_countdown_item;
 
