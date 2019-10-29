@@ -22,6 +22,7 @@ CFLAGS += -I "$(NEWLIBDIR)/include" -I $(STDDEF_INCPATH) \
           -I $(CIRCLEHOME)/addon/fatfs
 
 LIBS := $(VICELIBS) \
+        third_party/common/libbmc64common.a \
         $(NEWLIBDIR)/lib/libm.a \
 	$(NEWLIBDIR)/lib/libc.a \
 	$(NEWLIBDIR)/lib/libcirclenewlib.a \

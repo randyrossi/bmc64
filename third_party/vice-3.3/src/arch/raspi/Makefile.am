@@ -73,6 +73,4 @@ libarch_a_SOURCES = \
 	overlay.c \
 	overlay.h \
 	raspi_util.c \
-	raspi_util.h \
-	font.c \
-	font.h
+	raspi_util.h

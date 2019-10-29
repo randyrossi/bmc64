@@ -26,7 +26,7 @@ fi
 
 SRC_DIR=`pwd`
 
-cd third_party/circle-stdlib
+cd $SRC_DIR/third_party/circle-stdlib
 
 find . -name 'config.cache' -exec rm {} \;
 
@@ -34,10 +34,10 @@ echo ==============================================================
 echo APPLY PATCHES
 echo ==============================================================
 
-cd libs/circle-newlib
+cd $SRC_DIR/third_party/circle-stdlib/libs/circle-newlib
 patch -p1 < ../../../../circle_newlib_patch.diff
 
-cd ../circle
+cd $SRC_DIR/third_party/circle-stdlib/libs/circle
 
 if [ "$BOARD" = "pi0" ]
 then
@@ -52,7 +52,7 @@ echo BUILD CIRCLE-STDLIB
 echo $PATH
 echo ==============================================================
 
-cd ../..
+cd $SRC_DIR/third_party/circle-stdlib
 
 if [ "$BOARD" = "pi2" ]
 then
@@ -83,41 +83,40 @@ echo ==============================================================
 echo BUILD ADDONS
 echo ==============================================================
 
-cd libs/circle/addon
-
-cd fatfs
+cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon/fatfs
 make clean
 make
-cd ..
 
-cd linux
+cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon/linux
 make clean
 make
-cd ..
 
-cd vc4/vchiq
+cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon/vc4/vchiq
 make clean
 make 
-cd ../..
 
-cd vc4/interface/bcm_host
+cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon/vc4/interface/bcm_host
 make
-cd ../../..
 
-cd vc4/interface/khronos
+cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon/vc4/interface/khronos
 make
-cd ../../..
 
-cd vc4/interface/vmcs_host
+cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon/vc4/interface/vmcs_host
 make
-cd ../../..
 
-cd vc4/interface/vcos
+cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon/vc4/interface/vcos
 make
-cd ../../..
 
-cd ../../../../..
-cd third_party/vice-3.3
+# Common
+cd $SRC_DIR/third_party/common
+make
+
+# Plus4Emu
+cd $SRC_DIR/third_party/plus4emu
+make
+
+# Vice
+cd $SRC_DIR/third_party/vice-3.3
 
 if [ "$BOARD" = "pi0" ]
 then
@@ -147,14 +146,16 @@ cd src
 make libarchdep
 make libhvsc
 cd ..
+
 make x64
 make x128
 make xvic
 make xplus4
-cd ../..
+
 echo ==============================================================
 echo Link errors above are expected
 echo ==============================================================
 
+cd $SRC_DIR
 make clean
 BOARD=$BOARD make -f Makefile-C64

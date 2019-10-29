@@ -18,11 +18,11 @@ int circle_button_function(int device, int button_num, unsigned buttons,
 }
 
 void circle_mouse_move(int x, int y) { }
-void circle_button_left(int pressed) { }
-void circle_button_right(int pressed) { }
-void circle_button_middle(int pressed) { }
-void circle_button_up(int pressed) { }
-void circle_button_down(int pressed) { }
+void circle_mouse_button_left(int pressed) { }
+void circle_mouse_button_right(int pressed) { }
+void circle_mouse_button_middle(int pressed) { }
+void circle_mouse_button_up(int pressed) { }
+void circle_mouse_button_down(int pressed) { }
 
 void circle_emu_joy_interrupt(int type, int port, int device, int value) {
 }

@@ -14,6 +14,9 @@ cd $SRC_DIR/third_party/vice-3.3
 make clean
 git status | grep 'deleted:.*doc' | sed 's/deleted:/git checkout /' | sh
 
+cd $SRC_DIR/third_party/common
+make clean
+
 cd $SRC_DIR/third_party/plus4emu
 make clean
 
