@@ -8,7 +8,7 @@ INCLUDES = -I ../src
 all: libresid.a
 
 %.o : %.cpp
-	$(CXX_FOR_TARGET) $(INCLUDES) -c -o $@ $< $(CFLAGS_FOR_TARGET) $(CXXFLAGS_FOR_TARGET)
+	$(CXX_FOR_TARGET) $(INCLUDES) -c -O2 -o $@ $< $(CFLAGS_FOR_TARGET) $(CXXFLAGS_FOR_TARGET)
 
 libresid.a: $(OBJ)
 	$(AR_FOR_TARGET) cr libresid.a $(OBJ)

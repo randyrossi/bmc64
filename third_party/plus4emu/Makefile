@@ -12,7 +12,7 @@ CFLAGS_FOR_TARGET += -DHOST_BUILD
 endif
 
 %.o : %.c
-	$(CC_FOR_TARGET) $(INCLUDES) -c -o $@ $< $(CFLAGS_FOR_TARGET)
+	$(CC_FOR_TARGET) $(INCLUDES) -c -O2 -o $@ $< $(CFLAGS_FOR_TARGET)
 
 all: $(OBJS)
 	for dir in $(SUBDIRS); do \
