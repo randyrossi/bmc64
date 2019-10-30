@@ -3,7 +3,9 @@
 #include <string.h>
 #include <stdarg.h>
 #include <math.h>
+#include <assert.h>
 #include "plus4lib/plus4emu.h"
+#include "../common/circle.h"
 
 static Plus4VM            *vm = NULL;
 static Plus4VideoDecoder  *videoDecoder = NULL;
@@ -14,6 +16,11 @@ static int16_t          audioBuffer[2048];
 static int              audioBufferReadPos = 0;
 static int              audioBufferWritePos = 0;
 static int              audioBufferSamplesUsed = 0;
+
+static uint8_t          *fb_buf;
+static int              fb_pitch;
+
+#define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
 static void errorMessage(const char *fmt, ...)
 {
@@ -38,20 +45,16 @@ static void audioOutputCallback(void *userData,
                                 const int16_t *buf, size_t nFrames)
 {
   // TBD
-  printf ("Audio %d\n",(int)nFrames);
 }
 
 static void videoLineCallback(void *userData,
                               int lineNum, const Plus4VideoLineData *lineData)
 {
-  // TBD
-  printf ("VideoLine\n");
 }
 
 static void videoFrameCallback(void *userData)
 {
-  printf ("Vync\n");
-  // TBD - vsync
+  circle_frames_ready_fbl(FB_LAYER_VIC, -1 /* no 2nd layer */, 1 /* sync */);
 }
 
 static void resetMemoryConfiguration(void)
@@ -77,11 +80,19 @@ int main_program(int argc, char **argv)
 
   printf ("Init\n");
 
-  // VIDEO INIT
+  // BMC64 Video Init
+  if (circle_alloc_fbl(FB_LAYER_VIC, &fb_buf,
+                              384, 288, &fb_pitch)) {
+    printf ("Failed to create video buf.\n");
+    assert(0);
+  }
+  circle_clear_fbl(FB_LAYER_VIC);
+  circle_show_fbl(FB_LAYER_VIC);
 
   vm = Plus4VM_Create();
   if (!vm)
     errorMessage("could not create Plus/4 emulator object");
+
   Plus4VM_SetAudioOutputCallback(vm, &audioOutputCallback, NULL);
   if (Plus4VM_SetAudioOutputQuality(vm, 1) != PLUS4EMU_SUCCESS)
     vmError();
@@ -104,7 +115,16 @@ int main_program(int argc, char **argv)
   Plus4VM_SetVideoOutputCallback(vm, &Plus4VideoDecoder_VideoCallback,
                                  (void *) videoDecoder);
 
-  // AUDIO init
+  // BMC64 Palette Init
+  for (int c=0;c<256;c++) {
+     int red, green, blue;
+     Plus4VideoDecoder_GetPaletteColor(c, &red, &green, &blue);
+     circle_set_palette_fbl(FB_LAYER_VIC, c, COLOR16(red, green, blue));
+  }
+  circle_update_palette_fbl(FB_LAYER_VIC);
+
+  // BMC64 Audio Init
+  // TBD
 
   /* run Plus/4 emulation until the F12 key is pressed */
   printf ("Enter emulation loop\n");

@@ -940,6 +940,9 @@ PLUS4EMU_EXPORT void Plus4VideoDecoder_DecodeLine(
     Plus4VideoDecoder *vd, uint8_t *outBuf, int lineWidth, int pixelFormat,
     const Plus4VideoLineData *lineData);
 
+PLUS4EMU_EXPORT void Plus4VideoDecoder_GetPaletteColor(
+    int i, int *ri, int *gi, int *bi);
+
 #ifdef __cplusplus
 }       /* extern "C" */
 #endif

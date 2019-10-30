@@ -1951,3 +1951,17 @@ extern "C" PLUS4EMU_EXPORT void Plus4VideoDecoder_DecodeLine(
   }
 }
 
+extern "C" PLUS4EMU_EXPORT void Plus4VideoDecoder_GetPaletteColor(
+    int i, int *ri, int *gi, int *bi)
+{
+  float   y = 0.0f;
+  float   u = 0.0f;
+  float   v = 0.0f;
+  Plus4Emu::getPlus4PaletteColor(i, y, u, v);
+  float   r = (v / 0.877f) + y;
+  float   b = (u / 0.492f) + y;
+  float   g = (y - ((r * 0.299f) + (b * 0.114f))) / 0.587f;
+  *ri = int((r > 0.0f ? (r < 1.0f ? r : 1.0f) : 0.0f) * 255.0f + 0.5f);
+  *gi = int((g > 0.0f ? (g < 1.0f ? g : 1.0f) : 0.0f) * 255.0f + 0.5f);
+  *bi = int((b > 0.0f ? (b < 1.0f ? b : 1.0f) : 0.0f) * 255.0f + 0.5f);
+}
