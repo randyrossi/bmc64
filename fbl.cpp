@@ -21,10 +21,6 @@
 #define ALIGN_UP(x,y)  ((x + (y)-1) & ~((y)-1))
 #endif
 
-// Always use an indexed mode.
-#define IMG_TYPE VC_IMAGE_8BPP
-#define BYTES_PER_PIXEL 1
-
 #define RGB565(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 #define ARGB(a,r,g,b) ((uint32_t)((uint8_t)(a)<<24 | (uint8_t)(r)<<16 | (uint8_t)(g)<<8 | (uint8_t)(b)))
 
@@ -82,13 +78,14 @@ FrameBufferLayer::FrameBufferLayer() :
         aspect_(1.6), valign_(0), vpadding_(0), halign_(0), hpadding_(0),
         h_center_offset_(0), v_center_offset_(0),
         rnum_(0), leftPadding_(0), rightPadding_(0), topPadding_(0),
-        bottomPadding_(0), showing_(false), allocated_(false) {
+        bottomPadding_(0), showing_(false), allocated_(false),
+        mode_(VC_IMAGE_8BPP), bytes_per_pixel_(1) {
   alpha_.flags = DISPMANX_FLAGS_ALPHA_FROM_SOURCE;
   alpha_.opacity = 255;
   alpha_.mask = 0;
 
   memcpy (pal_565_, pal_565, sizeof(pal_565));
-  memcpy (pal_argb_, pal_argb, sizeof(pal_565));
+  memcpy (pal_argb_, pal_argb, sizeof(pal_argb));
 }
 
 FrameBufferLayer::~FrameBufferLayer() {
@@ -112,7 +109,7 @@ void FrameBufferLayer::Initialize() {
   initialized_ = true;
 }
 
-int FrameBufferLayer::Allocate(uint8_t **pixels, int width, int height, int *pitch) {
+int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels, int width, int height, int *pitch) {
   int ret;
   DISPMANX_MODEINFO_T dispman_info;
   uint32_t vc_image_ptr;
@@ -122,6 +119,21 @@ int FrameBufferLayer::Allocate(uint8_t **pixels, int width, int height, int *pit
   }
 
   allocated_ = true;
+
+  switch (pixelmode) {
+     case 0:
+        mode_ = VC_IMAGE_8BPP;
+        bytes_per_pixel_ = 1;
+        break;
+     case 1:
+        mode_ = VC_IMAGE_RGB565;
+        bytes_per_pixel_ = 2;
+        break;
+     default:
+        mode_ = VC_IMAGE_8BPP;
+        bytes_per_pixel_ = 1;
+        break;
+  }
 
   *pitch = pitch_ = ALIGN_UP(width, 32);
 
@@ -134,15 +146,15 @@ int FrameBufferLayer::Allocate(uint8_t **pixels, int width, int height, int *pit
   display_width_ = dispman_info.width;
   display_height_ = dispman_info.height;
 
-  *pixels = pixels_ = (uint8_t*) malloc(pitch_ * height * BYTES_PER_PIXEL);
+  *pixels = pixels_ = (uint8_t*) malloc(pitch_ * height * bytes_per_pixel_);
 
   // Allocate the VC resources along with the frame buffer
 
-  dispman_resource_[0] = vc_dispmanx_resource_create(IMG_TYPE,
+  dispman_resource_[0] = vc_dispmanx_resource_create(mode_,
                                                      width,
                                                      height,
                                                      &vc_image_ptr );
-  dispman_resource_[1] = vc_dispmanx_resource_create(IMG_TYPE,
+  dispman_resource_[1] = vc_dispmanx_resource_create(mode_,
                                                      width,
                                                      height,
                                                      &vc_image_ptr );
@@ -168,7 +180,7 @@ int FrameBufferLayer::Allocate(uint8_t **pixels, int width, int height, int *pit
 void FrameBufferLayer::Clear() {
   assert (allocated_);
 
-  memset(pixels_, 0, height_ * pitch_ * BYTES_PER_PIXEL);
+  memset(pixels_, 0, height_ * pitch_ * bytes_per_pixel_);
 }
 
 void FrameBufferLayer::Free() {
@@ -318,7 +330,7 @@ void FrameBufferLayer::FrameReady(int to_offscreen) {
   // Copy data into either the offscreen resource (if swap) or the
   // on screen resource (if !swap).
   vc_dispmanx_resource_write_data(dispman_resource_[rnum],
-                                  IMG_TYPE,
+                                  mode_,
                                   width_,
                                   pixels_,
                                   &copy_dst_rect_);
@@ -348,16 +360,19 @@ void FrameBufferLayer::SwapResources(FrameBufferLayer* fb1,
 
 void FrameBufferLayer::SetPalette(uint8_t index, uint16_t rgb565) {
   assert(!transparency_);
+  assert (mode_ == VC_IMAGE_8BPP);
   pal_565_[index] = rgb565;
 }
 
 void FrameBufferLayer::SetPalette(uint8_t index, uint32_t argb) {
   assert(transparency_);
+  assert (mode_ == VC_IMAGE_8BPP);
   pal_argb_[index] = argb;
 }
 
 void FrameBufferLayer::UpdatePalette() {
   if (!allocated_) return;
+  assert (mode_ == VC_IMAGE_8BPP);
 
   int ret;
   if (transparency_) {
@@ -383,6 +398,7 @@ int FrameBufferLayer::GetLayer() {
 }
 
 void FrameBufferLayer::SetTransparency(bool transparency) {
+  assert (mode_ == VC_IMAGE_8BPP);
   transparency_ = transparency;
 }
 

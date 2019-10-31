@@ -50,6 +50,7 @@ static void audioOutputCallback(void *userData,
 static void videoLineCallback(void *userData,
                               int lineNum, const Plus4VideoLineData *lineData)
 {
+printf ("%d\n",lineNum);
 }
 
 static void videoFrameCallback(void *userData)
@@ -81,7 +82,7 @@ int main_program(int argc, char **argv)
   printf ("Init\n");
 
   // BMC64 Video Init
-  if (circle_alloc_fbl(FB_LAYER_VIC, &fb_buf,
+  if (circle_alloc_fbl(FB_LAYER_VIC, 1 /* RGB565 */, &fb_buf,
                               384, 288, &fb_pitch)) {
     printf ("Failed to create video buf.\n");
     assert(0);

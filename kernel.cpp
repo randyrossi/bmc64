@@ -147,9 +147,9 @@ int circle_cycles_per_sec() {
   return static_kernel->circle_cycles_per_second();
 }
 
-int circle_alloc_fbl(int layer, uint8_t **pixels,
+int circle_alloc_fbl(int layer, int pixelmode, uint8_t **pixels,
                      int width, int height, int *pitch) {
-  return static_kernel->circle_alloc_fbl(layer, pixels, width, height, pitch);
+  return static_kernel->circle_alloc_fbl(layer, pixelmode, pixels, width, height, pitch);
 }
 
 void circle_free_fbl(int layer) {
@@ -1205,9 +1205,9 @@ int CKernel::circle_cycles_per_second() {
   #error Unknown RASPI_ variant
 #endif
 
-int CKernel::circle_alloc_fbl(int layer, uint8_t **pixels,
+int CKernel::circle_alloc_fbl(int layer, int pixelmode, uint8_t **pixels,
                               int width, int height, int *pitch) {
-  return fbl[layer].Allocate(pixels, width, height, pitch);
+  return fbl[layer].Allocate(pixelmode, pixels, width, height, pitch);
 }
 
 void CKernel::circle_free_fbl(int layer) {

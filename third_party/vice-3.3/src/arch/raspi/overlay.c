@@ -195,7 +195,7 @@ static void clear_statusbar() {
 // Create a new overlay buffer
 uint8_t *overlay_init(int padding, int c40_80_state, int vkbd_transparency) {
   last_c480_80_state = c40_80_state;
-  circle_alloc_fbl(FB_LAYER_STATUS,
+  circle_alloc_fbl(FB_LAYER_STATUS, 0 /* indexed */,
                    &overlay_buf, OVERLAY_WIDTH, OVERLAY_HEIGHT,
                    &overlay_buf_pitch);
   // Use negative aspect here so our overlay is stretched to the full

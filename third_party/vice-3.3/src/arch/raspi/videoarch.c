@@ -183,10 +183,10 @@ static int draw_buffer_alloc(struct video_canvas_s *canvas,
                              unsigned int fb_width, unsigned int fb_height,
                              unsigned int *fb_pitch) {
    if (is_vdc(canvas)) {
-      return circle_alloc_fbl(FB_LAYER_VDC, draw_buffer,
+      return circle_alloc_fbl(FB_LAYER_VDC, 0 /* indexed */, draw_buffer,
                               fb_width, fb_height, fb_pitch);
    } else {
-      return circle_alloc_fbl(FB_LAYER_VIC, draw_buffer,
+      return circle_alloc_fbl(FB_LAYER_VIC, 0 /* indexed */, draw_buffer,
                               fb_width, fb_height, fb_pitch);
    }
 }
@@ -771,7 +771,7 @@ void main_exit(void) {
   int fb_width = 320;
   int fb_height = 240;
 
-  circle_alloc_fbl(FB_LAYER_VIC, &fb,
+  circle_alloc_fbl(FB_LAYER_VIC, 0 /* indexed */, &fb,
                       fb_width, fb_height, &fb_pitch);
   circle_clear_fbl(FB_LAYER_VIC);
   circle_show_fbl(FB_LAYER_VIC);

@@ -159,7 +159,7 @@ extern void circle_sleep(long);
 extern unsigned long circle_get_ticks();
 extern void circle_yield();
 extern void circle_check_gpio();
-extern int circle_alloc_fbl(int layer, uint8_t **pixels,
+extern int circle_alloc_fbl(int pixelmode, int layer, uint8_t **pixels,
                             int width, int height, int *pitch);
 extern void circle_free_fbl(int layer);
 extern void circle_clear_fbl(int layer);

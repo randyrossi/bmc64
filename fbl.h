@@ -35,7 +35,8 @@ public:
   // is used.
   void SetTransparency(bool transparency);
 
-  int Allocate(uint8_t **pixels, int width, int height, int *pitch);
+  // pixel mode: 0=8-bit-indexed, 1=RGB565
+  int Allocate(int pixelmode, uint8_t **pixels, int width, int height, int *pitch);
   void Free();
   void Clear();
 
@@ -160,6 +161,9 @@ private:
 
   bool showing_;
   bool allocated_;
+
+  VC_IMAGE_TYPE_T mode_;
+  int bytes_per_pixel_;
 
   uint16_t pal_565_[256];
   uint32_t pal_argb_[256];

@@ -174,7 +174,7 @@ void ui_init_menu(void) {
   ui_key_ticks_repeats_next = 0;
 
   // Let's create our UI frame buffer
-  circle_alloc_fbl(FB_LAYER_UI, &ui_fb, ui_fb_w, ui_fb_h, &ui_fb_pitch);
+  circle_alloc_fbl(FB_LAYER_UI, 0 /* indexed */, &ui_fb, ui_fb_w, ui_fb_h, &ui_fb_pitch);
   circle_clear_fbl(FB_LAYER_UI);
 }
 
