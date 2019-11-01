@@ -50,12 +50,17 @@ static void audioOutputCallback(void *userData,
 static void videoLineCallback(void *userData,
                               int lineNum, const Plus4VideoLineData *lineData)
 {
-printf ("%d\n",lineNum);
+   lineNum = lineNum / 2;
+   if (lineNum >= 0 && lineNum < 288) {
+     Plus4VideoDecoder_DecodeLine(videoDecoder, fb_buf + lineNum * fb_pitch, 384, lineData);
+   }
 }
 
 static void videoFrameCallback(void *userData)
 {
+#ifndef HOST_BUILD
   circle_frames_ready_fbl(FB_LAYER_VIC, -1 /* no 2nd layer */, 1 /* sync */);
+#endif
 }
 
 static void resetMemoryConfiguration(void)
@@ -81,6 +86,7 @@ int main_program(int argc, char **argv)
 
   printf ("Init\n");
 
+#ifndef HOST_BUILD
   // BMC64 Video Init
   if (circle_alloc_fbl(FB_LAYER_VIC, 1 /* RGB565 */, &fb_buf,
                               384, 288, &fb_pitch)) {
@@ -89,6 +95,10 @@ int main_program(int argc, char **argv)
   }
   circle_clear_fbl(FB_LAYER_VIC);
   circle_show_fbl(FB_LAYER_VIC);
+#else
+  fb_buf = (uint8_t*) malloc(384*288*2);
+  fb_pitch = 384;
+#endif
 
   vm = Plus4VM_Create();
   if (!vm)
@@ -112,10 +122,11 @@ int main_program(int argc, char **argv)
       Plus4VideoDecoder_Create(&videoLineCallback, &videoFrameCallback, NULL);
   if (!videoDecoder)
     errorMessage("could not create video decoder object");
-  Plus4VideoDecoder_UpdatePalette(videoDecoder, 0, 16, 8, 0);
+  //Plus4VideoDecoder_UpdatePalette(videoDecoder, 0, 16, 8, 0); // not using rgb
   Plus4VM_SetVideoOutputCallback(vm, &Plus4VideoDecoder_VideoCallback,
                                  (void *) videoDecoder);
 
+  /* TODO REMOVE THIS
   // BMC64 Palette Init
   for (int c=0;c<256;c++) {
      int red, green, blue;
@@ -123,6 +134,7 @@ int main_program(int argc, char **argv)
      circle_set_palette_fbl(FB_LAYER_VIC, c, COLOR16(red, green, blue));
   }
   circle_update_palette_fbl(FB_LAYER_VIC);
+  */
 
   // BMC64 Audio Init
   // TBD

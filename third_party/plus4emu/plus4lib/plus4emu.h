@@ -920,8 +920,8 @@ PLUS4EMU_EXPORT void Plus4VideoDecoder_SetHueShift(
  * integer pixel format.
  * The default settings are: yuvMode = 0, rShift = 16, gShift = 8, bShift = 0.
  */
-PLUS4EMU_EXPORT void Plus4VideoDecoder_UpdatePalette(
-    Plus4VideoDecoder *vd, int yuvMode, int rShift, int gShift, int bShift);
+//PLUS4EMU_EXPORT void Plus4VideoDecoder_UpdatePalette(
+//    Plus4VideoDecoder *vd, int yuvMode, int rShift, int gShift, int bShift);
 /*!
  * Decode the line in 'lineData' to 'outBuf'.
  * 'lineWidth' is the horizontal resolution to which the 48 characters wide
@@ -936,8 +936,11 @@ PLUS4EMU_EXPORT void Plus4VideoDecoder_UpdatePalette(
  * written as 3 bytes in MSB-first order (so, with the default channel bit
  * shifts, it would be interleaved R,G,B,R,G,B,... or Y,U,V,Y,U,V,... bytes).
  */
+//PLUS4EMU_EXPORT void Plus4VideoDecoder_DecodeLine(
+//    Plus4VideoDecoder *vd, uint8_t *outBuf, int lineWidth, int pixelFormat,
+//    const Plus4VideoLineData *lineData);
 PLUS4EMU_EXPORT void Plus4VideoDecoder_DecodeLine(
-    Plus4VideoDecoder *vd, uint8_t *outBuf, int lineWidth, int pixelFormat,
+    Plus4VideoDecoder *vd, uint8_t *outBuf, int lineWidth,
     const Plus4VideoLineData *lineData);
 
 PLUS4EMU_EXPORT void Plus4VideoDecoder_GetPaletteColor(

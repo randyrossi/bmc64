@@ -1494,7 +1494,7 @@ class Plus4VideoDecoder_ {
   void          *callbackUserData;
   Plus4VideoLineData  lineBuffer;
   Plus4Emu::VideoDisplay::DisplayParameters displayParameters;
-  Plus4Emu::VideoDisplayColormap<uint32_t>  colormap;
+  Plus4Emu::VideoDisplayColormap<uint16_t>  colormap;
   // --------
   Plus4VideoDecoder_(
       void (*lineCallback_)(void *, int, const Plus4VideoLineData *),
@@ -1539,7 +1539,13 @@ Plus4VideoDecoder_::Plus4VideoDecoder_(
   if (!frameCallback)
     throw Plus4Emu::Exception("video decoder frame callback is NULL");
   // set default colormap (RGB colorspace)
-  Plus4VideoDecoder_UpdatePalette(this, 0, 16, 8, 0);
+  //Plus4VideoDecoder_UpdatePalette(this, 0, 16, 8, 0);
+
+  // We're using RGB565, just init the color map as is, not rgb colorspace
+  Plus4Emu::VideoDisplay::DisplayParameters dp(this->displayParameters);
+  dp.indexToYUVFunc = &Plus4::TED7360::convertPixelToYUV;
+  displayParameters = dp;
+  colormap.setDisplayParameters(dp, false);
 }
 
 Plus4VideoDecoder_::~Plus4VideoDecoder_()
@@ -1749,6 +1755,7 @@ extern "C" PLUS4EMU_EXPORT void Plus4VideoDecoder_SetHueShift(
   vd->displayParameters.hueShift = float(hueShift);
 }
 
+/*
 extern "C" PLUS4EMU_EXPORT void Plus4VideoDecoder_UpdatePalette(
     Plus4VideoDecoder *vd, int yuvMode, int rShift, int gShift, int bShift)
 {
@@ -1764,7 +1771,9 @@ extern "C" PLUS4EMU_EXPORT void Plus4VideoDecoder_UpdatePalette(
     p = vd->colormap.getNextEntry(p);
   }
 }
+*/
 
+/*
 extern "C" PLUS4EMU_EXPORT void Plus4VideoDecoder_DecodeLine(
     Plus4VideoDecoder *vd, uint8_t *outBuf, int lineWidth, int pixelFormat,
     const Plus4VideoLineData *lineData)
@@ -1950,6 +1959,7 @@ extern "C" PLUS4EMU_EXPORT void Plus4VideoDecoder_DecodeLine(
     break;
   }
 }
+*/
 
 extern "C" PLUS4EMU_EXPORT void Plus4VideoDecoder_GetPaletteColor(
     int i, int *ri, int *gi, int *bi)
@@ -1964,4 +1974,26 @@ extern "C" PLUS4EMU_EXPORT void Plus4VideoDecoder_GetPaletteColor(
   *ri = int((r > 0.0f ? (r < 1.0f ? r : 1.0f) : 0.0f) * 255.0f + 0.5f);
   *gi = int((g > 0.0f ? (g < 1.0f ? g : 1.0f) : 0.0f) * 255.0f + 0.5f);
   *bi = int((b > 0.0f ? (b < 1.0f ? b : 1.0f) : 0.0f) * 255.0f + 0.5f);
+}
+
+extern "C" PLUS4EMU_EXPORT void Plus4VideoDecoder_DecodeLine(
+    Plus4VideoDecoder *vd, uint8_t *outBuf, int lineWidth,
+    const Plus4VideoLineData *lineData)
+{
+  if (lineWidth < 1)
+    return;
+  const uint8_t *bufp = lineData->buf;
+  uint8_t   videoFlags =
+      uint8_t(((lineData->flags & 0x80) >> 2) | (lineData->flags & 0x02));
+  if (vd->displayParameters.ntscMode)
+    videoFlags = videoFlags | 0x10;
+
+  // output buffer is assumed to be aligned to 4 bytes
+  uint16_t  *p = reinterpret_cast<uint16_t *>(outBuf);
+  uint16_t  *endPtr = p + lineWidth;
+  do {
+    size_t  n = vd->colormap.convertFourPixels(p, bufp, videoFlags);
+    bufp = bufp + n;
+    p = p + 4;
+  } while (p < endPtr);
 }

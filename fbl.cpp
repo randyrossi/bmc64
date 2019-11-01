@@ -109,7 +109,8 @@ void FrameBufferLayer::Initialize() {
   initialized_ = true;
 }
 
-int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels, int width, int height, int *pitch) {
+int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
+                               int width, int height, int *pitch) {
   int ret;
   DISPMANX_MODEINFO_T dispman_info;
   uint32_t vc_image_ptr;
@@ -135,7 +136,12 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels, int width, int h
         break;
   }
 
-  *pitch = pitch_ = ALIGN_UP(width, 32);
+  int pitch_multiplier = 1;
+  if (mode_ == VC_IMAGE_RGB565)
+     pitch_multiplier = 2;
+
+  // pitch is in bytes
+  *pitch = pitch_ = ALIGN_UP(width * pitch_multiplier, 32);
 
   width_ = width;
   height_ = height;
@@ -162,7 +168,9 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels, int width, int h
   assert(dispman_resource_[1]);
 
   // Install the default palette
-  UpdatePalette();
+  if (mode_ == VC_IMAGE_8BPP) {
+    UpdatePalette();
+  }
 
   vc_dispmanx_rect_set( &copy_dst_rect_, 0, 0, width, height);
 
@@ -331,7 +339,7 @@ void FrameBufferLayer::FrameReady(int to_offscreen) {
   // on screen resource (if !swap).
   vc_dispmanx_resource_write_data(dispman_resource_[rnum],
                                   mode_,
-                                  width_,
+                                  pitch_,
                                   pixels_,
                                   &copy_dst_rect_);
 }

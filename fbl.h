@@ -36,7 +36,9 @@ public:
   void SetTransparency(bool transparency);
 
   // pixel mode: 0=8-bit-indexed, 1=RGB565
-  int Allocate(int pixelmode, uint8_t **pixels, int width, int height, int *pitch);
+  // pitch represents bytes per line
+  int Allocate(int pixelmode, uint8_t **pixels,
+               int width, int height, int *pitch);
   void Free();
   void Clear();
 
