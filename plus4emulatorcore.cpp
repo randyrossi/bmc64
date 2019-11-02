@@ -50,7 +50,7 @@ void Plus4EmulatorCore::RunMainPlus4(bool wait) {
   printf("Starting emulator main loop\n");
   int argc = 0;
   char *argv[] = {};
-
+  emu_machine_init();
   main_program(argc, argv);
 }
 

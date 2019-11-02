@@ -35,9 +35,9 @@
 // VICE includes
 #include "cartridge.h"
 #include "keyboard.h"
-#include "machine.h"
 
 // RASPI includes
+#include "emux_api.h"
 #include "menu.h"
 #include "raspi_machine.h"
 #include "ui.h"
@@ -71,7 +71,8 @@ void show_cart_osd_menu(void) {
   root->on_popped_off = glob_osd_popped;
 
   struct menu_item *child;
-  if (machine_class == VICE_MACHINE_C64 || machine_class == VICE_MACHINE_C128) {
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C64 || 
+      emux_machine_class == BMC64_MACHINE_CLASS_C128) {
     child = ui_menu_add_button(MENU_SAVE_EASYFLASH, root, "Save EasyFlash Now");
     child->on_value_changed = menu_item_changed;
     child = ui_menu_add_button(MENU_CART_FREEZE, root, "Cartridge Freeze");

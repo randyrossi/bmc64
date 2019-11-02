@@ -32,10 +32,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// VICE includes
-#include "datasette.h"
-#include "resources.h"
-
 // RASPI includes
 #include "circle.h"
 #include "menu.h"

@@ -33,7 +33,6 @@
 // VICE includes
 #include "datasette.h"
 #include "drive.h"
-#include "machine.h"
 #include "resources.h"
 #include "uiapi.h"
 
@@ -174,7 +173,7 @@ static void draw_statusbar() {
   draw_warp(warp_state);
   draw_joyswap(swap_state);
 
-  if (machine_class == VICE_MACHINE_C128) {
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      ui_draw_rect_buf(columns_x + inset_x, inset_y,
                       FONT_ADVANCE * 2, FONT_ADVANCE, BG_COLOR, 1,
                       overlay_buf, overlay_buf_pitch);
@@ -210,9 +209,9 @@ uint8_t *overlay_init(int padding, int c40_80_state, int vkbd_transparency) {
   memset(overlay_buf, TRANSPARENT_COLOR, overlay_buf_pitch * OVERLAY_HEIGHT);
 
   // Figure out inset that will center our template.
-  if (machine_class == VICE_MACHINE_VIC20) {
+  if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20) {
      template = "8:  9:  10:  11:  T:    STP   W:  J: ";
-  } else if (machine_class == VICE_MACHINE_C128) {
+  } else if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      template = "8:  9:  10:  11:  T:    STP   W:  J:   C:  ";
   } else {
      template = "8:  9:  10:  11:  T:    STP   W:  J:  ";

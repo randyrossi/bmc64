@@ -199,6 +199,10 @@ extern int circle_sound_bufferspace(void);
 // Functions called from kernel layer into emulator layer
 // -----------------------------------------------------------------------
 
+// Init some common layer stuff about the machine being emulated.
+// Must be called before launching emulator's main_program func.
+extern void emu_machine_init(void);
+
 // Compares the previous button state for 'button_num' with
 // the current state and will return a press or release event
 // for that button if the button has a button assignment.

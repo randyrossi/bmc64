@@ -89,7 +89,7 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
 #else
 #error "RASPI_[model] NOT DEFINED"
 #endif
-
+  emu_machine_init();
   main_program(argc, argv);
   main_exit();
 }

@@ -6,6 +6,7 @@
 #include <assert.h>
 #include "plus4lib/plus4emu.h"
 #include "../common/circle.h"
+#include "../common/emux_api.h"
 #include "../common/keycodes.h"
 
 static Plus4VM            *vm = NULL;
@@ -216,6 +217,12 @@ int main_program(int argc, char **argv)
   Plus4VM_Destroy(vm);
   Plus4VideoDecoder_Destroy(videoDecoder);
   return 0;
+}
+
+// Begin emu_api impl.
+
+void emu_machine_init() {
+  emux_machine_class = BMC64_MACHINE_CLASS_PLUS4EMU;
 }
 
 //     0: Del          1: Return       2: £            3: Help

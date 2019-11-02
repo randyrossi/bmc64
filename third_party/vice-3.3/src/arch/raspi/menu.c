@@ -51,6 +51,7 @@
 #include "vdrive-internal.h"
 
 // RASPI Includes
+#include "emux_api.h"
 #include "demo.h"
 #include "joy.h"
 #include "kbd.h"
@@ -432,20 +433,20 @@ static void show_about() {
   char title[16];
   char desc[32];
 
-  switch (machine_class) {
-  case VICE_MACHINE_C64:
+  switch (emux_machine_class) {
+  case BMC64_MACHINE_CLASS_C64:
     snprintf (title, 15, "%s%s %s", "BMC64", VARIANT_STRING, VERSION_STRING);
     strncpy (desc, "A Bare Metal C64 Emulator", 31);
     break;
-  case VICE_MACHINE_C128:
+  case BMC64_MACHINE_CLASS_C128:
     snprintf (title, 15, "%s%s %s", "BMC128", VARIANT_STRING, VERSION_STRING);
     strncpy (desc, "A Bare Metal C128 Emulator", 31);
     break;
-  case VICE_MACHINE_VIC20:
+  case BMC64_MACHINE_CLASS_VIC20:
     snprintf (title, 15, "%s%s %s", "BMVIC20", VARIANT_STRING, VERSION_STRING);
     strncpy (desc, "A Bare Metal VIC20 Emulator", 31);
     break;
-  case VICE_MACHINE_PLUS4:
+  case BMC64_MACHINE_CLASS_PLUS4:
     snprintf (title, 15, "%s%s %s", "BMPLUS4", VARIANT_STRING, VERSION_STRING);
     strncpy (desc, "A Bare Metal PLUS/4 Emulator", 31);
     break;
@@ -723,17 +724,17 @@ static int save_settings() {
   int i;
 
   FILE *fp;
-  switch (machine_class) {
-  case VICE_MACHINE_C64:
+  switch (emux_machine_class) {
+  case BMC64_MACHINE_CLASS_C64:
     fp = fopen("/settings.txt", "w");
     break;
-  case VICE_MACHINE_C128:
+  case BMC64_MACHINE_CLASS_C128:
     fp = fopen("/settings-c128.txt", "w");
     break;
-  case VICE_MACHINE_VIC20:
+  case BMC64_MACHINE_CLASS_VIC20:
     fp = fopen("/settings-vic20.txt", "w");
     break;
-  case VICE_MACHINE_PLUS4:
+  case BMC64_MACHINE_CLASS_PLUS4:
     fp = fopen("/settings-plus4.txt", "w");
     break;
   default:
@@ -763,7 +764,7 @@ static int save_settings() {
   fprintf(fp, "usb_x_t_1=%d\n", (int)(usb_x_thresh_1 * 100.0f));
   fprintf(fp, "usb_y_t_1=%d\n", (int)(usb_y_thresh_1 * 100.0f));
   fprintf(fp, "palette=%d\n", palette_item_0->value);
-  if (machine_class == VICE_MACHINE_C128) {
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
     fprintf(fp, "palette2=%d\n", palette_item_1->value);
   }
   fprintf(fp, "keyboard_type=%d\n", keyboard_type_item->value);
@@ -794,7 +795,7 @@ static int save_settings() {
   fprintf(fp, "h_border_trim_0=%d\n", h_border_item_0->value);
   fprintf(fp, "v_border_trim_0=%d\n", v_border_item_0->value);
   fprintf(fp, "aspect_0=%d\n", aspect_item_0->value);
-  if (machine_class == VICE_MACHINE_C128) {
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      fprintf(fp, "h_center_1=%d\n", h_center_item_1->value);
      fprintf(fp, "v_center_1=%d\n", v_center_item_1->value);
      fprintf(fp, "h_border_trim_1=%d\n", h_border_item_1->value);
@@ -885,7 +886,7 @@ static void load_settings() {
   tint_item_0->value = get_color_tint(0);
   video_color_setting_changed(0);
 
-  if (machine_class == VICE_MACHINE_C128) {
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
     brightness_item_1->value = get_color_brightness(1);
     contrast_item_1->value = get_color_contrast(1);
     gamma_item_1->value = get_color_gamma(1);
@@ -901,17 +902,17 @@ static void load_settings() {
   pot_y_low_value = 64;
 
   FILE *fp;
-  switch (machine_class) {
-  case VICE_MACHINE_C64:
+  switch (emux_machine_class) {
+  case BMC64_MACHINE_CLASS_C64:
     fp = fopen("/settings.txt", "r");
     break;
-  case VICE_MACHINE_C128:
+  case BMC64_MACHINE_CLASS_C128:
     fp = fopen("/settings-c128.txt", "r");
     break;
-  case VICE_MACHINE_VIC20:
+  case BMC64_MACHINE_CLASS_VIC20:
     fp = fopen("/settings-vic20.txt", "r");
     break;
-  case VICE_MACHINE_PLUS4:
+  case BMC64_MACHINE_CLASS_PLUS4:
     fp = fopen("/settings-plus4.txt", "r");
     break;
   default:
@@ -966,7 +967,7 @@ static void load_settings() {
       usb_y_thresh_1 = ((float)value) / 100.0f;
     } else if (strcmp(name, "palette") == 0) {
       palette_item_0->value = value;
-    } else if (strcmp(name, "palette2") == 0 && machine_class == VICE_MACHINE_C128) {
+    } else if (strcmp(name, "palette2") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       palette_item_1->value = value;
     } else if (strcmp(name, "keyboard_type") == 0) {
       keyboard_type_item->value = value;
@@ -1077,15 +1078,15 @@ static void load_settings() {
       v_border_item_0->value = value;
     } else if (strcmp(name, "aspect_0") == 0) {
       aspect_item_0->value = value;
-    } else if (strcmp(name, "h_center_1") == 0 && machine_class == VICE_MACHINE_C128) {
+    } else if (strcmp(name, "h_center_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       h_center_item_1->value = value;
-    } else if (strcmp(name, "v_center_1") == 0 && machine_class == VICE_MACHINE_C128) {
+    } else if (strcmp(name, "v_center_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       v_center_item_1->value = value;
-    } else if (strcmp(name, "h_border_trim_1") == 0 && machine_class == VICE_MACHINE_C128) {
+    } else if (strcmp(name, "h_border_trim_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       h_border_item_1->value = value;
-    } else if (strcmp(name, "v_border_trim_1") == 0 && machine_class == VICE_MACHINE_C128) {
+    } else if (strcmp(name, "v_border_trim_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       v_border_item_1->value = value;
-    } else if (strcmp(name, "aspect_1") == 0 && machine_class == VICE_MACHINE_C128) {
+    } else if (strcmp(name, "aspect_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       aspect_item_1->value = value;
     } else if (strcmp(name, "volume") == 0) {
       volume_item->value = value;
@@ -1650,7 +1651,7 @@ static void do_video_settings(int layer,
   int vid_hc = hc;
   int vid_vc = vc;
 
-  if (machine_class == VICE_MACHINE_C128) {
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      if ((active_display_item->value == MENU_ACTIVE_DISPLAY_VICII && layer == FB_LAYER_VIC) ||
          (active_display_item->value == MENU_ACTIVE_DISPLAY_VDC && layer == FB_LAYER_VDC)) {
         lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = layer == FB_LAYER_VIC ? 0 : 1;
@@ -1701,7 +1702,7 @@ static void do_video_settings(int layer,
   double a = (double)(aspect_item->value) / 100.0d;
 
   double vid_a = a;
-  if (machine_class == VICE_MACHINE_C128 &&
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C128 &&
           active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE) {
      // For side-by-side, it makes more sense to fill horizontal then scale
      // vertical since we just cut horizontal in half. So pass in negative
@@ -2483,12 +2484,12 @@ static void set_hotkey_choices(struct menu_item *item) {
   item->choice_ints[HOTKEY_CHOICE_PIP_SWAP] = BTN_ASSIGN_PIP_SWAP;
   item->choice_ints[HOTKEY_CHOICE_40_80_COLUMN] = BTN_ASSIGN_40_80_COLUMN;
 
-  if (machine_class == VICE_MACHINE_VIC20) {
+  if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20) {
      item->choice_disabled[HOTKEY_CHOICE_SWAP_PORTS] = 1;
      item->choice_disabled[HOTKEY_CHOICE_CART_FREEZE] = 1;
   }
 
-  if (machine_class != VICE_MACHINE_C128) {
+  if (emux_machine_class != BMC64_MACHINE_CLASS_C128) {
      item->choice_disabled[HOTKEY_CHOICE_ACTIVE_DISPLAY] = 1;
      item->choice_disabled[HOTKEY_CHOICE_PIP_LOCATION] = 1;
      item->choice_disabled[HOTKEY_CHOICE_PIP_SWAP] = 1;
@@ -2497,8 +2498,8 @@ static void set_hotkey_choices(struct menu_item *item) {
 }
 
 static void add_parallel_cable_option(struct menu_item* parent, int id, int drive) {
-  if (machine_class != VICE_MACHINE_C64 &&
-      machine_class != VICE_MACHINE_C128) {
+  if (emux_machine_class != BMC64_MACHINE_CLASS_C64 &&
+      emux_machine_class != BMC64_MACHINE_CLASS_C128) {
     return;
   }
 
@@ -2603,20 +2604,20 @@ void build_menu(struct menu_item *root) {
   char machine_sub_dir[16];
   machine_info_txt[0] = '\0';
 
-  switch (machine_class) {
-  case VICE_MACHINE_C64:
+  switch (emux_machine_class) {
+  case BMC64_MACHINE_CLASS_C64:
     strcat(machine_info_txt,"C64 ");
     strcpy(machine_sub_dir, "/C64");
     break;
-  case VICE_MACHINE_C128:
+  case BMC64_MACHINE_CLASS_C128:
     strcat(machine_info_txt,"C128 ");
     strcpy(machine_sub_dir, "/C128");
     break;
-  case VICE_MACHINE_VIC20:
+  case BMC64_MACHINE_CLASS_VIC20:
     strcat(machine_info_txt,"VIC20 ");
     strcpy(machine_sub_dir, "/VIC20");
     break;
-  case VICE_MACHINE_PLUS4:
+  case BMC64_MACHINE_CLASS_PLUS4:
     strcat(machine_info_txt,"PLUS/4 ");
     strcpy(machine_sub_dir, "/PLUS4");
     break;
@@ -2672,7 +2673,7 @@ void build_menu(struct menu_item *root) {
 
     parent = ui_menu_add_folder(drive_parent, "Drive 8");
 
-    if (machine_class != VICE_MACHINE_VIC20) {
+    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
      resources_get_int_sprintf("IECDevice%i", &tmp, 8);
      ui_menu_add_toggle(MENU_IECDEVICE_8, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_8, parent, "Select IEC Dir...");
@@ -2683,7 +2684,7 @@ void build_menu(struct menu_item *root) {
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_8, parent, "Change Model...");
 
     parent = ui_menu_add_folder(drive_parent, "Drive 9");
-    if (machine_class != VICE_MACHINE_VIC20) {
+    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
      resources_get_int_sprintf("IECDevice%i", &tmp, 9);
      ui_menu_add_toggle(MENU_IECDEVICE_9, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_9, parent, "Select IEC Dir...");
@@ -2694,7 +2695,7 @@ void build_menu(struct menu_item *root) {
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_9, parent, "Change Model...");
 
     parent = ui_menu_add_folder(drive_parent, "Drive 10");
-    if (machine_class != VICE_MACHINE_VIC20) {
+    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
      resources_get_int_sprintf("IECDevice%i", &tmp, 10);
      ui_menu_add_toggle(MENU_IECDEVICE_10, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_10, parent, "Select IEC Dir...");
@@ -2705,7 +2706,7 @@ void build_menu(struct menu_item *root) {
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_10, parent, "Change Model...");
 
     parent = ui_menu_add_folder(drive_parent, "Drive 11");
-    if (machine_class != VICE_MACHINE_VIC20) {
+    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
      resources_get_int_sprintf("IECDevice%i", &tmp, 11);
      ui_menu_add_toggle(MENU_IECDEVICE_11, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_11, parent, "Select IEC Dir...");
@@ -2736,7 +2737,7 @@ void build_menu(struct menu_item *root) {
   ui_menu_add_button(MENU_MAKE_CART_DEFAULT, parent,
                      "Set current cart default (Need Save)");
 
-  if (machine_class == VICE_MACHINE_C64 || machine_class == VICE_MACHINE_C128) {
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C64 || emux_machine_class == BMC64_MACHINE_CLASS_C128) {
     ui_menu_add_button(MENU_SAVE_EASYFLASH, parent, "Save EasyFlash Now");
     ui_menu_add_button(MENU_CART_FREEZE, parent, "Cartridge Freeze");
   }
@@ -2767,7 +2768,7 @@ void build_menu(struct menu_item *root) {
 
   video_parent = parent = ui_menu_add_folder(root, "Video");
 
-  if (machine_class == VICE_MACHINE_C128) {
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      // For C128, we split video options under video into VICII
      // and VDC submenus since there are two displays.  Otherwise,
      // when there is only one display, everything falls under
@@ -2817,7 +2818,7 @@ void build_menu(struct menu_item *root) {
   int defaultHBorderTrim;
   int defaultVBorderTrim;
   int defaultAspect;
-  if (machine_class == VICE_MACHINE_VIC20) {
+  if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20) {
      defaultHBorderTrim = DEFAULT_VIC_H_BORDER_TRIM;
      defaultVBorderTrim = DEFAULT_VIC_V_BORDER_TRIM;
      defaultAspect = DEFAULT_VIC_ASPECT;
@@ -2844,7 +2845,7 @@ void build_menu(struct menu_item *root) {
            100, 180, 1, defaultAspect);
   child->divisor = 100;
 
-  if (machine_class == VICE_MACHINE_C128) {
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      parent = ui_menu_add_folder(video_parent, "VDC");
 
      palette_item_1 = menu_build_palette_options(MENU_COLOR_PALETTE_1, parent);
@@ -2920,7 +2921,7 @@ void build_menu(struct menu_item *root) {
   strcpy(child->choices[KEYBOARD_TYPE_US], "US");
   strcpy(child->choices[KEYBOARD_TYPE_UK], "UK");
 
-  if (machine_class == VICE_MACHINE_C128) {
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      c40_80_column_item = ui_menu_add_toggle_labels(
         MENU_40_80_COLUMN, parent, "40/80 Column", 1 /* default 40 col */,
         "Down","Up");
@@ -3111,7 +3112,7 @@ void build_menu(struct menu_item *root) {
   circle_set_volume(volume_item->value);
 
   video_canvas_change_palette(0, palette_item_0->value);
-  if (machine_class == VICE_MACHINE_C128) {
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
     video_canvas_change_palette(1, palette_item_1->value);
   }
   ui_set_hotkeys();
@@ -3134,7 +3135,7 @@ void build_menu(struct menu_item *root) {
      (double)(aspect_item_0->value) / 100.0d,
      0.0d, 0.0d, 0.0d, 0.0d, 3);
 
-  if (machine_class == VICE_MACHINE_C128) {
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      apply_video_adjustments(FB_LAYER_VDC,
         h_center_item_1->value,
         v_center_item_1->value,
@@ -3291,7 +3292,7 @@ int emu_get_gpio_config() {
 }
 
 int emu_get_num_joysticks(void) {
-  if (machine_class == VICE_MACHINE_VIC20) {
+  if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20) {
     return 1;
   }
   return 2;

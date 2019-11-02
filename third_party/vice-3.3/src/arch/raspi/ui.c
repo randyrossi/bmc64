@@ -143,6 +143,8 @@ static int ui_fb_h;
 void ui_init_menu(void) {
   int i;
 
+  assert(emux_machine_class != BMC64_MACHINE_CLASS_UNKNOWN);
+
   // Why does ui_fb_w have to be a multiple of 32?
   ui_fb_w = menu_width_chars * 8 + 64;
   ui_fb_h = menu_height_chars * 8 + 32;

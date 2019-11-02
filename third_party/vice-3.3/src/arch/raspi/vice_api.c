@@ -44,6 +44,9 @@
 #include "keyboard.h"
 #include "demo.h"
 
+// RASPI includes
+#include "circle.h"
+
 static void pause_trap(uint16_t addr, void *data) {
   menu_about_to_activate();
   circle_show_fbl(FB_LAYER_UI);
@@ -59,6 +62,26 @@ static void pause_trap(uint16_t addr, void *data) {
   }
   menu_about_to_deactivate();
   circle_hide_fbl(FB_LAYER_UI);
+}
+
+void emu_machine_init(void) {
+  switch (machine_class) {
+    case VICE_MACHINE_C64:
+       emux_machine_class = BMC64_MACHINE_CLASS_C64;
+       break;
+    case VICE_MACHINE_C128:
+       emux_machine_class = BMC64_MACHINE_CLASS_C128;
+       break;
+    case VICE_MACHINE_VIC20:
+       emux_machine_class = BMC64_MACHINE_CLASS_VIC20;
+       break;
+    case VICE_MACHINE_PLUS4:
+       emux_machine_class = BMC64_MACHINE_CLASS_PLUS4;
+       break;
+    default:
+       assert(0);
+       break;
+  }
 }
 
 void emux_trap_main_loop_ui(void) {

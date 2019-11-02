@@ -31,6 +31,17 @@
 
 #include <stdint.h>
 
+typedef enum {
+  BMC64_MACHINE_CLASS_UNKNOWN,
+  BMC64_MACHINE_CLASS_VIC20,
+  BMC64_MACHINE_CLASS_C64,
+  BMC64_MACHINE_CLASS_C128,
+  BMC64_MACHINE_CLASS_PLUS4,
+  BMC64_MACHINE_CLASS_PLUS4EMU,
+} BMC64MachineClass;
+
+extern int emux_machine_class;
+
 // Pause emulator main loop and run our ui loop. 
 void emux_trap_main_loop_ui(void);
 

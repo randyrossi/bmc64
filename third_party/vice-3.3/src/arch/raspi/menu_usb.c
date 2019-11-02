@@ -32,10 +32,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-// VICE includes
-#include "machine.h"
-
 // RASPI includes
+#include "emux_api.h"
 #include "joy.h"
 #include "menu.h"
 #include "menu_key_binding.h"
@@ -249,12 +247,12 @@ static void add_button_choices(struct menu_item *tmp_item) {
      strcpy(tmp_item->choices[BTN_ASSIGN_CUSTOM_KEY_1 + n], scratch);
   }
 
-  if (machine_class == VICE_MACHINE_VIC20) {
+  if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20) {
     tmp_item->choice_disabled[BTN_ASSIGN_SWAP_PORTS] = 1;
     tmp_item->choice_disabled[BTN_ASSIGN_CART_FREEZE] = 1;
   }
 
-  if (machine_class != VICE_MACHINE_C128) {
+  if (emux_machine_class != BMC64_MACHINE_CLASS_C128) {
     tmp_item->choice_disabled[BTN_ASSIGN_ACTIVE_DISPLAY] = 1;
     tmp_item->choice_disabled[BTN_ASSIGN_PIP_LOCATION] = 1;
     tmp_item->choice_disabled[BTN_ASSIGN_PIP_SWAP] = 1;
