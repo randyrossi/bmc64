@@ -36,7 +36,6 @@
 #include "attach.h"
 #include "autostart.h"
 #include "cartridge.h"
-#include "datasette.h"
 #include "drive.h"
 #include "diskimage.h"
 #include "joyport.h"
@@ -2152,31 +2151,31 @@ static void menu_value_changed(struct menu_item *item) {
     }
     return;
   case MENU_TAPE_START:
-    datasette_control(DATASETTE_CONTROL_START);
+    emux_tape_control(EMUX_TAPE_PLAY);
     ui_pop_all_and_toggle();
     return;
   case MENU_TAPE_STOP:
-    datasette_control(DATASETTE_CONTROL_STOP);
+    emux_tape_control(EMUX_TAPE_STOP);
     ui_pop_all_and_toggle();
     return;
   case MENU_TAPE_REWIND:
-    datasette_control(DATASETTE_CONTROL_REWIND);
+    emux_tape_control(EMUX_TAPE_REWIND);
     ui_pop_all_and_toggle();
     return;
   case MENU_TAPE_FASTFWD:
-    datasette_control(DATASETTE_CONTROL_FORWARD);
+    emux_tape_control(EMUX_TAPE_FASTFORWARD);
     ui_pop_all_and_toggle();
     return;
   case MENU_TAPE_RECORD:
-    datasette_control(DATASETTE_CONTROL_RECORD);
+    emux_tape_control(EMUX_TAPE_RECORD);
     ui_pop_all_and_toggle();
     return;
   case MENU_TAPE_RESET:
-    datasette_control(DATASETTE_CONTROL_RESET);
+    emux_tape_control(EMUX_TAPE_RESET);
     ui_pop_all_and_toggle();
     return;
   case MENU_TAPE_RESET_COUNTER:
-    datasette_control(DATASETTE_CONTROL_RESET_COUNTER);
+    emux_tape_control(EMUX_TAPE_ZERO);
     ui_pop_all_and_toggle();
     return;
   case MENU_TAPE_RESET_WITH_MACHINE:

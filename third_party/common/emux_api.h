@@ -40,6 +40,16 @@ typedef enum {
   BMC64_MACHINE_CLASS_PLUS4EMU,
 } BMC64MachineClass;
 
+typedef enum {
+  EMUX_TAPE_STOP,
+  EMUX_TAPE_PLAY,
+  EMUX_TAPE_RECORD,
+  EMUX_TAPE_REWIND,
+  EMUX_TAPE_FASTFORWARD,
+  EMUX_TAPE_RESET,
+  EMUX_TAPE_ZERO,
+} EmuxTapeCmd;
+
 extern int emux_machine_class;
 
 // Pause emulator main loop and run our ui loop. 
@@ -72,5 +82,8 @@ int emux_save_state(char *filename);
 
 // Restore state of machine
 int emux_load_state(char *filename);
+
+// Change tape drive state
+int emux_tape_control(int cmd);
 
 #endif

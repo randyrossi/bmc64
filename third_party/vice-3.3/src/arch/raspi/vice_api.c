@@ -43,6 +43,7 @@
 #include "ui.h"
 #include "keyboard.h"
 #include "demo.h"
+#include "datasette.h"
 
 // RASPI includes
 #include "circle.h"
@@ -126,4 +127,33 @@ int emux_save_state(char *filename) {
 
 int emux_load_state(char *filename) {
   return machine_read_snapshot(filename, 0);
+}
+
+int emux_tape_control(int cmd) {
+  switch (cmd) {
+    case EMUX_TAPE_PLAY:
+      datasette_control(DATASETTE_CONTROL_START);
+      break;
+    case EMUX_TAPE_STOP:
+      datasette_control(DATASETTE_CONTROL_STOP);
+      break;
+    case EMUX_TAPE_REWIND:
+      datasette_control(DATASETTE_CONTROL_REWIND);
+      break;
+    case EMUX_TAPE_FASTFORWARD:
+      datasette_control(DATASETTE_CONTROL_FORWARD);
+      break;
+    case EMUX_TAPE_RECORD:
+      datasette_control(DATASETTE_CONTROL_RECORD);
+      break;
+    case EMUX_TAPE_RESET:
+      datasette_control(DATASETTE_CONTROL_RESET);
+      break;
+    case EMUX_TAPE_ZERO:
+      datasette_control(DATASETTE_CONTROL_RESET_COUNTER);
+      break;
+    default:
+      assert(0);
+      break;
+  }
 }
