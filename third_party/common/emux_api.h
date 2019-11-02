@@ -24,6 +24,8 @@
  *
  */
 
+// API between common code and emulator specific impl
+
 #ifndef RASPI_EMUX_API_H_
 #define RASPI_EMUX_API_H_
 
@@ -32,5 +34,19 @@ void emux_trap_main_loop(void);
 
 // Press/release key by row/col in keyboard matrix.
 void emux_kbd_set_latch_keyarr(int row, int col, int value);
+
+// Attach a disk image to a drive
+// Return negative on error.
+int emux_attach_disk_image(int unit, char *filename);
+
+// Detach a disk drive image or mounted file system.
+void emux_detach_disk(int unit);
+
+// Attach a cart image
+// Return negative on error.
+int emux_attach_cart(int bank, char *filename);
+
+// Detach a cart image
+void emux_detach_cart(int bank);
 
 #endif

@@ -31,13 +31,12 @@
 #include <string.h>
 
 // VICE includes
-#include "attach.h"
-#include "cartridge.h"
 #include "interrupt.h"
 #include "machine.h"
 
 // RASPI includes
 #include "circle.h"
+#include "emux_api.h"
 #include "joy.h"
 #include "menu.h"
 
@@ -90,7 +89,7 @@ static void pause_trap(uint16_t addr, void *data) {
     machine_trigger_reset(MACHINE_RESET_MODE_HARD);
   } else if (curr->operation == OP_DISKSWAP) {
     printf("Demo Disk swap %s\n", curr->file);
-    if (file_system_attach_disk(8, curr->file) < 0) {
+    if (emux_attach_disk_image(8, curr->file) < 0) {
       printf("ERROR: can't load demo disk.\n");
       raspi_demo_mode = 0;
       return;
@@ -104,17 +103,17 @@ static void pause_trap(uint16_t addr, void *data) {
     }
   } else if (curr->operation == OP_CARTRIDGE) {
     printf("Demo Cartridge %s\n", curr->file);
-    if (cartridge_attach_image(CARTRIDGE_CRT, curr->file) < 0) {
+    if (emux_attach_cart(0, curr->file) < 0) {
       printf("ERROR: can't load demo cartridge.\n");
       raspi_demo_mode = 0;
       return;
     }
   } else if (curr->operation == OP_DETACH_DISK) {
     printf("Demo Detach Disk \n");
-    file_system_detach_disk(8);
+    emux_detach_disk(8);
   } else if (curr->operation == OP_DETACH_CART) {
     printf("Demo Detach Cartridge\n");
-    cartridge_detach_image(CARTRIDGE_CRT);
+    emux_detach_cart(0);
   } else {
     printf("ERROR: Unknown demo operation %d.\n", curr->operation);
     raspi_demo_mode = 0;

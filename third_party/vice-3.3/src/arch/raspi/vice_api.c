@@ -33,6 +33,8 @@
 #include <ctype.h>
 
 // VICE includes
+#include "attach.h"
+#include "cartridge.h"
 #include "interrupt.h"
 #include "videoarch.h"
 #include "menu.h"
@@ -65,4 +67,22 @@ void emux_trap_main_loop(void) {
 void emux_kbd_set_latch_keyarr(int row, int col, int value) {
   demo_reset_timeout();
   keyboard_set_keyarr(row, col, value);
+}
+
+int emux_attach_disk_image(int unit, char* filename) {
+  return file_system_attach_disk(unit, filename);
+}
+
+void emux_detach_disk(int unit) {
+  file_system_detach_disk(unit);
+}
+
+int emux_attach_cart(int bank, char* filename) {
+  // Ignore bank for vice
+  return cartridge_attach_image(CARTRIDGE_CRT, filename);
+}
+
+void emux_detach_cart(int bank) {
+  // Ignore bank for vice
+  cartridge_detach_image(CARTRIDGE_NONE);
 }
