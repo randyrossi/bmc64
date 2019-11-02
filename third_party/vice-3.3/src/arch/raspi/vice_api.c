@@ -1,5 +1,5 @@
 /*
- * vice_api.c - VICE specific impl of emu_api.h
+ * vice_api.c - VICE specific impl of emux_api.h
  *
  * Written by
  *  Randy Rossi <randy.rossi@gmail.com>
@@ -24,7 +24,7 @@
  *
  */
 
-#include "emu_api.h"
+#include "emux_api.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -58,11 +58,11 @@ static void pause_trap(uint16_t addr, void *data) {
   circle_hide_fbl(FB_LAYER_UI);
 }
 
-void emu_trap_main_loop(void) {
+void emux_trap_main_loop(void) {
   interrupt_maincpu_trigger_trap(pause_trap, 0);
 }
 
-void kbd_set_latch_keyarr(int row, int col, int value) {
+void emux_kbd_set_latch_keyarr(int row, int col, int value) {
   demo_reset_timeout();
   keyboard_set_keyarr(row, col, value);
 }

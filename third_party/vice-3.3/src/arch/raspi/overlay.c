@@ -38,7 +38,7 @@
 #include "uiapi.h"
 
 // RASPI includes
-#include "emu_api.h"
+#include "emux_api.h"
 #include "raspi_machine.h"
 #include "menu.h"
 #include "ui.h"
@@ -757,7 +757,7 @@ void vkbd_nav_press(int pressed, int device) {
       // Only toggle on the press
       if (pressed) {
         vkbd[vkbd_cursor].state = 1 - vkbd[vkbd_cursor].state;
-        kbd_set_latch_keyarr(vkbd[vkbd_cursor].col,
+        emux_kbd_set_latch_keyarr(vkbd[vkbd_cursor].col,
                              vkbd[vkbd_cursor].row,
                              vkbd[vkbd_cursor].state);
         if (vkbd[vkbd_cursor].code == VKBD_LSHIFT) {
@@ -775,7 +775,7 @@ void vkbd_nav_press(int pressed, int device) {
       if (vkbd[vkbd_cursor].row == 0 && vkbd[vkbd_cursor].col == -3) {
          key_interrupt_locked(KEYCODE_PageUp, pressed);
       } else {
-         kbd_set_latch_keyarr(vkbd[vkbd_cursor].col,
+         emux_kbd_set_latch_keyarr(vkbd[vkbd_cursor].col,
                               vkbd[vkbd_cursor].row,
                               pressed);
       }

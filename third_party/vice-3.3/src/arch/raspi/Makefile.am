@@ -72,5 +72,4 @@ libarch_a_SOURCES = \
 	overlay.h \
 	raspi_util.c \
 	raspi_util.h \
-	vice_api.c \
-	emu_api.h
+	vice_api.c

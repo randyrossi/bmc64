@@ -24,13 +24,13 @@
  *
  */
 
-#ifndef RASPI_VICE_API_H_
-#define RASPI_VICE_API_H_
+#ifndef RASPI_EMUX_API_H_
+#define RASPI_EMUX_API_H_
 
 // Pause emulator main loop and run our ui loop. 
-void emu_trap_main_loop(void);
+void emux_trap_main_loop(void);
 
 // Press/release key by row/col in keyboard matrix.
-void kbd_set_latch_keyarr(int row, int col, int value);
+void emux_kbd_set_latch_keyarr(int row, int col, int value);
 
 #endif

@@ -34,7 +34,7 @@
 #include <ctype.h>
 
 // RASPI includes
-#include "emu_api.h"
+#include "emux_api.h"
 #include "circle.h"
 #include "joy.h"
 #include "kbd.h"
@@ -481,7 +481,7 @@ void ui_render_single_frame() {
 static void ui_toggle(void) {
   ui_enabled = 1 - ui_enabled;
   if (ui_enabled) {
-    emu_trap_main_loop();
+    emux_trap_main_loop();
   }
 }
 
