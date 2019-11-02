@@ -116,7 +116,7 @@ am_libarch_a_OBJECTS = archdep.$(OBJEXT) joy.$(OBJEXT) kbd.$(OBJEXT) \
 	menu_switch.$(OBJEXT) menu_timing.$(OBJEXT) \
 	menu_tape_osd.$(OBJEXT) menu_cart_osd.$(OBJEXT) \
 	menu_confirm_osd.$(OBJEXT) demo.$(OBJEXT) overlay.$(OBJEXT) \
-	raspi_util.$(OBJEXT) vice_api.$(OBJEXT)
+	vice_overlay.$(OBJEXT) raspi_util.$(OBJEXT) vice_api.$(OBJEXT)
 libarch_a_OBJECTS = $(am_libarch_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -506,6 +506,7 @@ libarch_a_SOURCES = \
 	demo.c \
 	overlay.c \
 	overlay.h \
+	vice_overlay.c \
 	raspi_util.c \
 	raspi_util.h \
 	vice_api.c
@@ -577,6 +578,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/raspi_util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vice_api.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vice_overlay.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/videoarch.Po@am__quote@
 
 .c.o:

@@ -68,6 +68,7 @@ libarch_a_SOURCES = \
 	demo.c \
 	overlay.c \
 	overlay.h \
+	vice_overlay.c \
 	raspi_util.c \
 	raspi_util.h \
 	vice_api.c

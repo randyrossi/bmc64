@@ -30,10 +30,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// VICE includes
-#include "datasette.h"
-#include "uiapi.h"
-
 // RASPI includes
 #include "emux_api.h"
 #include "raspi_machine.h"
@@ -72,12 +68,12 @@ static int columns_x;
 
 // Last known state for all status items
 static int drive_led_colors[DRIVE_NUM];
-static ui_drive_enable_t drive_state;
+static int drive_state;
 static int drive_enabled[DRIVE_NUM];
 static int drive_pwm1[DRIVE_NUM];
 static int drive_pwm2[DRIVE_NUM];
 static int tape_counter = 0;
-static int tape_control = DATASETTE_CONTROL_STOP;
+static int tape_control = EMUX_TAPE_STOP;
 static int tape_motor = 0;
 static int warp_state = 0;
 static int swap_state = 0;
@@ -142,7 +138,7 @@ static char *template;
 
 int overlay_dirty;
 
-static void draw_drive_status(ui_drive_enable_t state, int *drive_led_color);
+static void draw_drive_status(int state, int *drive_led_color);
 static void draw_drive_led(int drive, unsigned int pwm1, unsigned int pwm2);
 static void draw_tape_counter(int counter);
 static void draw_tape_control_status(int control);
@@ -263,7 +259,7 @@ static void statusbar_triggered_by_activity() {
   }
 }
 
-static void draw_drive_status(ui_drive_enable_t state, int *drive_led_color) {
+static void draw_drive_status(int state, int *drive_led_color) {
   int i, enabled = state;
 
   for (i = 0; i < DRIVE_NUM; ++i) {
@@ -292,8 +288,8 @@ static void draw_drive_status(ui_drive_enable_t state, int *drive_led_color) {
   overlay_dirty = 1;
 }
 
-// Called by VICE to enable a drive status lights
-void ui_enable_drive_status(ui_drive_enable_t state, int *drive_led_color) {
+// Enable a drive status lights
+void emux_enable_drive_status(int state, int *drive_led_color) {
   drive_state = state;
   if (!overlay_buf)
     return;
@@ -339,7 +335,7 @@ static void draw_drive_led(int drive, unsigned int pwm1, unsigned int pwm2) {
 }
 
 // Show drive led
-void ui_display_drive_led(int drive, unsigned int pwm1, unsigned int pwm2) {
+void emux_display_drive_led(int drive, unsigned int pwm1, unsigned int pwm2) {
   drive_pwm1[drive] = pwm1;
   drive_pwm2[drive] = pwm2;
 
@@ -364,7 +360,7 @@ static void draw_tape_counter(int counter) {
 }
 
 // Show tape counter text
-void ui_display_tape_counter(int counter) {
+void emux_display_tape_counter(int counter) {
   if (counter != tape_counter) {
     tape_counter = counter;
 
@@ -385,20 +381,20 @@ static void draw_tape_control_status(int control) {
   const char *txt;
   int col = FG_COLOR;
   switch (control) {
-  case DATASETTE_CONTROL_STOP:
+  case EMUX_TAPE_STOP:
     txt = "STP";
     break;
-  case DATASETTE_CONTROL_START:
+  case EMUX_TAPE_PLAY:
     col = GREEN_COLOR;
     txt = "PLY";
     break;
-  case DATASETTE_CONTROL_FORWARD:
+  case EMUX_TAPE_FASTFORWARD:
     txt = "FWD";
     break;
-  case DATASETTE_CONTROL_REWIND:
+  case EMUX_TAPE_REWIND:
     txt = "REW";
     break;
-  case DATASETTE_CONTROL_RECORD:
+  case EMUX_TAPE_RECORD:
     col = RED_COLOR;
     txt = "REC";
     break;
@@ -413,7 +409,7 @@ static void draw_tape_control_status(int control) {
 }
 
 // Show tape control text
-void ui_display_tape_control_status(int control) {
+void emux_display_tape_control_status(int control) {
   tape_control = control;
 
   if (!overlay_buf)
@@ -436,7 +432,7 @@ static void draw_tape_motor_status(int motor) {
 }
 
 // Draw tape motor status light
-void ui_display_tape_motor_status(int motor) {
+void emux_display_tape_motor_status(int motor) {
   tape_motor = motor;
 
   if (!overlay_buf)
