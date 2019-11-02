@@ -114,7 +114,7 @@ am_libarch_a_OBJECTS = archdep.$(OBJEXT) joy.$(OBJEXT) kbd.$(OBJEXT) \
 	videoarch.$(OBJEXT) menu.$(OBJEXT) menu_keyset.$(OBJEXT) \
 	menu_key_binding.$(OBJEXT) menu_usb.$(OBJEXT) \
 	menu_switch.$(OBJEXT) menu_timing.$(OBJEXT) \
-	menu_tape_osd.$(OBJEXT) menu_cart_osd.$(OBJEXT) \
+	menu_tape_osd.$(OBJEXT) vice_menu_cart_osd.$(OBJEXT) \
 	menu_confirm_osd.$(OBJEXT) demo.$(OBJEXT) overlay.$(OBJEXT) \
 	vice_overlay.$(OBJEXT) raspi_util.$(OBJEXT) vice_api.$(OBJEXT)
 libarch_a_OBJECTS = $(am_libarch_a_OBJECTS)
@@ -498,8 +498,7 @@ libarch_a_SOURCES = \
 	menu_timing.c \
 	menu_tape_osd.h \
 	menu_tape_osd.c \
-	menu_cart_osd.h \
-	menu_cart_osd.c \
+	vice_menu_cart_osd.c \
 	menu_confirm_osd.h \
 	menu_confirm_osd.c \
 	demo.h \
@@ -564,7 +563,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/joy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kbd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_cart_osd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_confirm_osd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_key_binding.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_keyset.Po@am__quote@
@@ -578,6 +576,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/raspi_util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vice_api.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vice_menu_cart_osd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vice_overlay.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/videoarch.Po@am__quote@
 

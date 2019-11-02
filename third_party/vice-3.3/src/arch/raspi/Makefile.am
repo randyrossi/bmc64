@@ -60,8 +60,7 @@ libarch_a_SOURCES = \
 	menu_timing.c \
 	menu_tape_osd.h \
 	menu_tape_osd.c \
-	menu_cart_osd.h \
-	menu_cart_osd.c \
+	vice_menu_cart_osd.c \
 	menu_confirm_osd.h \
 	menu_confirm_osd.c \
 	demo.h \

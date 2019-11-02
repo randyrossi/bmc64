@@ -51,7 +51,6 @@
 #include "joy.h"
 #include "kbd.h"
 #include "text.h"
-#include "menu_cart_osd.h"
 #include "menu_confirm_osd.h"
 #include "menu_tape_osd.h"
 #include "menu_timing.h"

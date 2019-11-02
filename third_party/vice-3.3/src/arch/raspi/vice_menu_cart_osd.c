@@ -24,8 +24,6 @@
  *
  */
 
-#include "menu_cart_osd.h"
-
 #include <dirent.h>
 #include <math.h>
 #include <stdio.h>
