@@ -148,6 +148,9 @@ void video_canvas_reveal_temp(int layer);
 
 void joy_interrupt(int type, int port, int device, int value);
 void key_interrupt(long key, int pressed);
+
+// Similar to the public emu_key_interrupt except can be called while
+// holding the lock.
 void key_interrupt_locked(long key, int pressed);
 
 #endif

@@ -110,10 +110,10 @@ am__v_AR_1 =
 libarch_a_AR = $(AR) $(ARFLAGS)
 libarch_a_LIBADD =
 am_libarch_a_OBJECTS = archdep.$(OBJEXT) joy.$(OBJEXT) kbd.$(OBJEXT) \
-	keycodes.$(OBJEXT) mousedrv.$(OBJEXT) missing.$(OBJEXT) \
-	ui.$(OBJEXT) videoarch.$(OBJEXT) menu.$(OBJEXT) \
-	menu_keyset.$(OBJEXT) menu_key_binding.$(OBJEXT) \
-	menu_usb.$(OBJEXT) menu_switch.$(OBJEXT) menu_timing.$(OBJEXT) \
+	mousedrv.$(OBJEXT) missing.$(OBJEXT) ui.$(OBJEXT) \
+	videoarch.$(OBJEXT) menu.$(OBJEXT) menu_keyset.$(OBJEXT) \
+	menu_key_binding.$(OBJEXT) menu_usb.$(OBJEXT) \
+	menu_switch.$(OBJEXT) menu_timing.$(OBJEXT) \
 	menu_tape_osd.$(OBJEXT) menu_cart_osd.$(OBJEXT) \
 	menu_confirm_osd.$(OBJEXT) text.$(OBJEXT) demo.$(OBJEXT) \
 	overlay.$(OBJEXT) raspi_util.$(OBJEXT) vice_api.$(OBJEXT)
@@ -477,8 +477,6 @@ libarch_a_SOURCES = \
 	joy.c \
 	kbd.h \
 	kbd.c \
-	keycodes.h \
-	keycodes.c \
 	mousedrv.h \
 	mousedrv.c \
 	missing.c \
@@ -567,7 +565,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/demo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/joy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kbd.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/keycodes.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_cart_osd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_confirm_osd.Po@am__quote@

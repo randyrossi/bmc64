@@ -187,6 +187,13 @@ extern int circle_unmount_usb(int usb);
 extern void circle_set_volume(int value);
 extern int circle_get_model();
 
+extern int circle_sound_init(const char *param, int *speed, int *fragsize,
+                        int *fragnr, int *channels);
+extern int circle_sound_write(int16_t *pbuf, size_t nr);
+extern void circle_sound_close(void);
+extern int circle_sound_suspend(void);
+extern int circle_sound_resume(void);
+extern int circle_sound_bufferspace(void);
 
 // -----------------------------------------------------------------------
 // Functions called from kernel layer into emulator layer

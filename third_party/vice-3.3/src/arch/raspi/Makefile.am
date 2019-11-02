@@ -39,8 +39,6 @@ libarch_a_SOURCES = \
 	joy.c \
 	kbd.h \
 	kbd.c \
-	keycodes.h \
-	keycodes.c \
 	mousedrv.h \
 	mousedrv.c \
 	missing.c \

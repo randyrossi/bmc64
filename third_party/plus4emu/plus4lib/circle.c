@@ -44,12 +44,6 @@ long emu_get_key_binding(int index) {
   return 0;
 }
 
-void emu_key_pressed(long key) {
-}
-
-void emu_key_released(long key) {
-}
-
 int emu_get_num_joysticks(void) {
   return 0;
 }
