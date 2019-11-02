@@ -36,6 +36,7 @@
 #include "attach.h"
 #include "cartridge.h"
 #include "interrupt.h"
+#include "machine.h"
 #include "videoarch.h"
 #include "menu.h"
 #include "menu_timing.h"
@@ -60,8 +61,12 @@ static void pause_trap(uint16_t addr, void *data) {
   circle_hide_fbl(FB_LAYER_UI);
 }
 
-void emux_trap_main_loop(void) {
+void emux_trap_main_loop_ui(void) {
   interrupt_maincpu_trigger_trap(pause_trap, 0);
+}
+
+void emux_trap_main_loop(void (*trap_func)(uint16_t, void *data), void* data) {
+  interrupt_maincpu_trigger_trap(trap_func, data);
 }
 
 void emux_kbd_set_latch_keyarr(int row, int col, int value) {
@@ -85,4 +90,17 @@ int emux_attach_cart(int bank, char* filename) {
 void emux_detach_cart(int bank) {
   // Ignore bank for vice
   cartridge_detach_image(CARTRIDGE_NONE);
+}
+
+void emux_reset(int soft) {
+  machine_trigger_reset(soft ? 
+      MACHINE_RESET_MODE_SOFT : MACHINE_RESET_MODE_HARD);
+}
+
+int emux_save_state(char *filename) {
+  return machine_write_snapshot(filename, 1, 1, 0);
+}
+
+int emux_load_state(char *filename) {
+  return machine_read_snapshot(filename, 0);
 }

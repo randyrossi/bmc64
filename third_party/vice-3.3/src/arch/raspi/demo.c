@@ -27,12 +27,9 @@
  */
 #include "demo.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-// VICE includes
-#include "interrupt.h"
-#include "machine.h"
 
 // RASPI includes
 #include "circle.h"
@@ -86,7 +83,7 @@ static void pause_trap(uint16_t addr, void *data) {
   // Perform operation
   if (curr->operation == OP_RESET) {
     printf("Demo Reset\n");
-    machine_trigger_reset(MACHINE_RESET_MODE_HARD);
+    emux_reset(0 /* hard */);
   } else if (curr->operation == OP_DISKSWAP) {
     printf("Demo Disk swap %s\n", curr->file);
     if (emux_attach_disk_image(8, curr->file) < 0) {
@@ -96,7 +93,7 @@ static void pause_trap(uint16_t addr, void *data) {
     }
   } else if (curr->operation == OP_SNAPSHOT) {
     printf("Demo Snapshot %s\n", curr->file);
-    if (machine_read_snapshot(curr->file, 0) < 0) {
+    if (emux_load_state(curr->file) < 0) {
       printf("ERROR: can't load demo snapshot.\n");
       raspi_demo_mode = 0;
       return;
@@ -230,7 +227,7 @@ void demo_check(void) {
   if (circle_get_ticks() - entry_start >= entry_delay) {
     // Time to do the next thing
     printf("Next demo entry\n");
-    interrupt_maincpu_trigger_trap(pause_trap, 0);
+    emux_trap_main_loop(pause_trap, 0);
   }
 }
 

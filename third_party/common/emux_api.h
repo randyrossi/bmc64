@@ -29,8 +29,12 @@
 #ifndef RASPI_EMUX_API_H_
 #define RASPI_EMUX_API_H_
 
+#include <stdint.h>
+
 // Pause emulator main loop and run our ui loop. 
-void emux_trap_main_loop(void);
+void emux_trap_main_loop_ui(void);
+
+void emux_trap_main_loop(void (*trap_func)(uint16_t, void *data), void* data);
 
 // Press/release key by row/col in keyboard matrix.
 void emux_kbd_set_latch_keyarr(int row, int col, int value);
@@ -48,5 +52,14 @@ int emux_attach_cart(int bank, char *filename);
 
 // Detach a cart image
 void emux_detach_cart(int bank);
+
+// Reset machine
+void emux_reset(int isSoft);
+
+// Save state of machine
+int emux_save_state(char *filename);
+
+// Restore state of machine
+int emux_load_state(char *filename);
 
 #endif

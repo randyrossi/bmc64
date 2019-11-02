@@ -481,7 +481,7 @@ void ui_render_single_frame() {
 static void ui_toggle(void) {
   ui_enabled = 1 - ui_enabled;
   if (ui_enabled) {
-    emux_trap_main_loop();
+    emux_trap_main_loop_ui();
   }
 }
 
