@@ -32,8 +32,6 @@
 
 // VICE includes
 #include "datasette.h"
-#include "drive.h"
-#include "resources.h"
 #include "uiapi.h"
 
 // RASPI includes
@@ -48,6 +46,8 @@
 #define ARGB(a,r,g,b) ((uint32_t)((uint8_t)(a)<<24 | (uint8_t)(r)<<16 | (uint8_t)(g)<<8 | (uint8_t)(b)))
 
 #define TICKS_PER_SECOND 1000000L
+
+#define DRIVE_NUM 4
 
 // These were added when we switch to hi-res overlay
 // Existing coordinated are scaled up 4x so we get

@@ -43,8 +43,6 @@
 #include "resources.h"
 #include "sid.h"
 #include "tape.h"
-#include "text.h"
-#include "util.h"
 #include "vdrive-internal.h"
 
 // RASPI Includes
@@ -52,6 +50,7 @@
 #include "demo.h"
 #include "joy.h"
 #include "kbd.h"
+#include "text.h"
 #include "menu_cart_osd.h"
 #include "menu_confirm_osd.h"
 #include "menu_tape_osd.h"
