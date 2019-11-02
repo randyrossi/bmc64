@@ -64,8 +64,6 @@ libarch_a_SOURCES = \
 	menu_cart_osd.c \
 	menu_confirm_osd.h \
 	menu_confirm_osd.c \
-	text.h \
-	text.c \
 	demo.h \
 	demo.c \
 	overlay.c \

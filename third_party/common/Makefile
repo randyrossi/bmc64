@@ -2,7 +2,7 @@ include ../circle-stdlib/Config.mk
 CIRCLE_STDLIB_HOME = ../circle-stdlib
 include Config.mk
 
-OBJ = font.o keycodes.o
+OBJ = font.o keycodes.o text.o
 
 INCLUDES = -I $(CIRCLE_STDLIB_HOME)/install/arm-none-circle/include -I $(CIRCLE_STDLIB_HOME)/libs/circle/addon/fatfs
 
