@@ -33,7 +33,6 @@
 #include <string.h>
 
 // VICE includes
-#include "attach.h"
 #include "autostart.h"
 #include "cartridge.h"
 #include "drive.h"
@@ -41,7 +40,6 @@
 #include "joyport.h"
 #include "joyport/joystick.h"
 #include "keyboard.h"
-#include "machine.h"
 #include "resources.h"
 #include "sid.h"
 #include "tape.h"
@@ -1134,7 +1132,7 @@ static void select_file(struct menu_item *item) {
        return;
      case MENU_LOAD_SNAP_FILE:
        ui_info("Loading...");
-       if (machine_read_snapshot(fullpath(DIR_SNAPS, item->str_value), 0) < 0) {
+       if (emux_load_state(fullpath(DIR_SNAPS, item->str_value)) < 0) {
          ui_pop_menu();
          ui_error("Load snapshot failed");
        } else {
@@ -1144,7 +1142,7 @@ static void select_file(struct menu_item *item) {
      case MENU_DISK_FILE:
        // Perform the attach
        ui_info("Attaching...");
-       if (file_system_attach_disk(unit, fullpath(DIR_DISKS, item->str_value)) <
+       if (emux_attach_disk_image(unit, fullpath(DIR_DISKS, item->str_value)) <
            0) {
          ui_pop_menu();
          ui_error("Failed to attach disk image");
@@ -1338,7 +1336,7 @@ static void select_file(struct menu_item *item) {
       }
     }
     ui_info("Saving...");
-    if (machine_write_snapshot(fullpath(DIR_SNAPS, fname), 1, 1, 0) < 0) {
+    if (emux_save_state(fullpath(DIR_SNAPS, fname)) < 0) {
       ui_pop_menu();
       ui_error("Save snapshot failed");
     } else {
@@ -1723,7 +1721,7 @@ static void menu_machine_reset(int type, int pop) {
   resources_set_string_sprintf("FSDevice%iDir", last_iec_dir[1], 9);
   resources_set_string_sprintf("FSDevice%iDir", last_iec_dir[2], 10);
   resources_set_string_sprintf("FSDevice%iDir", last_iec_dir[3], 11);
-  machine_trigger_reset(type);
+  emux_reset(type);
   if (pop) {
      ui_pop_all_and_toggle();
   }
@@ -1980,22 +1978,22 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_DETACH_DISK_8:
     ui_info("Deatching...");
-    file_system_detach_disk(8);
+    emux_detach_disk(8);
     ui_pop_all_and_toggle();
     return;
   case MENU_DETACH_DISK_9:
     ui_info("Detaching...");
-    file_system_detach_disk(9);
+    emux_detach_disk(9);
     ui_pop_all_and_toggle();
     return;
   case MENU_DETACH_DISK_10:
     ui_info("Detaching...");
-    file_system_detach_disk(10);
+    emux_detach_disk(10);
     ui_pop_all_and_toggle();
     return;
   case MENU_DETACH_DISK_11:
     ui_info("Detaching...");
-    file_system_detach_disk(11);
+    emux_detach_disk(11);
     ui_pop_all_and_toggle();
     return;
   case MENU_DETACH_TAPE:
@@ -2009,10 +2007,10 @@ static void menu_value_changed(struct menu_item *item) {
     ui_pop_all_and_toggle();
     return;
   case MENU_SOFT_RESET:
-    menu_machine_reset(MACHINE_RESET_MODE_SOFT, 1 /* pop */);
+    menu_machine_reset(1 /* soft */, 1 /* pop */);
     return;
   case MENU_HARD_RESET:
-    menu_machine_reset(MACHINE_RESET_MODE_HARD, 1 /* pop */);
+    menu_machine_reset(0 /* hard */, 1 /* pop */);
     return;
   case MENU_ABOUT:
     show_about();
@@ -3233,7 +3231,7 @@ void menu_quick_func(int button_assignment) {
     show_tape_osd_menu();
     break;
   case BTN_ASSIGN_CART_MENU:
-    show_cart_osd_menu();
+    emux_show_cart_osd_menu();
     break;
   case BTN_ASSIGN_CART_FREEZE:
     keyboard_clear_keymatrix();
@@ -3247,7 +3245,7 @@ void menu_quick_func(int button_assignment) {
     }
   // fallthrough
   case BTN_ASSIGN_RESET_HARD2:
-    menu_machine_reset(MACHINE_RESET_MODE_HARD, 0 /* no pop */);
+    menu_machine_reset(0 /* hard */, 0 /* no pop */);
     break;
   case BTN_ASSIGN_RESET_SOFT:
     if (reset_confirm_item->value) {
@@ -3257,7 +3255,7 @@ void menu_quick_func(int button_assignment) {
     }
   // fallthrough
   case BTN_ASSIGN_RESET_SOFT2:
-    menu_machine_reset(MACHINE_RESET_MODE_SOFT, 0 /* no pop */);
+    menu_machine_reset(1 /* soft */, 0 /* no pop */);
     break;
   case BTN_ASSIGN_ACTIVE_DISPLAY:
     active_display_item->value++;

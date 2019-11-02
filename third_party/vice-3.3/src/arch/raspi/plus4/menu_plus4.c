@@ -24,24 +24,28 @@
  *
  */
 
-#include "menu_plus4.h"
+#include "../raspi_machine.h"
 
 #include <memory.h>
 
+// VICE includes
 #include "plus4/plus4.h"
 #include "plus4/plus4model.h"
 #include "resources.h"
 #include "cartridge.h"
+
+// RASPI includes
+#include "circle.h"
+#include "emux_api.h"
 #include "menu.h"
 #include "ui.h"
-#include "circle.h"
 
 static void menu_value_changed(struct menu_item *item) {
   plus4model_set(item->sub_id);
   ui_pop_all_and_toggle();
 }
 
-unsigned long calculate_timing(double fps) {
+unsigned long emux_calculate_timing(double fps) {
   if (fps >= 49 && fps <= 51) {
     return PLUS4_PAL_CYCLES_PER_LINE * PLUS4_PAL_SCREEN_LINES * fps;
   } else if (fps >= 59 && fps <= 61) {

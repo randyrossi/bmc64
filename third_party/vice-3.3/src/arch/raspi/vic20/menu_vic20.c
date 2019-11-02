@@ -24,16 +24,20 @@
  *
  */
 
-#include "menu_vic20.h"
+#include "../raspi_machine.h"
 
 #include <memory.h>
 
+// VICE includes
 #include "resources.h"
 #include "vic20/vic20.h"
+
+// RASPI includes
+#include "emux_api.h"
 #include "menu.h"
 #include "ui.h"
 
-unsigned long calculate_timing(double fps) {
+unsigned long emux_calculate_timing(double fps) {
   if (fps >= 49 && fps <= 51) {
     return VIC20_PAL_CYCLES_PER_LINE * VIC20_PAL_SCREEN_LINES * fps;
   } else if (fps >= 59 && fps <= 61) {

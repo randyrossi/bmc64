@@ -24,13 +24,17 @@
  *
  */
 
-#include "menu_c128.h"
+#include "../raspi_machine.h"
 
 #include <memory.h>
 
+// VICE includes
 #include "c128/c128.h"
 #include "resources.h"
 #include "cartridge.h"
+
+// RASPI includes
+#include "emux_api.h"
 #include "menu.h"
 #include "ui.h"
 #include "overlay.h"
@@ -38,7 +42,7 @@
 // TODO: Should really move 40/80 stuff into here...
 extern struct menu_item *c40_80_column_item;
 
-unsigned long calculate_timing(double fps) {
+unsigned long emux_calculate_timing(double fps) {
   if (fps >= 49 && fps <= 51) {
     return C128_PAL_CYCLES_PER_LINE * C128_PAL_SCREEN_LINES * fps;
   } else if (fps >= 59 && fps <= 61) {

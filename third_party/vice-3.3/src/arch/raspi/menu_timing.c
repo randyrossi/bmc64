@@ -33,8 +33,9 @@
 #include <string.h>
 
 // RASPI includes
+#include "circle.h"
+#include "emux_api.h"
 #include "menu.h"
-#include "raspi_machine.h"
 #include "ui.h"
 
 static struct menu_item *g_countdown_item;
@@ -85,7 +86,7 @@ static void calc_popped(struct menu_item *new_root,
   }
 
   double fps = (double)hdmi_timing_count / (double)(TEST_DURATION / 1000000);
-  unsigned long cycles = calculate_timing(fps);
+  unsigned long cycles = emux_calculate_timing(fps);
 
   char timing_str[32];
   if (fps >= 49 && fps <= 51) {
@@ -103,7 +104,7 @@ static void calc_popped(struct menu_item *new_root,
     ui_menu_add_divider(root);
     ui_menu_add_button(MENU_TEXT, root, timing_str);
     tmp_item = ui_menu_add_button(MENU_TEXT, root, "");
-    sprintf(tmp_item->name, "cycles_per_second=%d", calculate_timing(fps));
+    sprintf(tmp_item->name, "cycles_per_second=%d", emux_calculate_timing(fps));
     ui_menu_add_divider(root);
     tmp_item = ui_menu_add_button(MENU_TEXT, root, "");
     sprintf(tmp_item->name, "Actual fps = %f", fps);

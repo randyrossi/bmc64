@@ -86,4 +86,9 @@ int emux_load_state(char *filename);
 // Change tape drive state
 int emux_tape_control(int cmd);
 
+// Enable the cartridge OSD popup
+void emux_show_cart_osd_menu(void);
+
+// Caluculate cycles per second timing for this machine
+unsigned long emux_calculate_timing(double fps);
 #endif
