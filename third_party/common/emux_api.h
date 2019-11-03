@@ -67,7 +67,38 @@ typedef enum {
 
 typedef char*(*fullpath_func)(DirType dir_type, char *name);
 
+struct CanvasState {
+  //struct video_canvas_s *canvas;
+  int palette_index;
+  // Just the gfx area (no border)
+  int gfx_w;
+  int gfx_h;
+  // How much border is available
+  int max_border_w;
+  int max_border_h;
+  // How much of the border we want to see
+  int border_w;
+  int border_h;
+
+  int src_off_x;
+  int src_off_y;
+  // The total visiible pixels in each dimension
+  int vis_w;
+  int vis_h;
+  // For our src region
+  int top;
+  int left;
+
+  // Where does the status overlay show up?
+  int overlay_x;
+  int overlay_y;
+};
+
 extern int emux_machine_class;
+extern int vic_showing;
+extern int vdc_showing;
+extern int vic_enabled;
+extern int vdc_enabled;
 
 // Pause emulator main loop and run our ui loop. 
 void emux_trap_main_loop_ui(void);
@@ -147,6 +178,38 @@ void emux_set_joy_pot_y(int value);
 
 void emux_add_sound_options(struct menu_item* parent);
 void emux_load_sound_options(void);
+
+void emux_video_color_setting_changed(int display_num);
+
+void emux_set_color_brightness(int display_num, int value);
+void emux_set_color_contrast(int display_num, int value);
+void emux_set_color_gamma(int display_num, int value);
+void emux_set_color_tint(int display_num, int value);
+
+int emux_get_color_brightness(int display_num);
+int emux_get_color_contrast(int display_num);
+int emux_get_color_gamma(int display_num);
+int emux_get_color_tint(int display_num);
+
+void emux_set_video_cache(int value);
+void emux_set_hw_scale(int value);
+
+void emux_cartridge_trigger_freeze(void);
+struct menu_item* emux_add_palette_options(int menu_id,
+                                           struct menu_item* parent);
+void emux_add_machine_options(struct menu_item* parent);
+struct menu_item* emux_add_cartridge_options(struct menu_item* parent);
+
+void emux_set_warp(int warp);
+
+void emux_apply_video_adjustments(int layer, int hcenter, int vcenter,
+                                  double hborder, double vborder,
+                                  double aspect, double lpad, double rpad,
+                                  double tpad, double bpad, int zlayer);
+
+// Select a palette index for the given display number.
+// (For indexed displays only)
+void emux_change_palette(int display_num, int palette_index);
 
 // VICE specific cart attach func.
 void emux_vice_attach_cart(int menu_id, char* filename);

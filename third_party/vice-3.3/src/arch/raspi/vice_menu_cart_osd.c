@@ -49,7 +49,7 @@ static void menu_item_changed(struct menu_item *item) {
     }
     break;
   case MENU_CART_FREEZE:
-    raspi_cartridge_trigger_freeze();
+    emux_cartridge_trigger_freeze();
     ui_pop_all_and_toggle();
     break;
   default:

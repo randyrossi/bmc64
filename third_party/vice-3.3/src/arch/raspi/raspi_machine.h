@@ -28,6 +28,8 @@
 #ifndef RASPI_MACHINE_H
 #define RASPI_MACHINE_H
 
+#include <stdint.h>
+
 #include "videoarch.h"
 
 struct vkbd_key {
@@ -79,32 +81,12 @@ typedef struct vkbd_key* vkbd_key_array;
 extern void set_refresh_rate(int timing, struct video_canvas_s *canvas);
 extern void set_video_font(uint8_t **video_font, uint8_t **raw_video_font,
                            uint16_t *video_font_translate);
-
-extern void set_color_brightness(int display_num, int value);
-extern void set_color_contrast(int display_num, int value);
-extern void set_color_gamma(int display_num, int value);
-extern void set_color_tint(int display_num, int value);
-extern void set_video_cache(int value);
-extern void set_hw_scale(int value);
-
-extern int get_color_brightness(int display_num);
-extern int get_color_contrast(int display_num);
-extern int get_color_gamma(int display_num);
-extern int get_color_tint(int display_num);
-
-extern void raspi_cartridge_trigger_freeze(void);
 extern unsigned int *raspi_get_palette(int index);
-extern struct menu_item* menu_build_palette_options(int menu_id, struct menu_item* parent);
-
 extern int is_vic(struct video_canvas_s *canvas);
 extern int is_vdc(struct video_canvas_s *canvas);
-
 extern vkbd_key_array get_vkbd();
 extern int get_vkbd_width(void);
 extern int get_vkbd_height(void);
 extern int get_vkbd_size(void);
-
-extern void menu_build_machine(struct menu_item* parent);
-extern struct menu_item* menu_build_cartridge(struct menu_item* parent);
 
 #endif

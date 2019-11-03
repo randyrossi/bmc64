@@ -460,3 +460,8 @@ void emux_load_sound_options(void) {
   
   resources_get_int("SidFilters", &sid_filter_item->value);
 }
+
+void emux_set_warp(int warp) {
+  resources_set_int("WarpMode", warp);
+  raspi_warp = warp;
+}

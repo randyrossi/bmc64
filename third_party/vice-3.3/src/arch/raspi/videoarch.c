@@ -46,6 +46,7 @@
 #include "viewport.h"
 
 // RASPI includes
+#include "emux_api.h"
 #include "demo.h"
 #include "font.h"
 #include "joy.h"
@@ -65,18 +66,14 @@ struct CanvasState canvas_state[2];
 
 struct video_canvas_s *vdc_canvas;
 struct video_canvas_s *vic_canvas;
+struct video_canvas_s *canvases[2];
+struct video_draw_buffer_callback_s draw_buffer_callback[2];
 
 // NOTE: For Plus/4, the vic_* variables are actually ted.
 // Maybe rename to pri_?
 
 static int vdc_canvas_index;
 static int vic_canvas_index;
-
-static int vic_enabled;
-static int vdc_enabled;
-
-static int vic_showing;
-static int vdc_showing;
 
 static int vic_first_refresh;
 static int vdc_first_refresh;
@@ -133,24 +130,24 @@ int is_vdc(struct video_canvas_s *canvas) {
 }
 
 // Called by menu when palette changes
-void video_canvas_change_palette(int display_num, int palette_index) {
-  if (!canvas_state[display_num].canvas)
+void emux_change_palette(int display_num, int palette_index) {
+  if (!canvases[display_num])
     return;
 
   canvas_state[display_num].palette_index = palette_index;
   // This will call set_palette below to get called after color controls
   // have been applied to the palette.
-  video_color_update_palette(canvas_state[display_num].canvas);
+  video_color_update_palette(canvases[display_num]);
 }
 
 // Called when a color setting has changed
-void video_color_setting_changed(int display_num) {
-  if (!canvas_state[display_num].canvas)
+void emux_video_color_setting_changed(int display_num) {
+  if (!canvases[display_num])
     return;
 
   // This will call set_palette below to get called after color controls
   // have been applied to the palette.
-  video_color_update_palette(canvas_state[display_num].canvas);
+  video_color_update_palette(canvases[display_num]);
 }
 
 int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
@@ -231,23 +228,19 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
   }
 
   // Have our fb class allocate draw buffers
-  canvas_state[canvas_num].draw_buffer_callback.draw_buffer_alloc =
+  draw_buffer_callback[canvas_num].draw_buffer_alloc =
      draw_buffer_alloc;
-  canvas_state[canvas_num].draw_buffer_callback.draw_buffer_free =
+  draw_buffer_callback[canvas_num].draw_buffer_free =
      draw_buffer_free;
-  canvas_state[canvas_num].draw_buffer_callback.draw_buffer_clear =
+  draw_buffer_callback[canvas_num].draw_buffer_clear =
      draw_buffer_clear;
   canvas->video_draw_buffer_callback =
-     &canvas_state[canvas_num].draw_buffer_callback;
+     &draw_buffer_callback[canvas_num];
 
   canvas_num++;
 }
 
-void video_init_overlay(int padding, int c40_80_state, int vkbd_transparency) {
-  overlay_init(padding, c40_80_state, vkbd_transparency);
-}
-
-void apply_video_adjustments(int layer,
+void emux_apply_video_adjustments(int layer,
       int hcenter, int vcenter,
       double hborder, double vborder, double aspect,
       double lpad, double rpad, double tpad, double bpad,
@@ -431,10 +424,10 @@ struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
                                            unsigned int *width,
                                            unsigned int *height, int mapped) {
   if (is_vic(canvas)) {
-     canvas_state[0].canvas = canvas;
+     canvases[0] = canvas;
      return video_canvas_create_vic(canvas, width, height, mapped);
   } else {
-     canvas_state[1].canvas = canvas;
+     canvases[1] = canvas;
      return video_canvas_create_vdc(canvas, width, height, mapped);
   }
 }
@@ -473,14 +466,6 @@ void vsyncarch_init(void) {
 }
 
 void vsyncarch_presync(void) { kbdbuf_flush(); }
-
-void enable_vic(int enabled) {
-  vic_enabled = enabled;
-}
-
-void enable_vdc(int enabled) {
-  vdc_enabled = enabled;
-}
 
 // This makes sure we are showing what the enable flags say we should
 // be showing.
@@ -816,17 +801,4 @@ void main_exit(void) {
   circle_set_palette_fbl(FB_LAYER_VIC, 1, COLOR16(255, 255, 255));
   circle_update_palette_fbl(FB_LAYER_VIC);
   circle_frames_ready_fbl(FB_LAYER_VIC, -1, 0);
-}
-
-// These will revert back to 0 when the user moves off the
-// current item.
-void video_canvas_reveal_temp(int layer) {
-  if (layer == FB_LAYER_VIC && vic_showing) {
-    ui_set_transparent(1);
-    ui_set_render_current_item_only(1);
-  }
-  else if (layer == FB_LAYER_VDC && vdc_showing) {
-    ui_set_transparent(1);
-    ui_set_render_current_item_only(1);
-  }
 }

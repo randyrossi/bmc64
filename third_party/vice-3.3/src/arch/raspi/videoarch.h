@@ -59,34 +59,6 @@ struct video_canvas_s {
 
 typedef struct video_canvas_s video_canvas_t;
 
-struct CanvasState {
-  struct video_canvas_s *canvas;
-  struct video_draw_buffer_callback_s draw_buffer_callback;
-  int palette_index;
-  // Just the gfx area (no border)
-  int gfx_w;
-  int gfx_h;
-  // How much border is available
-  int max_border_w;
-  int max_border_h;
-  // How much of the border we want to see
-  int border_w;
-  int border_h;
-
-  int src_off_x;
-  int src_off_y;
-  // The total visiible pixels in each dimension
-  int vis_w;
-  int vis_h;
-  // For our src region
-  int top;
-  int left;
-
-  // Where does the status overlay show up?
-  int overlay_x;
-  int overlay_y;
-};
-
 // Called when video canvas has been created.
 struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
                                            unsigned int *width,
@@ -98,8 +70,6 @@ void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
                           unsigned int w, unsigned int h);
 
 int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p);
-
-void video_canvas_change_palette(int display_num, int palette_index);
 
 void video_arch_canvas_init(struct video_canvas_s *canvas);
 
@@ -120,31 +90,11 @@ void draw(uint8_t *src, int srcw, int srch, int src_pitch, uint8_t *dst,
 // Make sure ui also sets this when turning on/off warp
 extern int raspi_warp;
 
-// Called by menu after color setting changed (brightness, contrast...)
-void video_color_setting_changed(int display_num);
-
-void video_init_overlay(int padding, int c40_80_state, int vkbd_transparency);
-
-void apply_video_adjustments(int layer, int hcenter, int vcenter,
-                             double hborder, double vborder,
-                             double aspect, double lpad, double rpad,
-                             double tpad, double bpad, int zlayer);
-
-void enable_vic(int enabled);
-void enable_vdc(int enabled);
-
 // Makes sure whatever canvas should be visible actually is.
 void ensure_video(void);
 
 palette_t *raspi_video_load_palette(int num_entries, char *name);
 void main_exit(void);
-
-// If layer is visible right now, make the ui transparent and tell the
-// ui only to render the current item. This is used to assist the user
-// in making video adjustments in real time (color, aspect ratio,
-// etc). Only takes effect while the user remains on the current menu
-// item.
-void video_canvas_reveal_temp(int layer);
 
 void joy_interrupt(int type, int port, int device, int value);
 void key_interrupt(long key, int pressed);

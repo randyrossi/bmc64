@@ -56,60 +56,60 @@ unsigned long emux_calculate_timing(double fps) {
   }
 }
 
-void set_color_brightness(int display_num, int value) {
+void emux_set_color_brightness(int display_num, int value) {
   resources_set_int("TEDColorBrightness", value);
 }
 
-void set_color_contrast(int display_num, int value) {
+void emux_set_color_contrast(int display_num, int value) {
   resources_set_int("TEDColorContrast", value);
 }
 
-void set_color_gamma(int display_num, int value) {
+void emux_set_color_gamma(int display_num, int value) {
   resources_set_int("TEDColorGamma", value);
 }
 
-void set_color_tint(int display_num, int value) {
+void emux_set_color_tint(int display_num, int value) {
   resources_set_int("TEDColorTint", value);
 }
 
-void set_video_cache(int value) {
+void emux_set_video_cache(int value) {
   resources_set_int("TEDVideoCache", value);
 }
 
-void set_hw_scale(int value) {
+void emux_set_hw_scale(int value) {
   resources_set_int("TEDHwScale", value);
 }
 
-int get_color_brightness(int display_num) {
+int emux_get_color_brightness(int display_num) {
   int value;
   resources_get_int("TEDColorBrightness", &value);
   return value;
 }
 
-int get_color_contrast(int display_num) {
+int emux_get_color_contrast(int display_num) {
   int value;
   resources_get_int("TEDColorContrast", &value);
   return value;
 }
 
-int get_color_gamma(int display_num) {
+int emux_get_color_gamma(int display_num) {
   int value;
   resources_get_int("TEDColorGamma", &value);
   return value;
 }
 
-int get_color_tint(int display_num) {
+int emux_get_color_tint(int display_num) {
   int value;
   resources_get_int("TEDColorTint", &value);
   return value;
 }
 
-void raspi_cartridge_trigger_freeze(void) {
+void emux_cartridge_trigger_freeze(void) {
   keyboard_clear_keymatrix();
   cartridge_trigger_freeze();
 }
 
-struct menu_item* menu_build_palette_options(int menu_id, struct menu_item* parent) {
+struct menu_item* emux_add_palette_options(int menu_id, struct menu_item* parent) {
   struct menu_item* palette_item =
       ui_menu_add_multiple_choice(menu_id, parent, "Color Palette");
   palette_item->num_choices = 2;
@@ -123,7 +123,7 @@ int cartridge_flush_image(int type) { }
 void cartridge_set_default(void) { }
 void cartridge_trigger_freeze(void) { }
 
-void menu_build_machine(struct menu_item* parent) {
+void emux_add_machine_options(struct menu_item* parent) {
   struct menu_item* model_parent = ui_menu_add_folder(parent, "Model...");
   int timing = circle_get_machine_timing();
 
@@ -153,7 +153,7 @@ void menu_build_machine(struct menu_item* parent) {
   }
 }
 
-struct menu_item* menu_build_cartridge(struct menu_item* root) {
+struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
   struct menu_item* parent = ui_menu_add_folder(root, "Cartridge");
   ui_menu_add_button(MENU_PLUS4_ATTACH_CART, parent, "Attach cart...");
   ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C0_LO, parent, "Attach C0 LO...");

@@ -27,3 +27,7 @@
 #include "emux_api.h"
 
 int emux_machine_class = BMC64_MACHINE_CLASS_UNKNOWN;
+int vic_showing;
+int vdc_showing;
+int vic_enabled;
+int vdc_enabled;

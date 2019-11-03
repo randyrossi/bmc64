@@ -47,7 +47,6 @@
 #include "menu_usb.h"
 #include "menu_keyset.h"
 #include "menu_switch.h"
-#include "raspi_machine.h"
 #include "overlay.h"
 #include "raspi_util.h"
 #include "ui.h"
@@ -772,18 +771,18 @@ static void load_settings() {
   resources_get_int("DriveSoundEmulationVolume", &drive_sounds_vol_item->value);
 #endif
 
-  brightness_item_0->value = get_color_brightness(0);
-  contrast_item_0->value = get_color_contrast(0);
-  gamma_item_0->value = get_color_gamma(0);
-  tint_item_0->value = get_color_tint(0);
-  video_color_setting_changed(0);
+  brightness_item_0->value = emux_get_color_brightness(0);
+  contrast_item_0->value = emux_get_color_contrast(0);
+  gamma_item_0->value = emux_get_color_gamma(0);
+  tint_item_0->value = emux_get_color_tint(0);
+  emux_video_color_setting_changed(0);
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-    brightness_item_1->value = get_color_brightness(1);
-    contrast_item_1->value = get_color_contrast(1);
-    gamma_item_1->value = get_color_gamma(1);
-    tint_item_1->value = get_color_tint(1);
-    video_color_setting_changed(1);
+    brightness_item_1->value = emux_get_color_brightness(1);
+    contrast_item_1->value = emux_get_color_contrast(1);
+    gamma_item_1->value = emux_get_color_gamma(1);
+    tint_item_1->value = emux_get_color_tint(1);
+    emux_video_color_setting_changed(1);
     resources_get_int("C128ColumnKey", &c40_80_column_item->value);
   }
 
@@ -1373,8 +1372,7 @@ static void enter_dir(struct menu_item *item) {
 }
 
 static void toggle_warp(int value) {
-  resources_set_int("WarpMode", value);
-  raspi_warp = value;
+  emux_set_warp(value);
   overlay_warp_changed(value);
   warp_item->value = value;
 }
@@ -1458,9 +1456,9 @@ static void do_video_settings(int layer,
   }
 
   // Tell videoarch about these changes
-  apply_video_adjustments(layer, vid_hc, vid_vc, h, v, vid_a, lpad, rpad, tpad, bpad, zlayer);
+  emux_apply_video_adjustments(layer, vid_hc, vid_vc, h, v, vid_a, lpad, rpad, tpad, bpad, zlayer);
   if (layer == FB_LAYER_VIC) {
-     apply_video_adjustments(FB_LAYER_UI, hc, vc, h, v, a, 0, 0, 0, 0, 3);
+     emux_apply_video_adjustments(FB_LAYER_UI, hc, vc, h, v, a, 0, 0, 0, 0, 3);
   }
 }
 
@@ -1522,12 +1520,12 @@ static void menu_value_changed(struct menu_item *item) {
     }
     return;
   case MENU_COLOR_PALETTE_0:
-    video_canvas_reveal_temp(FB_LAYER_VIC);
-    video_canvas_change_palette(0, item->value);
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
+    emux_change_palette(0, item->value);
     return;
   case MENU_COLOR_PALETTE_1:
-    video_canvas_reveal_temp(FB_LAYER_VDC);
-    video_canvas_change_palette(1, item->value);
+    ui_canvas_reveal_temp(FB_LAYER_VDC);
+    emux_change_palette(1, item->value);
     return;
   case MENU_AUTOSTART:
     show_files(DIR_ROOT, FILTER_NONE, MENU_AUTOSTART_FILE, 0);
@@ -1786,66 +1784,66 @@ static void menu_value_changed(struct menu_item *item) {
     resources_set_int("DriveSoundEmulationVolume", item->value);
     return;
   case MENU_COLOR_BRIGHTNESS_0:
-    video_canvas_reveal_temp(FB_LAYER_VIC);
-    set_color_brightness(0, item->value);
-    video_color_setting_changed(0);
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
+    emux_set_color_brightness(0, item->value);
+    emux_video_color_setting_changed(0);
     return;
   case MENU_COLOR_CONTRAST_0:
-    video_canvas_reveal_temp(FB_LAYER_VIC);
-    set_color_contrast(0, item->value);
-    video_color_setting_changed(0);
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
+    emux_set_color_contrast(0, item->value);
+    emux_video_color_setting_changed(0);
     return;
   case MENU_COLOR_GAMMA_0:
-    video_canvas_reveal_temp(FB_LAYER_VIC);
-    set_color_gamma(0, item->value);
-    video_color_setting_changed(0);
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
+    emux_set_color_gamma(0, item->value);
+    emux_video_color_setting_changed(0);
     return;
   case MENU_COLOR_TINT_0:
-    video_canvas_reveal_temp(FB_LAYER_VIC);
-    set_color_tint(0, item->value);
-    video_color_setting_changed(0);
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
+    emux_set_color_tint(0, item->value);
+    emux_video_color_setting_changed(0);
     return;
   case MENU_COLOR_RESET_0:
     brightness_item_0->value = 1000;
     contrast_item_0->value = 1250;
     gamma_item_0->value = 2200;
     tint_item_0->value = 1000;
-    set_color_brightness(0, brightness_item_0->value);
-    set_color_contrast(0, contrast_item_0->value);
-    set_color_gamma(0, gamma_item_0->value);
-    set_color_tint(0, tint_item_0->value);
-    video_color_setting_changed(0);
+    emux_set_color_brightness(0, brightness_item_0->value);
+    emux_set_color_contrast(0, contrast_item_0->value);
+    emux_set_color_gamma(0, gamma_item_0->value);
+    emux_set_color_tint(0, tint_item_0->value);
+    emux_video_color_setting_changed(0);
     return;
   case MENU_COLOR_BRIGHTNESS_1:
-    video_canvas_reveal_temp(FB_LAYER_VDC);
-    set_color_brightness(1, item->value);
-    video_color_setting_changed(1);
+    ui_canvas_reveal_temp(FB_LAYER_VDC);
+    emux_set_color_brightness(1, item->value);
+    emux_video_color_setting_changed(1);
     return;
   case MENU_COLOR_CONTRAST_1:
-    video_canvas_reveal_temp(FB_LAYER_VDC);
-    set_color_contrast(1, item->value);
-    video_color_setting_changed(1);
+    ui_canvas_reveal_temp(FB_LAYER_VDC);
+    emux_set_color_contrast(1, item->value);
+    emux_video_color_setting_changed(1);
     return;
   case MENU_COLOR_GAMMA_1:
-    video_canvas_reveal_temp(FB_LAYER_VDC);
-    set_color_gamma(1, item->value);
-    video_color_setting_changed(1);
+    ui_canvas_reveal_temp(FB_LAYER_VDC);
+    emux_set_color_gamma(1, item->value);
+    emux_video_color_setting_changed(1);
     return;
   case MENU_COLOR_TINT_1:
-    video_canvas_reveal_temp(FB_LAYER_VDC);
-    set_color_tint(1, item->value);
-    video_color_setting_changed(1);
+    ui_canvas_reveal_temp(FB_LAYER_VDC);
+    emux_set_color_tint(1, item->value);
+    emux_video_color_setting_changed(1);
     return;
   case MENU_COLOR_RESET_1:
     brightness_item_1->value = 1000;
     contrast_item_1->value = 1250;
     gamma_item_1->value = 2200;
     tint_item_1->value = 1000;
-    set_color_brightness(1, brightness_item_1->value);
-    set_color_contrast(1, contrast_item_1->value);
-    set_color_gamma(1, gamma_item_1->value);
-    set_color_tint(1, tint_item_1->value);
-    video_color_setting_changed(1);
+    emux_set_color_brightness(1, brightness_item_1->value);
+    emux_set_color_contrast(1, contrast_item_1->value);
+    emux_set_color_gamma(1, gamma_item_1->value);
+    emux_set_color_tint(1, tint_item_1->value);
+    emux_video_color_setting_changed(1);
     return;
   case MENU_SWAP_JOYSTICKS:
     menu_swap_joysticks();
@@ -1987,7 +1985,7 @@ static void menu_value_changed(struct menu_item *item) {
     emux_vice_easy_flash();
     return;
   case MENU_CART_FREEZE:
-    raspi_cartridge_trigger_freeze();
+    emux_cartridge_trigger_freeze();
     ui_pop_all_and_toggle();
     return;
   case MENU_VIC20_MEMORY_3K:
@@ -2009,8 +2007,8 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_PIP_LOCATION:
   case MENU_PIP_SWAPPED:
     if (active_display_item->value == MENU_ACTIVE_DISPLAY_VICII) {
-       enable_vic(1);
-       enable_vdc(0);
+       vic_enabled = 1;
+       vdc_enabled = 0;
        do_video_settings(FB_LAYER_VIC,
            h_center_item_0,
            v_center_item_0,
@@ -2018,8 +2016,8 @@ static void menu_value_changed(struct menu_item *item) {
            v_border_item_0,
            aspect_item_0);
     } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_VDC) {
-       enable_vdc(1);
-       enable_vic(0);
+       vdc_enabled = 1;
+       vic_enabled = 0;
        do_video_settings(FB_LAYER_VDC,
            h_center_item_1,
            v_center_item_1,
@@ -2028,8 +2026,8 @@ static void menu_value_changed(struct menu_item *item) {
            aspect_item_1);
     } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE ||
                active_display_item->value == MENU_ACTIVE_DISPLAY_PIP) {
-       enable_vdc(1);
-       enable_vic(1);
+       vdc_enabled = 1;
+       vic_enabled = 1;
        do_video_settings(FB_LAYER_VIC,
            h_center_item_0,
            v_center_item_0,
@@ -2049,7 +2047,7 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_H_BORDER_0:
   case MENU_V_BORDER_0:
   case MENU_ASPECT_0:
-    video_canvas_reveal_temp(FB_LAYER_VIC);
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
     do_video_settings(FB_LAYER_VIC,
         h_center_item_0,
         v_center_item_0,
@@ -2062,7 +2060,7 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_H_BORDER_1:
   case MENU_V_BORDER_1:
   case MENU_ASPECT_1:
-    video_canvas_reveal_temp(FB_LAYER_VDC);
+    ui_canvas_reveal_temp(FB_LAYER_VDC);
     do_video_settings(FB_LAYER_VDC,
         h_center_item_1,
         v_center_item_1,
@@ -2367,7 +2365,7 @@ void build_menu(struct menu_item *root) {
   ui_menu_add_button(MENU_AUTOSTART, root, "Autostart Prg/Disk...");
 
   machine_parent = ui_menu_add_folder(root, "Machine");
-    menu_build_machine(machine_parent);
+    emux_add_machine_options(machine_parent);
     menu_build_machine_switch(machine_parent);
 
   drive_parent = ui_menu_add_folder(root, "Drives");
@@ -2433,7 +2431,7 @@ void build_menu(struct menu_item *root) {
       ui_menu_add_button(MENU_CREATE_P64, parent, "P64...");
       ui_menu_add_button(MENU_CREATE_X64, parent, "X64...");
 
-  parent = menu_build_cartridge(root);
+  parent = emux_add_cartridge_options(root);
   ui_menu_add_button(MENU_TEXT, parent, "");
   ui_menu_add_button(MENU_MAKE_CART_DEFAULT, parent,
                      "Set current cart default (Need Save)");
@@ -2501,19 +2499,19 @@ void build_menu(struct menu_item *root) {
      parent = ui_menu_add_folder(video_parent, "VICII");
   }
 
-  palette_item_0 = menu_build_palette_options(MENU_COLOR_PALETTE_0, parent);
+  palette_item_0 = emux_add_palette_options(MENU_COLOR_PALETTE_0, parent);
 
   child = ui_menu_add_folder(parent, "Color Adjustments...");
 
   brightness_item_0 =
       ui_menu_add_range(MENU_COLOR_BRIGHTNESS_0, child, "Brightness", 0, 2000,
-                        100, get_color_brightness(0));
+                        100, emux_get_color_brightness(0));
   contrast_item_0 = ui_menu_add_range(MENU_COLOR_CONTRAST_0, child, "Contrast", 0,
-                                    2000, 100, get_color_contrast(0));
+                                    2000, 100, emux_get_color_contrast(0));
   gamma_item_0 = ui_menu_add_range(MENU_COLOR_GAMMA_0, child, "Gamma", 0, 4000, 100,
-                                 get_color_gamma(0));
+                                 emux_get_color_gamma(0));
   tint_item_0 = ui_menu_add_range(MENU_COLOR_TINT_0, child, "Tint", 0, 2000, 100,
-                                get_color_tint(0));
+                                emux_get_color_tint(0));
   ui_menu_add_button(MENU_COLOR_RESET_0, child, "Reset");
 
   int defaultHBorderTrim;
@@ -2549,19 +2547,19 @@ void build_menu(struct menu_item *root) {
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      parent = ui_menu_add_folder(video_parent, "VDC");
 
-     palette_item_1 = menu_build_palette_options(MENU_COLOR_PALETTE_1, parent);
+     palette_item_1 = emux_add_palette_options(MENU_COLOR_PALETTE_1, parent);
 
      child = ui_menu_add_folder(parent, "Color Adjustments...");
 
      brightness_item_1 =
          ui_menu_add_range(MENU_COLOR_BRIGHTNESS_1, child, "Brightness", 0, 2000,
-                           100, get_color_brightness(1));
+                           100, emux_get_color_brightness(1));
      contrast_item_1 = ui_menu_add_range(MENU_COLOR_CONTRAST_1, child, "Contrast", 0,
-                                       2000, 100, get_color_contrast(1));
+                                       2000, 100, emux_get_color_contrast(1));
      gamma_item_1 = ui_menu_add_range(MENU_COLOR_GAMMA_1, child, "Gamma", 0, 4000,
-                                       100, get_color_gamma(1));
+                                       100, emux_get_color_gamma(1));
      tint_item_1 = ui_menu_add_range(MENU_COLOR_TINT_1, child, "Tint", 0, 2000, 100,
-                                get_color_tint(1));
+                                emux_get_color_tint(1));
      ui_menu_add_button(MENU_COLOR_RESET_1, child, "Reset");
 
      h_center_item_1 =
@@ -2790,14 +2788,14 @@ void build_menu(struct menu_item *root) {
 
   circle_set_volume(volume_item->value);
 
-  video_canvas_change_palette(0, palette_item_0->value);
+  emux_change_palette(0, palette_item_0->value);
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-    video_canvas_change_palette(1, palette_item_1->value);
+    emux_change_palette(1, palette_item_1->value);
   }
   ui_set_hotkeys();
   ui_set_joy_devs();
 
-  apply_video_adjustments(FB_LAYER_VIC,
+  emux_apply_video_adjustments(FB_LAYER_VIC,
      h_center_item_0->value,
      v_center_item_0->value,
      (double)(100-h_border_item_0->value) / 100.0d,
@@ -2806,7 +2804,7 @@ void build_menu(struct menu_item *root) {
      0.0d, 0.0d, 0.0d, 0.0d, 0);
 
   // Menu gets the same adjustments
-  apply_video_adjustments(FB_LAYER_UI,
+  emux_apply_video_adjustments(FB_LAYER_UI,
      h_center_item_0->value,
      v_center_item_0->value,
      (double)(100-h_border_item_0->value) / 100.0d,
@@ -2815,7 +2813,7 @@ void build_menu(struct menu_item *root) {
      0.0d, 0.0d, 0.0d, 0.0d, 3);
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-     apply_video_adjustments(FB_LAYER_VDC,
+     emux_apply_video_adjustments(FB_LAYER_VDC,
         h_center_item_1->value,
         v_center_item_1->value,
         (double)(100-h_border_item_1->value) / 100.0d,
@@ -2824,17 +2822,17 @@ void build_menu(struct menu_item *root) {
         0.0d, 0.0d, 0.0d, 0.0d, 1);
   }
 
-  video_init_overlay(statusbar_padding_item->value,
-                     c40_80_column_item->value,
-                     vkbd_transparency_item->value);
+  overlay_init(statusbar_padding_item->value,
+               c40_80_column_item->value,
+               vkbd_transparency_item->value);
 
   emux_set_joy_pot_x(pot_x_high_value);
   emux_set_joy_pot_y(pot_y_high_value);
 
   // Always turn off resampling
   resources_set_int("SidResidSampling", 0);
-  set_video_cache(0);
-  set_hw_scale(0);
+  emux_set_video_cache(0);
+  emux_set_hw_scale(0);
 
 #ifdef RASPI_LITE
   resources_set_int("DriveSoundEmulation", 0);
@@ -2916,7 +2914,7 @@ void menu_quick_func(int button_assignment) {
     emux_show_cart_osd_menu();
     break;
   case BTN_ASSIGN_CART_FREEZE:
-    raspi_cartridge_trigger_freeze();
+    emux_cartridge_trigger_freeze();
     break;
   case BTN_ASSIGN_RESET_HARD:
     if (reset_confirm_item->value) {

@@ -53,7 +53,7 @@ unsigned long emux_calculate_timing(double fps) {
   }
 }
 
-void set_color_brightness(int display_num, int value) {
+void emux_set_color_brightness(int display_num, int value) {
   if (display_num == 0) {
     resources_set_int("VICIIColorBrightness", value);
   } else {
@@ -61,7 +61,7 @@ void set_color_brightness(int display_num, int value) {
   }
 }
 
-void set_color_contrast(int display_num, int value) {
+void emux_set_color_contrast(int display_num, int value) {
   if (display_num == 0) {
     resources_set_int("VICIIColorContrast", value);
   } else {
@@ -69,7 +69,7 @@ void set_color_contrast(int display_num, int value) {
   }
 }
 
-void set_color_gamma(int display_num, int value) {
+void emux_set_color_gamma(int display_num, int value) {
   if (display_num == 0) {
     resources_set_int("VICIIColorGamma", value);
   } else {
@@ -77,7 +77,7 @@ void set_color_gamma(int display_num, int value) {
   }
 }
 
-void set_color_tint(int display_num, int value) {
+void emux_set_color_tint(int display_num, int value) {
   if (display_num == 0) {
     resources_set_int("VICIIColorTint", value);
   } else {
@@ -85,15 +85,15 @@ void set_color_tint(int display_num, int value) {
   }
 }
 
-void set_video_cache(int value) {
+void emux_set_video_cache(int value) {
   resources_set_int("VICIIVideoCache", value);
 }
 
-void set_hw_scale(int value) {
+void emux_set_hw_scale(int value) {
   resources_set_int("VICIIHwScale", value);
 }
 
-int get_color_brightness(int display_num) {
+int emux_get_color_brightness(int display_num) {
   int value;
   if (display_num == 0) {
     resources_get_int("VICIIColorBrightness", &value);
@@ -103,7 +103,7 @@ int get_color_brightness(int display_num) {
   return value;
 }
 
-int get_color_contrast(int display_num) {
+int emux_get_color_contrast(int display_num) {
   int value;
   if (display_num == 0) {
     resources_get_int("VICIIColorContrast", &value);
@@ -113,7 +113,7 @@ int get_color_contrast(int display_num) {
   return value;
 }
 
-int get_color_gamma(int display_num) {
+int emux_get_color_gamma(int display_num) {
   int value;
   if (display_num == 0) {
     resources_get_int("VICIIColorGamma", &value);
@@ -123,7 +123,7 @@ int get_color_gamma(int display_num) {
   return value;
 }
 
-int get_color_tint(int display_num) {
+int emux_get_color_tint(int display_num) {
   int value;
   if (display_num == 0) {
     resources_get_int("VICIIColorTint", &value);
@@ -133,12 +133,12 @@ int get_color_tint(int display_num) {
   return value;
 }
 
-void raspi_cartridge_trigger_freeze(void) {
+void emux_cartridge_trigger_freeze(void) {
   keyboard_clear_keymatrix();
   cartridge_trigger_freeze();
 }
 
-struct menu_item* menu_build_palette_options(int menu_id, struct menu_item* parent) {
+struct menu_item* emux_add_palette_options(int menu_id, struct menu_item* parent) {
   struct menu_item* palette_item =
       ui_menu_add_multiple_choice(menu_id, parent, "Color Palette");
   palette_item->num_choices = 5;
@@ -160,7 +160,7 @@ void column4080_key_toggled(void) {
   overlay_40_80_columns_changed(v);
 }
 
-void menu_build_machine(struct menu_item* parent) {
+void emux_add_machine_options(struct menu_item* parent) {
   struct menu_item* roms_parent = ui_menu_add_folder(parent, "ROMs...");
   ui_menu_add_button(MENU_C128_LOAD_KERNAL, roms_parent, "Load C128 Kernal ROM...");
   ui_menu_add_button(MENU_C128_LOAD_BASIC_HI, roms_parent, "Load C128 Basic HI ROM...");
@@ -170,7 +170,7 @@ void menu_build_machine(struct menu_item* parent) {
   ui_menu_add_button(MENU_C128_LOAD_64_BASIC, roms_parent, "Load C64 Basic ROM...");
 }
 
-struct menu_item* menu_build_cartridge(struct menu_item* root) {
+struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
   struct menu_item* parent = ui_menu_add_folder(root, "Cartridge");
   ui_menu_add_button(MENU_C64_ATTACH_CART, parent, "Attach cart...");
   ui_menu_add_button(MENU_C64_ATTACH_CART_8K, parent, "Attach 8k raw...");
