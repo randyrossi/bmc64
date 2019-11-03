@@ -49,6 +49,7 @@
 #include "resources.h"
 #include "drive.h"
 #include "joyport.h"
+#include "joyport/joystick.h"
 #include "vdrive-internal.h"
 
 // RASPI includes
@@ -378,3 +379,10 @@ void emux_set_joy_port_device(int port_num, int dev_id) {
   }
 }
 
+void emux_set_joy_pot_x(int value) {
+   joystick_set_potx(value);
+}
+
+void emux_set_joy_pot_y(int value) {
+   joystick_set_poty(value);
+}

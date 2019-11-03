@@ -33,7 +33,6 @@
 #include <string.h>
 
 // VICE includes
-#include "joyport/joystick.h"
 #include "keyboard.h"
 #include "resources.h"
 #include "sid.h"
@@ -2885,8 +2884,8 @@ void build_menu(struct menu_item *root) {
                      c40_80_column_item->value,
                      vkbd_transparency_item->value);
 
-  joystick_set_potx(pot_x_high_value);
-  joystick_set_poty(pot_y_high_value);
+  emux_set_joy_pot_x(pot_x_high_value);
+  emux_set_joy_pot_y(pot_y_high_value);
 
   // Always turn off resampling
   resources_set_int("SidResidSampling", 0);

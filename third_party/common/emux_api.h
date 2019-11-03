@@ -135,6 +135,9 @@ void emux_create_disk(struct menu_item* item, fullpath_func fullpath);
 // Set the joy port device to JOYDEV_*
 void emux_set_joy_port_device(int port_num, int dev_id);
 
+void emux_set_joy_pot_x(int value);
+void emux_set_joy_pot_y(int value);
+
 // VICE specific cart attach func.
 void emux_vice_attach_cart(int menu_id, char* filename);
 void emux_vice_easy_flash(void);
