@@ -33,14 +33,12 @@
 #include <string.h>
 
 // VICE includes
-#include "diskimage.h"
 #include "joyport.h"
 #include "joyport/joystick.h"
 #include "keyboard.h"
 #include "resources.h"
 #include "sid.h"
 #include "tape.h"
-#include "vdrive-internal.h"
 
 // RASPI Includes
 #include "emux_api.h"
@@ -207,19 +205,6 @@ static char snap_filt_ext[1][5] = {".vsf"};
     }                                                                          \
     return include;                                                            \
   }
-
-// For file type dialogs. Determines what dir we start in. Used
-// as index into default_dir_names and current_dir_names.
-#define NUM_DIR_TYPES 7
-typedef enum {
-   DIR_ROOT,
-   DIR_DISKS,
-   DIR_TAPES,
-   DIR_CARTS,
-   DIR_SNAPS,
-   DIR_ROMS,
-   DIR_IEC,
-} DirType;
 
 // What directories to initialize file search dialogs with for
 // each type of file.
@@ -1238,102 +1223,9 @@ static void select_file(struct menu_item *item) {
   }
 
   // Handle creating empty disk
-  else if (item->id >= MENU_CREATE_D64_FILE && item->id <= MENU_CREATE_X64_FILE) {
-     char ext[5];
-     int image_type;
-     switch (item->id) {
-       case MENU_CREATE_D64_FILE:
-         image_type = DISK_IMAGE_TYPE_D64;
-         strcpy(ext, ".d64");
-         break;
-       case MENU_CREATE_D67_FILE:
-         image_type = DISK_IMAGE_TYPE_D67;
-         strcpy(ext, ".d67");
-         break;
-       case MENU_CREATE_D71_FILE:
-         image_type = DISK_IMAGE_TYPE_D71;
-         strcpy(ext, ".d71");
-         break;
-       case MENU_CREATE_D80_FILE:
-         image_type = DISK_IMAGE_TYPE_D80;
-         strcpy(ext, ".d80");
-         break;
-       case MENU_CREATE_D81_FILE:
-         image_type = DISK_IMAGE_TYPE_D81;
-         strcpy(ext, ".d81");
-         break;
-       case MENU_CREATE_D82_FILE:
-         image_type = DISK_IMAGE_TYPE_D82;
-         strcpy(ext, ".d82");
-         break;
-       case MENU_CREATE_D1M_FILE:
-         image_type = DISK_IMAGE_TYPE_D1M;
-         strcpy(ext, ".d1m");
-         break;
-       case MENU_CREATE_D2M_FILE:
-         image_type = DISK_IMAGE_TYPE_D2M;
-         strcpy(ext, ".d2m");
-         break;
-       case MENU_CREATE_D4M_FILE:
-         image_type = DISK_IMAGE_TYPE_D4M;
-         strcpy(ext, ".d4m");
-         break;
-       case MENU_CREATE_G64_FILE:
-         image_type = DISK_IMAGE_TYPE_G64;
-         strcpy(ext, ".g64");
-         break;
-       case MENU_CREATE_P64_FILE:
-         image_type = DISK_IMAGE_TYPE_P64;
-         strcpy(ext, ".p64");
-         break;
-       case MENU_CREATE_X64_FILE:
-         image_type = DISK_IMAGE_TYPE_X64;
-         strcpy(ext, ".x64");
-         break;
-       default:
-         return;
-     }
-
-    char *fname = item->str_value;
-    if (item->type == TEXTFIELD) {
-      // Scrub the filename before passing it along
-      fname = item->str_value;
-      if (strlen(fname) == 0) {
-        ui_error("Empty filename");
-        return;
-      } else if (strlen(fname) > MAX_FN_NAME) {
-        ui_error("Too long");
-        return;
-      }
-      char *dot = strchr(fname, '.');
-      if (dot == NULL) {
-        if (strlen(fname) + 4 <= MAX_FN_NAME) {
-          strcat(fname, ext);
-        } else {
-          ui_error("Too long");
-          return;
-        }
-      } else {
-        if (strncasecmp(dot, ext, 4) != 0) {
-          ui_error("Wrong extension");
-          return;
-        }
-      }
-    } else {
-      // Don't allow overwriting an existing file. Just ignore it.
-      return;
-    }
-
-    ui_info("Creating...");
-    if (vdrive_internal_create_format_disk_image(
-         fullpath(DIR_DISKS, fname), "DISK", image_type) < 0) {
-      ui_pop_menu();
-      ui_error("Create disk image failed");
-    } else {
-      ui_pop_menu();
-      ui_pop_menu();
-      ui_info("Disk Created");
-    }
+  else if (item->id >= MENU_CREATE_D64_FILE &&
+           item->id <= MENU_CREATE_X64_FILE) {
+    emux_create_disk(item, fullpath);
   }
 }
 

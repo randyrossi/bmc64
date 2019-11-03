@@ -52,6 +52,21 @@ typedef enum {
   EMUX_TAPE_ZERO,
 } EmuxTapeCmd;
 
+// For file type dialogs. Determines what dir we start in. Used
+// as index into default_dir_names and current_dir_names in menu.c
+#define NUM_DIR_TYPES 7
+typedef enum {
+   DIR_ROOT,
+   DIR_DISKS,
+   DIR_TAPES,
+   DIR_CARTS,
+   DIR_SNAPS,
+   DIR_ROMS,
+   DIR_IEC,
+} DirType;
+
+typedef char*(*fullpath_func)(DirType dir_type, char *name);
+
 extern int emux_machine_class;
 
 // Pause emulator main loop and run our ui loop. 
@@ -113,6 +128,9 @@ void emux_drive_change_model(int unit);
 // Add the parallel cable option to the menu container (if applicable)
 void emux_add_parallel_cable_option(struct menu_item* parent,
                                     int id, int drive);
+
+// Create an empty disk image
+void emux_create_disk(struct menu_item* item, fullpath_func fullpath);
 
 // VICE specific cart attach func.
 void emux_vice_attach_cart(int menu_id, char* filename);
