@@ -98,4 +98,8 @@ void emux_display_drive_led(int drive, unsigned int pwm1, unsigned int pwm2);
 void emux_display_tape_counter(int counter);
 void emux_display_tape_control_status(int control);
 void emux_display_tape_motor_status(int motor);
+
+// Autostart a file
+int emux_autostart_file(char* filename);
+
 #endif

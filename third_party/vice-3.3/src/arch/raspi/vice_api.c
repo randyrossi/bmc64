@@ -33,6 +33,7 @@
 #include <ctype.h>
 
 // VICE includes
+#include "autostart.h"
 #include "attach.h"
 #include "cartridge.h"
 #include "interrupt.h"
@@ -156,4 +157,8 @@ int emux_tape_control(int cmd) {
       assert(0);
       break;
   }
+}
+
+int emux_autostart_file(char* filename) {
+   return autostart_autodetect(filename, NULL, 0, AUTOSTART_MODE_RUN);
 }

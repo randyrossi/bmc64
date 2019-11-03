@@ -33,7 +33,6 @@
 #include <string.h>
 
 // VICE includes
-#include "autostart.h"
 #include "cartridge.h"
 #include "drive.h"
 #include "diskimage.h"
@@ -1222,8 +1221,7 @@ static void select_file(struct menu_item *item) {
        return;
      case MENU_AUTOSTART_FILE:
        ui_info("Starting...");
-       if (autostart_autodetect(fullpath(DIR_ROOT, item->str_value), NULL, 0,
-                             AUTOSTART_MODE_RUN) < 0) {
+       if (emux_autostart_file(fullpath(DIR_ROOT, item->str_value)) < 0) {
          ui_pop_menu();
          ui_error("Failed to autostart file");
        } else {
