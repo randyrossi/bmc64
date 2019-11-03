@@ -42,7 +42,6 @@ libarch_a_SOURCES = \
 	mousedrv.h \
 	mousedrv.c \
 	missing.c \
-	ui.h \
 	ui.c \
 	videoarch.h \
 	videoarch.c \

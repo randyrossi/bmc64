@@ -33,7 +33,6 @@
 #include <string.h>
 
 // VICE includes
-#include "drive.h"
 #include "diskimage.h"
 #include "joyport.h"
 #include "joyport/joystick.h"
@@ -527,56 +526,6 @@ static void confirm_dialog(int id, int value) {
   child->sub_id = id;
 
   child = ui_menu_add_button(MENU_CONFIRM_CANCEL, root, "CANCEL");
-}
-
-static void drive_change_model() {
-  struct menu_item *model_root = ui_push_menu(12, 8);
-  struct menu_item *item;
-
-  int current_drive_type;
-  resources_get_int_sprintf("Drive%iType", &current_drive_type, unit);
-
-  item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "None");
-  item->value = DRIVE_TYPE_NONE;
-  if (current_drive_type == DRIVE_TYPE_NONE) {
-    strcat(item->displayed_value, " (*)");
-  }
-
-  if (drive_check_type(DRIVE_TYPE_1541, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1541");
-    item->value = DRIVE_TYPE_1541;
-    if (current_drive_type == DRIVE_TYPE_1541) {
-      strcat(item->displayed_value, " (*)");
-    }
-  }
-  if (drive_check_type(DRIVE_TYPE_1541II, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1541II");
-    item->value = DRIVE_TYPE_1541II;
-    if (current_drive_type == DRIVE_TYPE_1541II) {
-      strcat(item->displayed_value, " (*)");
-    }
-  }
-  if (drive_check_type(DRIVE_TYPE_1551, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1551");
-    item->value = DRIVE_TYPE_1551;
-    if (current_drive_type == DRIVE_TYPE_1551) {
-      strcat(item->displayed_value, " (*)");
-    }
-  }
-  if (drive_check_type(DRIVE_TYPE_1571, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1571");
-    item->value = DRIVE_TYPE_1571;
-    if (current_drive_type == DRIVE_TYPE_1571) {
-      strcat(item->displayed_value, " (*)");
-    }
-  }
-  if (drive_check_type(DRIVE_TYPE_1581, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1581");
-    item->value = DRIVE_TYPE_1581;
-    if (current_drive_type == DRIVE_TYPE_1581) {
-      strcat(item->displayed_value, " (*)");
-    }
-  }
 }
 
 static void drive_change_rom() {
@@ -2133,7 +2082,7 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_DRIVE_CHANGE_MODEL_9:
   case MENU_DRIVE_CHANGE_MODEL_10:
   case MENU_DRIVE_CHANGE_MODEL_11:
-    drive_change_model();
+    emux_drive_change_model(unit);
     return;
   case MENU_DRIVE_CHANGE_ROM:
     drive_change_rom();
@@ -2430,43 +2379,6 @@ static void set_hotkey_choices(struct menu_item *item) {
   }
 }
 
-static void add_parallel_cable_option(struct menu_item* parent, int id, int drive) {
-  if (emux_machine_class != BMC64_MACHINE_CLASS_C64 &&
-      emux_machine_class != BMC64_MACHINE_CLASS_C128) {
-    return;
-  }
-
-  int tmp;
-  resources_get_int_sprintf("Drive%iParallelCable", &tmp, drive);
-
-  int index = 0;
-  switch (tmp) {
-    case DRIVE_PC_NONE:
-       index = 0; break;
-    case DRIVE_PC_STANDARD:
-       index = 1; break;
-    case DRIVE_PC_DD3:
-       index = 2; break;
-    case DRIVE_PC_FORMEL64:
-       index = 3; break;
-    default:
-       return;
-  }
-
-  struct menu_item* child =
-      ui_menu_add_multiple_choice(id, parent, "Parallel Cable");
-  child->num_choices = 4;
-  child->value = index;
-  strcpy(child->choices[0], "None");
-  strcpy(child->choices[1], "Standard");
-  strcpy(child->choices[2], "Dolphin DOS");
-  strcpy(child->choices[3], "Formel 64");
-  child->choice_ints[0] = DRIVE_PC_NONE;
-  child->choice_ints[1] = DRIVE_PC_STANDARD;
-  child->choice_ints[2] = DRIVE_PC_DD3;
-  child->choice_ints[3] = DRIVE_PC_FORMEL64;
-}
-
 static void menu_build_machine_switch(struct menu_item* parent) {
   struct menu_item* holder = ui_menu_add_folder(parent, "Switch");
 
@@ -2611,7 +2523,7 @@ void build_menu(struct menu_item *root) {
      ui_menu_add_toggle(MENU_IECDEVICE_8, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_8, parent, "Select IEC Dir...");
     }
-    add_parallel_cable_option(parent, MENU_PARALLEL_8, 8);
+    emux_add_parallel_cable_option(parent, MENU_PARALLEL_8, 8);
     ui_menu_add_button(MENU_ATTACH_DISK_8, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_8, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_8, parent, "Change Model...");
@@ -2622,7 +2534,7 @@ void build_menu(struct menu_item *root) {
      ui_menu_add_toggle(MENU_IECDEVICE_9, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_9, parent, "Select IEC Dir...");
     }
-    add_parallel_cable_option(parent, MENU_PARALLEL_9, 9);
+    emux_add_parallel_cable_option(parent, MENU_PARALLEL_9, 9);
     ui_menu_add_button(MENU_ATTACH_DISK_9, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_9, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_9, parent, "Change Model...");
@@ -2633,7 +2545,7 @@ void build_menu(struct menu_item *root) {
      ui_menu_add_toggle(MENU_IECDEVICE_10, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_10, parent, "Select IEC Dir...");
     }
-    add_parallel_cable_option(parent, MENU_PARALLEL_10, 10);
+    emux_add_parallel_cable_option(parent, MENU_PARALLEL_10, 10);
     ui_menu_add_button(MENU_ATTACH_DISK_10, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_10, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_10, parent, "Change Model...");
@@ -2644,7 +2556,7 @@ void build_menu(struct menu_item *root) {
      ui_menu_add_toggle(MENU_IECDEVICE_11, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_11, parent, "Select IEC Dir...");
     }
-    add_parallel_cable_option(parent, MENU_PARALLEL_11, 11);
+    emux_add_parallel_cable_option(parent, MENU_PARALLEL_11, 11);
     ui_menu_add_button(MENU_ATTACH_DISK_11, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_11, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");

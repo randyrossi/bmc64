@@ -31,6 +31,8 @@
 
 #include <stdint.h>
 
+#include "ui.h"
+
 typedef enum {
   BMC64_MACHINE_CLASS_UNKNOWN,
   BMC64_MACHINE_CLASS_VIC20,
@@ -105,7 +107,15 @@ void emux_display_tape_motor_status(int motor);
 // Autostart a file
 int emux_autostart_file(char* filename);
 
+// Show change model menu
+void emux_drive_change_model(int unit);
+
+// Add the parallel cable option to the menu container (if applicable)
+void emux_add_parallel_cable_option(struct menu_item* parent,
+                                    int id, int drive);
+
 // VICE specific cart attach func.
 void emux_vice_attach_cart(int menu_id, char* filename);
 void emux_vice_easy_flash(void);
+
 #endif

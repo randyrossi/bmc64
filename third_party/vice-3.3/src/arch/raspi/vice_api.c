@@ -45,6 +45,8 @@
 #include "keyboard.h"
 #include "demo.h"
 #include "datasette.h"
+#include "resources.h"
+#include "drive.h"
 
 // RASPI includes
 #include "circle.h"
@@ -167,3 +169,90 @@ int emux_autostart_file(char* filename) {
    return autostart_autodetect(filename, NULL, 0, AUTOSTART_MODE_RUN);
 }
 
+void emux_drive_change_model(int unit) {
+  struct menu_item *model_root = ui_push_menu(12, 8);
+  struct menu_item *item;
+
+  int current_drive_type;
+  resources_get_int_sprintf("Drive%iType", &current_drive_type, unit);
+
+  item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "None");
+  item->value = DRIVE_TYPE_NONE;
+  if (current_drive_type == DRIVE_TYPE_NONE) {
+    strcat(item->displayed_value, " (*)");
+  }
+
+  if (drive_check_type(DRIVE_TYPE_1541, unit - 8) > 0) {
+    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1541");
+    item->value = DRIVE_TYPE_1541;
+    if (current_drive_type == DRIVE_TYPE_1541) {
+      strcat(item->displayed_value, " (*)");
+    }
+  }
+  if (drive_check_type(DRIVE_TYPE_1541II, unit - 8) > 0) {
+    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1541II");
+    item->value = DRIVE_TYPE_1541II;
+    if (current_drive_type == DRIVE_TYPE_1541II) {
+      strcat(item->displayed_value, " (*)");
+    }
+  }
+  if (drive_check_type(DRIVE_TYPE_1551, unit - 8) > 0) {
+    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1551");
+    item->value = DRIVE_TYPE_1551;
+    if (current_drive_type == DRIVE_TYPE_1551) {
+      strcat(item->displayed_value, " (*)");
+    }
+  }
+  if (drive_check_type(DRIVE_TYPE_1571, unit - 8) > 0) {
+    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1571");
+    item->value = DRIVE_TYPE_1571;
+    if (current_drive_type == DRIVE_TYPE_1571) {
+      strcat(item->displayed_value, " (*)");
+    }
+  }
+  if (drive_check_type(DRIVE_TYPE_1581, unit - 8) > 0) {
+    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1581");
+    item->value = DRIVE_TYPE_1581;
+    if (current_drive_type == DRIVE_TYPE_1581) {
+      strcat(item->displayed_value, " (*)");
+    }
+  }
+}
+
+void emux_add_parallel_cable_option(struct menu_item* parent,
+                                    int id, int drive) {
+  if (emux_machine_class != BMC64_MACHINE_CLASS_C64 &&
+      emux_machine_class != BMC64_MACHINE_CLASS_C128) {
+    return;
+  }
+
+  int tmp;
+  resources_get_int_sprintf("Drive%iParallelCable", &tmp, drive);
+
+  int index = 0;
+  switch (tmp) {
+    case DRIVE_PC_NONE:
+       index = 0; break;
+    case DRIVE_PC_STANDARD:
+       index = 1; break;
+    case DRIVE_PC_DD3:
+       index = 2; break;
+    case DRIVE_PC_FORMEL64:
+       index = 3; break;
+    default:
+       return;
+  }
+
+  struct menu_item* child =
+      ui_menu_add_multiple_choice(id, parent, "Parallel Cable");
+  child->num_choices = 4;
+  child->value = index;
+  strcpy(child->choices[0], "None");
+  strcpy(child->choices[1], "Standard");
+  strcpy(child->choices[2], "Dolphin DOS");
+  strcpy(child->choices[3], "Formel 64");
+  child->choice_ints[0] = DRIVE_PC_NONE;
+  child->choice_ints[1] = DRIVE_PC_STANDARD;
+  child->choice_ints[2] = DRIVE_PC_DD3;
+  child->choice_ints[3] = DRIVE_PC_FORMEL64;
+}
