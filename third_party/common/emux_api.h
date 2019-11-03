@@ -71,6 +71,9 @@ void emux_detach_disk(int unit);
 // Return negative on error.
 int emux_attach_cart(int bank, char *filename);
 
+// Make current attached cartridge the default
+void emux_set_cart_default(void);
+
 // Detach a cart image
 void emux_detach_cart(int bank);
 
@@ -102,4 +105,7 @@ void emux_display_tape_motor_status(int motor);
 // Autostart a file
 int emux_autostart_file(char* filename);
 
+// VICE specific cart attach func.
+void emux_vice_attach_cart(int menu_id, char* filename);
+void emux_vice_easy_flash(void);
 #endif

@@ -33,7 +33,6 @@
 #include <string.h>
 
 // VICE includes
-#include "cartridge.h"
 #include "drive.h"
 #include "diskimage.h"
 #include "joyport.h"
@@ -1108,15 +1107,8 @@ void menu_swap_joysticks() {
   ui_set_joy_items();
 }
 
-static void attach_cart(struct menu_item *item, int cart_type) {
-  ui_info("Attaching...");
-  if (cartridge_attach_image(cart_type,
-            fullpath(DIR_CARTS, item->str_value)) < 0) {
-     ui_pop_menu();
-     ui_error("Failed to attach cart image");
-  } else {
-     ui_pop_all_and_toggle();
-  }
+static void attach_cart(int menu_id, struct menu_item *item) {
+  emux_vice_attach_cart(menu_id, fullpath(DIR_CARTS, item->str_value));
 }
 
 static void select_file(struct menu_item *item) {
@@ -1229,73 +1221,29 @@ static void select_file(struct menu_item *item) {
        }
        return;
      case MENU_C64_CART_FILE:
-       attach_cart(item, CARTRIDGE_CRT);
-       return;
      case MENU_C64_CART_8K_FILE:
-       attach_cart(item, CARTRIDGE_GENERIC_8KB);
-       return;
      case MENU_C64_CART_16K_FILE:
-       attach_cart(item, CARTRIDGE_GENERIC_16KB);
-       return;
      case MENU_C64_CART_ULTIMAX_FILE:
-       attach_cart(item, CARTRIDGE_ULTIMAX);
-       return;
      case MENU_VIC20_CART_DETECT_FILE:
-       attach_cart(item, CARTRIDGE_VIC20_DETECT);
-       return;
      case MENU_VIC20_CART_GENERIC_FILE:
-       attach_cart(item, CARTRIDGE_VIC20_GENERIC);
-       return;
      case MENU_VIC20_CART_16K_2000_FILE:
-       attach_cart(item, CARTRIDGE_VIC20_16KB_2000);
-       return;
      case MENU_VIC20_CART_16K_4000_FILE:
-       attach_cart(item, CARTRIDGE_VIC20_16KB_4000);
-       return;
      case MENU_VIC20_CART_16K_6000_FILE:
-       attach_cart(item, CARTRIDGE_VIC20_16KB_6000);
-       return;
      case MENU_VIC20_CART_8K_A000_FILE:
-       attach_cart(item, CARTRIDGE_VIC20_8KB_A000);
-       return;
      case MENU_VIC20_CART_4K_B000_FILE:
-       attach_cart(item, CARTRIDGE_VIC20_4KB_B000);
-       return;
      case MENU_VIC20_CART_BEHRBONZ_FILE:
-       attach_cart(item, CARTRIDGE_VIC20_BEHRBONZ);
-       return;
      case MENU_VIC20_CART_UM_FILE:
-       attach_cart(item, CARTRIDGE_VIC20_UM);
-       return;
      case MENU_VIC20_CART_FP_FILE:
-       attach_cart(item, CARTRIDGE_VIC20_FP);
-       return;
      case MENU_VIC20_CART_MEGACART_FILE:
-       attach_cart(item, CARTRIDGE_VIC20_MEGACART);
-       return;
      case MENU_VIC20_CART_FINAL_EXPANSION_FILE:
-       attach_cart(item, CARTRIDGE_VIC20_FINAL_EXPANSION);
-       return;
      case MENU_PLUS4_CART_FILE:
-       attach_cart(item, CARTRIDGE_PLUS4_DETECT);
-       return;
      case MENU_PLUS4_CART_C0_LO_FILE:
-       attach_cart(item, CARTRIDGE_PLUS4_16KB_C0LO);
-       return;
      case MENU_PLUS4_CART_C0_HI_FILE:
-       attach_cart(item, CARTRIDGE_PLUS4_16KB_C0HI);
-       return;
      case MENU_PLUS4_CART_C1_LO_FILE:
-       attach_cart(item, CARTRIDGE_PLUS4_16KB_C1LO);
-       return;
      case MENU_PLUS4_CART_C1_HI_FILE:
-       attach_cart(item, CARTRIDGE_PLUS4_16KB_C1HI);
-       return;
      case MENU_PLUS4_CART_C2_LO_FILE:
-       attach_cart(item, CARTRIDGE_PLUS4_16KB_C2LO);
-       return;
      case MENU_PLUS4_CART_C2_HI_FILE:
-       attach_cart(item, CARTRIDGE_PLUS4_16KB_C2HI);
+       attach_cart(item->id, item);
        return;
      default:
        break;
@@ -1723,14 +1671,6 @@ static void menu_machine_reset(int type, int pop) {
   }
 }
 
-static void do_easy_flash() {
-    if (cartridge_flush_image(CARTRIDGE_EASYFLASH) < 0) {
-      ui_error("Problem saving");
-    } else {
-      ui_pop_all_and_toggle();
-    }
-}
-
 // Interpret what menu item changed and make the change to vice
 static void menu_value_changed(struct menu_item *item) {
   struct machine_entry* head;
@@ -1969,7 +1909,7 @@ static void menu_value_changed(struct menu_item *item) {
     show_files(DIR_ROMS, FILTER_NONE, MENU_C128_LOAD_64_BASIC_FILE, 0);
     return;
   case MENU_MAKE_CART_DEFAULT:
-    cartridge_set_default();
+    emux_set_cart_default();
     ui_info("Remember to save..");
     return;
   case MENU_DETACH_DISK_8:
@@ -1999,7 +1939,7 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_DETACH_CART:
     ui_info("Detaching...");
-    cartridge_detach_image(CARTRIDGE_NONE);
+    emux_detach_cart(0);
     ui_pop_all_and_toggle();
     return;
   case MENU_SOFT_RESET:
@@ -2238,7 +2178,7 @@ static void menu_value_changed(struct menu_item *item) {
         7, KEYCODE_F7, hotkey_tf7_item->choice_ints[hotkey_tf7_item->value]);
     return;
   case MENU_SAVE_EASYFLASH:
-    do_easy_flash();
+    emux_vice_easy_flash();
     return;
   case MENU_CART_FREEZE:
     keyboard_clear_keymatrix();

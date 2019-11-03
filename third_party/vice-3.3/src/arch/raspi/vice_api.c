@@ -117,6 +117,10 @@ void emux_detach_cart(int bank) {
   cartridge_detach_image(CARTRIDGE_NONE);
 }
 
+void emux_set_cart_default(void) {
+   cartridge_set_default();
+}
+
 void emux_reset(int soft) {
   machine_trigger_reset(soft ? 
       MACHINE_RESET_MODE_SOFT : MACHINE_RESET_MODE_HARD);
@@ -162,3 +166,4 @@ int emux_tape_control(int cmd) {
 int emux_autostart_file(char* filename) {
    return autostart_autodetect(filename, NULL, 0, AUTOSTART_MODE_RUN);
 }
+
