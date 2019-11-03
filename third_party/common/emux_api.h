@@ -145,6 +145,9 @@ void emux_set_joy_port_device(int port_num, int dev_id);
 void emux_set_joy_pot_x(int value);
 void emux_set_joy_pot_y(int value);
 
+void emux_add_sound_options(struct menu_item* parent);
+void emux_load_sound_options(void);
+
 // VICE specific cart attach func.
 void emux_vice_attach_cart(int menu_id, char* filename);
 void emux_vice_easy_flash(void);

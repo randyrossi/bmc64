@@ -34,7 +34,6 @@
 
 // VICE includes
 #include "resources.h"
-#include "sid.h"
 
 // RASPI Includes
 #include "emux_api.h"
@@ -122,9 +121,6 @@ struct menu_item *hotkey_tf3_item;
 struct menu_item *hotkey_tf5_item;
 struct menu_item *hotkey_tf7_item;
 struct menu_item *volume_item;
-struct menu_item *sid_engine_item;
-struct menu_item *sid_model_item;
-struct menu_item *sid_filter_item;
 struct menu_item *statusbar_item;
 struct menu_item *statusbar_padding_item;
 struct menu_item *tape_reset_with_machine_item;
@@ -621,28 +617,6 @@ static void ui_set_joy_items() {
   }
 }
 
-static int viceSidEngineToBmcChoice(int viceEngine) {
-  switch (viceEngine) {
-  case SID_ENGINE_FASTSID:
-    return MENU_SID_ENGINE_FAST;
-  case SID_ENGINE_RESID:
-    return MENU_SID_ENGINE_RESID;
-  default:
-    return MENU_SID_ENGINE_RESID;
-  }
-}
-
-static int viceSidModelToBmcChoice(int viceModel) {
-  switch (viceModel) {
-  case SID_MODEL_6581:
-    return MENU_SID_MODEL_6581;
-  case SID_MODEL_8580:
-    return MENU_SID_MODEL_8580;
-  default:
-    return MENU_SID_MODEL_6581;
-  }
-}
-
 static int save_settings() {
   int i;
 
@@ -791,13 +765,8 @@ static void load_settings() {
 
   int tmp_value;
 
-  resources_get_int("SidEngine", &tmp_value);
-  sid_engine_item->value = viceSidEngineToBmcChoice(tmp_value);
+  emux_load_sound_options();
 
-  resources_get_int("SidModel", &tmp_value);
-  sid_model_item->value = viceSidModelToBmcChoice(tmp_value);
-
-  resources_get_int("SidFilters", &sid_filter_item->value);
 #ifndef RASPI_LITE
   resources_get_int("DriveSoundEmulation", &drive_sounds_item->value);
   resources_get_int("DriveSoundEmulationVolume", &drive_sounds_vol_item->value);
@@ -2621,29 +2590,7 @@ void build_menu(struct menu_item *root) {
   volume_item = ui_menu_add_range(MENU_VOLUME, parent,
       "Volume ", 0, 100, 1, 100);
 
-  // Resid by default
-  child = sid_engine_item =
-      ui_menu_add_multiple_choice(MENU_SID_ENGINE, parent, "Sid Engine");
-  child->num_choices = 2;
-  child->value = MENU_SID_ENGINE_RESID;
-  strcpy(child->choices[MENU_SID_ENGINE_FAST], "Fast");
-  strcpy(child->choices[MENU_SID_ENGINE_RESID], "ReSid");
-  child->choice_ints[MENU_SID_ENGINE_FAST] = SID_ENGINE_FASTSID;
-  child->choice_ints[MENU_SID_ENGINE_RESID] = SID_ENGINE_RESID;
-
-  // 6581 by default
-  child = sid_model_item =
-      ui_menu_add_multiple_choice(MENU_SID_MODEL, parent, "Sid Model");
-  child->num_choices = 2;
-  child->value = MENU_SID_MODEL_6581;
-  strcpy(child->choices[MENU_SID_MODEL_6581], "6581");
-  strcpy(child->choices[MENU_SID_MODEL_8580], "8580");
-  child->choice_ints[MENU_SID_MODEL_6581] = SID_MODEL_6581;
-  child->choice_ints[MENU_SID_MODEL_8580] = SID_MODEL_8580;
-
-  // Filter on by default
-  child = sid_filter_item =
-      ui_menu_add_toggle(MENU_SID_FILTER, parent, "Sid Filter", 0);
+  emux_add_sound_options(parent);
 
   parent = ui_menu_add_folder(root, "Keyboard");
   child = keyboard_type_item = ui_menu_add_multiple_choice(

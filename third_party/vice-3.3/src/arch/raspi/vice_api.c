@@ -52,9 +52,14 @@
 #include "joyport/joystick.h"
 #include "vdrive-internal.h"
 #include "tape.h"
+#include "sid.h"
 
 // RASPI includes
 #include "circle.h"
+
+struct menu_item *sid_engine_item;
+struct menu_item *sid_model_item;
+struct menu_item *sid_filter_item;
 
 static void pause_trap(uint16_t addr, void *data) {
   menu_about_to_activate();
@@ -394,4 +399,64 @@ int emux_attach_tape_image(char* filename) {
 
 void emux_detach_tape(void) {
    tape_image_detach(1);
+}
+
+void emux_add_sound_options(struct menu_item* parent) {
+  // Resid by default
+  struct menu_item* child = sid_engine_item =
+      ui_menu_add_multiple_choice(MENU_SID_ENGINE, parent, "Sid Engine");
+  child->num_choices = 2;
+  child->value = MENU_SID_ENGINE_RESID;
+  strcpy(child->choices[MENU_SID_ENGINE_FAST], "Fast");
+  strcpy(child->choices[MENU_SID_ENGINE_RESID], "ReSid");
+  child->choice_ints[MENU_SID_ENGINE_FAST] = SID_ENGINE_FASTSID;
+  child->choice_ints[MENU_SID_ENGINE_RESID] = SID_ENGINE_RESID;
+
+  // 6581 by default
+  child = sid_model_item =
+      ui_menu_add_multiple_choice(MENU_SID_MODEL, parent, "Sid Model");
+  child->num_choices = 2;
+  child->value = MENU_SID_MODEL_6581;
+  strcpy(child->choices[MENU_SID_MODEL_6581], "6581");
+  strcpy(child->choices[MENU_SID_MODEL_8580], "8580");
+  child->choice_ints[MENU_SID_MODEL_6581] = SID_MODEL_6581;
+  child->choice_ints[MENU_SID_MODEL_8580] = SID_MODEL_8580;
+
+  // Filter on by default
+  child = sid_filter_item =
+      ui_menu_add_toggle(MENU_SID_FILTER, parent, "Sid Filter", 0);
+}
+
+static int viceSidEngineToBmcChoice(int viceEngine) {
+  switch (viceEngine) {
+  case SID_ENGINE_FASTSID:
+    return MENU_SID_ENGINE_FAST;
+  case SID_ENGINE_RESID:
+    return MENU_SID_ENGINE_RESID;
+  default:
+    return MENU_SID_ENGINE_RESID;
+  }
+}
+
+static int viceSidModelToBmcChoice(int viceModel) {
+  switch (viceModel) {
+  case SID_MODEL_6581:
+    return MENU_SID_MODEL_6581;
+  case SID_MODEL_8580:
+    return MENU_SID_MODEL_8580;
+  default:
+    return MENU_SID_MODEL_6581;
+  }
+}
+
+void emux_load_sound_options(void) {
+  int tmp_value;
+
+  resources_get_int("SidEngine", &tmp_value);
+  sid_engine_item->value = viceSidEngineToBmcChoice(tmp_value);
+  
+  resources_get_int("SidModel", &tmp_value);
+  sid_model_item->value = viceSidModelToBmcChoice(tmp_value);
+  
+  resources_get_int("SidFilters", &sid_filter_item->value);
 }
