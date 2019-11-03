@@ -31,6 +31,7 @@
 // VICE includes
 #include "c128/c128.h"
 #include "resources.h"
+#include "keyboard.h"
 #include "cartridge.h"
 
 // RASPI includes
@@ -133,6 +134,7 @@ int get_color_tint(int display_num) {
 }
 
 void raspi_cartridge_trigger_freeze(void) {
+  keyboard_clear_keymatrix();
   cartridge_trigger_freeze();
 }
 

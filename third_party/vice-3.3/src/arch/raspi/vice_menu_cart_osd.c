@@ -49,7 +49,6 @@ static void menu_item_changed(struct menu_item *item) {
     }
     break;
   case MENU_CART_FREEZE:
-    keyboard_clear_keymatrix();
     raspi_cartridge_trigger_freeze();
     ui_pop_all_and_toggle();
     break;

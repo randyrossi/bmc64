@@ -33,10 +33,8 @@
 #include <string.h>
 
 // VICE includes
-#include "keyboard.h"
 #include "resources.h"
 #include "sid.h"
-#include "tape.h"
 
 // RASPI Includes
 #include "emux_api.h"
@@ -1099,7 +1097,7 @@ static void select_file(struct menu_item *item) {
        return;
      case MENU_TAPE_FILE:
        ui_info("Attaching...");
-       if (tape_image_attach(1, fullpath(DIR_TAPES, item->str_value)) < 0) {
+       if (emux_attach_tape_image(fullpath(DIR_TAPES, item->str_value)) < 0) {
          ui_pop_menu();
          ui_error("Failed to attach tape image");
        } else {
@@ -1773,7 +1771,7 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_DETACH_TAPE:
     ui_info("Detaching...");
-    tape_image_detach(1);
+    emux_detach_tape();
     ui_pop_all_and_toggle();
     return;
   case MENU_DETACH_CART:
@@ -2020,7 +2018,6 @@ static void menu_value_changed(struct menu_item *item) {
     emux_vice_easy_flash();
     return;
   case MENU_CART_FREEZE:
-    keyboard_clear_keymatrix();
     raspi_cartridge_trigger_freeze();
     ui_pop_all_and_toggle();
     return;
@@ -2972,7 +2969,6 @@ void menu_quick_func(int button_assignment) {
     emux_show_cart_osd_menu();
     break;
   case BTN_ASSIGN_CART_FREEZE:
-    keyboard_clear_keymatrix();
     raspi_cartridge_trigger_freeze();
     break;
   case BTN_ASSIGN_RESET_HARD:

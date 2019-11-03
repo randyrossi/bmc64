@@ -51,6 +51,7 @@
 #include "joyport.h"
 #include "joyport/joystick.h"
 #include "vdrive-internal.h"
+#include "tape.h"
 
 // RASPI includes
 #include "circle.h"
@@ -385,4 +386,12 @@ void emux_set_joy_pot_x(int value) {
 
 void emux_set_joy_pot_y(int value) {
    joystick_set_poty(value);
+}
+
+int emux_attach_tape_image(char* filename) {
+   return tape_image_attach(1, filename);
+}
+
+void emux_detach_tape(void) {
+   tape_image_detach(1);
 }

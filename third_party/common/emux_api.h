@@ -84,6 +84,13 @@ int emux_attach_disk_image(int unit, char *filename);
 // Detach a disk drive image or mounted file system.
 void emux_detach_disk(int unit);
 
+// Attach a tape image
+// Return negative on error.
+int emux_attach_tape_image(char *filename);
+
+// Detach a tape image.
+void emux_detach_tape(void);
+
 // Attach a cart image
 // Return negative on error.
 int emux_attach_cart(int bank, char *filename);
