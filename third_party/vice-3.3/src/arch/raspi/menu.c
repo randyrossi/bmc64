@@ -33,7 +33,6 @@
 #include <string.h>
 
 // VICE includes
-#include "joyport.h"
 #include "joyport/joystick.h"
 #include "keyboard.h"
 #include "resources.h"
@@ -595,32 +594,32 @@ static void ui_set_joy_items() {
 
   int value = port_1_menu_item->value;
   if (port_1_menu_item->choice_ints[value] == JOYDEV_NONE) {
-    resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
+    emux_set_joy_port_device(1, JOYDEV_NONE);
   } else if (port_1_menu_item->choice_ints[value] == JOYDEV_MOUSE) {
     if (emu_get_num_joysticks() > 1 &&
         port_2_menu_item->choice_ints[port_2_menu_item->value]
             == JOYDEV_MOUSE) {
-       resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
+       emux_set_joy_port_device(2, JOYDEV_NONE);
        port_2_menu_item->value = 0;
     }
-    resources_set_int("JoyPort1Device", JOYPORT_ID_MOUSE_1351);
+    emux_set_joy_port_device(1, JOYDEV_MOUSE);
   } else {
-    resources_set_int("JoyPort1Device", JOYPORT_ID_JOYSTICK);
+    emux_set_joy_port_device(1, port_1_menu_item->choice_ints[value]);
   }
 
   if (emu_get_num_joysticks() > 1) {
      value = port_2_menu_item->value;
      if (port_2_menu_item->choice_ints[value] == JOYDEV_NONE) {
-       resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
+       emux_set_joy_port_device(2, JOYDEV_NONE);
      } else if (port_2_menu_item->choice_ints[value] == JOYDEV_MOUSE) {
        if (port_1_menu_item->choice_ints[port_1_menu_item->value]
            == JOYDEV_MOUSE) {
-          resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
+          emux_set_joy_port_device(1, JOYDEV_NONE);
           port_1_menu_item->value = 0;
        }
-       resources_set_int("JoyPort2Device", JOYPORT_ID_MOUSE_1351);
+       emux_set_joy_port_device(2, JOYDEV_MOUSE);
      } else {
-       resources_set_int("JoyPort2Device", JOYPORT_ID_JOYSTICK);
+       emux_set_joy_port_device(2, port_2_menu_item->choice_ints[value]);
      }
   }
 }
@@ -1025,12 +1024,12 @@ static void load_settings() {
 void menu_swap_joysticks() {
   if (port_1_menu_item->choice_ints[port_1_menu_item->value]
           == JOYDEV_MOUSE) {
-     resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
+     emux_set_joy_port_device(1, JOYDEV_NONE);
   }
 
   if (port_2_menu_item->choice_ints[port_2_menu_item->value]
        == JOYDEV_MOUSE) {
-     resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
+     emux_set_joy_port_device(2, JOYDEV_NONE);
   }
 
   int tmp = joydevs[0].device;
@@ -1893,16 +1892,16 @@ static void menu_value_changed(struct menu_item *item) {
       joydevs[1].device = item->choice_ints[item->value];
     }
     if (item->choice_ints[item->value] == JOYDEV_NONE) {
-      resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
+      emux_set_joy_port_device(1, JOYDEV_NONE);
     } else if (item->choice_ints[item->value] == JOYDEV_MOUSE) {
       if (port_2_menu_item->choice_ints[port_2_menu_item->value]
           == JOYDEV_MOUSE) {
-         resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
+         emux_set_joy_port_device(2, JOYDEV_NONE);
          port_2_menu_item->value = 0;
       }
-      resources_set_int("JoyPort1Device", JOYPORT_ID_MOUSE_1351);
+      emux_set_joy_port_device(1, JOYDEV_MOUSE);
     } else {
-      resources_set_int("JoyPort1Device", JOYPORT_ID_JOYSTICK);
+      emux_set_joy_port_device(1, item->choice_ints[item->value]);
     }
     return;
   case MENU_JOYSTICK_PORT_2:
@@ -1913,16 +1912,16 @@ static void menu_value_changed(struct menu_item *item) {
       joydevs[1].device = item->choice_ints[item->value];
     }
     if (item->choice_ints[item->value] == JOYDEV_NONE) {
-      resources_set_int("JoyPort2Device", JOYPORT_ID_NONE);
+      emux_set_joy_port_device(2, JOYDEV_NONE);
     } else if (item->choice_ints[item->value] == JOYDEV_MOUSE) {
       if (port_1_menu_item->choice_ints[port_1_menu_item->value]
           == JOYDEV_MOUSE) {
-         resources_set_int("JoyPort1Device", JOYPORT_ID_NONE);
+         emux_set_joy_port_device(1, JOYDEV_NONE);
          port_1_menu_item->value = 0;
       }
-      resources_set_int("JoyPort2Device", JOYPORT_ID_MOUSE_1351);
+      emux_set_joy_port_device(2, JOYDEV_MOUSE);
     } else {
-      resources_set_int("JoyPort2Device", JOYPORT_ID_JOYSTICK);
+      emux_set_joy_port_device(2, item->choice_ints[item->value]);
     }
     return;
   case MENU_TAPE_START:

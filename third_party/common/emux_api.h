@@ -132,6 +132,9 @@ void emux_add_parallel_cable_option(struct menu_item* parent,
 // Create an empty disk image
 void emux_create_disk(struct menu_item* item, fullpath_func fullpath);
 
+// Set the joy port device to JOYDEV_*
+void emux_set_joy_port_device(int port_num, int dev_id);
+
 // VICE specific cart attach func.
 void emux_vice_attach_cart(int menu_id, char* filename);
 void emux_vice_easy_flash(void);

@@ -48,6 +48,7 @@
 #include "datasette.h"
 #include "resources.h"
 #include "drive.h"
+#include "joyport.h"
 #include "vdrive-internal.h"
 
 // RASPI includes
@@ -356,3 +357,24 @@ void emux_create_disk(struct menu_item* item, fullpath_func fullpath) {
       ui_info("Disk Created");
     }
 }
+
+void emux_set_joy_port_device(int port_num, int dev_id) {
+  int vice_id = JOYPORT_ID_NONE;
+  switch (dev_id) {
+     case JOYDEV_NONE:
+        vice_id = JOYPORT_ID_NONE;
+        break;
+     case JOYDEV_MOUSE:
+        vice_id = JOYPORT_ID_MOUSE_1351;
+        break;
+     default:
+        vice_id = JOYPORT_ID_JOYSTICK;
+        break;
+  }
+  if (port_num == 1) {
+     resources_set_int("JoyPort1Device", vice_id);
+  } else {
+     resources_set_int("JoyPort2Device", vice_id);
+  }
+}
+
