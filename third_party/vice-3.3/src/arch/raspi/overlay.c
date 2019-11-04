@@ -32,7 +32,6 @@
 
 // RASPI includes
 #include "emux_api.h"
-#include "raspi_machine.h"
 #include "menu.h"
 #include "ui.h"
 #include "circle.h"
@@ -544,8 +543,8 @@ void overlay_40_80_columns_changed(int value) {
 }
 
 static void overlay_clear_virtual_keyboard() {
-  int vkbd_width = get_vkbd_width();
-  int vkbd_height = get_vkbd_height();
+  int vkbd_width = emux_get_vkbd_width();
+  int vkbd_height = emux_get_vkbd_height();
 
   int cx = (OVERLAY_WIDTH - vkbd_width) / 2;
   int cy = (OVERLAY_HEIGHT - vkbd_height) / 2;
@@ -559,8 +558,8 @@ static void overlay_clear_virtual_keyboard() {
 
 static void overlay_draw_virtual_keyboard() {
   // Draw keys
-  int vkbd_width = get_vkbd_width();
-  int vkbd_height = get_vkbd_height();
+  int vkbd_width = emux_get_vkbd_width();
+  int vkbd_height = emux_get_vkbd_height();
   int cx = (OVERLAY_WIDTH - vkbd_width) / 2;
   int cy = (OVERLAY_HEIGHT - vkbd_height) / 2;
 
@@ -568,8 +567,8 @@ static void overlay_draw_virtual_keyboard() {
   ui_draw_rect_buf(cx-1, cy-1, vkbd_width+2, vkbd_height+2,
                    VKBD_BG_COLOR, 1, overlay_buf, overlay_buf_pitch);
 
-  vkbd_key_array vkbd = get_vkbd();
-  for (int i=0; i < get_vkbd_size(); i++) {
+  vkbd_key_array vkbd = emux_get_vkbd();
+  for (int i=0; i < emux_get_vkbd_size(); i++) {
      // Show current key
      int color = (i == vkbd_cursor ? LIGHT_GREEN_COLOR : VKBD_FG_COLOR);
 
@@ -723,31 +722,31 @@ void vkbd_disable() {
 }
 
 void vkbd_nav_up(void) {
-   vkbd_key_array vkbd = get_vkbd();
+   vkbd_key_array vkbd = emux_get_vkbd();
    vkbd_cursor = vkbd[vkbd_cursor].up;
    overlay_draw_virtual_keyboard();
 }
 
 void vkbd_nav_down(void) {
-   vkbd_key_array vkbd = get_vkbd();
+   vkbd_key_array vkbd = emux_get_vkbd();
    vkbd_cursor = vkbd[vkbd_cursor].down;
    overlay_draw_virtual_keyboard();
 }
 
 void vkbd_nav_left(void) {
-   vkbd_key_array vkbd = get_vkbd();
+   vkbd_key_array vkbd = emux_get_vkbd();
    vkbd_cursor = vkbd[vkbd_cursor].left;
    overlay_draw_virtual_keyboard();
 }
 
 void vkbd_nav_right(void) {
-   vkbd_key_array vkbd = get_vkbd();
+   vkbd_key_array vkbd = emux_get_vkbd();
    vkbd_cursor = vkbd[vkbd_cursor].right;
    overlay_draw_virtual_keyboard();
 }
 
 void vkbd_nav_press(int pressed, int device) {
-   vkbd_key_array vkbd = get_vkbd();
+   vkbd_key_array vkbd = emux_get_vkbd();
    if (vkbd[vkbd_cursor].toggle) {
       // Only toggle on the press
       if (pressed) {
@@ -768,7 +767,7 @@ void vkbd_nav_press(int pressed, int device) {
    } else {
       // Handle restore special case
       if (vkbd[vkbd_cursor].row == 0 && vkbd[vkbd_cursor].col == -3) {
-         key_interrupt_locked(KEYCODE_PageUp, pressed);
+         emux_key_interrupt_locked(KEYCODE_PageUp, pressed);
       } else {
          emux_kbd_set_latch_keyarr(vkbd[vkbd_cursor].col,
                               vkbd[vkbd_cursor].row,

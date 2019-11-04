@@ -26,8 +26,46 @@
 
 #include "emux_api.h"
 
+#include "circle.h"
+
 int emux_machine_class = BMC64_MACHINE_CLASS_UNKNOWN;
 int vic_showing;
 int vdc_showing;
 int vic_enabled;
 int vdc_enabled;
+
+// Ring buffer for key latch events
+struct pending_emu_key_s pending_emu_key;
+
+// Ring buffer for joy latch events
+struct pending_emu_joy_s pending_emu_joy;
+
+// queue a key for press/release for the main loop
+void emux_key_interrupt(long key, int pressed) {
+  circle_lock_acquire();
+  int i = pending_emu_key.tail & 0xf;
+  pending_emu_key.key[i] = key;
+  pending_emu_key.pressed[i] = pressed;
+  pending_emu_key.tail++;
+  circle_lock_release();
+}
+
+// Same as above except can call while already holding the lock
+void emux_key_interrupt_locked(long key, int pressed) {
+  int i = pending_emu_key.tail & 0xf;
+  pending_emu_key.key[i] = key;
+  pending_emu_key.pressed[i] = pressed;
+  pending_emu_key.tail++;
+}
+
+// Queue a joy latch change for the main loop
+void emux_joy_interrupt(int type, int port, int device, int value) {
+  circle_lock_acquire();
+  int i = pending_emu_joy.tail & 0x7f;
+  pending_emu_joy.type[i] = type;
+  pending_emu_joy.port[i] = port;
+  pending_emu_joy.device[i] = device;
+  pending_emu_joy.value[i] = value;
+  pending_emu_joy.tail++;
+  circle_lock_release();
+}

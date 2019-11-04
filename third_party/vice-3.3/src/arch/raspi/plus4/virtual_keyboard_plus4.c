@@ -2,6 +2,8 @@
 
 #include "plus4/virtual_keyboard_plus4.h"
 
+#include "emux_api.h"
+
 struct vkbd_key vkbd[] = {
    {7 ,0 ,27 ,33 ,7 ,7 ,0 ,0 ,0 ,-25 ,-25 ,-25 ,0 ,17 ,0 ,1 ,0 ,},  /* 0 Esc */
    {35 ,0 ,27 ,33 ,0 ,7 ,0 ,1 ,0 ,49 ,33 ,49 ,1 ,18 ,0 ,2 ,0 ,},  /* 1 1 */
@@ -72,18 +74,18 @@ struct vkbd_key vkbd[] = {
    {434 ,140 ,27 ,33 ,3 ,6 ,4 ,4 ,0 ,-21 ,-21 ,-21 ,61 ,66 ,65 ,66 ,0 ,},  /* 66 CursorRight */
 };
 
-vkbd_key_array get_vkbd(void) {
+vkbd_key_array emux_get_vkbd(void) {
   return &vkbd[0];
 }
 
-int get_vkbd_width(void) {
+int emux_get_vkbd_width(void) {
   return VKBD_WIDTH;
 }
 
-int get_vkbd_height(void) {
+int emux_get_vkbd_height(void) {
   return VKBD_HEIGHT;
 }
 
-int get_vkbd_size(void) {
+int emux_get_vkbd_size(void) {
   return NUM_KEYS;
 }

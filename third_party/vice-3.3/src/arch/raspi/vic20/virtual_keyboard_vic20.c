@@ -2,6 +2,8 @@
 
 #include "c64/virtual_keyboard_c64.h"
 
+#include "emux_api.h"
+
 struct vkbd_key vkbd[] = {
    {7 ,0 ,27 ,33 ,1 ,0 ,0 ,0 ,0 ,31 ,31 ,31 ,0 ,17 ,0 ,1 ,0 ,},  /* 0 LeftArrow */
    {35 ,0 ,27 ,33 ,0 ,0 ,0 ,1 ,0 ,49 ,33 ,49 ,1 ,18 ,0 ,2 ,0 ,},  /* 1 1 */
@@ -71,18 +73,18 @@ struct vkbd_key vkbd[] = {
    {96 ,140 ,236 ,33 ,4 ,0 ,4 ,0 ,0 ,-22 ,-22 ,-22 ,56 ,65 ,64 ,65 ,0 ,},  /* 65 Space */
  };
 
-vkbd_key_array get_vkbd(void) {
+vkbd_key_array emux_get_vkbd(void) {
   return &vkbd[0];
 }
 
-int get_vkbd_width(void) {
+int emux_get_vkbd_width(void) {
   return VKBD_WIDTH;
 }
 
-int get_vkbd_height(void) {
+int emux_get_vkbd_height(void) {
   return VKBD_HEIGHT;
 }
 
-int get_vkbd_size(void) {
+int emux_get_vkbd_size(void) {
   return NUM_KEYS;
 }

@@ -70,6 +70,25 @@ typedef enum {
 #define PENDING_EMU_JOY_TYPE_AND 1
 #define PENDING_EMU_JOY_TYPE_OR 2
 
+struct pending_emu_key_s {
+  int head;
+  int tail;
+  long key[16];
+  int pressed[16];
+};
+
+struct pending_emu_joy_s {
+  int head;
+  int tail;
+  int value[128];
+  int port[128];
+  int type[128];
+  int device[128];
+};
+
+extern struct pending_emu_key_s pending_emu_key;
+extern struct pending_emu_joy_s pending_emu_joy;
+
 typedef char*(*fullpath_func)(DirType dir_type, char *name);
 
 struct CanvasState {
@@ -98,6 +117,52 @@ struct CanvasState {
   int overlay_x;
   int overlay_y;
 };
+
+struct vkbd_key {
+  int x;
+  int y;
+  int w;
+  int h;
+  int row;
+  int col;
+  int layout_row;
+  int layout_col;
+  int toggle;
+  int code;
+  int shift_code;
+  int comm_code;
+  int up;
+  int down;
+  int left;
+  int right;
+  int state;
+};
+
+// special code values for keys
+#define VKBD_KEY_HOME -2
+#define VKBD_DEL -3
+#define VKBD_F1 -4
+#define VKBD_F3 -6
+#define VKBD_F5 -8
+#define VKBD_F7 -10
+#define VKBD_CNTRL -12
+#define VKBD_RESTORE -13
+#define VKBD_RUNSTOP -14
+#define VKBD_SHIFTLOCK -15
+#define VKBD_RETURN -16
+#define VKBD_COMMODORE -17
+#define VKBD_LSHIFT -18
+#define VKBD_RSHIFT -19
+#define VKBD_CURSDOWN -20
+#define VKBD_CURSRIGHT -21
+#define VKBD_SPACE -22
+#define VKBD_CLR -23
+#define VKBD_INS -24
+#define VKBD_ESC -25
+#define VKBD_CURSUP -26
+#define VKBD_CURSLEFT -27
+
+typedef struct vkbd_key* vkbd_key_array;
 
 extern int emux_machine_class;
 extern int vic_showing;
@@ -225,6 +290,12 @@ void emux_joy_interrupt(int type, int port, int device, int value);
 // Set key latch value for a keycode
 // Safe to call from ISR
 void emux_key_interrupt(long key, int pressed);
+void emux_key_interrupt_locked(long key, int pressed);
+
+vkbd_key_array emux_get_vkbd(void);
+int emux_get_vkbd_width(void);
+int emux_get_vkbd_height(void);
+int emux_get_vkbd_size(void);
 
 // VICE specific cart attach func.
 void emux_vice_attach_cart(int menu_id, char* filename);

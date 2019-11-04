@@ -8,9 +8,4 @@
 #define VKBD_WIDTH 512
 #define VKBD_HEIGHT 174
 
-vkbd_key_array get_vkbd(void);
-int get_vkbd_width(void);
-int get_vkbd_height(void);
-int get_vkbd_size(void);
-
 #endif

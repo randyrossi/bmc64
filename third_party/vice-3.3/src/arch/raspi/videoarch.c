@@ -34,6 +34,7 @@
 #include <sys/time.h>
 
 // VICE includes
+#include "emux_api.h"
 #include "joyport/joystick.h"
 #include "kbdbuf.h"
 #include "keyboard.h"
@@ -98,26 +99,6 @@ static int raspi_boot_warp = 1;
 static int fix_sid = 0;
 
 static int vdc_map[] = {0, 12, 6, 14, 5, 13, 11, 3, 2, 10, 8, 4, 9, 7, 15, 1};
-
-struct pending_emu_key_s {
-  int head;
-  int tail;
-  long key[16];
-  int pressed[16];
-};
-
-struct pending_emu_key_s pending_emu_key;
-
-struct pending_emu_joy_s {
-  int head;
-  int tail;
-  int value[128];
-  int port[128];
-  int type[128];
-  int device[128];
-};
-
-struct pending_emu_joy_s pending_emu_joy;
 
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
@@ -677,24 +658,6 @@ void vsyncarch_sleep(unsigned long delay) {
   // times our machine properly.
 }
 
-// queue a key for press/release for the main loop
-void emux_key_interrupt(long key, int pressed) {
-  circle_lock_acquire();
-  int i = pending_emu_key.tail & 0xf;
-  pending_emu_key.key[i] = key;
-  pending_emu_key.pressed[i] = pressed;
-  pending_emu_key.tail++;
-  circle_lock_release();
-}
-
-// Same as above except can call while already holding the lock
-void key_interrupt_locked(long key, int pressed) {
-  int i = pending_emu_key.tail & 0xf;
-  pending_emu_key.key[i] = key;
-  pending_emu_key.pressed[i] = pressed;
-  pending_emu_key.tail++;
-}
-
 void emu_joy_interrupt_abs(int port, int device,
                            int js_up,
                            int js_down,
@@ -710,18 +673,6 @@ void emu_joy_interrupt_abs(int port, int device,
   if (js_fire) val |= 0x10;
   add_pot_values(&val, pot_x, pot_y);
   emux_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, port, device, val);
-}
-
-// Queue a joy latch change for the main loop
-void emux_joy_interrupt(int type, int port, int device, int value) {
-  circle_lock_acquire();
-  int i = pending_emu_joy.tail & 0x7f;
-  pending_emu_joy.type[i] = type;
-  pending_emu_joy.port[i] = port;
-  pending_emu_joy.device[i] = device;
-  pending_emu_joy.value[i] = value;
-  pending_emu_joy.tail++;
-  circle_lock_release();
 }
 
 // Called by our special hook in vice to load palettes from

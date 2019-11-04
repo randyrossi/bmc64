@@ -32,61 +32,11 @@
 
 #include "videoarch.h"
 
-struct vkbd_key {
-  int x;
-  int y;
-  int w;
-  int h;
-  int row;
-  int col;
-  int layout_row;
-  int layout_col;
-  int toggle;
-  int code;
-  int shift_code;
-  int comm_code;
-  int up;
-  int down;
-  int left;
-  int right;
-  int state;
-};
-
-// special code values for keys
-#define VKBD_KEY_HOME -2
-#define VKBD_DEL -3
-#define VKBD_F1 -4
-#define VKBD_F3 -6
-#define VKBD_F5 -8
-#define VKBD_F7 -10
-#define VKBD_CNTRL -12
-#define VKBD_RESTORE -13
-#define VKBD_RUNSTOP -14
-#define VKBD_SHIFTLOCK -15
-#define VKBD_RETURN -16
-#define VKBD_COMMODORE -17
-#define VKBD_LSHIFT -18
-#define VKBD_RSHIFT -19
-#define VKBD_CURSDOWN -20
-#define VKBD_CURSRIGHT -21
-#define VKBD_SPACE -22
-#define VKBD_CLR -23
-#define VKBD_INS -24
-#define VKBD_ESC -25
-#define VKBD_CURSUP -26
-#define VKBD_CURSLEFT -27
-
-typedef struct vkbd_key* vkbd_key_array;
-
 extern void set_refresh_rate(int timing, struct video_canvas_s *canvas);
 extern void set_video_font(uint8_t **video_font, uint8_t **raw_video_font,
                            uint16_t *video_font_translate);
 extern unsigned int *raspi_get_palette(int index);
 extern int is_vic(struct video_canvas_s *canvas);
 extern int is_vdc(struct video_canvas_s *canvas);
-extern vkbd_key_array get_vkbd();
-extern int get_vkbd_width(void);
-extern int get_vkbd_height(void);
-extern int get_vkbd_size(void);
 
 #endif
