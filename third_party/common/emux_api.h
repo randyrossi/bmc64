@@ -337,6 +337,9 @@ void emux_get_int(IntSetting setting, int* dest);
 void emux_get_int_1(IntSetting setting, int* dest, int param);
 void emux_get_string_1(StringSetting setting, const char** dest, int param);
 
+// Save settings
+int emux_save_settings(void);
+
 // VICE specific cart attach func.
 void emux_vice_attach_cart(int menu_id, char* filename);
 void emux_vice_easy_flash(void);

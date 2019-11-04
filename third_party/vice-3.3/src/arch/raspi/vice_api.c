@@ -635,3 +635,7 @@ void emux_get_string_1(StringSetting setting, const char** dest, int param) {
       assert(0);
   }
 }
+
+int emux_save_settings(void) {
+   return resources_save(NULL);
+}

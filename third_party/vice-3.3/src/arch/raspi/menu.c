@@ -32,9 +32,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// VICE includes
-#include "resources.h"
-
 // RASPI Includes
 #include "emux_api.h"
 #include "demo.h"
@@ -638,7 +635,7 @@ static int save_settings() {
     return 1;
   }
 
-  int r = resources_save(NULL);
+  int r = emux_save_settings();
   if (r < 0) {
     printf("resource_save failed with %d\n", r);
     return 1;
