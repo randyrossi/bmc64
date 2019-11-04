@@ -2,7 +2,7 @@ include ../circle-stdlib/Config.mk
 CIRCLE_STDLIB_HOME = ../circle-stdlib
 include Config.mk
 
-OBJ = font.o keycodes.o text.o emux_api.o
+OBJ = demo.o emux_api.o font.o joy.o kbd.o keycodes.o menu.o menu_confirm_osd.o menu_key_binding.o menu_keyset.o menu_switch.o menu_tape_osd.o menu_timing.o menu_usb.o overlay.o raspi_util.o text.o ui.o
 
 INCLUDES = -I $(CIRCLE_STDLIB_HOME)/install/arm-none-circle/include -I $(CIRCLE_STDLIB_HOME)/libs/circle/addon/fatfs
 

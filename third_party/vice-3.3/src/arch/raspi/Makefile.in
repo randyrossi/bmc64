@@ -109,14 +109,10 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libarch_a_AR = $(AR) $(ARFLAGS)
 libarch_a_LIBADD =
-am_libarch_a_OBJECTS = archdep.$(OBJEXT) joy.$(OBJEXT) kbd.$(OBJEXT) \
-	mousedrv.$(OBJEXT) missing.$(OBJEXT) ui.$(OBJEXT) \
-	videoarch.$(OBJEXT) menu.$(OBJEXT) menu_keyset.$(OBJEXT) \
-	menu_key_binding.$(OBJEXT) menu_usb.$(OBJEXT) \
-	menu_switch.$(OBJEXT) menu_timing.$(OBJEXT) \
-	menu_tape_osd.$(OBJEXT) vice_menu_cart_osd.$(OBJEXT) \
-	menu_confirm_osd.$(OBJEXT) demo.$(OBJEXT) overlay.$(OBJEXT) \
-	vice_overlay.$(OBJEXT) raspi_util.$(OBJEXT) vice_api.$(OBJEXT)
+am_libarch_a_OBJECTS = archdep.$(OBJEXT) mousedrv.$(OBJEXT) \
+	missing.$(OBJEXT) videoarch.$(OBJEXT) \
+	vice_menu_cart_osd.$(OBJEXT) vice_overlay.$(OBJEXT) \
+	vice_api.$(OBJEXT)
 libarch_a_OBJECTS = $(am_libarch_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -473,40 +469,13 @@ noinst_LIBRARIES = libarch.a
 libarch_a_SOURCES = \
 	archdep.h \
 	archdep.c \
-	joy.h \
-	joy.c \
-	kbd.h \
-	kbd.c \
 	mousedrv.h \
 	mousedrv.c \
 	missing.c \
-	ui.c \
 	videoarch.h \
 	videoarch.c \
-	menu.h \
-	menu.c \
-	menu_keyset.h \
-	menu_keyset.c \
-	menu_key_binding.h \
-	menu_key_binding.c \
-	menu_usb.h \
-	menu_usb.c \
-	menu_switch.h \
-	menu_switch.c \
-	menu_timing.h \
-	menu_timing.c \
-	menu_tape_osd.h \
-	menu_tape_osd.c \
 	vice_menu_cart_osd.c \
-	menu_confirm_osd.h \
-	menu_confirm_osd.c \
-	demo.h \
-	demo.c \
-	overlay.c \
-	overlay.h \
 	vice_overlay.c \
-	raspi_util.c \
-	raspi_util.h \
 	vice_api.c
 
 all: all-recursive
@@ -558,22 +527,8 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archdep.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/demo.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/joy.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kbd.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_confirm_osd.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_key_binding.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_keyset.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_switch.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_tape_osd.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_timing.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_usb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/missing.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mousedrv.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/overlay.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/raspi_util.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vice_api.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vice_menu_cart_osd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vice_overlay.Po@am__quote@

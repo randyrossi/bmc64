@@ -35,38 +35,11 @@ noinst_LIBRARIES = libarch.a
 libarch_a_SOURCES = \
 	archdep.h \
 	archdep.c \
-	joy.h \
-	joy.c \
-	kbd.h \
-	kbd.c \
 	mousedrv.h \
 	mousedrv.c \
 	missing.c \
-	ui.c \
 	videoarch.h \
 	videoarch.c \
-	menu.h \
-	menu.c \
-	menu_keyset.h \
-	menu_keyset.c \
-	menu_key_binding.h \
-	menu_key_binding.c \
-	menu_usb.h \
-	menu_usb.c \
-	menu_switch.h \
-	menu_switch.c \
-	menu_timing.h \
-	menu_timing.c \
-	menu_tape_osd.h \
-	menu_tape_osd.c \
 	vice_menu_cart_osd.c \
-	menu_confirm_osd.h \
-	menu_confirm_osd.c \
-	demo.h \
-	demo.c \
-	overlay.c \
-	overlay.h \
 	vice_overlay.c \
-	raspi_util.c \
-	raspi_util.h \
 	vice_api.c
