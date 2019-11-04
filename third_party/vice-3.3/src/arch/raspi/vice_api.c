@@ -72,7 +72,7 @@ static void pause_trap(uint16_t addr, void *data) {
 
     ui_render_single_frame();
     hdmi_timing_hook();
-    ensure_video();
+    emux_ensure_video();
   }
   menu_about_to_deactivate();
   circle_hide_fbl(FB_LAYER_UI);

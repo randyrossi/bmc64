@@ -8,6 +8,8 @@
 #include "../common/circle.h"
 #include "../common/emux_api.h"
 #include "../common/keycodes.h"
+#include "../common/overlay.h"
+#include "../common/demo.h"
 
 static Plus4VM            *vm = NULL;
 static Plus4VideoDecoder  *videoDecoder = NULL;
@@ -69,160 +71,6 @@ static void resetMemoryConfiguration(void)
     errorMessage("cannot load p4kernal.rom");
   if (Plus4VM_LoadROM(vm, 0x10, "dos1541.rom", 0) != PLUS4EMU_SUCCESS)
     errorMessage("cannot load dos1541.rom");
-}
-
-// Used for injecting test strings into VM
-// [=shift down
-// ]=shift up
-// {=return down
-// }=return up
-// \=* down
-// |=* up
-static void fake_key(char c) {
-   if (c >= 'a' && c <='z') {
-        emu_key_pressed(KEYCODE_a+(c-'a'));
-   } else if (c >= 'A' && c <='Z') {
-        emu_key_released(KEYCODE_a+(c-'A'));
-   } else if (c == '[') {
-        emu_key_pressed(KEYCODE_LeftShift);
-   } else if (c == ']') {
-        emu_key_released(KEYCODE_LeftShift);
-   } else if (c == '{') {
-        emu_key_pressed(KEYCODE_Return);
-   } else if (c == '}') {
-        emu_key_released(KEYCODE_Return);
-   } else if (c == ',') {
-        emu_key_pressed(KEYCODE_Comma);
-   } else if (c == '<') {
-        emu_key_released(KEYCODE_Comma);
-   } else if (c == '0') {
-        emu_key_pressed(KEYCODE_0);
-   } else if (c >= '1' && c <='9') {
-        emu_key_pressed(KEYCODE_1 + (c-'1'));
-   } else if (c == '!') {
-        emu_key_released(KEYCODE_1);
-   } else if (c == '@') {
-        emu_key_released(KEYCODE_2);
-   } else if (c == '#') {
-        emu_key_released(KEYCODE_3);
-   } else if (c == '$') {
-        emu_key_released(KEYCODE_4);
-   } else if (c == '%') {
-        emu_key_released(KEYCODE_5);
-   } else if (c == '^') {
-        emu_key_released(KEYCODE_6);
-   } else if (c == '&') {
-        emu_key_released(KEYCODE_7);
-   } else if (c == '*') {
-        emu_key_released(KEYCODE_8);
-   } else if (c == '(') {
-        emu_key_released(KEYCODE_9);
-   } else if (c == ')') {
-        emu_key_released(KEYCODE_0);
-   } else if (c == '\\') {
-        emu_key_pressed(KEYCODE_Dash);
-   } else if (c == '|') {
-        emu_key_released(KEYCODE_Dash);
-   }
-}
-
-// Inject LOAD"*",8,1 into emulator.
-static void fake_inject() {
-  static char *test_str = "lLoOaAdD[2@]\\|[2@],<8*,<1!{}";
-  static int counter = 0;
-  static int pos = 0;
-  counter++;
-  if (counter >= 50*8) {
-     if (pos < strlen(test_str)) {
-        printf("fake %c\n",test_str[pos]);
-        fake_key(test_str[pos]);
-        pos++;
-     }
-     counter = counter - 100; // 2 seconds apart
-  }
-}
-
-// This is made to look like VICE's main entry point so our
-// Plus4Emu version of EmulatorCore can look more or less the same
-// as the Vice version.
-int main_program(int argc, char **argv)
-{
-  int     quitFlag = 0;
-
-  (void) argc;
-  (void) argv;
-
-  printf ("Init\n");
-
-#ifndef HOST_BUILD
-  // BMC64 Video Init
-  if (circle_alloc_fbl(FB_LAYER_VIC, 1 /* RGB565 */, &fb_buf,
-                              384, 288, &fb_pitch)) {
-    printf ("Failed to create video buf.\n");
-    assert(0);
-  }
-  circle_clear_fbl(FB_LAYER_VIC);
-  circle_show_fbl(FB_LAYER_VIC);
-#else
-  fb_buf = (uint8_t*) malloc(384*288*2);
-  fb_pitch = 384;
-#endif
-
-  vm = Plus4VM_Create();
-  if (!vm)
-    errorMessage("could not create Plus/4 emulator object");
-
-  Plus4VM_SetAudioOutputCallback(vm, &audioOutputCallback, NULL);
-  if (Plus4VM_SetAudioOutputQuality(vm, 1) != PLUS4EMU_SUCCESS)
-    vmError();
-
-  int audioSampleRate;
-  int fragsize;
-  int fragnr;
-  int channels;
-
-  circle_sound_init(NULL, &audioSampleRate, &fragsize, &fragnr, &channels);
-  if (Plus4VM_SetAudioSampleRate(vm, audioSampleRate) != PLUS4EMU_SUCCESS)
-    vmError();
-  resetMemoryConfiguration();
-  if (Plus4VM_SetWorkingDirectory(vm, ".") != PLUS4EMU_SUCCESS)
-    vmError();
-  /* enable read-write IEC level drive emulation for unit 8 */
-  //Plus4VM_SetIECDriveReadOnlyMode(vm, 0);
-  if (Plus4VM_SetDiskImageFile(vm, 0, "disks/plus4/advmono.d64", 0) != PLUS4EMU_SUCCESS)
-    vmError();
-  Plus4VM_Reset(vm, 1);
-
-  videoDecoder =
-      Plus4VideoDecoder_Create(&videoLineCallback, &videoFrameCallback, NULL);
-  if (!videoDecoder)
-    errorMessage("could not create video decoder object");
-  //Plus4VideoDecoder_UpdatePalette(videoDecoder, 0, 16, 8, 0); // not using rgb
-  Plus4VM_SetVideoOutputCallback(vm, &Plus4VideoDecoder_VideoCallback,
-                                 (void *) videoDecoder);
-
-  /* run Plus/4 emulation until the F12 key is pressed */
-  printf ("Enter emulation loop\n");
-
-  do {
-    if (Plus4VM_Run(vm, 2000) != PLUS4EMU_SUCCESS)
-      vmError();
-
-#ifdef FAKE_INJECT
-    fake_inject();
-#endif
-
-  } while (!quitFlag);
-
-  Plus4VM_Destroy(vm);
-  Plus4VideoDecoder_Destroy(videoDecoder);
-  return 0;
-}
-
-// Begin emu_api impl.
-
-void emu_machine_init() {
-  emux_machine_class = BMC64_MACHINE_CLASS_PLUS4EMU;
 }
 
 //     0: Del          1: Return       2: £            3: Help
@@ -377,16 +225,146 @@ static int bmc64_keycode_to_plus4emu(long keycode) {
    }
 }
 
-// TODO - Common kbd.c will implement this once it is moved up. For now, call
-// into VM here.
-void emu_key_pressed(long key) {
-   Plus4VM_KeyboardEvent(vm, bmc64_keycode_to_plus4emu(key), 1);
+// This is made to look like VICE's main entry point so our
+// Plus4Emu version of EmulatorCore can look more or less the same
+// as the Vice version.
+int main_program(int argc, char **argv)
+{
+  int     quitFlag = 0;
+
+  (void) argc;
+  (void) argv;
+
+  printf ("Init\n");
+
+#ifndef HOST_BUILD
+  // BMC64 Video Init
+  if (circle_alloc_fbl(FB_LAYER_VIC, 1 /* RGB565 */, &fb_buf,
+                              384, 288, &fb_pitch)) {
+    printf ("Failed to create video buf.\n");
+    assert(0);
+  }
+  circle_clear_fbl(FB_LAYER_VIC);
+  circle_show_fbl(FB_LAYER_VIC);
+#else
+  fb_buf = (uint8_t*) malloc(384*288*2);
+  fb_pitch = 384;
+#endif
+
+  vm = Plus4VM_Create();
+  if (!vm)
+    errorMessage("could not create Plus/4 emulator object");
+
+  Plus4VM_SetAudioOutputCallback(vm, &audioOutputCallback, NULL);
+  if (Plus4VM_SetAudioOutputQuality(vm, 1) != PLUS4EMU_SUCCESS)
+    vmError();
+
+  int audioSampleRate;
+  int fragsize;
+  int fragnr;
+  int channels;
+
+  circle_sound_init(NULL, &audioSampleRate, &fragsize, &fragnr, &channels);
+  if (Plus4VM_SetAudioSampleRate(vm, audioSampleRate) != PLUS4EMU_SUCCESS)
+    vmError();
+  resetMemoryConfiguration();
+  if (Plus4VM_SetWorkingDirectory(vm, ".") != PLUS4EMU_SUCCESS)
+    vmError();
+  /* enable read-write IEC level drive emulation for unit 8 */
+  //Plus4VM_SetIECDriveReadOnlyMode(vm, 0);
+  if (Plus4VM_SetDiskImageFile(vm, 0, "disks/plus4/advmono.d64", 0) != PLUS4EMU_SUCCESS)
+    vmError();
+  Plus4VM_Reset(vm, 1);
+
+  videoDecoder =
+      Plus4VideoDecoder_Create(&videoLineCallback, &videoFrameCallback, NULL);
+  if (!videoDecoder)
+    errorMessage("could not create video decoder object");
+  //Plus4VideoDecoder_UpdatePalette(videoDecoder, 0, 16, 8, 0); // not using rgb
+  Plus4VM_SetVideoOutputCallback(vm, &Plus4VideoDecoder_VideoCallback,
+                                 (void *) videoDecoder);
+
+  /* run Plus/4 emulation until the F12 key is pressed */
+  printf ("Enter emulation loop\n");
+
+  do {
+    if (Plus4VM_Run(vm, 2000) != PLUS4EMU_SUCCESS)
+      vmError();
+
+    emux_ensure_video();
+
+    // This render will handle any OSDs we have. ODSs don't pause emulation.
+    if (ui_enabled) {
+      // The only way we can be here and have ui_enabled=1
+      // is for an osd to be enabled.
+      ui_render_now(-1); // only render top most menu
+      circle_frames_ready_fbl(FB_LAYER_UI, -1 /* no 2nd layer */,
+         0 /* no sync */);
+      ui_check_key();
+    }
+
+    if (statusbar_showing || vkbd_showing) {
+      overlay_check();
+      if (overlay_dirty) {
+         circle_frames_ready_fbl(FB_LAYER_STATUS,                                                                -1 /* no 2nd layer */,
+                                 0 /* no sync */);
+         overlay_dirty = 0;
+      }
+    }
+
+    circle_yield();
+    circle_check_gpio();
+
+    int reset_demo = 0;
+
+    circle_lock_acquire();
+    while (pending_emu_key.head != pending_emu_key.tail) {
+      int i = pending_emu_key.head & 0xf;
+      reset_demo = 1;
+      if (vkbd_enabled) {
+        // Kind of nice to have virtual keyboard's state
+        // stay in sync with changes happening from USB
+        // key events.
+        vkbd_sync_event(pending_emu_key.key[i], pending_emu_key.pressed[i]);
+      }
+      Plus4VM_KeyboardEvent(vm, bmc64_keycode_to_plus4emu(
+         pending_emu_key.key[i]), pending_emu_key.pressed[i]);
+      pending_emu_key.head++;
+    }
+
+    // TODO: joystick dequeue
+
+    circle_lock_release();
+
+    ui_handle_toggle_or_quick_func();
+
+    if (reset_demo) {
+      demo_reset_timeout();
+    }
+
+    if (raspi_demo_mode) {
+      demo_check();
+    }
+
+  } while (!quitFlag);
+
+  Plus4VM_Destroy(vm);
+  Plus4VideoDecoder_Destroy(videoDecoder);
+  return 0;
 }
 
-// TODO - Common kbd.c will implement this once it is moved up. For now, call
-// into VM here.
-void emu_key_released(long key) {
-   Plus4VM_KeyboardEvent(vm, bmc64_keycode_to_plus4emu(key), 0);
+// Begin emu_api impl.
+
+void emu_machine_init() {
+  emux_machine_class = BMC64_MACHINE_CLASS_PLUS4EMU;
+}
+
+void emux_change_palette(int display_num, int palette_index) {
+  assert(0); // should never be called for plus4emu
+}
+
+void emux_video_color_setting_changed(int display_num) {
+  // TBD
 }
 
 #ifdef HOST_BUILD

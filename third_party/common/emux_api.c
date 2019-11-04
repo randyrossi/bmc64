@@ -27,6 +27,7 @@
 #include "emux_api.h"
 
 #include "circle.h"
+#include "overlay.h"
 
 int emux_machine_class = BMC64_MACHINE_CLASS_UNKNOWN;
 int vic_showing;
@@ -68,4 +69,53 @@ void emux_joy_interrupt(int type, int port, int device, int value) {
   pending_emu_joy.value[i] = value;
   pending_emu_joy.tail++;
   circle_lock_release();
+}
+
+// This makes sure we are showing what the enable flags say we should
+// be showing.
+void emux_ensure_video(void) {
+  if (vic_enabled && !vic_showing) {
+     circle_show_fbl(FB_LAYER_VIC);
+     vic_showing = 1;
+  } else if (!vic_enabled && vic_showing) {
+     circle_hide_fbl(FB_LAYER_VIC);
+     vic_showing = 0;
+  }
+
+  if (vdc_enabled && !vdc_showing) {
+     circle_show_fbl(FB_LAYER_VDC);
+     vdc_showing = 1;
+  } else if (!vdc_enabled && vdc_showing) {
+     circle_hide_fbl(FB_LAYER_VDC);
+     vdc_showing = 0;
+  }
+
+  if ((statusbar_enabled && !statusbar_showing) ||
+         (vkbd_enabled && !vkbd_showing)) {
+     if (statusbar_enabled && !statusbar_showing) {
+        statusbar_showing = 1;
+     }
+     if (vkbd_enabled && !vkbd_showing) {
+        vkbd_showing = 1;
+     }
+     if (statusbar_showing || vkbd_showing) {
+        circle_show_fbl(FB_LAYER_STATUS);
+     }
+  } else if ((!statusbar_enabled && statusbar_showing) ||
+                 (!vkbd_enabled && vkbd_showing)) {
+     if (!statusbar_enabled && statusbar_showing) {
+        statusbar_showing = 0;
+     }
+     if (!vkbd_enabled && vkbd_showing) {
+        vkbd_showing = 0;
+     }
+     if (!statusbar_showing && !vkbd_showing) {
+        circle_hide_fbl(FB_LAYER_STATUS);
+     }
+  }
+
+  if (ui_enabled && !ui_showing) {
+     circle_show_fbl(FB_LAYER_UI);
+     ui_showing = 1;
+  }
 }

@@ -227,7 +227,7 @@ void emux_apply_video_adjustments(int layer,
       double lpad, double rpad, double tpad, double bpad,
       int zlayer) {
   // Hide the layer. Can't show it here on the same loop so we have to
-  // allow ensure_video() to do it for us.  If the canvas is enabled, it
+  // allow emux_ensure_video() to do it for us.  If the canvas is enabled, it
   // will be shown again and our new settings will take effect.
   int index;
   struct video_canvas_s *canvas;
@@ -448,57 +448,8 @@ void vsyncarch_init(void) {
 
 void vsyncarch_presync(void) { kbdbuf_flush(); }
 
-// This makes sure we are showing what the enable flags say we should
-// be showing.
-void ensure_video(void) {
-  if (vic_enabled && !vic_showing) {
-     circle_show_fbl(FB_LAYER_VIC);
-     vic_showing = 1;
-  } else if (!vic_enabled && vic_showing) {
-     circle_hide_fbl(FB_LAYER_VIC);
-     vic_showing = 0;
-  }
-
-  if (vdc_enabled && !vdc_showing) {
-     circle_show_fbl(FB_LAYER_VDC);
-     vdc_showing = 1;
-  } else if (!vdc_enabled && vdc_showing) {
-     circle_hide_fbl(FB_LAYER_VDC);
-     vdc_showing = 0;
-  }
-
-  if ((statusbar_enabled && !statusbar_showing) ||
-         (vkbd_enabled && !vkbd_showing)) {
-     if (statusbar_enabled && !statusbar_showing) {
-        statusbar_showing = 1;
-     }
-     if (vkbd_enabled && !vkbd_showing) {
-        vkbd_showing = 1;
-     }
-     if (statusbar_showing || vkbd_showing) {
-        circle_show_fbl(FB_LAYER_STATUS);
-     }
-  } else if ((!statusbar_enabled && statusbar_showing) ||
-                 (!vkbd_enabled && vkbd_showing)) {
-     if (!statusbar_enabled && statusbar_showing) {
-        statusbar_showing = 0;
-     }
-     if (!vkbd_enabled && vkbd_showing) {
-        vkbd_showing = 0;
-     }
-     if (!statusbar_showing && !vkbd_showing) {
-        circle_hide_fbl(FB_LAYER_STATUS);
-     }
-  }
-
-  if (ui_enabled && !ui_showing) {
-     circle_show_fbl(FB_LAYER_UI);
-     ui_showing = 1;
-  }
-}
-
 void vsyncarch_postsync(void) {
-  ensure_video();
+  emux_ensure_video();
 
   // This render will handle any OSDs we have. ODSs don't pause emulation.
   if (ui_enabled) {
@@ -512,7 +463,9 @@ void vsyncarch_postsync(void) {
   if (statusbar_showing || vkbd_showing) {
     overlay_check();
     if (overlay_dirty) {
-       circle_frames_ready_fbl(FB_LAYER_STATUS, -1 /* no 2nd layer */, 0 /* no sync */);
+       circle_frames_ready_fbl(FB_LAYER_STATUS,
+                               -1 /* no 2nd layer */,
+                               0 /* no sync */);
        overlay_dirty = 0;
     }
   }

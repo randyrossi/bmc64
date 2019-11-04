@@ -5,6 +5,6 @@
 CFLAGS += "-DRASPI_PLUS4EMU"
 VARIANT = PLUS4EMU
 
-VICELIBS := third_party/plus4emu/main.o third_party/plus4emu/resid/libresid.a third_party/plus4emu/src/libplus4.a third_party/plus4emu/plus4lib/libplus4api.a
+VICELIBS := third_party/plus4emu/main.o third_party/common/libbmc64common.a third_party/plus4emu/resid/libresid.a third_party/plus4emu/src/libplus4.a third_party/plus4emu/plus4lib/libplus4api.a
 
 include Makefile

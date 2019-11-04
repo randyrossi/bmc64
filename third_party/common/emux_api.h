@@ -340,6 +340,8 @@ void emux_get_string_1(StringSetting setting, const char** dest, int param);
 // Save settings
 int emux_save_settings(void);
 
+void emux_ensure_video(void);
+
 // VICE specific cart attach func.
 void emux_vice_attach_cart(int menu_id, char* filename);
 void emux_vice_easy_flash(void);
