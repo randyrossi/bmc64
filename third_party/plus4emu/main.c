@@ -522,18 +522,6 @@ void emux_change_palette(int display_num, int palette_index) {
   assert(0); // should never be called for plus4emu
 }
 
-vkbd_key_array emux_get_vkbd(void) {
-}
-
-int emux_get_vkbd_width(void) {
-}
-
-int emux_get_vkbd_height(void) {
-}
-
-int emux_get_vkbd_size(void) {
-}
-
 void emux_handle_rom_change(struct menu_item* item, fullpath_func fullpath) {
 }
 
