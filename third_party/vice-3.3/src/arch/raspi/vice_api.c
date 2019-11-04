@@ -465,3 +465,53 @@ void emux_set_warp(int warp) {
   resources_set_int("WarpMode", warp);
   raspi_warp = warp;
 }
+
+void emux_handle_rom_change(struct menu_item* item, fullpath_func fullpath) {
+  // Make the rom change. These can't be fullpath or VICE complains.
+  switch (item->id) {
+     case MENU_DRIVE_ROM_FILE_1541:
+       resources_set_string("DosName1541", item->str_value);
+       return;
+     case MENU_DRIVE_ROM_FILE_1541II:
+       resources_set_string("DosName1541ii", item->str_value);
+       return;
+     case MENU_DRIVE_ROM_FILE_1551:
+       resources_set_string("DosName1551", item->str_value);
+       return;
+     case MENU_DRIVE_ROM_FILE_1571:
+       resources_set_string("DosName1571", item->str_value);
+       return;
+     case MENU_DRIVE_ROM_FILE_1581:
+       resources_set_string("DosName1581", item->str_value);
+       return;
+     case MENU_KERNAL_FILE:
+       resources_set_string("KernalName", item->str_value);
+       return;
+     case MENU_BASIC_FILE:
+       resources_set_string("BasicName", item->str_value);
+       return;
+     case MENU_CHARGEN_FILE:
+       resources_set_string("ChargenName", item->str_value);
+       return;
+     case MENU_C128_LOAD_KERNAL_FILE:
+       resources_set_string("KernalIntName", item->str_value);
+       return;
+     case MENU_C128_LOAD_BASIC_HI_FILE:
+       resources_set_string("BasicHiName", item->str_value);
+       return;
+     case MENU_C128_LOAD_BASIC_LO_FILE:
+       resources_set_string("BasicLoName", item->str_value);
+       return;
+     case MENU_C128_LOAD_CHARGEN_FILE:
+       resources_set_string("ChargenIntName", item->str_value);
+       return;
+     case MENU_C128_LOAD_64_KERNAL_FILE:
+       resources_set_string("Kernal64Name", item->str_value);
+       return;
+     case MENU_C128_LOAD_64_BASIC_FILE:
+       resources_set_string("Basic64Name", item->str_value);
+       return;
+     default:
+       assert(0);
+  }
+}

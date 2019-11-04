@@ -297,6 +297,9 @@ int emux_get_vkbd_width(void);
 int emux_get_vkbd_height(void);
 int emux_get_vkbd_size(void);
 
+// Handles one of the MENU_*_FILE rom change events from the menu
+void emux_handle_rom_change(struct menu_item* item, fullpath_func fullpath);
+
 // VICE specific cart attach func.
 void emux_vice_attach_cart(int menu_id, char* filename);
 void emux_vice_easy_flash(void);
