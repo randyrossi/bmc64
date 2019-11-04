@@ -217,9 +217,14 @@ void emux_apply_video_adjustments(int layer, int hcenter, int vcenter,
 void emux_change_palette(int display_num, int palette_index);
 
 // Set joystick latch value for port and device.
+// Safe to call from ISR
 // type is PENDING_EMU_JOY_*
 // device is JOYDEV_*
 void emux_joy_interrupt(int type, int port, int device, int value);
+
+// Set key latch value for a keycode
+// Safe to call from ISR
+void emux_key_interrupt(long key, int pressed);
 
 // VICE specific cart attach func.
 void emux_vice_attach_cart(int menu_id, char* filename);

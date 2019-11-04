@@ -91,8 +91,6 @@ void ensure_video(void);
 palette_t *raspi_video_load_palette(int num_entries, char *name);
 void main_exit(void);
 
-void key_interrupt(long key, int pressed);
-
 // Similar to the public emu_key_interrupt except can be called while
 // holding the lock.
 void key_interrupt_locked(long key, int pressed);

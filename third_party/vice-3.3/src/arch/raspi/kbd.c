@@ -30,13 +30,13 @@
 #include <string.h>
 
 // RASPI includes
+#include "emux_api.h"
 #include "circle.h"
 #include "demo.h"
 #include "joy.h"
 #include "menu.h"
 #include "menu_keyset.h"
 #include "ui.h"
-#include "videoarch.h"
 
 #define NUM_KEY_COMBOS 8
 
@@ -373,7 +373,7 @@ void emu_key_pressed(long key) {
   if (ui_enabled) {
     emu_ui_key_interrupt(key, 1 /* down */);
   } else {
-    key_interrupt(key, 1 /* down */);
+    emux_key_interrupt(key, 1 /* down */);
   }
 }
 
@@ -396,7 +396,7 @@ void emu_key_released(long key) {
     } else {
       // When transitioning to the menu, make sure to give emulator
       // at least one pass through main loop after sending the up event.
-      key_interrupt(key, 0 /* up */);
+      emux_key_interrupt(key, 0 /* up */);
       circle_lock_acquire();
       ui_toggle_pending = 2;
       circle_lock_release();
@@ -431,7 +431,7 @@ void emu_key_released(long key) {
   if (ui_enabled) {
     emu_ui_key_interrupt(key, 0 /* up */);
   } else {
-    key_interrupt(key, 0 /* up */);
+    emux_key_interrupt(key, 0 /* up */);
   }
 
   // Check hotkey combo here

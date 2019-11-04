@@ -678,7 +678,7 @@ void vsyncarch_sleep(unsigned long delay) {
 }
 
 // queue a key for press/release for the main loop
-void key_interrupt(long key, int pressed) {
+void emux_key_interrupt(long key, int pressed) {
   circle_lock_acquire();
   int i = pending_emu_key.tail & 0xf;
   pending_emu_key.key[i] = key;
