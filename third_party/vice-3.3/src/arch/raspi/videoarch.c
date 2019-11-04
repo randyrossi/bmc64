@@ -530,23 +530,6 @@ void vsyncarch_sleep(unsigned long delay) {
   // times our machine properly.
 }
 
-void emu_joy_interrupt_abs(int port, int device,
-                           int js_up,
-                           int js_down,
-                           int js_left,
-                           int js_right,
-                           int js_fire,
-                           int pot_x, int pot_y) {
-  int val = 0;
-  if (js_up) val |= 0x01;
-  if (js_down) val |= 0x02;
-  if (js_left) val |= 0x04;
-  if (js_right) val |= 0x08;
-  if (js_fire) val |= 0x10;
-  add_pot_values(&val, pot_x, pot_y);
-  emux_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, port, device, val);
-}
-
 // Called by our special hook in vice to load palettes from
 // memory.
 palette_t *raspi_video_load_palette(int num_entries, char *name) {

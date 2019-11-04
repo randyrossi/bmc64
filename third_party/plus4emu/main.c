@@ -359,13 +359,6 @@ void emu_machine_init() {
   emux_machine_class = BMC64_MACHINE_CLASS_PLUS4EMU;
 }
 
-void emux_change_palette(int display_num, int palette_index) {
-  assert(0); // should never be called for plus4emu
-}
-
-void emux_video_color_setting_changed(int display_num) {
-  // TBD
-}
 
 #ifdef HOST_BUILD
 
@@ -385,3 +378,191 @@ int main(int argc, char *argv[]) {
 }
 
 #endif
+
+
+// STUBS FOR NOW
+void emux_trap_main_loop_ui(void) {
+}
+
+void emux_trap_main_loop(void (*trap_func)(uint16_t, void *data), void* data) {
+}
+
+void emux_kbd_set_latch_keyarr(int row, int col, int value) {
+}
+
+int emux_attach_disk_image(int unit, char *filename) {
+  return 0;
+}
+
+void emux_detach_disk(int unit) {
+}
+
+int emux_attach_tape_image(char *filename) {
+  return 0;
+}
+
+void emux_detach_tape(void) {
+}
+
+int emux_attach_cart(int bank, char *filename) {
+  return 0;
+}
+
+void emux_set_cart_default(void) {
+}
+
+void emux_detach_cart(int bank) {
+}
+
+void emux_reset(int isSoft) {
+}
+
+int emux_save_state(char *filename) {
+  return 0;
+}
+
+int emux_load_state(char *filename) {
+  return 0;
+}
+
+int emux_tape_control(int cmd) {
+  return 0;
+}
+
+void emux_show_cart_osd_menu(void) {
+}
+
+unsigned long emux_calculate_timing(double fps) {
+}
+
+int emux_autostart_file(char* filename) {
+  return 0;
+}
+
+void emux_drive_change_model(int unit) {
+}
+
+void emux_add_parallel_cable_option(struct menu_item* parent,
+                                    int id, int drive) {
+}
+
+void emux_create_disk(struct menu_item* item, fullpath_func fullpath) {
+}
+
+void emux_set_joy_port_device(int port_num, int dev_id) {
+}
+
+void emux_set_joy_pot_x(int value) {
+}
+
+void emux_set_joy_pot_y(int value) {
+}
+
+void emux_add_sound_options(struct menu_item* parent) {
+}
+
+void emux_load_sound_options(void) {
+}
+
+void emux_video_color_setting_changed(int display_num) {
+  // TBD
+}
+
+void emux_set_color_brightness(int display_num, int value) {
+}
+
+void emux_set_color_contrast(int display_num, int value) {
+}
+
+void emux_set_color_gamma(int display_num, int value) {
+}
+
+void emux_set_color_tint(int display_num, int value) {
+}
+
+int emux_get_color_brightness(int display_num) {
+  return 1000;
+}
+
+int emux_get_color_contrast(int display_num) {
+  return 1000;
+}
+
+int emux_get_color_gamma(int display_num) {
+  return 1000;
+}
+
+int emux_get_color_tint(int display_num) {
+  return 1000;
+}
+
+void emux_set_video_cache(int value) {
+}
+
+void emux_set_hw_scale(int value) {
+}
+
+void emux_cartridge_trigger_freeze(void) {
+}
+
+struct menu_item* emux_add_palette_options(int menu_id,
+                                           struct menu_item* parent) {
+}
+
+void emux_add_machine_options(struct menu_item* parent) {
+}
+
+struct menu_item* emux_add_cartridge_options(struct menu_item* parent) {
+}
+
+void emux_set_warp(int warp) {
+}
+
+void emux_change_palette(int display_num, int palette_index) {
+  assert(0); // should never be called for plus4emu
+}
+
+vkbd_key_array emux_get_vkbd(void) {
+}
+
+int emux_get_vkbd_width(void) {
+}
+
+int emux_get_vkbd_height(void) {
+}
+
+int emux_get_vkbd_size(void) {
+}
+
+void emux_handle_rom_change(struct menu_item* item, fullpath_func fullpath) {
+}
+
+void emux_set_iec_dir(int unit, char* dir) {
+}
+
+void emux_set_int(IntSetting setting, int value) {
+}
+
+void emux_set_int_1(IntSetting setting, int value, int param) {
+}
+
+void emux_get_int(IntSetting setting, int* dest) {
+}
+
+void emux_get_int_1(IntSetting setting, int* dest, int param) {
+}
+
+void emux_get_string_1(StringSetting setting, const char** dest, int param) {
+}
+
+int emux_save_settings(void) {
+  return 0;
+}
+
+void emux_vice_attach_cart(int menu_id, char* filename) {
+  assert(0);
+}
+
+void emux_vice_easy_flash(void) {
+  assert(0);
+}

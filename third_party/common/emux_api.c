@@ -30,6 +30,7 @@
 
 #include "circle.h"
 #include "overlay.h"
+#include "menu_usb.h"
 
 int emux_machine_class = BMC64_MACHINE_CLASS_UNKNOWN;
 int vic_showing;
@@ -205,4 +206,21 @@ void emux_apply_video_adjustments(int layer,
 
   circle_set_center_offset(layer,
            hcenter, vcenter);          
+}
+
+void emu_joy_interrupt_abs(int port, int device,
+                           int js_up,
+                           int js_down,
+                           int js_left,
+                           int js_right,
+                           int js_fire,
+                           int pot_x, int pot_y) {
+  int val = 0;
+  if (js_up) val |= 0x01;
+  if (js_down) val |= 0x02;
+  if (js_left) val |= 0x04;
+  if (js_right) val |= 0x08;
+  if (js_fire) val |= 0x10;
+  add_pot_values(&val, pot_x, pot_y);
+  emux_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, port, device, val);
 }
