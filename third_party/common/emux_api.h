@@ -33,6 +33,8 @@
 
 #include "ui.h"
 
+extern const uint8_t ascii_to_petscii[256];
+
 typedef enum {
   BMC64_MACHINE_CLASS_UNKNOWN,
   BMC64_MACHINE_CLASS_VIC20,

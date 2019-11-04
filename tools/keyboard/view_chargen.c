@@ -1,15 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main() {
-   FILE* fp = fopen("CHARGEN","r");
-   unsigned char* d[4096];
+int main(int argc, char *argv[]) {
+   FILE* fp = fopen(argv[1],"r");
+   int size = atoi(argv[2]);
+   int off = atoi(argv[3]);
 
-   fread(d,1,4096,fp);
-
+   unsigned char* d = (unsigned char*) malloc(size);
+   fread(d,1,size,fp);
    fclose(fp);
 
-   unsigned char *p = &d[0];
+   unsigned char *p = &d[off];
    for (int i=0;i<512;i++) {
        printf ("%d\n",i);
        for (int r=0;r<8;r++) {

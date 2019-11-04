@@ -20,6 +20,25 @@ static int              ui_trap;
 
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
+static void set_video_font(void) {
+  int i;
+
+  // Temporary for now. Need to figure out how to get this from the emulator's
+  // ROM. Just read the file ourselves.
+  uint8_t* chargen = malloc(4096); // never freed
+  FILE* fp = fopen("p4kernal.rom", "r");
+  fseek(fp, 0x1000, SEEK_SET);
+  fread(chargen,1,4096,fp);
+  fclose(fp);
+
+  video_font = &chargen[0x400];
+  raw_video_font = &chargen[0x000];
+  for (i = 0; i < 256; ++i) {
+    video_font_translate[i] = 8 * ascii_to_petscii[i];
+  }
+}
+
+
 static void errorMessage(const char *fmt, ...)
 {
   va_list args;
@@ -287,6 +306,8 @@ int main_program(int argc, char **argv)
 
   vic_enabled = 1; // really TED
   ui_init_menu();
+
+  set_video_font();
 
   /* run Plus/4 emulation until the F12 key is pressed */
   printf ("Enter emulation loop\n");

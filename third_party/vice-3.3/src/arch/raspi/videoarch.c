@@ -343,7 +343,7 @@ void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
         raspi_boot_warp = 1;
         vic_first_refresh = 0;
      }
-     set_video_font(&video_font, &raw_video_font, &video_font_translate[0]);
+     set_video_font();
   } else {
      if (vdc_first_refresh == 1) {
         // Nothing to do.  Consider removing.

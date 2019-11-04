@@ -29,8 +29,7 @@
 #include "arch/raspi/videoarch.h"
 
 void set_refresh_rate(int timing, struct video_canvas_s *canvas);
-void set_video_font(uint8_t **video_font, uint8_t **raw_video_font,
-                    uint16_t *video_font_translate);
+void set_video_font(void);
 unsigned int *raspi_get_palette(int index);
 
 #endif
