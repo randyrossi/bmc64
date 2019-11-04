@@ -65,6 +65,11 @@ typedef enum {
    DIR_IEC,
 } DirType;
 
+// Types of queued joystick events for calls into emulator API
+#define PENDING_EMU_JOY_TYPE_ABSOLUTE 0
+#define PENDING_EMU_JOY_TYPE_AND 1
+#define PENDING_EMU_JOY_TYPE_OR 2
+
 typedef char*(*fullpath_func)(DirType dir_type, char *name);
 
 struct CanvasState {
@@ -210,6 +215,11 @@ void emux_apply_video_adjustments(int layer, int hcenter, int vcenter,
 // Select a palette index for the given display number.
 // (For indexed displays only)
 void emux_change_palette(int display_num, int palette_index);
+
+// Set joystick latch value for port and device.
+// type is PENDING_EMU_JOY_*
+// device is JOYDEV_*
+void emux_joy_interrupt(int type, int port, int device, int value);
 
 // VICE specific cart attach func.
 void emux_vice_attach_cart(int menu_id, char* filename);

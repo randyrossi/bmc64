@@ -709,11 +709,11 @@ void emu_joy_interrupt_abs(int port, int device,
   if (js_right) val |= 0x08;
   if (js_fire) val |= 0x10;
   add_pot_values(&val, pot_x, pot_y);
-  joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, port, device, val);
+  emux_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, port, device, val);
 }
 
 // Queue a joy latch change for the main loop
-void joy_interrupt(int type, int port, int device, int value) {
+void emux_joy_interrupt(int type, int port, int device, int value) {
   circle_lock_acquire();
   int i = pending_emu_joy.tail & 0x7f;
   pending_emu_joy.type[i] = type;

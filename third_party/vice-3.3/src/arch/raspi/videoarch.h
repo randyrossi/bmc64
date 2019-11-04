@@ -38,11 +38,6 @@
 #define POTX_BIT_MASK 0x1fe0
 #define POTY_BIT_MASK 0x1fe000
 
-// Types of queued joystick events for calls into emulator API
-#define PENDING_EMU_JOY_TYPE_ABSOLUTE 0
-#define PENDING_EMU_JOY_TYPE_AND 1
-#define PENDING_EMU_JOY_TYPE_OR 2
-
 struct video_canvas_s {
   // Core fields required by vice.
   unsigned int initialized;
@@ -96,7 +91,6 @@ void ensure_video(void);
 palette_t *raspi_video_load_palette(int num_entries, char *name);
 void main_exit(void);
 
-void joy_interrupt(int type, int port, int device, int value);
 void key_interrupt(long key, int pressed);
 
 // Similar to the public emu_key_interrupt except can be called while
