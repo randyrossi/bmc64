@@ -1536,13 +1536,13 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_IECDEVICE_9:
   case MENU_IECDEVICE_10:
   case MENU_IECDEVICE_11:
-    resources_set_int_sprintf("IECDevice%i", item->value, unit);
+    emux_set_int_1(Setting_IECDeviceN, item->value, unit);
     return;
   case MENU_PARALLEL_8:
   case MENU_PARALLEL_9:
   case MENU_PARALLEL_10:
   case MENU_PARALLEL_11:
-    resources_set_int_sprintf("Drive%iParallelCable",
+    emux_set_int_1(Setting_DriveNParallelCable, 
        item->choice_ints[item->value], unit);
     return;
   case MENU_IECDIR_8:
@@ -1737,10 +1737,10 @@ static void menu_value_changed(struct menu_item *item) {
     demo_reset();
     return;
   case MENU_DRIVE_SOUND_EMULATION:
-    resources_set_int("DriveSoundEmulation", item->value);
+    emux_set_int(Setting_DriveSoundEmulation, item->value);
     return;
   case MENU_DRIVE_SOUND_EMULATION_VOLUME:
-    resources_set_int("DriveSoundEmulationVolume", item->value);
+    emux_set_int(Setting_DriveSoundEmulationVolume, item->value);
     return;
   case MENU_COLOR_BRIGHTNESS_0:
     ui_canvas_reveal_temp(FB_LAYER_VIC);
@@ -1876,20 +1876,20 @@ static void menu_value_changed(struct menu_item *item) {
     ui_pop_all_and_toggle();
     return;
   case MENU_TAPE_RESET_WITH_MACHINE:
-    resources_set_int("DatasetteResetWithCPU",
+    emux_set_int(Setting_DatasetteResetWithCPU, 
                       tape_reset_with_machine_item->value);
     return;
   case MENU_SID_ENGINE:
-    resources_set_int("SidEngine", item->choice_ints[item->value]);
-    resources_set_int("SidResidSampling", 0);
+    emux_set_int(Setting_SidEngine, item->choice_ints[item->value]);
+    emux_set_int(Setting_SidResidSampling, 0);
     return;
   case MENU_SID_MODEL:
-    resources_set_int("SidModel", item->choice_ints[item->value]);
-    resources_set_int("SidResidSampling", 0);
+    emux_set_int(Setting_SidModel, item->choice_ints[item->value]);
+    emux_set_int(Setting_SidResidSampling, 0);
     return;
   case MENU_SID_FILTER:
-    resources_set_int("SidFilters", item->value);
-    resources_set_int("SidResidSampling", 0);
+    emux_set_int(Setting_SidFilters, item->value);
+    emux_set_int(Setting_SidResidSampling, 0);
     return;
 
   case MENU_DRIVE_CHANGE_MODEL_8:
@@ -1902,7 +1902,7 @@ static void menu_value_changed(struct menu_item *item) {
     drive_change_rom();
     return;
   case MENU_DRIVE_MODEL_SELECT:
-    resources_set_int_sprintf("Drive%iType", item->value, unit);
+    emux_set_int_1(Setting_DriveNType, item->value, unit);
     ui_pop_all_and_toggle();
     return;
   case MENU_CALC_TIMING:
@@ -1948,19 +1948,19 @@ static void menu_value_changed(struct menu_item *item) {
     ui_pop_all_and_toggle();
     return;
   case MENU_VIC20_MEMORY_3K:
-    resources_set_int("RAMBlock0", item->value);
+    emux_set_int(Setting_RAMBlock0, item->value);
     return;
   case MENU_VIC20_MEMORY_8K_2000:
-    resources_set_int("RAMBlock1", item->value);
+    emux_set_int(Setting_RAMBlock1, item->value);
     return;
   case MENU_VIC20_MEMORY_8K_4000:
-    resources_set_int("RAMBlock2", item->value);
+    emux_set_int(Setting_RAMBlock2, item->value);
     return;
   case MENU_VIC20_MEMORY_8K_6000:
-    resources_set_int("RAMBlock3", item->value);
+    emux_set_int(Setting_RAMBlock3, item->value);
     return;
   case MENU_VIC20_MEMORY_8K_A000:
-    resources_set_int("RAMBlock5", item->value);
+    emux_set_int(Setting_RAMBlock5, item->value);
     return;
   case MENU_ACTIVE_DISPLAY:
   case MENU_PIP_LOCATION:
@@ -2042,7 +2042,7 @@ static void menu_value_changed(struct menu_item *item) {
     overlay_change_vkbd_transparency(item->value);
     break;
   case MENU_40_80_COLUMN:
-    resources_set_int("C128ColumnKey", item->value);
+    emux_set_int(Setting_C128ColumnKey, item->value);
     overlay_40_80_columns_changed(item->value);
     break;
   case MENU_VOLUME:
@@ -2789,24 +2789,24 @@ void build_menu(struct menu_item *root) {
   emux_set_joy_pot_y(pot_y_high_value);
 
   // Always turn off resampling
-  resources_set_int("SidResidSampling", 0);
+  emux_set_int(Setting_SidResidSampling, 0);
   emux_set_video_cache(0);
   emux_set_hw_scale(0);
 
 #ifdef RASPI_LITE
-  resources_set_int("DriveSoundEmulation", 0);
-  resources_set_int("DriveSoundEmulationVolume", 0);
+  emux_set_int(Setting_DriveSoundEmulation, 0);
+  emux_set_int(Setting_DriveSoundEmulationVolume, 0);
 #endif
 
   // This can somehow get turned off. Make sure its always 1.
-  resources_set_int("Datasette", 1);
-  resources_set_int("Mouse", 1);
+  emux_set_int(Setting_Datasette, 1);
+  emux_set_int(Setting_Mouse, 1);
 
   // For now, all our drives will always be file system devices.
-  resources_set_int("FileSystemDevice8", 1);
-  resources_set_int("FileSystemDevice9", 1);
-  resources_set_int("FileSystemDevice10", 1);
-  resources_set_int("FileSystemDevice11", 1);
+  emux_set_int_1(Setting_FileSystemDeviceN, 1, 8);
+  emux_set_int_1(Setting_FileSystemDeviceN, 1, 9);
+  emux_set_int_1(Setting_FileSystemDeviceN, 1, 10);
+  emux_set_int_1(Setting_FileSystemDeviceN, 1, 11);
 
   // Restore last iec dirs for all drives
   const char *tmpf;

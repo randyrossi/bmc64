@@ -519,3 +519,74 @@ void emux_handle_rom_change(struct menu_item* item, fullpath_func fullpath) {
 void emux_set_iec_dir(int unit, char* dir) {
   resources_set_string_sprintf("FSDevice%iDir", dir, unit);
 }
+
+void emux_set_int(IntSetting setting, int value) {
+ switch (setting) {
+   case Setting_C128ColumnKey:
+     resources_set_int("C128ColumnKey", value);
+     break;
+   case Setting_Datasette:
+     resources_set_int("Datasette", value);
+     break;
+   case Setting_DatasetteResetWithCPU:
+     resources_set_int("DatasetteResetWithCPU", value);
+     break;
+   case Setting_DriveSoundEmulation:
+     resources_set_int("DriveSoundEmulation", value);
+     break;
+   case Setting_DriveSoundEmulationVolume:
+     resources_set_int("DriveSoundEmulationVolume", value);
+     break;
+   case Setting_Mouse:
+     resources_set_int("Mouse", value);
+     break;
+   case Setting_RAMBlock0:
+     resources_set_int("RAMBlock0", value);
+     break;
+   case Setting_RAMBlock1:
+     resources_set_int("RAMBlock1", value);
+     break;
+   case Setting_RAMBlock2:
+     resources_set_int("RAMBlock2", value);
+     break;
+   case Setting_RAMBlock3:
+     resources_set_int("RAMBlock3", value);
+     break;
+   case Setting_RAMBlock5:
+     resources_set_int("RAMBlock5", value);
+     break;
+   case Setting_SidEngine:
+     resources_set_int("SidEngine", value);
+     break;
+   case Setting_SidFilters:
+     resources_set_int("SidFilters", value);
+     break;
+   case Setting_SidModel:
+     resources_set_int("SidModel", value);
+     break;
+   case Setting_SidResidSampling:
+     resources_set_int("SidResidSampling", value);
+     break;
+   default:
+     assert(0);
+ }
+}
+
+void emux_set_int_1(IntSetting setting, int value, int param) {
+ switch (setting) {
+   case Setting_FileSystemDeviceN:
+     resources_set_int_sprintf("FileSystemDevice%i", value, param);
+     break;
+   case Setting_DriveNParallelCable:
+     resources_set_int_sprintf("Drive%iParallelCable", value, param);
+     break;
+   case Setting_DriveNType:
+     resources_set_int_sprintf("Drive%iType", value, param);
+     break;
+   case Setting_IECDeviceN:
+     resources_set_int_sprintf("IECDevice%i", value, param);
+     break;
+   default:
+     assert(0);
+ }
+}

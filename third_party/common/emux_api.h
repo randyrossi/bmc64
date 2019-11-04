@@ -65,6 +65,29 @@ typedef enum {
    DIR_IEC,
 } DirType;
 
+typedef enum {
+  Setting_C128ColumnKey,
+  Setting_Datasette,
+  Setting_DatasetteResetWithCPU,
+  Setting_DriveNParallelCable,
+  Setting_DriveNType,
+  Setting_DriveSoundEmulation,
+  Setting_DriveSoundEmulationVolume,
+  Setting_FileSystemDeviceN,
+  Setting_IECDeviceN,
+  Setting_Mouse,
+  Setting_RAMBlock0, // Vic20
+  Setting_RAMBlock1, // Vic20
+  Setting_RAMBlock2, // Vic20
+  Setting_RAMBlock3, // Vic20
+  Setting_RAMBlock5, // Vic20
+  Setting_SidEngine,
+  Setting_SidFilters,
+  Setting_SidModel,
+  Setting_SidResidSampling,
+  Setting_WarpMode,
+} IntSetting;
+
 // Types of queued joystick events for calls into emulator API
 #define PENDING_EMU_JOY_TYPE_ABSOLUTE 0
 #define PENDING_EMU_JOY_TYPE_AND 1
@@ -302,6 +325,10 @@ void emux_handle_rom_change(struct menu_item* item, fullpath_func fullpath);
 
 // Sets the directory for IEC emulation.
 void emux_set_iec_dir(int unit, char* dir);
+
+// Set a setting integer value.
+void emux_set_int(IntSetting setting, int value);
+void emux_set_int_1(IntSetting setting, int value, int param);
 
 // VICE specific cart attach func.
 void emux_vice_attach_cart(int menu_id, char* filename);
