@@ -701,13 +701,13 @@ static int save_settings() {
 
   int drive_type;
 
-  resources_get_int_sprintf("Drive%iType", &drive_type, 8);
+  emux_get_int_1(Setting_DriveNType, &drive_type, 8);
   fprintf(fp, "drive_type_8=%d\n", drive_type);
-  resources_get_int_sprintf("Drive%iType", &drive_type, 9);
+  emux_get_int_1(Setting_DriveNType, &drive_type, 9);
   fprintf(fp, "drive_type_9=%d\n", drive_type);
-  resources_get_int_sprintf("Drive%iType", &drive_type, 10);
+  emux_get_int_1(Setting_DriveNType, &drive_type, 10);
   fprintf(fp, "drive_type_10=%d\n", drive_type);
-  resources_get_int_sprintf("Drive%iType", &drive_type, 11);
+  emux_get_int_1(Setting_DriveNType, &drive_type, 11);
   fprintf(fp, "drive_type_11=%d\n", drive_type);
 
   fprintf(fp, "pot_x_high=%d\n", pot_x_high_value);
@@ -767,8 +767,8 @@ static void load_settings() {
   emux_load_sound_options();
 
 #ifndef RASPI_LITE
-  resources_get_int("DriveSoundEmulation", &drive_sounds_item->value);
-  resources_get_int("DriveSoundEmulationVolume", &drive_sounds_vol_item->value);
+  emux_get_int(Setting_DriveSoundEmulation, &drive_sounds_item->value);
+  emux_get_int(Setting_DriveSoundEmulationVolume, &drive_sounds_vol_item->value);
 #endif
 
   brightness_item_0->value = emux_get_color_brightness(0);
@@ -783,7 +783,7 @@ static void load_settings() {
     gamma_item_1->value = emux_get_color_gamma(1);
     tint_item_1->value = emux_get_color_tint(1);
     emux_video_color_setting_changed(1);
-    resources_get_int("C128ColumnKey", &c40_80_column_item->value);
+    emux_get_int(Setting_C128ColumnKey, &c40_80_column_item->value);
   }
 
   // Default pot values for buttons
@@ -2332,7 +2332,7 @@ void build_menu(struct menu_item *root) {
     parent = ui_menu_add_folder(drive_parent, "Drive 8");
 
     if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
-     resources_get_int_sprintf("IECDevice%i", &tmp, 8);
+     emux_get_int_1(Setting_IECDeviceN, &tmp, 8);
      ui_menu_add_toggle(MENU_IECDEVICE_8, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_8, parent, "Select IEC Dir...");
     }
@@ -2343,7 +2343,7 @@ void build_menu(struct menu_item *root) {
 
     parent = ui_menu_add_folder(drive_parent, "Drive 9");
     if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
-     resources_get_int_sprintf("IECDevice%i", &tmp, 9);
+     emux_get_int_1(Setting_IECDeviceN, &tmp, 9);
      ui_menu_add_toggle(MENU_IECDEVICE_9, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_9, parent, "Select IEC Dir...");
     }
@@ -2354,7 +2354,7 @@ void build_menu(struct menu_item *root) {
 
     parent = ui_menu_add_folder(drive_parent, "Drive 10");
     if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
-     resources_get_int_sprintf("IECDevice%i", &tmp, 10);
+     emux_get_int_1(Setting_IECDeviceN, &tmp, 10);
      ui_menu_add_toggle(MENU_IECDEVICE_10, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_10, parent, "Select IEC Dir...");
     }
@@ -2365,7 +2365,7 @@ void build_menu(struct menu_item *root) {
 
     parent = ui_menu_add_folder(drive_parent, "Drive 11");
     if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
-     resources_get_int_sprintf("IECDevice%i", &tmp, 11);
+     emux_get_int_1(Setting_IECDeviceN, &tmp, 11);
      ui_menu_add_toggle(MENU_IECDEVICE_11, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_11, parent, "Select IEC Dir...");
     }
@@ -2413,7 +2413,7 @@ void build_menu(struct menu_item *root) {
     ui_menu_add_button(MENU_TAPE_RECORD, tape_parent, "Record");
     ui_menu_add_button(MENU_TAPE_RESET, tape_parent, "Reset");
     ui_menu_add_button(MENU_TAPE_RESET_COUNTER, tape_parent, "Reset Counter");
-    resources_get_int("DatasetteResetWithCPU", &tmp);
+    emux_get_int(Setting_DatasetteResetWithCPU, &tmp);
     tape_reset_with_machine_item =
       ui_menu_add_toggle(MENU_TAPE_RESET_WITH_MACHINE, tape_parent,
                          "Reset Tape with Machine Reset", tmp);
@@ -2810,13 +2810,13 @@ void build_menu(struct menu_item *root) {
 
   // Restore last iec dirs for all drives
   const char *tmpf;
-  resources_get_string_sprintf("FSDevice%iDir", &tmpf, 8);
+  emux_get_string_1(Setting_FSDeviceNDir, &tmpf, 8);
   strcpy (last_iec_dir[0], tmpf);
-  resources_get_string_sprintf("FSDevice%iDir", &tmpf, 9);
+  emux_get_string_1(Setting_FSDeviceNDir, &tmpf, 9);
   strcpy (last_iec_dir[1], tmpf);
-  resources_get_string_sprintf("FSDevice%iDir", &tmpf, 10);
+  emux_get_string_1(Setting_FSDeviceNDir, &tmpf, 10);
   strcpy (last_iec_dir[2], tmpf);
-  resources_get_string_sprintf("FSDevice%iDir", &tmpf, 11);
+  emux_get_string_1(Setting_FSDeviceNDir, &tmpf, 11);
   strcpy (last_iec_dir[3], tmpf);
 }
 
@@ -2839,7 +2839,7 @@ void menu_quick_func(int button_assignment) {
   int value;
   switch (button_assignment) {
   case BTN_ASSIGN_WARP:
-    resources_get_int("WarpMode", &value);
+    emux_get_int(Setting_WarpMode, &value);
     toggle_warp(1 - value);
     break;
   case BTN_ASSIGN_SWAP_PORTS:

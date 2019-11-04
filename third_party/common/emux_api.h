@@ -88,6 +88,10 @@ typedef enum {
   Setting_WarpMode,
 } IntSetting;
 
+typedef enum {
+  Setting_FSDeviceNDir,
+} StringSetting;
+
 // Types of queued joystick events for calls into emulator API
 #define PENDING_EMU_JOY_TYPE_ABSOLUTE 0
 #define PENDING_EMU_JOY_TYPE_AND 1
@@ -329,6 +333,9 @@ void emux_set_iec_dir(int unit, char* dir);
 // Set a setting integer value.
 void emux_set_int(IntSetting setting, int value);
 void emux_set_int_1(IntSetting setting, int value, int param);
+void emux_get_int(IntSetting setting, int* dest);
+void emux_get_int_1(IntSetting setting, int* dest, int param);
+void emux_get_string_1(StringSetting setting, const char** dest, int param);
 
 // VICE specific cart attach func.
 void emux_vice_attach_cart(int menu_id, char* filename);

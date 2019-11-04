@@ -590,3 +590,48 @@ void emux_set_int_1(IntSetting setting, int value, int param) {
      assert(0);
  }
 }
+
+void emux_get_int(IntSetting setting, int* dest) {
+  switch (setting) {
+    case Setting_WarpMode:
+      resources_get_int("WarpMode", dest);
+      break;
+    case Setting_DriveSoundEmulation:
+      resources_get_int("DriveSoundEmulation", dest);
+      break;
+    case Setting_DriveSoundEmulationVolume:
+      resources_get_int("DriveSoundEmulationVolume", dest);
+      break;
+    case Setting_C128ColumnKey:
+      resources_get_int("C128ColumnKey", dest);
+      break;
+    case Setting_DatasetteResetWithCPU:
+      resources_get_int("DatasetteResetWithCPU", dest);
+      break;
+    default:
+      assert(0);
+  }
+}
+
+void emux_get_int_1(IntSetting setting, int* dest, int param) {
+  switch (setting) {
+    case Setting_DriveNType:
+      resources_get_int_sprintf("Drive%iType", dest, param);
+      break;
+    case Setting_IECDeviceN:
+      resources_get_int_sprintf("IECDevice%i", dest, param);
+      break;
+    default:
+      assert(0);
+  }
+}
+
+void emux_get_string_1(StringSetting setting, const char** dest, int param) {
+  switch (setting) {
+    case Setting_FSDeviceNDir:
+      resources_get_string_sprintf("FSDevice%iDir", dest, param);
+      break;
+    default:
+      assert(0);
+  }
+}
