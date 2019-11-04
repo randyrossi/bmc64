@@ -307,6 +307,20 @@ int main_program(int argc, char **argv)
   vic_enabled = 1; // really TED
   ui_init_menu();
 
+  canvas_state[0].gfx_w = 40*8;
+  canvas_state[0].gfx_h = 25*8;
+
+  int timing = circle_get_machine_timing();
+  if (timing == MACHINE_TIMING_NTSC_HDMI ||
+      timing == MACHINE_TIMING_NTSC_COMPOSITE ||
+      timing == MACHINE_TIMING_NTSC_CUSTOM) {
+    canvas_state[vic_canvas_index].max_border_w = 32;
+    canvas_state[vic_canvas_index].max_border_h = 16;
+  } else {
+    canvas_state[vic_canvas_index].max_border_w = 32;
+    canvas_state[vic_canvas_index].max_border_h = 40;
+  }
+
   set_video_font();
 
   /* run Plus/4 emulation until the F12 key is pressed */
