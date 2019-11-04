@@ -1012,8 +1012,7 @@ static void attach_cart(int menu_id, struct menu_item *item) {
 static void select_file(struct menu_item *item) {
   switch (item->id) {
      case MENU_IEC_DIR:
-       resources_set_string_sprintf("FSDevice%iDir",
-          fullpath(DIR_IEC, ""), unit);
+       emux_set_iec_dir(unit, fullpath(DIR_IEC, ""));
        strcpy(last_iec_dir[unit-8], fullpath(DIR_IEC, ""));
        ui_pop_menu();
        return;
@@ -1425,10 +1424,10 @@ static void do_video_settings(int layer,
 static void menu_machine_reset(int type, int pop) {
   // The IEC dir may have been changed by the emulated machine. On reset,
   // we reset back to the last dir set by the user.
-  resources_set_string_sprintf("FSDevice%iDir", last_iec_dir[0], 8);
-  resources_set_string_sprintf("FSDevice%iDir", last_iec_dir[1], 9);
-  resources_set_string_sprintf("FSDevice%iDir", last_iec_dir[2], 10);
-  resources_set_string_sprintf("FSDevice%iDir", last_iec_dir[3], 11);
+  emux_set_iec_dir(8, last_iec_dir[0]);
+  emux_set_iec_dir(9, last_iec_dir[1]);
+  emux_set_iec_dir(10, last_iec_dir[2]);
+  emux_set_iec_dir(11, last_iec_dir[3]);
   emux_reset(type);
   if (pop) {
      ui_pop_all_and_toggle();

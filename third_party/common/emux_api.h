@@ -300,6 +300,9 @@ int emux_get_vkbd_size(void);
 // Handles one of the MENU_*_FILE rom change events from the menu
 void emux_handle_rom_change(struct menu_item* item, fullpath_func fullpath);
 
+// Sets the directory for IEC emulation.
+void emux_set_iec_dir(int unit, char* dir);
+
 // VICE specific cart attach func.
 void emux_vice_attach_cart(int menu_id, char* filename);
 void emux_vice_easy_flash(void);

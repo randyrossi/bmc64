@@ -515,3 +515,7 @@ void emux_handle_rom_change(struct menu_item* item, fullpath_func fullpath) {
        assert(0);
   }
 }
+
+void emux_set_iec_dir(int unit, char* dir) {
+  resources_set_string_sprintf("FSDevice%iDir", dir, unit);
+}
