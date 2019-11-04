@@ -291,9 +291,9 @@ int main_program(int argc, char **argv)
   if (Plus4VM_SetWorkingDirectory(vm, ".") != PLUS4EMU_SUCCESS)
     vmError();
   /* enable read-write IEC level drive emulation for unit 8 */
-  //Plus4VM_SetIECDriveReadOnlyMode(vm, 0);
-  if (Plus4VM_SetDiskImageFile(vm, 0, "disks/plus4/advmono.d64", 0) != PLUS4EMU_SUCCESS)
-    vmError();
+  Plus4VM_SetIECDriveReadOnlyMode(vm, 0);
+  emux_detach_disk(0);
+
   Plus4VM_Reset(vm, 1);
 
   videoDecoder =
@@ -426,10 +426,14 @@ void emux_kbd_set_latch_keyarr(int row, int col, int value) {
 }
 
 int emux_attach_disk_image(int unit, char *filename) {
+  if (Plus4VM_SetDiskImageFile(vm, 0, filename, 0) != PLUS4EMU_SUCCESS) {
+    return 1;
+  }
   return 0;
 }
 
 void emux_detach_disk(int unit) {
+  Plus4VM_SetDiskImageFile(vm, 0, "", 1);
 }
 
 int emux_attach_tape_image(char *filename) {
@@ -450,6 +454,7 @@ void emux_detach_cart(int bank) {
 }
 
 void emux_reset(int isSoft) {
+  Plus4VM_Reset(vm, 1);
 }
 
 int emux_save_state(char *filename) {

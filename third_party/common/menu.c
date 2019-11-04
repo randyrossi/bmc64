@@ -412,6 +412,7 @@ static void show_about() {
     strncpy (desc, "A Bare Metal VIC20 Emulator", 31);
     break;
   case BMC64_MACHINE_CLASS_PLUS4:
+  case BMC64_MACHINE_CLASS_PLUS4EMU:
     snprintf (title, 15, "%s%s %s", "BMPLUS4", VARIANT_STRING, VERSION_STRING);
     strncpy (desc, "A Bare Metal PLUS/4 Emulator", 31);
     break;
@@ -2275,6 +2276,7 @@ void build_menu(struct menu_item *root) {
     strcpy(machine_sub_dir, "/VIC20");
     break;
   case BMC64_MACHINE_CLASS_PLUS4:
+  case BMC64_MACHINE_CLASS_PLUS4EMU:
     strcat(machine_info_txt,"PLUS/4 ");
     strcpy(machine_sub_dir, "/PLUS4");
     break;
