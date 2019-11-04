@@ -30,6 +30,8 @@
 
 #include "circle.h"
 #include "overlay.h"
+#include "menu.h"
+#include "menu_timing.h"
 #include "menu_usb.h"
 
 int emux_machine_class = BMC64_MACHINE_CLASS_UNKNOWN;
@@ -223,4 +225,21 @@ void emu_joy_interrupt_abs(int port, int device,
   if (js_fire) val |= 0x10;
   add_pot_values(&val, pot_x, pot_y);
   emux_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, port, device, val);
+}
+
+void emu_pause_trap(uint16_t addr, void *data) {
+  menu_about_to_activate();
+  circle_show_fbl(FB_LAYER_UI);
+  while (ui_enabled) {
+    circle_check_gpio();
+    ui_check_key();
+
+    ui_handle_toggle_or_quick_func();
+
+    ui_render_single_frame();
+    hdmi_timing_hook();
+    emux_ensure_video();
+  }
+  menu_about_to_deactivate();
+  circle_hide_fbl(FB_LAYER_UI);
 }

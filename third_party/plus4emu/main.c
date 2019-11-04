@@ -16,6 +16,7 @@ static Plus4VideoDecoder  *videoDecoder = NULL;
 
 static uint8_t          *fb_buf;
 static int              fb_pitch;
+static int              ui_trap;
 
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
@@ -284,6 +285,9 @@ int main_program(int argc, char **argv)
   Plus4VM_SetVideoOutputCallback(vm, &Plus4VideoDecoder_VideoCallback,
                                  (void *) videoDecoder);
 
+  vic_enabled = 1; // really TED
+  ui_init_menu();
+
   /* run Plus/4 emulation until the F12 key is pressed */
   printf ("Enter emulation loop\n");
 
@@ -334,6 +338,13 @@ int main_program(int argc, char **argv)
 
     // TODO: joystick dequeue
 
+    if (ui_trap) {
+        circle_lock_release();
+        emu_pause_trap(0, NULL);
+        circle_lock_acquire();
+        ui_trap = 0;
+    }
+
     circle_lock_release();
 
     ui_handle_toggle_or_quick_func();
@@ -382,6 +393,9 @@ int main(int argc, char *argv[]) {
 
 // STUBS FOR NOW
 void emux_trap_main_loop_ui(void) {
+  circle_lock_acquire();
+  ui_trap = 1;
+  circle_lock_release();
 }
 
 void emux_trap_main_loop(void (*trap_func)(uint16_t, void *data), void* data) {
@@ -519,7 +533,7 @@ void emux_set_warp(int warp) {
 }
 
 void emux_change_palette(int display_num, int palette_index) {
-  assert(0); // should never be called for plus4emu
+  // Ignore
 }
 
 void emux_handle_rom_change(struct menu_item* item, fullpath_func fullpath) {

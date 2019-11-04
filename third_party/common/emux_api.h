@@ -355,4 +355,6 @@ void emux_ensure_video(void);
 void emux_vice_attach_cart(int menu_id, char* filename);
 void emux_vice_easy_flash(void);
 
+void emu_pause_trap(uint16_t addr, void *data);
+
 #endif

@@ -628,6 +628,7 @@ static int save_settings() {
     fp = fopen("/settings-vic20.txt", "w");
     break;
   case BMC64_MACHINE_CLASS_PLUS4:
+  case BMC64_MACHINE_CLASS_PLUS4EMU:
     fp = fopen("/settings-plus4.txt", "w");
     break;
   default:
@@ -801,6 +802,7 @@ static void load_settings() {
     fp = fopen("/settings-vic20.txt", "r");
     break;
   case BMC64_MACHINE_CLASS_PLUS4:
+  case BMC64_MACHINE_CLASS_PLUS4EMU:
     fp = fopen("/settings-plus4.txt", "r");
     break;
   default:

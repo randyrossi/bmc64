@@ -61,23 +61,6 @@ struct menu_item *sid_engine_item;
 struct menu_item *sid_model_item;
 struct menu_item *sid_filter_item;
 
-static void pause_trap(uint16_t addr, void *data) {
-  menu_about_to_activate();
-  circle_show_fbl(FB_LAYER_UI);
-  while (ui_enabled) {
-    circle_check_gpio();
-    ui_check_key();
-
-    ui_handle_toggle_or_quick_func();
-
-    ui_render_single_frame();
-    hdmi_timing_hook();
-    emux_ensure_video();
-  }
-  menu_about_to_deactivate();
-  circle_hide_fbl(FB_LAYER_UI);
-}
-
 void emu_machine_init(void) {
   switch (machine_class) {
     case VICE_MACHINE_C64:
@@ -99,7 +82,7 @@ void emu_machine_init(void) {
 }
 
 void emux_trap_main_loop_ui(void) {
-  interrupt_maincpu_trigger_trap(pause_trap, 0);
+  interrupt_maincpu_trigger_trap(emu_pause_trap, 0);
 }
 
 void emux_trap_main_loop(void (*trap_func)(uint16_t, void *data), void* data) {
