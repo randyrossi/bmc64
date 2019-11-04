@@ -26,6 +26,8 @@
 
 #include "emux_api.h"
 
+#include <assert.h>
+
 #include "circle.h"
 #include "overlay.h"
 
@@ -34,12 +36,16 @@ int vic_showing;
 int vdc_showing;
 int vic_enabled;
 int vdc_enabled;
+int vdc_canvas_index;
+int vic_canvas_index;
 
 // Ring buffer for key latch events
 struct pending_emu_key_s pending_emu_key;
 
 // Ring buffer for joy latch events
 struct pending_emu_joy_s pending_emu_joy;
+
+struct CanvasState canvas_state[2];
 
 // queue a key for press/release for the main loop
 void emux_key_interrupt(long key, int pressed) {
@@ -118,4 +124,85 @@ void emux_ensure_video(void) {
      circle_show_fbl(FB_LAYER_UI);
      ui_showing = 1;
   }
+}
+
+void emux_apply_video_adjustments(int layer,
+      int hcenter, int vcenter,
+      double hborder, double vborder, double aspect,
+      double lpad, double rpad, double tpad, double bpad,
+      int zlayer) {
+  // Hide the layer. Can't show it here on the same loop so we have to
+  // allow emux_ensure_video() to do it for us.  If the canvas is enabled, it
+  // will be shown again and our new settings will take effect.
+  int index;
+
+  circle_hide_fbl(layer);
+  if (layer == FB_LAYER_VIC) {
+     vic_showing = 0;
+     index = vic_canvas_index;
+  } else if (layer == FB_LAYER_VDC) {
+     assert (layer == FB_LAYER_VDC);
+     vdc_showing = 0;
+     index = vdc_canvas_index;
+  } else if (layer == FB_LAYER_UI) {
+     index = -1;
+     ui_showing = 0;
+  } else {
+     assert(0);
+  }
+
+  circle_set_zlayer_fbl(layer, zlayer);
+  circle_set_padding_fbl(layer, lpad, rpad, tpad, bpad);
+
+  circle_set_aspect_fbl(layer, aspect);
+
+  if (index >= 0) {
+    canvas_state[index].border_w =
+       canvas_state[index].max_border_w * hborder;
+    canvas_state[index].border_h =
+       canvas_state[index].max_border_h * vborder;
+
+    canvas_state[index].vis_w =
+       canvas_state[index].gfx_w +
+          canvas_state[index].border_w*2;
+    canvas_state[index].vis_h =
+       canvas_state[index].gfx_h +
+          canvas_state[index].border_h*2;
+
+    canvas_state[index].src_off_x =
+       canvas_state[index].max_border_w -
+           canvas_state[index].border_w;
+
+    canvas_state[index].src_off_y =
+       canvas_state[index].max_border_h -
+           canvas_state[index].border_h;
+
+    canvas_state[index].left =
+       canvas_state[index].extra_offscreen_border_left +
+           canvas_state[index].src_off_x;
+
+    canvas_state[index].top =
+       canvas_state[index].first_displayed_line +
+           canvas_state[index].src_off_y;
+
+    // Cut out is defined by top,left,vis_w,vis_h
+
+    canvas_state[index].overlay_y =
+       canvas_state[index].top +
+            canvas_state[index].max_border_h +
+                canvas_state[index].gfx_h + 2;
+
+    canvas_state[index].overlay_x = canvas_state[index].left;
+  }
+
+  if (layer != FB_LAYER_UI) {
+     circle_set_src_rect_fbl(layer,
+           canvas_state[index].left,
+           canvas_state[index].top,
+           canvas_state[index].vis_w,
+           canvas_state[index].vis_h);
+  }
+
+  circle_set_center_offset(layer,
+           hcenter, vcenter);          
 }

@@ -143,7 +143,13 @@ struct CanvasState {
   // Where does the status overlay show up?
   int overlay_x;
   int overlay_y;
+
+  int extra_offscreen_border_left;
+  int first_displayed_line;
 };
+
+// One struct for each display (can be 2 for C128)
+extern struct CanvasState canvas_state[2];
 
 struct vkbd_key {
   int x;
@@ -191,11 +197,14 @@ struct vkbd_key {
 
 typedef struct vkbd_key* vkbd_key_array;
 
+// NOTE: For Plus4 vic == ted
 extern int emux_machine_class;
 extern int vic_showing;
 extern int vdc_showing;
 extern int vic_enabled;
 extern int vdc_enabled;
+extern int vdc_canvas_index;
+extern int vic_canvas_index;
 
 // Pause emulator main loop and run our ui loop. 
 void emux_trap_main_loop_ui(void);
