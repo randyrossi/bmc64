@@ -10,6 +10,7 @@
 #include "../common/keycodes.h"
 #include "../common/overlay.h"
 #include "../common/demo.h"
+#include "../common/menu.h"
 
 static Plus4VM            *vm = NULL;
 static Plus4VideoDecoder  *videoDecoder = NULL;
@@ -19,6 +20,10 @@ static int              fb_pitch;
 static int              ui_trap;
 static int              ui_warp;
 static int              joy_latch_value[2];
+
+static struct menu_item *sid_model_item;
+static struct menu_item *sid_write_access_item;
+static struct menu_item *sid_digiblaster_item;
 
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
@@ -40,6 +45,11 @@ static void set_video_font(void) {
   }
 }
 
+static void apply_sid_config() {
+  int sid_flags = sid_model_item->choice_ints[sid_model_item->value];
+  if (sid_write_access_item->value) sid_flags |= 0x2;
+  Plus4VM_SetSIDConfiguration(vm, sid_flags, sid_digiblaster_item->value, 0);
+}
 
 static void errorMessage(const char *fmt, ...)
 {
@@ -312,6 +322,10 @@ int main_program(int argc, char **argv)
   vic_enabled = 1; // really TED
   ui_init_menu();
 
+  // Here, we should make whatever calls are necessary to configure the VM
+  // according to any settings that were loaded.
+  apply_sid_config();
+
   canvas_state[0].gfx_w = 40*8;
   canvas_state[0].gfx_h = 25*8;
 
@@ -573,10 +587,16 @@ void emux_reset(int isSoft) {
 }
 
 int emux_save_state(char *filename) {
+  if (Plus4VM_SaveState(vm, filename) != PLUS4EMU_SUCCESS) {
+    return 1;
+  }
   return 0;
 }
 
 int emux_load_state(char *filename) {
+  if (Plus4VM_LoadState(vm, filename) != PLUS4EMU_SUCCESS) {
+    return 1;
+  }
   return 0;
 }
 
@@ -616,9 +636,23 @@ void emux_set_joy_pot_y(int value) {
 }
 
 void emux_add_sound_options(struct menu_item* parent) {
-}
+  // TODO: Why is 6581 so slow?
+  struct menu_item* child = sid_model_item =
+      ui_menu_add_multiple_choice(MENU_SID_MODEL, parent, "Sid Model");
+  child->num_choices = 1;
+  child->value = 0;
+  strcpy(child->choices[0], "8580");
+  child->choice_ints[0] = 0; // 8580 for sidflags
 
-void emux_load_sound_options(void) {
+  // Write access at $d400-d41f
+  child = sid_write_access_item =
+      ui_menu_add_toggle(MENU_SID_WRITE_D400, parent,
+          "Write Access $D400-D41F", 0);
+
+  // Digiblaster
+  child = sid_digiblaster_item =
+      ui_menu_add_toggle(MENU_SID_DIGIBLASTER, parent,
+          "Enable Digiblaster", 0);
 }
 
 void emux_video_color_setting_changed(int display_num) {
@@ -720,3 +754,31 @@ void emux_vice_attach_cart(int menu_id, char* filename) {
 void emux_vice_easy_flash(void) {
   assert(0);
 }
+
+int emux_handle_menu_change(struct menu_item* item) {
+  switch (item->id) {
+    case MENU_SID_MODEL:
+    case MENU_SID_WRITE_D400:
+    case MENU_SID_DIGIBLASTER:
+      apply_sid_config();
+      return 1;
+  }
+  return 0;
+}
+
+void emux_handle_load_setting(char *name, int value, char* value_str) {
+  if (strcmp(name,"sid_model") == 0) {
+     sid_model_item->value = value;
+  } else if (strcmp(name,"sid_write_access") == 0) {
+     sid_write_access_item->value = value;
+  } else if (strcmp(name,"sid_digiblaster") == 0) {
+     sid_digiblaster_item->value = value;
+  }
+}
+
+void emux_handle_save_settings(FILE *fp) {
+  fprintf (fp,"sid_model=%d\n", sid_model_item->value);
+  fprintf (fp,"sid_write_access=%d\n", sid_write_access_item->value);
+  fprintf (fp,"sid_digiblaster=%d\n", sid_digiblaster_item->value);
+}
+

@@ -29,6 +29,7 @@
 #ifndef RASPI_EMUX_API_H_
 #define RASPI_EMUX_API_H_
 
+#include <stdio.h>
 #include <stdint.h>
 
 #include "ui.h"
@@ -83,10 +84,12 @@ typedef enum {
   Setting_RAMBlock2, // Vic20
   Setting_RAMBlock3, // Vic20
   Setting_RAMBlock5, // Vic20
-  Setting_SidEngine,
-  Setting_SidFilters,
+  Setting_SidEngine, // Vice
+  Setting_SidFilters, // Vice
   Setting_SidModel,
-  Setting_SidResidSampling,
+  Setting_SidResidSampling, // Vice
+  Setting_SidWriteAccess, // Plus4Emu
+  Setting_SidDigiblaster, // Plus4Emu
   Setting_WarpMode,
 } IntSetting;
 
@@ -285,7 +288,6 @@ void emux_set_joy_pot_x(int value);
 void emux_set_joy_pot_y(int value);
 
 void emux_add_sound_options(struct menu_item* parent);
-void emux_load_sound_options(void);
 
 void emux_video_color_setting_changed(int display_num);
 
@@ -358,5 +360,11 @@ void emux_vice_attach_cart(int menu_id, char* filename);
 void emux_vice_easy_flash(void);
 
 void emu_pause_trap(uint16_t addr, void *data);
+
+// Return 1 to indicate item was handled, 0 otherwise
+int emux_handle_menu_change(struct menu_item* item);
+
+void emux_handle_load_setting(char *name, int value, char* value_str);
+void emux_handle_save_settings(FILE *fp);
 
 #endif

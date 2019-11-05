@@ -384,6 +384,28 @@ void emux_detach_tape(void) {
    tape_image_detach(1);
 }
 
+static int viceSidEngineToBmcChoice(int viceEngine) {
+  switch (viceEngine) {
+  case SID_ENGINE_FASTSID:
+    return MENU_SID_ENGINE_FAST;
+  case SID_ENGINE_RESID:
+    return MENU_SID_ENGINE_RESID;
+  default:
+    return MENU_SID_ENGINE_RESID;
+  }
+}
+
+static int viceSidModelToBmcChoice(int viceModel) {
+  switch (viceModel) {
+  case SID_MODEL_6581:
+    return MENU_SID_MODEL_6581;
+  case SID_MODEL_8580:
+    return MENU_SID_MODEL_8580;
+  default:
+    return MENU_SID_MODEL_6581;
+  }
+}
+
 void emux_add_sound_options(struct menu_item* parent) {
   // Resid by default
   struct menu_item* child = sid_engine_item =
@@ -408,31 +430,7 @@ void emux_add_sound_options(struct menu_item* parent) {
   // Filter on by default
   child = sid_filter_item =
       ui_menu_add_toggle(MENU_SID_FILTER, parent, "Sid Filter", 0);
-}
 
-static int viceSidEngineToBmcChoice(int viceEngine) {
-  switch (viceEngine) {
-  case SID_ENGINE_FASTSID:
-    return MENU_SID_ENGINE_FAST;
-  case SID_ENGINE_RESID:
-    return MENU_SID_ENGINE_RESID;
-  default:
-    return MENU_SID_ENGINE_RESID;
-  }
-}
-
-static int viceSidModelToBmcChoice(int viceModel) {
-  switch (viceModel) {
-  case SID_MODEL_6581:
-    return MENU_SID_MODEL_6581;
-  case SID_MODEL_8580:
-    return MENU_SID_MODEL_8580;
-  default:
-    return MENU_SID_MODEL_6581;
-  }
-}
-
-void emux_load_sound_options(void) {
   int tmp_value;
 
   resources_get_int("SidEngine", &tmp_value);
@@ -622,3 +620,17 @@ void emux_get_string_1(StringSetting setting, const char** dest, int param) {
 int emux_save_settings(void) {
    return resources_save(NULL);
 }
+
+int emux_handle_menu_change(struct menu_item* item) {
+  // TODO: Put VICE specific menu item handling here if possible
+  return 0;
+}
+
+void emux_handle_load_setting(char *name, int value, char* value_str) {
+  // TODO: Put VICE specific settings here.
+}
+
+void emux_handle_save_settings(FILE *fp) {
+  // TODO: Put VICE specific settings here.
+}
+

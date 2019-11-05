@@ -739,6 +739,8 @@ static int save_settings() {
 
   fprintf(fp, "volume=%d\n", volume_item->value);
 
+  emux_handle_save_settings(fp);
+
   fclose(fp);
 
   return 0;
@@ -762,8 +764,6 @@ static void ui_set_joy_devs() {
 static void load_settings() {
 
   int tmp_value;
-
-  emux_load_sound_options();
 
 #ifndef RASPI_LITE
   emux_get_int(Setting_DriveSoundEmulation, &drive_sounds_item->value);
@@ -981,6 +981,8 @@ static void load_settings() {
       aspect_item_1->value = value;
     } else if (strcmp(name, "volume") == 0) {
       volume_item->value = value;
+    } else {
+      emux_handle_load_setting(name, value, value_str);
     }
   }
   fclose(fp);
@@ -1468,6 +1470,10 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_PARALLEL_11:
     unit = 11;
     break;
+  }
+
+  if (emux_handle_menu_change(item)) {
+    return;
   }
 
   switch (item->id) {
