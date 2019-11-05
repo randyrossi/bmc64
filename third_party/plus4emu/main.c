@@ -18,6 +18,7 @@ static uint8_t          *fb_buf;
 static int              fb_pitch;
 static int              ui_trap;
 static int              ui_warp;
+static int              joy_latch_value[2];
 
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
@@ -378,7 +379,100 @@ int main_program(int argc, char **argv)
       pending_emu_key.head++;
     }
 
-    // TODO: joystick dequeue
+    // Joystick event dequeue
+    while (pending_emu_joy.head != pending_emu_joy.tail) {
+      int i = pending_emu_joy.head & 0x7f;
+      reset_demo = 1;
+      if (vkbd_enabled) {
+        int value = pending_emu_joy.value[i];
+        int devd = pending_emu_joy.device[i];
+        switch (pending_emu_joy.type[i]) {
+        case PENDING_EMU_JOY_TYPE_ABSOLUTE:
+          if (!vkbd_press[devd]) {
+             if (value & 0x1 && !vkbd_up[devd]) {
+               vkbd_up[devd] = 1;
+               vkbd_nav_up();
+             } else if (!(value & 0x1) && vkbd_up[devd]) {
+               vkbd_up[devd] = 0;
+             }
+             if (value & 0x2 && !vkbd_down[devd]) {
+               vkbd_down[devd] = 1;
+               vkbd_nav_down();
+             } else if (!(value & 0x2) && vkbd_down[devd]) {
+               vkbd_down[devd] = 0;
+             }
+             if (value & 0x4 && !vkbd_left[devd]) {
+               vkbd_left[devd] = 1;
+               vkbd_nav_left();
+             } else if (!(value & 0x4) && vkbd_left[devd]) {
+               vkbd_left[devd] = 0;
+             }
+             if (value & 0x8 && !vkbd_right[devd]) {
+               vkbd_right[devd] = 1;
+               vkbd_nav_right();
+             } else if (!(value & 0x8) && vkbd_right[devd]) {
+               vkbd_right[devd] = 0;
+             }
+          }
+          if (value & 0x10 && !vkbd_press[devd]) vkbd_nav_press(1, devd);
+          else if (!(value & 0x10) && vkbd_press[devd]) vkbd_nav_press(0, devd);
+          break;
+        }
+      } else {
+        int port = pending_emu_joy.port[i]-1;
+        int oldv = joy_latch_value[port];
+        switch (pending_emu_joy.type[i]) {
+        case PENDING_EMU_JOY_TYPE_ABSOLUTE:
+          // If new bit is 0 and old bit is 1, it is an up event
+          // If new bit is 1 and old bit is 0, it is a down event
+          joy_latch_value[port] = pending_emu_joy.value[i];
+          break;
+        case PENDING_EMU_JOY_TYPE_AND:
+          // If new bit is 0 and old bit is 1, it is an up event
+          joy_latch_value[port] &= pending_emu_joy.value[i];
+          break;
+        case PENDING_EMU_JOY_TYPE_OR:
+          // If new bit is 1 and old bit is 0, it is a down event
+          joy_latch_value[port] |= pending_emu_joy.value[i];
+          break;
+        default:
+          break;
+        }
+
+        //    72: Joy2 Up     73: Joy2 Down   74: Joy2 Left   75: Joy2 Right
+        //    79: Joy2 Fire
+        //    80: Joy1 Up     81: Joy1 Down   82: Joy1 Left   83: Joy1 Right
+        //    86: Joy1 Fire
+
+        int newv = joy_latch_value[port];
+        if (!(newv & 0x01) && (oldv & 0x01)) {
+          Plus4VM_KeyboardEvent(vm, 72 + 8*port, 0);
+        } else if ((newv & 0x01) && !(oldv & 0x01)) {
+          Plus4VM_KeyboardEvent(vm, 72 + 8*port, 1);
+        }
+        if (!(newv & 0x02) && (oldv & 0x02)) {
+          Plus4VM_KeyboardEvent(vm, 73 + 8*port, 0);
+        } else if ((newv & 0x02) && !(oldv & 0x02)) {
+          Plus4VM_KeyboardEvent(vm, 73 + 8*port, 1);
+        }
+        if (!(newv & 0x04) && (oldv & 0x04)) {
+          Plus4VM_KeyboardEvent(vm, 74 + 8*port, 0);
+        } else if ((newv & 0x04) && !(oldv & 0x04)) {
+          Plus4VM_KeyboardEvent(vm, 74 + 8*port, 1);
+        }
+        if (!(newv & 0x08) && (oldv & 0x08)) {
+          Plus4VM_KeyboardEvent(vm, 75 + 8*port, 0);
+        } else if ((newv & 0x08) && !(oldv & 0x08)) {
+          Plus4VM_KeyboardEvent(vm, 75 + 8*port, 1);
+        }
+        if (!(newv & 0x10) && (oldv & 0x10)) {
+          Plus4VM_KeyboardEvent(vm, 79 + 7*port, 0);
+        } else if ((newv & 0x10) && !(oldv & 0x10)) {
+          Plus4VM_KeyboardEvent(vm, 79 + 7*port, 1);
+        }
+      }
+      pending_emu_joy.head++;
+    }
 
     if (ui_trap) {
         circle_lock_release();
@@ -514,9 +608,11 @@ void emux_set_joy_port_device(int port_num, int dev_id) {
 }
 
 void emux_set_joy_pot_x(int value) {
+  // Not supported on plus4emu
 }
 
 void emux_set_joy_pot_y(int value) {
+  // Not supported on plus4emu
 }
 
 void emux_add_sound_options(struct menu_item* parent) {
