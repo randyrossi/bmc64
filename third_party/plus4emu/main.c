@@ -17,6 +17,7 @@ static Plus4VideoDecoder  *videoDecoder = NULL;
 static uint8_t          *fb_buf;
 static int              fb_pitch;
 static int              ui_trap;
+static int              ui_warp;
 
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
@@ -61,7 +62,8 @@ static void vmError(void)
 static void audioOutputCallback(void *userData,
                                 const int16_t *buf, size_t nFrames)
 {
-  circle_sound_write((int16_t*)buf, nFrames);
+  if (!ui_warp)
+     circle_sound_write((int16_t*)buf, nFrames);
 }
 
 static void videoLineCallback(void *userData,
@@ -76,7 +78,9 @@ static void videoLineCallback(void *userData,
 static void videoFrameCallback(void *userData)
 {
 #ifndef HOST_BUILD
-  circle_frames_ready_fbl(FB_LAYER_VIC, -1 /* no 2nd layer */, 1 /* sync */);
+  circle_frames_ready_fbl(FB_LAYER_VIC,
+                          -1 /* no 2nd layer */,
+                          !ui_warp /* sync */);
 #endif
 }
 
@@ -241,7 +245,7 @@ static int bmc64_keycode_to_plus4emu(long keycode) {
       case KEYCODE_Escape:
          return 63;
       default:
-         return 0;
+         return -1;
    }
 }
 
@@ -366,8 +370,11 @@ int main_program(int argc, char **argv)
         // key events.
         vkbd_sync_event(pending_emu_key.key[i], pending_emu_key.pressed[i]);
       }
-      Plus4VM_KeyboardEvent(vm, bmc64_keycode_to_plus4emu(
-         pending_emu_key.key[i]), pending_emu_key.pressed[i]);
+      int p4code = bmc64_keycode_to_plus4emu(
+         pending_emu_key.key[i]);
+      if (p4code >= 0) {
+         Plus4VM_KeyboardEvent(vm, p4code, pending_emu_key.pressed[i]);
+      }
       pending_emu_key.head++;
     }
 
@@ -570,6 +577,7 @@ struct menu_item* emux_add_cartridge_options(struct menu_item* parent) {
 }
 
 void emux_set_warp(int warp) {
+  ui_warp = warp;
 }
 
 void emux_change_palette(int display_num, int palette_index) {
@@ -589,6 +597,14 @@ void emux_set_int_1(IntSetting setting, int value, int param) {
 }
 
 void emux_get_int(IntSetting setting, int* dest) {
+   switch (setting) {
+      case Setting_WarpMode:
+          *dest = ui_warp;
+          break;
+      default:
+          printf ("WARNING: Tried to get unsupported setting %d\n",setting);
+          break;
+   }
 }
 
 void emux_get_int_1(IntSetting setting, int* dest, int param) {
