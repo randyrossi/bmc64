@@ -555,14 +555,14 @@ void emux_kbd_set_latch_keyarr(int row, int col, int value) {
 }
 
 int emux_attach_disk_image(int unit, char *filename) {
-  if (Plus4VM_SetDiskImageFile(vm, 0, filename, 0) != PLUS4EMU_SUCCESS) {
+  if (Plus4VM_SetDiskImageFile(vm, unit-8, filename, 0) != PLUS4EMU_SUCCESS) {
     return 1;
   }
   return 0;
 }
 
 void emux_detach_disk(int unit) {
-  Plus4VM_SetDiskImageFile(vm, 0, "", 1);
+  Plus4VM_SetDiskImageFile(vm, unit-8, "", 1);
 }
 
 int emux_attach_tape_image(char *filename) {

@@ -9,6 +9,7 @@ OBJS = main.o
 
 ifeq ($(HOST_BUILD),Y)
 CFLAGS_FOR_TARGET += -DHOST_BUILD
+OBJS = host_main.o
 endif
 
 %.o : %.c
@@ -26,6 +27,6 @@ clean:
 	rm -f *.o plus4emu
 
 # Host build only
-plus4emu: all main.o plus4lib/libplus4api.a src/libplus4.a resid/libresid.a
-	$(CXX) -o plus4emu main.o plus4lib/libplus4api.a \
+plus4emu: all host_main.o plus4lib/libplus4api.a src/libplus4.a resid/libresid.a
+	$(CXX) -o plus4emu host_main.o plus4lib/libplus4api.a \
 	src/libplus4.a resid/libresid.a
