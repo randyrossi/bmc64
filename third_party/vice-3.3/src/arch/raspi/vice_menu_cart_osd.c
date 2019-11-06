@@ -84,7 +84,7 @@ void emux_show_cart_osd_menu(void) {
   ui_enable_osd();
 }
 
-void emux_vice_attach_cart(int menu_id, char* filename) {
+int emux_attach_cart(int menu_id, char* filename) {
   ui_info("Attaching...");
 
   int cart_type;
@@ -166,9 +166,11 @@ void emux_vice_attach_cart(int menu_id, char* filename) {
   if (cartridge_attach_image(cart_type, filename) < 0) {
      ui_pop_menu();
      ui_error("Failed to attach cart image");
+     return 1;
   } else {
      ui_pop_all_and_toggle();
   }
+  return 0;
 }
 
 void emux_vice_easy_flash() {

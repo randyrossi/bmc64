@@ -25,6 +25,20 @@ static struct menu_item *sid_model_item;
 static struct menu_item *sid_write_access_item;
 static struct menu_item *sid_digiblaster_item;
 
+static struct menu_item *c0_lo_item;
+static struct menu_item *c0_hi_item;
+static struct menu_item *c1_lo_item;
+static struct menu_item *c1_hi_item;
+static struct menu_item *c2_lo_item;
+static struct menu_item *c2_hi_item;
+
+static struct menu_item *c0_lo_offset_item;
+static struct menu_item *c0_hi_offset_item;
+static struct menu_item *c1_lo_offset_item;
+static struct menu_item *c1_hi_offset_item;
+static struct menu_item *c2_lo_offset_item;
+static struct menu_item *c2_hi_offset_item;
+
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
 static void set_video_font(void) {
@@ -49,6 +63,10 @@ static void apply_sid_config() {
   int sid_flags = sid_model_item->choice_ints[sid_model_item->value];
   if (sid_write_access_item->value) sid_flags |= 0x2;
   Plus4VM_SetSIDConfiguration(vm, sid_flags, sid_digiblaster_item->value, 0);
+}
+
+static void apply_rom_config() {
+
 }
 
 static void errorMessage(const char *fmt, ...)
@@ -325,6 +343,7 @@ int main_program(int argc, char **argv)
   // Here, we should make whatever calls are necessary to configure the VM
   // according to any settings that were loaded.
   apply_sid_config();
+  apply_rom_config();
 
   canvas_state[0].gfx_w = 40*8;
   canvas_state[0].gfx_h = 25*8;
@@ -572,18 +591,104 @@ int emux_attach_tape_image(char *filename) {
 void emux_detach_tape(void) {
 }
 
-int emux_attach_cart(int bank, char *filename) {
+int emux_attach_cart(int menu_id, char *filename) {
+  int bank;
+  int offset;
+  struct menu_item* item;
+
+  ui_info("Attaching...");
+
+  switch (menu_id) {
+     case MENU_PLUS4_CART_C0_LO_FILE:
+        bank = 2;
+        offset = c0_lo_offset_item->value;
+        item = c0_lo_item;
+        break;
+     case MENU_PLUS4_CART_C0_HI_FILE:
+        bank = 3;
+        offset = c0_hi_offset_item->value;
+        item = c0_hi_item;
+        break;
+     case MENU_PLUS4_CART_C1_LO_FILE:
+        bank = 4;
+        offset = c1_lo_offset_item->value;
+        item = c1_lo_item;
+        break;
+     case MENU_PLUS4_CART_C1_HI_FILE:
+        bank = 5;
+        offset = c1_hi_offset_item->value;
+        item = c1_hi_item;
+        break;
+     case MENU_PLUS4_CART_C2_LO_FILE:
+        bank = 6;
+        offset = c2_lo_offset_item->value;
+        item = c2_lo_item;
+        break;
+     case MENU_PLUS4_CART_C2_HI_FILE:
+        bank = 7;
+        offset = c2_hi_offset_item->value;
+        item = c2_hi_item;
+        break;
+     default:
+        assert(0);
+  }
+
+  if (Plus4VM_LoadROM(vm, bank, filename, offset) != PLUS4EMU_SUCCESS) {
+     ui_pop_menu();
+     ui_error("Failed to attach cart image");
+     return 1;
+  } else {
+     ui_pop_all_and_toggle();
+     Plus4VM_Reset(vm, 1);
+  }
+
+  // Update attached cart name
+  strncpy(item->displayed_value, filename, MAX_DSP_VAL_LEN - 1);
   return 0;
 }
 
 void emux_set_cart_default(void) {
 }
 
-void emux_detach_cart(int bank) {
+void emux_detach_cart(int menu_id) {
+  int bank;
+  struct menu_item* item;
+  switch (menu_id) {
+     case MENU_PLUS4_DETACH_CART_C0_LO:
+        bank = 2;
+        item = c0_lo_item;
+        break;
+     case MENU_PLUS4_DETACH_CART_C0_HI:
+        bank = 3;
+        item = c0_hi_item;
+        break;
+     case MENU_PLUS4_DETACH_CART_C1_LO:
+        bank = 4;
+        item = c1_lo_item;
+        break;
+     case MENU_PLUS4_DETACH_CART_C1_HI:
+        bank = 5;
+        item = c1_hi_item;
+        break;
+     case MENU_PLUS4_DETACH_CART_C2_LO:
+        bank = 6;
+        item = c2_lo_item;
+        break;
+     case MENU_PLUS4_DETACH_CART_C2_HI:
+        bank = 7;
+        item = c2_hi_item;
+        break;
+     default:
+        break;
+  }
+
+  Plus4VM_LoadROM(vm, bank, "", 0);
+  Plus4VM_Reset(vm, 1);
+  strncpy(item->displayed_value, " ", MAX_DSP_VAL_LEN - 1);
 }
 
 void emux_reset(int isSoft) {
-  Plus4VM_Reset(vm, 1);
+  Plus4VM_Reset(vm, !isSoft);
 }
 
 int emux_save_state(char *filename) {
@@ -703,7 +808,58 @@ struct menu_item* emux_add_palette_options(int menu_id,
 void emux_add_machine_options(struct menu_item* parent) {
 }
 
-struct menu_item* emux_add_cartridge_options(struct menu_item* parent) {
+struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
+  struct menu_item* parent = ui_menu_add_folder(root, "Cartridge");
+
+  ui_menu_add_divider(parent);
+  c0_lo_item = ui_menu_add_button_with_value(MENU_TEXT, parent,
+     "C0 LO:",0," "," ");
+  ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C0_LO, parent, "Attach...");
+  c0_lo_offset_item = ui_menu_add_range(MENU_PLUS4_ATTACH_CART_C0_LO_OFFSET,
+     parent, "Offset", 0, 16384, 16384, 0);
+  ui_menu_add_button(MENU_PLUS4_DETACH_CART_C0_LO, parent, "Detach");
+  ui_menu_add_divider(parent);
+
+  c0_hi_item = ui_menu_add_button_with_value(MENU_TEXT, parent,
+      "C0 HI:",0," "," ");
+  ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C0_HI, parent, "Attach...");
+  c0_hi_offset_item = ui_menu_add_range(MENU_PLUS4_ATTACH_CART_C0_HI_OFFSET,
+     parent, "Offset", 0, 16384, 16384, 0);
+  ui_menu_add_button(MENU_PLUS4_DETACH_CART_C0_HI, parent, "Detach");
+  ui_menu_add_divider(parent);
+
+  c1_lo_item = ui_menu_add_button_with_value(MENU_TEXT, parent,
+      "C1 LO:",0," "," ");
+  ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C1_LO, parent, "Attach...");
+  c1_lo_offset_item = ui_menu_add_range(MENU_PLUS4_ATTACH_CART_C1_LO_OFFSET,
+      parent, "Offset", 0, 16384, 16384, 0);
+  ui_menu_add_button(MENU_PLUS4_DETACH_CART_C1_LO, parent, "Detach");
+  ui_menu_add_divider(parent);
+
+  c1_hi_item = ui_menu_add_button_with_value(MENU_TEXT, parent,
+      "C1 HI:",0," "," ");
+  ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C1_HI, parent, "Attach...");
+  c1_hi_offset_item = ui_menu_add_range(MENU_PLUS4_ATTACH_CART_C1_HI_OFFSET,
+      parent, "Offset", 0, 16384, 16384, 0);
+  ui_menu_add_button(MENU_PLUS4_DETACH_CART_C1_HI, parent, "Detach");
+  ui_menu_add_divider(parent);
+
+  c2_lo_item = ui_menu_add_button_with_value(MENU_TEXT, parent,
+      "C2 LO:",0," "," ");
+  ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C2_LO, parent, "Attach...");
+  c2_lo_offset_item = ui_menu_add_range(MENU_PLUS4_ATTACH_CART_C2_LO_OFFSET,
+      parent, "Offset", 0, 16384, 16384, 0);
+  ui_menu_add_button(MENU_PLUS4_DETACH_CART_C2_LO, parent, "Detach");
+  ui_menu_add_divider(parent);
+
+  c2_hi_item = ui_menu_add_button_with_value(MENU_TEXT, parent,
+      "C2 HI:",0," "," ");
+  ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C2_HI, parent, "Attach...");
+  c2_hi_offset_item = ui_menu_add_range(MENU_PLUS4_ATTACH_CART_C2_HI_OFFSET,
+      parent, "Offset", 0, 16384, 16384, 0);
+  ui_menu_add_button(MENU_PLUS4_DETACH_CART_C2_HI, parent, "Detach");
+
+  return parent;
 }
 
 void emux_set_warp(int warp) {

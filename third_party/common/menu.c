@@ -1008,7 +1008,7 @@ void menu_swap_joysticks() {
 }
 
 static void attach_cart(int menu_id, struct menu_item *item) {
-  emux_vice_attach_cart(menu_id, fullpath(DIR_CARTS, item->str_value));
+  emux_attach_cart(menu_id, fullpath(DIR_CARTS, item->str_value));
 }
 
 static void select_file(struct menu_item *item) {
@@ -1633,22 +1633,22 @@ static void menu_value_changed(struct menu_item *item) {
     show_files(DIR_CARTS, FILTER_CART, MENU_PLUS4_CART_FILE, 0);
     return;
   case MENU_PLUS4_ATTACH_CART_C0_LO:
-    show_files(DIR_CARTS, FILTER_CART, MENU_PLUS4_CART_C0_LO_FILE, 0);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_PLUS4_CART_C0_LO_FILE, 0);
     return;
   case MENU_PLUS4_ATTACH_CART_C0_HI:
-    show_files(DIR_CARTS, FILTER_CART, MENU_PLUS4_CART_C0_HI_FILE, 0);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_PLUS4_CART_C0_HI_FILE, 0);
     return;
   case MENU_PLUS4_ATTACH_CART_C1_LO:
-    show_files(DIR_CARTS, FILTER_CART, MENU_PLUS4_CART_C1_LO_FILE, 0);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_PLUS4_CART_C1_LO_FILE, 0);
     return;
   case MENU_PLUS4_ATTACH_CART_C1_HI:
-    show_files(DIR_CARTS, FILTER_CART, MENU_PLUS4_CART_C1_HI_FILE, 0);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_PLUS4_CART_C1_HI_FILE, 0);
     return;
   case MENU_PLUS4_ATTACH_CART_C2_LO:
-    show_files(DIR_CARTS, FILTER_CART, MENU_PLUS4_CART_C2_LO_FILE, 0);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_PLUS4_CART_C2_LO_FILE, 0);
     return;
   case MENU_PLUS4_ATTACH_CART_C2_HI:
-    show_files(DIR_CARTS, FILTER_CART, MENU_PLUS4_CART_C2_HI_FILE, 0);
+    show_files(DIR_CARTS, FILTER_NONE, MENU_PLUS4_CART_C2_HI_FILE, 0);
     return;
   case MENU_LOAD_KERNAL:
     show_files(DIR_ROMS, FILTER_NONE, MENU_KERNAL_FILE, 0);
@@ -1709,6 +1709,36 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_DETACH_CART:
     ui_info("Detaching...");
     emux_detach_cart(0);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_PLUS4_DETACH_CART_C0_LO:
+    ui_info("Detaching...");
+    emux_detach_cart(MENU_PLUS4_DETACH_CART_C0_LO);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_PLUS4_DETACH_CART_C0_HI:
+    ui_info("Detaching...");
+    emux_detach_cart(MENU_PLUS4_DETACH_CART_C0_HI);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_PLUS4_DETACH_CART_C1_LO:
+    ui_info("Detaching...");
+    emux_detach_cart(MENU_PLUS4_DETACH_CART_C1_LO);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_PLUS4_DETACH_CART_C1_HI:
+    ui_info("Detaching...");
+    emux_detach_cart(MENU_PLUS4_DETACH_CART_C1_HI);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_PLUS4_DETACH_CART_C2_LO:
+    ui_info("Detaching...");
+    emux_detach_cart(MENU_PLUS4_DETACH_CART_C2_LO);
+    ui_pop_all_and_toggle();
+    return;
+  case MENU_PLUS4_DETACH_CART_C2_HI:
+    ui_info("Detaching...");
+    emux_detach_cart(MENU_PLUS4_DETACH_CART_C2_HI);
     ui_pop_all_and_toggle();
     return;
   case MENU_SOFT_RESET:

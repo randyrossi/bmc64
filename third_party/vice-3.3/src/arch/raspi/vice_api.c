@@ -102,11 +102,6 @@ void emux_detach_disk(int unit) {
   file_system_detach_disk(unit);
 }
 
-int emux_attach_cart(int bank, char* filename) {
-  // Ignore bank for vice
-  return cartridge_attach_image(CARTRIDGE_CRT, filename);
-}
-
 void emux_detach_cart(int bank) {
   // Ignore bank for vice
   cartridge_detach_image(CARTRIDGE_NONE);
