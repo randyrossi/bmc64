@@ -39,6 +39,13 @@ static struct menu_item *c1_hi_offset_item;
 static struct menu_item *c2_lo_offset_item;
 static struct menu_item *c2_hi_offset_item;
 
+int is_tape_motor;
+int is_tape_motor_tick;
+int is_tape_seeking;
+int is_tape_seeking_dir;
+int is_tape_seeking_tick;
+double tape_counter_offset;
+
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
 static void set_video_font(void) {
@@ -526,6 +533,35 @@ int main_program(int argc, char **argv)
       demo_check();
     }
 
+    if (is_tape_motor) {
+       // Plus4Emu doesn't have a rewind/fastforward state so we
+       // fake it here.
+       if (is_tape_seeking) {
+          is_tape_seeking_tick--;
+          if (is_tape_seeking_tick == 0) {
+            double pos = Plus4VM_GetTapePosition(vm);
+            double newpos = pos + 1 * is_tape_seeking_dir;
+            double len = Plus4VM_GetTapeLength(vm);
+            if (newpos < 0)
+               newpos = 0;
+            else if (newpos > len)
+               newpos = len;
+
+            if (Plus4VM_TapeSeek(vm, newpos) != PLUS4EMU_SUCCESS) {
+               is_tape_seeking = 0;
+               is_tape_motor = 0;
+            }
+
+            is_tape_seeking_tick = 5;
+          }
+       }
+       is_tape_motor_tick--;
+       if (is_tape_motor_tick == 0) {
+         double pos = Plus4VM_GetTapePosition(vm);
+         emux_display_tape_counter((int)pos - (int)tape_counter_offset);
+         is_tape_motor_tick = 50;
+       }
+    }
   } while (!quitFlag);
 
   Plus4VM_Destroy(vm);
@@ -585,10 +621,14 @@ void emux_detach_disk(int unit) {
 }
 
 int emux_attach_tape_image(char *filename) {
+  if (Plus4VM_SetTapeFileName(vm, filename) != PLUS4EMU_SUCCESS) {
+    return 1;
+  }
   return 0;
 }
 
 void emux_detach_tape(void) {
+  Plus4VM_SetTapeFileName(vm, "");
 }
 
 int emux_attach_cart(int menu_id, char *filename) {
@@ -706,7 +746,55 @@ int emux_load_state(char *filename) {
 }
 
 int emux_tape_control(int cmd) {
-  return 0;
+    emux_display_tape_control_status(cmd);
+    switch (cmd) {
+    case EMUX_TAPE_PLAY:
+      Plus4VM_TapePlay(vm);
+      is_tape_seeking = 0;
+      is_tape_motor = 1;
+      is_tape_motor_tick = 50;
+      break;
+    case EMUX_TAPE_STOP:
+      Plus4VM_TapeStop(vm);
+      is_tape_seeking = 0;
+      is_tape_motor = 0;
+      break;
+    case EMUX_TAPE_REWIND:
+      is_tape_seeking = 1;
+      is_tape_seeking_dir = -1;
+      is_tape_seeking_tick = 5;
+      is_tape_motor = 1;
+      is_tape_motor_tick = 50;
+      break;
+    case EMUX_TAPE_FASTFORWARD:
+      is_tape_seeking = 1;
+      is_tape_seeking_dir = 1;
+      is_tape_seeking_tick = 5;
+      is_tape_motor = 1;
+      is_tape_motor_tick = 50;
+      break;
+    case EMUX_TAPE_RECORD:
+      Plus4VM_TapeRecord(vm);
+      is_tape_seeking = 0;
+      is_tape_motor = 1;
+      is_tape_motor_tick = 50;
+      break;
+    case EMUX_TAPE_RESET:
+      Plus4VM_TapeSeek(vm, 0);
+      Plus4VM_TapeStop(vm);
+      is_tape_motor = 0;
+      tape_counter_offset = 0;
+      emux_display_tape_counter(0);
+      break;
+    case EMUX_TAPE_ZERO:
+      tape_counter_offset = Plus4VM_GetTapePosition(vm);
+      emux_display_tape_counter(0);
+      break;
+    default:
+      assert(0);
+      break;
+  }
+  emux_display_tape_motor_status(is_tape_motor);
 }
 
 void emux_show_cart_osd_menu(void) {
@@ -938,3 +1026,29 @@ void emux_handle_save_settings(FILE *fp) {
   fprintf (fp,"sid_digiblaster=%d\n", sid_digiblaster_item->value);
 }
 
+/*
+void ui_enable_drive_status(ui_drive_enable_t state, int *drive_led_color) {
+  int st = state;
+  emux_enable_drive_status(st, drive_led_color);
+}
+
+// Called by VICE to show drive led
+void ui_display_drive_led(int drive, unsigned int pwm1, unsigned int pwm2) {
+  emux_display_drive_led(drive, pwm1, pwm2);
+}
+
+// Called by VICE to show tape counter text
+void ui_display_tape_counter(int counter) {
+  emux_display_tape_counter(counter);
+}
+
+// Called by VICE to draw tape motor status light
+void ui_display_tape_motor_status(int motor) {
+  emux_display_tape_motor_status(motor);
+}
+
+// Called by VICE to show tape control status
+void ui_display_tape_control_status(int control) {
+  emux_display_tape_control_status(xlated_control);
+}
+*/

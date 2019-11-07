@@ -2378,6 +2378,8 @@ void build_menu(struct menu_item *root) {
     ui_menu_add_button(MENU_DETACH_DISK_8, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_8, parent, "Change Model...");
 
+  // More than 1 drive costs too much. Limit to drive 8.
+  if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
     parent = ui_menu_add_folder(drive_parent, "Drive 9");
     if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
      emux_get_int_1(Setting_IECDeviceN, &tmp, 9);
@@ -2410,6 +2412,7 @@ void build_menu(struct menu_item *root) {
     ui_menu_add_button(MENU_ATTACH_DISK_11, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_11, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");
+  }
 
     ui_menu_add_button(MENU_DRIVE_CHANGE_ROM, drive_parent, "Change ROM...");
 
