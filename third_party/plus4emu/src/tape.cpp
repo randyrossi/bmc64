@@ -611,6 +611,8 @@ namespace Plus4Emu {
       inputCnt(0),
       savedInputCnt(0)
   {
+    memset(seekIndex,0,sizeof(seekIndex));
+    memset(posIndex,0,sizeof(posIndex));
     bool    isC16TAPFile = false;
     if (std::fseek(f, 0L, SEEK_END) >= 0) {
       if (std::ftell(f) >= 20L) {
@@ -635,6 +637,22 @@ namespace Plus4Emu {
     if (!isC16TAPFile)
       throw Exception("invalid tape file header");
     sampleRate = 55420L;
+
+    // Calculate index
+    int indexSeconds = 0;
+    while (!endOfTape) {
+      long pos = std::ftell(f);
+      if (indexSeconds >= 2700) {
+         break;
+      }
+      seekIndex[indexSeconds] = pos;
+      posIndex[indexSeconds] = tapePosition;
+      for (int q=0;q<sampleRate;q++) {
+         tapeLength = tapePosition;
+         runOneSample_();
+      }
+      indexSeconds++;
+    }
     this->seek(0.0);
   }
 
@@ -695,7 +713,7 @@ namespace Plus4Emu {
         inputCnt--;
     }
     tapePosition++;
-    tapeLength = tapePosition + 1;
+    //tapeLength = tapePosition + 1;
     outputState = (outputSignal > 0 ? (1 << (requestedBitsPerSample - 1)) : 0);
   }
 
@@ -713,16 +731,17 @@ namespace Plus4Emu {
   void Tape_C16::seek(double t)
   {
     if (t <= 0.0) {
-      tapeLength = 1;
-      tapePosition = 0;
+       t = 0.0;
+    }
+      //tapeLength = 1;
+      tapePosition = posIndex[(int)t];
       outputState = 0;
       endOfTape = false;
       inputSignal = (usingOldTapFormat ? -1 : 1);
       inputCnt = 0;
       savedInputCnt = 0;
-      if (std::fseek(f, 20L, SEEK_SET) < 0)
+      if (std::fseek(f, seekIndex[(int)t], SEEK_SET) < 0)
         endOfTape = true;
-    }
   }
 
   void Tape_C16::seekToCuePoint(bool isForward, double t)

@@ -273,6 +273,8 @@ namespace Plus4Emu {
     int       inputSignal;
     int       inputCnt;
     int       savedInputCnt;
+    long      seekIndex[2700];  // 45 minutes max
+    long      posIndex[2700];  // 45 minutes max
    public:
     /*!
      * Use C16 format tape file 'imageFile_' read-only.
