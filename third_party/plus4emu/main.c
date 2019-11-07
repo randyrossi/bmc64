@@ -76,63 +76,6 @@ static void apply_rom_config() {
 
 }
 
-static void errorMessage(const char *fmt, ...)
-{
-  va_list args;
-  fprintf(stderr, " *** Plus/4 error: ");
-  va_start(args, fmt);
-  vfprintf(stderr, fmt, args);
-  va_end(args);
-  fprintf(stderr, "\n");
-  Plus4VM_Destroy(vm);
-  exit(-1);
-}
-
-static void vmError(void)
-{
-  fprintf(stderr, " *** Plus/4 error: %s\n", Plus4VM_GetLastErrorMessage(vm));
-  Plus4VM_Destroy(vm);
-  exit(-1);
-}
-
-static void audioOutputCallback(void *userData,
-                                const int16_t *buf, size_t nFrames)
-{
-  if (!ui_warp)
-     circle_sound_write((int16_t*)buf, nFrames);
-}
-
-static void videoLineCallback(void *userData,
-                              int lineNum, const Plus4VideoLineData *lineData)
-{
-   lineNum = lineNum / 2;
-   if (lineNum >= 0 && lineNum < 288) {
-     Plus4VideoDecoder_DecodeLine(videoDecoder, fb_buf + lineNum * fb_pitch, 384, lineData);
-   }
-}
-
-static void videoFrameCallback(void *userData)
-{
-#ifndef HOST_BUILD
-  circle_frames_ready_fbl(FB_LAYER_VIC,
-                          -1 /* no 2nd layer */,
-                          !ui_warp /* sync */);
-#endif
-}
-
-static void resetMemoryConfiguration(void)
-{
-  if (Plus4VM_SetRAMConfiguration(vm, 64, 0x99999999UL) != PLUS4EMU_SUCCESS)
-    vmError();
-  /* load ROM images */
-  if (Plus4VM_LoadROM(vm, 0x00, "p4_basic.rom", 0) != PLUS4EMU_SUCCESS)
-    errorMessage("cannot load p4_basic.rom");
-  if (Plus4VM_LoadROM(vm, 0x01, "p4kernal.rom", 0) != PLUS4EMU_SUCCESS)
-    errorMessage("cannot load p4kernal.rom");
-  if (Plus4VM_LoadROM(vm, 0x10, "dos1541.rom", 0) != PLUS4EMU_SUCCESS)
-    errorMessage("cannot load dos1541.rom");
-}
-
 //     0: Del          1: Return       2: £            3: Help
 //     4: F1           5: F2           6: F3           7: @
 //     8: 3            9: W           10: A           11: 4
@@ -285,6 +228,252 @@ static int bmc64_keycode_to_plus4emu(long keycode) {
    }
 }
 
+static void errorMessage(const char *fmt, ...)
+{
+  va_list args;
+  fprintf(stderr, " *** Plus/4 error: ");
+  va_start(args, fmt);
+  vfprintf(stderr, fmt, args);
+  va_end(args);
+  fprintf(stderr, "\n");
+  Plus4VM_Destroy(vm);
+  exit(-1);
+}
+
+static void vmError(void)
+{
+  fprintf(stderr, " *** Plus/4 error: %s\n", Plus4VM_GetLastErrorMessage(vm));
+  Plus4VM_Destroy(vm);
+  exit(-1);
+}
+
+static void audioOutputCallback(void *userData,
+                                const int16_t *buf, size_t nFrames)
+{
+  if (!ui_warp)
+     circle_sound_write((int16_t*)buf, nFrames);
+}
+
+static void videoLineCallback(void *userData,
+                              int lineNum, const Plus4VideoLineData *lineData)
+{
+   lineNum = lineNum / 2;
+   if (lineNum >= 0 && lineNum < 288) {
+     Plus4VideoDecoder_DecodeLine(videoDecoder, fb_buf + lineNum * fb_pitch, 384, lineData);
+   }
+}
+
+static void videoFrameCallback(void *userData)
+{
+#ifndef HOST_BUILD
+  circle_frames_ready_fbl(FB_LAYER_VIC,
+                          -1 /* no 2nd layer */,
+                          !ui_warp /* sync */);
+
+  emux_ensure_video();
+
+  // This render will handle any OSDs we have. ODSs don't pause emulation.
+  if (ui_enabled) {
+    // The only way we can be here and have ui_enabled=1
+    // is for an osd to be enabled.
+    ui_render_now(-1); // only render top most menu
+    circle_frames_ready_fbl(FB_LAYER_UI, -1 /* no 2nd layer */,
+       0 /* no sync */);
+    ui_check_key();
+  }
+
+  if (statusbar_showing || vkbd_showing) {
+    overlay_check();
+    if (overlay_dirty) {
+       circle_frames_ready_fbl(FB_LAYER_STATUS,                                                                -1 /* no 2nd layer */,
+                               0 /* no sync */);
+       overlay_dirty = 0;
+    }
+  }
+
+  circle_yield();
+  circle_check_gpio();
+
+  int reset_demo = 0;
+
+  circle_lock_acquire();
+  while (pending_emu_key.head != pending_emu_key.tail) {
+    int i = pending_emu_key.head & 0xf;
+    reset_demo = 1;
+    if (vkbd_enabled) {
+      // Kind of nice to have virtual keyboard's state
+      // stay in sync with changes happening from USB
+      // key events.
+      vkbd_sync_event(pending_emu_key.key[i], pending_emu_key.pressed[i]);
+    }
+    int p4code = bmc64_keycode_to_plus4emu(
+       pending_emu_key.key[i]);
+    if (p4code >= 0) {
+       Plus4VM_KeyboardEvent(vm, p4code, pending_emu_key.pressed[i]);
+    }
+    pending_emu_key.head++;
+  }
+
+  // Joystick event dequeue
+  while (pending_emu_joy.head != pending_emu_joy.tail) {
+    int i = pending_emu_joy.head & 0x7f;
+    reset_demo = 1;
+    if (vkbd_enabled) {
+      int value = pending_emu_joy.value[i];
+      int devd = pending_emu_joy.device[i];
+      switch (pending_emu_joy.type[i]) {
+      case PENDING_EMU_JOY_TYPE_ABSOLUTE:
+        if (!vkbd_press[devd]) {
+           if (value & 0x1 && !vkbd_up[devd]) {
+             vkbd_up[devd] = 1;
+             vkbd_nav_up();
+           } else if (!(value & 0x1) && vkbd_up[devd]) {
+             vkbd_up[devd] = 0;
+           }
+           if (value & 0x2 && !vkbd_down[devd]) {
+             vkbd_down[devd] = 1;
+             vkbd_nav_down();
+           } else if (!(value & 0x2) && vkbd_down[devd]) {
+             vkbd_down[devd] = 0;
+           }
+           if (value & 0x4 && !vkbd_left[devd]) {
+             vkbd_left[devd] = 1;
+             vkbd_nav_left();
+           } else if (!(value & 0x4) && vkbd_left[devd]) {
+             vkbd_left[devd] = 0;
+           }
+           if (value & 0x8 && !vkbd_right[devd]) {
+             vkbd_right[devd] = 1;
+             vkbd_nav_right();
+           } else if (!(value & 0x8) && vkbd_right[devd]) {
+             vkbd_right[devd] = 0;
+           }
+        }
+        if (value & 0x10 && !vkbd_press[devd]) vkbd_nav_press(1, devd);
+        else if (!(value & 0x10) && vkbd_press[devd]) vkbd_nav_press(0, devd);
+        break;
+      }
+    } else {
+      int port = pending_emu_joy.port[i]-1;
+      int oldv = joy_latch_value[port];
+      switch (pending_emu_joy.type[i]) {
+      case PENDING_EMU_JOY_TYPE_ABSOLUTE:
+        // If new bit is 0 and old bit is 1, it is an up event
+        // If new bit is 1 and old bit is 0, it is a down event
+        joy_latch_value[port] = pending_emu_joy.value[i];
+        break;
+      case PENDING_EMU_JOY_TYPE_AND:
+        // If new bit is 0 and old bit is 1, it is an up event
+        joy_latch_value[port] &= pending_emu_joy.value[i];
+        break;
+      case PENDING_EMU_JOY_TYPE_OR:
+        // If new bit is 1 and old bit is 0, it is a down event
+        joy_latch_value[port] |= pending_emu_joy.value[i];
+        break;
+      default:
+        break;
+      }
+
+      //    72: Joy2 Up     73: Joy2 Down   74: Joy2 Left   75: Joy2 Right
+      //    79: Joy2 Fire
+      //    80: Joy1 Up     81: Joy1 Down   82: Joy1 Left   83: Joy1 Right
+      //    86: Joy1 Fire
+
+      int newv = joy_latch_value[port];
+      if (!(newv & 0x01) && (oldv & 0x01)) {
+        Plus4VM_KeyboardEvent(vm, 72 + 8*port, 0);
+      } else if ((newv & 0x01) && !(oldv & 0x01)) {
+        Plus4VM_KeyboardEvent(vm, 72 + 8*port, 1);
+      }
+      if (!(newv & 0x02) && (oldv & 0x02)) {
+        Plus4VM_KeyboardEvent(vm, 73 + 8*port, 0);
+      } else if ((newv & 0x02) && !(oldv & 0x02)) {
+        Plus4VM_KeyboardEvent(vm, 73 + 8*port, 1);
+      }
+      if (!(newv & 0x04) && (oldv & 0x04)) {
+        Plus4VM_KeyboardEvent(vm, 74 + 8*port, 0);
+      } else if ((newv & 0x04) && !(oldv & 0x04)) {
+        Plus4VM_KeyboardEvent(vm, 74 + 8*port, 1);
+      }
+      if (!(newv & 0x08) && (oldv & 0x08)) {
+        Plus4VM_KeyboardEvent(vm, 75 + 8*port, 0);
+      } else if ((newv & 0x08) && !(oldv & 0x08)) {
+        Plus4VM_KeyboardEvent(vm, 75 + 8*port, 1);
+      }
+      if (!(newv & 0x10) && (oldv & 0x10)) {
+        Plus4VM_KeyboardEvent(vm, 79 + 7*port, 0);
+      } else if ((newv & 0x10) && !(oldv & 0x10)) {
+        Plus4VM_KeyboardEvent(vm, 79 + 7*port, 1);
+      }
+    }
+    pending_emu_joy.head++;
+  }
+
+  if (ui_trap) {
+      circle_lock_release();
+      emu_pause_trap(0, NULL);
+      circle_lock_acquire();
+      ui_trap = 0;
+  }
+
+  circle_lock_release();
+
+  ui_handle_toggle_or_quick_func();
+
+  if (reset_demo) {
+    demo_reset_timeout();
+  }
+
+  if (raspi_demo_mode) {
+    demo_check();
+  }
+
+  if (is_tape_motor) {
+     // Plus4Emu doesn't have a rewind/fastforward state so we
+     // fake it here.
+     if (is_tape_seeking) {
+        is_tape_seeking_tick--;
+        if (is_tape_seeking_tick == 0) {
+          double pos = Plus4VM_GetTapePosition(vm);
+          double newpos = pos + 1 * is_tape_seeking_dir;
+          double len = Plus4VM_GetTapeLength(vm);
+          if (newpos < 0)
+             newpos = 0;
+          else if (newpos > len)
+             newpos = len;
+
+          if (Plus4VM_TapeSeek(vm, newpos) != PLUS4EMU_SUCCESS) {
+             is_tape_seeking = 0;
+             is_tape_motor = 0;
+          }
+
+          is_tape_seeking_tick = 5;
+        }
+     }
+     is_tape_motor_tick--;
+     if (is_tape_motor_tick == 0) {
+       double pos = Plus4VM_GetTapePosition(vm);
+       emux_display_tape_counter((int)pos - (int)tape_counter_offset);
+       is_tape_motor_tick = 50;
+     }
+  }
+#endif
+}
+
+static void resetMemoryConfiguration(void)
+{
+  if (Plus4VM_SetRAMConfiguration(vm, 64, 0x99999999UL) != PLUS4EMU_SUCCESS)
+    vmError();
+  /* load ROM images */
+  if (Plus4VM_LoadROM(vm, 0x00, "p4_basic.rom", 0) != PLUS4EMU_SUCCESS)
+    errorMessage("cannot load p4_basic.rom");
+  if (Plus4VM_LoadROM(vm, 0x01, "p4kernal.rom", 0) != PLUS4EMU_SUCCESS)
+    errorMessage("cannot load p4kernal.rom");
+  if (Plus4VM_LoadROM(vm, 0x10, "dos1541.rom", 0) != PLUS4EMU_SUCCESS)
+    errorMessage("cannot load dos1541.rom");
+}
+
+
 // This is made to look like VICE's main entry point so our
 // Plus4Emu version of EmulatorCore can look more or less the same
 // as the Vice version.
@@ -375,193 +564,6 @@ int main_program(int argc, char **argv)
     if (Plus4VM_Run(vm, 2000) != PLUS4EMU_SUCCESS)
       vmError();
 
-    emux_ensure_video();
-
-    // This render will handle any OSDs we have. ODSs don't pause emulation.
-    if (ui_enabled) {
-      // The only way we can be here and have ui_enabled=1
-      // is for an osd to be enabled.
-      ui_render_now(-1); // only render top most menu
-      circle_frames_ready_fbl(FB_LAYER_UI, -1 /* no 2nd layer */,
-         0 /* no sync */);
-      ui_check_key();
-    }
-
-    if (statusbar_showing || vkbd_showing) {
-      overlay_check();
-      if (overlay_dirty) {
-         circle_frames_ready_fbl(FB_LAYER_STATUS,                                                                -1 /* no 2nd layer */,
-                                 0 /* no sync */);
-         overlay_dirty = 0;
-      }
-    }
-
-    circle_yield();
-    circle_check_gpio();
-
-    int reset_demo = 0;
-
-    circle_lock_acquire();
-    while (pending_emu_key.head != pending_emu_key.tail) {
-      int i = pending_emu_key.head & 0xf;
-      reset_demo = 1;
-      if (vkbd_enabled) {
-        // Kind of nice to have virtual keyboard's state
-        // stay in sync with changes happening from USB
-        // key events.
-        vkbd_sync_event(pending_emu_key.key[i], pending_emu_key.pressed[i]);
-      }
-      int p4code = bmc64_keycode_to_plus4emu(
-         pending_emu_key.key[i]);
-      if (p4code >= 0) {
-         Plus4VM_KeyboardEvent(vm, p4code, pending_emu_key.pressed[i]);
-      }
-      pending_emu_key.head++;
-    }
-
-    // Joystick event dequeue
-    while (pending_emu_joy.head != pending_emu_joy.tail) {
-      int i = pending_emu_joy.head & 0x7f;
-      reset_demo = 1;
-      if (vkbd_enabled) {
-        int value = pending_emu_joy.value[i];
-        int devd = pending_emu_joy.device[i];
-        switch (pending_emu_joy.type[i]) {
-        case PENDING_EMU_JOY_TYPE_ABSOLUTE:
-          if (!vkbd_press[devd]) {
-             if (value & 0x1 && !vkbd_up[devd]) {
-               vkbd_up[devd] = 1;
-               vkbd_nav_up();
-             } else if (!(value & 0x1) && vkbd_up[devd]) {
-               vkbd_up[devd] = 0;
-             }
-             if (value & 0x2 && !vkbd_down[devd]) {
-               vkbd_down[devd] = 1;
-               vkbd_nav_down();
-             } else if (!(value & 0x2) && vkbd_down[devd]) {
-               vkbd_down[devd] = 0;
-             }
-             if (value & 0x4 && !vkbd_left[devd]) {
-               vkbd_left[devd] = 1;
-               vkbd_nav_left();
-             } else if (!(value & 0x4) && vkbd_left[devd]) {
-               vkbd_left[devd] = 0;
-             }
-             if (value & 0x8 && !vkbd_right[devd]) {
-               vkbd_right[devd] = 1;
-               vkbd_nav_right();
-             } else if (!(value & 0x8) && vkbd_right[devd]) {
-               vkbd_right[devd] = 0;
-             }
-          }
-          if (value & 0x10 && !vkbd_press[devd]) vkbd_nav_press(1, devd);
-          else if (!(value & 0x10) && vkbd_press[devd]) vkbd_nav_press(0, devd);
-          break;
-        }
-      } else {
-        int port = pending_emu_joy.port[i]-1;
-        int oldv = joy_latch_value[port];
-        switch (pending_emu_joy.type[i]) {
-        case PENDING_EMU_JOY_TYPE_ABSOLUTE:
-          // If new bit is 0 and old bit is 1, it is an up event
-          // If new bit is 1 and old bit is 0, it is a down event
-          joy_latch_value[port] = pending_emu_joy.value[i];
-          break;
-        case PENDING_EMU_JOY_TYPE_AND:
-          // If new bit is 0 and old bit is 1, it is an up event
-          joy_latch_value[port] &= pending_emu_joy.value[i];
-          break;
-        case PENDING_EMU_JOY_TYPE_OR:
-          // If new bit is 1 and old bit is 0, it is a down event
-          joy_latch_value[port] |= pending_emu_joy.value[i];
-          break;
-        default:
-          break;
-        }
-
-        //    72: Joy2 Up     73: Joy2 Down   74: Joy2 Left   75: Joy2 Right
-        //    79: Joy2 Fire
-        //    80: Joy1 Up     81: Joy1 Down   82: Joy1 Left   83: Joy1 Right
-        //    86: Joy1 Fire
-
-        int newv = joy_latch_value[port];
-        if (!(newv & 0x01) && (oldv & 0x01)) {
-          Plus4VM_KeyboardEvent(vm, 72 + 8*port, 0);
-        } else if ((newv & 0x01) && !(oldv & 0x01)) {
-          Plus4VM_KeyboardEvent(vm, 72 + 8*port, 1);
-        }
-        if (!(newv & 0x02) && (oldv & 0x02)) {
-          Plus4VM_KeyboardEvent(vm, 73 + 8*port, 0);
-        } else if ((newv & 0x02) && !(oldv & 0x02)) {
-          Plus4VM_KeyboardEvent(vm, 73 + 8*port, 1);
-        }
-        if (!(newv & 0x04) && (oldv & 0x04)) {
-          Plus4VM_KeyboardEvent(vm, 74 + 8*port, 0);
-        } else if ((newv & 0x04) && !(oldv & 0x04)) {
-          Plus4VM_KeyboardEvent(vm, 74 + 8*port, 1);
-        }
-        if (!(newv & 0x08) && (oldv & 0x08)) {
-          Plus4VM_KeyboardEvent(vm, 75 + 8*port, 0);
-        } else if ((newv & 0x08) && !(oldv & 0x08)) {
-          Plus4VM_KeyboardEvent(vm, 75 + 8*port, 1);
-        }
-        if (!(newv & 0x10) && (oldv & 0x10)) {
-          Plus4VM_KeyboardEvent(vm, 79 + 7*port, 0);
-        } else if ((newv & 0x10) && !(oldv & 0x10)) {
-          Plus4VM_KeyboardEvent(vm, 79 + 7*port, 1);
-        }
-      }
-      pending_emu_joy.head++;
-    }
-
-    if (ui_trap) {
-        circle_lock_release();
-        emu_pause_trap(0, NULL);
-        circle_lock_acquire();
-        ui_trap = 0;
-    }
-
-    circle_lock_release();
-
-    ui_handle_toggle_or_quick_func();
-
-    if (reset_demo) {
-      demo_reset_timeout();
-    }
-
-    if (raspi_demo_mode) {
-      demo_check();
-    }
-
-    if (is_tape_motor) {
-       // Plus4Emu doesn't have a rewind/fastforward state so we
-       // fake it here.
-       if (is_tape_seeking) {
-          is_tape_seeking_tick--;
-          if (is_tape_seeking_tick == 0) {
-            double pos = Plus4VM_GetTapePosition(vm);
-            double newpos = pos + 1 * is_tape_seeking_dir;
-            double len = Plus4VM_GetTapeLength(vm);
-            if (newpos < 0)
-               newpos = 0;
-            else if (newpos > len)
-               newpos = len;
-
-            if (Plus4VM_TapeSeek(vm, newpos) != PLUS4EMU_SUCCESS) {
-               is_tape_seeking = 0;
-               is_tape_motor = 0;
-            }
-
-            is_tape_seeking_tick = 5;
-          }
-       }
-       is_tape_motor_tick--;
-       if (is_tape_motor_tick == 0) {
-         double pos = Plus4VM_GetTapePosition(vm);
-         emux_display_tape_counter((int)pos - (int)tape_counter_offset);
-         is_tape_motor_tick = 50;
-       }
-    }
   } while (!quitFlag);
 
   Plus4VM_Destroy(vm);
@@ -596,7 +598,6 @@ int main(int argc, char *argv[]) {
 #endif
 
 
-// STUBS FOR NOW
 void emux_trap_main_loop_ui(void) {
   circle_lock_acquire();
   ui_trap = 1;
@@ -985,6 +986,10 @@ void emux_get_int_1(IntSetting setting, int* dest, int param) {
 }
 
 void emux_get_string_1(StringSetting setting, const char** dest, int param) {
+  // TEMP for now to avoid menu crashing
+  char* newstr = (char*) malloc(1);
+  newstr[0] = '\0';
+  *dest = newstr;
 }
 
 int emux_save_settings(void) {
@@ -1027,28 +1032,7 @@ void emux_handle_save_settings(FILE *fp) {
 }
 
 /*
-void ui_enable_drive_status(ui_drive_enable_t state, int *drive_led_color) {
-  int st = state;
+  Need to call these:
   emux_enable_drive_status(st, drive_led_color);
-}
-
-// Called by VICE to show drive led
-void ui_display_drive_led(int drive, unsigned int pwm1, unsigned int pwm2) {
   emux_display_drive_led(drive, pwm1, pwm2);
-}
-
-// Called by VICE to show tape counter text
-void ui_display_tape_counter(int counter) {
-  emux_display_tape_counter(counter);
-}
-
-// Called by VICE to draw tape motor status light
-void ui_display_tape_motor_status(int motor) {
-  emux_display_tape_motor_status(motor);
-}
-
-// Called by VICE to show tape control status
-void ui_display_tape_control_status(int control) {
-  emux_display_tape_control_status(xlated_control);
-}
 */

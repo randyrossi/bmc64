@@ -471,7 +471,7 @@ static void ui_action_frame() {
 
 void ui_render_single_frame() {
   // Start with transparent
-  ui_draw_rect(0, 0, ui_fb_w, ui_fb_h, TRANSPARENT_COLOR, 1);
+  memset(ui_fb, TRANSPARENT_COLOR, ui_fb_h * ui_fb_pitch);
 
   for (int msi=0;msi<=current_menu;msi++) {
      ui_render_now(msi);
@@ -983,7 +983,7 @@ static void ui_render_children(struct menu_item *node,
 // Make the UI layer fully transparent in preparation for an OSD to
 // be displayed.
 void ui_make_transparent(void) {
-  ui_draw_rect(0, 0, ui_fb_w, ui_fb_h, TRANSPARENT_COLOR, 1);
+  memset(ui_fb, TRANSPARENT_COLOR, ui_fb_h * ui_fb_pitch);
 }
 
 void ui_render_now(int menu_stack_index) {
@@ -993,7 +993,7 @@ void ui_render_now(int menu_stack_index) {
   if (menu_stack_index == -1) {
     menu_stack_index = current_menu;
     // When rendering only the top most menu, clear with transparent color
-    ui_draw_rect(0, 0, ui_fb_w, ui_fb_h, TRANSPARENT_COLOR, 1);
+    memset(ui_fb, TRANSPARENT_COLOR, ui_fb_h * ui_fb_pitch);
   }
 
   struct menu_item *ptr = menu_roots[menu_stack_index].first_child;
