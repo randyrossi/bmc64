@@ -447,13 +447,18 @@ static void videoFrameCallback(void *userData)
              is_tape_motor = 0;
           }
 
+          int showing = (int)pos - (int)tape_counter_offset;
+          if (showing < 0) showing += 1000;
+          emux_display_tape_counter(showing);
           is_tape_seeking_tick = 5;
         }
      }
      is_tape_motor_tick--;
      if (is_tape_motor_tick == 0) {
        double pos = Plus4VM_GetTapePosition(vm);
-       emux_display_tape_counter((int)pos - (int)tape_counter_offset);
+       int showing = (int)pos - (int)tape_counter_offset;
+       if (showing < 0) showing += 1000;
+       emux_display_tape_counter(showing);
        is_tape_motor_tick = 50;
      }
   }
@@ -622,6 +627,10 @@ void emux_detach_disk(int unit) {
 }
 
 int emux_attach_tape_image(char *filename) {
+  is_tape_seeking = 0;
+  is_tape_motor = 0;
+  emux_display_tape_counter(0);
+  emux_display_tape_motor_status(EMUX_TAPE_STOP);
   if (Plus4VM_SetTapeFileName(vm, filename) != PLUS4EMU_SUCCESS) {
     return 1;
   }
@@ -629,6 +638,10 @@ int emux_attach_tape_image(char *filename) {
 }
 
 void emux_detach_tape(void) {
+  is_tape_seeking = 0;
+  is_tape_motor = 0;
+  emux_display_tape_counter(0);
+  emux_display_tape_motor_status(EMUX_TAPE_STOP);
   Plus4VM_SetTapeFileName(vm, "");
 }
 
