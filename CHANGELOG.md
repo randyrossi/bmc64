@@ -263,3 +263,5 @@
   * Integrated Plus4Emu as more accurate PLUS/4 option (Pi3 only)
   * Lots of internal src reorg, new layers to plugin different emulators
   * Reboot after machine switch
+  * Fix mouse issue with Final Cart III
+  * Fix datasette not available after snapshot load

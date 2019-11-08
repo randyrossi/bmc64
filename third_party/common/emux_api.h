@@ -350,7 +350,7 @@ void emux_get_int(IntSetting setting, int* dest);
 void emux_get_int_1(IntSetting setting, int* dest, int param);
 void emux_get_string_1(StringSetting setting, const char** dest, int param);
 
-// Save settings
+// Persist all settings.
 int emux_save_settings(void);
 
 void emux_ensure_video(void);

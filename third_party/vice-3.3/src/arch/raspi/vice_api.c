@@ -121,7 +121,10 @@ int emux_save_state(char *filename) {
 }
 
 int emux_load_state(char *filename) {
-  return machine_read_snapshot(filename, 0);
+  int status = machine_read_snapshot(filename, 0);
+  // Somehow, this gets turned off. Vice bug?
+  resources_set_int("Datasette", 1);
+  return status;
 }
 
 int emux_tape_control(int cmd) {

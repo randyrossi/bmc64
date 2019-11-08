@@ -549,6 +549,23 @@ static void ui_set_hotkeys() {
   }
 }
 
+// If any joystick is set to mouse, enable it in the emulator.
+// FCIII apparently doesn't like the mouse enabled unless necessary
+static void set_need_mouse() {
+   int need_mouse = 0;
+   int index = port_1_menu_item->value;
+   if (port_1_menu_item->choice_ints[index] == JOYDEV_MOUSE) {
+      need_mouse = 1;
+   }
+   if (emu_get_num_joysticks() > 1) {
+      index = port_2_menu_item->value;
+      if (port_1_menu_item->choice_ints[index] == JOYDEV_MOUSE) {
+         need_mouse = 1;
+      }
+   }
+   emux_set_int(Setting_Mouse, need_mouse);
+}
+
 static void ui_set_joy_items() {
   int joydev;
   int i;
@@ -603,6 +620,8 @@ static void ui_set_joy_items() {
        emux_set_joy_port_device(2, port_2_menu_item->choice_ints[value]);
      }
   }
+
+  set_need_mouse();
 }
 
 static int save_settings() {
@@ -1861,6 +1880,7 @@ static void menu_value_changed(struct menu_item *item) {
     } else {
       emux_set_joy_port_device(1, item->choice_ints[item->value]);
     }
+    set_need_mouse();
     return;
   case MENU_JOYSTICK_PORT_2:
     // device in port 2 was changed
@@ -1881,6 +1901,7 @@ static void menu_value_changed(struct menu_item *item) {
     } else {
       emux_set_joy_port_device(2, item->choice_ints[item->value]);
     }
+    set_need_mouse();
     return;
   case MENU_TAPE_START:
     emux_tape_control(EMUX_TAPE_PLAY);
@@ -2872,7 +2893,6 @@ void build_menu(struct menu_item *root) {
 
   // This can somehow get turned off. Make sure its always 1.
   emux_set_int(Setting_Datasette, 1);
-  emux_set_int(Setting_Mouse, 1);
 
   // For now, all our drives will always be file system devices.
   emux_set_int_1(Setting_FileSystemDeviceN, 1, 8);

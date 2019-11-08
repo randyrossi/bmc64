@@ -79,6 +79,19 @@ static void apply_rom_config() {
 
 }
 
+// Reusing this from kernel to make implementing emux_kbd_set_latch_keyarr
+// easier.
+static long rowColToKeycode[8][8] = {
+ {KEYCODE_Backspace,  KEYCODE_3,         KEYCODE_5, KEYCODE_7, KEYCODE_9, KEYCODE_Down,         KEYCODE_Left,         KEYCODE_1},
+ {KEYCODE_Return,     KEYCODE_w,         KEYCODE_r, KEYCODE_y, KEYCODE_i, KEYCODE_p,            KEYCODE_Dash,         KEYCODE_BackQuote},
+ {KEYCODE_BackSlash,  KEYCODE_a,         KEYCODE_d, KEYCODE_g, KEYCODE_j, KEYCODE_l,            KEYCODE_SingleQuote,  KEYCODE_Tab},
+ {KEYCODE_F7,         KEYCODE_4,         KEYCODE_6, KEYCODE_8, KEYCODE_0, KEYCODE_Up,           KEYCODE_Right,        KEYCODE_2},
+ {KEYCODE_F1,         KEYCODE_z,         KEYCODE_c, KEYCODE_b, KEYCODE_m, KEYCODE_Period,       KEYCODE_RightShift,   KEYCODE_Space},
+ {KEYCODE_F3,         KEYCODE_s,         KEYCODE_f, KEYCODE_h, KEYCODE_k, KEYCODE_SemiColon,    KEYCODE_RightBracket, KEYCODE_LeftControl},
+ {KEYCODE_F5,         KEYCODE_e,         KEYCODE_t, KEYCODE_u, KEYCODE_o, KEYCODE_LeftBracket,  KEYCODE_Equals,       KEYCODE_q},
+ {KEYCODE_Insert,     KEYCODE_LeftShift, KEYCODE_x, KEYCODE_v, KEYCODE_n, KEYCODE_Comma,        KEYCODE_Slash,        KEYCODE_Escape},
+};
+
 //     0: Del          1: Return       2: £            3: Help
 //     4: F1           5: F2           6: F3           7: @
 //     8: 3            9: W           10: A           11: 4
@@ -620,7 +633,12 @@ void emux_trap_main_loop_ui(void) {
 void emux_trap_main_loop(void (*trap_func)(uint16_t, void *data), void* data) {
 }
 
-void emux_kbd_set_latch_keyarr(int row, int col, int value) {
+void emux_kbd_set_latch_keyarr(int row, int col, int pressed) {
+  long keycode = rowColToKeycode[row][col];
+  int p4code = bmc64_keycode_to_plus4emu(keycode);
+  if (p4code >= 0) {
+    Plus4VM_KeyboardEvent(vm, p4code, pressed);
+  }
 }
 
 int emux_attach_disk_image(int unit, char *filename) {
