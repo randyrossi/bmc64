@@ -638,6 +638,9 @@ namespace Plus4Emu {
       throw Exception("invalid tape file header");
     sampleRate = 55420L;
 
+   if (std::fseek(f, 20L, SEEK_SET) < 0)
+      throw Exception("invalid tape file header");
+
     // Calculate index
     int indexSeconds = 0;
     while (!endOfTape) {
