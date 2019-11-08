@@ -1799,10 +1799,12 @@ static void menu_value_changed(struct menu_item *item) {
     emux_video_color_setting_changed(0);
     return;
   case MENU_COLOR_RESET_0:
-    brightness_item_0->value = 1000;
-    contrast_item_0->value = 1250;
-    gamma_item_0->value = 2200;
-    tint_item_0->value = 1000;
+    emux_get_default_color_setting(
+      &brightness_item_0->value,
+      &contrast_item_0->value,
+      &gamma_item_0->value,
+      &tint_item_0->value
+    );
     emux_set_color_brightness(0, brightness_item_0->value);
     emux_set_color_contrast(0, contrast_item_0->value);
     emux_set_color_gamma(0, gamma_item_0->value);
@@ -1830,10 +1832,12 @@ static void menu_value_changed(struct menu_item *item) {
     emux_video_color_setting_changed(1);
     return;
   case MENU_COLOR_RESET_1:
-    brightness_item_1->value = 1000;
-    contrast_item_1->value = 1250;
-    gamma_item_1->value = 2200;
-    tint_item_1->value = 1000;
+    emux_get_default_color_setting(
+      &brightness_item_1->value,
+      &contrast_item_1->value,
+      &gamma_item_1->value,
+      &tint_item_1->value
+    );
     emux_set_color_brightness(1, brightness_item_1->value);
     emux_set_color_contrast(1, contrast_item_1->value);
     emux_set_color_gamma(1, gamma_item_1->value);
@@ -2507,14 +2511,21 @@ void build_menu(struct menu_item *root) {
   child = ui_menu_add_folder(parent, "Color Adjustments...");
 
   brightness_item_0 =
-      ui_menu_add_range(MENU_COLOR_BRIGHTNESS_0, child, "Brightness", 0, 2000,
-                        100, emux_get_color_brightness(0));
-  contrast_item_0 = ui_menu_add_range(MENU_COLOR_CONTRAST_0, child, "Contrast", 0,
-                                    2000, 100, emux_get_color_contrast(0));
-  gamma_item_0 = ui_menu_add_range(MENU_COLOR_GAMMA_0, child, "Gamma", 0, 4000, 100,
-                                 emux_get_color_gamma(0));
-  tint_item_0 = ui_menu_add_range(MENU_COLOR_TINT_0, child, "Tint", 0, 2000, 100,
-                                emux_get_color_tint(0));
+      ui_menu_add_range(MENU_COLOR_BRIGHTNESS_0, child, "Brightness",
+         0, 2000,
+            10, emux_get_color_brightness(0));
+  contrast_item_0 =
+      ui_menu_add_range(MENU_COLOR_CONTRAST_0, child, "Contrast",
+         0, 2000,
+            10, emux_get_color_contrast(0));
+  gamma_item_0 =
+      ui_menu_add_range(MENU_COLOR_GAMMA_0, child, "Gamma",
+         0, 4000,
+            10, emux_get_color_gamma(0));
+  tint_item_0 =
+      ui_menu_add_range(MENU_COLOR_TINT_0, child, "Tint",
+         0, 2000,
+            10, emux_get_color_tint(0));
   ui_menu_add_button(MENU_COLOR_RESET_0, child, "Reset");
 
   int defaultHBorderTrim;
@@ -2555,14 +2566,21 @@ void build_menu(struct menu_item *root) {
      child = ui_menu_add_folder(parent, "Color Adjustments...");
 
      brightness_item_1 =
-         ui_menu_add_range(MENU_COLOR_BRIGHTNESS_1, child, "Brightness", 0, 2000,
-                           100, emux_get_color_brightness(1));
-     contrast_item_1 = ui_menu_add_range(MENU_COLOR_CONTRAST_1, child, "Contrast", 0,
-                                       2000, 100, emux_get_color_contrast(1));
-     gamma_item_1 = ui_menu_add_range(MENU_COLOR_GAMMA_1, child, "Gamma", 0, 4000,
-                                       100, emux_get_color_gamma(1));
-     tint_item_1 = ui_menu_add_range(MENU_COLOR_TINT_1, child, "Tint", 0, 2000, 100,
-                                emux_get_color_tint(1));
+         ui_menu_add_range(MENU_COLOR_BRIGHTNESS_1, child, "Brightness",
+            0, 2000,
+               10, emux_get_color_brightness(1));
+     contrast_item_1 =
+         ui_menu_add_range(MENU_COLOR_CONTRAST_1, child, "Contrast",
+            0, 2000,
+               10, emux_get_color_contrast(1));
+     gamma_item_1 =
+         ui_menu_add_range(MENU_COLOR_GAMMA_1, child, "Gamma",
+            0, 4000,
+               10, emux_get_color_gamma(1));
+     tint_item_1 =
+         ui_menu_add_range(MENU_COLOR_TINT_1, child, "Tint",
+            0, 2000,
+               10, emux_get_color_tint(1));
      ui_menu_add_button(MENU_COLOR_RESET_1, child, "Reset");
 
      h_center_item_1 =

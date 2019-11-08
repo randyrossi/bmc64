@@ -366,4 +366,6 @@ int emux_handle_menu_change(struct menu_item* item);
 void emux_handle_load_setting(char *name, int value, char* value_str);
 void emux_handle_save_settings(FILE *fp);
 
+void emux_get_default_color_setting(int *brightness, int *contrast, int *gamma, int *tint);
+
 #endif

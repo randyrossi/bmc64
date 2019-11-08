@@ -629,3 +629,10 @@ void emux_handle_save_settings(FILE *fp) {
   // TODO: Put VICE specific settings here.
 }
 
+void emux_get_default_color_setting(int *brightness, int *contrast,
+                                    int *gamma, int *tint) {
+    *brightness = 1000;
+    *contrast = 1250;
+    *gamma = 2200;
+    *tint = 1000;
+}

@@ -886,6 +886,7 @@ void emux_video_color_setting_changed(int display_num) {
 
 void emux_set_color_brightness(int display_num, int value) {
   // Incoming 0-2000, Outgoing -.5 - .5
+  // Default 0
   double v = value;
   v = v - 1000;
   v = v / 2000;
@@ -894,6 +895,7 @@ void emux_set_color_brightness(int display_num, int value) {
 
 void emux_set_color_contrast(int display_num, int value) {
   // Incoming 0-2000, Outgoing .5 - 2.0
+  // Default 1
   double v = value / 1333.33d;
   v = v + .5;
   if (v < .5) v = .5;
@@ -903,6 +905,7 @@ void emux_set_color_contrast(int display_num, int value) {
 
 void emux_set_color_gamma(int display_num, int value) {
   // Incoming 0-4000, Outgoing .25 - 4.0
+  // Default 1
   double v = value / 1066.66d;
   v = v + .25;
   if (v < .25) v = .25;
@@ -912,6 +915,7 @@ void emux_set_color_gamma(int display_num, int value) {
 
 void emux_set_color_tint(int display_num, int value) {
   // Incoming 0-2000, Outgoing -180, 180
+  // Default 0
   double v = value / 5.555d;
   v = v - 180;
   if (v < -180) v = -180;
@@ -920,35 +924,44 @@ void emux_set_color_tint(int display_num, int value) {
 }
 
 int emux_get_color_brightness(int display_num) {
-  return 1000;
+  double saved_value = 0; // TODO : Restore this
+  return saved_value * 2000 + 1000;
 }
 
 int emux_get_color_contrast(int display_num) {
-  return 1000;
+  double saved_value = 1; // TODO: Restore this
+  return (saved_value - .5) * 1333.33d;
 }
 
 int emux_get_color_gamma(int display_num) {
-  return 1000;
+  double saved_value = 1; // TODO: Restore this
+  return (saved_value - .25) * 1066.66d;
 }
 
 int emux_get_color_tint(int display_num) {
-  return 1000;
+  double saved_value = 0; // TODO: Restore this
+  return (saved_value + 180) * 5.555d;
 }
 
 void emux_set_video_cache(int value) {
+  // Ignore for plus/4
 }
 
 void emux_set_hw_scale(int value) {
+  // Ignore for plus/4
 }
 
 void emux_cartridge_trigger_freeze(void) {
+  // Ignore for plus/4
 }
 
 struct menu_item* emux_add_palette_options(int menu_id,
                                            struct menu_item* parent) {
+  // None for plus/4
 }
 
 void emux_add_machine_options(struct menu_item* parent) {
+  // TODO : Memory and cartridge configurations
 }
 
 struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
@@ -1010,7 +1023,7 @@ void emux_set_warp(int warp) {
 }
 
 void emux_change_palette(int display_num, int palette_index) {
-  // Ignore
+  // Never called for Plus4Emu
 }
 
 void emux_handle_rom_change(struct menu_item* item, fullpath_func fullpath) {
@@ -1020,9 +1033,11 @@ void emux_set_iec_dir(int unit, char* dir) {
 }
 
 void emux_set_int(IntSetting setting, int value) {
+  // TODO
 }
 
 void emux_set_int_1(IntSetting setting, int value, int param) {
+  // TODO
 }
 
 void emux_get_int(IntSetting setting, int* dest) {
@@ -1037,6 +1052,7 @@ void emux_get_int(IntSetting setting, int* dest) {
 }
 
 void emux_get_int_1(IntSetting setting, int* dest, int param) {
+  // TODO
 }
 
 void emux_get_string_1(StringSetting setting, const char** dest, int param) {
@@ -1047,6 +1063,7 @@ void emux_get_string_1(StringSetting setting, const char** dest, int param) {
 }
 
 int emux_save_settings(void) {
+  // TODO
   return 0;
 }
 
@@ -1085,8 +1102,19 @@ void emux_handle_save_settings(FILE *fp) {
   fprintf (fp,"sid_digiblaster=%d\n", sid_digiblaster_item->value);
 }
 
+void emux_get_default_color_setting(int *brightness, int *contrast,
+                                    int *gamma, int *tint) {
+    *brightness = 1000;
+    *contrast = 666;
+    *gamma = 800;
+    *tint = 1000;
+}
+
 /*
   Need to call these:
   emux_enable_drive_status(st, drive_led_color);
   emux_display_drive_led(drive, pwm1, pwm2);
 */
+
+
+
