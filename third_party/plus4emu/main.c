@@ -15,13 +15,22 @@
 static Plus4VM            *vm = NULL;
 static Plus4VideoDecoder  *videoDecoder = NULL;
 
-static uint8_t          *fb_buf;
-static int              fb_pitch;
-static int              ui_trap;
-static int              wait_vsync;
-static int              ui_warp;
-static int              joy_latch_value[2];
+// Global state variables
+static uint8_t *fb_buf;
+static int fb_pitch;
+static int ui_trap;
+static int wait_vsync;
+static int ui_warp;
+static int joy_latch_value[2];
+static int is_tape_motor;
+static int is_tape_motor_tick;
+static int is_tape_seeking;
+static int is_tape_seeking_dir;
+static int is_tape_seeking_tick;
+static double tape_counter_offset;
 
+// Things that need to be saved and restored
+int reset_tape_with_cpu = 1;
 static struct menu_item *sid_model_item;
 static struct menu_item *sid_write_access_item;
 static struct menu_item *sid_digiblaster_item;
@@ -39,13 +48,6 @@ static struct menu_item *c1_lo_offset_item;
 static struct menu_item *c1_hi_offset_item;
 static struct menu_item *c2_lo_offset_item;
 static struct menu_item *c2_hi_offset_item;
-
-int is_tape_motor;
-int is_tape_motor_tick;
-int is_tape_seeking;
-int is_tape_seeking_dir;
-int is_tape_seeking_tick;
-double tape_counter_offset;
 
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
@@ -747,8 +749,21 @@ void emux_detach_cart(int menu_id) {
   strncpy(item->displayed_value, " ", MAX_DSP_VAL_LEN - 1);
 }
 
+static void reset_tape_drive() {
+  Plus4VM_TapeSeek(vm, 0);
+  Plus4VM_TapeStop(vm);
+  is_tape_motor = 0;
+  tape_counter_offset = 0;
+  emux_display_tape_counter(0);
+}
+
 void emux_reset(int isSoft) {
   Plus4VM_Reset(vm, !isSoft);
+  if (reset_tape_with_cpu) {
+     emux_display_tape_control_status(EMUX_TAPE_STOP);
+     reset_tape_drive();
+     emux_display_tape_motor_status(is_tape_motor);
+  }
 }
 
 int emux_save_state(char *filename) {
@@ -800,11 +815,7 @@ int emux_tape_control(int cmd) {
       is_tape_motor_tick = 50;
       break;
     case EMUX_TAPE_RESET:
-      Plus4VM_TapeSeek(vm, 0);
-      Plus4VM_TapeStop(vm);
-      is_tape_motor = 0;
-      tape_counter_offset = 0;
-      emux_display_tape_counter(0);
+      reset_tape_drive();
       break;
     case EMUX_TAPE_ZERO:
       tape_counter_offset = Plus4VM_GetTapePosition(vm);
@@ -1033,11 +1044,18 @@ void emux_set_iec_dir(int unit, char* dir) {
 }
 
 void emux_set_int(IntSetting setting, int value) {
-  // TODO
+  switch (setting) {
+    case Setting_DatasetteResetWithCPU:
+       reset_tape_with_cpu = value;
+       break;
+    default:
+       printf ("Unhandled set int %d\n", setting);
+  }
 }
 
 void emux_set_int_1(IntSetting setting, int value, int param) {
   // TODO
+  printf ("Unhandled set int_1 %d\n", setting);
 }
 
 void emux_get_int(IntSetting setting, int* dest) {
@@ -1045,6 +1063,8 @@ void emux_get_int(IntSetting setting, int* dest) {
       case Setting_WarpMode:
           *dest = ui_warp;
           break;
+      case Setting_DatasetteResetWithCPU:
+          *dest = reset_tape_with_cpu;
       default:
           printf ("WARNING: Tried to get unsupported setting %d\n",setting);
           break;
@@ -1053,6 +1073,7 @@ void emux_get_int(IntSetting setting, int* dest) {
 
 void emux_get_int_1(IntSetting setting, int* dest, int param) {
   // TODO
+  printf ("Unhandled get int_1 %d\n", setting);
 }
 
 void emux_get_string_1(StringSetting setting, const char** dest, int param) {

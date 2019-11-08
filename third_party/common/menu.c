@@ -2422,8 +2422,11 @@ void build_menu(struct menu_item *root) {
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");
   }
 
+  if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
     ui_menu_add_button(MENU_DRIVE_CHANGE_ROM, drive_parent, "Change ROM...");
+  }
 
+  if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
     parent = ui_menu_add_folder(drive_parent, "Create empty Disk");
       ui_menu_add_button(MENU_CREATE_D64, parent, "D64...");
       ui_menu_add_button(MENU_CREATE_D67, parent, "D67...");
@@ -2437,6 +2440,7 @@ void build_menu(struct menu_item *root) {
       ui_menu_add_button(MENU_CREATE_G64, parent, "G64...");
       ui_menu_add_button(MENU_CREATE_P64, parent, "P64...");
       ui_menu_add_button(MENU_CREATE_X64, parent, "X64...");
+  }
 
   parent = emux_add_cartridge_options(root);
   ui_menu_add_button(MENU_TEXT, parent, "");
@@ -2755,11 +2759,13 @@ void build_menu(struct menu_item *root) {
   parent = ui_menu_add_folder(root, "Prefs");
 
 #ifndef RASPI_LITE
-  drive_sounds_item = ui_menu_add_toggle(MENU_DRIVE_SOUND_EMULATION, parent,
+  if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
+    drive_sounds_item = ui_menu_add_toggle(MENU_DRIVE_SOUND_EMULATION, parent,
                                          "Drive sound emulation", 0);
-  drive_sounds_vol_item =
-      ui_menu_add_range(MENU_DRIVE_SOUND_EMULATION_VOLUME, parent,
+    drive_sounds_vol_item =
+        ui_menu_add_range(MENU_DRIVE_SOUND_EMULATION_VOLUME, parent,
                         "Drive sound emulation volume", 0, 1000, 100, 1000);
+  }
 #endif
 
   statusbar_item =
