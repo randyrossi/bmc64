@@ -28,7 +28,7 @@
 
 #include <stdlib.h>
 
-#include "emux_api.h";
+#include "emux_api.h"
 #include "plus4/plus4.h"
 #include "plus4/plus4memrom.h"
 #include "plus4/tedtypes.h"

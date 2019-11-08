@@ -38,3 +38,7 @@ cp $KERNEL ${KERNEL}.vic20
 make clean
 BOARD=$BOARD make -f Makefile-Plus4
 cp $KERNEL ${KERNEL}.plus4
+
+make clean
+BOARD=$BOARD make -f Makefile-Plus4Emu
+cp $KERNEL ${KERNEL}.plus4emu

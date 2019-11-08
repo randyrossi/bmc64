@@ -1195,9 +1195,18 @@ void ui_info(const char *format, ...) {
   ui_render_single_frame();
 }
 
-void ui_info_wrapped(char *title, const char *txt) {
-  struct menu_item *root = ui_push_menu(30, 8);
+void ui_confirm_wrapped(char *title, const char *txt, int ok_value, int ok_id) {
+  struct menu_item *root = ui_push_menu(30, 10);
   ui_menu_add_button(MENU_ERROR_DIALOG, root, title);
+
+  struct menu_item *child;
+  if (ok_value >=0 && ok_id >=0) {
+     child = ui_menu_add_button(MENU_CONFIRM_OK, root, "OK");
+     child->value = ok_value;
+     child->sub_id = ok_id;
+
+     ui_menu_add_button(MENU_CONFIRM_CANCEL, root, "CANCEL");
+  }
 
   ui_menu_add_divider(root);
   char buf[512];
@@ -1228,6 +1237,8 @@ void ui_info_wrapped(char *title, const char *txt) {
   if (strlen(line) > 0) {
      ui_menu_add_button(MENU_INFO_DIALOG, root, line);
   }
+
+
   ui_render_single_frame();
 }
 

@@ -258,3 +258,8 @@
   * Unified C64, VIC20, C128 and PLUS/4 into one release
   * Fixed cycles_per_second bug causing custom hdmi to not work
   * Look for carts, tapes, disks etc in machine subdir first
+
+## 3.1
+  * Integrated Plus4Emu as more accurate PLUS/4 option (Pi3 only)
+  * Lots of internal src reorg, new layers to plugin different emulators
+  * Reboot after machine switch

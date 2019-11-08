@@ -48,6 +48,8 @@
 #include "raspi_util.h"
 #include "ui.h"
 
+extern void reboot(void);
+
 #define VERSION_STRING "3.0"
 
 #ifdef RASPI_LITE
@@ -491,17 +493,6 @@ static void filesystem_change_volume(struct menu_item *item) {
   }
 }
 
-static void confirm_dialog(int id, int value) {
-  struct menu_item *root = ui_push_menu(8, 2);
-
-  struct menu_item *child;
-  child = ui_menu_add_button(MENU_CONFIRM_OK, root, "OK");
-  child->value = value;
-  child->sub_id = id;
-
-  child = ui_menu_add_button(MENU_CONFIRM_CANCEL, root, "CANCEL");
-}
-
 static void drive_change_rom() {
   struct menu_item *root = ui_push_menu(12, 8);
   struct menu_item *item;
@@ -629,8 +620,10 @@ static int save_settings() {
     fp = fopen("/settings-vic20.txt", "w");
     break;
   case BMC64_MACHINE_CLASS_PLUS4:
-  case BMC64_MACHINE_CLASS_PLUS4EMU:
     fp = fopen("/settings-plus4.txt", "w");
+    break;
+  case BMC64_MACHINE_CLASS_PLUS4EMU:
+    fp = fopen("/settings-plus4emu.txt", "w");
     break;
   default:
     printf("ERROR: Unhandled machine\n");
@@ -803,8 +796,10 @@ static void load_settings() {
     fp = fopen("/settings-vic20.txt", "r");
     break;
   case BMC64_MACHINE_CLASS_PLUS4:
-  case BMC64_MACHINE_CLASS_PLUS4EMU:
     fp = fopen("/settings-plus4.txt", "r");
+    break;
+  case BMC64_MACHINE_CLASS_PLUS4EMU:
+    fp = fopen("/settings-plus4emu.txt", "r");
     break;
   default:
     printf("ERROR: Unhandled machine\n");
@@ -2089,7 +2084,7 @@ static void menu_value_changed(struct menu_item *item) {
     circle_set_volume(item->value);
     break;
   case MENU_SWITCH_MACHINE:
-    confirm_dialog(MENU_SWITCH_MACHINE, item->value);
+    ui_confirm_wrapped("Confirm Switch",SWITCH_MSG,item->value,MENU_SWITCH_MACHINE);
     break;
   case MENU_CONFIRM_OK:
     ui_pop_menu();
@@ -2109,9 +2104,9 @@ static void menu_value_changed(struct menu_item *item) {
       if (status) {
          char failcode[32];
          sprintf (failcode, "FAILURE (CODE %d)", status);
-         ui_info_wrapped(failcode, SWITCH_FAIL_MSG);
+         ui_confirm_wrapped(failcode, SWITCH_FAIL_MSG,-1,-1);
       } else {
-         ui_info_wrapped("Success - PLEASE REBOOT", SWITCH_MSG);
+         reboot();
       }
     }
     break;
@@ -2259,12 +2254,21 @@ static void menu_build_machine_switch(struct menu_item* parent) {
       case BMC64_MACHINE_CLASS_PLUS4:
          item = ui_menu_add_button(MENU_SWITCH_MACHINE, plus4_r, ptr->desc);
          break;
+      case BMC64_MACHINE_CLASS_PLUS4EMU:
+         if (circle_get_model() >= 3) {
+            item = ui_menu_add_button(MENU_SWITCH_MACHINE, plus4_r, ptr->desc);
+         } else {
+            item = NULL;
+         }
+         break;
       default:
          item = NULL;
          break;
     }
 
-    item->value = ptr->id;
+    if (item) {
+       item->value = ptr->id;
+    }
 
     ptr=ptr->next;
   }

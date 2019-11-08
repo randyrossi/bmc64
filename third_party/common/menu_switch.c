@@ -132,6 +132,8 @@ static int new_section(struct machine_entry** new_section, char* line) {
      entry->class = BMC64_MACHINE_CLASS_C128;
   else if (strcasecmp(video_nam,"plus4") == 0)
      entry->class = BMC64_MACHINE_CLASS_PLUS4;
+  else if (strcasecmp(video_nam,"plus4emu") == 0)
+     entry->class = BMC64_MACHINE_CLASS_PLUS4EMU;
 
   if (strcasecmp(video_std,"ntsc") == 0)
      entry->video_standard = BMC64_VIDEO_STANDARD_NTSC;
@@ -510,6 +512,9 @@ int apply_config(struct machine_entry* head, int pi_model) {
         break;
      case BMC64_MACHINE_CLASS_PLUS4:
         strcat(kernel_name,".plus4");
+        break;
+     case BMC64_MACHINE_CLASS_PLUS4EMU:
+        strcat(kernel_name,".plus4emu");
         break;
      default:
         return ERROR_6;
