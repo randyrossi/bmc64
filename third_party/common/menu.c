@@ -2358,7 +2358,11 @@ void build_menu(struct menu_item *root) {
 
   ui_menu_add_divider(root);
 
-  ui_menu_add_button(MENU_AUTOSTART, root, "Autostart Prg/Disk...");
+  if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
+     ui_menu_add_button(MENU_AUTOSTART, root, "Load Prg...");
+  } else {
+     ui_menu_add_button(MENU_AUTOSTART, root, "Autostart Prg/Disk...");
+  }
 
   machine_parent = ui_menu_add_folder(root, "Machine");
     emux_add_machine_options(machine_parent);

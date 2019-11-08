@@ -920,8 +920,8 @@ PLUS4EMU_EXPORT void Plus4VideoDecoder_SetHueShift(
  * integer pixel format.
  * The default settings are: yuvMode = 0, rShift = 16, gShift = 8, bShift = 0.
  */
-//PLUS4EMU_EXPORT void Plus4VideoDecoder_UpdatePalette(
-//    Plus4VideoDecoder *vd, int yuvMode, int rShift, int gShift, int bShift);
+PLUS4EMU_EXPORT void Plus4VideoDecoder_UpdatePalette(
+    Plus4VideoDecoder *vd);
 /*!
  * Decode the line in 'lineData' to 'outBuf'.
  * 'lineWidth' is the horizontal resolution to which the 48 characters wide

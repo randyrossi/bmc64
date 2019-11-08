@@ -18,6 +18,7 @@ static Plus4VideoDecoder  *videoDecoder = NULL;
 static uint8_t          *fb_buf;
 static int              fb_pitch;
 static int              ui_trap;
+static int              wait_vsync;
 static int              ui_warp;
 static int              joy_latch_value[2];
 
@@ -270,6 +271,12 @@ static void videoFrameCallback(void *userData)
                           -1 /* no 2nd layer */,
                           !ui_warp /* sync */);
 
+  // Something is waiting for vsync, ack and return.
+  if (wait_vsync) {
+    wait_vsync = 0;
+    return;
+  }
+
   emux_ensure_video();
 
   // This render will handle any OSDs we have. ODSs don't pause emulation.
@@ -410,10 +417,10 @@ static void videoFrameCallback(void *userData)
   }
 
   if (ui_trap) {
+      ui_trap = 0;
       circle_lock_release();
       emu_pause_trap(0, NULL);
       circle_lock_acquire();
-      ui_trap = 0;
   }
 
   circle_lock_release();
@@ -568,7 +575,6 @@ int main_program(int argc, char **argv)
   do {
     if (Plus4VM_Run(vm, 2000) != PLUS4EMU_SUCCESS)
       vmError();
-
   } while (!quitFlag);
 
   Plus4VM_Destroy(vm);
@@ -818,6 +824,9 @@ unsigned long emux_calculate_timing(double fps) {
 }
 
 int emux_autostart_file(char* filename) {
+  if (Plus4VM_LoadProgram(vm, filename) != PLUS4EMU_SUCCESS) {
+     return 1;
+  }
   return 0;
 }
 
@@ -826,9 +835,11 @@ void emux_drive_change_model(int unit) {
 
 void emux_add_parallel_cable_option(struct menu_item* parent,
                                     int id, int drive) {
+  // Not supported for plus/4
 }
 
 void emux_create_disk(struct menu_item* item, fullpath_func fullpath) {
+  // Not supported for plus/4
 }
 
 void emux_set_joy_port_device(int port_num, int dev_id) {
@@ -863,19 +874,49 @@ void emux_add_sound_options(struct menu_item* parent) {
 }
 
 void emux_video_color_setting_changed(int display_num) {
-  // TBD
+  Plus4VideoDecoder_UpdatePalette(videoDecoder);
+  // Plus4Emu doesn't use an indexed palette so we have to allow
+  // the decoder to draw a frame after we change a color param.
+  wait_vsync = 1;
+  do {
+    if (Plus4VM_Run(vm, 2000) != PLUS4EMU_SUCCESS)
+      vmError();
+  } while (wait_vsync);
 }
 
 void emux_set_color_brightness(int display_num, int value) {
+  // Incoming 0-2000, Outgoing -.5 - .5
+  double v = value;
+  v = v - 1000;
+  v = v / 2000;
+  Plus4VideoDecoder_SetBrightness(videoDecoder,v,v,v,v);
 }
 
 void emux_set_color_contrast(int display_num, int value) {
+  // Incoming 0-2000, Outgoing .5 - 2.0
+  double v = value / 1333.33d;
+  v = v + .5;
+  if (v < .5) v = .5;
+  if (v > 2.0) v = 2.0;
+  Plus4VideoDecoder_SetContrast(videoDecoder,v,v,v,v);
 }
 
 void emux_set_color_gamma(int display_num, int value) {
+  // Incoming 0-4000, Outgoing .25 - 4.0
+  double v = value / 1066.66d;
+  v = v + .25;
+  if (v < .25) v = .25;
+  if (v > 4.0) v = 4.0;
+  Plus4VideoDecoder_SetGamma(videoDecoder,v,v,v,v);
 }
 
 void emux_set_color_tint(int display_num, int value) {
+  // Incoming 0-2000, Outgoing -180, 180
+  double v = value / 5.555d;
+  v = v - 180;
+  if (v < -180) v = -180;
+  if (v > 180) v = 180;
+  Plus4VideoDecoder_SetHueShift(videoDecoder,v);
 }
 
 int emux_get_color_brightness(int display_num) {

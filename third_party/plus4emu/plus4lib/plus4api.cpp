@@ -1755,23 +1755,14 @@ extern "C" PLUS4EMU_EXPORT void Plus4VideoDecoder_SetHueShift(
   vd->displayParameters.hueShift = float(hueShift);
 }
 
-/*
 extern "C" PLUS4EMU_EXPORT void Plus4VideoDecoder_UpdatePalette(
-    Plus4VideoDecoder *vd, int yuvMode, int rShift, int gShift, int bShift)
+    Plus4VideoDecoder *vd)
 {
   Plus4Emu::VideoDisplay::DisplayParameters dp(vd->displayParameters);
   dp.indexToYUVFunc = &Plus4::TED7360::convertPixelToYUV;
   vd->displayParameters = dp;
-  vd->colormap.setDisplayParameters(dp, bool(yuvMode));
-  uint32_t  *p = vd->colormap.getFirstEntry();
-  while (p) {
-    (*p) = (((*p) & 0x000000FFU) << rShift)             // red / Y
-           | ((((*p) & 0x0000FF00U) >> 8) << gShift)    // green / U
-           | ((((*p) & 0x00FF0000U) >> 16) << bShift);  // blue / V
-    p = vd->colormap.getNextEntry(p);
-  }
+  vd->colormap.setDisplayParameters(dp, false);
 }
-*/
 
 /*
 extern "C" PLUS4EMU_EXPORT void Plus4VideoDecoder_DecodeLine(
