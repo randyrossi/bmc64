@@ -363,8 +363,11 @@ void emu_pause_trap(uint16_t addr, void *data);
 // Return 1 to indicate item was handled, 0 otherwise
 int emux_handle_menu_change(struct menu_item* item);
 
-void emux_handle_load_setting(char *name, int value, char* value_str);
-void emux_handle_save_settings(FILE *fp);
+// Restore emulator specific settings that are set via emux_get_*/emux_set_*.
+void emux_load_additional_settings(void);
+
+// Persist emulator specific settings. Added to given open file pointer.
+void emux_save_additional_settings(FILE *fp);
 
 void emux_get_default_color_setting(int *brightness, int *contrast, int *gamma, int *tint);
 

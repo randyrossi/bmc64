@@ -751,7 +751,7 @@ static int save_settings() {
 
   fprintf(fp, "volume=%d\n", volume_item->value);
 
-  emux_handle_save_settings(fp);
+  emux_save_additional_settings(fp);
 
   fclose(fp);
 
@@ -995,8 +995,6 @@ static void load_settings() {
       aspect_item_1->value = value;
     } else if (strcmp(name, "volume") == 0) {
       volume_item->value = value;
-    } else {
-      emux_handle_load_setting(name, value, value_str);
     }
   }
   fclose(fp);
@@ -2308,6 +2306,8 @@ void build_menu(struct menu_item *root) {
   int i;
   int j;
   int tmp;
+
+  emux_load_additional_settings();
 
   // TODO: This doesn't really belong here. Need to sort
   // out init order of structs.

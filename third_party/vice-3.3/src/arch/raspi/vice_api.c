@@ -624,12 +624,14 @@ int emux_handle_menu_change(struct menu_item* item) {
   return 0;
 }
 
-void emux_handle_load_setting(char *name, int value, char* value_str) {
-  // TODO: Put VICE specific settings here.
+void emux_load_additional_settings() {
+  // Vice settings are automatically loaded by the emulator. Nothing
+  // to do here.
 }
 
-void emux_handle_save_settings(FILE *fp) {
-  // TODO: Put VICE specific settings here.
+void emux_save_additional_settings(FILE *fp) {
+  // Vice settings are persisted to vice.ini when emux_save_settings is
+  // called. Nothing to do here.
 }
 
 void emux_get_default_color_setting(int *brightness, int *contrast,

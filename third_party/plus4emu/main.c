@@ -29,8 +29,35 @@ static int is_tape_seeking_dir;
 static int is_tape_seeking_tick;
 static double tape_counter_offset;
 
-// Things that need to be saved and restored
+// Things that need to be saved and restored.
 int reset_tape_with_cpu = 1;
+int sid_model;
+int sid_write_access;
+int sid_digiblaster;
+char rom_basic[MAX_STR_VAL_LEN];
+char rom_kernal[MAX_STR_VAL_LEN];
+char rom_c0_lo[MAX_STR_VAL_LEN];
+char rom_c0_hi[MAX_STR_VAL_LEN];
+char rom_c1_lo[MAX_STR_VAL_LEN];
+char rom_c1_hi[MAX_STR_VAL_LEN];
+char rom_c2_lo[MAX_STR_VAL_LEN];
+char rom_c2_hi[MAX_STR_VAL_LEN];
+char rom_1541[MAX_STR_VAL_LEN];
+char rom_1551[MAX_STR_VAL_LEN];
+char rom_1581[MAX_STR_VAL_LEN];
+int rom_basic_off;
+int rom_kernal_off;
+int rom_c0_lo_off;
+int rom_c0_hi_off;
+int rom_c1_lo_off;
+int rom_c1_hi_off;
+int rom_c2_lo_off;
+int rom_c2_hi_off;
+int rom_1541_off;
+int rom_1551_off;
+int rom_1581_lo_off;
+int rom_1581_hi_off;
+
 static struct menu_item *sid_model_item;
 static struct menu_item *sid_write_access_item;
 static struct menu_item *sid_digiblaster_item;
@@ -57,7 +84,7 @@ static void set_video_font(void) {
   // Temporary for now. Need to figure out how to get this from the emulator's
   // ROM. Just read the file ourselves.
   uint8_t* chargen = malloc(4096); // never freed
-  FILE* fp = fopen("p4kernal.rom", "r");
+  FILE* fp = fopen(rom_kernal, "r");
   fseek(fp, 0x1000, SEEK_SET);
   fread(chargen,1,4096,fp);
   fclose(fp);
@@ -75,8 +102,39 @@ static void apply_sid_config() {
   Plus4VM_SetSIDConfiguration(vm, sid_flags, sid_digiblaster_item->value, 0);
 }
 
-static void apply_rom_config() {
+static int apply_rom_config() {
+  if (Plus4VM_LoadROM(vm, 0x00, rom_basic, 0) != PLUS4EMU_SUCCESS)
+    return 1;
 
+  if (Plus4VM_LoadROM(vm, 0x01, rom_kernal, 0) != PLUS4EMU_SUCCESS)
+    return 1;
+
+  if (Plus4VM_LoadROM(vm, 0x10, rom_1541, 0) != PLUS4EMU_SUCCESS)
+    return 1;
+
+  if (strlen(c0_lo_item->str_value) > 0)
+    Plus4VM_LoadROM(vm, 2, c0_lo_item->str_value, rom_c0_lo_off);
+  if (strlen(c0_hi_item->str_value) > 0)
+    Plus4VM_LoadROM(vm, 3, c0_hi_item->str_value, rom_c0_hi_off);
+
+  if (strlen(c1_lo_item->str_value) > 0)
+    Plus4VM_LoadROM(vm, 4, c1_lo_item->str_value, rom_c1_lo_off);
+  if (strlen(c1_hi_item->str_value) > 0)
+    Plus4VM_LoadROM(vm, 5, c1_hi_item->str_value, rom_c1_hi_off);
+
+  if (strlen(c2_lo_item->str_value) > 0)
+    Plus4VM_LoadROM(vm, 6, c2_lo_item->str_value, rom_c2_lo_off);
+  if (strlen(c2_hi_item->str_value) > 0)
+    Plus4VM_LoadROM(vm, 7, c2_hi_item->str_value, rom_c2_hi_off);
+
+  return 0;
+}
+
+static int apply_settings() {
+  // Here, we should make whatever calls are necessary to configure the VM
+  // according to any settings that were loaded.
+  apply_sid_config();
+  return apply_rom_config();
 }
 
 // Reusing this from kernel to make implementing emux_kbd_set_latch_keyarr
@@ -491,13 +549,6 @@ static void resetMemoryConfiguration(void)
 {
   if (Plus4VM_SetRAMConfiguration(vm, 64, 0x99999999UL) != PLUS4EMU_SUCCESS)
     vmError();
-  /* load ROM images */
-  if (Plus4VM_LoadROM(vm, 0x00, "p4_basic.rom", 0) != PLUS4EMU_SUCCESS)
-    errorMessage("cannot load p4_basic.rom");
-  if (Plus4VM_LoadROM(vm, 0x01, "p4kernal.rom", 0) != PLUS4EMU_SUCCESS)
-    errorMessage("cannot load p4kernal.rom");
-  if (Plus4VM_LoadROM(vm, 0x10, "dos1541.rom", 0) != PLUS4EMU_SUCCESS)
-    errorMessage("cannot load dos1541.rom");
 }
 
 
@@ -507,6 +558,7 @@ static void resetMemoryConfiguration(void)
 int main_program(int argc, char **argv)
 {
   int     quitFlag = 0;
+  int     timeAdvance;
 
   (void) argc;
   (void) argv;
@@ -543,14 +595,15 @@ int main_program(int argc, char **argv)
   circle_sound_init(NULL, &audioSampleRate, &fragsize, &fragnr, &channels);
   if (Plus4VM_SetAudioSampleRate(vm, audioSampleRate) != PLUS4EMU_SUCCESS)
     vmError();
+
   resetMemoryConfiguration();
+
   if (Plus4VM_SetWorkingDirectory(vm, ".") != PLUS4EMU_SUCCESS)
     vmError();
   /* enable read-write IEC level drive emulation for unit 8 */
   Plus4VM_SetIECDriveReadOnlyMode(vm, 0);
-  emux_detach_disk(0);
 
-  Plus4VM_Reset(vm, 1);
+  emux_detach_disk(0);
 
   videoDecoder =
       Plus4VideoDecoder_Create(&videoLineCallback, &videoFrameCallback, NULL);
@@ -563,13 +616,8 @@ int main_program(int argc, char **argv)
   vic_enabled = 1; // really TED
   ui_init_menu();
 
-  // Here, we should make whatever calls are necessary to configure the VM
-  // according to any settings that were loaded.
-  apply_sid_config();
-  apply_rom_config();
-
-  canvas_state[0].gfx_w = 40*8;
-  canvas_state[0].gfx_h = 25*8;
+  canvas_state[vic_canvas_index].gfx_w = 40*8;
+  canvas_state[vic_canvas_index].gfx_h = 25*8;
 
   int timing = circle_get_machine_timing();
   if (timing == MACHINE_TIMING_NTSC_HDMI ||
@@ -577,18 +625,36 @@ int main_program(int argc, char **argv)
       timing == MACHINE_TIMING_NTSC_CUSTOM) {
     canvas_state[vic_canvas_index].max_border_w = 32;
     canvas_state[vic_canvas_index].max_border_h = 16;
+    timeAdvance = 1666;
+    Plus4VM_SetVideoClockFrequency(vm, 14318180);
+    strcpy(rom_kernal,"p4_ntsc.rom");
+    Plus4VideoDecoder_SetNTSCMode(videoDecoder, 1);
   } else {
     canvas_state[vic_canvas_index].max_border_w = 32;
     canvas_state[vic_canvas_index].max_border_h = 40;
+    timeAdvance = 2000;
+    Plus4VM_SetVideoClockFrequency(vm, 17734475);
+    strcpy(rom_kernal,"p4kernal.rom");
+    Plus4VideoDecoder_SetNTSCMode(videoDecoder, 0);
+  }
+  strcpy(rom_basic,"p4_basic.rom");
+  strcpy(rom_1541,"dos1541.rom");
+  strcpy(rom_1551,"dos1551.rom");
+  strcpy(rom_1581,"dos1581.rom");
+
+  // Global settings vars have been restored by our load settings hook.
+  // Use them to configure the VM.
+  if (apply_settings()) {
+     return -1;
   }
 
   set_video_font();
 
-  /* run Plus/4 emulation until the F12 key is pressed */
   printf ("Enter emulation loop\n");
+  Plus4VM_Reset(vm, 1);
 
   do {
-    if (Plus4VM_Run(vm, 2000) != PLUS4EMU_SUCCESS)
+    if (Plus4VM_Run(vm, timeAdvance) != PLUS4EMU_SUCCESS)
       vmError();
   } while (!quitFlag);
 
@@ -634,7 +700,7 @@ void emux_trap_main_loop(void (*trap_func)(uint16_t, void *data), void* data) {
 }
 
 void emux_kbd_set_latch_keyarr(int row, int col, int pressed) {
-  long keycode = rowColToKeycode[row][col];
+  long keycode = rowColToKeycode[col][row];
   int p4code = bmc64_keycode_to_plus4emu(keycode);
   if (p4code >= 0) {
     Plus4VM_KeyboardEvent(vm, p4code, pressed);
@@ -723,6 +789,7 @@ int emux_attach_cart(int menu_id, char *filename) {
   }
 
   // Update attached cart name
+  strncpy(item->str_value, filename, MAX_STR_VAL_LEN - 1);
   strncpy(item->displayed_value, filename, MAX_DSP_VAL_LEN - 1);
   return 0;
 }
@@ -887,19 +954,19 @@ void emux_add_sound_options(struct menu_item* parent) {
   struct menu_item* child = sid_model_item =
       ui_menu_add_multiple_choice(MENU_SID_MODEL, parent, "Sid Model");
   child->num_choices = 1;
-  child->value = 0;
+  child->value = sid_model;
   strcpy(child->choices[0], "8580");
   child->choice_ints[0] = 0; // 8580 for sidflags
 
   // Write access at $d400-d41f
   child = sid_write_access_item =
       ui_menu_add_toggle(MENU_SID_WRITE_D400, parent,
-          "Write Access $D400-D41F", 0);
+          "Write Access $D400-D41F", sid_write_access);
 
   // Digiblaster
   child = sid_digiblaster_item =
       ui_menu_add_toggle(MENU_SID_DIGIBLASTER, parent,
-          "Enable Digiblaster", 0);
+          "Enable Digiblaster", sid_digiblaster);
 }
 
 void emux_video_color_setting_changed(int display_num) {
@@ -991,6 +1058,9 @@ struct menu_item* emux_add_palette_options(int menu_id,
 
 void emux_add_machine_options(struct menu_item* parent) {
   // TODO : Memory and cartridge configurations
+  // C16-16k
+  // C16-64k
+  // Plus/4-64k
 }
 
 struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
@@ -998,50 +1068,62 @@ struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
 
   ui_menu_add_divider(parent);
   c0_lo_item = ui_menu_add_button_with_value(MENU_TEXT, parent,
-     "C0 LO:",0," "," ");
+     "C0 LO:",0,rom_c0_lo,"");
+  c0_lo_item->prefer_str = 1;
+  strncpy(c0_lo_item->displayed_value, rom_c0_lo, MAX_DSP_VAL_LEN - 1);
   ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C0_LO, parent, "Attach...");
   c0_lo_offset_item = ui_menu_add_range(MENU_PLUS4_ATTACH_CART_C0_LO_OFFSET,
-     parent, "Offset", 0, 16384, 16384, 0);
+     parent, "Offset", 0, 16384, 16384, rom_c0_lo_off);
   ui_menu_add_button(MENU_PLUS4_DETACH_CART_C0_LO, parent, "Detach");
   ui_menu_add_divider(parent);
 
   c0_hi_item = ui_menu_add_button_with_value(MENU_TEXT, parent,
-      "C0 HI:",0," "," ");
+      "C0 HI:",0,rom_c0_hi,"");
+  c0_hi_item->prefer_str = 1;
+  strncpy(c0_hi_item->displayed_value, rom_c0_hi, MAX_DSP_VAL_LEN - 1);
   ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C0_HI, parent, "Attach...");
   c0_hi_offset_item = ui_menu_add_range(MENU_PLUS4_ATTACH_CART_C0_HI_OFFSET,
-     parent, "Offset", 0, 16384, 16384, 0);
+     parent, "Offset", 0, 16384, 16384, rom_c0_hi_off);
   ui_menu_add_button(MENU_PLUS4_DETACH_CART_C0_HI, parent, "Detach");
   ui_menu_add_divider(parent);
 
   c1_lo_item = ui_menu_add_button_with_value(MENU_TEXT, parent,
-      "C1 LO:",0," "," ");
+      "C1 LO:",0,rom_c1_lo,"");
+  c1_lo_item->prefer_str = 1;
+  strncpy(c1_lo_item->displayed_value, rom_c1_lo, MAX_DSP_VAL_LEN - 1);
   ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C1_LO, parent, "Attach...");
   c1_lo_offset_item = ui_menu_add_range(MENU_PLUS4_ATTACH_CART_C1_LO_OFFSET,
-      parent, "Offset", 0, 16384, 16384, 0);
+      parent, "Offset", 0, 16384, 16384, rom_c1_lo_off);
   ui_menu_add_button(MENU_PLUS4_DETACH_CART_C1_LO, parent, "Detach");
   ui_menu_add_divider(parent);
 
   c1_hi_item = ui_menu_add_button_with_value(MENU_TEXT, parent,
-      "C1 HI:",0," "," ");
+      "C1 HI:",0,rom_c1_hi,"");
+  c1_hi_item->prefer_str = 1;
+  strncpy(c1_hi_item->displayed_value, rom_c1_hi, MAX_DSP_VAL_LEN - 1);
   ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C1_HI, parent, "Attach...");
   c1_hi_offset_item = ui_menu_add_range(MENU_PLUS4_ATTACH_CART_C1_HI_OFFSET,
-      parent, "Offset", 0, 16384, 16384, 0);
+      parent, "Offset", 0, 16384, 16384, rom_c1_hi_off);
   ui_menu_add_button(MENU_PLUS4_DETACH_CART_C1_HI, parent, "Detach");
   ui_menu_add_divider(parent);
 
   c2_lo_item = ui_menu_add_button_with_value(MENU_TEXT, parent,
-      "C2 LO:",0," "," ");
+      "C2 LO:",0,rom_c2_lo,"");
+  c2_lo_item->prefer_str = 1;
+  strncpy(c2_lo_item->displayed_value, rom_c2_lo, MAX_DSP_VAL_LEN - 1);
   ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C2_LO, parent, "Attach...");
   c2_lo_offset_item = ui_menu_add_range(MENU_PLUS4_ATTACH_CART_C2_LO_OFFSET,
-      parent, "Offset", 0, 16384, 16384, 0);
+      parent, "Offset", 0, 16384, 16384, rom_c2_lo_off);
   ui_menu_add_button(MENU_PLUS4_DETACH_CART_C2_LO, parent, "Detach");
   ui_menu_add_divider(parent);
 
   c2_hi_item = ui_menu_add_button_with_value(MENU_TEXT, parent,
-      "C2 HI:",0," "," ");
+      "C2 HI:",0,rom_c2_hi,"");
+  c2_hi_item->prefer_str = 1;
+  strncpy(c2_hi_item->displayed_value, rom_c2_hi, MAX_DSP_VAL_LEN - 1);
   ui_menu_add_button(MENU_PLUS4_ATTACH_CART_C2_HI, parent, "Attach...");
   c2_hi_offset_item = ui_menu_add_range(MENU_PLUS4_ATTACH_CART_C2_HI_OFFSET,
-      parent, "Offset", 0, 16384, 16384, 0);
+      parent, "Offset", 0, 16384, 16384, rom_c2_hi_off);
   ui_menu_add_button(MENU_PLUS4_DETACH_CART_C2_HI, parent, "Detach");
 
   return parent;
@@ -1102,7 +1184,8 @@ void emux_get_string_1(StringSetting setting, const char** dest, int param) {
 }
 
 int emux_save_settings(void) {
-  // TODO
+  // All our  additional settings are handled by emux_save_additional_settings
+  // Nothing to do here.
   return 0;
 }
 
@@ -1114,6 +1197,7 @@ void emux_vice_easy_flash(void) {
   assert(0);
 }
 
+// Handle any menu item we've created for this emulator.
 int emux_handle_menu_change(struct menu_item* item) {
   switch (item->id) {
     case MENU_SID_MODEL:
@@ -1125,20 +1209,108 @@ int emux_handle_menu_change(struct menu_item* item) {
   return 0;
 }
 
-void emux_handle_load_setting(char *name, int value, char* value_str) {
-  if (strcmp(name,"sid_model") == 0) {
-     sid_model_item->value = value;
-  } else if (strcmp(name,"sid_write_access") == 0) {
-     sid_write_access_item->value = value;
-  } else if (strcmp(name,"sid_digiblaster") == 0) {
-     sid_digiblaster_item->value = value;
+// For Plus4emu, we grab additional settings from the same txt file.
+void emux_load_additional_settings() {
+  // NOTE: This is called before any menu items have been constructed.
+
+  strcpy(rom_c0_lo, "");
+  strcpy(rom_c0_hi, "");
+  strcpy(rom_c1_lo, "");
+  strcpy(rom_c1_hi, "");
+  strcpy(rom_c2_lo, "");
+  strcpy(rom_c2_hi, "");
+
+  FILE *fp;
+  fp = fopen("/settings-plus4emu.txt", "r");
+  if (fp == NULL) {
+     return;
   }
+
+  char name_value[80];
+  int value;
+  int usb_btn_0_i = 0;
+  int usb_btn_1_i = 0;
+  while (1) {
+    name_value[0] = '\0';
+    // Looks like circle-stdlib doesn't support something like %s=%d
+    int st = fscanf(fp, "%s", name_value);
+    if (name_value[0] == '\0' || st == EOF || feof(fp))
+      break;
+    char *name = strtok(name_value, "=");
+    if (name == NULL)
+      break;
+    char *value_str = strtok(NULL, "=");
+    if (value_str == NULL)
+      break;
+    value = atoi(value_str);
+
+    if (strcmp(name,"sid_model") == 0) {
+       sid_model = value;
+    } else if (strcmp(name,"sid_write_access") == 0) {
+       sid_write_access = value;
+    } else if (strcmp(name,"sid_digiblaster") == 0) {
+       sid_digiblaster = value;
+    } else if (strcmp(name,"reset_tape_with_cpu") == 0) {
+       reset_tape_with_cpu = value;
+    } else if (strcmp(name,"rom_c0_lo") == 0) {
+       strcpy(rom_c0_lo, value_str);
+    } else if (strcmp(name,"rom_c0_hi") == 0) {
+       strcpy(rom_c0_hi, value_str);
+    } else if (strcmp(name,"rom_c1_lo") == 0) {
+       strcpy(rom_c1_lo, value_str);
+    } else if (strcmp(name,"rom_c1_hi") == 0) {
+       strcpy(rom_c1_hi, value_str);
+    } else if (strcmp(name,"rom_c2_lo") == 0) {
+       strcpy(rom_c2_lo, value_str);
+    } else if (strcmp(name,"rom_c2_hi") == 0) {
+       strcpy(rom_c2_hi, value_str);
+    } else if (strcmp(name,"rom_c0_lo_off") == 0) {
+       rom_c0_lo_off = value;
+    } else if (strcmp(name,"rom_c0_hi_off") == 0) {
+       rom_c0_hi_off = value;
+    } else if (strcmp(name,"rom_c1_lo_off") == 0) {
+       rom_c1_lo_off = value;
+    } else if (strcmp(name,"rom_c1_hi_off") == 0) {
+       rom_c1_hi_off = value;
+    } else if (strcmp(name,"rom_c2_lo_off") == 0) {
+       rom_c2_lo_off = value;
+    } else if (strcmp(name,"rom_c2_hi_off") == 0) {
+       rom_c2_hi_off = value;
+    }
+  }
+
+  fclose(fp);
 }
 
-void emux_handle_save_settings(FILE *fp) {
+void emux_save_additional_settings(FILE *fp) {
   fprintf (fp,"sid_model=%d\n", sid_model_item->value);
   fprintf (fp,"sid_write_access=%d\n", sid_write_access_item->value);
   fprintf (fp,"sid_digiblaster=%d\n", sid_digiblaster_item->value);
+  fprintf (fp,"reset_tape_with_cpu=%d\n", reset_tape_with_cpu);
+  if (strlen(c0_lo_item->str_value) > 0) {
+     fprintf (fp,"rom_c0_lo=%s\n", c0_lo_item->str_value);
+  }
+  if (strlen(c0_hi_item->str_value) > 0) {
+     fprintf (fp,"rom_c0_hi=%s\n", c0_hi_item->str_value);
+  }
+  if (strlen(c1_lo_item->str_value) > 0) {
+     fprintf (fp,"rom_c1_lo=%s\n", c1_lo_item->str_value);
+  }
+  if (strlen(c1_hi_item->str_value) > 0) {
+     fprintf (fp,"rom_c1_hi=%s\n", c1_hi_item->str_value);
+  }
+  if (strlen(c2_lo_item->str_value) > 0) {
+     fprintf (fp,"rom_c2_lo=%s\n", c2_lo_item->str_value);
+  }
+  if (strlen(c2_hi_item->str_value) > 0) {
+     fprintf (fp,"rom_c2_hi=%s\n", c2_hi_item->str_value);
+  }
+  fprintf (fp,"rom_c0_lo_off=%d\n", c0_lo_offset_item->value);
+  fprintf (fp,"rom_c0_hi_off=%d\n", c0_hi_offset_item->value);
+  fprintf (fp,"rom_c1_lo_off=%d\n", c1_lo_offset_item->value);
+  fprintf (fp,"rom_c1_hi_off=%d\n", c1_hi_offset_item->value);
+  fprintf (fp,"rom_c2_lo_off=%d\n", c2_lo_offset_item->value);
+  fprintf (fp,"rom_c2_hi_off=%d\n", c2_hi_offset_item->value);
 }
 
 void emux_get_default_color_setting(int *brightness, int *contrast,

@@ -102,6 +102,8 @@ struct menu_item {
   // Also for TEXTFIELD, holds text
   char str_value[MAX_STR_VAL_LEN];
   char displayed_value[MAX_DSP_VAL_LEN];
+  // Set to 1 for prefer displayed value over int value
+  int prefer_str;
 
   // Optional menu item specific value changed function
   void (*on_value_changed)(struct menu_item *);

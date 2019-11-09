@@ -731,7 +731,7 @@ void ui_add_all(struct menu_item *src, struct menu_item *dest) {
 }
 
 static char *get_button_display_str(struct menu_item *node) {
-  if (strlen(node->displayed_value) > 0) {
+  if (node->prefer_str || strlen(node->displayed_value) > 0) {
     return node->displayed_value;
   } else {
     // Turn value into string as fallback
