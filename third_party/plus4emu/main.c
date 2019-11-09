@@ -627,20 +627,20 @@ int main_program(int argc, char **argv)
     canvas_state[vic_canvas_index].max_border_h = 16;
     timeAdvance = 1666;
     Plus4VM_SetVideoClockFrequency(vm, 14318180);
-    strcpy(rom_kernal,"p4_ntsc.rom");
+    strcpy(rom_kernal,"/PLUS4EMU/p4_ntsc.rom");
     Plus4VideoDecoder_SetNTSCMode(videoDecoder, 1);
   } else {
     canvas_state[vic_canvas_index].max_border_w = 32;
     canvas_state[vic_canvas_index].max_border_h = 40;
     timeAdvance = 2000;
     Plus4VM_SetVideoClockFrequency(vm, 17734475);
-    strcpy(rom_kernal,"p4kernal.rom");
+    strcpy(rom_kernal,"/PLUS4EMU/p4kernal.rom");
     Plus4VideoDecoder_SetNTSCMode(videoDecoder, 0);
   }
-  strcpy(rom_basic,"p4_basic.rom");
-  strcpy(rom_1541,"dos1541.rom");
-  strcpy(rom_1551,"dos1551.rom");
-  strcpy(rom_1581,"dos1581.rom");
+  strcpy(rom_basic,"/PLUS4EMU/p4_basic.rom");
+  strcpy(rom_1541,"/PLUS4EMU/dos1541.rom");
+  strcpy(rom_1551,"/PLUS4EMU/dos1551.rom");
+  strcpy(rom_1581,"/PLUS4EMU/dos1581.rom");
 
   // Global settings vars have been restored by our load settings hook.
   // Use them to configure the VM.
