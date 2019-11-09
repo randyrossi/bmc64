@@ -52,6 +52,7 @@ void Plus4EmulatorCore::RunMainPlus4(bool wait) {
   char *argv[] = {};
   emu_machine_init();
   main_program(argc, argv);
+  emu_exit();
 }
 
 // Initializing the filters for each SID model takes quite a bit.

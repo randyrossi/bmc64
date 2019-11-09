@@ -49,7 +49,6 @@
 // RASPI includes
 #include "emux_api.h"
 #include "demo.h"
-#include "font.h"
 #include "joy.h"
 #include "kbd.h"
 #include "menu.h"
@@ -548,63 +547,4 @@ palette_t *raspi_video_load_palette(int num_entries, char *name) {
     palette->entries[i].dither = 0;
   }
   return palette;
-}
-
-// This should be self contained. Don't rely on anything other
-// than the frame buffer which is guaranteed to be available.
-void main_exit(void) {
-  // We should never get here.  If we do, it's probably
-  // because essential roms are missing.  So display a message
-  // to that effect.
-  int i;
-  uint8_t *fb;
-  int fb_pitch;
-  int fb_width = 320;
-  int fb_height = 240;
-
-  circle_alloc_fbl(FB_LAYER_VIC, 0 /* indexed */, &fb,
-                      fb_width, fb_height, &fb_pitch);
-  circle_clear_fbl(FB_LAYER_VIC);
-  circle_show_fbl(FB_LAYER_VIC);
-
-  video_font = (uint8_t *)&font8x8_basic;
-  for (i = 0; i < 256; ++i) {
-    video_font_translate[i] = (8 * (i & 0x7f));
-  }
-
-  int x = 0;
-  int y = 3;
-  switch (machine_class) {
-    case VICE_MACHINE_VIC20:
-      ui_draw_text_buf("VIC20", x, y, 1, fb, fb_pitch, 1);
-      break;
-    case VICE_MACHINE_C64:
-      ui_draw_text_buf("C64", x, y, 1, fb, fb_pitch, 1);
-      break;
-    case VICE_MACHINE_C128:
-      ui_draw_text_buf("C128", x, y, 1, fb, fb_pitch, 1);
-      break;
-    case VICE_MACHINE_PLUS4:
-      ui_draw_text_buf("PLUS/4", x, y, 1, fb, fb_pitch, 1);
-      break;
-  }
-  y += 8;
-  ui_draw_text_buf("Emulator failed to start.", x, y, 1, fb, fb_pitch, 1);
-  y += 8;
-  ui_draw_text_buf("This most likely means you are missing", x, y, 1, fb,
-                   fb_pitch, 1);
-  y += 8;
-  ui_draw_text_buf("ROM files. Or you have specified an", x, y, 1, fb,
-                   fb_pitch, 1);
-  y += 8;
-  ui_draw_text_buf("invalid kernal, chargen or basic", x, y, 1, fb, fb_pitch, 1);
-  y += 8;
-  ui_draw_text_buf("ROM in vice.ini.  See documentation.", x, y, 1, fb,
-                   fb_pitch, 1);
-  y += 8;
-
-  circle_set_palette_fbl(FB_LAYER_VIC, 0, COLOR16(0, 0, 0));
-  circle_set_palette_fbl(FB_LAYER_VIC, 1, COLOR16(255, 255, 255));
-  circle_update_palette_fbl(FB_LAYER_VIC);
-  circle_frames_ready_fbl(FB_LAYER_VIC, -1, 0);
 }

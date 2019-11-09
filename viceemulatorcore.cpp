@@ -91,7 +91,7 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
 #endif
   emu_machine_init();
   main_program(argc, argv);
-  main_exit();
+  emu_exit();
 }
 
 // Initializing the filters for each SID model takes quite a bit.

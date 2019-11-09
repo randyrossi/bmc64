@@ -497,6 +497,16 @@ What to put on the SDcard:
         dos1551 (recommended)
 	rpi_sym.vkm
         bootstat.txt
+    /PLUS4EMU (Available for Pi3 Only)
+        p4kernal.rom
+        p4_ntsc.rom
+        p4_basic.rom
+        3plus1.rom
+        dos1541.rom
+        dos1551.rom
+        dos1581.rom (optional)
+        p4fileio.rom (optional)
+        p4fileio.rom (optional)
     kernel.img (C64 kernel for Pi0)
     kernel7.img (C64 kernel for Pi2)
     kernel8-32.img (C64 kernel for Pi3)
@@ -509,6 +519,7 @@ What to put on the SDcard:
     kernel.img.plus4
     kernel7.img.plus4
     kernel8-32.img.plus4
+    kernel8-32.img.plus4emu (for Pi3 only)
     fixup.dat
     bootstat.txt
     config.txt

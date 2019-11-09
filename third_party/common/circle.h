@@ -280,4 +280,7 @@ extern void emu_set_raw_usb(int device,
                             unsigned buttons,
                             const int hats[6],
                             const int axes[16]);
+
+extern void emu_exit(void);
+
 #endif
