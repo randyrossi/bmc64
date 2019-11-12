@@ -104,11 +104,6 @@ int emux_get_color_tint(int display_num) {
   return value;
 }
 
-void emux_cartridge_trigger_freeze(void) {
-  keyboard_clear_keymatrix();
-  cartridge_trigger_freeze();
-}
-
 struct menu_item* emux_add_palette_options(int menu_id, struct menu_item* parent) {
   struct menu_item* palette_item =
       ui_menu_add_multiple_choice(menu_id, parent, "Color Palette");

@@ -620,7 +620,33 @@ int emux_save_settings(void) {
 }
 
 int emux_handle_menu_change(struct menu_item* item) {
-  // TODO: Put VICE specific menu item handling here if possible
+  switch (item->id) {
+    case MENU_SAVE_EASYFLASH:
+      if (cartridge_flush_image(CARTRIDGE_EASYFLASH) < 0) {
+        ui_error("Problem saving");
+      } else {
+        ui_pop_all_and_toggle();
+      }
+      return 1;
+    case MENU_CART_FREEZE:
+      cartridge_trigger_freeze();
+      ui_pop_all_and_toggle();
+      return 1;
+    default:
+      break;
+  }
+
+  return 0;
+}
+
+int emux_handle_quick_func(int button_func) {
+  switch (button_func) {
+    case BTN_ASSIGN_CART_FREEZE:
+       cartridge_trigger_freeze();
+       return 1;
+    default:
+       break;
+  }
   return 0;
 }
 

@@ -502,7 +502,7 @@ What to put on the SDcard:
         p4_ntsc.rom
         p4_basic.rom
         3plus1.rom
-        dos1541.rom
+        dos1541.rom (optional)
         dos1551.rom
         dos1581.rom (optional)
         p4fileio.rom (optional)

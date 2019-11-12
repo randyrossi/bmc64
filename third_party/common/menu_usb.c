@@ -249,6 +249,10 @@ static void add_button_choices(struct menu_item *tmp_item) {
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20) {
     tmp_item->choice_disabled[BTN_ASSIGN_SWAP_PORTS] = 1;
+  }
+
+  if (emux_machine_class != BMC64_MACHINE_CLASS_C64 &&
+      emux_machine_class != BMC64_MACHINE_CLASS_C128) {
     tmp_item->choice_disabled[BTN_ASSIGN_CART_FREEZE] = 1;
   }
 

@@ -304,7 +304,6 @@ int emux_get_color_tint(int display_num);
 void emux_set_video_cache(int value);
 void emux_set_hw_scale(int value);
 
-void emux_cartridge_trigger_freeze(void);
 struct menu_item* emux_add_palette_options(int menu_id,
                                            struct menu_item* parent);
 void emux_add_machine_options(struct menu_item* parent);
@@ -362,6 +361,7 @@ void emu_pause_trap(uint16_t addr, void *data);
 
 // Return 1 to indicate item was handled, 0 otherwise
 int emux_handle_menu_change(struct menu_item* item);
+int emux_handle_quick_func(int button_func);
 
 // Restore emulator specific settings that are set via emux_get_*/emux_set_*.
 void emux_load_additional_settings(void);

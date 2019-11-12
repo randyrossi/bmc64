@@ -1189,14 +1189,6 @@ int emux_save_settings(void) {
   return 0;
 }
 
-void emux_vice_attach_cart(int menu_id, char* filename) {
-  assert(0);
-}
-
-void emux_vice_easy_flash(void) {
-  assert(0);
-}
-
 // Handle any menu item we've created for this emulator.
 int emux_handle_menu_change(struct menu_item* item) {
   switch (item->id) {
@@ -1206,6 +1198,10 @@ int emux_handle_menu_change(struct menu_item* item) {
       apply_sid_config();
       return 1;
   }
+  return 0;
+}
+
+int emux_handle_quick_func(int button_func) {
   return 0;
 }
 

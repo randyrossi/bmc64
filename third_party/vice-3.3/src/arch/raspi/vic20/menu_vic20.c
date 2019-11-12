@@ -95,7 +95,7 @@ int emux_get_color_tint(int display_num) {
   return value;
 }
 
-void emux_cartridge_trigger_freeze(void) {
+void cartridge_trigger_freeze(void) {
   // Not available on this machine.
 }
 

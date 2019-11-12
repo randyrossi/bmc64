@@ -49,7 +49,7 @@ static void menu_item_changed(struct menu_item *item) {
     }
     break;
   case MENU_CART_FREEZE:
-    emux_cartridge_trigger_freeze();
+    cartridge_trigger_freeze();
     ui_pop_all_and_toggle();
     break;
   default:
@@ -171,12 +171,4 @@ int emux_attach_cart(int menu_id, char* filename) {
      ui_pop_all_and_toggle();
   }
   return 0;
-}
-
-void emux_vice_easy_flash() {
-  if (cartridge_flush_image(CARTRIDGE_EASYFLASH) < 0) {
-    ui_error("Problem saving");
-  } else {
-    ui_pop_all_and_toggle();
-  }
 }

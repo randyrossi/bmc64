@@ -1994,13 +1994,6 @@ static void menu_value_changed(struct menu_item *item) {
     kbd_set_hotkey_function(
         7, KEYCODE_F7, hotkey_tf7_item->choice_ints[hotkey_tf7_item->value]);
     return;
-  case MENU_SAVE_EASYFLASH:
-    emux_vice_easy_flash();
-    return;
-  case MENU_CART_FREEZE:
-    emux_cartridge_trigger_freeze();
-    ui_pop_all_and_toggle();
-    return;
   case MENU_VIC20_MEMORY_3K:
     emux_set_int(Setting_RAMBlock0, item->value);
     return;
@@ -2235,6 +2228,10 @@ static void set_hotkey_choices(struct menu_item *item) {
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20) {
      item->choice_disabled[HOTKEY_CHOICE_SWAP_PORTS] = 1;
+  }
+
+  if (emux_machine_class != BMC64_MACHINE_CLASS_C64 &&
+      emux_machine_class != BMC64_MACHINE_CLASS_C128) {
      item->choice_disabled[HOTKEY_CHOICE_CART_FREEZE] = 1;
   }
 
@@ -2468,14 +2465,6 @@ void build_menu(struct menu_item *root) {
   }
 
   parent = emux_add_cartridge_options(root);
-  ui_menu_add_button(MENU_TEXT, parent, "");
-  ui_menu_add_button(MENU_MAKE_CART_DEFAULT, parent,
-                     "Set current cart default (Need Save)");
-
-  if (emux_machine_class == BMC64_MACHINE_CLASS_C64 || emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-    ui_menu_add_button(MENU_SAVE_EASYFLASH, parent, "Save EasyFlash Now");
-    ui_menu_add_button(MENU_CART_FREEZE, parent, "Cartridge Freeze");
-  }
 
   parent = ui_menu_add_folder(root, "Tape");
 
@@ -2929,6 +2918,11 @@ void menu_about_to_deactivate() {}
 // These are called on the main loop
 void menu_quick_func(int button_assignment) {
   int value;
+
+  if (emux_handle_quick_func(button_assignment)) {
+    return;
+  }
+
   switch (button_assignment) {
   case BTN_ASSIGN_WARP:
     emux_get_int(Setting_WarpMode, &value);
@@ -2963,9 +2957,6 @@ void menu_quick_func(int button_assignment) {
     break;
   case BTN_ASSIGN_CART_MENU:
     emux_show_cart_osd_menu();
-    break;
-  case BTN_ASSIGN_CART_FREEZE:
-    emux_cartridge_trigger_freeze();
     break;
   case BTN_ASSIGN_RESET_HARD:
     if (reset_confirm_item->value) {
