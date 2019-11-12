@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 // RASPI Includes
 #include "emux_api.h"
@@ -180,7 +181,7 @@ const int num_cart_ext = 2;
 static char cart_filt_ext[2][5] = {".crt", ".bin"};
 
 const int num_snap_ext = 1;
-static char snap_filt_ext[1][5] = {".vsf"};
+char snap_filt_ext[1][5];
 
 #define TEST_FILTER_MACRO(funcname, numvar, filtarray)                         \
   static int funcname(char *name) {                                            \
@@ -1136,16 +1137,23 @@ static void select_file(struct menu_item *item) {
       char *dot = strchr(fname, '.');
       if (dot == NULL) {
         if (strlen(fname) + 4 <= MAX_FN_NAME) {
-          strcat(fname, ".vsf");
+          strcat(fname, snap_filt_ext[0]);
         } else {
           ui_error("Too long");
           return;
         }
       } else {
-        if ((dot[1] != 'v' && dot[1] != 'V') ||
-            (dot[2] != 's' && dot[2] != 'S') ||
-            (dot[3] != 'f' && dot[3] != 'F') || dot[4] != '\0') {
-          ui_error("Need .VSF extension");
+        char l1 = tolower(dot[1]);
+        char l2 = tolower(dot[2]);
+        char l3 = tolower(dot[3]);
+        if (l1 != snap_filt_ext[0][1] ||
+            l2 != snap_filt_ext[0][2] ||
+            l3 != snap_filt_ext[0][3] || dot[4] != '\0') {
+          if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
+             ui_error("Need .P4S extension");
+          } else {
+             ui_error("Need .VSF extension");
+          }
           return;
         }
       }
@@ -2318,6 +2326,12 @@ void build_menu(struct menu_item *root) {
   strcpy(current_volume_name, default_volume_name);
   for (i = 0; i < NUM_DIR_TYPES; i++) {
     strcpy(current_dir_names[i], default_dir_names[i]);
+  }
+
+  if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
+     strcpy(snap_filt_ext[0],".p4s");
+  } else {
+     strcpy(snap_filt_ext[0],".vsf");
   }
 
   char machine_info_txt[64];
