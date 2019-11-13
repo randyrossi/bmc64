@@ -33,6 +33,7 @@
 #include <ctype.h>
 
 // VICE includes
+#include "raspi_machine.h"
 #include "autostart.h"
 #include "diskimage.h"
 #include "attach.h"
@@ -632,7 +633,7 @@ int emux_handle_menu_change(struct menu_item* item) {
       }
       return 1;
     case MENU_CART_FREEZE:
-      cartridge_trigger_freeze();
+      cartridge_freeze();
       ui_pop_all_and_toggle();
       return 1;
     default:
@@ -645,7 +646,7 @@ int emux_handle_menu_change(struct menu_item* item) {
 int emux_handle_quick_func(int button_func) {
   switch (button_func) {
     case BTN_ASSIGN_CART_FREEZE:
-       cartridge_trigger_freeze();
+       cartridge_freeze();
        return 1;
     default:
        break;

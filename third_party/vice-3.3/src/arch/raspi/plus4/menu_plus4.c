@@ -41,6 +41,25 @@
 #include "menu.h"
 #include "ui.h"
 
+static struct menu_item* memory_item;
+
+static void update_memory_item() {
+  int value;
+  resources_get_int("RamSize", &value);
+  switch (value) {
+    case 16:
+      memory_item->value = 0;
+      break;
+    case 32:
+      memory_item->value = 1;
+      break;
+    case 64:
+    default:
+      memory_item->value = 2;
+      break;
+  }
+}
+
 static void menu_value_changed(struct menu_item *item) {
   switch (item->id) {
      case MENU_MODEL_C16_PAL:
@@ -50,6 +69,7 @@ static void menu_value_changed(struct menu_item *item) {
      case MENU_MODEL_V364_NTSC:
      case MENU_MODEL_C232_NTSC:
         plus4model_set(item->sub_id);
+        update_memory_item();
         ui_pop_all_and_toggle();
         break;
      case MENU_MEMORY:
@@ -161,25 +181,11 @@ void emux_add_machine_options(struct menu_item* parent) {
     item->on_value_changed = menu_value_changed;
   }
 
-  int value;
-
-  struct menu_item* memory_item =
+  memory_item =
       ui_menu_add_multiple_choice(MENU_MEMORY, parent, "Memory");
   memory_item->num_choices = 3;
 
-  resources_get_int("RamSize", &value);
-  switch (value) {
-    case 16:
-      memory_item->value = 0;
-      break;
-    case 32:
-      memory_item->value = 1;
-      break;
-    case 64:
-    default:
-      memory_item->value = 2;
-      break;
-  }
+  update_memory_item();
 
   strcpy(memory_item->choices[0], "16k");
   strcpy(memory_item->choices[1], "32k");

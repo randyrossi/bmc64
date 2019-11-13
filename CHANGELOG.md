@@ -265,3 +265,5 @@
   * Reboot after machine switch
   * Fix mouse issue with Final Cart III
   * Fix datasette not available after snapshot load
+  * Fix ntsc-custom timing mode sound sync issue
+  * Added memory config option for plus/4

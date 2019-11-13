@@ -32,6 +32,7 @@ static double tape_counter_offset;
 // Things that need to be saved and restored.
 int reset_tape_with_cpu = 1;
 int tape_feedback = 0;
+int ram_size = 64;
 int sid_model = 0;
 int sid_write_access = 0;
 int sid_digiblaster = 0;
@@ -63,6 +64,7 @@ static struct menu_item *sid_model_item;
 static struct menu_item *sid_write_access_item;
 static struct menu_item *sid_digiblaster_item;
 static struct menu_item *tape_feedback_item;
+static struct menu_item *ram_size_item;
 
 static struct menu_item *c0_lo_item;
 static struct menu_item *c0_hi_item;
@@ -137,6 +139,7 @@ static int apply_settings() {
   // according to any settings that were loaded.
   apply_sid_config();
   Plus4VM_SetTapeFeedbackLevel(vm, tape_feedback);
+  Plus4VM_SetRAMConfiguration(vm, ram_size, 0x99999999UL);
   return apply_rom_config();
 }
 
@@ -548,13 +551,6 @@ static void videoFrameCallback(void *userData)
 #endif
 }
 
-static void resetMemoryConfiguration(void)
-{
-  if (Plus4VM_SetRAMConfiguration(vm, 64, 0x99999999UL) != PLUS4EMU_SUCCESS)
-    vmError();
-}
-
-
 // This is made to look like VICE's main entry point so our
 // Plus4Emu version of EmulatorCore can look more or less the same
 // as the Vice version.
@@ -599,8 +595,6 @@ int main_program(int argc, char **argv)
   if (Plus4VM_SetAudioSampleRate(vm, audioSampleRate) != PLUS4EMU_SUCCESS)
     vmError();
 
-  resetMemoryConfiguration();
-
   if (Plus4VM_SetWorkingDirectory(vm, ".") != PLUS4EMU_SUCCESS)
     vmError();
   /* enable read-write IEC level drive emulation for unit 8 */
@@ -617,6 +611,8 @@ int main_program(int argc, char **argv)
                                  (void *) videoDecoder);
 
   vic_enabled = 1; // really TED
+
+  // This loads settings vars
   ui_init_menu();
 
   canvas_state[vic_canvas_index].gfx_w = 40*8;
@@ -1065,11 +1061,41 @@ struct menu_item* emux_add_palette_options(int menu_id,
   // None for plus/4
 }
 
+static void menu_value_changed(struct menu_item *item) {
+  // Forward to our emux_ handler
+  emux_handle_menu_change(item);
+}
+
 void emux_add_machine_options(struct menu_item* parent) {
   // TODO : Memory and cartridge configurations
   // C16-16k
   // C16-64k
   // Plus/4-64k
+
+  ram_size_item =
+      ui_menu_add_multiple_choice(MENU_MEMORY, parent, "Memory");
+  ram_size_item->num_choices = 3;
+
+  switch (ram_size) {
+    case 16:
+      ram_size_item->value = 0;
+      break;
+    case 32:
+      ram_size_item->value = 1;
+      break;
+    case 64:
+    default:
+      ram_size_item->value = 2;
+      break;
+  }
+
+  strcpy(ram_size_item->choices[0], "16k");
+  strcpy(ram_size_item->choices[1], "32k");
+  strcpy(ram_size_item->choices[2], "64k");
+  ram_size_item->choice_ints[0] = 16;
+  ram_size_item->choice_ints[1] = 32;
+  ram_size_item->choice_ints[2] = 64;
+  ram_size_item->on_value_changed = menu_value_changed;
 }
 
 struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
@@ -1209,6 +1235,12 @@ int emux_handle_menu_change(struct menu_item* item) {
     case MENU_TAPE_FEEDBACK:
       Plus4VM_SetTapeFeedbackLevel(vm, item->value);
       return 1;
+    case MENU_MEMORY:
+printf ("Setting RAM To %d\n",ram_size_item->choice_ints[ram_size_item->value]);
+      Plus4VM_SetRAMConfiguration(vm,
+         ram_size_item->choice_ints[ram_size_item->value], 0x99999999UL);
+      apply_rom_config();
+      return 1;
   }
   return 0;
 }
@@ -1262,6 +1294,8 @@ void emux_load_additional_settings() {
        reset_tape_with_cpu = value;
     } else if (strcmp(name,"tape_feedback") == 0) {
        tape_feedback = value;
+    } else if (strcmp(name,"ram_size") == 0) {
+       ram_size = value;
     } else if (strcmp(name,"rom_c0_lo") == 0) {
        strcpy(rom_c0_lo, value_str);
     } else if (strcmp(name,"rom_c0_hi") == 0) {
@@ -1298,6 +1332,7 @@ void emux_save_additional_settings(FILE *fp) {
   fprintf (fp,"sid_digiblaster=%d\n", sid_digiblaster_item->value);
   fprintf (fp,"reset_tape_with_cpu=%d\n", reset_tape_with_cpu);
   fprintf (fp,"tape_feedback=%d\n", tape_feedback_item->value);
+  fprintf (fp,"ram_size=%d\n", ram_size_item->choice_ints[ram_size_item->value]);
   if (strlen(c0_lo_item->str_value) > 0) {
      fprintf (fp,"rom_c0_lo=%s\n", c0_lo_item->str_value);
   }
