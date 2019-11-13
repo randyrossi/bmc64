@@ -42,8 +42,22 @@
 #include "ui.h"
 
 static void menu_value_changed(struct menu_item *item) {
-  plus4model_set(item->sub_id);
-  ui_pop_all_and_toggle();
+  switch (item->id) {
+     case MENU_MODEL_C16_PAL:
+     case MENU_MODEL_PLUS4_PAL:
+     case MENU_MODEL_C16_NTSC:
+     case MENU_MODEL_PLUS4_NTSC:
+     case MENU_MODEL_V364_NTSC:
+     case MENU_MODEL_C232_NTSC:
+        plus4model_set(item->sub_id);
+        ui_pop_all_and_toggle();
+        break;
+     case MENU_MEMORY:
+        resources_set_int("RamSize", item->choice_ints[item->value]);
+        break;
+     default:
+        break;
+  }
 }
 
 unsigned long emux_calculate_timing(double fps) {
@@ -146,6 +160,34 @@ void emux_add_machine_options(struct menu_item* parent) {
     item->sub_id = PLUS4MODEL_232_NTSC;
     item->on_value_changed = menu_value_changed;
   }
+
+  int value;
+
+  struct menu_item* memory_item =
+      ui_menu_add_multiple_choice(MENU_MEMORY, parent, "Memory");
+  memory_item->num_choices = 3;
+
+  resources_get_int("RamSize", &value);
+  switch (value) {
+    case 16:
+      memory_item->value = 0;
+      break;
+    case 32:
+      memory_item->value = 1;
+      break;
+    case 64:
+    default:
+      memory_item->value = 2;
+      break;
+  }
+
+  strcpy(memory_item->choices[0], "16k");
+  strcpy(memory_item->choices[1], "32k");
+  strcpy(memory_item->choices[2], "64k");
+  memory_item->choice_ints[0] = 16;
+  memory_item->choice_ints[1] = 32;
+  memory_item->choice_ints[2] = 64;
+  memory_item->on_value_changed = menu_value_changed;
 }
 
 struct menu_item* emux_add_cartridge_options(struct menu_item* root) {

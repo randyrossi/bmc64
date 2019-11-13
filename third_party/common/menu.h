@@ -367,6 +367,7 @@ typedef enum {
    MENU_SWITCH_MACHINE,
 
    MENU_TAPE_FEEDBACK,
+   MENU_MEMORY,
 } MenuID;
 
 typedef enum {
