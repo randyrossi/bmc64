@@ -37,6 +37,6 @@ extern void set_video_font(void);
 extern unsigned int *raspi_get_palette(int index);
 extern int is_vic(struct video_canvas_s *canvas);
 extern int is_vdc(struct video_canvas_s *canvas);
-void cartridge_trigger_freeze(void);
+void cartridge_freeze(void);
 
 #endif

@@ -130,7 +130,7 @@ struct menu_item* emux_add_palette_options(int menu_id, struct menu_item* parent
 
 int cartridge_flush_image(int type) { }
 void cartridge_set_default(void) { }
-void cartridge_trigger_freeze(void) { }
+void cartridge_freeze(void) { }
 
 void emux_add_machine_options(struct menu_item* parent) {
   struct menu_item* model_parent = ui_menu_add_folder(parent, "Model...");
