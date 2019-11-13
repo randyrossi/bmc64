@@ -31,9 +31,10 @@ static double tape_counter_offset;
 
 // Things that need to be saved and restored.
 int reset_tape_with_cpu = 1;
-int sid_model;
-int sid_write_access;
-int sid_digiblaster;
+int tape_feedback = 0;
+int sid_model = 0;
+int sid_write_access = 0;
+int sid_digiblaster = 0;
 char rom_basic[MAX_STR_VAL_LEN];
 char rom_kernal[MAX_STR_VAL_LEN];
 char rom_c0_lo[MAX_STR_VAL_LEN];
@@ -61,6 +62,7 @@ int rom_1581_hi_off;
 static struct menu_item *sid_model_item;
 static struct menu_item *sid_write_access_item;
 static struct menu_item *sid_digiblaster_item;
+static struct menu_item *tape_feedback_item;
 
 static struct menu_item *c0_lo_item;
 static struct menu_item *c0_hi_item;
@@ -134,6 +136,7 @@ static int apply_settings() {
   // Here, we should make whatever calls are necessary to configure the VM
   // according to any settings that were loaded.
   apply_sid_config();
+  Plus4VM_SetTapeFeedbackLevel(vm, tape_feedback);
   return apply_rom_config();
 }
 
@@ -949,6 +952,12 @@ void emux_set_joy_pot_y(int value) {
   // Not supported on plus4emu
 }
 
+void emux_add_tape_options(struct menu_item* parent) {
+  tape_feedback_item =
+      ui_menu_add_range(MENU_TAPE_FEEDBACK, parent,
+          "Tape Feedback Level", 0, 10, 1, tape_feedback);
+}
+
 void emux_add_sound_options(struct menu_item* parent) {
   // TODO: Why is 6581 so slow?
   struct menu_item* child = sid_model_item =
@@ -959,12 +968,12 @@ void emux_add_sound_options(struct menu_item* parent) {
   child->choice_ints[0] = 0; // 8580 for sidflags
 
   // Write access at $d400-d41f
-  child = sid_write_access_item =
+  sid_write_access_item =
       ui_menu_add_toggle(MENU_SID_WRITE_D400, parent,
           "Write Access $D400-D41F", sid_write_access);
 
   // Digiblaster
-  child = sid_digiblaster_item =
+  sid_digiblaster_item =
       ui_menu_add_toggle(MENU_SID_DIGIBLASTER, parent,
           "Enable Digiblaster", sid_digiblaster);
 }
@@ -1197,6 +1206,9 @@ int emux_handle_menu_change(struct menu_item* item) {
     case MENU_SID_DIGIBLASTER:
       apply_sid_config();
       return 1;
+    case MENU_TAPE_FEEDBACK:
+      Plus4VM_SetTapeFeedbackLevel(vm, item->value);
+      return 1;
   }
   return 0;
 }
@@ -1248,6 +1260,8 @@ void emux_load_additional_settings() {
        sid_digiblaster = value;
     } else if (strcmp(name,"reset_tape_with_cpu") == 0) {
        reset_tape_with_cpu = value;
+    } else if (strcmp(name,"tape_feedback") == 0) {
+       tape_feedback = value;
     } else if (strcmp(name,"rom_c0_lo") == 0) {
        strcpy(rom_c0_lo, value_str);
     } else if (strcmp(name,"rom_c0_hi") == 0) {
@@ -1283,6 +1297,7 @@ void emux_save_additional_settings(FILE *fp) {
   fprintf (fp,"sid_write_access=%d\n", sid_write_access_item->value);
   fprintf (fp,"sid_digiblaster=%d\n", sid_digiblaster_item->value);
   fprintf (fp,"reset_tape_with_cpu=%d\n", reset_tape_with_cpu);
+  fprintf (fp,"tape_feedback=%d\n", tape_feedback_item->value);
   if (strlen(c0_lo_item->str_value) > 0) {
      fprintf (fp,"rom_c0_lo=%s\n", c0_lo_item->str_value);
   }

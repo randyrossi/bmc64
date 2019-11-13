@@ -2497,6 +2497,7 @@ void build_menu(struct menu_item *root) {
     tape_reset_with_machine_item =
       ui_menu_add_toggle(MENU_TAPE_RESET_WITH_MACHINE, tape_parent,
                          "Reset Tape with Machine Reset", tmp);
+    emux_add_tape_options(tape_parent);
 
   ui_menu_add_divider(root);
 

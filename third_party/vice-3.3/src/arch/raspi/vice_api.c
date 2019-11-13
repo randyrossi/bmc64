@@ -404,6 +404,9 @@ static int viceSidModelToBmcChoice(int viceModel) {
   }
 }
 
+void emux_add_tape_options(struct menu_item* parent) {
+}
+
 void emux_add_sound_options(struct menu_item* parent) {
   // Resid by default
   struct menu_item* child = sid_engine_item =
