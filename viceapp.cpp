@@ -317,6 +317,7 @@ bool ViceStdioApp::Initialize(void) {
   // the emulator main loop on CORE 1 before DWHCI.
   int timing_int = mViceOptions.GetMachineTiming();
   if (timing_int == MACHINE_TIMING_NTSC_HDMI ||
+      timing_int == MACHINE_TIMING_NTSC_CUSTOM ||
       timing_int == MACHINE_TIMING_NTSC_COMPOSITE) {
     strcpy(mTimingOption, "-ntsc");
   } else {
