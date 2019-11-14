@@ -211,11 +211,13 @@ void emux_drive_change_model(int unit) {
   }
 }
 
-void emux_add_drive_option(struct menu_item* parent, int drive) {
+void emux_add_drive_option(struct menu_item* root, int drive) {
   if (emux_machine_class != BMC64_MACHINE_CLASS_C64 &&
       emux_machine_class != BMC64_MACHINE_CLASS_C128) {
     return;
   }
+
+  struct menu_item* parent = ui_menu_add_folder(parent, "Options");
 
   int tmp;
   resources_get_int_sprintf("Drive%iParallelCable", &tmp, drive);
@@ -264,6 +266,26 @@ void emux_add_drive_option(struct menu_item* parent, int drive) {
   child->choice_ints[1] = DRIVE_PC_STANDARD;
   child->choice_ints[2] = DRIVE_PC_DD3;
   child->choice_ints[3] = DRIVE_PC_FORMEL64;
+
+  resources_get_int_sprintf("Drive%iRAM2000", &tmp, drive);
+  ui_menu_add_toggle(MENU_DRIVE_RAM_2000, parent, "RAM 2000", tmp)
+     ->sub_id = drive;
+
+  resources_get_int_sprintf("Drive%iRAM4000", &tmp, drive);
+  ui_menu_add_toggle(MENU_DRIVE_RAM_4000, parent, "RAM 4000", tmp)
+     ->sub_id = drive;
+
+  resources_get_int_sprintf("Drive%iRAM6000", &tmp, drive);
+  ui_menu_add_toggle(MENU_DRIVE_RAM_6000, parent, "RAM 6000", tmp)
+     ->sub_id = drive;
+
+  resources_get_int_sprintf("Drive%iRAM8000", &tmp, drive);
+  ui_menu_add_toggle(MENU_DRIVE_RAM_8000, parent, "RAM 8000", tmp)
+     ->sub_id = drive;
+
+  resources_get_int_sprintf("Drive%iRAMA000", &tmp, drive);
+  ui_menu_add_toggle(MENU_DRIVE_RAM_A000, parent, "RAM A000", tmp)
+     ->sub_id = drive;
 }
 
 void emux_create_disk(struct menu_item* item, fullpath_func fullpath) {
@@ -652,6 +674,21 @@ int emux_handle_menu_change(struct menu_item* item) {
     case MENU_CART_FREEZE:
       cartridge_freeze();
       ui_pop_all_and_toggle();
+      return 1;
+    case MENU_DRIVE_RAM_2000:
+      resources_set_int_sprintf("Drive%iRAM2000", item->value, item->sub_id);
+      return 1;
+    case MENU_DRIVE_RAM_4000:
+      resources_set_int_sprintf("Drive%iRAM4000", item->value, item->sub_id);
+      return 1;
+    case MENU_DRIVE_RAM_6000:
+      resources_set_int_sprintf("Drive%iRAM6000", item->value, item->sub_id);
+      return 1;
+    case MENU_DRIVE_RAM_8000:
+      resources_set_int_sprintf("Drive%iRAM8000", item->value, item->sub_id);
+      return 1;
+    case MENU_DRIVE_RAM_A000:
+      resources_set_int_sprintf("Drive%iRAMA000", item->value, item->sub_id);
       return 1;
     default:
       break;
