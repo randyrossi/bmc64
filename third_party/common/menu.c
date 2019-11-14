@@ -226,6 +226,34 @@ TEST_FILTER_MACRO(test_tape_name, num_tape_ext, tape_filt_ext);
 TEST_FILTER_MACRO(test_cart_name, num_cart_ext, cart_filt_ext);
 TEST_FILTER_MACRO(test_snap_name, num_snap_ext, snap_filt_ext);
 
+static void rtrim(char *txt) {
+  if (!txt) return;
+  int p=strlen(txt)-1;
+  while (isspace(txt[p])) { txt[p] = '\0'; p--; }
+}
+
+static char* ltrim(char *txt) {
+  if (!txt) return NULL;
+  int p=0;
+  while (isspace(txt[p])) { p++; }
+  return txt+p;
+}
+
+static void get_key_and_value(char *line, char **key, char **value) {
+   for (int i=0;i<strlen(line);i++) {
+      if (line[i] == '=') {
+         line[i] = '\0';
+         *key = ltrim(&line[0]);
+         rtrim(*key);
+         *value = ltrim(&line[i+1]);
+         rtrim(*value);
+         return;
+      }
+   }
+   *key = 0;
+   *value = 0;
+}
+
 static char *fullpath(DirType dir_type, char *name) {
   strcpy(full_path_str, current_volume_name);
   strcat(full_path_str, current_dir_names[dir_type]);
@@ -829,22 +857,26 @@ static void load_settings() {
   if (fp == NULL)
     return;
 
-  char name_value[80];
+  char name_value[256];
+  size_t len;
   int value;
   int usb_btn_0_i = 0;
   int usb_btn_1_i = 0;
   while (1) {
-    name_value[0] = '\0';
-    // Looks like circle-stdlib doesn't support something like %s=%d
-    int st = fscanf(fp, "%s", name_value);
-    if (name_value[0] == '\0' || st == EOF || feof(fp))
-      break;
-    char *name = strtok(name_value, "=");
-    if (name == NULL)
-      break;
-    char *value_str = strtok(NULL, "=");
-    if (value_str == NULL)
-      break;
+    char *line = fgets(name_value, 255, fp);
+    if (feof(fp) || line == NULL) break;
+
+    strcpy(name_value, line);
+
+    char *name;
+    char *value_str;
+    get_key_and_value(name_value, &name, &value_str);
+    if (!name || !value_str ||
+       strlen(name) == 0 ||
+          strlen(value_str) == 0) {
+       continue;
+    }
+
     value = atoi(value_str);
 
     if (strcmp(name, "port_1") == 0) {

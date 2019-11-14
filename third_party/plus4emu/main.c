@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <math.h>
 #include <assert.h>
+#include <ctype.h>
 #include "plus4lib/plus4emu.h"
 #include "../common/circle.h"
 #include "../common/emux_api.h"
@@ -82,6 +83,34 @@ static struct menu_item *c2_hi_offset_item;
 
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
+static void rtrim(char *txt) {
+  if (!txt) return;
+  int p=strlen(txt)-1;
+  while (isspace(txt[p])) { txt[p] = '\0'; p--; }
+}
+
+static char* ltrim(char *txt) {
+  if (!txt) return NULL;
+  int p=0;
+  while (isspace(txt[p])) { p++; }
+  return txt+p;
+}
+
+static void get_key_and_value(char *line, char **key, char **value) {
+   for (int i=0;i<strlen(line);i++) {
+      if (line[i] == '=') {
+         line[i] = '\0';
+         *key = ltrim(&line[0]);
+         rtrim(*key);
+         *value = ltrim(&line[i+1]);
+         rtrim(*value);
+         return;
+      }
+   }
+   *key = 0;
+   *value = 0;
+}
+
 static void set_video_font(void) {
   int i;
 
@@ -117,19 +146,19 @@ static int apply_rom_config() {
     return 1;
 
   if (strlen(c0_lo_item->str_value) > 0)
-    Plus4VM_LoadROM(vm, 2, c0_lo_item->str_value, rom_c0_lo_off);
+    Plus4VM_LoadROM(vm, 2, c0_lo_item->str_value, c0_lo_offset_item->value);
   if (strlen(c0_hi_item->str_value) > 0)
-    Plus4VM_LoadROM(vm, 3, c0_hi_item->str_value, rom_c0_hi_off);
+    Plus4VM_LoadROM(vm, 3, c0_hi_item->str_value, c0_hi_offset_item->value);
 
   if (strlen(c1_lo_item->str_value) > 0)
-    Plus4VM_LoadROM(vm, 4, c1_lo_item->str_value, rom_c1_lo_off);
+    Plus4VM_LoadROM(vm, 4, c1_lo_item->str_value, c1_lo_offset_item->value);
   if (strlen(c1_hi_item->str_value) > 0)
-    Plus4VM_LoadROM(vm, 5, c1_hi_item->str_value, rom_c1_hi_off);
+    Plus4VM_LoadROM(vm, 5, c1_hi_item->str_value, c1_hi_offset_item->value);
 
   if (strlen(c2_lo_item->str_value) > 0)
-    Plus4VM_LoadROM(vm, 6, c2_lo_item->str_value, rom_c2_lo_off);
+    Plus4VM_LoadROM(vm, 6, c2_lo_item->str_value, c2_lo_offset_item->value);
   if (strlen(c2_hi_item->str_value) > 0)
-    Plus4VM_LoadROM(vm, 7, c2_hi_item->str_value, rom_c2_hi_off);
+    Plus4VM_LoadROM(vm, 7, c2_hi_item->str_value, c2_hi_offset_item->value);
 
   return 0;
 }
@@ -830,7 +859,8 @@ void emux_detach_cart(int menu_id) {
 
   Plus4VM_LoadROM(vm, bank, "", 0);
   Plus4VM_Reset(vm, 1);
-  strncpy(item->displayed_value, " ", MAX_DSP_VAL_LEN - 1);
+  item->displayed_value[0] = '\0';
+  item->str_value[0] = '\0';
 }
 
 static void reset_tape_drive() {
@@ -951,7 +981,7 @@ void emux_set_joy_pot_y(int value) {
 void emux_add_tape_options(struct menu_item* parent) {
   tape_feedback_item =
       ui_menu_add_range(MENU_TAPE_FEEDBACK, parent,
-          "Tape Feedback Level", 0, 10, 1, tape_feedback);
+          "Tape Audible Feedback Level", 0, 10, 1, tape_feedback);
 }
 
 void emux_add_sound_options(struct menu_item* parent) {
@@ -1266,22 +1296,26 @@ void emux_load_additional_settings() {
      return;
   }
 
-  char name_value[80];
+  char name_value[256];
+  size_t len;
   int value;
   int usb_btn_0_i = 0;
   int usb_btn_1_i = 0;
   while (1) {
-    name_value[0] = '\0';
-    // Looks like circle-stdlib doesn't support something like %s=%d
-    int st = fscanf(fp, "%s", name_value);
-    if (name_value[0] == '\0' || st == EOF || feof(fp))
-      break;
-    char *name = strtok(name_value, "=");
-    if (name == NULL)
-      break;
-    char *value_str = strtok(NULL, "=");
-    if (value_str == NULL)
-      break;
+    char *line = fgets(name_value, 255, fp);
+    if (feof(fp) || line == NULL) break;
+
+    strcpy(name_value, line);
+
+    char *name;
+    char *value_str;
+    get_key_and_value(name_value, &name, &value_str);
+    if (!name || !value_str ||
+       strlen(name) == 0 ||
+          strlen(value_str) == 0) {
+       continue;
+    }
+
     value = atoi(value_str);
 
     if (strcmp(name,"sid_model") == 0) {
