@@ -211,8 +211,7 @@ void emux_drive_change_model(int unit) {
   }
 }
 
-void emux_add_parallel_cable_option(struct menu_item* parent,
-                                    int id, int drive) {
+void emux_add_drive_option(struct menu_item* parent, int drive) {
   if (emux_machine_class != BMC64_MACHINE_CLASS_C64 &&
       emux_machine_class != BMC64_MACHINE_CLASS_C128) {
     return;
@@ -233,6 +232,24 @@ void emux_add_parallel_cable_option(struct menu_item* parent,
        index = 3; break;
     default:
        return;
+  }
+
+  int id;
+  switch (drive) {
+     case 8:
+        id = MENU_PARALLEL_8;
+        break;
+     case 9:
+        id = MENU_PARALLEL_9;
+        break;
+     case 10:
+        id = MENU_PARALLEL_10;
+        break;
+     case 11:
+        id = MENU_PARALLEL_11;
+        break;
+     default:
+        id = MENU_PARALLEL_8;
   }
 
   struct menu_item* child =

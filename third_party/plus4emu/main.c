@@ -29,6 +29,7 @@ static int is_tape_seeking;
 static int is_tape_seeking_dir;
 static int is_tape_seeking_tick;
 static double tape_counter_offset;
+static char last_iec_dir[256];
 
 // Things that need to be saved and restored.
 int reset_tape_with_cpu = 1;
@@ -37,6 +38,7 @@ int ram_size = 64;
 int sid_model = 0;
 int sid_write_access = 0;
 int sid_digiblaster = 0;
+int drive_model_8 = 0;
 char rom_basic[MAX_STR_VAL_LEN];
 char rom_kernal[MAX_STR_VAL_LEN];
 char rom_c0_lo[MAX_STR_VAL_LEN];
@@ -66,6 +68,7 @@ static struct menu_item *sid_write_access_item;
 static struct menu_item *sid_digiblaster_item;
 static struct menu_item *tape_feedback_item;
 static struct menu_item *ram_size_item;
+static struct menu_item *drive_model_8_item;
 
 static struct menu_item *c0_lo_item;
 static struct menu_item *c0_hi_item;
@@ -607,6 +610,8 @@ int main_program(int argc, char **argv)
 
   printf ("Init\n");
 
+  strcpy (last_iec_dir, ".");
+
 #ifndef HOST_BUILD
   // BMC64 Video Init
   if (circle_alloc_fbl(FB_LAYER_VIC, 1 /* RGB565 */, &fb_buf,
@@ -643,7 +648,7 @@ int main_program(int argc, char **argv)
   /* enable read-write IEC level drive emulation for unit 8 */
   Plus4VM_SetIECDriveReadOnlyMode(vm, 0);
 
-  emux_detach_disk(0);
+  emux_detach_disk(8);
 
   videoDecoder =
       Plus4VideoDecoder_Create(&videoLineCallback, &videoFrameCallback, NULL);
@@ -750,7 +755,7 @@ void emux_kbd_set_latch_keyarr(int row, int col, int pressed) {
 }
 
 int emux_attach_disk_image(int unit, char *filename) {
-  if (Plus4VM_SetDiskImageFile(vm, unit-8, filename, 0) != PLUS4EMU_SUCCESS) {
+  if (Plus4VM_SetDiskImageFile(vm, unit-8, filename, drive_model_8) != PLUS4EMU_SUCCESS) {
     return 1;
   }
   emux_enable_drive_status(1, drive_led_colors);
@@ -758,7 +763,8 @@ int emux_attach_disk_image(int unit, char *filename) {
 }
 
 void emux_detach_disk(int unit) {
-  Plus4VM_SetDiskImageFile(vm, unit-8, "", 1);
+  Plus4VM_SetWorkingDirectory(vm, last_iec_dir);
+  Plus4VM_SetDiskImageFile(vm, unit-8, "", 1); // to enable IEC
   emux_enable_drive_status(0, drive_led_colors);
 }
 
@@ -974,9 +980,15 @@ int emux_autostart_file(char* filename) {
 void emux_drive_change_model(int unit) {
 }
 
-void emux_add_parallel_cable_option(struct menu_item* parent,
-                                    int id, int drive) {
-  // Not supported for plus/4
+void emux_add_drive_option(struct menu_item* parent, int drive) {
+  if (drive == 8) {
+    drive_model_8_item =
+        ui_menu_add_multiple_choice(MENU_DRIVE_TYPE_8, parent, "Drive Model");
+    drive_model_8_item->num_choices = 2;
+    drive_model_8_item->value = drive_model_8;
+    strcpy(drive_model_8_item->choices[0], "1541");
+    strcpy(drive_model_8_item->choices[1], "1551");
+  }
 }
 
 void emux_create_disk(struct menu_item* item, fullpath_func fullpath) {
@@ -1222,6 +1234,8 @@ void emux_handle_rom_change(struct menu_item* item, fullpath_func fullpath) {
 }
 
 void emux_set_iec_dir(int unit, char* dir) {
+  Plus4VM_SetWorkingDirectory(vm, dir);
+  strcpy (last_iec_dir, dir);
 }
 
 void emux_set_int(IntSetting setting, int value) {
@@ -1282,10 +1296,12 @@ int emux_handle_menu_change(struct menu_item* item) {
       Plus4VM_SetTapeFeedbackLevel(vm, item->value);
       return 1;
     case MENU_MEMORY:
-printf ("Setting RAM To %d\n",ram_size_item->choice_ints[ram_size_item->value]);
       Plus4VM_SetRAMConfiguration(vm,
          ram_size_item->choice_ints[ram_size_item->value], 0x99999999UL);
       apply_rom_config();
+      return 1;
+    case MENU_DRIVE_TYPE_8:
+      // Prevent common handler from seeing this.
       return 1;
   }
   return 0;
@@ -1346,6 +1362,8 @@ void emux_load_additional_settings() {
        tape_feedback = value;
     } else if (strcmp(name,"ram_size") == 0) {
        ram_size = value;
+    } else if (strcmp(name,"drive_model_8") == 0) {
+       drive_model_8 = value;
     } else if (strcmp(name,"rom_c0_lo") == 0) {
        strcpy(rom_c0_lo, value_str);
     } else if (strcmp(name,"rom_c0_hi") == 0) {
@@ -1383,6 +1401,7 @@ void emux_save_additional_settings(FILE *fp) {
   fprintf (fp,"reset_tape_with_cpu=%d\n", reset_tape_with_cpu);
   fprintf (fp,"tape_feedback=%d\n", tape_feedback_item->value);
   fprintf (fp,"ram_size=%d\n", ram_size_item->choice_ints[ram_size_item->value]);
+  fprintf (fp,"drive_model_8=%d\n", drive_model_8_item->value);
   if (strlen(c0_lo_item->str_value) > 0) {
      fprintf (fp,"rom_c0_lo=%s\n", c0_lo_item->str_value);
   }

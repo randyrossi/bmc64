@@ -2449,7 +2449,7 @@ void build_menu(struct menu_item *root) {
      ui_menu_add_toggle(MENU_IECDEVICE_8, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_8, parent, "Select IEC Dir...");
     }
-    emux_add_parallel_cable_option(parent, MENU_PARALLEL_8, 8);
+    emux_add_drive_option(parent, 8);
     ui_menu_add_button(MENU_ATTACH_DISK_8, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_8, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_8, parent, "Change Model...");
@@ -2462,7 +2462,7 @@ void build_menu(struct menu_item *root) {
      ui_menu_add_toggle(MENU_IECDEVICE_9, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_9, parent, "Select IEC Dir...");
     }
-    emux_add_parallel_cable_option(parent, MENU_PARALLEL_9, 9);
+    emux_add_drive_option(parent, 9);
     ui_menu_add_button(MENU_ATTACH_DISK_9, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_9, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_9, parent, "Change Model...");
@@ -2473,7 +2473,7 @@ void build_menu(struct menu_item *root) {
      ui_menu_add_toggle(MENU_IECDEVICE_10, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_10, parent, "Select IEC Dir...");
     }
-    emux_add_parallel_cable_option(parent, MENU_PARALLEL_10, 10);
+    emux_add_drive_option(parent, 10);
     ui_menu_add_button(MENU_ATTACH_DISK_10, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_10, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_10, parent, "Change Model...");
@@ -2484,7 +2484,7 @@ void build_menu(struct menu_item *root) {
      ui_menu_add_toggle(MENU_IECDEVICE_11, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_11, parent, "Select IEC Dir...");
     }
-    emux_add_parallel_cable_option(parent, MENU_PARALLEL_11, 11);
+    emux_add_drive_option(parent, 11);
     ui_menu_add_button(MENU_ATTACH_DISK_11, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_11, parent, "Detach Disk");
     ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");

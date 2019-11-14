@@ -274,9 +274,7 @@ int emux_autostart_file(char* filename);
 // Show change model menu
 void emux_drive_change_model(int unit);
 
-// Add the parallel cable option to the menu container (if applicable)
-void emux_add_parallel_cable_option(struct menu_item* parent,
-                                    int id, int drive);
+void emux_add_drive_option(struct menu_item* parent, int drive);
 
 // Create an empty disk image
 void emux_create_disk(struct menu_item* item, fullpath_func fullpath);
