@@ -7,7 +7,8 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
   * Frames are timed to vsync for true 50/60 hz smooth scrolling (no horizontal tearing!)
   * Low latency between input & audio/video
   * No shutdown sequence required, just power off
-  * High compatibility thanks to VICE
+  * High C64 compatibility thanks to VICE
+  * High Plus/4 compatibility thanks for Plus4Emu (Rpi3 Only)
   * Easily wire real Commodore/Atari Joysticks and nav buttons via GPIO using jumpers (GPIO Config 1)
   * Can use a real Commodore Keyboard and Joysticks via PCB (GPIO Config 2)
   * Can use a Waveshare Game HAT (Pi2 or 3 Only) (GPIO Config 3)
@@ -18,6 +19,8 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
   * There is no network support.
 
 This project uses VICE for emulation without any O/S (Linux) distribution installed on the Pi.  VICE (Versatile Commodore Emulator) platform dependencies are satisfied using circle-stdlib.
+
+For Plus/4 emulation on the Rasbperry Pi 3, a more accurate emulator using Plus4Emu is available.
 
 # Known Issues
 
@@ -37,7 +40,7 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
 
 # Machine Selection
 
-The default machine is a C64.  You can switch to VIC20, C128 and Plus/4 from the 'Machines->Switch' menu option.  A reboot is required after a switch. These configurations are defined in machines.txt. There you will find configurations for each machine type for NTSC/PAL over HDMI/Composite combinations.  Most video modes are 720p but you can change this (see below).
+The default machine is a C64.  You can switch to VIC20, C128 and Plus/4 from the 'Machines->Switch' menu option.  These configurations are defined in machines.txt. There you will find configurations for each machine type for NTSC/PAL over HDMI/Composite combinations.  Most video modes are 720p but you can change this (see below).
 
 # machines.txt (Video & Timing)
 
@@ -55,6 +58,10 @@ Here is an example of a machine entry:
     machine_timing=ntsc-hdmi
 
 NOTE: Even though a config is intended to be used for HDMI or Composite (never both), you should always define both composite and hdmi parameters.
+
+Valid machine names are C64, C128, VIC20, PLUS4 and PLUS4EMU (Rpi3 only)
+Valid video standards are NTSC, PAL
+Valid video output types are HDMI, Composite
 
 For HDMI, you should choose either a 50hz or 60hz mode.
 
@@ -279,6 +286,8 @@ Config | Description
 1      | Menu Nav Buttons + Real Joysticks (i.e. CPIO-64 PCB or jumpers)
 2      | Real Keyboard + Real Joysticks (BMC64 PCB)
 3      | Waveshare Game HAT
+
+NOTE: The default config is 1.  If you are installing BMC64 for the first time and need a GPIO config other than 1 and don't have a USB keyboard to change the option, you will have to manually edit settiongs.txt and ensure a line with 'gpio_config=[0-2]' exists. The number given should be 1 less than the config number in the documentation above.  For example, if you are using a PCB with full keyboard connector, you would add to (or create) a settings.txt file with "gpio_config=1" for the selection of Config 2.  Since each emulator has its own settings file, you would need to do this for settings.txt (C64), settings-c128.txt , settings-vic20.txt, settings-plus4.txt and settings-plus4emu.txt
 
 ## GPIO Config 1 : Menu Nav Buttons and Joysticks
 

@@ -81,6 +81,9 @@ static struct menu_item *c1_hi_offset_item;
 static struct menu_item *c2_lo_offset_item;
 static struct menu_item *c2_hi_offset_item;
 
+static uint32_t prev_drive_state;
+static int drive_led_colors[4];
+
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
 static void rtrim(char *txt) {
@@ -577,6 +580,17 @@ static void videoFrameCallback(void *userData)
        is_tape_motor_tick = 50;
      }
   }
+
+  // We only have one drive a.t.m.
+  uint32_t drive_state = Plus4VM_GetFloppyDriveLEDState(vm);
+  if (drive_state != prev_drive_state) {
+    if (drive_state)
+       emux_display_drive_led(0, 1000, 0);
+    else
+       emux_display_drive_led(0, 0, 0);
+     prev_drive_state = drive_state;
+  }
+
 #endif
 }
 
@@ -739,11 +753,13 @@ int emux_attach_disk_image(int unit, char *filename) {
   if (Plus4VM_SetDiskImageFile(vm, unit-8, filename, 0) != PLUS4EMU_SUCCESS) {
     return 1;
   }
+  emux_enable_drive_status(1, drive_led_colors);
   return 0;
 }
 
 void emux_detach_disk(int unit) {
   Plus4VM_SetDiskImageFile(vm, unit-8, "", 1);
+  emux_enable_drive_status(0, drive_led_colors);
 }
 
 int emux_attach_tape_image(char *filename) {

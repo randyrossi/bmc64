@@ -14,11 +14,13 @@
 #
 # MachineDescription = ([SectionHeader]"\n")(OptionLine\n*)*
 # SectionHeader = [Machine/TimingStandard/OutputType/ResolutionDesc]
-# Machine = VIC20|C64|C128|Plus4
+# Machine = VIC20|C64|C128|Plus4|Plus4Emu
 # TimingStandard = NTSC | PAL
 # OutputVideo = HDMI | Composite
 # ResolutionDesc = Any text (can be used to describe the video resolution)
 # OptionLine = "key=value\n"
+#
+# NOTE: Plus4Emu is only available on Raspberry Pi 3 models.
 #
 # config.txt options available (See RPi documentation)
 # ----------------------------------------------------
@@ -200,6 +202,7 @@ machine_timing=pal-composite
 
 # PLUS4EMU Is only available for Pi3. It is a more
 # accurate Plus/4 emulator but requires more CPU.
+# These options will not show up on any other Pi model.
 
 [PLUS4EMU/NTSC/HDMI/Plus4Emu 720p@60Hz]
 disable_overscan=1

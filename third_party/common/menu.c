@@ -2136,7 +2136,7 @@ static void menu_value_changed(struct menu_item *item) {
     circle_set_volume(item->value);
     break;
   case MENU_SWITCH_MACHINE:
-    ui_confirm_wrapped("Confirm Switch",SWITCH_MSG,item->value,MENU_SWITCH_MACHINE);
+    ui_confirm_wrapped("Reboot?",SWITCH_MSG,item->value,MENU_SWITCH_MACHINE);
     break;
   case MENU_CONFIRM_OK:
     ui_pop_menu();
