@@ -30,6 +30,8 @@ static int is_tape_seeking_dir;
 static int is_tape_seeking_tick;
 static double tape_counter_offset;
 static char last_iec_dir[256];
+static int vertical_res = 288;
+static int raster_low = 0;
 
 // Things that need to be saved and restored.
 int reset_tape_with_cpu = 1;
@@ -378,8 +380,8 @@ static void audioOutputCallback(void *userData,
 static void videoLineCallback(void *userData,
                               int lineNum, const Plus4VideoLineData *lineData)
 {
-   lineNum = lineNum / 2;
-   if (lineNum >= 0 && lineNum < 288) {
+   lineNum = lineNum / 2 - raster_low;
+   if (lineNum >= 0 && lineNum < vertical_res) {
      Plus4VideoDecoder_DecodeLine(videoDecoder, fb_buf + lineNum * fb_pitch, 384, lineData);
    }
 }
@@ -608,7 +610,6 @@ static void videoFrameCallback(void *userData)
 // as the Vice version.
 int main_program(int argc, char **argv)
 {
-  int     quitFlag = 0;
   int     timeAdvance;
 
   (void) argc;
@@ -618,17 +619,28 @@ int main_program(int argc, char **argv)
 
   strcpy (last_iec_dir, ".");
 
+  int timing = circle_get_machine_timing();
+  if (timing == MACHINE_TIMING_NTSC_HDMI ||
+      timing == MACHINE_TIMING_NTSC_COMPOSITE ||
+      timing == MACHINE_TIMING_NTSC_CUSTOM) {
+     vertical_res = 242;
+     raster_low = 18;
+  } else {
+     vertical_res = 288;
+     raster_low = 0;
+  }
+
 #ifndef HOST_BUILD
   // BMC64 Video Init
   if (circle_alloc_fbl(FB_LAYER_VIC, 1 /* RGB565 */, &fb_buf,
-                              384, 288, &fb_pitch)) {
+                              384, vertical_res, &fb_pitch)) {
     printf ("Failed to create video buf.\n");
     assert(0);
   }
   circle_clear_fbl(FB_LAYER_VIC);
   circle_show_fbl(FB_LAYER_VIC);
 #else
-  fb_buf = (uint8_t*) malloc(384*288*2);
+  fb_buf = (uint8_t*) malloc(384*vertical_res*2);
   fb_pitch = 384;
 #endif
 
@@ -672,12 +684,11 @@ int main_program(int argc, char **argv)
   canvas_state[vic_canvas_index].gfx_w = 40*8;
   canvas_state[vic_canvas_index].gfx_h = 25*8;
 
-  int timing = circle_get_machine_timing();
   if (timing == MACHINE_TIMING_NTSC_HDMI ||
       timing == MACHINE_TIMING_NTSC_COMPOSITE ||
       timing == MACHINE_TIMING_NTSC_CUSTOM) {
     canvas_state[vic_canvas_index].max_border_w = 32;
-    canvas_state[vic_canvas_index].max_border_h = 16;
+    canvas_state[vic_canvas_index].max_border_h = 22;
     timeAdvance = 1666;
     Plus4VM_SetVideoClockFrequency(vm, 14318180);
     strcpy(rom_kernal,"/PLUS4EMU/p4_ntsc.rom");
@@ -706,10 +717,9 @@ int main_program(int argc, char **argv)
   printf ("Enter emulation loop\n");
   Plus4VM_Reset(vm, 1);
 
-  do {
-    if (Plus4VM_Run(vm, timeAdvance) != PLUS4EMU_SUCCESS)
-      vmError();
-  } while (!quitFlag);
+  for(;;) {
+    Plus4VM_Run(vm, timeAdvance);
+  }
 
   Plus4VM_Destroy(vm);
   Plus4VideoDecoder_Destroy(videoDecoder);

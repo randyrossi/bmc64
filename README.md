@@ -432,15 +432,14 @@ Q: How do I get Dolphin DOS to work?
 
 From: http://rr.pokefinder.org/wiki/Dolphin_DOS
 
-In BMC64:
+From the menu:
 
-    Use model 1541 with c1541-20-6.rom
-    Load kernel-20-1.rom
-    Use Parallel Cable : Standard
-
-In vice.ini:
-
-    Drive8RAM6000=1
+    Machine -> ROMS -> Change Kernal ROM -> kernel-20-1.rom
+    Drives -> Change ROM -> 1541 -> c1541-20-6.rom
+    Drive 8
+       Change Model -> 1541
+       Options -> Parallel Cable -> Standard
+       Options -> RAM 6000 On
 
 # Build Instructions
 
