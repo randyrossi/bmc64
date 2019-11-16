@@ -1248,6 +1248,10 @@ void emux_set_int(IntSetting setting, int value) {
     case Setting_DatasetteResetWithCPU:
        reset_tape_with_cpu = value;
        break;
+    case Setting_SidResidSampling:
+    case Setting_Datasette:
+       // Not applicable
+       break;
     default:
        printf ("Unhandled set int %d\n", setting);
   }
@@ -1255,6 +1259,7 @@ void emux_set_int(IntSetting setting, int value) {
 
 void emux_set_int_1(IntSetting setting, int value, int param) {
   switch (setting) {
+     case Setting_FileSystemDeviceN:
      case Setting_IECDeviceN:
         // Nothing to do
         break;
@@ -1271,6 +1276,12 @@ void emux_get_int(IntSetting setting, int* dest) {
           break;
       case Setting_DatasetteResetWithCPU:
           *dest = reset_tape_with_cpu;
+          break;
+      case Setting_DriveSoundEmulation:
+      case Setting_DriveSoundEmulationVolume:
+          *dest = 0;
+          // Not applicable
+          break;
       default:
           printf ("WARNING: Tried to get unsupported setting %d\n",setting);
           break;
@@ -1282,6 +1293,10 @@ void emux_get_int_1(IntSetting setting, int* dest, int param) {
      case Setting_FileSystemDeviceN:
         *dest = 1;
         return;
+     case Setting_IECDeviceN:
+        // nothing to do, always capable of iec with no disk
+        *dest = 1;
+        break;
      default:
         printf ("Unhandled get int_1 %d\n", setting);
   }
