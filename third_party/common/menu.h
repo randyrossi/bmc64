@@ -374,6 +374,7 @@ typedef enum {
 
    MENU_TAPE_FEEDBACK,
    MENU_MEMORY,
+   MENU_PLUS4_3PLUS1_ROMS,
 } MenuID;
 
 typedef enum {

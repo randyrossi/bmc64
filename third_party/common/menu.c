@@ -1600,7 +1600,7 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_PARALLEL_9:
   case MENU_PARALLEL_10:
   case MENU_PARALLEL_11:
-    emux_set_int_1(Setting_DriveNParallelCable, 
+    emux_set_int_1(Setting_DriveNParallelCable,
        item->choice_ints[item->value], unit);
     return;
   case MENU_IECDIR_8:
@@ -1970,7 +1970,7 @@ static void menu_value_changed(struct menu_item *item) {
     ui_pop_all_and_toggle();
     return;
   case MENU_TAPE_RESET_WITH_MACHINE:
-    emux_set_int(Setting_DatasetteResetWithCPU, 
+    emux_set_int(Setting_DatasetteResetWithCPU,
                       tape_reset_with_machine_item->value);
     return;
   case MENU_SID_ENGINE:
@@ -2452,7 +2452,10 @@ void build_menu(struct menu_item *root) {
     emux_add_drive_option(parent, 8);
     ui_menu_add_button(MENU_ATTACH_DISK_8, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_8, parent, "Detach Disk");
-    ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_8, parent, "Change Model...");
+
+    if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
+      ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_8, parent, "Change Model...");
+    }
 
   // More than 1 drive costs too much. Limit to drive 8.
   if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
@@ -2465,7 +2468,10 @@ void build_menu(struct menu_item *root) {
     emux_add_drive_option(parent, 9);
     ui_menu_add_button(MENU_ATTACH_DISK_9, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_9, parent, "Detach Disk");
-    ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_9, parent, "Change Model...");
+
+    if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
+      ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_9, parent, "Change Model...");
+    }
 
     parent = ui_menu_add_folder(drive_parent, "Drive 10");
     if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
@@ -2476,7 +2482,9 @@ void build_menu(struct menu_item *root) {
     emux_add_drive_option(parent, 10);
     ui_menu_add_button(MENU_ATTACH_DISK_10, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_10, parent, "Detach Disk");
-    ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_10, parent, "Change Model...");
+    if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
+      ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_10, parent, "Change Model...");
+    }
 
     parent = ui_menu_add_folder(drive_parent, "Drive 11");
     if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
@@ -2487,7 +2495,9 @@ void build_menu(struct menu_item *root) {
     emux_add_drive_option(parent, 11);
     ui_menu_add_button(MENU_ATTACH_DISK_11, parent, "Attach Disk...");
     ui_menu_add_button(MENU_DETACH_DISK_11, parent, "Detach Disk");
-    ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");
+    if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
+      ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");
+    }
   }
 
   if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
@@ -2762,6 +2772,10 @@ void build_menu(struct menu_item *root) {
   strcpy(child->choices[11], "Custom Keyset 2");
   child->choice_ints[11] = JOYDEV_KEYSET2;
 
+  if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
+     child->choice_disabled[9] = 1;
+  }
+
   if (emu_get_num_joysticks() > 1) {
     child = port_2_menu_item = ui_menu_add_multiple_choice(
         MENU_JOYSTICK_PORT_2, parent, "Port 2");
@@ -2791,6 +2805,10 @@ void build_menu(struct menu_item *root) {
     child->choice_ints[10] = JOYDEV_KEYSET1;
     strcpy(child->choices[11], "Custom Keyset 2");
     child->choice_ints[11] = JOYDEV_KEYSET2;
+
+    if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
+       child->choice_disabled[9] = 1;
+    }
   }
 
   ui_menu_add_button(MENU_CONFIGURE_USB_0, parent, "Configure USB Joy 1...");

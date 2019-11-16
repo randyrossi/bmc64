@@ -217,7 +217,7 @@ void emux_add_drive_option(struct menu_item* root, int drive) {
     return;
   }
 
-  struct menu_item* parent = ui_menu_add_folder(parent, "Options");
+  struct menu_item* parent = ui_menu_add_folder(root, "Options");
 
   int tmp;
   resources_get_int_sprintf("Drive%iParallelCable", &tmp, drive);

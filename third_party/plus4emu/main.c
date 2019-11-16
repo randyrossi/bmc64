@@ -39,6 +39,7 @@ int sid_model = 0;
 int sid_write_access = 0;
 int sid_digiblaster = 0;
 int drive_model_8 = 0;
+int attach_3plus1_roms = 0;
 char rom_basic[MAX_STR_VAL_LEN];
 char rom_kernal[MAX_STR_VAL_LEN];
 char rom_c0_lo[MAX_STR_VAL_LEN];
@@ -62,6 +63,10 @@ int rom_1541_off;
 int rom_1551_off;
 int rom_1581_lo_off;
 int rom_1581_hi_off;
+int color_brightness = 1000;
+int color_contrast = 666;
+int color_gamma = 800;
+int color_tint = 1000;
 
 static struct menu_item *sid_model_item;
 static struct menu_item *sid_write_access_item;
@@ -69,6 +74,7 @@ static struct menu_item *sid_digiblaster_item;
 static struct menu_item *tape_feedback_item;
 static struct menu_item *ram_size_item;
 static struct menu_item *drive_model_8_item;
+static struct menu_item *attach_3plus1_roms_item;
 
 static struct menu_item *c0_lo_item;
 static struct menu_item *c0_hi_item;
@@ -1046,6 +1052,7 @@ void emux_video_color_setting_changed(int display_num) {
 void emux_set_color_brightness(int display_num, int value) {
   // Incoming 0-2000, Outgoing -.5 - .5
   // Default 0
+  color_brightness = value;
   double v = value;
   v = v - 1000;
   v = v / 2000;
@@ -1055,6 +1062,7 @@ void emux_set_color_brightness(int display_num, int value) {
 void emux_set_color_contrast(int display_num, int value) {
   // Incoming 0-2000, Outgoing .5 - 2.0
   // Default 1
+  color_contrast = value;
   double v = value / 1333.33d;
   v = v + .5;
   if (v < .5) v = .5;
@@ -1065,6 +1073,7 @@ void emux_set_color_contrast(int display_num, int value) {
 void emux_set_color_gamma(int display_num, int value) {
   // Incoming 0-4000, Outgoing .25 - 4.0
   // Default 1
+  color_gamma = value;
   double v = value / 1066.66d;
   v = v + .25;
   if (v < .25) v = .25;
@@ -1075,6 +1084,7 @@ void emux_set_color_gamma(int display_num, int value) {
 void emux_set_color_tint(int display_num, int value) {
   // Incoming 0-2000, Outgoing -180, 180
   // Default 0
+  color_tint = value;
   double v = value / 5.555d;
   v = v - 180;
   if (v < -180) v = -180;
@@ -1083,23 +1093,19 @@ void emux_set_color_tint(int display_num, int value) {
 }
 
 int emux_get_color_brightness(int display_num) {
-  double saved_value = 0; // TODO : Restore this
-  return saved_value * 2000 + 1000;
+  return color_brightness;
 }
 
 int emux_get_color_contrast(int display_num) {
-  double saved_value = 1; // TODO: Restore this
-  return (saved_value - .5) * 1333.33d;
+  return color_contrast;
 }
 
 int emux_get_color_gamma(int display_num) {
-  double saved_value = 1; // TODO: Restore this
-  return (saved_value - .25) * 1066.66d;
+  return color_gamma;
 }
 
 int emux_get_color_tint(int display_num) {
-  double saved_value = 0; // TODO: Restore this
-  return (saved_value + 180) * 5.555d;
+  return color_tint;
 }
 
 void emux_set_video_cache(int value) {
@@ -1107,10 +1113,6 @@ void emux_set_video_cache(int value) {
 }
 
 void emux_set_hw_scale(int value) {
-  // Ignore for plus/4
-}
-
-void emux_cartridge_trigger_freeze(void) {
   // Ignore for plus/4
 }
 
@@ -1154,6 +1156,9 @@ void emux_add_machine_options(struct menu_item* parent) {
   ram_size_item->choice_ints[1] = 32;
   ram_size_item->choice_ints[2] = 64;
   ram_size_item->on_value_changed = menu_value_changed;
+
+  attach_3plus1_roms_item = ui_menu_add_toggle(MENU_PLUS4_3PLUS1_ROMS, parent,
+          "Attach 3Plus1 ROMs", attach_3plus1_roms);
 }
 
 struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
@@ -1249,8 +1254,14 @@ void emux_set_int(IntSetting setting, int value) {
 }
 
 void emux_set_int_1(IntSetting setting, int value, int param) {
-  // TODO
-  printf ("Unhandled set int_1 %d\n", setting);
+  switch (setting) {
+     case Setting_IECDeviceN:
+        // Nothing to do
+        break;
+     default:
+        printf ("Unhandled set int_1 %d\n", setting);
+        break;
+  }
 }
 
 void emux_get_int(IntSetting setting, int* dest) {
@@ -1267,15 +1278,24 @@ void emux_get_int(IntSetting setting, int* dest) {
 }
 
 void emux_get_int_1(IntSetting setting, int* dest, int param) {
-  // TODO
-  printf ("Unhandled get int_1 %d\n", setting);
+  switch (setting) {
+     case Setting_FileSystemDeviceN:
+        *dest = 1;
+        return;
+     default:
+        printf ("Unhandled get int_1 %d\n", setting);
+  }
 }
 
 void emux_get_string_1(StringSetting setting, const char** dest, int param) {
-  // TEMP for now to avoid menu crashing
-  char* newstr = (char*) malloc(1);
-  newstr[0] = '\0';
-  *dest = newstr;
+  switch (setting) {
+     case Setting_FSDeviceNDir:
+        *dest = last_iec_dir;
+        break;
+     default:
+        printf ("Unhandled set string_1 %d\n", setting);
+        break;
+  }
 }
 
 int emux_save_settings(void) {
@@ -1303,6 +1323,25 @@ int emux_handle_menu_change(struct menu_item* item) {
     case MENU_DRIVE_TYPE_8:
       // Prevent common handler from seeing this.
       return 1;
+    case MENU_PLUS4_3PLUS1_ROMS:
+      if (item->value) {
+         strcpy (c0_lo_item->str_value,"/PLUS4EMU/3plus1.rom");
+         strcpy (c0_lo_item->displayed_value,"/PLUS4EMU/3plus1.rom");
+         c0_lo_offset_item->value = 0;
+         strcpy (c0_hi_item->str_value,"/PLUS4EMU/3plus1.rom");
+         strcpy (c0_hi_item->displayed_value,"/PLUS4EMU/3plus1.rom");
+         c0_hi_offset_item->value = 16384;
+      } else {
+         strcpy (c0_lo_item->str_value,"");
+         strcpy (c0_lo_item->displayed_value,"");
+         c0_lo_offset_item->value = 0;
+         strcpy (c0_hi_item->str_value,"");
+         strcpy (c0_hi_item->displayed_value,"");
+         c0_hi_offset_item->value = 0;
+      }
+      Plus4VM_LoadROM(vm, 2, c0_lo_item->str_value, c0_lo_offset_item->value);
+      Plus4VM_LoadROM(vm, 3, c0_hi_item->str_value, c0_hi_offset_item->value);
+      Plus4VM_Reset(vm, 1);
   }
   return 0;
 }
@@ -1364,6 +1403,8 @@ void emux_load_additional_settings() {
        ram_size = value;
     } else if (strcmp(name,"drive_model_8") == 0) {
        drive_model_8 = value;
+    } else if (strcmp(name,"attach_3plus1_roms") == 0) {
+       attach_3plus1_roms = value;
     } else if (strcmp(name,"rom_c0_lo") == 0) {
        strcpy(rom_c0_lo, value_str);
     } else if (strcmp(name,"rom_c0_hi") == 0) {
@@ -1388,6 +1429,14 @@ void emux_load_additional_settings() {
        rom_c2_lo_off = value;
     } else if (strcmp(name,"rom_c2_hi_off") == 0) {
        rom_c2_hi_off = value;
+    } else if (strcmp(name,"color_brightness") == 0) {
+       color_brightness = value;
+    } else if (strcmp(name,"color_contrast") == 0) {
+       color_contrast = value;
+    } else if (strcmp(name,"color_gamma") == 0) {
+       color_gamma = value;
+    } else if (strcmp(name,"color_tint") == 0) {
+       color_tint = value;
     }
   }
 
@@ -1402,6 +1451,7 @@ void emux_save_additional_settings(FILE *fp) {
   fprintf (fp,"tape_feedback=%d\n", tape_feedback_item->value);
   fprintf (fp,"ram_size=%d\n", ram_size_item->choice_ints[ram_size_item->value]);
   fprintf (fp,"drive_model_8=%d\n", drive_model_8_item->value);
+  fprintf (fp,"attach_3plus1_roms=%d\n", attach_3plus1_roms_item->value);
   if (strlen(c0_lo_item->str_value) > 0) {
      fprintf (fp,"rom_c0_lo=%s\n", c0_lo_item->str_value);
   }
@@ -1426,21 +1476,16 @@ void emux_save_additional_settings(FILE *fp) {
   fprintf (fp,"rom_c1_hi_off=%d\n", c1_hi_offset_item->value);
   fprintf (fp,"rom_c2_lo_off=%d\n", c2_lo_offset_item->value);
   fprintf (fp,"rom_c2_hi_off=%d\n", c2_hi_offset_item->value);
+  fprintf (fp,"color_brightness=%d\n", color_brightness);
+  fprintf (fp,"color_contrast=%d\n", color_contrast);
+  fprintf (fp,"color_gamma=%d\n", color_gamma);
+  fprintf (fp,"tintcolor_=%d\n", color_tint);
 }
 
 void emux_get_default_color_setting(int *brightness, int *contrast,
                                     int *gamma, int *tint) {
-    *brightness = 1000;
-    *contrast = 666;
-    *gamma = 800;
-    *tint = 1000;
+  *brightness = 1000;
+  *contrast = 666;
+  *gamma = 800;
+  *tint = 1000;
 }
-
-/*
-  Need to call these:
-  emux_enable_drive_status(st, drive_led_color);
-  emux_display_drive_led(drive, pwm1, pwm2);
-*/
-
-
-

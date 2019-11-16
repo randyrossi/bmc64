@@ -1,8 +1,6 @@
 #include "circle.h"
 
-// TODO: Temporary until joy moves to common.
-struct joydev_config joydevs[MAX_JOY_PORTS];
-
+// Not supported on plus4emu
 void emu_mouse_move(int x, int y) { }
 void emu_mouse_button_left(int pressed) { }
 void emu_mouse_button_right(int pressed) { }
