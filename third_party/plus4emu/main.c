@@ -388,7 +388,6 @@ static void videoLineCallback(void *userData,
 
 static void videoFrameCallback(void *userData)
 {
-#ifndef HOST_BUILD
   circle_frames_ready_fbl(FB_LAYER_VIC,
                           -1 /* no 2nd layer */,
                           !ui_warp /* sync */);
@@ -601,8 +600,6 @@ static void videoFrameCallback(void *userData)
        emux_display_drive_led(0, 0, 0);
      prev_drive_state = drive_state;
   }
-
-#endif
 }
 
 // This is made to look like VICE's main entry point so our
@@ -630,7 +627,6 @@ int main_program(int argc, char **argv)
      raster_low = 0;
   }
 
-#ifndef HOST_BUILD
   // BMC64 Video Init
   if (circle_alloc_fbl(FB_LAYER_VIC, 1 /* RGB565 */, &fb_buf,
                               384, vertical_res, &fb_pitch)) {
@@ -639,10 +635,6 @@ int main_program(int argc, char **argv)
   }
   circle_clear_fbl(FB_LAYER_VIC);
   circle_show_fbl(FB_LAYER_VIC);
-#else
-  fb_buf = (uint8_t*) malloc(384*vertical_res*2);
-  fb_pitch = 384;
-#endif
 
   vm = Plus4VM_Create();
   if (!vm)
@@ -672,14 +664,10 @@ int main_program(int argc, char **argv)
       Plus4VideoDecoder_Create(&videoLineCallback, &videoFrameCallback, NULL);
   if (!videoDecoder)
     errorMessage("could not create video decoder object");
-  //Plus4VideoDecoder_UpdatePalette(videoDecoder, 0, 16, 8, 0); // not using rgb
   Plus4VM_SetVideoOutputCallback(vm, &Plus4VideoDecoder_VideoCallback,
                                  (void *) videoDecoder);
 
   vic_enabled = 1; // really TED
-
-  // This loads settings vars
-  ui_init_menu();
 
   canvas_state[vic_canvas_index].gfx_w = 40*8;
   canvas_state[vic_canvas_index].gfx_h = 25*8;
@@ -701,6 +689,10 @@ int main_program(int argc, char **argv)
     strcpy(rom_kernal,"/PLUS4EMU/p4kernal.rom");
     Plus4VideoDecoder_SetNTSCMode(videoDecoder, 0);
   }
+
+  // This loads settings vars
+  ui_init_menu();
+
   strcpy(rom_basic,"/PLUS4EMU/p4_basic.rom");
   strcpy(rom_1541,"/PLUS4EMU/dos1541.rom");
   strcpy(rom_1551,"/PLUS4EMU/dos1551.rom");
@@ -731,27 +723,6 @@ int main_program(int argc, char **argv)
 void emu_machine_init() {
   emux_machine_class = BMC64_MACHINE_CLASS_PLUS4EMU;
 }
-
-
-#ifdef HOST_BUILD
-
-int circle_sound_init(const char *param, int *speed, int *fragsize,
-                        int *fragnr, int *channels) {
-   *speed = 48000;
-   *fragsize = 2048;
-   *fragnr = 16;
-   *channels = 1;
-}
-
-int circle_sound_write(int16_t *pbuf, size_t nr) {
-}
-
-int main(int argc, char *argv[]) {
-  main_program(argc, argv);
-}
-
-#endif
-
 
 void emux_trap_main_loop_ui(void) {
   circle_lock_acquire();
@@ -1054,8 +1025,7 @@ void emux_video_color_setting_changed(int display_num) {
   // the decoder to draw a frame after we change a color param.
   wait_vsync = 1;
   do {
-    if (Plus4VM_Run(vm, 2000) != PLUS4EMU_SUCCESS)
-      vmError();
+    Plus4VM_Run(vm, 2000);
   } while (wait_vsync);
 }
 
