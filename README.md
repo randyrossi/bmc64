@@ -20,7 +20,7 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
 
 This project uses VICE for emulation without any O/S (Linux) distribution installed on the Pi.  VICE (Versatile Commodore Emulator) platform dependencies are satisfied using circle-stdlib.
 
-For Plus/4 emulation on the Rasbperry Pi 3, a more accurate emulator using Plus4Emu is available.
+For Plus/4 emulation on the Rasbperry Pi 3, a more accurate emulator using Plus4Emu is also available.
 
 # Known Issues
 

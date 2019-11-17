@@ -260,10 +260,11 @@
   * Look for carts, tapes, disks etc in machine subdir first
 
 ## 3.1
-  * Integrated Plus4Emu as more accurate PLUS/4 option (Pi3 only)
-  * Lots of internal src reorg, new layers to plugin different emulators
+  * Added Plus4Emu option (more accurate PLUS/4 but Pi3 only)
   * Reboot after machine switch
   * Fix mouse issue with Final Cart III
   * Fix datasette not available after snapshot load
   * Fix ntsc-custom timing mode sound sync issue
   * Added memory config option for plus/4
+  * Added drive memory options for VICE emus
+  * Lots of internal src reorg, new layers to plugin different emulators

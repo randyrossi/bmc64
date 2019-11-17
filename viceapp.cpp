@@ -23,8 +23,10 @@
 #include "bootstat_c128.h"
 #elif defined(RASPI_VIC20)
 #include "bootstat_vic20.h"
-#elif defined(RASPI_PLUS4) | defined(RASPI_PLUS4EMU)
+#elif defined(RASPI_PLUS4)
 #include "bootstat_plus4.h"
+#elif defined(RASPI_PLUS4EMU)
+#include "bootstat_plus4emu.h"
 #else
   #error Unknown RASPI_ variant
 #endif
@@ -206,8 +208,10 @@ void ViceStdioApp::InitBootStat() {
   fp = fopen("/C128/bootstat.txt", "r");
 #elif defined(RASPI_VIC20)
   fp = fopen("/VIC20/bootstat.txt", "r");
-#elif defined(RASPI_PLUS4) | defined(RASPI_PLUS4EMU)
+#elif defined(RASPI_PLUS4)
   fp = fopen("/PLUS4/bootstat.txt", "r");
+#elif defined(RASPI_PLUS4EMU)
+  fp = NULL;
 #else
   #error Unknown RASPI_ variant
 #endif
