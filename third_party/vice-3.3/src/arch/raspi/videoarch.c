@@ -219,9 +219,9 @@ static struct video_canvas_s *video_canvas_create_vic(
        unsigned int *width,
        unsigned int *height, int mapped) {
 
-  canvas_state[vic_canvas_index].extra_offscreen_border_left = 
+  canvas_state[vic_canvas_index].extra_offscreen_border_left =
      canvas->geometry->extra_offscreen_border_left;
-  canvas_state[vic_canvas_index].first_displayed_line = 
+  canvas_state[vic_canvas_index].first_displayed_line =
      canvas->geometry->first_displayed_line;
 
   if (machine_class == VICE_MACHINE_VIC20) {
@@ -296,9 +296,9 @@ static struct video_canvas_s *video_canvas_create_vdc(
   *height = 312;
   canvas_state[vdc_canvas_index].gfx_w = 80*8;
   canvas_state[vdc_canvas_index].gfx_h = 25*8;
-  canvas_state[vic_canvas_index].extra_offscreen_border_left = 
+  canvas_state[vdc_canvas_index].extra_offscreen_border_left =
      canvas->geometry->extra_offscreen_border_left;
-  canvas_state[vic_canvas_index].first_displayed_line = 
+  canvas_state[vdc_canvas_index].first_displayed_line =
      canvas->geometry->first_displayed_line;
   canvas->draw_buffer->canvas_physical_width = *width;
   canvas->draw_buffer->canvas_physical_height = *height;
