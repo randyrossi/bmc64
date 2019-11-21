@@ -89,9 +89,7 @@ void Plus4EmulatorCore::Run(unsigned nCore) {
 }
 
 bool Plus4EmulatorCore::Init(void) {
-#ifdef ARM_ALLOW_MULTI_CORE
   return Initialize();
-#endif
 }
 
 void Plus4EmulatorCore::LaunchEmulator(char *timing_option) {
@@ -101,6 +99,6 @@ void Plus4EmulatorCore::LaunchEmulator(char *timing_option) {
   launch_ = true;
   m_Lock.Release();
 #else
-  RunMainPLus4(false);
+  RunMainPlus4(false);
 #endif
 }

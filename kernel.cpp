@@ -598,7 +598,7 @@ ViceApp::TShutdownMode CKernel::Run(void) {
   emu_set_gamepad_info(num_pads, num_buttons, num_axes, num_hats);
 
 #ifndef ARM_ALLOW_MULTI_CORE
-  mEmulatorCore.LaunchEmulator(mTimingOption);
+  mEmulatorCore->LaunchEmulator(mTimingOption);
 #else
   // This core will do nothing but service interrupts from
   // usb or gpio.

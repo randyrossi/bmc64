@@ -26,8 +26,9 @@ extern "C" {
 }
 
 class ViceEmulatorCore
+ : public EmulatorCore
 #ifdef ARM_ALLOW_MULTI_CORE
- : public CMultiCoreSupport, public EmulatorCore
+   ,public CMultiCoreSupport
 #endif
 {
 public:
