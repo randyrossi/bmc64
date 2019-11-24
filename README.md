@@ -441,6 +441,14 @@ From the menu:
        Options -> Parallel Cable -> Standard
        Options -> RAM 6000 On
 
+Q: PetRescue won't attach in Plus4Emu. Why?
+
+A: Plus4Emu is picky about the size of the disk images it attaches.  PetRescue has extra sectors but for some reason, the d64 image is 197376 bytes which doesn't complete a full track. To get it to attach, you will have to pad it with extra 0's. The size after padding should be 200960.
+
+On Linux, this command will work:
+
+truncate -s +3584 petrescue.d64
+
 # Build Instructions
 
 Pre-reqs:
