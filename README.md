@@ -475,35 +475,35 @@ What to put on the SDcard:
         rpi_sym.vkm
     /C128
         kernal
-	basichi
-	basiclo
-	charg64
-	chargen
-	kernal64
-	basic64
-	z80bios (optional)
-	d1541II (optional)
+        basichi
+        basiclo
+        charg64
+        chargen
+        kernal64
+        basic64
+        z80bios (optional)
+        d1541II (optional)
         dos1571 (recommended)
-	rpi_sym.vkm
+        rpi_sym.vkm
         bootstat.txt
     /VIC20
-	basic
-	chargen
-	kernal
-	d1541II
-	rpi_sym.vkm
+        basic
+        chargen
+        kernal
+        d1541II
+        rpi_sym.vkm
         bootstat.txt
     /PLUS4
-	kernal
-	kernal.005
-	kernal.232
-	3plus1hi
-	3plus1lo
-	basic
-	c2lo.364
-	d1541II (optional)
+        kernal
+        kernal.005
+        kernal.232
+        3plus1hi
+        3plus1lo
+        basic
+        c2lo.364
+        d1541II (optional)
         dos1551 (recommended)
-	rpi_sym.vkm
+        rpi_sym.vkm
         bootstat.txt
     /PLUS4EMU (Available for Pi3 Only)
         p4kernal.rom
