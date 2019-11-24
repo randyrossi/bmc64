@@ -109,7 +109,7 @@ make
 
 # Common
 cd $SRC_DIR/third_party/common
-make
+BOARD=$BOARD make
 
 # Plus4Emu
 cd $SRC_DIR/third_party/plus4emu
