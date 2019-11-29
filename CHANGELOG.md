@@ -268,3 +268,6 @@
   * Added memory config option for plus/4
   * Added drive memory options for VICE emus
   * Lots of internal src reorg, new layers to plugin different emulators
+
+## 3.2
+  * Fixed VIC20 crash on Port 1 menu option change to 1351 Mouse

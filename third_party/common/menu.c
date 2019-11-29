@@ -1903,14 +1903,15 @@ static void menu_value_changed(struct menu_item *item) {
     // device in port 1 was changed
     if (joydevs[0].port == 1) {
       joydevs[0].device = item->choice_ints[item->value];
-    } else if (joydevs[1].port == 1) {
+    } else if (emu_get_num_joysticks() > 1 && joydevs[1].port == 1) {
       joydevs[1].device = item->choice_ints[item->value];
     }
     if (item->choice_ints[item->value] == JOYDEV_NONE) {
       emux_set_joy_port_device(1, JOYDEV_NONE);
     } else if (item->choice_ints[item->value] == JOYDEV_MOUSE) {
-      if (port_2_menu_item->choice_ints[port_2_menu_item->value]
-          == JOYDEV_MOUSE) {
+      if (emu_get_num_joysticks() > 1 &&
+          port_2_menu_item->choice_ints[port_2_menu_item->value]
+             == JOYDEV_MOUSE) {
          emux_set_joy_port_device(2, JOYDEV_NONE);
          port_2_menu_item->value = 0;
       }
