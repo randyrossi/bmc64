@@ -159,6 +159,10 @@ static int apply_rom_config() {
   if (Plus4VM_LoadROM(vm, 0x10, rom_1541, 0) != PLUS4EMU_SUCCESS)
     return 1;
 
+  Plus4VM_LoadROM(vm, 0x20, rom_1551, 0);
+  Plus4VM_LoadROM(vm, 0x30, rom_1581, 0);
+  Plus4VM_LoadROM(vm, 0x31, rom_1581, 16384);
+
   if (strlen(c0_lo_item->str_value) > 0)
     Plus4VM_LoadROM(vm, 2, c0_lo_item->str_value, c0_lo_offset_item->value);
   if (strlen(c0_hi_item->str_value) > 0)
@@ -1317,6 +1321,7 @@ int emux_handle_menu_change(struct menu_item* item) {
       return 1;
     case MENU_DRIVE_TYPE_8:
       // Prevent common handler from seeing this.
+      drive_model_8 = item->value;
       return 1;
     case MENU_PLUS4_3PLUS1_ROMS:
       if (item->value) {
