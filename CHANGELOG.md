@@ -271,3 +271,4 @@
 
 ## 3.2
   * Fixed VIC20 crash on Port 1 menu option change to 1351 Mouse
+  * Fix 1551 and 1581 ROMs not loading in plus4emu

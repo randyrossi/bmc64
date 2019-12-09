@@ -110,6 +110,71 @@ index f8c1d59..487da4b 100644
  
  #ifdef _MSC_VER
  #define INLINE __inline
+diff --git a/include/circle/input/keyboardbehaviour.h b/include/circle/input/keyboardbehaviour.h
+index 46b5253..86321c8 100644
+--- a/include/circle/input/keyboardbehaviour.h
++++ b/include/circle/input/keyboardbehaviour.h
+@@ -51,6 +51,8 @@ enum TModifierKey
+ #define KEYB_LED_SCROLL_LOCK	(1 << 2)
+ 
+ typedef void TKeyPressedHandler (const char *pString);
++typedef void TKeyCodePressedHandler (const short code);
++typedef void TKeyCodeReleasedHandler (const short code);
+ typedef void TSelectConsoleHandler (unsigned nConsole);
+ typedef void TShutdownHandler (void);
+ 
+@@ -61,6 +63,8 @@ public:
+ 	~CKeyboardBehaviour (void);
+ 
+ 	void RegisterKeyPressedHandler (TKeyPressedHandler *pKeyPressedHandler);
++	void RegisterKeyCodePressedHandler (TKeyCodePressedHandler *pKeyCodePressedHandler);
++	void RegisterKeyCodeReleasedHandler (TKeyCodeReleasedHandler *pKeyCodeReleasedHandler);
+ 	void RegisterSelectConsoleHandler (TSelectConsoleHandler *pSelectConsoleHandler);
+ 	void RegisterShutdownHandler (TShutdownHandler *pShutdownHandler);
+ 
+@@ -71,17 +75,22 @@ public:
+ 
+ private:
+ 	void GenerateKeyEvent (u8 ucKeyCode);
++	void GenerateKeyCodeEvent (u8 ucKeyCode, int down);
+ 
+ 	void TimerHandler (TKernelTimerHandle hTimer);
+ 	static void TimerStub (TKernelTimerHandle hTimer, void *pParam, void *pContext);
+ 
+ private:
+ 	TKeyPressedHandler	*m_pKeyPressedHandler;
++	TKeyCodePressedHandler	*m_pKeyCodePressedHandler;
++	TKeyCodeReleasedHandler	*m_pKeyCodeReleasedHandler;
+ 	TSelectConsoleHandler	*m_pSelectConsoleHandler;
+ 	TShutdownHandler	*m_pShutdownHandler;
+ 
+ 	u8 m_ucModifiers;
+ 	u8 m_ucLastKeyCode;
++	u8 m_ucLastKeyCodes[5];
++	int m_ucLastKeyCodeIdx;
+ 
+ 	TKernelTimerHandle m_hTimer;
+ 
+diff --git a/include/circle/input/keymap.h b/include/circle/input/keymap.h
+index 588dc3b..e4aed25 100644
+--- a/include/circle/input/keymap.h
++++ b/include/circle/input/keymap.h
+@@ -118,6 +118,7 @@ public:
+ 
+ 	u16 Translate (u8 nPhyCode, u8 nModifiers);
+ 	const char *GetString (u16 nKeyCode, u8 nModifiers, char Buffer[2]) const;
++	const short GetCode (u16 nKeyCode, u8 nModifiers) const;
+ 
+ 	u8 GetLEDStatus (void) const;
+ 
+@@ -132,6 +133,7 @@ private:
+ 	boolean m_bScrollLock;
+ 	
+ 	static const char *s_KeyStrings[KeyMaxCode-KeySpace];
++	static const short s_KeyCodes[KeyMaxCode-KeySpace];
+ 	static const u16 s_DefaultMap[][PHY_MAX_CODE+1][K_ALTSHIFTTAB+1];
+ 	static const char *s_MapDirectory[];
+ };
 diff --git a/include/circle/memorymap.h b/include/circle/memorymap.h
 index d0ae6d0..1b9e735 100644
 --- a/include/circle/memorymap.h
@@ -124,7 +189,7 @@ index d0ae6d0..1b9e735 100644
  #define ARM_MEM_SIZE		(MEM_SIZE - GPU_MEM_SIZE)	// normally overwritten
  
 diff --git a/include/circle/sysconfig.h b/include/circle/sysconfig.h
-index 245e069..3747245 100644
+index 245e069..b09b8da 100644
 --- a/include/circle/sysconfig.h
 +++ b/include/circle/sysconfig.h
 @@ -34,7 +34,7 @@
@@ -163,6 +228,21 @@ index 245e069..3747245 100644
  
  ///////////////////////////////////////////////////////////////////////
  //
+@@ -168,12 +168,12 @@
+ // The default keyboard map can be overwritten in with the keymap=
+ // option in cmdline.txt.
+ 
+-#define DEFAULT_KEYMAP		"DE"
++//#define DEFAULT_KEYMAP		"DE"
+ //#define DEFAULT_KEYMAP		"ES"
+ //#define DEFAULT_KEYMAP		"FR"
+ //#define DEFAULT_KEYMAP		"IT"
+ //#define DEFAULT_KEYMAP		"UK"
+-//#define DEFAULT_KEYMAP		"US"
++#define DEFAULT_KEYMAP		"US"
+ 
+ ///////////////////////////////////////////////////////////////////////
+ //
 diff --git a/include/circle/usb/usbhiddevice.h b/include/circle/usb/usbhiddevice.h
 index 4e7f682..c8173b7 100644
 --- a/include/circle/usb/usbhiddevice.h
@@ -195,6 +275,19 @@ index 4e7f682..c8173b7 100644
  };
  
  #endif
+diff --git a/include/circle/usb/usbkeyboard.h b/include/circle/usb/usbkeyboard.h
+index 94954f7..387947d 100644
+--- a/include/circle/usb/usbkeyboard.h
++++ b/include/circle/usb/usbkeyboard.h
+@@ -41,6 +41,8 @@ public:
+ 
+ 	// cooked mode
+ 	void RegisterKeyPressedHandler (TKeyPressedHandler *pKeyPressedHandler);
++	void RegisterKeyCodePressedHandler (TKeyCodePressedHandler *pKeyCodePressedHandler);
++	void RegisterKeyCodeReleasedHandler (TKeyCodeReleasedHandler *pKeyCodeReleasedHandler);
+ 	void RegisterSelectConsoleHandler (TSelectConsoleHandler *pSelectConsoleHandler);
+ 	void RegisterShutdownHandler (TShutdownHandler *pShutdownHandler);
+ 
 diff --git a/lib/alloc.cpp b/lib/alloc.cpp
 index eb6fe49..f6e0776 100644
 --- a/lib/alloc.cpp
@@ -208,6 +301,293 @@ index eb6fe49..f6e0776 100644
  
  static TPageBucket s_PageBucket;
  
+diff --git a/lib/input/keyboardbehaviour.cpp b/lib/input/keyboardbehaviour.cpp
+index d529c98..82b154f 100644
+--- a/lib/input/keyboardbehaviour.cpp
++++ b/lib/input/keyboardbehaviour.cpp
+@@ -21,16 +21,20 @@
+ #include <assert.h>
+ 
+ //#define REPEAT_ENABLE
++#define USE_KEYCODE_LISTENERS
+ 
+ #define REPEAT_DELAY		MSEC2HZ (400)
+ #define REPEAT_RATE		MSEC2HZ (80)
+ 
+ CKeyboardBehaviour::CKeyboardBehaviour (void)
+ :	m_pKeyPressedHandler (0),
++	m_pKeyCodePressedHandler (0),
++	m_pKeyCodeReleasedHandler (0),
+ 	m_pSelectConsoleHandler (0),
+ 	m_pShutdownHandler (0),
+ 	m_ucModifiers (0),
+ 	m_ucLastKeyCode (0),
++	m_ucLastKeyCodeIdx (0),
+ 	m_hTimer (0)
+ {
+ }
+@@ -38,6 +42,8 @@ CKeyboardBehaviour::CKeyboardBehaviour (void)
+ CKeyboardBehaviour::~CKeyboardBehaviour (void)
+ {
+ 	m_pKeyPressedHandler = 0;
++	m_pKeyCodePressedHandler = 0;
++	m_pKeyCodePressedHandler = 0;
+ 	m_pSelectConsoleHandler = 0;
+ 	m_pShutdownHandler = 0;
+ }
+@@ -48,6 +54,18 @@ void CKeyboardBehaviour::RegisterKeyPressedHandler (TKeyPressedHandler *pKeyPres
+ 	m_pKeyPressedHandler = pKeyPressedHandler;
+ }
+ 
++void CKeyboardBehaviour::RegisterKeyCodePressedHandler (TKeyCodePressedHandler *pKeyCodePressedHandler)
++{
++	assert (pKeyCodePressedHandler != 0);
++	m_pKeyCodePressedHandler = pKeyCodePressedHandler;
++}
++
++void CKeyboardBehaviour::RegisterKeyCodeReleasedHandler (TKeyCodeReleasedHandler *pKeyCodeReleasedHandler)
++{
++	assert (pKeyCodeReleasedHandler != 0);
++	m_pKeyCodeReleasedHandler = pKeyCodeReleasedHandler;
++}
++
+ void CKeyboardBehaviour::RegisterSelectConsoleHandler (TSelectConsoleHandler *pSelectConsoleHandler)
+ {
+ 	assert (pSelectConsoleHandler != 0);
+@@ -119,6 +137,64 @@ void CKeyboardBehaviour::GenerateKeyEvent (u8 ucKeyCode)
+ 	}
+ }
+ 
++void CKeyboardBehaviour::GenerateKeyCodeEvent (u8 ucKeyCode, int down)
++{
++	short code;
++
++	u8 ucModifiers = m_ucModifiers;
++	u16 usLogCode = m_KeyMap.Translate (ucKeyCode, ucModifiers);
++
++	switch (usLogCode)
++	{
++	case ActionSwitchCapsLock:
++	case ActionSwitchNumLock:
++	case ActionSwitchScrollLock:
++		break;
++
++	case ActionSelectConsole1:
++	case ActionSelectConsole2:
++	case ActionSelectConsole3:
++	case ActionSelectConsole4:
++	case ActionSelectConsole5:
++	case ActionSelectConsole6:
++	case ActionSelectConsole7:
++	case ActionSelectConsole8:
++	case ActionSelectConsole9:
++	case ActionSelectConsole10:
++	case ActionSelectConsole11:
++	case ActionSelectConsole12:
++		if (m_pSelectConsoleHandler != 0)
++		{
++			unsigned nConsole = usLogCode - ActionSelectConsole1;
++			assert (nConsole < 12);
++
++			(*m_pSelectConsoleHandler) (nConsole);
++		}
++		break;
++
++	case ActionShutdown:
++		if (m_pShutdownHandler != 0)
++		{
++			(*m_pShutdownHandler) ();
++		}
++		break;
++
++	default:
++		code = m_KeyMap.GetCode (usLogCode, ucModifiers);
++		if (down && code != 0
++		    && m_pKeyCodePressedHandler != 0)
++		{
++			(*m_pKeyCodePressedHandler) (code);
++		}
++		else if (!down && code != 0
++		    && m_pKeyCodeReleasedHandler != 0)
++		{
++			(*m_pKeyCodeReleasedHandler) (code);
++		}
++		break;
++	}
++}
++
+ void CKeyboardBehaviour::KeyPressed (u8 ucKeyCode)
+ {
+ 	if (0x80 <= ucKeyCode && ucKeyCode < ModifierKeyUnknown)
+@@ -129,6 +205,7 @@ void CKeyboardBehaviour::KeyPressed (u8 ucKeyCode)
+ 	}
+ 	else
+ 	{
++#ifndef USE_KEYCODE_LISTENERS
+ 		if (ucKeyCode != m_ucLastKeyCode)
+ 		{
+ 			m_ucLastKeyCode = ucKeyCode;
+@@ -145,6 +222,18 @@ void CKeyboardBehaviour::KeyPressed (u8 ucKeyCode)
+ 			assert (m_hTimer != 0);
+ #endif
+ 		}
++#else
++
++		if (m_ucLastKeyCodeIdx < 5 && (m_ucLastKeyCodeIdx == 0 ||
++                    ucKeyCode != m_ucLastKeyCodes[m_ucLastKeyCodeIdx-1]))
++		{
++			m_ucLastKeyCodes[m_ucLastKeyCodeIdx] = ucKeyCode;
++                        m_ucLastKeyCodeIdx++;
++
++			GenerateKeyCodeEvent (ucKeyCode, 1);
++
++		}
++#endif
+ 	}
+ }
+ 
+@@ -158,6 +247,7 @@ void CKeyboardBehaviour::KeyReleased (u8 ucKeyCode)
+ 	}
+ 	else
+ 	{
++#ifndef USE_KEYCODE_LISTENERS
+ 		if (ucKeyCode == m_ucLastKeyCode)
+ 		{
+ 			if (m_hTimer != 0)
+@@ -168,6 +258,20 @@ void CKeyboardBehaviour::KeyReleased (u8 ucKeyCode)
+ 
+ 			m_ucLastKeyCode = 0;
+ 		}
++#else
++		for (int i=0;i<m_ucLastKeyCodeIdx;i++) {
++		    if (ucKeyCode == m_ucLastKeyCodes[i]) {
++			GenerateKeyCodeEvent (ucKeyCode, 0);
++			m_ucLastKeyCodes[i] = 0;
++
++			for (int n=i;n<m_ucLastKeyCodeIdx-1;n++) {
++			    m_ucLastKeyCodes[n] = m_ucLastKeyCodes[n+1];
++			}
++			m_ucLastKeyCodeIdx--;
++			break;
++		    }
++		}
++#endif
+ 	}
+ }
+ 
+diff --git a/lib/input/keymap.cpp b/lib/input/keymap.cpp
+index 7a2ce2d..ad4263c 100644
+--- a/lib/input/keymap.cpp
++++ b/lib/input/keymap.cpp
+@@ -83,6 +83,61 @@ const char *CKeyMap::s_KeyStrings[KeyMaxCode-KeySpace] =
+ 	"."			// KeyKP_Period
+ };
+ 
++const short CKeyMap::s_KeyCodes[KeyMaxCode-KeySpace] =
++{
++	32,			// KeySpace
++	27,			// KeyEscape
++	8,			// KeyBackspace
++	9,			// KeyTabulator
++	13,			// KeyReturn
++	277,			// KeyInsert
++	278,			// KeyHome
++	280,			// KeyPageUp
++	127,			// KeyDelete
++	279,			// KeyEnd
++	281,			// KeyPageDown
++	273,			// KeyUp
++	274,			// KeyDown
++	276,			// KeyLeft
++	275,			// KeyRight
++	282,			// KeyF1
++	283,			// KeyF2
++	284,			// KeyF3
++	285,			// KeyF4
++	286,			// KeyF5
++	287,			// KeyF6
++	288,			// KeyF7
++	289,			// KeyF8
++	290,			// KeyF9
++	291,			// KeyF10
++	292,			// KeyF11
++	293,			// KeyF12
++	0,			// KeyApplication
++	301,			// KeyCapsLock
++	0,			// KeyPrintScreen
++	302,			// KeyScrollLock
++	0,			// KeyPause
++	300,			// KeyNumLock
++	'/',			// KeyKP_Divide
++	'*',			// KeyKP_Multiply
++	'-',			// KeyKP_Subtract
++	'+',			// KeyKP_Add
++	'\n',			// KeyKP_Enter
++	'1',			// KeyKP_1
++	'2',			// KeyKP_2
++	'3',			// KeyKP_3
++	'4',			// KeyKP_4
++	'5',			// KeyKP_5
++	'6',			// KeyKP_6
++	'7',			// KeyKP_7
++	'8',			// KeyKP_8
++	'9',			// KeyKP_9
++	'0',			// KeyKP_0
++	0,			// KeyKP_Center
++	',',			// KeyKP_Comma
++	'.'			// KeyKP_Period
++};
++
+ #define C(chr)		((u16) (u8) (chr))
+ 
+ const u16 CKeyMap::s_DefaultMap[][PHY_MAX_CODE+1][K_ALTSHIFTTAB+1] =
+@@ -290,6 +345,46 @@ const char *CKeyMap::GetString (u16 nKeyCode, u8 nModifiers, char Buffer[2]) con
+ 	return Buffer;
+ }
+ 
++const short CKeyMap::GetCode (u16 nKeyCode, u8 nModifiers) const
++{
++	if (   nKeyCode <= ' '
++	    || nKeyCode >= KeyMaxCode)
++	{
++		return 0;
++	}
++
++	if (KeySpace <= nKeyCode && nKeyCode < KeyMaxCode)
++	{
++		return s_KeyCodes[nKeyCode-KeySpace];
++	}
++
++	char chChar = (char) nKeyCode;
++
++	if (nModifiers & (KEY_LCTRL_MASK | KEY_RCTRL_MASK))
++	{
++		chChar -= 'a';
++		if ('\0' <= chChar && chChar <= 'z'-'a')
++		{
++			return (short)(chChar+1);
++		}
++		return 0;
++	}
++
++	if (m_bCapsLock)
++	{
++		if ('A' <= chChar && chChar <= 'Z')
++		{
++			chChar += 'a'-'A';
++		}
++		else if ('a' <= chChar && chChar <= 'z')
++		{
++			chChar -= 'a'-'A';
++		}
++	}
++
++	return (short)chChar;
++}
++
+ u8 CKeyMap::GetLEDStatus (void) const
+ {
+ 	u8 nResult = 0;
 diff --git a/lib/sysinit.cpp b/lib/sysinit.cpp
 index c8ccb5b..2c65706 100644
 --- a/lib/sysinit.cpp
@@ -322,3 +702,24 @@ index 2893a86..9aac786 100644
  
  	delete m_pURB;
  	m_pURB = 0;
+diff --git a/lib/usb/usbkeyboard.cpp b/lib/usb/usbkeyboard.cpp
+index 1f0f2c0..c326dbe 100644
+--- a/lib/usb/usbkeyboard.cpp
++++ b/lib/usb/usbkeyboard.cpp
+@@ -70,6 +70,16 @@ void CUSBKeyboardDevice::RegisterKeyPressedHandler (TKeyPressedHandler *pKeyPres
+ 	m_Behaviour.RegisterKeyPressedHandler (pKeyPressedHandler);
+ }
+ 
++void CUSBKeyboardDevice::RegisterKeyCodePressedHandler (TKeyCodePressedHandler *pKeyCodePressedHandler)
++{
++	m_Behaviour.RegisterKeyCodePressedHandler (pKeyCodePressedHandler);
++}
++
++void CUSBKeyboardDevice::RegisterKeyCodeReleasedHandler (TKeyCodeReleasedHandler *pKeyCodeReleasedHandler)
++{
++	m_Behaviour.RegisterKeyCodeReleasedHandler (pKeyCodeReleasedHandler);
++}
++
+ void CUSBKeyboardDevice::RegisterSelectConsoleHandler (TSelectConsoleHandler *pSelectConsoleHandler)
+ {
+ 	m_Behaviour.RegisterSelectConsoleHandler (pSelectConsoleHandler);

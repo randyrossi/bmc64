@@ -55,6 +55,8 @@ public:
   static void MouseStatusHandler(unsigned nButtons, int nPosX, int nPosY);
   static void KeyStatusHandlerRaw(unsigned char ucModifiers,
                                   const unsigned char RawKeys[6]);
+  static void KeyPressedHandler (const short code);
+  static void KeyReleasedHandler (const short code);
   static void GamePadStatusHandler(unsigned nDeviceIndex,
                                    const TGamePadState *pState);
 

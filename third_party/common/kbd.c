@@ -244,6 +244,12 @@ signed long kbd_arch_keyname_to_keynum(char *keyname) {
     return (long)KEYCODE_F11;
   } else if (KCMP("ScrollLock")) {
     return (long)KEYCODE_ScrollLock;
+  } else {
+    // For symbolic key maps. If the key name is an int, use that
+    // value directly as the keycode.
+    int v = atoi(keyname);
+    if (v > 0)
+       return (long) v;
   }
 
   return 0;

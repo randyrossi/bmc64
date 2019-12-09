@@ -550,7 +550,10 @@ void CKernel::SetupUSBKeyboard() {
   CUSBKeyboardDevice *pKeyboard =
       (CUSBKeyboardDevice *)mDeviceNameService.GetDevice("ukbd1", FALSE);
   if (pKeyboard) {
-    pKeyboard->RegisterKeyStatusHandlerRaw(KeyStatusHandlerRaw);
+    //pKeyboard->RegisterKeyStatusHandlerRaw(KeyStatusHandlerRaw);
+    pKeyboard->RegisterKeyCodePressedHandler (KeyPressedHandler);
+    pKeyboard->RegisterKeyCodeReleasedHandler (KeyReleasedHandler);
+
   }
 }
 
@@ -899,6 +902,16 @@ void CKernel::MouseStatusHandler(unsigned nButtons, int deltaX, int deltaY) {
     emu_mouse_button_right(1);
   }
   prev_buttons = nButtons;
+}
+
+void CKernel::KeyPressedHandler (const short code)
+{
+  emu_key_pressed(code);
+}
+
+void CKernel::KeyReleasedHandler (const short code)
+{
+  emu_key_released(code);
 }
 
 void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
