@@ -192,11 +192,9 @@ signed long kbd_arch_keyname_to_keynum(char *keyname) {
     return (long)KEYCODE_Home;
   } else if (KCMP("Slash") || LEGACY_KCMP("slash")) {
     return (long)KEYCODE_Slash;
-  } else if ((KCMP("BackSlash") || LEGACY_KCMP("equal")) &&
-             menu_get_keyboard_type() == KEYBOARD_TYPE_US) {
+  } else if (KCMP("BackSlash")) {
     return (long)KEYCODE_BackSlash;
-  } else if ((KCMP("Pound") || LEGACY_KCMP("equal")) &&
-             menu_get_keyboard_type() == KEYBOARD_TYPE_UK) {
+  } else if (KCMP("Pound")) {
     return (long)KEYCODE_Pound;
   } else if (KCMP("Insert") || LEGACY_KCMP("sterling")) {
     return (long)KEYCODE_Insert;
@@ -244,12 +242,6 @@ signed long kbd_arch_keyname_to_keynum(char *keyname) {
     return (long)KEYCODE_F11;
   } else if (KCMP("ScrollLock")) {
     return (long)KEYCODE_ScrollLock;
-  } else {
-    // For symbolic key maps. If the key name is an int, use that
-    // value directly as the keycode.
-    int v = atoi(keyname);
-    if (v > 0)
-       return (long) v;
   }
 
   return 0;
