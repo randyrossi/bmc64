@@ -177,5 +177,3 @@ Right 0 2 8          /*         Right -> Right       */
 
 # Restore key mappings
 PageUp -3 0
-
-F11 -4 0 /* 40/80 Columns */

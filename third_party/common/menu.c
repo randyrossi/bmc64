@@ -108,7 +108,6 @@ int usb_1_button_assignments[MAX_USB_BUTTONS];
 int usb_button_bits[MAX_USB_BUTTONS]; // never change
 long keyset_codes[2][7];
 long key_bindings[6];
-struct menu_item *keyboard_type_item;
 struct menu_item *drive_sounds_item;
 struct menu_item *drive_sounds_vol_item;
 struct menu_item *hotkey_cf1_item;
@@ -703,7 +702,6 @@ static int save_settings() {
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
     fprintf(fp, "palette2=%d\n", palette_item_1->value);
   }
-  fprintf(fp, "keyboard_type=%d\n", keyboard_type_item->value);
 
   for (i = 0; i < MAX_USB_BUTTONS; i++) {
     fprintf(fp, "usb_btn_0=%d\n", usb_0_button_assignments[i]);
@@ -907,8 +905,6 @@ static void load_settings() {
       palette_item_0->value = value;
     } else if (strcmp(name, "palette2") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       palette_item_1->value = value;
-    } else if (strcmp(name, "keyboard_type") == 0) {
-      keyboard_type_item->value = value;
     } else if (strcmp(name, "usb_btn_0") == 0) {
       if (value >= NUM_BUTTON_ASSIGNMENTS) {
          value = NUM_BUTTON_ASSIGNMENTS - 1;
@@ -2233,8 +2229,6 @@ void emu_get_usb_pref(int device, int *usb_pref, int *x_axis, int *y_axis,
   }
 }
 
-int menu_get_keyboard_type(void) { return keyboard_type_item->value; }
-
 // KEEP in sync with kernel.cpp, kbd.c, menu_usb.c
 static void set_hotkey_choices(struct menu_item *item) {
   item->num_choices = 14;
@@ -2688,12 +2682,8 @@ void build_menu(struct menu_item *root) {
   emux_add_sound_options(parent);
 
   parent = ui_menu_add_folder(root, "Keyboard");
-  child = keyboard_type_item = ui_menu_add_multiple_choice(
-      MENU_KEYBOARD_TYPE, parent, "Layout (Needs Save+Reboot)");
-  child->num_choices = 2;
-  child->value = KEYBOARD_TYPE_US;
-  strcpy(child->choices[KEYBOARD_TYPE_US], "US");
-  strcpy(child->choices[KEYBOARD_TYPE_UK], "UK");
+
+  emux_add_keyboard_options(parent);
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      c40_80_column_item = ui_menu_add_toggle_labels(

@@ -61,6 +61,8 @@
 struct menu_item *sid_engine_item;
 struct menu_item *sid_model_item;
 struct menu_item *sid_filter_item;
+struct menu_item *keyboard_mapping_item;
+
 
 void emu_machine_init(void) {
   switch (machine_class) {
@@ -447,6 +449,22 @@ static int viceSidModelToBmcChoice(int viceModel) {
 void emux_add_tape_options(struct menu_item* parent) {
 }
 
+void emux_add_keyboard_options(struct menu_item* parent) {
+  keyboard_mapping_item = ui_menu_add_multiple_choice(
+      MENU_KEYBOARD_MAPPING, parent, "Mapping");
+  keyboard_mapping_item->num_choices = 2; 
+  
+  int tmp_value;
+printf ("here\n");
+  resources_get_int("KeymapIndex", &tmp_value);
+printf ("here\n");
+  keyboard_mapping_item->value = tmp_value;
+printf ("here\n");
+  strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_SYM], "Symbolic");
+printf ("here\n");
+  strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_POS], "Positional");
+}
+
 void emux_add_sound_options(struct menu_item* parent) {
   // Resid by default
   struct menu_item* child = sid_engine_item =
@@ -689,6 +707,9 @@ int emux_handle_menu_change(struct menu_item* item) {
       return 1;
     case MENU_DRIVE_RAM_A000:
       resources_set_int_sprintf("Drive%iRAMA000", item->value, item->sub_id);
+      return 1;
+    case MENU_KEYBOARD_MAPPING:
+      resources_set_int("KeymapIndex", item->value);
       return 1;
     default:
       break;

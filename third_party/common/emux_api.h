@@ -276,6 +276,8 @@ void emux_drive_change_model(int unit);
 
 void emux_add_drive_option(struct menu_item* parent, int drive);
 
+void emux_add_keyboard_options(struct menu_item* parent);
+
 // Create an empty disk image
 void emux_create_disk(struct menu_item* item, fullpath_func fullpath);
 

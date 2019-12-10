@@ -1003,6 +1003,9 @@ void emux_add_tape_options(struct menu_item* parent) {
           "Tape Audible Feedback Level", 0, 10, 1, tape_feedback);
 }
 
+void emux_add_keyboard_options(struct menu_item* parent) {
+}
+
 void emux_add_sound_options(struct menu_item* parent) {
   // TODO: Why is 6581 so slow?
   struct menu_item* child = sid_model_item =

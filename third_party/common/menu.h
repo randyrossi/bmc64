@@ -169,7 +169,7 @@ typedef enum {
    MENU_USB_1_PREF,
 
    MENU_SAVE_SETTINGS,
-   MENU_KEYBOARD_TYPE,
+   MENU_KEYBOARD_MAPPING,
 
    MENU_TAPE_START,
    MENU_TAPE_STOP,
@@ -389,9 +389,9 @@ typedef enum {
 
 // Used as saved values. Don't reorg.
 typedef enum {
-   KEYBOARD_TYPE_US = 0,
-   KEYBOARD_TYPE_UK,
-} MenuKeyboardType;
+   KEYBOARD_MAPPING_SYM = 0,
+   KEYBOARD_MAPPING_POS,
+} MenuKeyboardMapping;
 
 // Used as indices
 typedef enum {
@@ -491,7 +491,6 @@ extern int pot_y_low_value;
 // Called at initialzation
 void build_menu(struct menu_item *root);
 
-int menu_get_keyboard_type(void);
 void menu_swap_joysticks(void);
 int statusbar_never(void);
 int statusbar_always(void);
