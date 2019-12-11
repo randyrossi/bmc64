@@ -367,8 +367,13 @@ int emux_handle_quick_func(int button_func);
 // Restore emulator specific settings that are set via emux_get_*/emux_set_*.
 void emux_load_additional_settings(void);
 
+// Handle setting loaded from settings file. Return 1 if handled.
+int emux_handle_loaded_setting(char *name, char* value_str, int value);
+
 // Persist emulator specific settings. Added to given open file pointer.
 void emux_save_additional_settings(FILE *fp);
+
+void emux_load_settings_done(void);
 
 void emux_get_default_color_setting(int *brightness, int *contrast, int *gamma, int *tint);
 

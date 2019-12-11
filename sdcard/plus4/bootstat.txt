@@ -11,7 +11,6 @@ stat,basic,16384
 stat,3plus1hi,16384
 stat,3plus1lo,16384
 stat,c2lo.364,16384
-fail,rpi_pos.vkm,0
 fail,mps803,0
 fail,mps803.vpl,0
 fail,nl10-cbm,0

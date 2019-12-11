@@ -877,6 +877,10 @@ static void load_settings() {
 
     value = atoi(value_str);
 
+    if (emux_handle_loaded_setting(name, value_str, value)) {
+       continue;
+    }
+
     if (strcmp(name, "port_1") == 0) {
       port_1_menu_item->value = value;
     } else if (strcmp(name, "port_2") == 0) {
@@ -1027,6 +1031,8 @@ static void load_settings() {
     }
   }
   fclose(fp);
+
+  emux_load_settings_done();
 }
 
 void menu_swap_joysticks() {

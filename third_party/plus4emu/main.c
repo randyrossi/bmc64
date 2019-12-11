@@ -1492,3 +1492,10 @@ void emux_get_default_color_setting(int *brightness, int *contrast,
   *gamma = 800;
   *tint = 1000;
 }
+
+int emux_handle_loaded_setting(char *name, char* value_str, int value) {
+  return 0;
+}
+
+void emux_load_settings_done(void) {
+}

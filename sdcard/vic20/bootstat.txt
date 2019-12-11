@@ -7,7 +7,6 @@ stat,kernal,8192
 stat,basic,8192
 stat,chargen,4096
 stat,d1541II,16384
-fail,rpi_pos.vkm,0
 fail,fliplist-VIC20.vfl,0
 fail,mps803,0
 fail,mps803.vpl,0

@@ -256,6 +256,11 @@ void ViceStdioApp::InitBootStat() {
     if (strcmp(what, "stat") == 0) {
       mBootStatWhat[num] = BOOTSTAT_WHAT_STAT;
     } else if (strcmp(what, "fail") == 0) {
+      if (strcmp(file,"rpi_pos.vkm") == 0) {
+        // Ignore legacy mistake blocking rpi_pos.vkm
+        printf("Ignoring rpi_pos.vkm in bootstat.txt\n");
+        continue;
+      }
       mBootStatWhat[num] = BOOTSTAT_WHAT_FAIL;
     } else {
       printf("Ignoring unknown bootstat.txt '%s'\n", what);

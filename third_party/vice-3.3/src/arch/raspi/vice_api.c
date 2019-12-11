@@ -455,13 +455,9 @@ void emux_add_keyboard_options(struct menu_item* parent) {
   keyboard_mapping_item->num_choices = 2; 
   
   int tmp_value;
-printf ("here\n");
   resources_get_int("KeymapIndex", &tmp_value);
-printf ("here\n");
   keyboard_mapping_item->value = tmp_value;
-printf ("here\n");
   strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_SYM], "Symbolic");
-printf ("here\n");
   strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_POS], "Positional");
 }
 
@@ -745,4 +741,12 @@ void emux_get_default_color_setting(int *brightness, int *contrast,
     *contrast = 1250;
     *gamma = 2200;
     *tint = 1000;
+}
+
+int emux_handle_loaded_setting(char *name, char* value_str, int value) {
+  // Nothing to do here yet.
+  return 0;
+}
+
+void emux_load_settings_done(void) {
 }

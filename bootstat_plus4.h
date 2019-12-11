@@ -22,7 +22,6 @@ int dflt_bootStatWhat[] = {
     BOOTSTAT_WHAT_FAIL,
     BOOTSTAT_WHAT_FAIL,
     BOOTSTAT_WHAT_FAIL,
-    BOOTSTAT_WHAT_FAIL,
 };
 
 const char *dflt_bootStatFile[] = {
@@ -34,7 +33,6 @@ const char *dflt_bootStatFile[] = {
     "3plus1hi",
     "3plus1lo", 
     "c2lo.364",
-    "rpi_pos.vkm",
     "mps803",
     "mps803.vpl",
     "nl10-cbm",
@@ -58,7 +56,6 @@ int dflt_bootStatSize[] = {
     16384,
     16384,
     16384,
-    0,
     0,
     0,
     0,
