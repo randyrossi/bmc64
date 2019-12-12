@@ -1054,7 +1054,7 @@ int CKernel::ReadDebounced(int pinIndex) {
 void CKernel::circle_check_gpio() {
   int gpio_config = emu_get_gpio_config();
   switch(gpio_config) {
-    case 0:
+    case GPIO_CONFIG_NAV_JOY:
      // Nav Buttons + Real Joys
      if (ReadDebounced(GPIO_CONFIG_0_MENU_INDEX) == BTN_PRESS) {
       emu_key_pressed(KEYCODE_F12);
@@ -1087,13 +1087,13 @@ void CKernel::circle_check_gpio() {
      ReadJoystick(0, 0);
      ReadJoystick(1, 0);
      break;
-    case 1:
+    case GPIO_CONFIG_KYB_JOY:
      // Real Kyb + Joys
      ScanKeyboard();
      ReadJoystick(0, 1);
      ReadJoystick(1, 1);
      break;
-    case 2:
+    case GPIO_CONFIG_WAVESHARE:
      // Waveshare Hat
      if (ReadDebounced(GPIO_CONFIG_2_WAVESHARE_START_INDEX) == BTN_PRESS) {
        emu_key_pressed(KEYCODE_F12);
@@ -1113,6 +1113,9 @@ void CKernel::circle_check_gpio() {
        emu_quick_func_interrupt(BTN_ASSIGN_STATUS_TOGGLE);
      }
      ReadJoystick(0, 2);
+     break;
+    default:
+     // Disabled
      break;
   }
 }

@@ -124,6 +124,11 @@
 #define JOYDEV_CURS_LC 19
 #define JOYDEV_MOUSE 20
 
+#define GPIO_CONFIG_DISABLED -1
+#define GPIO_CONFIG_NAV_JOY 0
+#define GPIO_CONFIG_KYB_JOY 1
+#define GPIO_CONFIG_WAVESHARE 2
+
 struct axis_config {
   int use;
   int neutral;

@@ -275,3 +275,4 @@
   * Added Symbolic and Postional keyboard options
     Defaults to Symbolic which is different from what was released up
     to now. Named the keymap file incorrectly.
+  * Added disabled option to gpio config

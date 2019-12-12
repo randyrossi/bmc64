@@ -723,7 +723,7 @@ static int save_settings() {
   fprintf(fp, "vkbd_trans=%d\n", vkbd_transparency_item->value);
   fprintf(fp, "tapereset=%d\n", tape_reset_with_machine_item->value);
   fprintf(fp, "reset_confirm=%d\n", reset_confirm_item->value);
-  fprintf(fp, "gpio_config=%d\n", gpio_config_item->value);
+  fprintf(fp, "gpio_config=%d\n", gpio_config_item->choice_ints[gpio_config_item->value]);
   fprintf(fp, "h_center_0=%d\n", h_center_item_0->value);
   fprintf(fp, "v_center_0=%d\n", v_center_item_0->value);
   fprintf(fp, "h_border_trim_0=%d\n", h_border_item_0->value);
@@ -965,7 +965,24 @@ static void load_settings() {
     } else if (strcmp(name, "reset_confirm") == 0) {
       reset_confirm_item->value = value;
     } else if (strcmp(name, "gpio_config") == 0) {
-      gpio_config_item->value = value;
+      // We save/restore the choice int and map back to
+      // the value as index into the choices for this
+      // param.
+      switch(value) {
+        case GPIO_CONFIG_NAV_JOY:
+           gpio_config_item->value = 1;
+           break;
+        case GPIO_CONFIG_KYB_JOY:
+           gpio_config_item->value = 2;
+           break;
+        case GPIO_CONFIG_WAVESHARE:
+           gpio_config_item->value = 3;
+           break;
+        default:
+           // Disabled
+           gpio_config_item->value = 0;
+           break;
+      }
     } else if (strcmp(name, "keyset_1_up") == 0) {
       keyset_codes[0][KEYSET_UP] = value;
     } else if (strcmp(name, "keyset_1_down") == 0) {
@@ -2865,11 +2882,16 @@ void build_menu(struct menu_item *root) {
 
   child = gpio_config_item =
       ui_menu_add_multiple_choice(MENU_GPIO_CONFIG, parent, "GPIO Config");
-     child->num_choices = 3;
+     child->num_choices = 4;
      child->value = 0;
-     strcpy(child->choices[0], "#1 (Nav+Joy)");
-     strcpy(child->choices[1], "#2 (Kyb+Joy)");
-     strcpy(child->choices[2], "#3 (Waveshare Hat)");
+     strcpy(child->choices[0], "(Disabled)");
+     strcpy(child->choices[1], "#1 (Nav+Joy)");
+     strcpy(child->choices[2], "#2 (Kyb+Joy)");
+     strcpy(child->choices[3], "#3 (Waveshare Hat)");
+     child->choice_ints[0] = GPIO_CONFIG_DISABLED;
+     child->choice_ints[1] = GPIO_CONFIG_NAV_JOY;
+     child->choice_ints[2] = GPIO_CONFIG_KYB_JOY;
+     child->choice_ints[3] = GPIO_CONFIG_WAVESHARE;
 
   warp_item = ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
 
@@ -3068,7 +3090,7 @@ void menu_quick_func(int button_assignment) {
 }
 
 int emu_get_gpio_config() {
-  return gpio_config_item->value;
+  return gpio_config_item->choice_ints[gpio_config_item->value];
 }
 
 int emu_get_num_joysticks(void) {
