@@ -8,18 +8,22 @@ NEWLIBDIR = third_party/circle-stdlib/install/arm-none-circle
 OBJS	= main.o kernel.o vicesound.o vicesoundbasedevice.o \
           viceoptions.o viceapp.o fbl.o
 
-ifeq ($(VARIANT),PLUS4EMU)
+ifeq ($(MACHINE_CLASS),RASPI_PLUS4EMU)
 OBJS	+= plus4emulatorcore.o
-CFLAGS  += -I "third_party/plus4emu/src"
 else
 OBJS	+= viceemulatorcore.o
 endif
 
 include $(CIRCLEHOME)/Rules.mk
 
+ifeq ($(MACHINE_CLASS),RASPI_PLUS4EMU)
+CFLAGS  += -I "third_party/plus4emu/src"
+endif
+
 CFLAGS += -I "$(NEWLIBDIR)/include" -I $(STDDEF_INCPATH) \
           -I third_party/circle-stdlib/include \
-          -I $(CIRCLEHOME)/addon/fatfs
+          -I $(CIRCLEHOME)/addon/fatfs \
+          -D $(MACHINE_CLASS)
 
 LIBS := $(VICELIBS) \
         third_party/common/libbmc64common.a \

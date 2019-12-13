@@ -1,5 +1,5 @@
 diff --git a/addon/fatfs/ff.c b/addon/fatfs/ff.c
-index 253440a..194e0cc 100644
+index 750eee1..8a156fa 100644
 --- a/addon/fatfs/ff.c
 +++ b/addon/fatfs/ff.c
 @@ -224,6 +224,9 @@
@@ -12,7 +12,7 @@ index 253440a..194e0cc 100644
  #else
  #define LD2PD(vol) (BYTE)(vol)	/* Each logical drive is bound to the same physical drive number */
  #define LD2PT(vol) 0			/* Find first valid partition or in SFD */
-@@ -3273,12 +3276,26 @@ static FRESULT find_volume (	/* FR_OK(0): successful, !=0: an error occurred */
+@@ -3275,12 +3278,26 @@ static FRESULT find_volume (	/* FR_OK(0): successful, !=0: an error occurred */
  			pt = fs->win + (MBR_Table + i * SZ_PTE);
  			br[i] = pt[PTE_System] ? ld_dword(pt + PTE_StLba) : 0;
  		}
@@ -41,7 +41,7 @@ index 253440a..194e0cc 100644
  	if (fmt == 4) return FR_DISK_ERR;		/* An error occured in the disk I/O layer */
  	if (fmt >= 2) return FR_NO_FILESYSTEM;	/* No FAT volume is found */
 diff --git a/addon/fatfs/ff.h b/addon/fatfs/ff.h
-index a0792b2..598d584 100644
+index b3d75a9..8990c01 100644
 --- a/addon/fatfs/ff.h
 +++ b/addon/fatfs/ff.h
 @@ -63,7 +63,10 @@ typedef unsigned long	DWORD;	/* 32-bit unsigned integer */
@@ -111,11 +111,11 @@ index f8c1d59..487da4b 100644
  #ifdef _MSC_VER
  #define INLINE __inline
 diff --git a/include/circle/memorymap.h b/include/circle/memorymap.h
-index d0ae6d0..1b9e735 100644
+index 3fe23ed..e934688 100644
 --- a/include/circle/memorymap.h
 +++ b/include/circle/memorymap.h
-@@ -30,7 +30,7 @@
- 	#define MEGABYTE	0x100000
+@@ -33,7 +33,7 @@
+ 	#define GIGABYTE	0x40000000ULL
  #endif
  
 -#define MEM_SIZE		(256 * MEGABYTE)		// default size
@@ -124,7 +124,7 @@ index d0ae6d0..1b9e735 100644
  #define ARM_MEM_SIZE		(MEM_SIZE - GPU_MEM_SIZE)	// normally overwritten
  
 diff --git a/include/circle/sysconfig.h b/include/circle/sysconfig.h
-index 245e069..b09b8da 100644
+index 2ef7052..c45440e 100644
 --- a/include/circle/sysconfig.h
 +++ b/include/circle/sysconfig.h
 @@ -34,7 +34,7 @@
@@ -145,16 +145,16 @@ index 245e069..b09b8da 100644
  
  #endif
  
-@@ -124,7 +124,7 @@
- // system timing, because it triggers up to 8000 IRQs per second. For
+@@ -126,7 +126,7 @@
  // compatibility with existing applications it is not set by default.
+ // This option has no influence on the Raspberry Pi 4.
  
 -//#define USE_USB_SOF_INTR
 +#define USE_USB_SOF_INTR
  
  #endif
  
-@@ -142,7 +142,7 @@
+@@ -144,7 +144,7 @@
  // this option is that the "SpeedFactor" of your system is displayed.
  // You can reduce the time needed for booting, if you disable this.
  
@@ -163,7 +163,7 @@ index 245e069..b09b8da 100644
  
  ///////////////////////////////////////////////////////////////////////
  //
-@@ -168,12 +168,12 @@
+@@ -170,12 +170,12 @@
  // The default keyboard map can be overwritten in with the keymap=
  // option in cmdline.txt.
  
@@ -224,10 +224,10 @@ index eb6fe49..f6e0776 100644
  static TPageBucket s_PageBucket;
  
 diff --git a/lib/sysinit.cpp b/lib/sysinit.cpp
-index c8ccb5b..2c65706 100644
+index 3c96caf..e9e4127 100644
 --- a/lib/sysinit.cpp
 +++ b/lib/sysinit.cpp
-@@ -175,12 +175,15 @@ void sysinit (void)
+@@ -180,12 +180,15 @@ void sysinit (void)
  #endif
  
  	// clear BSS
@@ -249,19 +249,6 @@ index c8ccb5b..2c65706 100644
  
  	CMachineInfo MachineInfo;
  
-diff --git a/lib/usb/usbdevicefactory.cpp b/lib/usb/usbdevicefactory.cpp
-index 541aba4..9694acb 100644
---- a/lib/usb/usbdevicefactory.cpp
-+++ b/lib/usb/usbdevicefactory.cpp
-@@ -98,7 +98,7 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
- 	}
- 	else if (pName->Compare ("ven424-ec00") == 0)
- 	{
--		pResult = new CSMSC951xDevice (pParent);
-+		//pResult = new CSMSC951xDevice (pParent);
- 	}
- 	else if (pName->Compare ("ven424-7800") == 0)
- 	{
 diff --git a/lib/usb/usbgamepad.cpp b/lib/usb/usbgamepad.cpp
 index ff011e8..c6a0e8f 100644
 --- a/lib/usb/usbgamepad.cpp

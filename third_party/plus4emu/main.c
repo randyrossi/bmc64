@@ -97,16 +97,20 @@ static int drive_led_colors[4];
 
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
+static int p4_isspace(char c) {
+  return (c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v');
+}
+
 static void rtrim(char *txt) {
   if (!txt) return;
   int p=strlen(txt)-1;
-  while (isspace(txt[p])) { txt[p] = '\0'; p--; }
+  while (p4_isspace(txt[p])) { txt[p] = '\0'; p--; }
 }
 
 static char* ltrim(char *txt) {
   if (!txt) return NULL;
   int p=0;
-  while (isspace(txt[p])) { p++; }
+  while (p4_isspace(txt[p])) { p++; }
   return txt+p;
 }
 

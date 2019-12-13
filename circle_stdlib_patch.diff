@@ -58,14 +58,23 @@ index e0b90d5..0bf98e4 100644
  class CGlueIO
  {
 diff --git a/libs/circle b/libs/circle
+index 641264e..fe24b6b 160000
 --- a/libs/circle
 +++ b/libs/circle
 @@ -1 +1 @@
 -Subproject commit 641264ed56f0f621e4b681d5eefd6a19f8adfa5e
-+Subproject commit 641264ed56f0f621e4b681d5eefd6a19f8adfa5e-dirty
++Subproject commit fe24b6bebd1532f2a0ee981af12eaf50cc9e97fb-dirty
 diff --git a/libs/circle-newlib b/libs/circle-newlib
+index 7565e43..c01f95b 160000
 --- a/libs/circle-newlib
 +++ b/libs/circle-newlib
 @@ -1 +1 @@
 -Subproject commit 7565e4314b5915a0dc2a7745bd18c8f7833b3f5c
-+Subproject commit 7565e4314b5915a0dc2a7745bd18c8f7833b3f5c-dirty
++Subproject commit c01f95bcb08278d9e00f9795c7641284d4f89931-dirty
+diff --git a/libs/mbedtls b/libs/mbedtls
+index fb1972d..d81c11b 160000
+--- a/libs/mbedtls
++++ b/libs/mbedtls
+@@ -1 +1 @@
+-Subproject commit fb1972db23da39bd11d4f9c9ea6266eee665605b
++Subproject commit d81c11b8ab61fd5b2da8133aa73c5fe33a0633eb

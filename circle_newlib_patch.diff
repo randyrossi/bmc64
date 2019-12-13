@@ -11,17 +11,15 @@ index 27d8e3a3e..f563bb7db 100644
 +   return &errno;
 +}
 diff --git a/libgloss/circle/fstat.c b/libgloss/circle/fstat.c
-index 4e18d4216..9727a640a 100644
+index 3c5d7a6c2..9727a640a 100644
 --- a/libgloss/circle/fstat.c
 +++ b/libgloss/circle/fstat.c
-@@ -12,13 +12,4 @@
+@@ -12,11 +12,4 @@
  extern int errno;
  #include "warning.h"
  
 -int
--_DEFUN (_fstat, (fildes, st),
--        int          fildes _AND
--        struct stat *st)
+-_fstat(int fildes, struct stat *st)
 -{
 -  errno = ENOSYS;
 -  return -1;
@@ -30,12 +28,12 @@ index 4e18d4216..9727a640a 100644
 -stub_warning(_fstat)
 +// Moved to io.cpp
 diff --git a/libgloss/circle/getpid.c b/libgloss/circle/getpid.c
-index 0ea19238e..d5cf19731 100644
+index affc0f644..8c4d47f03 100644
 --- a/libgloss/circle/getpid.c
 +++ b/libgloss/circle/getpid.c
-@@ -14,8 +14,8 @@ int
- _DEFUN (_getpid, (),
-         _NOARGS)
+@@ -13,8 +13,8 @@ extern int errno;
+ int
+ _getpid(void)
  {
 -  errno = ENOSYS;
 -  return -1;
@@ -45,10 +43,10 @@ index 0ea19238e..d5cf19731 100644
  
  stub_warning(_getpid)
 diff --git a/libgloss/circle/io.cpp b/libgloss/circle/io.cpp
-index 23720b613..07f05c3e6 100644
+index 4c8358738..33d855b9f 100644
 --- a/libgloss/circle/io.cpp
 +++ b/libgloss/circle/io.cpp
-@@ -1,385 +1,822 @@
+@@ -1,375 +1,825 @@
  #include "config.h"
  #include <_ansi.h>
  #include <_syslist.h>
@@ -154,21 +152,21 @@ index 23720b613..07f05c3e6 100644
 +    }
 +    return 0; // t was longer than s
 +}
-+
+ 
+-        TFindCurrentEntry mCurrentEntry;
+-        struct dirent mEntry;
+-        unsigned int mFirstRead : 1;
+-        unsigned int mOpen : 1;
 +static void reverse(char *x, int begin, int end) {
 +  char c;
-+
+ 
 +  if (begin >= end)
 +    return;
 +
 +  c = *(x + begin);
 +  *(x + begin) = *(x + end);
 +  *(x + end) = c;
- 
--        TFindCurrentEntry mCurrentEntry;
--        struct dirent mEntry;
--        unsigned int mFirstRead : 1;
--        unsigned int mOpen : 1;
++
 +  reverse(x, ++begin, --end);
 +}
 +
@@ -185,7 +183,7 @@ index 23720b613..07f05c3e6 100644
 +
 +  reverse(dst, 0, strlen(dst) - 1);
 +}
- 
++
 +CSerialDevice *g_serial;
 +
 +static void logm(const char *msg) {
@@ -471,8 +469,7 @@ index 23720b613..07f05c3e6 100644
 -{
 -        CGlueInitConsole (rConsole);
 -        CGlueInitFileSystem (rFATFileSystem);
-+extern "C" int _DEFUN(_open, (file, flags, mode),
-+                      char *file _AND int flags _AND int mode) {
++extern "C" int _open(char *file, int flags, int mode) {
 +  int const masked_flags = flags & 7;
 +  if (masked_flags != O_RDONLY && masked_flags != O_WRONLY &&
 +      masked_flags != O_RDWR) {
@@ -545,7 +542,7 @@ index 23720b613..07f05c3e6 100644
 -void CGlueStdioInit (CFATFileSystem& rFATFileSystem)
 -{
 -        CGlueInitFileSystem (rFATFileSystem);
-+extern "C" int _DEFUN(_close, (fildes), int fildes) {
++extern "C" int _close(int fildes) {
 +  if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
 +    errno = EBADF;
 +    return -1;
@@ -606,8 +603,7 @@ index 23720b613..07f05c3e6 100644
 -void CGlueStdioInit (CConsole& rConsole)
 -{
 -        CGlueInitConsole (rConsole);
-+extern "C" int _DEFUN(_read, (fildes, ptr, len),
-+                      int fildes _AND char *ptr _AND int len) {
++extern "C" int _read(int fildes, char *ptr, int len) {
 +  if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
 +    errno = EBADF;
 +    return -1;
@@ -651,10 +647,7 @@ index 23720b613..07f05c3e6 100644
  
 -extern "C"
 -int
--_DEFUN (_open, (file, flags, mode),
--		char *file _AND
--		int flags _AND
--		int mode)
+-_open(char *file, int flags, int mode)
 -{
 -	int slot = -1;
 -
@@ -699,8 +692,7 @@ index 23720b613..07f05c3e6 100644
 -	}
 -
 -	return slot;
-+extern "C" int _DEFUN(_write, (fildes, ptr, len),
-+                      int fildes _AND char *ptr _AND int len) {
++extern "C" int _write(int fildes, char *ptr, int len) {
 +  if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
 +    errno = EBADF;
 +    return -1;
@@ -747,8 +739,7 @@ index 23720b613..07f05c3e6 100644
  
 -extern "C"
 -int
--_DEFUN (_close, (fildes),
--        int fildes)
+-_close(int fildes)
 -{
 -	if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES)
 -	{
@@ -796,10 +787,7 @@ index 23720b613..07f05c3e6 100644
  
 -extern "C"
 -int
--_DEFUN (_read, (fildes, ptr, len),
--        int   fildes  _AND
--        char *ptr   _AND
--        int   len)
+-_read(int fildes, char *ptr, int len)
 -{
 -	if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES)
 -	{
@@ -848,10 +836,7 @@ index 23720b613..07f05c3e6 100644
  
 -extern "C"
 -int
--_DEFUN (_write, (fildes, ptr, len),
--        int   fildes  _AND
--        char *ptr   _AND
--        int   len)
+-_write(int fildes, char *ptr, int len)
 -{
 -	if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES)
 -	{
@@ -919,9 +904,12 @@ index 23720b613..07f05c3e6 100644
 -        }
 +  return result;
 +}
-+
+ 
+-        auto &slot = dirTab[slotNum];
 +extern "C" void rewinddir(DIR *dir) { f_rewinddir(dir); }
-+
+ 
+-        slot.mOpen = 1;
+-        slot.mFirstRead = 1;
 +extern "C" int closedir(DIR *dir) {
 +  CircleDir *c_dir = FindCircleDirFromDIR(dir);
 +  if (c_dir == nullptr) {
@@ -929,17 +917,14 @@ index 23720b613..07f05c3e6 100644
 +    return -1;
 +  }
  
--        auto &slot = dirTab[slotNum];
+-        return &slot;
 +  c_dir->in_use = 0;
- 
--        slot.mOpen = 1;
--        slot.mFirstRead = 1;
++
 +  if (f_closedir(dir) != FR_OK) {
 +    errno = EIO;
 +    return -1;
 +  }
- 
--        return &slot;
++
 +  return 0;
  }
  
@@ -952,11 +937,21 @@ index 23720b613..07f05c3e6 100644
 -        {
 -                haveEntry = circle_fat_fs->RootFindFirst (&Direntry, &dir->mCurrentEntry);
 -                dir->mFirstRead = 0;
-+extern "C" int _DEFUN(_stat, (file, st),
-+                      const char *file _AND struct stat *st) {
+-        }
+-        else
+-        {
+-                haveEntry = circle_fat_fs->RootFindNext (&Direntry, &dir->mCurrentEntry);
+-        }
++extern "C" int _stat(const char *file, struct stat *st) {
 +  CirclePath circlePath(file);
 +  memset(st, 0, sizeof(struct stat));
-+
+ 
+-        struct dirent *result;
+-        if (haveEntry)
+-        {
+-                memcpy (de->d_name, Direntry.chTitle, sizeof(de->d_name));
+-                de->d_ino = 0; // TODO: how to determine an inode number in Circle?
+-                result = de;
 +  // Fastfail or fastsucceed
 +  for (int i=0;i<g_bootStatNum;i++) {
 +     if (g_bootStatWhat[i] == BOOTSTAT_WHAT_STAT) {
@@ -966,7 +961,8 @@ index 23720b613..07f05c3e6 100644
          }
 -        else
 -        {
--                haveEntry = circle_fat_fs->RootFindNext (&Direntry, &dir->mCurrentEntry);
+-                // end of directory does not change errno
+-                result = nullptr;
 +        return 0;
 +     }
 +     else if (g_bootStatWhat[i] == BOOTSTAT_WHAT_FAIL) {
@@ -989,19 +985,7 @@ index 23720b613..07f05c3e6 100644
 +    } else {
 +      st->st_mode |= S_IREAD | S_IWRITE;
 +    }
- 
--        struct dirent *result;
--        if (haveEntry)
--        {
--                memcpy (de->d_name, Direntry.chTitle, sizeof(de->d_name));
--                de->d_ino = 0; // TODO: how to determine an inode number in Circle?
--                result = de;
--        }
--        else
--        {
--                // end of directory does not change errno
--                result = nullptr;
--        }
++
 +    st->st_size = fno.fsize;
 +    return 0;
 +  }
@@ -1015,7 +999,7 @@ index 23720b613..07f05c3e6 100644
 -readdir (DIR *dir)
 -{
 -        struct dirent *result;
-+extern "C" int _DEFUN(_fstat, (fildes, st), int fildes _AND struct stat *st) {
++extern "C" int _fstat(int fildes, struct stat *st) {
  
 -        if (dir->mOpen)
 -        {
@@ -1040,9 +1024,17 @@ index 23720b613..07f05c3e6 100644
 -readdir_r (DIR *__restrict dir, dirent *__restrict de, dirent **__restrict ode)
 -{
 -        int result;
-+extern "C" int _DEFUN(_lseek, (fildes, ptr, dir),
-+                      int fildes _AND int ptr _AND int dir) {
-+
++extern "C" int _lseek(int fildes,int ptr, int dir) {
+ 
+-        if (dir->mOpen)
+-        {
+-                *ode = do_readdir (dir, de);
+-                result = 0;
+-        }
+-        else
+-        {
+-                *ode = nullptr;
+-                result = EBADF;
 +  if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
 +    errno = EBADF;
 +    return -1;
@@ -1078,19 +1070,8 @@ index 23720b613..07f05c3e6 100644
 +
 +  return file.position;
 +}
- 
--        if (dir->mOpen)
--        {
--                *ode = do_readdir (dir, de);
--                result = 0;
--        }
--        else
--        {
--                *ode = nullptr;
--                result = EBADF;
-+extern "C" int
-+_DEFUN (chdir, (path),
-+        const char *path) {
++
++extern "C" int chdir(const char *path) {
 +  int i;
 +
 +  if (path == nullptr) {
@@ -1140,9 +1121,7 @@ index 23720b613..07f05c3e6 100644
 +}
  
 -        return result;
-+extern "C" char *
-+_DEFUN (getwd, (buf),
-+        char *buf) {
++extern "C" char *getwd(char *buf) {
 +   if (buf) {
 +      strcpy(buf, currentDir);
 +      if (strlen(buf) > 1 && buf[strlen(buf)-1] == '/') {
@@ -1154,9 +1133,7 @@ index 23720b613..07f05c3e6 100644
  
 -extern "C" void
 -rewinddir (DIR *dir)
-+extern "C" int
-+_DEFUN (_link, (existing, newname),
-+        char *existing _AND char *newname)
++extern "C" int _link(char *existing, char *newname)
  {
 -        dir->mFirstRead = 1;
 +  int result = f_rename(existing, newname);
@@ -1168,34 +1145,46 @@ index 23720b613..07f05c3e6 100644
 +  return 0;
  }
  
- extern "C" int
+-extern "C" int
 -closedir (DIR *dir)
-+_DEFUN (_unlink, (name),
-+        char *name)
++extern "C" int _unlink(char *name)
  {
 -        if (!dir->mOpen)
 -        {
 -                errno = EBADF;
 -                return -1;
 -        }
--
++  f_unlink(name);
++  return 0;
++}
+ 
 -        dir->mOpen = 0;
 -        return 0;
-+  f_unlink(name);
++extern "C" int access(const char *fn, int flags)
++{
++  struct stat s;
++  if (stat(fn, &s))
++    return -1;
++  if (s.st_mode & S_IFDIR)
++    return 0;
++  if (flags & W_OK)
++  {
++    if (s.st_mode & S_IWRITE)
++      return 0;
++    return -1;
++  }
 +  return 0;
  }
 diff --git a/libgloss/circle/link.c b/libgloss/circle/link.c
-index 35881cf7f..525bd6ab8 100644
+index 5cc400748..525bd6ab8 100644
 --- a/libgloss/circle/link.c
 +++ b/libgloss/circle/link.c
-@@ -10,13 +10,4 @@
+@@ -10,11 +10,4 @@
  extern int errno;
  #include "warning.h"
  
 -int
--_DEFUN (_link, (existing, new),
--        char *existing _AND
--        char *new)
+-_link(char *existing, char *new)
 -{
 -  errno = ENOSYS;
 -  return -1;
@@ -1204,18 +1193,15 @@ index 35881cf7f..525bd6ab8 100644
 -stub_warning(_link)
 +// Moved to io.cpp
 diff --git a/libgloss/circle/lseek.c b/libgloss/circle/lseek.c
-index 0aa89e272..90c8d9821 100644
+index e8f9fb8ff..90c8d9821 100644
 --- a/libgloss/circle/lseek.c
 +++ b/libgloss/circle/lseek.c
-@@ -10,14 +10,4 @@
+@@ -10,11 +10,4 @@
  extern int errno;
  #include "warning.h"
  
 -int
--_DEFUN (_lseek, (file, ptr, dir),
--        int   file  _AND
--        int   ptr   _AND
--        int   dir)
+-_lseek(int file, int ptr, int dir)
 -{
 -  errno = ENOSYS;
 -  return -1;
@@ -1224,17 +1210,15 @@ index 0aa89e272..90c8d9821 100644
 -stub_warning(_lseek)
 +// Moved to io.cpp
 diff --git a/libgloss/circle/stat.c b/libgloss/circle/stat.c
-index 7c3463798..471c17652 100644
+index 1822a36cd..471c17652 100644
 --- a/libgloss/circle/stat.c
 +++ b/libgloss/circle/stat.c
-@@ -12,13 +12,4 @@
+@@ -12,11 +12,4 @@
  extern int errno;
  #include "warning.h"
  
 -int
--_DEFUN (_stat, (file, st),
--        const char  *file _AND
--        struct stat *st)
+-_stat(const char *file, struct stat *st)
 -{
 -  errno = ENOSYS;
 -  return -1;
@@ -1243,16 +1227,15 @@ index 7c3463798..471c17652 100644
 -stub_warning(_stat)
 +// Moved to io.cpp
 diff --git a/libgloss/circle/unlink.c b/libgloss/circle/unlink.c
-index c543709e4..2284ca75d 100644
+index 25791b5e9..2284ca75d 100644
 --- a/libgloss/circle/unlink.c
 +++ b/libgloss/circle/unlink.c
-@@ -10,12 +10,4 @@
+@@ -10,11 +10,4 @@
  extern int errno;
  #include "warning.h"
  
 -int
--_DEFUN (_unlink, (name),
--        char *name)
+-_unlink(const char *name)
 -{
 -  errno = ENOSYS;
 -  return -1;
@@ -1273,6 +1256,20 @@ index dbebfcc9a..7c35a180f 100644
  
  ACLOCAL_AMFLAGS = -I .. -I ../..
  CONFIG_STATUS_DEPENDENCIES = $(newlib_basedir)/configure.host
+diff --git a/newlib/libc/include/sys/types.h b/newlib/libc/include/sys/types.h
+index 4613ac81f..f12adbdcc 100644
+--- a/newlib/libc/include/sys/types.h
++++ b/newlib/libc/include/sys/types.h
+@@ -110,7 +110,8 @@ typedef	_CLOCK_T_	clock_t;
+ #endif
+ 
+ #if !defined(__time_t_defined) && !defined(_TIME_T_DECLARED)
+-typedef	_TIME_T_	time_t;
++//typedef	_TIME_T_	time_t;
++typedef	signed long time_t;
+ #define	__time_t_defined
+ #define	_TIME_T_DECLARED
+ #endif
 diff --git a/newlib/libc/sys/circle/sys/dirent.h b/newlib/libc/sys/circle/sys/dirent.h
 index 1f73230c6..4157027bf 100644
 --- a/newlib/libc/sys/circle/sys/dirent.h

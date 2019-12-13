@@ -323,7 +323,7 @@ bool ViceStdioApp::Initialize(void) {
   InitBootStat();
 
   // Now that emmc is initialized, launch
-  // the emulator main loop on CORE 1 before DWHCI.
+  // the emulator main loop on CORE 1 before USBHCII.
   int timing_int = mViceOptions.GetMachineTiming();
   if (timing_int == MACHINE_TIMING_NTSC_HDMI ||
       timing_int == MACHINE_TIMING_NTSC_CUSTOM ||
@@ -338,7 +338,7 @@ bool ViceStdioApp::Initialize(void) {
 #endif
 
   // This takes 1.5 seconds to init.
-  if (!mDWHCI.Initialize()) {
+  if (!mUSBHCII.Initialize()) {
     return false;
   }
 

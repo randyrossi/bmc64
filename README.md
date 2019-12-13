@@ -576,8 +576,8 @@ If the patches don't apply successfully, it's possible those projects have moved
 If that happens, reset these repos using "git reset HASH --hard" commands in the following directories:
 
     circle-stdlib dda16112cdb5470240cd51fb33bf72b311634340
-    libs/circle 641264ed56f0f621e4b681d5eefd6a19f8adfa5e
-    libs/circle-newlib 7565e4314b5915a0dc2a7745bd18c8f7833b3f5c
-    libs/mbedtls fb1972db23da39bd11d4f9c9ea6266eee665605b
+    libs/circle fe24b6bebd1532f2a0ee981af12eaf50cc9e97fb
+    libs/circle-newlib c01f95bcb08278d9e00f9795c7641284d4f89931
+    libs/mbedtls d81c11b8ab61fd5b2da8133aa73c5fe33a0633eb
 
 # Performance numbers can be found at https://accentual.com/bmc64

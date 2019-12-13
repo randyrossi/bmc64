@@ -2,7 +2,7 @@
 # Makefile for a C64 kernel
 #
 
-CFLAGS += "-DRASPI_C64"
+MACHINE_CLASS = RASPI_C64
 
 VICE = third_party/vice-3.3/src
 

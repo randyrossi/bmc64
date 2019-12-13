@@ -2,7 +2,7 @@
 # Makefile for a Plus4 kernel
 #
 
-CFLAGS += "-DRASPI_PLUS4"
+MACHINE_CLASS = RASPI_PLUS4
 
 VICE = third_party/vice-3.3/src
 

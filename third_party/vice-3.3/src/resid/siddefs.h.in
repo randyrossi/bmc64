@@ -43,8 +43,12 @@ const bool false = 0;
 
 // Branch prediction macros, lifted off the Linux kernel.
 #if RESID_BRANCH_HINTS && HAVE_BUILTIN_EXPECT
+#ifndef likely
 #define likely(x)      __builtin_expect(!!(x), 1)
+#endif
+#ifndef unlikely
 #define unlikely(x)    __builtin_expect(!!(x), 0)
+#endif
 #else
 #define likely(x)      (x)
 #define unlikely(x)    (x)

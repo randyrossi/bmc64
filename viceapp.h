@@ -34,7 +34,7 @@
 #include <circle/nulldevice.h>
 #include <circle/serial.h>
 #include <circle/timer.h>
-#include <circle/usb/dwhcidevice.h>
+#include <circle/usb/usbhcidevice.h>
 #include <ff.h>
 
 #include <circle_glue.h>
@@ -237,7 +237,7 @@ protected:
 class ViceStdioApp : public ViceScreenApp {
 public:
   ViceStdioApp(const char *kernel)
-      : ViceScreenApp(kernel), mDWHCI(&mInterrupt, &mTimer),
+      : ViceScreenApp(kernel), mUSBHCII(&mInterrupt, &mTimer),
         mEMMC(&mInterrupt, &mTimer, &mActLED)
         {}
 
@@ -261,7 +261,7 @@ protected:
   // fast fail or fast stat anything.
   void DisableBootStat();
 
-  CDWHCIDevice mDWHCI;
+  CUSBHCIDevice mUSBHCII;
   CEMMCDevice mEMMC;
   FATFS mFileSystemSD;
   FATFS mFileSystemUSB1;

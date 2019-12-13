@@ -11,8 +11,11 @@ KERNEL=kernel.img
 elif [ "$BOARD" = "pi2" ]
 then
 KERNEL=kernel7.img
+elif [ "$BOARD" = "pi4" ]
+then
+KERNEL=kernel7l.img
 else
-echo "Need arg [pi2|pi3|pi0]"
+echo "Need arg [pi0|pi2|pi3|pi4]"
 exit
 fi
 

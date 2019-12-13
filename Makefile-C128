@@ -2,7 +2,7 @@
 # Makefile for a C128 kernel
 #
 
-CFLAGS += "-DRASPI_C128"
+MACHINE_CLASS = RASPI_C128
 
 VICE = third_party/vice-3.3/src
 
