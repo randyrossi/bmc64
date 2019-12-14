@@ -278,3 +278,4 @@
     to now. Named the keymap file incorrectly.
 
   * Added disabled option to gpio config
+  * Moved up to v40 of circle in prep for Pi4

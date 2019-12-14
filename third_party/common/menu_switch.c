@@ -496,6 +496,9 @@ int apply_config(struct machine_entry* head, int pi_model) {
     case 3:
        strcpy(kernel_name,"kernel8-32.img");
        break;
+    case 4:
+       strcpy(kernel_name,"kernel7l.img");
+       break;
     default:
        return ERROR_5;
   }

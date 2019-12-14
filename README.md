@@ -204,7 +204,7 @@ Use F12 to bring up the menu and ESC/RUNSTOP to exit.
 
 If you use a real commodore keyboard (either Keyrah or GPIO via PCB), you can use Commodore Key + F7 in place of F12 (This key combination is configurable). You can also use gamepads with buttons configured for the menu.  Gamepads that have had a button configured to bring up the menu don't have to be assigned to a port to do that.  So even if you have DB9 joysticks wired, you should still be able to plug in a wired/wireless usb gamepad to trigger the menu if you want.
 
-For the Keyrah, if you find your '=' key doesn't work.  Try switching the keyboard type to 'UK'.  You must save and restart for this to take effect.
+When using a Keyrah, make sure the keyboard mapping is set to 'Positional'.
 
 ## Plus/4 Keyboard Notes
 
