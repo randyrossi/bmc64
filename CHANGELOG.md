@@ -279,3 +279,6 @@
 
   * Added disabled option to gpio config
   * Moved up to v40 of circle in prep for Pi4
+
+## 3.3
+  * Plus4Emu filter on PRG files for Load .PRG menu

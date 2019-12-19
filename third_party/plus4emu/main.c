@@ -965,6 +965,7 @@ void emux_show_cart_osd_menu(void) {
 unsigned long emux_calculate_timing(double fps) {
 }
 
+// Not really an autostart, just loads .PRG. TODO: Rename this.
 int emux_autostart_file(char* filename) {
   if (Plus4VM_LoadProgram(vm, filename) != PLUS4EMU_SUCCESS) {
      return 1;

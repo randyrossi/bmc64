@@ -88,6 +88,7 @@ typedef enum {
    FILTER_TAPE,
    FILTER_SNAP,
    FILTER_DIRS,
+   FILTER_PRGS,
 } FileFilter;
 
 // These can be saved
@@ -182,6 +183,9 @@ static char cart_filt_ext[2][5] = {".crt", ".bin"};
 const int num_snap_ext = 1;
 char snap_filt_ext[1][5];
 
+const int num_prg_ext = 1;
+const char prg_filt_ext[1][5] = {".prg"};
+
 #define TEST_FILTER_MACRO(funcname, numvar, filtarray)                         \
   static int funcname(char *name) {                                            \
     int include = 0;                                                           \
@@ -224,6 +228,7 @@ TEST_FILTER_MACRO(test_disk_name, num_disk_ext, disk_filt_ext);
 TEST_FILTER_MACRO(test_tape_name, num_tape_ext, tape_filt_ext);
 TEST_FILTER_MACRO(test_cart_name, num_cart_ext, cart_filt_ext);
 TEST_FILTER_MACRO(test_snap_name, num_snap_ext, snap_filt_ext);
+TEST_FILTER_MACRO(test_prg_name, num_prg_ext, prg_filt_ext);
 
 static void rtrim(char *txt) {
   if (!txt) return;
@@ -354,6 +359,8 @@ static void list_files(struct menu_item *parent,
           include = test_cart_name(ep->d_name);
         } else if (filter == FILTER_SNAP) {
           include = test_snap_name(ep->d_name);
+        } else if (filter == FILTER_PRGS) {
+          include = test_prg_name(ep->d_name);
         } else if (filter == FILTER_DIRS) {
           include = 0;
         } else if (filter == FILTER_NONE) {
@@ -1143,6 +1150,15 @@ static void select_file(struct menu_item *item) {
          ui_pop_all_and_toggle();
        }
        return;
+     case MENU_LOADPRG_FILE:
+       ui_info("Loading...");
+       if (emux_autostart_file(fullpath(DIR_ROOT, item->str_value)) < 0) {
+         ui_pop_menu();
+         ui_error("Failed to load file");
+       } else {
+         ui_pop_all_and_toggle();
+       }
+       return;
      case MENU_C64_CART_FILE:
      case MENU_C64_CART_8K_FILE:
      case MENU_C64_CART_16K_FILE:
@@ -1282,6 +1298,7 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
   case MENU_DRIVE_ROM_FILE_1581:
     return DIR_ROMS;
   case MENU_AUTOSTART_FILE:
+  case MENU_LOADPRG_FILE:
     return DIR_ROOT;
   case MENU_IEC_DIR:
     return DIR_IEC;
@@ -1363,6 +1380,9 @@ static void relist_files_after_dir_change(struct menu_item *item) {
     break;
   case MENU_AUTOSTART_FILE:
     show_files(DIR_ROOT, FILTER_NONE, item->id, 1);
+    break;
+  case MENU_LOADPRG_FILE:
+    show_files(DIR_ROOT, FILTER_PRGS, item->id, 1);
     break;
   case MENU_IEC_DIR:
     show_files(DIR_IEC, FILTER_DIRS, item->id, 1);
@@ -1565,6 +1585,9 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_AUTOSTART:
     show_files(DIR_ROOT, FILTER_NONE, MENU_AUTOSTART_FILE, 0);
+    return;
+  case MENU_LOADPRG:
+    show_files(DIR_ROOT, FILTER_PRGS, MENU_LOADPRG_FILE, 0);
     return;
   case MENU_SAVE_SNAP:
     show_files(DIR_SNAPS, FILTER_SNAP, MENU_SAVE_SNAP_FILE, 0);
@@ -2449,7 +2472,7 @@ void build_menu(struct menu_item *root) {
   ui_menu_add_divider(root);
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
-     ui_menu_add_button(MENU_AUTOSTART, root, "Load Prg...");
+     ui_menu_add_button(MENU_AUTOSTART, root, "Load .PRG File...");
   } else {
      ui_menu_add_button(MENU_AUTOSTART, root, "Autostart Prg/Disk...");
   }
