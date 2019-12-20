@@ -213,7 +213,6 @@ public:
   virtual bool Initialize(void);
 
 protected:
-  void SetupGPIO();
 
   EmulatorCore *mEmulatorCore;
   CTimer mTimer;
@@ -232,6 +231,12 @@ protected:
   CGPIOPin *config_2_joystickPins[7]; // potx and poty included
 
   CGPIOPin *gpioPins[NUM_GPIO_PINS];
+  CGPIOPin *DPIPins[28];
+
+private:
+  void SetupGPIOForInput();
+  void SetupGPIOForDPI();
+  void SetupGPIO();
 };
 
 class ViceStdioApp : public ViceScreenApp {

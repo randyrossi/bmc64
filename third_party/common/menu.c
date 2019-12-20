@@ -990,6 +990,11 @@ static void load_settings() {
            gpio_config_item->value = 0;
            break;
       }
+
+      // Force disabled if kernel options says so.
+      if (!circle_gpio_enabled()) {
+         gpio_config_item->value = 0;
+      }
     } else if (strcmp(name, "keyset_1_up") == 0) {
       keyset_codes[0][KEYSET_UP] = value;
     } else if (strcmp(name, "keyset_1_down") == 0) {
@@ -2907,7 +2912,7 @@ void build_menu(struct menu_item *root) {
       ui_menu_add_multiple_choice(MENU_GPIO_CONFIG, parent, "GPIO Config");
      child->num_choices = 4;
      child->value = 0;
-     strcpy(child->choices[0], "(Disabled)");
+     strcpy(child->choices[0], "Disabled");
      strcpy(child->choices[1], "#1 (Nav+Joy)");
      strcpy(child->choices[2], "#2 (Kyb+Joy)");
      strcpy(child->choices[3], "#3 (Waveshare Hat)");
@@ -2915,6 +2920,12 @@ void build_menu(struct menu_item *root) {
      child->choice_ints[1] = GPIO_CONFIG_NAV_JOY;
      child->choice_ints[2] = GPIO_CONFIG_KYB_JOY;
      child->choice_ints[3] = GPIO_CONFIG_WAVESHARE;
+
+  if (!circle_gpio_enabled()) {
+     child->choice_disabled[1] = 1;
+     child->choice_disabled[2] = 1;
+     child->choice_disabled[3] = 1;
+  }
 
   warp_item = ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
 

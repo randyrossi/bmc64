@@ -235,6 +235,10 @@ void circle_set_volume(int value) {
 int circle_get_model() {
   return static_kernel->circle_get_model();
 }
+
+int circle_gpio_enabled() {
+  return static_kernel->circle_gpio_enabled();
+}
 };
 
 CKernel::CKernel(void)
@@ -1299,4 +1303,9 @@ void CKernel::circle_set_volume(int value) {
 
 int CKernel::circle_get_model() {
   return mMachineInfo.GetModelMajor();
+}
+
+int CKernel::circle_gpio_enabled() {
+  // When DPI is enabled, GPIO scanning must be disabled.
+  return mViceOptions.DPIEnabled() == 0;
 }

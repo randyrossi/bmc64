@@ -94,7 +94,8 @@ bool ViceScreenApp::Initialize(void) {
   return true;
 }
 
-void ViceScreenApp::SetupGPIO() {
+// Setup GPIO pins for scanning keyboard, button or joysticks.
+void ViceScreenApp::SetupGPIOForInput() {
   // PA - Set to output-low for when scanning each
   // row. Otherwise set to input-pullup.
   // Note: Lines 0 and 7 are swapped. The order here is
@@ -194,6 +195,22 @@ void ViceScreenApp::SetupGPIO() {
   config_2_joystickPins[JOY_FIRE] = gpioPins[GPIO_CONFIG_2_WAVESHARE_B_INDEX];
   config_2_joystickPins[JOY_POTX] = gpioPins[GPIO_CONFIG_2_WAVESHARE_A_INDEX];
   config_2_joystickPins[JOY_POTY] = gpioPins[GPIO_CONFIG_2_WAVESHARE_Y_INDEX];
+}
+
+// Setup GPIO pins for DPI
+void ViceScreenApp::SetupGPIOForDPI() {
+  for (int i=0; i< 28; i++) {
+    DPIPins[i] =
+      new CGPIOPin(i, GPIOModeAlternateFunction2, &mGPIOManager);
+  }
+}
+
+void ViceScreenApp::SetupGPIO() {
+  if (mViceOptions.DPIEnabled()) {
+     SetupGPIOForDPI();
+  } else {
+     SetupGPIOForInput();
+  }
 }
 
 //
