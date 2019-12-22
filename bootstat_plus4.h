@@ -1,3 +1,6 @@
+#ifndef BOOTSTAT_PLUS4
+#define BOOTSTAT_PLUS4
+
 int dflt_bootStatNum = 22;
 
 int dflt_bootStatWhat[] = {
@@ -70,3 +73,5 @@ int dflt_bootStatSize[] = {
     0,
     0,
 };
+
+#endif

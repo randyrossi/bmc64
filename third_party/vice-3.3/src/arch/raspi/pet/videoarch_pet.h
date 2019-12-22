@@ -1,5 +1,5 @@
 /*
- * videoarch_plus4.h
+ * videoarch_pet.h
  *
  * Written by
  *  Randy Rossi <randy.rossi@gmail.com>
@@ -23,8 +23,8 @@
  *  02111-1307  USA.
  *
  */
-#ifndef RASPI_VIDEOARCH_PLUS4_H
-#define RASPI_VIDEOARCH_PLUS4_H
+#ifndef RASPI_VIDEOARCH_PET_H
+#define RASPI_VIDEOARCH_PET_H
 
 #include "arch/raspi/videoarch.h"
 

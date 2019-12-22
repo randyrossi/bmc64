@@ -14,7 +14,7 @@
 #
 # MachineDescription = ([SectionHeader]"\n")(OptionLine\n*)*
 # SectionHeader = [Machine/TimingStandard/OutputType/ResolutionDesc]
-# Machine = VIC20|C64|C128|Plus4|Plus4Emu
+# Machine = VIC20|C64|C128|Plus4|Plus4Emu|Pet
 # TimingStandard = NTSC | PAL
 # OutputVideo = HDMI | Composite
 # ResolutionDesc = Any text (can be used to describe the video resolution)
@@ -226,6 +226,38 @@ hdmi_mode=19
 machine_timing=pal-hdmi
 
 [PLUS4EMU/PAL/Composite/Plus4Emu 576p@50Hz]
+disable_overscan=1
+sdtv_mode=18
+hdmi_group=1
+hdmi_mode=19
+machine_timing=pal-composite
+
+#
+# PET
+#
+
+[PET/NTSC/HDMI/VICE 720p@60Hz]
+disable_overscan=1
+sdtv_mode=16
+hdmi_group=1
+hdmi_mode=4
+machine_timing=ntsc-hdmi
+
+[PET/NTSC/Composite/VICE 480p@60Hz]
+disable_overscan=1
+sdtv_mode=16
+hdmi_group=1
+hdmi_mode=4
+machine_timing=ntsc-composite
+
+[PET/PAL/HDMI/VICE 720p@50Hz]
+disable_overscan=1
+sdtv_mode=18
+hdmi_group=1
+hdmi_mode=19
+machine_timing=pal-hdmi
+
+[PET/PAL/Composite/VICE 576p@50Hz]
 disable_overscan=1
 sdtv_mode=18
 hdmi_group=1

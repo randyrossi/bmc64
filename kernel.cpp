@@ -1208,6 +1208,34 @@ int CKernel::circle_cycles_per_second() {
     return 982800;
   }
 }
+#elif defined(RASPI_PET)
+int CKernel::circle_cycles_per_second() {
+  if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_HDMI) {
+    // 60hz
+    return 1013760;
+  } else if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_COMPOSITE) {
+    // Actual C64's NTSC Composite frequency is 59.826 but the Pi's vertical
+    // sync frequency on composite is 60.053. See c64.h for how this is
+    // calculated. This keeps audio buffer to a minimum using ReSid.
+// TODO!!!
+    return 1000000;
+  } else if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_CUSTOM) {
+    return mViceOptions.GetCyclesPerSecond();
+  } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_HDMI) {
+    // 50hz
+    return 1001600;
+  } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_COMPOSITE) {
+    // Actual C64's PAL Composite frequency is 50.125 but the Pi's vertical
+    // sync frequency on composite is 50.0816. See c64.h for how this is
+    // calculated.  This keep audio buffer to a minimum using ReSid.
+// TODO!!!
+    return 1000000;
+  } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_CUSTOM) {
+    return mViceOptions.GetCyclesPerSecond();
+  } else {
+    return 1000000;
+  }
+}
 #else
   #error Unknown RASPI_ variant
 #endif

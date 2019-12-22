@@ -31,5 +31,7 @@
 void set_refresh_rate(int timing, struct video_canvas_s *canvas);
 void set_video_font(void);
 unsigned int *raspi_get_palette(int index);
+void set_canvas_size(int *w, int *h, int *gw, int *gh);
+void set_canvas_borders(int timing, int *w, int *h);
 
 #endif

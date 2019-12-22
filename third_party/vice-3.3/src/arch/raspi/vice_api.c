@@ -78,6 +78,9 @@ void emu_machine_init(void) {
     case VICE_MACHINE_PLUS4:
        emux_machine_class = BMC64_MACHINE_CLASS_PLUS4;
        break;
+    case VICE_MACHINE_PET:
+       emux_machine_class = BMC64_MACHINE_CLASS_PET;
+       break;
     default:
        assert(0);
        break;

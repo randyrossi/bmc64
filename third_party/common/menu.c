@@ -453,6 +453,10 @@ static void show_about() {
     snprintf (title, 15, "%s%s %s", "BMPLUS4", VARIANT_STRING, VERSION_STRING);
     strncpy (desc, "A Bare Metal PLUS/4 Emulator", 31);
     break;
+  case BMC64_MACHINE_CLASS_PET:
+    snprintf (title, 15, "%s%s %s", "BMPET", VARIANT_STRING, VERSION_STRING);
+    strncpy (desc, "A Bare Metal PET Emulator", 31);
+    break;
   default:
     strncpy (title, "ERROR", 15);
     strncpy (desc, "Unknown Emulator", 31);
@@ -679,6 +683,9 @@ static int save_settings() {
   case BMC64_MACHINE_CLASS_PLUS4EMU:
     fp = fopen("/settings-plus4emu.txt", "w");
     break;
+  case BMC64_MACHINE_CLASS_PET:
+    fp = fopen("/settings-pet.txt", "w");
+    break;
   default:
     printf("ERROR: Unhandled machine\n");
     return 1;
@@ -853,6 +860,9 @@ static void load_settings() {
     break;
   case BMC64_MACHINE_CLASS_PLUS4EMU:
     fp = fopen("/settings-plus4emu.txt", "r");
+    break;
+  case BMC64_MACHINE_CLASS_PET:
+    fp = fopen("/settings-pet.txt", "r");
     break;
   default:
     printf("ERROR: Unhandled machine\n");
@@ -2336,6 +2346,7 @@ static void menu_build_machine_switch(struct menu_item* parent) {
   struct menu_item* c64_r = ui_menu_add_folder(holder, "C64");
   struct menu_item* c128_r = ui_menu_add_folder(holder, "C128");
   struct menu_item* plus4_r = ui_menu_add_folder(holder, "Plus/4");
+  struct menu_item* pet_r = ui_menu_add_folder(holder, "PET");
 
   struct machine_entry* head;
   load_machines(&head);
@@ -2362,6 +2373,9 @@ static void menu_build_machine_switch(struct menu_item* parent) {
          } else {
             item = NULL;
          }
+         break;
+      case BMC64_MACHINE_CLASS_PET:
+         item = ui_menu_add_button(MENU_SWITCH_MACHINE, pet_r, ptr->desc);
          break;
       default:
          item = NULL;
@@ -2433,6 +2447,10 @@ void build_menu(struct menu_item *root) {
   case BMC64_MACHINE_CLASS_PLUS4EMU:
     strcat(machine_info_txt,"PLUS/4 ");
     strcpy(machine_sub_dir, "/PLUS4");
+    break;
+  case BMC64_MACHINE_CLASS_PET:
+    strcat(machine_info_txt,"PET ");
+    strcpy(machine_sub_dir, "/PET");
     break;
   default:
     strcat(machine_info_txt,"??? ");
@@ -2675,7 +2693,7 @@ void build_menu(struct menu_item *root) {
       ui_menu_add_range(MENU_V_BORDER_0, parent, "V Border Trim %",
           0, 100, 1, defaultVBorderTrim);
   child = aspect_item_0 =
-      ui_menu_add_range(MENU_ASPECT_0, parent, "Aspect Ratio",
+      ui_menu_add_range(MENU_ASPECT_0, parent, "H Stretch Factor",
            100, 180, 1, defaultAspect);
   child->divisor = 100;
 

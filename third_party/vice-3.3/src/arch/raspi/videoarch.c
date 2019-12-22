@@ -224,24 +224,9 @@ static struct video_canvas_s *video_canvas_create_vic(
   canvas_state[vic_canvas_index].first_displayed_line =
      canvas->geometry->first_displayed_line;
 
-  if (machine_class == VICE_MACHINE_VIC20) {
-    *width = 448;
-    *height = 284;
-    canvas_state[vic_canvas_index].gfx_w = 22*8*2;
-    canvas_state[vic_canvas_index].gfx_h = 23*8;
-  } else if (machine_class == VICE_MACHINE_PLUS4) {
-    *width = 384;
-    *height = 288;
-    canvas_state[vic_canvas_index].gfx_w = 40*8;
-    canvas_state[vic_canvas_index].gfx_h = 25*8;
-  } else {
-    assert(machine_class == VICE_MACHINE_C64 ||
-           machine_class == VICE_MACHINE_C128);
-    *width = 384;
-    *height = 272;
-    canvas_state[vic_canvas_index].gfx_w = 40*8;
-    canvas_state[vic_canvas_index].gfx_h = 25*8;
-  }
+  set_canvas_size(width, height,
+     &canvas_state[vic_canvas_index].gfx_w,
+     &canvas_state[vic_canvas_index].gfx_h);
 
   canvas->draw_buffer->canvas_physical_width = *width;
   canvas->draw_buffer->canvas_physical_height = *height;
@@ -249,39 +234,9 @@ static struct video_canvas_s *video_canvas_create_vic(
   canvas->videoconfig->external_palette_name = "RASPI";
 
   int timing = circle_get_machine_timing();
-  if (machine_class == VICE_MACHINE_VIC20) {
-    if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
-        timing == MACHINE_TIMING_NTSC_HDMI ||
-        timing == MACHINE_TIMING_NTSC_CUSTOM) {
-        canvas_state[vic_canvas_index].max_border_w = 40;
-        canvas_state[vic_canvas_index].max_border_h = 22;
-    } else {
-        canvas_state[vic_canvas_index].max_border_w = 96;
-        canvas_state[vic_canvas_index].max_border_h = 48;
-    }
-  } else if (machine_class == VICE_MACHINE_PLUS4) {
-    if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
-        timing == MACHINE_TIMING_NTSC_HDMI ||
-        timing == MACHINE_TIMING_NTSC_CUSTOM) {
-        canvas_state[vic_canvas_index].max_border_w = 32;
-        canvas_state[vic_canvas_index].max_border_h = 16;
-    } else {
-        canvas_state[vic_canvas_index].max_border_w = 32;
-        canvas_state[vic_canvas_index].max_border_h = 40;
-    }
-  } else {
-    assert(machine_class == VICE_MACHINE_C64 ||
-           machine_class == VICE_MACHINE_C128);
-    if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
-        timing == MACHINE_TIMING_NTSC_HDMI ||
-        timing == MACHINE_TIMING_NTSC_CUSTOM) {
-        canvas_state[vic_canvas_index].max_border_w = 32;
-        canvas_state[vic_canvas_index].max_border_h = 23;
-    } else {
-        canvas_state[vic_canvas_index].max_border_w = 32;
-        canvas_state[vic_canvas_index].max_border_h = 36;
-    }
-  }
+  set_canvas_borders(timing,
+                     &canvas_state[vic_canvas_index].max_border_w,
+                     &canvas_state[vic_canvas_index].max_border_h);
 
   return canvas;
 }
@@ -341,8 +296,8 @@ void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
         resources_set_int("WarpMode", 1);
         raspi_boot_warp = 1;
         vic_first_refresh = 0;
+        set_video_font();
      }
-     set_video_font();
   } else {
      if (vdc_first_refresh == 1) {
         // Nothing to do.  Consider removing.

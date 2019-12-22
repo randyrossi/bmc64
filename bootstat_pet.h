@@ -1,5 +1,5 @@
-#ifndef BOOTSTAT_PLUS4EMU
-#define BOOTSTAT_PLUS4EMU
+#ifndef BOOTSTAT_PET
+#define BOOTSTAT_PET
 
 int dflt_bootStatNum = 0;
 

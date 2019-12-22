@@ -1,5 +1,5 @@
 /*
- * videoarch_plus4.h
+ * archdep_pet.c
  *
  * Written by
  *  Randy Rossi <randy.rossi@gmail.com>
@@ -23,15 +23,11 @@
  *  02111-1307  USA.
  *
  */
-#ifndef RASPI_VIDEOARCH_PLUS4_H
-#define RASPI_VIDEOARCH_PLUS4_H
 
-#include "arch/raspi/videoarch.h"
+#include "archdep_pet.h"
 
-void set_refresh_rate(int timing, struct video_canvas_s *canvas);
-void set_video_font(void);
-unsigned int *raspi_get_palette(int index);
-void set_canvas_size(int *w, int *h, int *gw, int *gh);
-void set_canvas_borders(int timing, int *w, int *h);
+#include "util.h"
 
-#endif
+char *archdep_default_resource_file_name(void) {
+  return util_concat(archdep_boot_path(), "/vice.ini", NULL);
+}

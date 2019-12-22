@@ -27,6 +27,8 @@
 #include "bootstat_plus4.h"
 #elif defined(RASPI_PLUS4EMU)
 #include "bootstat_plus4emu.h"
+#elif defined(RASPI_PET)
+#include "bootstat_pet.h"
 #else
   #error Unknown RASPI_ variant
 #endif
@@ -229,6 +231,8 @@ void ViceStdioApp::InitBootStat() {
   fp = fopen("/PLUS4/bootstat.txt", "r");
 #elif defined(RASPI_PLUS4EMU)
   fp = NULL;
+#elif defined(RASPI_PET)
+  fp = fopen("/PET/bootstat.txt", "r");
 #else
   #error Unknown RASPI_ variant
 #endif

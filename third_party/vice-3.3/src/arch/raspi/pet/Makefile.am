@@ -1,15 +1,12 @@
-# Makefile.am for the raspi version of `libarch.a'.
+# Makefile.am for the raspi version of `libarch_pet.a'.
 
 AM_CPPFLAGS = \
 	@ARCH_INCLUDES@ \
 	$(extra_includes) \
 	-I$(top_builddir)/src \
 	-I$(top_srcdir)/src/drive \
-	-I$(top_srcdir)/src/c64 \
-	-I$(top_srcdir)/src/c64/cart \
-	-I$(top_srcdir)/src/c64dtv \
-	-I$(top_srcdir)/src/c128 \
-	-I$(top_srcdir)/src/vic20 \
+	-I$(top_srcdir)/src/pet \
+	-I$(top_srcdir)/src/pet/cart \
 	-I$(top_srcdir)/src/pet \
 	-I$(top_srcdir)/src/cbm2 \
 	-I$(top_srcdir)/src/plus4 \
@@ -28,18 +25,14 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/imagecontents \
 	-I$(top_srcdir)/src
 
-SUBDIRS = c64 vic20 c128 plus4 pet
+noinst_LIBRARIES = libarch_pet.a
 
-noinst_LIBRARIES = libarch.a
-
-libarch_a_SOURCES = \
-	archdep.h \
-	archdep.c \
-	mousedrv.h \
-	mousedrv.c \
-	missing.c \
-	videoarch.h \
-	videoarch.c \
-	vice_menu_cart_osd.c \
-	vice_overlay.c \
-	vice_api.c
+libarch_pet_a_SOURCES = \
+	archdep_pet.h \
+	archdep_pet.c \
+	videoarch_pet.h \
+	videoarch_pet.c \
+	virtual_keyboard_pet.h \
+	virtual_keyboard_pet.c \
+	menu_pet.h \
+	menu_pet.c

@@ -1410,6 +1410,9 @@ void emu_exit(void) {
     case BMC64_MACHINE_CLASS_PLUS4EMU:
       ui_draw_text_buf("PLUS4 (Plus4Emu)", x, y, 1, fb, fb_pitch, 1);
       break;
+    case BMC64_MACHINE_CLASS_PET:
+      ui_draw_text_buf("PET (Vice)", x, y, 1, fb, fb_pitch, 1);
+      break;
   }
   y += 8;
   ui_draw_text_buf("Emulator failed to start.", x, y, 1, fb, fb_pitch, 1);

@@ -1,3 +1,6 @@
+#ifndef BOOTSTAT_C64
+#define BOOTSTAT_C64
+
 int dflt_bootStatNum = 19;
 
 int dflt_bootStatWhat[] = {
@@ -62,3 +65,5 @@ int dflt_bootStatSize[] = {
     0,
     0
 };
+
+#endif

@@ -96,3 +96,22 @@ unsigned int *raspi_get_palette(int index) {
     return NULL;
   }
 }
+
+void set_canvas_size(int *w, int *h, int *gw, int *gh) {
+  *w = 448;
+  *h = 284;
+  *gw = 22*8*2;
+  *gh = 23*8;
+}
+
+void set_canvas_borders(int timing, int *w, int *h) {
+  if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
+      timing == MACHINE_TIMING_NTSC_HDMI ||
+      timing == MACHINE_TIMING_NTSC_CUSTOM) {
+      *w = 40;
+      *h = 22;
+  } else {
+      *w = 96;
+      *h = 48;
+  }
+}
