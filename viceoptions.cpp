@@ -113,6 +113,10 @@ ViceOptions::ViceOptions(void)
              m_nCyclesPerSecond == 0) {
     m_nMachineTiming = MACHINE_TIMING_NTSC_HDMI;
   }
+
+  if (m_bDPIEnabled) {
+     m_bSerialEnabled = false;
+  }
 }
 
 ViceOptions::~ViceOptions(void) { s_pThis = 0; }
