@@ -2508,7 +2508,7 @@ void build_menu(struct menu_item *root) {
 
     parent = ui_menu_add_folder(drive_parent, "Drive 8");
 
-    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
+    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 && emux_machine_class != BMC64_MACHINE_CLASS_PET) {
      emux_get_int_1(Setting_IECDeviceN, &tmp, 8);
      ui_menu_add_toggle(MENU_IECDEVICE_8, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_8, parent, "Select IEC Dir...");
@@ -2524,7 +2524,7 @@ void build_menu(struct menu_item *root) {
   // More than 1 drive costs too much. Limit to drive 8.
   if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
     parent = ui_menu_add_folder(drive_parent, "Drive 9");
-    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
+    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 && emux_machine_class != BMC64_MACHINE_CLASS_PET) {
      emux_get_int_1(Setting_IECDeviceN, &tmp, 9);
      ui_menu_add_toggle(MENU_IECDEVICE_9, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_9, parent, "Select IEC Dir...");
@@ -2538,7 +2538,7 @@ void build_menu(struct menu_item *root) {
     }
 
     parent = ui_menu_add_folder(drive_parent, "Drive 10");
-    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
+    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 && emux_machine_class != BMC64_MACHINE_CLASS_PET) {
      emux_get_int_1(Setting_IECDeviceN, &tmp, 10);
      ui_menu_add_toggle(MENU_IECDEVICE_10, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_10, parent, "Select IEC Dir...");
@@ -2551,7 +2551,7 @@ void build_menu(struct menu_item *root) {
     }
 
     parent = ui_menu_add_folder(drive_parent, "Drive 11");
-    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
+    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 && emux_machine_class != BMC64_MACHINE_CLASS_PET) {
      emux_get_int_1(Setting_IECDeviceN, &tmp, 11);
      ui_menu_add_toggle(MENU_IECDEVICE_11, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_11, parent, "Select IEC Dir...");

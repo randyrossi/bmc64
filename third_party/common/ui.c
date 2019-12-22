@@ -763,7 +763,7 @@ static void append(struct menu_item *folder, struct menu_item *new_item) {
   }
 }
 
-static struct menu_item *ui_new_item(struct menu_item *parent, char *name,
+static struct menu_item *ui_new_item(struct menu_item *parent, const char *name,
                                      int id) {
   struct menu_item *new_item =
       (struct menu_item *)malloc(sizeof(struct menu_item));
@@ -817,13 +817,13 @@ struct menu_item *ui_menu_add_multiple_choice(int id, struct menu_item *folder,
 }
 
 struct menu_item *ui_menu_add_button(int id, struct menu_item *folder,
-                                     char *name) {
+                                     const char *name) {
   return ui_menu_add_button_with_value(id, folder, name, 0, " ", " ");
 }
 
 struct menu_item *ui_menu_add_button_with_value(int id,
                                                 struct menu_item *folder,
-                                                char *name, int value,
+                                                const char *name, int value,
                                                 char *str_value,
                                                 char *displayed_value) {
   struct menu_item *new_item = ui_new_item(folder, name, id);

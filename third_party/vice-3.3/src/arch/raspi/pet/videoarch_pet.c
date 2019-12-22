@@ -74,13 +74,13 @@ void set_video_font(void) {
 unsigned int *raspi_get_palette(int index) {
   switch (index) {
   case 0:
-    return white_color_palette;
+    return green_color_palette;
     break;
   case 1:
     return amber_color_palette;
     break;
   case 2:
-    return green_color_palette;
+    return white_color_palette;
     break;
   default:
     return NULL;

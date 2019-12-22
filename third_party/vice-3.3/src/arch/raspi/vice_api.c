@@ -179,39 +179,44 @@ void emux_drive_change_model(int unit) {
     strcat(item->displayed_value, " (*)");
   }
 
-  if (drive_check_type(DRIVE_TYPE_1541, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1541");
-    item->value = DRIVE_TYPE_1541;
-    if (current_drive_type == DRIVE_TYPE_1541) {
-      strcat(item->displayed_value, " (*)");
-    }
-  }
-  if (drive_check_type(DRIVE_TYPE_1541II, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1541II");
-    item->value = DRIVE_TYPE_1541II;
-    if (current_drive_type == DRIVE_TYPE_1541II) {
-      strcat(item->displayed_value, " (*)");
-    }
-  }
-  if (drive_check_type(DRIVE_TYPE_1551, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1551");
-    item->value = DRIVE_TYPE_1551;
-    if (current_drive_type == DRIVE_TYPE_1551) {
-      strcat(item->displayed_value, " (*)");
-    }
-  }
-  if (drive_check_type(DRIVE_TYPE_1571, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1571");
-    item->value = DRIVE_TYPE_1571;
-    if (current_drive_type == DRIVE_TYPE_1571) {
-      strcat(item->displayed_value, " (*)");
-    }
-  }
-  if (drive_check_type(DRIVE_TYPE_1581, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1581");
-    item->value = DRIVE_TYPE_1581;
-    if (current_drive_type == DRIVE_TYPE_1581) {
-      strcat(item->displayed_value, " (*)");
+  static int num_supported_drives = 12;
+  static int supported_drives[] = {
+     DRIVE_TYPE_1541,
+     DRIVE_TYPE_1541II,
+     DRIVE_TYPE_1551,
+     DRIVE_TYPE_1571,
+     DRIVE_TYPE_1581,
+     DRIVE_TYPE_2031,
+     DRIVE_TYPE_2040,
+     DRIVE_TYPE_3040,
+     DRIVE_TYPE_4040,
+     DRIVE_TYPE_1001,
+     DRIVE_TYPE_8050,
+     DRIVE_TYPE_8250,
+  };
+
+  static const char* drive_labels[] = {
+     "1541",
+     "1541II",
+     "1551",
+     "1571",
+     "1581",
+     "2031",
+     "2040",
+     "3040",
+     "4040",
+     "1001",
+     "8050",
+     "8250",
+  };
+
+  for (int i = 0 ; i < num_supported_drives; i++) {
+    if (drive_check_type(supported_drives[i], unit - 8) > 0) {
+      item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, drive_labels[i]);
+      item->value = supported_drives[i];
+      if (current_drive_type == supported_drives[i]) {
+        strcat(item->displayed_value, " (*)");
+      }
     }
   }
 }

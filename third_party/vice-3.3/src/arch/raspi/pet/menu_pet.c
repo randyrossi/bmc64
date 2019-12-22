@@ -107,9 +107,9 @@ struct menu_item* emux_add_palette_options(int menu_id, struct menu_item* parent
       ui_menu_add_multiple_choice(menu_id, parent, "Color Palette");
   palette_item->num_choices = 3;
   palette_item->value = 0;
-  strcpy(palette_item->choices[0], "White");
+  strcpy(palette_item->choices[0], "Green");
   strcpy(palette_item->choices[1], "Amber");
-  strcpy(palette_item->choices[2], "Green");
+  strcpy(palette_item->choices[2], "White");
   return palette_item;
 }
 
@@ -121,17 +121,5 @@ void emux_add_machine_options(struct menu_item* parent) {
 }
 
 struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
-  struct menu_item* parent = ui_menu_add_folder(root, "Cartridge");
-  ui_menu_add_button(MENU_C64_ATTACH_CART, parent, "Attach cart...");
-  ui_menu_add_button(MENU_C64_ATTACH_CART_8K, parent, "Attach 8k raw...");
-  ui_menu_add_button(MENU_C64_ATTACH_CART_16K, parent, "Attach 16 raw...");
-  ui_menu_add_button(MENU_C64_ATTACH_CART_ULTIMAX, parent, "Attach Ultimax raw...");
-  ui_menu_add_button(MENU_DETACH_CART, parent, "Detach cartridge");
-
-  ui_menu_add_button(MENU_TEXT, parent, "");
-  ui_menu_add_button(MENU_MAKE_CART_DEFAULT, parent,
-                     "Set current cart default (Need Save)");
-
-  return parent;
+  return NULL;
 }
-
