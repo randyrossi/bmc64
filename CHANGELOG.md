@@ -284,3 +284,4 @@
   * Plus4Emu filter on PRG files for Load .PRG menu
   * Add PET emulator
   * Changed menu label 'Aspect Ratio' to 'H Stretch Factor'
+  * Add DPI support
