@@ -347,8 +347,10 @@ bool ViceStdioApp::Initialize(void) {
   // the emulator main loop on CORE 1 before USBHCII.
   int timing_int = mViceOptions.GetMachineTiming();
   if (timing_int == MACHINE_TIMING_NTSC_HDMI ||
-      timing_int == MACHINE_TIMING_NTSC_CUSTOM ||
-      timing_int == MACHINE_TIMING_NTSC_COMPOSITE) {
+      timing_int == MACHINE_TIMING_NTSC_CUSTOM_HDMI ||
+      timing_int == MACHINE_TIMING_NTSC_COMPOSITE ||
+      timing_int == MACHINE_TIMING_NTSC_DPI ||
+      timing_int == MACHINE_TIMING_NTSC_CUSTOM_DPI) {
     strcpy(mTimingOption, "-ntsc");
   } else {
     strcpy(mTimingOption, "-pal");

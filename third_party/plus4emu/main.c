@@ -625,9 +625,7 @@ int main_program(int argc, char **argv)
   strcpy (last_iec_dir, ".");
 
   int timing = circle_get_machine_timing();
-  if (timing == MACHINE_TIMING_NTSC_HDMI ||
-      timing == MACHINE_TIMING_NTSC_COMPOSITE ||
-      timing == MACHINE_TIMING_NTSC_CUSTOM) {
+  if (is_ntsc()) {
      vertical_res = 242;
      raster_low = 18;
   } else {
@@ -680,9 +678,7 @@ int main_program(int argc, char **argv)
   canvas_state[vic_canvas_index].gfx_w = 40*8;
   canvas_state[vic_canvas_index].gfx_h = 25*8;
 
-  if (timing == MACHINE_TIMING_NTSC_HDMI ||
-      timing == MACHINE_TIMING_NTSC_COMPOSITE ||
-      timing == MACHINE_TIMING_NTSC_CUSTOM) {
+  if (is_ntsc()) {
     canvas_state[vic_canvas_index].max_border_w = 32;
     canvas_state[vic_canvas_index].max_border_h = 22;
     timeAdvance = 1666;

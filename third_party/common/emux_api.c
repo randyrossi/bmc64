@@ -225,7 +225,7 @@ void emux_apply_video_adjustments(int layer,
   }
 
   circle_set_center_offset(layer,
-           hcenter, vcenter);          
+           hcenter, vcenter);
 }
 
 void emu_joy_interrupt_abs(int port, int device,
@@ -260,4 +260,14 @@ void emu_pause_trap(uint16_t addr, void *data) {
   }
   menu_about_to_deactivate();
   circle_hide_fbl(FB_LAYER_UI);
+}
+
+int is_ntsc() {
+  int timing = circle_get_machine_timing();
+  return
+      timing == MACHINE_TIMING_NTSC_COMPOSITE ||
+      timing == MACHINE_TIMING_NTSC_HDMI ||
+      timing == MACHINE_TIMING_NTSC_CUSTOM_HDMI ||
+      timing == MACHINE_TIMING_NTSC_DPI ||
+      timing == MACHINE_TIMING_NTSC_CUSTOM_DPI;
 }

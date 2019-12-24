@@ -45,10 +45,8 @@ static unsigned int green_color_palette[] = {
     0x00, 0x00, 0x00, 0x41, 0xFF, 0x00,
 };
 
-void set_refresh_rate(int timing, struct video_canvas_s *canvas) {
-  if (timing == MACHINE_TIMING_NTSC_HDMI ||
-      timing == MACHINE_TIMING_NTSC_COMPOSITE ||
-      timing == MACHINE_TIMING_NTSC_CUSTOM) {
+void set_refresh_rate(struct video_canvas_s *canvas) {
+  if (is_ntsc()) {
     canvas->refreshrate = PET_NTSC_RFSH_PER_SEC;
   } else {
     canvas->refreshrate = PET_PAL_RFSH_PER_SEC;
@@ -116,7 +114,7 @@ void set_canvas_size(int *w, int *h, int *gw, int *gh) {
   }
 }
 
-void set_canvas_borders(int timing, int *w, int *h) {
+void set_canvas_borders(int *w, int *h) {
   *w = 32;
   *h = 24;
 }

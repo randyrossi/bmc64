@@ -3,12 +3,12 @@
 BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio. Three other Commodore machines are available as well; C128, Vic20 and Plus/4.
 
 # BMC64 Features
-  * Quick boot time (C64 in 4.1 seconds!)
+  * Quick boot time (C64 in 4.1 seconds over composite!)
   * Frames are timed to vsync for true 50/60 hz smooth scrolling (no horizontal tearing!)
   * Low latency between input & audio/video
   * No shutdown sequence required, just power off
   * High C64 compatibility thanks to VICE
-  * High Plus/4 compatibility thanks for Plus4Emu (Rpi3 Only)
+  * High Plus/4 compatibility thanks to Plus4Emu (Rpi3 Only)
   * Easily wire real Commodore/Atari Joysticks and nav buttons via GPIO using jumpers (GPIO Config 1)
   * Can use a real Commodore Keyboard and Joysticks via PCB (GPIO Config 2)
   * Can use a Waveshare Game HAT (Pi2 or 3 Only) (GPIO Config 3)
@@ -40,7 +40,7 @@ For Plus/4 emulation on the Rasbperry Pi 3, a more accurate emulator using Plus4
 
 # Machine Selection
 
-The default machine is a C64.  You can switch to VIC20, C128 and Plus/4 from the 'Machines->Switch' menu option.  These configurations are defined in machines.txt. There you will find configurations for each machine type for NTSC/PAL over HDMI/Composite combinations.  Most video modes are 720p but you can change this (see below).
+The default machine is a C64.  You can switch to VIC20, C128, Plus/4 or PET from the 'Machines->Switch' menu option.  These configurations are defined in machines.txt. There you will find configurations for each machine type for NTSC/PAL over HDMI/Composite combinations.  Most video modes are 720p but you can change this (see below).
 
 # machines.txt (Video & Timing)
 
@@ -112,7 +112,39 @@ You would then define your machines.txt entry like this:
 
 And this option will show up in the Machine->Switch menu.
 
-# Video + Timing (VIC20, C128, Plus/4)
+## DPI (Parallel Display Interface)
+
+BMC64 v3.3 and higher supports video output via DPI. DPI is a (up to) 24-bit parallel RGB interface.  A DPI capable display device or RGB adapter board is required. You will have to match the output format to your device.  See https://www.raspberrypi.org/documentation/hardware/raspberrypi/dpi/README.md for more details.
+
+DPI disables HDMI and Composite video and is different for every device. For this reason, these configurations are not provided by default and must be added manually to machines.txt. I suggest once you have a working configuration, you add the machines.txt entries for all the machines you want to use DPI with.
+
+Here are a couple examples you can add to machines.txt that will work with the VGA666 adapter board:
+
+    [C64/NTSC/DPI/VGA666:720p@60hz]
+    enable_dpi=true
+    machine_timing=ntsc-custom
+    cycles_per_second=1025643   
+    enable_dpi_lcd=1
+    display_default_lcd=1
+    dpi_group=1
+    dpi_mode=4
+
+    [C64/NTSC/DPI/VGA666:720p@50hz]
+    enable_dpi=true
+    machine_timing=pal-custom
+    cycles_per_second=982734
+    enable_dpi_lcd=1
+    display_default_lcd=1
+    dpi_group=1
+    dpi_mode=19
+
+    * It appears these modes are not exactly 50hz/60hz like HDMI. It's likely the case that all DPI modes will require custom timing.
+
+# Recovering from a Blank Screen
+
+If you are experimenting with a video mode and are not getting a picture, you can press Cntrl followed by F7 and hold both for 5 seconds after a boot, then release the F7 key.  This will reset the emulator and switch back to C64 with a 'safe' HDMI 720p video mode. (This will also work over composite but you should follow up with a switch to one of the composite modes for correct audio sync.)
+
+# Video + Timing (VIC20, C128, Plus/4, PET)
 
 All of the above re: timing applies to the other machines as well.  However, in my opinion, the VIC20 machine is better configured to be an NTSC machine.  Most cartridges were made for NTSC and you will notice they position their screens poorly when inserted into a PAL machine.  Most games gave the option of moving it using cursor keys or joystick but this is annoying.
 
@@ -122,7 +154,7 @@ Since v2.1, the virtual display dimensions are adjusted dynamically from the men
 
       1. The amount of border to trim is removed from top/botom and left/right edges.
       2. The resulting image is stretched vertically to fill the Y dimension.
-      3. The width is then calculated according to the aspect ratio setting.
+      3. The width is then calculated according to the horizontal stretch factor.
 
 Using the three settings available, you should be able to customize how much border is available as well as the aspect ratio of the final image.  Reasonable defaults are provided.  
 

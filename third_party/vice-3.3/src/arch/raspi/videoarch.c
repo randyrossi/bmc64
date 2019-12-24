@@ -191,8 +191,7 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
      vdc_enabled = 0;
      vdc_showing = 0;
   } else {
-     int timing = circle_get_machine_timing();
-     set_refresh_rate(timing, canvas);
+     set_refresh_rate(canvas);
      vic_first_refresh = 1;
      vic_canvas = canvas;
      vic_canvas_index = canvas_num;
@@ -233,9 +232,7 @@ static struct video_canvas_s *video_canvas_create_vic(
   canvas->videoconfig->external_palette = 1;
   canvas->videoconfig->external_palette_name = "RASPI";
 
-  int timing = circle_get_machine_timing();
-  set_canvas_borders(timing,
-                     &canvas_state[vic_canvas_index].max_border_w,
+  set_canvas_borders(&canvas_state[vic_canvas_index].max_border_w,
                      &canvas_state[vic_canvas_index].max_border_h);
 
   return canvas;
@@ -261,9 +258,7 @@ static struct video_canvas_s *video_canvas_create_vdc(
   canvas->videoconfig->external_palette_name = "RASPI2";
 
   int timing = circle_get_machine_timing();
-  if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
-      timing == MACHINE_TIMING_NTSC_HDMI ||
-      timing == MACHINE_TIMING_NTSC_CUSTOM) {
+  if (is_ntsc()) {
       canvas_state[vdc_canvas_index].max_border_w = 112;
       canvas_state[vdc_canvas_index].max_border_h = 14;
   } else {

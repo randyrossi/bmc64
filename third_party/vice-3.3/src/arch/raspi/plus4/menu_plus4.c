@@ -157,9 +157,7 @@ void emux_add_machine_options(struct menu_item* parent) {
   int timing = circle_get_machine_timing();
 
   struct menu_item* item;
-  if (timing == MACHINE_TIMING_PAL_HDMI ||
-      timing == MACHINE_TIMING_PAL_COMPOSITE ||
-      timing == MACHINE_TIMING_PAL_CUSTOM) {
+  if (!is_ntsc()) {
     item = ui_menu_add_button(MENU_MODEL_C16_PAL, model_parent, "C16");
     item->sub_id = PLUS4MODEL_C16_PAL;
     item->on_value_changed = menu_value_changed;

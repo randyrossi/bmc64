@@ -36,9 +36,11 @@
 #include "joy.h"
 #include "menu.h"
 #include "menu_keyset.h"
+#include "menu_switch.h"
 #include "ui.h"
 
 #define NUM_KEY_COMBOS 8
+#define TICKS_PER_SECOND 1000000L
 
 // TODO: These should really come from the sym file.
 // Can't assume these are always correct.
@@ -47,8 +49,13 @@
 
 static int commodore_down = 0;
 static int control_down = 0;
+static int f7_down = 0;
+static unsigned long video_reset_time_down;
+static unsigned long video_reset_time_delay = TICKS_PER_SECOND * 5;
 
 key_combo_state_t key_combo_states[NUM_KEY_COMBOS];
+
+extern void reboot(void);
 
 void kbd_arch_init(void) {}
 
@@ -342,6 +349,11 @@ void emu_key_pressed(long key) {
     commodore_down = 1;
   } else if (key == CONTROL_KEY_CODE) {
     control_down = 1;
+  } else if (key == KEYCODE_F7) {
+    f7_down = 1;
+    if (commodore_down) {
+       video_reset_time_down = circle_get_ticks();
+    }
   }
 
   // Intercept keys meant to become joystick values
@@ -385,6 +397,14 @@ void emu_key_released(long key) {
     commodore_down = 0;
   } else if (key == CONTROL_KEY_CODE) {
     control_down = 0;
+  } else if (key == KEYCODE_F7) {
+    f7_down = 0;
+    if (commodore_down &&
+       (circle_get_ticks() - video_reset_time_down >= video_reset_time_delay)) {
+       // Reset to 'safe' video mode.
+       switch_safe();
+       reboot();
+    }
   }
 
   if (key == KEYCODE_F12) {

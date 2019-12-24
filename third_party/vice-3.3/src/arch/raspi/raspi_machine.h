@@ -32,12 +32,12 @@
 
 #include "videoarch.h"
 
-extern void set_refresh_rate(int timing, struct video_canvas_s *canvas);
+extern void set_refresh_rate(struct video_canvas_s *canvas);
 extern void set_video_font(void);
 extern unsigned int *raspi_get_palette(int index);
 extern int is_vic(struct video_canvas_s *canvas);
 extern int is_vdc(struct video_canvas_s *canvas);
 void cartridge_freeze(void);
 void set_canvas_size(int* w, int *h, int *gw, int *gh);
-void set_canvas_borders(int timing, int *w, int *h);
+void set_canvas_borders(int *w, int *h);
 #endif

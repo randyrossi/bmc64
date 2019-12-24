@@ -88,11 +88,11 @@ static void calc_popped(struct menu_item *new_root,
   double fps = (double)hdmi_timing_count / (double)(TEST_DURATION / 1000000);
   unsigned long cycles = emux_calculate_timing(fps);
 
-  char timing_str[32];
+  char timing_str[64];
   if (fps >= 49 && fps <= 51) {
-    strcat(timing_str, "machine_timing=custom-pal");
+    sprintf(timing_str, "machine_timing=custom-pal");
   } else if (fps >= 59 && fps <= 61) {
-    strcat(timing_str, "machine_timing=custom-ntsc");
+    sprintf(timing_str, "machine_timing=custom-ntsc");
   } else {
     sprintf(timing_str, "machine_timing=ERROR: FPS OUT OF RANGE, %f", fps);
   }

@@ -2204,8 +2204,7 @@ static void menu_value_changed(struct menu_item *item) {
       status = 0;
       while (ptr) {
           if (ptr->id == item->value) {
-            status = apply_config(ptr, circle_get_model());
-            status |= apply_cmdline(ptr);
+            status = switch_apply_files(ptr);
             break;
           }
           ptr = ptr->next;
@@ -2467,20 +2466,32 @@ void build_menu(struct menu_item *root) {
   case MACHINE_TIMING_NTSC_HDMI:
     strcat(machine_info_txt, "NTSC 60Hz HDMI");
     break;
+  case MACHINE_TIMING_NTSC_DPI:
+    strcat(machine_info_txt, "NTSC 60Hz DPI");
+    break;
   case MACHINE_TIMING_NTSC_COMPOSITE:
     strcat(machine_info_txt, "NTSC 60Hz Composite");
     break;
-  case MACHINE_TIMING_NTSC_CUSTOM:
-    strcat(machine_info_txt, "NTSC 60Hz Custom");
+  case MACHINE_TIMING_NTSC_CUSTOM_HDMI:
+    strcat(machine_info_txt, "NTSC 60Hz (Custom) HDMI");
+    break;
+  case MACHINE_TIMING_NTSC_CUSTOM_DPI:
+    strcat(machine_info_txt, "NTSC 60Hz (Custom) DPI");
     break;
   case MACHINE_TIMING_PAL_HDMI:
     strcat(machine_info_txt, "PAL 50Hz HDMI");
     break;
+  case MACHINE_TIMING_PAL_DPI:
+    strcat(machine_info_txt, "PAL 50Hz DPI");
+    break;
   case MACHINE_TIMING_PAL_COMPOSITE:
     strcat(machine_info_txt, "PAL 50Hz Composite");
     break;
-  case MACHINE_TIMING_PAL_CUSTOM:
-    strcat(machine_info_txt, "PAL 50Hz Custom");
+  case MACHINE_TIMING_PAL_CUSTOM_HDMI:
+    strcat(machine_info_txt, "PAL 50Hz (Custom) HDMI");
+    break;
+  case MACHINE_TIMING_PAL_CUSTOM_DPI:
+    strcat(machine_info_txt, "PAL 50Hz (Custom) DPI");
     break;
   default:
     strcat(machine_info_txt, "Error");
@@ -2741,7 +2752,7 @@ void build_menu(struct menu_item *root) {
   }
 
   ui_menu_add_button(MENU_CALC_TIMING, video_parent,
-                     "Custom HDMI mode timing calc...");
+                     "Custom HDMI/DPI mode timing calc...");
 
   parent = ui_menu_add_folder(root, "Sound");
 

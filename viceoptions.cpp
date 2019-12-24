@@ -58,17 +58,20 @@ ViceOptions::ViceOptions(void)
     if (strcmp(pOption, "machine_timing") == 0) {
       if (strcmp(pValue, "ntsc") == 0 || strcmp(pValue, "ntsc-hdmi") == 0) {
         m_nMachineTiming = MACHINE_TIMING_NTSC_HDMI;
+      } else if (strcmp(pValue, "ntsc-dpi") == 0) {
+        m_nMachineTiming = MACHINE_TIMING_NTSC_DPI;
       } else if (strcmp(pValue, "ntsc-composite") == 0) {
         m_nMachineTiming = MACHINE_TIMING_NTSC_COMPOSITE;
       } else if (strcmp(pValue, "ntsc-custom") == 0) {
-        m_nMachineTiming = MACHINE_TIMING_NTSC_CUSTOM;
-      } else if (strcmp(pValue, "pal") == 0 ||
-                 strcmp(pValue, "pal-hdmi") == 0) {
+        m_nMachineTiming = MACHINE_TIMING_NTSC_CUSTOM_HDMI;
+      } else if (strcmp(pValue, "pal") == 0 || strcmp(pValue, "pal-hdmi") == 0) {
         m_nMachineTiming = MACHINE_TIMING_PAL_HDMI;
+      } else if (strcmp(pValue, "pal-dpi") == 0) {
+        m_nMachineTiming = MACHINE_TIMING_PAL_DPI;
       } else if (strcmp(pValue, "pal-composite") == 0) {
         m_nMachineTiming = MACHINE_TIMING_PAL_COMPOSITE;
       } else if (strcmp(pValue, "pal-custom") == 0) {
-        m_nMachineTiming = MACHINE_TIMING_PAL_CUSTOM;
+        m_nMachineTiming = MACHINE_TIMING_PAL_CUSTOM_HDMI;
       }
     } else if (strcmp(pOption, "demo") == 0) {
       if (strcmp(pValue,"true") == 0 || strcmp(pValue, "1") == 0) {
@@ -106,12 +109,28 @@ ViceOptions::ViceOptions(void)
     }
   }
 
-  if (m_nMachineTiming == MACHINE_TIMING_PAL_CUSTOM &&
+  // When DPI is enabled, use the DPI versions of constants. Behavior
+  // is identical. It's just used for display purposes.
+  if (m_nMachineTiming == MACHINE_TIMING_PAL_CUSTOM_HDMI &&
+      m_bDPIEnabled) {
+     m_nMachineTiming = MACHINE_TIMING_PAL_CUSTOM_DPI;
+  } else if (m_nMachineTiming == MACHINE_TIMING_NTSC_CUSTOM_HDMI &&
+      m_bDPIEnabled) {
+     m_nMachineTiming = MACHINE_TIMING_NTSC_CUSTOM_DPI;
+  }
+
+  if (m_nMachineTiming == MACHINE_TIMING_PAL_CUSTOM_HDMI &&
       m_nCyclesPerSecond == 0) {
     m_nMachineTiming = MACHINE_TIMING_PAL_HDMI;
-  } else if (m_nMachineTiming == MACHINE_TIMING_NTSC_CUSTOM &&
+  } else if (m_nMachineTiming == MACHINE_TIMING_NTSC_CUSTOM_HDMI &&
              m_nCyclesPerSecond == 0) {
     m_nMachineTiming = MACHINE_TIMING_NTSC_HDMI;
+  } else if (m_nMachineTiming == MACHINE_TIMING_NTSC_CUSTOM_DPI &&
+             m_nCyclesPerSecond == 0) {
+    m_nMachineTiming = MACHINE_TIMING_NTSC_DPI;
+  } else if (m_nMachineTiming == MACHINE_TIMING_NTSC_CUSTOM_DPI &&
+             m_nCyclesPerSecond == 0) {
+    m_nMachineTiming = MACHINE_TIMING_NTSC_DPI;
   }
 
   if (m_bDPIEnabled) {

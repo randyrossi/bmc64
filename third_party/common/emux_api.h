@@ -378,4 +378,6 @@ void emux_load_settings_done(void);
 
 void emux_get_default_color_setting(int *brightness, int *contrast, int *gamma, int *tint);
 
+int is_ntsc();
+
 #endif
