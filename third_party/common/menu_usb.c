@@ -40,18 +40,12 @@
 #include "ui.h"
 #include "keycodes.h"
 
-extern int usb_pref_0;
-extern int usb_pref_1;
-extern int usb_x_axis_0;
-extern int usb_y_axis_0;
-extern int usb_x_axis_1;
-extern int usb_y_axis_1;
-extern float usb_x_thresh_0;
-extern float usb_y_thresh_0;
-extern float usb_x_thresh_1;
-extern float usb_y_thresh_1;
-extern int usb_0_button_assignments[MAX_USB_BUTTONS];
-extern int usb_1_button_assignments[MAX_USB_BUTTONS];
+extern int usb_pref[MAX_USB_DEVICES];
+extern int usb_x_axis[MAX_USB_DEVICES];
+extern int usb_y_axis[MAX_USB_DEVICES];
+extern float usb_x_thresh[MAX_USB_DEVICES];
+extern float usb_y_thresh[MAX_USB_DEVICES];
+extern int usb_button_assignments[MAX_USB_DEVICES][MAX_USB_BUTTONS];
 
 // Pre-shifted values for button bits for logical ops.
 // Should find out whether this is more efficient than
@@ -126,8 +120,7 @@ static void update_key_binding_descriptions(struct menu_item *new_root,
   char scratch[32];
   struct menu_item *child = new_root->first_child;
   while (child != NULL) {
-     if (child->id == MENU_USB_1_BTN_ASSIGN ||
-         child->id == MENU_USB_0_BTN_ASSIGN) {
+     if (child->id >= MENU_USB_0_BTN_ASSIGN && child->id <= MENU_USB_1_BTN_ASSIGN) {
         for (int n = 0; n < 6; n++) {
            sprintf (scratch, "Key %d (%s)", n+1,
               keycode_to_string(key_bindings[n]));
@@ -144,34 +137,34 @@ static void menu_usb_value_changed(struct menu_item *item) {
 
   switch (item->id) {
   case MENU_USB_0_PREF:
-    usb_pref_0 = item->value;
+  case MENU_USB_1_PREF:
+  case MENU_USB_2_PREF:
+  case MENU_USB_3_PREF:
+    usb_pref[item->id - MENU_USB_0_PREF] = item->value;
     break;
   case MENU_USB_0_X_AXIS:
-    usb_x_axis_0 = item->value;
+  case MENU_USB_1_X_AXIS:
+  case MENU_USB_2_X_AXIS:
+  case MENU_USB_3_X_AXIS:
+    usb_x_axis[item->id - MENU_USB_0_X_AXIS] = item->value;
     break;
   case MENU_USB_0_Y_AXIS:
-    usb_y_axis_0 = item->value;
-    break;
-  case MENU_USB_1_PREF:
-    usb_pref_1 = item->value;
-    break;
-  case MENU_USB_1_X_AXIS:
-    usb_x_axis_1 = item->value;
-    break;
   case MENU_USB_1_Y_AXIS:
-    usb_y_axis_1 = item->value;
+  case MENU_USB_2_Y_AXIS:
+  case MENU_USB_3_Y_AXIS:
+    usb_y_axis[item->id - MENU_USB_0_Y_AXIS] = item->value;
     break;
   case MENU_USB_0_WATCH_RAW:
-    show_usb_monitor(0);
-    break;
   case MENU_USB_1_WATCH_RAW:
-    show_usb_monitor(1);
+  case MENU_USB_2_WATCH_RAW:
+  case MENU_USB_3_WATCH_RAW:
+    show_usb_monitor(item->id - MENU_USB_0_WATCH_RAW);
     break;
   case MENU_USB_0_BTN_ASSIGN:
-    usb_0_button_assignments[item->sub_id] = item->value;
-    break;
   case MENU_USB_1_BTN_ASSIGN:
-    usb_1_button_assignments[item->sub_id] = item->value;
+  case MENU_USB_2_BTN_ASSIGN:
+  case MENU_USB_3_BTN_ASSIGN:
+    usb_button_assignments[item->id - MENU_USB_0_BTN_ASSIGN][item->sub_id] = item->value;
     break;
   case MENU_POTX_HIGH:
     pot_x_high_value = item->value;
@@ -186,16 +179,16 @@ static void menu_usb_value_changed(struct menu_item *item) {
     pot_y_low_value = item->value;
     break;
   case MENU_USB_0_X_THRESH:
-    usb_x_thresh_0 = ((float)item->value) / 100.0f;
+  case MENU_USB_1_X_THRESH:
+  case MENU_USB_2_X_THRESH:
+  case MENU_USB_3_X_THRESH:
+    usb_x_thresh[item->id - MENU_USB_0_X_THRESH] = ((float)item->value) / 100.0f;
     break;
   case MENU_USB_0_Y_THRESH:
-    usb_y_thresh_0 = ((float)item->value) / 100.0f;
-    break;
-  case MENU_USB_1_X_THRESH:
-    usb_x_thresh_1 = ((float)item->value) / 100.0f;
-    break;
   case MENU_USB_1_Y_THRESH:
-    usb_y_thresh_1 = ((float)item->value) / 100.0f;
+  case MENU_USB_2_Y_THRESH:
+  case MENU_USB_3_Y_THRESH:
+    usb_y_thresh[item->id - MENU_USB_0_Y_THRESH] = ((float)item->value) / 100.0f;
     break;
   case MENU_CONFIGURE_KEY_BINDINGS:
     tmp_item = ui_push_menu(-1,-1);
@@ -276,84 +269,50 @@ void build_usb_menu(int dev, struct menu_item *root) {
   int i;
   int j;
 
-  if (dev == 0) {
-    strcpy(desc, "USB 1:");
-    if (joy_num_pads > 0) {
-      strcat(desc, "DETECTED ");
-      sprintf(scratch, "%d hats, %d axes", joy_num_hats[0], joy_num_axes[0]);
-      strcat(desc, scratch);
-    } else {
-      strcat(desc, "NOT DETECTED");
-    }
-    ui_menu_add_button(MENU_TEXT, root, desc);
-    ui_menu_add_divider(root);
-    usb_pref_item =
-        ui_menu_add_multiple_choice(MENU_USB_0_PREF, root, "USB 1 Uses");
-    usb_pref_item->value = usb_pref_0;
-
-    x_axis_item = ui_menu_add_range(MENU_USB_0_X_AXIS, root, "USB 1 Analog X #",
-                                    0, 12, 1, usb_x_axis_0);
-    y_axis_item = ui_menu_add_range(MENU_USB_0_Y_AXIS, root, "USB 1 Analog Y #",
-                                    0, 12, 1, usb_y_axis_0);
-    x_thresh_item = ui_menu_add_range(MENU_USB_0_X_THRESH, root,
-                                      "USB 1 Analog X Threshold %", 10, 90, 1,
-                                      (int)(usb_x_thresh_0 * 100.0f));
-    y_thresh_item = ui_menu_add_range(MENU_USB_0_Y_THRESH, root,
-                                      "USB 1 Analog Y Threshold %", 10, 90, 1,
-                                      (int)(usb_y_thresh_0 * 100.0f));
-
-    tmp_item = ui_menu_add_button(MENU_USB_0_WATCH_RAW, root,
-                                  "Monitor raw USB 1 data...");
-    tmp_item->on_value_changed = menu_usb_value_changed;
-
-    for (i = 0; i < joy_num_buttons[0]; i++) {
-      sprintf(scratch, "Button %d Function", i);
-      tmp_item =
-          ui_menu_add_multiple_choice(MENU_USB_0_BTN_ASSIGN, root, scratch);
-      add_button_choices(tmp_item);
-      tmp_item->value = usb_0_button_assignments[i];
-      tmp_item->on_value_changed = menu_usb_value_changed;
-      tmp_item->sub_id = i;
-    }
+  sprintf(desc, "USB %d:",dev+1);
+  if (joy_num_pads > dev) {
+    strcat(desc, "DETECTED ");
+    sprintf(scratch, "%d hats, %d axes", joy_num_hats[dev], joy_num_axes[dev]);
+    strcat(desc, scratch);
   } else {
-    strcpy(desc, "USB 2:");
-    if (joy_num_pads > 1) {
-      strcat(desc, "DETECTED ");
-      sprintf(scratch, "%d hats, %d axes", joy_num_hats[1], joy_num_axes[1]);
-      strcat(desc, scratch);
-    } else {
-      strcat(desc, "NOT DETECTED");
-    }
-    ui_menu_add_button(MENU_TEXT, root, desc);
-    ui_menu_add_divider(root);
-    usb_pref_item =
-        ui_menu_add_multiple_choice(MENU_USB_1_PREF, root, "USB 2 Uses");
-    usb_pref_item->value = usb_pref_1;
+    strcat(desc, "NOT DETECTED");
+  }
 
-    x_axis_item = ui_menu_add_range(MENU_USB_1_X_AXIS, root, "USB 2 Analog X #",
-                                    0, 12, 1, usb_x_axis_1);
-    y_axis_item = ui_menu_add_range(MENU_USB_1_Y_AXIS, root, "USB 2 Analog Y #",
-                                    0, 12, 1, usb_y_axis_1);
-    x_thresh_item = ui_menu_add_range(MENU_USB_1_X_THRESH, root,
-                                      "USB 2 Analog X Threshold %", 10, 90, 1,
-                                      (int)(usb_x_thresh_1 * 100.0f));
-    y_thresh_item = ui_menu_add_range(MENU_USB_1_Y_THRESH, root,
-                                      "USB 2 Analog Y Threshold %", 10, 90, 1,
-                                      (int)(usb_y_thresh_1 * 100.0f));
-    tmp_item = ui_menu_add_button(MENU_USB_1_WATCH_RAW, root,
-                                  "Monitor raw USB 2 data...");
+  ui_menu_add_button(MENU_TEXT, root, desc);
+  ui_menu_add_divider(root);
+  usb_pref_item =
+      ui_menu_add_multiple_choice(MENU_USB_0_PREF+dev, root, "");
+  sprintf (usb_pref_item->name, "USB %d Uses", dev+1);
+  usb_pref_item->value = usb_pref[dev];
+
+  x_axis_item = ui_menu_add_range(MENU_USB_0_X_AXIS+dev, root, "",
+                                  0, 12, 1, usb_x_axis[dev]);
+  sprintf (x_axis_item->name, "USB %d Analog X #", dev+1);
+  y_axis_item = ui_menu_add_range(MENU_USB_0_Y_AXIS+dev, root, "",
+                                  0, 12, 1, usb_y_axis[dev]);
+  sprintf (y_axis_item->name, "USB %d Analog Y #", dev+1);
+  x_thresh_item = ui_menu_add_range(MENU_USB_0_X_THRESH+dev, root,
+                                    "", 10, 90, 1,
+                                    (int)(usb_x_thresh[dev] * 100.0f));
+  sprintf (x_thresh_item->name, "USB %d Analog X Threshold % #", dev+1);
+  y_thresh_item = ui_menu_add_range(MENU_USB_0_Y_THRESH+dev, root,
+                                    "", 10, 90, 1,
+                                    (int)(usb_y_thresh[dev] * 100.0f));
+  sprintf (y_thresh_item->name, "USB %d Analog Y Threshold % #", dev+1);
+
+  tmp_item = ui_menu_add_button(MENU_USB_0_WATCH_RAW+dev, root,
+                                "");
+  sprintf (tmp_item->name, "Monitor Raw USB %d data...", dev+1);
+  tmp_item->on_value_changed = menu_usb_value_changed;
+
+  for (i = 0; i < joy_num_buttons[dev]; i++) {
+    sprintf(scratch, "Button %d Function", i);
+    tmp_item =
+        ui_menu_add_multiple_choice(MENU_USB_0_BTN_ASSIGN+dev, root, scratch);
+    add_button_choices(tmp_item);
+    tmp_item->value = usb_button_assignments[dev][i];
     tmp_item->on_value_changed = menu_usb_value_changed;
-
-    for (i = 0; i < joy_num_buttons[1]; i++) {
-      sprintf(scratch, "Button %d Function", i);
-      tmp_item =
-          ui_menu_add_multiple_choice(MENU_USB_1_BTN_ASSIGN, root, scratch);
-      tmp_item->num_choices = NUM_BUTTON_ASSIGNMENTS;
-      add_button_choices(tmp_item);
-      tmp_item->value = usb_1_button_assignments[i];
-      tmp_item->on_value_changed = menu_usb_value_changed;
-      tmp_item->sub_id = i;
-    }
+    tmp_item->sub_id = i;
   }
 
   ui_menu_add_divider(root);
@@ -430,21 +389,13 @@ int emu_button_function(int device, int button_num, unsigned buttons,
       !(buttons & usb_button_bits[button_num])) {
     // Was down, now up.
     *is_press = 0;
-    if (device == 0) {
-       *btn_assignment = usb_0_button_assignments[button_num];
-    } else {
-       *btn_assignment = usb_1_button_assignments[button_num];
-    }
+    *btn_assignment = usb_button_assignments[device][button_num];
     return 0;
   } else if (!(prev_buttons & usb_button_bits[button_num]) &&
               (buttons & usb_button_bits[button_num])) {
     // Was up, now down.
     *is_press = 1;
-    if (device == 0) {
-       *btn_assignment = usb_0_button_assignments[button_num];
-    } else {
-       *btn_assignment = usb_1_button_assignments[button_num];
-    }
+    *btn_assignment = usb_button_assignments[device][button_num];
     return 0;
   }
 
@@ -469,44 +420,10 @@ int add_pot_values(int *value, int potx, int poty) {
 int emu_add_button_values(int dev, unsigned b) {
   int i;
   int value = (pot_x_high_value << 5) | (pot_y_high_value << 13);
-  if (dev == 0) {
-    for (i = 0; i < joy_num_buttons[dev]; i++) {
-      if (b & usb_button_bits[i]) {
-        int j = usb_0_button_assignments[i];
-        switch (j) {
-        case BTN_ASSIGN_FIRE:
-          value |= 0x10;
-          break;
-        case BTN_ASSIGN_POTX:
-          value &= ~(pot_x_high_value << 5);
-          value |= (pot_x_low_value << 5);
-          break;
-        case BTN_ASSIGN_POTY:
-          value &= ~(pot_y_high_value << 13);
-          value |= (pot_y_low_value << 13);
-          break;
-        case BTN_ASSIGN_UP:
-          value |= 0x1;
-          break;
-        case BTN_ASSIGN_DOWN:
-          value |= 0x2;
-          break;
-        case BTN_ASSIGN_LEFT:
-          value |= 0x4;
-          break;
-        case BTN_ASSIGN_RIGHT:
-          value |= 0x8;
-          break;
-        }
-      }
-    }
-    return value;
-  }
 
-  // TODO: Dedupe this later...
   for (i = 0; i < joy_num_buttons[dev]; i++) {
     if (b & usb_button_bits[i]) {
-      int j = usb_1_button_assignments[i];
+      int j = usb_button_assignments[dev][i];
       switch (j) {
       case BTN_ASSIGN_FIRE:
         value |= 0x10;

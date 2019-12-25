@@ -409,10 +409,19 @@ void emux_set_joy_port_device(int port_num, int dev_id) {
         vice_id = JOYPORT_ID_JOYSTICK;
         break;
   }
-  if (port_num == 1) {
+  switch (port_num) {
+  case 1:
      resources_set_int("JoyPort1Device", vice_id);
-  } else {
+     break;
+  case 2:
      resources_set_int("JoyPort2Device", vice_id);
+     break;
+  case 3:
+     resources_set_int("JoyPort3Device", vice_id);
+     break;
+  case 4:
+     resources_set_int("JoyPort4Device", vice_id);
+     break;
   }
 }
 

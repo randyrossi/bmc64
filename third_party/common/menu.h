@@ -143,6 +143,8 @@ typedef enum {
 
    MENU_JOYSTICK_PORT_1,
    MENU_JOYSTICK_PORT_2,
+   MENU_JOYSTICK_PORT_3,
+   MENU_JOYSTICK_PORT_4,
 
    MENU_CONFIG_GP_1,
    MENU_CONFIG_GP_2,
@@ -170,6 +172,8 @@ typedef enum {
 
    MENU_USB_0_PREF,
    MENU_USB_1_PREF,
+   MENU_USB_2_PREF,
+   MENU_USB_3_PREF,
 
    MENU_SAVE_SETTINGS,
    MENU_KEYBOARD_MAPPING,
@@ -185,16 +189,31 @@ typedef enum {
    MENU_DRIVE_SOUND_EMULATION,
    MENU_DRIVE_SOUND_EMULATION_VOLUME,
 
-   MENU_CONFIGURE_USB_0,
-   MENU_CONFIGURE_USB_1,
+   // Relative to _0_. Keep together.
+   MENU_USB_0_CONFIGURE,
+   MENU_USB_1_CONFIGURE,
+   MENU_USB_2_CONFIGURE,
+   MENU_USB_3_CONFIGURE,
+   // Relative to _0_. Keep together.
    MENU_USB_0_X_AXIS,
-   MENU_USB_0_Y_AXIS,
    MENU_USB_1_X_AXIS,
+   MENU_USB_2_X_AXIS,
+   MENU_USB_3_X_AXIS,
+   // Relative to _0_. Keep together.
+   MENU_USB_0_Y_AXIS,
    MENU_USB_1_Y_AXIS,
+   MENU_USB_2_Y_AXIS,
+   MENU_USB_3_Y_AXIS,
+   // Relative to _0_. Keep together.
    MENU_USB_0_WATCH_RAW,
    MENU_USB_1_WATCH_RAW,
+   MENU_USB_2_WATCH_RAW,
+   MENU_USB_3_WATCH_RAW,
+   // Relative to _0_. Keep together.
    MENU_USB_0_BTN_ASSIGN,
    MENU_USB_1_BTN_ASSIGN,
+   MENU_USB_2_BTN_ASSIGN,
+   MENU_USB_3_BTN_ASSIGN,
 
    MENU_SID_ENGINE, // VICE
    MENU_SID_MODEL,
@@ -291,10 +310,17 @@ typedef enum {
    MENU_SAVE_EASYFLASH,
    MENU_CART_FREEZE,
 
+   // Relative to _0_. Keep together.
    MENU_USB_0_X_THRESH,
-   MENU_USB_0_Y_THRESH,
    MENU_USB_1_X_THRESH,
+   MENU_USB_2_X_THRESH,
+   MENU_USB_3_X_THRESH,
+
+   // Relative to _0_. Keep together.
+   MENU_USB_0_Y_THRESH,
    MENU_USB_1_Y_THRESH,
+   MENU_USB_2_Y_THRESH,
+   MENU_USB_3_Y_THRESH,
 
    MENU_CONFIRM_OK,
    MENU_CONFIRM_CANCEL,

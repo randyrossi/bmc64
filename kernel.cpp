@@ -400,11 +400,11 @@ if (static_kernel->circle_get_ticks() - entry_start >= entry_delay) {
 
   static int dpad_to_joy[8] = {0x01, 0x09, 0x08, 0x0a, 0x02, 0x06, 0x04, 0x05};
 
-  static unsigned int prev_buttons[2] = {0, 0};
-  static int prev_dpad[2] = {8, 8};
-  static int prev_axes_dirs[2][12] = {{0, 0, 0, 0}, {0, 0, 0, 0}};
+  static unsigned int prev_buttons[MAX_USB_DEVICES] = {0, 0, 0, 0};
+  static int prev_dpad[MAX_USB_DEVICES] = {8, 8, 8, 8};
+  static int prev_axes_dirs[MAX_USB_DEVICES][4] = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
 
-  if (nDeviceIndex >= 2)
+  if (nDeviceIndex >= MAX_USB_DEVICES)
     return;
 
   if (emu_wants_raw_usb()) {
@@ -573,10 +573,10 @@ ViceApp::TShutdownMode CKernel::Run(void) {
   emu_set_demo_mode(mViceOptions.GetDemoMode());
 
   unsigned num_pads = 0;
-  int num_buttons[2] = {0, 0};
-  int num_axes[2] = {0, 0};
-  int num_hats[2] = {0, 0};
-  while (num_pads < 2) {
+  int num_buttons[MAX_USB_DEVICES] = {0, 0, 0, 0};
+  int num_axes[MAX_USB_DEVICES] = {0, 0, 0, 0};
+  int num_hats[MAX_USB_DEVICES] = {0, 0, 0, 0};
+  while (num_pads < MAX_USB_DEVICES) {
     CString DeviceName;
     DeviceName.Format("upad%u", num_pads + 1);
 
