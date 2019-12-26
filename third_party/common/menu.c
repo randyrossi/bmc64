@@ -434,6 +434,7 @@ static void show_files(DirType dir_type, FileFilter filter, int menu_id,
   }
 }
 
+
 static void show_about() {
   struct menu_item *about_root = ui_push_menu(32, 8);
   char title[16];
@@ -613,10 +614,41 @@ static void set_need_mouse() {
    emux_set_int(Setting_Mouse, need_mouse);
 }
 
-static void ui_set_joy_items() {
+// Sets joydev port 'p' (1-4) to JOYDEV_* value 'value' and makes sure
+// all other ports get the mouse turned off if this port got a mouse.
+static void set_joy_item_to_value(int p, int value) {
+    joydevs[p-1].device = value;
+    if (value == JOYDEV_MOUSE) {
+      // If any other port has mouse, set it to none.
+      for (int l = 0; l < MAX_JOY_PORTS; l++) {
+         if (l == (p-1)) continue;
+
+         struct menu_item* other;
+         switch (l) {
+            case 0:
+               other = port_1_menu_item; break;
+            case 1:
+               other = port_2_menu_item; break;
+            case 2:
+               other = port_3_menu_item; break;
+            case 3:
+               other = port_4_menu_item; break;
+            default:
+               assert(0);
+         }
+         if (other && other->choice_ints[other->value] == JOYDEV_MOUSE) {
+           emux_set_joy_port_device(l+1, JOYDEV_NONE);
+           other->value = 0;
+         }
+      }
+    }
+    emux_set_joy_port_device(p, value);
+}
+
+void ui_set_joy_items() {
   int joydev;
   int i;
-  for (joydev = 0; joydev < emu_get_num_joysticks(); joydev++) {
+  for (joydev = 0; joydev < MAX_JOY_PORTS; joydev++) {
     struct menu_item *dst;
 
     if (joydevs[joydev].port == 1) {
@@ -644,37 +676,22 @@ static void ui_set_joy_items() {
     }
   }
 
-  int value = port_1_menu_item->value;
-  if (port_1_menu_item->choice_ints[value] == JOYDEV_NONE) {
-    emux_set_joy_port_device(1, JOYDEV_NONE);
-  } else if (port_1_menu_item->choice_ints[value] == JOYDEV_MOUSE) {
-    if (port_2_menu_item &&
-        port_2_menu_item->choice_ints[port_2_menu_item->value]
-            == JOYDEV_MOUSE) {
-       emux_set_joy_port_device(2, JOYDEV_NONE);
-       port_2_menu_item->value = 0;
-    }
-    emux_set_joy_port_device(1, JOYDEV_MOUSE);
-  } else {
-    emux_set_joy_port_device(1, port_1_menu_item->choice_ints[value]);
+  if (port_1_menu_item) {
+     set_joy_item_to_value(1,
+         port_1_menu_item->choice_ints[port_1_menu_item->value]);
   }
-
   if (port_2_menu_item) {
-     value = port_2_menu_item->value;
-     if (port_2_menu_item->choice_ints[value] == JOYDEV_NONE) {
-       emux_set_joy_port_device(2, JOYDEV_NONE);
-     } else if (port_2_menu_item->choice_ints[value] == JOYDEV_MOUSE) {
-       if (port_1_menu_item->choice_ints[port_1_menu_item->value]
-           == JOYDEV_MOUSE) {
-          emux_set_joy_port_device(1, JOYDEV_NONE);
-          port_1_menu_item->value = 0;
-       }
-       emux_set_joy_port_device(2, JOYDEV_MOUSE);
-     } else {
-       emux_set_joy_port_device(2, port_2_menu_item->choice_ints[value]);
-     }
+     set_joy_item_to_value(2,
+         port_2_menu_item->choice_ints[port_2_menu_item->value]);
   }
-
+  if (port_3_menu_item) {
+     set_joy_item_to_value(3,
+         port_3_menu_item->choice_ints[port_3_menu_item->value]);
+  }
+  if (port_4_menu_item) {
+     set_joy_item_to_value(4,
+         port_4_menu_item->choice_ints[port_4_menu_item->value]);
+  }
   set_need_mouse();
 }
 
@@ -1978,37 +1995,7 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_JOYSTICK_PORT_3:
   case MENU_JOYSTICK_PORT_4:
     p = item->id - MENU_JOYSTICK_PORT_1 + 1;
-    // device in port p was changed
-    joydevs[p-1].device = item->choice_ints[item->value];
-    if (item->choice_ints[item->value] == JOYDEV_NONE) {
-      emux_set_joy_port_device(p, JOYDEV_NONE);
-    } else if (item->choice_ints[item->value] == JOYDEV_MOUSE) {
-      // If any other port has mouse, set it to none.
-      for (int l = 0; l < MAX_JOY_PORTS; l++) {
-         if (l == (p-1)) continue;
-
-         struct menu_item* other;
-         switch (l) {
-            case 0:
-               other = port_1_menu_item; break;
-            case 1:
-               other = port_2_menu_item; break;
-            case 2:
-               other = port_3_menu_item; break;
-            case 3:
-               other = port_4_menu_item; break;
-            default:
-               assert(0);
-         }
-         if (other && other->choice_ints[other->value] == JOYDEV_MOUSE) {
-           emux_set_joy_port_device(p, JOYDEV_NONE);
-           other->value = 0;
-         }
-      }
-      emux_set_joy_port_device(p, JOYDEV_MOUSE);
-    } else {
-      emux_set_joy_port_device(p, item->choice_ints[item->value]);
-    }
+    set_joy_item_to_value(p, item->choice_ints[item->value]);
     set_need_mouse();
     return;
   case MENU_TAPE_START:
@@ -2889,11 +2876,7 @@ void build_menu(struct menu_item *root) {
     port_2_menu_item = add_joyport_options(parent, 2);
   }
 
-  if (emux_machine_class == BMC64_MACHINE_CLASS_C64) {
-    // TEMPORARY !!!! Create under user port joysticks subdir !!!!
-    port_3_menu_item = add_joyport_options(parent, 3);
-    port_4_menu_item = add_joyport_options(parent, 4);
-  }
+  emux_add_userport_joys(parent);
 
   ui_menu_add_button(MENU_USB_0_CONFIGURE, parent, "Configure USB Gamepad 1...");
   ui_menu_add_button(MENU_USB_1_CONFIGURE, parent, "Configure USB Gamepad 2...");
@@ -2996,6 +2979,7 @@ void build_menu(struct menu_item *root) {
   }
   ui_set_hotkeys();
   ui_set_joy_devs();
+  ui_set_joy_items();
 
   emux_apply_video_adjustments(FB_LAYER_VIC,
      h_center_item_0->value,

@@ -54,6 +54,7 @@
 #include "vdrive-internal.h"
 #include "tape.h"
 #include "sid.h"
+#include "userport/userport_joystick.h"
 
 // RASPI includes
 #include "circle.h"
@@ -63,6 +64,15 @@ struct menu_item *sid_model_item;
 struct menu_item *sid_filter_item;
 struct menu_item *keyboard_mapping_item;
 
+// TODO: Fix these
+extern struct menu_item *port_3_menu_item;
+extern struct menu_item *port_4_menu_item;
+extern struct menu_item* add_joyport_options(struct menu_item* parent, int port);
+extern void ui_set_joy_items();
+
+struct menu_item *enable_item;
+struct menu_item *swap_item;
+struct menu_item *adapter_type_item;
 
 void emu_machine_init(void) {
   switch (machine_class) {
@@ -118,7 +128,7 @@ void emux_set_cart_default(void) {
 }
 
 void emux_reset(int soft) {
-  machine_trigger_reset(soft ? 
+  machine_trigger_reset(soft ?
       MACHINE_RESET_MODE_SOFT : MACHINE_RESET_MODE_HARD);
 }
 
@@ -469,8 +479,8 @@ void emux_add_tape_options(struct menu_item* parent) {
 void emux_add_keyboard_options(struct menu_item* parent) {
   keyboard_mapping_item = ui_menu_add_multiple_choice(
       MENU_KEYBOARD_MAPPING, parent, "Mapping");
-  keyboard_mapping_item->num_choices = 2; 
-  
+  keyboard_mapping_item->num_choices = 2;
+
   int tmp_value;
   resources_get_int("KeymapIndex", &tmp_value);
   keyboard_mapping_item->value = tmp_value;
@@ -507,10 +517,10 @@ void emux_add_sound_options(struct menu_item* parent) {
 
   resources_get_int("SidEngine", &tmp_value);
   sid_engine_item->value = viceSidEngineToBmcChoice(tmp_value);
-  
+
   resources_get_int("SidModel", &tmp_value);
   sid_model_item->value = viceSidModelToBmcChoice(tmp_value);
-  
+
   resources_get_int("SidFilters", &sid_filter_item->value);
 }
 
@@ -766,4 +776,83 @@ int emux_handle_loaded_setting(char *name, char* value_str, int value) {
 }
 
 void emux_load_settings_done(void) {
+}
+
+static void swap_userport_joysticks() {
+  int tmp = joydevs[2].device;
+  joydevs[2].device = joydevs[3].device;
+  joydevs[3].device = tmp;
+  ui_set_joy_items();
+}
+
+static void menu_value_changed(struct menu_item *item) {
+   switch (item->id) {
+      case MENU_USERPORT_JOYSTICKS:
+         resources_set_int("UserportJoy", item->value);
+         break;
+      case MENU_SWAP_USERPORT_JOYSTICKS:
+         swap_userport_joysticks();
+         break;
+      case MENU_USERPORT_TYPE:
+         resources_set_int("UserportJoyType", item->choice_ints[item->value]);
+         break;
+      default:
+         break;
+   }
+}
+
+void emux_add_userport_joys(struct menu_item* parent) {
+  struct menu_item* parent2 =
+     ui_menu_add_folder(parent,
+        "Userport Joystick Adapter");
+  int value;
+  resources_get_int("UserportJoy", &value);
+  enable_item =
+     ui_menu_add_toggle(MENU_USERPORT_JOYSTICKS, parent2, "Enable", value);
+  swap_item =
+     ui_menu_add_button(MENU_SWAP_USERPORT_JOYSTICKS, parent2,
+        "Swap Joystick Ports");
+  port_3_menu_item = add_joyport_options(parent2, 3);
+  port_4_menu_item = add_joyport_options(parent2, 4);
+
+  enable_item->on_value_changed = menu_value_changed;
+  swap_item->on_value_changed = menu_value_changed;
+
+  adapter_type_item =
+      ui_menu_add_multiple_choice(MENU_USERPORT_TYPE, parent2, "Adapter Type");
+  adapter_type_item->num_choices = 6;
+  resources_get_int("UserportJoyType", &value);
+  adapter_type_item->value = value;
+  strcpy(adapter_type_item->choices[0], "CGA");
+  strcpy(adapter_type_item->choices[1], "PET");
+  strcpy(adapter_type_item->choices[2], "Hummer");
+  strcpy(adapter_type_item->choices[3], "OEM");
+  strcpy(adapter_type_item->choices[4], "HIT");
+  strcpy(adapter_type_item->choices[5], "Kingsoft");
+  strcpy(adapter_type_item->choices[6], "Starbyte");
+  adapter_type_item->choice_ints[0] = USERPORT_JOYSTICK_CGA;
+  adapter_type_item->choice_ints[1] = USERPORT_JOYSTICK_PET;
+  adapter_type_item->choice_ints[2] = USERPORT_JOYSTICK_HUMMER;
+  adapter_type_item->choice_ints[3] = USERPORT_JOYSTICK_OEM;
+  adapter_type_item->choice_ints[4] = USERPORT_JOYSTICK_HIT;
+  adapter_type_item->choice_ints[5] = USERPORT_JOYSTICK_KINGSOFT;
+  adapter_type_item->choice_ints[6] = USERPORT_JOYSTICK_STARBYTE;
+  adapter_type_item->on_value_changed = menu_value_changed;
+
+  switch (machine_class) {
+    case VICE_MACHINE_VIC20:
+    case VICE_MACHINE_PET:
+       adapter_type_item->choice_disabled[4] = 1;
+       adapter_type_item->choice_disabled[5] = 1;
+       adapter_type_item->choice_disabled[6] = 1;
+       break;
+    case VICE_MACHINE_PLUS4:
+       adapter_type_item->choice_disabled[0] = 1;
+       adapter_type_item->choice_disabled[4] = 1;
+       adapter_type_item->choice_disabled[5] = 1;
+       adapter_type_item->choice_disabled[6] = 1;
+       break;
+    default:
+       break;
+  }
 }
