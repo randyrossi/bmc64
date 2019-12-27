@@ -1500,3 +1500,6 @@ int emux_handle_loaded_setting(char *name, char* value_str, int value) {
 
 void emux_load_settings_done(void) {
 }
+
+void emux_add_userport_joys(struct menu_item* parent) {
+}
