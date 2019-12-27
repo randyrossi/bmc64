@@ -978,6 +978,11 @@ static void load_settings() {
         case GPIO_CONFIG_WAVESHARE:
            gpio_config_item->value = 3;
            break;
+#if defined(RASPI_C64)
+        case GPIO_CONFIG_USERPORT:
+           gpio_config_item->value = 4;
+           break;
+#endif
         default:
            // Disabled
            gpio_config_item->value = 0;
@@ -1836,6 +1841,11 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_CONFIGURE_KEYSET2:
     configure_keyset(1);
     return;
+#if defined(RASPI_C64)
+  case MENU_GPIO_CONFIG:
+    circle_reset_gpio(item->value);
+    return
+#endif
   case MENU_WARP_MODE:
     toggle_warp(item->value);
     return;
@@ -2882,16 +2892,26 @@ void build_menu(struct menu_item *root) {
 
   child = gpio_config_item =
       ui_menu_add_multiple_choice(MENU_GPIO_CONFIG, parent, "GPIO Config");
+#if defined(RASPI_C64)
+     child->num_choices = 5;
+#else
      child->num_choices = 4;
+#endif
      child->value = 0;
      strcpy(child->choices[0], "(Disabled)");
      strcpy(child->choices[1], "#1 (Nav+Joy)");
      strcpy(child->choices[2], "#2 (Kyb+Joy)");
      strcpy(child->choices[3], "#3 (Waveshare Hat)");
+#if defined(RASPI_C64)
+     strcpy(child->choices[4], "#4 (Userport+Joy)");
+#endif
      child->choice_ints[0] = GPIO_CONFIG_DISABLED;
      child->choice_ints[1] = GPIO_CONFIG_NAV_JOY;
      child->choice_ints[2] = GPIO_CONFIG_KYB_JOY;
      child->choice_ints[3] = GPIO_CONFIG_WAVESHARE;
+#if defined(RASPI_C64)
+     child->choice_ints[4] = GPIO_CONFIG_USERPORT;
+#endif
 
   warp_item = ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
 

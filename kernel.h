@@ -43,6 +43,9 @@ extern "C" {
 #include "third_party/common/circle.h"
 #include "third_party/common/keycodes.h"
 #include "third_party/vice-3.3/src/main.h"
+#if defined(RASPI_C64)
+#include "third_party/vice-3.3/src/cia.h"
+#endif
 }
 
 class CKernel : public ViceStdioApp {
@@ -99,6 +102,9 @@ public:
   int circle_sound_bufferspace(void);
   void circle_yield(void);
   void circle_check_gpio();
+#if defined(RASPI_C64)
+  void circle_reset_gpio(int gpio_config);
+#endif
   void circle_lock_acquire();
   void circle_lock_release();
   void circle_boot_complete();
@@ -113,6 +119,10 @@ private:
   int ReadDebounced(int pinIndex);
   void ScanKeyboard();
   void ReadJoystick(int device, int gpioConfig);
+#if defined(RASPI_C64)
+  void SetupUserport();
+  void ReadWriteUserport();
+#endif
 
   ViceSound *mViceSound;
   CCPUThrottle mCPUThrottle;
