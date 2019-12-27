@@ -218,9 +218,9 @@ char* keycode_to_string(long keycode) {
        return "KP 9";
     case KEYCODE_KP0:
        return "KP 0";
-    case KEYCODE_Decimal:
+    case KEYCODE_KP_Decimal:
        return "KP Decimal";
-    case KEYCODE_BackSlash2:
+    case KEYCODE_KP_BackSlash:
        return "KP BackSlash";
     case KEYCODE_Application:
        return "App";

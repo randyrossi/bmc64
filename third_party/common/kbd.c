@@ -161,6 +161,8 @@ signed long kbd_arch_keyname_to_keynum(char *keyname) {
     return (long)KEYCODE_Backspace;
   } else if (KCMP("PageUp") || LEGACY_KCMP("Delete")) {
     return (long)KEYCODE_PageUp;
+  } else if (KCMP("PageDown")) {
+    return (long)KEYCODE_PageDown;
   } else if (KCMP("CapsLock")) {
     return (long)KEYCODE_CapsLock;
   } else if (KCMP("Up")) {
@@ -249,6 +251,38 @@ signed long kbd_arch_keyname_to_keynum(char *keyname) {
     return (long)KEYCODE_F11;
   } else if (KCMP("ScrollLock")) {
     return (long)KEYCODE_ScrollLock;
+  } else if (KCMP("KP_Divide")) {
+    return (long)KEYCODE_KP_Divide;
+  } else if (KCMP("KP_Decimal")) {
+    return (long)KEYCODE_KP_Decimal;
+  } else if (KCMP("KP_Multiply")) {
+    return (long)KEYCODE_KP_Multiply;
+  } else if (KCMP("KP_Subtract")) {
+    return (long)KEYCODE_KP_Subtract;
+  } else if (KCMP("KP_Add")) {
+    return (long)KEYCODE_KP_Add;
+  } else if (KCMP("KP_Enter")) {
+    return (long)KEYCODE_KP_Enter;
+  } else if (KCMP("KP_1")) {
+    return (long)KEYCODE_KP1;
+  } else if (KCMP("KP_2")) {
+    return (long)KEYCODE_KP2;
+  } else if (KCMP("KP_3")) {
+    return (long)KEYCODE_KP3;
+  } else if (KCMP("KP_4")) {
+    return (long)KEYCODE_KP4;
+  } else if (KCMP("KP_5")) {
+    return (long)KEYCODE_KP5;
+  } else if (KCMP("KP_6")) {
+    return (long)KEYCODE_KP6;
+  } else if (KCMP("KP_7")) {
+    return (long)KEYCODE_KP7;
+  } else if (KCMP("KP_8")) {
+    return (long)KEYCODE_KP8;
+  } else if (KCMP("KP_9")) {
+    return (long)KEYCODE_KP9;
+  } else if (KCMP("KP_0")) {
+    return (long)KEYCODE_KP0;
   }
 
   return 0;

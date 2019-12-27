@@ -2559,10 +2559,15 @@ void build_menu(struct menu_item *root) {
 
   ui_menu_add_divider(root);
 
-  if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
+  switch (emux_machine_class) {
+    case BMC64_MACHINE_CLASS_PLUS4EMU:
      ui_menu_add_button(MENU_AUTOSTART, root, "Load .PRG File...");
-  } else {
+     break;
+    case BMC64_MACHINE_CLASS_PET:
+     break;
+    default:
      ui_menu_add_button(MENU_AUTOSTART, root, "Autostart Prg/Disk...");
+     break;
   }
 
   machine_parent = ui_menu_add_folder(root, "Machine");
@@ -2868,13 +2873,16 @@ void build_menu(struct menu_item *root) {
       ui_menu_add_button(MENU_SWAP_JOYSTICKS, parent, "Swap Joystick Ports");
   }
 
-  port_1_menu_item = add_joyport_options(parent, 1);
+  port_1_menu_item = NULL;
+  if (emu_get_num_joysticks() > 0) {
+    port_1_menu_item = add_joyport_options(parent, 1);
+  }
   port_2_menu_item = NULL;
-  port_3_menu_item = NULL;
-  port_4_menu_item = NULL;
   if (emu_get_num_joysticks() > 1) {
     port_2_menu_item = add_joyport_options(parent, 2);
   }
+  port_3_menu_item = NULL;
+  port_4_menu_item = NULL;
 
   emux_add_userport_joys(parent);
 
@@ -3157,6 +3165,8 @@ int emu_get_gpio_config() {
 int emu_get_num_joysticks(void) {
   if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20) {
     return 1;
+  } else if (emux_machine_class == BMC64_MACHINE_CLASS_PET) {
+    return 0;
   }
   return 2;
 }
