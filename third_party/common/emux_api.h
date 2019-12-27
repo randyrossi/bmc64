@@ -152,6 +152,9 @@ struct CanvasState {
 
   int extra_offscreen_border_left;
   int first_displayed_line;
+
+  int fb_width;
+  int fb_height;
 };
 
 // One struct for each display (can be 2 for C128)

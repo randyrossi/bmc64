@@ -32,6 +32,7 @@
 #include "pet/pet.h"
 #include "pet/petmem.h"
 #include "pet/petmodel.h"
+#include "resources.h"
 
 static unsigned int white_color_palette[] = {
     0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF,
@@ -85,36 +86,23 @@ unsigned int *raspi_get_palette(int index) {
   }
 }
 
-void set_canvas_size(int *w, int *h, int *gw, int *gh) {
-  int model = petmodel_get();
-  switch (model) {
-    case PETMODEL_2001:
-    case PETMODEL_3008:
-    case PETMODEL_3016:
-    case PETMODEL_3032:
-    case PETMODEL_3032B:
-    case PETMODEL_4016:
-    case PETMODEL_4032:
-    case PETMODEL_4032B:
-      *w = 386;
-      *h = 288;
-      *gw = 40*8;
-      *gh = 25*8;
-      break;
-    case PETMODEL_8032:
-    case PETMODEL_8096:
-    case PETMODEL_8296:
-    case PETMODEL_SUPERPET:
-    default:
-      *w = 704;
-      *h = 532;
-      *gw = 80*8;
-      *gh = 25*8;
-      break;
+void set_canvas_size(int index, int *w, int *h, int *gw, int *gh) {
+  int size;
+  resources_get_int("VideoSize", &size);
+  if (size == 40) {
+    *w = 386;
+    *h = 288;
+    *gw = 40*8;
+    *gh = 25*8;
+    return;
   }
+  *w = 704;
+  *h = 532;
+  *gw = 80*8;
+  *gh = 25*8;
 }
 
-void set_canvas_borders(int *w, int *h) {
+void set_canvas_borders(int index, int *w, int *h) {
   *w = 32;
   *h = 24;
 }

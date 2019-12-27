@@ -59,11 +59,12 @@ Here is an example of a machine entry:
 
 NOTE: Even though a config is intended to be used for HDMI or Composite (never both), you should always define both composite and hdmi parameters.
 
-Valid machine names are C64, C128, VIC20, PLUS4 and PLUS4EMU (Rpi3 only)
+Valid machine names are C64, C128, VIC20, PET, PLUS4 and PLUS4EMU (Rpi3 only)
 Valid video standards are NTSC, PAL
-Valid video output types are HDMI, Composite
+Valid video output types are HDMI, Composite, DPI
 
 For HDMI, you should choose either a 50hz or 60hz mode.
+See below for notes on using DPI.
 
 If you want to use composite out, you MUST set machine_timing parameter to ntsc-composite or pal-composite and set the corresponding sdtv_mode. Otherwise, you will have audio synchronization issues.
 
@@ -138,7 +139,9 @@ Here are a couple examples you can add to machines.txt that will work with the V
     dpi_group=1
     dpi_mode=19
 
-    * It appears these modes are not exactly 50hz/60hz like HDMI. It's likely the case that all DPI modes will require custom timing.
+    * It appears these modes are not exactly 50hz/60hz like HDMI. It's likely the case that all DPI modes will require custom timing.  See steps mentioned above for how to find the correct cycles_per_second value for your DPI mode.
+
+    * DPI uses almost all the GPIO pins. GPIO configs for things like joyticks/keyboards/gamepads are disabled when enable_dpi is present in cmdline.txt
 
 # Recovering from a Blank Screen
 
@@ -258,13 +261,15 @@ You can hold down keys or gamepad/joystick directions and the navigation action 
 
 # Joyport Configuration
 
-Joyports (2 for C64/C128, 1 for VIC20) can be configured to use the following devices:
+'Regular' Joyports (2 for C64/C128, 1 for VIC20) can be configured to use the devices below.  The VICE emulators also support userport adapters that can add another 2 joyports (for games that support them).  Extra userport joysticks must be activated in the Joyports->Userport Joysticks sub-menu.
 
 Device | Description 
 -------|------------
 None | No device active for the port
 USB Gamepad 1 | First USB gamepad detected
 USB Gamepad 2 | Second USB gamepad detected
+USB Gamepad 3 | Third USB gamepad detected
+USB Gamepad 4 | Fourth USB gamepad detected
 GPIO Bank 1 | GPIO Pins as described below (GPIO Config dependent)
 GPIO Bank 2 | GPIO Pins as described below (GPIO Config dependent)
 1351 Mouse | First USB mouse detected
@@ -555,6 +560,34 @@ What to put on the SDcard:
         dos1581.rom (optional)
         p4fileio.rom (optional)
         p4fileio.rom (optional)
+    /PET
+        basic1
+        basic2
+        basic4
+        characters.901640-01.bin
+        chargen
+        edit1g
+        edit2b
+        edit2g
+        edit4b40
+        edit4b80
+        edit4g40
+        rpi_buuk_pos.vkm
+        rpi_buuk_sym.vkm
+        rpi_grus_pos.vkm
+        rpi_grus_sym.vkm
+        rpi_sym.vkm
+        hre-9000.324992-02.bin
+        hre-a000.324993-02.bin
+        kernal1
+        kernal2
+        kernal4
+        waterloo-a000.901898-01.bin
+        waterloo-b000.901898-02.bin
+        waterloo-c000.901898-03.bin
+        waterloo-d000.901898-04.bin
+        waterloo-e000.901897-01.bin
+        waterloo-f000.901898-05.bin
     kernel.img (C64 kernel for Pi0)
     kernel7.img (C64 kernel for Pi2)
     kernel8-32.img (C64 kernel for Pi3)
@@ -578,16 +611,19 @@ What to put on the SDcard:
         C128/
         VIC20/
         PLUS4/
+        PET/
     disks/
         C64/
         C128/
         VIC20/
         PLUS4/
+        PET/
     tapes/
         C64/
         C128/
         VIC20/
         PLUS4/
+        PET/
     carts/
         C64/
         C128/

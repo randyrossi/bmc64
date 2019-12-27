@@ -154,13 +154,6 @@ private:
   int src_w_;
   int src_h_;
 
-  // Computed from aspect_, defines the region within our display's
-  // bounds for the scaled buffer
-  int dst_x_;
-  int dst_y_;
-  int dst_w_;
-  int dst_h_;
-
   bool showing_;
   bool allocated_;
 

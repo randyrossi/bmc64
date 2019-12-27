@@ -148,15 +148,39 @@ int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
   circle_update_palette_fbl(layer);
 }
 
+static void check_dimensions(struct video_canvas_s* canvas,
+                             int canvas_index,
+                             int fb_width, int fb_height) {
+   if (canvas_state[canvas_index].fb_width != fb_width ||
+       canvas_state[canvas_index].fb_height != fb_height) {
+      // width/height has changed
+      int tx, ty;
+      set_canvas_size(canvas_index, &tx, &ty,
+         &canvas_state[canvas_index].gfx_w,
+         &canvas_state[canvas_index].gfx_h);
+
+      canvas->draw_buffer->canvas_physical_width = tx;
+      canvas->draw_buffer->canvas_physical_height = ty;
+
+      set_canvas_borders(canvas_index,
+                         &canvas_state[canvas_index].max_border_w,
+                         &canvas_state[canvas_index].max_border_h);
+   }
+   canvas_state[canvas_index].fb_width = fb_width;
+   canvas_state[canvas_index].fb_height = fb_height;
+}
+
 // Draw buffer bridge functions back to kernel
 static int draw_buffer_alloc(struct video_canvas_s *canvas,
                              uint8_t **draw_buffer,
                              unsigned int fb_width, unsigned int fb_height,
                              unsigned int *fb_pitch) {
    if (is_vdc(canvas)) {
+      check_dimensions(canvas, vic_canvas_index, fb_width, fb_height);
       return circle_alloc_fbl(FB_LAYER_VDC, 0 /* indexed */, draw_buffer,
                               fb_width, fb_height, fb_pitch);
    } else {
+      check_dimensions(canvas, vdc_canvas_index, fb_width, fb_height);
       return circle_alloc_fbl(FB_LAYER_VIC, 0 /* indexed */, draw_buffer,
                               fb_width, fb_height, fb_pitch);
    }
@@ -225,7 +249,8 @@ static struct video_canvas_s *video_canvas_create_vic(
   canvas_state[vic_canvas_index].first_displayed_line =
      canvas->geometry->first_displayed_line;
 
-  set_canvas_size(width, height,
+  set_canvas_size(vic_canvas_index,
+     width, height,
      &canvas_state[vic_canvas_index].gfx_w,
      &canvas_state[vic_canvas_index].gfx_h);
 
@@ -234,7 +259,8 @@ static struct video_canvas_s *video_canvas_create_vic(
   canvas->videoconfig->external_palette = 1;
   canvas->videoconfig->external_palette_name = "RASPI";
 
-  set_canvas_borders(&canvas_state[vic_canvas_index].max_border_w,
+  set_canvas_borders(vic_canvas_index,
+                     &canvas_state[vic_canvas_index].max_border_w,
                      &canvas_state[vic_canvas_index].max_border_h);
 
   return canvas;
@@ -246,27 +272,24 @@ static struct video_canvas_s *video_canvas_create_vdc(
        unsigned int *height, int mapped) {
   assert(machine_class == VICE_MACHINE_C128);
 
-  *width = 856;
-  *height = 312;
-  canvas_state[vdc_canvas_index].gfx_w = 80*8;
-  canvas_state[vdc_canvas_index].gfx_h = 25*8;
   canvas_state[vdc_canvas_index].extra_offscreen_border_left =
      canvas->geometry->extra_offscreen_border_left;
   canvas_state[vdc_canvas_index].first_displayed_line =
      canvas->geometry->first_displayed_line;
+
+  set_canvas_size(vdc_canvas_index,
+     width, height,
+     &canvas_state[vdc_canvas_index].gfx_w,
+     &canvas_state[vdc_canvas_index].gfx_h);
+
   canvas->draw_buffer->canvas_physical_width = *width;
   canvas->draw_buffer->canvas_physical_height = *height;
   canvas->videoconfig->external_palette = 1;
   canvas->videoconfig->external_palette_name = "RASPI2";
 
-  int timing = circle_get_machine_timing();
-  if (is_ntsc()) {
-      canvas_state[vdc_canvas_index].max_border_w = 112;
-      canvas_state[vdc_canvas_index].max_border_h = 14;
-  } else {
-      canvas_state[vdc_canvas_index].max_border_w = 112;
-      canvas_state[vdc_canvas_index].max_border_h = 38;
-  }
+  set_canvas_borders(vdc_canvas_index,
+                     &canvas_state[vdc_canvas_index].max_border_w,
+                     &canvas_state[vdc_canvas_index].max_border_h);
 
   return canvas;
 }

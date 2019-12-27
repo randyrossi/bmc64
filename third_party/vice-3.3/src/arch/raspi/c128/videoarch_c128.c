@@ -106,19 +106,38 @@ unsigned int *raspi_get_palette(int index) {
   }
 }
 
-void set_canvas_size(int *w, int *h, int *gw, int *gh) {
-  *w = 384;
-  *h = 272;
-  *gw = 40*8;
+void set_canvas_size(int index, int *w, int *h, int *gw, int *gh) {
+  if (index == vic_canvas_index) {
+    *w = 384;
+    *h = 272;
+    *gw = 40*8;
+    *gh = 25*8;
+    return;
+  }
+
+  *w = 856;
+  *h = 312;
+  *gw = 80*8;
   *gh = 25*8;
 }
 
-void set_canvas_borders(int *w, int *h) {
+void set_canvas_borders(int index, int *w, int *h) {
+  if (index == vic_canvas_index) {
+    if (is_ntsc()) {
+       *w = 32;
+       *h = 23;
+    } else {
+       *w = 32;
+       *h = 36;
+    }
+    return;
+  }
+
   if (is_ntsc()) {
-     *w = 32;
-     *h = 23;
+      *w = 112;
+      *h = 14;
   } else {
-     *w = 32;
-     *h = 36;
+      *w = 112;
+      *h = 38;
   }
 }

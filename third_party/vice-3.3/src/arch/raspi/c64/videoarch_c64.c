@@ -105,14 +105,14 @@ unsigned int *raspi_get_palette(int index) {
   }
 }
 
-void set_canvas_size(int* w, int *h, int *gw, int *gh) {
+void set_canvas_size(int index, int* w, int *h, int *gw, int *gh) {
   *w = 384;
   *h = 272;
   *gw = 40*8;
   *gh = 25*8;
 }
 
-void set_canvas_borders(int *w, int *h) {
+void set_canvas_borders(int index, int *w, int *h) {
   if (is_ntsc()) {
      *w = 32;
      *h = 23;
