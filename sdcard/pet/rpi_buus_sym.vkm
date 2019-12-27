@@ -1,0 +1,189 @@
+# VICE keyboard mapping file
+#
+# A Keyboard map is read in as patch to the current map.
+#
+# File format:
+# - comment lines start with '#'
+# - keyword lines start with '!keyword'
+# - normal line has 'keysym/scancode row column shiftflag'
+#
+# Keywords and their lines are:
+# '!CLEAR'               clear whole table
+# '!INCLUDE filename'    read file as mapping file
+# '!LSHIFT row col'      left shift keyboard row/column
+# '!RSHIFT row col'      right shift keyboard row/column
+# '!VSHIFT shiftkey'     virtual shift key (RSHIFT or LSHIFT)
+# '!UNDEF keysym'        remove keysym from table
+#
+# Shiftflag can have the values:
+# 0      key is not shifted for this keysym/scancode
+# 1      key is shifted for this keysym/scancode
+# 2      left shift
+# 4      right shift
+# 8      key can be shifted or not with this keysym/scancode
+# 16     deshift key for this keysym/scancode
+# 32     another definition for this keysym/scancode follows
+#
+# Negative row values:
+# 'keysym -1 n' joystick #1, direction n
+# 'keysym -2 n' joystick #2, direction n
+# 'keysym -3 0' first RESTORE key
+# 'keysym -3 1' second RESTORE key
+# 'keysym -4 0' 40/80 column key
+# 'keysym -4 1' CAPS (ASCII/DIN) key
+#
+
+# this is a PET business (uk) keyboard mapping (symbolic)
+
+# Business (UK) keyboard matrix:
+#
+# Keys starting with 'KP' are on the number pad.
+#
+#       0        1        2        3        4        5        6        7
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 0 |   2    |   5    |   8    |   -    |  KP8   |crsr rgt|  ^N    |   .    |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 1 |   1    |   4    |   7    |   0    |  KP7   |   ^    |--------|  KP9   |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 2 | escape |   s    |   f    |   h    |   ]    |   k    |   ;    |  KP5   |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 3 |   a    |   d    |   g    |   j    | return |   l    |   @    |  KP6   |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 4 |  tab   |   w    |   r    |   y    |   \    |   i    |   p    |  del   |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 5 |   q    |   e    |   t    |   u    |crsr dwn|   o    |   [    |  KP4   |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 6 |l shift |   c    |   b    |   .    |  KP.   |  ^Y    |r shift |  KP3   |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 7 |   z    |   v    |   n    |   ,    |  KP0   |  ^O    | repeat |  KP2   |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 8 |  RVS   |   x    | space  |   m    | home   |  ^U    |   /    |  KP1   |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 9 |  <--   |   3    |   6    |   9    |runstop |   :    |--------|  ^V    |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+#
+#   ^N = both shifts + 2
+#   ^Y = left shift + TAB + I
+#   ^O = Z + A + L
+#   ^U = RVS + A + L
+#   ^V = TAB + <- + DEL
+#
+# Business (US) matrix (differences to UK)
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 2 |        |        |        |        |   ;    |        |   \    |        |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 3 |        |        |        |        |        |        |   [    |        |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 4 |        |        |        |        |   @    |        |        |        |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+# 5 |        |        |        |        |        |        |   ]    |        |
+#   +--------+--------+--------+--------+--------+--------+--------+--------+
+
+!CLEAR
+!LSHIFT 6 0
+!RSHIFT 6 6
+!VSHIFT RSHIFT
+
+0 1 3 32
+0 9 3 1
+1 1 0 32
+1 1 0 1
+2 0 0 32
+2 3 6 0
+3 9 1 32
+3 9 1 1
+4 1 1 32
+4 1 1 1
+5 0 1 32
+5 0 1 1
+6 9 2 32
+6 1 5 0
+7 1 2 32
+7 9 2 1
+8 0 2 32
+8 9 5 1
+9 9 3 32
+9 0 2 1
+
+Control_L 9 4 8
+Home 8 4 8
+Right 0 5 8
+Down 5 4 8
+Del 4 7 0
+BackSpace 4 7 8
+Shift_L 6 0 2
+Shift_R 6 6 4
+Return 3 4 8
+Escape 2 0 8
+# RVS
+PageDown 8 0 8
+# RPT
+Control_R 7 6 8
+Tab 4 0 8
+KP_0 7 4 8
+KP_1 8 7 8
+KP_2 7 7 8
+KP_3 6 7 8
+KP_4 5 7 8
+KP_5 2 7 8
+KP_6 3 7 8
+KP_7 1 4 8
+KP_8 0 4 8
+KP_9 1 7 8
+KP_Separator 7 3 0
+KP_Multiply 9 5 1
+KP_Divide 8 6 0
+KP_Add 2 6 1
+KP_Subtract 0 3 0
+KP_Enter 3 4 8
+KP_Decimal 6 4 0
+Period 6 3 32
+Period 6 3 1
+Dash 0 3 32
+Dash 9 0 0
+Space 8 2 8
+SemiColon 2 6 32
+SemiColon 9 5 0
+Comma 7 3 32
+Comma 7 3 1
+Slash 8 6 32
+Slash 8 6 1
+BackSlash 4 4 32
+BackSlash 4 4 1
+a 3 0 8
+b 6 2 8
+c 6 1 8
+d 3 1 8
+e 5 1 8
+f 2 2 8
+g 3 2 8
+h 2 3 8
+i 4 5 8
+j 3 3 8
+k 2 5 8
+l 3 5 8
+m 8 3 8
+n 7 2 8
+o 5 5 8
+p 4 6 8
+q 5 0 8
+r 4 2 8
+s 2 1 8
+t 5 2 8
+u 5 3 8
+v 7 1 8
+w 4 1 8
+x 8 1 8
+y 4 3 8
+z 7 0 8
+LeftBracket 5 6 32	# [
+LeftBracket 5 6 1		# shift [, { for SuperPET
+RightBracket 2 4 32	# ]
+RightBracket 2 4 1	# shift ], } for SuperPET
+Insert 4 7 1
+Left 0 5 1
+Up 5 4 1
+SingleQuote 1 2 31
+SingleQuote 0 0 1
+Equals 0 3 33
+Equals 2 6 1
