@@ -165,8 +165,10 @@ static int draw_buffer_alloc(struct video_canvas_s *canvas,
 static void draw_buffer_free(struct video_canvas_s *canvas, uint8_t *draw_buffer) {
    if (is_vdc(canvas)) {
       circle_free_fbl(FB_LAYER_VDC);
+      vdc_showing = 0;
    } else {
       circle_free_fbl(FB_LAYER_VIC);
+      vic_showing = 0;
    }
 }
 

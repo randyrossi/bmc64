@@ -196,6 +196,10 @@ void FrameBufferLayer::Free() {
 
   if (!allocated_) return;
 
+  if (showing_) {
+     Hide();
+  }
+
   width_ = 0;
   height_ = 0;
   pitch_ = 0;
