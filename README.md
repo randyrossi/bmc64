@@ -76,7 +76,7 @@ sdtv_mode=18                | pal-composite  | not required
 sdtv_mode=16                | ntsc-composite | not required
 hdmi_group=2,hdmi_mode=87   | pal-custom or ntsc-custom | see below
 
-## How to add your own custom HDMI mode
+## How to add your own custom HDMI mode (VICE emulators only)
 
 You are free to experiment with different modes. It may be advantageous to set the video mode to match the native resolution of your monitor.  That way, it may have less processing to do and _may_ save on latency (not confirmed).  That can be accomplished with either a different hdmi_mode or a custom mode.
 
@@ -113,6 +113,8 @@ You would then define your machines.txt entry like this:
 
 And this option will show up in the Machine->Switch menu.
 
+Custom HDMI modes are not supported for plus4emu yet.
+
 ## DPI (Parallel Display Interface)
 
 BMC64 v3.3 and higher supports video output via DPI. DPI is a (up to) 24-bit parallel RGB interface.  A DPI capable display device or RGB adapter board is required. You will have to match the output format to your device.  See https://www.raspberrypi.org/documentation/hardware/raspberrypi/dpi/README.md for more details.
@@ -141,7 +143,7 @@ Here are a couple examples you can add to machines.txt that will work with the V
 
     * It appears these modes are not exactly 50hz/60hz like HDMI. It's likely the case that all DPI modes will require custom timing.  See steps mentioned above for how to find the correct cycles_per_second value for your DPI mode.
 
-    * DPI uses almost all the GPIO pins. GPIO configs for things like joyticks/keyboards/gamepads are disabled when enable_dpi is present in cmdline.txt
+    * DPI uses almost all the GPIO pins. GPIO configs for things like joyticks/keyboards/buttons are disabled when enable_dpi is present in cmdline.txt
 
 # Recovering from a Blank Screen
 
@@ -460,6 +462,8 @@ A: Yes, the original machine ran at 50.125Hz for PAL and 59.826Hz for NTSC. So, 
     cycles_per_second=985257
 
     This mode will match the timing of the original machine (for the purists) but may not be compatible with all monitors:
+
+   For NTSC, this mode will match the real timing very closely.  But again, since it's not a standard resolution, it may not work on all monitors.
 
 Q: Audio is not coming out of HDMI/Analog jack when I expect it to. Why?
 

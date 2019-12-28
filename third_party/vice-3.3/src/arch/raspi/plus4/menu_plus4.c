@@ -90,6 +90,13 @@ unsigned long emux_calculate_timing(double fps) {
   }
 }
 
+double emux_calculate_fps() {
+  if (is_ntsc()) {
+     return (double)circle_cycles_per_sec() / (PLUS4_NTSC_CYCLES_PER_LINE * PLUS4_NTSC_SCREEN_LINES);
+  }
+  return (double)circle_cycles_per_sec() / (PLUS4_PAL_CYCLES_PER_LINE * PLUS4_PAL_SCREEN_LINES);
+}
+
 void emux_set_color_brightness(int display_num, int value) {
   resources_set_int("TEDColorBrightness", value);
 }

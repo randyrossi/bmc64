@@ -255,6 +255,10 @@ static void add_button_choices(struct menu_item *tmp_item) {
     tmp_item->choice_disabled[BTN_ASSIGN_PIP_SWAP] = 1;
     tmp_item->choice_disabled[BTN_ASSIGN_40_80_COLUMN] = 1;
   }
+
+  if (emux_machine_class == BMC64_MACHINE_CLASS_PET) {
+    tmp_item->choice_disabled[BTN_ASSIGN_VKBD_TOGGLE] = 1;
+  }
 }
 
 void build_usb_menu(int dev, struct menu_item *root) {

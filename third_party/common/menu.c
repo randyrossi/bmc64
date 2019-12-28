@@ -2516,6 +2516,7 @@ void build_menu(struct menu_item *root) {
   strcat(current_dir_names[DIR_SNAPS],machine_sub_dir);
   strcpy(current_dir_names[DIR_ROMS], machine_sub_dir);
 
+  char scratch[16];
   switch (circle_get_machine_timing()) {
   case MACHINE_TIMING_NTSC_HDMI:
     strcat(machine_info_txt, "NTSC 60Hz HDMI");
@@ -2524,13 +2525,25 @@ void build_menu(struct menu_item *root) {
     strcat(machine_info_txt, "NTSC 60Hz DPI");
     break;
   case MACHINE_TIMING_NTSC_COMPOSITE:
-    strcat(machine_info_txt, "NTSC 60Hz Composite");
-    break;
   case MACHINE_TIMING_NTSC_CUSTOM_HDMI:
-    strcat(machine_info_txt, "NTSC 60Hz (Custom) HDMI");
-    break;
   case MACHINE_TIMING_NTSC_CUSTOM_DPI:
-    strcat(machine_info_txt, "NTSC 60Hz (Custom) DPI");
+    strcat(machine_info_txt, "NTSC ");
+    sprintf (scratch,"%.3f", emux_calculate_fps());
+    strcat (machine_info_txt, scratch);
+    strcat(machine_info_txt, "Hz ");
+    switch (circle_get_machine_timing()) {
+      case MACHINE_TIMING_NTSC_COMPOSITE:
+        strcat(machine_info_txt, "Composite");
+        break;
+      case MACHINE_TIMING_NTSC_CUSTOM_HDMI:
+        strcat(machine_info_txt, "Custom HDMI");
+        break;
+      case MACHINE_TIMING_NTSC_CUSTOM_DPI:
+        strcat(machine_info_txt, "Custom DPI");
+        break;
+      default:
+        break;
+    }
     break;
   case MACHINE_TIMING_PAL_HDMI:
     strcat(machine_info_txt, "PAL 50Hz HDMI");
@@ -2539,13 +2552,25 @@ void build_menu(struct menu_item *root) {
     strcat(machine_info_txt, "PAL 50Hz DPI");
     break;
   case MACHINE_TIMING_PAL_COMPOSITE:
-    strcat(machine_info_txt, "PAL 50Hz Composite");
-    break;
   case MACHINE_TIMING_PAL_CUSTOM_HDMI:
-    strcat(machine_info_txt, "PAL 50Hz (Custom) HDMI");
-    break;
   case MACHINE_TIMING_PAL_CUSTOM_DPI:
-    strcat(machine_info_txt, "PAL 50Hz (Custom) DPI");
+    strcat(machine_info_txt, "PAL ");
+    sprintf (scratch,"%.3f", emux_calculate_fps());
+    strcat (machine_info_txt, scratch);
+    strcat(machine_info_txt, "Hz ");
+    switch (circle_get_machine_timing()) {
+      case MACHINE_TIMING_PAL_COMPOSITE:
+        strcat(machine_info_txt, "Composite");
+        break;
+      case MACHINE_TIMING_PAL_CUSTOM_HDMI:
+        strcat(machine_info_txt, "Custom HDMI");
+        break;
+      case MACHINE_TIMING_PAL_CUSTOM_DPI:
+        strcat(machine_info_txt, "Custom DPI");
+        break;
+      default:
+        break;
+    }
     break;
   default:
     strcat(machine_info_txt, "Error");
@@ -2814,8 +2839,10 @@ void build_menu(struct menu_item *root) {
      child->divisor = 100;
   }
 
-  ui_menu_add_button(MENU_CALC_TIMING, video_parent,
+  if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
+     ui_menu_add_button(MENU_CALC_TIMING, video_parent,
                      "Custom HDMI/DPI mode timing calc...");
+  }
 
   parent = ui_menu_add_folder(root, "Sound");
 

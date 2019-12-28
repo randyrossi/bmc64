@@ -959,6 +959,16 @@ void emux_show_cart_osd_menu(void) {
 }
 
 unsigned long emux_calculate_timing(double fps) {
+  // TODO: Enable custom timing calc in common when this if fixed.
+  return 0;
+}
+
+double emux_calculate_fps() {
+  // TODO: Enable custom timing calc in common when this if fixed.
+  if (is_ntsc()) {
+    return 60;
+  }
+  return 50;
 }
 
 // Not really an autostart, just loads .PRG. TODO: Rename this.

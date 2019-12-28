@@ -265,6 +265,9 @@ void emux_show_cart_osd_menu(void);
 // Caluculate cycles per second timing for this machine
 unsigned long emux_calculate_timing(double fps);
 
+// Calculate fps given cycles per second
+double emux_calculate_fps(void);
+
 // Peripheral display status updates
 void emux_enable_drive_status(int state, int *drive_led_color);
 void emux_display_drive_led(int drive, unsigned int pwm1, unsigned int pwm2);

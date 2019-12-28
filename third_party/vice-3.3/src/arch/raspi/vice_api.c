@@ -152,6 +152,25 @@ int emux_load_state(char *filename) {
      resources_set_int("SidEngine", sid_engine);
   }
 
+  int tmp;
+  resources_get_int("UserportJoy", &tmp);
+  enable_item->value = tmp;
+
+  resources_get_int("UserportJoyType", &tmp);
+  for (int i=0;i<adapter_type_item->num_choices;i++) {
+     if (adapter_type_item->choice_ints[0] == tmp) {
+         adapter_type_item->value = i;
+         break;
+     }
+  }
+
+  // Do other menu items too.
+  //   Drive%iType, Drive%iParallelCable
+  //   Drive%iRAM2000-A000
+  //   KeymapIndex, SidEngine, SidModel, SidFilters, DriveSoundEmulation
+  //   DriveSoundEmulationVolume, C128ColumnKey, DatasetteResetWithCPU
+  //   IECDevice%i, FSDevice%iDir
+
   return status;
 }
 

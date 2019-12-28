@@ -29,6 +29,10 @@
 #ifndef VICE_PET_H
 #define VICE_PET_H
 
+#ifdef RASPI_COMPILE
+extern int circle_cycles_per_sec();
+#endif
+
 /*
 
     The PET CPU clock is exactly (within chip tolerances) 1MHz
