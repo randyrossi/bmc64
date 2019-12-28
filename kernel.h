@@ -44,7 +44,7 @@ extern "C" {
 #include "third_party/common/keycodes.h"
 #include "third_party/vice-3.3/src/main.h"
 #if defined(RASPI_C64)
-#include "third_party/vice-3.3/src/cia.h"
+#include "third_party/vice-3.3/src/c64/c64.h"
 #endif
 }
 

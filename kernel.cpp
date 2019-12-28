@@ -129,9 +129,8 @@ void circle_check_gpio() {
 
 #if defined(RASPI_C64)
 void circle_reset_gpio(int gpio_config) {
-  static_kernel->circle_reset_gpio(int gpio_config);
+  static_kernel->circle_reset_gpio(gpio_config);
 }
-extern machine_context_t machine_context;
 #endif
 
 void circle_lock_acquire() {
@@ -846,7 +845,7 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
 #if defined(RASPI_C64)
 // Configure CIA2 port B from DDR
 void CKernel::SetupUserport() {
-  uint8_t ddr = machine_context.cia2->c_cia[CIA_DDRB];
+  uint8_t ddr = machine_context.cia2->c_cia[3];
   for (int i = 0; i < 8; i++) {
     uint8_t bit_pos = 1<<i;
     uint8_t ddr_value = ddr & bit_pos;
@@ -856,8 +855,8 @@ void CKernel::SetupUserport() {
 
 // Read input pins and send to output pins
 void CKernel::ReadWriteUserport() {
-  uint8_t ddr = machine_context.cia2->c_cia[CIA_DDRB];
-  uint8_t value = machine_context.cia2->c_cia[CIA_PRB];
+  uint8_t ddr = machine_context.cia2->c_cia[3];
+  uint8_t value = machine_context.cia2->c_cia[1];
   uint8_t new_value = 0;
   for (int i = 0; i < 8; i++) {
     uint8_t bit_pos = 1<<i;
@@ -874,7 +873,7 @@ void CKernel::ReadWriteUserport() {
       }
     }
   }
-  machine_context.cia2->c_cia[CIA_PRB] = new_value;
+  machine_context.cia2->c_cia[1] = new_value;
 }
 #endif
 
