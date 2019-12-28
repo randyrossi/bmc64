@@ -286,3 +286,4 @@
   * Add 2 more USB gamepads for user port joysticks
   * Renamed menu label 'Aspect Ratio' to 'H Stretch Factor'
   * Plus4Emu filter on PRG files for Load .PRG menu
+  * Fixed Composite out due to bootcode.bin/start.elf/fixup.dat files

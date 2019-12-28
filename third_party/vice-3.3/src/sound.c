@@ -1232,7 +1232,7 @@ static int sound_run_sound(void)
             return 0;
         }
         if (snddata.bufptr + nr > SOUND_BUFSIZE) {
-#ifndef ANDROID_COMPILE
+#if !defined(ANDROID_COMPILE) && !defined(RASPI_COMPILE)
             return sound_error("Sound buffer overflow.");
 #else
             return 0;

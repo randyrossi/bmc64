@@ -140,6 +140,18 @@ int emux_load_state(char *filename) {
   int status = machine_read_snapshot(filename, 0);
   // Somehow, this gets turned off. Vice bug?
   resources_set_int("Datasette", 1);
+
+  if (machine_class == VICE_MACHINE_PET) {
+     // This is a hack to get sound working after a snapshot load.
+     // For some reason, the sound engine is closed after a load
+     // Snapshots are disabled for PET but keeping this here in case
+     // it's needed again.
+     int sid_engine;
+     resources_get_int("SidEngine", &sid_engine);
+     resources_set_int("SidEngine", 1-sid_engine);
+     resources_set_int("SidEngine", sid_engine);
+  }
+
   return status;
 }
 
@@ -489,6 +501,16 @@ void emux_add_keyboard_options(struct menu_item* parent) {
 }
 
 void emux_add_sound_options(struct menu_item* parent) {
+
+  // The pet has terrible lag when using ReSid, use FAST since it only
+  // ever makes simple beeps anyway.
+  if (machine_class == VICE_MACHINE_PET) {
+     resources_set_int("SidEngine", SID_ENGINE_FASTSID);
+     resources_set_int("SidModel", SID_MODEL_6581);
+     resources_set_int("SidFilters", 0);
+     return;
+  }
+
   // Resid by default
   struct menu_item* child = sid_engine_item =
       ui_menu_add_multiple_choice(MENU_SID_ENGINE, parent, "Sid Engine");

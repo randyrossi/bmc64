@@ -2677,9 +2677,13 @@ void build_menu(struct menu_item *root) {
 
   ui_menu_add_divider(root);
 
-  parent = ui_menu_add_folder(root, "Snapshots");
-  ui_menu_add_button(MENU_LOAD_SNAP, parent, "Load Snapshot...");
-  ui_menu_add_button(MENU_SAVE_SNAP, parent, "Save Snapshot...");
+  // TODO: Load/Save snapshot on PET is crashy. Figure out if upstream
+  // has fixed this.
+  if (emux_machine_class != BMC64_MACHINE_CLASS_PET) {
+     parent = ui_menu_add_folder(root, "Snapshots");
+     ui_menu_add_button(MENU_LOAD_SNAP, parent, "Load Snapshot...");
+     ui_menu_add_button(MENU_SAVE_SNAP, parent, "Save Snapshot...");
+  }
 
   video_parent = parent = ui_menu_add_folder(root, "Video");
 

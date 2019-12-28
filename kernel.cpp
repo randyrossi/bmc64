@@ -1221,8 +1221,7 @@ int CKernel::circle_cycles_per_second() {
     // Actual C64's NTSC Composite frequency is 59.826 but the Pi's vertical
     // sync frequency on composite is 60.053. See c64.h for how this is
     // calculated. This keeps audio buffer to a minimum using ReSid.
-// TODO!!!
-    return 1000000;
+    return 1014661;
   } else if (timing == MACHINE_TIMING_NTSC_CUSTOM_HDMI || timing == MACHINE_TIMING_NTSC_CUSTOM_DPI) {
     return mViceOptions.GetCyclesPerSecond();
   } else if (timing == MACHINE_TIMING_PAL_HDMI) {
@@ -1232,8 +1231,7 @@ int CKernel::circle_cycles_per_second() {
     // Actual C64's PAL Composite frequency is 50.125 but the Pi's vertical
     // sync frequency on composite is 50.0816. See c64.h for how this is
     // calculated.  This keep audio buffer to a minimum using ReSid.
-// TODO!!!
-    return 1000000;
+    return 1003202;
   } else if (timing == MACHINE_TIMING_PAL_CUSTOM_HDMI || timing == MACHINE_TIMING_PAL_CUSTOM_DPI) {
     return mViceOptions.GetCyclesPerSecond();
   } else {
