@@ -2586,7 +2586,7 @@ void build_menu(struct menu_item *root) {
 
   switch (emux_machine_class) {
     case BMC64_MACHINE_CLASS_PLUS4EMU:
-     ui_menu_add_button(MENU_AUTOSTART, root, "Load .PRG File...");
+     ui_menu_add_button(MENU_LOADPRG, root, "Load .PRG File...");
      break;
     case BMC64_MACHINE_CLASS_PET:
      break;
