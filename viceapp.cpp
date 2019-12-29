@@ -198,7 +198,6 @@ void ViceScreenApp::SetupGPIOForInput() {
   config_2_joystickPins[JOY_POTX] = gpioPins[GPIO_CONFIG_2_WAVESHARE_A_INDEX];
   config_2_joystickPins[JOY_POTY] = gpioPins[GPIO_CONFIG_2_WAVESHARE_Y_INDEX];
 
-#if defined(RASPI_C64)
   config_3_joystickPins[JOY_UP] = gpioPins[GPIO_CONFIG_3_JOY_1_UP_INDEX];
   config_3_joystickPins[JOY_DOWN] = gpioPins[GPIO_CONFIG_3_JOY_1_DOWN_INDEX];
   config_3_joystickPins[JOY_LEFT] = gpioPins[GPIO_CONFIG_3_JOY_1_LEFT_INDEX];
@@ -213,7 +212,6 @@ void ViceScreenApp::SetupGPIOForInput() {
   config_3_userportPins[USERPORT_PB5] = gpioPins[GPIO_CONFIG_3_USERPORT_PB5];
   config_3_userportPins[USERPORT_PB6] = gpioPins[GPIO_CONFIG_3_USERPORT_PB6];
   config_3_userportPins[USERPORT_PB7] = gpioPins[GPIO_CONFIG_3_USERPORT_PB7];
-#endif
 }
 
 // Setup GPIO pins for DPI

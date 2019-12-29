@@ -135,9 +135,7 @@
 #define GPIO_CONFIG_NAV_JOY 0
 #define GPIO_CONFIG_KYB_JOY 1
 #define GPIO_CONFIG_WAVESHARE 2
-#if defined(RASPI_C64)
 #define GPIO_CONFIG_USERPORT 3
-#endif
 
 struct axis_config {
   int use;
@@ -174,9 +172,7 @@ extern void circle_sleep(long);
 extern unsigned long circle_get_ticks();
 extern void circle_yield();
 extern void circle_check_gpio();
-#if defined(RASPI_C64)
 extern void circle_reset_gpio(int gpio_config);
-#endif
 extern int circle_alloc_fbl(int pixelmode, int layer, uint8_t **pixels,
                             int width, int height, int *pitch);
 extern void circle_free_fbl(int layer);

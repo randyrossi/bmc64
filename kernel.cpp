@@ -127,11 +127,10 @@ void circle_check_gpio() {
   static_kernel->circle_check_gpio();
 }
 
-#if defined(RASPI_C64)
 void circle_reset_gpio(int gpio_config) {
+  // Ensure GPIO pins are in correct configuration for current mode.
   static_kernel->circle_reset_gpio(gpio_config);
 }
-#endif
 
 void circle_lock_acquire() {
   // Always ok
@@ -745,11 +744,9 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
        case GPIO_CONFIG_WAVESHARE:
           js_pins = config_2_joystickPins;
           break;
-#if defined(RASPI_C64)
        case GPIO_CONFIG_USERPORT:
           js_pins = config_3_joystickPins;
           break;
-#endif
        default:
          assert(false);
     }
@@ -846,19 +843,23 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
   }
 }
 
-#if defined(RASPI_C64)
 // Configure CIA2 port B from DDR
+// Only configured for C64 for now.
 void CKernel::SetupUserport() {
+#if defined(RASPI_C64)
   uint8_t ddr = machine_context.cia2->c_cia[3];
   for (int i = 0; i < 8; i++) {
     uint8_t bit_pos = 1<<i;
     uint8_t ddr_value = ddr & bit_pos;
     config_3_userportPins[i]->SetMode(ddr_value ? GPIOModeOutput : GPIOModeInputPullUp);
   }
+#endif
 }
 
 // Read input pins and send to output pins
+// Only configured for C64 for now.
 void CKernel::ReadWriteUserport() {
+#if defined(RASPI_C64)
   uint8_t ddr = machine_context.cia2->c_cia[3];
   uint8_t value = machine_context.cia2->c_cia[1];
   uint8_t new_value = 0;
@@ -878,8 +879,8 @@ void CKernel::ReadWriteUserport() {
     }
   }
   machine_context.cia2->c_cia[1] = new_value;
-}
 #endif
+}
 
 int CKernel::circle_get_machine_timing() {
   // See circle.h for valid values
@@ -1164,21 +1165,18 @@ void CKernel::circle_check_gpio() {
      }
      ReadJoystick(0, GPIO_CONFIG_WAVESHARE);
      break;
-#if defined(RASPI_C64)
     case GPIO_CONFIG_USERPORT:
      // CIA2 port B
      SetupUserport();
      ReadWriteUserport();
      ReadJoystick(0, GPIO_CONFIG_USERPORT);
      break;
-#endif
     default:
      // Disabled
      break;
   }
 }
 
-#if defined(RASPI_C64)
 // Reset the state of the GPIO pins.
 // Needed when switching to and from GPIO_CONFIG_USERPORT
 void CKernel::circle_reset_gpio(int gpio_config) {
@@ -1203,7 +1201,6 @@ void CKernel::circle_reset_gpio(int gpio_config) {
       break;
   }
 }
-#endif
 
 void CKernel::circle_lock_acquire() { m_Lock.Acquire(); }
 

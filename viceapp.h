@@ -164,7 +164,6 @@
 #define GPIO_CONFIG_2_WAVESHARE_X_INDEX      3
 #define GPIO_CONFIG_2_WAVESHARE_TL_INDEX     11
 
-#if defined(RASPI_C64)
 // Config for userport CIA2 port B access
 #define GPIO_CONFIG_3_JOY_1_UP_INDEX     14  // GPIO 17
 #define GPIO_CONFIG_3_JOY_1_DOWN_INDEX   11  // GPIO 18
@@ -190,7 +189,6 @@
 #define USERPORT_PB5 5
 #define USERPORT_PB6 6
 #define USERPORT_PB7 7
-#endif
 
 extern "C" {
 void circle_fs_ready();
@@ -258,10 +256,8 @@ protected:
 
   CGPIOPin *config_2_joystickPins[7]; // potx and poty included
 
-#if defined(RASPI_C64)
   CGPIOPin *config_3_joystickPins[5];
   CGPIOPin *config_3_userportPins[8];
-#endif
 
   CGPIOPin *gpioPins[NUM_GPIO_PINS];
   CGPIOPin *DPIPins[28];
