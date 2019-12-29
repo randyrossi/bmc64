@@ -1914,7 +1914,7 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_GPIO_CONFIG:
     // Ensure GPIO pins are correct for new mode.
     circle_reset_gpio(item->value);
-    return
+    return;
   case MENU_WARP_MODE:
     toggle_warp(item->value);
     return;
