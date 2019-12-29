@@ -66,10 +66,8 @@ static unsigned int pepto_pal_color_palette[] = {
 };
 
 
-void set_refresh_rate(int timing, struct video_canvas_s *canvas) {
-  if (timing == MACHINE_TIMING_NTSC_HDMI ||
-      timing == MACHINE_TIMING_NTSC_COMPOSITE ||
-      timing == MACHINE_TIMING_NTSC_CUSTOM) {
+void set_refresh_rate(struct video_canvas_s *canvas) {
+  if (is_ntsc()) {
     canvas->refreshrate = C64_NTSC_RFSH_PER_SEC;
   } else {
     canvas->refreshrate = C64_PAL_RFSH_PER_SEC;
@@ -104,5 +102,22 @@ unsigned int *raspi_get_palette(int index) {
     break;
   default:
     return NULL;
+  }
+}
+
+void set_canvas_size(int index, int* w, int *h, int *gw, int *gh) {
+  *w = 384;
+  *h = 272;
+  *gw = 40*8;
+  *gh = 25*8;
+}
+
+void set_canvas_borders(int index, int *w, int *h) {
+  if (is_ntsc()) {
+     *w = 32;
+     *h = 23;
+  } else {
+     *w = 32;
+     *h = 36;
   }
 }

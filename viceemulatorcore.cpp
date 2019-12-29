@@ -86,6 +86,14 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
       // Unless we disable the video cache, vsync is messed up
       (char *)"+TEDvcache",
   };
+#elif defined(RASPI_PET)
+  int argc = 11;
+  char *argv[] = {
+      (char *)"vice", timing_option_, (char *)"-sounddev", (char *)"raspi",
+      (char *)"-soundoutput", (char *)"1", (char *)"-soundsync", (char *)"0",
+      (char *)"-refresh", (char *)"1",
+      (char *)"+CRTCvcache",
+  };
 #else
 #error "RASPI_[model] NOT DEFINED"
 #endif

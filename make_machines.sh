@@ -45,3 +45,7 @@ cp $KERNEL ${KERNEL}.plus4
 make clean
 BOARD=$BOARD make -f Makefile-Plus4Emu
 cp $KERNEL ${KERNEL}.plus4emu
+
+make clean
+BOARD=$BOARD make -f Makefile-PET
+cp $KERNEL ${KERNEL}.pet

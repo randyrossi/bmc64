@@ -43,6 +43,7 @@ typedef enum {
   BMC64_MACHINE_CLASS_C128,
   BMC64_MACHINE_CLASS_PLUS4,
   BMC64_MACHINE_CLASS_PLUS4EMU,
+  BMC64_MACHINE_CLASS_PET,
 } BMC64MachineClass;
 
 typedef enum {
@@ -151,6 +152,9 @@ struct CanvasState {
 
   int extra_offscreen_border_left;
   int first_displayed_line;
+
+  int fb_width;
+  int fb_height;
 };
 
 // One struct for each display (can be 2 for C128)
@@ -260,6 +264,9 @@ void emux_show_cart_osd_menu(void);
 
 // Caluculate cycles per second timing for this machine
 unsigned long emux_calculate_timing(double fps);
+
+// Calculate fps given cycles per second
+double emux_calculate_fps(void);
 
 // Peripheral display status updates
 void emux_enable_drive_status(int state, int *drive_led_color);
@@ -376,5 +383,9 @@ void emux_save_additional_settings(FILE *fp);
 void emux_load_settings_done(void);
 
 void emux_get_default_color_setting(int *brightness, int *contrast, int *gamma, int *tint);
+
+int is_ntsc();
+
+void emux_add_userport_joys(struct menu_item* parent);
 
 #endif

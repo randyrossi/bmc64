@@ -54,6 +54,7 @@
 #include "vdrive-internal.h"
 #include "tape.h"
 #include "sid.h"
+#include "userport/userport_joystick.h"
 
 // RASPI includes
 #include "circle.h"
@@ -63,6 +64,15 @@ struct menu_item *sid_model_item;
 struct menu_item *sid_filter_item;
 struct menu_item *keyboard_mapping_item;
 
+// TODO: Fix these
+extern struct menu_item *port_3_menu_item;
+extern struct menu_item *port_4_menu_item;
+extern struct menu_item* add_joyport_options(struct menu_item* parent, int port);
+extern void ui_set_joy_items();
+
+struct menu_item *enable_item;
+struct menu_item *swap_item;
+struct menu_item *adapter_type_item;
 
 void emu_machine_init(void) {
   switch (machine_class) {
@@ -77,6 +87,9 @@ void emu_machine_init(void) {
        break;
     case VICE_MACHINE_PLUS4:
        emux_machine_class = BMC64_MACHINE_CLASS_PLUS4;
+       break;
+    case VICE_MACHINE_PET:
+       emux_machine_class = BMC64_MACHINE_CLASS_PET;
        break;
     default:
        assert(0);
@@ -115,7 +128,7 @@ void emux_set_cart_default(void) {
 }
 
 void emux_reset(int soft) {
-  machine_trigger_reset(soft ? 
+  machine_trigger_reset(soft ?
       MACHINE_RESET_MODE_SOFT : MACHINE_RESET_MODE_HARD);
 }
 
@@ -127,6 +140,37 @@ int emux_load_state(char *filename) {
   int status = machine_read_snapshot(filename, 0);
   // Somehow, this gets turned off. Vice bug?
   resources_set_int("Datasette", 1);
+
+  if (machine_class == VICE_MACHINE_PET) {
+     // This is a hack to get sound working after a snapshot load.
+     // For some reason, the sound engine is closed after a load
+     // Snapshots are disabled for PET but keeping this here in case
+     // it's needed again.
+     int sid_engine;
+     resources_get_int("SidEngine", &sid_engine);
+     resources_set_int("SidEngine", 1-sid_engine);
+     resources_set_int("SidEngine", sid_engine);
+  }
+
+  int tmp;
+  resources_get_int("UserportJoy", &tmp);
+  enable_item->value = tmp;
+
+  resources_get_int("UserportJoyType", &tmp);
+  for (int i=0;i<adapter_type_item->num_choices;i++) {
+     if (adapter_type_item->choice_ints[0] == tmp) {
+         adapter_type_item->value = i;
+         break;
+     }
+  }
+
+  // Do other menu items too.
+  //   Drive%iType, Drive%iParallelCable
+  //   Drive%iRAM2000-A000
+  //   KeymapIndex, SidEngine, SidModel, SidFilters, DriveSoundEmulation
+  //   DriveSoundEmulationVolume, C128ColumnKey, DatasetteResetWithCPU
+  //   IECDevice%i, FSDevice%iDir
+
   return status;
 }
 
@@ -176,39 +220,44 @@ void emux_drive_change_model(int unit) {
     strcat(item->displayed_value, " (*)");
   }
 
-  if (drive_check_type(DRIVE_TYPE_1541, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1541");
-    item->value = DRIVE_TYPE_1541;
-    if (current_drive_type == DRIVE_TYPE_1541) {
-      strcat(item->displayed_value, " (*)");
-    }
-  }
-  if (drive_check_type(DRIVE_TYPE_1541II, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1541II");
-    item->value = DRIVE_TYPE_1541II;
-    if (current_drive_type == DRIVE_TYPE_1541II) {
-      strcat(item->displayed_value, " (*)");
-    }
-  }
-  if (drive_check_type(DRIVE_TYPE_1551, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1551");
-    item->value = DRIVE_TYPE_1551;
-    if (current_drive_type == DRIVE_TYPE_1551) {
-      strcat(item->displayed_value, " (*)");
-    }
-  }
-  if (drive_check_type(DRIVE_TYPE_1571, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1571");
-    item->value = DRIVE_TYPE_1571;
-    if (current_drive_type == DRIVE_TYPE_1571) {
-      strcat(item->displayed_value, " (*)");
-    }
-  }
-  if (drive_check_type(DRIVE_TYPE_1581, unit - 8) > 0) {
-    item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, "1581");
-    item->value = DRIVE_TYPE_1581;
-    if (current_drive_type == DRIVE_TYPE_1581) {
-      strcat(item->displayed_value, " (*)");
+  static int num_supported_drives = 12;
+  static int supported_drives[] = {
+     DRIVE_TYPE_1541,
+     DRIVE_TYPE_1541II,
+     DRIVE_TYPE_1551,
+     DRIVE_TYPE_1571,
+     DRIVE_TYPE_1581,
+     DRIVE_TYPE_2031,
+     DRIVE_TYPE_2040,
+     DRIVE_TYPE_3040,
+     DRIVE_TYPE_4040,
+     DRIVE_TYPE_1001,
+     DRIVE_TYPE_8050,
+     DRIVE_TYPE_8250,
+  };
+
+  static const char* drive_labels[] = {
+     "1541",
+     "1541II",
+     "1551",
+     "1571",
+     "1581",
+     "2031",
+     "2040",
+     "3040",
+     "4040",
+     "1001",
+     "8050",
+     "8250",
+  };
+
+  for (int i = 0 ; i < num_supported_drives; i++) {
+    if (drive_check_type(supported_drives[i], unit - 8) > 0) {
+      item = ui_menu_add_button(MENU_DRIVE_MODEL_SELECT, model_root, drive_labels[i]);
+      item->value = supported_drives[i];
+      if (current_drive_type == supported_drives[i]) {
+        strcat(item->displayed_value, " (*)");
+      }
     }
   }
 }
@@ -401,10 +450,19 @@ void emux_set_joy_port_device(int port_num, int dev_id) {
         vice_id = JOYPORT_ID_JOYSTICK;
         break;
   }
-  if (port_num == 1) {
+  switch (port_num) {
+  case 1:
      resources_set_int("JoyPort1Device", vice_id);
-  } else {
+     break;
+  case 2:
      resources_set_int("JoyPort2Device", vice_id);
+     break;
+  case 3:
+     resources_set_int("JoyPort3Device", vice_id);
+     break;
+  case 4:
+     resources_set_int("JoyPort4Device", vice_id);
+     break;
   }
 }
 
@@ -452,8 +510,8 @@ void emux_add_tape_options(struct menu_item* parent) {
 void emux_add_keyboard_options(struct menu_item* parent) {
   keyboard_mapping_item = ui_menu_add_multiple_choice(
       MENU_KEYBOARD_MAPPING, parent, "Mapping");
-  keyboard_mapping_item->num_choices = 2; 
-  
+  keyboard_mapping_item->num_choices = 2;
+
   int tmp_value;
   resources_get_int("KeymapIndex", &tmp_value);
   keyboard_mapping_item->value = tmp_value;
@@ -462,6 +520,16 @@ void emux_add_keyboard_options(struct menu_item* parent) {
 }
 
 void emux_add_sound_options(struct menu_item* parent) {
+
+  // The pet has terrible lag when using ReSid, use FAST since it only
+  // ever makes simple beeps anyway.
+  if (machine_class == VICE_MACHINE_PET) {
+     resources_set_int("SidEngine", SID_ENGINE_FASTSID);
+     resources_set_int("SidModel", SID_MODEL_6581);
+     resources_set_int("SidFilters", 0);
+     return;
+  }
+
   // Resid by default
   struct menu_item* child = sid_engine_item =
       ui_menu_add_multiple_choice(MENU_SID_ENGINE, parent, "Sid Engine");
@@ -490,10 +558,10 @@ void emux_add_sound_options(struct menu_item* parent) {
 
   resources_get_int("SidEngine", &tmp_value);
   sid_engine_item->value = viceSidEngineToBmcChoice(tmp_value);
-  
+
   resources_get_int("SidModel", &tmp_value);
   sid_model_item->value = viceSidModelToBmcChoice(tmp_value);
-  
+
   resources_get_int("SidFilters", &sid_filter_item->value);
 }
 
@@ -749,4 +817,83 @@ int emux_handle_loaded_setting(char *name, char* value_str, int value) {
 }
 
 void emux_load_settings_done(void) {
+}
+
+static void swap_userport_joysticks() {
+  int tmp = joydevs[2].device;
+  joydevs[2].device = joydevs[3].device;
+  joydevs[3].device = tmp;
+  ui_set_joy_items();
+}
+
+static void menu_value_changed(struct menu_item *item) {
+   switch (item->id) {
+      case MENU_USERPORT_JOYSTICKS:
+         resources_set_int("UserportJoy", item->value);
+         break;
+      case MENU_SWAP_USERPORT_JOYSTICKS:
+         swap_userport_joysticks();
+         break;
+      case MENU_USERPORT_TYPE:
+         resources_set_int("UserportJoyType", item->choice_ints[item->value]);
+         break;
+      default:
+         break;
+   }
+}
+
+void emux_add_userport_joys(struct menu_item* parent) {
+  struct menu_item* parent2 =
+     ui_menu_add_folder(parent,
+        "Userport Joystick Adapter");
+  int value;
+  resources_get_int("UserportJoy", &value);
+  enable_item =
+     ui_menu_add_toggle(MENU_USERPORT_JOYSTICKS, parent2, "Enable", value);
+  swap_item =
+     ui_menu_add_button(MENU_SWAP_USERPORT_JOYSTICKS, parent2,
+        "Swap Joystick Ports");
+  port_3_menu_item = add_joyport_options(parent2, 3);
+  port_4_menu_item = add_joyport_options(parent2, 4);
+
+  enable_item->on_value_changed = menu_value_changed;
+  swap_item->on_value_changed = menu_value_changed;
+
+  adapter_type_item =
+      ui_menu_add_multiple_choice(MENU_USERPORT_TYPE, parent2, "Adapter Type");
+  adapter_type_item->num_choices = 6;
+  resources_get_int("UserportJoyType", &value);
+  adapter_type_item->value = value;
+  strcpy(adapter_type_item->choices[0], "CGA");
+  strcpy(adapter_type_item->choices[1], "PET");
+  strcpy(adapter_type_item->choices[2], "Hummer");
+  strcpy(adapter_type_item->choices[3], "OEM");
+  strcpy(adapter_type_item->choices[4], "HIT");
+  strcpy(adapter_type_item->choices[5], "Kingsoft");
+  strcpy(adapter_type_item->choices[6], "Starbyte");
+  adapter_type_item->choice_ints[0] = USERPORT_JOYSTICK_CGA;
+  adapter_type_item->choice_ints[1] = USERPORT_JOYSTICK_PET;
+  adapter_type_item->choice_ints[2] = USERPORT_JOYSTICK_HUMMER;
+  adapter_type_item->choice_ints[3] = USERPORT_JOYSTICK_OEM;
+  adapter_type_item->choice_ints[4] = USERPORT_JOYSTICK_HIT;
+  adapter_type_item->choice_ints[5] = USERPORT_JOYSTICK_KINGSOFT;
+  adapter_type_item->choice_ints[6] = USERPORT_JOYSTICK_STARBYTE;
+  adapter_type_item->on_value_changed = menu_value_changed;
+
+  switch (machine_class) {
+    case VICE_MACHINE_VIC20:
+    case VICE_MACHINE_PET:
+       adapter_type_item->choice_disabled[4] = 1;
+       adapter_type_item->choice_disabled[5] = 1;
+       adapter_type_item->choice_disabled[6] = 1;
+       break;
+    case VICE_MACHINE_PLUS4:
+       adapter_type_item->choice_disabled[0] = 1;
+       adapter_type_item->choice_disabled[4] = 1;
+       adapter_type_item->choice_disabled[5] = 1;
+       adapter_type_item->choice_disabled[6] = 1;
+       break;
+    default:
+       break;
+  }
 }

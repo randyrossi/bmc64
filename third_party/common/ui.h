@@ -143,10 +143,10 @@ struct menu_item *ui_menu_add_checkbox(int id, struct menu_item *folder,
 struct menu_item *ui_menu_add_multiple_choice(int id, struct menu_item *folder,
                                               char *name);
 struct menu_item *ui_menu_add_button(int id, struct menu_item *folder,
-                                     char *name);
+                                     const char *name);
 struct menu_item *ui_menu_add_button_with_value(int id,
                                                 struct menu_item *folder,
-                                                char *name, int int_value,
+                                                const char *name, int int_value,
                                                 char *str_value,
                                                 char *displayed_value);
 struct menu_item *ui_menu_add_range(int id, struct menu_item *folder,

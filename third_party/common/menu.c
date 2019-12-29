@@ -51,7 +51,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "3.2"
+#define VERSION_STRING "3.3"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -88,23 +88,20 @@ typedef enum {
    FILTER_TAPE,
    FILTER_SNAP,
    FILTER_DIRS,
+   FILTER_PRGS,
 } FileFilter;
 
 // These can be saved
 struct menu_item *port_1_menu_item;
 struct menu_item *port_2_menu_item;
-int usb_pref_0;
-int usb_pref_1;
-int usb_x_axis_0;
-int usb_y_axis_0;
-int usb_x_axis_1;
-int usb_y_axis_1;
-float usb_x_thresh_0;
-float usb_y_thresh_0;
-float usb_x_thresh_1;
-float usb_y_thresh_1;
-int usb_0_button_assignments[MAX_USB_BUTTONS];
-int usb_1_button_assignments[MAX_USB_BUTTONS];
+struct menu_item *port_3_menu_item;
+struct menu_item *port_4_menu_item;
+int usb_pref[MAX_USB_DEVICES];
+int usb_x_axis[MAX_USB_DEVICES];
+int usb_y_axis[MAX_USB_DEVICES];
+float usb_x_thresh[MAX_USB_DEVICES];
+float usb_y_thresh[MAX_USB_DEVICES];
+int usb_button_assignments[MAX_USB_DEVICES][MAX_USB_BUTTONS];
 int usb_button_bits[MAX_USB_BUTTONS]; // never change
 long keyset_codes[2][7];
 long key_bindings[6];
@@ -168,6 +165,14 @@ int pot_x_low_value;
 int pot_y_high_value;
 int pot_y_low_value;
 
+// Property names for load/save files
+static char usb_btn_name[MAX_USB_DEVICES][16];
+static char usb_pref_name[MAX_USB_DEVICES][16];
+static char usb_x_name[MAX_USB_DEVICES][16];
+static char usb_y_name[MAX_USB_DEVICES][16];
+static char usb_x_t_name[MAX_USB_DEVICES][16];
+static char usb_y_t_name[MAX_USB_DEVICES][16];
+
 const int num_disk_ext = 13;
 static char disk_filt_ext[13][5] = {".d64", ".d67", ".d71", ".d80", ".d81",
                                     ".d82", ".d1m", ".d2m", ".d4m", ".g64",
@@ -181,6 +186,9 @@ static char cart_filt_ext[2][5] = {".crt", ".bin"};
 
 const int num_snap_ext = 1;
 char snap_filt_ext[1][5];
+
+const int num_prg_ext = 1;
+const char prg_filt_ext[1][5] = {".prg"};
 
 #define TEST_FILTER_MACRO(funcname, numvar, filtarray)                         \
   static int funcname(char *name) {                                            \
@@ -224,6 +232,7 @@ TEST_FILTER_MACRO(test_disk_name, num_disk_ext, disk_filt_ext);
 TEST_FILTER_MACRO(test_tape_name, num_tape_ext, tape_filt_ext);
 TEST_FILTER_MACRO(test_cart_name, num_cart_ext, cart_filt_ext);
 TEST_FILTER_MACRO(test_snap_name, num_snap_ext, snap_filt_ext);
+TEST_FILTER_MACRO(test_prg_name, num_prg_ext, prg_filt_ext);
 
 static void rtrim(char *txt) {
   if (!txt) return;
@@ -354,6 +363,8 @@ static void list_files(struct menu_item *parent,
           include = test_cart_name(ep->d_name);
         } else if (filter == FILTER_SNAP) {
           include = test_snap_name(ep->d_name);
+        } else if (filter == FILTER_PRGS) {
+          include = test_prg_name(ep->d_name);
         } else if (filter == FILTER_DIRS) {
           include = 0;
         } else if (filter == FILTER_NONE) {
@@ -423,6 +434,7 @@ static void show_files(DirType dir_type, FileFilter filter, int menu_id,
   }
 }
 
+
 static void show_about() {
   struct menu_item *about_root = ui_push_menu(32, 8);
   char title[16];
@@ -445,6 +457,10 @@ static void show_about() {
   case BMC64_MACHINE_CLASS_PLUS4EMU:
     snprintf (title, 15, "%s%s %s", "BMPLUS4", VARIANT_STRING, VERSION_STRING);
     strncpy (desc, "A Bare Metal PLUS/4 Emulator", 31);
+    break;
+  case BMC64_MACHINE_CLASS_PET:
+    snprintf (title, 15, "%s%s %s", "BMPET", VARIANT_STRING, VERSION_STRING);
+    strncpy (desc, "A Bare Metal PET Emulator", 31);
     break;
   default:
     strncpy (title, "ERROR", 15);
@@ -581,11 +597,15 @@ static void ui_set_hotkeys() {
 // FCIII apparently doesn't like the mouse enabled unless necessary
 static void set_need_mouse() {
    int need_mouse = 0;
-   int index = port_1_menu_item->value;
-   if (port_1_menu_item->choice_ints[index] == JOYDEV_MOUSE) {
-      need_mouse = 1;
+   int index;
+   // Only ports 1 and 2 can be assigned a mouse.
+   if (port_1_menu_item) {
+      index = port_1_menu_item->value;
+      if (port_1_menu_item->choice_ints[index] == JOYDEV_MOUSE) {
+         need_mouse = 1;
+      }
    }
-   if (emu_get_num_joysticks() > 1) {
+   if (port_2_menu_item) {
       index = port_2_menu_item->value;
       if (port_1_menu_item->choice_ints[index] == JOYDEV_MOUSE) {
          need_mouse = 1;
@@ -594,19 +614,57 @@ static void set_need_mouse() {
    emux_set_int(Setting_Mouse, need_mouse);
 }
 
-static void ui_set_joy_items() {
+// Sets joydev port 'p' (1-4) to JOYDEV_* value 'value' and makes sure
+// all other ports get the mouse turned off if this port got a mouse.
+static void set_joy_item_to_value(int p, int value) {
+    joydevs[p-1].device = value;
+    if (value == JOYDEV_MOUSE) {
+      // If any other port has mouse, set it to none.
+      for (int l = 0; l < MAX_JOY_PORTS; l++) {
+         if (l == (p-1)) continue;
+
+         struct menu_item* other;
+         switch (l) {
+            case 0:
+               other = port_1_menu_item; break;
+            case 1:
+               other = port_2_menu_item; break;
+            case 2:
+               other = port_3_menu_item; break;
+            case 3:
+               other = port_4_menu_item; break;
+            default:
+               assert(0);
+         }
+         if (other && other->choice_ints[other->value] == JOYDEV_MOUSE) {
+           emux_set_joy_port_device(l+1, JOYDEV_NONE);
+           other->value = 0;
+         }
+      }
+    }
+    emux_set_joy_port_device(p, value);
+}
+
+void ui_set_joy_items() {
   int joydev;
   int i;
-  for (joydev = 0; joydev < emu_get_num_joysticks(); joydev++) {
+  for (joydev = 0; joydev < MAX_JOY_PORTS; joydev++) {
     struct menu_item *dst;
 
     if (joydevs[joydev].port == 1) {
       dst = port_1_menu_item;
     } else if (joydevs[joydev].port == 2) {
       dst = port_2_menu_item;
+    } else if (joydevs[joydev].port == 3) {
+      dst = port_3_menu_item;
+    } else if (joydevs[joydev].port == 4) {
+      dst = port_4_menu_item;
     } else {
       continue;
     }
+
+    if (!dst)
+      continue;
 
     // Find which choice matches the device selected and
     // make sure the menu item matches
@@ -618,43 +676,26 @@ static void ui_set_joy_items() {
     }
   }
 
-  int value = port_1_menu_item->value;
-  if (port_1_menu_item->choice_ints[value] == JOYDEV_NONE) {
-    emux_set_joy_port_device(1, JOYDEV_NONE);
-  } else if (port_1_menu_item->choice_ints[value] == JOYDEV_MOUSE) {
-    if (emu_get_num_joysticks() > 1 &&
-        port_2_menu_item->choice_ints[port_2_menu_item->value]
-            == JOYDEV_MOUSE) {
-       emux_set_joy_port_device(2, JOYDEV_NONE);
-       port_2_menu_item->value = 0;
-    }
-    emux_set_joy_port_device(1, JOYDEV_MOUSE);
-  } else {
-    emux_set_joy_port_device(1, port_1_menu_item->choice_ints[value]);
+  if (port_1_menu_item) {
+     set_joy_item_to_value(1,
+         port_1_menu_item->choice_ints[port_1_menu_item->value]);
   }
-
-  if (emu_get_num_joysticks() > 1) {
-     value = port_2_menu_item->value;
-     if (port_2_menu_item->choice_ints[value] == JOYDEV_NONE) {
-       emux_set_joy_port_device(2, JOYDEV_NONE);
-     } else if (port_2_menu_item->choice_ints[value] == JOYDEV_MOUSE) {
-       if (port_1_menu_item->choice_ints[port_1_menu_item->value]
-           == JOYDEV_MOUSE) {
-          emux_set_joy_port_device(1, JOYDEV_NONE);
-          port_1_menu_item->value = 0;
-       }
-       emux_set_joy_port_device(2, JOYDEV_MOUSE);
-     } else {
-       emux_set_joy_port_device(2, port_2_menu_item->choice_ints[value]);
-     }
+  if (port_2_menu_item) {
+     set_joy_item_to_value(2,
+         port_2_menu_item->choice_ints[port_2_menu_item->value]);
   }
-
+  if (port_3_menu_item) {
+     set_joy_item_to_value(3,
+         port_3_menu_item->choice_ints[port_3_menu_item->value]);
+  }
+  if (port_4_menu_item) {
+     set_joy_item_to_value(4,
+         port_4_menu_item->choice_ints[port_4_menu_item->value]);
+  }
   set_need_mouse();
 }
 
 static int save_settings() {
-  int i;
-
   FILE *fp;
   switch (emux_machine_class) {
   case BMC64_MACHINE_CLASS_C64:
@@ -672,6 +713,9 @@ static int save_settings() {
   case BMC64_MACHINE_CLASS_PLUS4EMU:
     fp = fopen("/settings-plus4emu.txt", "w");
     break;
+  case BMC64_MACHINE_CLASS_PET:
+    fp = fopen("/settings-pet.txt", "w");
+    break;
   default:
     printf("ERROR: Unhandled machine\n");
     return 1;
@@ -686,28 +730,36 @@ static int save_settings() {
   if (fp == NULL)
     return 1;
 
-  fprintf(fp, "port_1=%d\n", port_1_menu_item->value);
-  fprintf(fp, "port_2=%d\n", port_2_menu_item->value);
-  fprintf(fp, "usb_0=%d\n", usb_pref_0);
-  fprintf(fp, "usb_1=%d\n", usb_pref_1);
-  fprintf(fp, "usb_x_0=%d\n", usb_x_axis_0);
-  fprintf(fp, "usb_y_0=%d\n", usb_y_axis_0);
-  fprintf(fp, "usb_x_1=%d\n", usb_x_axis_1);
-  fprintf(fp, "usb_y_1=%d\n", usb_y_axis_1);
-  fprintf(fp, "usb_x_t_0=%d\n", (int)(usb_x_thresh_0 * 100.0f));
-  fprintf(fp, "usb_y_t_0=%d\n", (int)(usb_y_thresh_0 * 100.0f));
-  fprintf(fp, "usb_x_t_1=%d\n", (int)(usb_x_thresh_1 * 100.0f));
-  fprintf(fp, "usb_y_t_1=%d\n", (int)(usb_y_thresh_1 * 100.0f));
+  if (port_1_menu_item) {
+    fprintf(fp, "port_1=%d\n", port_1_menu_item->value);
+  }
+  if (port_2_menu_item) {
+    fprintf(fp, "port_2=%d\n", port_2_menu_item->value);
+  }
+  if (port_3_menu_item) {
+    fprintf(fp, "port_3=%d\n", port_3_menu_item->value);
+  }
+  if (port_4_menu_item) {
+    fprintf(fp, "port_4=%d\n", port_4_menu_item->value);
+  }
+
+  for (int k = 0;k < MAX_USB_DEVICES; k++) {
+    fprintf(fp, "usb_%d=%d\n", k, usb_pref[k]);
+    fprintf(fp, "usb_x_%d=%d\n", k, usb_x_axis[k]);
+    fprintf(fp, "usb_y_%d=%d\n", k, usb_y_axis[k]);
+    fprintf(fp, "usb_x_t_%d=%d\n", k, (int)(usb_x_thresh[k] * 100.0f));
+    fprintf(fp, "usb_y_t_%d=%d\n", k, (int)(usb_y_thresh[k] * 100.0f));
+  }
+
   fprintf(fp, "palette=%d\n", palette_item_0->value);
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
     fprintf(fp, "palette2=%d\n", palette_item_1->value);
   }
 
-  for (i = 0; i < MAX_USB_BUTTONS; i++) {
-    fprintf(fp, "usb_btn_0=%d\n", usb_0_button_assignments[i]);
-  }
-  for (i = 0; i < MAX_USB_BUTTONS; i++) {
-    fprintf(fp, "usb_btn_1=%d\n", usb_1_button_assignments[i]);
+  for (int k = 0; k < MAX_USB_DEVICES; k++) {
+    for (int i = 0; i < MAX_USB_BUTTONS; i++) {
+      fprintf(fp, "usb_btn_%d=%d\n", k, usb_button_assignments[k][i]);
+    }
   }
   fprintf(fp, "hotkey_cf1=%d\n", hotkey_cf1_item->value);
   fprintf(fp, "hotkey_cf3=%d\n", hotkey_cf3_item->value);
@@ -787,16 +839,20 @@ static int save_settings() {
 
 // Make joydev reflect menu choice
 static void ui_set_joy_devs() {
-  if (joydevs[0].port == 1) {
+  if (port_1_menu_item) {
     joydevs[0].device = port_1_menu_item->choice_ints[port_1_menu_item->value];
-  } else if (emu_get_num_joysticks() > 1 && joydevs[0].port == 2) {
-    joydevs[0].device = port_2_menu_item->choice_ints[port_2_menu_item->value];
   }
 
-  if (joydevs[1].port == 1) {
-    joydevs[1].device = port_1_menu_item->choice_ints[port_1_menu_item->value];
-  } else if (emu_get_num_joysticks() > 1 && joydevs[1].port == 2) {
+  if (port_2_menu_item) {
     joydevs[1].device = port_2_menu_item->choice_ints[port_2_menu_item->value];
+  }
+
+  if (port_3_menu_item) {
+    joydevs[2].device = port_3_menu_item->choice_ints[port_3_menu_item->value];
+  }
+
+  if (port_4_menu_item) {
+    joydevs[3].device = port_4_menu_item->choice_ints[port_4_menu_item->value];
   }
 }
 
@@ -847,6 +903,9 @@ static void load_settings() {
   case BMC64_MACHINE_CLASS_PLUS4EMU:
     fp = fopen("/settings-plus4emu.txt", "r");
     break;
+  case BMC64_MACHINE_CLASS_PET:
+    fp = fopen("/settings-pet.txt", "r");
+    break;
   default:
     printf("ERROR: Unhandled machine\n");
     return;
@@ -858,8 +917,9 @@ static void load_settings() {
   char name_value[256];
   size_t len;
   int value;
-  int usb_btn_0_i = 0;
-  int usb_btn_1_i = 0;
+  int usb_btn_i[MAX_USB_DEVICES];
+  memset(usb_btn_i, 0, sizeof(usb_btn_i));
+
   while (1) {
     char *line = fgets(name_value, 255, fp);
     if (feof(fp) || line == NULL) break;
@@ -881,52 +941,18 @@ static void load_settings() {
        continue;
     }
 
-    if (strcmp(name, "port_1") == 0) {
+    if (port_1_menu_item && strcmp(name, "port_1") == 0) {
       port_1_menu_item->value = value;
-    } else if (strcmp(name, "port_2") == 0) {
+    } else if (port_2_menu_item && strcmp(name, "port_2") == 0) {
       port_2_menu_item->value = value;
-    } else if (strcmp(name, "usb_0") == 0) {
-      usb_pref_0 = value;
-    } else if (strcmp(name, "usb_1") == 0) {
-      usb_pref_1 = value;
-    } else if (strcmp(name, "usb_x_0") == 0) {
-      usb_x_axis_0 = value;
-    } else if (strcmp(name, "usb_y_0") == 0) {
-      usb_y_axis_0 = value;
-    } else if (strcmp(name, "usb_x_1") == 0) {
-      usb_x_axis_1 = value;
-    } else if (strcmp(name, "usb_y_1") == 0) {
-      usb_y_axis_1 = value;
-    } else if (strcmp(name, "usb_x_t_0") == 0) {
-      usb_x_thresh_0 = ((float)value) / 100.0f;
-    } else if (strcmp(name, "usb_y_t_0") == 0) {
-      usb_y_thresh_0 = ((float)value) / 100.0f;
-    } else if (strcmp(name, "usb_x_t_1") == 0) {
-      usb_x_thresh_1 = ((float)value) / 100.0f;
-    } else if (strcmp(name, "usb_y_t_1") == 0) {
-      usb_y_thresh_1 = ((float)value) / 100.0f;
+    } else if (port_3_menu_item && strcmp(name, "port_3") == 0) {
+      port_3_menu_item->value = value;
+    } else if (port_4_menu_item && strcmp(name, "port_4") == 0) {
+      port_4_menu_item->value = value;
     } else if (strcmp(name, "palette") == 0) {
       palette_item_0->value = value;
     } else if (strcmp(name, "palette2") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       palette_item_1->value = value;
-    } else if (strcmp(name, "usb_btn_0") == 0) {
-      if (value >= NUM_BUTTON_ASSIGNMENTS) {
-         value = NUM_BUTTON_ASSIGNMENTS - 1;
-      }
-      usb_0_button_assignments[usb_btn_0_i] = value;
-      usb_btn_0_i++;
-      if (usb_btn_0_i >= MAX_USB_BUTTONS) {
-        usb_btn_0_i = 0;
-      }
-    } else if (strcmp(name, "usb_btn_1") == 0) {
-      if (value >= NUM_BUTTON_ASSIGNMENTS) {
-         value = NUM_BUTTON_ASSIGNMENTS - 1;
-      }
-      usb_1_button_assignments[usb_btn_1_i] = value;
-      usb_btn_1_i++;
-      if (usb_btn_1_i >= MAX_USB_BUTTONS) {
-        usb_btn_1_i = 0;
-      }
     } else if (strcmp(name, "alt_f12") == 0) {
       // Old. Equivalent to cf7 = Menu
       hotkey_cf7_item->value = HOTKEY_CHOICE_MENU;
@@ -987,6 +1013,11 @@ static void load_settings() {
            // Disabled
            gpio_config_item->value = 0;
            break;
+      }
+
+      // Force disabled if kernel options says so.
+      if (!circle_gpio_enabled()) {
+         gpio_config_item->value = 0;
       }
     } else if (strcmp(name, "keyset_1_up") == 0) {
       keyset_codes[0][KEYSET_UP] = value;
@@ -1050,6 +1081,29 @@ static void load_settings() {
       aspect_item_1->value = value;
     } else if (strcmp(name, "volume") == 0) {
       volume_item->value = value;
+    } else {
+      for (int k=0; k < MAX_USB_DEVICES; k++) {
+       if (strcmp(name, usb_btn_name[k]) == 0) {
+         if (value >= NUM_BUTTON_ASSIGNMENTS) {
+            value = NUM_BUTTON_ASSIGNMENTS - 1;
+         }
+         usb_button_assignments[k][usb_btn_i[k]] = value;
+         usb_btn_i[k]++;
+         if (usb_btn_i[k] >= MAX_USB_BUTTONS) {
+           usb_btn_i[k] = 0;
+         }
+       } else if (strcmp(name, usb_pref_name[k]) == 0) {
+         usb_pref[k] = value;
+       } else if (strcmp(name, usb_x_name[k]) == 0) {
+         usb_x_axis[k] = value;
+       } else if (strcmp(name, usb_y_name[k]) == 0) {
+         usb_y_axis[k] = value;
+       } else if (strcmp(name, usb_x_t_name[k]) == 0) {
+         usb_x_thresh[k] = ((float)value) / 100.0f;
+       } else if (strcmp(name, usb_y_t_name[k]) == 0) {
+         usb_y_thresh[k] = ((float)value) / 100.0f;
+       }
+      }
     }
   }
   fclose(fp);
@@ -1057,13 +1111,14 @@ static void load_settings() {
   emux_load_settings_done();
 }
 
+// Swap ports 1 & 2
 void menu_swap_joysticks() {
-  if (port_1_menu_item->choice_ints[port_1_menu_item->value]
+  if (port_1_menu_item && port_1_menu_item->choice_ints[port_1_menu_item->value]
           == JOYDEV_MOUSE) {
      emux_set_joy_port_device(1, JOYDEV_NONE);
   }
 
-  if (port_2_menu_item->choice_ints[port_2_menu_item->value]
+  if (port_2_menu_item && port_2_menu_item->choice_ints[port_2_menu_item->value]
        == JOYDEV_MOUSE) {
      emux_set_joy_port_device(2, JOYDEV_NONE);
   }
@@ -1144,6 +1199,15 @@ static void select_file(struct menu_item *item) {
        if (emux_autostart_file(fullpath(DIR_ROOT, item->str_value)) < 0) {
          ui_pop_menu();
          ui_error("Failed to autostart file");
+       } else {
+         ui_pop_all_and_toggle();
+       }
+       return;
+     case MENU_LOADPRG_FILE:
+       ui_info("Loading...");
+       if (emux_autostart_file(fullpath(DIR_ROOT, item->str_value)) < 0) {
+         ui_pop_menu();
+         ui_error("Failed to load file");
        } else {
          ui_pop_all_and_toggle();
        }
@@ -1287,6 +1351,7 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
   case MENU_DRIVE_ROM_FILE_1581:
     return DIR_ROMS;
   case MENU_AUTOSTART_FILE:
+  case MENU_LOADPRG_FILE:
     return DIR_ROOT;
   case MENU_IEC_DIR:
     return DIR_IEC;
@@ -1368,6 +1433,9 @@ static void relist_files_after_dir_change(struct menu_item *item) {
     break;
   case MENU_AUTOSTART_FILE:
     show_files(DIR_ROOT, FILTER_NONE, item->id, 1);
+    break;
+  case MENU_LOADPRG_FILE:
+    show_files(DIR_ROOT, FILTER_PRGS, item->id, 1);
     break;
   case MENU_IEC_DIR:
     show_files(DIR_IEC, FILTER_DIRS, item->id, 1);
@@ -1516,6 +1584,7 @@ static void menu_machine_reset(int type, int pop) {
 static void menu_value_changed(struct menu_item *item) {
   struct machine_entry* head;
   int status = 0;
+  int p;
 
   switch (item->id) {
   case MENU_ATTACH_DISK_8:
@@ -1570,6 +1639,9 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_AUTOSTART:
     show_files(DIR_ROOT, FILTER_NONE, MENU_AUTOSTART_FILE, 0);
+    return;
+  case MENU_LOADPRG:
+    show_files(DIR_ROOT, FILTER_PRGS, MENU_LOADPRG_FILE, 0);
     return;
   case MENU_SAVE_SNAP:
     show_files(DIR_SNAPS, FILTER_SNAP, MENU_SAVE_SNAP_FILE, 0);
@@ -1829,11 +1901,11 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_LICENSE:
     show_license();
     return;
-  case MENU_CONFIGURE_USB_0:
-    configure_usb(0);
-    return;
-  case MENU_CONFIGURE_USB_1:
-    configure_usb(1);
+  case MENU_USB_0_CONFIGURE:
+  case MENU_USB_1_CONFIGURE:
+  case MENU_USB_2_CONFIGURE:
+  case MENU_USB_3_CONFIGURE:
+    configure_usb(item->id - MENU_USB_0_CONFIGURE);
     return;
   case MENU_CONFIGURE_KEYSET1:
     configure_keyset(0);
@@ -1929,46 +2001,11 @@ static void menu_value_changed(struct menu_item *item) {
     menu_swap_joysticks();
     return;
   case MENU_JOYSTICK_PORT_1:
-    // device in port 1 was changed
-    if (joydevs[0].port == 1) {
-      joydevs[0].device = item->choice_ints[item->value];
-    } else if (emu_get_num_joysticks() > 1 && joydevs[1].port == 1) {
-      joydevs[1].device = item->choice_ints[item->value];
-    }
-    if (item->choice_ints[item->value] == JOYDEV_NONE) {
-      emux_set_joy_port_device(1, JOYDEV_NONE);
-    } else if (item->choice_ints[item->value] == JOYDEV_MOUSE) {
-      if (emu_get_num_joysticks() > 1 &&
-          port_2_menu_item->choice_ints[port_2_menu_item->value]
-             == JOYDEV_MOUSE) {
-         emux_set_joy_port_device(2, JOYDEV_NONE);
-         port_2_menu_item->value = 0;
-      }
-      emux_set_joy_port_device(1, JOYDEV_MOUSE);
-    } else {
-      emux_set_joy_port_device(1, item->choice_ints[item->value]);
-    }
-    set_need_mouse();
-    return;
   case MENU_JOYSTICK_PORT_2:
-    // device in port 2 was changed
-    if (joydevs[0].port == 2) {
-      joydevs[0].device = item->choice_ints[item->value];
-    } else if (joydevs[1].port == 2) {
-      joydevs[1].device = item->choice_ints[item->value];
-    }
-    if (item->choice_ints[item->value] == JOYDEV_NONE) {
-      emux_set_joy_port_device(2, JOYDEV_NONE);
-    } else if (item->choice_ints[item->value] == JOYDEV_MOUSE) {
-      if (port_1_menu_item->choice_ints[port_1_menu_item->value]
-          == JOYDEV_MOUSE) {
-         emux_set_joy_port_device(1, JOYDEV_NONE);
-         port_1_menu_item->value = 0;
-      }
-      emux_set_joy_port_device(2, JOYDEV_MOUSE);
-    } else {
-      emux_set_joy_port_device(2, item->choice_ints[item->value]);
-    }
+  case MENU_JOYSTICK_PORT_3:
+  case MENU_JOYSTICK_PORT_4:
+    p = item->id - MENU_JOYSTICK_PORT_1 + 1;
+    set_joy_item_to_value(p, item->choice_ints[item->value]);
     set_need_mouse();
     return;
   case MENU_TAPE_START:
@@ -2176,8 +2213,7 @@ static void menu_value_changed(struct menu_item *item) {
       status = 0;
       while (ptr) {
           if (ptr->id == item->value) {
-            status = apply_config(ptr, circle_get_model());
-            status |= apply_cmdline(ptr);
+            status = switch_apply_files(ptr);
             break;
           }
           ptr = ptr->next;
@@ -2239,27 +2275,13 @@ static void menu_value_changed(struct menu_item *item) {
 }
 
 // Returns what input preference user has for this usb device
-void emu_get_usb_pref(int device, int *usb_pref, int *x_axis, int *y_axis,
+void emu_get_usb_pref(int device, int *usb_pref_dst, int *x_axis, int *y_axis,
                       float *x_thresh, float *y_thresh) {
-  if (device == 0) {
-    *usb_pref = usb_pref_0;
-    *x_axis = usb_x_axis_0;
-    *y_axis = usb_y_axis_0;
-    *x_thresh = usb_x_thresh_0;
-    *y_thresh = usb_y_thresh_0;
-  } else if (device == 1) {
-    *usb_pref = usb_pref_1;
-    *x_axis = usb_x_axis_1;
-    *y_axis = usb_y_axis_1;
-    *x_thresh = usb_x_thresh_1;
-    *y_thresh = usb_y_thresh_1;
-  } else {
-    *usb_pref = -1;
-    *x_axis = -1;
-    *y_axis = -1;
-    *x_thresh = .50;
-    *y_thresh = .50;
-  }
+  *usb_pref_dst = usb_pref[device];
+  *x_axis = usb_x_axis[device];
+  *y_axis = usb_y_axis[device];
+  *x_thresh = usb_x_thresh[device];
+  *y_thresh = usb_y_thresh[device];
 }
 
 // KEEP in sync with kernel.cpp, kbd.c, menu_usb.c
@@ -2318,6 +2340,7 @@ static void menu_build_machine_switch(struct menu_item* parent) {
   struct menu_item* c64_r = ui_menu_add_folder(holder, "C64");
   struct menu_item* c128_r = ui_menu_add_folder(holder, "C128");
   struct menu_item* plus4_r = ui_menu_add_folder(holder, "Plus/4");
+  struct menu_item* pet_r = ui_menu_add_folder(holder, "PET");
 
   struct machine_entry* head;
   load_machines(&head);
@@ -2345,6 +2368,9 @@ static void menu_build_machine_switch(struct menu_item* parent) {
             item = NULL;
          }
          break;
+      case BMC64_MACHINE_CLASS_PET:
+         item = ui_menu_add_button(MENU_SWITCH_MACHINE, pet_r, ptr->desc);
+         break;
       default:
          item = NULL;
          break;
@@ -2360,6 +2386,65 @@ static void menu_build_machine_switch(struct menu_item* parent) {
   free_machines(head);
 }
 
+struct menu_item* add_joyport_options(struct menu_item* parent, int port) {
+  int menu_id;
+  switch (port) {
+     case 1:
+       menu_id = MENU_JOYSTICK_PORT_1;
+       break;
+     case 2:
+       menu_id = MENU_JOYSTICK_PORT_2;
+       break;
+     case 3:
+       menu_id = MENU_JOYSTICK_PORT_3;
+       break;
+     case 4:
+       menu_id = MENU_JOYSTICK_PORT_4;
+       break;
+     default:
+       assert(0);
+  }
+
+  struct menu_item* child = ui_menu_add_multiple_choice(
+      menu_id, parent, "");
+  sprintf (child->name, "Port %d", port);
+  child->num_choices = 14;
+  child->value = 0;
+  strcpy(child->choices[0], "None");
+  child->choice_ints[0] = JOYDEV_NONE;
+  strcpy(child->choices[1], "USB Gamepad 1");
+  child->choice_ints[1] = JOYDEV_USB_0;
+  strcpy(child->choices[2], "USB Gamepad 2");
+  child->choice_ints[2] = JOYDEV_USB_1;
+  strcpy(child->choices[3], "GPIO Bank 1");
+  child->choice_ints[3] = JOYDEV_GPIO_0;
+  strcpy(child->choices[4], "GPIO Bank 2");
+  child->choice_ints[4] = JOYDEV_GPIO_1;
+  strcpy(child->choices[5], "CURS + SPACE");
+  child->choice_ints[5] = JOYDEV_CURS_SP;
+  strcpy(child->choices[6], "NUMPAD 64825");
+  child->choice_ints[6] = JOYDEV_NUMS_1;
+  strcpy(child->choices[7], "NUMPAD 17930");
+  child->choice_ints[7] = JOYDEV_NUMS_2;
+  strcpy(child->choices[8], "CURS + LCTRL");
+  child->choice_ints[8] = JOYDEV_CURS_LC;
+  strcpy(child->choices[9], "USB Mouse (1351)");
+  child->choice_ints[9] = JOYDEV_MOUSE;
+  strcpy(child->choices[10], "Custom Keyset 1");
+  child->choice_ints[10] = JOYDEV_KEYSET1;
+  strcpy(child->choices[11], "Custom Keyset 2");
+  child->choice_ints[11] = JOYDEV_KEYSET2;
+  strcpy(child->choices[12], "USB Gamepad 3");
+  child->choice_ints[12] = JOYDEV_USB_2;
+  strcpy(child->choices[13], "USB Gamepad 4");
+  child->choice_ints[13] = JOYDEV_USB_3;
+
+  if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU || port > 2) {
+     child->choice_disabled[9] = 1;
+  }
+  return child;
+}
+
 void build_menu(struct menu_item *root) {
   struct menu_item *parent;
   struct menu_item *video_parent;
@@ -2370,7 +2455,17 @@ void build_menu(struct menu_item *root) {
   int dev;
   int i;
   int j;
+  int k;
   int tmp;
+
+  for (int k = 0; k < MAX_USB_DEVICES; k++) {
+     sprintf (usb_btn_name[k], "usb_btn_%d", k);
+     sprintf (usb_pref_name[k], "usb_%d", k);
+     sprintf (usb_x_name[k], "usb_x_%d", k);
+     sprintf (usb_y_name[k], "usb_y_%d", k);
+     sprintf (usb_x_t_name[k], "usb_x_t_%d", k);
+     sprintf (usb_y_t_name[k], "usb_y_t_%d", k);
+  }
 
   emux_load_additional_settings();
 
@@ -2416,6 +2511,10 @@ void build_menu(struct menu_item *root) {
     strcat(machine_info_txt,"PLUS/4 ");
     strcpy(machine_sub_dir, "/PLUS4");
     break;
+  case BMC64_MACHINE_CLASS_PET:
+    strcat(machine_info_txt,"PET ");
+    strcpy(machine_sub_dir, "/PET");
+    break;
   default:
     strcat(machine_info_txt,"??? ");
     break;
@@ -2427,24 +2526,61 @@ void build_menu(struct menu_item *root) {
   strcat(current_dir_names[DIR_SNAPS],machine_sub_dir);
   strcpy(current_dir_names[DIR_ROMS], machine_sub_dir);
 
+  char scratch[16];
   switch (circle_get_machine_timing()) {
   case MACHINE_TIMING_NTSC_HDMI:
     strcat(machine_info_txt, "NTSC 60Hz HDMI");
     break;
-  case MACHINE_TIMING_NTSC_COMPOSITE:
-    strcat(machine_info_txt, "NTSC 60Hz Composite");
+  case MACHINE_TIMING_NTSC_DPI:
+    strcat(machine_info_txt, "NTSC 60Hz DPI");
     break;
-  case MACHINE_TIMING_NTSC_CUSTOM:
-    strcat(machine_info_txt, "NTSC 60Hz Custom");
+  case MACHINE_TIMING_NTSC_COMPOSITE:
+  case MACHINE_TIMING_NTSC_CUSTOM_HDMI:
+  case MACHINE_TIMING_NTSC_CUSTOM_DPI:
+    strcat(machine_info_txt, "NTSC ");
+    sprintf (scratch,"%.3f", emux_calculate_fps());
+    strcat (machine_info_txt, scratch);
+    strcat(machine_info_txt, "Hz ");
+    switch (circle_get_machine_timing()) {
+      case MACHINE_TIMING_NTSC_COMPOSITE:
+        strcat(machine_info_txt, "Composite");
+        break;
+      case MACHINE_TIMING_NTSC_CUSTOM_HDMI:
+        strcat(machine_info_txt, "Custom HDMI");
+        break;
+      case MACHINE_TIMING_NTSC_CUSTOM_DPI:
+        strcat(machine_info_txt, "Custom DPI");
+        break;
+      default:
+        break;
+    }
     break;
   case MACHINE_TIMING_PAL_HDMI:
     strcat(machine_info_txt, "PAL 50Hz HDMI");
     break;
-  case MACHINE_TIMING_PAL_COMPOSITE:
-    strcat(machine_info_txt, "PAL 50Hz Composite");
+  case MACHINE_TIMING_PAL_DPI:
+    strcat(machine_info_txt, "PAL 50Hz DPI");
     break;
-  case MACHINE_TIMING_PAL_CUSTOM:
-    strcat(machine_info_txt, "PAL 50Hz Custom");
+  case MACHINE_TIMING_PAL_COMPOSITE:
+  case MACHINE_TIMING_PAL_CUSTOM_HDMI:
+  case MACHINE_TIMING_PAL_CUSTOM_DPI:
+    strcat(machine_info_txt, "PAL ");
+    sprintf (scratch,"%.3f", emux_calculate_fps());
+    strcat (machine_info_txt, scratch);
+    strcat(machine_info_txt, "Hz ");
+    switch (circle_get_machine_timing()) {
+      case MACHINE_TIMING_PAL_COMPOSITE:
+        strcat(machine_info_txt, "Composite");
+        break;
+      case MACHINE_TIMING_PAL_CUSTOM_HDMI:
+        strcat(machine_info_txt, "Custom HDMI");
+        break;
+      case MACHINE_TIMING_PAL_CUSTOM_DPI:
+        strcat(machine_info_txt, "Custom DPI");
+        break;
+      default:
+        break;
+    }
     break;
   default:
     strcat(machine_info_txt, "Error");
@@ -2458,10 +2594,15 @@ void build_menu(struct menu_item *root) {
 
   ui_menu_add_divider(root);
 
-  if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
-     ui_menu_add_button(MENU_AUTOSTART, root, "Load Prg...");
-  } else {
+  switch (emux_machine_class) {
+    case BMC64_MACHINE_CLASS_PLUS4EMU:
+     ui_menu_add_button(MENU_LOADPRG, root, "Load .PRG File...");
+     break;
+    case BMC64_MACHINE_CLASS_PET:
+     break;
+    default:
      ui_menu_add_button(MENU_AUTOSTART, root, "Autostart Prg/Disk...");
+     break;
   }
 
   machine_parent = ui_menu_add_folder(root, "Machine");
@@ -2472,7 +2613,7 @@ void build_menu(struct menu_item *root) {
 
     parent = ui_menu_add_folder(drive_parent, "Drive 8");
 
-    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
+    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 && emux_machine_class != BMC64_MACHINE_CLASS_PET) {
      emux_get_int_1(Setting_IECDeviceN, &tmp, 8);
      ui_menu_add_toggle(MENU_IECDEVICE_8, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_8, parent, "Select IEC Dir...");
@@ -2488,7 +2629,7 @@ void build_menu(struct menu_item *root) {
   // More than 1 drive costs too much. Limit to drive 8.
   if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
     parent = ui_menu_add_folder(drive_parent, "Drive 9");
-    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
+    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 && emux_machine_class != BMC64_MACHINE_CLASS_PET) {
      emux_get_int_1(Setting_IECDeviceN, &tmp, 9);
      ui_menu_add_toggle(MENU_IECDEVICE_9, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_9, parent, "Select IEC Dir...");
@@ -2502,7 +2643,7 @@ void build_menu(struct menu_item *root) {
     }
 
     parent = ui_menu_add_folder(drive_parent, "Drive 10");
-    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
+    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 && emux_machine_class != BMC64_MACHINE_CLASS_PET) {
      emux_get_int_1(Setting_IECDeviceN, &tmp, 10);
      ui_menu_add_toggle(MENU_IECDEVICE_10, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_10, parent, "Select IEC Dir...");
@@ -2515,7 +2656,7 @@ void build_menu(struct menu_item *root) {
     }
 
     parent = ui_menu_add_folder(drive_parent, "Drive 11");
-    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20) {
+    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 && emux_machine_class != BMC64_MACHINE_CLASS_PET) {
      emux_get_int_1(Setting_IECDeviceN, &tmp, 11);
      ui_menu_add_toggle(MENU_IECDEVICE_11, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_11, parent, "Select IEC Dir...");
@@ -2571,9 +2712,13 @@ void build_menu(struct menu_item *root) {
 
   ui_menu_add_divider(root);
 
-  parent = ui_menu_add_folder(root, "Snapshots");
-  ui_menu_add_button(MENU_LOAD_SNAP, parent, "Load Snapshot...");
-  ui_menu_add_button(MENU_SAVE_SNAP, parent, "Save Snapshot...");
+  // TODO: Load/Save snapshot on PET is crashy. Figure out if upstream
+  // has fixed this.
+  if (emux_machine_class != BMC64_MACHINE_CLASS_PET) {
+     parent = ui_menu_add_folder(root, "Snapshots");
+     ui_menu_add_button(MENU_LOAD_SNAP, parent, "Load Snapshot...");
+     ui_menu_add_button(MENU_SAVE_SNAP, parent, "Save Snapshot...");
+  }
 
   video_parent = parent = ui_menu_add_folder(root, "Video");
 
@@ -2657,7 +2802,7 @@ void build_menu(struct menu_item *root) {
       ui_menu_add_range(MENU_V_BORDER_0, parent, "V Border Trim %",
           0, 100, 1, defaultVBorderTrim);
   child = aspect_item_0 =
-      ui_menu_add_range(MENU_ASPECT_0, parent, "Aspect Ratio",
+      ui_menu_add_range(MENU_ASPECT_0, parent, "H Stretch Factor",
            100, 180, 1, defaultAspect);
   child->divisor = 100;
 
@@ -2704,8 +2849,10 @@ void build_menu(struct menu_item *root) {
      child->divisor = 100;
   }
 
-  ui_menu_add_button(MENU_CALC_TIMING, video_parent,
-                     "Custom HDMI mode timing calc...");
+  if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
+     ui_menu_add_button(MENU_CALC_TIMING, video_parent,
+                     "Custom HDMI/DPI mode timing calc...");
+  }
 
   parent = ui_menu_add_folder(root, "Sound");
 
@@ -2767,90 +2914,36 @@ void build_menu(struct menu_item *root) {
       ui_menu_add_button(MENU_SWAP_JOYSTICKS, parent, "Swap Joystick Ports");
   }
 
-  child = port_1_menu_item = ui_menu_add_multiple_choice(
-      MENU_JOYSTICK_PORT_1, parent, "Port 1");
-  child->num_choices = 12;
-  child->value = 0;
-  strcpy(child->choices[0], "None");
-  child->choice_ints[0] = JOYDEV_NONE;
-  strcpy(child->choices[1], "USB Gamepad 1");
-  child->choice_ints[1] = JOYDEV_USB_0;
-  strcpy(child->choices[2], "USB Gamepad 2");
-  child->choice_ints[2] = JOYDEV_USB_1;
-  strcpy(child->choices[3], "GPIO Bank 1");
-  child->choice_ints[3] = JOYDEV_GPIO_0;
-  strcpy(child->choices[4], "GPIO Bank 2");
-  child->choice_ints[4] = JOYDEV_GPIO_1;
-  strcpy(child->choices[5], "CURS + SPACE");
-  child->choice_ints[5] = JOYDEV_CURS_SP;
-  strcpy(child->choices[6], "NUMPAD 64825");
-  child->choice_ints[6] = JOYDEV_NUMS_1;
-  strcpy(child->choices[7], "NUMPAD 17930");
-  child->choice_ints[7] = JOYDEV_NUMS_2;
-  strcpy(child->choices[8], "CURS + LCTRL");
-  child->choice_ints[8] = JOYDEV_CURS_LC;
-  strcpy(child->choices[9], "USB Mouse (1351)");
-  child->choice_ints[9] = JOYDEV_MOUSE;
-  strcpy(child->choices[10], "Custom Keyset 1");
-  child->choice_ints[10] = JOYDEV_KEYSET1;
-  strcpy(child->choices[11], "Custom Keyset 2");
-  child->choice_ints[11] = JOYDEV_KEYSET2;
-
-  if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
-     child->choice_disabled[9] = 1;
+  port_1_menu_item = NULL;
+  if (emu_get_num_joysticks() > 0) {
+    port_1_menu_item = add_joyport_options(parent, 1);
   }
-
+  port_2_menu_item = NULL;
   if (emu_get_num_joysticks() > 1) {
-    child = port_2_menu_item = ui_menu_add_multiple_choice(
-        MENU_JOYSTICK_PORT_2, parent, "Port 2");
-    child->num_choices = 12;
-    child->value = 0;
-    strcpy(child->choices[0], "None");
-    child->choice_ints[0] = JOYDEV_NONE;
-    strcpy(child->choices[1], "USB Gamepad 1");
-    child->choice_ints[1] = JOYDEV_USB_0;
-    strcpy(child->choices[2], "USB Gamepad 2");
-    child->choice_ints[2] = JOYDEV_USB_1;
-    strcpy(child->choices[3], "GPIO Bank 1");
-    child->choice_ints[3] = JOYDEV_GPIO_0;
-    strcpy(child->choices[4], "GPIO Bank 2");
-    child->choice_ints[4] = JOYDEV_GPIO_1;
-    strcpy(child->choices[5], "CURS + SPACE");
-    child->choice_ints[5] = JOYDEV_CURS_SP;
-    strcpy(child->choices[6], "NUMPAD 64825");
-    child->choice_ints[6] = JOYDEV_NUMS_1;
-    strcpy(child->choices[7], "NUMPAD 17930");
-    child->choice_ints[7] = JOYDEV_NUMS_2;
-    strcpy(child->choices[8], "CURS + LCTRL");
-    child->choice_ints[8] = JOYDEV_CURS_LC;
-    strcpy(child->choices[9], "USB Mouse (1351)");
-    child->choice_ints[9] = JOYDEV_MOUSE;
-    strcpy(child->choices[10], "Custom Keyset 1");
-    child->choice_ints[10] = JOYDEV_KEYSET1;
-    strcpy(child->choices[11], "Custom Keyset 2");
-    child->choice_ints[11] = JOYDEV_KEYSET2;
+    port_2_menu_item = add_joyport_options(parent, 2);
+  }
+  port_3_menu_item = NULL;
+  port_4_menu_item = NULL;
 
-    if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
-       child->choice_disabled[9] = 1;
-    }
+  emux_add_userport_joys(parent);
+
+  ui_menu_add_button(MENU_USB_0_CONFIGURE, parent, "Configure USB Gamepad 1...");
+  ui_menu_add_button(MENU_USB_1_CONFIGURE, parent, "Configure USB Gamepad 2...");
+  ui_menu_add_button(MENU_USB_2_CONFIGURE, parent, "Configure USB Gamepad 3...");
+  ui_menu_add_button(MENU_USB_3_CONFIGURE, parent, "Configure USB Gamepad 4...");
+
+  for (int k = 0; k < MAX_USB_DEVICES; k++) {
+    usb_pref[k] = 0;
+    usb_x_axis[k] = 0;
+    usb_y_axis[k] = 1;
+    usb_x_thresh[k] = .50;
+    usb_y_thresh[k] = .50;
   }
 
-  ui_menu_add_button(MENU_CONFIGURE_USB_0, parent, "Configure USB Joy 1...");
-  ui_menu_add_button(MENU_CONFIGURE_USB_1, parent, "Configure USB Joy 2...");
-
-  usb_pref_0 = 0;
-  usb_pref_1 = 0;
-  usb_x_axis_0 = 0;
-  usb_y_axis_0 = 1;
-  usb_x_axis_1 = 0;
-  usb_y_axis_1 = 1;
-  usb_x_thresh_0 = .50;
-  usb_y_thresh_0 = .50;
-  usb_x_thresh_1 = .50;
-  usb_y_thresh_1 = .50;
   for (j = 0; j < MAX_USB_BUTTONS; j++) {
-    usb_0_button_assignments[j] = (j == 0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
-    usb_1_button_assignments[j] = (j == 0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
+    for (k = 0; k < MAX_USB_DEVICES; k++) {
+      usb_button_assignments[k][j] = (j == 0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
+    }
     usb_button_bits[j] = 1 << j;
   }
 
@@ -2898,7 +2991,7 @@ void build_menu(struct menu_item *root) {
      child->num_choices = 4;
 #endif
      child->value = 0;
-     strcpy(child->choices[0], "(Disabled)");
+     strcpy(child->choices[0], "Disabled");
      strcpy(child->choices[1], "#1 (Nav+Joy)");
      strcpy(child->choices[2], "#2 (Kyb+Joy)");
      strcpy(child->choices[3], "#3 (Waveshare Hat)");
@@ -2912,6 +3005,12 @@ void build_menu(struct menu_item *root) {
 #if defined(RASPI_C64)
      child->choice_ints[4] = GPIO_CONFIG_USERPORT;
 #endif
+
+  if (!circle_gpio_enabled()) {
+     child->choice_disabled[1] = 1;
+     child->choice_disabled[2] = 1;
+     child->choice_disabled[3] = 1;
+  }
 
   warp_item = ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
 
@@ -2939,6 +3038,7 @@ void build_menu(struct menu_item *root) {
   }
   ui_set_hotkeys();
   ui_set_joy_devs();
+  ui_set_joy_items();
 
   emux_apply_video_adjustments(FB_LAYER_VIC,
      h_center_item_0->value,
@@ -3116,6 +3216,8 @@ int emu_get_gpio_config() {
 int emu_get_num_joysticks(void) {
   if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20) {
     return 1;
+  } else if (emux_machine_class == BMC64_MACHINE_CLASS_PET) {
+    return 0;
   }
   return 2;
 }

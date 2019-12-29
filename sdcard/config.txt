@@ -2,6 +2,13 @@
 # Bare Metal Commodore 64 Emulator For The Raspberry Pi
 #
 
+# uncomment scaling_kernel and set the desired value if you want to
+# change the scaling that affects the overall sharpness of the picture.
+# 8 = NEAREST NEIGHBOUR - sharp edges
+# 2 = SINC_BLACKMAN - good looking compromise
+# 6 = HAMMING - soft edges (default)
+#scaling_kernel=2
+
 # NOTE: Since v3.0, the video settings here and the
 # accompanying cmdline.txt settings are configured by
 # machines.txt. See README.md for how to switch

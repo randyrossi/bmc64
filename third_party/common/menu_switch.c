@@ -32,6 +32,8 @@
 #include <ctype.h>
 #include <unistd.h>
 
+#include "circle.h"
+
 #define OPTION_SCRATCH_LEN (KEY_LEN+1+VALUE_LEN+1)
 
 #define ERROR_1 1
@@ -44,6 +46,33 @@
 #define ERROR_8 128
 #define ERROR_9 256
 #define ERROR_10 512
+
+struct s_cfg_flags {
+  // Have flags for cmdline.txt
+  int have_cycles_per_second;
+  int have_machine_timing;
+  int have_serial;
+  int have_demo;
+  int have_audio_out;
+  int have_disk_partition;
+  int have_enable_dpi;
+
+  // Have flags for config.txt
+  int have_kernel;
+  int have_hdmi_timings;
+  int have_cvt;
+  int have_dpi_timings;
+  int have_enable_dpi_lcd;
+  int have_display_default_lcd;
+  int have_dpi_group;
+  int have_dpi_mode;
+  int have_dpi_output_format;
+
+  // Since kernel comes and goes, need this flag
+  // to know whether it should be added if not
+  // already present to config.txt
+  int need_kernel;
+};
 
 static int entry_id;
 
@@ -134,6 +163,8 @@ static int new_section(struct machine_entry** new_section, char* line) {
      entry->class = BMC64_MACHINE_CLASS_PLUS4;
   else if (strcasecmp(video_nam,"plus4emu") == 0)
      entry->class = BMC64_MACHINE_CLASS_PLUS4EMU;
+  else if (strcasecmp(video_nam,"pet") == 0)
+     entry->class = BMC64_MACHINE_CLASS_PET;
 
   if (strcasecmp(video_std,"ntsc") == 0)
      entry->video_standard = BMC64_VIDEO_STANDARD_NTSC;
@@ -144,6 +175,8 @@ static int new_section(struct machine_entry** new_section, char* line) {
      entry->video_out = BMC64_VIDEO_OUT_HDMI;
   else if (strcasecmp(video_out,"composite") == 0)
      entry->video_out = BMC64_VIDEO_OUT_COMPOSITE;
+  else if (strcasecmp(video_out,"dpi") == 0)
+     entry->video_out = BMC64_VIDEO_OUT_DPI;
 
   *new_section = entry;
   return 0;
@@ -260,12 +293,10 @@ static struct machine_option* find_option(char *key, struct machine_option *head
 // than those found in the options list for the machine
 // entry.  However, the following options will be removed
 // unless machine_timing=hdmi-custom or pal-custom is set:
-// hdmi_cvt, hdmi_timings
+// hdmi_cvt, hdmi_timings, dpi_timings
 static void apply_override_s(char *line,
                              struct machine_entry *head, char* kernel_name,
-                             int need_kernel,
-                             int* have_kernel,
-                             int* have_timings, int* have_cvt, int is_custom) {
+                             struct s_cfg_flags* cfg_flags, int is_custom) {
   if (strlen(line) > 0 && line[0] != '#') {
     char *key = strtok(line, "=");
     char *value = strtok(NULL, "=");
@@ -275,9 +306,9 @@ static void apply_override_s(char *line,
 
     // If we find a kernal name, overwrite it now.
     if(strcmp(key, "kernel") == 0) {
-       if (need_kernel) {
+       if (cfg_flags->need_kernel) {
           snprintf(line, CONFIG_TXT_LINE_LEN, "kernel=%s\n",kernel_name);
-          *have_kernel = 1;
+          cfg_flags->have_kernel = 1;
        } else {
           line[0] = '\0';
        }
@@ -286,15 +317,65 @@ static void apply_override_s(char *line,
 
     // Make sure we remove custom hdmi stuff unless we are using a custom mode
     if(strcmp(key, "hdmi_timings") == 0) {
-       *have_timings = 1;
-       if (!is_custom) {
+       cfg_flags->have_hdmi_timings = 1;
+       if (!is_custom || head->video_out != BMC64_VIDEO_OUT_HDMI) {
+          cfg_flags->have_hdmi_timings = 0;
           line[0] = '\0';
           return;
        }
     }
     if(strcmp(key, "hdmi_cvt") == 0) {
-       *have_cvt = 1;
-       if (!is_custom) {
+       cfg_flags->have_cvt = 1;
+       if (!is_custom || head->video_out != BMC64_VIDEO_OUT_HDMI) {
+          cfg_flags->have_cvt = 0;
+          line[0] = '\0';
+          return;
+       }
+    }
+    if(strcmp(key, "dpi_timings") == 0) {
+       cfg_flags->have_dpi_timings = 1;
+       if (!is_custom || head->video_out != BMC64_VIDEO_OUT_DPI) {
+          cfg_flags->have_dpi_timings = 0;
+          line[0] = '\0';
+          return;
+       }
+    }
+    if(strcmp(key, "enable_dpi_lcd") == 0) {
+       cfg_flags->have_enable_dpi_lcd = 1;
+       if (head->video_out != BMC64_VIDEO_OUT_DPI) {
+          cfg_flags->have_enable_dpi_lcd = 0;
+          line[0] = '\0';
+          return;
+       }
+    }
+    if(strcmp(key, "display_default_lcd") == 0) {
+       cfg_flags->have_display_default_lcd = 1;
+       if (head->video_out != BMC64_VIDEO_OUT_DPI) {
+          cfg_flags->have_display_default_lcd = 0;
+          line[0] = '\0';
+          return;
+       }
+    }
+    if(strcmp(key, "dpi_group") == 0) {
+       cfg_flags->have_dpi_group = 1;
+       if (head->video_out != BMC64_VIDEO_OUT_DPI) {
+          cfg_flags->have_dpi_group = 0;
+          line[0] = '\0';
+          return;
+       }
+    }
+    if(strcmp(key, "dpi_mode") == 0) {
+       cfg_flags->have_dpi_mode = 1;
+       if (head->video_out != BMC64_VIDEO_OUT_DPI) {
+          cfg_flags->have_dpi_mode = 0;
+          line[0] = '\0';
+          return;
+       }
+    }
+    if(strcmp(key, "dpi_output_format") == 0) {
+       cfg_flags->have_dpi_output_format = 1;
+       if (head->video_out != BMC64_VIDEO_OUT_DPI) {
+          cfg_flags->have_dpi_output_format = 0;
           line[0] = '\0';
           return;
        }
@@ -321,7 +402,8 @@ static void apply_override_s(char *line,
 // options are removed first:
 // cycles_per_second, cycles_per_refresh, machine_timing
 // serial, demo, audio_out, disk_partition
-static int apply_override_m(char *line, struct machine_entry *head) {
+static int apply_override_m(char *line, struct machine_entry *head,
+                            struct s_cfg_flags* cfg_flags) {
   if (strlen(line) > 0 && line[0] != '#') {
     char replacement[CONFIG_TXT_LINE_LEN];
     char new_option[OPTION_SCRATCH_LEN];
@@ -331,13 +413,6 @@ static int apply_override_m(char *line, struct machine_entry *head) {
     line = trim(line);
     int total = strlen(line);
     if (total == 0) return 0;
-
-    int have_cycles_per_second = 0;
-    int have_machine_timing = 0;
-    int have_serial = 0;
-    int have_demo = 0;
-    int have_audio_out = 0;
-    int have_disk_partition = 0;
 
     char *option = line;
     int pos = 0;
@@ -355,12 +430,13 @@ static int apply_override_m(char *line, struct machine_entry *head) {
       char *key = strtok(next_option, "=");
       char *value = strtok(NULL, "=");
 
-      if (strcmp(key,"cycles_per_second") == 0) { have_cycles_per_second = 1; }
-      if (strcmp(key,"machine_timing") == 0) { have_machine_timing = 1; }
-      if (strcmp(key,"serial") == 0) { have_serial = 1; }
-      if (strcmp(key,"demo") == 0) { have_demo = 1; }
-      if (strcmp(key,"audio_out") == 0) { have_audio_out = 1; }
-      if (strcmp(key,"disk_partition") == 0) { have_disk_partition = 1; }
+      if (strcmp(key,"cycles_per_second") == 0) { cfg_flags->have_cycles_per_second = 1; }
+      if (strcmp(key,"machine_timing") == 0) { cfg_flags->have_machine_timing = 1; }
+      if (strcmp(key,"serial") == 0) { cfg_flags->have_serial = 1; }
+      if (strcmp(key,"demo") == 0) { cfg_flags->have_demo = 1; }
+      if (strcmp(key,"audio_out") == 0) { cfg_flags->have_audio_out = 1; }
+      if (strcmp(key,"disk_partition") == 0) { cfg_flags->have_disk_partition = 1; }
+      if (strcmp(key,"enable_dpi") == 0) { cfg_flags->have_enable_dpi = 1; }
 
       struct machine_option* found = find_option(key, head->options);
       if (found) {
@@ -369,13 +445,15 @@ static int apply_override_m(char *line, struct machine_entry *head) {
          strcat(replacement, new_option);
          need_space=1;
       } else {
+         // Leave params we don't know about unchanged.
          if (strcmp(key,"cycles_per_refresh")!=0 &&
              strcmp(key,"cycles_per_second")!=0 &&
              strcmp(key,"machine_timing")!=0 &&
              strcmp(key,"serial")!=0 &&
              strcmp(key,"demo")!=0 &&
              strcmp(key,"audio_out")!=0 &&
-             strcmp(key,"disk_partition")!=0) {
+             strcmp(key,"disk_partition")!=0 &&
+             strcmp(key,"enable_dpi")!=0) {
             if (need_space) { strcat(replacement," "); }
             snprintf(new_option, OPTION_SCRATCH_LEN, "%s=%s", key, value);
             strcat(replacement, new_option);
@@ -386,7 +464,8 @@ static int apply_override_m(char *line, struct machine_entry *head) {
       option = line + pos;
     }
 
-    if (!have_cycles_per_second) {
+    // Now add params that should be present according to the entry.
+    if (!cfg_flags->have_cycles_per_second) {
        struct machine_option* found = find_option("cycles_per_second", head->options);
        if (found) {
           if (need_space) { strcat(replacement," "); }
@@ -395,7 +474,7 @@ static int apply_override_m(char *line, struct machine_entry *head) {
           need_space=1;
        }
     }
-    if (!have_machine_timing) {
+    if (!cfg_flags->have_machine_timing) {
        struct machine_option* found = find_option("machine_timing", head->options);
        if (found) {
           if (need_space) { strcat(replacement," "); }
@@ -404,7 +483,7 @@ static int apply_override_m(char *line, struct machine_entry *head) {
           need_space=1;
        }
     }
-    if (!have_serial) {
+    if (!cfg_flags->have_serial) {
        struct machine_option* found = find_option("serial", head->options);
        if (found) {
           if (need_space) { strcat(replacement," "); }
@@ -413,7 +492,7 @@ static int apply_override_m(char *line, struct machine_entry *head) {
           need_space=1;
        }
     }
-    if (!have_demo) {
+    if (!cfg_flags->have_demo) {
        struct machine_option* found = find_option("demo", head->options);
        if (found) {
           if (need_space) { strcat(replacement," "); }
@@ -422,7 +501,7 @@ static int apply_override_m(char *line, struct machine_entry *head) {
           need_space=1;
        }
     }
-    if (!have_audio_out) {
+    if (!cfg_flags->have_audio_out) {
        struct machine_option* found = find_option("audio_out", head->options);
        if (found) {
           if (need_space) { strcat(replacement," "); }
@@ -431,8 +510,17 @@ static int apply_override_m(char *line, struct machine_entry *head) {
           need_space=1;
        }
     }
-    if (!have_disk_partition) {
+    if (!cfg_flags->have_disk_partition) {
        struct machine_option* found = find_option("disk_partition", head->options);
+       if (found) {
+          if (need_space) { strcat(replacement," "); }
+          snprintf(new_option, OPTION_SCRATCH_LEN, "%s=%s", found->key, found->value);
+          strcat(replacement, new_option);
+          need_space=1;
+       }
+    }
+    if (!cfg_flags->have_enable_dpi) {
+       struct machine_option* found = find_option("enable_dpi", head->options);
        if (found) {
           if (need_space) { strcat(replacement," "); }
           snprintf(new_option, OPTION_SCRATCH_LEN, "%s=%s", found->key, found->value);
@@ -447,7 +535,7 @@ static int apply_override_m(char *line, struct machine_entry *head) {
   return 0;
 }
 
-int apply_cmdline(struct machine_entry* head) {
+static int apply_cmdline(struct machine_entry* head, struct s_cfg_flags *cfg_flags) {
   FILE* fp = fopen("/cmdline.txt","r");
   if (fp == NULL) {
      return ERROR_1;
@@ -464,7 +552,7 @@ int apply_cmdline(struct machine_entry* head) {
   while (fgets(line, CONFIG_TXT_LINE_LEN - 1, fp)) {
     if (feof(fp))
       break;
-    apply_override_m(line, head);
+    apply_override_m(line, head, cfg_flags);
     fprintf(fp2,"%s",line);
   }
 
@@ -483,7 +571,7 @@ int apply_cmdline(struct machine_entry* head) {
 // Reads config.txt and creates config.txt.new, overwriting
 // any config.txt related items from the machine_entry. If
 // kernel param is absent, it will be added.
-int apply_config(struct machine_entry* head, int pi_model) {
+static int apply_config(struct machine_entry* head, int pi_model, struct s_cfg_flags *cfg_flags) {
   char kernel_name[VALUE_LEN];
   switch (pi_model) {
     case 0:
@@ -519,6 +607,9 @@ int apply_config(struct machine_entry* head, int pi_model) {
      case BMC64_MACHINE_CLASS_PLUS4EMU:
         strcat(kernel_name,".plus4emu");
         break;
+     case BMC64_MACHINE_CLASS_PET:
+        strcat(kernel_name,".pet");
+        break;
      default:
         return ERROR_6;
    }
@@ -541,39 +632,69 @@ int apply_config(struct machine_entry* head, int pi_model) {
   }
 
   char line[CONFIG_TXT_LINE_LEN];
-  int have_kernel=0;
-  int need_kernel=head->class != BMC64_MACHINE_CLASS_C64;
-  int have_timings = 0;
-  int have_cvt = 0;
+  cfg_flags->need_kernel=head->class != BMC64_MACHINE_CLASS_C64;
   while (fgets(line, CONFIG_TXT_LINE_LEN - 1, fp)) {
     if (feof(fp))
       break;
 
-    apply_override_s(line, head, kernel_name, need_kernel, &have_kernel,
-                     &have_timings, &have_cvt, is_custom);
+    apply_override_s(line, head, kernel_name, cfg_flags, is_custom);
     fprintf(fp2,"%s",line);
   }
 
   // This may have been overwritten by the pass above. If not present, add
   // now.
-  if (!have_kernel && need_kernel) {
+  if (!cfg_flags->have_kernel && cfg_flags->need_kernel) {
     fprintf(fp2,"kernel=%s\n", kernel_name);
   }
 
   // Ensure we add custom timings if present.
   if (is_custom) {
-    if (!have_timings) {
+    if (!cfg_flags->have_hdmi_timings) {
        found = find_option("hdmi_timings", head->options);
        if (found) {
           fprintf(fp2,"hdmi_timings=%s\n", found->value);
        }
     }
-    if (!have_cvt) {
+    if (!cfg_flags->have_dpi_timings) {
+       found = find_option("dpi_timings", head->options);
+       if (found) {
+          fprintf(fp2,"dpi_timings=%s\n", found->value);
+       }
+    }
+    if (!cfg_flags->have_cvt) {
        found = find_option("hdmi_cvt", head->options);
        if (found) {
           fprintf(fp2,"hdmi_cvt=%s\n", found->value);
        }
     }
+  }
+
+  // Ensure we add dpi if necessary
+  if (head->video_out == BMC64_VIDEO_OUT_DPI) {
+     found = find_option("enable_dpi_lcd", head->options);
+     if (found) {
+        fprintf(fp2,"enable_dpi_lcd=%s\n", found->value);
+     }
+
+     found = find_option("display_default_lcd", head->options);
+     if (found) {
+        fprintf(fp2,"display_default_lcd=%s\n", found->value);
+     }
+
+     found = find_option("dpi_group", head->options);
+     if (found) {
+        fprintf(fp2,"dpi_group=%s\n", found->value);
+     }
+
+     found = find_option("dpi_mode", head->options);
+     if (found) {
+        fprintf(fp2,"dpi_mode=%s\n", found->value);
+     }
+
+     found = find_option("dpi_output_format", head->options);
+     if (found) {
+        fprintf(fp2,"dpi_output_format=%s\n", found->value);
+     }
   }
 
   fclose(fp);
@@ -586,4 +707,43 @@ int apply_config(struct machine_entry* head, int pi_model) {
     return ERROR_10;
   }
   return 0;
+}
+
+int switch_apply_files(struct machine_entry* head) {
+  struct s_cfg_flags cfg_flags;
+  memset(&cfg_flags, 0, sizeof(struct s_cfg_flags));
+
+  int status = apply_config(head, circle_get_model(), &cfg_flags);
+  status |= apply_cmdline(head, &cfg_flags);
+  return status;
+}
+
+void switch_safe() {
+  struct machine_entry* entry =
+     (struct machine_entry*) malloc(sizeof(struct machine_entry));
+
+  entry->id = 1;
+  entry->class = BMC64_MACHINE_CLASS_C64;
+  entry->video_standard = BMC64_VIDEO_STANDARD_PAL;
+  entry->video_out = BMC64_VIDEO_OUT_HDMI;
+  strcpy(entry->desc,"Safe");
+  entry->options = NULL;
+  entry->next = NULL;
+
+  char tmp[80];
+  strcpy (tmp,"disable_overscan=1");
+  append_to_section(entry, tmp);
+
+  strcpy (tmp,"sdtv_mode=18");
+
+  append_to_section(entry, tmp);
+  strcpy (tmp,"hdmi_group=1");
+
+  append_to_section(entry, tmp);
+  strcpy (tmp,"hdmi_mode=19");
+
+  append_to_section(entry, tmp);
+  strcpy (tmp,"machine_timing=ntsc-pal");
+
+  switch_apply_files(entry);
 }

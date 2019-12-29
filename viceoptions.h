@@ -34,6 +34,7 @@ public:
   const char *GetDiskVolume(void) const;
   unsigned long GetCyclesPerSecond(void) const;
   TVCHIQSoundDestination GetAudioOut(void) const;
+  bool DPIEnabled(void) const;
 
   static ViceOptions *Get(void);
 
@@ -58,6 +59,7 @@ private:
   char m_disk_volume[VOLUME_NAME_LEN];
   unsigned long m_nCyclesPerSecond;
   TVCHIQSoundDestination m_audioOut;
+  bool m_bDPIEnabled;
 
   static ViceOptions *s_pThis;
 };

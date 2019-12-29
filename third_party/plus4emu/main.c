@@ -625,9 +625,7 @@ int main_program(int argc, char **argv)
   strcpy (last_iec_dir, ".");
 
   int timing = circle_get_machine_timing();
-  if (timing == MACHINE_TIMING_NTSC_HDMI ||
-      timing == MACHINE_TIMING_NTSC_COMPOSITE ||
-      timing == MACHINE_TIMING_NTSC_CUSTOM) {
+  if (is_ntsc()) {
      vertical_res = 242;
      raster_low = 18;
   } else {
@@ -680,9 +678,7 @@ int main_program(int argc, char **argv)
   canvas_state[vic_canvas_index].gfx_w = 40*8;
   canvas_state[vic_canvas_index].gfx_h = 25*8;
 
-  if (timing == MACHINE_TIMING_NTSC_HDMI ||
-      timing == MACHINE_TIMING_NTSC_COMPOSITE ||
-      timing == MACHINE_TIMING_NTSC_CUSTOM) {
+  if (is_ntsc()) {
     canvas_state[vic_canvas_index].max_border_w = 32;
     canvas_state[vic_canvas_index].max_border_h = 22;
     timeAdvance = 1666;
@@ -963,8 +959,19 @@ void emux_show_cart_osd_menu(void) {
 }
 
 unsigned long emux_calculate_timing(double fps) {
+  // TODO: Enable custom timing calc in common when this if fixed.
+  return 0;
 }
 
+double emux_calculate_fps() {
+  // TODO: Enable custom timing calc in common when this if fixed.
+  if (is_ntsc()) {
+    return 60;
+  }
+  return 50;
+}
+
+// Not really an autostart, just loads .PRG. TODO: Rename this.
 int emux_autostart_file(char* filename) {
   if (Plus4VM_LoadProgram(vm, filename) != PLUS4EMU_SUCCESS) {
      return 1;
@@ -1502,4 +1509,7 @@ int emux_handle_loaded_setting(char *name, char* value_str, int value) {
 }
 
 void emux_load_settings_done(void) {
+}
+
+void emux_add_userport_joys(struct menu_item* parent) {
 }

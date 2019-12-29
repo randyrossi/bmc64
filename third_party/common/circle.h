@@ -37,14 +37,19 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
-#define MAX_JOY_PORTS 2
+#define MAX_USB_DEVICES 4
+#define MAX_JOY_PORTS 4
 
 #define MACHINE_TIMING_NTSC_HDMI 0
 #define MACHINE_TIMING_PAL_HDMI 1
 #define MACHINE_TIMING_NTSC_COMPOSITE 2
 #define MACHINE_TIMING_PAL_COMPOSITE 3
-#define MACHINE_TIMING_PAL_CUSTOM 4
-#define MACHINE_TIMING_NTSC_CUSTOM 5
+#define MACHINE_TIMING_PAL_CUSTOM_HDMI 4
+#define MACHINE_TIMING_NTSC_CUSTOM_HDMI 5
+#define MACHINE_TIMING_NTSC_DPI 6
+#define MACHINE_TIMING_PAL_DPI 7
+#define MACHINE_TIMING_PAL_CUSTOM_DPI 8
+#define MACHINE_TIMING_NTSC_CUSTOM_DPI 9
 
 #define FB_NUM_LAYERS   4
 #define FB_LAYER_VIC    0
@@ -101,7 +106,7 @@
 #define BTN_ASSIGN_RESET_HARD2 916
 #define BTN_ASSIGN_RESET_SOFT2 918
 
-#define JOYDEV_NUM_JOYDEVS 21
+#define JOYDEV_NUM_JOYDEVS 23
 #define JOYDEV_NONE 0
 #define JOYDEV_NUMPAD 1
 #define JOYDEV_KEYSET1 2
@@ -123,6 +128,8 @@
 #define JOYDEV_NUMS_2 18
 #define JOYDEV_CURS_LC 19
 #define JOYDEV_MOUSE 20
+#define JOYDEV_USB_2 21
+#define JOYDEV_USB_3 22
 
 #define GPIO_CONFIG_DISABLED -1
 #define GPIO_CONFIG_NAV_JOY 0
@@ -197,6 +204,7 @@ extern int circle_mount_usb(int usb);
 extern int circle_unmount_usb(int usb);
 extern void circle_set_volume(int value);
 extern int circle_get_model();
+extern int circle_gpio_enabled();
 
 extern int circle_sound_init(const char *param, int *speed, int *fragsize,
                         int *fragnr, int *channels);

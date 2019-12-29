@@ -279,3 +279,15 @@
 
   * Added disabled option to gpio config
   * Moved up to v40 of circle in prep for Pi4
+
+## 3.3
+  * Add PET emulator
+  * Add DPI support
+  * Add 2 more USB gamepads for user port joysticks
+  * Renamed menu label 'Aspect Ratio' to 'H Stretch Factor'
+  * Plus4Emu filter on PRG files for Load .PRG menu
+  * Fixed Composite out due to bootcode.bin/start.elf/fixup.dat files
+  * Removed custom HDMI timing from plus4emu until I can fix sound issues
+  * Removed incorrect 50.125hz VIC20 mode from machines.txt
+  * Menu shows actual fps for mode
+  * Virtual keyboard for PET does not work

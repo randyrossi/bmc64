@@ -1,3 +1,6 @@
+#ifndef BOOTSTAT_C128
+#define BOOTSTAT_C128
+
 int dflt_bootStatNum = 21;
 
 int dflt_bootStatWhat[] = {
@@ -70,3 +73,5 @@ int dflt_bootStatSize[] = {
     0,
     0
 };
+
+#endif

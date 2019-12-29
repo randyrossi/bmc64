@@ -44,6 +44,7 @@ typedef enum {
   BMC64_VIDEO_OUT_UNKNOWN,
   BMC64_VIDEO_OUT_HDMI,
   BMC64_VIDEO_OUT_COMPOSITE,
+  BMC64_VIDEO_OUT_DPI,
 } BMC64VideoOut;
 
 struct machine_option {
@@ -64,7 +65,8 @@ struct machine_entry {
 
 int load_machines(struct machine_entry** head);
 void free_machines(struct machine_entry* head);
-int apply_config(struct machine_entry* head, int pi_model);
-int apply_cmdline(struct machine_entry* head);
+int switch_apply_files(struct machine_entry* ptr);
 
+// Apply a safe HDMI video mode
+void switch_safe();
 #endif

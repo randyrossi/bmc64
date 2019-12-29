@@ -59,10 +59,8 @@ static unsigned int mike_pal_color_palette[] = {
    0xE0,0x9F,0xFF, 0x8F,0xE4,0x93, 0x82,0x90,0xFF, 0xE5,0xDE,0x85,
 };
 
-void set_refresh_rate(int timing, struct video_canvas_s *canvas) {
-  if (timing == MACHINE_TIMING_NTSC_HDMI ||
-      timing == MACHINE_TIMING_NTSC_COMPOSITE ||
-      timing == MACHINE_TIMING_NTSC_CUSTOM) {
+void set_refresh_rate(struct video_canvas_s *canvas) {
+  if (is_ntsc()) {
     canvas->refreshrate = VIC20_NTSC_RFSH_PER_SEC;
   } else {
     canvas->refreshrate = VIC20_PAL_RFSH_PER_SEC;
@@ -94,5 +92,22 @@ unsigned int *raspi_get_palette(int index) {
     break;
   default:
     return NULL;
+  }
+}
+
+void set_canvas_size(int index, int *w, int *h, int *gw, int *gh) {
+  *w = 448;
+  *h = 284;
+  *gw = 22*8*2;
+  *gh = 23*8;
+}
+
+void set_canvas_borders(int index, int *w, int *h) {
+  if (is_ntsc()) {
+      *w = 40;
+      *h = 22;
+  } else {
+      *w = 96;
+      *h = 48;
   }
 }

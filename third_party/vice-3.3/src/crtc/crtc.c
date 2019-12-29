@@ -756,10 +756,15 @@ static void crtc_raster_draw_alarm_handler(CLOCK offset, void *data)
 
                 /* cycles per frame, for speed adjustments */
                 cycles = crtc.rl_start - crtc.frame_start;
+#ifndef RASPI_COMPILE
+                // RASPI: Don't make adjustments to cycles per frame. Our
+                // calculations for raspi should be correct for the fps
+                // that is always consistent for the selected video mode.
                 if (crtc.frame_start && (cycles != crtc.cycles_per_frame)) {
                     machine_set_cycles_per_frame(cycles);
                     crtc.cycles_per_frame = cycles;
                 }
+#endif
                 crtc.frame_start = crtc.rl_start;
             } else {
                 crtc.raster.ycounter++;

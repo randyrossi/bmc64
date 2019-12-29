@@ -241,6 +241,10 @@ void circle_set_volume(int value) {
 int circle_get_model() {
   return static_kernel->circle_get_model();
 }
+
+int circle_gpio_enabled() {
+  return static_kernel->circle_gpio_enabled();
+}
 };
 
 CKernel::CKernel(void)
@@ -402,11 +406,11 @@ if (static_kernel->circle_get_ticks() - entry_start >= entry_delay) {
 
   static int dpad_to_joy[8] = {0x01, 0x09, 0x08, 0x0a, 0x02, 0x06, 0x04, 0x05};
 
-  static unsigned int prev_buttons[2] = {0, 0};
-  static int prev_dpad[2] = {8, 8};
-  static int prev_axes_dirs[2][12] = {{0, 0, 0, 0}, {0, 0, 0, 0}};
+  static unsigned int prev_buttons[MAX_USB_DEVICES] = {0, 0, 0, 0};
+  static int prev_dpad[MAX_USB_DEVICES] = {8, 8, 8, 8};
+  static int prev_axes_dirs[MAX_USB_DEVICES][4] = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
 
-  if (nDeviceIndex >= 2)
+  if (nDeviceIndex >= MAX_USB_DEVICES)
     return;
 
   if (emu_wants_raw_usb()) {
@@ -575,10 +579,10 @@ ViceApp::TShutdownMode CKernel::Run(void) {
   emu_set_demo_mode(mViceOptions.GetDemoMode());
 
   unsigned num_pads = 0;
-  int num_buttons[2] = {0, 0};
-  int num_axes[2] = {0, 0};
-  int num_hats[2] = {0, 0};
-  while (num_pads < 2) {
+  int num_buttons[MAX_USB_DEVICES] = {0, 0, 0, 0};
+  int num_axes[MAX_USB_DEVICES] = {0, 0, 0, 0};
+  int num_hats[MAX_USB_DEVICES] = {0, 0, 0, 0};
+  while (num_pads < MAX_USB_DEVICES) {
     CString DeviceName;
     DeviceName.Format("upad%u", num_pads + 1);
 
@@ -1209,7 +1213,8 @@ void CKernel::circle_boot_complete() { DisableBootStat(); }
 
 #if defined(RASPI_PLUS4) | defined(RASPI_PLUS4EMU)
 int CKernel::circle_cycles_per_second() {
-  if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_HDMI) {
+  int timing = circle_get_machine_timing();
+  if (timing == MACHINE_TIMING_NTSC_HDMI || timing == MACHINE_TIMING_NTSC_DPI) {
     // 60hz
     return 1792080;
   } else if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_COMPOSITE) {
@@ -1217,17 +1222,17 @@ int CKernel::circle_cycles_per_second() {
     // sync frequency on composite is 60.053. See c64.h for how this is
     // calculated. This keeps audio buffer to a minimum using ReSid.
     return 1793672;
-  } else if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_CUSTOM) {
+  } else if (timing == MACHINE_TIMING_NTSC_CUSTOM_HDMI || timing == MACHINE_TIMING_NTSC_CUSTOM_DPI) {
     return mViceOptions.GetCyclesPerSecond();
-  } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_HDMI) {
+  } else if (timing == MACHINE_TIMING_PAL_HDMI) {
     // 50hz
     return 1778400;
-  } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_COMPOSITE) {
+  } else if (timing == MACHINE_TIMING_PAL_COMPOSITE) {
     // Actual C64's PAL Composite frequency is 50.125 but the Pi's vertical
     // sync frequency on composite is 50.0816. See c64.h for how this is
     // calculated.  This keep audio buffer to a minimum using ReSid.
     return 1781245;
-  } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_CUSTOM) {
+  } else if (timing == MACHINE_TIMING_PAL_CUSTOM_HDMI || timing == MACHINE_TIMING_PAL_CUSTOM_DPI) {
     return mViceOptions.GetCyclesPerSecond();
   } else {
     return 1778400;
@@ -1235,25 +1240,26 @@ int CKernel::circle_cycles_per_second() {
 }
 #elif defined(RASPI_VIC20)
 int CKernel::circle_cycles_per_second() {
-  if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_HDMI) {
+  int timing = circle_get_machine_timing();
+  if (timing == MACHINE_TIMING_NTSC_HDMI) {
     // 60hz
     return 1017900;
-  } else if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_COMPOSITE) {
+  } else if (timing == MACHINE_TIMING_NTSC_COMPOSITE) {
     // Actual C64's NTSC Composite frequency is 59.826 but the Pi's vertical
     // sync frequency on composite is 60.053. See c64.h for how this is
     // calculated. This keeps audio buffer to a minimum using ReSid.
     return 1018804;
-  } else if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_CUSTOM) {
+  } else if (timing == MACHINE_TIMING_NTSC_CUSTOM_HDMI || timing == MACHINE_TIMING_NTSC_CUSTOM_DPI) {
     return mViceOptions.GetCyclesPerSecond();
-  } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_HDMI) {
+  } else if (timing == MACHINE_TIMING_PAL_HDMI) {
     // 50hz
     return 1107600;
-  } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_COMPOSITE) {
+  } else if (timing == MACHINE_TIMING_PAL_COMPOSITE) {
     // Actual C64's PAL Composite frequency is 50.125 but the Pi's vertical
     // sync frequency on composite is 50.0816. See c64.h for how this is
     // calculated.  This keep audio buffer to a minimum using ReSid.
     return 1109372;
-  } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_CUSTOM) {
+  } else if (timing == MACHINE_TIMING_PAL_CUSTOM_HDMI || timing == MACHINE_TIMING_PAL_CUSTOM_DPI) {
     return mViceOptions.GetCyclesPerSecond();
   } else {
     return 1017900;
@@ -1261,28 +1267,56 @@ int CKernel::circle_cycles_per_second() {
 }
 #elif defined(RASPI_C64) | defined(RASPI_C128)
 int CKernel::circle_cycles_per_second() {
-  if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_HDMI) {
+  int timing = circle_get_machine_timing();
+  if (timing == MACHINE_TIMING_NTSC_HDMI) {
     // 60hz
     return 1025700;
-  } else if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_COMPOSITE) {
+  } else if (timing == MACHINE_TIMING_NTSC_COMPOSITE) {
     // Actual C64's NTSC Composite frequency is 59.826 but the Pi's vertical
     // sync frequency on composite is 60.053. See c64.h for how this is
     // calculated. This keeps audio buffer to a minimum using ReSid.
     return 1026611;
-  } else if (circle_get_machine_timing() == MACHINE_TIMING_NTSC_CUSTOM) {
+  } else if (timing == MACHINE_TIMING_NTSC_CUSTOM_HDMI || timing == MACHINE_TIMING_NTSC_CUSTOM_DPI) {
     return mViceOptions.GetCyclesPerSecond();
-  } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_HDMI) {
+  } else if (timing == MACHINE_TIMING_PAL_HDMI) {
     // 50hz
     return 982800;
-  } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_COMPOSITE) {
+  } else if (timing == MACHINE_TIMING_PAL_COMPOSITE) {
     // Actual C64's PAL Composite frequency is 50.125 but the Pi's vertical
     // sync frequency on composite is 50.0816. See c64.h for how this is
     // calculated.  This keep audio buffer to a minimum using ReSid.
     return 984404;
-  } else if (circle_get_machine_timing() == MACHINE_TIMING_PAL_CUSTOM) {
+  } else if (timing == MACHINE_TIMING_PAL_CUSTOM_HDMI || timing == MACHINE_TIMING_PAL_CUSTOM_DPI) {
     return mViceOptions.GetCyclesPerSecond();
   } else {
     return 982800;
+  }
+}
+#elif defined(RASPI_PET)
+int CKernel::circle_cycles_per_second() {
+  int timing = circle_get_machine_timing();
+  if (timing == MACHINE_TIMING_NTSC_HDMI) {
+    // 60hz
+    return 1013760;
+  } else if (timing == MACHINE_TIMING_NTSC_COMPOSITE) {
+    // Actual C64's NTSC Composite frequency is 59.826 but the Pi's vertical
+    // sync frequency on composite is 60.053. See c64.h for how this is
+    // calculated. This keeps audio buffer to a minimum using ReSid.
+    return 1014661;
+  } else if (timing == MACHINE_TIMING_NTSC_CUSTOM_HDMI || timing == MACHINE_TIMING_NTSC_CUSTOM_DPI) {
+    return mViceOptions.GetCyclesPerSecond();
+  } else if (timing == MACHINE_TIMING_PAL_HDMI) {
+    // 50hz
+    return 1001600;
+  } else if (timing == MACHINE_TIMING_PAL_COMPOSITE) {
+    // Actual C64's PAL Composite frequency is 50.125 but the Pi's vertical
+    // sync frequency on composite is 50.0816. See c64.h for how this is
+    // calculated.  This keep audio buffer to a minimum using ReSid.
+    return 1003202;
+  } else if (timing == MACHINE_TIMING_PAL_CUSTOM_HDMI || timing == MACHINE_TIMING_PAL_CUSTOM_DPI) {
+    return mViceOptions.GetCyclesPerSecond();
+  } else {
+    return 1000000;
   }
 }
 #else
@@ -1380,4 +1414,9 @@ void CKernel::circle_set_volume(int value) {
 
 int CKernel::circle_get_model() {
   return mMachineInfo.GetModelMajor();
+}
+
+int CKernel::circle_gpio_enabled() {
+  // When DPI is enabled, GPIO scanning must be disabled.
+  return mViceOptions.DPIEnabled() == 0;
 }

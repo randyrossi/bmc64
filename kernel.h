@@ -112,6 +112,7 @@ public:
   int circle_cycles_per_second();
   void circle_set_volume(int value);
   int circle_get_model();
+  int circle_gpio_enabled();
 
 private:
   void InitSound();

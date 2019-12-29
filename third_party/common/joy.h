@@ -32,7 +32,6 @@
 #define MAX_USB_BUTTONS 16
 #define MAX_USB_AXES 16
 #define MAX_USB_HATS 6
-#define MAX_USB_PADS 2
 
 int joy_arch_init(void);
 
@@ -46,10 +45,10 @@ extern void new_joystick_close(void);
 extern void new_joystick(void);
 
 extern int joy_num_pads;
-extern int joy_num_axes[MAX_USB_PADS];
-extern int joy_num_hats[MAX_USB_PADS];
-extern int joy_num_buttons[MAX_USB_PADS];
-extern unsigned joy_prev_buttons[MAX_USB_PADS];
+extern int joy_num_axes[MAX_USB_DEVICES];
+extern int joy_num_hats[MAX_USB_DEVICES];
+extern int joy_num_buttons[MAX_USB_DEVICES];
+extern unsigned joy_prev_buttons[MAX_USB_DEVICES];
 
 int joy_key_up(unsigned int device, int key);
 int joy_key_down(unsigned int device, int key);

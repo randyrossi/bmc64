@@ -1,0 +1,18 @@
+#
+# Makefile for a C64 kernel
+#
+
+MACHINE_CLASS = RASPI_PET
+
+VICE = third_party/vice-3.3/src
+
+ifeq ($(BOARD),pi0)
+RESID_IMPL = $(VICE)/teensy-resid/libresid.a
+CFLAGS += "-DRASPI_LITE"
+else
+RESID_IMPL = $(VICE)/resid/libresid.a
+endif
+
+VICELIBS := $(VICE)/alarm.o $(VICE)/attach.o $(VICE)/autostart.o $(VICE)/autostart-prg.o $(VICE)/cbmdos.o $(VICE)/cbmimage.o $(VICE)/charset.o $(VICE)/clipboard.o $(VICE)/clkguard.o $(VICE)/cmdline.o $(VICE)/color.o $(VICE)/crc32.o $(VICE)/datasette.o $(VICE)/debug.o $(VICE)/dma.o $(VICE)/embedded.o $(VICE)/event.o $(VICE)/findpath.o $(VICE)/fliplist.o $(VICE)/gcr.o $(VICE)/info.o $(VICE)/init.o $(VICE)/initcmdline.o $(VICE)/interrupt.o $(VICE)/ioutil.o $(VICE)/kbdbuf.o $(VICE)/keyboard.o $(VICE)/lib.o $(VICE)/libm_math.o $(VICE)/log.o $(VICE)/machine-bus.o $(VICE)/machine.o $(VICE)/main.o $(VICE)/network.o $(VICE)/opencbmlib.o $(VICE)/palette.o $(VICE)/ram.o $(VICE)/rawfile.o $(VICE)/rawnet.o $(VICE)/resources.o $(VICE)/romset.o $(VICE)/screenshot.o $(VICE)/snapshot.o $(VICE)/socket.o $(VICE)/sound.o $(VICE)/sysfile.o $(VICE)/traps.o $(VICE)/util.o $(VICE)/vicefeatures.o $(VICE)/vsync.o $(VICE)/zfile.o $(VICE)/zipcode.o $(VICE)/tapeport/libtapeport.a $(VICE)/pet/libpet.a $(VICE)/diag/libdiag.a $(VICE)/drive/iecieee/libdriveiecieee.a $(VICE)/drive/ieee/libdriveieee.a $(VICE)/drive/libdrive.a $(VICE)/drive/iec/libdriveiec.a $(VICE)/drive/tcbm/libdrivetcbm.a $(VICE)/lib/p64/libp64.a $(VICE)/parallel/libparallel.a $(VICE)/vdrive/libvdrive.a $(VICE)/monitor/libmonitor.a $(VICE)/sid/libsid.a $(VICE)/joyport/libjoyport.a $(VICE)/samplerdrv/libsamplerdrv.a $(VICE)/sounddrv/libsounddrv.a $(VICE)/mididrv/libmididrv.a $(VICE)/socketdrv/libsocketdrv.a $(VICE)/hwsiddrv/libhwsiddrv.a $(VICE)/iodrv/libiodrv.a $(VICE)/gfxoutputdrv/libgfxoutputdrv.a $(VICE)/printerdrv/libprinterdrv.a $(VICE)/rs232drv/librs232drv.a $(VICE)/diskimage/libdiskimage.a $(VICE)/fsdevice/libfsdevice.a $(VICE)/tape/libtape.a $(VICE)/fileio/libfileio.a $(VICE)/serial/libserial.a $(VICE)/core/libcore.a $(VICE)/crtc/libcrtc.a $(VICE)/raster/libraster.a $(VICE)/userport/libuserport.a $(VICE)/video/libvideo.a $(VICE)/arch/raspi/libarch.a $(VICE)/usleep.o $(VICE)/imagecontents/libimagecontents.a $(VICE)/joyport/libjoyport.a $(RESID_IMPL) $(VICE)/rtc/librtc.a $(VICE)/hvsc/libhvsc.a $(VICE)/arch/raspi/libarch.a $(VICE)/arch/raspi/pet/libarch_pet.a
+
+include Makefile

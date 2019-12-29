@@ -1,14 +1,14 @@
 # BMC64
 
-BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio. Three other Commodore machines are available as well; C128, Vic20 and Plus/4.
+BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio. Four other Commodore machines are available as well; C128, Vic20, Plus/4 and PET.
 
 # BMC64 Features
-  * Quick boot time (C64 in 4.1 seconds!)
+  * Quick boot time (C64 in 4.1 seconds over composite!)
   * Frames are timed to vsync for true 50/60 hz smooth scrolling (no horizontal tearing!)
   * Low latency between input & audio/video
   * No shutdown sequence required, just power off
   * High C64 compatibility thanks to VICE
-  * High Plus/4 compatibility thanks for Plus4Emu (Rpi3 Only)
+  * High Plus/4 compatibility thanks to Plus4Emu (Rpi3 Only)
   * Easily wire real Commodore/Atari Joysticks and nav buttons via GPIO using jumpers (GPIO Config 1)
   * Can use a real Commodore Keyboard and Joysticks via PCB (GPIO Config 2)
   * Can use a Waveshare Game HAT (Pi2 or 3 Only) (GPIO Config 3)
@@ -40,7 +40,7 @@ For Plus/4 emulation on the Rasbperry Pi 3, a more accurate emulator using Plus4
 
 # Machine Selection
 
-The default machine is a C64.  You can switch to VIC20, C128 and Plus/4 from the 'Machines->Switch' menu option.  These configurations are defined in machines.txt. There you will find configurations for each machine type for NTSC/PAL over HDMI/Composite combinations.  Most video modes are 720p but you can change this (see below).
+The default machine is a C64.  You can switch to VIC20, C128, Plus/4 or PET from the 'Machines->Switch' menu option.  These configurations are defined in machines.txt. There you will find configurations for each machine type for NTSC/PAL over HDMI/Composite combinations.  Most video modes are 720p but you can change this (see below).
 
 # machines.txt (Video & Timing)
 
@@ -59,11 +59,12 @@ Here is an example of a machine entry:
 
 NOTE: Even though a config is intended to be used for HDMI or Composite (never both), you should always define both composite and hdmi parameters.
 
-Valid machine names are C64, C128, VIC20, PLUS4 and PLUS4EMU (Rpi3 only)
+Valid machine names are C64, C128, VIC20, PET, PLUS4 and PLUS4EMU (Rpi3 only)
 Valid video standards are NTSC, PAL
-Valid video output types are HDMI, Composite
+Valid video output types are HDMI, Composite, DPI
 
 For HDMI, you should choose either a 50hz or 60hz mode.
+See below for notes on using DPI.
 
 If you want to use composite out, you MUST set machine_timing parameter to ntsc-composite or pal-composite and set the corresponding sdtv_mode. Otherwise, you will have audio synchronization issues.
 
@@ -75,7 +76,7 @@ sdtv_mode=18                | pal-composite  | not required
 sdtv_mode=16                | ntsc-composite | not required
 hdmi_group=2,hdmi_mode=87   | pal-custom or ntsc-custom | see below
 
-## How to add your own custom HDMI mode
+## How to add your own custom HDMI mode (VICE emulators only)
 
 You are free to experiment with different modes. It may be advantageous to set the video mode to match the native resolution of your monitor.  That way, it may have less processing to do and _may_ save on latency (not confirmed).  That can be accomplished with either a different hdmi_mode or a custom mode.
 
@@ -112,7 +113,43 @@ You would then define your machines.txt entry like this:
 
 And this option will show up in the Machine->Switch menu.
 
-# Video + Timing (VIC20, C128, Plus/4)
+Custom HDMI modes are not supported for plus4emu yet.
+
+## DPI (Parallel Display Interface)
+
+BMC64 v3.3 and higher supports video output via DPI. DPI is a (up to) 24-bit parallel RGB interface.  A DPI capable display device or RGB adapter board is required. You will have to match the output format to your device.  See https://www.raspberrypi.org/documentation/hardware/raspberrypi/dpi/README.md for more details.
+
+DPI disables HDMI and Composite video and is different for every device. For this reason, these configurations are not provided by default and must be added manually to machines.txt. I suggest once you have a working configuration, you add the machines.txt entries for all the machines you want to use DPI with.
+
+Here are a couple examples you can add to machines.txt that will work with the VGA666 adapter board:
+
+    [C64/NTSC/DPI/VGA666:720p@60hz]
+    enable_dpi=true
+    machine_timing=ntsc-custom
+    cycles_per_second=1025643   
+    enable_dpi_lcd=1
+    display_default_lcd=1
+    dpi_group=1
+    dpi_mode=4
+
+    [C64/NTSC/DPI/VGA666:720p@50hz]
+    enable_dpi=true
+    machine_timing=pal-custom
+    cycles_per_second=982734
+    enable_dpi_lcd=1
+    display_default_lcd=1
+    dpi_group=1
+    dpi_mode=19
+
+* It appears these modes are not exactly 50hz/60hz like HDMI. It's likely the case that all DPI modes will require custom timing.  See steps mentioned above for how to find the correct cycles_per_second value for your DPI mode.
+
+** DPI uses almost all the GPIO pins. GPIO configs for things like joyticks/keyboards/buttons are disabled when enable_dpi is present in cmdline.txt
+
+# Recovering from a Blank Screen
+
+If you are experimenting with a video mode and are not getting a picture, you can press Cntrl followed by F7 and hold both for 5 seconds after a boot, then release the F7 key.  This will reset the emulator and switch back to C64 with a 'safe' HDMI 720p video mode. (This will also work over composite but you should follow up with a switch to one of the composite modes for correct audio sync.)
+
+# Video + Timing (VIC20, C128, Plus/4, PET)
 
 All of the above re: timing applies to the other machines as well.  However, in my opinion, the VIC20 machine is better configured to be an NTSC machine.  Most cartridges were made for NTSC and you will notice they position their screens poorly when inserted into a PAL machine.  Most games gave the option of moving it using cursor keys or joystick but this is annoying.
 
@@ -122,7 +159,7 @@ Since v2.1, the virtual display dimensions are adjusted dynamically from the men
 
       1. The amount of border to trim is removed from top/botom and left/right edges.
       2. The resulting image is stretched vertically to fill the Y dimension.
-      3. The width is then calculated according to the aspect ratio setting.
+      3. The width is then calculated according to the horizontal stretch factor.
 
 Using the three settings available, you should be able to customize how much border is available as well as the aspect ratio of the final image.  Reasonable defaults are provided.  
 
@@ -226,13 +263,15 @@ You can hold down keys or gamepad/joystick directions and the navigation action 
 
 # Joyport Configuration
 
-Joyports (2 for C64/C128, 1 for VIC20) can be configured to use the following devices:
+'Regular' Joyports (2 for C64/C128, 1 for VIC20) can be configured to use the devices below.  The VICE emulators also support userport adapters that can add another 2 joyports (for games that support them).  Extra userport joysticks must be activated in the Joyports->Userport Joysticks sub-menu.
 
 Device | Description 
 -------|------------
 None | No device active for the port
 USB Gamepad 1 | First USB gamepad detected
 USB Gamepad 2 | Second USB gamepad detected
+USB Gamepad 3 | Third USB gamepad detected
+USB Gamepad 4 | Fourth USB gamepad detected
 GPIO Bank 1 | GPIO Pins as described below (GPIO Config dependent)
 GPIO Bank 2 | GPIO Pins as described below (GPIO Config dependent)
 1351 Mouse | First USB mouse detected
@@ -422,7 +461,17 @@ A: Yes, the original machine ran at 50.125Hz for PAL and 59.826Hz for NTSC. So, 
     machine_timing=pal-custom
     cycles_per_second=985257
 
-    This mode will match the timing of the original machine (for the purists) but may not be compatible with all monitors:
+This mode will match the timing of the original machine (for the purists) but may not be compatible with all monitors:
+
+For NTSC, this mode will match the real timing very closely.  But again, since it's not a standard resolution, it may not work on all monitors.
+
+    [C64/NTSC/HDMI/VICE 768x525@59.825Hz]
+    sdtv_mode=18
+    hdmi_group=2
+    hdmi_mode=87
+    hdmi_timings=768 0 24 72 96 525 1 3 10 9 0 0 0 60 0 31415829 1
+    machine_timing=ntsc-custom
+    cycles_per_second=1022708
 
 Q: Audio is not coming out of HDMI/Analog jack when I expect it to. Why?
 
@@ -523,6 +572,33 @@ What to put on the SDcard:
         dos1581.rom (optional)
         p4fileio.rom (optional)
         p4fileio.rom (optional)
+    /PET
+        basic1
+        basic2
+        basic4
+        characters.901640-01.bin
+        chargen
+        edit1g
+        edit2b
+        edit2g
+        edit4b40
+        edit4b80
+        edit4g40
+        rpi_buus_pos.vkm
+        rpi_buus_sym.vkm
+        rpi_grus_pos.vkm
+        rpi_grus_sym.vkm
+        hre-9000.324992-02.bin
+        hre-a000.324993-02.bin
+        kernal1
+        kernal2
+        kernal4
+        waterloo-a000.901898-01.bin
+        waterloo-b000.901898-02.bin
+        waterloo-c000.901898-03.bin
+        waterloo-d000.901898-04.bin
+        waterloo-e000.901897-01.bin
+        waterloo-f000.901898-05.bin
     kernel.img (C64 kernel for Pi0)
     kernel7.img (C64 kernel for Pi2)
     kernel8-32.img (C64 kernel for Pi3)
@@ -546,16 +622,19 @@ What to put on the SDcard:
         C128/
         VIC20/
         PLUS4/
+        PET/
     disks/
         C64/
         C128/
         VIC20/
         PLUS4/
+        PET/
     tapes/
         C64/
         C128/
         VIC20/
         PLUS4/
+        PET/
     carts/
         C64/
         C128/

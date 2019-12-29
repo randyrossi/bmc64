@@ -39,13 +39,13 @@
 
 // Global usb gamepad info.
 int joy_num_pads;
-int joy_num_buttons[MAX_USB_PADS];
-int joy_num_axes[MAX_USB_PADS];
-int joy_num_hats[MAX_USB_PADS];
+int joy_num_buttons[MAX_USB_DEVICES];
+int joy_num_axes[MAX_USB_DEVICES];
+int joy_num_hats[MAX_USB_DEVICES];
 
 // Holds previous button states for the purpose of
 // reporting button functions press/release events.
-unsigned joy_prev_buttons[MAX_USB_PADS];
+unsigned joy_prev_buttons[MAX_USB_DEVICES];
 
 struct joydev_config joydevs[MAX_JOY_PORTS];
 
@@ -405,23 +405,27 @@ int joy_key_down(unsigned int device, int key) {
 // emulator API directly from here. Instead, we have to queue up
 // the event for processing on the main loop.
 void emu_set_joy_usb_interrupt(unsigned int device, int value) {
-  if (device == 0 && joydevs[0].device == JOYDEV_USB_0) {
-    emux_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, joydevs[0].port,
-                             JOYDEV_USB_0, value);
-  } else if (device == 0 && joydevs[1].device == JOYDEV_USB_0) {
-    emux_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, joydevs[1].port,
-                             JOYDEV_USB_0, value);
-  } else if (device == 1 && joydevs[0].device == JOYDEV_USB_1) {
-    emux_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, joydevs[0].port,
-                             JOYDEV_USB_1, value);
-  } else if (device == 1 && joydevs[1].device == JOYDEV_USB_1) {
-    emux_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, joydevs[1].port,
-                             JOYDEV_USB_1, value);
-  } else if (vkbd_enabled) {
+  static int want_dev[MAX_USB_DEVICES] = {
+     JOYDEV_USB_0, JOYDEV_USB_1, JOYDEV_USB_2, JOYDEV_USB_3,
+  };
+
+  // This convoluted loop figures out which joy port if any is
+  // assigned to the usb device for which an event is arriving.
+  for (int k = 0; k < MAX_USB_DEVICES; k++) {
+    for (int j = 0; j < MAX_JOY_PORTS; j++) {
+       if (device == k && joydevs[j].device == want_dev[k]) {
+          emux_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, joydevs[j].port,
+                             want_dev[k], value);
+          return;
+       }
+    }
+  }
+
+  if (vkbd_enabled) {
     // The port doesn't really matter here since this will not go to the
     // emulator. The value is ignored.
     emux_joy_interrupt(PENDING_EMU_JOY_TYPE_ABSOLUTE, 0,
-                             device ? JOYDEV_USB_1 : JOYDEV_USB_0, value);
+                             want_dev[device], value);
   }
 }
 
@@ -429,16 +433,15 @@ void emu_set_joy_usb_interrupt(unsigned int device, int value) {
 int joy_arch_init(void) { return 0; }
 
 void emu_set_gamepad_info(int num_pads,
-                          int num_buttons[MAX_USB_PADS],
-                          int num_axes[MAX_USB_PADS],
-                          int num_hats[MAX_USB_PADS]) {
-  joy_num_pads = MIN(num_pads , MAX_USB_PADS);
-  joy_num_axes[0] = MIN(num_axes[0] , MAX_USB_AXES);
-  joy_num_axes[1] = MIN(num_axes[1] , MAX_USB_AXES);
-  joy_num_hats[0] = MIN(num_hats[0] , MAX_USB_HATS);
-  joy_num_hats[1] = MIN(num_hats[1] , MAX_USB_HATS);
-  joy_num_buttons[0] = MIN(num_buttons[0] , MAX_USB_BUTTONS);
-  joy_num_buttons[1] = MIN(num_buttons[1] , MAX_USB_BUTTONS);
+                          int num_buttons[MAX_USB_DEVICES],
+                          int num_axes[MAX_USB_DEVICES],
+                          int num_hats[MAX_USB_DEVICES]) {
+  joy_num_pads = MIN(num_pads , MAX_USB_DEVICES);
+  for (int k = 0 ; k < MAX_USB_DEVICES; k++) {
+    joy_num_axes[k] = MIN(num_axes[k] , MAX_USB_AXES);
+    joy_num_hats[k] = MIN(num_hats[k] , MAX_USB_HATS);
+    joy_num_buttons[k] = MIN(num_buttons[k] , MAX_USB_BUTTONS);
+  }
 }
 
 void joystick_close(void) {}

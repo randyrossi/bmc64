@@ -14,7 +14,7 @@
 #
 # MachineDescription = ([SectionHeader]"\n")(OptionLine\n*)*
 # SectionHeader = [Machine/TimingStandard/OutputType/ResolutionDesc]
-# Machine = VIC20|C64|C128|Plus4|Plus4Emu
+# Machine = VIC20|C64|C128|Plus4|Plus4Emu|Pet
 # TimingStandard = NTSC | PAL
 # OutputVideo = HDMI | Composite
 # ResolutionDesc = Any text (can be used to describe the video resolution)
@@ -30,7 +30,7 @@
 # hdmi_mode
 # hdmi_timing
 # hdmi_cvt
-# 
+#
 # cmdline.txt options available (See README.md)
 # ----------------------------------------------------
 # machine_timing
@@ -74,16 +74,6 @@ hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-composite
 
-# This matches the timing of the real machine but may
-# not work on all monitors.
-[VIC20/PAL/HDMI/VICE 768x544@50.125Hz]
-sdtv_mode=18
-hdmi_group=2
-hdmi_mode=87
-hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
-machine_timing=pal-custom
-cycles_per_second=985257
-
 #
 # C64
 #
@@ -116,7 +106,7 @@ hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-composite
 
-# This matches the timing of the real machine but may
+# This matches the timing of a real PAL machine but may
 # not work on all monitors.
 [C64/PAL/HDMI/VICE 768x544@50.125Hz]
 sdtv_mode=18
@@ -125,6 +115,16 @@ hdmi_mode=87
 hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
 machine_timing=pal-custom
 cycles_per_second=985257
+
+# This matches the timing of a real NTSC machine but may
+# not work on all monitors.
+[C64/NTSC/HDMI/VICE 768x525@59.825Hz]
+sdtv_mode=18
+hdmi_group=2
+hdmi_mode=87
+hdmi_timings=768 0 24 72 96 525 1 3 10 9 0 0 0 60 0 31415829 1
+machine_timing=ntsc-custom
+cycles_per_second=1022708
 
 #
 # C128
@@ -158,7 +158,7 @@ hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-composite
 
-# This matches the timing of the real machine but may
+# This matches the timing of a real PAL machine but may
 # not work on all monitors.
 [C128/PAL/HDMI/VICE 768x544@50.125Hz]
 sdtv_mode=18
@@ -167,6 +167,16 @@ hdmi_mode=87
 hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
 machine_timing=pal-custom
 cycles_per_second=985257
+
+# This matches the timing of a real NTSC machine but may
+# not work on all monitors.
+[C128/NTSC/HDMI/VICE 768x525@59.825Hz]
+sdtv_mode=18
+hdmi_group=2
+hdmi_mode=87
+hdmi_timings=768 0 24 72 96 525 1 3 10 9 0 0 0 60 0 31415829 1
+machine_timing=ntsc-custom
+cycles_per_second=1022708
 
 #
 # PLUS/4 & C16
@@ -226,6 +236,38 @@ hdmi_mode=19
 machine_timing=pal-hdmi
 
 [PLUS4EMU/PAL/Composite/Plus4Emu 576p@50Hz]
+disable_overscan=1
+sdtv_mode=18
+hdmi_group=1
+hdmi_mode=19
+machine_timing=pal-composite
+
+#
+# PET
+#
+
+[PET/NTSC/HDMI/VICE 720p@60Hz]
+disable_overscan=1
+sdtv_mode=16
+hdmi_group=1
+hdmi_mode=4
+machine_timing=ntsc-hdmi
+
+[PET/NTSC/Composite/VICE 480p@60Hz]
+disable_overscan=1
+sdtv_mode=16
+hdmi_group=1
+hdmi_mode=4
+machine_timing=ntsc-composite
+
+[PET/PAL/HDMI/VICE 720p@50Hz]
+disable_overscan=1
+sdtv_mode=18
+hdmi_group=1
+hdmi_mode=19
+machine_timing=pal-hdmi
+
+[PET/PAL/Composite/VICE 576p@50Hz]
 disable_overscan=1
 sdtv_mode=18
 hdmi_group=1

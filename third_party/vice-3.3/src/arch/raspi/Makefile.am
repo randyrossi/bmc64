@@ -28,7 +28,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/imagecontents \
 	-I$(top_srcdir)/src
 
-SUBDIRS = c64 vic20 c128 plus4
+SUBDIRS = c64 vic20 c128 plus4 pet
 
 noinst_LIBRARIES = libarch.a
 

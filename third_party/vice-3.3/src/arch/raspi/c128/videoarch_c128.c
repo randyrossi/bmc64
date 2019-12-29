@@ -67,10 +67,8 @@ static unsigned int pepto_pal_color_palette[] = {
     0x6c, 0x6c, 0x6c, 0x9a, 0xd2, 0x84, 0x6c, 0x5e, 0xb5, 0x95, 0x95, 0x95,
 };
 
-void set_refresh_rate(int timing, struct video_canvas_s *canvas) {
-  if (timing == MACHINE_TIMING_NTSC_HDMI ||
-      timing == MACHINE_TIMING_NTSC_COMPOSITE ||
-      timing == MACHINE_TIMING_NTSC_CUSTOM) {
+void set_refresh_rate(struct video_canvas_s *canvas) {
+  if (is_ntsc()) {
     canvas->refreshrate = C128_NTSC_RFSH_PER_SEC;
   } else {
     canvas->refreshrate = C128_PAL_RFSH_PER_SEC;
@@ -105,5 +103,41 @@ unsigned int *raspi_get_palette(int index) {
     break;
   default:
     return NULL;
+  }
+}
+
+void set_canvas_size(int index, int *w, int *h, int *gw, int *gh) {
+  if (index == vic_canvas_index) {
+    *w = 384;
+    *h = 272;
+    *gw = 40*8;
+    *gh = 25*8;
+    return;
+  }
+
+  *w = 856;
+  *h = 312;
+  *gw = 80*8;
+  *gh = 25*8;
+}
+
+void set_canvas_borders(int index, int *w, int *h) {
+  if (index == vic_canvas_index) {
+    if (is_ntsc()) {
+       *w = 32;
+       *h = 23;
+    } else {
+       *w = 32;
+       *h = 36;
+    }
+    return;
+  }
+
+  if (is_ntsc()) {
+      *w = 112;
+      *h = 14;
+  } else {
+      *w = 112;
+      *h = 38;
   }
 }

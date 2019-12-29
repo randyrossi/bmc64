@@ -27,6 +27,8 @@
 #include "bootstat_plus4.h"
 #elif defined(RASPI_PLUS4EMU)
 #include "bootstat_plus4emu.h"
+#elif defined(RASPI_PET)
+#include "bootstat_pet.h"
 #else
   #error Unknown RASPI_ variant
 #endif
@@ -94,7 +96,8 @@ bool ViceScreenApp::Initialize(void) {
   return true;
 }
 
-void ViceScreenApp::SetupGPIO() {
+// Setup GPIO pins for scanning keyboard, button or joysticks.
+void ViceScreenApp::SetupGPIOForInput() {
   // PA - Set to output-low for when scanning each
   // row. Otherwise set to input-pullup.
   // Note: Lines 0 and 7 are swapped. The order here is
@@ -213,6 +216,22 @@ void ViceScreenApp::SetupGPIO() {
 #endif
 }
 
+// Setup GPIO pins for DPI
+void ViceScreenApp::SetupGPIOForDPI() {
+  for (int i=0; i< 28; i++) {
+    DPIPins[i] =
+      new CGPIOPin(i, GPIOModeAlternateFunction2, &mGPIOManager);
+  }
+}
+
+void ViceScreenApp::SetupGPIO() {
+  if (mViceOptions.DPIEnabled()) {
+     SetupGPIOForDPI();
+  } else {
+     SetupGPIOForInput();
+  }
+}
+
 //
 // ViceStdioApp impl
 //
@@ -229,6 +248,8 @@ void ViceStdioApp::InitBootStat() {
   fp = fopen("/PLUS4/bootstat.txt", "r");
 #elif defined(RASPI_PLUS4EMU)
   fp = NULL;
+#elif defined(RASPI_PET)
+  fp = fopen("/PET/bootstat.txt", "r");
 #else
   #error Unknown RASPI_ variant
 #endif
@@ -343,8 +364,10 @@ bool ViceStdioApp::Initialize(void) {
   // the emulator main loop on CORE 1 before USBHCII.
   int timing_int = mViceOptions.GetMachineTiming();
   if (timing_int == MACHINE_TIMING_NTSC_HDMI ||
-      timing_int == MACHINE_TIMING_NTSC_CUSTOM ||
-      timing_int == MACHINE_TIMING_NTSC_COMPOSITE) {
+      timing_int == MACHINE_TIMING_NTSC_CUSTOM_HDMI ||
+      timing_int == MACHINE_TIMING_NTSC_COMPOSITE ||
+      timing_int == MACHINE_TIMING_NTSC_DPI ||
+      timing_int == MACHINE_TIMING_NTSC_CUSTOM_DPI) {
     strcpy(mTimingOption, "-ntsc");
   } else {
     strcpy(mTimingOption, "-pal");

@@ -36,9 +36,11 @@
 #include "joy.h"
 #include "menu.h"
 #include "menu_keyset.h"
+#include "menu_switch.h"
 #include "ui.h"
 
 #define NUM_KEY_COMBOS 8
+#define TICKS_PER_SECOND 1000000L
 
 // TODO: These should really come from the sym file.
 // Can't assume these are always correct.
@@ -47,8 +49,13 @@
 
 static int commodore_down = 0;
 static int control_down = 0;
+static int f7_down = 0;
+static unsigned long video_reset_time_down;
+static unsigned long video_reset_time_delay = TICKS_PER_SECOND * 5;
 
 key_combo_state_t key_combo_states[NUM_KEY_COMBOS];
+
+extern void reboot(void);
 
 void kbd_arch_init(void) {}
 
@@ -154,6 +161,8 @@ signed long kbd_arch_keyname_to_keynum(char *keyname) {
     return (long)KEYCODE_Backspace;
   } else if (KCMP("PageUp") || LEGACY_KCMP("Delete")) {
     return (long)KEYCODE_PageUp;
+  } else if (KCMP("PageDown")) {
+    return (long)KEYCODE_PageDown;
   } else if (KCMP("CapsLock")) {
     return (long)KEYCODE_CapsLock;
   } else if (KCMP("Up")) {
@@ -242,6 +251,38 @@ signed long kbd_arch_keyname_to_keynum(char *keyname) {
     return (long)KEYCODE_F11;
   } else if (KCMP("ScrollLock")) {
     return (long)KEYCODE_ScrollLock;
+  } else if (KCMP("KP_Divide")) {
+    return (long)KEYCODE_KP_Divide;
+  } else if (KCMP("KP_Decimal")) {
+    return (long)KEYCODE_KP_Decimal;
+  } else if (KCMP("KP_Multiply")) {
+    return (long)KEYCODE_KP_Multiply;
+  } else if (KCMP("KP_Subtract")) {
+    return (long)KEYCODE_KP_Subtract;
+  } else if (KCMP("KP_Add")) {
+    return (long)KEYCODE_KP_Add;
+  } else if (KCMP("KP_Enter")) {
+    return (long)KEYCODE_KP_Enter;
+  } else if (KCMP("KP_1")) {
+    return (long)KEYCODE_KP1;
+  } else if (KCMP("KP_2")) {
+    return (long)KEYCODE_KP2;
+  } else if (KCMP("KP_3")) {
+    return (long)KEYCODE_KP3;
+  } else if (KCMP("KP_4")) {
+    return (long)KEYCODE_KP4;
+  } else if (KCMP("KP_5")) {
+    return (long)KEYCODE_KP5;
+  } else if (KCMP("KP_6")) {
+    return (long)KEYCODE_KP6;
+  } else if (KCMP("KP_7")) {
+    return (long)KEYCODE_KP7;
+  } else if (KCMP("KP_8")) {
+    return (long)KEYCODE_KP8;
+  } else if (KCMP("KP_9")) {
+    return (long)KEYCODE_KP9;
+  } else if (KCMP("KP_0")) {
+    return (long)KEYCODE_KP0;
   }
 
   return 0;
@@ -342,6 +383,11 @@ void emu_key_pressed(long key) {
     commodore_down = 1;
   } else if (key == CONTROL_KEY_CODE) {
     control_down = 1;
+  } else if (key == KEYCODE_F7) {
+    f7_down = 1;
+    if (commodore_down) {
+       video_reset_time_down = circle_get_ticks();
+    }
   }
 
   // Intercept keys meant to become joystick values
@@ -385,6 +431,14 @@ void emu_key_released(long key) {
     commodore_down = 0;
   } else if (key == CONTROL_KEY_CODE) {
     control_down = 0;
+  } else if (key == KEYCODE_F7) {
+    f7_down = 0;
+    if (commodore_down &&
+       (circle_get_ticks() - video_reset_time_down >= video_reset_time_delay)) {
+       // Reset to 'safe' video mode.
+       switch_safe();
+       reboot();
+    }
   }
 
   if (key == KEYCODE_F12) {

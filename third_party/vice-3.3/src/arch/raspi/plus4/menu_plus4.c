@@ -90,6 +90,13 @@ unsigned long emux_calculate_timing(double fps) {
   }
 }
 
+double emux_calculate_fps() {
+  if (is_ntsc()) {
+     return (double)circle_cycles_per_sec() / (PLUS4_NTSC_CYCLES_PER_LINE * PLUS4_NTSC_SCREEN_LINES);
+  }
+  return (double)circle_cycles_per_sec() / (PLUS4_PAL_CYCLES_PER_LINE * PLUS4_PAL_SCREEN_LINES);
+}
+
 void emux_set_color_brightness(int display_num, int value) {
   resources_set_int("TEDColorBrightness", value);
 }
@@ -157,9 +164,7 @@ void emux_add_machine_options(struct menu_item* parent) {
   int timing = circle_get_machine_timing();
 
   struct menu_item* item;
-  if (timing == MACHINE_TIMING_PAL_HDMI ||
-      timing == MACHINE_TIMING_PAL_COMPOSITE ||
-      timing == MACHINE_TIMING_PAL_CUSTOM) {
+  if (!is_ntsc()) {
     item = ui_menu_add_button(MENU_MODEL_C16_PAL, model_parent, "C16");
     item->sub_id = PLUS4MODEL_C16_PAL;
     item->on_value_changed = menu_value_changed;
