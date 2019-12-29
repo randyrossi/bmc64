@@ -1,6 +1,6 @@
 # BMC64
 
-BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio. Three other Commodore machines are available as well; C128, Vic20 and Plus/4.
+BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio. Four other Commodore machines are available as well; C128, Vic20, Plus/4 and PET.
 
 # BMC64 Features
   * Quick boot time (C64 in 4.1 seconds over composite!)
@@ -141,9 +141,9 @@ Here are a couple examples you can add to machines.txt that will work with the V
     dpi_group=1
     dpi_mode=19
 
-    * It appears these modes are not exactly 50hz/60hz like HDMI. It's likely the case that all DPI modes will require custom timing.  See steps mentioned above for how to find the correct cycles_per_second value for your DPI mode.
+* It appears these modes are not exactly 50hz/60hz like HDMI. It's likely the case that all DPI modes will require custom timing.  See steps mentioned above for how to find the correct cycles_per_second value for your DPI mode.
 
-    * DPI uses almost all the GPIO pins. GPIO configs for things like joyticks/keyboards/buttons are disabled when enable_dpi is present in cmdline.txt
+** DPI uses almost all the GPIO pins. GPIO configs for things like joyticks/keyboards/buttons are disabled when enable_dpi is present in cmdline.txt
 
 # Recovering from a Blank Screen
 
@@ -461,9 +461,17 @@ A: Yes, the original machine ran at 50.125Hz for PAL and 59.826Hz for NTSC. So, 
     machine_timing=pal-custom
     cycles_per_second=985257
 
-    This mode will match the timing of the original machine (for the purists) but may not be compatible with all monitors:
+This mode will match the timing of the original machine (for the purists) but may not be compatible with all monitors:
 
-   For NTSC, this mode will match the real timing very closely.  But again, since it's not a standard resolution, it may not work on all monitors.
+For NTSC, this mode will match the real timing very closely.  But again, since it's not a standard resolution, it may not work on all monitors.
+
+    [C64/NTSC/HDMI/VICE 768x525@59.825Hz]
+    sdtv_mode=18
+    hdmi_group=2
+    hdmi_mode=87
+    hdmi_timings=768 0 24 72 96 525 1 3 10 9 0 0 0 60 0 31415829 1
+    machine_timing=ntsc-custom
+    cycles_per_second=1022708
 
 Q: Audio is not coming out of HDMI/Analog jack when I expect it to. Why?
 
@@ -576,11 +584,10 @@ What to put on the SDcard:
         edit4b40
         edit4b80
         edit4g40
-        rpi_buuk_pos.vkm
-        rpi_buuk_sym.vkm
+        rpi_buus_pos.vkm
+        rpi_buus_sym.vkm
         rpi_grus_pos.vkm
         rpi_grus_sym.vkm
-        rpi_sym.vkm
         hre-9000.324992-02.bin
         hre-a000.324993-02.bin
         kernal1
