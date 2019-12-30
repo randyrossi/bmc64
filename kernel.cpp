@@ -745,7 +745,7 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
           js_pins = config_2_joystickPins;
           break;
        case GPIO_CONFIG_USERPORT:
-          js_pins = config_3_joystickPins;
+          js_pins = config_3_joystickPins1;
           break;
        default:
          assert(false);
@@ -770,6 +770,9 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
          js_selector = gpioPins[GPIO_JS2_SELECT_INDEX];
          js_pins = config_1_joystickPins2;
          break;
+       case GPIO_CONFIG_USERPORT:
+          js_pins = config_3_joystickPins2;
+          break;
        default:
          assert(false);
     }
@@ -1170,6 +1173,7 @@ void CKernel::circle_check_gpio() {
      SetupUserport();
      ReadWriteUserport();
      ReadJoystick(0, GPIO_CONFIG_USERPORT);
+     ReadJoystick(1, GPIO_CONFIG_USERPORT);
      break;
     default:
      // Disabled
@@ -1192,7 +1196,8 @@ void CKernel::circle_reset_gpio(int gpio_config) {
       break;
     case GPIO_CONFIG_USERPORT:
       for (int i = 0; i < 5; i++) {
-        config_3_joystickPins[i]->SetMode(GPIOModeInputPullUp);
+        config_3_joystickPins1[i]->SetMode(GPIOModeInputPullUp);
+        config_3_joystickPins2[i]->SetMode(GPIOModeInputPullUp);
       }
       SetupUserport();
       break;

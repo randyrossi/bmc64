@@ -82,7 +82,7 @@
 // 09 SPI (Currently unused by BMC64)
 // 11 SPI (Currently unused by BMC64)
 
-#define NUM_GPIO_PINS 19
+#define NUM_GPIO_PINS 21
 
 // Joystick select pins for config 1.
 #define GPIO_JS1_SELECT  7
@@ -171,6 +171,12 @@
 #define GPIO_CONFIG_3_JOY_1_RIGHT_INDEX  15  // GPIO 22
 #define GPIO_CONFIG_3_JOY_1_FIRE_INDEX   12  // GPIO 23
 
+#define GPIO_CONFIG_3_JOY_2_UP_INDEX     10  // GPIO 24
+#define GPIO_CONFIG_3_JOY_2_DOWN_INDEX   19  // GPIO 10
+#define GPIO_CONFIG_3_JOY_2_LEFT_INDEX   20  // GPIO  9
+#define GPIO_CONFIG_3_JOY_2_RIGHT_INDEX   9  // GPIO 25
+#define GPIO_CONFIG_3_JOY_2_FIRE_INDEX    8  // GPIO  8
+
 #define GPIO_CONFIG_3_USERPORT_PB0 0  // GPIO 5
 #define GPIO_CONFIG_3_USERPORT_PB1 5  // GPIO 6
 #define GPIO_CONFIG_3_USERPORT_PB2 6  // GPIO 12
@@ -256,7 +262,8 @@ protected:
 
   CGPIOPin *config_2_joystickPins[7]; // potx and poty included
 
-  CGPIOPin *config_3_joystickPins[5];
+  CGPIOPin *config_3_joystickPins1[5];
+  CGPIOPin *config_3_joystickPins2[5];
   CGPIOPin *config_3_userportPins[8];
 
   CGPIOPin *gpioPins[NUM_GPIO_PINS];
