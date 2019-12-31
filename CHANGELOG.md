@@ -291,3 +291,7 @@
   * Removed incorrect 50.125hz VIC20 mode from machines.txt
   * Menu shows actual fps for mode
   * Virtual keyboard for PET does not work
+
+## 3.4
+  * Fix IEC mode not working after plus4emu attach/detach
+  * Fix PET color and video settings after boot not applied
