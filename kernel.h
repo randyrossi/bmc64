@@ -43,11 +43,18 @@ extern "C" {
 #include "third_party/common/circle.h"
 #include "third_party/common/keycodes.h"
 #include "third_party/vice-3.3/src/main.h"
-#include "third_party/vice-3.3/src/cia.h"
 #if defined(RASPI_C64)
+#include "third_party/vice-3.3/src/cia.h"
 #include "third_party/vice-3.3/src/c64/c64.h"
 #elif  defined(RASPI_C128)
+#include "third_party/vice-3.3/src/cia.h"
 #include "third_party/vice-3.3/src/c128/c128.h"
+#elif  defined(RASPI_VIC20)
+#include "third_party/vice-3.3/src/via.h"
+#include "third_party/vice-3.3/src/vic20/vic20.h"
+#elif  defined(RASPI_PET)
+#include "third_party/vice-3.3/src/via.h"
+#include "third_party/vice-3.3/src/pet/pet.h"
 #endif
 }
 
