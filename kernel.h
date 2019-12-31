@@ -43,11 +43,11 @@ extern "C" {
 #include "third_party/common/circle.h"
 #include "third_party/common/keycodes.h"
 #include "third_party/vice-3.3/src/main.h"
-#if defined(RASPI_C64)
-// Only implemented for C64 for now.
-// Only defined for machines with CIA userport for now.
 #include "third_party/vice-3.3/src/cia.h"
+#if defined(RASPI_C64)
 #include "third_party/vice-3.3/src/c64/c64.h"
+#elif  defined(RASPI_C128)
+#include "third_party/vice-3.3/src/c128/c128.h"
 #endif
 }
 

@@ -849,7 +849,7 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
 // Configure CIA2 port B from DDR
 // Only configured for C64 for now.
 void CKernel::SetupUserport() {
-#if defined(RASPI_C64)
+#if defined(RASPI_C64) || defined(RASPI_C128)
   uint8_t ddr = machine_context.cia2->c_cia[3];
   for (int i = 0; i < 8; i++) {
     uint8_t bit_pos = 1<<i;
@@ -862,7 +862,7 @@ void CKernel::SetupUserport() {
 // Read input pins and send to output pins
 // Only configured for C64 for now.
 void CKernel::ReadWriteUserport() {
-#if defined(RASPI_C64)
+#if defined(RASPI_C64) || defined(RASPI_C128)
   uint8_t ddr = machine_context.cia2->c_cia[3];
   uint8_t value = machine_context.cia2->c_cia[1];
   uint8_t new_value = 0;
