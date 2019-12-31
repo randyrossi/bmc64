@@ -145,6 +145,8 @@ Here are a couple examples you can add to machines.txt that will work with the V
 
 ** DPI uses almost all the GPIO pins. GPIO configs for things like joyticks/keyboards/buttons are disabled when enable_dpi is present in cmdline.txt
 
+*** Special thanks goes out to github user K-rnivoro (https://github.com/K-rnivoro) for suggesting this feature.
+
 # Recovering from a Blank Screen
 
 If you are experimenting with a video mode and are not getting a picture, you can press Cntrl followed by F7 and hold both for 5 seconds after a boot, then release the F7 key.  This will reset the emulator and switch back to C64 with a 'safe' HDMI 720p video mode. (This will also work over composite but you should follow up with a switch to one of the composite modes for correct audio sync.)
