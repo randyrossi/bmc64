@@ -755,6 +755,7 @@ int emux_attach_disk_image(int unit, char *filename) {
 
 void emux_detach_disk(int unit) {
   Plus4VM_SetWorkingDirectory(vm, last_iec_dir);
+  Plus4VM_SetDiskImageFile(vm, unit-8, "", 0);
   Plus4VM_SetDiskImageFile(vm, unit-8, "", 1); // to enable IEC
   emux_enable_drive_status(0, drive_led_colors);
 }
