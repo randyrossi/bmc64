@@ -132,7 +132,7 @@ Here are a couple examples you can add to machines.txt that will work with the V
     dpi_group=1
     dpi_mode=4
 
-    [C64/NTSC/DPI/VGA666:720p@50hz]
+    [C64/PAL/DPI/VGA666:720p@50hz]
     enable_dpi=true
     machine_timing=pal-custom
     cycles_per_second=982734
