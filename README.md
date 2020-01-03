@@ -143,7 +143,7 @@ Here are a couple examples you can add to machines.txt that will work with the V
 
 * It appears these modes are not exactly 50hz/60hz like HDMI. It's likely the case that all DPI modes will require custom timing.  See steps mentioned above for how to find the correct cycles_per_second value for your DPI mode.
 
-** DPI uses almost all the GPIO pins. GPIO configs for things like joyticks/keyboards/buttons are disabled when enable_dpi is present in cmdline.txt
+** DPI uses almost all the GPIO pins. GPIO configs for things like joysticks/keyboards/buttons are disabled when enable_dpi is present in cmdline.txt
 
 *** Special thanks goes out to github user K-rnivoro (https://github.com/K-rnivoro) for suggesting this feature.
 
