@@ -37,7 +37,7 @@ echo ==============================================================
 echo APPLY PATCHES
 echo ==============================================================
 
-# required to enable input on userports
+# required to enable output on userports
 cd $SRC_DIR
 patch -p1 vice_patch.diff
 
