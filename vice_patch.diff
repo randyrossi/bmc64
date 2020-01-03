@@ -1,0 +1,39 @@
+diff --git a/third_party/vice-3.3/src/c64/c64cia2.c b/third_party/vice-3.3/src/c64/c64cia2.c
+index 707689b..7b2a5d3 100644
+--- a/third_party/vice-3.3/src/c64/c64cia2.c
++++ b/third_party/vice-3.3/src/c64/c64cia2.c
+@@ -253,7 +253,7 @@ static uint8_t read_ciapa(cia_context_t *cia_context)
+ /* read_* functions must return 0xff if nothing to read!!! */
+ static uint8_t read_ciapb(cia_context_t *cia_context)
+ {
+-    uint8_t byte = 0xff;
++    uint8_t byte = cia_context->c_cia[CIA_PRB];
+ 
+     byte = read_userport_pbx((uint8_t)~cia_context->c_cia[CIA_DDRB], byte);
+ 
+diff --git a/third_party/vice-3.3/src/pet/petvia.c b/third_party/vice-3.3/src/pet/petvia.c
+index e5f095b..3564c1c 100644
+--- a/third_party/vice-3.3/src/pet/petvia.c
++++ b/third_party/vice-3.3/src/pet/petvia.c
+@@ -196,7 +196,7 @@ static void reset(via_context_t *via_context)
+ 
+ inline static uint8_t read_pra(via_context_t *via_context, uint16_t addr)
+ {
+-    uint8_t byte = 0xff;
++    uint8_t byte = via_context->via[VIA_PRA];
+ 
+     byte = read_userport_pbx((uint8_t)~via_context->via[VIA_DDRA], byte);
+ 
+diff --git a/third_party/vice-3.3/src/vic20/vic20via2.c b/third_party/vice-3.3/src/vic20/vic20via2.c
+index 7b04508..ebd0719 100644
+--- a/third_party/vice-3.3/src/vic20/vic20via2.c
++++ b/third_party/vice-3.3/src/vic20/vic20via2.c
+@@ -253,7 +253,7 @@ inline static uint8_t read_pra(via_context_t *via_context, uint16_t addr)
+ inline static uint8_t read_prb(via_context_t *via_context)
+ {
+     uint8_t byte = 0xff;
+-    byte = via_context->via[VIA_PRB] | ~(via_context->via[VIA_DDRB]);
++    byte = via_context->via[VIA_PRB];
+ 
+     byte = read_userport_pbx((uint8_t)~via_context->via[VIA_DDRB], byte);
+ 

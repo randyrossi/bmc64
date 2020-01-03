@@ -37,6 +37,10 @@ echo ==============================================================
 echo APPLY PATCHES
 echo ==============================================================
 
+# required to enable input on userports
+cd $SRC_DIR
+patch -p1 vice_patch.diff
+
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle-newlib
 patch -p1 < ../../../../circle_newlib_patch.diff
 

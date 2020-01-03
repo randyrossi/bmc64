@@ -853,7 +853,7 @@ void CKernel::SetupUserport() {
 #if defined(RASPI_C64) || defined(RASPI_C128)
   uint8_t ddr = machine_context.cia2->c_cia[CIA_DDRB];
 #elif defined(RASPI_VIC20)
-  uint8_t ddr = machine_context.via1->via[VIA_DDRB];
+  uint8_t ddr = machine_context.via2->via[VIA_DDRB];
 #elif defined(RASPI_PET)
   uint8_t ddr = machine_context.via->via[VIA_DDRA];
 #endif
@@ -873,8 +873,8 @@ void CKernel::ReadWriteUserport() {
   uint8_t ddr = machine_context.cia2->c_cia[CIA_DDRB];
   uint8_t value = machine_context.cia2->c_cia[CIA_PRB];
 #elif defined(RASPI_VIC20)
-  uint8_t ddr = machine_context.via1->via[VIA_DDRB];
-  uint8_t value = machine_context.via1->via[VIA_PRB];
+  uint8_t ddr = machine_context.via2->via[VIA_DDRB];
+  uint8_t value = machine_context.via2->via[VIA_PRB];
 #elif defined(RASPI_PET)
   uint8_t ddr = machine_context.via->via[VIA_DDRA];
   uint8_t value = machine_context.via->via[VIA_PRA_NHS];
@@ -898,7 +898,7 @@ void CKernel::ReadWriteUserport() {
 #if defined(RASPI_C64) || defined(RASPI_C128)
   machine_context.cia2->c_cia[CIA_PRB] = new_value;
 #elif defined(RASPI_VIC20)
-  machine_context.via1->via[VIA_PRB] = new_value;
+  machine_context.via2->via[VIA_PRB] = new_value;
 #elif defined(RASPI_PET)
   machine_context.via->via[VIA_PRA_NHS] = new_value;
 #endif
