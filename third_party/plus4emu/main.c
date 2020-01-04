@@ -1091,6 +1091,10 @@ void emux_set_color_tint(int display_num, int value) {
   Plus4VideoDecoder_SetHueShift(videoDecoder,v);
 }
 
+void emux_set_color_saturation(int display_num, int value) {
+  // Not supported
+}
+
 int emux_get_color_brightness(int display_num) {
   return color_brightness;
 }
@@ -1105,6 +1109,11 @@ int emux_get_color_gamma(int display_num) {
 
 int emux_get_color_tint(int display_num) {
   return color_tint;
+}
+
+int emux_get_color_saturation(int display_num) {
+  // Not supported
+  return 1000;
 }
 
 void emux_set_video_cache(int value) {
@@ -1498,11 +1507,12 @@ void emux_save_additional_settings(FILE *fp) {
 }
 
 void emux_get_default_color_setting(int *brightness, int *contrast,
-                                    int *gamma, int *tint) {
+                                    int *gamma, int *tint, int *saturation) {
   *brightness = 1000;
   *contrast = 666;
   *gamma = 800;
   *tint = 1000;
+  *saturation = 1000;
 }
 
 int emux_handle_loaded_setting(char *name, char* value_str, int value) {

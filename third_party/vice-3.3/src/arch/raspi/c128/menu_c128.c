@@ -92,6 +92,14 @@ void emux_set_color_tint(int display_num, int value) {
   }
 }
 
+void emux_set_color_saturation(int display_num, int value) {
+  if (display_num == 0) {
+    resources_set_int("VICIIColorSaturation", value);
+  } else {
+    resources_set_int("VDCColorSaturation", value);
+  }
+}
+
 void emux_set_video_cache(int value) {
   resources_set_int("VICIIVideoCache", value);
 }
@@ -136,6 +144,16 @@ int emux_get_color_tint(int display_num) {
     resources_get_int("VICIIColorTint", &value);
   } else {
     resources_get_int("VDCColorTint", &value);
+  }
+  return value;
+}
+
+int emux_get_color_saturation(int display_num) {
+  int value;
+  if (display_num == 0) {
+    resources_get_int("VICIIColorSaturation", &value);
+  } else {
+    resources_get_int("VDCColorSaturation", &value);
   }
   return value;
 }
