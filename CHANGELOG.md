@@ -295,3 +295,4 @@
 ## 3.4
   * Fix IEC mode not working after plus4emu attach/detach
   * Fix PET color and video settings after boot not applied
+  * Add saturation to video color menu
