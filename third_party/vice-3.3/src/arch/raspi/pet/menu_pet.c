@@ -95,6 +95,10 @@ void emux_set_color_tint(int display_num, int value) {
   resources_set_int("CrtcColorTint", value);
 }
 
+void emux_set_color_saturation(int display_num, int value) {
+  resources_set_int("CrtcSaturation", value);
+}
+
 void emux_set_video_cache(int value) {
   resources_set_int("CrtcVideoCache", value);
 }
@@ -124,6 +128,12 @@ int emux_get_color_gamma(int display_num) {
 int emux_get_color_tint(int display_num) {
   int value;
   resources_get_int("CrtcColorTint", &value);
+  return value;
+}
+
+int emux_get_color_saturation(int display_num) {
+  int value;
+  resources_get_int("CrtcColorSaturation", &value);
   return value;
 }
 

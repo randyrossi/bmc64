@@ -126,12 +126,14 @@ struct menu_item *brightness_item_0;
 struct menu_item *contrast_item_0;
 struct menu_item *gamma_item_0;
 struct menu_item *tint_item_0;
+struct menu_item *saturation_item_0;
 
 struct menu_item *palette_item_1;
 struct menu_item *brightness_item_1;
 struct menu_item *contrast_item_1;
 struct menu_item *gamma_item_1;
 struct menu_item *tint_item_1;
+struct menu_item *saturation_item_1;
 
 struct menu_item *warp_item;
 struct menu_item *reset_confirm_item;
@@ -869,6 +871,7 @@ static void load_settings() {
   contrast_item_0->value = emux_get_color_contrast(0);
   gamma_item_0->value = emux_get_color_gamma(0);
   tint_item_0->value = emux_get_color_tint(0);
+  saturation_item_0->value = emux_get_color_saturation(0);
   emux_video_color_setting_changed(0);
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
@@ -876,6 +879,7 @@ static void load_settings() {
     contrast_item_1->value = emux_get_color_contrast(1);
     gamma_item_1->value = emux_get_color_gamma(1);
     tint_item_1->value = emux_get_color_tint(1);
+    saturation_item_1->value = emux_get_color_saturation(1);
     emux_video_color_setting_changed(1);
     emux_get_int(Setting_C128ColumnKey, &c40_80_column_item->value);
   }
@@ -1941,17 +1945,24 @@ static void menu_value_changed(struct menu_item *item) {
     emux_set_color_tint(0, item->value);
     emux_video_color_setting_changed(0);
     return;
+  case MENU_COLOR_SATURATION_0:
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
+    emux_set_color_saturation(0, item->value);
+    emux_video_color_setting_changed(0);
+    return;
   case MENU_COLOR_RESET_0:
     emux_get_default_color_setting(
       &brightness_item_0->value,
       &contrast_item_0->value,
       &gamma_item_0->value,
-      &tint_item_0->value
+      &tint_item_0->value,
+      &saturation_item_0->value
     );
     emux_set_color_brightness(0, brightness_item_0->value);
     emux_set_color_contrast(0, contrast_item_0->value);
     emux_set_color_gamma(0, gamma_item_0->value);
     emux_set_color_tint(0, tint_item_0->value);
+    emux_set_color_saturation(0, saturation_item_0->value);
     emux_video_color_setting_changed(0);
     return;
   case MENU_COLOR_BRIGHTNESS_1:
@@ -1974,17 +1985,24 @@ static void menu_value_changed(struct menu_item *item) {
     emux_set_color_tint(1, item->value);
     emux_video_color_setting_changed(1);
     return;
+  case MENU_COLOR_SATURATION_1:
+    ui_canvas_reveal_temp(FB_LAYER_VDC);
+    emux_set_color_saturation(1, item->value);
+    emux_video_color_setting_changed(1);
+    return;
   case MENU_COLOR_RESET_1:
     emux_get_default_color_setting(
       &brightness_item_1->value,
       &contrast_item_1->value,
       &gamma_item_1->value,
-      &tint_item_1->value
+      &tint_item_1->value,
+      &saturation_item_1->value
     );
     emux_set_color_brightness(1, brightness_item_1->value);
     emux_set_color_contrast(1, contrast_item_1->value);
     emux_set_color_gamma(1, gamma_item_1->value);
     emux_set_color_tint(1, tint_item_1->value);
+    emux_set_color_saturation(1, saturation_item_1->value);
     emux_video_color_setting_changed(1);
     return;
   case MENU_SWAP_JOYSTICKS:
@@ -2764,6 +2782,16 @@ void build_menu(struct menu_item *root) {
       ui_menu_add_range(MENU_COLOR_TINT_0, child, "Tint",
          0, 2000,
             10, emux_get_color_tint(0));
+  if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
+     saturation_item_0 =
+         ui_menu_add_range(MENU_COLOR_SATURATION_0, child, "Saturation",
+            0, 2000,
+               10, emux_get_color_saturation(0));
+  } else {
+     saturation_item_0 = (struct menu_item *)malloc(sizeof(struct menu_item));
+     memset(saturation_item_0, 0, sizeof(struct menu_item));
+  }
+
   ui_menu_add_button(MENU_COLOR_RESET_0, child, "Reset");
 
   int defaultHBorderTrim;
@@ -2819,6 +2847,17 @@ void build_menu(struct menu_item *root) {
          ui_menu_add_range(MENU_COLOR_TINT_1, child, "Tint",
             0, 2000,
                10, emux_get_color_tint(1));
+
+     if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
+        saturation_item_1 =
+            ui_menu_add_range(MENU_COLOR_SATURATION_1, child, "Saturation",
+               0, 2000,
+                  10, emux_get_color_saturation(1));
+     } else {
+        saturation_item_1 = (struct menu_item *)malloc(sizeof(struct menu_item));
+        memset(saturation_item_1, 0, sizeof(struct menu_item));
+     }
+
      ui_menu_add_button(MENU_COLOR_RESET_1, child, "Reset");
 
      h_center_item_1 =

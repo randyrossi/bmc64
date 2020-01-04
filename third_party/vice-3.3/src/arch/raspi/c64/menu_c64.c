@@ -72,6 +72,10 @@ void emux_set_color_tint(int display_num, int value) {
   resources_set_int("VICIIColorTint", value);
 }
 
+void emux_set_color_saturation(int display_num, int value) {
+  resources_set_int("VICIIColorSaturation", value);
+}
+
 void emux_set_video_cache(int value) {
   resources_set_int("VICIIVideoCache", value);
 }
@@ -101,6 +105,12 @@ int emux_get_color_gamma(int display_num) {
 int emux_get_color_tint(int display_num) {
   int value;
   resources_get_int("VICIIColorTint", &value);
+  return value;
+}
+
+int emux_get_color_saturation(int display_num) {
+  int value;
+  resources_get_int("VICIIColorSaturation", &value);
   return value;
 }
 
