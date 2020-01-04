@@ -822,11 +822,11 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
   } else {
     emu_joy_interrupt_abs(port, devd,
                           js_up == LOW,
-                          js_down == LOW, 
-                          js_left == LOW, 
-                          js_right == LOW, 
-                          js_fire == LOW, 
-                          js_potx == LOW, 
+                          js_down == LOW,
+                          js_left == LOW,
+                          js_right == LOW,
+                          js_fire == LOW,
+                          js_potx == LOW,
                           js_poty == LOW);
   }
 
@@ -1087,6 +1087,9 @@ void CKernel::circle_check_gpio() {
      if (ReadDebounced(GPIO_CONFIG_0_MENU_ENTER_INDEX) == BTN_PRESS) {
       emu_key_pressed(KEYCODE_Return);
       emu_key_released(KEYCODE_Return);
+     }
+     if (ReadDebounced(GPIO_CONFIG_0_MENU_VKBD_INDEX) == BTN_PRESS) {
+      emu_quick_func_interrupt(BTN_ASSIGN_VKBD_TOGGLE);
      }
      ReadJoystick(0, 0);
      ReadJoystick(1, 0);
