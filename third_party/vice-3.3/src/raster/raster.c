@@ -122,6 +122,9 @@ void raster_draw_buffer_ptr_update(raster_t *raster)
             raster->geometry->screen_size.height : 0
             ) + raster->current_line
            ) * raster_calc_frame_buffer_width(raster)
+#ifdef RASPI_COMPILE
+             * raster->canvas->raster_skip
+#endif
         + raster->geometry->extra_offscreen_border_left;
 }
 

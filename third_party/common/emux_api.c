@@ -203,8 +203,9 @@ void emux_apply_video_adjustments(int layer,
            canvas_state[index].src_off_x;
 
     canvas_state[index].top =
-       canvas_state[index].first_displayed_line +
-           canvas_state[index].src_off_y;
+       canvas_state[index].first_displayed_line *
+           canvas_state[index].raster_skip +
+              canvas_state[index].src_off_y;
 
     // Cut out is defined by top,left,vis_w,vis_h
 
@@ -270,4 +271,11 @@ int is_ntsc() {
       timing == MACHINE_TIMING_NTSC_CUSTOM_HDMI ||
       timing == MACHINE_TIMING_NTSC_DPI ||
       timing == MACHINE_TIMING_NTSC_CUSTOM_DPI;
+}
+
+int is_composite() {
+  int timing = circle_get_machine_timing();
+  return
+      timing == MACHINE_TIMING_NTSC_COMPOSITE ||
+      timing == MACHINE_TIMING_PAL_COMPOSITE;
 }

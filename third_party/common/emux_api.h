@@ -155,6 +155,9 @@ struct CanvasState {
 
   int fb_width;
   int fb_height;
+
+  // For CRT effect, set to 2.
+  int raster_skip;
 };
 
 // One struct for each display (can be 2 for C128)
@@ -387,6 +390,7 @@ void emux_load_settings_done(void);
 void emux_get_default_color_setting(int *brightness, int *contrast, int *gamma, int *tint, int *saturation);
 
 int is_ntsc();
+int is_composite();
 
 void emux_add_userport_joys(struct menu_item* parent);
 

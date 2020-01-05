@@ -30,8 +30,9 @@ static int is_tape_seeking_dir;
 static int is_tape_seeking_tick;
 static double tape_counter_offset;
 static char last_iec_dir[256];
-static int vertical_res = 288;
-static int raster_low = 0;
+static int vertical_res;
+static int raster_low;
+static int time_advance;
 
 // Things that need to be saved and restored.
 int reset_tape_with_cpu = 1;
@@ -69,6 +70,7 @@ int color_brightness = 1000;
 int color_contrast = 666;
 int color_gamma = 800;
 int color_tint = 1000;
+int raster_skip = 1; // TODO Make configurable
 
 static struct menu_item *sid_model_item;
 static struct menu_item *sid_write_access_item;
@@ -388,7 +390,11 @@ static void audioOutputCallback(void *userData,
 static void videoLineCallback(void *userData,
                               int lineNum, const Plus4VideoLineData *lineData)
 {
-   lineNum = lineNum / 2 - raster_low;
+   if (raster_skip == 1) {
+      lineNum = lineNum / 2 - raster_low;
+   } else {
+      lineNum = lineNum - raster_low;
+   }
    if (lineNum >= 0 && lineNum < vertical_res) {
      Plus4VideoDecoder_DecodeLine(videoDecoder, fb_buf + lineNum * fb_pitch, 384, lineData);
    }
@@ -615,8 +621,6 @@ static void videoFrameCallback(void *userData)
 // as the Vice version.
 int main_program(int argc, char **argv)
 {
-  int     timeAdvance;
-
   (void) argc;
   (void) argv;
 
@@ -625,22 +629,6 @@ int main_program(int argc, char **argv)
   strcpy (last_iec_dir, ".");
 
   int timing = circle_get_machine_timing();
-  if (is_ntsc()) {
-     vertical_res = 242;
-     raster_low = 18;
-  } else {
-     vertical_res = 288;
-     raster_low = 0;
-  }
-
-  // BMC64 Video Init
-  if (circle_alloc_fbl(FB_LAYER_VIC, 1 /* RGB565 */, &fb_buf,
-                              384, vertical_res, &fb_pitch)) {
-    printf ("Failed to create video buf.\n");
-    assert(0);
-  }
-  circle_clear_fbl(FB_LAYER_VIC);
-  circle_show_fbl(FB_LAYER_VIC);
 
   vm = Plus4VM_Create();
   if (!vm)
@@ -675,25 +663,6 @@ int main_program(int argc, char **argv)
 
   vic_enabled = 1; // really TED
 
-  canvas_state[vic_canvas_index].gfx_w = 40*8;
-  canvas_state[vic_canvas_index].gfx_h = 25*8;
-
-  if (is_ntsc()) {
-    canvas_state[vic_canvas_index].max_border_w = 32;
-    canvas_state[vic_canvas_index].max_border_h = 22;
-    timeAdvance = 1666;
-    Plus4VM_SetVideoClockFrequency(vm, 14318180);
-    strcpy(rom_kernal,"/PLUS4EMU/p4_ntsc.rom");
-    Plus4VideoDecoder_SetNTSCMode(videoDecoder, 1);
-  } else {
-    canvas_state[vic_canvas_index].max_border_w = 32;
-    canvas_state[vic_canvas_index].max_border_h = 40;
-    timeAdvance = 2000;
-    Plus4VM_SetVideoClockFrequency(vm, 17734475);
-    strcpy(rom_kernal,"/PLUS4EMU/p4kernal.rom");
-    Plus4VideoDecoder_SetNTSCMode(videoDecoder, 0);
-  }
-
   // This loads settings vars
   ui_init_menu();
 
@@ -713,8 +682,9 @@ int main_program(int argc, char **argv)
   printf ("Enter emulation loop\n");
   Plus4VM_Reset(vm, 1);
 
+  assert(time_advance > 0);
   for(;;) {
-    Plus4VM_Run(vm, timeAdvance);
+    Plus4VM_Run(vm, time_advance);
   }
 
   Plus4VM_Destroy(vm);
@@ -1520,6 +1490,42 @@ int emux_handle_loaded_setting(char *name, char* value_str, int value) {
 }
 
 void emux_load_settings_done(void) {
+  if (is_ntsc()) {
+     vertical_res = 242 * raster_skip;
+     raster_low = 18 * raster_skip;
+  } else {
+     vertical_res = 288 * raster_skip;
+     raster_low = 0;
+  }
+
+  // BMC64 Video Init
+  if (circle_alloc_fbl(FB_LAYER_VIC, 1 /* RGB565 */, &fb_buf,
+                              384, vertical_res, &fb_pitch)) {
+    printf ("Failed to create video buf.\n");
+    assert(0);
+  }
+  circle_clear_fbl(FB_LAYER_VIC);
+  circle_show_fbl(FB_LAYER_VIC);
+
+  canvas_state[vic_canvas_index].gfx_w = 40*8;
+  canvas_state[vic_canvas_index].gfx_h = 25*8 * raster_skip;
+  canvas_state[vic_canvas_index].raster_skip = raster_skip;
+
+  if (is_ntsc()) {
+    canvas_state[vic_canvas_index].max_border_w = 32;
+    canvas_state[vic_canvas_index].max_border_h = 22 * raster_skip;
+    time_advance = 1666;
+    Plus4VM_SetVideoClockFrequency(vm, 14318180);
+    strcpy(rom_kernal,"/PLUS4EMU/p4_ntsc.rom");
+    Plus4VideoDecoder_SetNTSCMode(videoDecoder, 1);
+  } else {
+    canvas_state[vic_canvas_index].max_border_w = 32;
+    canvas_state[vic_canvas_index].max_border_h = 40 * raster_skip;
+    time_advance = 2000;
+    Plus4VM_SetVideoClockFrequency(vm, 17734475);
+    strcpy(rom_kernal,"/PLUS4EMU/p4kernal.rom");
+    Plus4VideoDecoder_SetNTSCMode(videoDecoder, 0);
+  }
 }
 
 void emux_add_userport_joys(struct menu_item* parent) {

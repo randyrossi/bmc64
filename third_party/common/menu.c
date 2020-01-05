@@ -872,7 +872,6 @@ static void load_settings() {
   gamma_item_0->value = emux_get_color_gamma(0);
   tint_item_0->value = emux_get_color_tint(0);
   saturation_item_0->value = emux_get_color_saturation(0);
-  emux_video_color_setting_changed(0);
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
     brightness_item_1->value = emux_get_color_brightness(1);
@@ -880,7 +879,6 @@ static void load_settings() {
     gamma_item_1->value = emux_get_color_gamma(1);
     tint_item_1->value = emux_get_color_tint(1);
     saturation_item_1->value = emux_get_color_saturation(1);
-    emux_video_color_setting_changed(1);
     emux_get_int(Setting_C128ColumnKey, &c40_80_column_item->value);
   }
 
@@ -1108,6 +1106,11 @@ static void load_settings() {
   fclose(fp);
 
   emux_load_settings_done();
+
+  emux_video_color_setting_changed(0);
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
+    emux_video_color_setting_changed(1);
+  }
 }
 
 // Swap ports 1 & 2
@@ -3085,7 +3088,6 @@ void build_menu(struct menu_item *root) {
         (double)(aspect_item_1->value) / 100.0d,
         0.0d, 0.0d, 0.0d, 0.0d, 1);
   }
-
   overlay_init(statusbar_padding_item->value,
                c40_80_column_item->value,
                vkbd_transparency_item->value);

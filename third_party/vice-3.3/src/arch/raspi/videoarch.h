@@ -50,6 +50,7 @@ struct video_canvas_s {
   unsigned int depth;
   float refreshrate;
   struct video_draw_buffer_callback_s *video_draw_buffer_callback;
+  int raster_skip;
 };
 
 typedef struct video_canvas_s video_canvas_t;
