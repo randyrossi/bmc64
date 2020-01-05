@@ -20,7 +20,7 @@ index e5f095b..3564c1c 100644
  inline static uint8_t read_pra(via_context_t *via_context, uint16_t addr)
  {
 -    uint8_t byte = 0xff;
-+    uint8_t byte = via_context->via[VIA_PRA];
++    uint8_t byte = via_context->via[VIA_PRA_NHS];
  
      byte = read_userport_pbx((uint8_t)~via_context->via[VIA_DDRA], byte);
  
