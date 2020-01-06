@@ -306,6 +306,7 @@ static void list_files(struct menu_item *parent,
     if (dp == NULL) {
       // File dir may not be present. Try up one.
       remove_dir(current_dir_names[dir_type]);
+      dp = opendir(fullpath(dir_type,""));
       if (dp == NULL) {
         return;
       }
