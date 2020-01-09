@@ -179,6 +179,31 @@ The emulated resolutions are small and must be scaled up to the video mode's res
 
 ![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/scaling_kernel_8.jpg)
 
+# Files Organization
+
+File browsers will by default look in directories off the SD card using this convention:
+
+   /disks/C64
+   /carts/C64
+   /tapes/C64
+   /snapshots/C64
+
+   (Autostart starts off in "/")
+
+However, if you prefer to organize your files like this:
+
+   /C64/disks
+   /C64/carts
+   /C64/tapes
+   /C64/snapshots
+
+   (Autostart starts off in "/C64")
+
+Then change the 'Files Location Convention' in the Prefs menu accordingly.
+
+* ROMS must always be located in "/C64".
+** Replace "C64" above with the appropriate emulator sub dir for different emulators.
+
 # FileSystem/Drives
 
 By default, the first partition of the SDcard is mounted and is where BMC64 will search for emulator files. To change this, add "disk_partition=#" to cmdline.txt where # is the partition number you want to mount (1-4).

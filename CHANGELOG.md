@@ -296,3 +296,5 @@
   * Fix IEC mode not working after plus4emu attach/detach
   * Fix PET color and video settings after boot not applied
   * Add saturation to video color menu
+  * Fixed bug with files list if /disks dir was missing
+  * Added files location convention option: /C64/disks or /disks/C64

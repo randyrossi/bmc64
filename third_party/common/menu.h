@@ -424,6 +424,8 @@ typedef enum {
    MENU_USERPORT_JOYSTICKS,
    MENU_SWAP_USERPORT_JOYSTICKS,
    MENU_USERPORT_TYPE,
+
+   MENU_DIR_CONVENTION,
 } MenuID;
 
 typedef enum {
@@ -529,6 +531,11 @@ typedef enum {
    MENU_VOLUME_USB2,
    MENU_VOLUME_USB3
 } MenuVolume;
+
+typedef enum {
+   MENU_DIR_CONVENTION_FOLDER_EMU = 0,
+   MENU_DIR_CONVENTION_EMU_FOLDER,
+} MenuDirConvention;
 
 extern long keyset_codes[2][7];
 extern long key_bindings[6];

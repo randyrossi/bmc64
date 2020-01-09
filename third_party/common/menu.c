@@ -156,6 +156,7 @@ struct menu_item *pip_location_item;
 struct menu_item *pip_swapped_item;
 
 struct menu_item *c40_80_column_item;
+struct menu_item *dir_convention_item;
 
 static int unit;
 static int joyswap;
@@ -217,6 +218,8 @@ static const char default_dir_names[NUM_DIR_TYPES][16] = {
 static char current_volume_name[8] = "";
 // Keep track of current directory for each type of file.
 static char current_dir_names[NUM_DIR_TYPES][256];
+// Set to the sub dir name for this type.
+static char machine_sub_dir[16];
 // Keep track of last iec dirs for each drive
 static char last_iec_dir[4][256];
 
@@ -832,6 +835,7 @@ static int save_settings() {
   fprintf(fp, "key_binding_6=%d\n", key_bindings[5]);
 
   fprintf(fp, "volume=%d\n", volume_item->value);
+  fprintf(fp, "dir_convention=%d\n", dir_convention_item->value);
 
   emux_save_additional_settings(fp);
 
@@ -1079,6 +1083,8 @@ static void load_settings() {
       aspect_item_1->value = value;
     } else if (strcmp(name, "volume") == 0) {
       volume_item->value = value;
+    } else if (strcmp(name, "dir_convention") == 0) {
+      dir_convention_item->value = value;
     } else {
       for (int k=0; k < MAX_USB_DEVICES; k++) {
        if (strcmp(name, usb_btn_name[k]) == 0) {
@@ -1136,6 +1142,35 @@ void menu_swap_joysticks() {
 
 static void attach_cart(int menu_id, struct menu_item *item) {
   emux_attach_cart(menu_id, fullpath(DIR_CARTS, item->str_value));
+}
+
+// Reset current_dir_names according to preference.
+static void set_current_dir_names() {
+  int i;
+
+  switch (dir_convention_item->value) {
+     case MENU_DIR_CONVENTION_FOLDER_EMU:
+        for (i = 0; i < NUM_DIR_TYPES; i++) {
+          strcpy(current_dir_names[i], default_dir_names[i]);
+          strcat(current_dir_names[i], machine_sub_dir);
+        }
+        strcpy(current_dir_names[DIR_ROOT], "/");
+        break;
+     case MENU_DIR_CONVENTION_EMU_FOLDER:
+        for (i = 0; i < NUM_DIR_TYPES; i++) {
+          strcpy(current_dir_names[i], machine_sub_dir);
+          strcat(current_dir_names[i], default_dir_names[i]);
+        }
+        strcpy(current_dir_names[DIR_ROOT], machine_sub_dir);
+        break;
+     default:
+        assert(0);
+        break;
+  }
+
+  // These don't change
+  strcpy(current_dir_names[DIR_ROMS], machine_sub_dir);
+  strcpy(current_dir_names[DIR_IEC], "/");
 }
 
 static void select_file(struct menu_item *item) {
@@ -2243,6 +2278,9 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_CONFIRM_CANCEL:
     ui_pop_menu();
     break;
+  case MENU_DIR_CONVENTION:
+    set_current_dir_names();
+    break;
   }
 
   // Only items that were for file selection/nav should have these set...
@@ -2489,11 +2527,7 @@ void build_menu(struct menu_item *root) {
     joydevs[dev].device = JOYDEV_NONE;
   }
 
-  // TODO: Make these start dirs configurable.
   strcpy(current_volume_name, default_volume_name);
-  for (i = 0; i < NUM_DIR_TYPES; i++) {
-    strcpy(current_dir_names[i], default_dir_names[i]);
-  }
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
      strcpy(snap_filt_ext[0],".p4s");
@@ -2502,7 +2536,6 @@ void build_menu(struct menu_item *root) {
   }
 
   char machine_info_txt[64];
-  char machine_sub_dir[16];
   machine_info_txt[0] = '\0';
 
   switch (emux_machine_class) {
@@ -2529,14 +2562,10 @@ void build_menu(struct menu_item *root) {
     break;
   default:
     strcat(machine_info_txt,"??? ");
+    strcpy(machine_sub_dir, "/");
     break;
   }
 
-  strcat(current_dir_names[DIR_DISKS],machine_sub_dir);
-  strcat(current_dir_names[DIR_TAPES],machine_sub_dir);
-  strcat(current_dir_names[DIR_CARTS],machine_sub_dir);
-  strcat(current_dir_names[DIR_SNAPS],machine_sub_dir);
-  strcpy(current_dir_names[DIR_ROMS], machine_sub_dir);
 
   char scratch[16];
   switch (circle_get_machine_timing()) {
@@ -3035,6 +3064,19 @@ void build_menu(struct menu_item *root) {
      child->choice_disabled[3] = 1;
   }
 
+  char emu_folder[16];
+  char folder_emu[16];
+
+  strcpy (emu_folder, machine_sub_dir);
+  strcat (emu_folder, "/dir");
+
+  strcpy (folder_emu, "/dir");
+  strcat (folder_emu, machine_sub_dir);
+
+  dir_convention_item = ui_menu_add_toggle_labels(
+        MENU_DIR_CONVENTION, parent, "Look for files in", 0,
+        folder_emu, emu_folder);
+
   warp_item = ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
 
   // This is an undocumented feature for now. Keep invisible unless it
@@ -3052,6 +3094,8 @@ void build_menu(struct menu_item *root) {
   ui_set_on_value_changed_callback(menu_value_changed);
 
   load_settings();
+
+  set_current_dir_names();
 
   circle_set_volume(volume_item->value);
 
