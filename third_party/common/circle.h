@@ -210,6 +210,10 @@ extern int circle_sound_suspend(void);
 extern int circle_sound_resume(void);
 extern int circle_sound_bufferspace(void);
 
+extern uint8_t circle_get_userport_ddr(void);
+extern uint8_t circle_get_userport(void);
+extern void circle_set_userport(uint8_t value);
+
 // -----------------------------------------------------------------------
 // Functions called from kernel layer into emulator layer
 // -----------------------------------------------------------------------

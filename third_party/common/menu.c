@@ -2999,6 +2999,10 @@ void build_menu(struct menu_item *root) {
      child->choice_disabled[1] = 1;
      child->choice_disabled[2] = 1;
      child->choice_disabled[3] = 1;
+     child->choice_disabled[4] = 1;
+  }
+  if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
+    child->choice_disabled[4] = 1;
   }
 
   warp_item = ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);

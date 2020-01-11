@@ -849,36 +849,19 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
 // Configure CIA2 port B from DDR
 // Only configured for C64 for now.
 void CKernel::SetupUserport() {
-#if defined(RASPI_C64) || defined(RASPI_C128) || defined(RASPI_VIC20) || defined(RASPI_PET)
-#if defined(RASPI_C64) || defined(RASPI_C128)
-  uint8_t ddr = machine_context.cia2->c_cia[CIA_DDRB];
-#elif defined(RASPI_VIC20)
-  uint8_t ddr = machine_context.via2->via[VIA_DDRB];
-#elif defined(RASPI_PET)
-  uint8_t ddr = machine_context.via->via[VIA_DDRA];
-#endif
+  uint8_t ddr = circle_get_userport_ddr();
   for (int i = 0; i < 8; i++) {
     uint8_t bit_pos = 1<<i;
     uint8_t ddr_value = ddr & bit_pos;
     config_3_userportPins[i]->SetMode(ddr_value ? GPIOModeOutput : GPIOModeInputPullUp);
   }
-#endif
 }
 
 // Read input pins and send to output pins
 // Only configured for C64 for now.
 void CKernel::ReadWriteUserport() {
-#if defined(RASPI_C64) || defined(RASPI_C128) || defined(RASPI_VIC20) || defined(RASPI_PET)
-#if defined(RASPI_C64) || defined(RASPI_C128)
-  uint8_t ddr = machine_context.cia2->c_cia[CIA_DDRB];
-  uint8_t value = machine_context.cia2->c_cia[CIA_PRB];
-#elif defined(RASPI_VIC20)
-  uint8_t ddr = machine_context.via2->via[VIA_DDRB];
-  uint8_t value = machine_context.via2->via[VIA_PRB];
-#elif defined(RASPI_PET)
-  uint8_t ddr = machine_context.via->via[VIA_DDRA];
-  uint8_t value = machine_context.via->via[VIA_PRA_NHS];
-#endif
+  uint8_t ddr = circle_get_userport_ddr();
+  uint8_t value = circle_get_userport();
   uint8_t new_value = 0;
   for (int i = 0; i < 8; i++) {
     uint8_t bit_pos = 1<<i;
@@ -895,14 +878,7 @@ void CKernel::ReadWriteUserport() {
       }
     }
   }
-#if defined(RASPI_C64) || defined(RASPI_C128)
-  machine_context.cia2->c_cia[CIA_PRB] = new_value;
-#elif defined(RASPI_VIC20)
-  machine_context.via2->via[VIA_PRB] = new_value;
-#elif defined(RASPI_PET)
-  machine_context.via->via[VIA_PRA_NHS] = new_value;
-#endif
-#endif
+  circle_set_userport(new_value);
 }
 
 int CKernel::circle_get_machine_timing() {

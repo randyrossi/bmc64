@@ -897,3 +897,55 @@ void emux_add_userport_joys(struct menu_item* parent) {
        break;
   }
 }
+
+uint8_t circle_get_userport_ddr(void) {
+  switch (machine_class) {
+    case VICE_MACHINE_C64:
+    case VICE_MACHINE_C128:
+      return machine_context.cia2->c_cia[CIA_DDRB];
+      break;
+    case VICE_MACHINE_VIC20:
+      return machine_context.via2->via[VIA_DDRB];
+      break;
+    case VICE_MACHINE_PET:
+      return machine_context.via->via[VIA_DDRA];
+      break;
+    default:
+      break;
+  }
+  return 0;
+}
+
+uint8_t circle_get_userport(void) {
+  switch (machine_class) {
+    case VICE_MACHINE_C64:
+    case VICE_MACHINE_C128:
+      return machine_context.cia2->c_cia[CIA_PRB];
+      break;
+    case VICE_MACHINE_VIC20:
+      return machine_context.via2->via[VIA_PRB];
+      break;
+    case VICE_MACHINE_PET:
+      return machine_context.via->via[VIA_PRA_NHS];
+      break;
+    default:
+      break;
+  }
+}
+
+void circle_set_userport(uint8_t value) {
+  switch (machine_class) {
+    case VICE_MACHINE_C64:
+    case VICE_MACHINE_C128:
+      machine_context.cia2->c_cia[CIA_PRB] = value;
+      break;
+    case VICE_MACHINE_VIC20:
+      machine_context.via2->via[VIA_PRB] = value;
+      break;
+    case VICE_MACHINE_PET:
+      machine_context.via->via[VIA_PRA_NHS] = value;
+      break;
+    default:
+      break;
+  }
+}
