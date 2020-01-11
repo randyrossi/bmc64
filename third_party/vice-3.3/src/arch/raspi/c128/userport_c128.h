@@ -26,6 +26,8 @@
 #ifndef RASPI_USERPORT_C128_H
 #define RASPI_USERPORT_C128_H
 
+#include <stdint.h>
+
 uint8_t userport_get_ddr(void);
 uint8_t userport_get(void);
 void userport_set(uint8_t value);
