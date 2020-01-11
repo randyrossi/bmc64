@@ -846,8 +846,7 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
   }
 }
 
-// Configure CIA2 port B from DDR
-// Only configured for C64 for now.
+// Configure user port DDR
 void CKernel::SetupUserport() {
   uint8_t ddr = circle_get_userport_ddr();
   for (int i = 0; i < 8; i++) {
@@ -858,7 +857,6 @@ void CKernel::SetupUserport() {
 }
 
 // Read input pins and send to output pins
-// Only configured for C64 for now.
 void CKernel::ReadWriteUserport() {
   uint8_t ddr = circle_get_userport_ddr();
   uint8_t value = circle_get_userport();
