@@ -38,4 +38,6 @@ libarch_c64_a_SOURCES = \
 	virtual_keyboard_c64.h \
 	virtual_keyboard_c64.c \
 	menu_c64.h \
-	menu_c64.c
+	menu_c64.c \
+	userport_c64.h \
+	userport_c64.c

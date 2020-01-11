@@ -38,4 +38,6 @@ libarch_c128_a_SOURCES = \
 	virtual_keyboard_c128.h \
 	virtual_keyboard_c128.c \
 	menu_c128.h \
-	menu_c128.c
+	menu_c128.c \
+	userport_c128.h \
+	userport_c128.c

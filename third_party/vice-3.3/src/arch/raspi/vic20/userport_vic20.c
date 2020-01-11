@@ -1,8 +1,8 @@
 /*
- * videoarch_machine.h
+ * userport_vic20.c
  *
  * Written by
- *  Randy Rossi <randy.rossi@gmail.com>
+ *  Mark Bush <mark@bushnet.org>
  *
  * This file is part of VICE, the Versatile Commodore Emulator.
  * See README for copyright notice.
@@ -24,25 +24,17 @@
  *
  */
 
-// Machine specific routines
-#ifndef RASPI_MACHINE_H
-#define RASPI_MACHINE_H
+#include "userport_vic20.h"
 
-#include <stdint.h>
+#include "via.h"
+#include "vic20/vic20.h"
 
-#include "videoarch.h"
-
-extern void set_refresh_rate(struct video_canvas_s *canvas);
-extern void set_video_font(void);
-extern unsigned int *raspi_get_palette(int index);
-extern int is_vic(struct video_canvas_s *canvas);
-extern int is_vdc(struct video_canvas_s *canvas);
-void cartridge_freeze(void);
-void set_canvas_size(int index, int* w, int *h, int *gw, int *gh);
-void set_canvas_borders(int index, int *w, int *h);
-
-extern uint8_t userport_get_ddr(void);
-extern uint8_t userport_get(void);
-extern void userport_set(uint8_t value);
-
-#endif
+uint8_t userport_get_ddr(void) {
+  return machine_context.via2->via[VIA_DDRB];
+}
+uint8_t userport_get(void) {
+  return machine_context.via2->via[VIA_PRB];
+}
+void userport_set(uint8_t value) {
+  machine_context.via2->via[VIA_PRB] = value;
+}
