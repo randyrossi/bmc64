@@ -132,7 +132,7 @@ Here are a couple examples you can add to machines.txt that will work with the V
     dpi_group=1
     dpi_mode=4
 
-    [C64/NTSC/DPI/VGA666:720p@50hz]
+    [C64/PAL/DPI/VGA666:720p@50hz]
     enable_dpi=true
     machine_timing=pal-custom
     cycles_per_second=982734
@@ -143,7 +143,9 @@ Here are a couple examples you can add to machines.txt that will work with the V
 
 * It appears these modes are not exactly 50hz/60hz like HDMI. It's likely the case that all DPI modes will require custom timing.  See steps mentioned above for how to find the correct cycles_per_second value for your DPI mode.
 
-** DPI uses almost all the GPIO pins. GPIO configs for things like joyticks/keyboards/buttons are disabled when enable_dpi is present in cmdline.txt
+** DPI uses almost all the GPIO pins. GPIO configs for things like joysticks/keyboards/buttons are disabled when enable_dpi is present in cmdline.txt
+
+*** Special thanks goes out to github user K-rnivoro (https://github.com/K-rnivoro) for suggesting this feature.
 
 # Recovering from a Blank Screen
 

@@ -66,6 +66,14 @@ struct video_canvas_s *vic_canvas;
 struct video_canvas_s *canvases[2];
 struct video_draw_buffer_callback_s draw_buffer_callback[2];
 
+// Added for PET which seems to create the canvas later
+// than our menu construction. So we save the fact these are
+// needed and apply them on first refresh for each canvas.
+// Should not happen for other machines.
+int need_palette_update[2];
+int need_palette_update_index[2];
+int need_color_update[2];
+
 // NOTE: For Plus/4, the vic_* variables are actually ted.
 // Maybe rename to pri_?
 
@@ -105,8 +113,11 @@ int is_vdc(struct video_canvas_s *canvas) {
 
 // Called by menu when palette changes
 void emux_change_palette(int display_num, int palette_index) {
-  if (!canvases[display_num])
+  if (!canvases[display_num]) {
+    need_palette_update[display_num] = 1;
+    need_palette_update_index[display_num] = palette_index;
     return;
+  }
 
   canvas_state[display_num].palette_index = palette_index;
   // This will call set_palette below to get called after color controls
@@ -116,8 +127,10 @@ void emux_change_palette(int display_num, int palette_index) {
 
 // Called when a color setting has changed
 void emux_video_color_setting_changed(int display_num) {
-  if (!canvases[display_num])
+  if (!canvases[display_num]) {
+    need_color_update[display_num] = 1;
     return;
+  }
 
   // This will call set_palette below to get called after color controls
   // have been applied to the palette.
@@ -300,10 +313,9 @@ struct video_canvas_s *video_canvas_create(struct video_canvas_s *canvas,
   if (is_vic(canvas)) {
      canvases[0] = canvas;
      return video_canvas_create_vic(canvas, width, height, mapped);
-  } else {
-     canvases[1] = canvas;
-     return video_canvas_create_vdc(canvas, width, height, mapped);
   }
+  canvases[1] = canvas;
+  return video_canvas_create_vdc(canvas, width, height, mapped);
 }
 
 void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
@@ -317,11 +329,28 @@ void video_canvas_refresh(struct video_canvas_s *canvas, unsigned int xs,
         raspi_boot_warp = 1;
         vic_first_refresh = 0;
         set_video_font();
+
+        // Added for PET. See note above.
+        if (need_palette_update[0]) {
+           emux_change_palette(0, need_palette_update_index[0]);
+           need_palette_update[0] = 0;
+        } else if (need_color_update[0]) {
+           emux_video_color_setting_changed(0);
+           need_color_update[0] = 0;
+        }
      }
   } else {
      if (vdc_first_refresh == 1) {
-        // Nothing to do.  Consider removing.
         vdc_first_refresh = 0;
+
+        // Added for PET. See note above.
+        if (need_palette_update[1]) {
+           emux_change_palette(1, need_palette_update_index[1]);
+           need_palette_update[1] = 0;
+        } else if (need_color_update[1]) {
+           emux_video_color_setting_changed(1);
+           need_color_update[1] = 0;
+        }
      }
   }
 }

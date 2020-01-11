@@ -804,11 +804,12 @@ void emux_save_additional_settings(FILE *fp) {
 }
 
 void emux_get_default_color_setting(int *brightness, int *contrast,
-                                    int *gamma, int *tint) {
+                                    int *gamma, int *tint, int *saturation) {
     *brightness = 1000;
     *contrast = 1250;
     *gamma = 2200;
     *tint = 1000;
+    *saturation = 1000;
 }
 
 int emux_handle_loaded_setting(char *name, char* value_str, int value) {

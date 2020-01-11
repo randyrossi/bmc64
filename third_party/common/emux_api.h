@@ -303,11 +303,13 @@ void emux_set_color_brightness(int display_num, int value);
 void emux_set_color_contrast(int display_num, int value);
 void emux_set_color_gamma(int display_num, int value);
 void emux_set_color_tint(int display_num, int value);
+void emux_set_color_saturation(int display_num, int value);
 
 int emux_get_color_brightness(int display_num);
 int emux_get_color_contrast(int display_num);
 int emux_get_color_gamma(int display_num);
 int emux_get_color_tint(int display_num);
+int emux_get_color_saturation(int display_num);
 
 void emux_set_video_cache(int value);
 void emux_set_hw_scale(int value);
@@ -382,7 +384,7 @@ void emux_save_additional_settings(FILE *fp);
 
 void emux_load_settings_done(void);
 
-void emux_get_default_color_setting(int *brightness, int *contrast, int *gamma, int *tint);
+void emux_get_default_color_setting(int *brightness, int *contrast, int *gamma, int *tint, int *saturation);
 
 int is_ntsc();
 
