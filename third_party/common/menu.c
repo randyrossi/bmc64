@@ -1011,6 +1011,9 @@ static void load_settings() {
         case GPIO_CONFIG_WAVESHARE:
            gpio_config_item->value = 3;
            break;
+        case GPIO_CONFIG_USERPORT:
+           gpio_config_item->value = 4;
+           break;
         default:
            // Disabled
            gpio_config_item->value = 0;
@@ -1950,6 +1953,10 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_CONFIGURE_KEYSET2:
     configure_keyset(1);
+    return;
+  case MENU_GPIO_CONFIG:
+    // Ensure GPIO pins are correct for new mode.
+    circle_reset_gpio(item->value);
     return;
   case MENU_WARP_MODE:
     toggle_warp(item->value);
@@ -3047,21 +3054,27 @@ void build_menu(struct menu_item *root) {
 
   child = gpio_config_item =
       ui_menu_add_multiple_choice(MENU_GPIO_CONFIG, parent, "GPIO Config");
-     child->num_choices = 4;
+     child->num_choices = 5;
      child->value = 0;
      strcpy(child->choices[0], "Disabled");
      strcpy(child->choices[1], "#1 (Nav+Joy)");
      strcpy(child->choices[2], "#2 (Kyb+Joy)");
      strcpy(child->choices[3], "#3 (Waveshare Hat)");
+     strcpy(child->choices[4], "#4 (Userport+Joy)");
      child->choice_ints[0] = GPIO_CONFIG_DISABLED;
      child->choice_ints[1] = GPIO_CONFIG_NAV_JOY;
      child->choice_ints[2] = GPIO_CONFIG_KYB_JOY;
      child->choice_ints[3] = GPIO_CONFIG_WAVESHARE;
+     child->choice_ints[4] = GPIO_CONFIG_USERPORT;
 
   if (!circle_gpio_enabled()) {
      child->choice_disabled[1] = 1;
      child->choice_disabled[2] = 1;
      child->choice_disabled[3] = 1;
+     child->choice_disabled[4] = 1;
+  }
+  if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
+    child->choice_disabled[4] = 1;
   }
 
   char emu_folder[16];

@@ -300,4 +300,7 @@
   * Added "Look for files in" option: /C64/{dir} or /{dir}/C64
   * Fixed DRIVES drive rom discovery issue
   * Removed drive roms from bootstat to not interfere with path lookup
+  * Merged Mark Bush's Userport changes
   * Added (cheap) PET scanlines video option
+    Consistent thickness of lines can be achieved by adjusting vertical
+    border trim until the display's height is 2x the frame buffer's height.

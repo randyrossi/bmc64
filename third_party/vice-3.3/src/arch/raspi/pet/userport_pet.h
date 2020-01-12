@@ -1,8 +1,8 @@
 /*
- * videoarch_machine.h
+ * userport_pet.h
  *
  * Written by
- *  Randy Rossi <randy.rossi@gmail.com>
+ *  Mark Bush <mark@bushnet.org>
  *
  * This file is part of VICE, the Versatile Commodore Emulator.
  * See README for copyright notice.
@@ -23,27 +23,13 @@
  *  02111-1307  USA.
  *
  */
-
-// Machine specific routines
-#ifndef RASPI_MACHINE_H
-#define RASPI_MACHINE_H
+#ifndef RASPI_USERPORT_PET_H
+#define RASPI_USERPORT_PET_H
 
 #include <stdint.h>
 
-#include "videoarch.h"
-
-extern void set_refresh_rate(struct video_canvas_s *canvas);
-extern void set_video_font(void);
-extern unsigned int *raspi_get_palette(int index);
-extern int is_vic(struct video_canvas_s *canvas);
-extern int is_vdc(struct video_canvas_s *canvas);
-void cartridge_freeze(void);
-void set_canvas_size(int index, int* w, int *h, int *gw, int *gh);
-void set_canvas_borders(int index, int *w, int *h);
-void emux_machine_load_settings_done(void);
-
-extern uint8_t userport_get_ddr(void);
-extern uint8_t userport_get(void);
-extern void userport_set(uint8_t value);
+uint8_t userport_get_ddr(void);
+uint8_t userport_get(void);
+void userport_set(uint8_t value);
 
 #endif

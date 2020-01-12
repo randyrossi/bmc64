@@ -899,3 +899,44 @@ void emux_add_userport_joys(struct menu_item* parent) {
        break;
   }
 }
+
+uint8_t circle_get_userport_ddr(void) {
+  switch (machine_class) {
+    case VICE_MACHINE_C64:
+    case VICE_MACHINE_C128:
+    case VICE_MACHINE_VIC20:
+    case VICE_MACHINE_PET:
+      return userport_get_ddr();
+      break;
+    default:
+      break;
+  }
+  return 0;
+}
+
+uint8_t circle_get_userport(void) {
+  switch (machine_class) {
+    case VICE_MACHINE_C64:
+    case VICE_MACHINE_C128:
+    case VICE_MACHINE_VIC20:
+    case VICE_MACHINE_PET:
+      return userport_get();
+      break;
+    default:
+      break;
+  }
+  return 0xff;
+}
+
+void circle_set_userport(uint8_t value) {
+  switch (machine_class) {
+    case VICE_MACHINE_C64:
+    case VICE_MACHINE_C128:
+    case VICE_MACHINE_VIC20:
+    case VICE_MACHINE_PET:
+      userport_set(value);
+      break;
+    default:
+      break;
+  }
+}

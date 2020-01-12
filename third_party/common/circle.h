@@ -135,6 +135,7 @@
 #define GPIO_CONFIG_NAV_JOY 0
 #define GPIO_CONFIG_KYB_JOY 1
 #define GPIO_CONFIG_WAVESHARE 2
+#define GPIO_CONFIG_USERPORT 3
 
 struct axis_config {
   int use;
@@ -171,6 +172,7 @@ extern void circle_sleep(long);
 extern unsigned long circle_get_ticks();
 extern void circle_yield();
 extern void circle_check_gpio();
+extern void circle_reset_gpio(int gpio_config);
 extern int circle_alloc_fbl(int pixelmode, int layer, uint8_t **pixels,
                             int width, int height, int *pitch);
 extern void circle_free_fbl(int layer);
@@ -207,6 +209,10 @@ extern void circle_sound_close(void);
 extern int circle_sound_suspend(void);
 extern int circle_sound_resume(void);
 extern int circle_sound_bufferspace(void);
+
+extern uint8_t circle_get_userport_ddr(void);
+extern uint8_t circle_get_userport(void);
+extern void circle_set_userport(uint8_t value);
 
 // -----------------------------------------------------------------------
 // Functions called from kernel layer into emulator layer
