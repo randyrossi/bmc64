@@ -253,7 +253,11 @@ static uint8_t read_ciapa(cia_context_t *cia_context)
 /* read_* functions must return 0xff if nothing to read!!! */
 static uint8_t read_ciapb(cia_context_t *cia_context)
 {
-    uint8_t byte = 0xff;
+#ifdef RASPI_COMPILE
+  uint8_t byte = cia_context->c_cia[CIA_PRB];
+#else
+  uint8_t byte = 0xff;
+#endif
 
     byte = read_userport_pbx((uint8_t)~cia_context->c_cia[CIA_DDRB], byte);
 

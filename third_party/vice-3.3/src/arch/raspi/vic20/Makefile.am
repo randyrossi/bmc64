@@ -38,4 +38,6 @@ libarch_vic20_a_SOURCES = \
 	virtual_keyboard_vic20.h \
 	virtual_keyboard_vic20.c \
 	menu_vic20.h \
-	menu_vic20.c
+	menu_vic20.c \
+	userport_vic20.h \
+	userport_vic20.c

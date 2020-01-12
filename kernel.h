@@ -99,6 +99,7 @@ public:
   int circle_sound_bufferspace(void);
   void circle_yield(void);
   void circle_check_gpio();
+  void circle_reset_gpio(int gpio_config);
   void circle_lock_acquire();
   void circle_lock_release();
   void circle_boot_complete();
@@ -114,6 +115,8 @@ private:
   int ReadDebounced(int pinIndex);
   void ScanKeyboard();
   void ReadJoystick(int device, int gpioConfig);
+  void SetupUserport();
+  void ReadWriteUserport();
 
   ViceSound *mViceSound;
   CCPUThrottle mCPUThrottle;

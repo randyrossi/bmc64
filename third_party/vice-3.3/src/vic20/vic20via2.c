@@ -253,7 +253,11 @@ inline static uint8_t read_pra(via_context_t *via_context, uint16_t addr)
 inline static uint8_t read_prb(via_context_t *via_context)
 {
     uint8_t byte = 0xff;
+#ifdef RASPI_COMPILE
+    byte = via_context->via[VIA_PRB];
+#else
     byte = via_context->via[VIA_PRB] | ~(via_context->via[VIA_DDRB]);
+#endif
 
     byte = read_userport_pbx((uint8_t)~via_context->via[VIA_DDRB], byte);
 

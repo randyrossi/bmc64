@@ -196,7 +196,11 @@ static void reset(via_context_t *via_context)
 
 inline static uint8_t read_pra(via_context_t *via_context, uint16_t addr)
 {
-    uint8_t byte = 0xff;
+#ifdef RASPI_COMPILE
+  uint8_t byte = via_context->via[VIA_PRA_NHS];
+#else
+  uint8_t byte = 0xff;
+#endif
 
     byte = read_userport_pbx((uint8_t)~via_context->via[VIA_DDRA], byte);
 
