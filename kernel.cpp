@@ -1166,7 +1166,6 @@ void CKernel::circle_check_gpio() {
      ReadJoystick(0, GPIO_CONFIG_WAVESHARE);
      break;
     case GPIO_CONFIG_USERPORT:
-     // CIA2 port B
      SetupUserport();
      ReadWriteUserport();
      ReadJoystick(0, GPIO_CONFIG_USERPORT);
