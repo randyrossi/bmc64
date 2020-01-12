@@ -327,7 +327,7 @@ Config | Description
 1      | Menu Nav Buttons + Real Joysticks (i.e. CPIO-64 PCB or jumpers)
 2      | Real Keyboard + Real Joysticks (BMC64 PCB)
 3      | Waveshare Game HAT
-3      | Userport  + Real Joysticks
+4      | Userport  + Real Joysticks
 
 NOTE: The default config is 1.  If you are installing BMC64 for the first time and need a GPIO config other than 1 and don't have a USB keyboard to change the option, you will have to manually edit settiongs.txt and ensure a line with 'gpio_config=[0-2]' exists. The number given should be 1 less than the config number in the documentation above.  For example, if you are using a PCB with full keyboard connector, you would add to (or create) a settings.txt file with "gpio_config=1" for the selection of Config 2.  Since each emulator has its own settings file, you would need to do this for settings.txt (C64), settings-c128.txt , settings-vic20.txt, settings-plus4.txt and settings-plus4emu.txt
 
