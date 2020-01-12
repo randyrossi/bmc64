@@ -297,4 +297,7 @@
   * Fix PET color and video settings after boot not applied
   * Add saturation to video color menu
   * Fixed bug with files list if /disks dir was missing
-  * Added files location convention option: /C64/disks or /disks/C64
+  * Added "Look for files in" option: /C64/{dir} or /{dir}/C64
+  * Fixed DRIVES drive rom discovery issue
+  * Removed drive roms from bootstat to not interfere with path lookup
+  * Added (cheap) PET scanlines video option

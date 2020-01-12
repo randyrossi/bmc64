@@ -128,6 +128,17 @@ void raster_draw_buffer_ptr_update(raster_t *raster)
         + raster->geometry->extra_offscreen_border_left;
 }
 
+#ifdef RASPI_COMPILE
+void raster_draw_buffer_clone_line(raster_t *raster)
+{
+  if (!raster->canvas->raster_lines) {
+     int width = raster_calc_frame_buffer_width(raster);
+     memcpy(raster->draw_buffer_ptr + width,
+         raster->draw_buffer_ptr, width);
+  }
+}
+#endif
+
 static int raster_realize_frame_buffer(raster_t *raster)
 {
     unsigned int fb_width, fb_height, fb_pitch;

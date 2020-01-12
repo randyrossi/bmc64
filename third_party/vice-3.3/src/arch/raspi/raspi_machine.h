@@ -40,4 +40,5 @@ extern int is_vdc(struct video_canvas_s *canvas);
 void cartridge_freeze(void);
 void set_canvas_size(int index, int* w, int *h, int *gw, int *gh);
 void set_canvas_borders(int index, int *w, int *h);
+void emux_machine_load_settings_done(void);
 #endif

@@ -223,3 +223,6 @@ struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
   ui_menu_add_button(MENU_DETACH_CART, parent, "Detach cartridge");
   return parent;
 }
+
+void emux_machine_load_settings_done(void) {
+}

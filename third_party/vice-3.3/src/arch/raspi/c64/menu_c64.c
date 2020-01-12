@@ -156,3 +156,6 @@ struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
 
   return parent;
 }
+
+void emux_machine_load_settings_done(void) {
+}

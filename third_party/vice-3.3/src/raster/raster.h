@@ -213,6 +213,9 @@ extern void raster_set_geometry(raster_t *raster,
                                 unsigned int extra_offscreen_border_right);
 extern void raster_new_cache(raster_t *raster, unsigned int screen_height);
 extern void raster_draw_buffer_ptr_update(raster_t *raster);
+#ifdef RASPI_COMPILE
+extern void raster_draw_buffer_clone_line(raster_t *raster);
+#endif
 extern void raster_force_repaint(raster_t *raster);
 extern void raster_set_title(raster_t *raster, const char *name);
 extern void raster_skip_frame(raster_t *raster, int skip);

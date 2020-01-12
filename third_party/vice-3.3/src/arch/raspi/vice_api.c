@@ -818,6 +818,7 @@ int emux_handle_loaded_setting(char *name, char* value_str, int value) {
 }
 
 void emux_load_settings_done(void) {
+  emux_machine_load_settings_done();
 }
 
 static void swap_userport_joysticks() {

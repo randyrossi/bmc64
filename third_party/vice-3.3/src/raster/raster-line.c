@@ -707,6 +707,10 @@ void raster_line_emulate(raster_t *raster)
         }
     }
 
+#ifdef RASPI_COMPILE
+    raster_draw_buffer_clone_line(raster);
+#endif
+
     raster->current_line++;
 
     if (raster->current_line == raster->geometry->screen_size.height) {

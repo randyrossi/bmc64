@@ -50,7 +50,14 @@ struct video_canvas_s {
   unsigned int depth;
   float refreshrate;
   struct video_draw_buffer_callback_s *video_draw_buffer_callback;
+
+  // Set to 2 to double the height of the frame buffer. Allows for
+  // 'cheap' raster line simulation that can be turned on/off by
+  // setting raster_lines;
   int raster_skip;
+
+  // When non zero, simulates scanlines. Only applicable is raster_lines = 2
+  int raster_lines;
 };
 
 typedef struct video_canvas_s video_canvas_t;

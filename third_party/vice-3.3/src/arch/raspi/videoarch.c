@@ -247,7 +247,8 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
   }
 
   if (machine_class == VICE_MACHINE_PET && !is_composite()) {
-     // TODO : Make this configurable
+     // For the PET, we always double the vertical height of the frame buffer
+     // so we can do our 'cheap' scanlines effect.
      canvas->raster_skip = 2;
   } else {
      canvas->raster_skip = 1;

@@ -181,3 +181,6 @@ struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
     ui_menu_add_button(MENU_VIC20_ATTACH_CART_4K_B000, p2, "Attach 4k $B000...");
   return parent;
 }
+
+void emux_machine_load_settings_done(void) {
+}

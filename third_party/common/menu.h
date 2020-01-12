@@ -426,6 +426,7 @@ typedef enum {
    MENU_USERPORT_TYPE,
 
    MENU_DIR_CONVENTION,
+   MENU_SCANLINES,
 } MenuID;
 
 typedef enum {
