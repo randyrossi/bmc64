@@ -1,8 +1,15 @@
-# This file tells stdio glue code to fast fail,
-# fast stat certain files that are accessed 
-# at boot time in order to speed up the 
-# boot process.  If this file is missing, boot
-# time will be much longer.
+# This file tells stdio glue code to fast fail, fast stat certain files
+# that are accessed at boot time in order to speed up the boot process.
+# If this file is missing, the default internal list will be used which
+# matches the checked in version.
+#
+# Note: Any unqualified filename will fake success or fail for the file
+# regardless of the directory it resides in. Machine kernal and character
+# roms you know are present can have a 'stat' entry here. Any files you want
+# to fail regardless of where they reside can have a 'fail' entry. If you
+# want to store your drive rom files in DRIVES, you can add fail entries
+# for /C64/filename to speed up boot slightly since VICE looks for those
+# files first in the machine specific dir.  But this is not necessary.
 stat,kernal,8192
 stat,basic,8192
 stat,chargen,4096

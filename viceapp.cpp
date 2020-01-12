@@ -301,6 +301,12 @@ void ViceStdioApp::InitBootStat() {
     }
 
     if (strcmp(what, "stat") == 0) {
+      if (strcmp(file, "d1541II") == 0) {
+        // Ignore legacy d1541II faking found file without a fully
+        // qualified path.
+        printf("Ignoring d1541II in bootstat.txt\n");
+        continue;
+      }
       mBootStatWhat[num] = BOOTSTAT_WHAT_STAT;
     } else if (strcmp(what, "fail") == 0) {
       if (strcmp(file,"rpi_pos.vkm") == 0) {
