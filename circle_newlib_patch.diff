@@ -43,7 +43,7 @@ index affc0f644..8c4d47f03 100644
  
  stub_warning(_getpid)
 diff --git a/libgloss/circle/io.cpp b/libgloss/circle/io.cpp
-index 4c8358738..33d855b9f 100644
+index 4c8358738..5598f1c8f 100644
 --- a/libgloss/circle/io.cpp
 +++ b/libgloss/circle/io.cpp
 @@ -1,375 +1,825 @@
@@ -263,9 +263,7 @@ index 4c8358738..33d855b9f 100644
 +  int written_to; // at least one write was performed on this file
 +  int fopen_called; // f_open was called and thus f_close needs to be called
 +};
- 
--    constexpr unsigned int MAX_OPEN_FILES = 20;
--    constexpr unsigned int MAX_OPEN_DIRS = 20;
++
 +struct CircleDir {
 +  CircleDir() {
 +    mEntry.d_ino = 0;
@@ -279,14 +277,19 @@ index 4c8358738..33d855b9f 100644
 +  struct dirent mEntry;
 +};
  
--    CFATFileSystem *circle_fat_fs = nullptr;
+-    constexpr unsigned int MAX_OPEN_FILES = 20;
+-    constexpr unsigned int MAX_OPEN_DIRS = 20;
 +CircleFile fileTab[MAX_OPEN_FILES];
 +CircleDir dirTab[MAX_OPEN_DIRS];
  
--    CircleFile fileTab[MAX_OPEN_FILES];
--    _CIRCLE_DIR dirTab[MAX_OPEN_DIRS];
+-    CFATFileSystem *circle_fat_fs = nullptr;
 +static const char* const VolumeStr[FF_VOLUMES] = {FF_VOLUME_STRS};
 +PARTITION VolToPart[FF_VOLUMES];
+ 
+-    CircleFile fileTab[MAX_OPEN_FILES];
+-    _CIRCLE_DIR dirTab[MAX_OPEN_DIRS];
++void CGlueStdioInit(CSerialDevice *serial) {
++  g_serial = serial;
  
 -    int FindFreeFileSlot(void)
 -    {
@@ -302,9 +305,6 @@ index 4c8358738..33d855b9f 100644
 -    	}
 -
 -    	return slotNr;
-+void CGlueStdioInit(CSerialDevice *serial) {
-+  g_serial = serial;
-+
 +  // Initialize stdio, stderr and stdin
 +  fileTab[0].in_use = 1;
 +  fileTab[1].in_use = 1;
@@ -434,7 +434,7 @@ index 4c8358738..33d855b9f 100644
 +    unsigned total = 0;
 +    if (f_lseek(&file.file, 0) != FR_OK) {
 +       return -1;
-+    }
+     }
 +    while (true) {
 +      unsigned int num_read;
 +      if (f_read(&file.file, file.readBuf, READ_BUF_SIZE, &num_read) != FR_OK) {
@@ -460,7 +460,7 @@ index 4c8358738..33d855b9f 100644
 +      memcpy(file.contents + total, file.readBuf, num_read);
 +      total += num_read;
 +      file.size = total;
-     }
++    }
 +  }
 +  return 0;
  }
@@ -904,12 +904,10 @@ index 4c8358738..33d855b9f 100644
 -        }
 +  return result;
 +}
- 
--        auto &slot = dirTab[slotNum];
++
 +extern "C" void rewinddir(DIR *dir) { f_rewinddir(dir); }
  
--        slot.mOpen = 1;
--        slot.mFirstRead = 1;
+-        auto &slot = dirTab[slotNum];
 +extern "C" int closedir(DIR *dir) {
 +  CircleDir *c_dir = FindCircleDirFromDIR(dir);
 +  if (c_dir == nullptr) {
@@ -917,9 +915,11 @@ index 4c8358738..33d855b9f 100644
 +    return -1;
 +  }
  
--        return &slot;
+-        slot.mOpen = 1;
+-        slot.mFirstRead = 1;
 +  c_dir->in_use = 0;
-+
+ 
+-        return &slot;
 +  if (f_closedir(dir) != FR_OK) {
 +    errno = EIO;
 +    return -1;
@@ -937,33 +937,21 @@ index 4c8358738..33d855b9f 100644
 -        {
 -                haveEntry = circle_fat_fs->RootFindFirst (&Direntry, &dir->mCurrentEntry);
 -                dir->mFirstRead = 0;
--        }
--        else
--        {
--                haveEntry = circle_fat_fs->RootFindNext (&Direntry, &dir->mCurrentEntry);
--        }
 +extern "C" int _stat(const char *file, struct stat *st) {
 +  CirclePath circlePath(file);
 +  memset(st, 0, sizeof(struct stat));
- 
--        struct dirent *result;
--        if (haveEntry)
--        {
--                memcpy (de->d_name, Direntry.chTitle, sizeof(de->d_name));
--                de->d_ino = 0; // TODO: how to determine an inode number in Circle?
--                result = de;
++
 +  // Fastfail or fastsucceed
 +  for (int i=0;i<g_bootStatNum;i++) {
 +     if (g_bootStatWhat[i] == BOOTSTAT_WHAT_STAT) {
 +        if (strend(circlePath.path, g_bootStatFile[i])) {
-+           st->st_mode = S_IFREG | S_IREAD | S_IWRITE;
-+           st->st_size = g_bootStatSize[i];
++          st->st_mode = S_IFREG | S_IREAD | S_IWRITE;
++          st->st_size = g_bootStatSize[i];
++          return 0;
          }
 -        else
 -        {
--                // end of directory does not change errno
--                result = nullptr;
-+        return 0;
+-                haveEntry = circle_fat_fs->RootFindNext (&Direntry, &dir->mCurrentEntry);
 +     }
 +     else if (g_bootStatWhat[i] == BOOTSTAT_WHAT_FAIL) {
 +        if (strend(circlePath.path, g_bootStatFile[i])) {
@@ -985,7 +973,19 @@ index 4c8358738..33d855b9f 100644
 +    } else {
 +      st->st_mode |= S_IREAD | S_IWRITE;
 +    }
-+
+ 
+-        struct dirent *result;
+-        if (haveEntry)
+-        {
+-                memcpy (de->d_name, Direntry.chTitle, sizeof(de->d_name));
+-                de->d_ino = 0; // TODO: how to determine an inode number in Circle?
+-                result = de;
+-        }
+-        else
+-        {
+-                // end of directory does not change errno
+-                result = nullptr;
+-        }
 +    st->st_size = fno.fsize;
 +    return 0;
 +  }

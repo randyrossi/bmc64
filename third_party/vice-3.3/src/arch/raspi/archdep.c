@@ -70,7 +70,8 @@ char *archdep_default_sysfile_pathlist(const char *emu_id) {
     default_path =
         util_concat(boot_path, "/", emu_id, ARCHDEP_FINDPATH_SEPARATOR_STRING,
                     boot_path, "/", "DRIVES", ARCHDEP_FINDPATH_SEPARATOR_STRING,
-                    boot_path, "/", "PRINTER", NULL);
+                    NULL);
+                    // boot_path, "/", "PRINTER", NULL);
   }
 
   return default_path;

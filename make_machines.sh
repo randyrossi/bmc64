@@ -24,6 +24,7 @@ make x64
 make x128
 make xvic
 make xplus4
+make xpet
 cd ../..
 
 make clean

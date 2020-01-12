@@ -9,7 +9,6 @@ stat,basic64,8192
 stat,basichi,16384
 stat,basiclo,16384
 stat,chargen,8192
-stat,d1541II,16384
 fail,fliplist-C128.vfl,0
 fail,mps803,0
 fail,mps803.vpl,0

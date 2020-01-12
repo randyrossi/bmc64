@@ -1,10 +1,9 @@
 #ifndef BOOTSTAT_C128
 #define BOOTSTAT_C128
 
-int dflt_bootStatNum = 21;
+int dflt_bootStatNum = 20;
 
 int dflt_bootStatWhat[] = {
-    BOOTSTAT_WHAT_STAT,
     BOOTSTAT_WHAT_STAT,
     BOOTSTAT_WHAT_STAT,
     BOOTSTAT_WHAT_STAT,
@@ -34,7 +33,6 @@ const char *dflt_bootStatFile[] = {
     "basichi",
     "basiclo",
     "chargen",
-    "d1541II",
     "fliplist-C128.vfl",
     "mps803",
     "mps803.vpl",
@@ -57,7 +55,6 @@ int dflt_bootStatSize[] = {
     16384,
     16384,
     8192,
-    16384,
     0,
     0,
     0,
