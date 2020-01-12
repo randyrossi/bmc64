@@ -1024,6 +1024,9 @@ static void load_settings() {
       if (!circle_gpio_enabled()) {
          gpio_config_item->value = 0;
       }
+
+      // Make sure pins are configured properly after load
+      circle_reset_gpio(gpio_config_item->value);
     } else if (strcmp(name, "keyset_1_up") == 0) {
       keyset_codes[0][KEYSET_UP] = value;
     } else if (strcmp(name, "keyset_1_down") == 0) {
