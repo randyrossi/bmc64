@@ -111,7 +111,7 @@ libarch_plus4_a_AR = $(AR) $(ARFLAGS)
 libarch_plus4_a_LIBADD =
 am_libarch_plus4_a_OBJECTS = archdep_plus4.$(OBJEXT) \
 	videoarch_plus4.$(OBJEXT) virtual_keyboard_plus4.$(OBJEXT) \
-	menu_plus4.$(OBJEXT)
+	menu_plus4.$(OBJEXT) userport_plus4.$(OBJEXT)
 libarch_plus4_a_OBJECTS = $(am_libarch_plus4_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -430,7 +430,9 @@ libarch_plus4_a_SOURCES = \
 	virtual_keyboard_plus4.h \
 	virtual_keyboard_plus4.c \
 	menu_plus4.h \
-	menu_plus4.c
+	menu_plus4.c \
+	userport_plus4.h \
+	userport_plus4.c
 
 all: all-am
 
@@ -482,6 +484,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archdep_plus4.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_plus4.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/userport_plus4.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/videoarch_plus4.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/virtual_keyboard_plus4.Po@am__quote@
 

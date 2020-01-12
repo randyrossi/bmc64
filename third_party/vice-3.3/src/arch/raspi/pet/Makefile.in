@@ -111,7 +111,7 @@ libarch_pet_a_AR = $(AR) $(ARFLAGS)
 libarch_pet_a_LIBADD =
 am_libarch_pet_a_OBJECTS = archdep_pet.$(OBJEXT) \
 	videoarch_pet.$(OBJEXT) virtual_keyboard_pet.$(OBJEXT) \
-	menu_pet.$(OBJEXT)
+	menu_pet.$(OBJEXT) userport_pet.$(OBJEXT)
 libarch_pet_a_OBJECTS = $(am_libarch_pet_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -427,7 +427,9 @@ libarch_pet_a_SOURCES = \
 	virtual_keyboard_pet.h \
 	virtual_keyboard_pet.c \
 	menu_pet.h \
-	menu_pet.c
+	menu_pet.c \
+	userport_pet.h \
+	userport_pet.c
 
 all: all-am
 
@@ -479,6 +481,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archdep_pet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_pet.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/userport_pet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/videoarch_pet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/virtual_keyboard_pet.Po@am__quote@
 

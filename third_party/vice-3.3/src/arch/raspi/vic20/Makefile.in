@@ -111,7 +111,7 @@ libarch_vic20_a_AR = $(AR) $(ARFLAGS)
 libarch_vic20_a_LIBADD =
 am_libarch_vic20_a_OBJECTS = archdep_vic20.$(OBJEXT) \
 	videoarch_vic20.$(OBJEXT) virtual_keyboard_vic20.$(OBJEXT) \
-	menu_vic20.$(OBJEXT)
+	menu_vic20.$(OBJEXT) userport_vic20.$(OBJEXT)
 libarch_vic20_a_OBJECTS = $(am_libarch_vic20_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -430,7 +430,9 @@ libarch_vic20_a_SOURCES = \
 	virtual_keyboard_vic20.h \
 	virtual_keyboard_vic20.c \
 	menu_vic20.h \
-	menu_vic20.c
+	menu_vic20.c \
+	userport_vic20.h \
+	userport_vic20.c
 
 all: all-am
 
@@ -482,6 +484,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archdep_vic20.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_vic20.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/userport_vic20.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/videoarch_vic20.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/virtual_keyboard_vic20.Po@am__quote@
 

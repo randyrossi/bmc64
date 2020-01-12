@@ -316,8 +316,12 @@ src/arch/raspi/vic20/libarch_vic20.a
 src/arch/raspi/vic20/.deps
 src/arch/raspi/plus4/libarch_plus4.a
 src/arch/raspi/plus4/.deps
+src/arch/raspi/pet/libarch_pet.a
+src/arch/raspi/pet/.deps
 src/scpu64/libscpu64.a
+src/crtc/libcrtc.a
 src/c64/libc64scpu64.a
+src/pet/libpet.a
 src/viciisc/libviciisc.a
 src/teensy-resid/.deps/
 src/teensy-resid/libresid.a
