@@ -131,7 +131,7 @@ void raster_draw_buffer_ptr_update(raster_t *raster)
 #ifdef RASPI_COMPILE
 void raster_draw_buffer_clone_line(raster_t *raster)
 {
-  if (!raster->canvas->raster_lines) {
+  if (raster->canvas->raster_skip == 2 && !raster->canvas->raster_lines) {
      int width = raster_calc_frame_buffer_width(raster);
      memcpy(raster->draw_buffer_ptr + width,
          raster->draw_buffer_ptr, width);
