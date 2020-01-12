@@ -1524,3 +1524,14 @@ void emux_load_settings_done(void) {
 
 void emux_add_userport_joys(struct menu_item* parent) {
 }
+
+uint8_t circle_get_userport_ddr(void) {
+  return 0;
+}
+
+uint8_t circle_get_userport(void) {
+  return 0xff;
+}
+
+void circle_set_userport(uint8_t value) {
+}

@@ -38,4 +38,6 @@ libarch_plus4_a_SOURCES = \
 	virtual_keyboard_plus4.h \
 	virtual_keyboard_plus4.c \
 	menu_plus4.h \
-	menu_plus4.c
+	menu_plus4.c \
+	userport_plus4.h \
+	userport_plus4.c

@@ -35,4 +35,6 @@ libarch_pet_a_SOURCES = \
 	virtual_keyboard_pet.h \
 	virtual_keyboard_pet.c \
 	menu_pet.h \
-	menu_pet.c
+	menu_pet.c \
+	userport_pet.h \
+	userport_pet.c

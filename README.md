@@ -320,13 +320,14 @@ The Tape/Cart OSD functions display a dialog with access to some common function
 
 # GPIO Configurations
 
-There are 3 GPIO configurations to chose from:
+There are 4 GPIO configurations to chose from:
 
 Config | Description
 -------|----------------------------------
 1      | Menu Nav Buttons + Real Joysticks (i.e. CPIO-64 PCB or jumpers)
 2      | Real Keyboard + Real Joysticks (BMC64 PCB)
 3      | Waveshare Game HAT
+3      | Userport  + Real Joysticks
 
 NOTE: The default config is 1.  If you are installing BMC64 for the first time and need a GPIO config other than 1 and don't have a USB keyboard to change the option, you will have to manually edit settiongs.txt and ensure a line with 'gpio_config=[0-2]' exists. The number given should be 1 less than the config number in the documentation above.  For example, if you are using a PCB with full keyboard connector, you would add to (or create) a settings.txt file with "gpio_config=1" for the selection of Config 2.  Since each emulator has its own settings file, you would need to do this for settings.txt (C64), settings-c128.txt , settings-vic20.txt, settings-plus4.txt and settings-plus4emu.txt
 
@@ -420,6 +421,36 @@ GPIO16 | X                | Virtual Keyboard Toggle
 GPIO18 | Top Left         | Menu Back
 
 NOTE: These button assignments are not configurable but may be in the future.
+
+## GPIO Config 4 : Userport and Joysticks
+
+This configuration will let you control 8 GPIO pins using the emulator userport.  This has been tested for the C64 and may work as is for the C128, VIC20 and PET.  It also provides access to two real joysticks similar to options 1 and 2, but port 2 pins are slightly different.
+
+The joysticks are mapped as follows:
+
+GPIO BANK 1   | GPIO BANK 2 | C64 JOY PIN
+--------------|-------------|-------------
+GPIO17        |GPIO24       | 1 (Up)
+GPIO18        |GPIO10       | 2 (Down)
+GPIO27        |GPIO9        | 3 (Left)
+GPIO22        |GPIO25       | 4 (Right)
+GPIO23        |GPIO8        | 6 (Fire)
+GND           |GND          | 8 (GND)
+
+The userport is available as follows:
+
+GPIO   | Port Bit
+-------|---------
+GPIO5  | 0
+GPIO6  | 1
+GPIO12 | 2
+GPIO13 | 3
+GPIO19 | 4
+GPIO16 | 5
+GPIO26 | 6
+GPIO20 | 7
+
+When used as inputs, the pins use pull-up resistors (just like the real C64) so the value defaults to 1.  Grounding the pin will result in a 0 being read.
 
 # CPU Temperature
 

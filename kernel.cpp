@@ -127,6 +127,11 @@ void circle_check_gpio() {
   static_kernel->circle_check_gpio();
 }
 
+void circle_reset_gpio(int gpio_config) {
+  // Ensure GPIO pins are in correct configuration for current mode.
+  static_kernel->circle_reset_gpio(gpio_config);
+}
+
 void circle_lock_acquire() {
   // Always ok
   static_kernel->circle_lock_acquire();
@@ -729,15 +734,18 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
 
     js_prev = js_prev_0;
     switch (gpioConfig) {
-       case 0:
+       case GPIO_CONFIG_NAV_JOY:
           js_pins = config_0_joystickPins1;
           break;
-       case 1:
+       case GPIO_CONFIG_KYB_JOY:
           js_selector = gpioPins[GPIO_JS1_SELECT_INDEX];
           js_pins = config_1_joystickPins1;
           break;
-       case 2:
+       case GPIO_CONFIG_WAVESHARE:
           js_pins = config_2_joystickPins;
+          break;
+       case GPIO_CONFIG_USERPORT:
+          js_pins = config_3_joystickPins1;
           break;
        default:
          assert(false);
@@ -755,13 +763,16 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
 
     js_prev = js_prev_1;
     switch (gpioConfig) {
-       case 0:
+       case GPIO_CONFIG_NAV_JOY:
          js_pins = config_0_joystickPins2;
          break;
-       case 1:
+       case GPIO_CONFIG_KYB_JOY:
          js_selector = gpioPins[GPIO_JS2_SELECT_INDEX];
          js_pins = config_1_joystickPins2;
          break;
+       case GPIO_CONFIG_USERPORT:
+          js_pins = config_3_joystickPins2;
+          break;
        default:
          assert(false);
     }
@@ -833,6 +844,39 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
   if (gpioConfig == 1) {
      js_selector->SetMode(GPIOModeInputPullUp);
   }
+}
+
+// Configure user port DDR
+void CKernel::SetupUserport() {
+  uint8_t ddr = circle_get_userport_ddr();
+  for (int i = 0; i < 8; i++) {
+    uint8_t bit_pos = 1<<i;
+    uint8_t ddr_value = ddr & bit_pos;
+    config_3_userportPins[i]->SetMode(ddr_value ? GPIOModeOutput : GPIOModeInputPullUp);
+  }
+}
+
+// Read input pins and send to output pins
+void CKernel::ReadWriteUserport() {
+  uint8_t ddr = circle_get_userport_ddr();
+  uint8_t value = circle_get_userport();
+  uint8_t new_value = 0;
+  for (int i = 0; i < 8; i++) {
+    uint8_t bit_pos = 1<<i;
+    uint8_t ddr_value = ddr & bit_pos;
+    uint8_t data_value = value & bit_pos;
+    if (ddr_value) {
+      // output bit
+      config_3_userportPins[i]->Write(data_value ? HIGH : LOW);
+      new_value |= data_value;
+    } else {
+      // input bit
+      if (config_3_userportPins[i]->Read() == HIGH) {
+        new_value |= bit_pos;
+      }
+    }
+  }
+  circle_set_userport(new_value);
 }
 
 int CKernel::circle_get_machine_timing() {
@@ -1091,14 +1135,14 @@ void CKernel::circle_check_gpio() {
      if (ReadDebounced(GPIO_CONFIG_0_MENU_VKBD_INDEX) == BTN_PRESS) {
       emu_quick_func_interrupt(BTN_ASSIGN_VKBD_TOGGLE);
      }
-     ReadJoystick(0, 0);
-     ReadJoystick(1, 0);
+     ReadJoystick(0, GPIO_CONFIG_NAV_JOY);
+     ReadJoystick(1, GPIO_CONFIG_NAV_JOY);
      break;
     case GPIO_CONFIG_KYB_JOY:
      // Real Kyb + Joys
      ScanKeyboard();
-     ReadJoystick(0, 1);
-     ReadJoystick(1, 1);
+     ReadJoystick(0, GPIO_CONFIG_KYB_JOY);
+     ReadJoystick(1, GPIO_CONFIG_KYB_JOY);
      break;
     case GPIO_CONFIG_WAVESHARE:
      // Waveshare Hat
@@ -1119,11 +1163,44 @@ void CKernel::circle_check_gpio() {
      if (ReadDebounced(GPIO_CONFIG_2_WAVESHARE_SELECT_INDEX) == BTN_PRESS) {
        emu_quick_func_interrupt(BTN_ASSIGN_STATUS_TOGGLE);
      }
-     ReadJoystick(0, 2);
+     ReadJoystick(0, GPIO_CONFIG_WAVESHARE);
+     break;
+    case GPIO_CONFIG_USERPORT:
+     // CIA2 port B
+     SetupUserport();
+     ReadWriteUserport();
+     ReadJoystick(0, GPIO_CONFIG_USERPORT);
+     ReadJoystick(1, GPIO_CONFIG_USERPORT);
      break;
     default:
      // Disabled
      break;
+  }
+}
+
+// Reset the state of the GPIO pins.
+// Needed when switching to and from GPIO_CONFIG_USERPORT
+void CKernel::circle_reset_gpio(int gpio_config) {
+  switch (gpio_config) {
+    case GPIO_CONFIG_NAV_JOY:
+    case GPIO_CONFIG_KYB_JOY:
+    case GPIO_CONFIG_WAVESHARE:
+      // Joystick and keyboard settings require all ports
+      // to be inputs
+      for (int i = 0; i < NUM_GPIO_PINS; i++) {
+        gpioPins[i]->SetMode(GPIOModeInputPullUp);
+      }
+      break;
+    case GPIO_CONFIG_USERPORT:
+      for (int i = 0; i < 5; i++) {
+        config_3_joystickPins1[i]->SetMode(GPIOModeInputPullUp);
+        config_3_joystickPins2[i]->SetMode(GPIOModeInputPullUp);
+      }
+      SetupUserport();
+      break;
+    default:
+      // Disabled
+      break;
   }
 }
 

@@ -370,7 +370,11 @@ static io_source_t vic_device = {
     "VIC",
     IO_DETACH_CART, /* dummy */
     NULL,           /* dummy */
+#ifdef RASPI_COMPILE
+    0x9000, 0x911f, 0x3f, /* must include A5/A4 */
+#else
     0x9000, 0x90ff, 0x3f, /* must include A5/A4 */
+#endif
     1, /* read is always valid */
     vic_via1_via2_store,
     vic_via1_via2_read,
@@ -385,7 +389,11 @@ static io_source_t via2_device = {
     "VIA2",
     IO_DETACH_CART, /* dummy */
     NULL,           /* dummy */
+#ifdef RASPI_COMPILE
+    0x9110, 0x911f, 0x3f, /* must include A5/A4 */
+#else
     0x9110, 0x93ff, 0x3f, /* must include A5/A4 */
+#endif
     1, /* read is always valid */
     via1_via2_store,
     via1_via2_read,
@@ -400,7 +408,11 @@ static io_source_t via1_device = {
     "VIA1",
     IO_DETACH_CART, /* dummy */
     NULL,           /* dummy */
+#ifdef RASPI_COMPILE
+    0x9120, 0x912f, 0x3f, /* must include A5/A4 */
+#else
     0x9120, 0x93ff, 0x3f, /* must include A5/A4 */
+#endif
     1, /* read is always valid */
     via1_via2_store,
     via1_via2_read,
