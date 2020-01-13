@@ -201,6 +201,7 @@ extern int circle_unmount_usb(int usb);
 extern void circle_set_volume(int value);
 extern int circle_get_model();
 extern int circle_gpio_enabled();
+extern int circle_gpio_outputs_enabled();
 
 extern int circle_sound_init(const char *param, int *speed, int *fragsize,
                         int *fragnr, int *channels);

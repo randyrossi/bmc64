@@ -451,6 +451,8 @@ NOTE: These button assignments are not configurable but may be in the future.
 
 This configuration will let you control 8 GPIO pins using the emulator userport.  This has been tested for the C64 and may work as is for the C128, VIC20 and PET.  It also provides access to two real joysticks similar to options 1 and 2, but port 2 pins are slightly different.
 
+***WARNING***: This configuration is capable of setting some pins to OUTPUT 3.3V. Do NOT use this while the keyboard/joystick PCB mentioned above is connected to your Pi.  This will make it possible for some OUTPUT pins to be connected to some INPUT pins simply by pressing keys on the keyboard.  Since there is nothing limiting current, this WILL cause damage the GPIO pins.  For this reason, this option is only available for selection from the menu by adding 'gpio_outputs_enabled=true' to cmdline.txt  Do not use this option unless you are certain the connections to your GPIO header are safe for use with this configuration.
+
 The joysticks are mapped as follows:
 
 GPIO BANK 1   | GPIO BANK 2 | C64 JOY PIN

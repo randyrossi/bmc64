@@ -1012,7 +1012,12 @@ static void load_settings() {
            gpio_config_item->value = 3;
            break;
         case GPIO_CONFIG_USERPORT:
-           gpio_config_item->value = 4;
+           // Only allow this if gpio outputs are enabled.
+           if (circle_gpio_outputs_enabled()) {
+              gpio_config_item->value = 4;
+           } else {
+              gpio_config_item->value = 0;
+           }
            break;
         default:
            // Disabled
@@ -3081,7 +3086,8 @@ void build_menu(struct menu_item *root) {
      child->choice_disabled[3] = 1;
      child->choice_disabled[4] = 1;
   }
-  if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
+  if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU ||
+      !circle_gpio_outputs_enabled()) {
     child->choice_disabled[4] = 1;
   }
 

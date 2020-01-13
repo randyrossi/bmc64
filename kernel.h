@@ -107,6 +107,7 @@ public:
   void circle_set_volume(int value);
   int circle_get_model();
   int circle_gpio_enabled();
+  int circle_gpio_outputs_enabled();
 
 private:
   void InitSound();

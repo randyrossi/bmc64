@@ -28,8 +28,9 @@ public:
   ~ViceOptions(void);
 
   unsigned GetMachineTiming(void) const;
-  bool GetDemoMode(void) const;
+  bool DemoEnabled(void) const;
   bool SerialEnabled(void) const;
+  bool GPIOOutputsEnabled(void) const;
   int GetDiskPartition(void) const;
   const char *GetDiskVolume(void) const;
   unsigned long GetCyclesPerSecond(void) const;
@@ -53,8 +54,9 @@ private:
   char *m_pOptions;
 
   unsigned m_nMachineTiming;
-  bool m_bDemoMode;
+  bool m_bDemoEnabled;
   bool m_bSerialEnabled;
+  bool m_bGPIOOutputsEnabled;
   int m_disk_partition;
   char m_disk_volume[VOLUME_NAME_LEN];
   unsigned long m_nCyclesPerSecond;

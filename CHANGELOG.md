@@ -304,3 +304,4 @@
   * Added (cheap) PET scanlines video option
     Consistent thickness of lines can be achieved by adjusting vertical
     border trim until the display's height is 2x the frame buffer's height.
+  * Fixed PET vertical centering issue

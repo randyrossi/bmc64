@@ -244,6 +244,10 @@ int circle_get_model() {
 int circle_gpio_enabled() {
   return static_kernel->circle_gpio_enabled();
 }
+
+int circle_gpio_outputs_enabled() {
+  return static_kernel->circle_gpio_outputs_enabled();
+}
 };
 
 CKernel::CKernel(void)
@@ -575,7 +579,7 @@ ViceApp::TShutdownMode CKernel::Run(void) {
   SetupUSBKeyboard();
   SetupUSBMouse();
 
-  emu_set_demo_mode(mViceOptions.GetDemoMode());
+  emu_set_demo_mode(mViceOptions.DemoEnabled());
 
   unsigned num_pads = 0;
   int num_buttons[MAX_USB_DEVICES] = {0, 0, 0, 0};
@@ -1417,4 +1421,8 @@ int CKernel::circle_get_model() {
 int CKernel::circle_gpio_enabled() {
   // When DPI is enabled, GPIO scanning must be disabled.
   return mViceOptions.DPIEnabled() == 0;
+}
+
+int CKernel::circle_gpio_outputs_enabled() {
+  return !mViceOptions.DPIEnabled() && mViceOptions.GPIOOutputsEnabled();
 }

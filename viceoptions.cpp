@@ -30,7 +30,8 @@ ViceOptions *ViceOptions::s_pThis = 0;
 
 ViceOptions::ViceOptions(void)
     : m_nMachineTiming(MACHINE_TIMING_PAL_HDMI),
-      m_bDemoMode(false), m_bSerialEnabled(false), m_nCyclesPerSecond(0),
+      m_bDemoEnabled(false), m_bSerialEnabled(false),
+      m_bGPIOOutputsEnabled(false), m_nCyclesPerSecond(0),
       m_audioOut(VCHIQSoundDestinationAuto), m_bDPIEnabled(false) {
   s_pThis = this;
 
@@ -73,17 +74,23 @@ ViceOptions::ViceOptions(void)
       } else if (strcmp(pValue, "pal-custom") == 0) {
         m_nMachineTiming = MACHINE_TIMING_PAL_CUSTOM_HDMI;
       }
-    } else if (strcmp(pOption, "demo") == 0) {
+    } else if (strcmp(pOption, "enable_demo") == 0) {
       if (strcmp(pValue,"true") == 0 || strcmp(pValue, "1") == 0) {
-        m_bDemoMode = true;
+        m_bDemoEnabled = true;
       } else {
-        m_bDemoMode = false;
+        m_bDemoEnabled = false;
       }
-    } else if (strcmp(pOption, "serial") == 0) {
+    } else if (strcmp(pOption, "enable_serial") == 0) {
       if (strcmp(pValue,"true") == 0 || strcmp(pValue, "1") == 0) {
         m_bSerialEnabled = true;
       } else {
         m_bSerialEnabled = false;
+      }
+    } else if (strcmp(pOption, "enable_gpio_outputs") == 0) {
+      if (strcmp(pValue,"true") == 0 || strcmp(pValue, "1") == 0) {
+        m_bGPIOOutputsEnabled = true;
+      } else {
+        m_bGPIOOutputsEnabled = false;
       }
     } else if (strcmp(pOption, "disk_partition") == 0) {
       m_disk_partition = atoi(pValue);
@@ -142,9 +149,11 @@ ViceOptions::~ViceOptions(void) { s_pThis = 0; }
 
 unsigned ViceOptions::GetMachineTiming(void) const { return m_nMachineTiming; }
 
-bool ViceOptions::GetDemoMode(void) const { return m_bDemoMode; }
+bool ViceOptions::DemoEnabled(void) const { return m_bDemoEnabled; }
 
 bool ViceOptions::SerialEnabled(void) const { return m_bSerialEnabled; }
+
+bool ViceOptions::GPIOOutputsEnabled(void) const { return m_bGPIOOutputsEnabled; }
 
 bool ViceOptions::DPIEnabled(void) const { return m_bDPIEnabled; }
 
