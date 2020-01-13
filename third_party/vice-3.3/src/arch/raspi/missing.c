@@ -72,11 +72,11 @@ int joy_arch_cmdline_options_init(void) { return 0; }
 int joy_arch_resources_init(void) { return 0; }
 int joy_arch_set_device(int port_idx, int new_dev) { return 0; }
 int mui_init(void) { return 0; }
-int petui_init_early(void) {
+int petui_init_early(void) { return 0; }
+int petui_init(void) {
   ui_init_menu();
   return 0;
 }
-int petui_init(void) { return 0; }
 int plus4ui_init_early(void) { return 0; }
 int plus4ui_init(void) {
   ui_init_menu();

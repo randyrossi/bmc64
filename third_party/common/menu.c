@@ -1605,9 +1605,14 @@ static void do_video_settings(int layer,
   }
 
   // Tell videoarch about these changes
-  emux_apply_video_adjustments(layer, vid_hc, vid_vc, h, v, vid_a, lpad, rpad, tpad, bpad, zlayer);
+  emux_apply_video_adjustments(layer, vid_hc, vid_vc,
+                               h, v, vid_a,
+                               lpad, rpad, tpad, bpad, zlayer);
   if (layer == FB_LAYER_VIC) {
-     emux_apply_video_adjustments(FB_LAYER_UI, hc, vc, h, v, a, 0, 0, 0, 0, 3);
+     // Make UI match VIC settings except for padding.
+     emux_apply_video_adjustments(FB_LAYER_UI, hc, vc,
+                                  h, v, a,
+                                  0, 0, 0, 0, 3);
   }
 }
 
@@ -3123,31 +3128,20 @@ void build_menu(struct menu_item *root) {
   ui_set_joy_devs();
   ui_set_joy_items();
 
-  emux_apply_video_adjustments(FB_LAYER_VIC,
-     h_center_item_0->value,
-     v_center_item_0->value,
-     (double)(100-h_border_item_0->value) / 100.0d,
-     (double)(100-v_border_item_0->value) / 100.0d,
-     (double)(aspect_item_0->value) / 100.0d,
-     0.0d, 0.0d, 0.0d, 0.0d, 0);
-
-  // Menu gets the same adjustments
-  emux_apply_video_adjustments(FB_LAYER_UI,
-     h_center_item_0->value,
-     v_center_item_0->value,
-     (double)(100-h_border_item_0->value) / 100.0d,
-     (double)(100-v_border_item_0->value) / 100.0d,
-     (double)(aspect_item_0->value) / 100.0d,
-     0.0d, 0.0d, 0.0d, 0.0d, 3);
+  do_video_settings(FB_LAYER_VIC,
+      h_center_item_0,
+      v_center_item_0,
+      h_border_item_0,
+      v_border_item_0,
+      aspect_item_0);
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-     emux_apply_video_adjustments(FB_LAYER_VDC,
-        h_center_item_1->value,
-        v_center_item_1->value,
-        (double)(100-h_border_item_1->value) / 100.0d,
-        (double)(100-v_border_item_1->value) / 100.0d,
-        (double)(aspect_item_1->value) / 100.0d,
-        0.0d, 0.0d, 0.0d, 0.0d, 1);
+     do_video_settings(FB_LAYER_VDC,
+         h_center_item_1,
+         v_center_item_1,
+         h_border_item_1,
+         v_border_item_1,
+         aspect_item_1);
   }
   overlay_init(statusbar_padding_item->value,
                c40_80_column_item->value,
