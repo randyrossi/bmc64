@@ -1427,7 +1427,15 @@ void emu_exit(void) {
   y += 8;
   ui_draw_text_buf("ROM.  See the documentation.", x, y, 1, fb,
                    fb_pitch, 1);
-  y += 8;
+
+  if (emux_machine_class != BMC64_MACHINE_CLASS_C64) {
+     y += 16;
+     ui_draw_text_buf("Hold Ctrl/Commodore + F7 for 5 seconds,", x, y, 1, fb,
+                   fb_pitch, 1);
+     y += 8;
+     ui_draw_text_buf("then release F7 to reset back to C64.", x, y, 1, fb,
+                   fb_pitch, 1);
+  }
 
   circle_set_palette_fbl(FB_LAYER_VIC, 0, COLOR16(0, 0, 0));
   circle_set_palette_fbl(FB_LAYER_VIC, 1, COLOR16(255, 255, 255));
