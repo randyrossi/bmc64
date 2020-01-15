@@ -45,6 +45,7 @@
 #include "menu_usb.h"
 #include "menu_keyset.h"
 #include "menu_switch.h"
+#include "menu_gpio.h"
 #include "overlay.h"
 #include "raspi_util.h"
 #include "ui.h"
@@ -105,6 +106,10 @@ int usb_button_assignments[MAX_USB_DEVICES][MAX_USB_BUTTONS];
 int usb_button_bits[MAX_USB_BUTTONS]; // never change
 long keyset_codes[2][7];
 long key_bindings[6];
+
+// Lower byte is BTN_ASSIGN_ constant. Upper byte is port or other arg.
+int gpio_bindings[NUM_GPIO_PINS];
+
 struct menu_item *drive_sounds_item;
 struct menu_item *drive_sounds_vol_item;
 struct menu_item *hotkey_cf1_item;
@@ -511,6 +516,11 @@ static void configure_timing() {
   build_timing_menu(timing_root);
 }
 
+static void configure_gpio() {
+  struct menu_item *gpio_root = ui_push_menu(-1, -1);
+  build_gpio_menu(gpio_root);
+}
+
 // Show a pop up menu with the available drive volumes.
 // The item's id will be passed along to every item created
 // here. The action to perform is dicatated by sub_id.
@@ -837,6 +847,10 @@ static int save_settings() {
   fprintf(fp, "volume=%d\n", volume_item->value);
   fprintf(fp, "dir_convention=%d\n", dir_convention_item->value);
 
+  for (int i = 0 ; i < NUM_GPIO_PINS; i++) {
+     fprintf (fp, "custom_gpio=%d,%d\n", i, gpio_bindings[i]);
+  }
+
   emux_save_additional_settings(fp);
 
   fclose(fp);
@@ -1019,6 +1033,9 @@ static void load_settings() {
               gpio_config_item->value = 0;
            }
            break;
+        case GPIO_CONFIG_CUSTOM:
+           gpio_config_item->value = 5;
+           break;
         default:
            // Disabled
            gpio_config_item->value = 0;
@@ -1096,6 +1113,16 @@ static void load_settings() {
       volume_item->value = value;
     } else if (strcmp(name, "dir_convention") == 0) {
       dir_convention_item->value = value;
+    } else if (strcmp(name, "custom_gpio") == 0) {
+      char* token = strtok (value_str, ",");
+      if (token != NULL) {
+         int pin_index = atoi(token);
+         if (pin_index >=0 && pin_index < NUM_GPIO_PINS) {
+            token = strtok (NULL, ",");
+            int binding_value = token ? atoi(token) : 0;
+            gpio_bindings[pin_index] = binding_value;
+         }
+      }
     } else {
       for (int k=0; k < MAX_USB_DEVICES; k++) {
        if (strcmp(name, usb_btn_name[k]) == 0) {
@@ -1967,6 +1994,9 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_CONFIGURE_KEYSET2:
     configure_keyset(1);
     return;
+  case MENU_CONFIGURE_GPIO:
+    configure_gpio();
+    return;
   case MENU_GPIO_CONFIG:
     // Ensure GPIO pins are correct for new mode.
     circle_reset_gpio(item->value);
@@ -2357,20 +2387,20 @@ void emu_get_usb_pref(int device, int *usb_pref_dst, int *x_axis, int *y_axis,
 // KEEP in sync with kernel.cpp, kbd.c, menu_usb.c
 static void set_hotkey_choices(struct menu_item *item) {
   item->num_choices = 14;
-  strcpy(item->choices[HOTKEY_CHOICE_NONE], "None");
-  strcpy(item->choices[HOTKEY_CHOICE_MENU], "Menu");
-  strcpy(item->choices[HOTKEY_CHOICE_WARP], "Warp");
-  strcpy(item->choices[HOTKEY_CHOICE_STATUS_TOGGLE], "Toggle Status");
-  strcpy(item->choices[HOTKEY_CHOICE_SWAP_PORTS], "Swap Ports");
-  strcpy(item->choices[HOTKEY_CHOICE_TAPE_MENU], "Tape OSD");
-  strcpy(item->choices[HOTKEY_CHOICE_CART_MENU], "Cart OSD");
-  strcpy(item->choices[HOTKEY_CHOICE_CART_FREEZE], "Cart Freeze");
-  strcpy(item->choices[HOTKEY_CHOICE_RESET_HARD], "Hard Reset");
-  strcpy(item->choices[HOTKEY_CHOICE_RESET_SOFT], "Soft Reset");
-  strcpy(item->choices[HOTKEY_CHOICE_ACTIVE_DISPLAY], "Change Active Display");
-  strcpy(item->choices[HOTKEY_CHOICE_PIP_LOCATION], "Change PIP Location");
-  strcpy(item->choices[HOTKEY_CHOICE_PIP_SWAP], "Swap PIP");
-  strcpy(item->choices[HOTKEY_CHOICE_40_80_COLUMN], "40/80 Column");
+  strcpy(item->choices[HOTKEY_CHOICE_NONE], function_to_string(BTN_ASSIGN_UNDEF));
+  strcpy(item->choices[HOTKEY_CHOICE_MENU], function_to_string(BTN_ASSIGN_MENU));
+  strcpy(item->choices[HOTKEY_CHOICE_WARP], function_to_string(BTN_ASSIGN_WARP));
+  strcpy(item->choices[HOTKEY_CHOICE_STATUS_TOGGLE], function_to_string(BTN_ASSIGN_STATUS_TOGGLE));
+  strcpy(item->choices[HOTKEY_CHOICE_SWAP_PORTS], function_to_string(BTN_ASSIGN_SWAP_PORTS));
+  strcpy(item->choices[HOTKEY_CHOICE_TAPE_MENU], function_to_string(BTN_ASSIGN_TAPE_MENU));
+  strcpy(item->choices[HOTKEY_CHOICE_CART_MENU], function_to_string(BTN_ASSIGN_CART_MENU));
+  strcpy(item->choices[HOTKEY_CHOICE_CART_FREEZE], function_to_string(BTN_ASSIGN_CART_FREEZE));
+  strcpy(item->choices[HOTKEY_CHOICE_RESET_HARD], function_to_string(BTN_ASSIGN_RESET_HARD));
+  strcpy(item->choices[HOTKEY_CHOICE_RESET_SOFT], function_to_string(BTN_ASSIGN_RESET_SOFT));
+  strcpy(item->choices[HOTKEY_CHOICE_ACTIVE_DISPLAY], function_to_string(BTN_ASSIGN_ACTIVE_DISPLAY));
+  strcpy(item->choices[HOTKEY_CHOICE_PIP_LOCATION], function_to_string(BTN_ASSIGN_PIP_LOCATION));
+  strcpy(item->choices[HOTKEY_CHOICE_PIP_SWAP], function_to_string(BTN_ASSIGN_PIP_SWAP));
+  strcpy(item->choices[HOTKEY_CHOICE_40_80_COLUMN], function_to_string(BTN_ASSIGN_40_80_COLUMN));
   item->choice_ints[HOTKEY_CHOICE_NONE] = BTN_ASSIGN_UNDEF;
   item->choice_ints[HOTKEY_CHOICE_MENU] = BTN_ASSIGN_MENU;
   item->choice_ints[HOTKEY_CHOICE_WARP] = BTN_ASSIGN_WARP;
@@ -3067,28 +3097,36 @@ void build_menu(struct menu_item *root) {
 
   child = gpio_config_item =
       ui_menu_add_multiple_choice(MENU_GPIO_CONFIG, parent, "GPIO Config");
-     child->num_choices = 5;
+     child->num_choices = 6;
      child->value = 0;
      strcpy(child->choices[0], "Disabled");
      strcpy(child->choices[1], "#1 (Nav+Joy)");
      strcpy(child->choices[2], "#2 (Kyb+Joy)");
      strcpy(child->choices[3], "#3 (Waveshare Hat)");
      strcpy(child->choices[4], "#4 (Userport+Joy)");
+     strcpy(child->choices[5], "#5 (Custom)");
      child->choice_ints[0] = GPIO_CONFIG_DISABLED;
      child->choice_ints[1] = GPIO_CONFIG_NAV_JOY;
      child->choice_ints[2] = GPIO_CONFIG_KYB_JOY;
      child->choice_ints[3] = GPIO_CONFIG_WAVESHARE;
      child->choice_ints[4] = GPIO_CONFIG_USERPORT;
+     child->choice_ints[5] = GPIO_CONFIG_CUSTOM;
 
   if (!circle_gpio_enabled()) {
      child->choice_disabled[1] = 1;
      child->choice_disabled[2] = 1;
      child->choice_disabled[3] = 1;
      child->choice_disabled[4] = 1;
+     child->choice_disabled[5] = 1;
   }
   if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU ||
       !circle_gpio_outputs_enabled()) {
     child->choice_disabled[4] = 1;
+  }
+
+  if (circle_gpio_enabled()) {
+     ui_menu_add_button(MENU_CONFIGURE_GPIO,
+                        parent, "Configure Custom GPIO...");
   }
 
   char emu_folder[16];
@@ -3302,4 +3340,69 @@ int emu_get_num_joysticks(void) {
     return 0;
   }
   return 2;
+}
+
+const char* function_to_string(int button_func) {
+  switch (button_func) {
+    case BTN_ASSIGN_UNDEF:
+       return "None";
+    case BTN_ASSIGN_FIRE:
+       return "Fire";
+    case BTN_ASSIGN_MENU:
+       return "Menu";
+    case BTN_ASSIGN_WARP:
+       return "Warp";
+    case BTN_ASSIGN_STATUS_TOGGLE:
+       return "Status Toggle";
+    case BTN_ASSIGN_SWAP_PORTS:
+       return "Swap Ports";
+    case BTN_ASSIGN_UP:
+       return "Up";
+    case BTN_ASSIGN_DOWN:
+       return "Down";
+    case BTN_ASSIGN_LEFT:
+       return "Left";
+    case BTN_ASSIGN_RIGHT:
+       return "Right";
+    case BTN_ASSIGN_POTX:
+       return "POT X";
+    case BTN_ASSIGN_POTY:
+       return "POT Y";
+    case BTN_ASSIGN_TAPE_MENU:
+       return "Tape OSD";
+    case BTN_ASSIGN_CART_MENU:
+       return "Cart OSD";
+    case BTN_ASSIGN_CART_FREEZE:
+       return "Cart Freeze";
+    case BTN_ASSIGN_RESET_HARD:
+       return "Hard Reset";
+    case BTN_ASSIGN_RESET_SOFT:
+       return "Soft Reset";
+    case BTN_ASSIGN_RUN_STOP_BACK:
+       return "Menu Back";
+    case BTN_ASSIGN_CUSTOM_KEY_1:
+       return "Custom Key 1";
+    case BTN_ASSIGN_CUSTOM_KEY_2:
+       return "Custom Key 2";
+    case BTN_ASSIGN_CUSTOM_KEY_3:
+       return "Custom Key 3";
+    case BTN_ASSIGN_CUSTOM_KEY_4:
+       return "Custom Key 4";
+    case BTN_ASSIGN_CUSTOM_KEY_5:
+       return "Custom Key 5";
+    case BTN_ASSIGN_CUSTOM_KEY_6:
+       return "Custom Key 6";
+    case BTN_ASSIGN_ACTIVE_DISPLAY:
+       return "Cycle Display";
+    case BTN_ASSIGN_PIP_LOCATION:
+       return "PIP Location";
+    case BTN_ASSIGN_PIP_SWAP:
+       return "PIP Swap";
+    case BTN_ASSIGN_40_80_COLUMN:
+       return "40/80 Column Key";
+    case BTN_ASSIGN_VKBD_TOGGLE:
+       return "Virtual Keyboard";
+    default:
+       return "Unknown";
+  }
 }

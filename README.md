@@ -317,28 +317,29 @@ You can assign functions to USB buttons or HotKey Combinations. HotKey combinati
 
 Function | Description | Availability
 ---------|-------------|-------------
-Up | Equivalent to Joystick Up | USB
-Down | Equivalent to Joystick Down | USB
-Left | Equivalent to Joystick Left | USB
-Right | Equivalent to Joystick Right | USB
-Fire | Equivalent to Joystick Fire Button | USB
-POT X | Equivalent to Joystick 2nd Button (for some games) | USB
-POT Y | Equivalent to Joystick 3rd Button (for some games) | USB
-Menu | Enter/Exit Menu | USB+HotKey
-Menu Back | Navigate to previous menu | USB+HotKey
-Warp | Toggle warp mode | USB+HotKey
-Status | Toggle status bar | USB+HotKey
-Swap Ports | Swap joystick ports | USB+HotKey
-Tape OSD | Brings up tape on screen display options | USB+HotKey
-Cart OSD | Brings up cartridge on screen display options | USB+HotKey
-Cart Freeze | Triggers cartridge freeze function (if installed) | USB+HotKey
-Hard Reset | Hard resets the emulated machine | USB+HotKey
-Soft Reset | Soft resets the emulated machine | USB+HotKey
+Up | Equivalent to Joystick Up | USB, GPIO
+Down | Equivalent to Joystick Down | USB, GPIO
+Left | Equivalent to Joystick Left | USB, GPIO
+Right | Equivalent to Joystick Right | USB, GPIO
+Fire | Equivalent to Joystick Fire Button | USB, GPIO
+POT X | Equivalent to Joystick 2nd Button (for some games) | USB, GPIO
+POT Y | Equivalent to Joystick 3rd Button (for some games) | USB, GPIO
+Menu | Enter/Exit Menu | USB, GPIO, HotKey
+Menu Back | Navigate to previous menu | USB, GPIO, HotKey
+Warp | Toggle warp mode | USB, GPIO, HotKey
+Status | Toggle status bar | USB, GPIO, HotKey
+Swap Ports | Swap joystick ports | USB, GPIO, HotKey
+Tape OSD | Brings up tape on screen display options | USB, GPIO, HotKey
+Cart OSD | Brings up cartridge on screen display options | USB, GPIO, HotKey
+Cart Freeze | Triggers cartridge freeze function (if installed) | USB, GPIO, HotKey
+Hard Reset | Hard resets the emulated machine | USB, GPIO, HotKey
+Soft Reset | Soft resets the emulated machine | USB, GPIO, HotKey
 Key 1-6 | Custom defined keystroke  | USB
-Change Display | Switches VICII/VDC Displays | USB+Hotkey (C128 Only)
-Change PIP Location | Moves PIP Location | USB+Hotkey (C128 Only)
-Swap PIP | Swaps PIP Displays | USB+Hotkey (C128 Only)
-40/80 Column | Toggles 40/80 Column Key | USB+Hotkey (C128 Only)
+Change Display | Switches VICII/VDC Displays | USB, GPIO, Hotkey (C128 Only)
+Change PIP Location | Moves PIP Location | USB, GPIO, Hotkey (C128 Only)
+Swap PIP | Swaps PIP Displays | USB, GPIO, Hotkey (C128 Only)
+40/80 Column | Toggles 40/80 Column Key | USB, GPIO, Hotkey (C128 Only)
+Virtual Kbd | Toggles Virtual Keyboard | USB, GPIO
 
 Custom defined keys (1-6) can be defined in the usb gamepad configuration screen.
 The Tape/Cart OSD functions display a dialog with access to some common functions without pausing emulation.

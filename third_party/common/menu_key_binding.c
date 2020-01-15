@@ -40,7 +40,7 @@ static struct menu_item* binding[6];
 static struct menu_item* item_waiting_for_key;
 
 static void keycode_for_keybinding(long keycode) {
-  char* keyname = keycode_to_string(keycode);
+  const char* keyname = keycode_to_string(keycode);
   sprintf(item_waiting_for_key->displayed_value, "%s", keyname);
   key_bindings[item_waiting_for_key->value] = keycode;
   raw_keycode_func = NULL;

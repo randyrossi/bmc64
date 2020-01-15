@@ -136,6 +136,7 @@
 #define GPIO_CONFIG_KYB_JOY 1
 #define GPIO_CONFIG_WAVESHARE 2
 #define GPIO_CONFIG_USERPORT 3
+#define GPIO_CONFIG_CUSTOM 5
 
 struct axis_config {
   int use;

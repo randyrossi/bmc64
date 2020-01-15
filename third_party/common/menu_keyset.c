@@ -58,7 +58,7 @@ typedef enum {
 } KeysetMenuID;
 
 static void keycode_for_keyset(long keycode) {
-  char* keyname = keycode_to_string(keycode);
+  const char* keyname = keycode_to_string(keycode);
   sprintf(item_waiting_for_key->displayed_value, "%s", keyname);
   keyset_codes[keyset_num][item_waiting_for_key->value] = keycode;
   raw_keycode_func = NULL;

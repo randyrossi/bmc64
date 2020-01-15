@@ -32,6 +32,10 @@
 // Make sure does not exceed max choices in ui.h
 #define NUM_BUTTON_ASSIGNMENTS 29
 
+// For gpio bindings
+#define NUM_GPIO_PINS 19
+#define NUM_GPIO_BINDINGS 36
+
 // Never used as values. Can be reorged.
 typedef enum {
    MENU_ABOUT,
@@ -367,6 +371,7 @@ typedef enum {
    MENU_CONFIGURE_KEYSET1,
    MENU_CONFIGURE_KEYSET2,
    MENU_CONFIGURE_KEY_BINDINGS,
+   MENU_CONFIGURE_GPIO,
 
    MENU_ACTIVE_DISPLAY,
 
@@ -540,6 +545,10 @@ typedef enum {
 
 extern long keyset_codes[2][7];
 extern long key_bindings[6];
+
+// Lower byte is BTN_ASSIGN_ constant. Upper byte can be port or other arg.
+extern int gpio_bindings[NUM_GPIO_PINS];
+
 extern int pot_x_high_value;
 extern int pot_x_low_value;
 extern int pot_y_high_value;
@@ -556,5 +565,6 @@ void menu_about_to_activate(void);
 void menu_about_to_deactivate(void);
 
 void menu_quick_func(int button_assignment);
+const char* function_to_string(int);
 
 #endif

@@ -202,37 +202,37 @@ static void menu_usb_value_changed(struct menu_item *item) {
 
 static void add_button_choices(struct menu_item *tmp_item) {
   tmp_item->num_choices = NUM_BUTTON_ASSIGNMENTS;
-  strcpy(tmp_item->choices[BTN_ASSIGN_UNDEF], "None");
-  strcpy(tmp_item->choices[BTN_ASSIGN_FIRE], "Fire");
-  strcpy(tmp_item->choices[BTN_ASSIGN_MENU], "Menu");
-  strcpy(tmp_item->choices[BTN_ASSIGN_WARP], "Warp");
-  strcpy(tmp_item->choices[BTN_ASSIGN_STATUS_TOGGLE], "Status Toggle");
-  strcpy(tmp_item->choices[BTN_ASSIGN_SWAP_PORTS], "Swap Ports");
+  strcpy(tmp_item->choices[BTN_ASSIGN_UNDEF], function_to_string(BTN_ASSIGN_UNDEF));
+  strcpy(tmp_item->choices[BTN_ASSIGN_FIRE], function_to_string(BTN_ASSIGN_FIRE));
+  strcpy(tmp_item->choices[BTN_ASSIGN_MENU], function_to_string(BTN_ASSIGN_MENU));
+  strcpy(tmp_item->choices[BTN_ASSIGN_WARP], function_to_string(BTN_ASSIGN_WARP));
+  strcpy(tmp_item->choices[BTN_ASSIGN_STATUS_TOGGLE], function_to_string(BTN_ASSIGN_STATUS_TOGGLE));
+  strcpy(tmp_item->choices[BTN_ASSIGN_SWAP_PORTS], function_to_string(BTN_ASSIGN_SWAP_PORTS));
 
   // These are only available for USB buttons, not as hotkeys
-  strcpy(tmp_item->choices[BTN_ASSIGN_UP], "Up");
-  strcpy(tmp_item->choices[BTN_ASSIGN_DOWN], "Down");
-  strcpy(tmp_item->choices[BTN_ASSIGN_LEFT], "Left");
-  strcpy(tmp_item->choices[BTN_ASSIGN_RIGHT], "Right");
-  strcpy(tmp_item->choices[BTN_ASSIGN_POTX], "POT X");
-  strcpy(tmp_item->choices[BTN_ASSIGN_POTY], "POT Y");
+  strcpy(tmp_item->choices[BTN_ASSIGN_UP], function_to_string(BTN_ASSIGN_UP));
+  strcpy(tmp_item->choices[BTN_ASSIGN_DOWN], function_to_string(BTN_ASSIGN_DOWN));
+  strcpy(tmp_item->choices[BTN_ASSIGN_LEFT], function_to_string(BTN_ASSIGN_LEFT));
+  strcpy(tmp_item->choices[BTN_ASSIGN_RIGHT], function_to_string(BTN_ASSIGN_RIGHT));
+  strcpy(tmp_item->choices[BTN_ASSIGN_POTX], function_to_string(BTN_ASSIGN_POTX));
+  strcpy(tmp_item->choices[BTN_ASSIGN_POTY], function_to_string(BTN_ASSIGN_POTY));
 
   // Back to avail for all
-  strcpy(tmp_item->choices[BTN_ASSIGN_TAPE_MENU], "Tape OSD");
-  strcpy(tmp_item->choices[BTN_ASSIGN_CART_MENU], "Cart OSD");
-  strcpy(tmp_item->choices[BTN_ASSIGN_CART_FREEZE], "Cart Freeze");
-  strcpy(tmp_item->choices[BTN_ASSIGN_RESET_HARD], "Hard Reset");
-  strcpy(tmp_item->choices[BTN_ASSIGN_RESET_SOFT], "Soft Reset");
+  strcpy(tmp_item->choices[BTN_ASSIGN_TAPE_MENU], function_to_string(BTN_ASSIGN_TAPE_MENU));
+  strcpy(tmp_item->choices[BTN_ASSIGN_CART_MENU], function_to_string(BTN_ASSIGN_CART_MENU));
+  strcpy(tmp_item->choices[BTN_ASSIGN_CART_FREEZE], function_to_string(BTN_ASSIGN_CART_FREEZE));
+  strcpy(tmp_item->choices[BTN_ASSIGN_RESET_HARD], function_to_string(BTN_ASSIGN_RESET_HARD));
+  strcpy(tmp_item->choices[BTN_ASSIGN_RESET_SOFT], function_to_string(BTN_ASSIGN_RESET_SOFT));
 
   // More just for USB buttons
-  strcpy(tmp_item->choices[BTN_ASSIGN_RUN_STOP_BACK], "Menu Back");
+  strcpy(tmp_item->choices[BTN_ASSIGN_RUN_STOP_BACK], function_to_string(BTN_ASSIGN_RUN_STOP_BACK));
 
   // More for all
-  strcpy(tmp_item->choices[BTN_ASSIGN_ACTIVE_DISPLAY], "Change Active Display");
-  strcpy(tmp_item->choices[BTN_ASSIGN_PIP_LOCATION], "Change PIP Location");
-  strcpy(tmp_item->choices[BTN_ASSIGN_PIP_SWAP], "Swap PIP");
-  strcpy(tmp_item->choices[BTN_ASSIGN_40_80_COLUMN], "40/80 Column Key");
-  strcpy(tmp_item->choices[BTN_ASSIGN_VKBD_TOGGLE], "Virtual Keyboard");
+  strcpy(tmp_item->choices[BTN_ASSIGN_ACTIVE_DISPLAY], function_to_string(BTN_ASSIGN_ACTIVE_DISPLAY));
+  strcpy(tmp_item->choices[BTN_ASSIGN_PIP_LOCATION], function_to_string(BTN_ASSIGN_PIP_LOCATION));
+  strcpy(tmp_item->choices[BTN_ASSIGN_PIP_SWAP], function_to_string(BTN_ASSIGN_PIP_SWAP));
+  strcpy(tmp_item->choices[BTN_ASSIGN_40_80_COLUMN], function_to_string(BTN_ASSIGN_40_80_COLUMN));
+  strcpy(tmp_item->choices[BTN_ASSIGN_VKBD_TOGGLE], function_to_string(BTN_ASSIGN_VKBD_TOGGLE));
 
   char scratch[32];
   for (int n = 0; n < 6; n++) {

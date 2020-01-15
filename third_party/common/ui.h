@@ -30,7 +30,7 @@
 #include <stdint.h>
 
 #define NUM_MENU_ROOTS 5
-#define MAX_CHOICES    32
+#define MAX_CHOICES    48
 #define MAX_MENU_STR   36
 #define MAX_FN_NAME    20 // only limit for new file names
 
@@ -147,8 +147,8 @@ struct menu_item *ui_menu_add_button(int id, struct menu_item *folder,
 struct menu_item *ui_menu_add_button_with_value(int id,
                                                 struct menu_item *folder,
                                                 const char *name, int int_value,
-                                                char *str_value,
-                                                char *displayed_value);
+                                                const char *str_value,
+                                                const char *displayed_value);
 struct menu_item *ui_menu_add_range(int id, struct menu_item *folder,
                                     char *name, int min, int max, int step,
                                     int initial_value);

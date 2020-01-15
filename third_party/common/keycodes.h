@@ -141,6 +141,6 @@
 typedef void (*raw_keycode_func_t)(long key);
 
 extern raw_keycode_func_t raw_keycode_func;
-char* keycode_to_string(long keycode);
+const char* keycode_to_string(long keycode);
 
 #endif
