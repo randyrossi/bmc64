@@ -1026,12 +1026,7 @@ static void load_settings() {
            gpio_config_item->value = 3;
            break;
         case GPIO_CONFIG_USERPORT:
-           // Only allow this if gpio outputs are enabled.
-           if (circle_gpio_outputs_enabled()) {
-              gpio_config_item->value = 4;
-           } else {
-              gpio_config_item->value = 0;
-           }
+           gpio_config_item->value = 4;
            break;
         case GPIO_CONFIG_CUSTOM:
            gpio_config_item->value = 5;
@@ -3103,7 +3098,12 @@ void build_menu(struct menu_item *root) {
      strcpy(child->choices[1], "#1 (Nav+Joy)");
      strcpy(child->choices[2], "#2 (Kyb+Joy)");
      strcpy(child->choices[3], "#3 (Waveshare Hat)");
-     strcpy(child->choices[4], "#4 (Userport+Joy)");
+     if (circle_gpio_outputs_enabled() &&
+         emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
+        strcpy(child->choices[4], "#4 (Userport+Joy)");
+     } else {
+        strcpy(child->choices[4], "#4 (N/A)");
+     }
      strcpy(child->choices[5], "#5 (Custom)");
      child->choice_ints[0] = GPIO_CONFIG_DISABLED;
      child->choice_ints[1] = GPIO_CONFIG_NAV_JOY;
@@ -3118,10 +3118,6 @@ void build_menu(struct menu_item *root) {
      child->choice_disabled[3] = 1;
      child->choice_disabled[4] = 1;
      child->choice_disabled[5] = 1;
-  }
-  if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU ||
-      !circle_gpio_outputs_enabled()) {
-    child->choice_disabled[4] = 1;
   }
 
   if (circle_gpio_enabled()) {

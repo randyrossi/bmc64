@@ -87,6 +87,7 @@ ViceOptions::ViceOptions(void)
         m_bSerialEnabled = false;
       }
     } else if (strcmp(pOption, "enable_gpio_outputs") == 0) {
+      // Unless this is true, OUTPUT HIGH should not be allowed on any pin.
       if (strcmp(pValue,"true") == 0 || strcmp(pValue, "1") == 0) {
         m_bGPIOOutputsEnabled = true;
       } else {

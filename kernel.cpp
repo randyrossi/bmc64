@@ -994,35 +994,43 @@ void CKernel::ReadCustomGPIO() {
 
 // Configure user port DDR
 void CKernel::SetupUserport() {
-  uint8_t ddr = circle_get_userport_ddr();
-  for (int i = 0; i < 8; i++) {
-    uint8_t bit_pos = 1<<i;
-    uint8_t ddr_value = ddr & bit_pos;
-    config_3_userportPins[i]->SetMode(ddr_value ? GPIOModeOutput : GPIOModeInputPullUp);
+  // Unless enable_gpio_outputs is true, this will have no effect. Menu item
+  // should reflect this.
+  if (circle_gpio_outputs_enabled()) {
+    uint8_t ddr = circle_get_userport_ddr();
+    for (int i = 0; i < 8; i++) {
+      uint8_t bit_pos = 1<<i;
+      uint8_t ddr_value = ddr & bit_pos;
+      config_3_userportPins[i]->SetMode(ddr_value ? GPIOModeOutput : GPIOModeInputPullUp);
+    }
   }
 }
 
 // Read input pins and send to output pins
 void CKernel::ReadWriteUserport() {
-  uint8_t ddr = circle_get_userport_ddr();
-  uint8_t value = circle_get_userport();
-  uint8_t new_value = 0;
-  for (int i = 0; i < 8; i++) {
-    uint8_t bit_pos = 1<<i;
-    uint8_t ddr_value = ddr & bit_pos;
-    uint8_t data_value = value & bit_pos;
-    if (ddr_value) {
-      // output bit
-      config_3_userportPins[i]->Write(data_value ? HIGH : LOW);
-      new_value |= data_value;
-    } else {
-      // input bit
-      if (config_3_userportPins[i]->Read() == HIGH) {
-        new_value |= bit_pos;
+  // Unless enable_gpio_outputs is true, this will have no effect. Menu item
+  // should reflect this.
+  if (circle_gpio_outputs_enabled()) {
+    uint8_t ddr = circle_get_userport_ddr();
+    uint8_t value = circle_get_userport();
+    uint8_t new_value = 0;
+    for (int i = 0; i < 8; i++) {
+      uint8_t bit_pos = 1<<i;
+      uint8_t ddr_value = ddr & bit_pos;
+      uint8_t data_value = value & bit_pos;
+      if (ddr_value) {
+        // output bit
+        config_3_userportPins[i]->Write(data_value ? HIGH : LOW);
+        new_value |= data_value;
+      } else {
+        // input bit
+        if (config_3_userportPins[i]->Read() == HIGH) {
+          new_value |= bit_pos;
+        }
       }
     }
+    circle_set_userport(new_value);
   }
-  circle_set_userport(new_value);
 }
 
 int CKernel::circle_get_machine_timing() {
