@@ -575,12 +575,7 @@ void CKernel::SetupUSBMouse() {
   }
 }
 
-ViceApp::TShutdownMode CKernel::Run(void) {
-  SetupUSBKeyboard();
-  SetupUSBMouse();
-
-  emu_set_demo_mode(mViceOptions.DemoEnabled());
-
+void CKernel::SetupUSBGamepads() {
   unsigned num_pads = 0;
   int num_buttons[MAX_USB_DEVICES] = {0, 0, 0, 0};
   int num_axes[MAX_USB_DEVICES] = {0, 0, 0, 0};
@@ -609,6 +604,14 @@ ViceApp::TShutdownMode CKernel::Run(void) {
 
   // Tell the emulator what we found
   emu_set_gamepad_info(num_pads, num_buttons, num_axes, num_hats);
+}
+
+ViceApp::TShutdownMode CKernel::Run(void) {
+  SetupUSBKeyboard();
+  SetupUSBMouse();
+  SetupUSBGamepads();
+
+  emu_set_demo_mode(mViceOptions.DemoEnabled());
 
 #ifndef ARM_ALLOW_MULTI_CORE
   mEmulatorCore->LaunchEmulator(mTimingOption);

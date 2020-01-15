@@ -113,6 +113,7 @@ private:
   void InitSound();
   void SetupUSBKeyboard();
   void SetupUSBMouse();
+  void SetupUSBGamepads();
   int ReadDebounced(int pinIndex);
   void ScanKeyboard();
   void ReadJoystick(int device, int gpioConfig);
