@@ -26,15 +26,13 @@
 
 #include "ui.h"
 
+#include "circle.h"
+
 #ifndef RASPI_MENU_H
 #define RASPI_MENU_H
 
 // Make sure does not exceed max choices in ui.h
 #define NUM_BUTTON_ASSIGNMENTS 29
-
-// For gpio bindings
-#define NUM_GPIO_PINS 19
-#define NUM_GPIO_BINDINGS 36
 
 // Never used as values. Can be reorged.
 typedef enum {
@@ -545,9 +543,6 @@ typedef enum {
 
 extern long keyset_codes[2][7];
 extern long key_bindings[6];
-
-// Lower byte is BTN_ASSIGN_ constant. Upper byte can be port or other arg.
-extern int gpio_bindings[NUM_GPIO_PINS];
 
 extern int pot_x_high_value;
 extern int pot_x_low_value;

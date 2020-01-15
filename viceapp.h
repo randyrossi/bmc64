@@ -82,8 +82,6 @@
 // 09 SPI (Currently unused by BMC64)
 // 11 SPI (Currently unused by BMC64)
 
-#define NUM_GPIO_PINS 21
-
 // Joystick select pins for config 1.
 #define GPIO_JS1_SELECT  7
 #define GPIO_JS2_SELECT  21

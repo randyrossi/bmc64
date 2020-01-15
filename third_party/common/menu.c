@@ -108,7 +108,7 @@ long keyset_codes[2][7];
 long key_bindings[6];
 
 // Lower byte is BTN_ASSIGN_ constant. Upper byte is port or other arg.
-int gpio_bindings[NUM_GPIO_PINS];
+unsigned int gpio_bindings[NUM_GPIO_PINS];
 
 struct menu_item *drive_sounds_item;
 struct menu_item *drive_sounds_vol_item;
@@ -1119,7 +1119,7 @@ static void load_settings() {
          int pin_index = atoi(token);
          if (pin_index >=0 && pin_index < NUM_GPIO_PINS) {
             token = strtok (NULL, ",");
-            int binding_value = token ? atoi(token) : 0;
+            unsigned int binding_value = token ? atoi(token) : 0;
             gpio_bindings[pin_index] = binding_value;
          }
       }

@@ -40,6 +40,8 @@
 #define MAX_USB_DEVICES 4
 #define MAX_JOY_PORTS 4
 
+#define NUM_GPIO_PINS 21
+
 #define MACHINE_TIMING_NTSC_HDMI 0
 #define MACHINE_TIMING_PAL_HDMI 1
 #define MACHINE_TIMING_NTSC_COMPOSITE 2
@@ -164,6 +166,12 @@ struct joydev_config {
 };
 
 extern struct joydev_config joydevs[MAX_JOY_PORTS];
+
+extern int custom_gpio_pins[NUM_GPIO_PINS];
+
+// Lower byte is BTN_ASSIGN_ constant. Upper byte can be bank or other arg.
+extern unsigned int gpio_bindings[NUM_GPIO_PINS];
+
 
 // -----------------------------------------------------------------------
 // Functions called from emulator layer into kernel layer

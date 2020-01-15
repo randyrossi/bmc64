@@ -250,6 +250,27 @@ int circle_gpio_outputs_enabled() {
 }
 };
 
+namespace {
+
+long func_to_keycode(int btn_func) {
+   switch (btn_func) {
+      case BTN_ASSIGN_UP:
+         return KEYCODE_Up;
+      case BTN_ASSIGN_DOWN:
+         return KEYCODE_Down;
+      case BTN_ASSIGN_LEFT:
+         return KEYCODE_Left;
+      case BTN_ASSIGN_RIGHT:
+         return KEYCODE_Right;
+      case BTN_ASSIGN_FIRE:
+         return KEYCODE_Return;
+      default:
+         return 0;
+   }
+}
+
+}
+
 CKernel::CKernel(void)
     : ViceStdioApp("vice"), mViceSound(nullptr),
       mNumJoy(emu_get_num_joysticks()),
@@ -261,6 +282,7 @@ CKernel::CKernel(void)
   // Only used for pins that are used as buttons. See viceapp.h.
   for (int i = 0; i < NUM_GPIO_PINS; i++) {
     gpio_debounce_state[i] = BTN_UP;
+    gpio_prev_state[i] = HIGH;
   }
 
   kbdRestoreState = HIGH;
@@ -291,15 +313,7 @@ bool CKernel::Initialize(void) {
   return true;
 }
 
-// KEEP THIS IN SYNC WITH kbd.c
-static void handle_button_function(bool is_ui, int device, unsigned buttons) {
-  int button_num = 0;
-
-  int button_func;
-  int is_press;
-
-  while (emu_button_function(device, button_num, buttons,
-                             &button_func, &is_press) >= 0) {
+static void exec_button_func(int button_func, int is_press, int is_ui) {
    // KEEP THIS IN SYNC WITH kbd.c
    switch (button_func) {
      case BTN_ASSIGN_MENU:
@@ -340,13 +354,6 @@ static void handle_button_function(bool is_ui, int device, unsigned buttons) {
                emu_get_key_binding(button_func - BTN_ASSIGN_CUSTOM_KEY_1));
         }
         break;
-     case BTN_ASSIGN_FIRE:
-       // Only need to handle ui fire here. Actual joy fire is
-       // handled in circle_add_usb_values.
-       if (is_ui) {
-         emu_ui_key_interrupt(KEYCODE_Return, is_press);
-       }
-       break;
      case BTN_ASSIGN_RUN_STOP_BACK:
        if (is_ui) {
          emu_ui_key_interrupt(KEYCODE_Escape, is_press);
@@ -358,33 +365,33 @@ static void handle_button_function(bool is_ui, int device, unsigned buttons) {
          }
        }
        break;
-     // Only do direction button assignments for UI, joy is handled
+     // Only do direction/fire button assignments for UI, joy is handled
      // in circle_add_usb_values seperately.
      case BTN_ASSIGN_UP:
-       if (is_ui) {
-         emu_ui_key_interrupt(KEYCODE_Up, is_press);
-       }
-       break;
      case BTN_ASSIGN_DOWN:
-       if (is_ui) {
-         emu_ui_key_interrupt(KEYCODE_Down, is_press);
-       }
-       break;
      case BTN_ASSIGN_LEFT:
-       if (is_ui) {
-         emu_ui_key_interrupt(KEYCODE_Left, is_press);
-       }
-       break;
      case BTN_ASSIGN_RIGHT:
+     case BTN_ASSIGN_FIRE:
        if (is_ui) {
-         emu_ui_key_interrupt(KEYCODE_Right, is_press);
+         emu_ui_key_interrupt(func_to_keycode(button_func), is_press);
        }
        break;
      default:
        break;
    }
+}
 
-   button_num++;
+// KEEP THIS IN SYNC WITH kbd.c
+static void handle_button_function(bool is_ui, int device, unsigned buttons) {
+  int button_num = 0;
+
+  int button_func;
+  int is_press;
+
+  while (emu_button_function(device, button_num, buttons,
+                             &button_func, &is_press) >= 0) {
+    exec_button_func(button_func, is_press, is_ui);
+    button_num++;
   }
 }
 
@@ -853,6 +860,138 @@ void CKernel::ReadJoystick(int device, int gpioConfig) {
   }
 }
 
+void CKernel::ReadCustomGPIO() {
+  int i;
+  unsigned int bank;
+  unsigned int func;
+  int value;
+
+  int js_up_1 = HIGH;
+  int js_down_1 = HIGH;
+  int js_left_1 = HIGH;
+  int js_right_1 = HIGH;
+  int js_fire_1 = HIGH;
+  int js_potx_1 = HIGH;
+  int js_poty_1 = HIGH;
+
+  int js_up_2 = HIGH;
+  int js_down_2 = HIGH;
+  int js_left_2 = HIGH;
+  int js_right_2 = HIGH;
+  int js_fire_2 = HIGH;
+  int js_potx_2 = HIGH;
+  int js_poty_2 = HIGH;
+
+  int ui_activated = emu_is_ui_activated();
+
+  for (i = 0 ; i < NUM_GPIO_PINS; i++) {
+    bank = gpio_bindings[i] >> 8;
+    func = gpio_bindings[i] & 0xFF;
+    if (bank > 0) {
+      // This is for a joystick bank
+      value = gpioPins[i]->Read();
+      if (ui_activated) {
+        if (value == LOW && gpio_prev_state[i] != LOW) {
+          emu_ui_key_interrupt(func_to_keycode(func), 1);
+        } else if (value != LOW && gpio_prev_state[i] == LOW) {
+          emu_ui_key_interrupt(func_to_keycode(func), 0);
+        }
+        gpio_prev_state[i] = value;
+      } else {
+        int dev_match = bank == 1 ? JOYDEV_GPIO_0 : JOYDEV_GPIO_1;
+
+        int port;
+        if (joydevs[0].device == dev_match) {
+          port = joydevs[0].port;
+        } else if (joydevs[1].device == dev_match) {
+          port = joydevs[1].port;
+        } else {
+          continue;
+        }
+
+        switch (func) {
+          case BTN_ASSIGN_UP:
+            if (port == 1) {
+              js_up_1 = value;
+            } else {
+              js_up_2 = value;
+            }
+            break;
+          case BTN_ASSIGN_DOWN:
+            if (port == 1) {
+              js_down_1 = value;
+            } else {
+              js_down_2 = value;
+            }
+            break;
+          case BTN_ASSIGN_LEFT:
+            if (port == 1) {
+              js_left_1 = value;
+            } else {
+              js_left_2 = value;
+            }
+            break;
+          case BTN_ASSIGN_RIGHT:
+            if (port == 1) {
+              js_right_1 = value;
+            } else {
+              js_right_2 = value;
+            }
+            break;
+          case BTN_ASSIGN_FIRE:
+            if (port == 1) {
+              js_fire_1 = value;
+            } else {
+              js_fire_2 = value;
+            }
+            break;
+          case BTN_ASSIGN_POTX:
+            if (port == 1) {
+              js_potx_1 = value;
+            } else {
+              js_potx_2 = value;
+            }
+            break;
+          case BTN_ASSIGN_POTY:
+            if (port == 1) {
+              js_poty_1 = value;
+            } else {
+              js_poty_2 = value;
+            }
+            break;
+          }
+        }
+      } else {
+        int debounced = ReadDebounced(i);
+        if (debounced == BTN_PRESS) {
+          exec_button_func(func, 1, ui_activated);
+        } else if (debounced == BTN_RELEASE) {
+          exec_button_func(func, 0, ui_activated);
+        }
+     }
+   }
+
+   // The device here doesn't really matter.
+   emu_joy_interrupt_abs(1, JOYDEV_GPIO_0,
+                         js_up_1 == LOW,
+                         js_down_1 == LOW,
+                         js_left_1 == LOW,
+                         js_right_1 == LOW,
+                         js_fire_1 == LOW,
+                         js_potx_1 == LOW,
+                         js_poty_1 == LOW);
+
+   // The device here doesn't really matter.
+   emu_joy_interrupt_abs(2, JOYDEV_GPIO_1,
+                         js_up_2 == LOW,
+                         js_down_2 == LOW,
+                         js_left_2 == LOW,
+                         js_right_2 == LOW,
+                         js_fire_2 == LOW,
+                         js_potx_2 == LOW,
+                         js_poty_2 == LOW);
+}
+
 // Configure user port DDR
 void CKernel::SetupUserport() {
   uint8_t ddr = circle_get_userport_ddr();
@@ -1108,6 +1247,7 @@ int CKernel::ReadDebounced(int pinIndex) {
 // Otherwise, just scans gpio joysticks.
 void CKernel::circle_check_gpio() {
   int gpio_config = emu_get_gpio_config();
+
   switch(gpio_config) {
     case GPIO_CONFIG_NAV_JOY:
      // Nav Buttons + Real Joys
@@ -1178,6 +1318,9 @@ void CKernel::circle_check_gpio() {
      ReadJoystick(0, GPIO_CONFIG_USERPORT);
      ReadJoystick(1, GPIO_CONFIG_USERPORT);
      break;
+    case GPIO_CONFIG_CUSTOM:
+     ReadCustomGPIO();
+     break;
     default:
      // Disabled
      break;
@@ -1191,6 +1334,7 @@ void CKernel::circle_reset_gpio(int gpio_config) {
     case GPIO_CONFIG_NAV_JOY:
     case GPIO_CONFIG_KYB_JOY:
     case GPIO_CONFIG_WAVESHARE:
+    case GPIO_CONFIG_CUSTOM:
       // Joystick and keyboard settings require all ports
       // to be inputs
       for (int i = 0; i < NUM_GPIO_PINS; i++) {

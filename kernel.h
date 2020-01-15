@@ -117,6 +117,7 @@ private:
   int ReadDebounced(int pinIndex);
   void ScanKeyboard();
   void ReadJoystick(int device, int gpioConfig);
+  void ReadCustomGPIO();
   void SetupUserport();
   void ReadWriteUserport();
 
@@ -127,6 +128,9 @@ private:
   int mInitialVolume;
 
   int gpio_debounce_state[NUM_GPIO_PINS];
+
+  // Used for custom gpio configs that have joy assignments
+  int gpio_prev_state[NUM_GPIO_PINS];
 
   FrameBufferLayer fbl[FB_NUM_LAYERS];
 };

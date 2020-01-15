@@ -35,11 +35,16 @@
 #include "menu.h"
 #include "ui.h"
 
-static int pins[NUM_GPIO_PINS] = { 4, 17, 27, 22, 5,
-                                   6, 13, 19, 26, 18,
-                                   23, 24, 25, 8, 7,
-                                   12, 16, 20, 21 };
-// Button function and port (if applicable)
+// These are listed in the same order as the array in viceapp.cpp
+// in the kernel layer. They must match.  TODO: Set these from kernel
+// in an init method instead of this duplicated list.
+int custom_gpio_pins[NUM_GPIO_PINS] = {
+    5, 20, 19, 16, 13, 6, 12, 26, 8, 25, 24,
+    18, 23, 27, 17, 22, 4, 7, 21, 10, 9 };
+
+#define NUM_GPIO_BINDINGS 36
+
+// Button function and bank (if applicable)
 static int menu_items_list[NUM_GPIO_BINDINGS][2] = {
     { BTN_ASSIGN_UNDEF, 0 },
     { BTN_ASSIGN_MENU, 0 },
@@ -79,38 +84,37 @@ static int menu_items_list[NUM_GPIO_BINDINGS][2] = {
     { BTN_ASSIGN_VKBD_TOGGLE, 0 },
 };
 
-static struct menu_item* binding_item[NUM_GPIO_PINS];
-
 static void menu_value_changed(struct menu_item *item) {
    int pin_index = item->id;
    gpio_bindings[pin_index] = item->choice_ints[item->value];
 }
 
 void build_gpio_menu(struct menu_item *root) {
+   struct menu_item* item;
    for (int i=0;i<NUM_GPIO_PINS;i++) {
-     binding_item[i] = ui_menu_add_multiple_choice(i, root, "");
-     binding_item[i]->num_choices = NUM_GPIO_BINDINGS;
-     sprintf (binding_item[i]->name, "GPIO%02d Binding", pins[i]);
+     item = ui_menu_add_multiple_choice(i, root, "");
+     item->num_choices = NUM_GPIO_BINDINGS;
+     sprintf (item->name, "GPIO%02d Binding", custom_gpio_pins[i]);
 
      for (int j = 0; j < NUM_GPIO_BINDINGS; j++) {
-        // Lower = func, Upper = port arg
-        int func = menu_items_list[j][0];
-        int port = menu_items_list[j][1];
-        int binding_value = func | (port << 8);
-        strcpy(binding_item[i]->choices[j], function_to_string(func));
+        // Lower = func, Upper = bank arg
+        unsigned int func = menu_items_list[j][0];
+        unsigned int bank = menu_items_list[j][1];
+        unsigned int binding_value = func | (bank << 8);
+        strcpy(item->choices[j], function_to_string(func));
 
-        if (port != 0) {
+        if (bank > 0) {
            char tmp[16];
-           sprintf (tmp, " (Port %d)", port);
-           strcat (binding_item[i]->choices[j], tmp);
+           sprintf (tmp, " (Bank %d)", bank);
+           strcat (item->choices[j], tmp);
         }
 
-        binding_item[i]->choice_ints[j] = binding_value;
+        item->choice_ints[j] = binding_value;
 
         if (gpio_bindings[i] == binding_value) {
-           binding_item[i]->value = j;
+           item->value = j;
         }
      }
-     binding_item[i]->on_value_changed = menu_value_changed;
+     item->on_value_changed = menu_value_changed;
    }
 }
