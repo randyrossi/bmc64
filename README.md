@@ -450,7 +450,7 @@ NOTE: These button assignments are not configurable but may be in the future.
 
 ## GPIO Config 4 : Userport and Joysticks
 
-This configuration will let you control 8 GPIO pins using the emulator userport.  This has been tested for the C64 and may work as is for the C128, VIC20 and PET.  It also provides access to two real joysticks similar to options 1 and 2, but port 2 pins are slightly different.
+This configuration will let you control 8 GPIO pins using the emulator userport.  This has been tested for the C64 and may work as is for the C128, VIC20 and PET.  It also provides access to two real joysticks similar to option 1.  Please keep in mind the highest resolution for changing or reading pins values will be that of the video vertical frequency of 50hz or 60hz.  This is because the emulator emulates CPU cycles in bursts as fast as it can to render the next 20 ms or 16 ms worth of activity each frame.  This is must lower a resolution than you would get on a real C64 (even in BASIC) so don't expect to control high speed devices this way.  This is for educational/fun purposes only.
 
 ***WARNING***: This configuration is capable of setting some pins to OUTPUT 3.3V. Do NOT use this while the keyboard/joystick PCB mentioned above is connected to your Pi.  This will make it possible for some OUTPUT pins to be connected to some INPUT pins simply by pressing keys on the keyboard.  Since there is nothing limiting current, this WILL cause damage to the GPIO pins.  For this reason, this option is only available for selection from the menu by adding 'gpio_outputs_enabled=true' to cmdline.txt  Do not use this option unless you are certain the connections to your GPIO header are safe for use with this configuration.
 
@@ -458,25 +458,25 @@ The joysticks are mapped as follows:
 
 GPIO BANK 1   | GPIO BANK 2 | C64 JOY PIN
 --------------|-------------|-------------
-GPIO17        |GPIO24       | 1 (Up)
-GPIO18        |GPIO10       | 2 (Down)
-GPIO27        |GPIO9        | 3 (Left)
-GPIO22        |GPIO25       | 4 (Right)
-GPIO23        |GPIO8        | 6 (Fire)
+GPIO17        |GPIO5        | 1 (Up)
+GPIO18        |GPIO6        | 2 (Down)
+GPIO27        |GPIO12       | 3 (Left)
+GPIO22        |GPIO13       | 4 (Right)
+GPIO23        |GPIO19       | 6 (Fire)
 GND           |GND          | 8 (GND)
 
 The userport is available as follows:
 
 GPIO   | Port Bit
 -------|---------
-GPIO5  | 0
-GPIO6  | 1
-GPIO12 | 2
-GPIO13 | 3
-GPIO19 | 4
-GPIO16 | 5
-GPIO26 | 6
-GPIO20 | 7
+GPIO4  | 0
+GPIO24 | 1
+GPIO25 | 2
+GPIO8  | 3
+GPIO16 | 4
+GPIO26 | 5
+GPIO20 | 6
+GPIO21 | 7
 
 When used as inputs, the pins use pull-up resistors (just like the real C64) so the value defaults to 1.  Grounding the pin will result in a 0 being read.
 

@@ -40,7 +40,7 @@
 // in an init method instead of this duplicated list.
 int custom_gpio_pins[NUM_GPIO_PINS] = {
     5, 20, 19, 16, 13, 6, 12, 26, 8, 25, 24,
-    18, 23, 27, 17, 22, 4, 7, 21, 10, 9 };
+    18, 23, 27, 17, 22, 4, 7, 21 };
 
 #define NUM_GPIO_BINDINGS 36
 
