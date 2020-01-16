@@ -3057,6 +3057,44 @@ void build_menu(struct menu_item *root) {
   ui_menu_add_button(MENU_CONFIGURE_KEYSET1, parent, "Configure Keyset 1...");
   ui_menu_add_button(MENU_CONFIGURE_KEYSET2, parent, "Configure Keyset 2...");
 
+  parent = ui_menu_add_folder(root, "GPIO");
+
+  child = gpio_config_item =
+      ui_menu_add_multiple_choice(MENU_GPIO_CONFIG, parent, "Config");
+     child->num_choices = 6;
+     child->value = 0;
+     strcpy(child->choices[0], "Disabled");
+     strcpy(child->choices[1], "#1 (Nav+Joy)");
+     strcpy(child->choices[2], "#2 (Kyb+Joy)");
+     strcpy(child->choices[3], "#3 (Waveshare Hat)");
+     if (circle_gpio_outputs_enabled() &&
+         emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU &&
+         emux_machine_class != BMC64_MACHINE_CLASS_PLUS4) {
+        strcpy(child->choices[4], "#4 (Userport+Joy)");
+     } else {
+        strcpy(child->choices[4], "#4 (N/A)");
+     }
+     strcpy(child->choices[5], "#5 (Custom)");
+     child->choice_ints[0] = GPIO_CONFIG_DISABLED;
+     child->choice_ints[1] = GPIO_CONFIG_NAV_JOY;
+     child->choice_ints[2] = GPIO_CONFIG_KYB_JOY;
+     child->choice_ints[3] = GPIO_CONFIG_WAVESHARE;
+     child->choice_ints[4] = GPIO_CONFIG_USERPORT;
+     child->choice_ints[5] = GPIO_CONFIG_CUSTOM;
+
+     if (!circle_gpio_enabled()) {
+        child->choice_disabled[1] = 1;
+        child->choice_disabled[2] = 1;
+        child->choice_disabled[3] = 1;
+        child->choice_disabled[4] = 1;
+        child->choice_disabled[5] = 1;
+     }
+
+     if (circle_gpio_enabled()) {
+        ui_menu_add_button(MENU_CONFIGURE_GPIO,
+                        parent, "Configure Custom GPIO...");
+     }
+
   ui_menu_add_divider(root);
 
   parent = ui_menu_add_folder(root, "Prefs");
@@ -3089,41 +3127,6 @@ void build_menu(struct menu_item *root) {
 
   reset_confirm_item = ui_menu_add_toggle(MENU_RESET_CONFIRM, parent,
                                           "Confirm Reset from Emulator", 1);
-
-  child = gpio_config_item =
-      ui_menu_add_multiple_choice(MENU_GPIO_CONFIG, parent, "GPIO Config");
-     child->num_choices = 6;
-     child->value = 0;
-     strcpy(child->choices[0], "Disabled");
-     strcpy(child->choices[1], "#1 (Nav+Joy)");
-     strcpy(child->choices[2], "#2 (Kyb+Joy)");
-     strcpy(child->choices[3], "#3 (Waveshare Hat)");
-     if (circle_gpio_outputs_enabled() &&
-         emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
-        strcpy(child->choices[4], "#4 (Userport+Joy)");
-     } else {
-        strcpy(child->choices[4], "#4 (N/A)");
-     }
-     strcpy(child->choices[5], "#5 (Custom)");
-     child->choice_ints[0] = GPIO_CONFIG_DISABLED;
-     child->choice_ints[1] = GPIO_CONFIG_NAV_JOY;
-     child->choice_ints[2] = GPIO_CONFIG_KYB_JOY;
-     child->choice_ints[3] = GPIO_CONFIG_WAVESHARE;
-     child->choice_ints[4] = GPIO_CONFIG_USERPORT;
-     child->choice_ints[5] = GPIO_CONFIG_CUSTOM;
-
-  if (!circle_gpio_enabled()) {
-     child->choice_disabled[1] = 1;
-     child->choice_disabled[2] = 1;
-     child->choice_disabled[3] = 1;
-     child->choice_disabled[4] = 1;
-     child->choice_disabled[5] = 1;
-  }
-
-  if (circle_gpio_enabled()) {
-     ui_menu_add_button(MENU_CONFIGURE_GPIO,
-                        parent, "Configure Custom GPIO...");
-  }
 
   char emu_folder[16];
   char folder_emu[16];
