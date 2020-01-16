@@ -334,7 +334,7 @@ Cart OSD | Brings up cartridge on screen display options | USB, GPIO, HotKey
 Cart Freeze | Triggers cartridge freeze function (if installed) | USB, GPIO, HotKey
 Hard Reset | Hard resets the emulated machine | USB, GPIO, HotKey
 Soft Reset | Soft resets the emulated machine | USB, GPIO, HotKey
-Key 1-6 | Custom defined keystroke  | USB
+Key 1-6 | Custom defined keystroke  | USB, GPIO
 Change Display | Switches VICII/VDC Displays | USB, GPIO, Hotkey (C128 Only)
 Change PIP Location | Moves PIP Location | USB, GPIO, Hotkey (C128 Only)
 Swap PIP | Swaps PIP Displays | USB, GPIO, Hotkey (C128 Only)
@@ -346,7 +346,7 @@ The Tape/Cart OSD functions display a dialog with access to some common function
 
 # GPIO Configurations
 
-There are 4 GPIO configurations to chose from:
+There are a number of GPIO configurations to chose from:
 
 Config | Description
 -------|----------------------------------
@@ -354,6 +354,7 @@ Config | Description
 2      | Real Keyboard + Real Joysticks (BMC64 PCB)
 3      | Waveshare Game HAT
 4      | Userport  + Real Joysticks
+5      | Custom Defined
 
 NOTE: The default config is 1.  If you are installing BMC64 for the first time and need a GPIO config other than 1 and don't have a USB keyboard to change the option, you will have to manually edit settiongs.txt and ensure a line with 'gpio_config=[0-2]' exists. The number given should be 1 less than the config number in the documentation above.  For example, if you are using a PCB with full keyboard connector, you would add to (or create) a settings.txt file with "gpio_config=1" for the selection of Config 2.  Since each emulator has its own settings file, you would need to do this for settings.txt (C64), settings-c128.txt , settings-vic20.txt, settings-plus4.txt and settings-plus4emu.txt
 
@@ -373,6 +374,7 @@ GPIO19 | Down
 GPIO20 | Left
 GPIO21 | Right
 GPIO24 | Enter
+GPIO23 | Virtual Keyboard
 
 It's possible to wire real Commodore or Atari joysticks directly to the Pi using this config. You can do it without a PCB if you want. Each joystick gets its own set of GPIO pins, making it easy to hook up using nothing but jumpers and DB9 connectors.  (See http://accentual.com/bmc64/joystick.html). Wiring is as follows:
 
@@ -450,9 +452,9 @@ NOTE: These button assignments are not configurable but may be in the future.
 
 ## GPIO Config 4 : Userport and Joysticks
 
-This configuration will let you control 8 GPIO pins using the emulator userport.  This has been tested for the C64 and may work as is for the C128, VIC20 and PET.  It also provides access to two real joysticks similar to option 1.  Please keep in mind the highest resolution for changing or reading pins values will be that of the video vertical frequency of 50hz or 60hz.  This is because the emulator emulates CPU cycles in bursts as fast as it can to render the next 20 ms or 16 ms worth of activity each frame.  This is must lower a resolution than you would get on a real C64 (even in BASIC) so don't expect to control high speed devices this way.  This is for educational/fun purposes only.
+This configuration will let you control 8 GPIO pins using the emulator userport.  This has been tested for the C64 and may work as is for the C128, VIC20 and PET.  It also provides access to two real joysticks similar to option 1.  Please keep in mind the highest resolution for changing or reading pins values will be that of the video vertical frequency of 50hz or 60hz.  This is because the emulator emulates CPU cycles in bursts as fast as it can to render the next 20 ms or 16 ms worth of activity each frame.  This is much lower a resolution than you would get on a real C64 (even in BASIC) so don't expect to control high speed devices this way.  This is for educational/fun purposes only.
 
-***WARNING***: This configuration is capable of setting some pins to OUTPUT 3.3V. Do NOT use this while the keyboard/joystick PCB mentioned above is connected to your Pi.  This will make it possible for some OUTPUT pins to be connected to some INPUT pins simply by pressing keys on the keyboard.  Since there is nothing limiting current, this WILL cause damage to the GPIO pins.  For this reason, this option is only available for selection from the menu by adding 'gpio_outputs_enabled=true' to cmdline.txt  Do not use this option unless you are certain the connections to your GPIO header are safe for use with this configuration.
+***WARNING***: This configuration is capable of setting some pins to OUTPUT 3.3V. Do NOT use this while the keyboard/joystick PCB mentioned above is connected to your Pi.  This will make it possible for some OUTPUT pins to be connected to some INPUT pins simply by pressing keys on the C64 keyboard or using a joystick.  Since there is nothing limiting current, this WILL cause damage to the GPIO pins.  For this reason, this option is only available for selection from the menu by adding 'gpio_outputs_enabled=true' to cmdline.txt  Do not use this option unless you are certain the connections to your GPIO header are safe for use with this configuration.
 
 The joysticks are mapped as follows:
 
@@ -479,6 +481,10 @@ GPIO20 | 6
 GPIO21 | 7
 
 When used as inputs, the pins use pull-up resistors (just like the real C64) so the value defaults to 1.  Grounding the pin will result in a 0 being read.
+
+## GPIO Config 5 : Custom Defined
+
+If the pre-defined GPIO configurations don't suit your needs, you can define your own GPIO mappings if you wish.  Use the 'Configure Custom GPIO' menu option under 'Prefs'.
 
 # CPU Temperature
 
