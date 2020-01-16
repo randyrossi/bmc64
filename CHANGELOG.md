@@ -295,7 +295,7 @@
 ## 3.4
   * Fix IEC mode not working after plus4emu attach/detach
   * Fix PET color and video settings after boot not applied
-  * Add saturation to video color menu
+  * Added saturation to video color menu
   * Fixed bug with files list if /disks dir was missing
   * Added "Look for files in" option: /C64/{dir} or /{dir}/C64
   * Fixed DRIVES drive rom discovery issue
@@ -306,3 +306,4 @@
     border trim until the display's height is 2x the frame buffer's height.
   * Fixed PET vertical centering issue
   * Added configurable gpio
+  * Fixed issue with debounce routine on GPIO button functions

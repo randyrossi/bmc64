@@ -1223,10 +1223,14 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
 
 int CKernel::ReadDebounced(int pinIndex) {
   CGPIOPin *pin = gpioPins[pinIndex];
+
+  if (gpio_debounce_state[pinIndex] == BTN_PRESS) {
+    gpio_debounce_state[pinIndex] = BTN_DOWN;
+  } else if (gpio_debounce_state[pinIndex] == BTN_RELEASE) {
+    gpio_debounce_state[pinIndex] = BTN_UP;
+  }
+
   if (pin->Read() == LOW) {
-    if (gpio_debounce_state[pinIndex] == BTN_PRESS) {
-      gpio_debounce_state[pinIndex] = BTN_DOWN;
-    }
     if (gpio_debounce_state[pinIndex] == BTN_UP) {
       circle_sleep(5);
       if (pin->Read() == LOW) {
@@ -1234,9 +1238,6 @@ int CKernel::ReadDebounced(int pinIndex) {
       }
     }
   } else {
-    if (gpio_debounce_state[pinIndex] == BTN_RELEASE) {
-      gpio_debounce_state[pinIndex] = BTN_UP;
-    }
     if (gpio_debounce_state[pinIndex] == BTN_DOWN) {
       if (pin->Read() == HIGH) {
         circle_sleep(5);
