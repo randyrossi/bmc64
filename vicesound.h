@@ -16,16 +16,10 @@
 #ifndef _vice_sound_h
 #define _vice_sound_h
 
+#include "defs.h"
 #include "vicesoundbasedevice.h"
 #include <circle/types.h>
 #include <vc4/vchiq/vchiqdevice.h>
-
-// The sample rate we're asking vice to produce.
-#ifdef RASPI_LITE
-#define SAMPLE_RATE 33075
-#else
-#define SAMPLE_RATE 44100
-#endif
 
 // This is the fragment size we give to vice.
 #define FRAG_SIZE 256

@@ -32,7 +32,7 @@ class ViceEmulatorCore
 #endif
 {
 public:
-  ViceEmulatorCore(CMemorySystem *pMemorySystem);
+  ViceEmulatorCore(CMemorySystem *pMemorySystem, int cyclesPerSecond);
   ~ViceEmulatorCore(void);
 
   void Run(unsigned nCore)
@@ -50,6 +50,7 @@ public:
 
 private:
   bool launch_;
+  int cyclesPerSecond_;
   char timing_option_[8];
   CSpinLock m_Lock;
 

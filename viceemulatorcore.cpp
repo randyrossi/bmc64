@@ -19,17 +19,33 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "defs.h"
+
 extern "C" {
 #include "third_party/vice-3.3/src/main.h"
 }
 
+#include "third_party/vice-3.3/src/resid/sid.h"
 #include "third_party/vice-3.3/src/resid/filter.h"
 
-ViceEmulatorCore::ViceEmulatorCore(CMemorySystem *pMemorySystem) :
+ViceEmulatorCore::ViceEmulatorCore(CMemorySystem *pMemorySystem,
+                                   int cyclesPerSecond) :
 #ifdef ARM_ALLOW_MULTI_CORE
        CMultiCoreSupport(pMemorySystem),
 #endif
-       launch_(false) {}
+       launch_(false), cyclesPerSecond_(cyclesPerSecond) {
+
+  // These calls only allocate the sampling table. Population is
+  // done by cores 1 and 2 in parellel below.
+  reSID::SID::ComputeSamplingTable(cyclesPerSecond_,
+                                   reSID::SAMPLE_RESAMPLE,
+                                   SAMPLE_RATE, 19845, 0.97,
+                                   0);
+  reSID::SID::ComputeSamplingTable(cyclesPerSecond_,
+                                   reSID::SAMPLE_RESAMPLE_FASTMEM,
+                                   SAMPLE_RATE, 19845, 0.97,
+                                   0);
+}
 
 ViceEmulatorCore::~ViceEmulatorCore(void) {}
 
@@ -111,6 +127,8 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
 // modifications done for BMC64.
 void ViceEmulatorCore::ComputeResidFilter(int model) { reSID::Filter f(model); }
 
+// In addition to initializing the filters in parellel during boot, we
+// compute the resampling tables for the two resampling methods.
 void ViceEmulatorCore::Run(unsigned nCore) {
   assert(nCore > 0);
   switch (nCore) {
@@ -118,12 +136,30 @@ void ViceEmulatorCore::Run(unsigned nCore) {
     RunMainVice(true);
     break;
   case 2:
-    // Core 2 will initialize 6581 filter data. Then sleep.
+    // Core 2 will initialize 6581 filter data. Then partition 1
+    // of the resampling tables. Then sleep.
     ComputeResidFilter(0);
+    reSID::SID::ComputeSamplingTable(cyclesPerSecond_,
+                                     reSID::SAMPLE_RESAMPLE,
+                                     SAMPLE_RATE, 19845, 0.97,
+                                     1);
+    reSID::SID::ComputeSamplingTable(cyclesPerSecond_,
+                                     reSID::SAMPLE_RESAMPLE_FASTMEM,
+                                     SAMPLE_RATE, 19845, 0.97,
+                                     1);
     break;
   case 3:
-    // Core 3 will initialize 8580 filter data. Then sleep.
+    // Core 3 will initialize 8580 filter data. Then partition 2
+    // of the resampling tables. Then sleep.
     ComputeResidFilter(1);
+    reSID::SID::ComputeSamplingTable(cyclesPerSecond_,
+                                     reSID::SAMPLE_RESAMPLE,
+                                     SAMPLE_RATE, 19845, 0.97,
+                                     2);
+    reSID::SID::ComputeSamplingTable(cyclesPerSecond_,
+                                     reSID::SAMPLE_RESAMPLE_FASTMEM,
+                                     SAMPLE_RATE, 19845, 0.97,
+                                     2);
     break;
   }
 

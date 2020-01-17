@@ -212,6 +212,9 @@ public:
   virtual TShutdownMode Run(void) = 0;
   const char *GetKernelName(void) const { return FromKernel; }
 
+  int circle_get_machine_timing();
+  int circle_cycles_per_second();
+
 private:
   char const *FromKernel;
 
@@ -235,9 +238,9 @@ public:
         mLogger(mOptions.GetLogLevel(), &mTimer),
         mGPIOManager(&mInterrupt), mVCHIQ(&mMemory, &mInterrupt) {
 #if defined(RASPI_PLUS4EMU)
-     mEmulatorCore = new Plus4EmulatorCore(&mMemory);
+     mEmulatorCore = new Plus4EmulatorCore(&mMemory, circle_cycles_per_second());
 #else
-     mEmulatorCore = new ViceEmulatorCore(&mMemory);
+     mEmulatorCore = new ViceEmulatorCore(&mMemory, circle_cycles_per_second());
 #endif
   }
 

@@ -32,7 +32,7 @@ class Plus4EmulatorCore
 #endif
 {
 public:
-  Plus4EmulatorCore(CMemorySystem *pMemorySystem);
+  Plus4EmulatorCore(CMemorySystem *pMemorySystem, int cyclesPerSecond);
   ~Plus4EmulatorCore(void);
 
   void Run(unsigned nCore)
@@ -50,6 +50,7 @@ public:
 
 private:
   bool launch_;
+  int cyclesPerSecond_;
   char timing_option_[8];
   CSpinLock m_Lock;
 

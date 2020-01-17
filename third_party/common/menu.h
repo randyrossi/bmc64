@@ -220,6 +220,7 @@ typedef enum {
    MENU_SID_ENGINE, // VICE
    MENU_SID_MODEL,
    MENU_SID_FILTER, // VICE
+   MENU_SID_SAMPLING, // VICE
 
    MENU_SID_WRITE_D400,  // PLUS4EMU
    MENU_SID_DIGIBLASTER, // PLUS4EMU
@@ -459,6 +460,14 @@ typedef enum {
    MENU_SID_MODEL_6581 = 0,
    MENU_SID_MODEL_8580,
 } MenuSidModel;
+
+// Used as indices
+typedef enum {
+   MENU_SID_SAMPLING_FAST = 0,
+   MENU_SID_SAMPLING_INTERPOLATION,
+   MENU_SID_SAMPLING_RESAMPLING,
+   MENU_SID_SAMPLING_FAST_RESAMPLING,
+} MenuSidSampling;
 
 // Used as indices
 typedef enum {

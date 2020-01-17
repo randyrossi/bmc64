@@ -54,6 +54,7 @@
 #include "vdrive-internal.h"
 #include "tape.h"
 #include "sid.h"
+#include "sid-resources.h"
 #include "userport/userport_joystick.h"
 
 // RASPI includes
@@ -62,6 +63,7 @@
 struct menu_item *sid_engine_item;
 struct menu_item *sid_model_item;
 struct menu_item *sid_filter_item;
+struct menu_item *sid_resampling_item;
 struct menu_item *keyboard_mapping_item;
 
 // TODO: Fix these
@@ -504,6 +506,21 @@ static int viceSidModelToBmcChoice(int viceModel) {
   }
 }
 
+static int viceSidResamplingToBmcChoice(int method) {
+  switch (method) {
+  case SID_RESID_SAMPLING_FAST:
+    return MENU_SID_SAMPLING_FAST;
+  case SID_RESID_SAMPLING_INTERPOLATION:
+    return MENU_SID_SAMPLING_INTERPOLATION;
+  case SID_RESID_SAMPLING_RESAMPLING:
+    return MENU_SID_SAMPLING_RESAMPLING;
+  case SID_RESID_SAMPLING_FAST_RESAMPLING:
+    return MENU_SID_SAMPLING_FAST_RESAMPLING;
+  default:
+    return MENU_SID_SAMPLING_FAST;
+  }
+}
+
 void emux_add_tape_options(struct menu_item* parent) {
 }
 
@@ -554,6 +571,24 @@ void emux_add_sound_options(struct menu_item* parent) {
   child = sid_filter_item =
       ui_menu_add_toggle(MENU_SID_FILTER, parent, "Sid Filter", 0);
 
+  if (circle_get_model() >= 3 ) {
+     child = sid_resampling_item =
+         ui_menu_add_multiple_choice(MENU_SID_SAMPLING, parent, "Resampling");
+     child->num_choices = 4;
+     strcpy(child->choices[MENU_SID_SAMPLING_FAST], "Fast");
+     strcpy(child->choices[MENU_SID_SAMPLING_INTERPOLATION], "Interpolation");
+     strcpy(child->choices[MENU_SID_SAMPLING_RESAMPLING], "Resampling");
+     strcpy(child->choices[MENU_SID_SAMPLING_FAST_RESAMPLING], "Fast Resampling");
+     child->choice_ints[MENU_SID_SAMPLING_FAST] = SID_RESID_SAMPLING_FAST;
+     child->choice_ints[MENU_SID_SAMPLING_INTERPOLATION] = SID_RESID_SAMPLING_INTERPOLATION;
+     child->choice_ints[MENU_SID_SAMPLING_RESAMPLING] = SID_RESID_SAMPLING_RESAMPLING;
+     child->choice_ints[MENU_SID_SAMPLING_FAST_RESAMPLING] = SID_RESID_SAMPLING_FAST_RESAMPLING;
+
+     if (circle_get_model() < 4) {
+        child->choice_disabled[MENU_SID_SAMPLING_RESAMPLING] = 1;
+     }
+  }
+
   int tmp_value;
 
   resources_get_int("SidEngine", &tmp_value);
@@ -563,6 +598,11 @@ void emux_add_sound_options(struct menu_item* parent) {
   sid_model_item->value = viceSidModelToBmcChoice(tmp_value);
 
   resources_get_int("SidFilters", &sid_filter_item->value);
+
+  if (circle_get_model() >= 3 ) {
+    resources_get_int("SidResidSampling", &tmp_value);
+    sid_resampling_item->value = viceSidResamplingToBmcChoice(tmp_value);
+  }
 }
 
 void emux_set_warp(int warp) {
@@ -669,6 +709,7 @@ void emux_set_int(IntSetting setting, int value) {
      resources_set_int("SidModel", value);
      break;
    case Setting_SidResidSampling:
+     // These are the same values. Not bothering to translate...
      resources_set_int("SidResidSampling", value);
      break;
    default:
@@ -711,6 +752,9 @@ void emux_get_int(IntSetting setting, int* dest) {
       break;
     case Setting_DatasetteResetWithCPU:
       resources_get_int("DatasetteResetWithCPU", dest);
+      break;
+    case Setting_SidResidSampling:
+      resources_get_int("SidResidSampling", dest);
       break;
     default:
       assert(0);

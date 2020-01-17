@@ -25,11 +25,12 @@ extern "C" {
 
 #include "third_party/plus4emu/resid/filter.hpp"
 
-Plus4EmulatorCore::Plus4EmulatorCore(CMemorySystem *pMemorySystem) :
+Plus4EmulatorCore::Plus4EmulatorCore(CMemorySystem *pMemorySystem,
+                                     int cyclesPerSecond) :
 #ifdef ARM_ALLOW_MULTI_CORE
        CMultiCoreSupport(pMemorySystem),
 #endif
-       launch_(false) {}
+       launch_(false), cyclesPerSecond_(cyclesPerSecond) {}
 
 Plus4EmulatorCore::~Plus4EmulatorCore(void) {}
 

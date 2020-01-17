@@ -58,7 +58,6 @@ public:
   static void GamePadStatusHandler(unsigned nDeviceIndex,
                                    const TGamePadState *pState);
 
-  int circle_get_machine_timing();
   void circle_sleep(long delay);
   unsigned long circle_get_ticks();
 
@@ -103,7 +102,6 @@ public:
   void circle_lock_acquire();
   void circle_lock_release();
   void circle_boot_complete();
-  int circle_cycles_per_second();
   void circle_set_volume(int value);
   int circle_get_model();
   int circle_gpio_enabled();

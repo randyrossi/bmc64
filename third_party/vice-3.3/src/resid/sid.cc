@@ -27,9 +27,14 @@
 #include "sid.h"
 #include <math.h>
 
+#include <string.h>
+#include <stdio.h>
+
 #ifndef round
 #define round(x) (x>=0.0?floor(x+0.5):ceil(x-0.5))
 #endif
+
+static short* fir_cached[4]; // one for each method
 
 namespace reSID
 {
@@ -69,7 +74,7 @@ SID::SID()
 SID::~SID()
 {
   delete[] sample;
-  delete[] fir;
+  //delete[] fir;
 }
 
 
@@ -554,7 +559,7 @@ bool SID::set_sampling_parameters(double clock_freq, sampling_method method,
   if (method != SAMPLE_RESAMPLE && method != SAMPLE_RESAMPLE_FASTMEM)
   {
     delete[] sample;
-    delete[] fir;
+    //delete[] fir;
     sample = 0;
     fir = 0;
     return true;
@@ -565,9 +570,10 @@ bool SID::set_sampling_parameters(double clock_freq, sampling_method method,
     sample = new short[RINGSIZE*2];
   }
   // Clear sample buffer.
-  for (int j = 0; j < RINGSIZE*2; j++) {
-    sample[j] = 0;
-  }
+  //for (int j = 0; j < RINGSIZE*2; j++) {
+  //  sample[j] = 0;
+  //}
+  memset(sample, 0, RINGSIZE*2);
   sample_index = 0;
 
   const double pi = 3.1415926535897932385;
@@ -613,6 +619,7 @@ bool SID::set_sampling_parameters(double clock_freq, sampling_method method,
   if (fir && fir_RES_new == fir_RES && fir_N_new == fir_N && beta == fir_beta && f_cycles_per_sample == fir_f_cycles_per_sample && fir_filter_scale == filter_scale) {
       return true;
   }
+
   fir_RES = fir_RES_new;
   fir_N = fir_N_new;
   fir_beta = beta;
@@ -620,11 +627,112 @@ bool SID::set_sampling_parameters(double clock_freq, sampling_method method,
   fir_filter_scale = filter_scale;
 
   // Allocate memory for FIR tables.
-  delete[] fir;
-  fir = new short[fir_N*fir_RES];
+  //delete[] fir;  no need to delete
+  //fir = new short[fir_N*fir_RES];
+
+  fir = fir_cached[method];
 
   // Calculate fir_RES FIR tables for linear interpolation.
-  for (int i = 0; i < fir_RES; i++) {
+  //for (int i = 0; i < fir_RES; i++) {
+  //  int fir_offset = i*fir_N + fir_N/2;
+  //  double j_offset = double(i)/fir_RES;
+    // Calculate FIR table. This is the sinc function, weighted by the
+    // Kaiser window.
+  //  for (int j = -fir_N/2; j <= fir_N/2; j++) {
+  //    double jx = j - j_offset;
+  //    double wt = wc*jx/f_cycles_per_sample;
+  //    double temp = jx/(fir_N/2);
+  //    double Kaiser = fabs(temp) <= 1 ? I0(beta*sqrt(1 - temp*temp))/I0beta : 0;
+  //    double sincwt = fabs(wt) >= 1e-6 ? sin(wt)/wt : 1;
+  //    double val = (1 << FIR_SHIFT)*filter_scale*f_samples_per_cycle*wc/pi*sincwt*Kaiser;
+  //    fir[fir_offset + j] = (short)round(val);
+  //  }
+  //}
+
+  return true;
+}
+
+// This method is a copy of the logic found at the end of
+// set_sampling_parameters above and will prepopulate our BMC64 resampling
+// table caches (possibly for multiple methods) to save init time.  This
+// method will be called by other cores with the same parameters that
+// set_sampling_parameters will be called with so it will not have to
+// recompute the tables. Parameters other than method will never change
+// while the machine is running.
+// partition = 0 means allocate the array only
+// partition = 1 means fill in first half
+// partition = 2 means fill in second half
+void SID::ComputeSamplingTable(double clock_freq, sampling_method method,
+                               double sample_freq, double pass_freq,
+                               double filter_scale, int partition) {
+  const double pi = 3.1415926535897932385;
+
+  // 16 bits -> -96dB stopband attenuation.
+  const double A = -20*log10(1.0/(1 << 16));
+  // A fraction of the bandwidth is allocated to the transition band,
+  double dw = (1 - 2*pass_freq/sample_freq)*pi*2;
+  // The cutoff frequency is midway through the transition band (nyquist)
+  double wc = pi;
+
+  // For calculation of beta and N see the reference for the kaiserord
+  // function in the MATLAB Signal Processing Toolbox:
+  // http://www.mathworks.com/access/helpdesk/help/toolbox/signal/kaiserord.html
+  const double beta = 0.1102*(A - 8.7);
+  const double I0beta = I0(beta);
+
+  // The filter order will maximally be 124 with the current constraints.
+  // N >= (96.33 - 7.95)/(2.285*0.1*pi) -> N >= 123
+  // The filter order is equal to the number of zero crossings, i.e.
+  // it should be an even number (sinc is symmetric about x = 0).
+  int N = int((A - 7.95)/(2.285*dw) + 0.5);
+  N += N & 1;
+
+  double f_samples_per_cycle = sample_freq/clock_freq;
+  double f_cycles_per_sample = clock_freq/sample_freq;
+
+  // The filter length is equal to the filter order + 1.
+  // The filter length must be an odd number (sinc is symmetric about x = 0).
+  int fir_N_new = int(N*f_cycles_per_sample) + 1;
+  fir_N_new |= 1;
+
+  // We clamp the filter table resolution to 2^n, making the fixed point
+  // sample_offset a whole multiple of the filter table resolution.
+  int res = method == SAMPLE_RESAMPLE ?
+    FIR_RES : FIR_RES_FASTMEM;
+  int n = (int)ceil(log(res/f_cycles_per_sample)/log(2.0f));
+  int fir_RES_new = 1 << n;
+
+  /* Determine if we need to recalculate table, or whether we can reuse earlier cached copy.
+   * This pays off on slow hardware such as current Android devices.
+   */
+  //if (fir && fir_RES_new == fir_RES && fir_N_new == fir_N && beta == fir_beta && f_cycles_per_sample == fir_f_cycles_per_sample && fir_filter_scale == filter_scale) {
+  //    return true;
+  //}
+
+  int fir_RES = fir_RES_new;
+  int fir_N = fir_N_new;
+  int fir_beta = beta;
+  int fir_f_cycles_per_sample = f_cycles_per_sample;
+  int fir_filter_scale = filter_scale;
+
+  // Allocate memory for FIR tables.
+  //delete[] fir;
+
+  if (partition == 0) {
+     fir_cached[method] = new short[fir_N*fir_RES];
+     return;
+  }
+
+  int start;
+  int end;
+  if (partition == 1) {
+     start = 0; end = fir_RES/2;
+  } else {
+     start = fir_RES/2; end = fir_RES;
+  }
+
+  // Calculate fir_RES FIR tables for linear interpolation.
+  for (int i = start; i < end; i++) {
     int fir_offset = i*fir_N + fir_N/2;
     double j_offset = double(i)/fir_RES;
     // Calculate FIR table. This is the sinc function, weighted by the
@@ -636,13 +744,12 @@ bool SID::set_sampling_parameters(double clock_freq, sampling_method method,
       double Kaiser = fabs(temp) <= 1 ? I0(beta*sqrt(1 - temp*temp))/I0beta : 0;
       double sincwt = fabs(wt) >= 1e-6 ? sin(wt)/wt : 1;
       double val = (1 << FIR_SHIFT)*filter_scale*f_samples_per_cycle*wc/pi*sincwt*Kaiser;
-      fir[fir_offset + j] = (short)round(val);
+      fir_cached[method][fir_offset + j] = (short)round(val);
     }
   }
 
-  return true;
+  //return true;
 }
-
 
 // ----------------------------------------------------------------------------
 // Adjustment of SID sampling frequency.

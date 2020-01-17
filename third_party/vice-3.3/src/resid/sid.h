@@ -45,6 +45,22 @@ public:
   bool set_sampling_parameters(double clock_freq, sampling_method method,
   double sample_freq, double pass_freq = -1,
   double filter_scale = 0.97);
+
+  // Added for BMC64. This method pre-populates the resampling tables
+  // for RESAMPLING and FAST_RESAMPLING methods so that this data is
+  // cached and available for set_sampling_parameters when needed rather
+  // than having to be computed on-demand and 'freezing' the emulator
+  // for multiple seconds.  This is part of the effort to keep BMC64
+  // booting as fast as possible so this method is called by cores 2 & 3
+  // in parallel, each handling one half of the table.  Also, since
+  // the cached data is only relevant for these parameters, they cannot
+  // be changed after init.  So things like pass_freq changing will
+  // require a reboot before taking effect.  The UI doesn't allow
+  // changing these values anyway.
+  static void ComputeSamplingTable(double clock_freq, sampling_method method,
+                                   double sample_freq, double pass_freq,
+                                   double filter_scale, int partition);
+
   void adjust_sampling_frequency(double sample_freq);
 
   void clock();
