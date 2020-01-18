@@ -55,7 +55,7 @@ const uint8_t ascii_to_petscii[256] = {
 int emux_machine_class = BMC64_MACHINE_CLASS_UNKNOWN;
 int vic_showing;
 int vdc_showing;
-int vic_enabled;
+int vic_enabled = 1;
 int vdc_enabled;
 int vdc_canvas_index;
 int vic_canvas_index;

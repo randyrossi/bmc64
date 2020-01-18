@@ -294,6 +294,7 @@
 
 ## 3.4
   * Added Resid Interpolation and Fast Resampling for Pi3
+  * Added vertical stretch to better align with real scanlines on CRTs
   * Added saturation to video color menu
   * Added "Look for files in" option: /C64/{dir} or /{dir}/C64
   * Added (cheap) PET scanlines video option
