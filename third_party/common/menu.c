@@ -3236,7 +3236,7 @@ void build_menu(struct menu_item *root) {
       h_border_item_0,
       v_border_item_0,
       h_stretch_item_0,
-      v_stretch_item_1);
+      v_stretch_item_0);
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      do_video_settings(FB_LAYER_VDC,
