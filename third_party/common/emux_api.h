@@ -89,6 +89,8 @@ typedef enum {
   Setting_SidFilters, // Vice
   Setting_SidModel,
   Setting_SidResidSampling, // Vice
+  Setting_SidResidPassband, // Vice
+  Setting_SidResidGain,     // Vice
   Setting_SidWriteAccess, // Plus4Emu
   Setting_SidDigiblaster, // Plus4Emu
   Setting_WarpMode,

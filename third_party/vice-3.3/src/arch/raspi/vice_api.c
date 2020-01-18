@@ -712,6 +712,14 @@ void emux_set_int(IntSetting setting, int value) {
      // These are the same values. Not bothering to translate...
      resources_set_int("SidResidSampling", value);
      break;
+   case Setting_SidResidPassband:
+     resources_set_int("SidResidPassband", value);
+     resources_set_int("SidResid8580Passband", value);
+     break;
+   case Setting_SidResidGain:
+     resources_set_int("SidResidGain", value);
+     resources_set_int("SidResid8580Gain", value);
+     break;
    default:
      assert(0);
  }

@@ -1655,6 +1655,10 @@ static void check_sid_sampling() {
           MENU_SID_SAMPLING_FAST_RESAMPLING);
      }
   }
+
+  // These can never change. See viceemulatorcore.cpp
+  emux_set_int(Setting_SidResidPassband, 90);
+  emux_set_int(Setting_SidResidGain, 97);
 }
 
 static void menu_machine_reset(int type, int pop) {
