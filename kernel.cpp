@@ -1046,10 +1046,8 @@ int CKernel::circle_sound_init(const char *param, int *speed, int *fragsize,
   // We force mono.
   *channels = 1;
 
-  if (!mViceSound) {
-    mViceSound = new ViceSound(&mVCHIQ, mViceOptions.GetAudioOut());
-    mViceSound->Playback(vol_percent_to_vchiq(mInitialVolume));
-  }
+  // We init sound after boot is complete to avoid an initial
+  // sound sync issue if a cartridge is attached.
   return 0;
 }
 
@@ -1362,7 +1360,17 @@ void CKernel::circle_lock_acquire() { m_Lock.Acquire(); }
 
 void CKernel::circle_lock_release() { m_Lock.Release(); }
 
-void CKernel::circle_boot_complete() { DisableBootStat(); }
+void CKernel::circle_boot_complete() {
+  // NOTE: We init the sound device here to avoid a sound sync
+  // issue if a cartridge is attached.  If this is done too
+  // early, the sound data consumer is a bit further behind.
+  if (!mViceSound) {
+    mViceSound = new ViceSound(&mVCHIQ, mViceOptions.GetAudioOut());
+    mViceSound->Playback(vol_percent_to_vchiq(mInitialVolume));
+  }
+
+  DisableBootStat();
+}
 
 int CKernel::circle_alloc_fbl(int layer, int pixelmode, uint8_t **pixels,
                               int width, int height, int *pitch) {

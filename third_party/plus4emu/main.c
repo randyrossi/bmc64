@@ -682,6 +682,8 @@ int main_program(int argc, char **argv)
   printf ("Enter emulation loop\n");
   Plus4VM_Reset(vm, 1);
 
+  circle_boot_complete();
+
   assert(time_advance > 0);
   for(;;) {
     Plus4VM_Run(vm, time_advance);

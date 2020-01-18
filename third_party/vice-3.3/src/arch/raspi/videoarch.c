@@ -89,7 +89,6 @@ unsigned long video_frame_count;
 
 int raspi_warp = 0;
 static int raspi_boot_warp = 1;
-static int fix_sid = 0;
 
 static int vdc_map[] = {0, 12, 6, 14, 5, 13, 11, 3, 2, 10, 8, 4, 9, 7, 15, 1};
 
@@ -354,12 +353,6 @@ unsigned long vsyncarch_frequency(void) { return video_freq; }
 unsigned long vsyncarch_gettime(void) { return video_ticks; }
 
 void vsyncarch_init(void) {
-  // See video refresh code to see why this is necessary.
-  int sid_engine;
-  resources_get_int("SidEngine", &sid_engine);
-  if (sid_engine == SID_ENGINE_RESID) {
-    fix_sid = 1;
-  }
 }
 
 void vsyncarch_presync(void) { kbdbuf_flush(); }
@@ -501,24 +494,6 @@ void vsyncarch_postsync(void) {
   if (raspi_demo_mode) {
     demo_check();
   }
-
-  // BEGIN UGLY HACK
-  // What follows is an ugly hack to get around a small extra delay
-  // in the audio buffer when RESID is set and we first boot.  I
-  // fought with VICE for a while but eventually just decided to re-init
-  // RESID at this point in the boot process to work around the issue.  This
-  // gets our audio buffer as close to the 'live' edge as possible.  It's only
-  // an issue if RESID is the engine selected for boot.
-  if (fix_sid) {
-    if (video_frame_count == 121) {
-      resources_set_int("SidEngine", SID_ENGINE_FASTSID);
-    } else if (video_frame_count == 122) {
-      resources_set_int("SidEngine", SID_ENGINE_RESID);
-      fix_sid = 0;
-    }
-  }
-  // END UGLY HACK
-
 }
 
 void vsyncarch_sleep(unsigned long delay) {
