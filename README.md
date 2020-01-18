@@ -183,10 +183,12 @@ The emulated resolutions are small and must be scaled up to the video mode's res
 
 If you are using a CRT, you may want to use the 'V Stretch Factor' to better align the video to your monitr's real scanlines.  A mis-alignment can make characters look fuzzy.
 
-Here's what a bad alignemnt can look like:
+  * Here's what a bad alignment can look like:
+
 ![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/bad_crt_align.jpg)
 
-Here's what a better alignment can look like:
+  * Here's what a better alignment can look like:
+
 ![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/good_crt_align.jpg)
 
 NOTE: It may not be possible for EVERY scanline to line up from top to bottom but you should be able to get most of the display to look less 'fuzzy'.
