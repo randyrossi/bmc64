@@ -248,6 +248,10 @@ int circle_gpio_enabled() {
 int circle_gpio_outputs_enabled() {
   return static_kernel->circle_gpio_outputs_enabled();
 }
+
+void circle_kernel_core_init_complete(int core) {
+  static_kernel->circle_kernel_core_init_complete(core);
+}
 };
 
 namespace {
@@ -274,7 +278,8 @@ long func_to_keycode(int btn_func) {
 CKernel::CKernel(void)
     : ViceStdioApp("vice"), mViceSound(nullptr),
       mNumJoy(emu_get_num_joysticks()),
-      mInitialVolume(100) {
+      mInitialVolume(100), mNumCoresComplete(0),
+      mNeedSoundInit(false) {
   static_kernel = this;
   mod_states = 0;
   memset(key_states, 0, MAX_KEY_CODES * sizeof(bool));
@@ -1248,6 +1253,20 @@ int CKernel::ReadDebounced(int pinIndex) {
 // function. Also scans a real C64 keyboard and joysticks if enabled.
 // Otherwise, just scans gpio joysticks.
 void CKernel::circle_check_gpio() {
+
+  // TODO: Find a better place for this. Piggy back on emulation loop
+  // to initialize sound when helper cores were late initializing the sid
+  // tables.
+#ifdef ARM_ALLOW_MULTI_CORE
+  circle_lock_acquire();
+  if (mNeedSoundInit && mNumCoresComplete >= 2) {
+     mViceSound = new ViceSound(&mVCHIQ, mViceOptions.GetAudioOut());
+     mViceSound->Playback(vol_percent_to_vchiq(mInitialVolume));
+     mNeedSoundInit = false;
+  }
+  circle_lock_release();
+#endif
+
   int gpio_config = emu_get_gpio_config();
 
   switch(gpio_config) {
@@ -1365,8 +1384,24 @@ void CKernel::circle_boot_complete() {
   // issue if a cartridge is attached.  If this is done too
   // early, the sound data consumer is a bit further behind.
   if (!mViceSound) {
+#ifdef ARM_ALLOW_MULTI_CORE
+    circle_lock_acquire();
+    if (mNumCoresComplete >= 2) {
+       // Cores 1/2 are done initing sound tables before we tried to
+       // start playback device.
+       mViceSound = new ViceSound(&mVCHIQ, mViceOptions.GetAudioOut());
+       mViceSound->Playback(vol_percent_to_vchiq(mInitialVolume));
+    } else {
+       // Cores 1/2 are still initializing sound tables. We'll init
+       // sound later.  This is to get around the crashing noise you
+       // can get on boot if you have a cartridge attached.
+       mNeedSoundInit = true;
+    }
+    circle_lock_release();
+#else
     mViceSound = new ViceSound(&mVCHIQ, mViceOptions.GetAudioOut());
     mViceSound->Playback(vol_percent_to_vchiq(mInitialVolume));
+#endif
   }
 
   DisableBootStat();
@@ -1472,4 +1507,13 @@ int CKernel::circle_gpio_enabled() {
 
 int CKernel::circle_gpio_outputs_enabled() {
   return !mViceOptions.DPIEnabled() && mViceOptions.GPIOOutputsEnabled();
+}
+
+// Called by cores 1 and 2 after they are done initializing
+// sid tables.  Used to know whether volume should be set to
+// 0 or requested initial volume after boot.
+void CKernel::circle_kernel_core_init_complete(int core) {
+  circle_lock_acquire();
+  mNumCoresComplete++;
+  circle_lock_release();
 }

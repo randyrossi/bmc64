@@ -23,6 +23,8 @@
 
 extern "C" {
 #include "third_party/vice-3.3/src/main.h"
+
+extern void circle_kernel_core_init_complete(int core);
 }
 
 #include "third_party/vice-3.3/src/resid/sid.h"
@@ -147,6 +149,7 @@ void ViceEmulatorCore::Run(unsigned nCore) {
                                      reSID::SAMPLE_RESAMPLE_FASTMEM,
                                      SAMPLE_RATE, 19845, 0.97,
                                      1);
+    circle_kernel_core_init_complete(2);
     break;
   case 3:
     // Core 3 will initialize 8580 filter data. Then partition 2
@@ -160,6 +163,7 @@ void ViceEmulatorCore::Run(unsigned nCore) {
                                      reSID::SAMPLE_RESAMPLE_FASTMEM,
                                      SAMPLE_RATE, 19845, 0.97,
                                      2);
+    circle_kernel_core_init_complete(3);
     break;
   }
 

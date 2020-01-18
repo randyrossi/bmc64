@@ -106,6 +106,7 @@ public:
   int circle_get_model();
   int circle_gpio_enabled();
   int circle_gpio_outputs_enabled();
+  void circle_kernel_core_init_complete(int core);
 
 private:
   void InitSound();
@@ -124,6 +125,8 @@ private:
   CSpinLock m_Lock;
   int mNumJoy;
   int mInitialVolume;
+  int mNumCoresComplete;
+  bool mNeedSoundInit;
 
   int gpio_debounce_state[NUM_GPIO_PINS];
 
