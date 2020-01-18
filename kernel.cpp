@@ -189,8 +189,8 @@ void circle_update_palette_fbl(int layer) {
   static_kernel->circle_update_palette_fbl(layer);
 }
 
-void circle_set_aspect_fbl(int layer, double aspect) {
-  static_kernel->circle_set_aspect_fbl(layer, aspect);
+void circle_set_stretch_fbl(int layer, double hstretch, double vstretch) {
+  static_kernel->circle_set_stretch_fbl(layer, hstretch, vstretch);
 }
 
 void circle_set_center_offset(int layer, int cx, int cy) {
@@ -1454,8 +1454,8 @@ void CKernel::circle_update_palette_fbl(int layer) {
   fbl[layer].UpdatePalette();
 }
 
-void CKernel::circle_set_aspect_fbl(int layer, double aspect) {
-  fbl[layer].SetAspect(aspect);
+void CKernel::circle_set_stretch_fbl(int layer, double hstretch, double vstretch) {
+  fbl[layer].SetStretch(hstretch, vstretch);
 }
 
 void CKernel::circle_set_center_offset(int layer, int cx, int cy) {

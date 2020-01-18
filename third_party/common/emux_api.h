@@ -328,7 +328,8 @@ void emux_set_warp(int warp);
 
 void emux_apply_video_adjustments(int layer, int hcenter, int vcenter,
                                   double hborder, double vborder,
-                                  double aspect, double lpad, double rpad,
+                                  double hstretch, double vstretch,
+                                  double lpad, double rpad,
                                   double tpad, double bpad, int zlayer);
 
 // Select a palette index for the given display number.

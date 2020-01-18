@@ -75,7 +75,8 @@ DISPMANX_DISPLAY_HANDLE_T FrameBufferLayer::dispman_display_;
 
 FrameBufferLayer::FrameBufferLayer() :
         width_(0), height_(0), pitch_(0), layer_(0), transparency_(false),
-        aspect_(1.6), valign_(0), vpadding_(0), halign_(0), hpadding_(0),
+        hstretch_(1.6), vstretch_(1.0),
+        valign_(0), vpadding_(0), halign_(0), hpadding_(0),
         h_center_offset_(0), v_center_offset_(0),
         rnum_(0), leftPadding_(0), rightPadding_(0), topPadding_(0),
         bottomPadding_(0), showing_(false), allocated_(false),
@@ -225,7 +226,8 @@ void FrameBufferLayer::Show() {
 
   int dst_w;
   int dst_h;
-  assert (aspect_ != 0);
+  assert (hstretch_ != 0);
+  assert (vstretch_ != 0);
 
   int lpad_abs = display_width_ * leftPadding_;
   int rpad_abs = display_width_ * rightPadding_;
@@ -235,19 +237,25 @@ void FrameBufferLayer::Show() {
   int avail_width = display_width_ - lpad_abs - rpad_abs;
   int avail_height = display_height_ - tpad_abs - bpad_abs;
 
-  if (aspect_ < 0) {
-     // Stretch horizontally to fill width and then set height based on
-     // aspect ratio.
-     dst_w = avail_width;
-     dst_h = (double)avail_width / -aspect_;
+  if (hstretch_ < 0) {
+     // Stretch horizontally to fill width * vstretch and then set height
+     // based on hstretch.
+     dst_w = avail_width * vstretch_;
+     dst_h = (double)avail_width / -hstretch_;
+     if (dst_w > avail_width) {
+        dst_w = avail_width;
+     }
      if (dst_h > avail_height) {
         dst_h = avail_height;
      }
   } else {
-     // Stretch vertically to fill height and then set width based on
-     // aspect ratio.
-     dst_h = avail_height;
-     dst_w = (double)avail_height * aspect_;
+     // Stretch vertically to fill height * vstretch and then set width
+     // based on hstretch.
+     dst_h = avail_height * vstretch_;
+     dst_w = (double)avail_height * hstretch_;
+     if (dst_h > avail_height) {
+        dst_h = avail_height;
+     }
      if (dst_w > avail_width) {
         dst_w = avail_width;
      }
@@ -421,9 +429,10 @@ void FrameBufferLayer::SetSrcRect(int x, int y, int w, int h) {
   src_h_ = h;
 }
 
-// Set horizontal multiplier
-void FrameBufferLayer::SetAspect(double aspect) {
-  aspect_ = aspect;
+// Set horizontal/vertical multipliers
+void FrameBufferLayer::SetStretch(double hstretch, double vstretch) {
+  hstretch_ = hstretch;
+  vstretch_ = vstretch;
 }
 
 void FrameBufferLayer::SetVerticalAlignment(int alignment, int padding) {

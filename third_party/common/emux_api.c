@@ -149,7 +149,7 @@ void emux_ensure_video(void) {
 
 void emux_apply_video_adjustments(int layer,
       int hcenter, int vcenter,
-      double hborder, double vborder, double aspect,
+      double hborder, double vborder, double h_stretch, double v_stretch,
       double lpad, double rpad, double tpad, double bpad,
       int zlayer) {
   // Hide the layer. Can't show it here on the same loop so we have to
@@ -175,7 +175,7 @@ void emux_apply_video_adjustments(int layer,
   circle_set_zlayer_fbl(layer, zlayer);
   circle_set_padding_fbl(layer, lpad, rpad, tpad, bpad);
 
-  circle_set_aspect_fbl(layer, aspect);
+  circle_set_stretch_fbl(layer, h_stretch, v_stretch);
 
   if (index >= 0) {
     canvas_state[index].border_w =

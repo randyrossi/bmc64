@@ -160,7 +160,7 @@ All of the above re: timing applies to the other machines as well.  However, in 
 Since v2.1, the virtual display dimensions are adjusted dynamically from the menu. Under 'Video', you will find Horizontal Border Trim %, Vertical Border Trim % and Aspect Ratio controls for each virtual display available.  Displays are scaled as follows:
 
       1. The amount of border to trim is removed from top/botom and left/right edges.
-      2. The resulting image is stretched vertically to fill the Y dimension.
+      2. The resulting image is stretched vertically according to vertical stretch factor (1.0 is full vertical height)
       3. The width is then calculated according to the horizontal stretch factor.
 
 Using the three settings available, you should be able to customize how much border is available as well as the aspect ratio of the final image.  Reasonable defaults are provided.

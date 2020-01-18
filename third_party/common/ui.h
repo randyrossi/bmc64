@@ -245,7 +245,7 @@ extern uint8_t *raw_video_font;
 
 // If layer is visible right now, make the ui transparent and tell the
 // ui only to render the current item. This is used to assist the user
-// in making video adjustments in real time (color, aspect ratio,
+// in making video adjustments in real time (color, hstretch,
 // etc). Only takes effect while the user remains on the current menu
 // item.
 extern void ui_canvas_reveal_temp(int layer);

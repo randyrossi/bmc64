@@ -465,8 +465,8 @@ static void ui_action_frame() {
       if (ui_key_ticks_repeats >= ui_key_ticks_repeats_next) {
         ui_key_ticks_repeats_next *= 4;
         ui_key_ticks_next /= 2;
-        if (ui_key_ticks_next < 1)
-          ui_key_ticks_next = 1;
+        if (ui_key_ticks_next < 2)
+          ui_key_ticks_next = 2;
       }
     }
   }
@@ -943,8 +943,8 @@ static void ui_render_children(struct menu_item *node,
           if (node->divisor == 1) {
              sprintf(node->scratch, "%d", node->value);
           } else {
-             // TODO: Don't assume 2 decimal places. Use divisor.
-             sprintf(node->scratch, "%.2f",
+             // TODO: Don't assume 3 decimal places. Use divisor.
+             sprintf(node->scratch, "%.3f",
                 (float)node->value / (float)node->divisor);
           }
           ui_draw_text(node->scratch, node->menu_left + node->menu_width -

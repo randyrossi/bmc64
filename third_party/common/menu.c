@@ -60,15 +60,18 @@ extern void reboot(void);
 #define VARIANT_STRING ""
 #endif
 
-#define DEFAULT_VICII_ASPECT 145
+#define DEFAULT_VICII_H_STRETCH 1450
+#define DEFAULT_VICII_V_STRETCH 1000
 #define DEFAULT_VICII_H_BORDER_TRIM 0
 #define DEFAULT_VICII_V_BORDER_TRIM 0
 
-#define DEFAULT_VIC_ASPECT 145
+#define DEFAULT_VIC_H_STRETCH 1450
+#define DEFAULT_VIC_V_STRETCH 1000
 #define DEFAULT_VIC_H_BORDER_TRIM 30
 #define DEFAULT_VIC_V_BORDER_TRIM 12
 
-#define DEFAULT_VDC_ASPECT 145
+#define DEFAULT_VDC_H_STRETCH 1450
+#define DEFAULT_VDC_V_STRETCH 1000
 #define DEFAULT_VDC_H_BORDER_TRIM 20
 #define DEFAULT_VDC_V_BORDER_TRIM 40
 
@@ -149,13 +152,15 @@ struct menu_item *h_center_item_0;
 struct menu_item *v_center_item_0;
 struct menu_item *h_border_item_0;
 struct menu_item *v_border_item_0;
-struct menu_item *aspect_item_0;
+struct menu_item *h_stretch_item_0;
+struct menu_item *v_stretch_item_0;
 
 struct menu_item *h_center_item_1;
 struct menu_item *v_center_item_1;
 struct menu_item *h_border_item_1;
 struct menu_item *v_border_item_1;
-struct menu_item *aspect_item_1;
+struct menu_item *h_stretch_item_1;
+struct menu_item *v_stretch_item_1;
 
 struct menu_item *pip_location_item;
 struct menu_item *pip_swapped_item;
@@ -796,13 +801,15 @@ static int save_settings() {
   fprintf(fp, "v_center_0=%d\n", v_center_item_0->value);
   fprintf(fp, "h_border_trim_0=%d\n", h_border_item_0->value);
   fprintf(fp, "v_border_trim_0=%d\n", v_border_item_0->value);
-  fprintf(fp, "aspect_0=%d\n", aspect_item_0->value);
+  fprintf(fp, "h_stretch_0=%d\n", h_stretch_item_0->value);
+  fprintf(fp, "v_stretch_0=%d\n", v_stretch_item_0->value);
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      fprintf(fp, "h_center_1=%d\n", h_center_item_1->value);
      fprintf(fp, "v_center_1=%d\n", v_center_item_1->value);
      fprintf(fp, "h_border_trim_1=%d\n", h_border_item_1->value);
      fprintf(fp, "v_border_trim_1=%d\n", v_border_item_1->value);
-     fprintf(fp, "aspect_1=%d\n", aspect_item_1->value);
+     fprintf(fp, "hstretch_1=%d\n", h_stretch_item_1->value);
+     fprintf(fp, "vstretch_1=%d\n", v_stretch_item_1->value);
   }
 
   int drive_type;
@@ -1093,7 +1100,12 @@ static void load_settings() {
     } else if (strcmp(name, "v_border_trim_0") == 0) {
       v_border_item_0->value = value;
     } else if (strcmp(name, "aspect_0") == 0) {
-      aspect_item_0->value = value;
+      // LEGACY NAME : aspect * 10 = h_stretch
+      h_stretch_item_0->value = value * 10;
+    } else if (strcmp(name, "h_stretch_0") == 0) {
+      h_stretch_item_0->value = value;
+    } else if (strcmp(name, "v_stretch_0") == 0) {
+      v_stretch_item_0->value = value;
     } else if (strcmp(name, "h_center_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       h_center_item_1->value = value;
     } else if (strcmp(name, "v_center_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
@@ -1103,7 +1115,12 @@ static void load_settings() {
     } else if (strcmp(name, "v_border_trim_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       v_border_item_1->value = value;
     } else if (strcmp(name, "aspect_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      aspect_item_1->value = value;
+      // LEGACY NAME : aspect * 10 = h_stretch
+      h_stretch_item_1->value = value * 10;
+    } else if (strcmp(name, "h_stretch_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
+      h_stretch_item_1->value = value;
+    } else if (strcmp(name, "v_stretch_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
+      v_stretch_item_1->value = value;
     } else if (strcmp(name, "volume") == 0) {
       volume_item->value = value;
     } else if (strcmp(name, "dir_convention") == 0) {
@@ -1559,7 +1576,8 @@ static void do_video_settings(int layer,
                               struct menu_item* vcenter_item,
                               struct menu_item* hborder_item,
                               struct menu_item* vborder_item,
-                              struct menu_item* aspect_item) {
+                              struct menu_item* h_stretch_item,
+                              struct menu_item* v_stretch_item) {
 
   double lpad;
   double rpad;
@@ -1620,25 +1638,26 @@ static void do_video_settings(int layer,
 
   double h = (double)(100-hborder_item->value) / 100.0d;
   double v = (double)(100-vborder_item->value) / 100.0d;
-  double a = (double)(aspect_item->value) / 100.0d;
+  double hs = (double)(h_stretch_item->value) / 1000.0d;
+  double vs = (double)(v_stretch_item->value) / 1000.0d;
 
-  double vid_a = a;
+  double vid_hstretch = hs;
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128 &&
           active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE) {
      // For side-by-side, it makes more sense to fill horizontal then scale
      // vertical since we just cut horizontal in half. So pass in negative
-     // aspect.
-     vid_a = -a;
+     // hstretch.
+     vid_hstretch = -hs;
   }
 
   // Tell videoarch about these changes
   emux_apply_video_adjustments(layer, vid_hc, vid_vc,
-                               h, v, vid_a,
+                               h, v, vid_hstretch, vs,
                                lpad, rpad, tpad, bpad, zlayer);
   if (layer == FB_LAYER_VIC) {
      // Make UI match VIC settings except for padding.
      emux_apply_video_adjustments(FB_LAYER_UI, hc, vc,
-                                  h, v, a,
+                                  h, v, hs, vs,
                                   0, 0, 0, 0, 3);
   }
 }
@@ -2239,7 +2258,8 @@ static void menu_value_changed(struct menu_item *item) {
            v_center_item_0,
            h_border_item_0,
            v_border_item_0,
-           aspect_item_0);
+           h_stretch_item_0,
+           v_stretch_item_0);
     } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_VDC) {
        vdc_enabled = 1;
        vic_enabled = 0;
@@ -2248,7 +2268,8 @@ static void menu_value_changed(struct menu_item *item) {
            v_center_item_1,
            h_border_item_1,
            v_border_item_1,
-           aspect_item_1);
+           h_stretch_item_1,
+           v_stretch_item_1);
     } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE ||
                active_display_item->value == MENU_ACTIVE_DISPLAY_PIP) {
        vdc_enabled = 1;
@@ -2258,40 +2279,46 @@ static void menu_value_changed(struct menu_item *item) {
            v_center_item_0,
            h_border_item_0,
            v_border_item_0,
-           aspect_item_0);
+           h_stretch_item_0,
+           v_stretch_item_0);
        do_video_settings(FB_LAYER_VDC,
            h_center_item_1,
            v_center_item_1,
            h_border_item_1,
            v_border_item_1,
-           aspect_item_1);
+           h_stretch_item_1,
+           v_stretch_item_1);
     }
     break;
   case MENU_H_CENTER_0:
   case MENU_V_CENTER_0:
   case MENU_H_BORDER_0:
   case MENU_V_BORDER_0:
-  case MENU_ASPECT_0:
+  case MENU_H_STRETCH_0:
+  case MENU_V_STRETCH_0:
     ui_canvas_reveal_temp(FB_LAYER_VIC);
     do_video_settings(FB_LAYER_VIC,
         h_center_item_0,
         v_center_item_0,
         h_border_item_0,
         v_border_item_0,
-        aspect_item_0);
+        h_stretch_item_0,
+        v_stretch_item_0);
     break;
   case MENU_H_CENTER_1:
   case MENU_V_CENTER_1:
   case MENU_H_BORDER_1:
   case MENU_V_BORDER_1:
-  case MENU_ASPECT_1:
+  case MENU_H_STRETCH_1:
+  case MENU_V_STRETCH_1:
     ui_canvas_reveal_temp(FB_LAYER_VDC);
     do_video_settings(FB_LAYER_VDC,
         h_center_item_1,
         v_center_item_1,
         h_border_item_1,
         v_border_item_1,
-        aspect_item_1);
+        h_stretch_item_1,
+        v_stretch_item_1);
     break;
   case MENU_OVERLAY:
     statusbar_forced = 0;
@@ -2894,15 +2921,18 @@ void build_menu(struct menu_item *root) {
 
   int defaultHBorderTrim;
   int defaultVBorderTrim;
-  int defaultAspect;
+  int defaultHStretch;
+  int defaultVStretch;
   if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20) {
      defaultHBorderTrim = DEFAULT_VIC_H_BORDER_TRIM;
      defaultVBorderTrim = DEFAULT_VIC_V_BORDER_TRIM;
-     defaultAspect = DEFAULT_VIC_ASPECT;
+     defaultHStretch = DEFAULT_VIC_H_STRETCH;
+     defaultVStretch = DEFAULT_VIC_V_STRETCH;
   } else {
      defaultHBorderTrim = DEFAULT_VICII_H_BORDER_TRIM;
      defaultVBorderTrim = DEFAULT_VICII_V_BORDER_TRIM;
-     defaultAspect = DEFAULT_VICII_ASPECT;
+     defaultHStretch = DEFAULT_VICII_H_STRETCH;
+     defaultVStretch = DEFAULT_VICII_V_STRETCH;
   }
 
   h_center_item_0 =
@@ -2917,10 +2947,14 @@ void build_menu(struct menu_item *root) {
   v_border_item_0 =
       ui_menu_add_range(MENU_V_BORDER_0, parent, "V Border Trim %",
           0, 100, 1, defaultVBorderTrim);
-  child = aspect_item_0 =
-      ui_menu_add_range(MENU_ASPECT_0, parent, "H Stretch Factor",
-           100, 180, 1, defaultAspect);
-  child->divisor = 100;
+  child = h_stretch_item_0 =
+      ui_menu_add_range(MENU_H_STRETCH_0, parent, "H Stretch Factor",
+           1000, 1800, 5, defaultHStretch);
+  child->divisor = 1000;
+  child = v_stretch_item_0 =
+      ui_menu_add_range(MENU_V_STRETCH_0, parent, "V Stretch Factor",
+           500, 1000, 5, defaultVStretch);
+  child->divisor = 1000;
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      parent = ui_menu_add_folder(video_parent, "VDC");
@@ -2970,10 +3004,14 @@ void build_menu(struct menu_item *root) {
      v_border_item_1 =
          ui_menu_add_range(MENU_V_BORDER_1, parent, "V Border Trim %",
              0, 100, 1, DEFAULT_VDC_V_BORDER_TRIM);
-     child = aspect_item_1 =
-         ui_menu_add_range(MENU_ASPECT_1, parent, "Aspect Ratio",
-              100, 180, 1, DEFAULT_VDC_ASPECT);
-     child->divisor = 100;
+     child = h_stretch_item_1 =
+         ui_menu_add_range(MENU_H_STRETCH_1, parent, "H Stretch Factor",
+              1000, 1800, 5, DEFAULT_VDC_H_STRETCH);
+     child->divisor = 1000;
+     child = v_stretch_item_1 =
+         ui_menu_add_range(MENU_V_STRETCH_1, parent, "V Stretch Factor",
+              500, 1000, 5, DEFAULT_VDC_V_STRETCH);
+     child->divisor = 1000;
   }
 
   if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
@@ -3197,7 +3235,8 @@ void build_menu(struct menu_item *root) {
       v_center_item_0,
       h_border_item_0,
       v_border_item_0,
-      aspect_item_0);
+      h_stretch_item_0,
+      v_stretch_item_1);
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      do_video_settings(FB_LAYER_VDC,
@@ -3205,7 +3244,8 @@ void build_menu(struct menu_item *root) {
          v_center_item_1,
          h_border_item_1,
          v_border_item_1,
-         aspect_item_1);
+         h_stretch_item_1,
+         v_stretch_item_1);
   }
   overlay_init(statusbar_padding_item->value,
                c40_80_column_item->value,

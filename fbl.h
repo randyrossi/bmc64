@@ -71,12 +71,14 @@ public:
   // on the next call to Show()
   void SetSrcRect(int x, int y, int w, int h);
 
-  // The desired X:Y ratio of scaled image (i.e. 16:9 = 1.777)
-  // If positive, the src region height is scaled up to the height of the
-  // frame buffer and the width is determined by height * aspect.
-  // If negative, the src region width is scaled up to the width of the
-  // frame buffer and the height is determiend by width / aspect.
-  void SetAspect(double aspect);
+  // The amount to stretch to vertical and horizontal dimensions
+  // If hstretch is positive, the src region height is scaled up to the
+  // height of the frame buffer * vstretch, the width is then determined by
+  // frame buffer height * hstretch.
+  // Otherwise, the src region width is scaled up to the width of the
+  // frame buffer * vstretch, the height is determined by 
+  // frame buffer width / hstretch.
+  void SetStretch(double hstretch, double vstretch);
 
   void SetCenterOffset(int cx, int cy);
 
@@ -124,7 +126,8 @@ private:
   int pitch_;
   int layer_;
   int transparency_;
-  double aspect_;
+  double hstretch_;
+  double vstretch_;
   // -1 = top, 0 = center, 1 = bottom
   int valign_;
   int vpadding_;

@@ -192,10 +192,10 @@ uint8_t *overlay_init(int padding, int c40_80_state, int vkbd_transparency) {
   circle_alloc_fbl(FB_LAYER_STATUS, 0 /* indexed */,
                    &overlay_buf, OVERLAY_WIDTH, OVERLAY_HEIGHT,
                    &overlay_buf_pitch);
-  // Use negative aspect here so our overlay is stretched to the full
+  // Use negative hstretch here so our overlay is stretched to the full
   // horizontal resolution rather than vertical.
-  circle_set_aspect_fbl(FB_LAYER_STATUS,
-      -(double)OVERLAY_WIDTH/(double)OVERLAY_HEIGHT);
+  circle_set_stretch_fbl(FB_LAYER_STATUS,
+      -(double)OVERLAY_WIDTH/(double)OVERLAY_HEIGHT, 1.0);
   // We want our status bar to show up at the bottom of the screen with
   // padding set by user.
   circle_set_valign_fbl(FB_LAYER_STATUS, 1 /* BOTTOM */, padding);
