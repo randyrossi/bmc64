@@ -293,17 +293,16 @@
   * Virtual keyboard for PET does not work
 
 ## 3.4
-  * Fix IEC mode not working after plus4emu attach/detach
-  * Fix PET color and video settings after boot not applied
+  * Added Resid Interpolation and Fast Resampling for Pi3
   * Added saturation to video color menu
-  * Fixed bug with files list if /disks dir was missing
   * Added "Look for files in" option: /C64/{dir} or /{dir}/C64
+  * Added (cheap) PET scanlines video option
+  * Added configurable gpio
+  * Fixed IEC mode not working after plus4emu attach/detach
+  * Fixed PET color and video settings after boot not applied
+  * Fixed bug with files list if /disks dir was missing
   * Fixed DRIVES drive rom discovery issue
+  * Fixed PET vertical centering issue
+  * Fixed issue with debounce routine on GPIO button functions
   * Removed drive roms from bootstat to not interfere with path lookup
   * Merged Mark Bush's Userport changes (See README.md on how to activate)
-  * Added (cheap) PET scanlines video option
-    Consistent thickness of lines can be achieved by adjusting vertical
-    border trim until the display's height is 2x the frame buffer's height.
-  * Fixed PET vertical centering issue
-  * Added configurable gpio
-  * Fixed issue with debounce routine on GPIO button functions

@@ -126,7 +126,7 @@ Here are a couple examples you can add to machines.txt that will work with the V
     [C64/NTSC/DPI/VGA666:720p@60hz]
     enable_dpi=true
     machine_timing=ntsc-custom
-    cycles_per_second=1025643   
+    cycles_per_second=1025643
     enable_dpi_lcd=1
     display_default_lcd=1
     dpi_group=1
@@ -163,7 +163,7 @@ Since v2.1, the virtual display dimensions are adjusted dynamically from the men
       2. The resulting image is stretched vertically to fill the Y dimension.
       3. The width is then calculated according to the horizontal stretch factor.
 
-Using the three settings available, you should be able to customize how much border is available as well as the aspect ratio of the final image.  Reasonable defaults are provided.  
+Using the three settings available, you should be able to customize how much border is available as well as the aspect ratio of the final image.  Reasonable defaults are provided.
 
 NOTE: v2.1 and onward will ignore any vic_canvas_* or vicii_canvas_* kernel parameters.  The scaling_kernel option is still applicable.  If you are using a version lower than v2.1, consult the old documentation on how video cropping/sizing works.
 
@@ -258,9 +258,13 @@ NOTE: If you select a directory off a USB device (not the SD card), then the IEC
 
 The default Sid engine is 'ReSid' which more accurately reproduces the sound chip.
 
-NOTE: I had a section here previously about the Pi 2 @900Mhz not being able to keep up with some high intensity demos (i.e. last sequence of disk 1 Comaland 100%).  This is, in fact, a bug that only shows up after a snapshot previously saved at that part of the demo is loaded.  I'm investigating this.  But it appears the Pi 2 does run that sequence okay as long as you load it from disk.
+You can switch between 6581 and 8580 models as well as turn on/off the filter.
 
-You can switch between 6581 and 8580 models as well as turn on/off the filter.  For ReSid, only fast interpolation method is currently supported.
+On the Pi0/Pi2, only 'Fast' sampling method is supported.
+
+On the Pi3, 'Fast', 'Interpolation' and 'Fast Resampling" sampling methods are supported.  'Fast Resampling' produces the highest quality.
+
+NOTE: 'Fast Resampling' is the default on new installs.  If you have an existing installation (before 3.4), your setting will default to 'Fast' since previous versions only supported that sampling method.  Parameters like Gain and Passband frequency must remain at the default values and cannot be changed.
 
 # Keyboards
 
@@ -292,7 +296,7 @@ You can hold down keys or gamepad/joystick directions and the navigation action 
 
 'Regular' Joyports (2 for C64/C128, 1 for VIC20) can be configured to use the devices below.  The VICE emulators also support userport adapters that can add another 2 joyports (for games that support them).  Extra userport joysticks must be activated in the Joyports->Userport Joysticks sub-menu.
 
-Device | Description 
+Device | Description
 -------|------------
 None | No device active for the port
 USB Gamepad 1 | First USB gamepad detected
@@ -408,7 +412,7 @@ GND  |              | KBD1 (GND)
  06  |              | KBD15
  12  |              | KBD14
  05  |              | KDB13
- 21  | GND (J2_SEL) | 
+ 21  | GND (J2_SEL) |
  08  |              | KBD12
  25  |              | KBD11
  24  |              | KBD10
