@@ -241,6 +241,10 @@ int circle_get_model() {
   return static_kernel->circle_get_model();
 }
 
+unsigned circle_get_arm_clock() {
+  return static_kernel->circle_get_arm_clock();
+}
+
 int circle_gpio_enabled() {
   return static_kernel->circle_gpio_enabled();
 }
@@ -1498,6 +1502,10 @@ void CKernel::circle_set_volume(int value) {
 
 int CKernel::circle_get_model() {
   return mMachineInfo.GetModelMajor();
+}
+
+unsigned CKernel::circle_get_arm_clock() {
+  return mMachineInfo.GetClockRate(CLOCK_ID_ARM);
 }
 
 int CKernel::circle_gpio_enabled() {

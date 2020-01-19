@@ -51,6 +51,7 @@ public:
 private:
   bool launch_;
   int cyclesPerSecond_;
+  int passBandFreq_;
   char timing_option_[8];
   CSpinLock m_Lock;
 

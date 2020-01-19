@@ -40,13 +40,24 @@ ViceEmulatorCore::ViceEmulatorCore(CMemorySystem *pMemorySystem,
   // These calls only allocate the sampling table. Population is
   // done by cores 1 and 2 in parellel below.
 #ifdef ARM_ALLOW_MULTI_CORE
+
+  passBandFreq_ = 19845; // 90%
+  unsigned clock = circle_get_arm_clock();
+  if (clock < 1400000000) {
+     // For Pi3 models with a lower clock rate (<= 1.2Ghz)
+     // we must lower the passband freq to avoid stuttering
+     // in the worst case.  This logic must match the passband
+     // percentage we set in menu.c in common dir.
+     passBandFreq_ = 13230; // 60%
+  }
+
   reSID::SID::ComputeSamplingTable(cyclesPerSecond_,
                                    reSID::SAMPLE_RESAMPLE,
-                                   SAMPLE_RATE, 19845, 0.97,
+                                   SAMPLE_RATE, passBandFreq_, 0.97,
                                    0);
   reSID::SID::ComputeSamplingTable(cyclesPerSecond_,
                                    reSID::SAMPLE_RESAMPLE_FASTMEM,
-                                   SAMPLE_RATE, 19845, 0.97,
+                                   SAMPLE_RATE, passBandFreq_, 0.97,
                                    0);
 #endif
 }
@@ -146,11 +157,11 @@ void ViceEmulatorCore::Run(unsigned nCore) {
     ComputeResidFilter(0);
     reSID::SID::ComputeSamplingTable(cyclesPerSecond_,
                                      reSID::SAMPLE_RESAMPLE,
-                                     SAMPLE_RATE, 19845, 0.97,
+                                     SAMPLE_RATE, passBandFreq_, 0.97,
                                      1);
     reSID::SID::ComputeSamplingTable(cyclesPerSecond_,
                                      reSID::SAMPLE_RESAMPLE_FASTMEM,
-                                     SAMPLE_RATE, 19845, 0.97,
+                                     SAMPLE_RATE, passBandFreq_, 0.97,
                                      1);
     circle_kernel_core_init_complete(2);
 #endif
@@ -162,11 +173,11 @@ void ViceEmulatorCore::Run(unsigned nCore) {
     ComputeResidFilter(1);
     reSID::SID::ComputeSamplingTable(cyclesPerSecond_,
                                      reSID::SAMPLE_RESAMPLE,
-                                     SAMPLE_RATE, 19845, 0.97,
+                                     SAMPLE_RATE, passBandFreq_, 0.97,
                                      2);
     reSID::SID::ComputeSamplingTable(cyclesPerSecond_,
                                      reSID::SAMPLE_RESAMPLE_FASTMEM,
-                                     SAMPLE_RATE, 19845, 0.97,
+                                     SAMPLE_RATE, passBandFreq_, 0.97,
                                      2);
     circle_kernel_core_init_complete(3);
 #endif

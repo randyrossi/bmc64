@@ -107,6 +107,7 @@ public:
   int circle_gpio_enabled();
   int circle_gpio_outputs_enabled();
   void circle_kernel_core_init_complete(int core);
+  unsigned circle_get_arm_clock();
 
 private:
   void InitSound();

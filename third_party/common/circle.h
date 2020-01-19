@@ -209,6 +209,7 @@ extern int circle_mount_usb(int usb);
 extern int circle_unmount_usb(int usb);
 extern void circle_set_volume(int value);
 extern int circle_get_model();
+extern unsigned circle_get_arm_clock();
 extern int circle_gpio_enabled();
 extern int circle_gpio_outputs_enabled();
 
