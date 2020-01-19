@@ -39,6 +39,7 @@ ViceEmulatorCore::ViceEmulatorCore(CMemorySystem *pMemorySystem,
 
   // These calls only allocate the sampling table. Population is
   // done by cores 1 and 2 in parellel below.
+#ifdef ARM_ALLOW_MULTI_CORE
   reSID::SID::ComputeSamplingTable(cyclesPerSecond_,
                                    reSID::SAMPLE_RESAMPLE,
                                    SAMPLE_RATE, 19845, 0.97,
@@ -47,6 +48,7 @@ ViceEmulatorCore::ViceEmulatorCore(CMemorySystem *pMemorySystem,
                                    reSID::SAMPLE_RESAMPLE_FASTMEM,
                                    SAMPLE_RATE, 19845, 0.97,
                                    0);
+#endif
 }
 
 ViceEmulatorCore::~ViceEmulatorCore(void) {}
@@ -140,6 +142,7 @@ void ViceEmulatorCore::Run(unsigned nCore) {
   case 2:
     // Core 2 will initialize 6581 filter data. Then partition 1
     // of the resampling tables. Then sleep.
+#ifdef ARM_ALLOW_MULTI_CORE
     ComputeResidFilter(0);
     reSID::SID::ComputeSamplingTable(cyclesPerSecond_,
                                      reSID::SAMPLE_RESAMPLE,
@@ -150,10 +153,12 @@ void ViceEmulatorCore::Run(unsigned nCore) {
                                      SAMPLE_RATE, 19845, 0.97,
                                      1);
     circle_kernel_core_init_complete(2);
+#endif
     break;
   case 3:
     // Core 3 will initialize 8580 filter data. Then partition 2
     // of the resampling tables. Then sleep.
+#ifdef ARM_ALLOW_MULTI_CORE
     ComputeResidFilter(1);
     reSID::SID::ComputeSamplingTable(cyclesPerSecond_,
                                      reSID::SAMPLE_RESAMPLE,
@@ -164,6 +169,7 @@ void ViceEmulatorCore::Run(unsigned nCore) {
                                      SAMPLE_RATE, 19845, 0.97,
                                      2);
     circle_kernel_core_init_complete(3);
+#endif
     break;
   }
 
