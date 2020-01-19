@@ -274,11 +274,16 @@ The default Sid engine is 'ReSid' which more accurately reproduces the sound chi
 
 You can switch between 6581 and 8580 models as well as turn on/off the filter.
 
-On the Pi0/Pi2, only 'Fast' sampling method is supported.
+On the Pi0/Pi2, only 'Fast' sampling method is enabled.
 
-On the Pi3, 'Fast', 'Interpolation' and 'Fast Resampling" sampling methods are supported.  'Fast Resampling' produces the highest quality.
+On the Pi3, 'Fast', 'Interpolation' and 'Fast Resampling" sampling methods have been enabled.  'Fast Resampling' produces the highest quality but consumes the most CPU.
 
-NOTE: 'Fast Resampling' is the default on new installs.  If you have an existing installation (before 3.4), your setting will default to 'Fast' since previous versions only supported that sampling method.  Parameters like Gain and Passband frequency must remain at the default values and cannot be changed.
+On the Pi3 model B with a 1.2Ghz clock, 'Fast Resampling' passband is set to 13230hz.
+On the Pi3 model B+ with a 1.4Ghz clock, 'Fast Resampling' passband is set to 19845hz.
+
+Fast Resampling+6581 can possibly cause stuttering on complex demos with a lot of multi colored expanded sprites.  However, my two worst test cases (Comaland 100% and Star Wars) appear to just squeak by with approx 2ms to spare at the most complex points in the demos.
+
+NOTE: For resampling, parameters like Gain and Passband frequency must remain at the default values and cannot be changed (even in vice.ini).
 
 # Keyboards
 
