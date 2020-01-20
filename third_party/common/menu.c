@@ -1677,11 +1677,11 @@ static void check_sid_sampling() {
 
   // These can never change and must match the logic in
   // viceemulatorcore.cpp.
-  if (circle_get_arm_clock() < 1400000000) {
+  //if (circle_get_arm_clock() < 1400000000) {
      emux_set_int(Setting_SidResidPassband, 60);
-  } else {
-     emux_set_int(Setting_SidResidPassband, 90);
-  }
+  //} else {
+  //   emux_set_int(Setting_SidResidPassband, 90);
+  //}
   emux_set_int(Setting_SidResidGain, 97);
 }
 

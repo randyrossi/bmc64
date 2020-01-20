@@ -42,14 +42,14 @@ ViceEmulatorCore::ViceEmulatorCore(CMemorySystem *pMemorySystem,
 #ifdef ARM_ALLOW_MULTI_CORE
 
   passBandFreq_ = 19845; // 90%
-  unsigned clock = circle_get_arm_clock();
-  if (clock < 1400000000) {
+  //unsigned clock = circle_get_arm_clock();
+  //if (clock < 1400000000) {
      // For Pi3 models with a lower clock rate (<= 1.2Ghz)
      // we must lower the passband freq to avoid stuttering
      // in the worst case.  This logic must match the passband
      // percentage we set in menu.c in common dir.
      passBandFreq_ = 13230; // 60%
-  }
+  //}
 
   reSID::SID::ComputeSamplingTable(cyclesPerSecond_,
                                    reSID::SAMPLE_RESAMPLE,
