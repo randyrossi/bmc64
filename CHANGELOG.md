@@ -307,3 +307,6 @@
   * Fixed issue with debounce routine on GPIO button functions
   * Removed drive roms from bootstat to not interfere with path lookup
   * Merged Mark Bush's Userport changes (See README.md on how to activate)
+
+## 3.5
+  * Allow same joystick GPIO mapping on multiple pins with custom GPIO

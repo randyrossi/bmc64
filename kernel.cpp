@@ -928,51 +928,51 @@ void CKernel::ReadCustomGPIO() {
         switch (func) {
           case BTN_ASSIGN_UP:
             if (port == 1) {
-              js_up_1 = value;
+              js_up_1 &= value;
             } else {
-              js_up_2 = value;
+              js_up_2 &= value;
             }
             break;
           case BTN_ASSIGN_DOWN:
             if (port == 1) {
-              js_down_1 = value;
+              js_down_1 &= value;
             } else {
-              js_down_2 = value;
+              js_down_2 &= value;
             }
             break;
           case BTN_ASSIGN_LEFT:
             if (port == 1) {
-              js_left_1 = value;
+              js_left_1 &= value;
             } else {
-              js_left_2 = value;
+              js_left_2 &= value;
             }
             break;
           case BTN_ASSIGN_RIGHT:
             if (port == 1) {
-              js_right_1 = value;
+              js_right_1 &= value;
             } else {
-              js_right_2 = value;
+              js_right_2 &= value;
             }
             break;
           case BTN_ASSIGN_FIRE:
             if (port == 1) {
-              js_fire_1 = value;
+              js_fire_1 &= value;
             } else {
-              js_fire_2 = value;
+              js_fire_2 &= value;
             }
             break;
           case BTN_ASSIGN_POTX:
             if (port == 1) {
-              js_potx_1 = value;
+              js_potx_1 &= value;
             } else {
-              js_potx_2 = value;
+              js_potx_2 &= value;
             }
             break;
           case BTN_ASSIGN_POTY:
             if (port == 1) {
-              js_poty_1 = value;
+              js_poty_1 &= value;
             } else {
-              js_poty_2 = value;
+              js_poty_2 &= value;
             }
             break;
           }
