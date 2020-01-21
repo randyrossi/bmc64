@@ -279,9 +279,11 @@ On the Pi0/Pi2, only 'Fast' sampling method is enabled.
 On the Pi3, 'Fast', 'Interpolation' and 'Fast Resampling" sampling methods have been enabled.  'Fast Resampling' produces the highest quality but consumes the most CPU.
 
 On the Pi3 model B with a 1.2Ghz clock, 'Fast Resampling' passband is set to 13230hz.
-On the Pi3 model B+ with a 1.4Ghz clock, 'Fast Resampling' passband is set to 19845hz.
+On the Pi3 model B+ with a 1.4Ghz clock, 'Fast Resampling' passband is set to ~~19845hz~~ 13230hz (Temporary until I can reliably detect Pi3B at boot).
 
 Fast Resampling+6581 can possibly cause stuttering on complex demos with a lot of multi colored expanded sprites.  However, my two worst test cases (Comaland 100% and Star Wars) appear to just squeak by with approx 2ms to spare at the most complex points in the demos.
+
+Caution: Fast Resampling in combination with other high CPU intensive tasks (like true drive emulation) can push the emulator 'over the edge' and cause stuttering.  A known case is the Epyx FastLoad cartridge + Interpoliation or Fast Resampling will cause slow downs on the Pi3.  If you experience this, use Fast sampling instead.
 
 NOTE: For resampling, parameters like Gain and Passband frequency must remain at the default values and cannot be changed (even in vice.ini).
 
