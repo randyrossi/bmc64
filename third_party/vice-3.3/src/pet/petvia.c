@@ -194,10 +194,14 @@ static void reset(via_context_t *via_context)
     store_userport_pa2(1);
 }
 
+#ifdef RASPI_COMPILE
+extern int raspi_userport_enabled;
+#endif
+
 inline static uint8_t read_pra(via_context_t *via_context, uint16_t addr)
 {
 #ifdef RASPI_COMPILE
-  uint8_t byte = via_context->via[VIA_PRA_NHS];
+  uint8_t byte = raspi_userport_enabled ? via_context->via[VIA_PRA_NHS] : 0xff;
 #else
   uint8_t byte = 0xff;
 #endif

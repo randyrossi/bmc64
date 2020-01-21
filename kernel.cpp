@@ -28,6 +28,9 @@ CKernel *static_kernel = NULL;
 #define MAX_KEY_CODES 128
 #define TICKS_PER_SECOND 1000000L
 
+// A global to control whether our special VICE CIA port changes
+// should take effect. Only set when gpio_outputs_enabled is allowed.
+int raspi_userport_enabled;
 
 // Usb key states
 static bool key_states[MAX_KEY_CODES];
@@ -312,6 +315,10 @@ CKernel::CKernel(void)
 
   fbl[FB_LAYER_UI].SetLayer(3);
   fbl[FB_LAYER_UI].SetTransparency(true);
+
+  if (circle_gpio_outputs_enabled()) {
+     raspi_userport_enabled = 1;
+  }
 }
 
 bool CKernel::Initialize(void) {
@@ -1407,8 +1414,6 @@ void CKernel::circle_boot_complete() {
     mViceSound->Playback(vol_percent_to_vchiq(mInitialVolume));
 #endif
   }
-
-  circle_set_userport(0xff);
 
   DisableBootStat();
 }

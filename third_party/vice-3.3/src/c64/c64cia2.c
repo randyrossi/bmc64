@@ -250,11 +250,15 @@ static uint8_t read_ciapa(cia_context_t *cia_context)
     return value;
 }
 
+#ifdef RASPI_COMPILE
+extern int raspi_userport_enabled;
+#endif
+
 /* read_* functions must return 0xff if nothing to read!!! */
 static uint8_t read_ciapb(cia_context_t *cia_context)
 {
 #ifdef RASPI_COMPILE
-  uint8_t byte = cia_context->c_cia[CIA_PRB];
+  uint8_t byte = raspi_userport_enabled ? cia_context->c_cia[CIA_PRB] : 0xff;
 #else
   uint8_t byte = 0xff;
 #endif

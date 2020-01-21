@@ -250,11 +250,15 @@ inline static uint8_t read_pra(via_context_t *via_context, uint16_t addr)
     return byte;
 }
 
+#ifdef RASPI_COMPILE
+extern int raspi_userport_enabled;
+#endif
+
 inline static uint8_t read_prb(via_context_t *via_context)
 {
     uint8_t byte = 0xff;
 #ifdef RASPI_COMPILE
-    byte = via_context->via[VIA_PRB];
+    byte = raspi_userport_enabled ? via_context->via[VIA_PRB] : (via_context->via[VIA_PRB] | ~(via_context->via[VIA_DDRB]));
 #else
     byte = via_context->via[VIA_PRB] | ~(via_context->via[VIA_DDRB]);
 #endif
