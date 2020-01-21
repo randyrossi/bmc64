@@ -1406,11 +1406,9 @@ void CKernel::circle_boot_complete() {
     mViceSound = new ViceSound(&mVCHIQ, mViceOptions.GetAudioOut());
     mViceSound->Playback(vol_percent_to_vchiq(mInitialVolume));
 #endif
-
-    if (!circle_gpio_outputs_enabled()) {
-      circle_set_userport(0xff);
-    }
   }
+
+  circle_set_userport(0xff);
 
   DisableBootStat();
 }
