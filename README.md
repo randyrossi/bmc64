@@ -395,11 +395,11 @@ GPIO   | Function
 GPIO16 | Menu Toggle
 GPIO4  | Menu Back
 GPIO25 | Up
-GPIO19 | Down
+GPIO8  | Down
 GPIO20 | Left
 GPIO21 | Right
 GPIO24 | Enter
-GPIO23 | Virtual Keyboard
+GPIO26 | Virtual Keyboard
 
 It's possible to wire real Commodore or Atari joysticks directly to the Pi using this config. You can do it without a PCB if you want. Each joystick gets its own set of GPIO pins, making it easy to hook up using nothing but jumpers and DB9 connectors.  (See http://accentual.com/bmc64/joystick.html). Wiring is as follows:
 

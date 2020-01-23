@@ -141,11 +141,11 @@
 #define GPIO_CONFIG_0_MENU_INDEX       3   // GPIO 16
 #define GPIO_CONFIG_0_MENU_BACK_INDEX  16  // GPIO 4
 #define GPIO_CONFIG_0_MENU_UP_INDEX    9   // GPIO 25
-#define GPIO_CONFIG_0_MENU_DOWN_INDEX  2   // GPIO 19
+#define GPIO_CONFIG_0_MENU_DOWN_INDEX  8   // GPIO 8
 #define GPIO_CONFIG_0_MENU_LEFT_INDEX  1   // GPIO 20
 #define GPIO_CONFIG_0_MENU_RIGHT_INDEX 18  // GPIO 21
 #define GPIO_CONFIG_0_MENU_ENTER_INDEX 10  // GPIO 24
-#define GPIO_CONFIG_0_MENU_VKBD_INDEX  12  // GPIO 23
+#define GPIO_CONFIG_0_MENU_VKBD_INDEX  7   // GPIO 26
 
 // Buttons for Waveshare HAT
 // up, down, left, right, start, select, a,  b,  tr, y,  x,  tl
