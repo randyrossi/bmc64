@@ -655,7 +655,6 @@ static void load_keymap(void) {
       int p4code = atoi(p4code_str);
       int keysym = kbd_arch_keyname_to_keynum(sym_name);
       if (keysym > 0 && keysym < MAX_KEY_SYM) {
-         printf ("INFO: keysym %s=%d\n",sym_name, p4code);
          keysymToP4Code[keysym] = p4code;
       } else {
          printf ("WARNING: Ignoring keysym %s\n",sym_name);
@@ -1077,7 +1076,7 @@ void emux_add_keyboard_options(struct menu_item* parent) {
   keyboard_mapping_item->value = keyboard_mapping;
   strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_SYM], "Symbolic");
   strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_POS], "Positional");
-  strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_MAXI], "Maxi Positional");
+  strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_MAXI], "Maxi");
 
   // Do this for now in case we ever support this some day.
   keyboard_mapping_item->choice_disabled[KEYBOARD_MAPPING_SYM] = 1;
