@@ -12,7 +12,7 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
   * Easily wire real Commodore/Atari Joysticks and nav buttons via GPIO using jumpers (GPIO Config 1)
   * Can use a real Commodore Keyboard and Joysticks via PCB (GPIO Config 2)
   * Can use a Waveshare Game HAT (Pi2 or 3 Only) (GPIO Config 3)
-  * Also works with the Keyrah
+  * Also works with the Keyrah and TheC64 'Maxi'
 
 # Limitations
   * USB gamepad support is limited. Not all gamepads will work.
@@ -293,7 +293,16 @@ Use F12 to bring up the menu and ESC/RUNSTOP to exit.
 
 If you use a real commodore keyboard (either Keyrah or GPIO via PCB), you can use Commodore Key + F7 in place of F12 (This key combination is configurable). You can also use gamepads with buttons configured for the menu.  Gamepads that have had a button configured to bring up the menu don't have to be assigned to a port to do that.  So even if you have DB9 joysticks wired, you should still be able to plug in a wired/wireless usb gamepad to trigger the menu if you want.
 
-When using a Keyrah, make sure the keyboard mapping is set to 'Positional'.
+What keyboard mapping to use?
+
+Usage         | Keyboard Mapping
+--------------|----------------
+USB           | Positional or Symbolic
+GPIO          | Positional
+Keyrah        | Positional
+TheC64 (Maxi) | Maxi
+
+* Make sure you have the rpi_*.vkm files located in each machine subdir.
 
 ## Plus/4 Keyboard Notes
 
