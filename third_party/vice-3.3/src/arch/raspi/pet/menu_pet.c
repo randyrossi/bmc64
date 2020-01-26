@@ -39,6 +39,7 @@
 #include "emux_api.h"
 #include "menu.h"
 #include "ui.h"
+#include "keycodes.h"
 
 extern struct video_canvas_s *vic_canvas;
 
@@ -201,3 +202,13 @@ struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
 
 void emux_machine_load_settings_done(void) {
 }
+
+void machine_keymap_changed(int row, int col, signed long sym) {
+  if (row == 0 && col == 0) {
+     // Different keyboards so just be consistent and use these.
+     commodore_key_sym = KEYCODE_LeftControl;
+     ctrl_key_sym = KEYCODE_Tab;
+     restore_key_sym = KEYCODE_PageUp;
+  }
+}
+

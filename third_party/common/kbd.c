@@ -42,11 +42,6 @@
 #define NUM_KEY_COMBOS 8
 #define TICKS_PER_SECOND 1000000L
 
-// TODO: These should really come from the sym file.
-// Can't assume these are always correct.
-#define COMMODORE_KEY_CODE KEYCODE_LeftControl
-#define CONTROL_KEY_CODE KEYCODE_Tab
-
 static int commodore_down = 0;
 static int control_down = 0;
 static int f7_down = 0;
@@ -379,9 +374,9 @@ void emu_key_pressed(long key) {
     return;
   }
 
-  if (key == COMMODORE_KEY_CODE) {
+  if (key == commodore_key_sym) {
     commodore_down = 1;
-  } else if (key == CONTROL_KEY_CODE) {
+  } else if (key == ctrl_key_sym) {
     control_down = 1;
   } else if (key == KEYCODE_F7) {
     f7_down = 1;
@@ -427,9 +422,9 @@ void emu_key_released(long key) {
     return;
   }
 
-  if (key == COMMODORE_KEY_CODE) {
+  if (key == commodore_key_sym) {
     commodore_down = 0;
-  } else if (key == CONTROL_KEY_CODE) {
+  } else if (key == ctrl_key_sym) {
     control_down = 0;
   } else if (key == KEYCODE_F7) {
     f7_down = 0;
@@ -487,7 +482,7 @@ void emu_key_released(long key) {
   }
 
   // Check hotkey combo here
-  if (key == COMMODORE_KEY_CODE || key == CONTROL_KEY_CODE) {
+  if (key == commodore_key_sym || key == ctrl_key_sym) {
     // We invoke the hot key func here after the modifier key is released
     // so emulator is not left in a weird state.
     handle_key_combo_function();

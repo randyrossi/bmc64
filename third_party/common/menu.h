@@ -445,10 +445,11 @@ typedef enum {
    MENU_SUB_SELECT_VOLUME,
 } MenuSubID;
 
-// Used as saved values. Don't reorg.
+// Used as indices
 typedef enum {
    KEYBOARD_MAPPING_SYM = 0,
    KEYBOARD_MAPPING_POS,
+   KEYBOARD_MAPPING_MAXI,
 } MenuKeyboardMapping;
 
 // Used as indices

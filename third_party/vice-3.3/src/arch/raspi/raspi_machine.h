@@ -41,6 +41,7 @@ void cartridge_freeze(void);
 void set_canvas_size(int index, int* w, int *h, int *gw, int *gh);
 void set_canvas_borders(int index, int *w, int *h);
 void emux_machine_load_settings_done(void);
+void machine_keymap_changed(int, int, signed long);
 
 extern uint8_t userport_get_ddr(void);
 extern uint8_t userport_get(void);

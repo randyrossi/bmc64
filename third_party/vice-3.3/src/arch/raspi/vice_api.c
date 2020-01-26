@@ -59,6 +59,7 @@
 
 // RASPI includes
 #include "circle.h"
+#include "keycodes.h"
 
 struct menu_item *sid_engine_item;
 struct menu_item *sid_model_item;
@@ -75,6 +76,8 @@ extern void ui_set_joy_items();
 struct menu_item *enable_item;
 struct menu_item *swap_item;
 struct menu_item *adapter_type_item;
+
+void raspi_keymap_changed(int, int, signed long);
 
 void emu_machine_init(void) {
   switch (machine_class) {
@@ -98,6 +101,33 @@ void emu_machine_init(void) {
        break;
   }
 }
+
+static int vice_keymap_index_to_bmc(int value) {
+   switch (value) {
+      case KBD_INDEX_SYM:
+         return KEYBOARD_MAPPING_SYM;
+      case KBD_INDEX_POS:
+         return KEYBOARD_MAPPING_POS;
+      case KBD_INDEX_USERPOS:
+         return KEYBOARD_MAPPING_MAXI;
+      default:
+         return KEYBOARD_MAPPING_SYM;
+   }
+}
+
+static int bmc_keymap_index_to_vice(int value) {
+   switch (value) {
+      case KEYBOARD_MAPPING_SYM:
+        return KBD_INDEX_SYM;
+      case KEYBOARD_MAPPING_POS:
+        return KBD_INDEX_POS;
+      case KEYBOARD_MAPPING_MAXI:
+        return KBD_INDEX_USERPOS;
+      default:
+         return KBD_INDEX_SYM;
+   }
+}
+
 
 void emux_trap_main_loop_ui(void) {
   interrupt_maincpu_trigger_trap(emu_pause_trap, 0);
@@ -527,13 +557,17 @@ void emux_add_tape_options(struct menu_item* parent) {
 void emux_add_keyboard_options(struct menu_item* parent) {
   keyboard_mapping_item = ui_menu_add_multiple_choice(
       MENU_KEYBOARD_MAPPING, parent, "Mapping");
-  keyboard_mapping_item->num_choices = 2;
+  keyboard_mapping_item->num_choices = 3;
 
   int tmp_value;
   resources_get_int("KeymapIndex", &tmp_value);
-  keyboard_mapping_item->value = tmp_value;
+  keyboard_mapping_item->value = vice_keymap_index_to_bmc(tmp_value);
   strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_SYM], "Symbolic");
+  keyboard_mapping_item->choice_ints[KEYBOARD_MAPPING_SYM] = KBD_INDEX_SYM;
   strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_POS], "Positional");
+  keyboard_mapping_item->choice_ints[KEYBOARD_MAPPING_POS] = KBD_INDEX_POS;
+  strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_MAXI], "Maxi Positional");
+  keyboard_mapping_item->choice_ints[KEYBOARD_MAPPING_MAXI] = KBD_INDEX_USERPOS;
 }
 
 void emux_add_sound_options(struct menu_item* parent) {
@@ -825,7 +859,12 @@ int emux_handle_menu_change(struct menu_item* item) {
       resources_set_int_sprintf("Drive%iRAMA000", item->value, item->sub_id);
       return 1;
     case MENU_KEYBOARD_MAPPING:
-      resources_set_int("KeymapIndex", item->value);
+      resources_set_int("KeymapIndex", bmc_keymap_index_to_vice(item->value));
+      if (item->value == KEYBOARD_MAPPING_MAXI) {
+         resources_set_string("KeymapUserPosFile", "rpi_maxi_pos.vkm");
+      } else {
+         resources_set_string("KeymapUserPosFile", "");
+      }
       return 1;
     default:
       break;
@@ -851,8 +890,6 @@ void emux_load_additional_settings() {
 }
 
 void emux_save_additional_settings(FILE *fp) {
-  // Vice settings are persisted to vice.ini when emux_save_settings is
-  // called. Nothing to do here.
 }
 
 void emux_get_default_color_setting(int *brightness, int *contrast,
@@ -865,7 +902,6 @@ void emux_get_default_color_setting(int *brightness, int *contrast,
 }
 
 int emux_handle_loaded_setting(char *name, char* value_str, int value) {
-  // Nothing to do here yet.
   return 0;
 }
 
@@ -991,4 +1027,18 @@ void circle_set_userport(uint8_t value) {
     default:
       break;
   }
+}
+
+void raspi_keymap_changed(int row, int col, signed long sym) {
+  if (row == -1 && col == -1) {
+     // Reset. Mark as not set and default to sane values.
+     commodore_key_sym_set = 0;
+     ctrl_key_sym_set = 0;
+     restore_key_sym_set = 0;
+     commodore_key_sym = KEYCODE_LeftControl;
+     ctrl_key_sym = KEYCODE_Tab;
+     restore_key_sym = KEYCODE_PageUp;
+  }
+
+  machine_keymap_changed(row, col, sym);
 }

@@ -36,45 +36,42 @@
 
 !CLEAR
 !LSHIFT 1 7
-!RSHIFT 6 4
+!RSHIFT 1 7
 !VSHIFT RSHIFT
 
-Tab 7 2 8       /* CTRL */
-Control_L 7 5 8 /* Commodore Key */
+Control_L 7 2 8 /* CTRL */
+Super_L 7 5 8   /* Commodore Key */
 Alt_L 7 5 8     /* Commodore Key */
 BackSpace 0 0 8
-Down 0 7 8
-Escape 7 7 8    /* RunStop */
+Down 5 0 8
+Escape 7 7 0    /* Run Stop */
 F1 0 4 8
-F2 0 4 1
 F3 0 5 8
-F4 0 5 1
 F5 0 6 8
-F6 0 6 1
 F7 0 3 8
-F8 0 3 1
-Home 6 3 8      /* Clr */
-Left 0 2 1
+Home 7 1 8      /* Clr */
+Left 6 0 8
 Return 0 1 8
-Right 0 2 8
+Right 6 3 8
 Shift_L 1 7 2
-Shift_R 6 4 4
-Up 0 7 1
-LeftBracket 5 6 8     /* at */
-SemiColon 5 5 8       /* colon */
+Shift_R 1 7 4
+Up 5 3 8
+BackSlash 0 7 8       /* at */
+LeftBracket 5 5 8     /* colon */
 Comma 5 7 8           /* comma */
-BackSlash 6 5 0       /* equal */
-Pound 6 5 0           /* equal */
-Equals 5 3 8          /* minus */
+Pound 6 5 8           /* equal */
+Equals 6 5 8          /* equal */
+LP_Subtract 5 6 8     /* minus */
 Period 5 4 8          /* period */
-Dash 5 0 8            /* plus */
-SingleQuote 6 2 8     /* semicolon */
+KP_Add 6 6 8          /* plus */
+RightBracket 6 2 8    /* semicolon */
 Slash 6 7 8           /* slash */
 Space 7 4 8           /* space */
-Insert 6 0 8          /* sterling */
-RightBracket 6 1 8    /* asterisk */
-BackQuote 7 1 0       /* arrowleft */
-Del 6 6 8             /* arrowup */
+Dash 0 2 8            /* sterling */
+Insert 0 2 8          /* sterling */
+SemiColon 6 1 8       /* asterisk */
+BackQuote 6 4 8       /* escape */
+Del 6 6 8             /* plus */
 0 4 3 8
 1 7 0 8
 2 7 3 8
@@ -113,6 +110,5 @@ y 3 1 8
 z 1 4 8
 
 # Restore key mappings
-PageUp -3 0
+Tab -3 0
 CapsLock -4 1
-F11 -4 0 /* 40/80 Columns */

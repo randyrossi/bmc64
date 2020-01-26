@@ -12,9 +12,14 @@
 #include "../common/overlay.h"
 #include "../common/demo.h"
 #include "../common/menu.h"
+#include "../common/kbd.h"
 
 static Plus4VM            *vm = NULL;
 static Plus4VideoDecoder  *videoDecoder = NULL;
+
+#define TEXT_LINE_LEN 80
+#define MAX_KEY_SYM 0x108
+static int keysymToP4Code[0x108];
 
 // Global state variables
 static uint8_t *fb_buf;
@@ -43,6 +48,7 @@ int sid_write_access = 0;
 int sid_digiblaster = 0;
 int drive_model_8 = 0;
 int attach_3plus1_roms = 0;
+int keyboard_mapping = 1;
 char rom_basic[MAX_STR_VAL_LEN];
 char rom_kernal[MAX_STR_VAL_LEN];
 char rom_c0_lo[MAX_STR_VAL_LEN];
@@ -79,6 +85,7 @@ static struct menu_item *tape_feedback_item;
 static struct menu_item *ram_size_item;
 static struct menu_item *drive_model_8_item;
 static struct menu_item *attach_3plus1_roms_item;
+static struct menu_item *keyboard_mapping_item;
 
 static struct menu_item *c0_lo_item;
 static struct menu_item *c0_hi_item;
@@ -196,17 +203,19 @@ static int apply_settings() {
   return apply_rom_config();
 }
 
-// Reusing this from kernel to make implementing emux_kbd_set_latch_keyarr
-// easier.
-static long rowColToKeycode[8][8] = {
- {KEYCODE_Backspace,  KEYCODE_3,         KEYCODE_5, KEYCODE_7, KEYCODE_9, KEYCODE_Down,         KEYCODE_Left,         KEYCODE_1},
- {KEYCODE_Return,     KEYCODE_w,         KEYCODE_r, KEYCODE_y, KEYCODE_i, KEYCODE_p,            KEYCODE_Dash,         KEYCODE_BackQuote},
- {KEYCODE_BackSlash,  KEYCODE_a,         KEYCODE_d, KEYCODE_g, KEYCODE_j, KEYCODE_l,            KEYCODE_SingleQuote,  KEYCODE_Tab},
- {KEYCODE_F7,         KEYCODE_4,         KEYCODE_6, KEYCODE_8, KEYCODE_0, KEYCODE_Up,           KEYCODE_Right,        KEYCODE_2},
- {KEYCODE_F1,         KEYCODE_z,         KEYCODE_c, KEYCODE_b, KEYCODE_m, KEYCODE_Period,       KEYCODE_RightShift,   KEYCODE_Space},
- {KEYCODE_F3,         KEYCODE_s,         KEYCODE_f, KEYCODE_h, KEYCODE_k, KEYCODE_SemiColon,    KEYCODE_RightBracket, KEYCODE_LeftControl},
- {KEYCODE_F5,         KEYCODE_e,         KEYCODE_t, KEYCODE_u, KEYCODE_o, KEYCODE_LeftBracket,  KEYCODE_Equals,       KEYCODE_q},
- {KEYCODE_Insert,     KEYCODE_LeftShift, KEYCODE_x, KEYCODE_v, KEYCODE_n, KEYCODE_Comma,        KEYCODE_Slash,        KEYCODE_Escape},
+// This is only used for the latch func for row/col which
+// is really only used for the virtual keyboard. Even USB
+// GPIO ends up using the keymap so it must match the
+// kernel's keysym table.
+static int rowColToP4Code[8][8] = {
+ {0, 8,  16, 24, 32, 40, 48, 56},
+ {1, 9,  17, 25, 33, 41, 49, 52},
+ {2, 10, 18, 26, 34, 42, 50, 58},
+ {3, 11, 19, 27, 35, 43, 51, 59},
+ {4, 12, 20, 28, 36, 44, 15, 60},
+ {5, 13, 21, 29, 37, 45, 53, 61},
+ {6, 14, 22, 30, 38, 46, 54, 62},
+ {7, 15, 23, 31, 39, 47, 55, 63},
 };
 
 //     0: Del          1: Return       2: £            3: Help
@@ -225,7 +234,7 @@ static long rowColToKeycode[8][8] = {
 //    52: Esc         53: =           54: +           55: /
 //    56: 1           57: Home        58: Ctrl        59: 2
 //    60: Space       61: C=          62: Q           63: Stop
-static int bmc64_keycode_to_plus4emu(long keycode) {
+static int default_bmc64_keycode_to_plus4emu(long keycode) {
    switch (keycode) {
       case KEYCODE_Backspace:
          return 0;
@@ -448,8 +457,7 @@ static void videoFrameCallback(void *userData)
       // key events.
       vkbd_sync_event(pending_emu_key.key[i], pending_emu_key.pressed[i]);
     }
-    int p4code = bmc64_keycode_to_plus4emu(
-       pending_emu_key.key[i]);
+    int p4code = keysymToP4Code[pending_emu_key.key[i]];
     if (p4code >= 0) {
        Plus4VM_KeyboardEvent(vm, p4code, pending_emu_key.pressed[i]);
     }
@@ -616,6 +624,72 @@ static void videoFrameCallback(void *userData)
   }
 }
 
+static void load_keymap(void) {
+  FILE *fp = NULL;
+  if (keyboard_mapping_item->value == KEYBOARD_MAPPING_POS) {
+     fp = fopen("/PLUS4EMU/rpi_pos.vkm", "r");
+  } else if (keyboard_mapping_item->value == KEYBOARD_MAPPING_MAXI) {
+     fp = fopen("/PLUS4EMU/rpi_maxi_pos.vkm", "r");
+  }
+  char line[TEXT_LINE_LEN];
+  if (fp != NULL) {
+    while (fgets(line, TEXT_LINE_LEN - 1, fp)) {
+      if (feof(fp))
+        break;
+      if (strlen(line) == 0)
+        continue;
+      if (line[0] == '#')
+        continue;
+
+      char *sym_name = strtok(line, " ");
+      if (sym_name == NULL)
+        continue;
+
+      char *p4code_str = strtok(NULL, " ");
+      if (p4code_str == NULL)
+        continue;
+
+      if (p4code_str[strlen(p4code_str) - 1] == '\n') {
+          p4code_str[strlen(p4code_str) - 1] = '\0';
+      }
+      int p4code = atoi(p4code_str);
+      int keysym = kbd_arch_keyname_to_keynum(sym_name);
+      if (keysym > 0 && keysym < MAX_KEY_SYM) {
+         printf ("INFO: keysym %s=%d\n",sym_name, p4code);
+         keysymToP4Code[keysym] = p4code;
+      } else {
+         printf ("WARNING: Ignoring keysym %s\n",sym_name);
+      }
+    }
+    fclose(fp);
+  } else {
+    printf ("WARNING: No keymap found, using default\n");
+  }
+}
+
+static void machine_kbd_init(void) {
+  // Discover these keys from the keymap.
+  commodore_key_sym = KEYCODE_LeftControl;
+  ctrl_key_sym = KEYCODE_Tab;
+  restore_key_sym = KEYCODE_Home;
+  commodore_key_sym_set = 0;
+  ctrl_key_sym_set = 0;
+  restore_key_sym_set = 0;
+
+  for (int i=0;i<MAX_KEY_SYM;i++) {
+     if (keysymToP4Code[i] == 61 && !commodore_key_sym_set) {
+        commodore_key_sym = i;
+        commodore_key_sym_set = 1;
+     } else if (keysymToP4Code[i] == 58 && !ctrl_key_sym_set) {
+        ctrl_key_sym = i;
+        ctrl_key_sym_set = 1;
+     } else if (keysymToP4Code[i] == 57 && !restore_key_sym_set) {
+        restore_key_sym = i;
+        restore_key_sym_set = 1;
+     }
+  }
+}
+
 // This is made to look like VICE's main entry point so our
 // Plus4Emu version of EmulatorCore can look more or less the same
 // as the Vice version.
@@ -627,6 +701,11 @@ int main_program(int argc, char **argv)
   printf ("Init\n");
 
   strcpy (last_iec_dir, ".");
+
+  // Default keymap
+  for (int i=0;i<MAX_KEY_SYM;i++) {
+    keysymToP4Code[i] = default_bmc64_keycode_to_plus4emu(i);
+  }
 
   int timing = circle_get_machine_timing();
 
@@ -665,6 +744,9 @@ int main_program(int argc, char **argv)
 
   // This loads settings vars
   ui_init_menu();
+
+  load_keymap();
+  machine_kbd_init();
 
   strcpy(rom_basic,"/PLUS4EMU/p4_basic.rom");
   strcpy(rom_1541,"/PLUS4EMU/dos1541.rom");
@@ -710,8 +792,7 @@ void emux_trap_main_loop(void (*trap_func)(uint16_t, void *data), void* data) {
 }
 
 void emux_kbd_set_latch_keyarr(int row, int col, int pressed) {
-  long keycode = rowColToKeycode[col][row];
-  int p4code = bmc64_keycode_to_plus4emu(keycode);
+  int p4code = rowColToP4Code[col][row];
   if (p4code >= 0) {
     Plus4VM_KeyboardEvent(vm, p4code, pressed);
   }
@@ -988,6 +1069,18 @@ void emux_add_tape_options(struct menu_item* parent) {
 }
 
 void emux_add_keyboard_options(struct menu_item* parent) {
+  keyboard_mapping_item = ui_menu_add_multiple_choice(
+      MENU_KEYBOARD_MAPPING, parent, "Mapping");
+  keyboard_mapping_item->num_choices = 3;
+
+  int tmp_value;
+  keyboard_mapping_item->value = keyboard_mapping;
+  strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_SYM], "Symbolic");
+  strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_POS], "Positional");
+  strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_MAXI], "Maxi Positional");
+
+  // Do this for now in case we ever support this some day.
+  keyboard_mapping_item->choice_disabled[KEYBOARD_MAPPING_SYM] = 1;
 }
 
 void emux_add_sound_options(struct menu_item* parent) {
@@ -1338,8 +1431,14 @@ int emux_handle_menu_change(struct menu_item* item) {
       Plus4VM_LoadROM(vm, 2, c0_lo_item->str_value, c0_lo_offset_item->value);
       Plus4VM_LoadROM(vm, 3, c0_hi_item->str_value, c0_hi_offset_item->value);
       Plus4VM_Reset(vm, 1);
+      return 1;
+    case MENU_KEYBOARD_MAPPING:
+      load_keymap();
+      machine_kbd_init();
+      return 1;
+    default:
+      return 0;
   }
-  return 0;
 }
 
 int emux_handle_quick_func(int button_func) {
@@ -1433,6 +1532,8 @@ void emux_load_additional_settings() {
        color_gamma = value;
     } else if (strcmp(name,"color_tint") == 0) {
        color_tint = value;
+    } else if (strcmp(name,"keyboard_mapping") == 0) {
+       keyboard_mapping = value;
     }
   }
 
@@ -1476,6 +1577,7 @@ void emux_save_additional_settings(FILE *fp) {
   fprintf (fp,"color_contrast=%d\n", color_contrast);
   fprintf (fp,"color_gamma=%d\n", color_gamma);
   fprintf (fp,"tintcolor_=%d\n", color_tint);
+  fprintf (fp,"keyboard_mapping=%d\n", keyboard_mapping_item->value);
 }
 
 void emux_get_default_color_setting(int *brightness, int *contrast,
@@ -1543,3 +1645,4 @@ uint8_t circle_get_userport(void) {
 
 void circle_set_userport(uint8_t value) {
 }
+

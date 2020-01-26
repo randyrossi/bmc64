@@ -75,7 +75,7 @@ int ui_toggle_pending;
 int pending_emu_quick_func;
 
 static int osd_active;
-static int ui_ctrl_down;
+static int ui_commodore_down;
 static int ui_transparent;
 static int ui_render_current_item_only;
 
@@ -330,10 +330,12 @@ static void ui_key_pressed(long key) {
     ui_render_current_item_only = 0;
   }
 
+  if (key == commodore_key_sym) {
+     ui_commodore_down = 1;
+     return;
+  }
+
   switch (key) {
-  case KEYCODE_LeftControl:
-    ui_ctrl_down = 1;
-    return;
   case KEYCODE_Up:
     ui_key_action = ACTION_Up;
     ui_key_ticks = INITIAL_ACTION_DELAY;
@@ -402,10 +404,12 @@ static void ui_key_pressed(long key) {
 
 // Happens on main loop. Process a key release for the ui.
 static void ui_key_released(long key) {
-  switch (key) {
-  case KEYCODE_LeftControl:
-    ui_ctrl_down = 0;
+  if (key == commodore_key_sym) {
+    ui_commodore_down = 0;
     return;
+  }
+
+  switch (key) {
   case KEYCODE_Up:
   case KEYCODE_Down:
   case KEYCODE_Left:
@@ -428,19 +432,19 @@ static void ui_key_released(long key) {
   // to happen as well.
   case KEYCODE_Home:
   case KEYCODE_F1:
-    if (!ui_ctrl_down) ui_to_top();
+    if (!ui_commodore_down) ui_to_top();
     return;
   case KEYCODE_End:
   case KEYCODE_F7:
-    if (!ui_ctrl_down) ui_to_bottom();
+    if (!ui_commodore_down) ui_to_bottom();
     return;
   case KEYCODE_PageUp:
   case KEYCODE_F3:
-    if (!ui_ctrl_down) ui_page_up();
+    if (!ui_commodore_down) ui_page_up();
     return;
   case KEYCODE_PageDown:
   case KEYCODE_F5:
-    if (!ui_ctrl_down) ui_page_down();
+    if (!ui_commodore_down) ui_page_down();
     return;
   case KEYCODE_LeftShift:
     keyboard_shift &= ~1;

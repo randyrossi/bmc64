@@ -653,22 +653,15 @@ ViceApp::TShutdownMode CKernel::Run(void) {
 void CKernel::ScanKeyboard() {
   int ui_activated = emu_is_ui_activated();
 
-  // For restore, there is no public API that triggers it so we will
-  // pass the keycode that will.
   int restore = gpioPins[GPIO_KBD_RESTORE_INDEX]->Read();
-#if defined(RASPI_PLUS4) | defined(RASPI_PLUS4EMU)
+  // For restore, there is no public API that triggers it so we will
+  // pass the keycode that will.  NOTE: On the plus/4, this key sym
+  // will be the CLR key according to the keymap.
   if (restore == LOW && kbdRestoreState == HIGH) {
-     emu_key_pressed(KEYCODE_Home);
+     emu_key_pressed(restore_key_sym);
   } else if (restore == HIGH && kbdRestoreState == LOW) {
-     emu_key_released(KEYCODE_Home);
+     emu_key_released(restore_key_sym);
   }
-#else
-  if (restore == LOW && kbdRestoreState == HIGH) {
-     emu_key_pressed(KEYCODE_PageUp);
-  } else if (restore == HIGH && kbdRestoreState == LOW) {
-     emu_key_released(KEYCODE_PageUp);
-  }
-#endif
   kbdRestoreState = restore;
 
   // Keyboard scan
