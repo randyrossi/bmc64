@@ -115,20 +115,6 @@ static int vice_keymap_index_to_bmc(int value) {
    }
 }
 
-static int bmc_keymap_index_to_vice(int value) {
-   switch (value) {
-      case KEYBOARD_MAPPING_SYM:
-        return KBD_INDEX_SYM;
-      case KEYBOARD_MAPPING_POS:
-        return KBD_INDEX_POS;
-      case KEYBOARD_MAPPING_MAXI:
-        return KBD_INDEX_USERPOS;
-      default:
-         return KBD_INDEX_SYM;
-   }
-}
-
-
 void emux_trap_main_loop_ui(void) {
   interrupt_maincpu_trigger_trap(emu_pause_trap, 0);
 }
@@ -859,12 +845,10 @@ int emux_handle_menu_change(struct menu_item* item) {
       resources_set_int_sprintf("Drive%iRAMA000", item->value, item->sub_id);
       return 1;
     case MENU_KEYBOARD_MAPPING:
-      resources_set_int("KeymapIndex", bmc_keymap_index_to_vice(item->value));
       if (item->value == KEYBOARD_MAPPING_MAXI) {
          resources_set_string("KeymapUserPosFile", "rpi_maxi_pos.vkm");
-      } else {
-         resources_set_string("KeymapUserPosFile", "");
       }
+      resources_set_int("KeymapIndex", item->choice_ints[item->value]);
       return 1;
     default:
       break;

@@ -310,3 +310,6 @@
 
 ## 3.5
   * Allow same joystick GPIO mapping on multiple pins with custom GPIO
+  * Added 'Maxi' keyboard support , new vkm files switchable from menu
+  * Fixed CP/M keyboard not responsive regression
+  * Fixed duplicate GPIO pins on Config #1 issue

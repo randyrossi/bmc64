@@ -22,8 +22,7 @@
 #
 BackSpace     0
 Return        1
-Insert        2
-Dash          2
+Down          2
 F7            3
 F1            4
 F3            5
