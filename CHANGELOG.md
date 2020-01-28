@@ -313,3 +313,4 @@
   * Added 'Maxi' keyboard support , new vkm files switchable from menu
   * Fixed CP/M keyboard not responsive regression
   * Fixed duplicate GPIO pins on Config #1 issue
+  * Disable VDC video cache causing glitches on some games

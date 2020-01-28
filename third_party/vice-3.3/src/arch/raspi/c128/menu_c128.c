@@ -103,10 +103,12 @@ void emux_set_color_saturation(int display_num, int value) {
 
 void emux_set_video_cache(int value) {
   resources_set_int("VICIIVideoCache", value);
+  resources_set_int("VDCVideoCache", value);
 }
 
 void emux_set_hw_scale(int value) {
   resources_set_int("VICIIHwScale", value);
+  resources_set_int("VDCHwScale", value);
 }
 
 int emux_get_color_brightness(int display_num) {
