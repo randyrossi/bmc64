@@ -4,7 +4,6 @@ BOARD=$1
 PREFIX=arm-none-eabi
 ARM_HOME="${HOME}/gcc-arm-none-eabi-7-2018-q2-update"
 ARM_INCLUDES="-I${ARM_HOME}/lib/gcc/arm-none-eabi/7.3.1/include -I${ARM_HOME}/lib/gcc/arm-none-eabi/7.3.1/include-fixed"
-echo $ARM_INCLUDES
 
 if [ "$BOARD" = "pi2" ]
 then
