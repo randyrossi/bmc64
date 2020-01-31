@@ -1320,7 +1320,6 @@ void emux_set_int(IntSetting setting, int value) {
     case Setting_DatasetteResetWithCPU:
        reset_tape_with_cpu = value;
        break;
-    case Setting_SidResidSampling:
     case Setting_Datasette:
        // Not applicable
        break;

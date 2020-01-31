@@ -125,9 +125,10 @@ private:
   CCPUThrottle mCPUThrottle;
   CSpinLock m_Lock;
   int mNumJoy;
-  int mInitialVolume;
+  int mVolume;
   int mNumCoresComplete;
   bool mNeedSoundInit;
+  int mNumSoundChannels;
 
   int gpio_debounce_state[NUM_GPIO_PINS];
 

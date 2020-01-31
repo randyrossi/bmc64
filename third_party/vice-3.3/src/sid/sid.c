@@ -344,7 +344,11 @@ sound_t *sid_sound_machine_open(int chipno)
     }
 #endif
 
+#ifdef RASPI_COMPILE
+    return sid_engine.open(siddata[chipno], chipno);
+#else
     return sid_engine.open(siddata[chipno]);
+#endif
 }
 
 /* manage temporary buffers. if the requested size is smaller or equal to the

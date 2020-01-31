@@ -53,7 +53,11 @@ void ViceSoundBaseDevice::SetVolume(int nVolume) {
   m_nVolume = nVolume;
 }
 
-boolean ViceSoundBaseDevice::Start(void) {
+void ViceSoundBaseDevice::SetChannels(int nChannels) {
+  m_nChannels = nChannels;
+}
+
+boolean ViceSoundBaseDevice::Start() {
   if (m_State > VCHIQSoundIdle) {
     return FALSE;
   }
@@ -108,7 +112,7 @@ boolean ViceSoundBaseDevice::Start(void) {
     vchi_service_release(m_hService);
 
     Msg.type = VC_AUDIO_MSG_TYPE_CONFIG;
-    Msg.u.config.channels = 1;
+    Msg.u.config.channels = m_nChannels;
     Msg.u.config.samplerate = m_nSampleRate;
     Msg.u.config.bps = 16;
 
@@ -225,8 +229,12 @@ void ViceSoundBaseDevice::Cancel(void) {
   }
 
   m_State = VCHIQSoundCancelled;
-  while (m_State == VCHIQSoundCancelled) {
-    CScheduler::Get()->Yield();
+  if (m_nWritePos - m_nCompletePos > 0) {
+     while (m_State == VCHIQSoundCancelled) {
+       CScheduler::Get()->Yield();
+     }
+  } else {
+     m_State = VCHIQSoundTerminating;
   }
 
   assert(m_State == VCHIQSoundTerminating);

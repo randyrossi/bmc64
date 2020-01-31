@@ -51,7 +51,7 @@ public:
 
   /// \brief Starts playback
   /// \return Operation successful?
-  boolean Playback(int volume);
+  boolean Playback(int volume, int channels);
 
   /// \return Is playback running?
   boolean PlaybackActive(void) const;
@@ -68,7 +68,7 @@ public:
   SetControl(int nVolume,
              TVCHIQSoundDestination Destination = VCHIQSoundDestinationUnknown);
   unsigned AddChunk(s16 *pBuffer, unsigned nChunkSize);
-  unsigned BufferSpaceBytes();
+  unsigned BufferSpaceSamples();
 
 private:
   unsigned GetChunk(s16 *pBuffer, unsigned nChunkSize);

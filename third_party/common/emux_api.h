@@ -85,12 +85,6 @@ typedef enum {
   Setting_RAMBlock2, // Vic20
   Setting_RAMBlock3, // Vic20
   Setting_RAMBlock5, // Vic20
-  Setting_SidEngine, // Vice
-  Setting_SidFilters, // Vice
-  Setting_SidModel,
-  Setting_SidResidSampling, // Vice
-  Setting_SidResidPassband, // Vice
-  Setting_SidResidGain,     // Vice
   Setting_SidWriteAccess, // Plus4Emu
   Setting_SidDigiblaster, // Plus4Emu
   Setting_WarpMode,

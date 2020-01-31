@@ -285,8 +285,8 @@ long func_to_keycode(int btn_func) {
 CKernel::CKernel(void)
     : ViceStdioApp("vice"), mViceSound(nullptr),
       mNumJoy(emu_get_num_joysticks()),
-      mInitialVolume(100), mNumCoresComplete(0),
-      mNeedSoundInit(false) {
+      mVolume(100), mNumCoresComplete(0),
+      mNeedSoundInit(false), mNumSoundChannels(1) {
   static_kernel = this;
   mod_states = 0;
   memset(key_states, 0, MAX_KEY_CODES * sizeof(bool));
@@ -1052,11 +1052,15 @@ int CKernel::circle_sound_init(const char *param, int *speed, int *fragsize,
   *speed = SAMPLE_RATE;
   *fragsize = FRAG_SIZE;
   *fragnr = NUM_FRAGS;
-  // We force mono.
-  *channels = 1;
+  mNumSoundChannels = *channels;
 
-  // We init sound after boot is complete to avoid an initial
-  // sound sync issue if a cartridge is attached.
+  // NOTE: We init sound after boot is complete to avoid an initial
+  // sound sync issue if a cartridge is attached. But if it's already
+  // initialised, cancel and restart here in case channels has changed.
+  if (mViceSound) {
+     mViceSound->CancelPlayback();
+     mViceSound->Playback(vol_percent_to_vchiq(mVolume), mNumSoundChannels);
+  }
   return 0;
 }
 
@@ -1078,7 +1082,7 @@ int CKernel::circle_sound_resume(void) { return 0; }
 
 int CKernel::circle_sound_bufferspace(void) {
   if (mViceSound) {
-    return mViceSound->BufferSpaceBytes();
+    return mViceSound->BufferSpaceSamples();
   }
   return FRAG_SIZE * NUM_FRAGS;
 }
@@ -1265,7 +1269,7 @@ void CKernel::circle_check_gpio() {
   circle_lock_acquire();
   if (mNeedSoundInit && mNumCoresComplete >= 2) {
      mViceSound = new ViceSound(&mVCHIQ, mViceOptions.GetAudioOut());
-     mViceSound->Playback(vol_percent_to_vchiq(mInitialVolume));
+     mViceSound->Playback(vol_percent_to_vchiq(mVolume), mNumSoundChannels);
      mNeedSoundInit = false;
   }
   circle_lock_release();
@@ -1394,7 +1398,7 @@ void CKernel::circle_boot_complete() {
        // Cores 1/2 are done initing sound tables before we tried to
        // start playback device.
        mViceSound = new ViceSound(&mVCHIQ, mViceOptions.GetAudioOut());
-       mViceSound->Playback(vol_percent_to_vchiq(mInitialVolume));
+       mViceSound->Playback(vol_percent_to_vchiq(mVolume), mNumSoundChannels);
     } else {
        // Cores 1/2 are still initializing sound tables. We'll init
        // sound later.  This is to get around the crashing noise you
@@ -1404,7 +1408,7 @@ void CKernel::circle_boot_complete() {
     circle_lock_release();
 #else
     mViceSound = new ViceSound(&mVCHIQ, mViceOptions.GetAudioOut());
-    mViceSound->Playback(vol_percent_to_vchiq(mInitialVolume));
+    mViceSound->Playback(vol_percent_to_vchiq(mVolume), mNumSoundChannels);
 #endif
   }
 
@@ -1492,11 +1496,10 @@ int CKernel::circle_get_zlayer_fbl(int layer) {
 
 void CKernel::circle_set_volume(int value) {
   // TODO: This is a race condition between two cores. Fix this.
+  mVolume = value;
   if (mViceSound) {
      mViceSound->SetControl(vol_percent_to_vchiq(value),
                             mViceOptions.GetAudioOut());
-  } else {
-     mInitialVolume = value;
   }
 }
 

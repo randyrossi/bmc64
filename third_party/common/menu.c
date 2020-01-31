@@ -1662,29 +1662,6 @@ static void do_video_settings(int layer,
   }
 }
 
-static void check_sid_sampling() {
-  int value;
-  emux_get_int(Setting_SidResidSampling, &value);
-  // For less capable Pi's, we force fast sampling.
-  if (circle_get_model() < 3) {
-     emux_set_int(Setting_SidResidSampling, MENU_SID_SAMPLING_FAST);
-  } else if (circle_get_model() < 4) {
-     if (value == MENU_SID_SAMPLING_RESAMPLING) {
-       emux_set_int(Setting_SidResidSampling,
-          MENU_SID_SAMPLING_FAST_RESAMPLING);
-     }
-  }
-
-  // These can never change and must match the logic in
-  // viceemulatorcore.cpp.
-  //if (circle_get_arm_clock() < 1400000000) {
-     emux_set_int(Setting_SidResidPassband, 60);
-  //} else {
-  //   emux_set_int(Setting_SidResidPassband, 90);
-  //}
-  emux_set_int(Setting_SidResidGain, 97);
-}
-
 static void menu_machine_reset(int type, int pop) {
   // The IEC dir may have been changed by the emulated machine. On reset,
   // we reset back to the last dir set by the user.
@@ -2173,21 +2150,6 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_TAPE_RESET_WITH_MACHINE:
     emux_set_int(Setting_DatasetteResetWithCPU,
                       tape_reset_with_machine_item->value);
-    return;
-  case MENU_SID_ENGINE:
-    emux_set_int(Setting_SidEngine, item->choice_ints[item->value]);
-    check_sid_sampling();
-    return;
-  case MENU_SID_MODEL:
-    emux_set_int(Setting_SidModel, item->choice_ints[item->value]);
-    check_sid_sampling();
-    return;
-  case MENU_SID_FILTER:
-    emux_set_int(Setting_SidFilters, item->value);
-    check_sid_sampling();
-    return;
-  case MENU_SID_SAMPLING:
-    emux_set_int(Setting_SidResidSampling, item->value);
     return;
   case MENU_DRIVE_CHANGE_MODEL_8:
   case MENU_DRIVE_CHANGE_MODEL_9:
@@ -3029,7 +2991,6 @@ void build_menu(struct menu_item *root) {
   volume_item = ui_menu_add_range(MENU_VOLUME, parent,
       "Volume ", 0, 100, 1, 100);
 
-  check_sid_sampling();
   emux_add_sound_options(parent);
 
   parent = ui_menu_add_folder(root, "Keyboard");

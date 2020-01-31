@@ -222,6 +222,10 @@ typedef enum {
    MENU_SID_FILTER, // VICE
    MENU_SID_SAMPLING, // VICE
 
+   MENU_SID2_ENABLE, // VICE
+   MENU_SID2_ADDRESS, // VICE
+   MENU_SID2_MODEL, // VICE
+
    MENU_SID_WRITE_D400,  // PLUS4EMU
    MENU_SID_DIGIBLASTER, // PLUS4EMU
 
@@ -433,6 +437,7 @@ typedef enum {
 
    MENU_DIR_CONVENTION,
    MENU_SCANLINES,
+
 } MenuID;
 
 typedef enum {
