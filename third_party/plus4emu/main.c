@@ -719,7 +719,7 @@ int main_program(int argc, char **argv)
   int audioSampleRate;
   int fragsize;
   int fragnr;
-  int channels;
+  int channels = 1; // Only mono for plus4emu
 
   circle_sound_init(NULL, &audioSampleRate, &fragsize, &fragnr, &channels);
   if (Plus4VM_SetAudioSampleRate(vm, audioSampleRate) != PLUS4EMU_SUCCESS)
@@ -762,6 +762,10 @@ int main_program(int argc, char **argv)
 
   printf ("Enter emulation loop\n");
   Plus4VM_Reset(vm, 1);
+
+  // Fake two core init complete. Temp solution to get sound back for plus4emu.
+  circle_kernel_core_init_complete(1);
+  circle_kernel_core_init_complete(2);
 
   circle_boot_complete();
 
@@ -1076,7 +1080,7 @@ void emux_add_keyboard_options(struct menu_item* parent) {
   keyboard_mapping_item->value = keyboard_mapping;
   strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_SYM], "Symbolic");
   strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_POS], "Positional");
-  strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_MAXI], "Maxi");
+  strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_MAXI], "Maxi Positional");
 
   // Do this for now in case we ever support this some day.
   keyboard_mapping_item->choice_disabled[KEYBOARD_MAPPING_SYM] = 1;

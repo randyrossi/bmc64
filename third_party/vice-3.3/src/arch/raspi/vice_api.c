@@ -620,7 +620,7 @@ void emux_add_keyboard_options(struct menu_item* parent) {
   keyboard_mapping_item->choice_ints[KEYBOARD_MAPPING_SYM] = KBD_INDEX_SYM;
   strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_POS], "Positional");
   keyboard_mapping_item->choice_ints[KEYBOARD_MAPPING_POS] = KBD_INDEX_POS;
-  strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_MAXI], "Maxi");
+  strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_MAXI], "Maxi Positional");
   keyboard_mapping_item->choice_ints[KEYBOARD_MAPPING_MAXI] = KBD_INDEX_USERPOS;
 }
 
