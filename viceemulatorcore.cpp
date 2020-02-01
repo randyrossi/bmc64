@@ -23,10 +23,12 @@
 
 extern "C" {
 #include "third_party/vice-3.3/src/main.h"
+#include "third_party/common/semaphore.h"
 
 extern void circle_kernel_core_init_complete(int core);
 }
 
+#include "third_party/vice-3.3/src/sid/sid.h"
 #include "third_party/vice-3.3/src/resid/sid.h"
 #include "third_party/vice-3.3/src/resid/filter.h"
 
@@ -192,6 +194,12 @@ void ViceEmulatorCore::Run(unsigned nCore) {
     circle_kernel_core_init_complete(3);
 #endif
     break;
+  }
+
+  while (true) {
+     sem_dec(&sid_job);
+     core_job_func(core_job_psid, core_job_pbuf, core_job_nr, 2, &core_job_delta_t);
+     sem_inc(&sid_done);
   }
 
 #ifdef ARM_ALLOW_MULTI_CORE

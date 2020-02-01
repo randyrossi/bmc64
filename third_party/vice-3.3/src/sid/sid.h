@@ -36,6 +36,20 @@
 
 #define SID_SETTINGS_DIALOG
 
+#ifdef RASPI_COMPILE
+extern int (*core_job_func)(struct sound_s *psid, short *pbuf, int nr, int interleave, int *delta_t);
+extern struct sound_s *core_job_psid;
+extern int16_t *core_job_pbuf;
+extern int core_job_nr;
+extern int core_job_delta_t;
+
+extern uint32_t sid_job;
+extern uint32_t sid_done;
+extern void sem_inc(uint32_t* semaphore);
+extern void sem_dec(uint32_t* semaphore);
+
+#endif
+
 struct sound_s;
 struct sid_snapshot_state_s;
 

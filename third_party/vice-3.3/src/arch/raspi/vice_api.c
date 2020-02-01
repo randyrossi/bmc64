@@ -223,6 +223,9 @@ int emux_load_state(char *filename) {
      resources_set_int("SidEngine", sid_engine);
   }
 
+  // This makes sure sid options are sane.
+  check_sid_options();
+
   int tmp;
   resources_get_int("UserportJoy", &tmp);
   enable_item->value = tmp;
@@ -235,12 +238,24 @@ int emux_load_state(char *filename) {
      }
   }
 
+  resources_get_int("SidStereo", &tmp);
+  sid_dual_item->value = tmp;
+
+  resources_get_int("SidStereoAddressStart", &tmp);
+  for (int i=0;i<sid_base_address_item->num_choices;i=i+1) {
+     if (sid_base_address_item->choice_ints[i] == tmp) {
+        sid_base_address_item->value = i;
+        break;
+     }
+  }
+
   // Do other menu items too.
   //   Drive%iType, Drive%iParallelCable
   //   Drive%iRAM2000-A000
   //   KeymapIndex, SidEngine, SidModel, SidFilters, DriveSoundEmulation
   //   DriveSoundEmulationVolume, C128ColumnKey, DatasetteResetWithCPU
   //   IECDevice%i, FSDevice%iDir
+  
 
   return status;
 }

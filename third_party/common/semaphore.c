@@ -1,6 +1,7 @@
 #include "semaphore.h"
 
 void sem_dec(uint32_t* semaphore) {
+#ifndef RASPI_LITE
     asm volatile (
       "1:  LDREX    r1, [r0]\n"
       "    CMP	    r1, #0\n"
@@ -16,9 +17,11 @@ void sem_dec(uint32_t* semaphore) {
       "    B       1b\n"
       "3:\n"
     );
+#endif
 }
 
 void sem_inc(uint32_t* semaphore) {
+#ifndef RASPI_LITE
     asm volatile (
       "1:   LDREX   r1, [r0]\n"
       "     ADD     r1, #1\n"
@@ -34,5 +37,5 @@ void sem_inc(uint32_t* semaphore) {
       "     SEV\n"
       "3:\n"
     );
+#endif
 }
-

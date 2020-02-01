@@ -153,6 +153,22 @@ boolean ViceSoundBaseDevice::Start() {
     }
 
     m_State = VCHIQSoundIdle;
+  } else {
+    // Added this so we can switch channels after a Cancel.
+    Msg.type = VC_AUDIO_MSG_TYPE_CONFIG;
+    Msg.u.config.channels = m_nChannels;
+    Msg.u.config.samplerate = m_nSampleRate;
+    Msg.u.config.bps = 16;
+
+    nResult = CallMessage(&Msg);
+    if (nResult != 0) {
+      CLogger::Get()->Write(FromVCHIQSound, LogError, "Cannot set config (%d)",
+                            nResult);
+
+      m_State = VCHIQSoundError;
+
+      return FALSE;
+    }
   }
 
   assert(m_State == VCHIQSoundIdle);
@@ -312,7 +328,10 @@ int ViceSoundBaseDevice::WriteChunk(void) {
   unsigned nWords = GetChunk(p_buffer, m_nChunkSize);
   if (nWords == 0) {
     m_State = VCHIQSoundIdle;
+    return 0;
+  }
 
+  if (m_State == VCHIQSoundIdle || m_State == VCHIQSoundCancelled) {
     return 0;
   }
 
@@ -382,7 +401,11 @@ void ViceSoundBaseDevice::Callback(const VCHI_CALLBACK_REASON_T Reason,
     break;
 
   case VC_AUDIO_MSG_TYPE_COMPLETE:
-    if (m_State == VCHIQSoundIdle || m_State == VCHIQSoundError) {
+    if (m_State == VCHIQSoundIdle) {
+      break;
+    }
+    if (m_State == VCHIQSoundError) {
+      assert(0);
       break;
     }
     assert(m_State >= VCHIQSoundRunning);
@@ -400,22 +423,9 @@ void ViceSoundBaseDevice::Callback(const VCHI_CALLBACK_REASON_T Reason,
     // Report how many bytes we have buffered
     AmountBufferedBytes(m_nWritePos - m_nCompletePos);
 
-    // if there is no more than one chunk left queued
-    if (m_nWritePos - m_nCompletePos <= m_nChunkSize * sizeof(s16)) {
-      if (m_State == VCHIQSoundCancelled) {
-        m_State = VCHIQSoundTerminating;
-
-        break;
-      }
-
-      /*
-                              if (WriteChunk () != 0)
-                              {
-                                      assert (0);
-
-                                      m_State = VCHIQSoundError;
-                              }
-      */
+    // No more data left?
+    if (m_nWritePos - m_nCompletePos == 0 && m_State == VCHIQSoundCancelled) {
+      m_State = VCHIQSoundTerminating;
     }
     break;
 
