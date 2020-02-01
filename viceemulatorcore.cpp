@@ -196,10 +196,13 @@ void ViceEmulatorCore::Run(unsigned nCore) {
     break;
   }
 
-  while (true) {
-     sem_dec(&sid_job);
-     core_job_func(core_job_psid, core_job_pbuf, core_job_nr, 2, &core_job_delta_t);
-     sem_inc(&sid_done);
+  if (nCore == 2) {
+     while (true) {
+        sem_dec(&sid_job);
+        sid_job_func(sid_job_psid, sid_job_pbuf, sid_job_nr,
+                     2, &sid_job_delta_t);
+        sem_inc(&sid_done);
+     }
   }
 
 #ifdef ARM_ALLOW_MULTI_CORE

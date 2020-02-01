@@ -50,11 +50,12 @@
 #include "types.h"
 
 #ifdef RASPI_COMPILE
-int (*core_job_func)(struct sound_s *psid, short *pbuf, int nr, int interleave, int *delta_t);
-struct sound_s *core_job_psid;
-int16_t *core_job_pbuf;
-int core_job_nr;
-int core_job_delta_t;
+int (*sid_job_func)(struct sound_s *psid, short *pbuf,
+                     int nr, int interleave, int *delta_t);
+struct sound_s *sid_job_psid;
+int16_t *sid_job_pbuf;
+int sid_job_nr;
+int sid_job_delta_t;
 uint32_t sid_job;
 uint32_t sid_done;
 #endif
@@ -528,11 +529,11 @@ int sid_sound_machine_calculate_samples(sound_t **psid, int16_t *pbuf, int nr, i
         // prevents some stuttering on the Pi2 which is already very close to
         // the edge in terms of CPU utilization
         // Setup the job
-        core_job_func = sid_engine.calculate_samples;
-        core_job_psid = psid[1];
-        core_job_pbuf = pbuf + 1;
-        core_job_nr = nr;
-        core_job_delta_t = tmp_delta_t;
+        sid_job_func = sid_engine.calculate_samples;
+        sid_job_psid = psid[1];
+        sid_job_pbuf = pbuf + 1;
+        sid_job_nr = nr;
+        sid_job_delta_t = tmp_delta_t;
         sem_inc(&sid_job);
         tmp_nr = sid_engine.calculate_samples(psid[0], pbuf, nr, 2, delta_t);
         sem_dec(&sid_done);

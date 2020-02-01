@@ -287,6 +287,10 @@ Caution: Fast Resampling in combination with other high CPU intensive tasks (lik
 
 NOTE: For resampling, parameters like Gain and Passband frequency must remain at the default values and cannot be changed (even in vice.ini).
 
+## Dual SIDs
+
+You can enable dual SIDs in v3.5+ for the C64. BMC64 has modified VICE code to allow the same base address ($d400) for both SIDs as well allowing different SID models on each channel.  You can get a 'pseudo' stereo effect this way due to the different characteristics of the different SID chips.  (Try listening to 'Edge of Disgrace' with headphones and select 6581 for SID1 and 8850 for SID2.)
+
 # Keyboards
 
 Use F12 to bring up the menu and ESC/RUNSTOP to exit.
