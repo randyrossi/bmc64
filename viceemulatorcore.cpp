@@ -102,10 +102,10 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
       (char *)"+VICIIvcache",
   };
 #elif defined(RASPI_C128)
-  int argc = 11;
+  int argc = 12;
   char *argv[] = {
       (char *)"vice", timing_option_, (char *)"-sounddev", (char *)"raspi",
-      (char *)"-soundsync", (char *)"0",
+      (char *)"-soundoutput", (char *)"1", (char *)"-soundsync", (char *)"0",
       (char *)"-refresh", (char *)"1",
       // Unless we disable the video cache, vsync is messed up
       (char *)"+VICIIvcache",
