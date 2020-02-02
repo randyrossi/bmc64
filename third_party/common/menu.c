@@ -1050,7 +1050,7 @@ static void load_settings() {
       }
 
       // Make sure pins are configured properly after load
-      circle_reset_gpio(gpio_config_item->value);
+      circle_reset_gpio(emu_get_gpio_config());
     } else if (strcmp(name, "keyset_1_up") == 0) {
       keyset_codes[0][KEYSET_UP] = value;
     } else if (strcmp(name, "keyset_1_down") == 0) {
@@ -2013,7 +2013,7 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_GPIO_CONFIG:
     // Ensure GPIO pins are correct for new mode.
-    circle_reset_gpio(item->value);
+    circle_reset_gpio(emu_get_gpio_config());
     return;
   case MENU_WARP_MODE:
     toggle_warp(item->value);
