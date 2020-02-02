@@ -289,7 +289,11 @@ NOTE: For resampling, parameters like Gain and Passband frequency must remain at
 
 ## Dual SIDs
 
-You can enable dual SIDs in v3.5+ for the C64. BMC64 has modified VICE code to allow the same base address ($d400) for both SIDs as well allowing different SID models on each channel.  You can get a 'pseudo' stereo effect this way due to the different characteristics of the different SID chips.  (Try listening to 'Edge of Disgrace' with headphones and select 6581 for SID1 and 8850 for SID2.)
+You can enable dual SIDs in v3.5+ for the C64 to get 6 voices and stereo sound. For the second SID to work, your C64 program and the base address for the second SID must match.  If you change the base address, it's best to reset the machine to clear out the registers.
+
+## Pseudo Stereo
+
+BMC64 has modified VICE code to allow the same base address ($d400) for both SIDs as well allowing different SID models on each channel.  You can get a 'pseudo' stereo effect this way due to the different characteristics of the different SID chips.  (Try listening to 'Edge of Disgrace' with headphones and select 6581 for SID1 and 8850 for SID2.)  This will work for any software you run, not just programs that can use a second SID.
 
 # Keyboards
 
