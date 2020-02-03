@@ -225,6 +225,10 @@ extern uint8_t circle_get_userport_ddr(void);
 extern uint8_t circle_get_userport(void);
 extern void circle_set_userport(uint8_t value);
 extern void circle_kernel_core_init_complete(int core);
+extern void circle_get_fbl_dimensions(int layer,
+                                      int *display_w, int *display_h,
+                                      int *src_w, int *src_h,
+                                      int *dst_w, int *dst_h);
 
 // -----------------------------------------------------------------------
 // Functions called from kernel layer into emulator layer

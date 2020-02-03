@@ -259,6 +259,13 @@ int circle_gpio_outputs_enabled() {
 void circle_kernel_core_init_complete(int core) {
   static_kernel->circle_kernel_core_init_complete(core);
 }
+
+void circle_get_fbl_dimensions(int layer, int *display_w, int *display_h,
+                               int *src_w, int *src_h,
+                               int *dst_w, int *dst_h) {
+  static_kernel->circle_get_fbl_dimensions(layer, display_w, display_h,
+                                           src_w, src_h, dst_w, dst_h);
+}
 };
 
 namespace {
@@ -1527,4 +1534,12 @@ void CKernel::circle_kernel_core_init_complete(int core) {
   circle_lock_acquire();
   mNumCoresComplete++;
   circle_lock_release();
+}
+
+void CKernel::circle_get_fbl_dimensions(int layer,
+                               int *display_w, int *display_h,
+                               int *src_w, int *src_h,
+                               int *dst_w, int *dst_h) {
+  return fbl[layer].GetDimensions(display_w, display_h, src_w, src_h,
+                                  dst_w, dst_h);
 }

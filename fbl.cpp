@@ -173,7 +173,9 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
     UpdatePalette();
   }
 
-  vc_dispmanx_rect_set( &copy_dst_rect_, 0, 0, width, height);
+  vc_dispmanx_rect_set(&copy_dst_rect_, 0, 0, width, height);
+  dst_w_ = width;
+  dst_h_ = height;
 
   assert(ret == 0);
 
@@ -305,6 +307,8 @@ void FrameBufferLayer::Show() {
                        oy + tpad_abs,
                        dst_w,
                        dst_h);
+  dst_w_ = dst_w;
+  dst_h_ = dst_h;
 
   dispman_update = vc_dispmanx_update_start(0);
   assert( dispman_update );
@@ -458,4 +462,15 @@ void FrameBufferLayer::SetPadding(double leftPadding,
 void FrameBufferLayer::SetCenterOffset(int cx, int cy) {
   h_center_offset_ = cx;
   v_center_offset_ = cy;
+}
+
+void FrameBufferLayer::GetDimensions(int *display_w, int *display_h,
+                                     int *src_w, int *src_h,
+                                     int *dst_w, int *dst_h) {
+  *display_w = display_width_;
+  *display_h = display_height_;
+  *src_w = src_w_;
+  *src_h = src_h_;
+  *dst_w = dst_w_;
+  *dst_h = dst_h_;
 }

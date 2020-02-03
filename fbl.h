@@ -94,6 +94,8 @@ public:
   // Used to force a fb into a smaller space (for things like PIP or side-by-side.
   void SetPadding(double leftPadding, double rightPadding, double topPadding, double bottomPadding);
 
+  void GetDimensions(int *display_w, int *display_h, int *src_w, int *src_h, int *dst_w, int *dst_h);
+
   // initializes the bcm_host interface
   static void Initialize();
 
@@ -156,6 +158,9 @@ private:
   int src_y_;
   int src_w_;
   int src_h_;
+
+  int dst_w_;
+  int dst_h_;
 
   bool showing_;
   bool allocated_;
