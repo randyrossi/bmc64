@@ -1632,6 +1632,8 @@ void emux_load_settings_done(void) {
     strcpy(rom_kernal,"/PLUS4EMU/p4kernal.rom");
     Plus4VideoDecoder_SetNTSCMode(videoDecoder, 0);
   }
+
+  emux_geometry_changed(FB_LAYER_VIC, vic_canvas_index);
 }
 
 void emux_add_userport_joys(struct menu_item* parent) {

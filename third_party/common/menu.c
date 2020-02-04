@@ -26,6 +26,7 @@
 
 #include "menu.h"
 
+#include <math.h>
 #include <assert.h>
 #include <dirent.h>
 #include <stdio.h>
@@ -150,15 +151,15 @@ struct menu_item *active_display_item;
 
 struct menu_item *h_center_item_0;
 struct menu_item *v_center_item_0;
-struct menu_item *h_border_item_0;
-struct menu_item *v_border_item_0;
+struct menu_item *h_border_trim_item_0;
+struct menu_item *v_border_trim_item_0;
 struct menu_item *h_stretch_item_0;
 struct menu_item *v_stretch_item_0;
 
 struct menu_item *h_center_item_1;
 struct menu_item *v_center_item_1;
-struct menu_item *h_border_item_1;
-struct menu_item *v_border_item_1;
+struct menu_item *h_border_trim_item_1;
+struct menu_item *v_border_trim_item_1;
 struct menu_item *h_stretch_item_1;
 struct menu_item *v_stretch_item_1;
 
@@ -799,15 +800,15 @@ static int save_settings() {
   fprintf(fp, "gpio_config=%d\n", gpio_config_item->choice_ints[gpio_config_item->value]);
   fprintf(fp, "h_center_0=%d\n", h_center_item_0->value);
   fprintf(fp, "v_center_0=%d\n", v_center_item_0->value);
-  fprintf(fp, "h_border_trim_0=%d\n", h_border_item_0->value);
-  fprintf(fp, "v_border_trim_0=%d\n", v_border_item_0->value);
+  fprintf(fp, "h_border_trim_0=%d\n", h_border_trim_item_0->value);
+  fprintf(fp, "v_border_trim_0=%d\n", v_border_trim_item_0->value);
   fprintf(fp, "h_stretch_0=%d\n", h_stretch_item_0->value);
   fprintf(fp, "v_stretch_0=%d\n", v_stretch_item_0->value);
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      fprintf(fp, "h_center_1=%d\n", h_center_item_1->value);
      fprintf(fp, "v_center_1=%d\n", v_center_item_1->value);
-     fprintf(fp, "h_border_trim_1=%d\n", h_border_item_1->value);
-     fprintf(fp, "v_border_trim_1=%d\n", v_border_item_1->value);
+     fprintf(fp, "h_border_trim_1=%d\n", h_border_trim_item_1->value);
+     fprintf(fp, "v_border_trim_1=%d\n", v_border_trim_item_1->value);
      fprintf(fp, "hstretch_1=%d\n", h_stretch_item_1->value);
      fprintf(fp, "vstretch_1=%d\n", v_stretch_item_1->value);
   }
@@ -1096,9 +1097,9 @@ static void load_settings() {
     } else if (strcmp(name, "v_center_0") == 0) {
       v_center_item_0->value = value;
     } else if (strcmp(name, "h_border_trim_0") == 0) {
-      h_border_item_0->value = value;
+      h_border_trim_item_0->value = value;
     } else if (strcmp(name, "v_border_trim_0") == 0) {
-      v_border_item_0->value = value;
+      v_border_trim_item_0->value = value;
     } else if (strcmp(name, "aspect_0") == 0) {
       // LEGACY NAME : aspect * 10 = h_stretch
       h_stretch_item_0->value = value * 10;
@@ -1111,9 +1112,9 @@ static void load_settings() {
     } else if (strcmp(name, "v_center_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       v_center_item_1->value = value;
     } else if (strcmp(name, "h_border_trim_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      h_border_item_1->value = value;
+      h_border_trim_item_1->value = value;
     } else if (strcmp(name, "v_border_trim_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      v_border_item_1->value = value;
+      v_border_trim_item_1->value = value;
     } else if (strcmp(name, "aspect_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       // LEGACY NAME : aspect * 10 = h_stretch
       h_stretch_item_1->value = value * 10;
@@ -2223,8 +2224,8 @@ static void menu_value_changed(struct menu_item *item) {
        do_video_settings(FB_LAYER_VIC,
            h_center_item_0,
            v_center_item_0,
-           h_border_item_0,
-           v_border_item_0,
+           h_border_trim_item_0,
+           v_border_trim_item_0,
            h_stretch_item_0,
            v_stretch_item_0);
     } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_VDC) {
@@ -2233,8 +2234,8 @@ static void menu_value_changed(struct menu_item *item) {
        do_video_settings(FB_LAYER_VDC,
            h_center_item_1,
            v_center_item_1,
-           h_border_item_1,
-           v_border_item_1,
+           h_border_trim_item_1,
+           v_border_trim_item_1,
            h_stretch_item_1,
            v_stretch_item_1);
     } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE ||
@@ -2244,15 +2245,15 @@ static void menu_value_changed(struct menu_item *item) {
        do_video_settings(FB_LAYER_VIC,
            h_center_item_0,
            v_center_item_0,
-           h_border_item_0,
-           v_border_item_0,
+           h_border_trim_item_0,
+           v_border_trim_item_0,
            h_stretch_item_0,
            v_stretch_item_0);
        do_video_settings(FB_LAYER_VDC,
            h_center_item_1,
            v_center_item_1,
-           h_border_item_1,
-           v_border_item_1,
+           h_border_trim_item_1,
+           v_border_trim_item_1,
            h_stretch_item_1,
            v_stretch_item_1);
     }
@@ -2267,8 +2268,8 @@ static void menu_value_changed(struct menu_item *item) {
     do_video_settings(FB_LAYER_VIC,
         h_center_item_0,
         v_center_item_0,
-        h_border_item_0,
-        v_border_item_0,
+        h_border_trim_item_0,
+        v_border_trim_item_0,
         h_stretch_item_0,
         v_stretch_item_0);
     break;
@@ -2282,8 +2283,8 @@ static void menu_value_changed(struct menu_item *item) {
     do_video_settings(FB_LAYER_VDC,
         h_center_item_1,
         v_center_item_1,
-        h_border_item_1,
-        v_border_item_1,
+        h_border_trim_item_1,
+        v_border_trim_item_1,
         h_stretch_item_1,
         v_stretch_item_1);
     break;
@@ -2908,15 +2909,19 @@ void build_menu(struct menu_item *root) {
   v_center_item_0 =
       ui_menu_add_range(MENU_V_CENTER_0, parent, "V Center",
           -48, 48, 1, 0);
-  h_border_item_0 =
+  h_border_trim_item_0 =
       ui_menu_add_range(MENU_H_BORDER_0, parent, "H Border Trim %",
-          0, 100, 1, defaultHBorderTrim);
-  v_border_item_0 =
+          canvas_state[vic_canvas_index].min_border_w,
+             100, 1, defaultHBorderTrim);
+  v_border_trim_item_0 =
       ui_menu_add_range(MENU_V_BORDER_0, parent, "V Border Trim %",
-          0, 100, 1, defaultVBorderTrim);
+          canvas_state[vic_canvas_index].min_border_h,
+             100, 1, defaultVBorderTrim);
   child = h_stretch_item_0 =
       ui_menu_add_range(MENU_H_STRETCH_0, parent, "H Stretch Factor",
-           1000, 1800, 5, defaultHStretch);
+           1000, canvas_state[vic_canvas_index].max_stretch_h ?
+              canvas_state[vic_canvas_index].max_stretch_h : 1800,
+                 5, defaultHStretch);
   child->divisor = 1000;
   child = v_stretch_item_0 =
       ui_menu_add_range(MENU_V_STRETCH_0, parent, "V Stretch Factor",
@@ -2965,15 +2970,19 @@ void build_menu(struct menu_item *root) {
      v_center_item_1 =
          ui_menu_add_range(MENU_V_CENTER_1, parent, "V Center",
              -48, 48, 1, 0);
-     h_border_item_1 =
+     h_border_trim_item_1 =
          ui_menu_add_range(MENU_H_BORDER_1, parent, "H Border Trim %",
-             0, 100, 1, DEFAULT_VDC_H_BORDER_TRIM);
-     v_border_item_1 =
+             canvas_state[vdc_canvas_index].min_border_w,
+                100, 1, DEFAULT_VDC_H_BORDER_TRIM);
+     v_border_trim_item_1 =
          ui_menu_add_range(MENU_V_BORDER_1, parent, "V Border Trim %",
-             0, 100, 1, DEFAULT_VDC_V_BORDER_TRIM);
+             canvas_state[vdc_canvas_index].min_border_h,
+                100, 1, DEFAULT_VDC_V_BORDER_TRIM);
      child = h_stretch_item_1 =
          ui_menu_add_range(MENU_H_STRETCH_1, parent, "H Stretch Factor",
-              1000, 1800, 5, DEFAULT_VDC_H_STRETCH);
+              1000, canvas_state[vdc_canvas_index].max_stretch_h ?
+                 canvas_state[vdc_canvas_index].max_stretch_h : 1800,
+                    5, DEFAULT_VDC_H_STRETCH);
      child->divisor = 1000;
      child = v_stretch_item_1 =
          ui_menu_add_range(MENU_V_STRETCH_1, parent, "V Stretch Factor",
@@ -3199,8 +3208,8 @@ void build_menu(struct menu_item *root) {
   do_video_settings(FB_LAYER_VIC,
       h_center_item_0,
       v_center_item_0,
-      h_border_item_0,
-      v_border_item_0,
+      h_border_trim_item_0,
+      v_border_trim_item_0,
       h_stretch_item_0,
       v_stretch_item_0);
 
@@ -3208,8 +3217,8 @@ void build_menu(struct menu_item *root) {
      do_video_settings(FB_LAYER_VDC,
          h_center_item_1,
          v_center_item_1,
-         h_border_item_1,
-         v_border_item_1,
+         h_border_trim_item_1,
+         v_border_trim_item_1,
          h_stretch_item_1,
          v_stretch_item_1);
   }
@@ -3429,4 +3438,35 @@ const char* function_to_string(int button_func) {
     default:
        return "Unknown";
   }
+}
+
+void emux_geometry_changed(int layer, int canvas_index) {
+
+  // Update the allowed min for border trim items. This lets the user
+  // start padding the edges with negative trim values.
+  // These are expressed in terms of percentage of the max because they
+  // are going into the range item.
+  int min_neg_h_trim = ((double)MIN(
+      canvas_state[canvas_index].extra_offscreen_border_left,
+      canvas_state[canvas_index].extra_offscreen_border_right) / (double)canvas_state[canvas_index].max_border_w) * 100.0;
+  int min_neg_v_trim = ((double)canvas_state[canvas_index].first_displayed_line / (double)canvas_state[canvas_index].max_border_h) * 100.0;
+
+  // Update the allowed max h stretch based on the display width and height
+  int dpx, dpy, dx, dy, sx, sy;
+  circle_get_fbl_dimensions(layer,
+                            &dpx, &dpy, &sx, &sy, &dx, &dy);
+  double max_scale = ceil((double)dpx / (double)dpy);
+
+  if (layer == FB_LAYER_VIC) {
+     h_border_trim_item_0->min = -min_neg_h_trim;
+     v_border_trim_item_0->min = -min_neg_v_trim;
+     h_stretch_item_0->max = max_scale * 1000;
+  } else if (layer == FB_LAYER_VDC) {
+     h_border_trim_item_1->min = -min_neg_h_trim;
+     v_border_trim_item_1->min = -min_neg_v_trim;
+     h_stretch_item_1->max = max_scale * 1000;
+  }
+  canvas_state[canvas_index].min_border_w = -min_neg_h_trim;
+  canvas_state[canvas_index].min_border_h = -min_neg_v_trim;
+  canvas_state[canvas_index].max_stretch_h = max_scale * 1000;
 }

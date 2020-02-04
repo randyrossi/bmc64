@@ -126,6 +126,10 @@ struct CanvasState {
   // Just the gfx area (no border)
   int gfx_w;
   int gfx_h;
+  int max_stretch_h;
+  // How low can border trim go
+  int min_border_w;
+  int min_border_h;
   // How much border is available
   int max_border_w;
   int max_border_h;
@@ -147,7 +151,9 @@ struct CanvasState {
   int overlay_y;
 
   int extra_offscreen_border_left;
+  int extra_offscreen_border_right;
   int first_displayed_line;
+  int last_displayed_line;
 
   int fb_width;
   int fb_height;
@@ -390,5 +396,7 @@ int is_ntsc();
 int is_composite();
 
 void emux_add_userport_joys(struct menu_item* parent);
+
+void emux_geometry_changed(int layer, int canvas_index);
 
 #endif

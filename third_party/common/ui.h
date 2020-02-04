@@ -81,6 +81,7 @@ struct menu_item {
   int min;
   int max;
   int step;
+  int ministep;
   int divisor;
 
   // For FOLDER

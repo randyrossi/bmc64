@@ -34,7 +34,6 @@
 #include <sys/time.h>
 
 // VICE includes
-#include "emux_api.h"
 #include "joyport/joystick.h"
 #include "kbdbuf.h"
 #include "keyboard.h"
@@ -166,6 +165,15 @@ static void check_dimensions(struct video_canvas_s* canvas,
    }
    canvas_state[canvas_index].fb_width = fb_width;
    canvas_state[canvas_index].fb_height = fb_height;
+
+   canvas_state[canvas_index].extra_offscreen_border_left =
+     canvas->geometry->extra_offscreen_border_left;
+   canvas_state[canvas_index].extra_offscreen_border_right =
+     canvas->geometry->extra_offscreen_border_right;
+   canvas_state[canvas_index].first_displayed_line =
+     canvas->geometry->first_displayed_line;
+   canvas_state[canvas_index].last_displayed_line =
+     canvas->geometry->last_displayed_line;
 }
 
 // Draw buffer bridge functions back to kernel
@@ -173,17 +181,22 @@ static int draw_buffer_alloc(struct video_canvas_s *canvas,
                              uint8_t **draw_buffer,
                              unsigned int fb_width, unsigned int fb_height,
                              unsigned int *fb_pitch) {
+   int status;
    if (is_vdc(canvas)) {
       check_dimensions(canvas, vic_canvas_index, fb_width, fb_height);
-      return circle_alloc_fbl(FB_LAYER_VDC, 0 /* indexed */, draw_buffer,
+      status = circle_alloc_fbl(FB_LAYER_VDC, 0 /* indexed */, draw_buffer,
                               fb_width, fb_height * canvas->raster_skip,
                               fb_pitch);
+      emux_geometry_changed(FB_LAYER_VDC, vdc_canvas_index);
    } else {
       check_dimensions(canvas, vdc_canvas_index, fb_width, fb_height);
-      return circle_alloc_fbl(FB_LAYER_VIC, 0 /* indexed */, draw_buffer,
+      status = circle_alloc_fbl(FB_LAYER_VIC, 0 /* indexed */, draw_buffer,
                               fb_width, fb_height * canvas->raster_skip,
                               fb_pitch);
+      emux_geometry_changed(FB_LAYER_VIC, vic_canvas_index);
    }
+
+   return status;
 }
 
 static void draw_buffer_free(struct video_canvas_s *canvas, uint8_t *draw_buffer) {
@@ -257,8 +270,12 @@ static struct video_canvas_s *video_canvas_create_vic(
 
   canvas_state[vic_canvas_index].extra_offscreen_border_left =
      canvas->geometry->extra_offscreen_border_left;
+  canvas_state[vic_canvas_index].extra_offscreen_border_right =
+     canvas->geometry->extra_offscreen_border_right;
   canvas_state[vic_canvas_index].first_displayed_line =
      canvas->geometry->first_displayed_line;
+  canvas_state[vic_canvas_index].last_displayed_line =
+     canvas->geometry->last_displayed_line;
 
   set_canvas_size(vic_canvas_index,
      width, height,
@@ -279,6 +296,8 @@ static struct video_canvas_s *video_canvas_create_vic(
 
   canvas_state[vic_canvas_index].max_border_h *= raster_skip;
 
+  emux_geometry_changed(FB_LAYER_VIC, vic_canvas_index);
+
   return canvas;
 }
 
@@ -293,8 +312,10 @@ static struct video_canvas_s *video_canvas_create_vdc(
 
   canvas_state[vdc_canvas_index].extra_offscreen_border_left =
      canvas->geometry->extra_offscreen_border_left;
-  canvas_state[vdc_canvas_index].first_displayed_line =
-     canvas->geometry->first_displayed_line;
+  canvas_state[vdc_canvas_index].extra_offscreen_border_right =
+     canvas->geometry->extra_offscreen_border_right;
+  canvas_state[vdc_canvas_index].last_displayed_line =
+     canvas->geometry->last_displayed_line;
 
   set_canvas_size(vdc_canvas_index,
      width, height,
@@ -314,6 +335,8 @@ static struct video_canvas_s *video_canvas_create_vdc(
                      &canvas_state[vdc_canvas_index].max_border_h);
 
   canvas_state[vdc_canvas_index].max_border_h *= raster_skip;
+
+  emux_geometry_changed(FB_LAYER_VDC, vdc_canvas_index);
 
   return canvas;
 }

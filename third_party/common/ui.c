@@ -122,6 +122,8 @@ void (*on_value_changed)(struct menu_item *) = NULL;
 #define ACTION_Return 5
 #define ACTION_Escape 6
 #define ACTION_Exit 7
+#define ACTION_MiniLeft 8
+#define ACTION_MiniRight 9
 
 #define INITIAL_ACTION_DELAY 24
 #define INITIAL_ACTION_REPEAT_DELAY 8
@@ -148,6 +150,10 @@ void ui_init_menu(void) {
   int i;
 
   assert(emux_machine_class != BMC64_MACHINE_CLASS_UNKNOWN);
+
+  int dpx, dpy;
+  int sx, sy;
+  int dx, dy;
 
   // Why does ui_fb_w have to be a multiple of 32?
   ui_fb_w = menu_width_chars * 8 + 64;
@@ -180,7 +186,8 @@ void ui_init_menu(void) {
   ui_key_ticks_repeats_next = 0;
 
   // Let's create our UI frame buffer
-  circle_alloc_fbl(FB_LAYER_UI, 0 /* indexed */, &ui_fb, ui_fb_w, ui_fb_h, &ui_fb_pitch);
+  circle_alloc_fbl(FB_LAYER_UI, 0 /* indexed */, &ui_fb,
+                   ui_fb_w, ui_fb_h, &ui_fb_pitch);
   circle_clear_fbl(FB_LAYER_UI);
 }
 
@@ -338,36 +345,32 @@ static void ui_key_pressed(long key) {
 
   switch (key) {
   case KEYCODE_Up:
-    ui_key_action = ACTION_Up;
-    ui_key_ticks = INITIAL_ACTION_DELAY;
-    ui_key_ticks_next = INITIAL_ACTION_REPEAT_DELAY;
-    ui_key_ticks_repeats = 0;
-    ui_key_ticks_repeats_next = 8;
-    ui_action(ACTION_Up);
-    return;
   case KEYCODE_Down:
-    ui_key_action = ACTION_Down;
-    ui_key_ticks = INITIAL_ACTION_DELAY;
-    ui_key_ticks_next = INITIAL_ACTION_REPEAT_DELAY;
-    ui_key_ticks_repeats = 0;
-    ui_key_ticks_repeats_next = 8;
-    ui_action(ACTION_Down);
-    return;
   case KEYCODE_Left:
-    ui_key_action = ACTION_Left;
-    ui_key_ticks = INITIAL_ACTION_DELAY;
-    ui_key_ticks_next = INITIAL_ACTION_REPEAT_DELAY;
-    ui_key_ticks_repeats = 0;
-    ui_key_ticks_repeats_next = 8;
-    ui_action(ACTION_Left);
-    return;
   case KEYCODE_Right:
-    ui_key_action = ACTION_Right;
+  case KEYCODE_Comma:
+  case KEYCODE_Period:
+    switch (key) {
+      case KEYCODE_Up:
+        ui_key_action = ACTION_Up; break;
+      case KEYCODE_Down:
+        ui_key_action = ACTION_Down; break;
+      case KEYCODE_Left:
+        ui_key_action = ACTION_Left; break;
+      case KEYCODE_Right:
+        ui_key_action = ACTION_Right; break;
+      case KEYCODE_Comma:
+        ui_key_action = ACTION_MiniLeft; break;
+      case KEYCODE_Period:
+        ui_key_action = ACTION_MiniRight; break;
+      default:
+        return;
+    }
     ui_key_ticks = INITIAL_ACTION_DELAY;
     ui_key_ticks_next = INITIAL_ACTION_REPEAT_DELAY;
     ui_key_ticks_repeats = 0;
     ui_key_ticks_repeats_next = 8;
-    ui_action(ACTION_Right);
+    ui_action(ui_key_action);
     return;
   case KEYCODE_Escape:
     return;
@@ -415,6 +418,8 @@ static void ui_key_released(long key) {
   case KEYCODE_Down:
   case KEYCODE_Left:
   case KEYCODE_Right:
+  case KEYCODE_Comma:
+  case KEYCODE_Period:
     ui_key_action = ACTION_None;
     return;
   case KEYCODE_Return:
@@ -538,8 +543,13 @@ static void ui_action(long action) {
     }
     break;
   case ACTION_Left:
+  case ACTION_MiniLeft:
     if (cur->type == RANGE) {
-      cur->value -= cur->step;
+      if (action == ACTION_MiniLeft)
+         cur->value -= cur->ministep;
+      else
+         cur->value -= cur->step;
+
       if (cur->value < cur->min) {
         cur->value = cur->min;
       } else {
@@ -571,8 +581,13 @@ static void ui_action(long action) {
     }
     break;
   case ACTION_Right:
+  case ACTION_MiniRight:
     if (cur->type == RANGE) {
-      cur->value += cur->step;
+      if (action == ACTION_MiniRight)
+         cur->value += cur->ministep;
+      else
+         cur->value += cur->step;
+
       if (cur->value > cur->max) {
         cur->value = cur->max;
       } else {
@@ -851,6 +866,7 @@ struct menu_item *ui_menu_add_range(int id, struct menu_item *folder,
   new_item->min = min;
   new_item->max = max;
   new_item->step = step;
+  new_item->ministep = 1;
   new_item->divisor = 1;
   new_item->value = initial_value;
   append(folder, new_item);
@@ -997,6 +1013,12 @@ void ui_make_transparent(void) {
   memset(ui_fb, TRANSPARENT_COLOR, ui_fb_h * ui_fb_pitch);
 }
 
+static void ui_draw_shadow_text(const char* txt, int *x, int *y, int col) {
+  ui_draw_text(txt, *x+1, *y+1, 0);
+  ui_draw_text(txt, *x, *y, col);
+  *x = *x + strlen(txt) *8;
+}
+
 void ui_render_now(int menu_stack_index) {
   int index = 0;
   int indent = 0;
@@ -1032,26 +1054,80 @@ void ui_render_now(int menu_stack_index) {
 
   // Reveal dimensions in top left corner
   if (ui_transparent) {
-    char tmp[32];
+    char str1[32];
+    char str2[32];
     int dpx, dpy, dx, dy, sx, sy;
+
+    // We're drawing into the UI layer so get it's fb dims.
+    circle_get_fbl_dimensions(FB_LAYER_UI,
+                              &dpx, &dpy, &sx, &sy, &dx, &dy);
+
+    int cx = sx / 2 - 18 * 8 / 2;
+    int cy = sy / 2 - 3 * 10 / 2;
+
+    // Now get info about the layer we are djusting
     circle_get_fbl_dimensions(ui_transparent_layer,
                               &dpx, &dpy, &sx, &sy, &dx, &dy);
 
-    int qx = 0;
-    int qy = 0;
+    int qx = cx;
+    int qy = cy;
 
-    sprintf (tmp,"Display: %d x %d", dpx, dpy);
-    ui_draw_text(tmp, qx+1,qy+1,0);
-    ui_draw_text(tmp, qx,qy,1);
-    qy+=10;
-    sprintf (tmp,"FB: %d x %d",sx,sy);
-    ui_draw_text(tmp, qx+1,qy+1,0);
-    ui_draw_text(tmp, qx,qy,1);
-    qy+=10;
-    sprintf (tmp,"DST: %d x %d",dx,dy);
-    ui_draw_text(tmp, qx+1,qy+1,0);
-    ui_draw_text(tmp, qx,qy,1);
-    qy+=10;
+    sprintf (str1,"Display: %dx%d", dpx, dpy);
+    ui_draw_shadow_text(str1, &qx, &qy, 1);
+
+    qx = cx; qy+=10;
+    // FB: 123 x 123. Show green dimension if it divides
+    // evenly into the display resolution.
+    sprintf (str1, "%d", sx);
+    sprintf (str2, "%d", sy);
+    ui_draw_shadow_text("FB:", &qx, &qy, 1);
+    qx = qx + 8;
+    ui_draw_shadow_text(str1, &qx, &qy, dpx % sx == 0 ? 5 : 1);
+    ui_draw_shadow_text("x", &qx, &qy, 1);
+    ui_draw_shadow_text(str2, &qx, &qy, dpy % sy == 0 ? 5 : 1);
+    qx = qx + 8;
+    if (dpx % sx == 0) {
+       sprintf (str1, "x%d,", dpx/sx);
+       ui_draw_shadow_text(str1, &qx, &qy, 5);
+    } else {
+       ui_draw_shadow_text("*", &qx, &qy, 1);
+    }
+    if (dpy % sy == 0) {
+       sprintf (str1, "x%d", dpy/sy);
+       ui_draw_shadow_text(str1, &qx, &qy, 5);
+    } else {
+       ui_draw_shadow_text("*", &qx, &qy, 1);
+    }
+
+    qx = cx; qy+=10;
+    // DS: 123 x 123; Show green dimension if it matches
+    // the display resolution.  Show yellow if it is evenly divided by
+    // FB.
+    sprintf (str1, "%d", dx);
+    sprintf (str2, "%d", dy);
+    ui_draw_shadow_text("SFB:", &qx, &qy, 1);
+    qx = qx + 8;
+    ui_draw_shadow_text(str1, &qx, &qy, dx % sx == 0 ? 5 : 1);
+    ui_draw_shadow_text("x", &qx, &qy, 1);
+    ui_draw_shadow_text(str2, &qx, &qy, dy % sy == 0 ? 5 : 1);
+    qx = qx + 8;
+    if (dx % sx == 0) {
+       sprintf (str1, "x%d,", dx/sx);
+       ui_draw_shadow_text(str1, &qx, &qy, 5);
+    } else {
+       ui_draw_shadow_text("*", &qx, &qy, 1);
+    }
+    if (dy % sy == 0) {
+       sprintf (str1, "x%d", dy/sy);
+       ui_draw_shadow_text(str1, &qx, &qy, 5);
+    } else {
+       ui_draw_shadow_text("*", &qx, &qy, 1);
+    }
+
+    qx = cx; qy+=20;
+    ui_draw_shadow_text("Use , and . for fine grained", &qx, &qy, 1);
+    qx = cx; qy+=10;
+    ui_draw_shadow_text("H/V stretch control.", &qx, &qy, 1);
   }
 }
 
