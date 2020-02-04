@@ -77,6 +77,7 @@ int pending_emu_quick_func;
 static int osd_active;
 static int ui_commodore_down;
 static int ui_transparent;
+static int ui_transparent_layer; // which layer we are revealing for adjustment
 static int ui_render_current_item_only;
 
 // Stubs for vice callbacks. Unimplemented for now.
@@ -1028,6 +1029,30 @@ void ui_render_now(int menu_stack_index) {
     menu_cursor[menu_stack_index] = max_index[menu_stack_index] - 1;
     cursor_pos_updated();
   }
+
+  // Reveal dimensions in top left corner
+  if (ui_transparent) {
+    char tmp[32];
+    int dpx, dpy, dx, dy, sx, sy;
+    circle_get_fbl_dimensions(ui_transparent_layer,
+                              &dpx, &dpy, &sx, &sy, &dx, &dy);
+
+    int qx = 0;
+    int qy = 0;
+
+    sprintf (tmp,"Display: %d x %d", dpx, dpy);
+    ui_draw_text(tmp, qx+1,qy+1,0);
+    ui_draw_text(tmp, qx,qy,1);
+    qy+=10;
+    sprintf (tmp,"FB: %d x %d",sx,sy);
+    ui_draw_text(tmp, qx+1,qy+1,0);
+    ui_draw_text(tmp, qx,qy,1);
+    qy+=10;
+    sprintf (tmp,"DST: %d x %d",dx,dy);
+    ui_draw_text(tmp, qx+1,qy+1,0);
+    ui_draw_text(tmp, qx,qy,1);
+    qy+=10;
+  }
 }
 
 // This function will traverse recursively all nodes in the node list
@@ -1354,10 +1379,6 @@ void ui_dismiss_osd_if_active(void) {
   }
 }
 
-void ui_set_transparent(int v) {
-  ui_transparent = v;
-}
-
 void ui_set_render_current_item_only(int v) {
   ui_render_current_item_only = v;
 }
@@ -1370,11 +1391,13 @@ void emu_quick_func_interrupt(int button_assignment) {
 // current item.
 void ui_canvas_reveal_temp(int layer) {
   if (layer == FB_LAYER_VIC && vic_showing) {
-    ui_set_transparent(1);
+    ui_transparent = 1;
+    ui_transparent_layer = layer;
     ui_set_render_current_item_only(1);
   }
   else if (layer == FB_LAYER_VDC && vdc_showing) {
-    ui_set_transparent(1);
+    ui_transparent = 1;
+    ui_transparent_layer = layer;
     ui_set_render_current_item_only(1);
   }
 }
