@@ -157,15 +157,39 @@ All of the above re: timing applies to the other machines as well.  However, in 
 
 # Canvas Dimensions
 
-Since v2.1, the virtual display dimensions are adjusted dynamically from the menu. Under 'Video', you will find Horizontal Border Trim %, Vertical Border Trim % and Aspect Ratio controls for each virtual display available.  Displays are scaled as follows:
+The virtual display dimensions are adjusted dynamically from the menu. Under 'Video', you will find Horizontal Border Trim %, Vertical Border Trim % and H/V Stretch controls for each virtual display available. Displays are scaled as follows:
 
-      1. The amount of border to trim is removed from top/botom and left/right edges.
-      2. The resulting image is stretched vertically according to vertical stretch factor (1.0 is full vertical height)
-      3. The width is then calculated according to the horizontal stretch factor.
+      1. The amount of border to trim is removed/added from/to top/botom and left/right edges.
+      2. The resulting image is stretched according to stretch factors (1.0 is full vertical height)
+      3. The scaled image is then centered within the display resolution.
 
-Using the three settings available, you should be able to customize how much border is available as well as the aspect ratio of the final image.  Reasonable defaults are provided.
+Using the settings, you should be able to customize the display to your liking.  However, there are benefits to chosing values that produce integer scaling.
 
-NOTE: v2.1 and onward will ignore any vic_canvas_* or vicii_canvas_* kernel parameters.  The scaling_kernel option is still applicable.  If you are using a version lower than v2.1, consult the old documentation on how video cropping/sizing works.
+## Integer Scaling
+
+    BMC64 has some tools for anyone who wants to get better picture quality on their CRT monitors or if you want 'pixel perfect' HDMI displays instead of the 'soft' look with the default config.  Integer scaling along with nearest neighbor (scaling_kernel=8) will eliminate scaling artifacts and if you chose a vertical resolution equal to or a multiple of the frame buffer resolution, you get cleaner scanlines on CRTs.  It also makes HDMI look clean if you want 'pixel perfect' scaling.
+
+    When you adjust the display settings (trim and stretch), the display resolution, the frame buffer resolution (FB) and the scaled frame buffer resolution (SFB) will be displayed in the middle of the screen.  To get integer scaling, first use border trim to either reduce or increase the FB dimensions until they evenly divide into the display resolution. Then use stretch to make the SFB evenly divided by FB.  You will end up with a 'pixel perfect' up-scale.  The dimensions will turn green when you get it right and the scaling integers are displayed.
+
+    For, example, a DPI output connected to a CRT, you can try a custom resolution like this:
+
+    dpi_timings=1920 1 56 176 208 282 1 5 2 23 0 0 0 50 0 36900000 1
+
+    Which gives a 1920 x 282 display res.  Then trim/pad FB to 384x282.  Then scale SFB to 1536x282.  That gives a 4x horizontal scale and 1:1 vertical.  So the scanlines on your CRT should be nice and clean. Once your resolution looks good, follow the custom timing tool instructions to get your cycles_per_second correct.  The above mode was tested on a Sony Trinitron CRT. Here is what the machines.txt entry would look lile:
+
+    [C64/PAL/DPI/VGA666:1920x282@50.1hz]
+    enable_dpi=true
+    machine_timing=pal-custom
+    cycles_per_second=CALCULATE THIS!!!
+    enable_dpi_lcd=1
+    display_default_lcd=1
+    dpi_group=2
+    dpi_mode=87
+    dpi_timings=1920 1 56 176 208 282 1 5 2 23 0 0 0 50 0 36900000 1
+
+    For CRT, similar things can be done with a x2 vertical scale.
+
+    Many thanks goes out to Alessio Scanderebech and Andrea Mazzoleni for their assistance with getting this working.
 
 # Video Scaling Algorithm
 
@@ -178,6 +202,8 @@ The emulated resolutions are small and must be scaled up to the video mode's res
   * (Pixel Perfect Look) This is what scaling_kernel=8 option will look like:
 
 ![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/scaling_kernel_8.jpg)
+
+  NOTE: For scaling_kernel=8, it's best to adjust your FB so that it evenly divides into the display resolution and SFB so that it is evenly divided by FB.  See section on Integer Scaling above.
 
 # CRT Scanline alignment
 
