@@ -1546,3 +1546,8 @@ void emu_exit(void) {
   circle_update_palette_fbl(FB_LAYER_VIC);
   circle_frames_ready_fbl(FB_LAYER_VIC, -1, 0);
 }
+
+void ui_geometry_changed(int dpx, int dpy, int sx, int sy, int dx, int dy) {
+  // When the ui geometry changes, we need to update some menu
+  // fields to match.
+}

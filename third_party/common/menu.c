@@ -3630,4 +3630,10 @@ void emux_geometry_changed(int layer, int canvas_index) {
   canvas_state[canvas_index].max_padding_w_px = max_padding_w_px;
   canvas_state[canvas_index].max_padding_h_px = max_padding_w_px;
   canvas_state[canvas_index].max_stretch_h = max_scale * 1000;
+
+  if (layer == FB_LAYER_VIC) {
+     // When the first display changes, we need to update the UI since
+     // it's frame buffer dimensions must match.
+     ui_geometry_changed(dpx, dpy, sx, sy, dx, dy);
+  }
 }
