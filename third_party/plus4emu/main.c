@@ -1639,7 +1639,7 @@ static void init_video(void) {
     Plus4VideoDecoder_SetNTSCMode(videoDecoder, 0);
   }
 
-  emux_geometry_changed(FB_LAYER_VIC, vic_canvas_index);
+  emux_geometry_changed(FB_LAYER_VIC);
 }
 
 void emux_add_userport_joys(struct menu_item* parent) {

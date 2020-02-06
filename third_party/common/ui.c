@@ -164,7 +164,7 @@ void ui_init_menu(void) {
   }
 
   // Root menu is never popped
-  struct menu_item *root = ui_push_menu(-1, -1);
+  struct menu_item *root = ui_push_menu(-2, -2);
 
   // This also loads our custom settings file. It's safe to have settings
   // here that our videoarch code needs since this is called before any
@@ -1052,8 +1052,10 @@ void ui_render_now(int menu_stack_index) {
                               &sw, &sh,
                               &dw, &dh);
 
-    int cx = sw / 2 - 18 * 8 / 2;
-    int cy = sh / 2 - 3 * 10 / 2;
+    // We can use the 1st display canvas info because our UI layer
+    // mirrors it's dimensions all the time.
+    int cx = canvas_state[vic_canvas_index].left + sw / 2 - 18 * 8 / 2;
+    int cy = canvas_state[vic_canvas_index].top + sh / 2 - 3 * 10 / 2;
 
     // Now get info about the layer we are djusting
     circle_get_fbl_dimensions(ui_transparent_layer,
@@ -1069,33 +1071,14 @@ void ui_render_now(int menu_stack_index) {
     ui_draw_shadow_text(str1, &qx, &qy, 1);
 
     qx = cx; qy+=10;
-    // FB: 123 x 123. Show green dimension if it divides
-    // evenly into the display resolution.
-    sprintf (str1, "%d", sw);
-    sprintf (str2, "%d", sh);
-    ui_draw_shadow_text("FB:", &qx, &qy, 1);
-    qx = qx + 8;
-    ui_draw_shadow_text(str1, &qx, &qy, dpx % sw == 0 ? 5 : 1);
-    ui_draw_shadow_text("x", &qx, &qy, 1);
-    ui_draw_shadow_text(str2, &qx, &qy, dpy % sh == 0 ? 5 : 1);
-    qx = qx + 8;
-    if (dpx % sw == 0) {
-       sprintf (str1, "x%d,", dpx/sw);
-       ui_draw_shadow_text(str1, &qx, &qy, 5);
-    } else {
-       ui_draw_shadow_text("*", &qx, &qy, 1);
-    }
-    if (dpy % sh == 0) {
-       sprintf (str1, "x%d", dpy/sh);
-       ui_draw_shadow_text(str1, &qx, &qy, 5);
-    } else {
-       ui_draw_shadow_text("*", &qx, &qy, 1);
-    }
+    // Unscaled frame buffer
+    sprintf (str1, "FB: %d x %d", sw, sh);
+    ui_draw_shadow_text(str1, &qx, &qy, 1);
+    qx = qx + 10;
 
+    // Scaled frame buffer. Show green dimension if it is
+    // an even multiple of the unscaled frame buffer.
     qx = cx; qy+=10;
-    // DS: 123 x 123; Show green dimension if it matches
-    // the display resolution.  Show yellow if it is evenly divided by
-    // FB.
     sprintf (str1, "%d", dw);
     sprintf (str2, "%d", dh);
     ui_draw_shadow_text("SFB:", &qx, &qy, 1);
@@ -1210,9 +1193,9 @@ struct menu_item *ui_push_menu(int w_chars, int h_chars) {
 
   int menu_width = w_chars * 8;
   int menu_height = h_chars * 8;
-  if (w_chars == -1)
+  if (w_chars < 0)
     menu_width = menu_width_chars * 8;
-  if (h_chars == -1)
+  if (h_chars < 0)
     menu_height = menu_height_chars * 8;
 
   current_menu++;
@@ -1231,21 +1214,31 @@ struct menu_item *ui_push_menu(int w_chars, int h_chars) {
   menu_roots[current_menu].menu_width = menu_width;
   menu_roots[current_menu].menu_height = menu_height;
 
-  if (w_chars == -1) {
+  if (w_chars == -2) {
+    // Root: This will get set after frame buffer is created
     menu_roots[current_menu].menu_left = 0;
+  } else if (w_chars == -1) {
+    // Inherit the root menu's left
+    menu_roots[current_menu].menu_left = menu_roots[0].menu_left;
   } else {
-    menu_roots[current_menu].menu_left = (ui_fb_w - menu_width) / 2;
+    // Center this smaller menu inside the bounds of the root
+    menu_roots[current_menu].menu_left = menu_roots[0].menu_left + (menu_roots[0].menu_width - menu_width) / 2;
   }
 
-  if (h_chars == -1) {
-     menu_roots[current_menu].menu_top = 0;
+  if (h_chars == -2) {
+    // Root: This will get set after frame buffer is created
+    menu_roots[current_menu].menu_top = 0;
+  } else if (h_chars == -1) {
+    // Inherit the root menu's top
+    menu_roots[current_menu].menu_top = menu_roots[0].menu_top;
   } else {
-     menu_roots[current_menu].menu_top = (ui_fb_h - menu_height) / 2;
+    // Center this smaller menu inside the bounds of the root
+    menu_roots[current_menu].menu_top = menu_roots[0].menu_top + (menu_roots[0].menu_height - menu_height) / 2;
   }
 
   menu_cursor[current_menu] = 0;
   menu_window_top[current_menu] = 0;
-  if (h_chars == -1) {
+  if (h_chars < 0) {
      menu_window_bottom[current_menu] = menu_height_chars;
   } else {
      menu_window_bottom[current_menu] = h_chars;
