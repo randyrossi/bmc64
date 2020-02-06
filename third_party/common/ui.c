@@ -1043,24 +1043,24 @@ void ui_render_now(int menu_stack_index) {
   if (ui_transparent) {
     char str1[32];
     char str2[32];
-    int dpx, dpy, fbw, fbh, dx, dy, sx, sy;
+    int dpx, dpy, fbw, fbh, dw, dh, sw, sh;
 
     // We're drawing into the UI layer so get it's fb dims.
     circle_get_fbl_dimensions(FB_LAYER_UI,
                               &dpx, &dpy,
                               &fbw, &fbh,
-                              &sx, &sy,
-                              &dx, &dy);
+                              &sw, &sh,
+                              &dw, &dh);
 
-    int cx = sx / 2 - 18 * 8 / 2;
-    int cy = sy / 2 - 3 * 10 / 2;
+    int cx = sw / 2 - 18 * 8 / 2;
+    int cy = sh / 2 - 3 * 10 / 2;
 
     // Now get info about the layer we are djusting
     circle_get_fbl_dimensions(ui_transparent_layer,
                               &dpx, &dpy,
                               &fbw, &fbh,
-                              &sx, &sy,
-                              &dx, &dy);
+                              &sw, &sh,
+                              &dw, &dh);
 
     int qx = cx;
     int qy = cy;
@@ -1071,22 +1071,22 @@ void ui_render_now(int menu_stack_index) {
     qx = cx; qy+=10;
     // FB: 123 x 123. Show green dimension if it divides
     // evenly into the display resolution.
-    sprintf (str1, "%d", sx);
-    sprintf (str2, "%d", sy);
+    sprintf (str1, "%d", sw);
+    sprintf (str2, "%d", sh);
     ui_draw_shadow_text("FB:", &qx, &qy, 1);
     qx = qx + 8;
-    ui_draw_shadow_text(str1, &qx, &qy, dpx % sx == 0 ? 5 : 1);
+    ui_draw_shadow_text(str1, &qx, &qy, dpx % sw == 0 ? 5 : 1);
     ui_draw_shadow_text("x", &qx, &qy, 1);
-    ui_draw_shadow_text(str2, &qx, &qy, dpy % sy == 0 ? 5 : 1);
+    ui_draw_shadow_text(str2, &qx, &qy, dpy % sh == 0 ? 5 : 1);
     qx = qx + 8;
-    if (dpx % sx == 0) {
-       sprintf (str1, "x%d,", dpx/sx);
+    if (dpx % sw == 0) {
+       sprintf (str1, "x%d,", dpx/sw);
        ui_draw_shadow_text(str1, &qx, &qy, 5);
     } else {
        ui_draw_shadow_text("*", &qx, &qy, 1);
     }
-    if (dpy % sy == 0) {
-       sprintf (str1, "x%d", dpy/sy);
+    if (dpy % sh == 0) {
+       sprintf (str1, "x%d", dpy/sh);
        ui_draw_shadow_text(str1, &qx, &qy, 5);
     } else {
        ui_draw_shadow_text("*", &qx, &qy, 1);
@@ -1096,22 +1096,22 @@ void ui_render_now(int menu_stack_index) {
     // DS: 123 x 123; Show green dimension if it matches
     // the display resolution.  Show yellow if it is evenly divided by
     // FB.
-    sprintf (str1, "%d", dx);
-    sprintf (str2, "%d", dy);
+    sprintf (str1, "%d", dw);
+    sprintf (str2, "%d", dh);
     ui_draw_shadow_text("SFB:", &qx, &qy, 1);
     qx = qx + 8;
-    ui_draw_shadow_text(str1, &qx, &qy, dx % sx == 0 ? 5 : 1);
+    ui_draw_shadow_text(str1, &qx, &qy, dw % sw == 0 ? 5 : 1);
     ui_draw_shadow_text("x", &qx, &qy, 1);
-    ui_draw_shadow_text(str2, &qx, &qy, dy % sy == 0 ? 5 : 1);
+    ui_draw_shadow_text(str2, &qx, &qy, dh % sh == 0 ? 5 : 1);
     qx = qx + 8;
-    if (dx % sx == 0) {
-       sprintf (str1, "x%d,", dx/sx);
+    if (dw % sw == 0) {
+       sprintf (str1, "x%d,", dw/sw);
        ui_draw_shadow_text(str1, &qx, &qy, 5);
     } else {
        ui_draw_shadow_text("*", &qx, &qy, 1);
     }
-    if (dy % sy == 0) {
-       sprintf (str1, "x%d", dy/sy);
+    if (dh % sh == 0) {
+       sprintf (str1, "x%d", dh/sh);
        ui_draw_shadow_text(str1, &qx, &qy, 5);
     } else {
        ui_draw_shadow_text("*", &qx, &qy, 1);
@@ -1569,8 +1569,8 @@ static void ui_update_children(struct menu_item *node,
 
 void ui_geometry_changed(int dpx, int dpy,
                          int fbw, int fbh,
-                         int sx, int sy,
-                         int dx, int dy) {
+                         int sw, int sh,
+                         int dw, int dh) {
   // When the ui geometry changes, we need to update some menu
   // fields to match.
   if (fbw != ui_fb_w || fbh != ui_fb_h) {

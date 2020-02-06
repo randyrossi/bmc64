@@ -772,12 +772,12 @@ static int compute_trim_stretch(int display_dim, int fb_dim,
 }
 
 static void do_integer_scaling(int layer, int canvas_index, int dimension) {
-  int dpx, dpy, fbw, fbh, dx, dy, sx, sy;
+  int dpx, dpy, fbw, fbh, sw, sh, dw, dh;
   circle_get_fbl_dimensions(layer,
                             &dpx, &dpy,
                             &fbw, &fbh,
-                            &sx, &sy,
-                            &dx, &dy);
+                            &sw, &sh,
+                            &dw, &dh);
   int dst_trim;
   int dst_stretch;
   int dst_new_fb;
@@ -3609,12 +3609,12 @@ void emux_geometry_changed(int layer) {
      canvas_index = vdc_canvas_index;
   }
 
-  int dpx, dpy, fbw, fbh, dx, dy, sx, sy;
+  int dpx, dpy, fbw, fbh, sw, sh, dw, dh;
   circle_get_fbl_dimensions(layer,
                             &dpx, &dpy,
                             &fbw, &fbh,
-                            &sx, &sy,
-                            &dx, &dy);
+                            &sw, &sh,
+                            &dw, &dh);
 
   if (canvas_index >= 0) {
     int max_padding_w_px = MIN(
@@ -3650,6 +3650,6 @@ void emux_geometry_changed(int layer) {
   if (layer == FB_LAYER_VIC) {
      // When the first display changes, we need to update the UI since
      // it's frame buffer dimensions must match.
-     ui_geometry_changed(dpx, dpy, fbw, fbh, sx, sy, dx, dy);
+     ui_geometry_changed(dpx, dpy, fbw, fbh, sw, sh, dw, dh);
   }
 }
