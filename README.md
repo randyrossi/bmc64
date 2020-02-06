@@ -159,15 +159,17 @@ All of the above re: timing applies to the other machines as well.  However, in 
 
 The virtual display dimensions are adjusted dynamically from the menu. Under 'Video', you will find Horizontal Border Trim %, Vertical Border Trim % and H/V Stretch controls for each virtual display available. Displays are scaled as follows:
 
-      1. The amount of border to trim is removed/added from/to top/botom and left/right edges.
-      2. The resulting image is stretched according to stretch factors (1.0 is full vertical height)
+      1. The amount of border to trim is removed/added from/to top/botom and left/right edges (negative trim = extra padding).
+      2. The resulting image is scaled according to stretch factors (1.0 is full vertical height)
       3. The scaled image is then centered within the display resolution.
 
-Using the settings, you should be able to customize the display to your liking.  However, there are benefits to chosing values that produce integer scaling.
+Using the settings, you should be able to customize the display to your liking. However, there are benefits to chosing values that produce integer scaling (see below).
 
 ## Integer Scaling
 
     BMC64 has some tools for anyone who wants to get better picture quality on their CRT monitors or if you want 'pixel perfect' HDMI displays instead of the 'soft' look with the default config.  Integer scaling along with nearest neighbor (scaling_kernel=8) will eliminate scaling artifacts and if you chose a vertical resolution equal to or a multiple of the frame buffer resolution, you get cleaner scanlines on CRTs.  It also makes HDMI look clean if you want 'pixel perfect' scaling.
+
+    NOTE: Not all resolutions will support integer scaling.  The default 720p modes don't because the frame buffer can't be padded/trimmed enough to hit the resolutions.  Usually, a custom resolution is required.
 
     When you adjust the display settings (trim and stretch), the display resolution, the frame buffer resolution (FB) and the scaled frame buffer resolution (SFB) will be displayed in the middle of the screen.  To get integer scaling, first use border trim to either reduce or increase the FB dimensions until they evenly divide into the display resolution. Then use stretch to make the SFB evenly divided by FB.  You will end up with a 'pixel perfect' up-scale.  The dimensions will turn green when you get it right and the scaling integers are displayed.
 
@@ -188,6 +190,8 @@ Using the settings, you should be able to customize the display to your liking. 
     dpi_timings=1920 1 56 176 208 282 1 5 2 23 0 0 0 50 0 36900000 1
 
     For CRT, similar things can be done with a x2 vertical scale.
+
+    There are options in the 'Video' menu to attempt to integer scale each dimension separately. They may not work on your resolution, however.
 
     Many thanks goes out to Alessio Scanderebech and Andrea Mazzoleni for their assistance with getting this working.
 

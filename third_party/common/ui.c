@@ -1125,9 +1125,7 @@ void ui_render_now(int menu_stack_index) {
     }
 
     qx = cx; qy+=20;
-    ui_draw_shadow_text("Use , and . for fine grained", &qx, &qy, 1);
-    qx = cx; qy+=10;
-    ui_draw_shadow_text("H/V stretch control.", &qx, &qy, 1);
+    ui_draw_shadow_text("Use , and . for -/+ 1", &qx, &qy, 1);
   }
 }
 

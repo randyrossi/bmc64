@@ -127,10 +127,13 @@ struct CanvasState {
   int gfx_w;
   int gfx_h;
   int max_stretch_h;
-  // How low can border trim go
-  int min_border_w;
-  int min_border_h;
-  // How much border is available
+  // Max padding allowed in pixels;
+  int max_padding_w_px;
+  int max_padding_h_px;
+  // Max padding amount. Expressed as negative % of max_border_w/h.
+  int max_padding_w;
+  int max_padding_h;
+  // How much border is available in pixels. Max trim amount.
   int max_border_w;
   int max_border_h;
   // How much of the border we want to see
@@ -158,7 +161,10 @@ struct CanvasState {
   int fb_width;
   int fb_height;
 
-  // For CRT effect, set to 2.
+  // For CRT effect, set to 2. This doubles the height of
+  // the frame buffer so we can 'skip' every other line.
+  // Not loaded from settings. It's set by the machine if
+  // it wants to support this.  Currently only PET does.
   int raster_skip;
 };
 

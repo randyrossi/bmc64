@@ -106,6 +106,8 @@ static int drive_led_colors[4];
 
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
+static void init_video(void);
+
 static int p4_isspace(char c) {
   return (c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v');
 }
@@ -741,6 +743,7 @@ int main_program(int argc, char **argv)
 
   vic_enabled = 1; // really TED
 
+  init_video();
   // This loads settings vars
   ui_init_menu();
 
@@ -1596,6 +1599,9 @@ int emux_handle_loaded_setting(char *name, char* value_str, int value) {
 }
 
 void emux_load_settings_done(void) {
+}
+
+static void init_video(void) {
   if (is_ntsc()) {
      vertical_res = 242 * raster_skip;
      raster_low = 18 * raster_skip;

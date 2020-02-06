@@ -717,6 +717,109 @@ void ui_set_joy_items() {
   set_need_mouse();
 }
 
+// Figure out what trim and stretch value will result in integer scaling
+// given the display dimension and the frame buffer dimension.  The
+// dst_trim will be the number of pixels and should be expressed as a
+// percentage of the max border for the dimension if it's going to be
+// used in the menu trim item.  The dst_stretch will be a multiple that
+// will bring the padded/trimmed frame buffer up to the given display_dim.
+// It should be expressed as a percentage of the display height if it's
+// going to be used in a stretch menu item.
+static int compute_trim_stretch(int display_dim, int fb_dim,
+                                int max_pad, int max_trim,
+                                int *dst_trim, int *dst_stretch, int *dst_new_fb) {
+  int can_trim = 0;
+  int can_stretch = 0;
+
+  int trim;
+  int stretch;
+  int new_fb_dim;
+
+  for (int n = 1; n < 8 && !can_trim && !can_stretch; n++) {
+     int t = display_dim / n;
+
+     can_trim = 0;
+     if (t>= fb_dim && (fb_dim + max_pad) >= t && (t-fb_dim) % 2 == 0) {
+        // Yes, we can pad. Pad is negative trim.
+        trim = -(t - fb_dim);
+        can_trim = 1;
+     } else if (t <= fb_dim && (fb_dim - max_trim) <= t && (fb_dim - t) % 2 == 0) {
+        // Yes, we can trim
+        trim = (fb_dim - t);
+        can_trim = 1;
+     }
+
+     if (can_trim) {
+        new_fb_dim = fb_dim - trim;
+        for (int m = 1; m < 8; m++) {
+            if (m * new_fb_dim == display_dim) {
+               stretch = m;
+               can_stretch = 1;
+               break;
+            }
+        }
+     }
+  }
+
+  if (!can_trim && !can_stretch) {
+     return 0;
+  }
+
+  *dst_trim = trim / 2; // div 2 because trim is taken off each side
+  *dst_stretch = stretch;
+  *dst_new_fb = new_fb_dim;
+  return 1; //success
+}
+
+static void do_integer_scaling(int layer, int canvas_index, int dimension) {
+  int dpx, dpy, dx, dy, sx, sy;
+  circle_get_fbl_dimensions(layer,
+                            &dpx, &dpy, &sx, &sy, &dx, &dy);
+  int dst_trim;
+  int dst_stretch;
+  int dst_new_fb;
+
+  int display_dim = dimension == 0 ? dpx : dpy;
+  int fb_dim = dimension == 0 ? canvas_state[canvas_index].gfx_w + canvas_state[canvas_index].max_border_w*2 :
+                                canvas_state[canvas_index].gfx_h + canvas_state[canvas_index].max_border_h*2;
+  int max_pad = dimension == 0 ? canvas_state[canvas_index].max_padding_w_px :
+                                 canvas_state[canvas_index].max_padding_h_px;
+  int max_trim = dimension == 0 ? canvas_state[canvas_index].max_border_w :
+                                  canvas_state[canvas_index].max_border_h;
+
+  if (compute_trim_stretch(display_dim, fb_dim, max_pad, max_trim, &dst_trim, &dst_stretch, &dst_new_fb)) {
+     // Now express the trim as a percentage of the max for the menu.
+     int menu_trim_value;
+     if (dst_trim > 0)
+        menu_trim_value = ceil((double)dst_trim * 100.0 / (double)max_trim);
+     else
+        menu_trim_value = floor((double)dst_trim * 100.0 / (double)max_trim);
+
+     // Now express the scale as a ratio of the display height for the menu
+     int menu_stretch_value = ceil((double)(dst_stretch * dst_new_fb) * 1000.0 / (double)dpy);
+
+     if (dimension == 0) {
+        if (layer == FB_LAYER_VIC) {
+           h_border_trim_item_0->value = menu_trim_value;
+           h_stretch_item_0->value = menu_stretch_value;
+        } else if (layer == FB_LAYER_VDC) {
+           h_border_trim_item_1->value = menu_trim_value;
+           h_stretch_item_1->value = menu_stretch_value;
+        }
+     } else {
+        if (layer == FB_LAYER_VIC) {
+           v_border_trim_item_0->value = menu_trim_value;
+           v_stretch_item_0->value = menu_stretch_value;
+        } else if (layer == FB_LAYER_VDC) {
+           v_border_trim_item_1->value = menu_trim_value;
+           v_stretch_item_1->value = menu_stretch_value;
+        }
+     }
+  } else {
+     ui_error("Can't integer scale this resolution!");
+  }
+}
+
 static int save_settings() {
   FILE *fp;
   switch (emux_machine_class) {
@@ -2258,6 +2361,50 @@ static void menu_value_changed(struct menu_item *item) {
            v_stretch_item_1);
     }
     break;
+  case MENU_INTEGER_SCALE_W_0:
+    do_integer_scaling(FB_LAYER_VIC, vic_canvas_index, 0);
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
+    do_video_settings(FB_LAYER_VIC,
+        h_center_item_0,
+        v_center_item_0,
+        h_border_trim_item_0,
+        v_border_trim_item_0,
+        h_stretch_item_0,
+        v_stretch_item_0);
+    break;
+  case MENU_INTEGER_SCALE_H_0:
+    do_integer_scaling(FB_LAYER_VIC, vic_canvas_index, 1);
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
+    do_video_settings(FB_LAYER_VIC,
+        h_center_item_0,
+        v_center_item_0,
+        h_border_trim_item_0,
+        v_border_trim_item_0,
+        h_stretch_item_0,
+        v_stretch_item_0);
+    break;
+  case MENU_INTEGER_SCALE_W_1:
+    do_integer_scaling(FB_LAYER_VDC, vdc_canvas_index, 0);
+    ui_canvas_reveal_temp(FB_LAYER_VDC);
+    do_video_settings(FB_LAYER_VDC,
+        h_center_item_1,
+        v_center_item_1,
+        h_border_trim_item_1,
+        v_border_trim_item_1,
+        h_stretch_item_1,
+        v_stretch_item_1);
+    break;
+  case MENU_INTEGER_SCALE_H_1:
+    do_integer_scaling(FB_LAYER_VDC, vdc_canvas_index, 1);
+    ui_canvas_reveal_temp(FB_LAYER_VDC);
+    do_video_settings(FB_LAYER_VDC,
+        h_center_item_1,
+        v_center_item_1,
+        h_border_trim_item_1,
+        v_border_trim_item_1,
+        h_stretch_item_1,
+        v_stretch_item_1);
+    break;
   case MENU_H_CENTER_0:
   case MENU_V_CENTER_0:
   case MENU_H_BORDER_0:
@@ -2911,11 +3058,11 @@ void build_menu(struct menu_item *root) {
           -48, 48, 1, 0);
   h_border_trim_item_0 =
       ui_menu_add_range(MENU_H_BORDER_0, parent, "H Border Trim %",
-          canvas_state[vic_canvas_index].min_border_w,
+          canvas_state[vic_canvas_index].max_padding_w,
              100, 1, defaultHBorderTrim);
   v_border_trim_item_0 =
       ui_menu_add_range(MENU_V_BORDER_0, parent, "V Border Trim %",
-          canvas_state[vic_canvas_index].min_border_h,
+          canvas_state[vic_canvas_index].max_padding_h,
              100, 1, defaultVBorderTrim);
   child = h_stretch_item_0 =
       ui_menu_add_range(MENU_H_STRETCH_0, parent, "H Stretch Factor",
@@ -2927,6 +3074,9 @@ void build_menu(struct menu_item *root) {
       ui_menu_add_range(MENU_V_STRETCH_0, parent, "V Stretch Factor",
            500, 1000, 5, defaultVStretch);
   child->divisor = 1000;
+
+  ui_menu_add_button(MENU_INTEGER_SCALE_W_0, parent, "Attempt H Integer Scale");
+  ui_menu_add_button(MENU_INTEGER_SCALE_H_0, parent, "Attempt V Integer Scale");
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      parent = ui_menu_add_folder(video_parent, "VDC");
@@ -2972,11 +3122,11 @@ void build_menu(struct menu_item *root) {
              -48, 48, 1, 0);
      h_border_trim_item_1 =
          ui_menu_add_range(MENU_H_BORDER_1, parent, "H Border Trim %",
-             canvas_state[vdc_canvas_index].min_border_w,
+             canvas_state[vdc_canvas_index].max_padding_w,
                 100, 1, DEFAULT_VDC_H_BORDER_TRIM);
      v_border_trim_item_1 =
          ui_menu_add_range(MENU_V_BORDER_1, parent, "V Border Trim %",
-             canvas_state[vdc_canvas_index].min_border_h,
+             canvas_state[vdc_canvas_index].max_padding_h,
                 100, 1, DEFAULT_VDC_V_BORDER_TRIM);
      child = h_stretch_item_1 =
          ui_menu_add_range(MENU_H_STRETCH_1, parent, "H Stretch Factor",
@@ -2988,6 +3138,9 @@ void build_menu(struct menu_item *root) {
          ui_menu_add_range(MENU_V_STRETCH_1, parent, "V Stretch Factor",
               500, 1000, 5, DEFAULT_VDC_V_STRETCH);
      child->divisor = 1000;
+
+     ui_menu_add_button(MENU_INTEGER_SCALE_W_1, parent, "Integer Scale W");
+     ui_menu_add_button(MENU_INTEGER_SCALE_H_1, parent, "Integer Scale H");
   }
 
   if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
@@ -3446,10 +3599,14 @@ void emux_geometry_changed(int layer, int canvas_index) {
   // start padding the edges with negative trim values.
   // These are expressed in terms of percentage of the max because they
   // are going into the range item.
-  int min_neg_h_trim = ((double)MIN(
+  int max_padding_w_px = MIN(
       canvas_state[canvas_index].extra_offscreen_border_left,
-      canvas_state[canvas_index].extra_offscreen_border_right) / (double)canvas_state[canvas_index].max_border_w) * 100.0;
-  int min_neg_v_trim = ((double)canvas_state[canvas_index].first_displayed_line / (double)canvas_state[canvas_index].max_border_h) * 100.0;
+      canvas_state[canvas_index].extra_offscreen_border_right);
+  int max_padding_h_px = canvas_state[canvas_index].first_displayed_line;
+
+  // Express these pixel values as negative percentage of border amts (for the menu item)
+  int max_padding_w = -((double)max_padding_w_px / (double)canvas_state[canvas_index].max_border_w) * 100.0;
+  int max_padding_h = -((double)max_padding_h_px / (double)canvas_state[canvas_index].max_border_h) * 100.0;
 
   // Update the allowed max h stretch based on the display width and height
   int dpx, dpy, dx, dy, sx, sy;
@@ -3458,15 +3615,19 @@ void emux_geometry_changed(int layer, int canvas_index) {
   double max_scale = ceil((double)dpx / (double)dpy);
 
   if (layer == FB_LAYER_VIC) {
-     h_border_trim_item_0->min = -min_neg_h_trim;
-     v_border_trim_item_0->min = -min_neg_v_trim;
+     h_border_trim_item_0->min = max_padding_w;
+     v_border_trim_item_0->min = max_padding_h;
      h_stretch_item_0->max = max_scale * 1000;
   } else if (layer == FB_LAYER_VDC) {
-     h_border_trim_item_1->min = -min_neg_h_trim;
-     v_border_trim_item_1->min = -min_neg_v_trim;
+     h_border_trim_item_1->min = max_padding_w;
+     v_border_trim_item_1->min = max_padding_h;
      h_stretch_item_1->max = max_scale * 1000;
   }
-  canvas_state[canvas_index].min_border_w = -min_neg_h_trim;
-  canvas_state[canvas_index].min_border_h = -min_neg_v_trim;
+
+  // Stuff these into the canvas state
+  canvas_state[canvas_index].max_padding_w = max_padding_w;
+  canvas_state[canvas_index].max_padding_h = max_padding_w;
+  canvas_state[canvas_index].max_padding_w_px = max_padding_w_px;
+  canvas_state[canvas_index].max_padding_h_px = max_padding_w_px;
   canvas_state[canvas_index].max_stretch_h = max_scale * 1000;
 }
