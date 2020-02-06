@@ -94,7 +94,11 @@ public:
   // Used to force a fb into a smaller space (for things like PIP or side-by-side.
   void SetPadding(double leftPadding, double rightPadding, double topPadding, double bottomPadding);
 
-  void GetDimensions(int *display_w, int *display_h, int *src_w, int *src_h, int *dst_w, int *dst_h);
+  // Retrieve dimensions for this layer. 
+  void GetDimensions(int *display_w, int *display_h,
+                     int *fb_w, int *fb_h,
+                     int *src_w, int *src_h,
+                     int *dst_w, int *dst_h);
 
   // initializes the bcm_host interface
   static void Initialize();
@@ -123,9 +127,9 @@ private:
 
   static bool initialized_;
 
-  int width_;
-  int height_;
-  int pitch_;
+  int fb_width_;
+  int fb_height_;
+  int fb_pitch_;
   int layer_;
   int transparency_;
   double hstretch_;

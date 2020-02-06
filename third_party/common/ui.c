@@ -151,14 +151,6 @@ void ui_init_menu(void) {
 
   assert(emux_machine_class != BMC64_MACHINE_CLASS_UNKNOWN);
 
-  int dpx, dpy;
-  int sx, sy;
-  int dx, dy;
-
-  // Why does ui_fb_w have to be a multiple of 32?
-  ui_fb_w = menu_width_chars * 8 + 64;
-  ui_fb_h = menu_height_chars * 8 + 32;
-
   ui_enabled = 0;
   ui_showing = 0;
   current_menu = -1;
@@ -184,11 +176,6 @@ void ui_init_menu(void) {
   ui_key_ticks_next = 0;
   ui_key_ticks_repeats = 0;
   ui_key_ticks_repeats_next = 0;
-
-  // Let's create our UI frame buffer
-  circle_alloc_fbl(FB_LAYER_UI, 0 /* indexed */, &ui_fb,
-                   ui_fb_w, ui_fb_h, &ui_fb_pitch);
-  circle_clear_fbl(FB_LAYER_UI);
 }
 
 // Draw a single character at x,y coords into the offscreen area
@@ -1056,18 +1043,24 @@ void ui_render_now(int menu_stack_index) {
   if (ui_transparent) {
     char str1[32];
     char str2[32];
-    int dpx, dpy, dx, dy, sx, sy;
+    int dpx, dpy, fbw, fbh, dx, dy, sx, sy;
 
     // We're drawing into the UI layer so get it's fb dims.
     circle_get_fbl_dimensions(FB_LAYER_UI,
-                              &dpx, &dpy, &sx, &sy, &dx, &dy);
+                              &dpx, &dpy,
+                              &fbw, &fbh,
+                              &sx, &sy,
+                              &dx, &dy);
 
     int cx = sx / 2 - 18 * 8 / 2;
     int cy = sy / 2 - 3 * 10 / 2;
 
     // Now get info about the layer we are djusting
     circle_get_fbl_dimensions(ui_transparent_layer,
-                              &dpx, &dpy, &sx, &sy, &dx, &dy);
+                              &dpx, &dpy,
+                              &fbw, &fbh,
+                              &sx, &sy,
+                              &dx, &dy);
 
     int qx = cx;
     int qy = cy;
@@ -1215,10 +1208,12 @@ struct menu_item *ui_pop_menu(void) {
 
 struct menu_item *ui_push_menu(int w_chars, int h_chars) {
 
+  int menu_width = w_chars * 8;
+  int menu_height = h_chars * 8;
   if (w_chars == -1)
-    w_chars = menu_width_chars;
+    menu_width = menu_width_chars * 8;
   if (h_chars == -1)
-    h_chars = menu_height_chars;
+    menu_height = menu_height_chars * 8;
 
   current_menu++;
   if (current_menu >= NUM_MENU_ROOTS) {
@@ -1233,16 +1228,28 @@ struct menu_item *ui_push_menu(int w_chars, int h_chars) {
   menu_roots[current_menu].on_popped_to = NULL;
 
   // Set dimensions
-  int menu_width = w_chars * 8;
-  int menu_height = h_chars * 8;
   menu_roots[current_menu].menu_width = menu_width;
   menu_roots[current_menu].menu_height = menu_height;
-  menu_roots[current_menu].menu_left = (ui_fb_w - menu_width) / 2;
-  menu_roots[current_menu].menu_top = (ui_fb_h - menu_height) / 2;
+
+  if (w_chars == -1) {
+    menu_roots[current_menu].menu_left = 0;
+  } else {
+    menu_roots[current_menu].menu_left = (ui_fb_w - menu_width) / 2;
+  }
+
+  if (h_chars == -1) {
+     menu_roots[current_menu].menu_top = 0;
+  } else {
+     menu_roots[current_menu].menu_top = (ui_fb_h - menu_height) / 2;
+  }
 
   menu_cursor[current_menu] = 0;
   menu_window_top[current_menu] = 0;
-  menu_window_bottom[current_menu] = h_chars;
+  if (h_chars == -1) {
+     menu_window_bottom[current_menu] = menu_height_chars;
+  } else {
+     menu_window_bottom[current_menu] = h_chars;
+  }
 
   return &menu_roots[current_menu];
 }
@@ -1547,7 +1554,38 @@ void emu_exit(void) {
   circle_frames_ready_fbl(FB_LAYER_VIC, -1, 0);
 }
 
-void ui_geometry_changed(int dpx, int dpy, int sx, int sy, int dx, int dy) {
+static void ui_update_children(struct menu_item *node,
+                               int top, int left) {
+  while (node != NULL) {
+    node->menu_top = top;
+    node->menu_left = left;
+
+    if (node->type == FOLDER && node->first_child != NULL) {
+      ui_update_children(node->first_child, top, left);
+    }
+    node = node->next;
+  }
+}
+
+void ui_geometry_changed(int dpx, int dpy,
+                         int fbw, int fbh,
+                         int sx, int sy,
+                         int dx, int dy) {
   // When the ui geometry changes, we need to update some menu
   // fields to match.
+  if (fbw != ui_fb_w || fbh != ui_fb_h) {
+     // Destroy old fb.
+     if (ui_fb) {
+        circle_free_fbl(FB_LAYER_UI);
+     }
+
+     circle_alloc_fbl(FB_LAYER_UI, 0 /* indexed */, &ui_fb,
+                      fbw, fbh, &ui_fb_pitch);
+     circle_clear_fbl(FB_LAYER_UI);
+     ui_fb_w = fbw;
+     ui_fb_h = fbh;
+   }
+   menu_roots[0].menu_top = canvas_state[vic_canvas_index].top + canvas_state[vic_canvas_index].border_h;
+   menu_roots[0].menu_left = canvas_state[vic_canvas_index].left + canvas_state[vic_canvas_index].border_w;
+   ui_update_children(&menu_roots[0], menu_roots[0].menu_top, menu_roots[0].menu_left);
 }

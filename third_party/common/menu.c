@@ -772,9 +772,12 @@ static int compute_trim_stretch(int display_dim, int fb_dim,
 }
 
 static void do_integer_scaling(int layer, int canvas_index, int dimension) {
-  int dpx, dpy, dx, dy, sx, sy;
+  int dpx, dpy, fbw, fbh, dx, dy, sx, sy;
   circle_get_fbl_dimensions(layer,
-                            &dpx, &dpy, &sx, &sy, &dx, &dy);
+                            &dpx, &dpy,
+                            &fbw, &fbh,
+                            &sx, &sy,
+                            &dx, &dy);
   int dst_trim;
   int dst_stretch;
   int dst_new_fb;
@@ -3593,47 +3596,60 @@ const char* function_to_string(int button_func) {
   }
 }
 
-void emux_geometry_changed(int layer, int canvas_index) {
+void emux_geometry_changed(int layer) {
 
   // Update the allowed min for border trim items. This lets the user
   // start padding the edges with negative trim values.
   // These are expressed in terms of percentage of the max because they
   // are going into the range item.
-  int max_padding_w_px = MIN(
-      canvas_state[canvas_index].extra_offscreen_border_left,
-      canvas_state[canvas_index].extra_offscreen_border_right);
-  int max_padding_h_px = canvas_state[canvas_index].first_displayed_line;
-
-  // Express these pixel values as negative percentage of border amts (for the menu item)
-  int max_padding_w = -((double)max_padding_w_px / (double)canvas_state[canvas_index].max_border_w) * 100.0;
-  int max_padding_h = -((double)max_padding_h_px / (double)canvas_state[canvas_index].max_border_h) * 100.0;
-
-  // Update the allowed max h stretch based on the display width and height
-  int dpx, dpy, dx, dy, sx, sy;
-  circle_get_fbl_dimensions(layer,
-                            &dpx, &dpy, &sx, &sy, &dx, &dy);
-  double max_scale = ceil((double)dpx / (double)dpy);
-
+  int canvas_index = -1;
   if (layer == FB_LAYER_VIC) {
-     h_border_trim_item_0->min = max_padding_w;
-     v_border_trim_item_0->min = max_padding_h;
-     h_stretch_item_0->max = max_scale * 1000;
+     canvas_index = vic_canvas_index;
   } else if (layer == FB_LAYER_VDC) {
-     h_border_trim_item_1->min = max_padding_w;
-     v_border_trim_item_1->min = max_padding_h;
-     h_stretch_item_1->max = max_scale * 1000;
+     canvas_index = vdc_canvas_index;
   }
 
-  // Stuff these into the canvas state
-  canvas_state[canvas_index].max_padding_w = max_padding_w;
-  canvas_state[canvas_index].max_padding_h = max_padding_w;
-  canvas_state[canvas_index].max_padding_w_px = max_padding_w_px;
-  canvas_state[canvas_index].max_padding_h_px = max_padding_w_px;
-  canvas_state[canvas_index].max_stretch_h = max_scale * 1000;
+  int dpx, dpy, fbw, fbh, dx, dy, sx, sy;
+  circle_get_fbl_dimensions(layer,
+                            &dpx, &dpy,
+                            &fbw, &fbh,
+                            &sx, &sy,
+                            &dx, &dy);
+
+  if (canvas_index >= 0) {
+    int max_padding_w_px = MIN(
+        canvas_state[canvas_index].extra_offscreen_border_left,
+        canvas_state[canvas_index].extra_offscreen_border_right);
+    int max_padding_h_px = canvas_state[canvas_index].first_displayed_line;
+
+    // Express these pixel values as negative percentage of border amts (for the menu item)
+    int max_padding_w = -((double)max_padding_w_px / (double)canvas_state[canvas_index].max_border_w) * 100.0;
+    int max_padding_h = -((double)max_padding_h_px / (double)canvas_state[canvas_index].max_border_h) * 100.0;
+
+    // Update the allowed max h stretch based on the display width and height
+    double max_scale = ceil((double)dpx / (double)dpy);
+
+    if (layer == FB_LAYER_VIC) {
+       h_border_trim_item_0->min = max_padding_w;
+       v_border_trim_item_0->min = max_padding_h;
+       h_stretch_item_0->max = max_scale * 1000;
+      } else if (layer == FB_LAYER_VDC) {
+       h_border_trim_item_1->min = max_padding_w;
+       v_border_trim_item_1->min = max_padding_h;
+       h_stretch_item_1->max = max_scale * 1000;
+    }
+
+    // Stuff these into the canvas state
+    canvas_state[canvas_index].max_padding_w = max_padding_w;
+    canvas_state[canvas_index].max_padding_h = max_padding_w;
+    canvas_state[canvas_index].max_padding_w_px = max_padding_w_px;
+    canvas_state[canvas_index].max_padding_h_px = max_padding_w_px;
+    canvas_state[canvas_index].max_stretch_h = max_scale * 1000;
+  }
 
   if (layer == FB_LAYER_VIC) {
      // When the first display changes, we need to update the UI since
      // it's frame buffer dimensions must match.
-     ui_geometry_changed(dpx, dpy, sx, sy, dx, dy);
+     ui_geometry_changed(dpx, dpy, fbw, fbh, sx, sy, dx, dy);
   }
 }

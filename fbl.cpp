@@ -74,7 +74,7 @@ bool FrameBufferLayer::initialized_ = false;
 DISPMANX_DISPLAY_HANDLE_T FrameBufferLayer::dispman_display_;
 
 FrameBufferLayer::FrameBufferLayer() :
-        width_(0), height_(0), pitch_(0), layer_(0), transparency_(false),
+        fb_width_(0), fb_height_(0), fb_pitch_(0), layer_(0), transparency_(false),
         hstretch_(1.6), vstretch_(1.0),
         valign_(0), vpadding_(0), halign_(0), hpadding_(0),
         h_center_offset_(0), v_center_offset_(0),
@@ -142,10 +142,10 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
      pitch_multiplier = 2;
 
   // pitch is in bytes
-  *pitch = pitch_ = ALIGN_UP(width * pitch_multiplier, 32);
+  *pitch = fb_pitch_ = ALIGN_UP(width * pitch_multiplier, 32);
 
-  width_ = width;
-  height_ = height;
+  fb_width_ = width;
+  fb_height_ = height;
 
   ret = vc_dispmanx_display_get_info(dispman_display_, &dispman_info);
   assert(ret == 0);
@@ -153,7 +153,7 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
   display_width_ = dispman_info.width;
   display_height_ = dispman_info.height;
 
-  *pixels = pixels_ = (uint8_t*) malloc(pitch_ * height * bytes_per_pixel_);
+  *pixels = pixels_ = (uint8_t*) malloc(fb_pitch_ * height * bytes_per_pixel_);
 
   // Allocate the VC resources along with the frame buffer
 
@@ -191,7 +191,7 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
 void FrameBufferLayer::Clear() {
   assert (allocated_);
 
-  memset(pixels_, 0, height_ * pitch_ * bytes_per_pixel_);
+  memset(pixels_, 0, fb_height_ * fb_pitch_ * bytes_per_pixel_);
 }
 
 void FrameBufferLayer::Free() {
@@ -203,9 +203,9 @@ void FrameBufferLayer::Free() {
      Hide();
   }
 
-  width_ = 0;
-  height_ = 0;
-  pitch_ = 0;
+  fb_width_ = 0;
+  fb_height_ = 0;
+  fb_pitch_ = 0;
   free(pixels_);
 
   ret = vc_dispmanx_resource_delete(dispman_resource_[0]);
@@ -355,7 +355,7 @@ void FrameBufferLayer::FrameReady(int to_offscreen) {
   // on screen resource (if !swap).
   vc_dispmanx_resource_write_data(dispman_resource_[rnum],
                                   mode_,
-                                  pitch_,
+                                  fb_pitch_,
                                   pixels_,
                                   &copy_dst_rect_);
 }
@@ -465,10 +465,13 @@ void FrameBufferLayer::SetCenterOffset(int cx, int cy) {
 }
 
 void FrameBufferLayer::GetDimensions(int *display_w, int *display_h,
+                                     int *fb_w, int *fb_h,
                                      int *src_w, int *src_h,
                                      int *dst_w, int *dst_h) {
   *display_w = display_width_;
   *display_h = display_height_;
+  *fb_w = fb_width_;
+  *fb_h = fb_height_;
   *src_w = src_w_;
   *src_h = src_h_;
   *dst_w = dst_w_;

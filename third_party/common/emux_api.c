@@ -215,18 +215,27 @@ void emux_apply_video_adjustments(int layer,
                 canvas_state[index].gfx_h + 2;
 
     canvas_state[index].overlay_x = canvas_state[index].left;
-  }
 
-  if (layer != FB_LAYER_UI) {
-     circle_set_src_rect_fbl(layer,
+    circle_set_src_rect_fbl(layer,
            canvas_state[index].left,
            canvas_state[index].top,
            canvas_state[index].vis_w,
            canvas_state[index].vis_h);
   }
 
+  if (layer == FB_LAYER_UI) {
+    // For the UI, we inherit the same cutout as the VIC
+    circle_set_src_rect_fbl(layer,
+           canvas_state[vic_canvas_index].left,
+           canvas_state[vic_canvas_index].top,
+           canvas_state[vic_canvas_index].vis_w,
+           canvas_state[vic_canvas_index].vis_h);
+  }
+
   circle_set_center_offset(layer,
            hcenter, vcenter);
+
+  emux_geometry_changed(layer);
 }
 
 void emu_joy_interrupt_abs(int port, int device,

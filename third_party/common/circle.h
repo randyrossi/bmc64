@@ -234,6 +234,7 @@ extern void circle_set_userport(uint8_t value);
 extern void circle_kernel_core_init_complete(int core);
 extern void circle_get_fbl_dimensions(int layer,
                                       int *display_w, int *display_h,
+                                      int *fb_w, int *fb_h,
                                       int *src_w, int *src_h,
                                       int *dst_w, int *dst_h);
 

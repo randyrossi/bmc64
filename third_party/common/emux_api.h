@@ -403,6 +403,6 @@ int is_composite();
 
 void emux_add_userport_joys(struct menu_item* parent);
 
-void emux_geometry_changed(int layer, int canvas_index);
+void emux_geometry_changed(int layer);
 
 #endif
