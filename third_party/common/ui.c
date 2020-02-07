@@ -322,6 +322,7 @@ static void ui_key_pressed(long key) {
   // for.
   if (key != KEYCODE_Left && key != KEYCODE_Right) {
     ui_transparent = 0;
+    ui_transparent_layer = -1;
     ui_render_current_item_only = 0;
   }
 
@@ -1043,7 +1044,7 @@ void ui_render_now(int menu_stack_index) {
   }
 
   // Reveal dimensions in top left corner
-  if (ui_transparent) {
+  if (ui_transparent && ui_transparent_layer >= 0) {
     char str1[32];
     char str2[32];
     int dpx, dpy, fbw, fbh, dw, dh, sw, sh;
@@ -1058,7 +1059,7 @@ void ui_render_now(int menu_stack_index) {
     // We can use the 1st display canvas info because our UI layer
     // mirrors it's dimensions all the time.
     int cx = canvas_state[vic_canvas_index].left + sw / 2 - 18 * 8 / 2;
-    int cy = canvas_state[vic_canvas_index].top + sh / 2 - 3 * 10 / 2;
+    int cy = canvas_state[vic_canvas_index].top + sh / 2 - 7 * 10 / 2;
 
     // Now get info about the layer we are djusting
     circle_get_fbl_dimensions(ui_transparent_layer,
@@ -1222,8 +1223,7 @@ struct menu_item *ui_push_menu(int w_chars, int h_chars) {
   menu_roots[current_menu].menu_height = menu_height;
 
   if (w_chars == -2) {
-    // Root: This will get set after frame buffer is created
-    menu_roots[current_menu].menu_left = 0;
+    menu_roots[current_menu].menu_left = canvas_state[vic_canvas_index].left + canvas_state[vic_canvas_index].border_w;
   } else if (w_chars == -1) {
     // Inherit the root menu's left
     menu_roots[current_menu].menu_left = menu_roots[0].menu_left;
@@ -1233,8 +1233,7 @@ struct menu_item *ui_push_menu(int w_chars, int h_chars) {
   }
 
   if (h_chars == -2) {
-    // Root: This will get set after frame buffer is created
-    menu_roots[current_menu].menu_top = 0;
+    menu_roots[current_menu].menu_top = canvas_state[vic_canvas_index].top + canvas_state[vic_canvas_index].border_h;
   } else if (h_chars == -1) {
     // Inherit the root menu's top
     menu_roots[current_menu].menu_top = menu_roots[0].menu_top;
@@ -1281,6 +1280,8 @@ void glob_osd_popped(struct menu_item *new_root,
 
 void ui_error(const char *format, ...) {
   struct menu_item *root = ui_push_dialog_header(1);
+  // Don't show layer info when we want to show error.
+  ui_transparent_layer = 0;
   if (!ui_enabled) {
      // We were called without the UI being up. Make this an OSD.
      ui_enable_osd();
@@ -1297,6 +1298,8 @@ void ui_error(const char *format, ...) {
 
 void ui_info(const char *format, ...) {
   struct menu_item *root = ui_push_dialog_header(0);
+  // Don't show layer info when we want to show info.
+  ui_transparent_layer = 0;
   if (!ui_enabled) {
      // We were called without the UI being up. Make this an OSD.
      ui_enable_osd();

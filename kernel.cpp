@@ -268,6 +268,10 @@ void circle_get_fbl_dimensions(int layer, int *display_w, int *display_h,
                                            fb_w, fb_h,
                                            src_w, src_h, dst_w, dst_h);
 }
+
+void circle_get_scaling_params(int *fbw, int *fbh, int *sx, int *sy) {
+  static_kernel->circle_get_scaling_params(fbw, fbh, sx, sy);
+}
 };
 
 namespace {
@@ -1547,4 +1551,9 @@ void CKernel::circle_get_fbl_dimensions(int layer,
                                   fb_w, fb_h,
                                   src_w, src_h,
                                   dst_w, dst_h);
+}
+
+void CKernel::circle_get_scaling_params(int *fbw, int *fbh,
+                                        int *sx, int *sy) {
+  mViceOptions.GetScalingParams(fbw, fbh, sx, sy);
 }

@@ -744,8 +744,8 @@ int main_program(int argc, char **argv)
   vic_enabled = 1; // really TED
 
   init_video();
-  // This loads settings vars
-  ui_init_menu();
+  ui_init_menu(); // loads settings
+  emux_geometry_changed(FB_LAYER_VIC);
 
   load_keymap();
   machine_kbd_init();
@@ -1624,6 +1624,8 @@ static void init_video(void) {
   canvas_state[vic_canvas_index].raster_skip = raster_skip;
 
   if (is_ntsc()) {
+    canvas_state[vic_canvas_index].min_border_w = 0;
+    canvas_state[vic_canvas_index].min_border_h = 0;
     canvas_state[vic_canvas_index].max_border_w = 32;
     canvas_state[vic_canvas_index].max_border_h = 22 * raster_skip;
     time_advance = 1666;
@@ -1631,6 +1633,8 @@ static void init_video(void) {
     strcpy(rom_kernal,"/PLUS4EMU/p4_ntsc.rom");
     Plus4VideoDecoder_SetNTSCMode(videoDecoder, 1);
   } else {
+    canvas_state[vic_canvas_index].min_border_w = 0;
+    canvas_state[vic_canvas_index].min_border_h = 0;
     canvas_state[vic_canvas_index].max_border_w = 32;
     canvas_state[vic_canvas_index].max_border_h = 40 * raster_skip;
     time_advance = 2000;
@@ -1638,8 +1642,6 @@ static void init_video(void) {
     strcpy(rom_kernal,"/PLUS4EMU/p4kernal.rom");
     Plus4VideoDecoder_SetNTSCMode(videoDecoder, 0);
   }
-
-  emux_geometry_changed(FB_LAYER_VIC);
 }
 
 void emux_add_userport_joys(struct menu_item* parent) {

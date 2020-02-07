@@ -63,18 +63,12 @@ extern void reboot(void);
 
 #define DEFAULT_VICII_H_STRETCH 1200
 #define DEFAULT_VICII_V_STRETCH 1000
-#define DEFAULT_VICII_H_BORDER_TRIM 0
-#define DEFAULT_VICII_V_BORDER_TRIM 0
 
 #define DEFAULT_VIC_H_STRETCH 1450
 #define DEFAULT_VIC_V_STRETCH 1000
-#define DEFAULT_VIC_H_BORDER_TRIM 30
-#define DEFAULT_VIC_V_BORDER_TRIM 12
 
 #define DEFAULT_VDC_H_STRETCH 1450
 #define DEFAULT_VDC_V_STRETCH 1000
-#define DEFAULT_VDC_H_BORDER_TRIM 20
-#define DEFAULT_VDC_V_BORDER_TRIM 40
 
 #define SWITCH_MSG "NOTE: For machines other than C64, " \
                    "the SDCard will only boot on the same Pi model the " \
@@ -149,19 +143,25 @@ struct menu_item *reset_confirm_item;
 struct menu_item *gpio_config_item;
 struct menu_item *active_display_item;
 
+struct menu_item *use_integer_scaling_item;
+
 struct menu_item *h_center_item_0;
 struct menu_item *v_center_item_0;
-struct menu_item *h_border_trim_item_0;
-struct menu_item *v_border_trim_item_0;
+struct menu_item *h_border_item_0;
+struct menu_item *v_border_item_0;
 struct menu_item *h_stretch_item_0;
 struct menu_item *v_stretch_item_0;
+int h_integer_stretch_0;
+int v_integer_stretch_0;
 
 struct menu_item *h_center_item_1;
 struct menu_item *v_center_item_1;
-struct menu_item *h_border_trim_item_1;
-struct menu_item *v_border_trim_item_1;
+struct menu_item *h_border_item_1;
+struct menu_item *v_border_item_1;
 struct menu_item *h_stretch_item_1;
 struct menu_item *v_stretch_item_1;
+int h_integer_stretch_1;
+int v_integer_stretch_1;
 
 struct menu_item *pip_location_item;
 struct menu_item *pip_swapped_item;
@@ -744,19 +744,26 @@ static void next_integer_scaling(int layer,
   }
 
   // Now express the scale as a ratio of the display height for the menu
+  // This won't be the actual value that determines the final dimension
+  // due to rounding errors.  'scaled dim' is what will be sent to
+  // fbl.
   int menu_stretch_value = ceil((double)scaled_dim * 1000.0 / (double)dph);
 
   if (dimension == 0) {
      if (layer == FB_LAYER_VIC) {
         h_stretch_item_0->value = menu_stretch_value;
+        h_integer_stretch_0 = scaled_dim;
      } else if (layer == FB_LAYER_VDC) {
         h_stretch_item_1->value = menu_stretch_value;
+        h_integer_stretch_1 = scaled_dim;
      }
   } else {
      if (layer == FB_LAYER_VIC) {
         v_stretch_item_0->value = menu_stretch_value;
+        v_integer_stretch_0 = scaled_dim;
      } else if (layer == FB_LAYER_VDC) {
         v_stretch_item_1->value = menu_stretch_value;
+        v_integer_stretch_1 = scaled_dim;
      }
   }
 }
@@ -844,15 +851,15 @@ static int save_settings() {
   fprintf(fp, "gpio_config=%d\n", gpio_config_item->choice_ints[gpio_config_item->value]);
   fprintf(fp, "h_center_0=%d\n", h_center_item_0->value);
   fprintf(fp, "v_center_0=%d\n", v_center_item_0->value);
-  fprintf(fp, "h_border_trim_0=%d\n", h_border_trim_item_0->value);
-  fprintf(fp, "v_border_trim_0=%d\n", v_border_trim_item_0->value);
+  fprintf(fp, "h_border_0=%d\n", h_border_item_0->value);
+  fprintf(fp, "v_border_0=%d\n", v_border_item_0->value);
   fprintf(fp, "h_stretch_0=%d\n", h_stretch_item_0->value);
   fprintf(fp, "v_stretch_0=%d\n", v_stretch_item_0->value);
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      fprintf(fp, "h_center_1=%d\n", h_center_item_1->value);
      fprintf(fp, "v_center_1=%d\n", v_center_item_1->value);
-     fprintf(fp, "h_border_trim_1=%d\n", h_border_trim_item_1->value);
-     fprintf(fp, "v_border_trim_1=%d\n", v_border_trim_item_1->value);
+     fprintf(fp, "h_border_1=%d\n", h_border_item_1->value);
+     fprintf(fp, "v_border_1=%d\n", v_border_item_1->value);
      fprintf(fp, "hstretch_1=%d\n", h_stretch_item_1->value);
      fprintf(fp, "vstretch_1=%d\n", v_stretch_item_1->value);
   }
@@ -1141,12 +1148,18 @@ static void load_settings() {
     } else if (strcmp(name, "v_center_0") == 0) {
       v_center_item_0->value = value;
     } else if (strcmp(name, "h_border_trim_0") == 0) {
-      h_border_trim_item_0->value = value;
+      // LEGACY NAME : menu value = max_border_w * value / 100.
+      h_border_item_0->value = h_border_item_0->max * (1.0d - (value / 100.0d));
     } else if (strcmp(name, "v_border_trim_0") == 0) {
-      v_border_trim_item_0->value = value;
+      // LEGACY NAME : menu value = max_border_h * value / 100.
+      v_border_item_0->value = v_border_item_0->max * (1.0d - (value / 100.0d));
     } else if (strcmp(name, "aspect_0") == 0) {
       // LEGACY NAME : aspect * 10 = h_stretch
       h_stretch_item_0->value = value * 10;
+    } else if (strcmp(name, "h_border_1") == 0) {
+      h_border_item_0->value = value;
+    } else if (strcmp(name, "v_border_1") == 0) {
+      v_border_item_0->value = value;
     } else if (strcmp(name, "h_stretch_0") == 0) {
       h_stretch_item_0->value = value;
     } else if (strcmp(name, "v_stretch_0") == 0) {
@@ -1156,12 +1169,18 @@ static void load_settings() {
     } else if (strcmp(name, "v_center_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       v_center_item_1->value = value;
     } else if (strcmp(name, "h_border_trim_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      h_border_trim_item_1->value = value;
+      // LEGACY NAME : menu value = max_border_w * value / 100.
+      h_border_item_1->value = h_border_item_1->max * (1.0d - (value / 100.0d));
     } else if (strcmp(name, "v_border_trim_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      v_border_trim_item_1->value = value;
+      // LEGACY NAME : menu value = max_border_h * value / 100.
+      v_border_item_1->value = v_border_item_1->max * (1.0d - (value / 100.0d));
     } else if (strcmp(name, "aspect_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       // LEGACY NAME : aspect * 10 = h_stretch
       h_stretch_item_1->value = value * 10;
+    } else if (strcmp(name, "h_border_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
+      h_border_item_1->value = value;
+    } else if (strcmp(name, "v_border_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
+      v_border_item_1->value = value;
     } else if (strcmp(name, "h_stretch_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       h_stretch_item_1->value = value;
     } else if (strcmp(name, "v_stretch_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
@@ -1681,8 +1700,8 @@ static void do_video_settings(int layer,
      lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = 0;
   }
 
-  double h = (double)(100-hborder_item->value) / 100.0d;
-  double v = (double)(100-vborder_item->value) / 100.0d;
+  int h = hborder_item->value;
+  int v = vborder_item->value;
   double hs = (double)(h_stretch_item->value) / 1000.0d;
   double vs = (double)(v_stretch_item->value) / 1000.0d;
 
@@ -2268,8 +2287,8 @@ static void menu_value_changed(struct menu_item *item) {
        do_video_settings(FB_LAYER_VIC,
            h_center_item_0,
            v_center_item_0,
-           h_border_trim_item_0,
-           v_border_trim_item_0,
+           h_border_item_0,
+           v_border_item_0,
            h_stretch_item_0,
            v_stretch_item_0);
     } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_VDC) {
@@ -2278,8 +2297,8 @@ static void menu_value_changed(struct menu_item *item) {
        do_video_settings(FB_LAYER_VDC,
            h_center_item_1,
            v_center_item_1,
-           h_border_trim_item_1,
-           v_border_trim_item_1,
+           h_border_item_1,
+           v_border_item_1,
            h_stretch_item_1,
            v_stretch_item_1);
     } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE ||
@@ -2289,15 +2308,15 @@ static void menu_value_changed(struct menu_item *item) {
        do_video_settings(FB_LAYER_VIC,
            h_center_item_0,
            v_center_item_0,
-           h_border_trim_item_0,
-           v_border_trim_item_0,
+           h_border_item_0,
+           v_border_item_0,
            h_stretch_item_0,
            v_stretch_item_0);
        do_video_settings(FB_LAYER_VDC,
            h_center_item_1,
            v_center_item_1,
-           h_border_trim_item_1,
-           v_border_trim_item_1,
+           h_border_item_1,
+           v_border_item_1,
            h_stretch_item_1,
            v_stretch_item_1);
     }
@@ -2308,8 +2327,8 @@ static void menu_value_changed(struct menu_item *item) {
     do_video_settings(FB_LAYER_VIC,
         h_center_item_0,
         v_center_item_0,
-        h_border_trim_item_0,
-        v_border_trim_item_0,
+        h_border_item_0,
+        v_border_item_0,
         h_stretch_item_0,
         v_stretch_item_0);
     break;
@@ -2319,8 +2338,8 @@ static void menu_value_changed(struct menu_item *item) {
     do_video_settings(FB_LAYER_VIC,
         h_center_item_0,
         v_center_item_0,
-        h_border_trim_item_0,
-        v_border_trim_item_0,
+        h_border_item_0,
+        v_border_item_0,
         h_stretch_item_0,
         v_stretch_item_0);
     break;
@@ -2330,8 +2349,8 @@ static void menu_value_changed(struct menu_item *item) {
     do_video_settings(FB_LAYER_VDC,
         h_center_item_1,
         v_center_item_1,
-        h_border_trim_item_1,
-        v_border_trim_item_1,
+        h_border_item_1,
+        v_border_item_1,
         h_stretch_item_1,
         v_stretch_item_1);
     break;
@@ -2341,8 +2360,8 @@ static void menu_value_changed(struct menu_item *item) {
     do_video_settings(FB_LAYER_VDC,
         h_center_item_1,
         v_center_item_1,
-        h_border_trim_item_1,
-        v_border_trim_item_1,
+        h_border_item_1,
+        v_border_item_1,
         h_stretch_item_1,
         v_stretch_item_1);
     break;
@@ -2356,8 +2375,8 @@ static void menu_value_changed(struct menu_item *item) {
     do_video_settings(FB_LAYER_VIC,
         h_center_item_0,
         v_center_item_0,
-        h_border_trim_item_0,
-        v_border_trim_item_0,
+        h_border_item_0,
+        v_border_item_0,
         h_stretch_item_0,
         v_stretch_item_0);
     break;
@@ -2371,8 +2390,8 @@ static void menu_value_changed(struct menu_item *item) {
     do_video_settings(FB_LAYER_VDC,
         h_center_item_1,
         v_center_item_1,
-        h_border_trim_item_1,
-        v_border_trim_item_1,
+        h_border_item_1,
+        v_border_item_1,
         h_stretch_item_1,
         v_stretch_item_1);
     break;
@@ -2911,6 +2930,9 @@ void build_menu(struct menu_item *root) {
 
   video_parent = parent = ui_menu_add_folder(root, "Video");
 
+  use_integer_scaling_item = ui_menu_add_toggle(
+     MENU_USE_SCALING_PARAMS, parent, "Use integer scaling", 1);
+
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      // For C128, we split video options under video into VICII
      // and VDC submenus since there are two displays.  Otherwise,
@@ -2975,18 +2997,12 @@ void build_menu(struct menu_item *root) {
 
   ui_menu_add_button(MENU_COLOR_RESET_0, child, "Reset");
 
-  int defaultHBorderTrim;
-  int defaultVBorderTrim;
   int defaultHStretch;
   int defaultVStretch;
   if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20) {
-     defaultHBorderTrim = DEFAULT_VIC_H_BORDER_TRIM;
-     defaultVBorderTrim = DEFAULT_VIC_V_BORDER_TRIM;
      defaultHStretch = DEFAULT_VIC_H_STRETCH;
      defaultVStretch = DEFAULT_VIC_V_STRETCH;
   } else {
-     defaultHBorderTrim = DEFAULT_VICII_H_BORDER_TRIM;
-     defaultVBorderTrim = DEFAULT_VICII_V_BORDER_TRIM;
      defaultHStretch = DEFAULT_VICII_H_STRETCH;
      defaultVStretch = DEFAULT_VICII_V_STRETCH;
   }
@@ -2997,14 +3013,16 @@ void build_menu(struct menu_item *root) {
   v_center_item_0 =
       ui_menu_add_range(MENU_V_CENTER_0, parent, "V Center",
           -48, 48, 1, 0);
-  h_border_trim_item_0 =
+  h_border_item_0 =
       ui_menu_add_range(MENU_H_BORDER_0, parent, "H Border Trim %",
-          canvas_state[vic_canvas_index].max_padding_w,
-             100, 1, defaultHBorderTrim);
-  v_border_trim_item_0 =
+          canvas_state[vic_canvas_index].min_border_w,
+             canvas_state[vic_canvas_index].max_border_w,
+                1, canvas_state[vic_canvas_index].max_border_w);
+  v_border_item_0 =
       ui_menu_add_range(MENU_V_BORDER_0, parent, "V Border Trim %",
-          canvas_state[vic_canvas_index].max_padding_h,
-             100, 1, defaultVBorderTrim);
+          canvas_state[vic_canvas_index].min_border_h,
+             canvas_state[vic_canvas_index].max_border_h,
+                1, canvas_state[vic_canvas_index].max_border_h);
   child = h_stretch_item_0 =
       ui_menu_add_range(MENU_H_STRETCH_0, parent, "H Stretch Factor",
            500, canvas_state[vic_canvas_index].max_stretch_h ?
@@ -3061,14 +3079,16 @@ void build_menu(struct menu_item *root) {
      v_center_item_1 =
          ui_menu_add_range(MENU_V_CENTER_1, parent, "V Center",
              -48, 48, 1, 0);
-     h_border_trim_item_1 =
-         ui_menu_add_range(MENU_H_BORDER_1, parent, "H Border Trim %",
-             canvas_state[vdc_canvas_index].max_padding_w,
-                100, 1, DEFAULT_VDC_H_BORDER_TRIM);
-     v_border_trim_item_1 =
-         ui_menu_add_range(MENU_V_BORDER_1, parent, "V Border Trim %",
-             canvas_state[vdc_canvas_index].max_padding_h,
-                100, 1, DEFAULT_VDC_V_BORDER_TRIM);
+     h_border_item_1 =
+         ui_menu_add_range(MENU_H_BORDER_1, parent, "H Border Trim px",
+             canvas_state[vdc_canvas_index].min_border_w,
+                canvas_state[vdc_canvas_index].max_border_w,
+                   1, canvas_state[vdc_canvas_index].max_border_w);
+     v_border_item_1 =
+         ui_menu_add_range(MENU_V_BORDER_1, parent, "V Border Trim px",
+             canvas_state[vdc_canvas_index].min_border_h,
+                canvas_state[vdc_canvas_index].max_border_h,
+                   1, canvas_state[vdc_canvas_index].max_border_h);
      child = h_stretch_item_1 =
          ui_menu_add_range(MENU_H_STRETCH_1, parent, "H Stretch Factor",
               500, canvas_state[vdc_canvas_index].max_stretch_h ?
@@ -3302,8 +3322,8 @@ void build_menu(struct menu_item *root) {
   do_video_settings(FB_LAYER_VIC,
       h_center_item_0,
       v_center_item_0,
-      h_border_trim_item_0,
-      v_border_trim_item_0,
+      h_border_item_0,
+      v_border_item_0,
       h_stretch_item_0,
       v_stretch_item_0);
 
@@ -3311,8 +3331,8 @@ void build_menu(struct menu_item *root) {
      do_video_settings(FB_LAYER_VDC,
          h_center_item_1,
          v_center_item_1,
-         h_border_trim_item_1,
-         v_border_trim_item_1,
+         h_border_item_1,
+         v_border_item_1,
          h_stretch_item_1,
          v_stretch_item_1);
   }
@@ -3555,34 +3575,32 @@ void emux_geometry_changed(int layer) {
                             &dw, &dh);
 
   if (canvas_index >= 0) {
-    int max_padding_w_px = MIN(
+    int min_border_w = -MIN(
         canvas_state[canvas_index].extra_offscreen_border_left,
         canvas_state[canvas_index].extra_offscreen_border_right);
-    int max_padding_h_px = canvas_state[canvas_index].first_displayed_line;
-
-    // Express these pixel values as negative percentage of border amts (for the menu item)
-    int max_padding_w = -((double)max_padding_w_px / (double)canvas_state[canvas_index].max_border_w) * 100.0;
-    int max_padding_h = -((double)max_padding_h_px / (double)canvas_state[canvas_index].max_border_h) * 100.0;
+    int min_border_h = -canvas_state[canvas_index].first_displayed_line;
 
     // Update the allowed max h stretch based on the display width and height
-    double max_scale = ceil((double)dpx / (double)dpy);
+    double max_scale = ceil((double)dpx / (double)dpy) * 1000;
 
     if (layer == FB_LAYER_VIC) {
-       h_border_trim_item_0->min = max_padding_w;
-       v_border_trim_item_0->min = max_padding_h;
-       h_stretch_item_0->max = max_scale * 1000;
-      } else if (layer == FB_LAYER_VDC) {
-       h_border_trim_item_1->min = max_padding_w;
-       v_border_trim_item_1->min = max_padding_h;
-       h_stretch_item_1->max = max_scale * 1000;
+       if (h_border_item_0) h_border_item_0->min = min_border_w;
+       if (v_border_item_0) v_border_item_0->min = min_border_h;
+       if (h_border_item_0) h_border_item_0->max = canvas_state[canvas_index].max_border_w;
+       if (v_border_item_0) v_border_item_0->max = canvas_state[canvas_index].max_border_h;
+       if (h_stretch_item_0) h_stretch_item_0->max = max_scale;
+    } else if (layer == FB_LAYER_VDC) {
+       if (h_border_item_1) h_border_item_1->min = min_border_w;
+       if (v_border_item_1) v_border_item_1->min = min_border_h;
+       if (h_border_item_1) h_border_item_1->max = canvas_state[canvas_index].max_border_w;
+       if (v_border_item_1) v_border_item_1->max = canvas_state[canvas_index].max_border_h;
+       if (h_stretch_item_1) h_stretch_item_1->max = max_scale;
     }
 
     // Stuff these into the canvas state
-    canvas_state[canvas_index].max_padding_w = max_padding_w;
-    canvas_state[canvas_index].max_padding_h = max_padding_w;
-    canvas_state[canvas_index].max_padding_w_px = max_padding_w_px;
-    canvas_state[canvas_index].max_padding_h_px = max_padding_w_px;
-    canvas_state[canvas_index].max_stretch_h = max_scale * 1000;
+    canvas_state[canvas_index].min_border_w = min_border_w;
+    canvas_state[canvas_index].min_border_h = min_border_h;
+    canvas_state[canvas_index].max_stretch_h = max_scale;
   }
 
   if (layer == FB_LAYER_VIC) {

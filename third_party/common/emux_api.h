@@ -127,16 +127,17 @@ struct CanvasState {
   int gfx_w;
   int gfx_h;
   int max_stretch_h;
-  // Max padding allowed in pixels;
-  int max_padding_w_px;
-  int max_padding_h_px;
-  // Max padding amount. Expressed as negative % of max_border_w/h.
-  int max_padding_w;
-  int max_padding_h;
-  // How much border is available in pixels. Max trim amount.
+
+  // Negative border area available for padding in pixels.
+  int min_border_w;
+  int min_border_h;
+
+  // How much border is available in pixels.
   int max_border_w;
   int max_border_h;
-  // How much of the border we want to see
+
+  // How much of the border we want to see. Comes from
+  // the menu items.
   int border_w;
   int border_h;
 
@@ -333,7 +334,7 @@ struct menu_item* emux_add_cartridge_options(struct menu_item* parent);
 void emux_set_warp(int warp);
 
 void emux_apply_video_adjustments(int layer, int hcenter, int vcenter,
-                                  double hborder, double vborder,
+                                  int hborder, int vborder,
                                   double hstretch, double vstretch,
                                   double lpad, double rpad,
                                   double tpad, double bpad, int zlayer);

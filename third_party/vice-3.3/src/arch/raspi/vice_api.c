@@ -1006,6 +1006,18 @@ int emux_handle_quick_func(int button_func) {
 void emux_load_additional_settings() {
   // Vice settings are automatically loaded by the emulator. Nothing
   // to do here.
+
+  // CHEAT: Temporarily using this hook to get the max border settings
+  // into the canvas structure early.  These are now reqiured by
+  // the menu before the border items are created. TODO: FIX THIS!!
+  set_canvas_borders(vic_canvas_index,
+                     &canvas_state[vic_canvas_index].max_border_w,
+                     &canvas_state[vic_canvas_index].max_border_h);
+  if (machine_class == VICE_MACHINE_C128) {
+     set_canvas_borders(vdc_canvas_index,
+                        &canvas_state[vdc_canvas_index].max_border_w,
+                        &canvas_state[vdc_canvas_index].max_border_h);
+  }
 }
 
 void emux_save_additional_settings(FILE *fp) {

@@ -57,7 +57,7 @@ int vic_showing;
 int vdc_showing;
 int vic_enabled = 1;
 int vdc_enabled;
-int vdc_canvas_index;
+int vdc_canvas_index = 1;
 int vic_canvas_index;
 
 // Ring buffer for key latch events
@@ -149,7 +149,7 @@ void emux_ensure_video(void) {
 
 void emux_apply_video_adjustments(int layer,
       int hcenter, int vcenter,
-      double hborder, double vborder, double h_stretch, double v_stretch,
+      int hborder, int vborder, double h_stretch, double v_stretch,
       double lpad, double rpad, double tpad, double bpad,
       int zlayer) {
   // Hide the layer. Can't show it here on the same loop so we have to
@@ -178,10 +178,8 @@ void emux_apply_video_adjustments(int layer,
   circle_set_stretch_fbl(layer, h_stretch, v_stretch);
 
   if (index >= 0) {
-    canvas_state[index].border_w =
-       canvas_state[index].max_border_w * hborder;
-    canvas_state[index].border_h =
-       canvas_state[index].max_border_h * vborder;
+    canvas_state[index].border_w = hborder;
+    canvas_state[index].border_h = vborder;
 
     canvas_state[index].vis_w =
        canvas_state[index].gfx_w +

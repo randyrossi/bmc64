@@ -442,6 +442,8 @@ typedef enum {
    MENU_INTEGER_SCALE_H_0,
    MENU_INTEGER_SCALE_W_1,
    MENU_INTEGER_SCALE_H_1,
+
+   MENU_USE_SCALING_PARAMS,
 } MenuID;
 
 typedef enum {

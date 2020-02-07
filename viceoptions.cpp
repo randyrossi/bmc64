@@ -32,7 +32,9 @@ ViceOptions::ViceOptions(void)
     : m_nMachineTiming(MACHINE_TIMING_PAL_HDMI),
       m_bDemoEnabled(false), m_bSerialEnabled(false),
       m_bGPIOOutputsEnabled(false), m_nCyclesPerSecond(0),
-      m_audioOut(VCHIQSoundDestinationAuto), m_bDPIEnabled(false) {
+      m_audioOut(VCHIQSoundDestinationAuto), m_bDPIEnabled(false),
+      m_scaling_param_fbw(0), m_scaling_param_fbh(0),
+      m_scaling_param_sx(0), m_scaling_param_sy(0) {
   s_pThis = this;
 
   CBcmPropertyTags Tags;
@@ -55,6 +57,8 @@ ViceOptions::ViceOptions(void)
   char *pOption;
   while ((pOption = GetToken()) != 0) {
     char *pValue = GetOptionValue(pOption);
+
+    if (!pValue) continue;
 
     if (strcmp(pOption, "machine_timing") == 0) {
       if (strcmp(pValue, "ntsc") == 0 || strcmp(pValue, "ntsc-hdmi") == 0) {
@@ -114,6 +118,19 @@ ViceOptions::ViceOptions(void)
       } else {
         m_bDPIEnabled = false;
       }
+    } else if (strcmp(pOption, "scaling_params") == 0) {
+      char* fbw_s = strtok(pValue, ",");
+      if (!fbw_s) continue;
+      char* fbh_s = strtok(NULL, ",");
+      if (!fbh_s) continue;
+      char* sx_s = strtok(NULL, ",");
+      if (!sx_s) continue;
+      char* sy_s = strtok(NULL, ",");
+      if (!sy_s) continue;
+      m_scaling_param_fbw = atoi(fbw_s);
+      m_scaling_param_fbh = atoi(fbh_s);
+      m_scaling_param_sx = atoi(sx_s);
+      m_scaling_param_sy = atoi(sy_s);
     }
   }
 
@@ -159,6 +176,13 @@ bool ViceOptions::GPIOOutputsEnabled(void) const { return m_bGPIOOutputsEnabled;
 bool ViceOptions::DPIEnabled(void) const { return m_bDPIEnabled; }
 
 int ViceOptions::GetDiskPartition(void) const { return m_disk_partition; }
+
+void ViceOptions::GetScalingParams(int *fbw, int *fbh, int *sx, int *sy) {
+  *fbw = m_scaling_param_fbw;
+  *fbh = m_scaling_param_fbh;
+  *sx = m_scaling_param_sx;
+  *sy = m_scaling_param_sy;
+}
 
 const char *ViceOptions::GetDiskVolume(void) const { return m_disk_volume; }
 

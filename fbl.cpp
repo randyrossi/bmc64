@@ -243,7 +243,7 @@ void FrameBufferLayer::Show() {
      // Stretch horizontally to fill width * vstretch and then set height
      // based on hstretch.
      dst_w = avail_width * vstretch_;
-     dst_h = (double)avail_width / -hstretch_;
+     dst_h = avail_width / -hstretch_;
      if (dst_w > avail_width) {
         dst_w = avail_width;
      }
@@ -254,7 +254,7 @@ void FrameBufferLayer::Show() {
      // Stretch vertically to fill height * vstretch and then set width
      // based on hstretch.
      dst_h = avail_height * vstretch_;
-     dst_w = (double)avail_height * hstretch_;
+     dst_w = avail_height * hstretch_;
      if (dst_h > avail_height) {
         dst_h = avail_height;
      }

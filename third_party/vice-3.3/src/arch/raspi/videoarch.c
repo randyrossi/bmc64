@@ -57,9 +57,6 @@
 #include "raspi_machine.h"
 #include "ui.h"
 
-// Increments with each canvas being inited by vice
-int canvas_num;
-
 struct video_canvas_s *vdc_canvas;
 struct video_canvas_s *vic_canvas;
 struct video_canvas_s *canvases[2];
@@ -174,6 +171,14 @@ static void check_dimensions(struct video_canvas_s* canvas,
      canvas->geometry->first_displayed_line;
    canvas_state[canvas_index].last_displayed_line =
      canvas->geometry->last_displayed_line;
+
+   int min_border_w = -MIN(
+        canvas_state[canvas_index].extra_offscreen_border_left,
+        canvas_state[canvas_index].extra_offscreen_border_right);
+   int min_border_h = -canvas_state[canvas_index].first_displayed_line;
+
+   canvas_state[canvas_index].min_border_w = min_border_w;
+   canvas_state[canvas_index].min_border_h = min_border_h;
 }
 
 // Draw buffer bridge functions back to kernel
@@ -225,20 +230,21 @@ static void draw_buffer_clear(struct video_canvas_s *canvas, uint8_t *draw_buffe
 // For C128, first will be the VDC, followed by VIC.
 // For other machines, only one canvas is initialized.
 void video_arch_canvas_init(struct video_canvas_s *canvas) {
-  if (machine_class == VICE_MACHINE_C128 && canvas_num == 1) {
+  int canvas_index;
+  if (machine_class == VICE_MACHINE_C128) {
      vdc_canvas = canvas;
-     vdc_canvas_index = canvas_num;
      vdc_first_refresh = 1;
      vdc_enabled = 0;
      vdc_showing = 0;
+     canvas_index = 1;
   } else {
      set_refresh_rate(canvas);
      vic_first_refresh = 1;
      vic_canvas = canvas;
-     vic_canvas_index = canvas_num;
      video_freq = canvas->refreshrate * video_tick_inc;
      vic_enabled = 1;
      vic_showing = 0;
+     canvas_index = 0;
   }
 
   if (machine_class == VICE_MACHINE_PET && !is_composite()) {
@@ -250,16 +256,14 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
   }
 
   // Have our fb class allocate draw buffers
-  draw_buffer_callback[canvas_num].draw_buffer_alloc =
+  draw_buffer_callback[canvas_index].draw_buffer_alloc =
      draw_buffer_alloc;
-  draw_buffer_callback[canvas_num].draw_buffer_free =
+  draw_buffer_callback[canvas_index].draw_buffer_free =
      draw_buffer_free;
-  draw_buffer_callback[canvas_num].draw_buffer_clear =
+  draw_buffer_callback[canvas_index].draw_buffer_clear =
      draw_buffer_clear;
   canvas->video_draw_buffer_callback =
-     &draw_buffer_callback[canvas_num];
-
-  canvas_num++;
+     &draw_buffer_callback[canvas_index];
 }
 
 static struct video_canvas_s *video_canvas_create_vic(
