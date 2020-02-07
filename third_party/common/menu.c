@@ -717,109 +717,47 @@ void ui_set_joy_items() {
   set_need_mouse();
 }
 
-// Figure out what trim and stretch value will result in integer scaling
-// given the display dimension and the frame buffer dimension.  The
-// dst_trim will be the number of pixels and should be expressed as a
-// percentage of the max border for the dimension if it's going to be
-// used in the menu trim item.  The dst_stretch will be a multiple that
-// will bring the padded/trimmed frame buffer up to the given display_dim.
-// It should be expressed as a percentage of the display height if it's
-// going to be used in a stretch menu item.
-static int compute_trim_stretch(int display_dim, int fb_dim,
-                                int max_pad, int max_trim,
-                                int *dst_trim, int *dst_stretch, int *dst_new_fb) {
-  int can_trim = 0;
-  int can_stretch = 0;
-
-  int trim;
-  int stretch;
-  int new_fb_dim;
-
-  for (int n = 1; n < 8 && !can_trim && !can_stretch; n++) {
-     int t = display_dim / n;
-
-     can_trim = 0;
-     if (t>= fb_dim && (fb_dim + max_pad) >= t && (t-fb_dim) % 2 == 0) {
-        // Yes, we can pad. Pad is negative trim.
-        trim = -(t - fb_dim);
-        can_trim = 1;
-     } else if (t <= fb_dim && (fb_dim - max_trim) <= t && (fb_dim - t) % 2 == 0) {
-        // Yes, we can trim
-        trim = (fb_dim - t);
-        can_trim = 1;
-     }
-
-     if (can_trim) {
-        new_fb_dim = fb_dim - trim;
-        for (int m = 1; m < 8; m++) {
-            if (m * new_fb_dim == display_dim) {
-               stretch = m;
-               can_stretch = 1;
-               break;
-            }
-        }
-     }
-  }
-
-  if (!can_trim && !can_stretch) {
-     return 0;
-  }
-
-  *dst_trim = trim / 2; // div 2 because trim is taken off each side
-  *dst_stretch = stretch;
-  *dst_new_fb = new_fb_dim;
-  return 1; //success
-}
-
-static void do_integer_scaling(int layer, int canvas_index, int dimension) {
-  int dpx, dpy, fbw, fbh, sw, sh, dw, dh;
+static void next_integer_scaling(int layer,
+                                 int canvas_index,
+                                 int dimension) {
+  int dpw, dph, fbw, fbh, sw, sh, dw, dh;
   circle_get_fbl_dimensions(layer,
-                            &dpx, &dpy,
+                            &dpw, &dph,
                             &fbw, &fbh,
                             &sw, &sh,
                             &dw, &dh);
-  int dst_trim;
-  int dst_stretch;
-  int dst_new_fb;
 
-  int display_dim = dimension == 0 ? dpx : dpy;
-  int fb_dim = dimension == 0 ? canvas_state[canvas_index].gfx_w + canvas_state[canvas_index].max_border_w*2 :
-                                canvas_state[canvas_index].gfx_h + canvas_state[canvas_index].max_border_h*2;
-  int max_pad = dimension == 0 ? canvas_state[canvas_index].max_padding_w_px :
-                                 canvas_state[canvas_index].max_padding_h_px;
-  int max_trim = dimension == 0 ? canvas_state[canvas_index].max_border_w :
-                                  canvas_state[canvas_index].max_border_h;
+  int dim = dimension == 0 ? sw : sh;
+  int scaled_dim = dimension == 0 ? dw : dh;
+  int max = dimension == 0 ? dpw : dph;
 
-  if (compute_trim_stretch(display_dim, fb_dim, max_pad, max_trim, &dst_trim, &dst_stretch, &dst_new_fb)) {
-     // Now express the trim as a percentage of the max for the menu.
-     int menu_trim_value;
-     if (dst_trim > 0)
-        menu_trim_value = ceil((double)dst_trim * 100.0 / (double)max_trim);
+  int scale = scaled_dim / dim;
+  scale = scale + 1;
+
+  scaled_dim = dim * scale;
+  if (scaled_dim > max) {
+     // Start back at 1.
+     if (dimension == 0)
+        scaled_dim = sw;
      else
-        menu_trim_value = floor((double)dst_trim * 100.0 / (double)max_trim);
+        scaled_dim = sh;
+  }
 
-     // Now express the scale as a ratio of the display height for the menu
-     int menu_stretch_value = ceil((double)(dst_stretch * dst_new_fb) * 1000.0 / (double)dpy);
+  // Now express the scale as a ratio of the display height for the menu
+  int menu_stretch_value = ceil((double)scaled_dim * 1000.0 / (double)dph);
 
-     if (dimension == 0) {
-        if (layer == FB_LAYER_VIC) {
-           h_border_trim_item_0->value = menu_trim_value;
-           h_stretch_item_0->value = menu_stretch_value;
-        } else if (layer == FB_LAYER_VDC) {
-           h_border_trim_item_1->value = menu_trim_value;
-           h_stretch_item_1->value = menu_stretch_value;
-        }
-     } else {
-        if (layer == FB_LAYER_VIC) {
-           v_border_trim_item_0->value = menu_trim_value;
-           v_stretch_item_0->value = menu_stretch_value;
-        } else if (layer == FB_LAYER_VDC) {
-           v_border_trim_item_1->value = menu_trim_value;
-           v_stretch_item_1->value = menu_stretch_value;
-        }
+  if (dimension == 0) {
+     if (layer == FB_LAYER_VIC) {
+        h_stretch_item_0->value = menu_stretch_value;
+     } else if (layer == FB_LAYER_VDC) {
+        h_stretch_item_1->value = menu_stretch_value;
      }
   } else {
-     ui_error("Can't integer scale this resolution!");
+     if (layer == FB_LAYER_VIC) {
+        v_stretch_item_0->value = menu_stretch_value;
+     } else if (layer == FB_LAYER_VDC) {
+        v_stretch_item_1->value = menu_stretch_value;
+     }
   }
 }
 
@@ -2365,7 +2303,7 @@ static void menu_value_changed(struct menu_item *item) {
     }
     break;
   case MENU_INTEGER_SCALE_W_0:
-    do_integer_scaling(FB_LAYER_VIC, vic_canvas_index, 0);
+    next_integer_scaling(FB_LAYER_VIC, vic_canvas_index, 0);
     ui_canvas_reveal_temp(FB_LAYER_VIC);
     do_video_settings(FB_LAYER_VIC,
         h_center_item_0,
@@ -2376,7 +2314,7 @@ static void menu_value_changed(struct menu_item *item) {
         v_stretch_item_0);
     break;
   case MENU_INTEGER_SCALE_H_0:
-    do_integer_scaling(FB_LAYER_VIC, vic_canvas_index, 1);
+    next_integer_scaling(FB_LAYER_VIC, vic_canvas_index, 1);
     ui_canvas_reveal_temp(FB_LAYER_VIC);
     do_video_settings(FB_LAYER_VIC,
         h_center_item_0,
@@ -2387,7 +2325,7 @@ static void menu_value_changed(struct menu_item *item) {
         v_stretch_item_0);
     break;
   case MENU_INTEGER_SCALE_W_1:
-    do_integer_scaling(FB_LAYER_VDC, vdc_canvas_index, 0);
+    next_integer_scaling(FB_LAYER_VDC, vdc_canvas_index, 0);
     ui_canvas_reveal_temp(FB_LAYER_VDC);
     do_video_settings(FB_LAYER_VDC,
         h_center_item_1,
@@ -2398,7 +2336,7 @@ static void menu_value_changed(struct menu_item *item) {
         v_stretch_item_1);
     break;
   case MENU_INTEGER_SCALE_H_1:
-    do_integer_scaling(FB_LAYER_VDC, vdc_canvas_index, 1);
+    next_integer_scaling(FB_LAYER_VDC, vdc_canvas_index, 1);
     ui_canvas_reveal_temp(FB_LAYER_VDC);
     do_video_settings(FB_LAYER_VDC,
         h_center_item_1,
@@ -3069,7 +3007,7 @@ void build_menu(struct menu_item *root) {
              100, 1, defaultVBorderTrim);
   child = h_stretch_item_0 =
       ui_menu_add_range(MENU_H_STRETCH_0, parent, "H Stretch Factor",
-           1000, canvas_state[vic_canvas_index].max_stretch_h ?
+           500, canvas_state[vic_canvas_index].max_stretch_h ?
               canvas_state[vic_canvas_index].max_stretch_h : 1800,
                  5, defaultHStretch);
   child->divisor = 1000;
@@ -3078,8 +3016,8 @@ void build_menu(struct menu_item *root) {
            500, 1000, 5, defaultVStretch);
   child->divisor = 1000;
 
-  ui_menu_add_button(MENU_INTEGER_SCALE_W_0, parent, "Attempt H Integer Scale");
-  ui_menu_add_button(MENU_INTEGER_SCALE_H_0, parent, "Attempt V Integer Scale");
+  ui_menu_add_button(MENU_INTEGER_SCALE_W_0, parent, "Next H Integer Scale");
+  ui_menu_add_button(MENU_INTEGER_SCALE_H_0, parent, "Next V Integer Scale");
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      parent = ui_menu_add_folder(video_parent, "VDC");
@@ -3133,7 +3071,7 @@ void build_menu(struct menu_item *root) {
                 100, 1, DEFAULT_VDC_V_BORDER_TRIM);
      child = h_stretch_item_1 =
          ui_menu_add_range(MENU_H_STRETCH_1, parent, "H Stretch Factor",
-              1000, canvas_state[vdc_canvas_index].max_stretch_h ?
+              500, canvas_state[vdc_canvas_index].max_stretch_h ?
                  canvas_state[vdc_canvas_index].max_stretch_h : 1800,
                     5, DEFAULT_VDC_H_STRETCH);
      child->divisor = 1000;

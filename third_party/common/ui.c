@@ -1001,7 +1001,10 @@ void ui_make_transparent(void) {
 }
 
 static void ui_draw_shadow_text(const char* txt, int *x, int *y, int col) {
-  ui_draw_text(txt, *x+1, *y+1, 0);
+  ui_draw_text(txt, *x+1, *y, 0);
+  ui_draw_text(txt, *x-1, *y, 0);
+  ui_draw_text(txt, *x, *y+1, 0);
+  ui_draw_text(txt, *x, *y-1, 0);
   ui_draw_text(txt, *x, *y, col);
   *x = *x + strlen(txt) *8;
 }
@@ -1101,7 +1104,11 @@ void ui_render_now(int menu_stack_index) {
     }
 
     qx = cx; qy+=20;
-    ui_draw_shadow_text("Use , and . for -/+ 1", &qx, &qy, 1);
+    ui_draw_shadow_text("Use , and . for", &qx, &qy, 1);
+    qx = cx; qy+=10;
+    ui_draw_shadow_text("-/+1 increments.", &qx, &qy, 1);
+    qx = cx; qy+=10;
+    ui_draw_shadow_text("R resets to 1.000", &qx, &qy, 1);
   }
 }
 
