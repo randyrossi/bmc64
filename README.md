@@ -167,33 +167,34 @@ Using the settings, you should be able to customize the display to your liking. 
 
 ## Integer Scaling
 
-    BMC64 has some tools for anyone who wants to get better picture quality on their CRT monitors or if you want 'pixel perfect' HDMI displays instead of the 'soft' look with the default config.  Integer scaling along with nearest neighbor (scaling_kernel=8) will eliminate scaling artifacts and if you chose a vertical resolution equal to or a multiple of the frame buffer resolution, you get cleaner scanlines on CRTs.  It also makes HDMI look clean if you want 'pixel perfect' scaling.
+If you want to get better picture quality on your CRT monitor or if you prefer the 'pixel perfect' look on HDMI, integer scaling is what you want. Integer scaling along with nearest neighbor scaling_kernel (8) will eliminate scaling artifacts (i.e. variation in thickness of scaled up pixels)
 
-    NOTE: Not all resolutions will support integer scaling.  The default 720p modes don't because the frame buffer can't be padded/trimmed enough to hit the resolutions.  Usually, a custom resolution is required.
+When you change the border trim or stretch values, you will see three dimensions displayed; the display dimensions, the frame buffer dimensions and the scaled frame buffer dimensions. When the scaled frame buffer dimensions are an integer multiple of the frame buffer dimensions, they will turn green.
 
-    When you adjust the display settings (trim and stretch), the display resolution, the frame buffer resolution (FB) and the scaled frame buffer resolution (SFB) will be displayed in the middle of the screen.  To get integer scaling, first use border trim to either reduce or increase the FB dimensions until they evenly divide into the display resolution. Then use stretch to make the SFB evenly divided by FB.  You will end up with a 'pixel perfect' up-scale.  The dimensions will turn green when you get it right and the scaling integers are displayed.
+To make this easier, there are video options named 'Next H Integer Scale' and 'Next V Integer Scale'.  They will bump up the horizontal and vertical stretch to the next nearest integer multiple of the frame buffer's dimensions. Keep pressing return to cycle through all integer multipls that will fit.
 
-    For, example, a DPI output connected to a CRT, you can try a custom resolution like this:
+Some resolutions will require sacrificing some border to get a higher integer scale that will fill most of the display.
+
+## Perfect Scanlines
+
+For those using DPI connected to CRTs (via VGA666 for example), you can try a custom resolution like this:
 
     dpi_timings=1920 1 56 176 208 282 1 5 2 23 0 0 0 50 0 36900000 1
 
-    Which gives a 1920 x 282 display res.  Then trim/pad FB to 384x282.  Then scale SFB to 1536x282.  That gives a 4x horizontal scale and 1:1 vertical.  So the scanlines on your CRT should be nice and clean. Once your resolution looks good, follow the custom timing tool instructions to get your cycles_per_second correct.  The above mode was tested on a Sony Trinitron CRT. Here is what the machines.txt entry would look lile:
+This gives a 1920 x 282 display res.  Then set FB to 384x282.  Then set SFB to 1536x282.  That gives a 4x horizontal scale and 1x vertical.  So the CRT will trace each line of the frame buffer on one scanline.  Once your resolution looks good, follow the custom timing tool instructions to get your cycles_per_second correct.  The above mode was tested on a Sony Trinitron CRT.  Here is the machines.txt entry:
 
     [C64/PAL/DPI/VGA666:1920x282@50.1hz]
     enable_dpi=true
     machine_timing=pal-custom
-    cycles_per_second=CALCULATE THIS!!!
+    cycles_per_second=984994
     enable_dpi_lcd=1
     display_default_lcd=1
     dpi_group=2
     dpi_mode=87
     dpi_timings=1920 1 56 176 208 282 1 5 2 23 0 0 0 50 0 36900000 1
+    scaling_params=384,282,1536,282
 
-    For CRT, similar things can be done with a x2 vertical scale.
-
-    There are options in the 'Video' menu to attempt to integer scale each dimension separately. They may not work on your resolution, however.
-
-    Many thanks goes out to Alessio Scanderebech and Andrea Mazzoleni for their assistance with getting this working.
+Many thanks goes out to Alessio Scanderebech and Andrea Mazzoleni for their assistance with getting this working.
 
 # Video Scaling Algorithm
 
@@ -207,7 +208,7 @@ The emulated resolutions are small and must be scaled up to the video mode's res
 
 ![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/scaling_kernel_8.jpg)
 
-  NOTE: For scaling_kernel=8, it's best to adjust your FB so that it evenly divides into the display resolution and SFB so that it is evenly divided by FB.  See section on Integer Scaling above.
+  NOTE: For scaling_kernel=8, it's best to adjust your FB so that it can be scaled by an integer and fill most of the screen.  See section on Integer Scaling above.
 
 # CRT Scanline alignment
 
