@@ -1010,13 +1010,13 @@ void emux_load_additional_settings() {
   // CHEAT: Temporarily using this hook to get the max border settings
   // into the canvas structure early.  These are now reqiured by
   // the menu before the border items are created. TODO: FIX THIS!!
-  set_canvas_borders(vic_canvas_index,
-                     &canvas_state[vic_canvas_index].max_border_w,
-                     &canvas_state[vic_canvas_index].max_border_h);
+  set_canvas_borders(VIC_INDEX,
+                     &canvas_state[VIC_INDEX].max_border_w,
+                     &canvas_state[VIC_INDEX].max_border_h);
   if (machine_class == VICE_MACHINE_C128) {
-     set_canvas_borders(vdc_canvas_index,
-                        &canvas_state[vdc_canvas_index].max_border_w,
-                        &canvas_state[vdc_canvas_index].max_border_h);
+     set_canvas_borders(VDC_INDEX,
+                        &canvas_state[VDC_INDEX].max_border_w,
+                        &canvas_state[VDC_INDEX].max_border_h);
   }
 }
 

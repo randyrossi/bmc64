@@ -224,8 +224,9 @@ extern int vic_showing;
 extern int vdc_showing;
 extern int vic_enabled;
 extern int vdc_enabled;
-extern int vdc_canvas_index;
-extern int vic_canvas_index;
+
+#define VIC_INDEX 0
+#define VDC_INDEX 1
 
 // Pause emulator main loop and run our ui loop. 
 void emux_trap_main_loop_ui(void);

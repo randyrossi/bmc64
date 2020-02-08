@@ -1058,8 +1058,8 @@ void ui_render_now(int menu_stack_index) {
 
     // We can use the 1st display canvas info because our UI layer
     // mirrors it's dimensions all the time.
-    int cx = canvas_state[vic_canvas_index].left + sw / 2 - 18 * 8 / 2;
-    int cy = canvas_state[vic_canvas_index].top + sh / 2 - 7 * 10 / 2;
+    int cx = canvas_state[VIC_INDEX].left + sw / 2 - 18 * 8 / 2;
+    int cy = canvas_state[VIC_INDEX].top + sh / 2 - 7 * 10 / 2;
 
     // Now get info about the layer we are djusting
     circle_get_fbl_dimensions(ui_transparent_layer,
@@ -1223,7 +1223,7 @@ struct menu_item *ui_push_menu(int w_chars, int h_chars) {
   menu_roots[current_menu].menu_height = menu_height;
 
   if (w_chars == -2) {
-    menu_roots[current_menu].menu_left = canvas_state[vic_canvas_index].left + canvas_state[vic_canvas_index].border_w;
+    menu_roots[current_menu].menu_left = canvas_state[VIC_INDEX].left + canvas_state[VIC_INDEX].border_w;
   } else if (w_chars == -1) {
     // Inherit the root menu's left
     menu_roots[current_menu].menu_left = menu_roots[0].menu_left;
@@ -1233,7 +1233,7 @@ struct menu_item *ui_push_menu(int w_chars, int h_chars) {
   }
 
   if (h_chars == -2) {
-    menu_roots[current_menu].menu_top = canvas_state[vic_canvas_index].top + canvas_state[vic_canvas_index].border_h;
+    menu_roots[current_menu].menu_top = canvas_state[VIC_INDEX].top + canvas_state[VIC_INDEX].border_h;
   } else if (h_chars == -1) {
     // Inherit the root menu's top
     menu_roots[current_menu].menu_top = menu_roots[0].menu_top;
@@ -1588,7 +1588,7 @@ void ui_geometry_changed(int dpx, int dpy,
      ui_fb_w = fbw;
      ui_fb_h = fbh;
    }
-   menu_roots[0].menu_top = canvas_state[vic_canvas_index].top + canvas_state[vic_canvas_index].border_h;
-   menu_roots[0].menu_left = canvas_state[vic_canvas_index].left + canvas_state[vic_canvas_index].border_w;
+   menu_roots[0].menu_top = canvas_state[VIC_INDEX].top + canvas_state[VIC_INDEX].border_h;
+   menu_roots[0].menu_left = canvas_state[VIC_INDEX].left + canvas_state[VIC_INDEX].border_w;
    ui_update_children(&menu_roots[0], menu_roots[0].menu_top, menu_roots[0].menu_left);
 }

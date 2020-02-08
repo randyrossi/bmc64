@@ -1619,24 +1619,24 @@ static void init_video(void) {
   circle_clear_fbl(FB_LAYER_VIC);
   circle_show_fbl(FB_LAYER_VIC);
 
-  canvas_state[vic_canvas_index].gfx_w = 40*8;
-  canvas_state[vic_canvas_index].gfx_h = 25*8 * raster_skip;
-  canvas_state[vic_canvas_index].raster_skip = raster_skip;
+  canvas_state[VIC_INDEX].gfx_w = 40*8;
+  canvas_state[VIC_INDEX].gfx_h = 25*8 * raster_skip;
+  canvas_state[VIC_INDEX].raster_skip = raster_skip;
 
   if (is_ntsc()) {
-    canvas_state[vic_canvas_index].min_border_w = 0;
-    canvas_state[vic_canvas_index].min_border_h = 0;
-    canvas_state[vic_canvas_index].max_border_w = 32;
-    canvas_state[vic_canvas_index].max_border_h = 22 * raster_skip;
+    canvas_state[VIC_INDEX].min_border_w = 0;
+    canvas_state[VIC_INDEX].min_border_h = 0;
+    canvas_state[VIC_INDEX].max_border_w = 32;
+    canvas_state[VIC_INDEX].max_border_h = 22 * raster_skip;
     time_advance = 1666;
     Plus4VM_SetVideoClockFrequency(vm, 14318180);
     strcpy(rom_kernal,"/PLUS4EMU/p4_ntsc.rom");
     Plus4VideoDecoder_SetNTSCMode(videoDecoder, 1);
   } else {
-    canvas_state[vic_canvas_index].min_border_w = 0;
-    canvas_state[vic_canvas_index].min_border_h = 0;
-    canvas_state[vic_canvas_index].max_border_w = 32;
-    canvas_state[vic_canvas_index].max_border_h = 40 * raster_skip;
+    canvas_state[VIC_INDEX].min_border_w = 0;
+    canvas_state[VIC_INDEX].min_border_h = 0;
+    canvas_state[VIC_INDEX].max_border_w = 32;
+    canvas_state[VIC_INDEX].max_border_h = 40 * raster_skip;
     time_advance = 2000;
     Plus4VM_SetVideoClockFrequency(vm, 17734475);
     strcpy(rom_kernal,"/PLUS4EMU/p4kernal.rom");

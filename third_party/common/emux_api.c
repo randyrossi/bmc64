@@ -57,8 +57,6 @@ int vic_showing;
 int vdc_showing;
 int vic_enabled = 1;
 int vdc_enabled;
-int vdc_canvas_index = 1;
-int vic_canvas_index;
 
 // Ring buffer for key latch events
 struct pending_emu_key_s pending_emu_key;
@@ -162,11 +160,11 @@ void emux_apply_video_adjustments(int layer,
   circle_hide_fbl(layer);
   if (layer == FB_LAYER_VIC) {
      vic_showing = 0;
-     index = vic_canvas_index;
+     index = VIC_INDEX;
   } else if (layer == FB_LAYER_VDC) {
      assert (layer == FB_LAYER_VDC);
      vdc_showing = 0;
-     index = vdc_canvas_index;
+     index = VDC_INDEX;
   } else if (layer == FB_LAYER_UI) {
      index = -1;
      ui_showing = 0;
@@ -225,10 +223,10 @@ void emux_apply_video_adjustments(int layer,
   if (layer == FB_LAYER_UI) {
     // For the UI, we inherit the same cutout as the VIC
     circle_set_src_rect_fbl(layer,
-           canvas_state[vic_canvas_index].left,
-           canvas_state[vic_canvas_index].top,
-           canvas_state[vic_canvas_index].vis_w,
-           canvas_state[vic_canvas_index].vis_h);
+           canvas_state[VIC_INDEX].left,
+           canvas_state[VIC_INDEX].top,
+           canvas_state[VIC_INDEX].vis_w,
+           canvas_state[VIC_INDEX].vis_h);
   }
 
   circle_set_center_offset(layer,

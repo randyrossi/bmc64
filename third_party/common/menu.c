@@ -124,49 +124,30 @@ struct menu_item *statusbar_padding_item;
 struct menu_item *tape_reset_with_machine_item;
 struct menu_item *vkbd_transparency_item;
 
-struct menu_item *palette_item_0;
-struct menu_item *brightness_item_0;
-struct menu_item *contrast_item_0;
-struct menu_item *gamma_item_0;
-struct menu_item *tint_item_0;
-struct menu_item *saturation_item_0;
-
-struct menu_item *palette_item_1;
-struct menu_item *brightness_item_1;
-struct menu_item *contrast_item_1;
-struct menu_item *gamma_item_1;
-struct menu_item *tint_item_1;
-struct menu_item *saturation_item_1;
+struct menu_item *palette_item[2];
+struct menu_item *brightness_item[2];
+struct menu_item *contrast_item[2];
+struct menu_item *gamma_item[2];
+struct menu_item *tint_item[2];
+struct menu_item *saturation_item[2];
 
 struct menu_item *warp_item;
 struct menu_item *reset_confirm_item;
 struct menu_item *gpio_config_item;
 struct menu_item *active_display_item;
 
-struct menu_item *use_integer_scaling_item_0;
-struct menu_item *use_integer_scaling_item_1;
+struct menu_item *use_integer_scaling_item[2];
 
-struct menu_item *h_center_item_0;
-struct menu_item *v_center_item_0;
-struct menu_item *h_border_item_0;
-struct menu_item *v_border_item_0;
-struct menu_item *h_stretch_item_0;
-struct menu_item *v_stretch_item_0;
-int h_integer_stretch_0;
-int v_integer_stretch_0;
-int use_h_integer_stretch_0;
-int use_v_integer_stretch_0;
-
-struct menu_item *h_center_item_1;
-struct menu_item *v_center_item_1;
-struct menu_item *h_border_item_1;
-struct menu_item *v_border_item_1;
-struct menu_item *h_stretch_item_1;
-struct menu_item *v_stretch_item_1;
-int h_integer_stretch_1;
-int v_integer_stretch_1;
-int use_h_integer_stretch_1;
-int use_v_integer_stretch_1;
+struct menu_item *h_center_item[2];
+struct menu_item *v_center_item[2];
+struct menu_item *h_border_item[2];
+struct menu_item *v_border_item[2];
+struct menu_item *h_stretch_item[2];
+struct menu_item *v_stretch_item[2];
+int h_integer_stretch[2];
+int v_integer_stretch[2];
+int use_h_integer_stretch[2];
+int use_v_integer_stretch[2];
 
 struct menu_item *pip_location_item;
 struct menu_item *pip_swapped_item;
@@ -722,10 +703,18 @@ void ui_set_joy_items() {
   set_need_mouse();
 }
 
-// TODO : Handle layer other than VIC
 static void do_use_int_scaling(int layer, int silent) {
+  int canvas_index;
+  if (layer == FB_LAYER_VIC) {
+    canvas_index = VIC_INDEX;
+  } else if (layer == FB_LAYER_VDC) {
+    canvas_index = VDC_INDEX;
+  } else {
+    return;
+  }
+
   int fbw, fbh, sx, sy;
-  circle_get_scaling_params(0, &fbw, &fbh, &sx, &sy);
+  circle_get_scaling_params(canvas_index, &fbw, &fbh, &sx, &sy);
 
   int dpw, dph, tmp;
   circle_get_fbl_dimensions(layer,
@@ -734,63 +723,70 @@ static void do_use_int_scaling(int layer, int silent) {
                             &tmp, &tmp,
                             &tmp, &tmp);
 
+
   if (fbw == 0 || fbh == 0 || sx == 0 || sy == 0) {
      if (!silent)
         ui_error("Bad or missing params");
-     use_integer_scaling_item_0->value = 0;
+     use_integer_scaling_item[canvas_index]->value = 0;
      return;
   }
 
   if (fbw % 2 != 0) {
      if (!silent)
         ui_error("fbw must be even");
-     use_integer_scaling_item_0->value = 0;
+     use_integer_scaling_item[canvas_index]->value = 0;
      return;
   }
 
   if (fbh % 2 != 0) {
      if (!silent)
         ui_error("fbh must be even");
-     use_integer_scaling_item_0->value = 0;
+     use_integer_scaling_item[canvas_index]->value = 0;
      return;
   }
 
-  h_integer_stretch_0 = fbw * sx;
-  v_integer_stretch_0 = fbh * sy;
+  h_integer_stretch[canvas_index] = fbw * sx;
+  v_integer_stretch[canvas_index] = fbh * sy;
 
-  h_border_item_0->value = (fbw - canvas_state[0].gfx_w) / 2;
-  if (h_border_item_0->value > h_border_item_0->max) {
+  h_border_item[canvas_index]->value =
+     (fbw - canvas_state[canvas_index].gfx_w) / 2;
+  if (h_border_item[canvas_index]->value >
+         h_border_item[canvas_index]->max) {
      if (!silent)
         ui_error("H out of range");
-     use_integer_scaling_item_0->value = 0;
+     use_integer_scaling_item[canvas_index]->value = 0;
      return;
-  } else if (h_border_item_0->value < h_border_item_0->min) {
+  } else if (h_border_item[canvas_index]->value <
+                h_border_item[canvas_index]->min) {
      if (!silent)
         ui_error("H out of range");
-     use_integer_scaling_item_0->value = 0;
+     use_integer_scaling_item[canvas_index]->value = 0;
      return;
   }
 
-  v_border_item_0->value = (fbh - canvas_state[0].gfx_h) / 2;
-  if (v_border_item_0->value > v_border_item_0->max) {
+  v_border_item[canvas_index]->value =
+     (fbh - canvas_state[canvas_index].gfx_h) / 2;
+  if (v_border_item[canvas_index]->value >
+     v_border_item[canvas_index]->max) {
      if (!silent)
         ui_error("V out of range");
-     use_integer_scaling_item_0->value = 0;
+     use_integer_scaling_item[canvas_index]->value = 0;
      return;
-  } else if (v_border_item_0->value < v_border_item_0->min) {
+  } else if (v_border_item[canvas_index]->value <
+                v_border_item[canvas_index]->min) {
      if (!silent)
         ui_error("V out of range");
-     use_integer_scaling_item_0->value = 0;
+     use_integer_scaling_item[canvas_index]->value = 0;
      return;
   }
 
-  h_stretch_item_0->value =
-     ceil((double)h_integer_stretch_0 * 1000.0 / (double)dph);
-  v_stretch_item_0->value =
-     ceil((double)v_integer_stretch_0 * 1000.0 / (double)dph);
+  h_stretch_item[canvas_index]->value =
+     ceil((double)h_integer_stretch[canvas_index] * 1000.0 / (double)dph);
+  v_stretch_item[canvas_index]->value =
+     ceil((double)v_integer_stretch[canvas_index] * 1000.0 / (double)dph);
 
-  use_h_integer_stretch_0 = 1;
-  use_v_integer_stretch_0 = 1;
+  use_h_integer_stretch[canvas_index] = 1;
+  use_v_integer_stretch[canvas_index] = 1;
 }
 
 static void next_integer_scaling(int layer,
@@ -826,25 +822,13 @@ static void next_integer_scaling(int layer,
   int menu_stretch_value = ceil((double)scaled_dim * 1000.0 / (double)dph);
 
   if (dimension == 0) {
-     if (layer == FB_LAYER_VIC) {
-        h_stretch_item_0->value = menu_stretch_value;
-        h_integer_stretch_0 = scaled_dim;
-        use_h_integer_stretch_0 = 1;
-     } else if (layer == FB_LAYER_VDC) {
-        h_stretch_item_1->value = menu_stretch_value;
-        h_integer_stretch_1 = scaled_dim;
-        use_h_integer_stretch_1 = 1;
-     }
+     h_stretch_item[canvas_index]->value = menu_stretch_value;
+     h_integer_stretch[canvas_index] = scaled_dim;
+     use_h_integer_stretch[canvas_index] = 1;
   } else {
-     if (layer == FB_LAYER_VIC) {
-        v_stretch_item_0->value = menu_stretch_value;
-        v_integer_stretch_0 = scaled_dim;
-        use_v_integer_stretch_0 = 1;
-     } else if (layer == FB_LAYER_VDC) {
-        v_stretch_item_1->value = menu_stretch_value;
-        v_integer_stretch_1 = scaled_dim;
-        use_v_integer_stretch_1 = 1;
-     }
+     v_stretch_item[canvas_index]->value = menu_stretch_value;
+     v_integer_stretch[canvas_index] = scaled_dim;
+     use_v_integer_stretch[canvas_index] = 1;
   }
 }
 
@@ -904,9 +888,9 @@ static int save_settings() {
     fprintf(fp, "usb_y_t_%d=%d\n", k, (int)(usb_y_thresh[k] * 100.0f));
   }
 
-  fprintf(fp, "palette=%d\n", palette_item_0->value);
+  fprintf(fp, "palette=%d\n", palette_item[0]->value);
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-    fprintf(fp, "palette2=%d\n", palette_item_1->value);
+    fprintf(fp, "palette2=%d\n", palette_item[1]->value);
   }
 
   for (int k = 0; k < MAX_USB_DEVICES; k++) {
@@ -929,19 +913,19 @@ static int save_settings() {
   fprintf(fp, "tapereset=%d\n", tape_reset_with_machine_item->value);
   fprintf(fp, "reset_confirm=%d\n", reset_confirm_item->value);
   fprintf(fp, "gpio_config=%d\n", gpio_config_item->choice_ints[gpio_config_item->value]);
-  fprintf(fp, "h_center_0=%d\n", h_center_item_0->value);
-  fprintf(fp, "v_center_0=%d\n", v_center_item_0->value);
-  fprintf(fp, "h_border_0=%d\n", h_border_item_0->value);
-  fprintf(fp, "v_border_0=%d\n", v_border_item_0->value);
-  fprintf(fp, "h_stretch_0=%d\n", h_stretch_item_0->value);
-  fprintf(fp, "v_stretch_0=%d\n", v_stretch_item_0->value);
+  fprintf(fp, "h_center_0=%d\n", h_center_item[0]->value);
+  fprintf(fp, "v_center_0=%d\n", v_center_item[0]->value);
+  fprintf(fp, "h_border_0=%d\n", h_border_item[0]->value);
+  fprintf(fp, "v_border_0=%d\n", v_border_item[0]->value);
+  fprintf(fp, "h_stretch_0=%d\n", h_stretch_item[0]->value);
+  fprintf(fp, "v_stretch_0=%d\n", v_stretch_item[0]->value);
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-     fprintf(fp, "h_center_1=%d\n", h_center_item_1->value);
-     fprintf(fp, "v_center_1=%d\n", v_center_item_1->value);
-     fprintf(fp, "h_border_1=%d\n", h_border_item_1->value);
-     fprintf(fp, "v_border_1=%d\n", v_border_item_1->value);
-     fprintf(fp, "hstretch_1=%d\n", h_stretch_item_1->value);
-     fprintf(fp, "vstretch_1=%d\n", v_stretch_item_1->value);
+     fprintf(fp, "h_center_1=%d\n", h_center_item[1]->value);
+     fprintf(fp, "v_center_1=%d\n", v_center_item[1]->value);
+     fprintf(fp, "h_border_1=%d\n", h_border_item[1]->value);
+     fprintf(fp, "v_border_1=%d\n", v_border_item[1]->value);
+     fprintf(fp, "hstretch_1=%d\n", h_stretch_item[1]->value);
+     fprintf(fp, "vstretch_1=%d\n", v_stretch_item[1]->value);
   }
 
   int drive_type;
@@ -985,9 +969,9 @@ static int save_settings() {
 
   fprintf(fp, "volume=%d\n", volume_item->value);
   fprintf(fp, "dir_convention=%d\n", dir_convention_item->value);
-  fprintf(fp, "use_int_scaling_0=%d\n", use_integer_scaling_item_0->value);
+  fprintf(fp, "use_int_scaling_0=%d\n", use_integer_scaling_item[0]->value);
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-     fprintf(fp, "use_int_scaling_1=%d\n", use_integer_scaling_item_1->value);
+     fprintf(fp, "use_int_scaling_1=%d\n", use_integer_scaling_item[1]->value);
   }
 
   for (int i = 0 ; i < NUM_GPIO_PINS; i++) {
@@ -1029,18 +1013,18 @@ static void load_settings() {
   emux_get_int(Setting_DriveSoundEmulationVolume, &drive_sounds_vol_item->value);
 #endif
 
-  brightness_item_0->value = emux_get_color_brightness(0);
-  contrast_item_0->value = emux_get_color_contrast(0);
-  gamma_item_0->value = emux_get_color_gamma(0);
-  tint_item_0->value = emux_get_color_tint(0);
-  saturation_item_0->value = emux_get_color_saturation(0);
+  brightness_item[0]->value = emux_get_color_brightness(0);
+  contrast_item[0]->value = emux_get_color_contrast(0);
+  gamma_item[0]->value = emux_get_color_gamma(0);
+  tint_item[0]->value = emux_get_color_tint(0);
+  saturation_item[0]->value = emux_get_color_saturation(0);
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-    brightness_item_1->value = emux_get_color_brightness(1);
-    contrast_item_1->value = emux_get_color_contrast(1);
-    gamma_item_1->value = emux_get_color_gamma(1);
-    tint_item_1->value = emux_get_color_tint(1);
-    saturation_item_1->value = emux_get_color_saturation(1);
+    brightness_item[1]->value = emux_get_color_brightness(1);
+    contrast_item[1]->value = emux_get_color_contrast(1);
+    gamma_item[1]->value = emux_get_color_gamma(1);
+    tint_item[1]->value = emux_get_color_tint(1);
+    saturation_item[1]->value = emux_get_color_saturation(1);
     emux_get_int(Setting_C128ColumnKey, &c40_80_column_item->value);
   }
 
@@ -1114,9 +1098,9 @@ static void load_settings() {
     } else if (port_4_menu_item && strcmp(name, "port_4") == 0) {
       port_4_menu_item->value = value;
     } else if (strcmp(name, "palette") == 0) {
-      palette_item_0->value = value;
+      palette_item[0]->value = value;
     } else if (strcmp(name, "palette2") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      palette_item_1->value = value;
+      palette_item[1]->value = value;
     } else if (strcmp(name, "alt_f12") == 0) {
       // Old. Equivalent to cf7 = Menu
       hotkey_cf7_item->value = HOTKEY_CHOICE_MENU;
@@ -1228,55 +1212,57 @@ static void load_settings() {
     } else if (strcmp(name, "key_binding_6") == 0) {
       key_bindings[5] = value;
     } else if (strcmp(name, "h_center_0") == 0) {
-      h_center_item_0->value = value;
+      h_center_item[0]->value = value;
     } else if (strcmp(name, "v_center_0") == 0) {
-      v_center_item_0->value = value;
+      v_center_item[0]->value = value;
     } else if (strcmp(name, "h_border_trim_0") == 0) {
       // LEGACY NAME : menu value = max_border_w * value / 100.
-      h_border_item_0->value = h_border_item_0->max * (1.0d - (value / 100.0d));
+      h_border_item[0]->value =
+         h_border_item[0]->max * (1.0d - (value / 100.0d));
     } else if (strcmp(name, "v_border_trim_0") == 0) {
       // LEGACY NAME : menu value = max_border_h * value / 100.
-      v_border_item_0->value = v_border_item_0->max * (1.0d - (value / 100.0d));
+      v_border_item[0]->value =
+         v_border_item[0]->max * (1.0d - (value / 100.0d));
     } else if (strcmp(name, "aspect_0") == 0) {
       // LEGACY NAME : aspect * 10 = h_stretch
-      h_stretch_item_0->value = value * 10;
-    } else if (strcmp(name, "h_border_1") == 0) {
-      h_border_item_0->value = value;
-    } else if (strcmp(name, "v_border_1") == 0) {
-      v_border_item_0->value = value;
+      h_stretch_item[0]->value = value * 10;
+    } else if (strcmp(name, "h_border_0") == 0) {
+      h_border_item[0]->value = value;
+    } else if (strcmp(name, "v_border_0") == 0) {
+      v_border_item[0]->value = value;
     } else if (strcmp(name, "h_stretch_0") == 0) {
-      h_stretch_item_0->value = value;
+      h_stretch_item[0]->value = value;
     } else if (strcmp(name, "v_stretch_0") == 0) {
-      v_stretch_item_0->value = value;
+      v_stretch_item[0]->value = value;
     } else if (strcmp(name, "h_center_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      h_center_item_1->value = value;
+      h_center_item[1]->value = value;
     } else if (strcmp(name, "v_center_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      v_center_item_1->value = value;
+      v_center_item[1]->value = value;
     } else if (strcmp(name, "h_border_trim_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       // LEGACY NAME : menu value = max_border_w * value / 100.
-      h_border_item_1->value = h_border_item_1->max * (1.0d - (value / 100.0d));
+      h_border_item[1]->value = h_border_item[1]->max * (1.0d - (value / 100.0d));
     } else if (strcmp(name, "v_border_trim_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       // LEGACY NAME : menu value = max_border_h * value / 100.
-      v_border_item_1->value = v_border_item_1->max * (1.0d - (value / 100.0d));
+      v_border_item[1]->value = v_border_item[1]->max * (1.0d - (value / 100.0d));
     } else if (strcmp(name, "aspect_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       // LEGACY NAME : aspect * 10 = h_stretch
-      h_stretch_item_1->value = value * 10;
+      h_stretch_item[1]->value = value * 10;
     } else if (strcmp(name, "h_border_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      h_border_item_1->value = value;
+      h_border_item[1]->value = value;
     } else if (strcmp(name, "v_border_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      v_border_item_1->value = value;
+      v_border_item[1]->value = value;
     } else if (strcmp(name, "h_stretch_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      h_stretch_item_1->value = value;
+      h_stretch_item[1]->value = value;
     } else if (strcmp(name, "v_stretch_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      v_stretch_item_1->value = value;
+      v_stretch_item[1]->value = value;
     } else if (strcmp(name, "volume") == 0) {
       volume_item->value = value;
     } else if (strcmp(name, "dir_convention") == 0) {
       dir_convention_item->value = value;
     } else if (strcmp(name, "use_int_scaling_0") == 0) {
-      use_integer_scaling_item_0->value = value;
+      use_integer_scaling_item[0]->value = value;
     } else if (strcmp(name, "use_int_scaling_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      use_integer_scaling_item_1->value = value;
+      use_integer_scaling_item[1]->value = value;
     } else if (strcmp(name, "custom_gpio") == 0) {
       char* token = strtok (value_str, ",");
       if (token != NULL) {
@@ -1735,38 +1721,32 @@ static void do_video_settings(int layer) {
   struct menu_item* vcenter_item;
   struct menu_item* hborder_item;
   struct menu_item* vborder_item;
-  struct menu_item* h_stretch_item;
-  struct menu_item* v_stretch_item;
-  int h_integer_stretch;
-  int v_integer_stretch;
-  int use_h_integer_stretch;
-  int use_v_integer_stretch;
+  struct menu_item* h_str_item;
+  struct menu_item* v_str_item;
+  int h_int_stretch;
+  int v_int_stretch;
+  int use_h_int_stretch;
+  int use_v_int_stretch;
 
+  int canvas_index;
   if (layer == FB_LAYER_VIC) {
-    hcenter_item = h_center_item_0;
-    vcenter_item = v_center_item_0;
-    hborder_item = h_border_item_0;
-    vborder_item = v_border_item_0;
-    h_stretch_item = h_stretch_item_0;
-    v_stretch_item = v_stretch_item_0;
-    h_integer_stretch = h_integer_stretch_0;
-    v_integer_stretch = v_integer_stretch_0;
-    use_h_integer_stretch = use_h_integer_stretch_0;
-    use_v_integer_stretch = use_v_integer_stretch_0;
+     canvas_index = VIC_INDEX;
   } else if (layer == FB_LAYER_VDC) {
-    hcenter_item = h_center_item_1;
-    vcenter_item = v_center_item_1;
-    hborder_item = h_border_item_1;
-    vborder_item = v_border_item_1;
-    h_stretch_item = h_stretch_item_1;
-    v_stretch_item = v_stretch_item_1;
-    h_integer_stretch = h_integer_stretch_1;
-    v_integer_stretch = v_integer_stretch_1;
-    use_h_integer_stretch = use_h_integer_stretch_1;
-    use_v_integer_stretch = use_v_integer_stretch_1;
+     canvas_index = VDC_INDEX;
   } else {
      return;
   }
+
+  hcenter_item = h_center_item[canvas_index];
+  vcenter_item = v_center_item[canvas_index];
+  hborder_item = h_border_item[canvas_index];
+  vborder_item = v_border_item[canvas_index];
+  h_str_item = h_stretch_item[canvas_index];
+  v_str_item = v_stretch_item[canvas_index];
+  h_int_stretch = h_integer_stretch[canvas_index];
+  v_int_stretch = v_integer_stretch[canvas_index];
+  use_h_int_stretch = use_h_integer_stretch[canvas_index];
+  use_v_int_stretch = use_v_integer_stretch[canvas_index];
 
   int hc = hcenter_item->value;
   int vc = vcenter_item->value;
@@ -1779,8 +1759,8 @@ static void do_video_settings(int layer) {
         lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = layer == FB_LAYER_VIC ? 0 : 1;
      } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE) {
         // VIC on the left, VDC on the right, always, no swapping
-        use_h_integer_stretch = 0;
-        use_v_integer_stretch = 0;
+        use_h_int_stretch = 0;
+        use_v_int_stretch = 0;
         if (layer == FB_LAYER_VIC) {
             lpad = 0; rpad = .50d; tpad = 0; bpad = 0; zlayer = 0;
         } else {
@@ -1795,8 +1775,8 @@ static void do_video_settings(int layer) {
             // full screen for this layer
             lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = 0;
         } else {
-            use_h_integer_stretch = 0;
-            use_v_integer_stretch = 0;
+            use_h_int_stretch = 0;
+            use_v_int_stretch = 0;
             zlayer = 1;
             if (pip_location_item->value == MENU_PIP_TOP_LEFT) {
               // top left quad
@@ -1825,8 +1805,8 @@ static void do_video_settings(int layer) {
 
   int h = hborder_item->value;
   int v = vborder_item->value;
-  double hs = (double)(h_stretch_item->value) / 1000.0d;
-  double vs = (double)(v_stretch_item->value) / 1000.0d;
+  double hs = (double)(h_str_item->value) / 1000.0d;
+  double vs = (double)(v_str_item->value) / 1000.0d;
 
   double vid_hstretch = hs;
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128 &&
@@ -1841,16 +1821,16 @@ static void do_video_settings(int layer) {
   emux_apply_video_adjustments(layer, vid_hc, vid_vc,
                                h, v,
                                vid_hstretch, vs,
-                               h_integer_stretch, v_integer_stretch,
-                               use_h_integer_stretch, use_v_integer_stretch,
+                               h_int_stretch, v_int_stretch,
+                               use_h_int_stretch, use_v_int_stretch,
                                lpad, rpad, tpad, bpad, zlayer);
   if (layer == FB_LAYER_VIC) {
      // Make UI match VIC settings except for padding.
      emux_apply_video_adjustments(FB_LAYER_UI, hc, vc,
                                   h, v,
                                   hs, vs,
-                                  h_integer_stretch_0, v_integer_stretch_0,
-                                  use_h_integer_stretch_0, use_v_integer_stretch_0,
+                                  h_integer_stretch[0], v_integer_stretch[0],
+                                  use_h_integer_stretch[0], use_v_integer_stretch[0],
                                   0, 0, 0, 0, 3);
   }
 }
@@ -2248,17 +2228,17 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_COLOR_RESET_0:
     emux_get_default_color_setting(
-      &brightness_item_0->value,
-      &contrast_item_0->value,
-      &gamma_item_0->value,
-      &tint_item_0->value,
-      &saturation_item_0->value
+      &brightness_item[0]->value,
+      &contrast_item[0]->value,
+      &gamma_item[0]->value,
+      &tint_item[0]->value,
+      &saturation_item[0]->value
     );
-    emux_set_color_brightness(0, brightness_item_0->value);
-    emux_set_color_contrast(0, contrast_item_0->value);
-    emux_set_color_gamma(0, gamma_item_0->value);
-    emux_set_color_tint(0, tint_item_0->value);
-    emux_set_color_saturation(0, saturation_item_0->value);
+    emux_set_color_brightness(0, brightness_item[0]->value);
+    emux_set_color_contrast(0, contrast_item[0]->value);
+    emux_set_color_gamma(0, gamma_item[0]->value);
+    emux_set_color_tint(0, tint_item[0]->value);
+    emux_set_color_saturation(0, saturation_item[0]->value);
     emux_video_color_setting_changed(0);
     return;
   case MENU_COLOR_BRIGHTNESS_1:
@@ -2288,17 +2268,17 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_COLOR_RESET_1:
     emux_get_default_color_setting(
-      &brightness_item_1->value,
-      &contrast_item_1->value,
-      &gamma_item_1->value,
-      &tint_item_1->value,
-      &saturation_item_1->value
+      &brightness_item[1]->value,
+      &contrast_item[1]->value,
+      &gamma_item[1]->value,
+      &tint_item[1]->value,
+      &saturation_item[1]->value
     );
-    emux_set_color_brightness(1, brightness_item_1->value);
-    emux_set_color_contrast(1, contrast_item_1->value);
-    emux_set_color_gamma(1, gamma_item_1->value);
-    emux_set_color_tint(1, tint_item_1->value);
-    emux_set_color_saturation(1, saturation_item_1->value);
+    emux_set_color_brightness(1, brightness_item[1]->value);
+    emux_set_color_contrast(1, contrast_item[1]->value);
+    emux_set_color_gamma(1, gamma_item[1]->value);
+    emux_set_color_tint(1, tint_item[1]->value);
+    emux_set_color_saturation(1, saturation_item[1]->value);
     emux_video_color_setting_changed(1);
     return;
   case MENU_SWAP_JOYSTICKS:
@@ -2427,22 +2407,22 @@ static void menu_value_changed(struct menu_item *item) {
     }
     break;
   case MENU_INTEGER_SCALE_W_0:
-    next_integer_scaling(FB_LAYER_VIC, vic_canvas_index, 0);
+    next_integer_scaling(FB_LAYER_VIC, VIC_INDEX, 0);
     ui_canvas_reveal_temp(FB_LAYER_VIC);
     do_video_settings(FB_LAYER_VIC);
     break;
   case MENU_INTEGER_SCALE_H_0:
-    next_integer_scaling(FB_LAYER_VIC, vic_canvas_index, 1);
+    next_integer_scaling(FB_LAYER_VIC, VIC_INDEX, 1);
     ui_canvas_reveal_temp(FB_LAYER_VIC);
     do_video_settings(FB_LAYER_VIC);
     break;
   case MENU_INTEGER_SCALE_W_1:
-    next_integer_scaling(FB_LAYER_VDC, vdc_canvas_index, 0);
+    next_integer_scaling(FB_LAYER_VDC, VDC_INDEX, 0);
     ui_canvas_reveal_temp(FB_LAYER_VDC);
     do_video_settings(FB_LAYER_VDC);
     break;
   case MENU_INTEGER_SCALE_H_1:
-    next_integer_scaling(FB_LAYER_VDC, vdc_canvas_index, 1);
+    next_integer_scaling(FB_LAYER_VDC, VDC_INDEX, 1);
     ui_canvas_reveal_temp(FB_LAYER_VDC);
     do_video_settings(FB_LAYER_VDC);
     break;
@@ -2455,11 +2435,11 @@ static void menu_value_changed(struct menu_item *item) {
     // Any manual adjustment to stretch, go back
     // to scaled dimensions.
     if (item->id == MENU_H_STRETCH_0 || item->id == MENU_H_BORDER_0) {
-       use_h_integer_stretch_0 = 0;
-       use_integer_scaling_item_0->value = 0;
+       use_h_integer_stretch[0] = 0;
+       use_integer_scaling_item[0]->value = 0;
     } else if (item->id == MENU_V_STRETCH_0 || item->id == MENU_V_BORDER_0) {
-       use_v_integer_stretch_0 = 0;
-       use_integer_scaling_item_0->value = 0;
+       use_v_integer_stretch[0] = 0;
+       use_integer_scaling_item[0]->value = 0;
     }
     ui_canvas_reveal_temp(FB_LAYER_VIC);
     do_video_settings(FB_LAYER_VIC);
@@ -2473,11 +2453,11 @@ static void menu_value_changed(struct menu_item *item) {
     // Any manual adjustment to stretch, go back
     // to scaled dimensions.
     if (item->id == MENU_H_STRETCH_1 || item->id == MENU_H_BORDER_1) {
-       use_h_integer_stretch_1 = 0;
-       use_integer_scaling_item_1->value = 0;
+       use_h_integer_stretch[1] = 0;
+       use_integer_scaling_item[1]->value = 0;
     } else if (item->id == MENU_V_STRETCH_1 || item->id == MENU_V_BORDER_1) {
-       use_v_integer_stretch_1 = 0;
-       use_integer_scaling_item_1->value = 0;
+       use_v_integer_stretch[1] = 0;
+       use_integer_scaling_item[1]->value = 0;
     }
     ui_canvas_reveal_temp(FB_LAYER_VDC);
     do_video_settings(FB_LAYER_VDC);
@@ -3063,37 +3043,37 @@ void build_menu(struct menu_item *root) {
      parent = ui_menu_add_folder(video_parent, "VICII");
   }
 
-  use_integer_scaling_item_0 = ui_menu_add_toggle(
+  use_integer_scaling_item[0] = ui_menu_add_toggle(
      MENU_USE_SCALING_PARAMS_0, parent, "Use integer scaling params", 1);
 
-  palette_item_0 = emux_add_palette_options(MENU_COLOR_PALETTE_0, parent);
+  palette_item[0] = emux_add_palette_options(MENU_COLOR_PALETTE_0, parent);
 
   child = ui_menu_add_folder(parent, "Color Adjustments...");
 
-  brightness_item_0 =
+  brightness_item[0] =
       ui_menu_add_range(MENU_COLOR_BRIGHTNESS_0, child, "Brightness",
          0, 2000,
             10, emux_get_color_brightness(0));
-  contrast_item_0 =
+  contrast_item[0] =
       ui_menu_add_range(MENU_COLOR_CONTRAST_0, child, "Contrast",
          0, 2000,
             10, emux_get_color_contrast(0));
-  gamma_item_0 =
+  gamma_item[0] =
       ui_menu_add_range(MENU_COLOR_GAMMA_0, child, "Gamma",
          0, 4000,
             10, emux_get_color_gamma(0));
-  tint_item_0 =
+  tint_item[0] =
       ui_menu_add_range(MENU_COLOR_TINT_0, child, "Tint",
          0, 2000,
             10, emux_get_color_tint(0));
   if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
-     saturation_item_0 =
+     saturation_item[0] =
          ui_menu_add_range(MENU_COLOR_SATURATION_0, child, "Saturation",
             0, 2000,
                10, emux_get_color_saturation(0));
   } else {
-     saturation_item_0 = (struct menu_item *)malloc(sizeof(struct menu_item));
-     memset(saturation_item_0, 0, sizeof(struct menu_item));
+     saturation_item[0] = (struct menu_item *)malloc(sizeof(struct menu_item));
+     memset(saturation_item[0], 0, sizeof(struct menu_item));
   }
 
   ui_menu_add_button(MENU_COLOR_RESET_0, child, "Reset");
@@ -3108,29 +3088,29 @@ void build_menu(struct menu_item *root) {
      defaultVStretch = DEFAULT_VICII_V_STRETCH;
   }
 
-  h_center_item_0 =
+  h_center_item[0] =
       ui_menu_add_range(MENU_H_CENTER_0, parent, "H Center",
           -48, 48, 1, 0);
-  v_center_item_0 =
+  v_center_item[0] =
       ui_menu_add_range(MENU_V_CENTER_0, parent, "V Center",
           -48, 48, 1, 0);
-  h_border_item_0 =
+  h_border_item[0] =
       ui_menu_add_range(MENU_H_BORDER_0, parent, "H Border (px)",
-          canvas_state[vic_canvas_index].min_border_w,
-             canvas_state[vic_canvas_index].max_border_w,
-                1, canvas_state[vic_canvas_index].max_border_w);
-  v_border_item_0 =
+          canvas_state[VIC_INDEX].min_border_w,
+             canvas_state[VIC_INDEX].max_border_w,
+                1, canvas_state[VIC_INDEX].max_border_w);
+  v_border_item[0] =
       ui_menu_add_range(MENU_V_BORDER_0, parent, "V Border (px)",
-          canvas_state[vic_canvas_index].min_border_h,
-             canvas_state[vic_canvas_index].max_border_h,
-                1, canvas_state[vic_canvas_index].max_border_h);
-  child = h_stretch_item_0 =
+          canvas_state[VIC_INDEX].min_border_h,
+             canvas_state[VIC_INDEX].max_border_h,
+                1, canvas_state[VIC_INDEX].max_border_h);
+  child = h_stretch_item[0] =
       ui_menu_add_range(MENU_H_STRETCH_0, parent, "H Stretch Factor",
-           500, canvas_state[vic_canvas_index].max_stretch_h ?
-              canvas_state[vic_canvas_index].max_stretch_h : 1800,
+           500, canvas_state[VIC_INDEX].max_stretch_h ?
+              canvas_state[VIC_INDEX].max_stretch_h : 1800,
                  5, defaultHStretch);
   child->divisor = 1000;
-  child = v_stretch_item_0 =
+  child = v_stretch_item[0] =
       ui_menu_add_range(MENU_V_STRETCH_0, parent, "V Stretch Factor",
            500, 1000, 5, defaultVStretch);
   child->divisor = 1000;
@@ -3141,65 +3121,65 @@ void build_menu(struct menu_item *root) {
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      parent = ui_menu_add_folder(video_parent, "VDC");
 
-     use_integer_scaling_item_1 = ui_menu_add_toggle(
+     use_integer_scaling_item[1] = ui_menu_add_toggle(
         MENU_USE_SCALING_PARAMS_1, parent, "Use integer scaling params", 1);
 
-     palette_item_1 = emux_add_palette_options(MENU_COLOR_PALETTE_1, parent);
+     palette_item[1] = emux_add_palette_options(MENU_COLOR_PALETTE_1, parent);
 
      child = ui_menu_add_folder(parent, "Color Adjustments...");
 
-     brightness_item_1 =
+     brightness_item[1] =
          ui_menu_add_range(MENU_COLOR_BRIGHTNESS_1, child, "Brightness",
             0, 2000,
                10, emux_get_color_brightness(1));
-     contrast_item_1 =
+     contrast_item[1] =
          ui_menu_add_range(MENU_COLOR_CONTRAST_1, child, "Contrast",
             0, 2000,
                10, emux_get_color_contrast(1));
-     gamma_item_1 =
+     gamma_item[1] =
          ui_menu_add_range(MENU_COLOR_GAMMA_1, child, "Gamma",
             0, 4000,
                10, emux_get_color_gamma(1));
-     tint_item_1 =
+     tint_item[1] =
          ui_menu_add_range(MENU_COLOR_TINT_1, child, "Tint",
             0, 2000,
                10, emux_get_color_tint(1));
 
      if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
-        saturation_item_1 =
+        saturation_item[1] =
             ui_menu_add_range(MENU_COLOR_SATURATION_1, child, "Saturation",
                0, 2000,
                   10, emux_get_color_saturation(1));
      } else {
-        saturation_item_1 = (struct menu_item *)malloc(sizeof(struct menu_item));
-        memset(saturation_item_1, 0, sizeof(struct menu_item));
+        saturation_item[1] = (struct menu_item *)malloc(sizeof(struct menu_item));
+        memset(saturation_item[1], 0, sizeof(struct menu_item));
      }
 
      ui_menu_add_button(MENU_COLOR_RESET_1, child, "Reset");
 
-     h_center_item_1 =
+     h_center_item[1] =
          ui_menu_add_range(MENU_H_CENTER_1, parent, "H Center",
              -48, 48, 1, 0);
-     v_center_item_1 =
+     v_center_item[1] =
          ui_menu_add_range(MENU_V_CENTER_1, parent, "V Center",
              -48, 48, 1, 0);
-     h_border_item_1 =
+     h_border_item[1] =
          ui_menu_add_range(MENU_H_BORDER_1, parent, "H Border (px)",
-             canvas_state[vdc_canvas_index].min_border_w,
-                canvas_state[vdc_canvas_index].max_border_w,
-                   1, canvas_state[vdc_canvas_index].max_border_w);
-     v_border_item_1 =
+             canvas_state[VDC_INDEX].min_border_w,
+                canvas_state[VDC_INDEX].max_border_w,
+                   1, canvas_state[VDC_INDEX].max_border_w);
+     v_border_item[1] =
          ui_menu_add_range(MENU_V_BORDER_1, parent, "V Border (px)",
-             canvas_state[vdc_canvas_index].min_border_h,
-                canvas_state[vdc_canvas_index].max_border_h,
-                   1, canvas_state[vdc_canvas_index].max_border_h);
-     child = h_stretch_item_1 =
+             canvas_state[VDC_INDEX].min_border_h,
+                canvas_state[VDC_INDEX].max_border_h,
+                   1, canvas_state[VDC_INDEX].max_border_h);
+     child = h_stretch_item[1] =
          ui_menu_add_range(MENU_H_STRETCH_1, parent, "H Stretch Factor",
-              500, canvas_state[vdc_canvas_index].max_stretch_h ?
-                 canvas_state[vdc_canvas_index].max_stretch_h : 1800,
+              500, canvas_state[VDC_INDEX].max_stretch_h ?
+                 canvas_state[VDC_INDEX].max_stretch_h : 1800,
                     5, DEFAULT_VDC_H_STRETCH);
      child->divisor = 1000;
-     child = v_stretch_item_1 =
+     child = v_stretch_item[1] =
          ui_menu_add_range(MENU_V_STRETCH_1, parent, "V Stretch Factor",
               500, 1000, 5, DEFAULT_VDC_V_STRETCH);
      child->divisor = 1000;
@@ -3411,11 +3391,11 @@ void build_menu(struct menu_item *root) {
 
   load_settings();
 
-  if (use_integer_scaling_item_0->value) {
+  if (use_integer_scaling_item[0]->value) {
      do_use_int_scaling(FB_LAYER_VIC, 1 /* silent */);
   }
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128 &&
-         use_integer_scaling_item_1->value) {
+         use_integer_scaling_item[1]->value) {
      do_use_int_scaling(FB_LAYER_VDC, 1 /* silent */);
   }
 
@@ -3423,9 +3403,9 @@ void build_menu(struct menu_item *root) {
 
   circle_set_volume(volume_item->value);
 
-  emux_change_palette(0, palette_item_0->value);
+  emux_change_palette(0, palette_item[0]->value);
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-    emux_change_palette(1, palette_item_1->value);
+    emux_change_palette(1, palette_item[1]->value);
   }
   ui_set_hotkeys();
   ui_set_joy_devs();
@@ -3662,9 +3642,9 @@ void emux_geometry_changed(int layer) {
   // are going into the range item.
   int canvas_index = -1;
   if (layer == FB_LAYER_VIC) {
-     canvas_index = vic_canvas_index;
+     canvas_index = VIC_INDEX;
   } else if (layer == FB_LAYER_VDC) {
-     canvas_index = vdc_canvas_index;
+     canvas_index = VDC_INDEX;
   }
 
   int dpx, dpy, fbw, fbh, sw, sh, dw, dh;
@@ -3683,19 +3663,11 @@ void emux_geometry_changed(int layer) {
     // Update the allowed max h stretch based on the display width and height
     double max_scale = ceil((double)dpx / (double)dpy) * 1000;
 
-    if (layer == FB_LAYER_VIC) {
-       if (h_border_item_0) h_border_item_0->min = min_border_w;
-       if (v_border_item_0) v_border_item_0->min = min_border_h;
-       if (h_border_item_0) h_border_item_0->max = canvas_state[canvas_index].max_border_w;
-       if (v_border_item_0) v_border_item_0->max = canvas_state[canvas_index].max_border_h;
-       if (h_stretch_item_0) h_stretch_item_0->max = max_scale;
-    } else if (layer == FB_LAYER_VDC) {
-       if (h_border_item_1) h_border_item_1->min = min_border_w;
-       if (v_border_item_1) v_border_item_1->min = min_border_h;
-       if (h_border_item_1) h_border_item_1->max = canvas_state[canvas_index].max_border_w;
-       if (v_border_item_1) v_border_item_1->max = canvas_state[canvas_index].max_border_h;
-       if (h_stretch_item_1) h_stretch_item_1->max = max_scale;
-    }
+    if (h_border_item[canvas_index]) h_border_item[canvas_index]->min = min_border_w;
+    if (v_border_item[canvas_index]) v_border_item[canvas_index]->min = min_border_h;
+    if (h_border_item[canvas_index]) h_border_item[canvas_index]->max = canvas_state[canvas_index].max_border_w;
+    if (v_border_item[canvas_index]) v_border_item[canvas_index]->max = canvas_state[canvas_index].max_border_h;
+    if (h_stretch_item[canvas_index]) h_stretch_item[canvas_index]->max = max_scale;
 
     // Stuff these into the canvas state
     canvas_state[canvas_index].min_border_w = min_border_w;
