@@ -725,7 +725,7 @@ void ui_set_joy_items() {
 // TODO : Handle layer other than VIC
 static void do_use_int_scaling(int layer, int silent) {
   int fbw, fbh, sx, sy;
-  circle_get_scaling_params(&fbw, &fbh, &sx, &sy);
+  circle_get_scaling_params(0, &fbw, &fbh, &sx, &sy);
 
   int dpw, dph, tmp;
   circle_get_fbl_dimensions(layer,

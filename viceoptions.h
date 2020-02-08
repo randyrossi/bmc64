@@ -36,7 +36,7 @@ public:
   unsigned long GetCyclesPerSecond(void) const;
   TVCHIQSoundDestination GetAudioOut(void) const;
   bool DPIEnabled(void) const;
-  void GetScalingParams(int *fbw, int *fbh, int *sx, int *sy);
+  void GetScalingParams(int display, int *fbw, int *fbh, int *sx, int *sy);
 
   static ViceOptions *Get(void);
 
@@ -63,10 +63,10 @@ private:
   unsigned long m_nCyclesPerSecond;
   TVCHIQSoundDestination m_audioOut;
   bool m_bDPIEnabled;
-  int m_scaling_param_fbw;
-  int m_scaling_param_fbh;
-  int m_scaling_param_sx;
-  int m_scaling_param_sy;
+  int m_scaling_param_fbw[2];
+  int m_scaling_param_fbh[2];
+  int m_scaling_param_sx[2];
+  int m_scaling_param_sy[2];
 
   static ViceOptions *s_pThis;
 };

@@ -112,7 +112,9 @@ public:
                                  int *fb_w, int *fb_h,
                                  int *src_w, int *src_h,
                                  int *dst_w, int *dst_h);
-  void circle_get_scaling_params(int *fbw, int *fbh, int *sx, int *sy);
+  void circle_get_scaling_params(int display,
+                                 int *fbw, int *fbh,
+                                 int *sx, int *sy);
 
 private:
   void InitSound();

@@ -16,7 +16,7 @@
 # SectionHeader = [Machine/TimingStandard/OutputType/ResolutionDesc]
 # Machine = VIC20|C64|C128|Plus4|Plus4Emu|Pet
 # TimingStandard = NTSC | PAL
-# OutputVideo = HDMI | Composite
+# OutputVideo = HDMI | DPI | Composite
 # ResolutionDesc = Any text (can be used to describe the video resolution)
 # OptionLine = "key=value\n"
 #
@@ -36,6 +36,7 @@
 # machine_timing
 # cycles_per_second
 # audio_out
+# scaling_params
 
 #
 # NOTE: Always include a valid hdmi mode even for the composite

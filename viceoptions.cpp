@@ -14,11 +14,14 @@
 // limitations under the License.
 
 #include "viceoptions.h"
+
+#include <stdlib.h>
+#include <string.h>
+#include <algorithm>
+
 #include <circle/logger.h>
 #include <circle/sysconfig.h>
 #include <circle/util.h>
-#include <stdlib.h>
-#include <string.h>
 
 extern "C" {
 #include "third_party/common/circle.h"
@@ -33,8 +36,8 @@ ViceOptions::ViceOptions(void)
       m_bDemoEnabled(false), m_bSerialEnabled(false),
       m_bGPIOOutputsEnabled(false), m_nCyclesPerSecond(0),
       m_audioOut(VCHIQSoundDestinationAuto), m_bDPIEnabled(false),
-      m_scaling_param_fbw(0), m_scaling_param_fbh(0),
-      m_scaling_param_sx(0), m_scaling_param_sy(0) {
+      m_scaling_param_fbw{0,0}, m_scaling_param_fbh{0,0},
+      m_scaling_param_sx{0,0}, m_scaling_param_sy{0,0} {
   s_pThis = this;
 
   CBcmPropertyTags Tags;
@@ -119,7 +122,9 @@ ViceOptions::ViceOptions(void)
         m_bDPIEnabled = false;
       }
     } else if (strcmp(pOption, "scaling_params") == 0) {
-      char* fbw_s = strtok(pValue, ",");
+      char* num_s = strtok(pValue, ",");
+      if (!num_s) continue;
+      char* fbw_s = strtok(NULL, ",");
       if (!fbw_s) continue;
       char* fbh_s = strtok(NULL, ",");
       if (!fbh_s) continue;
@@ -127,10 +132,13 @@ ViceOptions::ViceOptions(void)
       if (!sx_s) continue;
       char* sy_s = strtok(NULL, ",");
       if (!sy_s) continue;
-      m_scaling_param_fbw = atoi(fbw_s);
-      m_scaling_param_fbh = atoi(fbh_s);
-      m_scaling_param_sx = atoi(sx_s);
-      m_scaling_param_sy = atoi(sy_s);
+      int num = atoi(num_s);
+      if (num >=0 && num < 2) {
+         m_scaling_param_fbw[num] = atoi(fbw_s);
+         m_scaling_param_fbh[num] = atoi(fbh_s);
+         m_scaling_param_sx[num] = atoi(sx_s);
+         m_scaling_param_sy[num] = atoi(sy_s);
+      }
     }
   }
 
@@ -177,11 +185,13 @@ bool ViceOptions::DPIEnabled(void) const { return m_bDPIEnabled; }
 
 int ViceOptions::GetDiskPartition(void) const { return m_disk_partition; }
 
-void ViceOptions::GetScalingParams(int *fbw, int *fbh, int *sx, int *sy) {
-  *fbw = m_scaling_param_fbw;
-  *fbh = m_scaling_param_fbh;
-  *sx = m_scaling_param_sx;
-  *sy = m_scaling_param_sy;
+void ViceOptions::GetScalingParams(int display, int *fbw, int *fbh, int *sx, int *sy) {
+  if (display >=0 && display < 2) {
+     *fbw = m_scaling_param_fbw[display];
+     *fbh = m_scaling_param_fbh[display];
+     *sx = m_scaling_param_sx[display];
+     *sy = m_scaling_param_sy[display];
+  }
 }
 
 const char *ViceOptions::GetDiskVolume(void) const { return m_disk_volume; }
