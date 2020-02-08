@@ -1108,8 +1108,6 @@ void ui_render_now(int menu_stack_index) {
     ui_draw_shadow_text("Use , and . for", &qx, &qy, 1);
     qx = cx; qy+=10;
     ui_draw_shadow_text("-/+1 increments.", &qx, &qy, 1);
-    qx = cx; qy+=10;
-    ui_draw_shadow_text("R resets to 1.000", &qx, &qy, 1);
   }
 }
 

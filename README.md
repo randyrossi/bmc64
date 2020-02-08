@@ -131,6 +131,7 @@ Here are a couple examples you can add to machines.txt that will work with the V
     display_default_lcd=1
     dpi_group=1
     dpi_mode=4
+    scaling_params=0,384,240,1152,720
 
     [C64/PAL/DPI/VGA666:720p@50hz]
     enable_dpi=true
@@ -140,6 +141,7 @@ Here are a couple examples you can add to machines.txt that will work with the V
     display_default_lcd=1
     dpi_group=1
     dpi_mode=19
+    scaling_params=0,384,240,1152,720
 
 * It appears these modes are not exactly 50hz/60hz like HDMI. It's likely the case that all DPI modes will require custom timing.  See steps mentioned above for how to find the correct cycles_per_second value for your DPI mode.
 

@@ -53,6 +53,7 @@ sdtv_mode=16
 hdmi_group=1
 hdmi_mode=4
 machine_timing=ntsc-hdmi
+scaling_params=0,414,228,1242,684
 
 [VIC20/NTSC/Composite/VICE 480p@60Hz]
 disable_overscan=1
@@ -60,6 +61,7 @@ sdtv_mode=16
 hdmi_group=1
 hdmi_mode=4
 machine_timing=ntsc-composite
+scaling_params=0,422,228,720,456
 
 [VIC20/PAL/HDMI/VICE 720p@50Hz]
 disable_overscan=1
@@ -67,6 +69,7 @@ sdtv_mode=18
 hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-hdmi
+scaling_params=0,414,240,1242,720
 
 [VIC20/PAL/Composite/VICE 576p@50Hz]
 disable_overscan=1
@@ -74,6 +77,7 @@ sdtv_mode=18
 hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-composite
+scaling_params=0,422,240,668,480
 
 #
 # C64
@@ -85,6 +89,7 @@ sdtv_mode=16
 hdmi_group=1
 hdmi_mode=4
 machine_timing=ntsc-hdmi
+scaling_params=0,384,240,1152,720
 
 [C64/NTSC/Composite/VICE 480p@60Hz]
 disable_overscan=1
@@ -92,6 +97,7 @@ sdtv_mode=16
 hdmi_group=1
 hdmi_mode=4
 machine_timing=ntsc-composite
+scaling_params=0,364,240,600,480
 
 [C64/PAL/HDMI/VICE 720p@50Hz]
 disable_overscan=1
@@ -99,6 +105,7 @@ sdtv_mode=18
 hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-hdmi
+scaling_params=0,384,240,1152,720
 
 [C64/PAL/Composite/VICE 576p@50Hz]
 disable_overscan=1
@@ -106,16 +113,7 @@ sdtv_mode=18
 hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-composite
-
-# This matches the timing of a real PAL machine but may
-# not work on all monitors.
-[C64/PAL/HDMI/VICE 768x544@50.125Hz]
-sdtv_mode=18
-hdmi_group=2
-hdmi_mode=87
-hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
-machine_timing=pal-custom
-cycles_per_second=985257
+scaling_params=0,384,272,648,544
 
 # This matches the timing of a real NTSC machine but may
 # not work on all monitors.
@@ -126,6 +124,19 @@ hdmi_mode=87
 hdmi_timings=768 0 24 72 96 525 1 3 10 9 0 0 0 60 0 31415829 1
 machine_timing=ntsc-custom
 cycles_per_second=1022708
+scaling_params=0,384,246,768,492
+
+# This matches the timing of a real PAL machine but may
+# not work on all monitors.
+[C64/PAL/HDMI/VICE 768x544@50.125Hz]
+sdtv_mode=18
+hdmi_group=2
+hdmi_mode=87
+hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
+machine_timing=pal-custom
+cycles_per_second=985257
+scaling_params=0,384,272,768,544
+
 
 #
 # C128
@@ -137,6 +148,8 @@ sdtv_mode=16
 hdmi_group=1
 hdmi_mode=4
 machine_timing=ntsc-hdmi
+scaling_params=0,384,240,1152,720
+scaling_params=1,864,228,1280,684
 
 [C128/NTSC/Composite/VICE 480p@60Hz]
 disable_overscan=1
@@ -144,6 +157,7 @@ sdtv_mode=16
 hdmi_group=1
 hdmi_mode=4
 machine_timing=ntsc-composite
+scaling_params=0,364,240,640,480
 
 [C128/PAL/HDMI/VICE 720p@50Hz]
 disable_overscan=1
@@ -151,6 +165,8 @@ sdtv_mode=18
 hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-hdmi
+scaling_params=0,384,240,1152,720
+scaling_params=1,864,240,1280,684
 
 [C128/PAL/Composite/VICE 576p@50Hz]
 disable_overscan=1
@@ -158,16 +174,7 @@ sdtv_mode=18
 hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-composite
-
-# This matches the timing of a real PAL machine but may
-# not work on all monitors.
-[C128/PAL/HDMI/VICE 768x544@50.125Hz]
-sdtv_mode=18
-hdmi_group=2
-hdmi_mode=87
-hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
-machine_timing=pal-custom
-cycles_per_second=985257
+scaling_params=0,384,272,648,544
 
 # This matches the timing of a real NTSC machine but may
 # not work on all monitors.
@@ -178,6 +185,21 @@ hdmi_mode=87
 hdmi_timings=768 0 24 72 96 525 1 3 10 9 0 0 0 60 0 31415829 1
 machine_timing=ntsc-custom
 cycles_per_second=1022708
+scaling_params=0,384,246,1152,492
+scaling_params=1,674,228,674,456
+
+# This matches the timing of a real PAL machine but may
+# not work on all monitors.
+[C128/PAL/HDMI/VICE 768x544@50.125Hz]
+sdtv_mode=18
+hdmi_group=2
+hdmi_mode=87
+hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
+machine_timing=pal-custom
+cycles_per_second=985257
+scaling_params=0,384,272,768,544
+scaling_params=1,674,272,674,544
+
 
 #
 # PLUS/4 & C16
@@ -189,6 +211,7 @@ sdtv_mode=16
 hdmi_group=1
 hdmi_mode=4
 machine_timing=ntsc-hdmi
+scaling_params=0,384,232,1152,696
 
 [PLUS4/NTSC/Composite/VICE 480p@60Hz]
 disable_overscan=1
@@ -196,6 +219,7 @@ sdtv_mode=16
 hdmi_group=1
 hdmi_mode=4
 machine_timing=ntsc-composite
+scaling_params=0,360,232,640,464
 
 [PLUS4/PAL/HDMI/VICE 720p@50Hz]
 disable_overscan=1
@@ -203,6 +227,7 @@ sdtv_mode=18
 hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-hdmi
+scaling_params=0,384,240,1152,720
 
 [PLUS4/PAL/Composite/VICE 576p@50Hz]
 disable_overscan=1
@@ -210,6 +235,7 @@ sdtv_mode=18
 hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-composite
+scaling_params=0,364,280,640,560
 
 # PLUS4EMU Is only available for Pi3. It is a more
 # accurate Plus/4 emulator but requires more CPU.
@@ -221,6 +247,7 @@ sdtv_mode=16
 hdmi_group=1
 hdmi_mode=4
 machine_timing=ntsc-hdmi
+scaling_params=0,384,240,1152,720
 
 [PLUS4EMU/NTSC/Composite/Plus4Emu 480p@60Hz]
 disable_overscan=1
@@ -228,6 +255,7 @@ sdtv_mode=16
 hdmi_group=1
 hdmi_mode=4
 machine_timing=ntsc-composite
+scaling_params=0,364,240,640,480
 
 [PLUS4EMU/PAL/HDMI/Plus4Emu 720p@50Hz]
 disable_overscan=1
@@ -235,6 +263,7 @@ sdtv_mode=18
 hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-hdmi
+scaling_params=0,384,240,1152,720
 
 [PLUS4EMU/PAL/Composite/Plus4Emu 576p@50Hz]
 disable_overscan=1
@@ -242,6 +271,7 @@ sdtv_mode=18
 hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-composite
+scaling_params=0,364,272,640,544
 
 #
 # PET

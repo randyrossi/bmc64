@@ -162,7 +162,6 @@ void emux_apply_video_adjustments(int layer,
      vic_showing = 0;
      index = VIC_INDEX;
   } else if (layer == FB_LAYER_VDC) {
-     assert (layer == FB_LAYER_VDC);
      vdc_showing = 0;
      index = VDC_INDEX;
   } else if (layer == FB_LAYER_UI) {

@@ -136,7 +136,7 @@ struct menu_item *reset_confirm_item;
 struct menu_item *gpio_config_item;
 struct menu_item *active_display_item;
 
-struct menu_item *use_integer_scaling_item[2];
+struct menu_item *use_scaling_params_item[2];
 
 struct menu_item *h_center_item[2];
 struct menu_item *v_center_item[2];
@@ -703,14 +703,17 @@ void ui_set_joy_items() {
   set_need_mouse();
 }
 
-static void do_use_int_scaling(int layer, int silent) {
+static int do_use_int_scaling(int layer, int silent) {
   int canvas_index;
   if (layer == FB_LAYER_VIC) {
     canvas_index = VIC_INDEX;
   } else if (layer == FB_LAYER_VDC) {
     canvas_index = VDC_INDEX;
   } else {
-    return;
+    if (!silent)
+       ui_error("Bad display num");
+    use_scaling_params_item[canvas_index]->value = 0;
+    return 0;
   }
 
   int fbw, fbh, sx, sy;
@@ -727,26 +730,40 @@ static void do_use_int_scaling(int layer, int silent) {
   if (fbw == 0 || fbh == 0 || sx == 0 || sy == 0) {
      if (!silent)
         ui_error("Bad or missing params");
-     use_integer_scaling_item[canvas_index]->value = 0;
-     return;
+     use_scaling_params_item[canvas_index]->value = 0;
+     return 0;
   }
 
   if (fbw % 2 != 0) {
      if (!silent)
         ui_error("fbw must be even");
-     use_integer_scaling_item[canvas_index]->value = 0;
-     return;
+     use_scaling_params_item[canvas_index]->value = 0;
+     return 0;
   }
 
   if (fbh % 2 != 0) {
      if (!silent)
         ui_error("fbh must be even");
-     use_integer_scaling_item[canvas_index]->value = 0;
-     return;
+     use_scaling_params_item[canvas_index]->value = 0;
+     return 0;
   }
 
-  h_integer_stretch[canvas_index] = fbw * sx;
-  v_integer_stretch[canvas_index] = fbh * sy;
+  if (sx > dpw) {
+     if (!silent)
+        ui_error("sx too large for display");
+     use_scaling_params_item[canvas_index]->value = 0;
+     return 0;
+  }
+
+  if (sy > dph) {
+     if (!silent)
+        ui_error("sy too large for display");
+     use_scaling_params_item[canvas_index]->value = 0;
+     return 0;
+  }
+
+  h_integer_stretch[canvas_index] = sx;
+  v_integer_stretch[canvas_index] = sy;
 
   h_border_item[canvas_index]->value =
      (fbw - canvas_state[canvas_index].gfx_w) / 2;
@@ -754,14 +771,14 @@ static void do_use_int_scaling(int layer, int silent) {
          h_border_item[canvas_index]->max) {
      if (!silent)
         ui_error("H out of range");
-     use_integer_scaling_item[canvas_index]->value = 0;
-     return;
+     use_scaling_params_item[canvas_index]->value = 0;
+     return 0;
   } else if (h_border_item[canvas_index]->value <
                 h_border_item[canvas_index]->min) {
      if (!silent)
         ui_error("H out of range");
-     use_integer_scaling_item[canvas_index]->value = 0;
-     return;
+     use_scaling_params_item[canvas_index]->value = 0;
+     return 0;
   }
 
   v_border_item[canvas_index]->value =
@@ -770,14 +787,14 @@ static void do_use_int_scaling(int layer, int silent) {
      v_border_item[canvas_index]->max) {
      if (!silent)
         ui_error("V out of range");
-     use_integer_scaling_item[canvas_index]->value = 0;
-     return;
+     use_scaling_params_item[canvas_index]->value = 0;
+     return 0;
   } else if (v_border_item[canvas_index]->value <
                 v_border_item[canvas_index]->min) {
      if (!silent)
         ui_error("V out of range");
-     use_integer_scaling_item[canvas_index]->value = 0;
-     return;
+     use_scaling_params_item[canvas_index]->value = 0;
+     return 0;
   }
 
   h_stretch_item[canvas_index]->value =
@@ -787,6 +804,7 @@ static void do_use_int_scaling(int layer, int silent) {
 
   use_h_integer_stretch[canvas_index] = 1;
   use_v_integer_stretch[canvas_index] = 1;
+  return 1;
 }
 
 static void next_integer_scaling(int layer,
@@ -969,9 +987,9 @@ static int save_settings() {
 
   fprintf(fp, "volume=%d\n", volume_item->value);
   fprintf(fp, "dir_convention=%d\n", dir_convention_item->value);
-  fprintf(fp, "use_int_scaling_0=%d\n", use_integer_scaling_item[0]->value);
+  fprintf(fp, "use_int_scaling_0=%d\n", use_scaling_params_item[0]->value);
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-     fprintf(fp, "use_int_scaling_1=%d\n", use_integer_scaling_item[1]->value);
+     fprintf(fp, "use_int_scaling_1=%d\n", use_scaling_params_item[1]->value);
   }
 
   for (int i = 0 ; i < NUM_GPIO_PINS; i++) {
@@ -1260,9 +1278,9 @@ static void load_settings() {
     } else if (strcmp(name, "dir_convention") == 0) {
       dir_convention_item->value = value;
     } else if (strcmp(name, "use_int_scaling_0") == 0) {
-      use_integer_scaling_item[0]->value = value;
+      use_scaling_params_item[0]->value = value;
     } else if (strcmp(name, "use_int_scaling_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      use_integer_scaling_item[1]->value = value;
+      use_scaling_params_item[1]->value = value;
     } else if (strcmp(name, "custom_gpio") == 0) {
       char* token = strtok (value_str, ",");
       if (token != NULL) {
@@ -2436,10 +2454,10 @@ static void menu_value_changed(struct menu_item *item) {
     // to scaled dimensions.
     if (item->id == MENU_H_STRETCH_0 || item->id == MENU_H_BORDER_0) {
        use_h_integer_stretch[0] = 0;
-       use_integer_scaling_item[0]->value = 0;
+       use_scaling_params_item[0]->value = 0;
     } else if (item->id == MENU_V_STRETCH_0 || item->id == MENU_V_BORDER_0) {
        use_v_integer_stretch[0] = 0;
-       use_integer_scaling_item[0]->value = 0;
+       use_scaling_params_item[0]->value = 0;
     }
     ui_canvas_reveal_temp(FB_LAYER_VIC);
     do_video_settings(FB_LAYER_VIC);
@@ -2454,10 +2472,10 @@ static void menu_value_changed(struct menu_item *item) {
     // to scaled dimensions.
     if (item->id == MENU_H_STRETCH_1 || item->id == MENU_H_BORDER_1) {
        use_h_integer_stretch[1] = 0;
-       use_integer_scaling_item[1]->value = 0;
+       use_scaling_params_item[1]->value = 0;
     } else if (item->id == MENU_V_STRETCH_1 || item->id == MENU_V_BORDER_1) {
        use_v_integer_stretch[1] = 0;
-       use_integer_scaling_item[1]->value = 0;
+       use_scaling_params_item[1]->value = 0;
     }
     ui_canvas_reveal_temp(FB_LAYER_VDC);
     do_video_settings(FB_LAYER_VDC);
@@ -2517,16 +2535,18 @@ static void menu_value_changed(struct menu_item *item) {
     break;
   case MENU_USE_SCALING_PARAMS_0:
     if (item->value) {
-       do_use_int_scaling(FB_LAYER_VIC, 0 /* not silent */);
-       ui_canvas_reveal_temp(FB_LAYER_VIC);
-       do_video_settings(FB_LAYER_VIC);
+       if (do_use_int_scaling(FB_LAYER_VIC, 0 /* not silent */)) {
+          ui_canvas_reveal_temp(FB_LAYER_VIC);
+          do_video_settings(FB_LAYER_VIC);
+       }
     }
     break;
   case MENU_USE_SCALING_PARAMS_1:
     if (item->value) {
-       do_use_int_scaling(FB_LAYER_VDC, 0 /* not silent */);
-       ui_canvas_reveal_temp(FB_LAYER_VDC);
-       do_video_settings(FB_LAYER_VDC);
+       if (do_use_int_scaling(FB_LAYER_VDC, 0 /* not silent */)) {
+          ui_canvas_reveal_temp(FB_LAYER_VDC);
+          do_video_settings(FB_LAYER_VDC);
+       }
     }
     break;
   }
@@ -3043,8 +3063,8 @@ void build_menu(struct menu_item *root) {
      parent = ui_menu_add_folder(video_parent, "VICII");
   }
 
-  use_integer_scaling_item[0] = ui_menu_add_toggle(
-     MENU_USE_SCALING_PARAMS_0, parent, "Use integer scaling params", 1);
+  use_scaling_params_item[0] = ui_menu_add_toggle(
+     MENU_USE_SCALING_PARAMS_0, parent, "Use scaling params", 1);
 
   palette_item[0] = emux_add_palette_options(MENU_COLOR_PALETTE_0, parent);
 
@@ -3121,8 +3141,8 @@ void build_menu(struct menu_item *root) {
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      parent = ui_menu_add_folder(video_parent, "VDC");
 
-     use_integer_scaling_item[1] = ui_menu_add_toggle(
-        MENU_USE_SCALING_PARAMS_1, parent, "Use integer scaling params", 1);
+     use_scaling_params_item[1] = ui_menu_add_toggle(
+        MENU_USE_SCALING_PARAMS_1, parent, "Use scaling params", 1);
 
      palette_item[1] = emux_add_palette_options(MENU_COLOR_PALETTE_1, parent);
 
@@ -3391,11 +3411,11 @@ void build_menu(struct menu_item *root) {
 
   load_settings();
 
-  if (use_integer_scaling_item[0]->value) {
+  if (use_scaling_params_item[0]->value) {
      do_use_int_scaling(FB_LAYER_VIC, 1 /* silent */);
   }
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128 &&
-         use_integer_scaling_item[1]->value) {
+         use_scaling_params_item[1]->value) {
      do_use_int_scaling(FB_LAYER_VDC, 1 /* silent */);
   }
 

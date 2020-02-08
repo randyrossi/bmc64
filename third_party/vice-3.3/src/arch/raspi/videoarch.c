@@ -230,8 +230,9 @@ static void draw_buffer_clear(struct video_canvas_s *canvas, uint8_t *draw_buffe
 // For C128, first will be the VDC, followed by VIC.
 // For other machines, only one canvas is initialized.
 void video_arch_canvas_init(struct video_canvas_s *canvas) {
+  static int canvas_num = 0;
   int canvas_index;
-  if (machine_class == VICE_MACHINE_C128) {
+  if (machine_class == VICE_MACHINE_C128 && canvas_num == 1) {
      vdc_canvas = canvas;
      vdc_first_refresh = 1;
      vdc_enabled = 0;
@@ -246,6 +247,7 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
      vic_showing = 0;
      canvas_index = 0;
   }
+  canvas_num++;
 
   if (machine_class == VICE_MACHINE_PET && !is_composite()) {
      // For the PET, we always double the vertical height of the frame buffer
