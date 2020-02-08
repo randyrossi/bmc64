@@ -241,7 +241,7 @@ void FrameBufferLayer::Show() {
 
   if (hstretch_ < 0) {
      // Stretch horizontally to fill width * vstretch and then set height
-     // based on hstretch.
+     // based on hstretch.  This mode doesn't support integer stretch.
      dst_w = avail_width * vstretch_;
      dst_h = avail_width / -hstretch_;
      if (dst_w > avail_width) {
@@ -254,7 +254,14 @@ void FrameBufferLayer::Show() {
      // Stretch vertically to fill height * vstretch and then set width
      // based on hstretch.
      dst_h = avail_height * vstretch_;
+     if (use_vintstr_) {
+        dst_h = vintstr_;
+     }
      dst_w = avail_height * hstretch_;
+     if (use_hintstr_) {
+        dst_w = hintstr_;
+     }
+
      if (dst_h > avail_height) {
         dst_h = avail_height;
      }
@@ -434,9 +441,13 @@ void FrameBufferLayer::SetSrcRect(int x, int y, int w, int h) {
 }
 
 // Set horizontal/vertical multipliers
-void FrameBufferLayer::SetStretch(double hstretch, double vstretch) {
+void FrameBufferLayer::SetStretch(double hstretch, double vstretch, int hintstr, int vintstr, int use_hintstr, int use_vintstr) {
   hstretch_ = hstretch;
   vstretch_ = vstretch;
+  hintstr_ = hintstr;
+  vintstr_ = vintstr;
+  use_hintstr_ = use_hintstr;
+  use_vintstr_ = use_vintstr;
 }
 
 void FrameBufferLayer::SetVerticalAlignment(int alignment, int padding) {

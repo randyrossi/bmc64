@@ -78,7 +78,7 @@ public:
   // Otherwise, the src region width is scaled up to the width of the
   // frame buffer * vstretch, the height is determined by 
   // frame buffer width / hstretch.
-  void SetStretch(double hstretch, double vstretch);
+  void SetStretch(double hstretch, double vstretch, int hintstr, int vintstr, int use_hintstr, int use_vintstr);
 
   void SetCenterOffset(int cx, int cy);
 
@@ -134,6 +134,11 @@ private:
   int transparency_;
   double hstretch_;
   double vstretch_;
+  int hintstr_;
+  int vintstr_;
+  int use_hintstr_;
+  int use_vintstr_;
+
   // -1 = top, 0 = center, 1 = bottom
   int valign_;
   int vpadding_;

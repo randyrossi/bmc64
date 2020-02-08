@@ -336,6 +336,8 @@ void emux_set_warp(int warp);
 void emux_apply_video_adjustments(int layer, int hcenter, int vcenter,
                                   int hborder, int vborder,
                                   double hstretch, double vstretch,
+                                  int hintstr, int vintstr,
+                                  int use_hintstr, int use_vintstr,
                                   double lpad, double rpad,
                                   double tpad, double bpad, int zlayer);
 
