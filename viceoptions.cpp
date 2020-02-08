@@ -121,10 +121,13 @@ ViceOptions::ViceOptions(void)
       } else {
         m_bDPIEnabled = false;
       }
-    } else if (strcmp(pOption, "scaling_params") == 0) {
-      char* num_s = strtok(pValue, ",");
-      if (!num_s) continue;
-      char* fbw_s = strtok(NULL, ",");
+    } else if (strcmp(pOption, "scaling_params") == 0 ||
+               strcmp(pOption, "scaling_params2") == 0) {
+      int num = 0;
+      if (strcmp(pOption, "scaling_params2") == 0) {
+         num = 1;
+      }
+      char* fbw_s = strtok(pValue, ",");
       if (!fbw_s) continue;
       char* fbh_s = strtok(NULL, ",");
       if (!fbh_s) continue;
@@ -132,13 +135,11 @@ ViceOptions::ViceOptions(void)
       if (!sx_s) continue;
       char* sy_s = strtok(NULL, ",");
       if (!sy_s) continue;
-      int num = atoi(num_s);
-      if (num >=0 && num < 2) {
-         m_scaling_param_fbw[num] = atoi(fbw_s);
-         m_scaling_param_fbh[num] = atoi(fbh_s);
-         m_scaling_param_sx[num] = atoi(sx_s);
-         m_scaling_param_sy[num] = atoi(sy_s);
-      }
+
+      m_scaling_param_fbw[num] = atoi(fbw_s);
+      m_scaling_param_fbh[num] = atoi(fbh_s);
+      m_scaling_param_sx[num] = atoi(sx_s);
+      m_scaling_param_sy[num] = atoi(sy_s);
     }
   }
 

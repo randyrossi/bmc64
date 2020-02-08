@@ -717,7 +717,14 @@ static int do_use_int_scaling(int layer, int silent) {
   }
 
   int fbw, fbh, sx, sy;
-  circle_get_scaling_params(canvas_index, &fbw, &fbh, &sx, &sy);
+  int display_num = canvas_index;
+  // For the PET, 1st display is 40 column models, 2nd is 80 column models
+  if (emux_machine_class == BMC64_MACHINE_CLASS_PET) {
+     int cols;
+     emux_get_int(Setting_VideoSize, &cols);
+     display_num = cols == 40 ? 0 : 1;
+  }
+  circle_get_scaling_params(display_num, &fbw, &fbh, &sx, &sy);
 
   int dpw, dph, tmp;
   circle_get_fbl_dimensions(layer,
@@ -3720,4 +3727,12 @@ void emux_geometry_changed(int layer) {
      // it's frame buffer dimensions must match.
      ui_geometry_changed(dpx, dpy, fbw, fbh, sw, sh, dw, dh);
   }
+}
+
+void emux_frame_buffer_changed(int layer) {
+  int canvas_index = layer == FB_LAYER_VIC ? VIC_INDEX : VDC_INDEX;
+  if (use_scaling_params_item[canvas_index]->value) {
+     do_use_int_scaling(layer, 1 /* silent */);
+  }
+  do_video_settings(layer);
 }

@@ -57,6 +57,7 @@ struct s_cfg_flags {
   int have_disk_partition;
   int have_enable_dpi;
   int have_scaling_params;
+  int have_scaling_params2;
 
   // Have flags for config.txt
   int have_kernel;
@@ -439,6 +440,7 @@ static int apply_override_m(char *line, struct machine_entry *head,
       if (strcmp(key,"disk_partition") == 0) { cfg_flags->have_disk_partition = 1; }
       if (strcmp(key,"enable_dpi") == 0) { cfg_flags->have_enable_dpi = 1; }
       if (strcmp(key,"scaling_params") == 0) { cfg_flags->have_scaling_params = 1; }
+      if (strcmp(key,"scaling_params2") == 0) { cfg_flags->have_scaling_params2 = 1; }
 
       struct machine_option* found = find_option(key, head->options);
       if (found) {
@@ -456,7 +458,8 @@ static int apply_override_m(char *line, struct machine_entry *head,
              strcmp(key,"audio_out")!=0 &&
              strcmp(key,"disk_partition")!=0 &&
              strcmp(key,"enable_dpi")!=0 &&
-             strcmp(key,"scaling_params")!=0) {
+             strcmp(key,"scaling_params")!=0 &&
+             strcmp(key,"scaling_params2")!=0) {
             if (need_space) { strcat(replacement," "); }
             snprintf(new_option, OPTION_SCRATCH_LEN, "%s=%s", key, value);
             strcat(replacement, new_option);
@@ -533,6 +536,15 @@ static int apply_override_m(char *line, struct machine_entry *head,
     }
     if (!cfg_flags->have_scaling_params) {
        struct machine_option* found = find_option("scaling_params", head->options);
+       if (found) {
+          if (need_space) { strcat(replacement," "); }
+          snprintf(new_option, OPTION_SCRATCH_LEN, "%s=%s", found->key, found->value);
+          strcat(replacement, new_option);
+          need_space=1;
+       }
+    }
+    if (!cfg_flags->have_scaling_params2) {
+       struct machine_option* found = find_option("scaling_params2", head->options);
        if (found) {
           if (need_space) { strcat(replacement," "); }
           snprintf(new_option, OPTION_SCRATCH_LEN, "%s=%s", found->key, found->value);

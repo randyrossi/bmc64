@@ -1211,13 +1211,14 @@ static int calc_root_menu_left() {
 // double the height of the UI frame buffer like we do
 // the main display.
 static int calc_root_menu_top() {
-   return
-       canvas_state[VIC_INDEX].top +
-          canvas_state[VIC_INDEX].border_h /
-             canvas_state[VIC_INDEX].raster_skip +
-                canvas_state[VIC_INDEX].gfx_h / 2 /
-                   canvas_state[VIC_INDEX].raster_skip -
-                      menu_height_chars * 8 / 2;
+   int raster_skip = canvas_state[VIC_INDEX].raster_skip;
+
+   int ui_top = canvas_state[VIC_INDEX].first_displayed_line +
+       canvas_state[VIC_INDEX].max_border_h / raster_skip;
+
+   return ui_top + canvas_state[VIC_INDEX].gfx_h / 2 /
+                      canvas_state[VIC_INDEX].raster_skip -
+                         menu_height_chars * 8 / 2;
 }
 
 struct menu_item *ui_push_menu(int w_chars, int h_chars) {

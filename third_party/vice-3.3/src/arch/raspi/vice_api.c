@@ -893,6 +893,9 @@ void emux_get_int(IntSetting setting, int* dest) {
     case Setting_DatasetteResetWithCPU:
       resources_get_int("DatasetteResetWithCPU", dest);
       break;
+    case Setting_VideoSize:
+      resources_get_int("VideoSize", dest);
+      break;
     default:
       assert(0);
   }

@@ -88,6 +88,7 @@ typedef enum {
   Setting_SidWriteAccess, // Plus4Emu
   Setting_SidDigiblaster, // Plus4Emu
   Setting_WarpMode,
+  Setting_VideoSize, // PET
 } IntSetting;
 
 typedef enum {
@@ -408,5 +409,10 @@ int is_composite();
 void emux_add_userport_joys(struct menu_item* parent);
 
 void emux_geometry_changed(int layer);
+
+// Indicates the framebuffer (fbl) has changed size and other canvas_state
+// parameters may have changed as well.  May cause a call to geometry change.
+// Video settings needs to be applied.
+void emux_frame_buffer_changed(int layer);
 
 #endif

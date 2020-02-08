@@ -1,4 +1,4 @@
-fast=true machine_timing=pal-hdmi
+fast=true machine_timing=pal-hdmi scaling_params=384,240,1152,720
 
 # DO NOT EDIT - This file is no longer edited by hand. Use the
 # machines.txt to set both config.txt and cmdline.txt params for

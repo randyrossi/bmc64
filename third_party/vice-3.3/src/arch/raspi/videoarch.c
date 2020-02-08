@@ -193,14 +193,14 @@ static int draw_buffer_alloc(struct video_canvas_s *canvas,
       status = circle_alloc_fbl(FB_LAYER_VDC, 0 /* indexed */, draw_buffer,
                               fb_width, fb_height * canvas->raster_skip,
                               fb_pitch);
-      emux_geometry_changed(FB_LAYER_VDC);
+      emux_frame_buffer_changed(FB_LAYER_VDC);
    } else {
       check_dimensions(canvas, VIC_INDEX, fb_width,
                           fb_height * canvas->raster_skip);
       status = circle_alloc_fbl(FB_LAYER_VIC, 0 /* indexed */, draw_buffer,
                               fb_width, fb_height * canvas->raster_skip,
                               fb_pitch);
-      emux_geometry_changed(FB_LAYER_VIC);
+      emux_frame_buffer_changed(FB_LAYER_VIC);
    }
 
    return status;
