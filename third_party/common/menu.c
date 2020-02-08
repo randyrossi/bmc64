@@ -53,7 +53,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "3.4"
+#define VERSION_STRING "3.5-beta"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -1237,10 +1237,18 @@ static void load_settings() {
       // LEGACY NAME : menu value = max_border_w * value / 100.
       h_border_item[0]->value =
          h_border_item[0]->max * (1.0d - (value / 100.0d));
+      // If this exists, we're going to default use_scaling_params to
+      // 0 so we don't clobber user settings. This will never happen
+      // again after the user saves at least once.
+      use_scaling_params_item[0]->value = 0;
     } else if (strcmp(name, "v_border_trim_0") == 0) {
       // LEGACY NAME : menu value = max_border_h * value / 100.
       v_border_item[0]->value =
          v_border_item[0]->max * (1.0d - (value / 100.0d));
+      // If this exists, we're going to default use_scaling_params to
+      // 0 so we don't clobber user settings. This will never happen
+      // again after the user saves at least once.
+      use_scaling_params_item[0]->value = 0;
     } else if (strcmp(name, "aspect_0") == 0) {
       // LEGACY NAME : aspect * 10 = h_stretch
       h_stretch_item[0]->value = value * 10;
@@ -1259,9 +1267,17 @@ static void load_settings() {
     } else if (strcmp(name, "h_border_trim_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       // LEGACY NAME : menu value = max_border_w * value / 100.
       h_border_item[1]->value = h_border_item[1]->max * (1.0d - (value / 100.0d));
+      // If this exists, we're going to default use_scaling_params to
+      // 0 so we don't clobber user settings. This will never happen
+      // again after the user saves at least once.
+      use_scaling_params_item[1]->value = 0;
     } else if (strcmp(name, "v_border_trim_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       // LEGACY NAME : menu value = max_border_h * value / 100.
       v_border_item[1]->value = v_border_item[1]->max * (1.0d - (value / 100.0d));
+      // If this exists, we're going to default use_scaling_params to
+      // 0 so we don't clobber user settings. This will never happen
+      // again after the user saves at least once.
+      use_scaling_params_item[1]->value = 0;
     } else if (strcmp(name, "aspect_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       // LEGACY NAME : aspect * 10 = h_stretch
       h_stretch_item[1]->value = value * 10;
@@ -3065,8 +3081,9 @@ void build_menu(struct menu_item *root) {
      parent = ui_menu_add_folder(video_parent, "VICII");
   }
 
-  use_scaling_params_item[0] = ui_menu_add_toggle(
-     MENU_USE_SCALING_PARAMS_0, parent, "Use scaling params", 1);
+  use_scaling_params_item[0] = ui_menu_add_toggle_labels(
+     MENU_USE_SCALING_PARAMS_0, parent, "Apply scaling params at boot", 1,
+        "No","Yes");
 
   palette_item[0] = emux_add_palette_options(MENU_COLOR_PALETTE_0, parent);
 
@@ -3143,8 +3160,9 @@ void build_menu(struct menu_item *root) {
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      parent = ui_menu_add_folder(video_parent, "VDC");
 
-     use_scaling_params_item[1] = ui_menu_add_toggle(
-        MENU_USE_SCALING_PARAMS_1, parent, "Use scaling params", 1);
+     use_scaling_params_item[1] = ui_menu_add_toggle_labels(
+        MENU_USE_SCALING_PARAMS_1, parent, "Apply scaling params at boot", 1,
+           "No","Yes");
 
      palette_item[1] = emux_add_palette_options(MENU_COLOR_PALETTE_1, parent);
 

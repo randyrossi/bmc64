@@ -50,12 +50,13 @@ Inside machines.txt, you can change or add new machine configurations. These wil
 
 Here is an example of a machine entry:
 
-    [C64/NTSC/HDMI/720p@60Hz]
+    [C64/PAL/HDMI/VICE 720p@50Hz]
     disable_overscan=1
-    sdtv_mode=16
+    sdtv_mode=18
     hdmi_group=1
     hdmi_mode=19
-    machine_timing=ntsc-hdmi
+    machine_timing=pal-hdmi
+    scaling_params=0,384,240,1152,720
 
 NOTE: Even though a config is intended to be used for HDMI or Composite (never both), you should always define both composite and hdmi parameters.
 
@@ -111,6 +112,8 @@ You would then define your machines.txt entry like this:
     machine_timing=pal-custom
     cycles_per_second=980670
 
+    (see below for chosing scaling_params)
+
 And this option will show up in the Machine->Switch menu.
 
 Custom HDMI modes are not supported for plus4emu yet.
@@ -157,27 +160,36 @@ If you are experimenting with a video mode and are not getting a picture, you ca
 
 All of the above re: timing applies to the other machines as well.  However, in my opinion, the VIC20 machine is better configured to be an NTSC machine.  Most cartridges were made for NTSC and you will notice they position their screens poorly when inserted into a PAL machine.  Most games gave the option of moving it using cursor keys or joystick but this is annoying.
 
-# Canvas Dimensions
+# Dimensions and Scaling
 
-The virtual display dimensions are adjusted dynamically from the menu. Under 'Video', you will find Horizontal Border Trim %, Vertical Border Trim % and H/V Stretch controls for each virtual display available. Displays are scaled as follows:
+The virtual display dimensions can be adjusted dynamically from the menu. Under 'Video', you will find Horizontal Border (px), Vertical Border (px), and H/V Stretch controls for each virtual display available. Displays are scaled as follows:
 
-      1. The amount of border to trim is removed/added from/to top/botom and left/right edges (negative trim = extra padding).
-      2. The resulting image is scaled according to stretch factors (1.0 is full vertical height)
+      1. The main graphics area is trimmed or padded by border levels (negative border = extra padding).
+      2. The resulting image is scaled according to stretch factors (1.0 is full vertical height, horizontal is a scalar of the display height)
       3. The scaled image is then centered within the display resolution.
 
 Using the settings, you should be able to customize the display to your liking. However, there are benefits to chosing values that produce integer scaling (see below).
 
 ## Integer Scaling
 
-If you want to get better picture quality on your CRT monitor or if you prefer the 'pixel perfect' look on HDMI, integer scaling is what you want. Integer scaling along with nearest neighbor scaling_kernel (8) will eliminate scaling artifacts (i.e. variation in thickness of scaled up pixels)
+If you want to get better picture quality on your CRT monitor or if you prefer the 'pixel perfect' look on HDMI, integer scaling is what you want. Integer scaling along with nearest neighbor scaling_kernel (8) will eliminate scaling artifacts (i.e. variation in thickness of scaled up pixels).  However, you may have to sacrifice some border area and/or not get the exact aspect ratio you want.
 
-When you change the border trim or stretch values, you will see three dimensions displayed; the display dimensions, the frame buffer dimensions and the scaled frame buffer dimensions. When the scaled frame buffer dimensions are an integer multiple of the frame buffer dimensions, they will turn green.
+When you change the border trim or stretch values, you will see three dimensions displayed; the display dimensions, the frame buffer dimensions (FB) and the scaled frame buffer (SFB) dimensions. When the scaled frame buffer dimensions are an integer multiple of the frame buffer dimensions, they will turn green.
 
 To make this easier, there are video options named 'Next H Integer Scale' and 'Next V Integer Scale'.  They will bump up the horizontal and vertical stretch to the next nearest integer multiple of the frame buffer's dimensions. Keep pressing return to cycle through all integer multipls that will fit.
 
-Some resolutions will require sacrificing some border to get a higher integer scale that will fill most of the display.
+Once you have values that work for you, edit the machines.txt file and add or change the scaling_params for the mode you are running:
 
-## Perfect Scanlines
+    scaling_params=displaynum,fb_width,fb_height,sfb_width,sfb_height
+
+When sfb_width = fb_width * N, width will be integer scaled.
+When sfb_height = fb_height * N, height will be integer scaled.
+
+scaling_kernel=8 without integer scaling
+
+scaling_kernel=8 with integer scaling
+
+## Perfect DPI -> CRT Scanlines
 
 For those using DPI connected to CRTs (via VGA666 for example), you can try a custom resolution like this:
 
@@ -602,6 +614,7 @@ A: Yes, the original machine ran at 50.125Hz for PAL and 59.826Hz for NTSC. So, 
     hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
     machine_timing=pal-custom
     cycles_per_second=985257
+    scaling_params=0,384,272,768,544
 
 This mode will match the timing of the original machine (for the purists) but may not be compatible with all monitors:
 
@@ -614,6 +627,7 @@ For NTSC, this mode will match the real timing very closely.  But again, since i
     hdmi_timings=768 0 24 72 96 525 1 3 10 9 0 0 0 60 0 31415829 1
     machine_timing=ntsc-custom
     cycles_per_second=1022708
+    scaling_params=0,384,246,768,492
 
 Q: Audio is not coming out of HDMI/Analog jack when I expect it to. Why?
 
