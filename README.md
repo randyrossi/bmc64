@@ -56,7 +56,7 @@ Here is an example of a machine entry:
     hdmi_group=1
     hdmi_mode=19
     machine_timing=pal-hdmi
-    scaling_params=0,384,240,1152,720
+    scaling_params=384,240,1152,720
 
 NOTE: Even though a config is intended to be used for HDMI or Composite (never both), you should always define both composite and hdmi parameters.
 
@@ -134,7 +134,7 @@ Here are a couple examples you can add to machines.txt that will work with the V
     display_default_lcd=1
     dpi_group=1
     dpi_mode=4
-    scaling_params=0,384,240,1152,720
+    scaling_params=384,240,1152,720
 
     [C64/PAL/DPI/VGA666:720p@50hz]
     enable_dpi=true
@@ -144,7 +144,7 @@ Here are a couple examples you can add to machines.txt that will work with the V
     display_default_lcd=1
     dpi_group=1
     dpi_mode=19
-    scaling_params=0,384,240,1152,720
+    scaling_params=384,240,1152,720
 
 * It appears these modes are not exactly 50hz/60hz like HDMI. It's likely the case that all DPI modes will require custom timing.  See steps mentioned above for how to find the correct cycles_per_second value for your DPI mode.
 
@@ -181,6 +181,8 @@ To make this easier, there are video options named 'Next H Integer Scale' and 'N
 Once you have values that work for you, edit the machines.txt file and add or change the scaling_params for the mode you are running:
 
     scaling_params=displaynum,fb_width,fb_height,sfb_width,sfb_height
+
+    (For C128 and PET use scaling_params2 for the 80 column displays.)
 
 When sfb_width = fb_width * N, width will be integer scaled.
 When sfb_height = fb_height * N, height will be integer scaled.
