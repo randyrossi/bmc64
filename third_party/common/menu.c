@@ -1837,19 +1837,21 @@ static void do_video_settings(int layer) {
 
   // Tell videoarch about these changes
   emux_apply_video_adjustments(layer, vid_hc, vid_vc,
-                               h, v,
-                               vid_hstretch, vs,
-                               h_int_stretch, v_int_stretch,
-                               use_h_int_stretch, use_v_int_stretch,
-                               lpad, rpad, tpad, bpad, zlayer);
+     h, v,
+     vid_hstretch, vs,
+     h_int_stretch, v_int_stretch,
+     use_h_int_stretch, use_v_int_stretch,
+     lpad, rpad, tpad, bpad, zlayer);
+
   if (layer == FB_LAYER_VIC) {
      // Make UI match VIC settings except for padding.
-     emux_apply_video_adjustments(FB_LAYER_UI, hc, vc,
-                                  h, v,
-                                  hs, vs,
-                                  h_integer_stretch[0], v_integer_stretch[0],
-                                  use_h_integer_stretch[0], use_v_integer_stretch[0],
-                                  0, 0, 0, 0, 3);
+     emux_apply_video_adjustments(
+        FB_LAYER_UI, hc, vc,
+        h, v,
+        hs, vs,
+        h_integer_stretch[0], v_integer_stretch[0],
+        use_h_integer_stretch[0], use_v_integer_stretch[0],
+        0, 0, 0, 0, 3);
   }
 }
 

@@ -173,7 +173,9 @@ void emux_apply_video_adjustments(int layer,
 
   circle_set_zlayer_fbl(layer, zlayer);
   circle_set_padding_fbl(layer, lpad, rpad, tpad, bpad);
-  circle_set_stretch_fbl(layer, h_stretch, v_stretch, hintstr, vintstr, use_hintstr, use_vintstr);
+  circle_set_stretch_fbl(layer, h_stretch, v_stretch,
+                         hintstr, vintstr, use_hintstr,
+                         use_vintstr);
 
   if (index >= 0) {
     canvas_state[index].border_w = hborder;
@@ -220,12 +222,20 @@ void emux_apply_video_adjustments(int layer,
   }
 
   if (layer == FB_LAYER_UI) {
-    // For the UI, we inherit the same cutout as the VIC
+    // Due to raster skip, we won't use top, recalculate it
+    // as though raster skip was 1.
+    int raster_skip = canvas_state[VIC_INDEX].raster_skip;
+    int ui_top = canvas_state[VIC_INDEX].first_displayed_line +
+       canvas_state[VIC_INDEX].max_border_h / raster_skip -
+           canvas_state[VIC_INDEX].border_h / raster_skip;
+
+    // For the UI, we inherit the same cutout as the VIC (but take
+    // in account raster_skip)
     circle_set_src_rect_fbl(layer,
            canvas_state[VIC_INDEX].left,
-           canvas_state[VIC_INDEX].top,
+           ui_top,
            canvas_state[VIC_INDEX].vis_w,
-           canvas_state[VIC_INDEX].vis_h);
+           canvas_state[VIC_INDEX].vis_h / raster_skip);
   }
 
   circle_set_center_offset(layer,

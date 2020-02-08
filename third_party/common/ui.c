@@ -1195,6 +1195,31 @@ struct menu_item *ui_pop_menu(void) {
   return &menu_roots[current_menu];
 }
 
+// left + border_w brings us to the left of gfx area
+// then we center the menu width inside the gfx_w area
+static int calc_root_menu_left() {
+   return
+       canvas_state[VIC_INDEX].left +
+          canvas_state[VIC_INDEX].border_w +
+             canvas_state[VIC_INDEX].gfx_w / 2 -
+                menu_width_chars * 8 / 2;
+}
+
+// top + border_h brings us to the top of the gfx area
+// then we center the menu height inside the gfx_h area
+// BUT must take into account raster_skip since we don't
+// double the height of the UI frame buffer like we do
+// the main display.
+static int calc_root_menu_top() {
+   return
+       canvas_state[VIC_INDEX].top +
+          canvas_state[VIC_INDEX].border_h /
+             canvas_state[VIC_INDEX].raster_skip +
+                canvas_state[VIC_INDEX].gfx_h / 2 /
+                   canvas_state[VIC_INDEX].raster_skip -
+                      menu_height_chars * 8 / 2;
+}
+
 struct menu_item *ui_push_menu(int w_chars, int h_chars) {
 
   int menu_width = w_chars * 8;
@@ -1221,23 +1246,25 @@ struct menu_item *ui_push_menu(int w_chars, int h_chars) {
   menu_roots[current_menu].menu_height = menu_height;
 
   if (w_chars == -2) {
-    menu_roots[current_menu].menu_left = canvas_state[VIC_INDEX].left + canvas_state[VIC_INDEX].border_w;
+    menu_roots[current_menu].menu_left = calc_root_menu_left();
   } else if (w_chars == -1) {
     // Inherit the root menu's left
     menu_roots[current_menu].menu_left = menu_roots[0].menu_left;
   } else {
     // Center this smaller menu inside the bounds of the root
-    menu_roots[current_menu].menu_left = menu_roots[0].menu_left + (menu_roots[0].menu_width - menu_width) / 2;
+    menu_roots[current_menu].menu_left =
+       menu_roots[0].menu_left + (menu_roots[0].menu_width - menu_width) / 2;
   }
 
   if (h_chars == -2) {
-    menu_roots[current_menu].menu_top = canvas_state[VIC_INDEX].top + canvas_state[VIC_INDEX].border_h;
+    menu_roots[current_menu].menu_top = calc_root_menu_top();
   } else if (h_chars == -1) {
     // Inherit the root menu's top
     menu_roots[current_menu].menu_top = menu_roots[0].menu_top;
   } else {
     // Center this smaller menu inside the bounds of the root
-    menu_roots[current_menu].menu_top = menu_roots[0].menu_top + (menu_roots[0].menu_height - menu_height) / 2;
+    menu_roots[current_menu].menu_top =
+       menu_roots[0].menu_top + (menu_roots[0].menu_height - menu_height) / 2;
   }
 
   menu_cursor[current_menu] = 0;
@@ -1572,6 +1599,12 @@ void ui_geometry_changed(int dpx, int dpy,
                          int fbw, int fbh,
                          int sw, int sh,
                          int dw, int dh) {
+
+  // For the UI, we don't want to double the height like we do
+  // with the actual display, so we take raster_skip into account
+  // here.
+  fbh = fbh / canvas_state[VIC_INDEX].raster_skip;
+
   // When the ui geometry changes, we need to update some menu
   // fields to match.
   if (fbw != ui_fb_w || fbh != ui_fb_h) {
@@ -1586,7 +1619,8 @@ void ui_geometry_changed(int dpx, int dpy,
      ui_fb_w = fbw;
      ui_fb_h = fbh;
    }
-   menu_roots[0].menu_top = canvas_state[VIC_INDEX].top + canvas_state[VIC_INDEX].border_h;
-   menu_roots[0].menu_left = canvas_state[VIC_INDEX].left + canvas_state[VIC_INDEX].border_w;
-   ui_update_children(&menu_roots[0], menu_roots[0].menu_top, menu_roots[0].menu_left);
+   menu_roots[0].menu_top = calc_root_menu_top();
+   menu_roots[0].menu_left = calc_root_menu_left();
+   ui_update_children(&menu_roots[0],
+      menu_roots[0].menu_top, menu_roots[0].menu_left);
 }
