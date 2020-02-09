@@ -168,11 +168,11 @@ The virtual display dimensions can be adjusted dynamically from the menu. Under 
       2. The resulting image is scaled according to stretch factors (1.0 is full vertical height, horizontal is a scalar of the display height)
       3. The scaled image is then centered within the display resolution.
 
-Using the settings, you should be able to customize the display to your liking. However, there are benefits to chosing values that produce integer scaling (see below).
+Using the settings, you should be able to customize the display to your liking. However, if you plan on using scaling_kernel=8 (nearest neighbor) there are benefits to chosing dimensions that result in integer multipliers of the frame buffer (see below).
 
 ## Integer Scaling
 
-If you want to get better picture quality on your CRT monitor or if you prefer the 'pixel perfect' look on HDMI, integer scaling is what you want. Integer scaling along with nearest neighbor scaling_kernel (8) will eliminate scaling artifacts (i.e. variation in thickness of scaled up pixels).  However, you may have to sacrifice some border area and/or not get the exact aspect ratio you want.
+If you want to get better picture quality on your CRT monitor or if you prefer the 'pixel perfect' look on HDMI, integer scaling is what you want. Integer scaling along with scaling_kernel=8 will eliminate scaling artifacts (i.e. variation in thickness of scaled up pixels).  However, you may have to sacrifice some border area and/or not get the exact aspect ratio you want.
 
 When you change the border trim or stretch values, you will see three dimensions displayed; the display dimensions, the frame buffer dimensions (FB) and the scaled frame buffer (SFB) dimensions. When the scaled frame buffer dimensions are an integer multiple of the frame buffer dimensions, they will turn green.
 
@@ -342,9 +342,14 @@ NOTE: For resampling, parameters like Gain and Passband frequency must remain at
 
 You can enable dual SIDs in v3.5+ for the C64 to get 6 voices and stereo sound. For the second SID to work, your C64 program and the base address for the second SID must match.  If you change the base address, it's best to reset the machine to clear out the registers.
 
-## Pseudo Stereo
+## Pseudo Stereo Effect
 
 BMC64 has modified VICE code to allow the same base address ($d400) for both SIDs as well allowing different SID models on each channel.  You can get a 'pseudo' stereo effect this way due to the different characteristics of the different SID chips.  (Try listening to 'Edge of Disgrace' with headphones and select 6581 for SID1 and 8850 for SID2.)  This will work for any software you run, not just programs that can use a second SID.
+
+Thanks goes out to to github.com user boras-pl (https://github.com/boras-pl) for suggesting this. This simulates this real life mod:
+
+    (https://www.youtube.com/watch?v=2Qlqeaxkp14)
+    (http://blog.tynemouthsoftware.co.uk/2015/11/commodore-64-pseudo-stereo-dual-sid.html)
 
 # Keyboards
 
