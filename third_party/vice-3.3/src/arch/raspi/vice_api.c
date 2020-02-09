@@ -158,9 +158,10 @@ void emu_machine_init(void) {
          !is_composite()) {
      // For the PET, we always double the vertical height of the
      // frame buffer so we can do our 'cheap' scanlines effect.
-     canvas_state[VDC_INDEX].raster_skip = 2;
+     canvas_state[VIC_INDEX].raster_skip = 2;
   } else {
      canvas_state[VIC_INDEX].raster_skip = 1;
+     canvas_state[VDC_INDEX].raster_skip = 1;
   }
 }
 
