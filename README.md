@@ -590,7 +590,28 @@ On Linux, this command will work:
 
 truncate -s +3584 petrescue.d64
 
-Q. What do I put on the SDcard?
+# Build Instructions
+
+Pre-reqs:
+
+    sudo apt-get install xa65
+
+First get this repo:
+
+    git clone https://github.com/randyrossi/bmc64.git --recursive
+
+From the top level dir:
+
+./clean_all.sh - will clean everything
+./make_all.sh [pi0|pi2|pi3] - build third party libs (vice/circle) and a C64 image for a Pi model
+./make_machines.sh [pi0|pi2|pi3] - build all machines for a Pil model (depends on make_all.sh having been run once)
+
+The make_all.sh script will make kernel.img for RPI0, kernel7.img for RPI2, kernel8-32.img for RPI3
+The make_machines.sh script will make kernels for each machine with a suffix (.c64, .c128, .vic20, etc)
+
+NOTE: There is no incremental build and the make_all.sh script will likely fail if run without a clean_all.sh before.
+
+What to put on the SDcard:
 
     C64/
         kernal
@@ -714,8 +735,20 @@ Q. What do I put on the SDcard?
     tmp/
         (used by the emulator sometimes)
 
-# Build Instructions
+# Resources
 
-Refer to BUILDING.md for instructions.
+    https://github.com/raspberrypi/tools
+    https://developer.arm.com/open-source/gnu-toolchain/gnu-rm/downloads
+
+# Dependencies
+
+These are the git hashes for the repos under circle-stdlib this project is known to work with.
+If the patches don't apply successfully, it's possible those projects have moved forward causing incompatibilities.
+If that happens, reset these repos using "git reset HASH --hard" commands in the following directories:
+
+    circle-stdlib dda16112cdb5470240cd51fb33bf72b311634340
+    libs/circle fe24b6bebd1532f2a0ee981af12eaf50cc9e97fb
+    libs/circle-newlib c01f95bcb08278d9e00f9795c7641284d4f89931
+    libs/mbedtls d81c11b8ab61fd5b2da8133aa73c5fe33a0633eb
 
 # Performance numbers can be found at https://accentual.com/bmc64
