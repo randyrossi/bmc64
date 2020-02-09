@@ -712,7 +712,6 @@ static int do_use_int_scaling(int layer, int silent) {
   } else {
     if (!silent)
        ui_error("Bad display num");
-    use_scaling_params_item[canvas_index]->value = 0;
     return 0;
   }
 
@@ -734,38 +733,33 @@ static int do_use_int_scaling(int layer, int silent) {
                             &tmp, &tmp);
 
 
-  if (fbw == 0 || fbh == 0 || sx == 0 || sy == 0) {
+  if (fbw <= 0 || fbh <= 0 || sx <= 0 || sy <= 0) {
      if (!silent)
         ui_error("Bad or missing params");
-     use_scaling_params_item[canvas_index]->value = 0;
      return 0;
   }
 
   if (fbw % 2 != 0) {
      if (!silent)
         ui_error("fbw must be even");
-     use_scaling_params_item[canvas_index]->value = 0;
      return 0;
   }
 
   if (fbh % 2 != 0) {
      if (!silent)
         ui_error("fbh must be even");
-     use_scaling_params_item[canvas_index]->value = 0;
      return 0;
   }
 
   if (sx > dpw) {
      if (!silent)
         ui_error("sx too large for display");
-     use_scaling_params_item[canvas_index]->value = 0;
      return 0;
   }
 
   if (sy > dph) {
      if (!silent)
         ui_error("sy too large for display");
-     use_scaling_params_item[canvas_index]->value = 0;
      return 0;
   }
 
@@ -777,14 +771,16 @@ static int do_use_int_scaling(int layer, int silent) {
   if (h_border_item[canvas_index]->value >
          h_border_item[canvas_index]->max) {
      if (!silent)
-        ui_error("H out of range");
-     use_scaling_params_item[canvas_index]->value = 0;
+        ui_error("fbw too large");
+     h_border_item[canvas_index]->value =
+        h_border_item[canvas_index]->max;
      return 0;
   } else if (h_border_item[canvas_index]->value <
                 h_border_item[canvas_index]->min) {
      if (!silent)
-        ui_error("H out of range");
-     use_scaling_params_item[canvas_index]->value = 0;
+        ui_error("fbh too small");
+     h_border_item[canvas_index]->value =
+        h_border_item[canvas_index]->min;
      return 0;
   }
 
@@ -793,14 +789,16 @@ static int do_use_int_scaling(int layer, int silent) {
   if (v_border_item[canvas_index]->value >
      v_border_item[canvas_index]->max) {
      if (!silent)
-        ui_error("V out of range");
-     use_scaling_params_item[canvas_index]->value = 0;
+        ui_error("fbh too large");
+     v_border_item[canvas_index]->value =
+        v_border_item[canvas_index]->max;
      return 0;
   } else if (v_border_item[canvas_index]->value <
                 v_border_item[canvas_index]->min) {
      if (!silent)
-        ui_error("V out of range");
-     use_scaling_params_item[canvas_index]->value = 0;
+        ui_error("fbh too small");
+     v_border_item[canvas_index]->value =
+        v_border_item[canvas_index]->min;
      return 0;
   }
 
@@ -2563,6 +2561,8 @@ static void menu_value_changed(struct menu_item *item) {
        if (do_use_int_scaling(FB_LAYER_VIC, 0 /* not silent */)) {
           ui_canvas_reveal_temp(FB_LAYER_VIC);
           do_video_settings(FB_LAYER_VIC);
+       } else {
+          use_scaling_params_item[VIC_INDEX]->value = 0;
        }
     }
     break;
@@ -2571,6 +2571,8 @@ static void menu_value_changed(struct menu_item *item) {
        if (do_use_int_scaling(FB_LAYER_VDC, 0 /* not silent */)) {
           ui_canvas_reveal_temp(FB_LAYER_VDC);
           do_video_settings(FB_LAYER_VDC);
+       } else {
+          use_scaling_params_item[VDC_INDEX]->value = 0;
        }
     }
     break;
@@ -3439,11 +3441,15 @@ void build_menu(struct menu_item *root) {
   load_settings();
 
   if (use_scaling_params_item[0]->value) {
-     do_use_int_scaling(FB_LAYER_VIC, 1 /* silent */);
+     if (!do_use_int_scaling(FB_LAYER_VIC, 1 /* silent */)) {
+        use_scaling_params_item[VIC_INDEX]->value = 0;
+     }
   }
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128 &&
          use_scaling_params_item[1]->value) {
-     do_use_int_scaling(FB_LAYER_VDC, 1 /* silent */);
+     if (!do_use_int_scaling(FB_LAYER_VDC, 1 /* silent */)) {
+        use_scaling_params_item[VDC_INDEX]->value = 0;
+     }
   }
 
   set_current_dir_names();
@@ -3732,7 +3738,9 @@ void emux_geometry_changed(int layer) {
 void emux_frame_buffer_changed(int layer) {
   int canvas_index = layer == FB_LAYER_VIC ? VIC_INDEX : VDC_INDEX;
   if (use_scaling_params_item[canvas_index]->value) {
-     do_use_int_scaling(layer, 1 /* silent */);
+     if (!do_use_int_scaling(layer, 1 /* silent */)) {
+        use_scaling_params_item[canvas_index]->value = 0;
+     }
   }
   do_video_settings(layer);
 }
