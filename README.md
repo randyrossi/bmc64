@@ -187,9 +187,13 @@ Once you have values that work for you, edit the machines.txt file and add or ch
 When sfb_width = fb_width * N, width will be integer scaled.
 When sfb_height = fb_height * N, height will be integer scaled.
 
-scaling_kernel=8 without integer scaling
+Using scaling_kernel=8 without integer scaling can cause irregular looking characters. Notice the two O's and S's look odd.
 
-scaling_kernel=8 with integer scaling
+![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/not_integer_scaled.png)
+
+Using scaling_kernel=8 with integer scaling eliminates irregularities.
+
+![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/integer_scaled.png)
 
 ## Perfect DPI -> CRT Scanlines
 
