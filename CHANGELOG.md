@@ -314,3 +314,10 @@
   * Fixed CP/M keyboard not responsive regression
   * Fixed duplicate GPIO pins on Config #1 issue
   * Disable VDC video cache causing glitches on some games
+  * Added Dual SID support
+  * Changed border trim menu options from % to absolute pixel values
+  * Added support for negative border values (padding)
+  * Added scaling_params to machines.txt for integer scaling when possible
+  * Made finding integer scaling options easier from menu
+  * Changed PET resolutions to 1080p in default machines.txt
+  * Fixed bug with PET screen init after model switch
