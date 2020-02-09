@@ -76,7 +76,7 @@ int color_brightness = 1000;
 int color_contrast = 666;
 int color_gamma = 800;
 int color_tint = 1000;
-int raster_skip = 1; // TODO Make configurable
+int raster_skip = 1; // Never going to change.
 
 static struct menu_item *sid_model_item;
 static struct menu_item *sid_write_access_item;

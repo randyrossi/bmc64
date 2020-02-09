@@ -249,13 +249,7 @@ void video_arch_canvas_init(struct video_canvas_s *canvas) {
   }
   canvas_num++;
 
-  if (machine_class == VICE_MACHINE_PET && !is_composite()) {
-     // For the PET, we always double the vertical height of the frame buffer
-     // so we can do our 'cheap' scanlines effect.
-     canvas->raster_skip = 2;
-  } else {
-     canvas->raster_skip = 1;
-  }
+  canvas->raster_skip = canvas_state[canvas_index].raster_skip;
 
   // Have our fb class allocate draw buffers
   draw_buffer_callback[canvas_index].draw_buffer_alloc =
@@ -273,10 +267,7 @@ static struct video_canvas_s *video_canvas_create_vic(
        unsigned int *width,
        unsigned int *height, int mapped) {
 
-  int raster_skip = canvas->raster_skip;
-  canvas_state[VIC_INDEX].raster_skip = raster_skip;
-
-  *height = *height * raster_skip;
+  *height = *height * canvas_state[VIC_INDEX].raster_skip;
 
   canvas->draw_buffer->canvas_physical_width = *width;
   canvas->draw_buffer->canvas_physical_height = *height;
@@ -292,10 +283,7 @@ static struct video_canvas_s *video_canvas_create_vdc(
        unsigned int *height, int mapped) {
   assert(machine_class == VICE_MACHINE_C128);
 
-  int raster_skip = canvas->raster_skip;
-  canvas_state[VDC_INDEX].raster_skip = raster_skip;
-
-  *height = *height * raster_skip;
+  *height = *height * canvas_state[VDC_INDEX].raster_skip;
 
   canvas->draw_buffer->canvas_physical_width = *width;
   canvas->draw_buffer->canvas_physical_height = *height;
