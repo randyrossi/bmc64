@@ -115,6 +115,7 @@ public:
   void circle_get_scaling_params(int display,
                                  int *fbw, int *fbh,
                                  int *sx, int *sy);
+  void circle_set_interpolation(int enable);
 
 private:
   void InitSound();

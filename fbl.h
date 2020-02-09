@@ -107,6 +107,8 @@ public:
   // then swap destination resources in prep for next frame
   static void SwapResources(FrameBufferLayer* fb1, FrameBufferLayer* fb2);
 
+  static void SetInterpolation(int enable);
+
 private:
 
   void Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update);

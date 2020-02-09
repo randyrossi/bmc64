@@ -70,6 +70,10 @@ static uint32_t pal_argb[256] = {
   ARGB(0x00, 0x00, 0x00, 0x00),
 };
 
+static const char sNoInt[] = "scaling_kernel 0 0 0 0 0 0 0 0 1 1 1 1 255 255 255 255 255 255 255 255 1 1 1 1 0 0 0 0 0 0 0 0   1";
+
+static char config_scaling_kernel[1024];
+
 bool FrameBufferLayer::initialized_ = false;
 DISPMANX_DISPLAY_HANDLE_T FrameBufferLayer::dispman_display_;
 
@@ -106,6 +110,16 @@ void FrameBufferLayer::Initialize() {
   bcm_host_init();
 
   dispman_display_ = vc_dispmanx_display_open(0);
+
+  bcm_get_sclker(config_scaling_kernel, sizeof(config_scaling_kernel));
+  // We have to remove the '=' or else what we send back
+  // won't work.
+  for (unsigned int i=0;i<strlen(config_scaling_kernel);i++) {
+    if (config_scaling_kernel[i] == '=') {
+       config_scaling_kernel[i] = ' ';
+       break;
+    }
+  }
 
   initialized_ = true;
 }
@@ -487,4 +501,12 @@ void FrameBufferLayer::GetDimensions(int *display_w, int *display_h,
   *src_h = src_h_;
   *dst_w = dst_w_;
   *dst_h = dst_h_;
+}
+
+void FrameBufferLayer::SetInterpolation(int enable) {
+  if (enable) {
+     bcm_set_sclker(config_scaling_kernel);
+  } else {
+     bcm_set_sclker(sNoInt);
+  }
 }

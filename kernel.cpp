@@ -274,6 +274,10 @@ void circle_get_scaling_params(int display,
                                int *sx, int *sy) {
   static_kernel->circle_get_scaling_params(display, fbw, fbh, sx, sy);
 }
+
+void circle_set_interpolation(int enable) {
+  static_kernel->circle_set_interpolation(enable);
+}
 };
 
 namespace {
@@ -1559,4 +1563,8 @@ void CKernel::circle_get_scaling_params(int display,
                                         int *fbw, int *fbh,
                                         int *sx, int *sy) {
   mViceOptions.GetScalingParams(display, fbw, fbh, sx, sy);
+}
+
+void CKernel::circle_set_interpolation(int enable) {
+  FrameBufferLayer::SetInterpolation(enable);
 }

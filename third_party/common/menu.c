@@ -155,6 +155,8 @@ struct menu_item *pip_swapped_item;
 struct menu_item *c40_80_column_item;
 struct menu_item *dir_convention_item;
 
+struct menu_item *scaling_interp_item;
+
 static int unit;
 static int joyswap;
 static int statusbar_forced;
@@ -935,6 +937,7 @@ static int save_settings() {
   fprintf(fp, "vkbd_trans=%d\n", vkbd_transparency_item->value);
   fprintf(fp, "tapereset=%d\n", tape_reset_with_machine_item->value);
   fprintf(fp, "reset_confirm=%d\n", reset_confirm_item->value);
+  fprintf(fp, "scaling_interp=%d\n", scaling_interp_item->value);
   fprintf(fp, "gpio_config=%d\n", gpio_config_item->choice_ints[gpio_config_item->value]);
   fprintf(fp, "h_center_0=%d\n", h_center_item[0]->value);
   fprintf(fp, "v_center_0=%d\n", v_center_item[0]->value);
@@ -1161,6 +1164,8 @@ static void load_settings() {
       hotkey_tf7_item->value = value;
     } else if (strcmp(name, "reset_confirm") == 0) {
       reset_confirm_item->value = value;
+    } else if (strcmp(name, "scaling_interp") == 0) {
+      scaling_interp_item->value = value;
     } else if (strcmp(name, "gpio_config") == 0) {
       // We save/restore the choice int and map back to
       // the value as index into the choices for this
@@ -2576,6 +2581,9 @@ static void menu_value_changed(struct menu_item *item) {
        }
     }
     break;
+  case MENU_SCALING_INTERPOLATION:
+    circle_set_interpolation(item->value);
+    break;
   }
 
   // Only items that were for file selection/nav should have these set...
@@ -3058,6 +3066,10 @@ void build_menu(struct menu_item *root) {
 
   video_parent = parent = ui_menu_add_folder(root, "Video");
 
+  scaling_interp_item = ui_menu_add_toggle_labels(
+     MENU_SCALING_INTERPOLATION, parent,
+        "Scaling Interpolation", 1, "Off", "Cfg Default"); // default cfg
+
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      // For C128, we split video options under video into VICII
      // and VDC submenus since there are two displays.  Otherwise,
@@ -3465,6 +3477,7 @@ void build_menu(struct menu_item *root) {
   ui_set_joy_items();
 
   do_video_settings(FB_LAYER_VIC);
+  circle_set_interpolation(scaling_interp_item->value);
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      do_video_settings(FB_LAYER_VDC);

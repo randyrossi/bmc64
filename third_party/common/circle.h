@@ -240,6 +240,7 @@ extern void circle_get_fbl_dimensions(int layer,
 extern void circle_get_scaling_params(int display,
                                       int *fbw, int *fbh,
                                       int *sx, int *sy);
+extern void circle_set_interpolation(int enable);
 
 // -----------------------------------------------------------------------
 // Functions called from kernel layer into emulator layer

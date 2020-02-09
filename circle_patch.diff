@@ -96,6 +96,38 @@ index f5068b4..9fed785 100644
  typedef int		gfp_t;
  typedef uintptr		dma_addr_t;
  
+diff --git a/addon/vc4/interface/bcm_host/bcm_host.c b/addon/vc4/interface/bcm_host/bcm_host.c
+index 7b5c415..81d122f 100644
+--- a/addon/vc4/interface/bcm_host/bcm_host.c
++++ b/addon/vc4/interface/bcm_host/bcm_host.c
+@@ -178,3 +178,14 @@ unsigned bcm_host_get_sdram_address(void)
+ }
+ 
+ #endif
++
++void bcm_get_sclker(char* buffer, int size) {
++   if (vc_gencmd (buffer, size, "scaling_kernel") != 0 )
++      printk("Failed to restore scaling kernel");
++}
++
++void bcm_set_sclker(const char* buffer) {
++   char tmp[1024];
++   if (vc_gencmd (tmp, sizeof(tmp), buffer) != 0 )
++      printk("Failed to set scaling kernel");
++}
+diff --git a/addon/vc4/interface/bcm_host/bcm_host.h b/addon/vc4/interface/bcm_host/bcm_host.h
+index cd601a1..89aac5d 100644
+--- a/addon/vc4/interface/bcm_host/bcm_host.h
++++ b/addon/vc4/interface/bcm_host/bcm_host.h
+@@ -38,6 +38,8 @@ extern "C" {
+ 
+ void bcm_host_init(void);
+ void bcm_host_deinit(void);
++void bcm_get_sclker(char* buffer, int size);
++void bcm_set_sclker(const char* buffer);
+ 
+ int32_t graphics_get_display_size( const uint16_t display_number,
+                                                     uint32_t *width,
 diff --git a/addon/vc4/interface/khronos/common/khrn_int_common.h b/addon/vc4/interface/khronos/common/khrn_int_common.h
 index f8c1d59..487da4b 100644
 --- a/addon/vc4/interface/khronos/common/khrn_int_common.h
@@ -110,6 +142,19 @@ index f8c1d59..487da4b 100644
  
  #ifdef _MSC_VER
  #define INLINE __inline
+diff --git a/addon/vc4/interface/vmcs_host/vc_vchi_gencmd.c b/addon/vc4/interface/vmcs_host/vc_vchi_gencmd.c
+index d4a142e..6c6284e 100644
+--- a/addon/vc4/interface/vmcs_host/vc_vchi_gencmd.c
++++ b/addon/vc4/interface/vmcs_host/vc_vchi_gencmd.c
+@@ -59,7 +59,7 @@ extern const char *gencmd_get_build_version(void);
+ /******************************************************************************
+ Local types and defines.
+ ******************************************************************************/
+-#define GENCMD_MAX_LENGTH 512
++#define GENCMD_MAX_LENGTH 511
+ typedef struct {
+    VCHI_SERVICE_HANDLE_T open_handle[VCHI_MAX_NUM_CONNECTIONS];
+    uint32_t              msg_flag[VCHI_MAX_NUM_CONNECTIONS];
 diff --git a/addon/vc4/vchiq/vchiq_2835_arm.c b/addon/vc4/vchiq/vchiq_2835_arm.c
 index 4d716ff..79343b5 100644
 --- a/addon/vc4/vchiq/vchiq_2835_arm.c
