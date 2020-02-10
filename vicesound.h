@@ -82,6 +82,7 @@ private:
   // Position within src_buffer we are drawing next chunk from
   unsigned int src_pos;
   unsigned int src_size;
+  unsigned int num_channels;
 };
 
 #endif // VICE_SOUND_H
