@@ -130,8 +130,8 @@ struct CanvasState {
   int max_stretch_h;
 
   // Negative border area available for padding in pixels.
-  int min_border_w;
-  int min_border_h;
+  int max_padding_w;
+  int max_padding_h;
 
   // How much border is available in pixels.
   int max_border_w;

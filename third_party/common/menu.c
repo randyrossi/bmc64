@@ -3156,14 +3156,12 @@ void build_menu(struct menu_item *root) {
           -48, 48, 1, 0);
   h_border_item[0] =
       ui_menu_add_range(MENU_H_BORDER_0, parent, "H Border (px)",
-          canvas_state[VIC_INDEX].min_border_w,
-             canvas_state[VIC_INDEX].max_border_w,
-                1, canvas_state[VIC_INDEX].max_border_w);
+          0, canvas_state[VIC_INDEX].max_border_w,
+             1, canvas_state[VIC_INDEX].max_border_w);
   v_border_item[0] =
       ui_menu_add_range(MENU_V_BORDER_0, parent, "V Border (px)",
-          canvas_state[VIC_INDEX].min_border_h,
-             canvas_state[VIC_INDEX].max_border_h,
-                1, canvas_state[VIC_INDEX].max_border_h);
+          0, canvas_state[VIC_INDEX].max_border_h,
+             1, canvas_state[VIC_INDEX].max_border_h);
   child = h_stretch_item[0] =
       ui_menu_add_range(MENU_H_STRETCH_0, parent, "H Stretch Factor",
            500, canvas_state[VIC_INDEX].max_stretch_h ?
@@ -3226,14 +3224,12 @@ void build_menu(struct menu_item *root) {
              -48, 48, 1, 0);
      h_border_item[1] =
          ui_menu_add_range(MENU_H_BORDER_1, parent, "H Border (px)",
-             canvas_state[VDC_INDEX].min_border_w,
-                canvas_state[VDC_INDEX].max_border_w,
-                   1, canvas_state[VDC_INDEX].max_border_w);
+             0, canvas_state[VDC_INDEX].max_border_w,
+                1, canvas_state[VDC_INDEX].max_border_w);
      v_border_item[1] =
          ui_menu_add_range(MENU_V_BORDER_1, parent, "V Border (px)",
-             canvas_state[VDC_INDEX].min_border_h,
-                canvas_state[VDC_INDEX].max_border_h,
-                   1, canvas_state[VDC_INDEX].max_border_h);
+             0, canvas_state[VDC_INDEX].max_border_h,
+                1, canvas_state[VDC_INDEX].max_border_h);
      child = h_stretch_item[1] =
          ui_menu_add_range(MENU_H_STRETCH_1, parent, "H Stretch Factor",
               500, canvas_state[VDC_INDEX].max_stretch_h ?
@@ -3721,23 +3717,23 @@ void emux_geometry_changed(int layer) {
                             &dw, &dh);
 
   if (canvas_index >= 0) {
-    int min_border_w = -MIN(
+    int max_padding_w = MIN(
         canvas_state[canvas_index].extra_offscreen_border_left,
         canvas_state[canvas_index].extra_offscreen_border_right);
-    int min_border_h = -canvas_state[canvas_index].first_displayed_line;
+    int max_padding_h = canvas_state[canvas_index].first_displayed_line;
 
     // Update the allowed max h stretch based on the display width and height
     double max_scale = ceil((double)dpx / (double)dpy) * 1000;
 
-    if (h_border_item[canvas_index]) h_border_item[canvas_index]->min = min_border_w;
-    if (v_border_item[canvas_index]) v_border_item[canvas_index]->min = min_border_h;
-    if (h_border_item[canvas_index]) h_border_item[canvas_index]->max = canvas_state[canvas_index].max_border_w;
-    if (v_border_item[canvas_index]) v_border_item[canvas_index]->max = canvas_state[canvas_index].max_border_h;
+    if (h_border_item[canvas_index]) h_border_item[canvas_index]->min = 0;
+    if (v_border_item[canvas_index]) v_border_item[canvas_index]->min = 0;
+    if (h_border_item[canvas_index]) h_border_item[canvas_index]->max = canvas_state[canvas_index].max_border_w + max_padding_w;
+    if (v_border_item[canvas_index]) v_border_item[canvas_index]->max = canvas_state[canvas_index].max_border_h + max_padding_h;
     if (h_stretch_item[canvas_index]) h_stretch_item[canvas_index]->max = max_scale;
 
     // Stuff these into the canvas state
-    canvas_state[canvas_index].min_border_w = min_border_w;
-    canvas_state[canvas_index].min_border_h = min_border_h;
+    canvas_state[canvas_index].max_padding_w = max_padding_w;
+    canvas_state[canvas_index].max_padding_h = max_padding_h;
     canvas_state[canvas_index].max_stretch_h = max_scale;
   }
 
