@@ -1624,8 +1624,8 @@ static void init_video(void) {
   canvas_state[VIC_INDEX].raster_skip = raster_skip;
 
   if (is_ntsc()) {
-    canvas_state[VIC_INDEX].min_border_w = 0;
-    canvas_state[VIC_INDEX].min_border_h = 0;
+    canvas_state[VIC_INDEX].max_padding_w = 0;
+    canvas_state[VIC_INDEX].max_padding_h = 0;
     canvas_state[VIC_INDEX].max_border_w = 32;
     canvas_state[VIC_INDEX].max_border_h = 22 * raster_skip;
     time_advance = 1666;
@@ -1633,8 +1633,8 @@ static void init_video(void) {
     strcpy(rom_kernal,"/PLUS4EMU/p4_ntsc.rom");
     Plus4VideoDecoder_SetNTSCMode(videoDecoder, 1);
   } else {
-    canvas_state[VIC_INDEX].min_border_w = 0;
-    canvas_state[VIC_INDEX].min_border_h = 0;
+    canvas_state[VIC_INDEX].max_padding_w = 0;
+    canvas_state[VIC_INDEX].max_padding_h = 0;
     canvas_state[VIC_INDEX].max_border_w = 32;
     canvas_state[VIC_INDEX].max_border_h = 40 * raster_skip;
     time_advance = 2000;

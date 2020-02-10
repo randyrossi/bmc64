@@ -172,13 +172,13 @@ static void check_dimensions(struct video_canvas_s* canvas,
    canvas_state[canvas_index].last_displayed_line =
      canvas->geometry->last_displayed_line;
 
-   int min_border_w = -MIN(
+   int max_padding_w = MIN(
         canvas_state[canvas_index].extra_offscreen_border_left,
         canvas_state[canvas_index].extra_offscreen_border_right);
-   int min_border_h = -canvas_state[canvas_index].first_displayed_line;
+   int max_padding_h = canvas_state[canvas_index].first_displayed_line;
 
-   canvas_state[canvas_index].min_border_w = min_border_w;
-   canvas_state[canvas_index].min_border_h = min_border_h;
+   canvas_state[canvas_index].max_padding_w = max_padding_w;
+   canvas_state[canvas_index].max_padding_h = max_padding_h;
 }
 
 // Draw buffer bridge functions back to kernel
