@@ -227,6 +227,10 @@ struct sound_s {
     uint8_t filterType;
     uint8_t filterCurType;
     uint16_t filterValue;
+
+#ifdef RASPI_COMPILE
+    int chip_num;
+#endif
 };
 
 /* XXX: check these */
@@ -853,7 +857,11 @@ static void init_filter(sound_t *psid, int freq)
 }
 
 /* SID initialization routine */
+#ifdef RASPI_COMPILE
+static sound_t *fastsid_open(uint8_t *sidstate, int chip_num)
+#else
 static sound_t *fastsid_open(uint8_t *sidstate)
+#endif
 {
     sound_t *psid;
 
@@ -861,6 +869,9 @@ static sound_t *fastsid_open(uint8_t *sidstate)
 
     memcpy(psid->d, sidstate, 32);
 
+#ifdef RASPI_COMPILE
+    psid->chip_num = chip_num;
+#endif
     return psid;
 }
 
@@ -898,9 +909,18 @@ static int fastsid_init(sound_t *psid, int speed, int cycles_per_sec, int factor
         setup_voice(&psid->v[i]);
     }
 #ifdef WAVETABLES
+#ifdef RASPI_COMPILE
+    if (psid->chip_num == 0 && resources_get_int("SidModel", &sid_model) < 0) {
+        return 0;
+    }
+    if (psid->chip_num == 1 && resources_get_int("Sid2Model", &sid_model) < 0) {
+        return 0;
+    }
+#else
     if (resources_get_int("SidModel", &sid_model) < 0) {
         return 0;
     }
+#endif
 
     psid->newsid = 0;
     switch (sid_model) {

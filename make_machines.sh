@@ -27,26 +27,13 @@ make xplus4
 make xpet
 cd ../..
 
-make clean
-BOARD=$BOARD make -f Makefile-C64
-cp $KERNEL ${KERNEL}.c64
+MACHINES="C64:c64 C128:c128 VIC20:vic20 Plus4:plus4 Plus4Emu:plus4emu PET:pet"
 
-make clean
-BOARD=$BOARD make -f Makefile-C128
-cp $KERNEL ${KERNEL}.c128
-
-make clean
-BOARD=$BOARD make -f Makefile-VIC20
-cp $KERNEL ${KERNEL}.vic20
-
-make clean
-BOARD=$BOARD make -f Makefile-Plus4
-cp $KERNEL ${KERNEL}.plus4
-
-make clean
-BOARD=$BOARD make -f Makefile-Plus4Emu
-cp $KERNEL ${KERNEL}.plus4emu
-
-make clean
-BOARD=$BOARD make -f Makefile-PET
-cp $KERNEL ${KERNEL}.pet
+for m in $MACHINES
+do
+   P1=`echo $m | sed 's/:.*$//'`
+   P2=`echo $m | sed 's/^.*://'`
+   make clean
+   BOARD=$BOARD make -f Makefile-$P1
+   cp $KERNEL ${KERNEL}.$P2
+done

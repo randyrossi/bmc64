@@ -77,6 +77,7 @@ int pending_emu_quick_func;
 static int osd_active;
 static int ui_commodore_down;
 static int ui_transparent;
+static int ui_transparent_layer; // which layer we are revealing for adjustment
 static int ui_render_current_item_only;
 
 // Stubs for vice callbacks. Unimplemented for now.
@@ -121,6 +122,8 @@ void (*on_value_changed)(struct menu_item *) = NULL;
 #define ACTION_Return 5
 #define ACTION_Escape 6
 #define ACTION_Exit 7
+#define ACTION_MiniLeft 8
+#define ACTION_MiniRight 9
 
 #define INITIAL_ACTION_DELAY 24
 #define INITIAL_ACTION_REPEAT_DELAY 8
@@ -148,10 +151,6 @@ void ui_init_menu(void) {
 
   assert(emux_machine_class != BMC64_MACHINE_CLASS_UNKNOWN);
 
-  // Why does ui_fb_w have to be a multiple of 32?
-  ui_fb_w = menu_width_chars * 8 + 64;
-  ui_fb_h = menu_height_chars * 8 + 32;
-
   ui_enabled = 0;
   ui_showing = 0;
   current_menu = -1;
@@ -165,7 +164,7 @@ void ui_init_menu(void) {
   }
 
   // Root menu is never popped
-  struct menu_item *root = ui_push_menu(-1, -1);
+  struct menu_item *root = ui_push_menu(-2, -2);
 
   // This also loads our custom settings file. It's safe to have settings
   // here that our videoarch code needs since this is called before any
@@ -177,10 +176,6 @@ void ui_init_menu(void) {
   ui_key_ticks_next = 0;
   ui_key_ticks_repeats = 0;
   ui_key_ticks_repeats_next = 0;
-
-  // Let's create our UI frame buffer
-  circle_alloc_fbl(FB_LAYER_UI, 0 /* indexed */, &ui_fb, ui_fb_w, ui_fb_h, &ui_fb_pitch);
-  circle_clear_fbl(FB_LAYER_UI);
 }
 
 // Draw a single character at x,y coords into the offscreen area
@@ -327,6 +322,7 @@ static void ui_key_pressed(long key) {
   // for.
   if (key != KEYCODE_Left && key != KEYCODE_Right) {
     ui_transparent = 0;
+    ui_transparent_layer = -1;
     ui_render_current_item_only = 0;
   }
 
@@ -337,36 +333,32 @@ static void ui_key_pressed(long key) {
 
   switch (key) {
   case KEYCODE_Up:
-    ui_key_action = ACTION_Up;
-    ui_key_ticks = INITIAL_ACTION_DELAY;
-    ui_key_ticks_next = INITIAL_ACTION_REPEAT_DELAY;
-    ui_key_ticks_repeats = 0;
-    ui_key_ticks_repeats_next = 8;
-    ui_action(ACTION_Up);
-    return;
   case KEYCODE_Down:
-    ui_key_action = ACTION_Down;
-    ui_key_ticks = INITIAL_ACTION_DELAY;
-    ui_key_ticks_next = INITIAL_ACTION_REPEAT_DELAY;
-    ui_key_ticks_repeats = 0;
-    ui_key_ticks_repeats_next = 8;
-    ui_action(ACTION_Down);
-    return;
   case KEYCODE_Left:
-    ui_key_action = ACTION_Left;
-    ui_key_ticks = INITIAL_ACTION_DELAY;
-    ui_key_ticks_next = INITIAL_ACTION_REPEAT_DELAY;
-    ui_key_ticks_repeats = 0;
-    ui_key_ticks_repeats_next = 8;
-    ui_action(ACTION_Left);
-    return;
   case KEYCODE_Right:
-    ui_key_action = ACTION_Right;
+  case KEYCODE_Comma:
+  case KEYCODE_Period:
+    switch (key) {
+      case KEYCODE_Up:
+        ui_key_action = ACTION_Up; break;
+      case KEYCODE_Down:
+        ui_key_action = ACTION_Down; break;
+      case KEYCODE_Left:
+        ui_key_action = ACTION_Left; break;
+      case KEYCODE_Right:
+        ui_key_action = ACTION_Right; break;
+      case KEYCODE_Comma:
+        ui_key_action = ACTION_MiniLeft; break;
+      case KEYCODE_Period:
+        ui_key_action = ACTION_MiniRight; break;
+      default:
+        return;
+    }
     ui_key_ticks = INITIAL_ACTION_DELAY;
     ui_key_ticks_next = INITIAL_ACTION_REPEAT_DELAY;
     ui_key_ticks_repeats = 0;
     ui_key_ticks_repeats_next = 8;
-    ui_action(ACTION_Right);
+    ui_action(ui_key_action);
     return;
   case KEYCODE_Escape:
     return;
@@ -414,6 +406,8 @@ static void ui_key_released(long key) {
   case KEYCODE_Down:
   case KEYCODE_Left:
   case KEYCODE_Right:
+  case KEYCODE_Comma:
+  case KEYCODE_Period:
     ui_key_action = ACTION_None;
     return;
   case KEYCODE_Return:
@@ -537,8 +531,13 @@ static void ui_action(long action) {
     }
     break;
   case ACTION_Left:
+  case ACTION_MiniLeft:
     if (cur->type == RANGE) {
-      cur->value -= cur->step;
+      if (action == ACTION_MiniLeft)
+         cur->value -= cur->ministep;
+      else
+         cur->value -= cur->step;
+
       if (cur->value < cur->min) {
         cur->value = cur->min;
       } else {
@@ -570,8 +569,13 @@ static void ui_action(long action) {
     }
     break;
   case ACTION_Right:
+  case ACTION_MiniRight:
     if (cur->type == RANGE) {
-      cur->value += cur->step;
+      if (action == ACTION_MiniRight)
+         cur->value += cur->ministep;
+      else
+         cur->value += cur->step;
+
       if (cur->value > cur->max) {
         cur->value = cur->max;
       } else {
@@ -850,6 +854,7 @@ struct menu_item *ui_menu_add_range(int id, struct menu_item *folder,
   new_item->min = min;
   new_item->max = max;
   new_item->step = step;
+  new_item->ministep = 1;
   new_item->divisor = 1;
   new_item->value = initial_value;
   append(folder, new_item);
@@ -996,6 +1001,15 @@ void ui_make_transparent(void) {
   memset(ui_fb, TRANSPARENT_COLOR, ui_fb_h * ui_fb_pitch);
 }
 
+static void ui_draw_shadow_text(const char* txt, int *x, int *y, int col) {
+  ui_draw_text(txt, *x+1, *y, 0);
+  ui_draw_text(txt, *x-1, *y, 0);
+  ui_draw_text(txt, *x, *y+1, 0);
+  ui_draw_text(txt, *x, *y-1, 0);
+  ui_draw_text(txt, *x, *y, col);
+  *x = *x + strlen(txt) *8;
+}
+
 void ui_render_now(int menu_stack_index) {
   int index = 0;
   int indent = 0;
@@ -1027,6 +1041,73 @@ void ui_render_now(int menu_stack_index) {
   if (menu_cursor[menu_stack_index] >= max_index[menu_stack_index]) {
     menu_cursor[menu_stack_index] = max_index[menu_stack_index] - 1;
     cursor_pos_updated();
+  }
+
+  // Reveal dimensions in top left corner
+  if (ui_transparent && ui_transparent_layer >= 0) {
+    char str1[32];
+    char str2[32];
+    int dpx, dpy, fbw, fbh, dw, dh, sw, sh;
+
+    // We're drawing into the UI layer so get it's fb dims.
+    circle_get_fbl_dimensions(FB_LAYER_UI,
+                              &dpx, &dpy,
+                              &fbw, &fbh,
+                              &sw, &sh,
+                              &dw, &dh);
+
+    // We can use the 1st display canvas info because our UI layer
+    // mirrors it's dimensions all the time.
+    int cx = canvas_state[VIC_INDEX].left + sw / 2 - 18 * 8 / 2;
+    int cy = canvas_state[VIC_INDEX].top + sh / 2 - 7 * 10 / 2;
+
+    // Now get info about the layer we are djusting
+    circle_get_fbl_dimensions(ui_transparent_layer,
+                              &dpx, &dpy,
+                              &fbw, &fbh,
+                              &sw, &sh,
+                              &dw, &dh);
+
+    int qx = cx;
+    int qy = cy;
+
+    sprintf (str1,"Display: %dx%d", dpx, dpy);
+    ui_draw_shadow_text(str1, &qx, &qy, 1);
+
+    qx = cx; qy+=10;
+    // Unscaled frame buffer
+    sprintf (str1, "FB: %d x %d", sw, sh);
+    ui_draw_shadow_text(str1, &qx, &qy, 1);
+    qx = qx + 10;
+
+    // Scaled frame buffer. Show green dimension if it is
+    // an even multiple of the unscaled frame buffer.
+    qx = cx; qy+=10;
+    sprintf (str1, "%d", dw);
+    sprintf (str2, "%d", dh);
+    ui_draw_shadow_text("SFB:", &qx, &qy, 1);
+    qx = qx + 8;
+    ui_draw_shadow_text(str1, &qx, &qy, dw % sw == 0 ? 5 : 1);
+    ui_draw_shadow_text("x", &qx, &qy, 1);
+    ui_draw_shadow_text(str2, &qx, &qy, dh % sh == 0 ? 5 : 1);
+    qx = qx + 8;
+    if (dw % sw == 0) {
+       sprintf (str1, "x%d,", dw/sw);
+       ui_draw_shadow_text(str1, &qx, &qy, 5);
+    } else {
+       ui_draw_shadow_text("*", &qx, &qy, 1);
+    }
+    if (dh % sh == 0) {
+       sprintf (str1, "x%d", dh/sh);
+       ui_draw_shadow_text(str1, &qx, &qy, 5);
+    } else {
+       ui_draw_shadow_text("*", &qx, &qy, 1);
+    }
+
+    qx = cx; qy+=20;
+    ui_draw_shadow_text("Use , and . for", &qx, &qy, 1);
+    qx = cx; qy+=10;
+    ui_draw_shadow_text("-/+1 increments.", &qx, &qy, 1);
   }
 }
 
@@ -1114,12 +1195,40 @@ struct menu_item *ui_pop_menu(void) {
   return &menu_roots[current_menu];
 }
 
+// left + border_w brings us to the left of gfx area
+// then we center the menu width inside the gfx_w area
+static int calc_root_menu_left() {
+   return
+       canvas_state[VIC_INDEX].left +
+          canvas_state[VIC_INDEX].border_w +
+             canvas_state[VIC_INDEX].gfx_w / 2 -
+                menu_width_chars * 8 / 2;
+}
+
+// top + border_h brings us to the top of the gfx area
+// then we center the menu height inside the gfx_h area
+// BUT must take into account raster_skip since we don't
+// double the height of the UI frame buffer like we do
+// the main display.
+static int calc_root_menu_top() {
+   int raster_skip = canvas_state[VIC_INDEX].raster_skip;
+
+   int ui_top = canvas_state[VIC_INDEX].first_displayed_line +
+       canvas_state[VIC_INDEX].max_border_h / raster_skip;
+
+   return ui_top + canvas_state[VIC_INDEX].gfx_h / 2 /
+                      canvas_state[VIC_INDEX].raster_skip -
+                         menu_height_chars * 8 / 2;
+}
+
 struct menu_item *ui_push_menu(int w_chars, int h_chars) {
 
-  if (w_chars == -1)
-    w_chars = menu_width_chars;
-  if (h_chars == -1)
-    h_chars = menu_height_chars;
+  int menu_width = w_chars * 8;
+  int menu_height = h_chars * 8;
+  if (w_chars < 0)
+    menu_width = menu_width_chars * 8;
+  if (h_chars < 0)
+    menu_height = menu_height_chars * 8;
 
   current_menu++;
   if (current_menu >= NUM_MENU_ROOTS) {
@@ -1134,16 +1243,38 @@ struct menu_item *ui_push_menu(int w_chars, int h_chars) {
   menu_roots[current_menu].on_popped_to = NULL;
 
   // Set dimensions
-  int menu_width = w_chars * 8;
-  int menu_height = h_chars * 8;
   menu_roots[current_menu].menu_width = menu_width;
   menu_roots[current_menu].menu_height = menu_height;
-  menu_roots[current_menu].menu_left = (ui_fb_w - menu_width) / 2;
-  menu_roots[current_menu].menu_top = (ui_fb_h - menu_height) / 2;
+
+  if (w_chars == -2) {
+    menu_roots[current_menu].menu_left = calc_root_menu_left();
+  } else if (w_chars == -1) {
+    // Inherit the root menu's left
+    menu_roots[current_menu].menu_left = menu_roots[0].menu_left;
+  } else {
+    // Center this smaller menu inside the bounds of the root
+    menu_roots[current_menu].menu_left =
+       menu_roots[0].menu_left + (menu_roots[0].menu_width - menu_width) / 2;
+  }
+
+  if (h_chars == -2) {
+    menu_roots[current_menu].menu_top = calc_root_menu_top();
+  } else if (h_chars == -1) {
+    // Inherit the root menu's top
+    menu_roots[current_menu].menu_top = menu_roots[0].menu_top;
+  } else {
+    // Center this smaller menu inside the bounds of the root
+    menu_roots[current_menu].menu_top =
+       menu_roots[0].menu_top + (menu_roots[0].menu_height - menu_height) / 2;
+  }
 
   menu_cursor[current_menu] = 0;
   menu_window_top[current_menu] = 0;
-  menu_window_bottom[current_menu] = h_chars;
+  if (h_chars < 0) {
+     menu_window_bottom[current_menu] = menu_height_chars;
+  } else {
+     menu_window_bottom[current_menu] = h_chars;
+  }
 
   return &menu_roots[current_menu];
 }
@@ -1175,6 +1306,8 @@ void glob_osd_popped(struct menu_item *new_root,
 
 void ui_error(const char *format, ...) {
   struct menu_item *root = ui_push_dialog_header(1);
+  // Don't show layer info when we want to show error.
+  ui_transparent_layer = 0;
   if (!ui_enabled) {
      // We were called without the UI being up. Make this an OSD.
      ui_enable_osd();
@@ -1191,6 +1324,8 @@ void ui_error(const char *format, ...) {
 
 void ui_info(const char *format, ...) {
   struct menu_item *root = ui_push_dialog_header(0);
+  // Don't show layer info when we want to show info.
+  ui_transparent_layer = 0;
   if (!ui_enabled) {
      // We were called without the UI being up. Make this an OSD.
      ui_enable_osd();
@@ -1354,10 +1489,6 @@ void ui_dismiss_osd_if_active(void) {
   }
 }
 
-void ui_set_transparent(int v) {
-  ui_transparent = v;
-}
-
 void ui_set_render_current_item_only(int v) {
   ui_render_current_item_only = v;
 }
@@ -1370,11 +1501,13 @@ void emu_quick_func_interrupt(int button_assignment) {
 // current item.
 void ui_canvas_reveal_temp(int layer) {
   if (layer == FB_LAYER_VIC && vic_showing) {
-    ui_set_transparent(1);
+    ui_transparent = 1;
+    ui_transparent_layer = layer;
     ui_set_render_current_item_only(1);
   }
   else if (layer == FB_LAYER_VDC && vdc_showing) {
-    ui_set_transparent(1);
+    ui_transparent = 1;
+    ui_transparent_layer = layer;
     ui_set_render_current_item_only(1);
   }
 }
@@ -1448,4 +1581,47 @@ void emu_exit(void) {
   circle_set_palette_fbl(FB_LAYER_VIC, 1, COLOR16(255, 255, 255));
   circle_update_palette_fbl(FB_LAYER_VIC);
   circle_frames_ready_fbl(FB_LAYER_VIC, -1, 0);
+}
+
+static void ui_update_children(struct menu_item *node,
+                               int top, int left) {
+  while (node != NULL) {
+    node->menu_top = top;
+    node->menu_left = left;
+
+    if (node->type == FOLDER && node->first_child != NULL) {
+      ui_update_children(node->first_child, top, left);
+    }
+    node = node->next;
+  }
+}
+
+void ui_geometry_changed(int dpx, int dpy,
+                         int fbw, int fbh,
+                         int sw, int sh,
+                         int dw, int dh) {
+
+  // For the UI, we don't want to double the height like we do
+  // with the actual display, so we take raster_skip into account
+  // here.
+  fbh = fbh / canvas_state[VIC_INDEX].raster_skip;
+
+  // When the ui geometry changes, we need to update some menu
+  // fields to match.
+  if (fbw != ui_fb_w || fbh != ui_fb_h) {
+     // Destroy old fb.
+     if (ui_fb) {
+        circle_free_fbl(FB_LAYER_UI);
+     }
+
+     circle_alloc_fbl(FB_LAYER_UI, 0 /* indexed */, &ui_fb,
+                      fbw, fbh, &ui_fb_pitch);
+     circle_clear_fbl(FB_LAYER_UI);
+     ui_fb_w = fbw;
+     ui_fb_h = fbh;
+   }
+   menu_roots[0].menu_top = calc_root_menu_top();
+   menu_roots[0].menu_left = calc_root_menu_left();
+   ui_update_children(&menu_roots[0],
+      menu_roots[0].menu_top, menu_roots[0].menu_left);
 }

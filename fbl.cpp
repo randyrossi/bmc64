@@ -70,11 +70,15 @@ static uint32_t pal_argb[256] = {
   ARGB(0x00, 0x00, 0x00, 0x00),
 };
 
+static const char sNoInt[] = "scaling_kernel 0 0 0 0 0 0 0 0 1 1 1 1 255 255 255 255 255 255 255 255 1 1 1 1 0 0 0 0 0 0 0 0   1";
+
+static char config_scaling_kernel[1024];
+
 bool FrameBufferLayer::initialized_ = false;
 DISPMANX_DISPLAY_HANDLE_T FrameBufferLayer::dispman_display_;
 
 FrameBufferLayer::FrameBufferLayer() :
-        width_(0), height_(0), pitch_(0), layer_(0), transparency_(false),
+        fb_width_(0), fb_height_(0), fb_pitch_(0), layer_(0), transparency_(false),
         hstretch_(1.6), vstretch_(1.0),
         valign_(0), vpadding_(0), halign_(0), hpadding_(0),
         h_center_offset_(0), v_center_offset_(0),
@@ -106,6 +110,16 @@ void FrameBufferLayer::Initialize() {
   bcm_host_init();
 
   dispman_display_ = vc_dispmanx_display_open(0);
+
+  bcm_get_sclker(config_scaling_kernel, sizeof(config_scaling_kernel));
+  // We have to remove the '=' or else what we send back
+  // won't work.
+  for (unsigned int i=0;i<strlen(config_scaling_kernel);i++) {
+    if (config_scaling_kernel[i] == '=') {
+       config_scaling_kernel[i] = ' ';
+       break;
+    }
+  }
 
   initialized_ = true;
 }
@@ -142,10 +156,10 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
      pitch_multiplier = 2;
 
   // pitch is in bytes
-  *pitch = pitch_ = ALIGN_UP(width * pitch_multiplier, 32);
+  *pitch = fb_pitch_ = ALIGN_UP(width * pitch_multiplier, 32);
 
-  width_ = width;
-  height_ = height;
+  fb_width_ = width;
+  fb_height_ = height;
 
   ret = vc_dispmanx_display_get_info(dispman_display_, &dispman_info);
   assert(ret == 0);
@@ -153,7 +167,7 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
   display_width_ = dispman_info.width;
   display_height_ = dispman_info.height;
 
-  *pixels = pixels_ = (uint8_t*) malloc(pitch_ * height * bytes_per_pixel_);
+  *pixels = pixels_ = (uint8_t*) malloc(fb_pitch_ * height * bytes_per_pixel_);
 
   // Allocate the VC resources along with the frame buffer
 
@@ -173,7 +187,9 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
     UpdatePalette();
   }
 
-  vc_dispmanx_rect_set( &copy_dst_rect_, 0, 0, width, height);
+  vc_dispmanx_rect_set(&copy_dst_rect_, 0, 0, width, height);
+  dst_w_ = width;
+  dst_h_ = height;
 
   assert(ret == 0);
 
@@ -189,7 +205,7 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
 void FrameBufferLayer::Clear() {
   assert (allocated_);
 
-  memset(pixels_, 0, height_ * pitch_ * bytes_per_pixel_);
+  memset(pixels_, 0, fb_height_ * fb_pitch_ * bytes_per_pixel_);
 }
 
 void FrameBufferLayer::Free() {
@@ -201,9 +217,9 @@ void FrameBufferLayer::Free() {
      Hide();
   }
 
-  width_ = 0;
-  height_ = 0;
-  pitch_ = 0;
+  fb_width_ = 0;
+  fb_height_ = 0;
+  fb_pitch_ = 0;
   free(pixels_);
 
   ret = vc_dispmanx_resource_delete(dispman_resource_[0]);
@@ -239,9 +255,9 @@ void FrameBufferLayer::Show() {
 
   if (hstretch_ < 0) {
      // Stretch horizontally to fill width * vstretch and then set height
-     // based on hstretch.
+     // based on hstretch.  This mode doesn't support integer stretch.
      dst_w = avail_width * vstretch_;
-     dst_h = (double)avail_width / -hstretch_;
+     dst_h = avail_width / -hstretch_;
      if (dst_w > avail_width) {
         dst_w = avail_width;
      }
@@ -252,7 +268,14 @@ void FrameBufferLayer::Show() {
      // Stretch vertically to fill height * vstretch and then set width
      // based on hstretch.
      dst_h = avail_height * vstretch_;
-     dst_w = (double)avail_height * hstretch_;
+     if (use_vintstr_) {
+        dst_h = vintstr_;
+     }
+     dst_w = avail_height * hstretch_;
+     if (use_hintstr_) {
+        dst_w = hintstr_;
+     }
+
      if (dst_h > avail_height) {
         dst_h = avail_height;
      }
@@ -305,6 +328,8 @@ void FrameBufferLayer::Show() {
                        oy + tpad_abs,
                        dst_w,
                        dst_h);
+  dst_w_ = dst_w;
+  dst_h_ = dst_h;
 
   dispman_update = vc_dispmanx_update_start(0);
   assert( dispman_update );
@@ -351,7 +376,7 @@ void FrameBufferLayer::FrameReady(int to_offscreen) {
   // on screen resource (if !swap).
   vc_dispmanx_resource_write_data(dispman_resource_[rnum],
                                   mode_,
-                                  pitch_,
+                                  fb_pitch_,
                                   pixels_,
                                   &copy_dst_rect_);
 }
@@ -430,9 +455,13 @@ void FrameBufferLayer::SetSrcRect(int x, int y, int w, int h) {
 }
 
 // Set horizontal/vertical multipliers
-void FrameBufferLayer::SetStretch(double hstretch, double vstretch) {
+void FrameBufferLayer::SetStretch(double hstretch, double vstretch, int hintstr, int vintstr, int use_hintstr, int use_vintstr) {
   hstretch_ = hstretch;
   vstretch_ = vstretch;
+  hintstr_ = hintstr;
+  vintstr_ = vintstr;
+  use_hintstr_ = use_hintstr;
+  use_vintstr_ = use_vintstr;
 }
 
 void FrameBufferLayer::SetVerticalAlignment(int alignment, int padding) {
@@ -458,4 +487,26 @@ void FrameBufferLayer::SetPadding(double leftPadding,
 void FrameBufferLayer::SetCenterOffset(int cx, int cy) {
   h_center_offset_ = cx;
   v_center_offset_ = cy;
+}
+
+void FrameBufferLayer::GetDimensions(int *display_w, int *display_h,
+                                     int *fb_w, int *fb_h,
+                                     int *src_w, int *src_h,
+                                     int *dst_w, int *dst_h) {
+  *display_w = display_width_;
+  *display_h = display_height_;
+  *fb_w = fb_width_;
+  *fb_h = fb_height_;
+  *src_w = src_w_;
+  *src_h = src_h_;
+  *dst_w = dst_w_;
+  *dst_h = dst_h_;
+}
+
+void FrameBufferLayer::SetInterpolation(int enable) {
+  if (enable) {
+     bcm_set_sclker(config_scaling_kernel);
+  } else {
+     bcm_set_sclker(sNoInt);
+  }
 }

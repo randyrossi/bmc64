@@ -78,7 +78,7 @@ public:
   // Otherwise, the src region width is scaled up to the width of the
   // frame buffer * vstretch, the height is determined by 
   // frame buffer width / hstretch.
-  void SetStretch(double hstretch, double vstretch);
+  void SetStretch(double hstretch, double vstretch, int hintstr, int vintstr, int use_hintstr, int use_vintstr);
 
   void SetCenterOffset(int cx, int cy);
 
@@ -94,12 +94,20 @@ public:
   // Used to force a fb into a smaller space (for things like PIP or side-by-side.
   void SetPadding(double leftPadding, double rightPadding, double topPadding, double bottomPadding);
 
+  // Retrieve dimensions for this layer. 
+  void GetDimensions(int *display_w, int *display_h,
+                     int *fb_w, int *fb_h,
+                     int *src_w, int *src_h,
+                     int *dst_w, int *dst_h);
+
   // initializes the bcm_host interface
   static void Initialize();
 
   // make off screen resources for fb1 (and optionally fb2) visible
   // then swap destination resources in prep for next frame
   static void SwapResources(FrameBufferLayer* fb1, FrameBufferLayer* fb2);
+
+  static void SetInterpolation(int enable);
 
 private:
 
@@ -121,13 +129,18 @@ private:
 
   static bool initialized_;
 
-  int width_;
-  int height_;
-  int pitch_;
+  int fb_width_;
+  int fb_height_;
+  int fb_pitch_;
   int layer_;
   int transparency_;
   double hstretch_;
   double vstretch_;
+  int hintstr_;
+  int vintstr_;
+  int use_hintstr_;
+  int use_vintstr_;
+
   // -1 = top, 0 = center, 1 = bottom
   int valign_;
   int vpadding_;
@@ -156,6 +169,9 @@ private:
   int src_y_;
   int src_w_;
   int src_h_;
+
+  int dst_w_;
+  int dst_h_;
 
   bool showing_;
   bool allocated_;

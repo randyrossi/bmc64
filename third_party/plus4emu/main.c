@@ -76,7 +76,7 @@ int color_brightness = 1000;
 int color_contrast = 666;
 int color_gamma = 800;
 int color_tint = 1000;
-int raster_skip = 1; // TODO Make configurable
+int raster_skip = 1; // Never going to change.
 
 static struct menu_item *sid_model_item;
 static struct menu_item *sid_write_access_item;
@@ -105,6 +105,8 @@ static uint32_t prev_drive_state;
 static int drive_led_colors[4];
 
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
+
+static void init_video(void);
 
 static int p4_isspace(char c) {
   return (c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v');
@@ -719,7 +721,7 @@ int main_program(int argc, char **argv)
   int audioSampleRate;
   int fragsize;
   int fragnr;
-  int channels;
+  int channels = 1; // Only mono for plus4emu
 
   circle_sound_init(NULL, &audioSampleRate, &fragsize, &fragnr, &channels);
   if (Plus4VM_SetAudioSampleRate(vm, audioSampleRate) != PLUS4EMU_SUCCESS)
@@ -741,8 +743,9 @@ int main_program(int argc, char **argv)
 
   vic_enabled = 1; // really TED
 
-  // This loads settings vars
-  ui_init_menu();
+  init_video();
+  ui_init_menu(); // loads settings
+  emux_geometry_changed(FB_LAYER_VIC);
 
   load_keymap();
   machine_kbd_init();
@@ -762,6 +765,10 @@ int main_program(int argc, char **argv)
 
   printf ("Enter emulation loop\n");
   Plus4VM_Reset(vm, 1);
+
+  // Fake two core init complete. Temp solution to get sound back for plus4emu.
+  circle_kernel_core_init_complete(1);
+  circle_kernel_core_init_complete(2);
 
   circle_boot_complete();
 
@@ -1076,7 +1083,7 @@ void emux_add_keyboard_options(struct menu_item* parent) {
   keyboard_mapping_item->value = keyboard_mapping;
   strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_SYM], "Symbolic");
   strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_POS], "Positional");
-  strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_MAXI], "Maxi");
+  strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_MAXI], "Maxi Positional");
 
   // Do this for now in case we ever support this some day.
   keyboard_mapping_item->choice_disabled[KEYBOARD_MAPPING_SYM] = 1;
@@ -1320,7 +1327,6 @@ void emux_set_int(IntSetting setting, int value) {
     case Setting_DatasetteResetWithCPU:
        reset_tape_with_cpu = value;
        break;
-    case Setting_SidResidSampling:
     case Setting_Datasette:
        // Not applicable
        break;
@@ -1593,6 +1599,9 @@ int emux_handle_loaded_setting(char *name, char* value_str, int value) {
 }
 
 void emux_load_settings_done(void) {
+}
+
+static void init_video(void) {
   if (is_ntsc()) {
      vertical_res = 242 * raster_skip;
      raster_low = 18 * raster_skip;
@@ -1610,20 +1619,24 @@ void emux_load_settings_done(void) {
   circle_clear_fbl(FB_LAYER_VIC);
   circle_show_fbl(FB_LAYER_VIC);
 
-  canvas_state[vic_canvas_index].gfx_w = 40*8;
-  canvas_state[vic_canvas_index].gfx_h = 25*8 * raster_skip;
-  canvas_state[vic_canvas_index].raster_skip = raster_skip;
+  canvas_state[VIC_INDEX].gfx_w = 40*8;
+  canvas_state[VIC_INDEX].gfx_h = 25*8 * raster_skip;
+  canvas_state[VIC_INDEX].raster_skip = raster_skip;
 
   if (is_ntsc()) {
-    canvas_state[vic_canvas_index].max_border_w = 32;
-    canvas_state[vic_canvas_index].max_border_h = 22 * raster_skip;
+    canvas_state[VIC_INDEX].max_padding_w = 0;
+    canvas_state[VIC_INDEX].max_padding_h = 0;
+    canvas_state[VIC_INDEX].max_border_w = 32;
+    canvas_state[VIC_INDEX].max_border_h = 22 * raster_skip;
     time_advance = 1666;
     Plus4VM_SetVideoClockFrequency(vm, 14318180);
     strcpy(rom_kernal,"/PLUS4EMU/p4_ntsc.rom");
     Plus4VideoDecoder_SetNTSCMode(videoDecoder, 1);
   } else {
-    canvas_state[vic_canvas_index].max_border_w = 32;
-    canvas_state[vic_canvas_index].max_border_h = 40 * raster_skip;
+    canvas_state[VIC_INDEX].max_padding_w = 0;
+    canvas_state[VIC_INDEX].max_padding_h = 0;
+    canvas_state[VIC_INDEX].max_border_w = 32;
+    canvas_state[VIC_INDEX].max_border_h = 40 * raster_skip;
     time_advance = 2000;
     Plus4VM_SetVideoClockFrequency(vm, 17734475);
     strcpy(rom_kernal,"/PLUS4EMU/p4kernal.rom");

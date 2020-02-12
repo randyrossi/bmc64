@@ -34,8 +34,15 @@
 #include <sys/types.h>
 #include <stdint.h>
 
-#define MIN(a,b) (((a)<(b))?(a):(b))
-#define MAX(a,b) (((a)>(b))?(a):(b))
+#define MIN(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
+
+#define MAX(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a > _b ? _a : _b; })
 
 #define MAX_USB_DEVICES 4
 #define MAX_JOY_PORTS 4
@@ -192,7 +199,7 @@ extern void circle_frames_ready_fbl(int layer1, int layer2, int sync);
 extern void circle_set_palette_fbl(int layer, uint8_t index, uint16_t rgb565);
 extern void circle_set_palette32_fbl(int layer, uint8_t index, uint32_t argb);
 extern void circle_update_palette_fbl(int layer);
-extern void circle_set_stretch_fbl(int layer, double hstretch, double vstretch);
+extern void circle_set_stretch_fbl(int layer, double hstretch, double vstretch, int hintstr, int vintstr, int use_hintstr, int use_vintstr);
 extern void circle_set_src_rect_fbl(int layer, int x, int y, int w, int h);
 extern void circle_set_center_offset(int layer, int cx, int cy);
 extern void circle_set_valign_fbl(int layer, int align, int padding);
@@ -224,6 +231,16 @@ extern int circle_sound_bufferspace(void);
 extern uint8_t circle_get_userport_ddr(void);
 extern uint8_t circle_get_userport(void);
 extern void circle_set_userport(uint8_t value);
+extern void circle_kernel_core_init_complete(int core);
+extern void circle_get_fbl_dimensions(int layer,
+                                      int *display_w, int *display_h,
+                                      int *fb_w, int *fb_h,
+                                      int *src_w, int *src_h,
+                                      int *dst_w, int *dst_h);
+extern void circle_get_scaling_params(int display,
+                                      int *fbw, int *fbh,
+                                      int *sx, int *sy);
+extern void circle_set_interpolation(int enable);
 
 // -----------------------------------------------------------------------
 // Functions called from kernel layer into emulator layer

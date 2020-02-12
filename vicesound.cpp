@@ -36,9 +36,11 @@ ViceSound::ViceSound(CVCHIQDevice *pVCHIQDevice,
 
 ViceSound::~ViceSound(void) {}
 
-boolean ViceSound::Playback(int volume) {
+boolean ViceSound::Playback(int volume, int channels) {
   assert(!IsActive());
+  num_channels = channels;
   SetVolume(volume);
+  SetChannels(channels);
   return Start();
 }
 
@@ -100,7 +102,7 @@ void ViceSound::AmountBufferedBytes(unsigned nBytes) {
 
 // Call from vice to ask us how much space is left in our buffer.
 // Return value is in samples.
-unsigned ViceSound::BufferSpaceBytes() {
-  int left = FRAG_SIZE * NUM_FRAGS - bytes_buffered / BYTES_PER_SAMPLE;
+unsigned ViceSound::BufferSpaceSamples() {
+  int left = FRAG_SIZE * NUM_FRAGS - bytes_buffered / BYTES_PER_SAMPLE / num_channels;
   return left < 0 ? 0 : left;
 }

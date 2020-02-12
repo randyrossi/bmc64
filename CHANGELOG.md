@@ -310,3 +310,15 @@
 
 ## 3.5
   * Allow same joystick GPIO mapping on multiple pins with custom GPIO
+  * Added 'Maxi' keyboard support , new vkm files switchable from menu
+  * Fixed CP/M keyboard not responsive regression
+  * Fixed duplicate GPIO pins on Config #1 issue
+  * Disable VDC video cache causing glitches on some games
+  * Added Dual SID support (also made pseudo stereo effect possible)
+  * Changed border trim menu options from % to absolute pixel values
+  * Added support for negative border values (padding)
+  * Added scaling_params to machines.txt for integer scaling when possible
+  * Made finding integer scaling options easier from menu
+  * Changed PET resolutions to 1080p in default machines.txt
+  * Fixed bug with PET screen init after model switch
+  * Added menu optionm to turn scaling interpolation off

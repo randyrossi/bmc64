@@ -51,7 +51,7 @@ public:
 
   /// \brief Starts playback
   /// \return Operation successful?
-  boolean Playback(int volume);
+  boolean Playback(int volume, int channels);
 
   /// \return Is playback running?
   boolean PlaybackActive(void) const;
@@ -68,7 +68,7 @@ public:
   SetControl(int nVolume,
              TVCHIQSoundDestination Destination = VCHIQSoundDestinationUnknown);
   unsigned AddChunk(s16 *pBuffer, unsigned nChunkSize);
-  unsigned BufferSpaceBytes();
+  unsigned BufferSpaceSamples();
 
 private:
   unsigned GetChunk(s16 *pBuffer, unsigned nChunkSize);
@@ -82,6 +82,7 @@ private:
   // Position within src_buffer we are drawing next chunk from
   unsigned int src_pos;
   unsigned int src_size;
+  unsigned int num_channels;
 };
 
 #endif // VICE_SOUND_H

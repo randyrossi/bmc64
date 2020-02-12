@@ -36,6 +36,21 @@
 
 #define SID_SETTINGS_DIALOG
 
+#ifdef RASPI_COMPILE
+extern int (*sid_job_func)(struct sound_s *psid, short *pbuf,
+                           int nr, int interleave, int *delta_t);
+extern struct sound_s *sid_job_psid;
+extern int16_t *sid_job_pbuf;
+extern int sid_job_nr;
+extern int sid_job_delta_t;
+
+extern uint32_t sid_job;
+extern uint32_t sid_done;
+extern void sem_inc(uint32_t* semaphore);
+extern void sem_dec(uint32_t* semaphore);
+
+#endif
+
 struct sound_s;
 struct sid_snapshot_state_s;
 
@@ -98,7 +113,13 @@ extern void sid_state_write(unsigned int channel,
                             struct sid_snapshot_state_s *sid_state);
 
 struct sid_engine_s {
+// For RASPI, this doesn't end up causing a lot of changes elsewhere
+// because only sid chips have an open call. Others set NULL.
+#ifdef RASPI_COMPILE
+    struct sound_s *(*open)(uint8_t *sidstate, int chip_num);
+#else
     struct sound_s *(*open)(uint8_t *sidstate);
+#endif
     int (*init)(struct sound_s *psid, int speed, int cycles_per_sec, int factor);
     void (*close)(struct sound_s *psid);
     uint8_t (*read)(struct sound_s *psid, uint16_t addr);
@@ -136,6 +157,9 @@ extern int sid_sound_machine_channels(void);
 extern void sid_sound_machine_enable(int enable);
 extern sid_engine_model_t **sid_get_engine_model_list(void);
 extern int sid_set_engine_model(int engine, int model);
+#ifdef RASPI_COMPILE
+extern int sid_set_engine_model2(int engine, int model1, int model2);
+#endif
 extern void sid_sound_chip_init(void);
 
 extern void sid_set_enable(int value);

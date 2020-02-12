@@ -54,6 +54,9 @@
 
 static int sid_filters_enabled;       /* app_resources.sidFilters */
 static int sid_model;                 /* app_resources.sidModel */
+#ifdef RASPI_COMPILE
+static int sid_model2;                /* app_resources.sidModel */
+#endif
 #if defined(HAVE_RESID)
 static int sid_resid_sampling;
 static int sid_resid_passband;
@@ -240,6 +243,47 @@ static int set_sid_model(int val, void *param)
     return 0;
 }
 
+#ifdef RASPI_COMPILE
+static int set_sid_model2(int val, void *param)
+{
+    sid_model2 = val;
+
+    if (sid_model2 == SID_MODEL_DEFAULT) {
+        sid_model2 = SID_MODEL_6581;
+#ifdef HAVE_RESID
+        if (machine_class == VICE_MACHINE_C64DTV) {
+            sid_model2 = SID_MODEL_DTVSID;
+        } else
+#endif
+        if ((machine_class == VICE_MACHINE_C128) || 
+            (machine_class == VICE_MACHINE_C64) ||
+            (machine_class == VICE_MACHINE_C64SC) ||
+            (machine_class == VICE_MACHINE_SCPU64)){
+            sid_model2 = SID_MODEL_8580;
+        }
+    }
+
+    switch (sid_model2) {
+        case SID_MODEL_6581:
+        case SID_MODEL_8580:
+        case SID_MODEL_8580D:
+        case SID_MODEL_6581R4:
+#ifdef HAVE_RESID
+        case SID_MODEL_DTVSID:
+#endif
+            break;
+        default:
+            return -1;
+    }
+
+#ifdef SID_ENGINE_MODEL_DEBUG
+    log_debug("SID2 model set to %d", sid_model2);
+#endif
+    sid_state_changed = 1;
+    return 0;
+}
+#endif
+
 #if defined(HAVE_RESID) || defined(HAVE_RESID_DTV)
 static int set_sid_resid_sampling(int val, void *param)
 {
@@ -405,6 +449,10 @@ static const resource_int_t common_resources_int[] = {
       &sid_filters_enabled, set_sid_filters_enabled, NULL },
     { "SidModel", SID_MODEL_DEFAULT, RES_EVENT_SAME, NULL,
       &sid_model, set_sid_model, NULL },
+#ifdef RASPI_COMPILE
+    { "Sid2Model", SID_MODEL_DEFAULT, RES_EVENT_SAME, NULL,
+      &sid_model2, set_sid_model2, NULL },
+#endif
     RESOURCE_INT_LIST_END
 };
 

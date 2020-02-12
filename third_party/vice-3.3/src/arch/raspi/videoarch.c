@@ -34,7 +34,6 @@
 #include <sys/time.h>
 
 // VICE includes
-#include "emux_api.h"
 #include "joyport/joystick.h"
 #include "kbdbuf.h"
 #include "keyboard.h"
@@ -57,9 +56,6 @@
 #include "overlay.h"
 #include "raspi_machine.h"
 #include "ui.h"
-
-// Increments with each canvas being inited by vice
-int canvas_num;
 
 struct video_canvas_s *vdc_canvas;
 struct video_canvas_s *vic_canvas;
@@ -166,6 +162,23 @@ static void check_dimensions(struct video_canvas_s* canvas,
    }
    canvas_state[canvas_index].fb_width = fb_width;
    canvas_state[canvas_index].fb_height = fb_height;
+
+   canvas_state[canvas_index].extra_offscreen_border_left =
+     canvas->geometry->extra_offscreen_border_left;
+   canvas_state[canvas_index].extra_offscreen_border_right =
+     canvas->geometry->extra_offscreen_border_right;
+   canvas_state[canvas_index].first_displayed_line =
+     canvas->geometry->first_displayed_line;
+   canvas_state[canvas_index].last_displayed_line =
+     canvas->geometry->last_displayed_line;
+
+   int max_padding_w = MIN(
+        canvas_state[canvas_index].extra_offscreen_border_left,
+        canvas_state[canvas_index].extra_offscreen_border_right);
+   int max_padding_h = canvas_state[canvas_index].first_displayed_line;
+
+   canvas_state[canvas_index].max_padding_w = max_padding_w;
+   canvas_state[canvas_index].max_padding_h = max_padding_h;
 }
 
 // Draw buffer bridge functions back to kernel
@@ -173,17 +186,24 @@ static int draw_buffer_alloc(struct video_canvas_s *canvas,
                              uint8_t **draw_buffer,
                              unsigned int fb_width, unsigned int fb_height,
                              unsigned int *fb_pitch) {
+   int status;
    if (is_vdc(canvas)) {
-      check_dimensions(canvas, vic_canvas_index, fb_width, fb_height);
-      return circle_alloc_fbl(FB_LAYER_VDC, 0 /* indexed */, draw_buffer,
+      check_dimensions(canvas, VDC_INDEX, fb_width,
+                          fb_height * canvas->raster_skip);
+      status = circle_alloc_fbl(FB_LAYER_VDC, 0 /* indexed */, draw_buffer,
                               fb_width, fb_height * canvas->raster_skip,
                               fb_pitch);
+      emux_frame_buffer_changed(FB_LAYER_VDC);
    } else {
-      check_dimensions(canvas, vdc_canvas_index, fb_width, fb_height);
-      return circle_alloc_fbl(FB_LAYER_VIC, 0 /* indexed */, draw_buffer,
+      check_dimensions(canvas, VIC_INDEX, fb_width,
+                          fb_height * canvas->raster_skip);
+      status = circle_alloc_fbl(FB_LAYER_VIC, 0 /* indexed */, draw_buffer,
                               fb_width, fb_height * canvas->raster_skip,
                               fb_pitch);
+      emux_frame_buffer_changed(FB_LAYER_VIC);
    }
+
+   return status;
 }
 
 static void draw_buffer_free(struct video_canvas_s *canvas, uint8_t *draw_buffer) {
@@ -210,41 +230,36 @@ static void draw_buffer_clear(struct video_canvas_s *canvas, uint8_t *draw_buffe
 // For C128, first will be the VDC, followed by VIC.
 // For other machines, only one canvas is initialized.
 void video_arch_canvas_init(struct video_canvas_s *canvas) {
+  static int canvas_num = 0;
+  int canvas_index;
   if (machine_class == VICE_MACHINE_C128 && canvas_num == 1) {
      vdc_canvas = canvas;
-     vdc_canvas_index = canvas_num;
      vdc_first_refresh = 1;
      vdc_enabled = 0;
      vdc_showing = 0;
+     canvas_index = 1;
   } else {
      set_refresh_rate(canvas);
      vic_first_refresh = 1;
      vic_canvas = canvas;
-     vic_canvas_index = canvas_num;
      video_freq = canvas->refreshrate * video_tick_inc;
      vic_enabled = 1;
      vic_showing = 0;
+     canvas_index = 0;
   }
+  canvas_num++;
 
-  if (machine_class == VICE_MACHINE_PET && !is_composite()) {
-     // For the PET, we always double the vertical height of the frame buffer
-     // so we can do our 'cheap' scanlines effect.
-     canvas->raster_skip = 2;
-  } else {
-     canvas->raster_skip = 1;
-  }
+  canvas->raster_skip = canvas_state[canvas_index].raster_skip;
 
   // Have our fb class allocate draw buffers
-  draw_buffer_callback[canvas_num].draw_buffer_alloc =
+  draw_buffer_callback[canvas_index].draw_buffer_alloc =
      draw_buffer_alloc;
-  draw_buffer_callback[canvas_num].draw_buffer_free =
+  draw_buffer_callback[canvas_index].draw_buffer_free =
      draw_buffer_free;
-  draw_buffer_callback[canvas_num].draw_buffer_clear =
+  draw_buffer_callback[canvas_index].draw_buffer_clear =
      draw_buffer_clear;
   canvas->video_draw_buffer_callback =
-     &draw_buffer_callback[canvas_num];
-
-  canvas_num++;
+     &draw_buffer_callback[canvas_index];
 }
 
 static struct video_canvas_s *video_canvas_create_vic(
@@ -252,32 +267,12 @@ static struct video_canvas_s *video_canvas_create_vic(
        unsigned int *width,
        unsigned int *height, int mapped) {
 
-  int raster_skip = canvas->raster_skip;
-  canvas_state[vic_canvas_index].raster_skip = raster_skip;
-
-  canvas_state[vic_canvas_index].extra_offscreen_border_left =
-     canvas->geometry->extra_offscreen_border_left;
-  canvas_state[vic_canvas_index].first_displayed_line =
-     canvas->geometry->first_displayed_line;
-
-  set_canvas_size(vic_canvas_index,
-     width, height,
-     &canvas_state[vic_canvas_index].gfx_w,
-     &canvas_state[vic_canvas_index].gfx_h);
-
-  *height = *height * raster_skip;
-  canvas_state[vic_canvas_index].gfx_h *= raster_skip;
+  *height = *height * canvas_state[VIC_INDEX].raster_skip;
 
   canvas->draw_buffer->canvas_physical_width = *width;
   canvas->draw_buffer->canvas_physical_height = *height;
   canvas->videoconfig->external_palette = 1;
   canvas->videoconfig->external_palette_name = "RASPI";
-
-  set_canvas_borders(vic_canvas_index,
-                     &canvas_state[vic_canvas_index].max_border_w,
-                     &canvas_state[vic_canvas_index].max_border_h);
-
-  canvas_state[vic_canvas_index].max_border_h *= raster_skip;
 
   return canvas;
 }
@@ -288,32 +283,12 @@ static struct video_canvas_s *video_canvas_create_vdc(
        unsigned int *height, int mapped) {
   assert(machine_class == VICE_MACHINE_C128);
 
-  int raster_skip = canvas->raster_skip;
-  canvas_state[vdc_canvas_index].raster_skip = raster_skip;
-
-  canvas_state[vdc_canvas_index].extra_offscreen_border_left =
-     canvas->geometry->extra_offscreen_border_left;
-  canvas_state[vdc_canvas_index].first_displayed_line =
-     canvas->geometry->first_displayed_line;
-
-  set_canvas_size(vdc_canvas_index,
-     width, height,
-     &canvas_state[vdc_canvas_index].gfx_w,
-     &canvas_state[vdc_canvas_index].gfx_h);
-
-  *height = *height * raster_skip;
-  canvas_state[vdc_canvas_index].gfx_h *= raster_skip;
+  *height = *height * canvas_state[VDC_INDEX].raster_skip;
 
   canvas->draw_buffer->canvas_physical_width = *width;
   canvas->draw_buffer->canvas_physical_height = *height;
   canvas->videoconfig->external_palette = 1;
   canvas->videoconfig->external_palette_name = "RASPI2";
-
-  set_canvas_borders(vdc_canvas_index,
-                     &canvas_state[vdc_canvas_index].max_border_w,
-                     &canvas_state[vdc_canvas_index].max_border_h);
-
-  canvas_state[vdc_canvas_index].max_border_h *= raster_skip;
 
   return canvas;
 }
