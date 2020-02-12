@@ -201,18 +201,20 @@ For those using DPI connected to CRTs (via VGA666 for example), you can try a cu
 
     dpi_timings=1920 1 56 176 208 282 1 5 2 23 0 0 0 50 0 36900000 1
 
-This gives a 1920 x 282 display res.  Then set FB to 384x282.  Then set SFB to 1536x282.  That gives a 4x horizontal scale and 1x vertical.  So the CRT will trace each line of the frame buffer on one scanline.  Once your resolution looks good, follow the custom timing tool instructions to get your cycles_per_second correct.  The above mode was tested on a Sony Trinitron CRT.  Here is the machines.txt entry:
+This gives a 1920 x 282 display res.  Then set FB to 384x282.  Then set SFB to 1920x282.  That gives a 5x horizontal scale and 1x vertical.  So the CRT will trace each line of the frame buffer on one scanline.  Once your resolution looks good, follow the custom timing tool instructions to get your cycles_per_second correct.  The above mode was tested on a Sony Trinitron CRT.  Here is the machines.txt entry:
 
-    [C64/PAL/DPI/VGA666:1920x282@50.1hz]
+    [C64/PAL/DPI/VGA666:1920x282@50.125hz]
     enable_dpi=true
     machine_timing=pal-custom
-    cycles_per_second=984994
+    cycles_per_second=985257
     enable_dpi_lcd=1
     display_default_lcd=1
     dpi_group=2
     dpi_mode=87
-    dpi_timings=1920 1 56 176 208 282 1 5 2 23 0 0 0 50 0 36900000 1
-    scaling_params=384,282,1536,282
+    dpi_timings=1920 1 56 176 208 282 1 5 2 23 0 0 0 50 0 36908040 1
+    scaling_params=384,282,1920,282
+
+NOTE: Your monitor may not support this mode.  You may have to experiment with other resolutions (not necessarily 282 lines) to get something working.
 
 Many thanks goes out to Alessio Scanderebech and Andrea Mazzoleni for their assistance with getting this working.
 
