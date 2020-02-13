@@ -15,7 +15,7 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
   * Also works with the Keyrah and TheC64 'Maxi'
 
 # Limitations
-  * USB gamepad support is limited. Not all gamepads will work.
+  * USB gamepad support is limited. Not all gamepads will work (especially wireless).
   * There is no network support.
 
 This project uses VICE for emulation without any O/S (Linux) distribution installed on the Pi.  VICE (Versatile Commodore Emulator) platform dependencies are satisfied using circle-stdlib.
@@ -164,7 +164,7 @@ All of the above re: timing applies to the other machines as well.  However, in 
 
 The virtual display dimensions can be adjusted dynamically from the menu. Under 'Video', you will find Horizontal Border (px), Vertical Border (px), and H/V Stretch controls for each virtual display available. Displays are scaled as follows:
 
-      1. The main graphics area is trimmed or padded by border levels (negative border = extra padding).
+      1. The main graphics area is trimmed or padded by border level adjustments.
       2. The resulting image is scaled according to stretch factors (1.0 is full vertical height, horizontal is a scalar of the display height)
       3. The scaled image is then centered within the display resolution.
 
@@ -174,18 +174,19 @@ Using the settings, you should be able to customize the display to your liking. 
 
 If you want to get better picture quality on your CRT monitor or if you prefer the 'pixel perfect' look on HDMI, integer scaling is what you want. Integer scaling along with scaling_kernel=8 will eliminate scaling artifacts (i.e. variation in thickness of scaled up pixels).  However, you may have to sacrifice some border area and/or not get the exact aspect ratio you want.
 
-When you change the border trim or stretch values, you will see three dimensions displayed; the display dimensions, the frame buffer dimensions (FB) and the scaled frame buffer (SFB) dimensions. When the scaled frame buffer dimensions are an integer multiple of the frame buffer dimensions, they will turn green.
+When you change the border values, you will see three dimensions displayed; the display dimensions, the frame buffer dimensions (FB) and the scaled frame buffer (SFB) dimensions. When the scaled frame buffer dimensions are an integer multiple of the frame buffer dimensions, they will turn green.
 
-To make this easier, there are video options named 'Next H Integer Scale' and 'Next V Integer Scale'.  They will bump up the horizontal and vertical stretch to the next nearest integer multiple of the frame buffer's dimensions. Keep pressing return to cycle through all integer multipls that will fit.
+To make this easier, there are video options named 'Next H Integer Scale' and 'Next V Integer Scale'.  They will bump up the horizontal and vertical stretch to the next nearest integer multiple of the frame buffer's dimensions. Keep pressing return to cycle through all integer multipls that will fit.  If the next integer multiple doesn't fill the screen, you will have to adjust the border amount so that it does and try again (not always possible).
 
 Once you have values that work for you, edit the machines.txt file and add or change the scaling_params for the mode you are running:
 
-    scaling_params=displaynum,fb_width,fb_height,sfb_width,sfb_height
+    scaling_params=fb_width,fb_height,sfb_width,sfb_height
 
     (For C128 and PET use scaling_params2 for the 80 column displays.)
 
-When sfb_width = fb_width * N, width will be integer scaled.
-When sfb_height = fb_height * N, height will be integer scaled.
+When sfb_width = fb_width * N, where N is some integer, the width will be integer scaled.
+
+When sfb_height = fb_height * N, where N is some integer, height will be integer scaled.
 
 Using scaling_kernel=8 without integer scaling can cause irregular looking characters. Notice the two O's and S's look odd.
 
@@ -199,7 +200,7 @@ Using scaling_kernel=8 with integer scaling eliminates irregularities.
 
 For those using DPI connected to CRTs (via VGA666 for example), you can try a custom resolution like this:
 
-    dpi_timings=1920 1 56 176 208 282 1 5 2 23 0 0 0 50 0 36900000 1
+    dpi_timings=1920 1 56 176 208 282 1 5 2 23 0 0 0 50 0 36908040 1
 
 This gives a 1920 x 282 display res.  Then set FB to 384x282.  Then set SFB to 1920x282.  That gives a 5x horizontal scale and 1x vertical.  So the CRT will trace each line of the frame buffer on one scanline.  Once your resolution looks good, follow the custom timing tool instructions to get your cycles_per_second correct.  The above mode was tested on a Sony Trinitron CRT.  Here is the machines.txt entry:
 
@@ -214,7 +215,7 @@ This gives a 1920 x 282 display res.  Then set FB to 384x282.  Then set SFB to 1
     dpi_timings=1920 1 56 176 208 282 1 5 2 23 0 0 0 50 0 36908040 1
     scaling_params=384,282,1920,282
 
-NOTE: Your monitor may not support this mode.  You may have to experiment with other resolutions (not necessarily 282 lines) to get something working.
+NOTE: This mode has a 15khz horizontal refresh rate which many monitors don't support.  You may have to experiment with other resolutions (not necessarily 282 lines) to get something working.
 
 Many thanks goes out to Alessio Scanderebech and Andrea Mazzoleni for their assistance with getting this working.
 
@@ -350,8 +351,8 @@ BMC64 has modified VICE code to allow the same base address ($d400) for both SID
 
 Thanks goes out to to github.com user boras-pl (https://github.com/boras-pl) for suggesting this. This simulates this real life mod:
 
-    (https://www.youtube.com/watch?v=2Qlqeaxkp14)
-    (http://blog.tynemouthsoftware.co.uk/2015/11/commodore-64-pseudo-stereo-dual-sid.html)
+(https://www.youtube.com/watch?v=2Qlqeaxkp14)
+(http://blog.tynemouthsoftware.co.uk/2015/11/commodore-64-pseudo-stereo-dual-sid.html)
 
 # Keyboards
 
@@ -366,7 +367,7 @@ Usage         | Keyboard Mapping
 USB           | Positional or Symbolic
 GPIO          | Positional
 Keyrah        | Positional
-TheC64 (Maxi) | Maxi
+TheC64 (Maxi) | Maxi Positional
 
 * Make sure you have the rpi_*.vkm files located in each machine subdir.
 
