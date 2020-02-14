@@ -19,12 +19,20 @@ echo "Need arg [pi0|pi2|pi3|pi4]"
 exit
 fi
 
+cd third_party/common
+make
+cd ../..
+
 cd third_party/vice-3.3
 make x64
 make x128
 make xvic
 make xplus4
 make xpet
+cd ../..
+
+cd third_party/plus4emu
+make
 cd ../..
 
 MACHINES="C64:c64 C128:c128 VIC20:vic20 Plus4:plus4 Plus4Emu:plus4emu PET:pet"
