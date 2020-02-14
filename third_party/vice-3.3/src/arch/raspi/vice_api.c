@@ -132,7 +132,7 @@ static void check_sid_options() {
   }
 }
 
-void emu_machine_init(void) {
+void emu_machine_init(int raster_skip_enabled) {
   switch (machine_class) {
     case VICE_MACHINE_C64:
        emux_machine_class = BMC64_MACHINE_CLASS_C64;
@@ -160,9 +160,12 @@ void emu_machine_init(void) {
      // frame buffer so we can do our 'cheap' scanlines effect.
      canvas_state[VIC_INDEX].raster_skip = 2;
   } else {
-     canvas_state[VIC_INDEX].raster_skip = 1;
-     canvas_state[VDC_INDEX].raster_skip = 1;
+     canvas_state[VIC_INDEX].raster_skip = raster_skip_enabled ? 2 : 1;
+     canvas_state[VDC_INDEX].raster_skip = raster_skip_enabled ? 2 : 1;
   }
+
+  // If raster skip enabled via kernel params, enable lines.
+  set_raster_lines(raster_skip_enabled);
 }
 
 static int vice_keymap_index_to_bmc(int value) {

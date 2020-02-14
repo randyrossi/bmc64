@@ -248,7 +248,7 @@ extern void circle_set_interpolation(int enable);
 
 // Init some common layer stuff about the machine being emulated.
 // Must be called before launching emulator's main_program func.
-extern void emu_machine_init(void);
+extern void emu_machine_init(int raster_skip_enabled);
 
 // Compares the previous button state for 'button_num' with
 // the current state and will return a press or release event

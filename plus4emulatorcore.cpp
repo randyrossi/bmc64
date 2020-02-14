@@ -51,7 +51,7 @@ void Plus4EmulatorCore::RunMainPlus4(bool wait) {
   printf("Starting emulator main loop\n");
   int argc = 0;
   char *argv[] = {};
-  emu_machine_init();
+  emu_machine_init(m_options->GetRasterSkip());
   main_program(argc, argv);
   emu_exit();
 }
@@ -89,7 +89,8 @@ void Plus4EmulatorCore::Run(unsigned nCore) {
 #endif
 }
 
-bool Plus4EmulatorCore::Init(void) {
+bool Plus4EmulatorCore::Init(ViceOptions* options) {
+  m_options = options;
   return Initialize();
 }
 

@@ -100,4 +100,5 @@ void main_exit(void);
 // holding the lock.
 void key_interrupt_locked(long key, int pressed);
 
+void set_raster_lines(int v);
 #endif

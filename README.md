@@ -219,6 +219,21 @@ NOTE: This mode has a 15khz horizontal refresh rate which many monitors don't su
 
 Many thanks goes out to Alessio Scanderebech and Andrea Mazzoleni for their assistance with getting this working.
 
+# VGA Display without 15khz hsync support
+
+If you have a VGA monitor that doesn't support 15khz hsync, you can try using a 1920x1080 resolution and add raster_skip=true to the machine config.  The 'raster_skip' option doubles the vertical height of the frame buffer and draws the emulated display into every other line.  When this is integer scaled up to 1080, you can achieve more or less the same effect you would get with a monitor that could do 15khz.  That is, there will be gaps between each 'scanline' as though there were only ~270 lines.  This looks pretty decent on a Trinitron tube because there are no horizontal gaps in the phosphor bars and the 2 real scanlines that resulted from doubling the one line from the frame buffer looks like one solid scanline (...at least that's what I think is happening)
+
+    [C64/PAL/DPI/VGA666:1920x1080@50hz]
+    enable_dpi=true
+    machine_timing=pal-custom
+    cycles_per_second=985257
+    enable_dpi_lcd=1
+    display_default_lcd=1
+    dpi_group=1
+    dpi_mode=31
+    raster_skip=true
+    scaling_params=1920,540,1920,1080
+
 # Video Scaling Algorithm
 
 The emulated resolutions are small and must be scaled up to the video mode's resolution.  You can tell the Pi to change the way it scales the video using the 'scaling_kernel' option in config.txt:

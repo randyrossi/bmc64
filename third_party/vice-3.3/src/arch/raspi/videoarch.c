@@ -83,10 +83,14 @@ const unsigned long video_tick_inc = 10000;
 unsigned long video_freq;
 unsigned long video_frame_count;
 
-int raspi_warp = 0;
+int raspi_warp;
 static int raspi_boot_warp = 1;
 
 static int vdc_map[] = {0, 12, 6, 14, 5, 13, 11, 3, 2, 10, 8, 4, 9, 7, 15, 1};
+
+// Should be set only when raster_skip=true is present
+// in the kernel args.
+int raster_lines;
 
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
@@ -179,6 +183,9 @@ static void check_dimensions(struct video_canvas_s* canvas,
 
    canvas_state[canvas_index].max_padding_w = max_padding_w;
    canvas_state[canvas_index].max_padding_h = max_padding_h;
+
+   // If config says raster lines, do it here.
+   canvas->raster_lines |= raster_lines;
 }
 
 // Draw buffer bridge functions back to kernel
@@ -495,4 +502,11 @@ palette_t *raspi_video_load_palette(int num_entries, char *name) {
     palette->entries[i].dither = 0;
   }
   return palette;
+}
+
+void set_raster_lines(int v) {
+  vic_canvas->raster_lines = v;
+  if (vdc_canvas) {
+     vdc_canvas->raster_lines = v;
+  }
 }

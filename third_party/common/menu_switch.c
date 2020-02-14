@@ -58,6 +58,7 @@ struct s_cfg_flags {
   int have_enable_dpi;
   int have_scaling_params;
   int have_scaling_params2;
+  int have_raster_skip;
 
   // Have flags for config.txt
   int have_kernel;
@@ -278,7 +279,8 @@ void free_machines(struct machine_entry* head) {
   }
 }
 
-static struct machine_option* find_option(char *key, struct machine_option *head) {
+static struct machine_option* find_option(const char *key,
+                                          struct machine_option *head) {
   struct machine_option* opt = head;
   while (opt) {
     if(strcmp(opt->key, key) == 0) {
@@ -441,6 +443,7 @@ static int apply_override_m(char *line, struct machine_entry *head,
       if (strcmp(key,"enable_dpi") == 0) { cfg_flags->have_enable_dpi = 1; }
       if (strcmp(key,"scaling_params") == 0) { cfg_flags->have_scaling_params = 1; }
       if (strcmp(key,"scaling_params2") == 0) { cfg_flags->have_scaling_params2 = 1; }
+      if (strcmp(key,"raster_skip") == 0) { cfg_flags->have_raster_skip = 1; }
 
       struct machine_option* found = find_option(key, head->options);
       if (found) {
@@ -458,6 +461,7 @@ static int apply_override_m(char *line, struct machine_entry *head,
              strcmp(key,"audio_out")!=0 &&
              strcmp(key,"disk_partition")!=0 &&
              strcmp(key,"enable_dpi")!=0 &&
+             strcmp(key,"raster_skip")!=0 &&
              strcmp(key,"scaling_params")!=0 &&
              strcmp(key,"scaling_params2")!=0) {
             if (need_space) { strcat(replacement," "); }
@@ -545,6 +549,15 @@ static int apply_override_m(char *line, struct machine_entry *head,
     }
     if (!cfg_flags->have_scaling_params2) {
        struct machine_option* found = find_option("scaling_params2", head->options);
+       if (found) {
+          if (need_space) { strcat(replacement," "); }
+          snprintf(new_option, OPTION_SCRATCH_LEN, "%s=%s", found->key, found->value);
+          strcat(replacement, new_option);
+          need_space=1;
+       }
+    }
+    if (!cfg_flags->have_raster_skip) {
+       struct machine_option* found = find_option("raster_skip", head->options);
        if (found) {
           if (need_space) { strcat(replacement," "); }
           snprintf(new_option, OPTION_SCRATCH_LEN, "%s=%s", found->key, found->value);

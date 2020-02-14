@@ -37,7 +37,8 @@ ViceOptions::ViceOptions(void)
       m_bGPIOOutputsEnabled(false), m_nCyclesPerSecond(0),
       m_audioOut(VCHIQSoundDestinationAuto), m_bDPIEnabled(false),
       m_scaling_param_fbw{0,0}, m_scaling_param_fbh{0,0},
-      m_scaling_param_sx{0,0}, m_scaling_param_sy{0,0} {
+      m_scaling_param_sx{0,0}, m_scaling_param_sy{0,0},
+      m_raster_skip(false) {
   s_pThis = this;
 
   CBcmPropertyTags Tags;
@@ -140,6 +141,12 @@ ViceOptions::ViceOptions(void)
       m_scaling_param_fbh[num] = atoi(fbh_s);
       m_scaling_param_sx[num] = atoi(sx_s);
       m_scaling_param_sy[num] = atoi(sy_s);
+    } else if (strcmp(pOption, "raster_skip") == 0) {
+      if (strcmp(pValue, "true") == 0 || strcmp(pValue, "1") == 0) {
+        m_raster_skip = true;
+      } else {
+        m_raster_skip = false;
+      }
     }
   }
 
@@ -186,7 +193,7 @@ bool ViceOptions::DPIEnabled(void) const { return m_bDPIEnabled; }
 
 int ViceOptions::GetDiskPartition(void) const { return m_disk_partition; }
 
-void ViceOptions::GetScalingParams(int display, int *fbw, int *fbh, int *sx, int *sy) {
+void ViceOptions::GetScalingParams(int display, int *fbw, int *fbh, int *sx, int *sy) const {
   if (display >=0 && display < 2) {
      *fbw = m_scaling_param_fbw[display];
      *fbh = m_scaling_param_fbh[display];
@@ -194,6 +201,8 @@ void ViceOptions::GetScalingParams(int display, int *fbw, int *fbh, int *sx, int
      *sy = m_scaling_param_sy[display];
   }
 }
+
+bool ViceOptions::GetRasterSkip(void) const { return m_raster_skip; }
 
 const char *ViceOptions::GetDiskVolume(void) const { return m_disk_volume; }
 

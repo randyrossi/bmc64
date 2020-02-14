@@ -36,7 +36,8 @@ public:
   unsigned long GetCyclesPerSecond(void) const;
   TVCHIQSoundDestination GetAudioOut(void) const;
   bool DPIEnabled(void) const;
-  void GetScalingParams(int display, int *fbw, int *fbh, int *sx, int *sy);
+  void GetScalingParams(int display, int *fbw, int *fbh, int *sx, int *sy) const;
+  bool GetRasterSkip(void) const;
 
   static ViceOptions *Get(void);
 
@@ -67,6 +68,7 @@ private:
   int m_scaling_param_fbh[2];
   int m_scaling_param_sx[2];
   int m_scaling_param_sy[2];
+  bool m_raster_skip;
 
   static ViceOptions *s_pThis;
 };
