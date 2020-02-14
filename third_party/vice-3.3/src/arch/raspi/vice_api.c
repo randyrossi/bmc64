@@ -1026,10 +1026,15 @@ void emux_load_additional_settings() {
   set_canvas_borders(VIC_INDEX,
                      &canvas_state[VIC_INDEX].max_border_w,
                      &canvas_state[VIC_INDEX].max_border_h);
+  canvas_state[VIC_INDEX].max_border_h *=
+     canvas_state[VIC_INDEX].raster_skip;
+
   if (machine_class == VICE_MACHINE_C128) {
      set_canvas_borders(VDC_INDEX,
                         &canvas_state[VDC_INDEX].max_border_w,
                         &canvas_state[VDC_INDEX].max_border_h);
+     canvas_state[VDC_INDEX].max_border_h *=
+        canvas_state[VDC_INDEX].raster_skip;
   }
 }
 
