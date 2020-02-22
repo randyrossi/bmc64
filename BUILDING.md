@@ -94,7 +94,9 @@ Once the *make_machines.sh* build is complete, you will have kernel files with a
 ## Problems
 1. When you run *make\_all.sh* you get an error such as '#error "<dirent.h> not supported"'
 
-    Ensure you have all of the build tools installed from the prerequisites step
+    Ensure you have all of the build tools installed from the prerequisites step.
+    
+    If it still does not work, try rebooting your machine and following the "Building" steps again.
 
 2. When you run one of the build scripts (*clean\_all.sh*, *make\_all.sh* or *make\_machines.sh*), you get an error such as 'arm-eabi-g++: Command not found'
 
