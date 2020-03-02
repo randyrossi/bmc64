@@ -386,7 +386,7 @@ TheC64 (Maxi) | Maxi Positional
 
 * Make sure you have the rpi_*.vkm files located in each machine subdir.
 
-* Special thanks goes out to ody81(github) / ody ody (youtube) user who figured out the Maxi keyboard mapping file.  You can watch his tutorial on how to put BMC64 inside a Maxi case here: https://www.youtube.com/channel/UCrXCNM2oXmIA7sTUwXrumiw or read his Redit post here: https://www.reddit.com/r/Commodore/comments/ejtggy/the_c64_maxi_to_bmc64_conversion_rough_tutorial
+* Special thanks goes out to ody81(github) / ody ody (youtube) user who figured out the Maxi keyboard mapping file.  You can watch his tutorial on how to put BMC64 inside a Maxi case here: https://www.youtube.com/channel/UCrXCNM2oXmIA7sTUwXrumiw or read his Reddit post here: https://www.reddit.com/r/Commodore/comments/ejtggy/the_c64_maxi_to_bmc64_conversion_rough_tutorial
 
 ## Plus/4 Keyboard Notes
 
