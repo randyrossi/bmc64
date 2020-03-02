@@ -12,7 +12,7 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
   * Easily wire real Commodore/Atari Joysticks and nav buttons via GPIO using jumpers (GPIO Config 1)
   * Can use a real Commodore Keyboard and Joysticks via PCB (GPIO Config 2)
   * Can use a Waveshare Game HAT (Pi2 or 3 Only) (GPIO Config 3)
-  * Also works with the Keyrah and TheC64 'Maxi'
+  * Also works with the Keyrah and TheC64 'Maxi' case
 
 # Limitations
   * USB gamepad support is limited. Not all gamepads will work (especially wireless).
@@ -385,6 +385,8 @@ Keyrah        | Positional
 TheC64 (Maxi) | Maxi Positional
 
 * Make sure you have the rpi_*.vkm files located in each machine subdir.
+
+* Special thanks goes out to ody81(github) / ody ody (youtube) user who figured out the Maxi mappings.  You can watch his tutorial on how to put BMC64 inside a Maxi case here: https://www.youtube.com/channel/UCrXCNM2oXmIA7sTUwXrumiw
 
 ## Plus/4 Keyboard Notes
 
