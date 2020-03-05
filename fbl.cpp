@@ -13,9 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Notes: This class started out being just a wrapper around the
+// dispmanx API to get frame buffer pixels to the screen using just
+// an element, src rect and dest rect.  It now includes code that
+// essentially tries to get the same pixels to the screen but
+// through an gles shader instead.  So when uses_shader_ flag is true,
+// (for the emulated machine's display, for example) gles is used.
+// Otherwise, it's not (for the UI or overlays, for example).
+
 #include "fbl.h"
 
 #include <stdio.h>
+#include <circle/bcmframebuffer.h>
 
 #ifndef ALIGN_UP
 #define ALIGN_UP(x,y)  ((x + (y)-1) & ~((y)-1))
@@ -76,6 +85,18 @@ static char config_scaling_kernel[1024];
 
 bool FrameBufferLayer::initialized_ = false;
 DISPMANX_DISPLAY_HANDLE_T FrameBufferLayer::dispman_display_;
+EGLDisplay FrameBufferLayer::egl_display_;
+EGLContext FrameBufferLayer::egl_context_;
+
+static void check(const char* msg) {
+	int g = glGetError();
+	if (g != 0) {
+		FILE *fp = fopen("errors.txt","w");
+		fprintf (fp,"%s %d\n",msg, g);
+		fclose(fp);
+		assert(false);
+	}
+}
 
 FrameBufferLayer::FrameBufferLayer() :
         fb_width_(0), fb_height_(0), fb_pitch_(0), layer_(0), transparency_(false),
@@ -84,7 +105,8 @@ FrameBufferLayer::FrameBufferLayer() :
         h_center_offset_(0), v_center_offset_(0),
         rnum_(0), leftPadding_(0), rightPadding_(0), topPadding_(0),
         bottomPadding_(0), showing_(false), allocated_(false),
-        mode_(VC_IMAGE_8BPP), bytes_per_pixel_(1) {
+        mode_(VC_IMAGE_8BPP), bytes_per_pixel_(1), uses_shader_(false),
+        shader_init_(false), need_cpu_crop_(true), cropped_pixels_(0) {
   alpha_.flags = DISPMANX_FLAGS_ALPHA_FROM_SOURCE;
   alpha_.opacity = 255;
   alpha_.mask = 0;
@@ -102,12 +124,228 @@ FrameBufferLayer::~FrameBufferLayer() {
   }
 }
 
+void FrameBufferLayer::OGLInit() {
+  EGLBoolean result;
+
+  egl_display_ = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+  assert(egl_display_ != EGL_NO_DISPLAY);
+  result = eglInitialize(egl_display_, NULL, NULL);
+  assert(EGL_FALSE != result);
+  result = eglBindAPI(EGL_OPENGL_ES_API);
+  assert(EGL_FALSE != result);
+}
+
+void FrameBufferLayer::ShaderInit() {
+
+  // orthographic projection matrix
+  static const GLfloat mvp_ortho[16] = { 2.0f,  0.0f,  0.0f,  0.0f,
+                                         0.0f,  2.0f,  0.0f,  0.0f,
+                                         0.0f,  0.0f, -1.0f,  0.0f,
+                                         -1.0f, -1.0f,  0.0f,  1.0f };
+
+  if (shader_init_) {
+      return;
+  }
+
+  FILE *f = fopen("crt-pi.gls", "r");
+  fseek(f, 0, SEEK_END);
+  long fsize = ftell(f);
+  fseek(f, 0, SEEK_SET);
+  char *file_shader = (char*) malloc(fsize + 1);
+  fread(file_shader, 1, fsize, f);
+  fclose(f);
+  file_shader[fsize] = 0;
+
+  char vheader[] = "#define VERTEX\n";
+  char *vshader = (char*) malloc(fsize + 1 + strlen(vheader));
+  strcpy(vshader, vheader);
+  strcat(vshader, file_shader);
+
+  const GLchar *vshader_source = (const GLchar*) vshader;
+  vshader_ = glCreateShader(GL_VERTEX_SHADER);
+  glShaderSource(vshader_, 1, &vshader_source, 0);
+  glCompileShader(vshader_);
+  check("glCompileShader");
+
+  char log[1024];
+  strcpy(log,"");
+  glGetShaderInfoLog(vshader_,sizeof log,NULL,log);
+  FILE *fp = fopen("shader1.log","w");
+  fprintf(fp,"%s\n",log);
+  fclose(fp);
+
+  char fheader[] = "#define FRAGMENT\n";
+  char *fshader = (char*) malloc(fsize + 1 + strlen(fheader));
+  strcpy(fshader, fheader);
+  strcat(fshader, file_shader);
+
+  const GLchar *fshader_source = (const GLchar*) fshader;
+  fshader_ = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(fshader_, 1, &fshader_source, 0);
+  glCompileShader(fshader_);
+  check("glCompileShader2");
+
+  glGetShaderInfoLog(fshader_,sizeof log,NULL,log);
+  fp = fopen("shader2.log","w");
+  fprintf(fp,"%s\n",log);
+  fclose(fp);
+
+  shader_program_ = glCreateProgram();
+  glAttachShader(shader_program_, vshader_);
+  glAttachShader(shader_program_, fshader_);
+  glLinkProgram(shader_program_);
+  check("linkProgram");
+  GLint status;
+  glGetProgramiv (shader_program_, GL_LINK_STATUS, &status);
+  if (status != GL_TRUE) {
+	  glGetProgramInfoLog(shader_program_,sizeof log,NULL,log);
+	  fp = fopen("program.log","w");
+	  fprintf(fp,"%s\n",log);
+	  fclose(fp);
+  }
+
+  glUseProgram (shader_program_);
+
+  attr_vertex_ = glGetAttribLocation(shader_program_, "VertexCoord");
+  check("get 1");
+  attr_texcoord_ = glGetAttribLocation(shader_program_, "TexCoord");
+  check("get 2");
+  texture_sampler_ = glGetUniformLocation(shader_program_, "Texture");
+  check("get 3");
+  palette_sampler_ = glGetUniformLocation(shader_program_, "Palette");
+  check("get 4");
+  input_size_ = glGetUniformLocation (shader_program_, "InputSize");
+  check("get 5");
+  output_size_= glGetUniformLocation (shader_program_, "OutputSize");
+  check("get 6");
+  texture_size_ = glGetUniformLocation (shader_program_, "TextureSize");
+  check("get 7");
+
+  mvp_ = glGetUniformLocation (shader_program_, "MVPMatrix");
+  if (mvp_ > -1) {
+	  glUniformMatrix4fv(mvp_, 1, GL_FALSE, mvp_ortho);
+  }
+
+  // These values make sense but I'm not sure what the difference between
+  // inputSize and textureSize is.  Perhaps it has something to do with
+  // the fact these shaders are meant to be chained together over different
+  // passes and the next shader needs to know what the output size of the
+  // previous was?
+  float inputSize[2] = { (float) src_w_, (float)src_h_ };
+  float outputSize[2] = { (float) dst_w_, (float)dst_h_ };
+  
+  int tx = need_cpu_crop_ ? src_w_ : fb_pitch_;
+  int ty = need_cpu_crop_ ? src_h_ : fb_height_;
+  float textureSize[2] = { (float) tx, (float) ty };
+
+  glUniform2fv(input_size_, 1, inputSize);
+  glUniform2fv(output_size_, 1, outputSize);
+  glUniform2fv(texture_size_, 1, textureSize);
+
+  glGenTextures(1, &tex_);
+  glBindTexture(GL_TEXTURE_2D,tex_);
+  glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE,
+     need_cpu_crop_ ? src_w_ : fb_pitch_,
+     need_cpu_crop_ ? src_h_ : fb_height_,
+     0,GL_LUMINANCE,GL_UNSIGNED_BYTE, 0);
+  
+  // Used for need_cpu_crop_ only...
+  cropped_pixels_ = (uint8_t*) malloc(src_w_ * src_h_);
+
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+  glGenTextures(1, &pal_);
+  glBindTexture(GL_TEXTURE_2D,pal_);
+  glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,256,1,0,GL_RGB,GL_UNSIGNED_SHORT_5_6_5, pal_565_);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+  // Use full screen viewport.
+  glViewport (0, 0, display_width_, display_height_);
+
+  // For our vertex and texture coordinates.
+  glGenBuffers(1, &vbo_);
+
+  shader_init_ = true;
+}
+
+void FrameBufferLayer::ShaderUpdate() {
+  // Update any shader inputs that may need to change because of
+  // new values coming in after a Show().
+
+  // Coordinates. One array is used for both vertex and
+  // texture coordinates.
+  static GLfloat tex_coords[16] = {
+     0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, // vertex
+     0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f  // texture
+  };
+
+  // Futz with the vertex coordinates so we draw into a quad
+  // that matches our calculated destination rect.  These
+  // need to be updates every time they can change from a
+  // call to Show()
+  
+  // Bottom left
+  tex_coords[0] = (float)dst_x_ / (float)display_width_;
+  tex_coords[1] = (float)dst_y_ / (float)display_height_;
+
+  // Bottom right
+  tex_coords[2] = (float)(dst_x_+dst_w_) / (float)display_width_;
+  tex_coords[3] = (float)dst_y_ / (float)display_height_;
+
+  // Top left
+  tex_coords[4] = (float)dst_x_ / (float)display_width_;
+  tex_coords[5] = (float)(dst_y_ + dst_h_) / (float)display_height_;
+
+  // Top right
+  tex_coords[6] = (float)(dst_x_ + dst_w_) / (float)display_width_;
+  tex_coords[7] = (float)(dst_y_ + dst_h_) / (float)display_height_;
+
+
+  if (!need_cpu_crop_) {
+    // Now futz with the texture coordinates (for triangle strip)
+    // to crop out only the portion of the frame buffer we want to see.
+    // When curvature is requested, we can't do this because the
+    // shader seems to want the texture to be only visible pixels
+    // for its curvature calculation.
+
+    // Top left
+    tex_coords[8] = (float)src_x_ / (float)fb_pitch_;
+    tex_coords[9] = (float)(src_y_ + src_h_) / (float)fb_height_;
+
+    // Top right
+    tex_coords[10] = (float)(src_x_ + src_w_) / (float)fb_pitch_;
+    tex_coords[11] = (float)(src_y_ + src_h_) / (float)fb_height_;
+
+    // Bottom left
+    tex_coords[12] = (float)src_x_ / (float)fb_pitch_;
+    tex_coords[13] = (float)src_y_ / (float)fb_height_;
+
+    // Bottom right
+    tex_coords[14] = (float)(src_x_+src_w_) / (float)fb_pitch_;
+    tex_coords[15] = (float)src_y_ / (float)fb_height_;
+  }
+
+  glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+  glBufferData(GL_ARRAY_BUFFER, sizeof (GLfloat) * 16, tex_coords, GL_STATIC_DRAW);
+
+  glEnableVertexAttribArray(attr_texcoord_);
+  glVertexAttribPointer(attr_texcoord_, 2, GL_FLOAT, GL_FALSE, 0, (void *)(sizeof (float) * 8));
+
+  glEnableVertexAttribArray(attr_vertex_);
+  glVertexAttribPointer(attr_vertex_, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+  glUseProgram (0);
+}
+
 // static
 void FrameBufferLayer::Initialize() {
   if (initialized_)
      return;
 
   bcm_host_init();
+  OGLInit();
 
   dispman_display_ = vc_dispmanx_display_open(0);
 
@@ -182,12 +420,9 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
   assert(dispman_resource_[0]);
   assert(dispman_resource_[1]);
 
-  // Install the default palette
-  if (mode_ == VC_IMAGE_8BPP) {
-    UpdatePalette();
-  }
-
   vc_dispmanx_rect_set(&copy_dst_rect_, 0, 0, width, height);
+  dst_x_ = 0;
+  dst_y_ = 0;
   dst_w_ = width;
   dst_h_ = height;
 
@@ -198,6 +433,32 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
   src_y_ = 0;
   src_w_ = width;
   src_h_ = height;
+
+  EGLBoolean result;
+  EGLint num_config;
+
+  static const EGLint context_attributes[] =
+  {
+	 EGL_CONTEXT_CLIENT_VERSION, 2,
+	 EGL_NONE
+  };
+
+  static const EGLint attribute_list[] =
+  {
+	EGL_RED_SIZE, 8,
+	EGL_GREEN_SIZE, 8,
+	EGL_BLUE_SIZE, 8,
+	EGL_ALPHA_SIZE, 8,
+	EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+	EGL_NONE
+  };
+
+  if (uses_shader_) {
+     result = eglChooseConfig(egl_display_, attribute_list, &egl_config_, 1, &num_config);
+     assert(EGL_FALSE != result);
+     egl_context_ = eglCreateContext(egl_display_, egl_config_, EGL_NO_CONTEXT, context_attributes);
+     assert(egl_context_ != EGL_NO_CONTEXT);
+  }
 
   return 0;
 }
@@ -215,6 +476,10 @@ void FrameBufferLayer::Free() {
 
   if (showing_) {
      Hide();
+  }
+
+  if (uses_shader_) {
+      eglDestroyContext(egl_display_, egl_config_);
   }
 
   fb_width_ = 0;
@@ -235,10 +500,6 @@ void FrameBufferLayer::Show() {
   DISPMANX_UPDATE_HANDLE_T dispman_update;
 
   if (showing_) return;
-
-  // Define source rect
-  vc_dispmanx_rect_set(&src_rect_,
-     src_x_ << 16, src_y_ << 16, src_w_ << 16, src_h_ << 16);
 
   int dst_w;
   int dst_h;
@@ -323,13 +584,38 @@ void FrameBufferLayer::Show() {
         break;
   }
 
-  vc_dispmanx_rect_set(&scale_dst_rect_,
-                       ox + lpad_abs,
-                       oy + tpad_abs,
-                       dst_w,
-                       dst_h);
+
+  dst_x_ = ox + lpad_abs; 
+  dst_y_ = oy + tpad_abs; 
   dst_w_ = dst_w;
   dst_h_ = dst_h;
+
+  if (uses_shader_) {
+     // When we use opengl + shader the source rect needs to
+     // be the dest rect because the shader ends up doing the
+     // cropping/scaling. So we don't want any scaling done
+     // by the dispman layer.
+     vc_dispmanx_rect_set(&src_rect_,
+                       dst_x_ << 16,
+                       dst_y_ << 16,
+                       dst_w_ << 16,
+                       dst_h_ << 16);
+  } else {
+     // When we're using just dispmanx, we isolate and crop
+     // the region in the layer we want to scale up to the
+     // dest rect.
+     vc_dispmanx_rect_set(&src_rect_,
+                       src_x_ << 16,
+                       src_y_ << 16,
+                       src_w_ << 16,
+                       src_h_ << 16);
+  }
+
+  vc_dispmanx_rect_set(&scale_dst_rect_,
+                       dst_x_,
+                       dst_y_,
+                       dst_w_,
+                       dst_h_);
 
   dispman_update = vc_dispmanx_update_start(0);
   assert( dispman_update );
@@ -348,6 +634,27 @@ void FrameBufferLayer::Show() {
 
   ret = vc_dispmanx_update_submit(dispman_update, NULL, NULL);
   assert( ret == 0 );
+
+  if (uses_shader_) {
+     egl_native_window_.element = dispman_element_;
+     egl_native_window_.width = display_width_;
+     egl_native_window_.height = display_height_;
+     egl_surface_ = eglCreateWindowSurface(egl_display_, egl_config_, &egl_native_window_, NULL );
+     assert(egl_surface_ != EGL_NO_SURFACE);
+
+     EGLBoolean result;
+     result = eglMakeCurrent(egl_display_, egl_surface_, egl_surface_, egl_context_);
+     assert(EGL_FALSE != result);
+     check("eglMakeCurrent");
+
+     ShaderInit();
+     ShaderUpdate();
+  }
+
+  if (mode_ == VC_IMAGE_8BPP) {
+    UpdatePalette();
+  }
+
   showing_ = true;
 }
 
@@ -356,6 +663,11 @@ void FrameBufferLayer::Hide() {
   DISPMANX_UPDATE_HANDLE_T dispman_update;
 
   if (!showing_) return;
+
+  if (uses_shader_) {
+     eglMakeCurrent(egl_display_, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context_);
+     eglDestroySurface(egl_display_, egl_surface_);
+  }
 
   dispman_update = vc_dispmanx_update_start(0);
   ret = vc_dispmanx_element_remove(dispman_update, dispman_element_);
@@ -374,11 +686,13 @@ void FrameBufferLayer::FrameReady(int to_offscreen) {
 
   // Copy data into either the offscreen resource (if swap) or the
   // on screen resource (if !swap).
-  vc_dispmanx_resource_write_data(dispman_resource_[rnum],
-                                  mode_,
-                                  fb_pitch_,
-                                  pixels_,
-                                  &copy_dst_rect_);
+  if (!uses_shader_) {
+      vc_dispmanx_resource_write_data(dispman_resource_[rnum],
+                                      mode_,
+                                      fb_pitch_,
+                                      pixels_,
+                                      &copy_dst_rect_);
+  }
 }
 
 // Private function to change the source of this frame buffer's
@@ -386,21 +700,80 @@ void FrameBufferLayer::FrameReady(int to_offscreen) {
 // index in preparation for the off screen data to be shown.
 void FrameBufferLayer::Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update) {
   rnum_ = 1 - rnum_;
+
   vc_dispmanx_element_change_source(dispman_update,
                                     dispman_element_,
                                     dispman_resource_[rnum_]);
 }
 
+void FrameBufferLayer::Swap2() {
+    // Our pixels_ framebuffer includes a lot of black border area around
+    // the visible pixels we want to see. When shader curvature is needed,
+    // we need to provide a texture with only the pixels we actually want
+    // to see, otherwise the curvature gets applied incorrectly to the 
+    // larger area. So we crop on the CPU rather than by texture coords.
+    if (need_cpu_crop_) {
+       for (int yy=src_y_; yy < src_y_ + src_h_;yy++) {
+          memcpy (cropped_pixels_ + (yy - src_y_) * src_w_, pixels_ + src_x_ + yy * fb_pitch_, src_w_);
+       }
+    }
+
+    glBindTexture(GL_TEXTURE_2D,tex_);
+    glTexSubImage2D(GL_TEXTURE_2D,
+        0,
+        0,
+        0,
+        need_cpu_crop_ ? src_w_ : fb_pitch_,
+        need_cpu_crop_ ? src_h_ : fb_height_,
+        GL_LUMINANCE,
+        GL_UNSIGNED_BYTE,
+        need_cpu_crop_ ? cropped_pixels_ : pixels_);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+    check("glBindBuffer vbo2");
+    glUseProgram (shader_program_);
+    check("useProgram");
+
+    glActiveTexture(GL_TEXTURE0 + 0);
+    glBindTexture(GL_TEXTURE_2D, tex_);
+    check("bindTexture 1");
+    glUniform1i(texture_sampler_, 0);
+    check("glUniform1i");
+
+    glActiveTexture(GL_TEXTURE0 + 1);
+    glBindTexture(GL_TEXTURE_2D, pal_);
+    check("bindTexture 2");
+    glUniform1i(palette_sampler_, 1);
+    check("glUniform1i");
+
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    check("glDrawArrays");
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    check("glBindBuffer 0");
+
+    eglSwapBuffers(egl_display_, egl_surface_);
+    check("eglSwapBuffers");
+}
+
 // Static
 void FrameBufferLayer::SwapResources(FrameBufferLayer* fb1,
                                      FrameBufferLayer* fb2) {
-  int ret;
+
   DISPMANX_UPDATE_HANDLE_T dispman_update;
   dispman_update = vc_dispmanx_update_start(0);
-  fb1->Swap(dispman_update);
-  if (fb2) fb2->Swap(dispman_update);
-  ret = vc_dispmanx_update_submit_sync(dispman_update);
+  if (!fb1->UsesShader()) {
+     fb1->Swap(dispman_update);
+  }
+  if (fb2 && !fb2->UsesShader()) {
+     fb2->Swap(dispman_update);
+  }
+  int ret = vc_dispmanx_update_submit_sync(dispman_update);
   assert(ret == 0);
+
+  if (fb1->UsesShader()) {
+     fb1->Swap2();
+  }
 }
 
 void FrameBufferLayer::SetPalette(uint8_t index, uint16_t rgb565) {
@@ -432,6 +805,17 @@ void FrameBufferLayer::UpdatePalette() {
                                             pal_565_, 0, sizeof pal_565_);
   }
   assert( ret == 0 );
+
+  if (uses_shader_ & shader_init_) {
+     if (transparency_) {
+	  // Not supported yet.
+	  assert(false);
+     } else {
+	  glBindTexture(GL_TEXTURE_2D,pal_);
+	  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 1, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, pal_565_);
+	  Swap2();
+     }
+  }
 }
 
 void FrameBufferLayer::SetLayer(int layer) {

@@ -17,6 +17,10 @@
 #define _fb2_h
 
 #include "bcm_host.h"
+#include "GLES2/gl2.h"
+#include "GLES2/gl2ext.h"
+#include "EGL/egl.h"
+#include "EGL/eglext.h"
 
 // A wrapper that manages a single dispmanx layer and
 // indexed frame buffer.
@@ -102,6 +106,10 @@ public:
 
   // initializes the bcm_host interface
   static void Initialize();
+  static void OGLInit();
+  void ShaderInit();
+  void ShaderUpdate();
+  bool UsesShader() { return uses_shader_; }
 
   // make off screen resources for fb1 (and optionally fb2) visible
   // then swap destination resources in prep for next frame
@@ -112,6 +120,7 @@ public:
 private:
 
   void Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update);
+  void Swap2();
 
   // Raw pixel data. Not VC memory.
   uint8_t* pixels_;
@@ -119,6 +128,12 @@ private:
   static DISPMANX_DISPLAY_HANDLE_T dispman_display_;
   DISPMANX_ELEMENT_HANDLE_T dispman_element_;
   DISPMANX_RESOURCE_HANDLE_T dispman_resource_[2];
+
+  static EGLDisplay egl_display_;
+  static EGLContext egl_context_;
+  EGLConfig egl_config_;
+  EGLSurface egl_surface_;
+  EGL_DISPMANX_WINDOW_T egl_native_window_;
 
   VC_RECT_T scale_dst_rect_;
   VC_RECT_T copy_dst_rect_;
@@ -170,6 +185,8 @@ private:
   int src_w_;
   int src_h_;
 
+  int dst_x_;
+  int dst_y_;
   int dst_w_;
   int dst_h_;
 
@@ -181,6 +198,37 @@ private:
 
   uint16_t pal_565_[256];
   uint32_t pal_argb_[256];
+
+  bool uses_shader_;
+
+  bool shader_init_;
+  GLuint vshader_;
+  GLuint fshader_;
+  GLuint shader_program_;
+  GLuint vbo_;
+  GLuint attr_vertex_;
+  GLuint attr_texcoord_;
+  GLuint texture_sampler_;
+  GLuint palette_sampler_;
+  GLuint tex_;
+  GLuint pal_;
+
+  // Orthographic projection matrix
+  GLint mvp_;
+
+  // Shader parameters
+  GLuint input_size_;
+  GLuint output_size_;
+  GLuint texture_size_;
+
+  // Curvature requires the texture to have only
+  // the visible pixels in it. We can't get away
+  // with texture coords to crop what we want out
+  // of the buffer.  The shader could probably be
+  // updated to avoid this.  This flag being true
+  // causes hundreds of memcpy's to crop the data.
+  bool need_cpu_crop_;
+  uint8_t* cropped_pixels_;
 };
 
 #endif
