@@ -119,7 +119,8 @@ FrameBufferLayer::FrameBufferLayer() :
         texture_sampler_(-1), palette_sampler_(-1),
         tex_(-1), pal_(-1), mvp_(0),
         input_size_(0), output_size_(0), texture_size_(0),
-        need_cpu_crop_(true), cropped_pixels_(0) {
+        need_cpu_crop_(true), cropped_pixels_(0),
+        curvature_(false) {
   alpha_.flags = DISPMANX_FLAGS_ALPHA_FROM_SOURCE;
   alpha_.opacity = 255;
   alpha_.mask = 0;
@@ -202,9 +203,14 @@ void FrameBufferLayer::ShaderInit() {
   fclose(f);
   file_shader[fsize] = 0;
 
+  char cheader[] = "#define CURVATURE\n";
+
   char vheader[] = "#define VERTEX\n";
-  char *vshader = (char*) malloc(fsize + 1 + strlen(vheader));
+  char *vshader = (char*) malloc(fsize + 1 + strlen(vheader) + strlen(cheader));
   strcpy(vshader, vheader);
+  if (curvature_) {
+	  strcat(vshader, cheader);
+  }
   strcat(vshader, file_shader);
 
   const GLchar *vshader_source = (const GLchar*) vshader;
@@ -213,16 +219,19 @@ void FrameBufferLayer::ShaderInit() {
   glCompileShader(vshader_);
   check("glCompileShader");
 
-  char log[1024];
-  strcpy(log,"");
-  glGetShaderInfoLog(vshader_,sizeof log,NULL,log);
-  FILE *fp = fopen("shader1.log","w");
-  fprintf(fp,"%s\n",log);
-  fclose(fp);
+//  char log[1024];
+//  strcpy(log,"");
+//  glGetShaderInfoLog(vshader_,sizeof log,NULL,log);
+//  FILE *fp = fopen("shader1.log","w");
+//  fprintf(fp,"%s\n",log);
+//  fclose(fp);
 
   char fheader[] = "#define FRAGMENT\n";
-  char *fshader = (char*) malloc(fsize + 1 + strlen(fheader));
+  char *fshader = (char*) malloc(fsize + 1 + strlen(fheader) + strlen(cheader));
   strcpy(fshader, fheader);
+  if (curvature_) {
+	  strcat(fshader, cheader);
+  }
   strcat(fshader, file_shader);
 
   const GLchar *fshader_source = (const GLchar*) fshader;
@@ -231,24 +240,27 @@ void FrameBufferLayer::ShaderInit() {
   glCompileShader(fshader_);
   check("glCompileShader2");
 
-  glGetShaderInfoLog(fshader_,sizeof log,NULL,log);
-  fp = fopen("shader2.log","w");
-  fprintf(fp,"%s\n",log);
-  fclose(fp);
+  free(file_shader);
+
+//  glGetShaderInfoLog(fshader_,sizeof log,NULL,log);
+//  fp = fopen("shader2.log","w");
+//  fprintf(fp,"%s\n",log);
+//  fclose(fp);
 
   shader_program_ = glCreateProgram();
   glAttachShader(shader_program_, vshader_);
   glAttachShader(shader_program_, fshader_);
   glLinkProgram(shader_program_);
   check("linkProgram");
-  GLint status;
-  glGetProgramiv (shader_program_, GL_LINK_STATUS, &status);
-  if (status != GL_TRUE) {
-	  glGetProgramInfoLog(shader_program_,sizeof log,NULL,log);
-	  fp = fopen("program.log","w");
-	  fprintf(fp,"%s\n",log);
-	  fclose(fp);
-  }
+
+//  GLint status;
+//  glGetProgramiv (shader_program_, GL_LINK_STATUS, &status);
+//  if (status != GL_TRUE) {
+//	  glGetProgramInfoLog(shader_program_,sizeof log,NULL,log);
+//	  fp = fopen("program.log","w");
+//	  fprintf(fp,"%s\n",log);
+//	  fclose(fp);
+//  }
 
   glUseProgram (shader_program_);
 
@@ -278,9 +290,6 @@ void FrameBufferLayer::ShaderInit() {
   glGenTextures(1, &tex_);
   CreateTexture();
 
-  // Used for need_cpu_crop_ only...
-  cropped_pixels_ = (uint8_t*) malloc(fb_pitch_ * fb_height_);
-
   glGenTextures(1, &pal_);
   glBindTexture(GL_TEXTURE_2D,pal_);
   glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,256,1,0,GL_RGB,GL_UNSIGNED_SHORT_5_6_5, pal_565_);
@@ -294,6 +303,20 @@ void FrameBufferLayer::ShaderInit() {
   glGenBuffers(1, &vbo_);
 
   shader_init_ = true;
+}
+
+void FrameBufferLayer::ShaderDestroy() {
+  if (shader_init_) {
+    glDeleteBuffers(1, &vbo_);
+    glDeleteTextures(1, &tex_);
+    glUseProgram (0);
+    glDetachShader(shader_program_, vshader_);
+    glDetachShader(shader_program_, fshader_);
+    glDeleteProgram(shader_program_);
+    glDeleteShader(vshader_);
+    glDeleteShader(fshader_);
+    shader_init_ = false;
+  }
 }
 
 void FrameBufferLayer::ShaderUpdate() {
@@ -366,6 +389,20 @@ void FrameBufferLayer::ShaderUpdate() {
   glUseProgram (0);
 }
 
+void FrameBufferLayer::SetUsesShader(bool enabled) {
+  assert(!allocated_);
+  uses_shader_ = enabled;
+}
+
+void FrameBufferLayer::SetShaderParams(bool curvature) {
+  if (uses_shader_) {
+     ShaderDestroy();
+  }
+  curvature_ = curvature;
+  need_cpu_crop_ = curvature;
+  Hide();
+}
+
 // static
 void FrameBufferLayer::Initialize() {
   if (initialized_)
@@ -395,9 +432,7 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
   DISPMANX_MODEINFO_T dispman_info;
   uint32_t vc_image_ptr;
 
-  if (allocated_) {
-     Free();
-  }
+  assert(!allocated_);
 
   allocated_ = true;
 
@@ -421,7 +456,9 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
      pitch_multiplier = 2;
 
   // pitch is in bytes
-  *pitch = fb_pitch_ = ALIGN_UP(width * pitch_multiplier, 32);
+  if (pitch) {
+     *pitch = fb_pitch_ = ALIGN_UP(width * pitch_multiplier, 32);
+  }
 
   fb_width_ = width;
   fb_height_ = height;
@@ -432,7 +469,12 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
   display_width_ = dispman_info.width;
   display_height_ = dispman_info.height;
 
-  *pixels = pixels_ = (uint8_t*) malloc(fb_pitch_ * height * bytes_per_pixel_);
+  if (pixels) {
+     pixels_ = (uint8_t*) malloc(fb_pitch_ * height * bytes_per_pixel_);
+     cropped_pixels_ =
+        (uint8_t*) malloc(fb_pitch_ * fb_height_ * bytes_per_pixel_);
+     *pixels = pixels_;
+  }
 
   // Allocate the VC resources along with the frame buffer
 
@@ -448,18 +490,19 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
   assert(dispman_resource_[1]);
 
   vc_dispmanx_rect_set(&copy_dst_rect_, 0, 0, width, height);
-  dst_x_ = 0;
-  dst_y_ = 0;
-  dst_w_ = width;
-  dst_h_ = height;
 
-  assert(ret == 0);
+  if (pixels) {
+     // Don't clobber these on realloc.
+     dst_x_ = 0;
+     dst_y_ = 0;
+     dst_w_ = width;
+     dst_h_ = height;
 
-  // Default our src region to the entire buffer.
-  src_x_ = 0;
-  src_y_ = 0;
-  src_w_ = width;
-  src_h_ = height;
+     src_x_ = 0;
+     src_y_ = 0;
+     src_w_ = width;
+     src_h_ = height;
+  }
 
   EGLBoolean result;
   EGLint num_config;
@@ -481,13 +524,32 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
   };
 
   if (uses_shader_) {
-     result = eglChooseConfig(egl_display_, attribute_list, &egl_config_, 1, &num_config);
+     result = eglChooseConfig(egl_display_, attribute_list,
+                               &egl_config_, 1, &num_config);
      assert(EGL_FALSE != result);
-     egl_context_ = eglCreateContext(egl_display_, egl_config_, EGL_NO_CONTEXT, context_attributes);
+     egl_context_ = eglCreateContext(egl_display_, egl_config_,
+                                        EGL_NO_CONTEXT, context_attributes);
      assert(egl_context_ != EGL_NO_CONTEXT);
   }
 
   return 0;
+}
+
+int FrameBufferLayer::ReAllocate(bool shader_enable) {
+  assert(allocated_);
+  assert(showing_);
+
+  // Free layer but keep pixels.
+  FreeInternal(true);
+
+  // Change the uses shader flag.
+  SetUsesShader(shader_enable);
+
+  int pixelmode = 0;
+  if (mode_ == VC_IMAGE_RGB565) pixelmode = 1;
+
+  // Reallocate with same params.
+  return Allocate(pixelmode, nullptr, fb_width_, fb_height_, nullptr);
 }
 
 void FrameBufferLayer::Clear() {
@@ -496,23 +558,32 @@ void FrameBufferLayer::Clear() {
   memset(pixels_, 0, fb_height_ * fb_pitch_ * bytes_per_pixel_);
 }
 
-void FrameBufferLayer::Free() {
+// When keepPixels is true, don't clobber any dimensions or delete
+// buffers. Only tear down gl and dispmanx resources.
+void FrameBufferLayer::FreeInternal(bool keepPixels) {
   int ret;
 
   if (!allocated_) return;
 
+  if (uses_shader_) {
+     ShaderDestroy();
+  }
+ 
   if (showing_) {
      Hide();
   }
 
   if (uses_shader_) {
-      eglDestroyContext(egl_display_, egl_config_);
+     eglDestroyContext(egl_display_, egl_context_);
   }
 
-  fb_width_ = 0;
-  fb_height_ = 0;
-  fb_pitch_ = 0;
-  free(pixels_);
+  if (!keepPixels) {
+     fb_width_ = 0;
+     fb_height_ = 0;
+     fb_pitch_ = 0;
+     free(pixels_);
+     free(cropped_pixels_);
+  }
 
   ret = vc_dispmanx_resource_delete(dispman_resource_[0]);
   assert(ret == 0);
@@ -520,6 +591,10 @@ void FrameBufferLayer::Free() {
   assert(ret == 0);
 
   allocated_ = false;
+}
+
+void FrameBufferLayer::Free() {
+  FreeInternal(false);
 }
 
 void FrameBufferLayer::Show() {
@@ -663,25 +738,30 @@ void FrameBufferLayer::Show() {
   assert( ret == 0 );
 
   if (uses_shader_) {
-     egl_native_window_.element = dispman_element_;
-     egl_native_window_.width = display_width_;
-     egl_native_window_.height = display_height_;
-     egl_surface_ = eglCreateWindowSurface(egl_display_, egl_config_, &egl_native_window_, NULL );
-     assert(egl_surface_ != EGL_NO_SURFACE);
+    egl_native_window_.element = dispman_element_;
+    egl_native_window_.width = display_width_;
+    egl_native_window_.height = display_height_;
+    egl_surface_ = eglCreateWindowSurface(egl_display_, egl_config_, &egl_native_window_, NULL );
+    assert(egl_surface_ != EGL_NO_SURFACE);
 
-     EGLBoolean result;
-     result = eglMakeCurrent(egl_display_, egl_surface_, egl_surface_, egl_context_);
-     assert(EGL_FALSE != result);
-     check("eglMakeCurrent");
+    EGLBoolean result;
+    result = eglMakeCurrent(egl_display_, egl_surface_, egl_surface_, egl_context_);
+    assert(EGL_FALSE != result);
+    check("eglMakeCurrent");
 
-     ShaderInit();
-     ShaderUpdate();
+    ShaderInit();
+    ShaderUpdate();
+
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    eglSwapBuffers(egl_display_, egl_surface_);
   }
 
   if (mode_ == VC_IMAGE_8BPP) {
     UpdatePalette();
   }
 
+  FrameReady(0);
   showing_ = true;
 }
 
@@ -692,8 +772,8 @@ void FrameBufferLayer::Hide() {
   if (!showing_) return;
 
   if (uses_shader_) {
-     eglMakeCurrent(egl_display_, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context_);
-     eglDestroySurface(egl_display_, egl_surface_);
+    eglMakeCurrent(egl_display_, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context_);
+    eglDestroySurface(egl_display_, egl_surface_);
   }
 
   dispman_update = vc_dispmanx_update_start(0);
@@ -847,14 +927,15 @@ void FrameBufferLayer::UpdatePalette() {
 
 void FrameBufferLayer::SetLayer(int layer) {
   layer_ = layer;
-  if (layer_ == 0) {
-      // Experimental.
-      // uses_shader_ = true;
-  }
+  //if (layer_ == 0) uses_shader_ = true; // REMOVE THIS
 }
 
 int FrameBufferLayer::GetLayer() {
   return layer_;
+}
+
+bool FrameBufferLayer::UsesShader() {
+	return uses_shader_;
 }
 
 void FrameBufferLayer::SetTransparency(bool transparency) {

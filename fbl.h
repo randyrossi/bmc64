@@ -43,6 +43,12 @@ public:
   // pitch represents bytes per line
   int Allocate(int pixelmode, uint8_t **pixels,
                int width, int height, int *pitch);
+
+  // Allocate again with the same parameters. pixels and
+  // pitch will remain the same.  Used for turning the shader
+  // on/off.
+  int ReAllocate(bool shader_enable);
+
   void Free();
   void Clear();
 
@@ -54,10 +60,10 @@ public:
   // the currently visible resource is the destination.
   void FrameReady(int to_offscreen);
 
-  // Show the framebuffer over top the first
+  // Show the framebuffer.
   void Show();
 
-  // Hide the framebuffer
+  // Hide the framebuffer.
   void Hide();
 
   // Set one color of the indexed palette. Can only be called when
@@ -107,12 +113,14 @@ public:
   // initializes the bcm_host interface
   static void Initialize();
   static void OGLInit();
-  void CreateTexture();
-  void ReCreateTexture();
 
-  void ShaderInit();
-  void ShaderUpdate();
-  bool UsesShader() { return uses_shader_; }
+  bool UsesShader();
+
+  void SetUsesShader(bool enable);
+
+  // NOTE: This will implicitly Hide the layer since the shader must be
+  // destroyed and recompiled.
+  void SetShaderParams(bool curvature);
 
   // make off screen resources for fb1 (and optionally fb2) visible
   // then swap destination resources in prep for next frame
@@ -121,9 +129,18 @@ public:
   static void SetInterpolation(int enable);
 
 private:
-
+  void FreeInternal(bool keepPixels);
   void Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update);
   void Swap2();
+
+  void ShaderInit();
+  void ShaderDestroy();
+  void CreateTexture();
+  void ReCreateTexture();
+  void ShaderUpdate();
+
+  void EnableShader();
+  void DisableShader();
 
   // Raw pixel data. Not VC memory.
   uint8_t* pixels_;
@@ -236,6 +253,9 @@ private:
   // Coordinates. One array is used for both vertex and
   // texture coordinates. 0-7 = vertex, 8-15 = texture
   GLfloat tex_coords_[16];
+
+  // Shader params
+  bool curvature_;
 
 };
 

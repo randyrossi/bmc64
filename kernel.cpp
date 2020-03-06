@@ -160,6 +160,10 @@ int circle_alloc_fbl(int layer, int pixelmode, uint8_t **pixels,
   return static_kernel->circle_alloc_fbl(layer, pixelmode, pixels, width, height, pitch);
 }
 
+int circle_realloc_fbl(int layer, int shader) {
+  return static_kernel->circle_realloc_fbl(layer, shader);
+}
+
 void circle_free_fbl(int layer) {
   static_kernel->circle_free_fbl(layer);
 }
@@ -278,6 +282,14 @@ void circle_get_scaling_params(int display,
 void circle_set_interpolation(int enable) {
   static_kernel->circle_set_interpolation(enable);
 }
+
+void circle_set_use_shader(int enable) {
+  static_kernel->circle_set_use_shader(enable);
+}
+
+void circle_set_shader_params(int curvature) {
+  static_kernel->circle_set_shader_params(curvature);
+}
 };
 
 namespace {
@@ -324,6 +336,7 @@ CKernel::CKernel(void)
   }
 
   fbl[FB_LAYER_VIC].SetLayer(0);
+  //fbl[FB_LAYER_VIC].SetUsesShader(true);
   fbl[FB_LAYER_VIC].SetTransparency(false);
 
   fbl[FB_LAYER_VDC].SetLayer(1);
@@ -1439,6 +1452,10 @@ int CKernel::circle_alloc_fbl(int layer, int pixelmode, uint8_t **pixels,
   return fbl[layer].Allocate(pixelmode, pixels, width, height, pitch);
 }
 
+int CKernel::circle_realloc_fbl(int layer, int shader) {
+  return fbl[layer].ReAllocate(shader);
+}
+
 void CKernel::circle_free_fbl(int layer) {
   fbl[layer].Free();
 }
@@ -1567,4 +1584,14 @@ void CKernel::circle_get_scaling_params(int display,
 
 void CKernel::circle_set_interpolation(int enable) {
   FrameBufferLayer::SetInterpolation(enable);
+}
+
+void CKernel::circle_set_use_shader(int enable) {
+	// Only the main display (layer 0) ever gets a shader.
+  fbl[0].SetUsesShader(enable);
+}
+
+void CKernel::circle_set_shader_params(int curvature) {
+  // Only the main display (layer 0) ever gets a shader.
+  fbl[0].SetShaderParams(curvature);
 }

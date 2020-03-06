@@ -191,6 +191,7 @@ extern void circle_check_gpio();
 extern void circle_reset_gpio(int gpio_config);
 extern int circle_alloc_fbl(int pixelmode, int layer, uint8_t **pixels,
                             int width, int height, int *pitch);
+extern int circle_realloc_fbl(int layer, int shader);
 extern void circle_free_fbl(int layer);
 extern void circle_clear_fbl(int layer);
 extern void circle_show_fbl(int layer);
@@ -241,6 +242,8 @@ extern void circle_get_scaling_params(int display,
                                       int *fbw, int *fbh,
                                       int *sx, int *sy);
 extern void circle_set_interpolation(int enable);
+extern void circle_set_use_shader(int enable);
+extern void circle_set_shader_params(int curvature);
 
 // -----------------------------------------------------------------------
 // Functions called from kernel layer into emulator layer

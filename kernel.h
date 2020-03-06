@@ -72,6 +72,7 @@ public:
   // New FB2 stuff to replace the default frame buffer
   int circle_alloc_fbl(int layer, int pixelmode, uint8_t **pixels,
                        int width, int height, int *pitch);
+  int circle_realloc_fbl(int layer, int shader);
   void circle_free_fbl(int layer);
   void circle_clear_fbl(int layer);
   void circle_show_fbl(int layer);
@@ -116,6 +117,8 @@ public:
                                  int *fbw, int *fbh,
                                  int *sx, int *sy);
   void circle_set_interpolation(int enable);
+  void circle_set_use_shader(int enable);
+  void circle_set_shader_params(int curvature);
 
 private:
   void InitSound();
