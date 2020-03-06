@@ -99,14 +99,27 @@ static void check(const char* msg) {
 }
 
 FrameBufferLayer::FrameBufferLayer() :
+		pixels_(nullptr), dispman_element_(0),egl_config_(nullptr),egl_surface_(nullptr),
         fb_width_(0), fb_height_(0), fb_pitch_(0), layer_(0), transparency_(false),
-        hstretch_(1.6), vstretch_(1.0),
+        hstretch_(1.6), vstretch_(1.0), hintstr_(0), vintstr_(0),
+        use_hintstr_(0), use_vintstr_(0),
         valign_(0), vpadding_(0), halign_(0), hpadding_(0),
         h_center_offset_(0), v_center_offset_(0),
         rnum_(0), leftPadding_(0), rightPadding_(0), topPadding_(0),
-        bottomPadding_(0), showing_(false), allocated_(false),
+        bottomPadding_(0),
+        display_width_(0), display_height_(0),
+        src_x_(0), src_y_(0), src_w_(0), src_h_(0),
+        dst_x_(0), dst_y_(0), dst_w_(0), dst_h_(0),
+        showing_(false), allocated_(false),
         mode_(VC_IMAGE_8BPP), bytes_per_pixel_(1), uses_shader_(false),
-        shader_init_(false), need_cpu_crop_(true), cropped_pixels_(0) {
+        shader_init_(false),
+        vshader_(-1), fshader_(-1), shader_program_(-1),
+        vbo_(-1),
+        attr_vertex_(-1), attr_texcoord_(-1),
+        texture_sampler_(-1), palette_sampler_(-1),
+        tex_(-1), pal_(-1), mvp_(0),
+        input_size_(0), output_size_(0), texture_size_(0),
+        need_cpu_crop_(true), cropped_pixels_(0) {
   alpha_.flags = DISPMANX_FLAGS_ALPHA_FROM_SOURCE;
   alpha_.opacity = 255;
   alpha_.mask = 0;
@@ -274,33 +287,26 @@ void FrameBufferLayer::ShaderUpdate() {
   // Update any shader inputs that may need to change because of
   // new values coming in after a Show().
 
-  // Coordinates. One array is used for both vertex and
-  // texture coordinates.
-  static GLfloat tex_coords[16] = {
-     0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, // vertex
-     0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f  // texture
-  };
-
   // Futz with the vertex coordinates so we draw into a quad
   // that matches our calculated destination rect.  These
   // need to be updates every time they can change from a
   // call to Show()
   
   // Bottom left
-  tex_coords[0] = (float)dst_x_ / (float)display_width_;
-  tex_coords[1] = (float)dst_y_ / (float)display_height_;
+  tex_coords_[0] = (float)dst_x_ / (float)display_width_;
+  tex_coords_[1] = (float)dst_y_ / (float)display_height_;
 
   // Bottom right
-  tex_coords[2] = (float)(dst_x_+dst_w_) / (float)display_width_;
-  tex_coords[3] = (float)dst_y_ / (float)display_height_;
+  tex_coords_[2] = (float)(dst_x_+dst_w_) / (float)display_width_;
+  tex_coords_[3] = (float)dst_y_ / (float)display_height_;
 
   // Top left
-  tex_coords[4] = (float)dst_x_ / (float)display_width_;
-  tex_coords[5] = (float)(dst_y_ + dst_h_) / (float)display_height_;
+  tex_coords_[4] = (float)dst_x_ / (float)display_width_;
+  tex_coords_[5] = (float)(dst_y_ + dst_h_) / (float)display_height_;
 
   // Top right
-  tex_coords[6] = (float)(dst_x_ + dst_w_) / (float)display_width_;
-  tex_coords[7] = (float)(dst_y_ + dst_h_) / (float)display_height_;
+  tex_coords_[6] = (float)(dst_x_ + dst_w_) / (float)display_width_;
+  tex_coords_[7] = (float)(dst_y_ + dst_h_) / (float)display_height_;
 
 
   if (!need_cpu_crop_) {
@@ -311,24 +317,33 @@ void FrameBufferLayer::ShaderUpdate() {
     // for its curvature calculation.
 
     // Top left
-    tex_coords[8] = (float)src_x_ / (float)fb_pitch_;
-    tex_coords[9] = (float)(src_y_ + src_h_) / (float)fb_height_;
+	tex_coords_[8] = (float)src_x_ / (float)fb_pitch_;
+	tex_coords_[9] = (float)(src_y_ + src_h_) / (float)fb_height_;
 
     // Top right
-    tex_coords[10] = (float)(src_x_ + src_w_) / (float)fb_pitch_;
-    tex_coords[11] = (float)(src_y_ + src_h_) / (float)fb_height_;
+	tex_coords_[10] = (float)(src_x_ + src_w_) / (float)fb_pitch_;
+	tex_coords_[11] = (float)(src_y_ + src_h_) / (float)fb_height_;
 
     // Bottom left
-    tex_coords[12] = (float)src_x_ / (float)fb_pitch_;
-    tex_coords[13] = (float)src_y_ / (float)fb_height_;
+	tex_coords_[12] = (float)src_x_ / (float)fb_pitch_;
+	tex_coords_[13] = (float)src_y_ / (float)fb_height_;
 
     // Bottom right
-    tex_coords[14] = (float)(src_x_+src_w_) / (float)fb_pitch_;
-    tex_coords[15] = (float)src_y_ / (float)fb_height_;
+	tex_coords_[14] = (float)(src_x_+src_w_) / (float)fb_pitch_;
+	tex_coords_[15] = (float)src_y_ / (float)fb_height_;
+  } else {
+	tex_coords_[8] = 0.0f;
+	tex_coords_[9] = 1.0f;
+	tex_coords_[10] = 1.0f;
+	tex_coords_[11] = 1.0f;
+	tex_coords_[12] = 0.0f;
+	tex_coords_[13] = 0.0f;
+	tex_coords_[14] = 1.0f;
+	tex_coords_[15] = 0.0f;
   }
 
   glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-  glBufferData(GL_ARRAY_BUFFER, sizeof (GLfloat) * 16, tex_coords, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof (GLfloat) * 16, tex_coords_, GL_STATIC_DRAW);
 
   glEnableVertexAttribArray(attr_texcoord_);
   glVertexAttribPointer(attr_texcoord_, 2, GL_FLOAT, GL_FALSE, 0, (void *)(sizeof (float) * 8));
@@ -820,6 +835,10 @@ void FrameBufferLayer::UpdatePalette() {
 
 void FrameBufferLayer::SetLayer(int layer) {
   layer_ = layer;
+  if (layer_ == 0) {
+	  // Experimental.
+	  // uses_shader_ = true;
+  }
 }
 
 int FrameBufferLayer::GetLayer() {

@@ -229,6 +229,11 @@ private:
   // causes hundreds of memcpy's to crop the data.
   bool need_cpu_crop_;
   uint8_t* cropped_pixels_;
+
+  // Coordinates. One array is used for both vertex and
+  // texture coordinates. 0-7 = vertex, 8-15 = texture
+  GLfloat tex_coords_[16];
+
 };
 
 #endif
