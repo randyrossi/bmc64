@@ -107,6 +107,9 @@ public:
   // initializes the bcm_host interface
   static void Initialize();
   static void OGLInit();
+  void CreateTexture();
+  void ReCreateTexture();
+
   void ShaderInit();
   void ShaderUpdate();
   bool UsesShader() { return uses_shader_; }

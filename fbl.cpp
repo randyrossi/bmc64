@@ -148,6 +148,39 @@ void FrameBufferLayer::OGLInit() {
   assert(EGL_FALSE != result);
 }
 
+void FrameBufferLayer::CreateTexture() {
+  // These values make sense but I'm not sure what the difference between
+  // inputSize and textureSize is.  Perhaps it has something to do with
+  // the fact these shaders are meant to be chained together over different
+  // passes and the next shader needs to know what the output size of the
+  // previous was?
+  float inputSize[2] = { (float) src_w_, (float)src_h_ };
+  float outputSize[2] = { (float) dst_w_, (float)dst_h_ };
+
+  int tx = need_cpu_crop_ ? src_w_ : fb_pitch_;
+  int ty = need_cpu_crop_ ? src_h_ : fb_height_;
+  float textureSize[2] = { (float) tx, (float) ty };
+
+  glUniform2fv(input_size_, 1, inputSize);
+  glUniform2fv(output_size_, 1, outputSize);
+  glUniform2fv(texture_size_, 1, textureSize);
+
+  glBindTexture(GL_TEXTURE_2D,tex_);
+  glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE,
+     need_cpu_crop_ ? src_w_ : fb_pitch_,
+     need_cpu_crop_ ? src_h_ : fb_height_,
+     0,GL_LUMINANCE,GL_UNSIGNED_BYTE, 0);
+
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+}
+
+void FrameBufferLayer::ReCreateTexture() {
+  if (shader_init_) {
+	  CreateTexture();
+  }
+}
+
 void FrameBufferLayer::ShaderInit() {
 
   // orthographic projection matrix
@@ -239,34 +272,14 @@ void FrameBufferLayer::ShaderInit() {
 	  glUniformMatrix4fv(mvp_, 1, GL_FALSE, mvp_ortho);
   }
 
-  // These values make sense but I'm not sure what the difference between
-  // inputSize and textureSize is.  Perhaps it has something to do with
-  // the fact these shaders are meant to be chained together over different
-  // passes and the next shader needs to know what the output size of the
-  // previous was?
-  float inputSize[2] = { (float) src_w_, (float)src_h_ };
-  float outputSize[2] = { (float) dst_w_, (float)dst_h_ };
-  
-  int tx = need_cpu_crop_ ? src_w_ : fb_pitch_;
-  int ty = need_cpu_crop_ ? src_h_ : fb_height_;
-  float textureSize[2] = { (float) tx, (float) ty };
-
-  glUniform2fv(input_size_, 1, inputSize);
-  glUniform2fv(output_size_, 1, outputSize);
-  glUniform2fv(texture_size_, 1, textureSize);
-
+  // This texture is the indexed bitmap data so we use LUMINANCE which
+  // will show up as coordinate x in the shader. Then we use the palette
+  // 256x1 texture (below) to lookup the color.
   glGenTextures(1, &tex_);
-  glBindTexture(GL_TEXTURE_2D,tex_);
-  glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE,
-     need_cpu_crop_ ? src_w_ : fb_pitch_,
-     need_cpu_crop_ ? src_h_ : fb_height_,
-     0,GL_LUMINANCE,GL_UNSIGNED_BYTE, 0);
-  
-  // Used for need_cpu_crop_ only...
-  cropped_pixels_ = (uint8_t*) malloc(src_w_ * src_h_);
+  CreateTexture();
 
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  // Used for need_cpu_crop_ only...
+  cropped_pixels_ = (uint8_t*) malloc(fb_pitch_ * fb_height_);
 
   glGenTextures(1, &pal_);
   glBindTexture(GL_TEXTURE_2D,pal_);
@@ -291,7 +304,7 @@ void FrameBufferLayer::ShaderUpdate() {
   // that matches our calculated destination rect.  These
   // need to be updates every time they can change from a
   // call to Show()
-  
+
   // Bottom left
   tex_coords_[0] = (float)dst_x_ / (float)display_width_;
   tex_coords_[1] = (float)dst_y_ / (float)display_height_;
@@ -307,7 +320,6 @@ void FrameBufferLayer::ShaderUpdate() {
   // Top right
   tex_coords_[6] = (float)(dst_x_ + dst_w_) / (float)display_width_;
   tex_coords_[7] = (float)(dst_y_ + dst_h_) / (float)display_height_;
-
 
   if (!need_cpu_crop_) {
     // Now futz with the texture coordinates (for triangle strip)
@@ -600,8 +612,8 @@ void FrameBufferLayer::Show() {
   }
 
 
-  dst_x_ = ox + lpad_abs; 
-  dst_y_ = oy + tpad_abs; 
+  dst_x_ = ox + lpad_abs;
+  dst_y_ = oy + tpad_abs;
   dst_w_ = dst_w;
   dst_h_ = dst_h;
 
@@ -725,7 +737,7 @@ void FrameBufferLayer::Swap2() {
     // Our pixels_ framebuffer includes a lot of black border area around
     // the visible pixels we want to see. When shader curvature is needed,
     // we need to provide a texture with only the pixels we actually want
-    // to see, otherwise the curvature gets applied incorrectly to the 
+    // to see, otherwise the curvature gets applied incorrectly to the
     // larger area. So we crop on the CPU rather than by texture coords.
     if (need_cpu_crop_) {
        for (int yy=src_y_; yy < src_y_ + src_h_;yy++) {
@@ -836,8 +848,8 @@ void FrameBufferLayer::UpdatePalette() {
 void FrameBufferLayer::SetLayer(int layer) {
   layer_ = layer;
   if (layer_ == 0) {
-	  // Experimental.
-	  // uses_shader_ = true;
+      // Experimental.
+      // uses_shader_ = true;
   }
 }
 
@@ -851,10 +863,16 @@ void FrameBufferLayer::SetTransparency(bool transparency) {
 }
 
 void FrameBufferLayer::SetSrcRect(int x, int y, int w, int h) {
+  bool has_changed = x != src_x_ || y != src_y_ || w != src_w_ || h != src_h_;
   src_x_ = x;
   src_y_ = y;
   src_w_ = w;
   src_h_ = h;
+
+  if (has_changed && need_cpu_crop_) {
+      // When using cpu crop, we have to resize our texture.
+      ReCreateTexture();
+  }
 }
 
 // Set horizontal/vertical multipliers
