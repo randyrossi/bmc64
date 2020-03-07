@@ -1020,6 +1020,21 @@ static int save_settings() {
      fprintf (fp, "custom_gpio=%d,%d\n", i, gpio_bindings[i]);
   }
 
+  fprintf(fp,"s_enable_shader=%d\n", s_enable_shader_item->value);
+  fprintf(fp,"s_curvature=%d\n", s_curvature_item->value);
+  fprintf(fp,"s_curvature_x=%d\n", s_curvature_x_item->value);
+  fprintf(fp,"s_curvature_y=%d\n", s_curvature_y_item->value);
+  fprintf(fp,"s_sharper=%d\n", s_sharper_item->value);
+  fprintf(fp,"s_mask=%d\n", s_mask_item->value);
+  fprintf(fp,"s_mask_brightness=%d\n", s_mask_brightness_item->value);
+  fprintf(fp,"s_scanlines=%d\n", s_scanlines_item->value);
+  fprintf(fp,"s_scanline_weight=%d\n", s_scanline_weight_item->value);
+  fprintf(fp,"s_scanline_gap_brightness=%d\n", s_scanline_gap_brightness_item->value);
+  fprintf(fp,"s_bloom_factor=%d\n", s_bloom_factor_item->value);
+  fprintf(fp,"s_gamma=%d\n", s_gamma_item->value);
+  fprintf(fp,"s_input_gamma=%d\n", s_input_gamma_item->value);
+  fprintf(fp,"s_output_gamma=%d\n", s_output_gamma_item->value);
+
   emux_save_additional_settings(fp);
 
   fclose(fp);
@@ -1323,6 +1338,34 @@ static void load_settings() {
       use_scaling_params_item[0]->value = value;
     } else if (strcmp(name, "use_int_scaling_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       use_scaling_params_item[1]->value = value;
+    } else if (strcmp(name, "s_enable_shader") == 0) {
+      s_enable_shader_item->value = value;
+    } else if (strcmp(name, "s_curvature") == 0) {
+      s_curvature_item->value = value;
+    } else if (strcmp(name, "s_curvature_x") == 0) {
+      s_curvature_x_item->value = value;
+    } else if (strcmp(name, "s_curvature_y") == 0) {
+      s_curvature_y_item->value = value;
+    } else if (strcmp(name, "s_sharper") == 0) {
+      s_sharper_item->value = value;
+    } else if (strcmp(name, "s_mask") == 0) {
+      s_mask_item->value = value;
+    } else if (strcmp(name, "s_mask_brightness") == 0) {
+      s_mask_brightness_item->value = value;
+    } else if (strcmp(name, "s_scanlines") == 0) {
+      s_scanlines_item->value = value;
+    } else if (strcmp(name, "s_scanline_weight") == 0) {
+      s_scanline_weight_item->value = value;
+    } else if (strcmp(name, "s_scanline_gap_brightness") == 0) {
+      s_scanline_gap_brightness_item->value = value;
+    } else if (strcmp(name, "s_bloom_factor") == 0) {
+      s_bloom_factor_item->value = value;
+    } else if (strcmp(name, "s_gamma") == 0) {
+      s_gamma_item->value = value;
+    } else if (strcmp(name, "s_input_gamma") == 0) {
+      s_input_gamma_item->value = value;
+    } else if (strcmp(name, "s_output_gamma") == 0) {
+      s_output_gamma_item->value = value;
     } else if (strcmp(name, "custom_gpio") == 0) {
       char* token = strtok (value_str, ",");
       if (token != NULL) {
@@ -1911,7 +1954,19 @@ static void menu_machine_reset(int type, int pop) {
 }
 
 static void reset_shader_params() {
-
+  s_curvature_item->value = 0;
+  s_curvature_x_item->value = 10;
+  s_curvature_y_item->value = 15;
+  s_sharper_item->value = 0;
+  s_mask_item->value = 0;
+  s_mask_brightness_item->value = 70;
+  s_scanlines_item->value = 1;
+  s_scanline_weight_item->value = 60;
+  s_scanline_gap_brightness_item->value = 12;
+  s_bloom_factor_item->value = 150;
+  s_gamma_item->value = 2;
+  s_input_gamma_item->value = 240;
+  s_output_gamma_item->value = 220;
 }
 
 static void sanity_check_shader_params(int itemid) {
@@ -2731,6 +2786,8 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_SHADER_RESET_ALL:
     ui_canvas_reveal_temp(FB_LAYER_VIC);
     reset_shader_params();
+    sanity_check_shader_params(item->id);
+    handle_shader_param_change();
     break;
   case MENU_USE_SCALING_PARAMS_0:
     if (item->value) {
@@ -3277,7 +3334,8 @@ void build_menu(struct menu_item *root) {
      MENU_USE_SCALING_PARAMS_0, parent, "Apply scaling params at boot", 1,
         "No","Yes");
 
-  struct menu_item *shader = ui_menu_add_folder(parent, "CRT Shader");
+  if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
+     struct menu_item *shader = ui_menu_add_folder(parent, "CRT Shader");
      s_enable_shader_item =
         ui_menu_add_toggle_labels(MENU_SHADER_ENABLE, shader,
            "Enable CRT Shader?", 1, "No", "Yes");
@@ -3341,6 +3399,7 @@ void build_menu(struct menu_item *root) {
            0, 500, 10, 220);
 
      ui_menu_add_button(MENU_SHADER_RESET_ALL, shader, "Reset");
+  }
 
   palette_item[0] = emux_add_palette_options(MENU_COLOR_PALETTE_0, parent);
 
