@@ -145,7 +145,7 @@ public:
 private:
   void FreeInternal(bool keepPixels);
   void Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update);
-  void Swap2();
+  void RenderGL(bool sync);
 
   void ShaderInit();
   void ShaderDestroy();

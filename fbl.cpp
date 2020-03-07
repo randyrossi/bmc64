@@ -890,6 +890,8 @@ void FrameBufferLayer::FrameReady(int to_offscreen) {
                                       fb_pitch_,
                                       pixels_,
                                       &copy_dst_rect_);
+  } else {
+	  RenderGL(to_offscreen);
   }
 }
 
@@ -904,7 +906,7 @@ void FrameBufferLayer::Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update) {
                                     dispman_resource_[rnum_]);
 }
 
-void FrameBufferLayer::Swap2() {
+void FrameBufferLayer::RenderGL(bool sync) {
     // Our pixels_ framebuffer includes a lot of black border area around
     // the visible pixels we want to see. When shader curvature is needed,
     // we need to provide a texture with only the pixels we actually want
@@ -950,6 +952,7 @@ void FrameBufferLayer::Swap2() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     check("glBindBuffer 0");
 
+    eglSwapInterval(egl_display_, sync ? 1 : 0);
     eglSwapBuffers(egl_display_, egl_surface_);
     check("eglSwapBuffers");
 }
@@ -968,10 +971,6 @@ void FrameBufferLayer::SwapResources(FrameBufferLayer* fb1,
   }
   int ret = vc_dispmanx_update_submit_sync(dispman_update);
   assert(ret == 0);
-
-  if (fb1->UsesShader()) {
-     fb1->Swap2();
-  }
 }
 
 void FrameBufferLayer::SetPalette(uint8_t index, uint16_t rgb565) {
@@ -1011,14 +1010,13 @@ void FrameBufferLayer::UpdatePalette() {
      } else {
 	  glBindTexture(GL_TEXTURE_2D,pal_);
 	  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 1, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, pal_565_);
-	  Swap2();
+	  RenderGL(true);
      }
   }
 }
 
 void FrameBufferLayer::SetLayer(int layer) {
   layer_ = layer;
-  //if (layer_ == 0) uses_shader_ = true; // REMOVE THIS
 }
 
 int FrameBufferLayer::GetLayer() {
