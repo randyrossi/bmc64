@@ -287,8 +287,34 @@ void circle_set_use_shader(int enable) {
   static_kernel->circle_set_use_shader(enable);
 }
 
-void circle_set_shader_params(int curvature) {
-  static_kernel->circle_set_shader_params(curvature);
+void circle_set_shader_params(int curvature,
+		float curvature_x,
+		float curvature_y,
+		int mask,
+		float mask_brightness,
+		int gamma,
+		int fake_gamma,
+		int scanlines,
+		float scanline_weight,
+		float scanline_gap_brightness,
+		float bloom_factor,
+		float input_gamma,
+		float output_gamma,
+		int sharper) {
+  static_kernel->circle_set_shader_params(curvature,
+			curvature_x,
+			curvature_y,
+			mask,
+			mask_brightness,
+			gamma,
+			fake_gamma,
+			scanlines,
+			scanline_weight,
+			scanline_gap_brightness,
+			bloom_factor,
+			input_gamma,
+			output_gamma,
+			sharper);
 }
 };
 
@@ -336,7 +362,6 @@ CKernel::CKernel(void)
   }
 
   fbl[FB_LAYER_VIC].SetLayer(0);
-  //fbl[FB_LAYER_VIC].SetUsesShader(true);
   fbl[FB_LAYER_VIC].SetTransparency(false);
 
   fbl[FB_LAYER_VDC].SetLayer(1);
@@ -1591,7 +1616,33 @@ void CKernel::circle_set_use_shader(int enable) {
   fbl[0].SetUsesShader(enable);
 }
 
-void CKernel::circle_set_shader_params(int curvature) {
+void CKernel::circle_set_shader_params(int curvature,
+		float curvature_x,
+		float curvature_y,
+		int mask,
+		float mask_brightness,
+		int gamma,
+		int fake_gamma,
+		int scanlines,
+		float scanline_weight,
+		float scanline_gap_brightness,
+		float bloom_factor,
+		float input_gamma,
+		float output_gamma,
+		int sharper) {
   // Only the main display (layer 0) ever gets a shader.
-  fbl[0].SetShaderParams(curvature);
+  fbl[0].SetShaderParams(curvature,
+			curvature_x,
+			curvature_y,
+			mask,
+			mask_brightness,
+			gamma,
+			fake_gamma,
+			scanlines,
+			scanline_weight,
+			scanline_gap_brightness,
+			bloom_factor,
+			input_gamma,
+			output_gamma,
+			sharper);
 }

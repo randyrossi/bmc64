@@ -157,6 +157,21 @@ struct menu_item *dir_convention_item;
 
 struct menu_item *scaling_interp_item;
 
+struct menu_item* s_curvature_item;
+struct menu_item* s_curvature_x_item;
+struct menu_item* s_curvature_y_item;
+struct menu_item* s_mask_item;
+struct menu_item* s_mask_brightness_item;
+struct menu_item* s_gamma_item;
+struct menu_item* s_fake_gamma_item;
+struct menu_item* s_scanlines_item;
+struct menu_item* s_scanline_weight_item;
+struct menu_item* s_scanline_gap_brightness_item;
+struct menu_item* s_bloom_factor_item;
+struct menu_item* s_input_gamma_item;
+struct menu_item* s_output_gamma_item;
+struct menu_item* s_sharper_item;
+
 static int unit;
 static int joyswap;
 static int statusbar_forced;
@@ -1894,6 +1909,60 @@ static void menu_machine_reset(int type, int pop) {
   }
 }
 
+static void reset_shader_params() {
+
+}
+
+static void handle_shader_param_change() {
+  int curvature;
+  float curvature_x;
+  float curvature_y;
+  int mask;
+  float mask_brightness;
+  int gamma;
+  int fake_gamma;
+  int scanlines;
+  float scanline_weight;
+  float scanline_gap_brightness;
+  float bloom_factor;
+  float input_gamma;
+  float output_gamma;
+  int sharper;
+
+  curvature = s_curvature_item->value;
+  curvature_x = (float)s_curvature_x_item->value / 100.0f;
+  curvature_y = (float)s_curvature_y_item->value / 100.0f;
+  mask = s_mask_item->value;
+  mask_brightness = (float)s_mask_brightness_item->value / 100.0f;
+  gamma = s_gamma_item->value > 0;
+  fake_gamma = s_gamma_item->value == 2;
+  scanlines = s_scanlines_item->value;
+  scanline_weight = (float)s_scanline_weight_item->value / 10.0f;
+  scanline_gap_brightness = (float)s_scanline_gap_brightness_item->value / 100.0f;
+  bloom_factor = (float)s_bloom_factor_item->value / 100.0f;
+  input_gamma = (float)s_input_gamma_item->value / 100.0f;
+  output_gamma = (float)s_output_gamma_item->value / 100.0f;
+  sharper = s_sharper_item->value;
+
+  circle_set_shader_params(curvature,
+                        curvature_x,
+                        curvature_y,
+                        mask,
+                        mask_brightness,
+                        gamma,
+                        fake_gamma,
+                        scanlines,
+                        scanline_weight,
+                        scanline_gap_brightness,
+                        bloom_factor,
+                        input_gamma,
+                        output_gamma,
+                        sharper);
+
+  // Setting shader params hides the layer.
+  vic_showing = 0;
+}
+
 // Interpret what menu item changed and make the change to vice
 static void menu_value_changed(struct menu_item *item) {
   struct machine_entry* head;
@@ -2561,6 +2630,32 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_DIR_CONVENTION:
     set_current_dir_names();
     break;
+  case MENU_SHADER_ENABLE:
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
+    circle_realloc_fbl(FB_LAYER_VIC, item->value);
+    handle_shader_param_change();
+    vic_showing = 0;
+    break;
+  case MENU_SHADER_CURVATURE:
+  case MENU_SHADER_CURVATURE_X:
+  case MENU_SHADER_CURVATURE_Y:
+  case MENU_SHADER_SCANLINES:
+  case MENU_SHADER_SCANLINE_WEIGHT:
+  case MENU_SHADER_SCANLINE_GAP_BRIGHTNESS:
+  case MENU_SHADER_MASK:
+  case MENU_SHADER_MASK_BRIGHTNESS:
+  case MENU_SHADER_BLOOM:
+  case MENU_SHADER_GAMMA:
+  case MENU_SHADER_INPUT_GAMMA:
+  case MENU_SHADER_OUTPUT_GAMMA:
+  case MENU_SHADER_SHARPER:
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
+    handle_shader_param_change();
+    break;
+  case MENU_SHADER_RESET_ALL:
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
+    reset_shader_params();
+    break;
   case MENU_USE_SCALING_PARAMS_0:
     if (item->value) {
        if (do_use_int_scaling(FB_LAYER_VIC, 0 /* not silent */)) {
@@ -3105,6 +3200,70 @@ void build_menu(struct menu_item *root) {
   use_scaling_params_item[0] = ui_menu_add_toggle_labels(
      MENU_USE_SCALING_PARAMS_0, parent, "Apply scaling params at boot", 1,
         "No","Yes");
+
+  struct menu_item *shader = ui_menu_add_folder(parent, "CRT Shader");
+     ui_menu_add_toggle_labels(MENU_SHADER_ENABLE, shader,
+        "Enable CRT Shader?", 0, "No", "Yes");
+
+     s_curvature_item =
+       ui_menu_add_toggle(MENU_SHADER_CURVATURE, shader, "Curvature", 0);
+
+     s_curvature_x_item =
+       ui_menu_add_range(MENU_SHADER_CURVATURE_X, shader, "H Curvature Amount",
+          0, 25, 1, 10);
+
+     s_curvature_y_item =
+       ui_menu_add_range(MENU_SHADER_CURVATURE_Y, shader, "V Curvature Amount",
+          0, 25, 1, 10);
+
+     s_mask_item = ui_menu_add_multiple_choice(
+        MENU_SHADER_MASK, shader, "Mask Type");
+     s_mask_item->num_choices = 3;
+     s_mask_item->value = 0;
+     strcpy(s_mask_item->choices[0], "None");
+     strcpy(s_mask_item->choices[1], "Green/Magenta");
+     strcpy(s_mask_item->choices[2], "Trinitron");
+
+     s_mask_brightness_item = ui_menu_add_range(
+        MENU_SHADER_MASK_BRIGHTNESS, shader, "Mask Brightness",
+           0, 100, 1, 70);
+
+     s_scanlines_item =
+        ui_menu_add_toggle(MENU_SHADER_SCANLINES, shader, "Scanlines", 0);
+
+     s_scanline_weight_item =
+        ui_menu_add_range(
+           MENU_SHADER_SCANLINE_WEIGHT, shader, "Scanline Weight",
+              10, 100, 1, 60);
+
+     s_scanline_gap_brightness_item = ui_menu_add_range(
+        MENU_SHADER_SCANLINE_GAP_BRIGHTNESS, shader, "Scanline Gap Brightness",
+           0, 100, 1, 12);
+
+     s_bloom_factor_item = ui_menu_add_range(
+        MENU_SHADER_BLOOM, shader, "Bloom Factor",
+           100, 200, 1, 150);
+
+     s_sharper_item = ui_menu_add_toggle(
+        MENU_SHADER_SHARPER, shader, "Sharper H Blend", 0);
+
+     s_gamma_item =
+        ui_menu_add_multiple_choice(MENU_SHADER_GAMMA, shader, "Gamma");
+     s_gamma_item->num_choices = 3;
+     s_gamma_item->value = 0;
+     strcpy(s_gamma_item->choices[0], "Off");
+     strcpy(s_gamma_item->choices[1], "On");
+     strcpy(s_gamma_item->choices[2], "Fake (Fast)");
+
+     s_input_gamma_item = ui_menu_add_range(
+        MENU_SHADER_INPUT_GAMMA, shader, "Input Gamma",
+           200, 300, 1, 240);
+
+     s_output_gamma_item = ui_menu_add_range(
+        MENU_SHADER_OUTPUT_GAMMA, shader, "Output Gamma",
+           200, 300, 1, 220);
+
+     ui_menu_add_button(MENU_SHADER_RESET_ALL, shader, "Reset");
 
   palette_item[0] = emux_add_palette_options(MENU_COLOR_PALETTE_0, parent);
 

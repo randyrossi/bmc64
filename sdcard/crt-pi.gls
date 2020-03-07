@@ -37,14 +37,14 @@ MASK_TYPE defines what, if any, shadow mask to use. MASK_BRIGHTNESS defines how 
 #pragma parameter OUTPUT_GAMMA "Output gamma" 2.2 0.0 5.0 0.01
 
 // Haven't put these as parameters as it would slow the code down.
-#define SCANLINES
-#define MULTISAMPLE
-#define GAMMA
+//#define SCANLINES
+//#define MULTISAMPLE
+//#define GAMMA
 //#define FAKE_GAMMA
 //#define CURVATURE
 //#define SHARPER
 // MASK_TYPE: 0 = none, 1 = green/magenta, 2 = trinitron(ish)
-#define MASK_TYPE 1
+//#define MASK_TYPE 1
 
 
 #ifdef GL_ES
@@ -64,14 +64,14 @@ uniform COMPAT_PRECISION float BLOOM_FACTOR;
 uniform COMPAT_PRECISION float INPUT_GAMMA;
 uniform COMPAT_PRECISION float OUTPUT_GAMMA;
 #else
-#define CURVATURE_X 0.10
-#define CURVATURE_Y 0.25
-#define MASK_BRIGHTNESS 0.70
-#define SCANLINE_WEIGHT 6.0
-#define SCANLINE_GAP_BRIGHTNESS 0.12
-#define BLOOM_FACTOR 1.5
-#define INPUT_GAMMA 2.4
-#define OUTPUT_GAMMA 2.2
+//#define CURVATURE_X 0.10
+//#define CURVATURE_Y 0.25
+//#define MASK_BRIGHTNESS 0.70
+//#define SCANLINE_WEIGHT 6.0
+//#define SCANLINE_GAP_BRIGHTNESS 0.12
+//#define BLOOM_FACTOR 1.5
+//#define INPUT_GAMMA 2.4
+//#define OUTPUT_GAMMA 2.2
 #endif
 
 /* COMPATIBILITY

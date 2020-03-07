@@ -120,7 +120,21 @@ public:
 
   // NOTE: This will implicitly Hide the layer since the shader must be
   // destroyed and recompiled.
-  void SetShaderParams(bool curvature);
+  void SetShaderParams(
+		    bool curvature,
+			float curvature_x,
+			float curvature_y,
+			int mask,
+			float mask_brightness,
+			bool gamma,
+			bool fake_gamma,
+			bool scanlines,
+			float scanline_weight,
+			float scanline_gap_brightness,
+			float bloom_factor,
+			float input_gamma,
+			float output_gamma,
+			bool sharper);
 
   // make off screen resources for fb1 (and optionally fb2) visible
   // then swap destination resources in prep for next frame
@@ -141,6 +155,8 @@ private:
 
   void EnableShader();
   void DisableShader();
+
+  void ConcatShaderDefines(char *dst);
 
   // Raw pixel data. Not VC memory.
   uint8_t* pixels_;
@@ -256,7 +272,19 @@ private:
 
   // Shader params
   bool curvature_;
-
+  float curvature_x_;
+  float curvature_y_;
+  int mask_;
+  float mask_brightness_;
+  bool gamma_;
+  bool fake_gamma_;
+  bool scanlines_;
+  float scanline_weight_;
+  float scanline_gap_brightness_;
+  float bloom_factor_;
+  float input_gamma_;
+  float output_gamma_;
+  bool sharper_;
 };
 
 #endif

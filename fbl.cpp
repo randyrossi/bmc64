@@ -87,6 +87,8 @@ bool FrameBufferLayer::initialized_ = false;
 DISPMANX_DISPLAY_HANDLE_T FrameBufferLayer::dispman_display_;
 EGLDisplay FrameBufferLayer::egl_display_;
 EGLContext FrameBufferLayer::egl_context_;
+static char* file_shader_txt_;
+static long file_shader_txt__len_;
 
 static void check(const char* msg) {
 	int g = glGetError();
@@ -182,7 +184,75 @@ void FrameBufferLayer::ReCreateTexture() {
   }
 }
 
+void FrameBufferLayer::ConcatShaderDefines(char *dst) {
+  char scratch[64];
+  if (curvature_) {
+	  strcat(dst,"#define CURVATURE\n");
+  }
+
+  sprintf (scratch, "#define CURVATURE_X %f\n", curvature_x_);
+  strcat(dst, scratch);
+
+  sprintf (scratch, "#define CURVATURE_Y %f\n", curvature_y_);
+  strcat(dst, scratch);
+
+  sprintf (scratch, "#define MASK_TYPE %d\n", mask_);
+  strcat(dst, scratch);
+
+  sprintf (scratch, "#define MASK_BRIGHTNESS %f\n", mask_brightness_);
+  strcat(dst, scratch);
+
+  if (gamma_) {
+	  strcat (dst, "#define GAMMA\n");
+	  if (fake_gamma_) {
+		  strcat (dst, "#define FAKE_GAMMA\n");
+	  }
+  }
+
+  if (scanlines_) {
+	  strcat (dst, "#define SCANLINES\n");
+  }
+
+  sprintf (scratch, "#define SCANLINE_WEIGHT %f\n", scanline_weight_);
+  strcat(dst, scratch);
+
+  sprintf (scratch, "#define SCANLINE_GAP_BRIGHTNESS %f\n", scanline_gap_brightness_);
+  strcat(dst, scratch);
+
+  sprintf (scratch, "#define BLOOM_FACTOR %f\n", bloom_factor_);
+  strcat(dst, scratch);
+
+  sprintf (scratch, "#define INPUT_GAMMA %f\n", input_gamma_);
+  strcat(dst, scratch);
+
+  sprintf (scratch, "#define OUTPUT_GAMMA %f\n", output_gamma_);
+  strcat(dst, scratch);
+
+  if (sharper_) {
+	  strcat (dst, "#define SHARPER\n");
+  }
+}
+
 void FrameBufferLayer::ShaderInit() {
+
+	// Used to for size to reserve enough space at
+	// beginning of shader for dynamic defines.
+	static const char* header_template =
+           "#define FRAGMENT                    "
+           "#define CURVATURE                   "
+           "#define CURVATURE_X 0.10            "
+           "#define CURVATURE_Y 0.25            "
+           "#define MASK 1                      "
+           "#define MASK_BRIGHTNESS 0.70        "
+           "#define GAMMA                       "
+           "#define FAKE_GAMMA                  "
+           "#define SCANLINES                   "
+           "#define SCANLINE_WEIGHT 6.0         "
+           "#define SCANLINE_GAP_BRIGHTNESS 0.12"
+           "#define BLOOM_FACTOR 1.5            "
+           "#define INPUT_GAMMA 2.4             "
+           "#define OUTPUT_GAMMA 2.2            "
+           "#define SHARPER                     ";
 
   // orthographic projection matrix
   static const GLfloat mvp_ortho[16] = { 2.0f,  0.0f,  0.0f,  0.0f,
@@ -194,24 +264,22 @@ void FrameBufferLayer::ShaderInit() {
       return;
   }
 
-  FILE *f = fopen("crt-pi.gls", "r");
-  fseek(f, 0, SEEK_END);
-  long fsize = ftell(f);
-  fseek(f, 0, SEEK_SET);
-  char *file_shader = (char*) malloc(fsize + 1);
-  fread(file_shader, 1, fsize, f);
-  fclose(f);
-  file_shader[fsize] = 0;
-
-  char cheader[] = "#define CURVATURE\n";
+  if (!file_shader_txt_) {
+	  FILE *f = fopen("crt-pi.gls", "r");
+	  fseek(f, 0, SEEK_END);
+	  file_shader_txt__len_ = ftell(f);
+	  fseek(f, 0, SEEK_SET);
+	  file_shader_txt_ = (char*) malloc(file_shader_txt__len_ + 1);
+	  fread(file_shader_txt_, 1, file_shader_txt__len_, f);
+	  fclose(f);
+	  file_shader_txt_[file_shader_txt__len_] = 0;
+  }
 
   char vheader[] = "#define VERTEX\n";
-  char *vshader = (char*) malloc(fsize + 1 + strlen(vheader) + strlen(cheader));
+  char *vshader = (char*) malloc(file_shader_txt__len_ + 1 + strlen(vheader) + strlen(header_template));
   strcpy(vshader, vheader);
-  if (curvature_) {
-	  strcat(vshader, cheader);
-  }
-  strcat(vshader, file_shader);
+  ConcatShaderDefines(vshader);
+  strcat(vshader, file_shader_txt_);
 
   const GLchar *vshader_source = (const GLchar*) vshader;
   vshader_ = glCreateShader(GL_VERTEX_SHADER);
@@ -227,20 +295,16 @@ void FrameBufferLayer::ShaderInit() {
 //  fclose(fp);
 
   char fheader[] = "#define FRAGMENT\n";
-  char *fshader = (char*) malloc(fsize + 1 + strlen(fheader) + strlen(cheader));
+  char *fshader = (char*) malloc(file_shader_txt__len_ + 1 + strlen(fheader) + strlen(header_template));
   strcpy(fshader, fheader);
-  if (curvature_) {
-	  strcat(fshader, cheader);
-  }
-  strcat(fshader, file_shader);
+  ConcatShaderDefines(fshader);
+  strcat(fshader, file_shader_txt_);
 
   const GLchar *fshader_source = (const GLchar*) fshader;
   fshader_ = glCreateShader(GL_FRAGMENT_SHADER);
   glShaderSource(fshader_, 1, &fshader_source, 0);
   glCompileShader(fshader_);
   check("glCompileShader2");
-
-  free(file_shader);
 
 //  glGetShaderInfoLog(fshader_,sizeof log,NULL,log);
 //  fp = fopen("shader2.log","w");
@@ -394,12 +458,39 @@ void FrameBufferLayer::SetUsesShader(bool enabled) {
   uses_shader_ = enabled;
 }
 
-void FrameBufferLayer::SetShaderParams(bool curvature) {
+void FrameBufferLayer::SetShaderParams(
+		bool curvature,
+		float curvature_x,
+		float curvature_y,
+		int mask,
+		float mask_brightness,
+		bool gamma,
+		bool fake_gamma,
+		bool scanlines,
+		float scanline_weight,
+		float scanline_gap_brightness,
+		float bloom_factor,
+		float input_gamma,
+		float output_gamma,
+		bool sharper) {
   if (uses_shader_) {
      ShaderDestroy();
   }
   curvature_ = curvature;
   need_cpu_crop_ = curvature;
+  curvature_x_ = curvature_x;
+  curvature_y_ = curvature_y;
+  mask_ = mask;
+  mask_brightness_ = mask_brightness;
+  gamma_ = gamma;
+  fake_gamma_ = fake_gamma;
+  scanlines_ = scanlines;
+  scanline_weight_ = scanline_weight;
+  scanline_gap_brightness_ = scanline_gap_brightness;
+  bloom_factor_ = bloom_factor;
+  input_gamma_ = input_gamma;
+  output_gamma_ = output_gamma;
+  sharper_ = sharper;
   Hide();
 }
 

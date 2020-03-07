@@ -243,7 +243,20 @@ extern void circle_get_scaling_params(int display,
                                       int *sx, int *sy);
 extern void circle_set_interpolation(int enable);
 extern void circle_set_use_shader(int enable);
-extern void circle_set_shader_params(int curvature);
+extern void circle_set_shader_params(int curvature,
+			float curvature_x,
+			float curvature_y,
+			int mask,
+			float mask_brightness,
+			int gamma,
+			int fake_gamma,
+			int scanlines,
+			float scanline_weight,
+			float scanline_gap_brightness,
+			float bloom_factor,
+			float input_gamma,
+			float output_gamma,
+			int sharper);
 
 // -----------------------------------------------------------------------
 // Functions called from kernel layer into emulator layer
