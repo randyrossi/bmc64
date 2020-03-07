@@ -1959,6 +1959,12 @@ static void sanity_check_shader_params(int itemid) {
        s_scanlines_item->value = 0;
     }
 
+    // If curvature is off, disable x and y too
+    if (!s_curvature_item->value) {
+       s_curvature_x_item->disabled = 1;
+       s_curvature_y_item->disabled = 1;
+    }
+
     // If scanlines are off, gamma is disabled.
     // If scanlines are off, weight and gap brightness disabled
     // If scanlines are off, bloom factor is disabled
@@ -3274,7 +3280,7 @@ void build_menu(struct menu_item *root) {
   struct menu_item *shader = ui_menu_add_folder(parent, "CRT Shader");
      s_enable_shader_item =
         ui_menu_add_toggle_labels(MENU_SHADER_ENABLE, shader,
-           "Enable CRT Shader?", 0, "No", "Yes");
+           "Enable CRT Shader?", 1, "No", "Yes");
 
      s_curvature_item =
        ui_menu_add_toggle(MENU_SHADER_CURVATURE, shader, "Curvature", 0);
@@ -3303,7 +3309,7 @@ void build_menu(struct menu_item *root) {
            0, 100, 1, 70);
 
      s_scanlines_item =
-        ui_menu_add_toggle(MENU_SHADER_SCANLINES, shader, "Scanlines", 0);
+        ui_menu_add_toggle(MENU_SHADER_SCANLINES, shader, "Scanlines", 1);
 
      s_scanline_weight_item =
         ui_menu_add_range(
@@ -3321,7 +3327,7 @@ void build_menu(struct menu_item *root) {
      s_gamma_item =
         ui_menu_add_multiple_choice(MENU_SHADER_GAMMA, shader, "Gamma Correction");
      s_gamma_item->num_choices = 3;
-     s_gamma_item->value = 0;
+     s_gamma_item->value = 2;
      strcpy(s_gamma_item->choices[0], "Off");
      strcpy(s_gamma_item->choices[1], "On");
      strcpy(s_gamma_item->choices[2], "Fake (Fast)");
@@ -3677,6 +3683,11 @@ void build_menu(struct menu_item *root) {
   ui_set_on_value_changed_callback(menu_value_changed);
 
   load_settings();
+
+  // Apply shader params
+  sanity_check_shader_params(s_enable_shader_item->id);
+  circle_realloc_fbl(FB_LAYER_VIC, s_enable_shader_item->value);
+  handle_shader_param_change();
 
   if (use_scaling_params_item[0]->value) {
      if (!do_use_int_scaling(FB_LAYER_VIC, 1 /* silent */)) {

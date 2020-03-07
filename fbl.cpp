@@ -628,7 +628,11 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
 
 int FrameBufferLayer::ReAllocate(bool shader_enable) {
   assert(allocated_);
-  assert(showing_);
+
+  if (uses_shader_ == shader_enable) {
+     // No need to realloc if nothing changed;
+     return 0;
+  }
 
   // Free layer but keep pixels.
   FreeInternal(true);
