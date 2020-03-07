@@ -48,6 +48,7 @@
 
 #define BG_COLOR 6
 #define FG_COLOR 3
+#define DISABLED_COLOR 11
 #define HILITE_COLOR 2
 #define BORDER_COLOR 14
 #define TRANSPARENT_COLOR 16
@@ -56,6 +57,7 @@
 
 #define BG_COLOR 0
 #define FG_COLOR 1
+#define DISABLED_COLOR 11
 #define HILITE_COLOR 2
 #define BORDER_COLOR 3
 #define TRANSPARENT_COLOR 16
@@ -532,6 +534,7 @@ static void ui_action(long action) {
     break;
   case ACTION_Left:
   case ACTION_MiniLeft:
+    if (cur->disabled) break;
     if (cur->type == RANGE) {
       if (action == ACTION_MiniLeft)
          cur->value -= cur->ministep;
@@ -570,6 +573,7 @@ static void ui_action(long action) {
     break;
   case ACTION_Right:
   case ACTION_MiniRight:
+    if (cur->disabled) break;
     if (cur->type == RANGE) {
       if (action == ACTION_MiniRight)
          cur->value += cur->ministep;
@@ -603,6 +607,7 @@ static void ui_action(long action) {
     }
     break;
   case ACTION_Return:
+    if (cur->disabled) break;
     if (cur->type == FOLDER) {
       cur->is_expanded = 1 - cur->is_expanded;
       do_on_value_changed(menu_cursor_item[current_menu]);
@@ -890,6 +895,8 @@ static void ui_render_children(struct menu_item *node,
   while (node != NULL) {
     node->render_index = *index;
 
+    int colour = node->disabled ? DISABLED_COLOR : FG_COLOR;
+
     // Render a row
     if (*index >= menu_window_top[stack_index] &&
         *index < menu_window_bottom[stack_index]) {
@@ -902,7 +909,7 @@ static void ui_render_children(struct menu_item *node,
       // Special symbol drawn on left edge
       if (node->symbol) {
           ui_draw_char_raw(node->symbol,
-              node->menu_left+indent*8, y, FG_COLOR, NULL, 0, 1);
+              node->menu_left+indent*8, y, colour, NULL, 0, 1);
       }
 
       // Sometimes, we only want to render the current item. Like when we
@@ -912,45 +919,45 @@ static void ui_render_children(struct menu_item *node,
           *index == menu_cursor[stack_index]) {
 
         ui_draw_text(node->name,
-           node->menu_left + (indent + 1) * 8, y, FG_COLOR);
+           node->menu_left + (indent + 1) * 8, y, colour);
 
         if (node->type == FOLDER) {
           if (node->is_expanded)
-            ui_draw_text("-", node->menu_left + (indent)*8, y, FG_COLOR);
+            ui_draw_text("-", node->menu_left + (indent)*8, y, colour);
           else
-            ui_draw_text("+", node->menu_left + (indent)*8, y, FG_COLOR);
+            ui_draw_text("+", node->menu_left + (indent)*8, y, colour);
         } else if (node->type == TOGGLE) {
           if (node->value) {
             if (node->custom_toggle_label[1][0] == '\0') {
                ui_draw_text("On",
                          node->menu_left + node->menu_width -
-                         ui_text_width("On"), y, FG_COLOR);
+                         ui_text_width("On"), y, colour);
             } else {
                ui_draw_text(node->custom_toggle_label[1],
                          node->menu_left + node->menu_width -
                          ui_text_width(node->custom_toggle_label[1]), y,
-                                       FG_COLOR);
+                                       colour);
             }
           } else {
             if (node->custom_toggle_label[0][0] == '\0') {
                ui_draw_text("Off", node->menu_left + node->menu_width -
-                         ui_text_width("Off"), y, FG_COLOR);
+                         ui_text_width("Off"), y, colour);
             } else {
                ui_draw_text(node->custom_toggle_label[0],
                          node->menu_left + node->menu_width -
                          ui_text_width(node->custom_toggle_label[0]), y,
-                                       FG_COLOR);
+                                       colour);
             }
           }
         } else if (node->type == CHECKBOX) {
           if (node->value)
             ui_draw_text("True", node->menu_left + node->menu_width -
                                      ui_text_width("True"),
-                         y, FG_COLOR);
+                         y, colour);
           else
             ui_draw_text("False", node->menu_left + node->menu_width -
                                       ui_text_width("False"),
-                         y, FG_COLOR);
+                         y, colour);
         } else if (node->type == RANGE) {
           if (node->divisor == 1) {
              sprintf(node->scratch, "%d", node->value);
@@ -961,19 +968,19 @@ static void ui_render_children(struct menu_item *node,
           }
           ui_draw_text(node->scratch, node->menu_left + node->menu_width -
                                           ui_text_width(node->scratch),
-                       y, FG_COLOR);
+                       y, colour);
         } else if (node->type == MULTIPLE_CHOICE) {
           ui_draw_text(node->choices[node->value],
                        node->menu_left + node->menu_width -
                            ui_text_width(node->choices[node->value]),
-                       y, FG_COLOR);
+                       y, colour);
         } else if (node->type == DIVIDER) {
           ui_draw_rect(node->menu_left, y + 3, node->menu_width, 2, BORDER_COLOR, 1);
         } else if (node->type == BUTTON) {
           char *dsp_string = get_button_display_str(node);
           ui_draw_text(dsp_string, node->menu_left + node->menu_width -
                                        ui_text_width(dsp_string),
-                       y, FG_COLOR);
+                       y, colour);
         } else if (node->type == TEXTFIELD) {
           // draw cursor underneath text
           ui_draw_rect(node->menu_left + ui_text_width(node->name) + 8 +
@@ -981,7 +988,7 @@ static void ui_render_children(struct menu_item *node,
                        y, 8, 8, BORDER_COLOR, 1);
           ui_draw_text(node->str_value,
                        node->menu_left + ui_text_width(node->name) + 8, y,
-                       FG_COLOR);
+                       colour);
         }
       }
     }

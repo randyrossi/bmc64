@@ -55,6 +55,9 @@ struct menu_item {
   // Client defined id.
   int id;
 
+  // Menu item is visible but disabled.
+  int disabled;
+
   // Client sub-identifier
   int sub_id;
 

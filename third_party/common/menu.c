@@ -157,6 +157,7 @@ struct menu_item *dir_convention_item;
 
 struct menu_item *scaling_interp_item;
 
+struct menu_item* s_enable_shader_item;
 struct menu_item* s_curvature_item;
 struct menu_item* s_curvature_x_item;
 struct menu_item* s_curvature_y_item;
@@ -1913,6 +1914,73 @@ static void reset_shader_params() {
 
 }
 
+static void sanity_check_shader_params(int itemid) {
+    // All shader items should be disabled if shader is off
+    s_curvature_item->disabled = 0;
+    s_curvature_x_item->disabled = 0;
+    s_curvature_y_item->disabled = 0;
+    s_mask_item->disabled = 0;
+    s_mask_brightness_item->disabled = 0;
+    s_gamma_item->disabled = 0;
+    s_fake_gamma_item->disabled = 0;
+    s_scanlines_item->disabled = 0;
+    s_scanline_weight_item->disabled = 0;
+    s_scanline_gap_brightness_item->disabled = 0;
+    s_bloom_factor_item->disabled = 0;
+    s_input_gamma_item->disabled = 0;
+    s_output_gamma_item->disabled = 0;
+    s_sharper_item->disabled = 0;
+    if (!s_enable_shader_item->value) {
+       s_curvature_item->disabled = 1;
+       s_curvature_x_item->disabled = 1;
+       s_curvature_y_item->disabled = 1;
+       s_mask_item->disabled = 1;
+       s_mask_brightness_item->disabled = 1;
+       s_gamma_item->disabled = 1;
+       s_fake_gamma_item->disabled = 1;
+       s_scanlines_item->disabled = 1;
+       s_scanline_weight_item->disabled = 1;
+       s_scanline_gap_brightness_item->disabled = 1;
+       s_bloom_factor_item->disabled = 1;
+       s_input_gamma_item->disabled = 1;
+       s_output_gamma_item->disabled = 1;
+       s_sharper_item->disabled = 1;
+    }
+
+    if (itemid == MENU_SHADER_SCANLINES &&
+       s_scanlines_item->value &&
+         s_mask_item->value == 2) {
+       // Turn off Trinitron if user selects scanlines
+       s_mask_item->value = 0;
+    } else if (itemid == MENU_SHADER_MASK &&
+       s_mask_item->value == 2 &&
+         s_scanlines_item->value) {
+       // Turn off Scanlines if user selects Trinitron mask
+       s_scanlines_item->value = 0;
+    }
+
+    // If scanlines are off, gamma is disabled.
+    // If scanlines are off, weight and gap brightness disabled
+    // If scanlines are off, bloom factor is disabled
+    if (!s_scanlines_item->value) {
+       s_gamma_item->disabled = 1;
+       s_scanline_weight_item->disabled = 1;
+       s_scanline_gap_brightness_item->disabled = 1;
+       s_bloom_factor_item->disabled = 1;
+    }
+
+    // If gamma is disabled, off or fake, input/output is disabled.
+    if (s_gamma_item->disabled || s_gamma_item->value == 0 || s_gamma_item->value == 2) {
+       s_input_gamma_item->disabled = 1;
+       s_output_gamma_item->disabled = 1;
+    }
+
+    // If mask is off, mask brightness is disabled
+    if (!s_mask_item->value) {
+       s_mask_brightness_item->disabled = 1;
+    }
+}
+
 static void handle_shader_param_change() {
   int curvature;
   float curvature_x;
@@ -2631,6 +2699,7 @@ static void menu_value_changed(struct menu_item *item) {
     set_current_dir_names();
     break;
   case MENU_SHADER_ENABLE:
+    sanity_check_shader_params(item->id);
     ui_canvas_reveal_temp(FB_LAYER_VIC);
     circle_realloc_fbl(FB_LAYER_VIC, item->value);
     handle_shader_param_change();
@@ -2649,6 +2718,7 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_SHADER_INPUT_GAMMA:
   case MENU_SHADER_OUTPUT_GAMMA:
   case MENU_SHADER_SHARPER:
+    sanity_check_shader_params(item->id);
     ui_canvas_reveal_temp(FB_LAYER_VIC);
     handle_shader_param_change();
     break;
@@ -3202,19 +3272,23 @@ void build_menu(struct menu_item *root) {
         "No","Yes");
 
   struct menu_item *shader = ui_menu_add_folder(parent, "CRT Shader");
-     ui_menu_add_toggle_labels(MENU_SHADER_ENABLE, shader,
-        "Enable CRT Shader?", 0, "No", "Yes");
+     s_enable_shader_item =
+        ui_menu_add_toggle_labels(MENU_SHADER_ENABLE, shader,
+           "Enable CRT Shader?", 0, "No", "Yes");
 
      s_curvature_item =
        ui_menu_add_toggle(MENU_SHADER_CURVATURE, shader, "Curvature", 0);
 
      s_curvature_x_item =
        ui_menu_add_range(MENU_SHADER_CURVATURE_X, shader, "H Curvature Amount",
-          0, 25, 1, 10);
+          0, 30, 1, 10);
 
      s_curvature_y_item =
        ui_menu_add_range(MENU_SHADER_CURVATURE_Y, shader, "V Curvature Amount",
-          0, 25, 1, 10);
+          0, 30, 1, 15);
+
+     s_sharper_item = ui_menu_add_toggle(
+        MENU_SHADER_SHARPER, shader, "Sharper Horizontal Blend", 0);
 
      s_mask_item = ui_menu_add_multiple_choice(
         MENU_SHADER_MASK, shader, "Mask Type");
@@ -3234,7 +3308,7 @@ void build_menu(struct menu_item *root) {
      s_scanline_weight_item =
         ui_menu_add_range(
            MENU_SHADER_SCANLINE_WEIGHT, shader, "Scanline Weight",
-              10, 100, 1, 60);
+              0, 150, 1, 60);
 
      s_scanline_gap_brightness_item = ui_menu_add_range(
         MENU_SHADER_SCANLINE_GAP_BRIGHTNESS, shader, "Scanline Gap Brightness",
@@ -3242,13 +3316,10 @@ void build_menu(struct menu_item *root) {
 
      s_bloom_factor_item = ui_menu_add_range(
         MENU_SHADER_BLOOM, shader, "Bloom Factor",
-           100, 200, 1, 150);
-
-     s_sharper_item = ui_menu_add_toggle(
-        MENU_SHADER_SHARPER, shader, "Sharper H Blend", 0);
+           0, 500, 10, 150);
 
      s_gamma_item =
-        ui_menu_add_multiple_choice(MENU_SHADER_GAMMA, shader, "Gamma");
+        ui_menu_add_multiple_choice(MENU_SHADER_GAMMA, shader, "Gamma Correction");
      s_gamma_item->num_choices = 3;
      s_gamma_item->value = 0;
      strcpy(s_gamma_item->choices[0], "Off");
@@ -3257,11 +3328,11 @@ void build_menu(struct menu_item *root) {
 
      s_input_gamma_item = ui_menu_add_range(
         MENU_SHADER_INPUT_GAMMA, shader, "Input Gamma",
-           200, 300, 1, 240);
+           0, 500, 10, 240);
 
      s_output_gamma_item = ui_menu_add_range(
         MENU_SHADER_OUTPUT_GAMMA, shader, "Output Gamma",
-           200, 300, 1, 220);
+           0, 500, 10, 220);
 
      ui_menu_add_button(MENU_SHADER_RESET_ALL, shader, "Reset");
 
