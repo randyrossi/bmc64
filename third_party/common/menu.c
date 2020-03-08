@@ -166,6 +166,7 @@ struct menu_item* s_mask_brightness_item;
 struct menu_item* s_gamma_item;
 struct menu_item* s_fake_gamma_item;
 struct menu_item* s_scanlines_item;
+struct menu_item* s_multisample_item;
 struct menu_item* s_scanline_weight_item;
 struct menu_item* s_scanline_gap_brightness_item;
 struct menu_item* s_bloom_factor_item;
@@ -1028,6 +1029,7 @@ static int save_settings() {
   fprintf(fp,"s_mask=%d\n", s_mask_item->value);
   fprintf(fp,"s_mask_brightness=%d\n", s_mask_brightness_item->value);
   fprintf(fp,"s_scanlines=%d\n", s_scanlines_item->value);
+  fprintf(fp,"s_multisample=%d\n", s_multisample_item->value);
   fprintf(fp,"s_scanline_weight=%d\n", s_scanline_weight_item->value);
   fprintf(fp,"s_scanline_gap_brightness=%d\n", s_scanline_gap_brightness_item->value);
   fprintf(fp,"s_bloom_factor=%d\n", s_bloom_factor_item->value);
@@ -1354,6 +1356,8 @@ static void load_settings() {
       s_mask_brightness_item->value = value;
     } else if (strcmp(name, "s_scanlines") == 0) {
       s_scanlines_item->value = value;
+    } else if (strcmp(name, "s_multisample") == 0) {
+      s_multisample_item->value = value;
     } else if (strcmp(name, "s_scanline_weight") == 0) {
       s_scanline_weight_item->value = value;
     } else if (strcmp(name, "s_scanline_gap_brightness") == 0) {
@@ -1961,6 +1965,7 @@ static void reset_shader_params() {
   s_mask_item->value = 0;
   s_mask_brightness_item->value = 70;
   s_scanlines_item->value = 1;
+  s_multisample_item->value = 1;
   s_scanline_weight_item->value = 60;
   s_scanline_gap_brightness_item->value = 12;
   s_bloom_factor_item->value = 150;
@@ -1979,6 +1984,7 @@ static void sanity_check_shader_params(int itemid) {
     s_gamma_item->disabled = 0;
     s_fake_gamma_item->disabled = 0;
     s_scanlines_item->disabled = 0;
+    s_multisample_item->disabled = 0;
     s_scanline_weight_item->disabled = 0;
     s_scanline_gap_brightness_item->disabled = 0;
     s_bloom_factor_item->disabled = 0;
@@ -1994,6 +2000,7 @@ static void sanity_check_shader_params(int itemid) {
        s_gamma_item->disabled = 1;
        s_fake_gamma_item->disabled = 1;
        s_scanlines_item->disabled = 1;
+       s_multisample_item->disabled = 1;
        s_scanline_weight_item->disabled = 1;
        s_scanline_gap_brightness_item->disabled = 1;
        s_bloom_factor_item->disabled = 1;
@@ -2024,6 +2031,7 @@ static void sanity_check_shader_params(int itemid) {
     // If scanlines are off, weight and gap brightness disabled
     // If scanlines are off, bloom factor is disabled
     if (!s_scanlines_item->value) {
+       s_multisample_item->disabled = 1;
        s_gamma_item->disabled = 1;
        s_scanline_weight_item->disabled = 1;
        s_scanline_gap_brightness_item->disabled = 1;
@@ -2051,6 +2059,7 @@ static void handle_shader_param_change() {
   int gamma;
   int fake_gamma;
   int scanlines;
+  int multisample;
   float scanline_weight;
   float scanline_gap_brightness;
   float bloom_factor;
@@ -2066,6 +2075,7 @@ static void handle_shader_param_change() {
   gamma = s_gamma_item->value > 0;
   fake_gamma = s_gamma_item->value == 2;
   scanlines = s_scanlines_item->value;
+  multisample = s_multisample_item->value;
   scanline_weight = (float)s_scanline_weight_item->value / 10.0f;
   scanline_gap_brightness = (float)s_scanline_gap_brightness_item->value / 100.0f;
   bloom_factor = (float)s_bloom_factor_item->value / 100.0f;
@@ -2081,6 +2091,7 @@ static void handle_shader_param_change() {
                         gamma,
                         fake_gamma,
                         scanlines,
+                        multisample,
                         scanline_weight,
                         scanline_gap_brightness,
                         bloom_factor,
@@ -2770,6 +2781,7 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_SHADER_CURVATURE_X:
   case MENU_SHADER_CURVATURE_Y:
   case MENU_SHADER_SCANLINES:
+  case MENU_SHADER_MULTISAMPLE:
   case MENU_SHADER_SCANLINE_WEIGHT:
   case MENU_SHADER_SCANLINE_GAP_BRIGHTNESS:
   case MENU_SHADER_MASK:
@@ -3377,6 +3389,9 @@ void build_menu(struct menu_item *root) {
      s_scanline_gap_brightness_item = ui_menu_add_range(
         MENU_SHADER_SCANLINE_GAP_BRIGHTNESS, shader, "Scanline Gap Brightness",
            0, 100, 1, 12);
+
+     s_multisample_item =
+        ui_menu_add_toggle(MENU_SHADER_MULTISAMPLE, shader, "Multisample", 1);
 
      s_bloom_factor_item = ui_menu_add_range(
         MENU_SHADER_BLOOM, shader, "Bloom Factor",

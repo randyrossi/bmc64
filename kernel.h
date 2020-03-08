@@ -127,6 +127,7 @@ public:
 			int gamma,
 			int fake_gamma,
 			int scanlines,
+			int multisample,
 			float scanline_weight,
 			float scanline_gap_brightness,
 			float bloom_factor,

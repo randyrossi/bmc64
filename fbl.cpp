@@ -213,6 +213,10 @@ void FrameBufferLayer::ConcatShaderDefines(char *dst) {
 	  strcat (dst, "#define SCANLINES\n");
   }
 
+  if (multisample_) {
+	  strcat (dst, "#define MULTISAMPLE\n");
+  }
+
   sprintf (scratch, "#define SCANLINE_WEIGHT %f\n", scanline_weight_);
   strcat(dst, scratch);
 
@@ -247,6 +251,7 @@ void FrameBufferLayer::ShaderInit() {
            "#define GAMMA                       "
            "#define FAKE_GAMMA                  "
            "#define SCANLINES                   "
+           "#define MULTISAMPLE                 "
            "#define SCANLINE_WEIGHT 6.0         "
            "#define SCANLINE_GAP_BRIGHTNESS 0.12"
            "#define BLOOM_FACTOR 1.5            "
@@ -467,6 +472,7 @@ void FrameBufferLayer::SetShaderParams(
 		bool gamma,
 		bool fake_gamma,
 		bool scanlines,
+		bool multisample,
 		float scanline_weight,
 		float scanline_gap_brightness,
 		float bloom_factor,
@@ -485,6 +491,7 @@ void FrameBufferLayer::SetShaderParams(
   gamma_ = gamma;
   fake_gamma_ = fake_gamma;
   scanlines_ = scanlines;
+  multisample_ = multisample;
   scanline_weight_ = scanline_weight;
   scanline_gap_brightness_ = scanline_gap_brightness;
   bloom_factor_ = bloom_factor;

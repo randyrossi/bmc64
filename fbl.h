@@ -129,6 +129,7 @@ public:
 			bool gamma,
 			bool fake_gamma,
 			bool scanlines,
+			bool multisample,
 			float scanline_weight,
 			float scanline_gap_brightness,
 			float bloom_factor,
@@ -279,6 +280,7 @@ private:
   bool gamma_;
   bool fake_gamma_;
   bool scanlines_;
+  bool multisample_;
   float scanline_weight_;
   float scanline_gap_brightness_;
   float bloom_factor_;
