@@ -3346,8 +3346,8 @@ void build_menu(struct menu_item *root) {
      MENU_USE_SCALING_PARAMS_0, parent, "Apply scaling params at boot", 1,
         "No","Yes");
 
-  if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
-     struct menu_item *shader = ui_menu_add_folder(parent, "CRT Shader");
+  struct menu_item *shader = ui_menu_add_folder(parent, "CRT Shader");
+
      s_enable_shader_item =
         ui_menu_add_toggle_labels(MENU_SHADER_ENABLE, shader,
            "Enable CRT Shader?", 1, "No", "Yes");
@@ -3414,7 +3414,6 @@ void build_menu(struct menu_item *root) {
            0, 500, 10, 220);
 
      ui_menu_add_button(MENU_SHADER_RESET_ALL, shader, "Reset");
-  }
 
   palette_item[0] = emux_add_palette_options(MENU_COLOR_PALETTE_0, parent);
 

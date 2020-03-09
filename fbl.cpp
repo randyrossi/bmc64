@@ -160,7 +160,7 @@ void FrameBufferLayer::CreateTexture() {
   float inputSize[2] = { (float) src_w_, (float)src_h_ };
   float outputSize[2] = { (float) dst_w_, (float)dst_h_ };
 
-  int tx = need_cpu_crop_ ? src_w_ : fb_pitch_;
+  int tx = need_cpu_crop_ ? src_w_ : fb_pitch_ / bytes_per_pixel_;
   int ty = need_cpu_crop_ ? src_h_ : fb_height_;
   float textureSize[2] = { (float) tx, (float) ty };
 
@@ -169,10 +169,17 @@ void FrameBufferLayer::CreateTexture() {
   glUniform2fv(texture_size_, 1, textureSize);
 
   glBindTexture(GL_TEXTURE_2D,tex_);
-  glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE,
-     need_cpu_crop_ ? src_w_ : fb_pitch_,
-     need_cpu_crop_ ? src_h_ : fb_height_,
-     0,GL_LUMINANCE,GL_UNSIGNED_BYTE, 0);
+  if (mode_ == VC_IMAGE_8BPP) {
+     glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE,
+        need_cpu_crop_ ? src_w_ : fb_pitch_ / bytes_per_pixel_,
+        need_cpu_crop_ ? src_h_ : fb_height_,
+        0,GL_LUMINANCE,GL_UNSIGNED_BYTE, 0);
+  } else {
+     glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,
+        need_cpu_crop_ ? src_w_ : fb_pitch_ / bytes_per_pixel_,
+        need_cpu_crop_ ? src_h_ : fb_height_,
+        0,GL_RGB,GL_UNSIGNED_SHORT_5_6_5, 0);
+  }
 
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -270,14 +277,21 @@ void FrameBufferLayer::ShaderInit() {
   }
 
   if (!file_shader_txt_) {
-	  FILE *f = fopen("crt-pi.gls", "r");
-	  fseek(f, 0, SEEK_END);
-	  file_shader_txt__len_ = ftell(f);
-	  fseek(f, 0, SEEK_SET);
-	  file_shader_txt_ = (char*) malloc(file_shader_txt__len_ + 1);
-	  fread(file_shader_txt_, 1, file_shader_txt__len_, f);
-	  fclose(f);
-	  file_shader_txt_[file_shader_txt__len_] = 0;
+     FILE *f;
+     if (mode_ == VC_IMAGE_8BPP) {
+        // Use indexed texture version
+        f = fopen("crt-pi-idx.gls", "r");
+     } else {
+        // Use rgb texture version
+        f = fopen("crt-pi-rgb.gls", "r");
+     }
+     fseek(f, 0, SEEK_END);
+     file_shader_txt__len_ = ftell(f);
+     fseek(f, 0, SEEK_SET);
+     file_shader_txt_ = (char*) malloc(file_shader_txt__len_ + 1);
+     fread(file_shader_txt_, 1, file_shader_txt__len_, f);
+     fclose(f);
+     file_shader_txt_[file_shader_txt__len_] = 0;
   }
 
   char vheader[] = "#define VERTEX\n";
@@ -334,19 +348,14 @@ void FrameBufferLayer::ShaderInit() {
   glUseProgram (shader_program_);
 
   attr_vertex_ = glGetAttribLocation(shader_program_, "VertexCoord");
-  check("get 1");
   attr_texcoord_ = glGetAttribLocation(shader_program_, "TexCoord");
-  check("get 2");
   texture_sampler_ = glGetUniformLocation(shader_program_, "Texture");
-  check("get 3");
-  palette_sampler_ = glGetUniformLocation(shader_program_, "Palette");
-  check("get 4");
+  if (mode_ == VC_IMAGE_8BPP) {
+     palette_sampler_ = glGetUniformLocation(shader_program_, "Palette");
+  }
   input_size_ = glGetUniformLocation (shader_program_, "InputSize");
-  check("get 5");
   output_size_= glGetUniformLocation (shader_program_, "OutputSize");
-  check("get 6");
   texture_size_ = glGetUniformLocation (shader_program_, "TextureSize");
-  check("get 7");
 
   mvp_ = glGetUniformLocation (shader_program_, "MVPMatrix");
   if (mvp_ > -1) {
@@ -359,11 +368,13 @@ void FrameBufferLayer::ShaderInit() {
   glGenTextures(1, &tex_);
   CreateTexture();
 
-  glGenTextures(1, &pal_);
-  glBindTexture(GL_TEXTURE_2D,pal_);
-  glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,256,1,0,GL_RGB,GL_UNSIGNED_SHORT_5_6_5, pal_565_);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  if (mode_ == VC_IMAGE_8BPP) {
+     glGenTextures(1, &pal_);
+     glBindTexture(GL_TEXTURE_2D,pal_);
+     glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,256,1,0,GL_RGB,GL_UNSIGNED_SHORT_5_6_5, pal_565_);
+     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  }
 
   // Use full screen viewport.
   glViewport (0, 0, display_width_, display_height_);
@@ -421,29 +432,29 @@ void FrameBufferLayer::ShaderUpdate() {
     // for its curvature calculation.
 
     // Top left
-	tex_coords_[8] = (float)src_x_ / (float)fb_pitch_;
-	tex_coords_[9] = (float)(src_y_ + src_h_) / (float)fb_height_;
+    tex_coords_[8] = (float)src_x_ / (float)(fb_pitch_ / bytes_per_pixel_);
+    tex_coords_[9] = (float)(src_y_ + src_h_) / (float)fb_height_;
 
     // Top right
-	tex_coords_[10] = (float)(src_x_ + src_w_) / (float)fb_pitch_;
-	tex_coords_[11] = (float)(src_y_ + src_h_) / (float)fb_height_;
+    tex_coords_[10] = (float)(src_x_ + src_w_) / (float)(fb_pitch_ / bytes_per_pixel_);
+    tex_coords_[11] = (float)(src_y_ + src_h_) / (float)fb_height_;
 
     // Bottom left
-	tex_coords_[12] = (float)src_x_ / (float)fb_pitch_;
-	tex_coords_[13] = (float)src_y_ / (float)fb_height_;
+    tex_coords_[12] = (float)src_x_ / (float)(fb_pitch_ / bytes_per_pixel_);
+    tex_coords_[13] = (float)src_y_ / (float)fb_height_;
 
     // Bottom right
-	tex_coords_[14] = (float)(src_x_+src_w_) / (float)fb_pitch_;
-	tex_coords_[15] = (float)src_y_ / (float)fb_height_;
+    tex_coords_[14] = (float)(src_x_+src_w_) / (float)(fb_pitch_ / bytes_per_pixel_);
+    tex_coords_[15] = (float)src_y_ / (float)fb_height_;
   } else {
-	tex_coords_[8] = 0.0f;
-	tex_coords_[9] = 1.0f;
-	tex_coords_[10] = 1.0f;
-	tex_coords_[11] = 1.0f;
-	tex_coords_[12] = 0.0f;
-	tex_coords_[13] = 0.0f;
-	tex_coords_[14] = 1.0f;
-	tex_coords_[15] = 0.0f;
+    tex_coords_[8] = 0.0f;
+    tex_coords_[9] = 1.0f;
+    tex_coords_[10] = 1.0f;
+    tex_coords_[11] = 1.0f;
+    tex_coords_[12] = 0.0f;
+    tex_coords_[13] = 0.0f;
+    tex_coords_[14] = 1.0f;
+    tex_coords_[15] = 0.0f;
   }
 
   glBindBuffer(GL_ARRAY_BUFFER, vbo_);
@@ -549,13 +560,9 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
         break;
   }
 
-  int pitch_multiplier = 1;
-  if (mode_ == VC_IMAGE_RGB565)
-     pitch_multiplier = 2;
-
   // pitch is in bytes
   if (pitch) {
-     *pitch = fb_pitch_ = ALIGN_UP(width * pitch_multiplier, 32);
+     *pitch = fb_pitch_ = ALIGN_UP(width * bytes_per_pixel_, 32);
   }
 
   fb_width_ = width;
@@ -568,9 +575,8 @@ int FrameBufferLayer::Allocate(int pixelmode, uint8_t **pixels,
   display_height_ = dispman_info.height;
 
   if (pixels) {
-     pixels_ = (uint8_t*) malloc(fb_pitch_ * height * bytes_per_pixel_);
-     cropped_pixels_ =
-        (uint8_t*) malloc(fb_pitch_ * fb_height_ * bytes_per_pixel_);
+     pixels_ = (uint8_t*) malloc(fb_pitch_ * height);
+     cropped_pixels_ = (uint8_t*) malloc(fb_pitch_ * fb_height_);
      *pixels = pixels_;
   }
 
@@ -657,7 +663,7 @@ int FrameBufferLayer::ReAllocate(bool shader_enable) {
 void FrameBufferLayer::Clear() {
   assert (allocated_);
 
-  memset(pixels_, 0, fb_height_ * fb_pitch_ * bytes_per_pixel_);
+  memset(pixels_, 0, fb_height_ * fb_pitch_);
 }
 
 // When keepPixels is true, don't clobber any dimensions or delete
@@ -924,48 +930,56 @@ void FrameBufferLayer::RenderGL(bool sync) {
     // to see, otherwise the curvature gets applied incorrectly to the
     // larger area. So we crop on the CPU rather than by texture coords.
     if (need_cpu_crop_) {
+       int wid = src_w_ * bytes_per_pixel_;
        for (int yy=src_y_; yy < src_y_ + src_h_;yy++) {
-          memcpy (cropped_pixels_ + (yy - src_y_) * src_w_, pixels_ + src_x_ + yy * fb_pitch_, src_w_);
+          memcpy (cropped_pixels_ + (yy - src_y_) * wid,
+                  pixels_ + src_x_ + yy * fb_pitch_, wid);
        }
     }
 
     glBindTexture(GL_TEXTURE_2D,tex_);
-    glTexSubImage2D(GL_TEXTURE_2D,
+
+    if (mode_ == VC_IMAGE_8BPP) {
+        glTexSubImage2D(GL_TEXTURE_2D,
         0,
         0,
         0,
-        need_cpu_crop_ ? src_w_ : fb_pitch_,
+        need_cpu_crop_ ? src_w_ : fb_pitch_ / bytes_per_pixel_,
         need_cpu_crop_ ? src_h_ : fb_height_,
         GL_LUMINANCE,
         GL_UNSIGNED_BYTE,
         need_cpu_crop_ ? cropped_pixels_ : pixels_);
+    } else {
+        glTexSubImage2D(GL_TEXTURE_2D,
+        0,
+        0,
+        0,
+        need_cpu_crop_ ? src_w_ : fb_pitch_ / bytes_per_pixel_,
+        need_cpu_crop_ ? src_h_ : fb_height_,
+        GL_RGB,
+        GL_UNSIGNED_SHORT_5_6_5,
+        need_cpu_crop_ ? cropped_pixels_ : pixels_);
+    }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-    check("glBindBuffer vbo2");
     glUseProgram (shader_program_);
-    check("useProgram");
 
     glActiveTexture(GL_TEXTURE0 + 0);
     glBindTexture(GL_TEXTURE_2D, tex_);
-    check("bindTexture 1");
     glUniform1i(texture_sampler_, 0);
-    check("glUniform1i");
 
-    glActiveTexture(GL_TEXTURE0 + 1);
-    glBindTexture(GL_TEXTURE_2D, pal_);
-    check("bindTexture 2");
-    glUniform1i(palette_sampler_, 1);
-    check("glUniform1i");
+    if (mode_ == VC_IMAGE_8BPP) {
+       glActiveTexture(GL_TEXTURE0 + 1);
+       glBindTexture(GL_TEXTURE_2D, pal_);
+       glUniform1i(palette_sampler_, 1);
+    }
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    check("glDrawArrays");
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    check("glBindBuffer 0");
 
     eglSwapInterval(egl_display_, sync ? 1 : 0);
     eglSwapBuffers(egl_display_, egl_surface_);
-    check("eglSwapBuffers");
 }
 
 // Static
