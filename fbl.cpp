@@ -930,10 +930,11 @@ void FrameBufferLayer::RenderGL(bool sync) {
     // to see, otherwise the curvature gets applied incorrectly to the
     // larger area. So we crop on the CPU rather than by texture coords.
     if (need_cpu_crop_) {
-       int wid = src_w_ * bytes_per_pixel_;
+       int wid = ALIGN_UP(src_w_ * bytes_per_pixel_, 4);
+       uint8_t *src_col = pixels_ + src_x_ * bytes_per_pixel_;
        for (int yy=src_y_; yy < src_y_ + src_h_;yy++) {
           memcpy (cropped_pixels_ + (yy - src_y_) * wid,
-                  pixels_ + src_x_ + yy * fb_pitch_, wid);
+                  src_col + yy * fb_pitch_, wid);
        }
     }
 
