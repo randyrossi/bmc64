@@ -17,6 +17,10 @@
 #define _fb2_h
 
 #include "bcm_host.h"
+#include "GLES2/gl2.h"
+#include "GLES2/gl2ext.h"
+#include "EGL/egl.h"
+#include "EGL/eglext.h"
 
 // A wrapper that manages a single dispmanx layer and
 // indexed frame buffer.
@@ -39,6 +43,12 @@ public:
   // pitch represents bytes per line
   int Allocate(int pixelmode, uint8_t **pixels,
                int width, int height, int *pitch);
+
+  // Allocate again with the same parameters. pixels and
+  // pitch will remain the same.  Used for turning the shader
+  // on/off.
+  int ReAllocate(bool shader_enable);
+
   void Free();
   void Clear();
 
@@ -50,10 +60,10 @@ public:
   // the currently visible resource is the destination.
   void FrameReady(int to_offscreen);
 
-  // Show the framebuffer over top the first
+  // Show the framebuffer.
   void Show();
 
-  // Hide the framebuffer
+  // Hide the framebuffer.
   void Hide();
 
   // Set one color of the indexed palette. Can only be called when
@@ -78,7 +88,7 @@ public:
   // Otherwise, the src region width is scaled up to the width of the
   // frame buffer * vstretch, the height is determined by 
   // frame buffer width / hstretch.
-  void SetStretch(double hstretch, double vstretch);
+  void SetStretch(double hstretch, double vstretch, int hintstr, int vintstr, int use_hintstr, int use_vintstr);
 
   void SetCenterOffset(int cx, int cy);
 
@@ -94,16 +104,60 @@ public:
   // Used to force a fb into a smaller space (for things like PIP or side-by-side.
   void SetPadding(double leftPadding, double rightPadding, double topPadding, double bottomPadding);
 
+  // Retrieve dimensions for this layer. 
+  void GetDimensions(int *display_w, int *display_h,
+                     int *fb_w, int *fb_h,
+                     int *src_w, int *src_h,
+                     int *dst_w, int *dst_h);
+
   // initializes the bcm_host interface
   static void Initialize();
+  static void OGLInit();
+
+  bool UsesShader();
+
+  void SetUsesShader(bool enable);
+
+  // NOTE: This will implicitly Hide the layer since the shader must be
+  // destroyed and recompiled.
+  void SetShaderParams(
+		    bool curvature,
+			float curvature_x,
+			float curvature_y,
+			int mask,
+			float mask_brightness,
+			bool gamma,
+			bool fake_gamma,
+			bool scanlines,
+			bool multisample,
+			float scanline_weight,
+			float scanline_gap_brightness,
+			float bloom_factor,
+			float input_gamma,
+			float output_gamma,
+			bool sharper);
 
   // make off screen resources for fb1 (and optionally fb2) visible
   // then swap destination resources in prep for next frame
   static void SwapResources(FrameBufferLayer* fb1, FrameBufferLayer* fb2);
 
-private:
+  static void SetInterpolation(int enable);
 
+private:
+  void FreeInternal(bool keepPixels);
   void Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update);
+  void RenderGL(bool sync);
+
+  void ShaderInit();
+  void ShaderDestroy();
+  void CreateTexture();
+  void ReCreateTexture();
+  void ShaderUpdate();
+
+  void EnableShader();
+  void DisableShader();
+
+  void ConcatShaderDefines(char *dst);
 
   // Raw pixel data. Not VC memory.
   uint8_t* pixels_;
@@ -111,6 +165,12 @@ private:
   static DISPMANX_DISPLAY_HANDLE_T dispman_display_;
   DISPMANX_ELEMENT_HANDLE_T dispman_element_;
   DISPMANX_RESOURCE_HANDLE_T dispman_resource_[2];
+
+  static EGLDisplay egl_display_;
+  static EGLContext egl_context_;
+  EGLConfig egl_config_;
+  EGLSurface egl_surface_;
+  EGL_DISPMANX_WINDOW_T egl_native_window_;
 
   VC_RECT_T scale_dst_rect_;
   VC_RECT_T copy_dst_rect_;
@@ -121,13 +181,18 @@ private:
 
   static bool initialized_;
 
-  int width_;
-  int height_;
-  int pitch_;
+  int fb_width_;
+  int fb_height_;
+  int fb_pitch_;
   int layer_;
   int transparency_;
   double hstretch_;
   double vstretch_;
+  int hintstr_;
+  int vintstr_;
+  int use_hintstr_;
+  int use_vintstr_;
+
   // -1 = top, 0 = center, 1 = bottom
   int valign_;
   int vpadding_;
@@ -157,6 +222,11 @@ private:
   int src_w_;
   int src_h_;
 
+  int dst_x_;
+  int dst_y_;
+  int dst_w_;
+  int dst_h_;
+
   bool showing_;
   bool allocated_;
 
@@ -165,6 +235,58 @@ private:
 
   uint16_t pal_565_[256];
   uint32_t pal_argb_[256];
+
+  bool uses_shader_;
+
+  bool shader_init_;
+  GLuint vshader_;
+  GLuint fshader_;
+  GLuint shader_program_;
+  GLuint vbo_;
+  GLuint attr_vertex_;
+  GLuint attr_texcoord_;
+  GLuint texture_sampler_;
+  GLuint palette_sampler_;
+  GLuint tex_;
+  GLuint pal_;
+
+  // Orthographic projection matrix
+  GLint mvp_;
+
+  // Shader parameters
+  GLuint input_size_;
+  GLuint output_size_;
+  GLuint texture_size_;
+
+  // Curvature requires the texture to have only
+  // the visible pixels in it. We can't get away
+  // with texture coords to crop what we want out
+  // of the buffer.  The shader could probably be
+  // updated to avoid this.  This flag being true
+  // causes hundreds of memcpy's to crop the data.
+  bool need_cpu_crop_;
+  uint8_t* cropped_pixels_;
+
+  // Coordinates. One array is used for both vertex and
+  // texture coordinates. 0-7 = vertex, 8-15 = texture
+  GLfloat tex_coords_[16];
+
+  // Shader params
+  bool curvature_;
+  float curvature_x_;
+  float curvature_y_;
+  int mask_;
+  float mask_brightness_;
+  bool gamma_;
+  bool fake_gamma_;
+  bool scanlines_;
+  bool multisample_;
+  float scanline_weight_;
+  float scanline_gap_brightness_;
+  float bloom_factor_;
+  float input_gamma_;
+  float output_gamma_;
+  bool sharper_;
 };
 
 #endif

@@ -107,7 +107,7 @@ unsigned int *raspi_get_palette(int index) {
 }
 
 void set_canvas_size(int index, int *w, int *h, int *gw, int *gh) {
-  if (index == vic_canvas_index) {
+  if (index == VIC_INDEX) {
     *w = 384;
     *h = 272;
     *gw = 40*8;
@@ -122,7 +122,7 @@ void set_canvas_size(int index, int *w, int *h, int *gw, int *gh) {
 }
 
 void set_canvas_borders(int index, int *w, int *h) {
-  if (index == vic_canvas_index) {
+  if (index == VIC_INDEX) {
     if (is_ntsc()) {
        *w = 32;
        *h = 23;

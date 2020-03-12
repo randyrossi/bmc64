@@ -30,7 +30,7 @@
 #include <stdint.h>
 
 #define NUM_MENU_ROOTS 5
-#define MAX_CHOICES    48
+#define MAX_CHOICES    64
 #define MAX_MENU_STR   36
 #define MAX_FN_NAME    20 // only limit for new file names
 
@@ -54,6 +54,9 @@ typedef enum menu_item_type {
 struct menu_item {
   // Client defined id.
   int id;
+
+  // Menu item is visible but disabled.
+  int disabled;
 
   // Client sub-identifier
   int sub_id;
@@ -81,6 +84,7 @@ struct menu_item {
   int min;
   int max;
   int step;
+  int ministep;
   int divisor;
 
   // For FOLDER
@@ -222,7 +226,6 @@ void ui_enable_osd(void);
 void ui_disable_osd(void);
 void ui_dismiss_osd_if_active(void);
 
-void ui_set_transparent(int v);
 void ui_set_render_current_item_only(int v);
 
 struct menu_item* ui_find_item_by_id(struct menu_item *node, int id);
@@ -232,6 +235,10 @@ extern int ui_showing;
 
 void ui_handle_toggle_or_quick_func(void);
 void ui_render_single_frame(void);
+void ui_geometry_changed(int dpx, int dpy,
+                         int fbw, int fbh,
+                         int sw, int sh,
+                         int dw, int dh);
 
 // Used to ensure we process all key events before transitioning to
 // the ui. Can be set to 2 from an ISR to ensure handling from key queue and

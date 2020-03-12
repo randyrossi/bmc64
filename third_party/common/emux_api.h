@@ -85,15 +85,10 @@ typedef enum {
   Setting_RAMBlock2, // Vic20
   Setting_RAMBlock3, // Vic20
   Setting_RAMBlock5, // Vic20
-  Setting_SidEngine, // Vice
-  Setting_SidFilters, // Vice
-  Setting_SidModel,
-  Setting_SidResidSampling, // Vice
-  Setting_SidResidPassband, // Vice
-  Setting_SidResidGain,     // Vice
   Setting_SidWriteAccess, // Plus4Emu
   Setting_SidDigiblaster, // Plus4Emu
   Setting_WarpMode,
+  Setting_VideoSize, // PET
 } IntSetting;
 
 typedef enum {
@@ -132,10 +127,18 @@ struct CanvasState {
   // Just the gfx area (no border)
   int gfx_w;
   int gfx_h;
-  // How much border is available
+  int max_stretch_h;
+
+  // Negative border area available for padding in pixels.
+  int max_padding_w;
+  int max_padding_h;
+
+  // How much border is available in pixels.
   int max_border_w;
   int max_border_h;
-  // How much of the border we want to see
+
+  // How much of the border we want to see. Comes from
+  // the menu items.
   int border_w;
   int border_h;
 
@@ -153,12 +156,17 @@ struct CanvasState {
   int overlay_y;
 
   int extra_offscreen_border_left;
+  int extra_offscreen_border_right;
   int first_displayed_line;
+  int last_displayed_line;
 
   int fb_width;
   int fb_height;
 
-  // For CRT effect, set to 2.
+  // For CRT effect, set to 2. This doubles the height of
+  // the frame buffer so we can 'skip' every other line.
+  // Not loaded from settings. It's set by the machine if
+  // it wants to support this.  Currently only PET does.
   int raster_skip;
 };
 
@@ -217,8 +225,9 @@ extern int vic_showing;
 extern int vdc_showing;
 extern int vic_enabled;
 extern int vdc_enabled;
-extern int vdc_canvas_index;
-extern int vic_canvas_index;
+
+#define VIC_INDEX 0
+#define VDC_INDEX 1
 
 // Pause emulator main loop and run our ui loop. 
 void emux_trap_main_loop_ui(void);
@@ -327,8 +336,10 @@ struct menu_item* emux_add_cartridge_options(struct menu_item* parent);
 void emux_set_warp(int warp);
 
 void emux_apply_video_adjustments(int layer, int hcenter, int vcenter,
-                                  double hborder, double vborder,
+                                  int hborder, int vborder,
                                   double hstretch, double vstretch,
+                                  int hintstr, int vintstr,
+                                  int use_hintstr, int use_vintstr,
                                   double lpad, double rpad,
                                   double tpad, double bpad, int zlayer);
 
@@ -396,5 +407,12 @@ int is_ntsc();
 int is_composite();
 
 void emux_add_userport_joys(struct menu_item* parent);
+
+void emux_geometry_changed(int layer);
+
+// Indicates the framebuffer (fbl) has changed size and other canvas_state
+// parameters may have changed as well.  May cause a call to geometry change.
+// Video settings needs to be applied.
+void emux_frame_buffer_changed(int layer);
 
 #endif

@@ -45,7 +45,7 @@ public:
   bool Initialize() { return true; }
 #endif
 
-  bool Init(void) override;
+  bool Init(ViceOptions* options) override;
   void LaunchEmulator(char *timing_option) override;
 
 private:
@@ -53,6 +53,7 @@ private:
   int cyclesPerSecond_;
   char timing_option_[8];
   CSpinLock m_Lock;
+  ViceOptions *m_options;
 
   void RunMainPlus4(bool wait);
   void ComputeResidFilter(int model);

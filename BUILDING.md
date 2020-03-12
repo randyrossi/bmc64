@@ -24,7 +24,7 @@ These instructions have been tested on Debian/Ubuntu/Mint distributions. If you 
 2. Download and unpack the *GNU Embedded Toolchain for Arm*:
 
     * Visit [https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
-    * Download the package for your system. For example, at the time of writing [gcc-arm-none-eabi-9-2019-q4-major-x86\_64-linux.tar.bz2](https://developer.arm.com/-/media/Files/downloads/gnu-rm/9-2019q4/gcc-arm-none-eabi-9-2019-q4-major-x86_64-linux.tar.bz2?revision=108bd959-44bd-4619-9c19-26187abf5225&la=en&hash=E788CE92E5DFD64B2A8C246BBA91A249CB8E2D2D) was available for Linux x86\_64.
+    * Download the package for your system. For example, at the time of writing [gcc-arm-none-eabi-9-2019-q4-major-x86\_64-linux.tar.bz2](https://developer.arm.com/-/media/Files/downloads/gnu-rm/9-2019q4/gcc-arm-none-eabi-9-2019-q4-major-x86_64-linux.tar.bz2) was available for Linux x86\_64.
     * Once downloaded, extract the file somewhere. Note down the path to the extracted directory. This will be used later.
     * In the extracted directory, find the /lib/gcc/arm-none-eabi/ directory and note down the version number. This will be used later.
 
@@ -94,7 +94,9 @@ Once the *make_machines.sh* build is complete, you will have kernel files with a
 ## Problems
 1. When you run *make\_all.sh* you get an error such as '#error "<dirent.h> not supported"'
 
-    Ensure you have all of the build tools installed from the prerequisites step
+    Ensure you have all of the build tools installed from the prerequisites step.
+    
+    If it still does not work, try rebooting your machine and following the "Building" steps again.
 
 2. When you run one of the build scripts (*clean\_all.sh*, *make\_all.sh* or *make\_machines.sh*), you get an error such as 'arm-eabi-g++: Command not found'
 

@@ -22,6 +22,7 @@ endif
 
 CFLAGS += -I "$(NEWLIBDIR)/include" -I $(STDDEF_INCPATH) \
           -I third_party/circle-stdlib/include \
+          -I third_party/vice-3.3/src \
           -I $(CIRCLEHOME)/addon/fatfs \
           -D $(MACHINE_CLASS)
 

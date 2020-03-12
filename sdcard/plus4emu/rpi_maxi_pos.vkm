@@ -1,0 +1,88 @@
+# BMC64 keyboard mapping file suitable for both
+# USB and real C64 keyboards using GPIO
+#
+# This is not a VICE keymap file.
+#
+#     0: Del          1: Return       2: £            3: Help
+#     4: F1           5: F2           6: F3           7: @
+#     8: 3            9: W           10: A           11: 4
+#    12: Z           13: S           14: E           15: Shift
+#    16: 5           17: R           18: D           19: 6
+#    20: C           21: F           22: T           23: X
+#    24: 7           25: Y           26: G           27: 8
+#    28: B           29: H           30: U           31: V
+#    32: 9           33: I           34: J           35: 0
+#    36: M           37: K           38: O           39: N
+#    40: Down        41: P           42: L           43: Up
+#    44: .           45: :           46: -           47: ,
+#    48: Left        49: *           50: ;           51: Right
+#    52: Esc         53: =           54: +           55: /
+#    56: 1           57: Home        58: Ctrl        59: 2
+#    60: Space       61: C=          62: Q           63: Stop
+#
+BackSpace     0
+Return        1
+Down          2
+F7            3
+F1            4
+F3            5
+F5            6
+BackSlash     7
+3             8
+w             9
+a            10
+4            11
+z            12
+s            13
+e            14
+Shift_L      15
+Shift_R      15
+5            16
+r            17
+d            18
+6            19
+c            20
+f            21
+t            22
+x            23
+7            24
+y            25
+g            26
+8            27
+b            28
+h            29
+u            30
+v            31
+9            32
+i            33
+j            34
+0            35
+m            36
+k            37
+o            38
+n            39
+Home         40   // C64 Home = Plus4 Down
+p            41
+l            42
+Insert       43   // C64 Sterling = Plus4 Up
+Dash         43   // C64 Sterline = Plus4 Up
+Period       44
+LeftBracket  45
+SingleQuote  46   // C64 Up arrow = Plus4 Dash
+Comma        47
+KP_Add       48   // C64 Plus = Plus4 Left
+Equals       49   // C64 Equals = Plus4 Asterisk
+RightBracket 50
+KP_Subtract  51   // C64 Dash = Plus4 Right
+BackQuote    52   // C64 Left Arrow = Plus4 Escape
+Right        53   // C64 Right = PLus4 Equals
+SemiColon    54   // C64 Asterisk = Plus4 Plus
+Slash        55
+1            56
+Tab          57   // C64 Restore = Plus4 Clr/Home
+Control_L    58
+2            59
+Space        60
+Super_L      61
+q            62
+Escape       63

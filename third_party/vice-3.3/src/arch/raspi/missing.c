@@ -33,6 +33,7 @@
 #include <sys/time.h>
 
 #include "ui.h"
+#include "raspi_machine.h"
 
 // ------------------------------------------------------------------------
 // These are stubs to get things compiling. The vast majority of these

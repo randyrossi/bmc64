@@ -16,12 +16,14 @@
 #ifndef emualtorcore_h
 #define emulatorcore_h
 
+#include "viceoptions.h"
+
 class EmulatorCore {
 public:
   EmulatorCore(void) = default;
   ~EmulatorCore(void) = default;
 
-  virtual bool Init() = 0;
+  virtual bool Init(ViceOptions *options) = 0;
   virtual void LaunchEmulator(char *timing_option) = 0;
 };
 

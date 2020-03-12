@@ -26,6 +26,14 @@
 
 #include "keycodes.h"
 
+signed long commodore_key_sym;
+signed long restore_key_sym;
+signed long ctrl_key_sym;
+int commodore_key_sym_set;
+int restore_key_sym_set;
+int ctrl_key_sym_set;
+
+
 raw_keycode_func_t raw_keycode_func = 0;
 
 const char* keycode_to_string(long keycode) {

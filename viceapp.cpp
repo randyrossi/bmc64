@@ -190,7 +190,7 @@ bool ViceScreenApp::Initialize(void) {
      }
   }
 
-  if (!mEmulatorCore->Init()) {
+  if (!mEmulatorCore->Init(&mViceOptions)) {
     return false;
   }
 

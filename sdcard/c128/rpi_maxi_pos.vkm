@@ -1,5 +1,4 @@
-# BMC64 keyboard mapping file suitable for both
-# USB and real C64 keyboards using GPIO
+# BMC64 keyboard mapping file for TheC64 ('Maxi')
 #
 # A Keyboard map is read in as patch to the current map.
 #
@@ -39,9 +38,8 @@
 !RSHIFT 6 4
 !VSHIFT RSHIFT
 
-Tab 7 2 8       /* CTRL */
-Control_L 7 5 8 /* Commodore Key */
-Alt_L 7 5 8     /* Commodore Key */
+Control_L 7 2 8 /* Ctrl */
+Super_L 7 5 0   /* Commodore Key */
 BackSpace 0 0 8
 Down 0 7 8
 Escape 7 7 8    /* RunStop */
@@ -54,25 +52,29 @@ F6 0 6 1
 F7 0 3 8
 F8 0 3 1
 Home 6 3 8      /* Clr */
+Insert 0 0 16   /* Insert */
 Left 0 2 1
 Return 0 1 8
 Right 0 2 8
 Shift_L 1 7 2
 Shift_R 6 4 4
 Up 0 7 1
-LeftBracket 5 6 8     /* at */
-SemiColon 5 5 8       /* colon */
-Comma 5 7 8           /* comma */
-BackSlash 6 5 0       /* equal */
+KP_Add 5 0 8          /* + */
+KP_Subtract 5 3 8     /* - */
+Apostrophe 6 6 8      /* Up Arrow */
+LeftBracket 5 5 8     /* : -> : */
+SemiColon  6 1 8      /* * -> * */
+Comma  5 7 8          /* , -> , */
+BackSlash  5 6 8      /* @ -> @ */
 Pound 6 5 0           /* equal */
-Equals 5 3 8          /* minus */
-Period 5 4 8          /* period */
-Dash 5 0 8            /* plus */
-SingleQuote 6 2 8     /* semicolon */
-Slash 6 7 8           /* slash */
+Equals  6 5 8         /* = -> = */
+Period  5 4 8         /* . */
+Dash  6 0 8           /* Pound */
+SingleQuote 6 6 8     /* Up Arrow */
+Slash  6 7 8          /* / -> / */
 Space 7 4 8           /* space */
 Insert 6 0 8          /* sterling */
-RightBracket 6 1 8    /* asterisk */
+RightBracket  6 2 8   /* ; -> ; */
 BackQuote 7 1 0       /* arrowleft */
 Del 6 6 8             /* arrowup */
 0 4 3 8
@@ -113,6 +115,5 @@ y 3 1 8
 z 1 4 8
 
 # Restore key mappings
-PageUp -3 0
 CapsLock -4 1
-F11 -4 0 /* 40/80 Columns */
+Tab -3 0

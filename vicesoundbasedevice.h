@@ -71,6 +71,9 @@ public:
   /// Set volume before start if desired
   void SetVolume(int nVolume);
 
+  /// Set channels before start
+  void SetChannels(int nChannels);
+
   /// \brief Connects to the VCHIQ sound service and starts sending sound data
   /// \return Operation successful?
   boolean Start(void);
@@ -131,6 +134,7 @@ private:
   unsigned m_nCompletePos;
   s16 *p_buffer;
   int m_nVolume;
+  int m_nChannels;
 };
 
 #endif

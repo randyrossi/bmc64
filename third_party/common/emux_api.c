@@ -57,8 +57,6 @@ int vic_showing;
 int vdc_showing;
 int vic_enabled = 1;
 int vdc_enabled;
-int vdc_canvas_index;
-int vic_canvas_index;
 
 // Ring buffer for key latch events
 struct pending_emu_key_s pending_emu_key;
@@ -149,7 +147,9 @@ void emux_ensure_video(void) {
 
 void emux_apply_video_adjustments(int layer,
       int hcenter, int vcenter,
-      double hborder, double vborder, double h_stretch, double v_stretch,
+      int hborder, int vborder, double h_stretch, double v_stretch,
+      int hintstr, int vintstr,
+      int use_hintstr, int use_vintstr,
       double lpad, double rpad, double tpad, double bpad,
       int zlayer) {
   // Hide the layer. Can't show it here on the same loop so we have to
@@ -160,11 +160,10 @@ void emux_apply_video_adjustments(int layer,
   circle_hide_fbl(layer);
   if (layer == FB_LAYER_VIC) {
      vic_showing = 0;
-     index = vic_canvas_index;
+     index = VIC_INDEX;
   } else if (layer == FB_LAYER_VDC) {
-     assert (layer == FB_LAYER_VDC);
      vdc_showing = 0;
-     index = vdc_canvas_index;
+     index = VDC_INDEX;
   } else if (layer == FB_LAYER_UI) {
      index = -1;
      ui_showing = 0;
@@ -174,14 +173,13 @@ void emux_apply_video_adjustments(int layer,
 
   circle_set_zlayer_fbl(layer, zlayer);
   circle_set_padding_fbl(layer, lpad, rpad, tpad, bpad);
-
-  circle_set_stretch_fbl(layer, h_stretch, v_stretch);
+  circle_set_stretch_fbl(layer, h_stretch, v_stretch,
+                         hintstr, vintstr, use_hintstr,
+                         use_vintstr);
 
   if (index >= 0) {
-    canvas_state[index].border_w =
-       canvas_state[index].max_border_w * hborder;
-    canvas_state[index].border_h =
-       canvas_state[index].max_border_h * vborder;
+    canvas_state[index].border_w = hborder;
+    canvas_state[index].border_h = vborder;
 
     canvas_state[index].vis_w =
        canvas_state[index].gfx_w +
@@ -215,18 +213,35 @@ void emux_apply_video_adjustments(int layer,
                 canvas_state[index].gfx_h + 2;
 
     canvas_state[index].overlay_x = canvas_state[index].left;
-  }
 
-  if (layer != FB_LAYER_UI) {
-     circle_set_src_rect_fbl(layer,
+    circle_set_src_rect_fbl(layer,
            canvas_state[index].left,
            canvas_state[index].top,
            canvas_state[index].vis_w,
            canvas_state[index].vis_h);
   }
 
+  if (layer == FB_LAYER_UI) {
+    // Due to raster skip, we won't use top, recalculate it
+    // as though raster skip was 1.
+    int raster_skip = canvas_state[VIC_INDEX].raster_skip;
+    int ui_top = canvas_state[VIC_INDEX].first_displayed_line +
+       canvas_state[VIC_INDEX].max_border_h / raster_skip -
+           canvas_state[VIC_INDEX].border_h / raster_skip;
+
+    // For the UI, we inherit the same cutout as the VIC (but take
+    // in account raster_skip)
+    circle_set_src_rect_fbl(layer,
+           canvas_state[VIC_INDEX].left,
+           ui_top,
+           canvas_state[VIC_INDEX].vis_w,
+           canvas_state[VIC_INDEX].vis_h / raster_skip);
+  }
+
   circle_set_center_offset(layer,
            hcenter, vcenter);
+
+  emux_geometry_changed(layer);
 }
 
 void emu_joy_interrupt_abs(int port, int device,

@@ -26,6 +26,7 @@
 
 #include "menu.h"
 
+#include <math.h>
 #include <assert.h>
 #include <dirent.h>
 #include <stdio.h>
@@ -52,7 +53,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "3.4"
+#define VERSION_STRING "3.5"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -62,18 +63,12 @@ extern void reboot(void);
 
 #define DEFAULT_VICII_H_STRETCH 1200
 #define DEFAULT_VICII_V_STRETCH 1000
-#define DEFAULT_VICII_H_BORDER_TRIM 0
-#define DEFAULT_VICII_V_BORDER_TRIM 0
 
 #define DEFAULT_VIC_H_STRETCH 1450
 #define DEFAULT_VIC_V_STRETCH 1000
-#define DEFAULT_VIC_H_BORDER_TRIM 30
-#define DEFAULT_VIC_V_BORDER_TRIM 12
 
 #define DEFAULT_VDC_H_STRETCH 1450
 #define DEFAULT_VDC_V_STRETCH 1000
-#define DEFAULT_VDC_H_BORDER_TRIM 20
-#define DEFAULT_VDC_V_BORDER_TRIM 40
 
 #define SWITCH_MSG "NOTE: For machines other than C64, " \
                    "the SDCard will only boot on the same Pi model the " \
@@ -129,44 +124,55 @@ struct menu_item *statusbar_padding_item;
 struct menu_item *tape_reset_with_machine_item;
 struct menu_item *vkbd_transparency_item;
 
-struct menu_item *palette_item_0;
-struct menu_item *brightness_item_0;
-struct menu_item *contrast_item_0;
-struct menu_item *gamma_item_0;
-struct menu_item *tint_item_0;
-struct menu_item *saturation_item_0;
-
-struct menu_item *palette_item_1;
-struct menu_item *brightness_item_1;
-struct menu_item *contrast_item_1;
-struct menu_item *gamma_item_1;
-struct menu_item *tint_item_1;
-struct menu_item *saturation_item_1;
+struct menu_item *palette_item[2];
+struct menu_item *brightness_item[2];
+struct menu_item *contrast_item[2];
+struct menu_item *gamma_item[2];
+struct menu_item *tint_item[2];
+struct menu_item *saturation_item[2];
 
 struct menu_item *warp_item;
 struct menu_item *reset_confirm_item;
 struct menu_item *gpio_config_item;
 struct menu_item *active_display_item;
 
-struct menu_item *h_center_item_0;
-struct menu_item *v_center_item_0;
-struct menu_item *h_border_item_0;
-struct menu_item *v_border_item_0;
-struct menu_item *h_stretch_item_0;
-struct menu_item *v_stretch_item_0;
+struct menu_item *use_scaling_params_item[2];
 
-struct menu_item *h_center_item_1;
-struct menu_item *v_center_item_1;
-struct menu_item *h_border_item_1;
-struct menu_item *v_border_item_1;
-struct menu_item *h_stretch_item_1;
-struct menu_item *v_stretch_item_1;
+struct menu_item *h_center_item[2];
+struct menu_item *v_center_item[2];
+struct menu_item *h_border_item[2];
+struct menu_item *v_border_item[2];
+struct menu_item *h_stretch_item[2];
+struct menu_item *v_stretch_item[2];
+int h_integer_stretch[2];
+int v_integer_stretch[2];
+int use_h_integer_stretch[2];
+int use_v_integer_stretch[2];
 
 struct menu_item *pip_location_item;
 struct menu_item *pip_swapped_item;
 
 struct menu_item *c40_80_column_item;
 struct menu_item *dir_convention_item;
+
+struct menu_item *scaling_interp_item;
+
+struct menu_item* s_enable_shader_item;
+struct menu_item* s_curvature_item;
+struct menu_item* s_curvature_x_item;
+struct menu_item* s_curvature_y_item;
+struct menu_item* s_mask_item;
+struct menu_item* s_mask_brightness_item;
+struct menu_item* s_gamma_item;
+struct menu_item* s_fake_gamma_item;
+struct menu_item* s_scanlines_item;
+struct menu_item* s_multisample_item;
+struct menu_item* s_scanline_weight_item;
+struct menu_item* s_scanline_gap_brightness_item;
+struct menu_item* s_bloom_factor_item;
+struct menu_item* s_input_gamma_item;
+struct menu_item* s_output_gamma_item;
+struct menu_item* s_sharper_item;
 
 static int unit;
 static int joyswap;
@@ -716,6 +722,158 @@ void ui_set_joy_items() {
   set_need_mouse();
 }
 
+static int do_use_int_scaling(int layer, int silent) {
+  int canvas_index;
+  if (layer == FB_LAYER_VIC) {
+    canvas_index = VIC_INDEX;
+  } else if (layer == FB_LAYER_VDC) {
+    canvas_index = VDC_INDEX;
+  } else {
+    if (!silent)
+       ui_error("Bad display num");
+    return 0;
+  }
+
+  int fbw, fbh, sx, sy;
+  int display_num = canvas_index;
+  // For the PET, 1st display is 40 column models, 2nd is 80 column models
+  if (emux_machine_class == BMC64_MACHINE_CLASS_PET) {
+     int cols;
+     emux_get_int(Setting_VideoSize, &cols);
+     display_num = cols == 40 ? 0 : 1;
+  }
+  circle_get_scaling_params(display_num, &fbw, &fbh, &sx, &sy);
+
+  int dpw, dph, tmp;
+  circle_get_fbl_dimensions(layer,
+                            &dpw, &dph,
+                            &tmp, &tmp,
+                            &tmp, &tmp,
+                            &tmp, &tmp);
+
+
+  if (fbw <= 0 || fbh <= 0 || sx <= 0 || sy <= 0) {
+     if (!silent)
+        ui_error("Bad or missing params");
+     return 0;
+  }
+
+  if (fbw % 2 != 0) {
+     if (!silent)
+        ui_error("fbw must be even");
+     return 0;
+  }
+
+  if (fbh % 2 != 0) {
+     if (!silent)
+        ui_error("fbh must be even");
+     return 0;
+  }
+
+  if (sx > dpw) {
+     if (!silent)
+        ui_error("sx too large for display");
+     return 0;
+  }
+
+  if (sy > dph) {
+     if (!silent)
+        ui_error("sy too large for display");
+     return 0;
+  }
+
+  h_integer_stretch[canvas_index] = sx;
+  v_integer_stretch[canvas_index] = sy;
+
+  h_border_item[canvas_index]->value =
+     (fbw - canvas_state[canvas_index].gfx_w) / 2;
+  if (h_border_item[canvas_index]->value >
+         h_border_item[canvas_index]->max) {
+     if (!silent)
+        ui_error("fbw too large");
+     h_border_item[canvas_index]->value =
+        h_border_item[canvas_index]->max;
+     return 0;
+  } else if (h_border_item[canvas_index]->value <
+                h_border_item[canvas_index]->min) {
+     if (!silent)
+        ui_error("fbh too small");
+     h_border_item[canvas_index]->value =
+        h_border_item[canvas_index]->min;
+     return 0;
+  }
+
+  v_border_item[canvas_index]->value =
+     (fbh - canvas_state[canvas_index].gfx_h) / 2;
+  if (v_border_item[canvas_index]->value >
+     v_border_item[canvas_index]->max) {
+     if (!silent)
+        ui_error("fbh too large");
+     v_border_item[canvas_index]->value =
+        v_border_item[canvas_index]->max;
+     return 0;
+  } else if (v_border_item[canvas_index]->value <
+                v_border_item[canvas_index]->min) {
+     if (!silent)
+        ui_error("fbh too small");
+     v_border_item[canvas_index]->value =
+        v_border_item[canvas_index]->min;
+     return 0;
+  }
+
+  h_stretch_item[canvas_index]->value =
+     ceil((double)h_integer_stretch[canvas_index] * 1000.0 / (double)dph);
+  v_stretch_item[canvas_index]->value =
+     ceil((double)v_integer_stretch[canvas_index] * 1000.0 / (double)dph);
+
+  use_h_integer_stretch[canvas_index] = 1;
+  use_v_integer_stretch[canvas_index] = 1;
+  return 1;
+}
+
+static void next_integer_scaling(int layer,
+                                 int canvas_index,
+                                 int dimension) {
+  int dpw, dph, fbw, fbh, sw, sh, dw, dh;
+  circle_get_fbl_dimensions(layer,
+                            &dpw, &dph,
+                            &fbw, &fbh,
+                            &sw, &sh,
+                            &dw, &dh);
+
+  int dim = dimension == 0 ? sw : sh;
+  int scaled_dim = dimension == 0 ? dw : dh;
+  int max = dimension == 0 ? dpw : dph;
+
+  int scale = scaled_dim / dim;
+  scale = scale + 1;
+
+  scaled_dim = dim * scale;
+  if (scaled_dim > max) {
+     // Start back at 1.
+     if (dimension == 0)
+        scaled_dim = sw;
+     else
+        scaled_dim = sh;
+  }
+
+  // Now express the scale as a ratio of the display height for the menu
+  // This won't be the actual value that determines the final dimension
+  // due to rounding errors.  'scaled dim' is what will be sent to
+  // fbl.
+  int menu_stretch_value = ceil((double)scaled_dim * 1000.0 / (double)dph);
+
+  if (dimension == 0) {
+     h_stretch_item[canvas_index]->value = menu_stretch_value;
+     h_integer_stretch[canvas_index] = scaled_dim;
+     use_h_integer_stretch[canvas_index] = 1;
+  } else {
+     v_stretch_item[canvas_index]->value = menu_stretch_value;
+     v_integer_stretch[canvas_index] = scaled_dim;
+     use_v_integer_stretch[canvas_index] = 1;
+  }
+}
+
 static int save_settings() {
   FILE *fp;
   switch (emux_machine_class) {
@@ -772,9 +930,9 @@ static int save_settings() {
     fprintf(fp, "usb_y_t_%d=%d\n", k, (int)(usb_y_thresh[k] * 100.0f));
   }
 
-  fprintf(fp, "palette=%d\n", palette_item_0->value);
+  fprintf(fp, "palette=%d\n", palette_item[0]->value);
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-    fprintf(fp, "palette2=%d\n", palette_item_1->value);
+    fprintf(fp, "palette2=%d\n", palette_item[1]->value);
   }
 
   for (int k = 0; k < MAX_USB_DEVICES; k++) {
@@ -796,20 +954,21 @@ static int save_settings() {
   fprintf(fp, "vkbd_trans=%d\n", vkbd_transparency_item->value);
   fprintf(fp, "tapereset=%d\n", tape_reset_with_machine_item->value);
   fprintf(fp, "reset_confirm=%d\n", reset_confirm_item->value);
+  fprintf(fp, "scaling_interp=%d\n", scaling_interp_item->value);
   fprintf(fp, "gpio_config=%d\n", gpio_config_item->choice_ints[gpio_config_item->value]);
-  fprintf(fp, "h_center_0=%d\n", h_center_item_0->value);
-  fprintf(fp, "v_center_0=%d\n", v_center_item_0->value);
-  fprintf(fp, "h_border_trim_0=%d\n", h_border_item_0->value);
-  fprintf(fp, "v_border_trim_0=%d\n", v_border_item_0->value);
-  fprintf(fp, "h_stretch_0=%d\n", h_stretch_item_0->value);
-  fprintf(fp, "v_stretch_0=%d\n", v_stretch_item_0->value);
+  fprintf(fp, "h_center_0=%d\n", h_center_item[0]->value);
+  fprintf(fp, "v_center_0=%d\n", v_center_item[0]->value);
+  fprintf(fp, "h_border_0=%d\n", h_border_item[0]->value);
+  fprintf(fp, "v_border_0=%d\n", v_border_item[0]->value);
+  fprintf(fp, "h_stretch_0=%d\n", h_stretch_item[0]->value);
+  fprintf(fp, "v_stretch_0=%d\n", v_stretch_item[0]->value);
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-     fprintf(fp, "h_center_1=%d\n", h_center_item_1->value);
-     fprintf(fp, "v_center_1=%d\n", v_center_item_1->value);
-     fprintf(fp, "h_border_trim_1=%d\n", h_border_item_1->value);
-     fprintf(fp, "v_border_trim_1=%d\n", v_border_item_1->value);
-     fprintf(fp, "hstretch_1=%d\n", h_stretch_item_1->value);
-     fprintf(fp, "vstretch_1=%d\n", v_stretch_item_1->value);
+     fprintf(fp, "h_center_1=%d\n", h_center_item[1]->value);
+     fprintf(fp, "v_center_1=%d\n", v_center_item[1]->value);
+     fprintf(fp, "h_border_1=%d\n", h_border_item[1]->value);
+     fprintf(fp, "v_border_1=%d\n", v_border_item[1]->value);
+     fprintf(fp, "hstretch_1=%d\n", h_stretch_item[1]->value);
+     fprintf(fp, "vstretch_1=%d\n", v_stretch_item[1]->value);
   }
 
   int drive_type;
@@ -853,10 +1012,30 @@ static int save_settings() {
 
   fprintf(fp, "volume=%d\n", volume_item->value);
   fprintf(fp, "dir_convention=%d\n", dir_convention_item->value);
+  fprintf(fp, "use_int_scaling_0=%d\n", use_scaling_params_item[0]->value);
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
+     fprintf(fp, "use_int_scaling_1=%d\n", use_scaling_params_item[1]->value);
+  }
 
   for (int i = 0 ; i < NUM_GPIO_PINS; i++) {
      fprintf (fp, "custom_gpio=%d,%d\n", i, gpio_bindings[i]);
   }
+
+  fprintf(fp,"s_enable_shader=%d\n", s_enable_shader_item->value);
+  fprintf(fp,"s_curvature=%d\n", s_curvature_item->value);
+  fprintf(fp,"s_curvature_x=%d\n", s_curvature_x_item->value);
+  fprintf(fp,"s_curvature_y=%d\n", s_curvature_y_item->value);
+  fprintf(fp,"s_sharper=%d\n", s_sharper_item->value);
+  fprintf(fp,"s_mask=%d\n", s_mask_item->value);
+  fprintf(fp,"s_mask_brightness=%d\n", s_mask_brightness_item->value);
+  fprintf(fp,"s_scanlines=%d\n", s_scanlines_item->value);
+  fprintf(fp,"s_multisample=%d\n", s_multisample_item->value);
+  fprintf(fp,"s_scanline_weight=%d\n", s_scanline_weight_item->value);
+  fprintf(fp,"s_scanline_gap_brightness=%d\n", s_scanline_gap_brightness_item->value);
+  fprintf(fp,"s_bloom_factor=%d\n", s_bloom_factor_item->value);
+  fprintf(fp,"s_gamma=%d\n", s_gamma_item->value);
+  fprintf(fp,"s_input_gamma=%d\n", s_input_gamma_item->value);
+  fprintf(fp,"s_output_gamma=%d\n", s_output_gamma_item->value);
 
   emux_save_additional_settings(fp);
 
@@ -893,18 +1072,18 @@ static void load_settings() {
   emux_get_int(Setting_DriveSoundEmulationVolume, &drive_sounds_vol_item->value);
 #endif
 
-  brightness_item_0->value = emux_get_color_brightness(0);
-  contrast_item_0->value = emux_get_color_contrast(0);
-  gamma_item_0->value = emux_get_color_gamma(0);
-  tint_item_0->value = emux_get_color_tint(0);
-  saturation_item_0->value = emux_get_color_saturation(0);
+  brightness_item[0]->value = emux_get_color_brightness(0);
+  contrast_item[0]->value = emux_get_color_contrast(0);
+  gamma_item[0]->value = emux_get_color_gamma(0);
+  tint_item[0]->value = emux_get_color_tint(0);
+  saturation_item[0]->value = emux_get_color_saturation(0);
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-    brightness_item_1->value = emux_get_color_brightness(1);
-    contrast_item_1->value = emux_get_color_contrast(1);
-    gamma_item_1->value = emux_get_color_gamma(1);
-    tint_item_1->value = emux_get_color_tint(1);
-    saturation_item_1->value = emux_get_color_saturation(1);
+    brightness_item[1]->value = emux_get_color_brightness(1);
+    contrast_item[1]->value = emux_get_color_contrast(1);
+    gamma_item[1]->value = emux_get_color_gamma(1);
+    tint_item[1]->value = emux_get_color_tint(1);
+    saturation_item[1]->value = emux_get_color_saturation(1);
     emux_get_int(Setting_C128ColumnKey, &c40_80_column_item->value);
   }
 
@@ -978,9 +1157,9 @@ static void load_settings() {
     } else if (port_4_menu_item && strcmp(name, "port_4") == 0) {
       port_4_menu_item->value = value;
     } else if (strcmp(name, "palette") == 0) {
-      palette_item_0->value = value;
+      palette_item[0]->value = value;
     } else if (strcmp(name, "palette2") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      palette_item_1->value = value;
+      palette_item[1]->value = value;
     } else if (strcmp(name, "alt_f12") == 0) {
       // Old. Equivalent to cf7 = Menu
       hotkey_cf7_item->value = HOTKEY_CHOICE_MENU;
@@ -1018,6 +1197,8 @@ static void load_settings() {
       hotkey_tf7_item->value = value;
     } else if (strcmp(name, "reset_confirm") == 0) {
       reset_confirm_item->value = value;
+    } else if (strcmp(name, "scaling_interp") == 0) {
+      scaling_interp_item->value = value;
     } else if (strcmp(name, "gpio_config") == 0) {
       // We save/restore the choice int and map back to
       // the value as index into the choices for this
@@ -1050,7 +1231,7 @@ static void load_settings() {
       }
 
       // Make sure pins are configured properly after load
-      circle_reset_gpio(gpio_config_item->value);
+      circle_reset_gpio(emu_get_gpio_config());
     } else if (strcmp(name, "keyset_1_up") == 0) {
       keyset_codes[0][KEYSET_UP] = value;
     } else if (strcmp(name, "keyset_1_down") == 0) {
@@ -1092,39 +1273,103 @@ static void load_settings() {
     } else if (strcmp(name, "key_binding_6") == 0) {
       key_bindings[5] = value;
     } else if (strcmp(name, "h_center_0") == 0) {
-      h_center_item_0->value = value;
+      h_center_item[0]->value = value;
     } else if (strcmp(name, "v_center_0") == 0) {
-      v_center_item_0->value = value;
+      v_center_item[0]->value = value;
     } else if (strcmp(name, "h_border_trim_0") == 0) {
-      h_border_item_0->value = value;
+      // LEGACY NAME : menu value = max_border_w * value / 100.
+      h_border_item[0]->value =
+         h_border_item[0]->max * (1.0d - (value / 100.0d));
+      // If this exists, we're going to default use_scaling_params to
+      // 0 so we don't clobber user settings. This will never happen
+      // again after the user saves at least once.
+      use_scaling_params_item[0]->value = 0;
     } else if (strcmp(name, "v_border_trim_0") == 0) {
-      v_border_item_0->value = value;
+      // LEGACY NAME : menu value = max_border_h * value / 100.
+      v_border_item[0]->value =
+         v_border_item[0]->max * (1.0d - (value / 100.0d));
+      // If this exists, we're going to default use_scaling_params to
+      // 0 so we don't clobber user settings. This will never happen
+      // again after the user saves at least once.
+      use_scaling_params_item[0]->value = 0;
     } else if (strcmp(name, "aspect_0") == 0) {
       // LEGACY NAME : aspect * 10 = h_stretch
-      h_stretch_item_0->value = value * 10;
+      h_stretch_item[0]->value = value * 10;
+    } else if (strcmp(name, "h_border_0") == 0) {
+      h_border_item[0]->value = value;
+    } else if (strcmp(name, "v_border_0") == 0) {
+      v_border_item[0]->value = value;
     } else if (strcmp(name, "h_stretch_0") == 0) {
-      h_stretch_item_0->value = value;
+      h_stretch_item[0]->value = value;
     } else if (strcmp(name, "v_stretch_0") == 0) {
-      v_stretch_item_0->value = value;
+      v_stretch_item[0]->value = value;
     } else if (strcmp(name, "h_center_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      h_center_item_1->value = value;
+      h_center_item[1]->value = value;
     } else if (strcmp(name, "v_center_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      v_center_item_1->value = value;
+      v_center_item[1]->value = value;
     } else if (strcmp(name, "h_border_trim_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      h_border_item_1->value = value;
+      // LEGACY NAME : menu value = max_border_w * value / 100.
+      h_border_item[1]->value = h_border_item[1]->max * (1.0d - (value / 100.0d));
+      // If this exists, we're going to default use_scaling_params to
+      // 0 so we don't clobber user settings. This will never happen
+      // again after the user saves at least once.
+      use_scaling_params_item[1]->value = 0;
     } else if (strcmp(name, "v_border_trim_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      v_border_item_1->value = value;
+      // LEGACY NAME : menu value = max_border_h * value / 100.
+      v_border_item[1]->value = v_border_item[1]->max * (1.0d - (value / 100.0d));
+      // If this exists, we're going to default use_scaling_params to
+      // 0 so we don't clobber user settings. This will never happen
+      // again after the user saves at least once.
+      use_scaling_params_item[1]->value = 0;
     } else if (strcmp(name, "aspect_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       // LEGACY NAME : aspect * 10 = h_stretch
-      h_stretch_item_1->value = value * 10;
+      h_stretch_item[1]->value = value * 10;
+    } else if (strcmp(name, "h_border_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
+      h_border_item[1]->value = value;
+    } else if (strcmp(name, "v_border_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
+      v_border_item[1]->value = value;
     } else if (strcmp(name, "h_stretch_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      h_stretch_item_1->value = value;
+      h_stretch_item[1]->value = value;
     } else if (strcmp(name, "v_stretch_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-      v_stretch_item_1->value = value;
+      v_stretch_item[1]->value = value;
     } else if (strcmp(name, "volume") == 0) {
       volume_item->value = value;
     } else if (strcmp(name, "dir_convention") == 0) {
       dir_convention_item->value = value;
+    } else if (strcmp(name, "use_int_scaling_0") == 0) {
+      use_scaling_params_item[0]->value = value;
+    } else if (strcmp(name, "use_int_scaling_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
+      use_scaling_params_item[1]->value = value;
+    } else if (strcmp(name, "s_enable_shader") == 0) {
+      s_enable_shader_item->value = value;
+    } else if (strcmp(name, "s_curvature") == 0) {
+      s_curvature_item->value = value;
+    } else if (strcmp(name, "s_curvature_x") == 0) {
+      s_curvature_x_item->value = value;
+    } else if (strcmp(name, "s_curvature_y") == 0) {
+      s_curvature_y_item->value = value;
+    } else if (strcmp(name, "s_sharper") == 0) {
+      s_sharper_item->value = value;
+    } else if (strcmp(name, "s_mask") == 0) {
+      s_mask_item->value = value;
+    } else if (strcmp(name, "s_mask_brightness") == 0) {
+      s_mask_brightness_item->value = value;
+    } else if (strcmp(name, "s_scanlines") == 0) {
+      s_scanlines_item->value = value;
+    } else if (strcmp(name, "s_multisample") == 0) {
+      s_multisample_item->value = value;
+    } else if (strcmp(name, "s_scanline_weight") == 0) {
+      s_scanline_weight_item->value = value;
+    } else if (strcmp(name, "s_scanline_gap_brightness") == 0) {
+      s_scanline_gap_brightness_item->value = value;
+    } else if (strcmp(name, "s_bloom_factor") == 0) {
+      s_bloom_factor_item->value = value;
+    } else if (strcmp(name, "s_gamma") == 0) {
+      s_gamma_item->value = value;
+    } else if (strcmp(name, "s_input_gamma") == 0) {
+      s_input_gamma_item->value = value;
+    } else if (strcmp(name, "s_output_gamma") == 0) {
+      s_output_gamma_item->value = value;
     } else if (strcmp(name, "custom_gpio") == 0) {
       char* token = strtok (value_str, ",");
       if (token != NULL) {
@@ -1571,19 +1816,44 @@ static void toggle_warp(int value) {
 }
 
 // Tell videoarch the new settings made from the menu.
-static void do_video_settings(int layer,
-                              struct menu_item* hcenter_item,
-                              struct menu_item* vcenter_item,
-                              struct menu_item* hborder_item,
-                              struct menu_item* vborder_item,
-                              struct menu_item* h_stretch_item,
-                              struct menu_item* v_stretch_item) {
+static void do_video_settings(int layer) {
 
   double lpad;
   double rpad;
   double tpad;
   double bpad;
   int zlayer;
+
+  struct menu_item* hcenter_item;
+  struct menu_item* vcenter_item;
+  struct menu_item* hborder_item;
+  struct menu_item* vborder_item;
+  struct menu_item* h_str_item;
+  struct menu_item* v_str_item;
+  int h_int_stretch;
+  int v_int_stretch;
+  int use_h_int_stretch;
+  int use_v_int_stretch;
+
+  int canvas_index;
+  if (layer == FB_LAYER_VIC) {
+     canvas_index = VIC_INDEX;
+  } else if (layer == FB_LAYER_VDC) {
+     canvas_index = VDC_INDEX;
+  } else {
+     return;
+  }
+
+  hcenter_item = h_center_item[canvas_index];
+  vcenter_item = v_center_item[canvas_index];
+  hborder_item = h_border_item[canvas_index];
+  vborder_item = v_border_item[canvas_index];
+  h_str_item = h_stretch_item[canvas_index];
+  v_str_item = v_stretch_item[canvas_index];
+  h_int_stretch = h_integer_stretch[canvas_index];
+  v_int_stretch = v_integer_stretch[canvas_index];
+  use_h_int_stretch = use_h_integer_stretch[canvas_index];
+  use_v_int_stretch = use_v_integer_stretch[canvas_index];
 
   int hc = hcenter_item->value;
   int vc = vcenter_item->value;
@@ -1596,6 +1866,8 @@ static void do_video_settings(int layer,
         lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = layer == FB_LAYER_VIC ? 0 : 1;
      } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE) {
         // VIC on the left, VDC on the right, always, no swapping
+        use_h_int_stretch = 0;
+        use_v_int_stretch = 0;
         if (layer == FB_LAYER_VIC) {
             lpad = 0; rpad = .50d; tpad = 0; bpad = 0; zlayer = 0;
         } else {
@@ -1610,6 +1882,8 @@ static void do_video_settings(int layer,
             // full screen for this layer
             lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = 0;
         } else {
+            use_h_int_stretch = 0;
+            use_v_int_stretch = 0;
             zlayer = 1;
             if (pip_location_item->value == MENU_PIP_TOP_LEFT) {
               // top left quad
@@ -1636,10 +1910,10 @@ static void do_video_settings(int layer,
      lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = 0;
   }
 
-  double h = (double)(100-hborder_item->value) / 100.0d;
-  double v = (double)(100-vborder_item->value) / 100.0d;
-  double hs = (double)(h_stretch_item->value) / 1000.0d;
-  double vs = (double)(v_stretch_item->value) / 1000.0d;
+  int h = hborder_item->value;
+  int v = vborder_item->value;
+  double hs = (double)(h_str_item->value) / 1000.0d;
+  double vs = (double)(v_str_item->value) / 1000.0d;
 
   double vid_hstretch = hs;
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128 &&
@@ -1652,37 +1926,22 @@ static void do_video_settings(int layer,
 
   // Tell videoarch about these changes
   emux_apply_video_adjustments(layer, vid_hc, vid_vc,
-                               h, v, vid_hstretch, vs,
-                               lpad, rpad, tpad, bpad, zlayer);
+     h, v,
+     vid_hstretch, vs,
+     h_int_stretch, v_int_stretch,
+     use_h_int_stretch, use_v_int_stretch,
+     lpad, rpad, tpad, bpad, zlayer);
+
   if (layer == FB_LAYER_VIC) {
      // Make UI match VIC settings except for padding.
-     emux_apply_video_adjustments(FB_LAYER_UI, hc, vc,
-                                  h, v, hs, vs,
-                                  0, 0, 0, 0, 3);
+     emux_apply_video_adjustments(
+        FB_LAYER_UI, hc, vc,
+        h, v,
+        hs, vs,
+        h_integer_stretch[0], v_integer_stretch[0],
+        use_h_integer_stretch[0], use_v_integer_stretch[0],
+        0, 0, 0, 0, 3);
   }
-}
-
-static void check_sid_sampling() {
-  int value;
-  emux_get_int(Setting_SidResidSampling, &value);
-  // For less capable Pi's, we force fast sampling.
-  if (circle_get_model() < 3) {
-     emux_set_int(Setting_SidResidSampling, MENU_SID_SAMPLING_FAST);
-  } else if (circle_get_model() < 4) {
-     if (value == MENU_SID_SAMPLING_RESAMPLING) {
-       emux_set_int(Setting_SidResidSampling,
-          MENU_SID_SAMPLING_FAST_RESAMPLING);
-     }
-  }
-
-  // These can never change and must match the logic in
-  // viceemulatorcore.cpp.
-  //if (circle_get_arm_clock() < 1400000000) {
-     emux_set_int(Setting_SidResidPassband, 60);
-  //} else {
-  //   emux_set_int(Setting_SidResidPassband, 90);
-  //}
-  emux_set_int(Setting_SidResidGain, 97);
 }
 
 static void menu_machine_reset(int type, int pop) {
@@ -1696,6 +1955,152 @@ static void menu_machine_reset(int type, int pop) {
   if (pop) {
      ui_pop_all_and_toggle();
   }
+}
+
+static void reset_shader_params() {
+  s_curvature_item->value = 0;
+  s_curvature_x_item->value = 10;
+  s_curvature_y_item->value = 15;
+  s_sharper_item->value = 0;
+  s_mask_item->value = 0;
+  s_mask_brightness_item->value = 70;
+  s_scanlines_item->value = 1;
+  s_multisample_item->value = 1;
+  s_scanline_weight_item->value = 60;
+  s_scanline_gap_brightness_item->value = 12;
+  s_bloom_factor_item->value = 150;
+  s_gamma_item->value = 2;
+  s_input_gamma_item->value = 240;
+  s_output_gamma_item->value = 220;
+}
+
+static void sanity_check_shader_params(int itemid) {
+    // All shader items should be disabled if shader is off
+    s_curvature_item->disabled = 0;
+    s_curvature_x_item->disabled = 0;
+    s_curvature_y_item->disabled = 0;
+    s_mask_item->disabled = 0;
+    s_mask_brightness_item->disabled = 0;
+    s_gamma_item->disabled = 0;
+    s_fake_gamma_item->disabled = 0;
+    s_scanlines_item->disabled = 0;
+    s_multisample_item->disabled = 0;
+    s_scanline_weight_item->disabled = 0;
+    s_scanline_gap_brightness_item->disabled = 0;
+    s_bloom_factor_item->disabled = 0;
+    s_input_gamma_item->disabled = 0;
+    s_output_gamma_item->disabled = 0;
+    s_sharper_item->disabled = 0;
+    if (!s_enable_shader_item->value) {
+       s_curvature_item->disabled = 1;
+       s_curvature_x_item->disabled = 1;
+       s_curvature_y_item->disabled = 1;
+       s_mask_item->disabled = 1;
+       s_mask_brightness_item->disabled = 1;
+       s_gamma_item->disabled = 1;
+       s_fake_gamma_item->disabled = 1;
+       s_scanlines_item->disabled = 1;
+       s_multisample_item->disabled = 1;
+       s_scanline_weight_item->disabled = 1;
+       s_scanline_gap_brightness_item->disabled = 1;
+       s_bloom_factor_item->disabled = 1;
+       s_input_gamma_item->disabled = 1;
+       s_output_gamma_item->disabled = 1;
+       s_sharper_item->disabled = 1;
+    }
+
+    if (itemid == MENU_SHADER_SCANLINES &&
+       s_scanlines_item->value &&
+         s_mask_item->value == 2) {
+       // Turn off Trinitron if user selects scanlines
+       s_mask_item->value = 0;
+    } else if (itemid == MENU_SHADER_MASK &&
+       s_mask_item->value == 2 &&
+         s_scanlines_item->value) {
+       // Turn off Scanlines if user selects Trinitron mask
+       s_scanlines_item->value = 0;
+    }
+
+    // If curvature is off, disable x and y too
+    if (!s_curvature_item->value) {
+       s_curvature_x_item->disabled = 1;
+       s_curvature_y_item->disabled = 1;
+    }
+
+    // If scanlines are off, gamma is disabled.
+    // If scanlines are off, weight and gap brightness disabled
+    // If scanlines are off, bloom factor is disabled
+    if (!s_scanlines_item->value) {
+       s_multisample_item->disabled = 1;
+       s_gamma_item->disabled = 1;
+       s_scanline_weight_item->disabled = 1;
+       s_scanline_gap_brightness_item->disabled = 1;
+       s_bloom_factor_item->disabled = 1;
+    }
+
+    // If gamma is disabled, off or fake, input/output is disabled.
+    if (s_gamma_item->disabled || s_gamma_item->value == 0 || s_gamma_item->value == 2) {
+       s_input_gamma_item->disabled = 1;
+       s_output_gamma_item->disabled = 1;
+    }
+
+    // If mask is off, mask brightness is disabled
+    if (!s_mask_item->value) {
+       s_mask_brightness_item->disabled = 1;
+    }
+}
+
+static void handle_shader_param_change() {
+  int curvature;
+  float curvature_x;
+  float curvature_y;
+  int mask;
+  float mask_brightness;
+  int gamma;
+  int fake_gamma;
+  int scanlines;
+  int multisample;
+  float scanline_weight;
+  float scanline_gap_brightness;
+  float bloom_factor;
+  float input_gamma;
+  float output_gamma;
+  int sharper;
+
+  curvature = s_curvature_item->value;
+  curvature_x = (float)s_curvature_x_item->value / 100.0f;
+  curvature_y = (float)s_curvature_y_item->value / 100.0f;
+  mask = s_mask_item->value;
+  mask_brightness = (float)s_mask_brightness_item->value / 100.0f;
+  gamma = s_gamma_item->value > 0;
+  fake_gamma = s_gamma_item->value == 2;
+  scanlines = s_scanlines_item->value;
+  multisample = s_multisample_item->value;
+  scanline_weight = (float)s_scanline_weight_item->value / 10.0f;
+  scanline_gap_brightness = (float)s_scanline_gap_brightness_item->value / 100.0f;
+  bloom_factor = (float)s_bloom_factor_item->value / 100.0f;
+  input_gamma = (float)s_input_gamma_item->value / 100.0f;
+  output_gamma = (float)s_output_gamma_item->value / 100.0f;
+  sharper = s_sharper_item->value;
+
+  circle_set_shader_params(curvature,
+                        curvature_x,
+                        curvature_y,
+                        mask,
+                        mask_brightness,
+                        gamma,
+                        fake_gamma,
+                        scanlines,
+                        multisample,
+                        scanline_weight,
+                        scanline_gap_brightness,
+                        bloom_factor,
+                        input_gamma,
+                        output_gamma,
+                        sharper);
+
+  // Setting shader params hides the layer.
+  vic_showing = 0;
 }
 
 // Interpret what menu item changed and make the change to vice
@@ -2036,7 +2441,7 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_GPIO_CONFIG:
     // Ensure GPIO pins are correct for new mode.
-    circle_reset_gpio(item->value);
+    circle_reset_gpio(emu_get_gpio_config());
     return;
   case MENU_WARP_MODE:
     toggle_warp(item->value);
@@ -2078,17 +2483,17 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_COLOR_RESET_0:
     emux_get_default_color_setting(
-      &brightness_item_0->value,
-      &contrast_item_0->value,
-      &gamma_item_0->value,
-      &tint_item_0->value,
-      &saturation_item_0->value
+      &brightness_item[0]->value,
+      &contrast_item[0]->value,
+      &gamma_item[0]->value,
+      &tint_item[0]->value,
+      &saturation_item[0]->value
     );
-    emux_set_color_brightness(0, brightness_item_0->value);
-    emux_set_color_contrast(0, contrast_item_0->value);
-    emux_set_color_gamma(0, gamma_item_0->value);
-    emux_set_color_tint(0, tint_item_0->value);
-    emux_set_color_saturation(0, saturation_item_0->value);
+    emux_set_color_brightness(0, brightness_item[0]->value);
+    emux_set_color_contrast(0, contrast_item[0]->value);
+    emux_set_color_gamma(0, gamma_item[0]->value);
+    emux_set_color_tint(0, tint_item[0]->value);
+    emux_set_color_saturation(0, saturation_item[0]->value);
     emux_video_color_setting_changed(0);
     return;
   case MENU_COLOR_BRIGHTNESS_1:
@@ -2118,17 +2523,17 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_COLOR_RESET_1:
     emux_get_default_color_setting(
-      &brightness_item_1->value,
-      &contrast_item_1->value,
-      &gamma_item_1->value,
-      &tint_item_1->value,
-      &saturation_item_1->value
+      &brightness_item[1]->value,
+      &contrast_item[1]->value,
+      &gamma_item[1]->value,
+      &tint_item[1]->value,
+      &saturation_item[1]->value
     );
-    emux_set_color_brightness(1, brightness_item_1->value);
-    emux_set_color_contrast(1, contrast_item_1->value);
-    emux_set_color_gamma(1, gamma_item_1->value);
-    emux_set_color_tint(1, tint_item_1->value);
-    emux_set_color_saturation(1, saturation_item_1->value);
+    emux_set_color_brightness(1, brightness_item[1]->value);
+    emux_set_color_contrast(1, contrast_item[1]->value);
+    emux_set_color_gamma(1, gamma_item[1]->value);
+    emux_set_color_tint(1, tint_item[1]->value);
+    emux_set_color_saturation(1, saturation_item[1]->value);
     emux_video_color_setting_changed(1);
     return;
   case MENU_SWAP_JOYSTICKS:
@@ -2173,21 +2578,6 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_TAPE_RESET_WITH_MACHINE:
     emux_set_int(Setting_DatasetteResetWithCPU,
                       tape_reset_with_machine_item->value);
-    return;
-  case MENU_SID_ENGINE:
-    emux_set_int(Setting_SidEngine, item->choice_ints[item->value]);
-    check_sid_sampling();
-    return;
-  case MENU_SID_MODEL:
-    emux_set_int(Setting_SidModel, item->choice_ints[item->value]);
-    check_sid_sampling();
-    return;
-  case MENU_SID_FILTER:
-    emux_set_int(Setting_SidFilters, item->value);
-    check_sid_sampling();
-    return;
-  case MENU_SID_SAMPLING:
-    emux_set_int(Setting_SidResidSampling, item->value);
     return;
   case MENU_DRIVE_CHANGE_MODEL_8:
   case MENU_DRIVE_CHANGE_MODEL_9:
@@ -2258,42 +2648,38 @@ static void menu_value_changed(struct menu_item *item) {
     if (active_display_item->value == MENU_ACTIVE_DISPLAY_VICII) {
        vic_enabled = 1;
        vdc_enabled = 0;
-       do_video_settings(FB_LAYER_VIC,
-           h_center_item_0,
-           v_center_item_0,
-           h_border_item_0,
-           v_border_item_0,
-           h_stretch_item_0,
-           v_stretch_item_0);
+       do_video_settings(FB_LAYER_VIC);
     } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_VDC) {
        vdc_enabled = 1;
        vic_enabled = 0;
-       do_video_settings(FB_LAYER_VDC,
-           h_center_item_1,
-           v_center_item_1,
-           h_border_item_1,
-           v_border_item_1,
-           h_stretch_item_1,
-           v_stretch_item_1);
+       do_video_settings(FB_LAYER_VDC);
     } else if (active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE ||
                active_display_item->value == MENU_ACTIVE_DISPLAY_PIP) {
        vdc_enabled = 1;
        vic_enabled = 1;
-       do_video_settings(FB_LAYER_VIC,
-           h_center_item_0,
-           v_center_item_0,
-           h_border_item_0,
-           v_border_item_0,
-           h_stretch_item_0,
-           v_stretch_item_0);
-       do_video_settings(FB_LAYER_VDC,
-           h_center_item_1,
-           v_center_item_1,
-           h_border_item_1,
-           v_border_item_1,
-           h_stretch_item_1,
-           v_stretch_item_1);
+       do_video_settings(FB_LAYER_VIC);
+       do_video_settings(FB_LAYER_VDC);
     }
+    break;
+  case MENU_INTEGER_SCALE_W_0:
+    next_integer_scaling(FB_LAYER_VIC, VIC_INDEX, 0);
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
+    do_video_settings(FB_LAYER_VIC);
+    break;
+  case MENU_INTEGER_SCALE_H_0:
+    next_integer_scaling(FB_LAYER_VIC, VIC_INDEX, 1);
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
+    do_video_settings(FB_LAYER_VIC);
+    break;
+  case MENU_INTEGER_SCALE_W_1:
+    next_integer_scaling(FB_LAYER_VDC, VDC_INDEX, 0);
+    ui_canvas_reveal_temp(FB_LAYER_VDC);
+    do_video_settings(FB_LAYER_VDC);
+    break;
+  case MENU_INTEGER_SCALE_H_1:
+    next_integer_scaling(FB_LAYER_VDC, VDC_INDEX, 1);
+    ui_canvas_reveal_temp(FB_LAYER_VDC);
+    do_video_settings(FB_LAYER_VDC);
     break;
   case MENU_H_CENTER_0:
   case MENU_V_CENTER_0:
@@ -2301,14 +2687,17 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_V_BORDER_0:
   case MENU_H_STRETCH_0:
   case MENU_V_STRETCH_0:
+    // Any manual adjustment to stretch, go back
+    // to scaled dimensions.
+    if (item->id == MENU_H_STRETCH_0 || item->id == MENU_H_BORDER_0) {
+       use_h_integer_stretch[0] = 0;
+       use_scaling_params_item[0]->value = 0;
+    } else if (item->id == MENU_V_STRETCH_0 || item->id == MENU_V_BORDER_0) {
+       use_v_integer_stretch[0] = 0;
+       use_scaling_params_item[0]->value = 0;
+    }
     ui_canvas_reveal_temp(FB_LAYER_VIC);
-    do_video_settings(FB_LAYER_VIC,
-        h_center_item_0,
-        v_center_item_0,
-        h_border_item_0,
-        v_border_item_0,
-        h_stretch_item_0,
-        v_stretch_item_0);
+    do_video_settings(FB_LAYER_VIC);
     break;
   case MENU_H_CENTER_1:
   case MENU_V_CENTER_1:
@@ -2316,14 +2705,17 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_V_BORDER_1:
   case MENU_H_STRETCH_1:
   case MENU_V_STRETCH_1:
+    // Any manual adjustment to stretch, go back
+    // to scaled dimensions.
+    if (item->id == MENU_H_STRETCH_1 || item->id == MENU_H_BORDER_1) {
+       use_h_integer_stretch[1] = 0;
+       use_scaling_params_item[1]->value = 0;
+    } else if (item->id == MENU_V_STRETCH_1 || item->id == MENU_V_BORDER_1) {
+       use_v_integer_stretch[1] = 0;
+       use_scaling_params_item[1]->value = 0;
+    }
     ui_canvas_reveal_temp(FB_LAYER_VDC);
-    do_video_settings(FB_LAYER_VDC,
-        h_center_item_1,
-        v_center_item_1,
-        h_border_item_1,
-        v_border_item_1,
-        h_stretch_item_1,
-        v_stretch_item_1);
+    do_video_settings(FB_LAYER_VDC);
     break;
   case MENU_OVERLAY:
     statusbar_forced = 0;
@@ -2377,6 +2769,60 @@ static void menu_value_changed(struct menu_item *item) {
     break;
   case MENU_DIR_CONVENTION:
     set_current_dir_names();
+    break;
+  case MENU_SHADER_ENABLE:
+    sanity_check_shader_params(item->id);
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
+    circle_realloc_fbl(FB_LAYER_VIC, item->value);
+    handle_shader_param_change();
+    vic_showing = 0;
+    break;
+  case MENU_SHADER_CURVATURE:
+  case MENU_SHADER_CURVATURE_X:
+  case MENU_SHADER_CURVATURE_Y:
+  case MENU_SHADER_SCANLINES:
+  case MENU_SHADER_MULTISAMPLE:
+  case MENU_SHADER_SCANLINE_WEIGHT:
+  case MENU_SHADER_SCANLINE_GAP_BRIGHTNESS:
+  case MENU_SHADER_MASK:
+  case MENU_SHADER_MASK_BRIGHTNESS:
+  case MENU_SHADER_BLOOM:
+  case MENU_SHADER_GAMMA:
+  case MENU_SHADER_INPUT_GAMMA:
+  case MENU_SHADER_OUTPUT_GAMMA:
+  case MENU_SHADER_SHARPER:
+    sanity_check_shader_params(item->id);
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
+    handle_shader_param_change();
+    break;
+  case MENU_SHADER_RESET_ALL:
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
+    reset_shader_params();
+    sanity_check_shader_params(item->id);
+    handle_shader_param_change();
+    break;
+  case MENU_USE_SCALING_PARAMS_0:
+    if (item->value) {
+       if (do_use_int_scaling(FB_LAYER_VIC, 0 /* not silent */)) {
+          ui_canvas_reveal_temp(FB_LAYER_VIC);
+          do_video_settings(FB_LAYER_VIC);
+       } else {
+          use_scaling_params_item[VIC_INDEX]->value = 0;
+       }
+    }
+    break;
+  case MENU_USE_SCALING_PARAMS_1:
+    if (item->value) {
+       if (do_use_int_scaling(FB_LAYER_VDC, 0 /* not silent */)) {
+          ui_canvas_reveal_temp(FB_LAYER_VDC);
+          do_video_settings(FB_LAYER_VDC);
+       } else {
+          use_scaling_params_item[VDC_INDEX]->value = 0;
+       }
+    }
+    break;
+  case MENU_SCALING_INTERPOLATION:
+    circle_set_interpolation(item->value);
     break;
   }
 
@@ -2860,6 +3306,10 @@ void build_menu(struct menu_item *root) {
 
   video_parent = parent = ui_menu_add_folder(root, "Video");
 
+  scaling_interp_item = ui_menu_add_toggle_labels(
+     MENU_SCALING_INTERPOLATION, parent,
+        "Scaling Interpolation", 1, "Off", "Cfg Default"); // default cfg
+
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      // For C128, we split video options under video into VICII
      // and VDC submenus since there are two displays.  Otherwise,
@@ -2892,131 +3342,216 @@ void build_menu(struct menu_item *root) {
      parent = ui_menu_add_folder(video_parent, "VICII");
   }
 
-  palette_item_0 = emux_add_palette_options(MENU_COLOR_PALETTE_0, parent);
+  use_scaling_params_item[0] = ui_menu_add_toggle_labels(
+     MENU_USE_SCALING_PARAMS_0, parent, "Apply scaling params at boot", 1,
+        "No","Yes");
+
+  struct menu_item *shader = ui_menu_add_folder(parent, "CRT Shader");
+
+     s_enable_shader_item =
+        ui_menu_add_toggle_labels(MENU_SHADER_ENABLE, shader,
+           "Enable CRT Shader?", 1, "No", "Yes");
+
+     s_curvature_item =
+       ui_menu_add_toggle(MENU_SHADER_CURVATURE, shader, "Curvature", 0);
+
+     s_curvature_x_item =
+       ui_menu_add_range(MENU_SHADER_CURVATURE_X, shader, "H Curvature Amount",
+          0, 30, 1, 10);
+
+     s_curvature_y_item =
+       ui_menu_add_range(MENU_SHADER_CURVATURE_Y, shader, "V Curvature Amount",
+          0, 30, 1, 15);
+
+     s_sharper_item = ui_menu_add_toggle(
+        MENU_SHADER_SHARPER, shader, "Sharper Horizontal Blend", 0);
+
+     s_mask_item = ui_menu_add_multiple_choice(
+        MENU_SHADER_MASK, shader, "Mask Type");
+     s_mask_item->num_choices = 3;
+     s_mask_item->value = 0;
+     strcpy(s_mask_item->choices[0], "None");
+     strcpy(s_mask_item->choices[1], "Green/Magenta");
+     strcpy(s_mask_item->choices[2], "Trinitron");
+
+     s_mask_brightness_item = ui_menu_add_range(
+        MENU_SHADER_MASK_BRIGHTNESS, shader, "Mask Brightness",
+           0, 100, 1, 70);
+
+     s_scanlines_item =
+        ui_menu_add_toggle(MENU_SHADER_SCANLINES, shader, "Scanlines", 1);
+
+     s_scanline_weight_item =
+        ui_menu_add_range(
+           MENU_SHADER_SCANLINE_WEIGHT, shader, "Scanline Weight",
+              0, 150, 1, 60);
+
+     s_scanline_gap_brightness_item = ui_menu_add_range(
+        MENU_SHADER_SCANLINE_GAP_BRIGHTNESS, shader, "Scanline Gap Brightness",
+           0, 100, 1, 12);
+
+     s_multisample_item =
+        ui_menu_add_toggle(MENU_SHADER_MULTISAMPLE, shader, "Multisample", 1);
+
+     s_bloom_factor_item = ui_menu_add_range(
+        MENU_SHADER_BLOOM, shader, "Bloom Factor",
+           0, 500, 10, 150);
+
+     s_gamma_item =
+        ui_menu_add_multiple_choice(MENU_SHADER_GAMMA, shader, "Gamma Correction");
+     s_gamma_item->num_choices = 3;
+     s_gamma_item->value = 2;
+     strcpy(s_gamma_item->choices[0], "Off");
+     strcpy(s_gamma_item->choices[1], "On");
+     strcpy(s_gamma_item->choices[2], "Fake (Fast)");
+
+     s_input_gamma_item = ui_menu_add_range(
+        MENU_SHADER_INPUT_GAMMA, shader, "Input Gamma",
+           0, 500, 10, 240);
+
+     s_output_gamma_item = ui_menu_add_range(
+        MENU_SHADER_OUTPUT_GAMMA, shader, "Output Gamma",
+           0, 500, 10, 220);
+
+     ui_menu_add_button(MENU_SHADER_RESET_ALL, shader, "Reset");
+
+  palette_item[0] = emux_add_palette_options(MENU_COLOR_PALETTE_0, parent);
 
   child = ui_menu_add_folder(parent, "Color Adjustments...");
 
-  brightness_item_0 =
+  brightness_item[0] =
       ui_menu_add_range(MENU_COLOR_BRIGHTNESS_0, child, "Brightness",
          0, 2000,
             10, emux_get_color_brightness(0));
-  contrast_item_0 =
+  contrast_item[0] =
       ui_menu_add_range(MENU_COLOR_CONTRAST_0, child, "Contrast",
          0, 2000,
             10, emux_get_color_contrast(0));
-  gamma_item_0 =
+  gamma_item[0] =
       ui_menu_add_range(MENU_COLOR_GAMMA_0, child, "Gamma",
          0, 4000,
             10, emux_get_color_gamma(0));
-  tint_item_0 =
+  tint_item[0] =
       ui_menu_add_range(MENU_COLOR_TINT_0, child, "Tint",
          0, 2000,
             10, emux_get_color_tint(0));
   if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
-     saturation_item_0 =
+     saturation_item[0] =
          ui_menu_add_range(MENU_COLOR_SATURATION_0, child, "Saturation",
             0, 2000,
                10, emux_get_color_saturation(0));
   } else {
-     saturation_item_0 = (struct menu_item *)malloc(sizeof(struct menu_item));
-     memset(saturation_item_0, 0, sizeof(struct menu_item));
+     saturation_item[0] = (struct menu_item *)malloc(sizeof(struct menu_item));
+     memset(saturation_item[0], 0, sizeof(struct menu_item));
   }
 
   ui_menu_add_button(MENU_COLOR_RESET_0, child, "Reset");
 
-  int defaultHBorderTrim;
-  int defaultVBorderTrim;
   int defaultHStretch;
   int defaultVStretch;
   if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20) {
-     defaultHBorderTrim = DEFAULT_VIC_H_BORDER_TRIM;
-     defaultVBorderTrim = DEFAULT_VIC_V_BORDER_TRIM;
      defaultHStretch = DEFAULT_VIC_H_STRETCH;
      defaultVStretch = DEFAULT_VIC_V_STRETCH;
   } else {
-     defaultHBorderTrim = DEFAULT_VICII_H_BORDER_TRIM;
-     defaultVBorderTrim = DEFAULT_VICII_V_BORDER_TRIM;
      defaultHStretch = DEFAULT_VICII_H_STRETCH;
      defaultVStretch = DEFAULT_VICII_V_STRETCH;
   }
 
-  h_center_item_0 =
+  h_center_item[0] =
       ui_menu_add_range(MENU_H_CENTER_0, parent, "H Center",
           -48, 48, 1, 0);
-  v_center_item_0 =
+  v_center_item[0] =
       ui_menu_add_range(MENU_V_CENTER_0, parent, "V Center",
           -48, 48, 1, 0);
-  h_border_item_0 =
-      ui_menu_add_range(MENU_H_BORDER_0, parent, "H Border Trim %",
-          0, 100, 1, defaultHBorderTrim);
-  v_border_item_0 =
-      ui_menu_add_range(MENU_V_BORDER_0, parent, "V Border Trim %",
-          0, 100, 1, defaultVBorderTrim);
-  child = h_stretch_item_0 =
+  h_border_item[0] =
+      ui_menu_add_range(MENU_H_BORDER_0, parent, "H Border (px)",
+          0, canvas_state[VIC_INDEX].max_border_w,
+             1, canvas_state[VIC_INDEX].max_border_w);
+  v_border_item[0] =
+      ui_menu_add_range(MENU_V_BORDER_0, parent, "V Border (px)",
+          0, canvas_state[VIC_INDEX].max_border_h,
+             1, canvas_state[VIC_INDEX].max_border_h);
+  child = h_stretch_item[0] =
       ui_menu_add_range(MENU_H_STRETCH_0, parent, "H Stretch Factor",
-           1000, 1800, 5, defaultHStretch);
+           500, canvas_state[VIC_INDEX].max_stretch_h ?
+              canvas_state[VIC_INDEX].max_stretch_h : 1800,
+                 5, defaultHStretch);
   child->divisor = 1000;
-  child = v_stretch_item_0 =
+  child = v_stretch_item[0] =
       ui_menu_add_range(MENU_V_STRETCH_0, parent, "V Stretch Factor",
            500, 1000, 5, defaultVStretch);
   child->divisor = 1000;
 
+  ui_menu_add_button(MENU_INTEGER_SCALE_W_0, parent, "Next H Integer Scale");
+  ui_menu_add_button(MENU_INTEGER_SCALE_H_0, parent, "Next V Integer Scale");
+
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      parent = ui_menu_add_folder(video_parent, "VDC");
 
-     palette_item_1 = emux_add_palette_options(MENU_COLOR_PALETTE_1, parent);
+     use_scaling_params_item[1] = ui_menu_add_toggle_labels(
+        MENU_USE_SCALING_PARAMS_1, parent, "Apply scaling params at boot", 1,
+           "No","Yes");
+
+     palette_item[1] = emux_add_palette_options(MENU_COLOR_PALETTE_1, parent);
 
      child = ui_menu_add_folder(parent, "Color Adjustments...");
 
-     brightness_item_1 =
+     brightness_item[1] =
          ui_menu_add_range(MENU_COLOR_BRIGHTNESS_1, child, "Brightness",
             0, 2000,
                10, emux_get_color_brightness(1));
-     contrast_item_1 =
+     contrast_item[1] =
          ui_menu_add_range(MENU_COLOR_CONTRAST_1, child, "Contrast",
             0, 2000,
                10, emux_get_color_contrast(1));
-     gamma_item_1 =
+     gamma_item[1] =
          ui_menu_add_range(MENU_COLOR_GAMMA_1, child, "Gamma",
             0, 4000,
                10, emux_get_color_gamma(1));
-     tint_item_1 =
+     tint_item[1] =
          ui_menu_add_range(MENU_COLOR_TINT_1, child, "Tint",
             0, 2000,
                10, emux_get_color_tint(1));
 
      if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
-        saturation_item_1 =
+        saturation_item[1] =
             ui_menu_add_range(MENU_COLOR_SATURATION_1, child, "Saturation",
                0, 2000,
                   10, emux_get_color_saturation(1));
      } else {
-        saturation_item_1 = (struct menu_item *)malloc(sizeof(struct menu_item));
-        memset(saturation_item_1, 0, sizeof(struct menu_item));
+        saturation_item[1] = (struct menu_item *)malloc(sizeof(struct menu_item));
+        memset(saturation_item[1], 0, sizeof(struct menu_item));
      }
 
      ui_menu_add_button(MENU_COLOR_RESET_1, child, "Reset");
 
-     h_center_item_1 =
+     h_center_item[1] =
          ui_menu_add_range(MENU_H_CENTER_1, parent, "H Center",
              -48, 48, 1, 0);
-     v_center_item_1 =
+     v_center_item[1] =
          ui_menu_add_range(MENU_V_CENTER_1, parent, "V Center",
              -48, 48, 1, 0);
-     h_border_item_1 =
-         ui_menu_add_range(MENU_H_BORDER_1, parent, "H Border Trim %",
-             0, 100, 1, DEFAULT_VDC_H_BORDER_TRIM);
-     v_border_item_1 =
-         ui_menu_add_range(MENU_V_BORDER_1, parent, "V Border Trim %",
-             0, 100, 1, DEFAULT_VDC_V_BORDER_TRIM);
-     child = h_stretch_item_1 =
+     h_border_item[1] =
+         ui_menu_add_range(MENU_H_BORDER_1, parent, "H Border (px)",
+             0, canvas_state[VDC_INDEX].max_border_w,
+                1, canvas_state[VDC_INDEX].max_border_w);
+     v_border_item[1] =
+         ui_menu_add_range(MENU_V_BORDER_1, parent, "V Border (px)",
+             0, canvas_state[VDC_INDEX].max_border_h,
+                1, canvas_state[VDC_INDEX].max_border_h);
+     child = h_stretch_item[1] =
          ui_menu_add_range(MENU_H_STRETCH_1, parent, "H Stretch Factor",
-              1000, 1800, 5, DEFAULT_VDC_H_STRETCH);
+              500, canvas_state[VDC_INDEX].max_stretch_h ?
+                 canvas_state[VDC_INDEX].max_stretch_h : 1800,
+                    5, DEFAULT_VDC_H_STRETCH);
      child->divisor = 1000;
-     child = v_stretch_item_1 =
+     child = v_stretch_item[1] =
          ui_menu_add_range(MENU_V_STRETCH_1, parent, "V Stretch Factor",
               500, 1000, 5, DEFAULT_VDC_V_STRETCH);
      child->divisor = 1000;
+
+     ui_menu_add_button(MENU_INTEGER_SCALE_W_1, parent, "Integer Scale W");
+     ui_menu_add_button(MENU_INTEGER_SCALE_H_1, parent, "Integer Scale H");
   }
 
   if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
@@ -3029,7 +3564,6 @@ void build_menu(struct menu_item *root) {
   volume_item = ui_menu_add_range(MENU_VOLUME, parent,
       "Volume ", 0, 100, 1, 100);
 
-  check_sid_sampling();
   emux_add_sound_options(parent);
 
   parent = ui_menu_add_folder(root, "Keyboard");
@@ -3223,34 +3757,40 @@ void build_menu(struct menu_item *root) {
 
   load_settings();
 
+  // Apply shader params
+  sanity_check_shader_params(s_enable_shader_item->id);
+  circle_realloc_fbl(FB_LAYER_VIC, s_enable_shader_item->value);
+  handle_shader_param_change();
+
+  if (use_scaling_params_item[0]->value) {
+     if (!do_use_int_scaling(FB_LAYER_VIC, 1 /* silent */)) {
+        use_scaling_params_item[VIC_INDEX]->value = 0;
+     }
+  }
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C128 &&
+         use_scaling_params_item[1]->value) {
+     if (!do_use_int_scaling(FB_LAYER_VDC, 1 /* silent */)) {
+        use_scaling_params_item[VDC_INDEX]->value = 0;
+     }
+  }
+
   set_current_dir_names();
 
   circle_set_volume(volume_item->value);
 
-  emux_change_palette(0, palette_item_0->value);
+  emux_change_palette(0, palette_item[0]->value);
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-    emux_change_palette(1, palette_item_1->value);
+    emux_change_palette(1, palette_item[1]->value);
   }
   ui_set_hotkeys();
   ui_set_joy_devs();
   ui_set_joy_items();
 
-  do_video_settings(FB_LAYER_VIC,
-      h_center_item_0,
-      v_center_item_0,
-      h_border_item_0,
-      v_border_item_0,
-      h_stretch_item_0,
-      v_stretch_item_0);
+  do_video_settings(FB_LAYER_VIC);
+  circle_set_interpolation(scaling_interp_item->value);
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-     do_video_settings(FB_LAYER_VDC,
-         h_center_item_1,
-         v_center_item_1,
-         h_border_item_1,
-         v_border_item_1,
-         h_stretch_item_1,
-         v_stretch_item_1);
+     do_video_settings(FB_LAYER_VDC);
   }
   overlay_init(statusbar_padding_item->value,
                c40_80_column_item->value,
@@ -3468,4 +4008,62 @@ const char* function_to_string(int button_func) {
     default:
        return "Unknown";
   }
+}
+
+void emux_geometry_changed(int layer) {
+
+  // Update the allowed min for border trim items. This lets the user
+  // start padding the edges with negative trim values.
+  // These are expressed in terms of percentage of the max because they
+  // are going into the range item.
+  int canvas_index = -1;
+  if (layer == FB_LAYER_VIC) {
+     canvas_index = VIC_INDEX;
+  } else if (layer == FB_LAYER_VDC) {
+     canvas_index = VDC_INDEX;
+  }
+
+  int dpx, dpy, fbw, fbh, sw, sh, dw, dh;
+  circle_get_fbl_dimensions(layer,
+                            &dpx, &dpy,
+                            &fbw, &fbh,
+                            &sw, &sh,
+                            &dw, &dh);
+
+  if (canvas_index >= 0) {
+    int max_padding_w = MIN(
+        canvas_state[canvas_index].extra_offscreen_border_left,
+        canvas_state[canvas_index].extra_offscreen_border_right);
+    int max_padding_h = canvas_state[canvas_index].first_displayed_line;
+
+    // Update the allowed max h stretch based on the display width and height
+    double max_scale = ceil((double)dpx / (double)dpy) * 1000;
+
+    if (h_border_item[canvas_index]) h_border_item[canvas_index]->min = 0;
+    if (v_border_item[canvas_index]) v_border_item[canvas_index]->min = 0;
+    if (h_border_item[canvas_index]) h_border_item[canvas_index]->max = canvas_state[canvas_index].max_border_w + max_padding_w;
+    if (v_border_item[canvas_index]) v_border_item[canvas_index]->max = canvas_state[canvas_index].max_border_h + max_padding_h;
+    if (h_stretch_item[canvas_index]) h_stretch_item[canvas_index]->max = max_scale;
+
+    // Stuff these into the canvas state
+    canvas_state[canvas_index].max_padding_w = max_padding_w;
+    canvas_state[canvas_index].max_padding_h = max_padding_h;
+    canvas_state[canvas_index].max_stretch_h = max_scale;
+  }
+
+  if (layer == FB_LAYER_VIC) {
+     // When the first display changes, we need to update the UI since
+     // it's frame buffer dimensions must match.
+     ui_geometry_changed(dpx, dpy, fbw, fbh, sw, sh, dw, dh);
+  }
+}
+
+void emux_frame_buffer_changed(int layer) {
+  int canvas_index = layer == FB_LAYER_VIC ? VIC_INDEX : VDC_INDEX;
+  if (use_scaling_params_item[canvas_index]->value) {
+     if (!do_use_int_scaling(layer, 1 /* silent */)) {
+        use_scaling_params_item[canvas_index]->value = 0;
+     }
+  }
+  do_video_settings(layer);
 }

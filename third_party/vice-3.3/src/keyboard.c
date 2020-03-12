@@ -36,6 +36,10 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifdef RASPI_COMPILE
+extern void raspi_keymap_changed(int, int, signed long);
+#endif
+
 #ifndef RAND_MAX
 #include <limits.h>
 #define RAND_MAX INT_MAX
@@ -971,6 +975,10 @@ static int keyboard_parse_keymap(const char *filename, int child)
     /* open in binary mode so the newline system doesn't matter */
     fp = sysfile_open(filename, &complete_path, "rb");
 
+#ifdef RASPI_COMPILE
+    raspi_keymap_changed(-1, -1, 0); // reset
+#endif
+
     if (fp == NULL) {
         log_message(keyboard_log, "Error loading keymap `%s'->`%s'.", filename, complete_path ? complete_path : "<empty/null>");
         DBG(("<keyboard_parse_keymap(%s) ERROR\n", filename));
@@ -1019,6 +1027,14 @@ static int keyboard_parse_keymap(const char *filename, int child)
     lib_free(complete_path);
 
     DBG(("<keyboard_parse_keymap OK\n"));
+#ifdef RASPI_COMPILE
+    raspi_keymap_changed(-3, 0, key_ctrl_restore1);
+    raspi_keymap_changed(-3, 1, key_ctrl_restore2);
+    for (int i = 0; i < keyc_num; ++i) {
+       raspi_keymap_changed(keyconvmap[i].row, keyconvmap[i].column,
+                            keyconvmap[i].sym);
+    }
+#endif
     return 0;
 }
 

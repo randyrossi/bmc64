@@ -29,7 +29,7 @@
 
 #include "emux_api.h"
 
-#define CONFIG_TXT_LINE_LEN 128
+#define CONFIG_TXT_LINE_LEN 512
 #define KEY_LEN 32
 #define VALUE_LEN 96
 #define DESC_LEN 64

@@ -31,11 +31,13 @@
 // VICE includes
 #include "resources.h"
 #include "vic20/vic20.h"
+#include "keyboard.h"
 
 // RASPI includes
 #include "emux_api.h"
 #include "menu.h"
 #include "ui.h"
+#include "keycodes.h"
 
 unsigned long emux_calculate_timing(double fps) {
   if (fps >= 49 && fps <= 51) {
@@ -183,4 +185,18 @@ struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
 }
 
 void emux_machine_load_settings_done(void) {
+}
+
+void machine_keymap_changed(int row, int col, signed long sym) {
+  if (row == 0 && col == 5 && !commodore_key_sym_set) {
+     commodore_key_sym = sym;
+     commodore_key_sym_set = 1;
+  } else if (row == 0 && col == 2 && !ctrl_key_sym_set) {
+     ctrl_key_sym = sym;
+     ctrl_key_sym_set = 1;
+  } else if (row == -3 && col == 0 && !restore_key_sym_set) {
+     restore_key_sym = sym;
+     restore_key_sym_set = 1;
+  }
+
 }

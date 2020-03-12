@@ -59,11 +59,15 @@
 
 // RASPI includes
 #include "circle.h"
+#include "keycodes.h"
 
+struct menu_item *sid_dual_item;
+struct menu_item *sid_base_address_item;
 struct menu_item *sid_engine_item;
-struct menu_item *sid_model_item;
+struct menu_item *sid_model_item[2];
 struct menu_item *sid_filter_item;
 struct menu_item *sid_resampling_item;
+
 struct menu_item *keyboard_mapping_item;
 
 // TODO: Fix these
@@ -76,7 +80,59 @@ struct menu_item *enable_item;
 struct menu_item *swap_item;
 struct menu_item *adapter_type_item;
 
-void emu_machine_init(void) {
+void raspi_keymap_changed(int, int, signed long);
+
+// Make sure SID options are sane for this model
+static void check_sid_options() {
+  int value;
+  resources_get_int("SidResidSampling", &value);
+  // For less capable Pi's, we force fast sampling.
+  if (circle_get_model() < 3) {
+     resources_set_int("SidResidSampling", SID_RESID_SAMPLING_FAST);
+  } else if (circle_get_model() < 4) {
+     if (value == SID_RESID_SAMPLING_RESAMPLING) {
+       resources_set_int( "SidResidSampling",
+              SID_RESID_SAMPLING_FAST_RESAMPLING);
+     }
+  }
+
+  // These can never change and must match the logic in
+  // viceemulatorcore.cpp.
+  //if (circle_get_arm_clock() < 1400000000) {
+     resources_set_int("SidResidPassband", 60);
+     resources_set_int("SidResid8580Passband", 60);
+  //} else {
+  //   resources_set_int("SidResidPassband", 90);
+  //   resources_set_int("SidResid8580Passband", 90);
+  //}
+  resources_set_int("SidResidGain", 97);
+  resources_set_int("SidResid8580Gain", 97);
+
+  // When dual sid is enabled, SidStereo=1, SoundOutput=2 and
+  // the audio driver must be configured for 2 channel output.
+  // Otherwise, SidStereo=0, SoundOutput=1 and the driver is
+  // configured for 1 channel.
+  //
+  // Never allow SidStereo=0 and SoundOutput=2 because is results
+  // in duplicating the mono channel to 2 channels which costs
+  // enough CPU on the Pi2 to blow the vsync budget. When dual sid
+  // is enabled, we have some VICE changes to produce the 2nd SID
+  // stream on another core so there is no performance penalty.
+  if (circle_get_model() >= 2) {
+     resources_get_int("SidStereo", &value);
+     if (value > 0) {
+        resources_set_int("SoundOutput", 2);
+     } else {
+        resources_set_int("SoundOutput", 1);
+     }
+  } else {
+     // Always mono for < Pi2
+     resources_set_int("SidStereo", 0);
+     resources_set_int("SoundOutput", 1);
+  }
+}
+
+void emu_machine_init(int raster_skip_enabled) {
   switch (machine_class) {
     case VICE_MACHINE_C64:
        emux_machine_class = BMC64_MACHINE_CLASS_C64;
@@ -97,6 +153,32 @@ void emu_machine_init(void) {
        assert(0);
        break;
   }
+
+  if (emux_machine_class == BMC64_MACHINE_CLASS_PET &&
+         !is_composite()) {
+     // For the PET, we always double the vertical height of the
+     // frame buffer so we can do our 'cheap' scanlines effect.
+     canvas_state[VIC_INDEX].raster_skip = 2;
+  } else {
+     canvas_state[VIC_INDEX].raster_skip = raster_skip_enabled ? 2 : 1;
+     canvas_state[VDC_INDEX].raster_skip = raster_skip_enabled ? 2 : 1;
+  }
+
+  // If raster skip enabled via kernel params, enable lines.
+  set_raster_lines(raster_skip_enabled);
+}
+
+static int vice_keymap_index_to_bmc(int value) {
+   switch (value) {
+      case KBD_INDEX_SYM:
+         return KEYBOARD_MAPPING_SYM;
+      case KBD_INDEX_POS:
+         return KEYBOARD_MAPPING_POS;
+      case KBD_INDEX_USERPOS:
+         return KEYBOARD_MAPPING_MAXI;
+      default:
+         return KEYBOARD_MAPPING_SYM;
+   }
 }
 
 void emux_trap_main_loop_ui(void) {
@@ -154,6 +236,9 @@ int emux_load_state(char *filename) {
      resources_set_int("SidEngine", sid_engine);
   }
 
+  // This makes sure sid options are sane.
+  check_sid_options();
+
   int tmp;
   resources_get_int("UserportJoy", &tmp);
   enable_item->value = tmp;
@@ -166,12 +251,24 @@ int emux_load_state(char *filename) {
      }
   }
 
+  resources_get_int("SidStereo", &tmp);
+  sid_dual_item->value = tmp;
+
+  resources_get_int("SidStereoAddressStart", &tmp);
+  for (int i=0;i<sid_base_address_item->num_choices;i=i+1) {
+     if (sid_base_address_item->choice_ints[i] == tmp) {
+        sid_base_address_item->value = i;
+        break;
+     }
+  }
+
   // Do other menu items too.
   //   Drive%iType, Drive%iParallelCable
   //   Drive%iRAM2000-A000
   //   KeymapIndex, SidEngine, SidModel, SidFilters, DriveSoundEmulation
   //   DriveSoundEmulationVolume, C128ColumnKey, DatasetteResetWithCPU
   //   IECDevice%i, FSDevice%iDir
+  
 
   return status;
 }
@@ -527,16 +624,34 @@ void emux_add_tape_options(struct menu_item* parent) {
 void emux_add_keyboard_options(struct menu_item* parent) {
   keyboard_mapping_item = ui_menu_add_multiple_choice(
       MENU_KEYBOARD_MAPPING, parent, "Mapping");
-  keyboard_mapping_item->num_choices = 2;
+  keyboard_mapping_item->num_choices = 3;
 
   int tmp_value;
   resources_get_int("KeymapIndex", &tmp_value);
-  keyboard_mapping_item->value = tmp_value;
+  keyboard_mapping_item->value = vice_keymap_index_to_bmc(tmp_value);
   strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_SYM], "Symbolic");
+  keyboard_mapping_item->choice_ints[KEYBOARD_MAPPING_SYM] = KBD_INDEX_SYM;
   strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_POS], "Positional");
+  keyboard_mapping_item->choice_ints[KEYBOARD_MAPPING_POS] = KBD_INDEX_POS;
+  strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_MAXI], "Maxi Positional");
+  keyboard_mapping_item->choice_ints[KEYBOARD_MAPPING_MAXI] = KBD_INDEX_USERPOS;
 }
 
+// NOTES: 0xd400 is normally not an option in VICE for the 2nd SID but
+// we added mirroring support for BMC64. Also, each sid can be configured
+// to have different models unlike upstream VICE.
 void emux_add_sound_options(struct menu_item* parent) {
+
+  static int addresses[] = {
+      0xd400, 0xd420, 0xd440, 0xd460, 0xd480, 0xd4a0, 0xd4c0, 0xd4d0,
+      0xd500, 0xd520, 0xd540, 0xd560, 0xd580, 0xd5a0, 0xd5c0, 0xd5d0,
+      0xd600, 0xd620, 0xd640, 0xd660, 0xd680, 0xd6a0, 0xd6c0, 0xd6d0,
+      0xd700, 0xd720, 0xd740, 0xd760, 0xd780, 0xd7a0, 0xd7c0, 0xd7d0,
+      0xde00, 0xde20, 0xde40, 0xde60, 0xde80, 0xdea0, 0xdec0, 0xded0,
+      0xdf00, 0xdf20, 0xdf40, 0xdf60, 0xdf80, 0xdfa0, 0xdfc0, 0xdfd0,
+  };
+
+  check_sid_options();
 
   // The pet has terrible lag when using ReSid, use FAST since it only
   // ever makes simple beeps anyway.
@@ -547,9 +662,12 @@ void emux_add_sound_options(struct menu_item* parent) {
      return;
   }
 
+  int supports_dual_sid = machine_class == VICE_MACHINE_C64 &&
+                           circle_get_model() >= 2;
+
   // Resid by default
   struct menu_item* child = sid_engine_item =
-      ui_menu_add_multiple_choice(MENU_SID_ENGINE, parent, "Sid Engine");
+      ui_menu_add_multiple_choice(MENU_SID_ENGINE, parent, "SID Engine");
   child->num_choices = 2;
   child->value = MENU_SID_ENGINE_RESID;
   strcpy(child->choices[MENU_SID_ENGINE_FAST], "Fast");
@@ -558,8 +676,8 @@ void emux_add_sound_options(struct menu_item* parent) {
   child->choice_ints[MENU_SID_ENGINE_RESID] = SID_ENGINE_RESID;
 
   // 6581 by default
-  child = sid_model_item =
-      ui_menu_add_multiple_choice(MENU_SID_MODEL, parent, "Sid Model");
+  child = sid_model_item[0] =
+    ui_menu_add_multiple_choice(MENU_SID_MODEL, parent, "SID Model");
   child->num_choices = 2;
   child->value = MENU_SID_MODEL_6581;
   strcpy(child->choices[MENU_SID_MODEL_6581], "6581");
@@ -568,25 +686,69 @@ void emux_add_sound_options(struct menu_item* parent) {
   child->choice_ints[MENU_SID_MODEL_8580] = SID_MODEL_8580;
 
   // Filter on by default
-  child = sid_filter_item =
-      ui_menu_add_toggle(MENU_SID_FILTER, parent, "Sid Filter", 0);
+  sid_filter_item =
+      ui_menu_add_toggle(MENU_SID_FILTER, parent, "SID Filter", 0);
 
-  if (circle_get_model() >= 3 ) {
+  if (circle_get_model() >= 3) {
      child = sid_resampling_item =
-         ui_menu_add_multiple_choice(MENU_SID_SAMPLING, parent, "Resampling");
+         ui_menu_add_multiple_choice(MENU_SID_SAMPLING,
+             parent, "SID Resampling");
      child->num_choices = 4;
      strcpy(child->choices[MENU_SID_SAMPLING_FAST], "Fast");
      strcpy(child->choices[MENU_SID_SAMPLING_INTERPOLATION], "Interpolation");
      strcpy(child->choices[MENU_SID_SAMPLING_RESAMPLING], "Resampling");
      strcpy(child->choices[MENU_SID_SAMPLING_FAST_RESAMPLING], "Fast Resampling");
-     child->choice_ints[MENU_SID_SAMPLING_FAST] = SID_RESID_SAMPLING_FAST;
-     child->choice_ints[MENU_SID_SAMPLING_INTERPOLATION] = SID_RESID_SAMPLING_INTERPOLATION;
-     child->choice_ints[MENU_SID_SAMPLING_RESAMPLING] = SID_RESID_SAMPLING_RESAMPLING;
-     child->choice_ints[MENU_SID_SAMPLING_FAST_RESAMPLING] = SID_RESID_SAMPLING_FAST_RESAMPLING;
+     child->choice_ints[MENU_SID_SAMPLING_FAST] =
+         SID_RESID_SAMPLING_FAST;
+     child->choice_ints[MENU_SID_SAMPLING_INTERPOLATION] =
+         SID_RESID_SAMPLING_INTERPOLATION;
+     child->choice_ints[MENU_SID_SAMPLING_RESAMPLING] =
+         SID_RESID_SAMPLING_RESAMPLING;
+     child->choice_ints[MENU_SID_SAMPLING_FAST_RESAMPLING] =
+         SID_RESID_SAMPLING_FAST_RESAMPLING;
 
      if (circle_get_model() < 4) {
         child->choice_disabled[MENU_SID_SAMPLING_RESAMPLING] = 1;
      }
+  }
+
+  if (supports_dual_sid) {
+     ui_menu_add_divider(parent);
+
+     int value;
+     resources_get_int("SidStereo", &value);
+     if (value > 1) {
+        resources_set_int("SidStereo", 1);
+        value = 1;
+     }
+     sid_dual_item =
+        ui_menu_add_toggle(MENU_SID2_ENABLE, parent, "Dual SID", value);
+
+     child = sid_base_address_item =
+        ui_menu_add_multiple_choice(MENU_SID2_ADDRESS, parent, "SID2 Address");
+     child->num_choices = 48;
+
+     int cur_addr;
+     resources_get_int("SidStereoAddressStart", &cur_addr);
+     for (int i=0;i<48;i=i+1) {
+        char label[32];
+        sprintf (label, "0x%04x", addresses[i]);
+        strcpy(child->choices[i], label);
+        child->choice_ints[i] = addresses[i];
+        if (addresses[i] == cur_addr) {
+           child->value = i;
+        }
+     }
+
+     // 6581 by default
+     child = sid_model_item[1] =
+       ui_menu_add_multiple_choice(MENU_SID2_MODEL, parent, "SID2 Model");
+     child->num_choices = 2;
+     child->value = MENU_SID_MODEL_6581;
+     strcpy(child->choices[MENU_SID_MODEL_6581], "6581");
+     strcpy(child->choices[MENU_SID_MODEL_8580], "8580");
+     child->choice_ints[MENU_SID_MODEL_6581] = SID_MODEL_6581;
+     child->choice_ints[MENU_SID_MODEL_8580] = SID_MODEL_8580;
   }
 
   int tmp_value;
@@ -595,13 +757,17 @@ void emux_add_sound_options(struct menu_item* parent) {
   sid_engine_item->value = viceSidEngineToBmcChoice(tmp_value);
 
   resources_get_int("SidModel", &tmp_value);
-  sid_model_item->value = viceSidModelToBmcChoice(tmp_value);
+  sid_model_item[0]->value = viceSidModelToBmcChoice(tmp_value);
+  resources_get_int("Sid2Model", &tmp_value);
+  sid_model_item[1]->value = viceSidModelToBmcChoice(tmp_value);
 
-  resources_get_int("SidFilters", &sid_filter_item->value);
+  resources_get_int("SidFilters", &tmp_value);
+  sid_filter_item->value = tmp_value;
 
   if (circle_get_model() >= 3 ) {
     resources_get_int("SidResidSampling", &tmp_value);
-    sid_resampling_item->value = viceSidResamplingToBmcChoice(tmp_value);
+    sid_resampling_item->value =
+        viceSidResamplingToBmcChoice(tmp_value);
   }
 }
 
@@ -699,27 +865,6 @@ void emux_set_int(IntSetting setting, int value) {
    case Setting_RAMBlock5:
      resources_set_int("RAMBlock5", value);
      break;
-   case Setting_SidEngine:
-     resources_set_int("SidEngine", value);
-     break;
-   case Setting_SidFilters:
-     resources_set_int("SidFilters", value);
-     break;
-   case Setting_SidModel:
-     resources_set_int("SidModel", value);
-     break;
-   case Setting_SidResidSampling:
-     // These are the same values. Not bothering to translate...
-     resources_set_int("SidResidSampling", value);
-     break;
-   case Setting_SidResidPassband:
-     resources_set_int("SidResidPassband", value);
-     resources_set_int("SidResid8580Passband", value);
-     break;
-   case Setting_SidResidGain:
-     resources_set_int("SidResidGain", value);
-     resources_set_int("SidResid8580Gain", value);
-     break;
    default:
      assert(0);
  }
@@ -761,8 +906,8 @@ void emux_get_int(IntSetting setting, int* dest) {
     case Setting_DatasetteResetWithCPU:
       resources_get_int("DatasetteResetWithCPU", dest);
       break;
-    case Setting_SidResidSampling:
-      resources_get_int("SidResidSampling", dest);
+    case Setting_VideoSize:
+      resources_get_int("VideoSize", dest);
       break;
     default:
       assert(0);
@@ -798,6 +943,32 @@ int emux_save_settings(void) {
 
 int emux_handle_menu_change(struct menu_item* item) {
   switch (item->id) {
+    case MENU_SID2_ADDRESS:
+      resources_set_int("SidStereoAddressStart", item->choice_ints[item->value]);
+      return 1;
+    case MENU_SID2_ENABLE:
+      resources_set_int("SidStereo", item->value);
+      check_sid_options();
+      return 1;
+    case MENU_SID_ENGINE:
+      resources_set_int("SidEngine", item->choice_ints[item->value]);
+      check_sid_options();
+      return 1;
+    case MENU_SID_MODEL:
+      resources_set_int("SidModel", item->choice_ints[item->value]);
+      check_sid_options();
+      return 1;
+    case MENU_SID2_MODEL:
+      resources_set_int("Sid2Model", item->choice_ints[item->value]);
+      check_sid_options();
+      return 1;
+    case MENU_SID_FILTER:
+      resources_set_int("SidFilters", item->value);
+      check_sid_options();
+      return 1;
+    case MENU_SID_SAMPLING:
+      resources_set_int("SidResidSampling", item->value);
+      return 1;
     case MENU_SAVE_EASYFLASH:
       if (cartridge_flush_image(CARTRIDGE_EASYFLASH) < 0) {
         ui_error("Problem saving");
@@ -825,7 +996,10 @@ int emux_handle_menu_change(struct menu_item* item) {
       resources_set_int_sprintf("Drive%iRAMA000", item->value, item->sub_id);
       return 1;
     case MENU_KEYBOARD_MAPPING:
-      resources_set_int("KeymapIndex", item->value);
+      if (item->value == KEYBOARD_MAPPING_MAXI) {
+         resources_set_string("KeymapUserPosFile", "rpi_maxi_pos.vkm");
+      }
+      resources_set_int("KeymapIndex", item->choice_ints[item->value]);
       return 1;
     default:
       break;
@@ -848,11 +1022,26 @@ int emux_handle_quick_func(int button_func) {
 void emux_load_additional_settings() {
   // Vice settings are automatically loaded by the emulator. Nothing
   // to do here.
+
+  // CHEAT: Temporarily using this hook to get the max border settings
+  // into the canvas structure early.  These are now reqiured by
+  // the menu before the border items are created. TODO: FIX THIS!!
+  set_canvas_borders(VIC_INDEX,
+                     &canvas_state[VIC_INDEX].max_border_w,
+                     &canvas_state[VIC_INDEX].max_border_h);
+  canvas_state[VIC_INDEX].max_border_h *=
+     canvas_state[VIC_INDEX].raster_skip;
+
+  if (machine_class == VICE_MACHINE_C128) {
+     set_canvas_borders(VDC_INDEX,
+                        &canvas_state[VDC_INDEX].max_border_w,
+                        &canvas_state[VDC_INDEX].max_border_h);
+     canvas_state[VDC_INDEX].max_border_h *=
+        canvas_state[VDC_INDEX].raster_skip;
+  }
 }
 
 void emux_save_additional_settings(FILE *fp) {
-  // Vice settings are persisted to vice.ini when emux_save_settings is
-  // called. Nothing to do here.
 }
 
 void emux_get_default_color_setting(int *brightness, int *contrast,
@@ -865,7 +1054,6 @@ void emux_get_default_color_setting(int *brightness, int *contrast,
 }
 
 int emux_handle_loaded_setting(char *name, char* value_str, int value) {
-  // Nothing to do here yet.
   return 0;
 }
 
@@ -991,4 +1179,18 @@ void circle_set_userport(uint8_t value) {
     default:
       break;
   }
+}
+
+void raspi_keymap_changed(int row, int col, signed long sym) {
+  if (row == -1 && col == -1) {
+     // Reset. Mark as not set and default to sane values.
+     commodore_key_sym_set = 0;
+     ctrl_key_sym_set = 0;
+     restore_key_sym_set = 0;
+     commodore_key_sym = KEYCODE_LeftControl;
+     ctrl_key_sym = KEYCODE_Tab;
+     restore_key_sym = KEYCODE_PageUp;
+  }
+
+  machine_keymap_changed(row, col, sym);
 }

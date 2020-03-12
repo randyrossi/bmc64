@@ -195,7 +195,7 @@ uint8_t *overlay_init(int padding, int c40_80_state, int vkbd_transparency) {
   // Use negative hstretch here so our overlay is stretched to the full
   // horizontal resolution rather than vertical.
   circle_set_stretch_fbl(FB_LAYER_STATUS,
-      -(double)OVERLAY_WIDTH/(double)OVERLAY_HEIGHT, 1.0);
+      -(double)OVERLAY_WIDTH/(double)OVERLAY_HEIGHT, 1.0, 0, 0, 0, 0);
   // We want our status bar to show up at the bottom of the screen with
   // padding set by user.
   circle_set_valign_fbl(FB_LAYER_STATUS, 1 /* BOTTOM */, padding);
@@ -767,7 +767,7 @@ void vkbd_nav_press(int pressed, int device) {
    } else {
       // Handle restore special case
       if (vkbd[vkbd_cursor].row == 0 && vkbd[vkbd_cursor].col == -3) {
-         emux_key_interrupt_locked(KEYCODE_PageUp, pressed);
+         emux_key_interrupt_locked(restore_key_sym, pressed);
       } else {
          emux_kbd_set_latch_keyarr(vkbd[vkbd_cursor].col,
                               vkbd[vkbd_cursor].row,
@@ -787,9 +787,9 @@ void vkbd_sync_event(long key, int pressed) {
       vkbd_lshift_down = pressed;
    } else if (key == KEYCODE_RightShift) {
       vkbd_rshift_down = pressed;
-   } else if (key == KEYCODE_LeftControl) {
+   } else if (key == commodore_key_sym) {
       vkbd_commodore_down = pressed;
-   } else if (key == KEYCODE_Tab) {
+   } else if (key == ctrl_key_sym) {
       vkbd_cntrl_down = pressed;
    }
    overlay_draw_virtual_keyboard();

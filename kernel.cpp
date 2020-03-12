@@ -160,6 +160,10 @@ int circle_alloc_fbl(int layer, int pixelmode, uint8_t **pixels,
   return static_kernel->circle_alloc_fbl(layer, pixelmode, pixels, width, height, pitch);
 }
 
+int circle_realloc_fbl(int layer, int shader) {
+  return static_kernel->circle_realloc_fbl(layer, shader);
+}
+
 void circle_free_fbl(int layer) {
   static_kernel->circle_free_fbl(layer);
 }
@@ -192,8 +196,8 @@ void circle_update_palette_fbl(int layer) {
   static_kernel->circle_update_palette_fbl(layer);
 }
 
-void circle_set_stretch_fbl(int layer, double hstretch, double vstretch) {
-  static_kernel->circle_set_stretch_fbl(layer, hstretch, vstretch);
+void circle_set_stretch_fbl(int layer, double hstretch, double vstretch, int hintstr, int vintstr, int use_hintstr, int use_vintstr) {
+  static_kernel->circle_set_stretch_fbl(layer, hstretch, vstretch, hintstr, vintstr, use_hintstr, use_vintstr);
 }
 
 void circle_set_center_offset(int layer, int cx, int cy) {
@@ -259,6 +263,61 @@ int circle_gpio_outputs_enabled() {
 void circle_kernel_core_init_complete(int core) {
   static_kernel->circle_kernel_core_init_complete(core);
 }
+
+void circle_get_fbl_dimensions(int layer, int *display_w, int *display_h,
+                               int *fb_w, int *fb_h,
+                               int *src_w, int *src_h,
+                               int *dst_w, int *dst_h) {
+  static_kernel->circle_get_fbl_dimensions(layer, display_w, display_h,
+                                           fb_w, fb_h,
+                                           src_w, src_h, dst_w, dst_h);
+}
+
+void circle_get_scaling_params(int display,
+                               int *fbw, int *fbh,
+                               int *sx, int *sy) {
+  static_kernel->circle_get_scaling_params(display, fbw, fbh, sx, sy);
+}
+
+void circle_set_interpolation(int enable) {
+  static_kernel->circle_set_interpolation(enable);
+}
+
+void circle_set_use_shader(int enable) {
+  static_kernel->circle_set_use_shader(enable);
+}
+
+void circle_set_shader_params(int curvature,
+		float curvature_x,
+		float curvature_y,
+		int mask,
+		float mask_brightness,
+		int gamma,
+		int fake_gamma,
+		int scanlines,
+		int multisample,
+		float scanline_weight,
+		float scanline_gap_brightness,
+		float bloom_factor,
+		float input_gamma,
+		float output_gamma,
+		int sharper) {
+  static_kernel->circle_set_shader_params(curvature,
+			curvature_x,
+			curvature_y,
+			mask,
+			mask_brightness,
+			gamma,
+			fake_gamma,
+			scanlines,
+			multisample,
+			scanline_weight,
+			scanline_gap_brightness,
+			bloom_factor,
+			input_gamma,
+			output_gamma,
+			sharper);
+}
 };
 
 namespace {
@@ -285,8 +344,8 @@ long func_to_keycode(int btn_func) {
 CKernel::CKernel(void)
     : ViceStdioApp("vice"), mViceSound(nullptr),
       mNumJoy(emu_get_num_joysticks()),
-      mInitialVolume(100), mNumCoresComplete(0),
-      mNeedSoundInit(false) {
+      mVolume(100), mNumCoresComplete(0),
+      mNeedSoundInit(false), mNumSoundChannels(1) {
   static_kernel = this;
   mod_states = 0;
   memset(key_states, 0, MAX_KEY_CODES * sizeof(bool));
@@ -653,22 +712,15 @@ ViceApp::TShutdownMode CKernel::Run(void) {
 void CKernel::ScanKeyboard() {
   int ui_activated = emu_is_ui_activated();
 
-  // For restore, there is no public API that triggers it so we will
-  // pass the keycode that will.
   int restore = gpioPins[GPIO_KBD_RESTORE_INDEX]->Read();
-#if defined(RASPI_PLUS4) | defined(RASPI_PLUS4EMU)
+  // For restore, there is no public API that triggers it so we will
+  // pass the keycode that will.  NOTE: On the plus/4, this key sym
+  // will be the CLR key according to the keymap.
   if (restore == LOW && kbdRestoreState == HIGH) {
-     emu_key_pressed(KEYCODE_Home);
+     emu_key_pressed(restore_key_sym);
   } else if (restore == HIGH && kbdRestoreState == LOW) {
-     emu_key_released(KEYCODE_Home);
+     emu_key_released(restore_key_sym);
   }
-#else
-  if (restore == LOW && kbdRestoreState == HIGH) {
-     emu_key_pressed(KEYCODE_PageUp);
-  } else if (restore == HIGH && kbdRestoreState == LOW) {
-     emu_key_released(KEYCODE_PageUp);
-  }
-#endif
   kbdRestoreState = restore;
 
   // Keyboard scan
@@ -1059,11 +1111,15 @@ int CKernel::circle_sound_init(const char *param, int *speed, int *fragsize,
   *speed = SAMPLE_RATE;
   *fragsize = FRAG_SIZE;
   *fragnr = NUM_FRAGS;
-  // We force mono.
-  *channels = 1;
+  mNumSoundChannels = *channels;
 
-  // We init sound after boot is complete to avoid an initial
-  // sound sync issue if a cartridge is attached.
+  // NOTE: We init sound after boot is complete to avoid an initial
+  // sound sync issue if a cartridge is attached. But if it's already
+  // initialised, cancel and restart here in case channels has changed.
+  if (mViceSound) {
+     mViceSound->CancelPlayback();
+     mViceSound->Playback(vol_percent_to_vchiq(mVolume), mNumSoundChannels);
+  }
   return 0;
 }
 
@@ -1085,7 +1141,7 @@ int CKernel::circle_sound_resume(void) { return 0; }
 
 int CKernel::circle_sound_bufferspace(void) {
   if (mViceSound) {
-    return mViceSound->BufferSpaceBytes();
+    return mViceSound->BufferSpaceSamples();
   }
   return FRAG_SIZE * NUM_FRAGS;
 }
@@ -1272,7 +1328,7 @@ void CKernel::circle_check_gpio() {
   circle_lock_acquire();
   if (mNeedSoundInit && mNumCoresComplete >= 2) {
      mViceSound = new ViceSound(&mVCHIQ, mViceOptions.GetAudioOut());
-     mViceSound->Playback(vol_percent_to_vchiq(mInitialVolume));
+     mViceSound->Playback(vol_percent_to_vchiq(mVolume), mNumSoundChannels);
      mNeedSoundInit = false;
   }
   circle_lock_release();
@@ -1401,7 +1457,7 @@ void CKernel::circle_boot_complete() {
        // Cores 1/2 are done initing sound tables before we tried to
        // start playback device.
        mViceSound = new ViceSound(&mVCHIQ, mViceOptions.GetAudioOut());
-       mViceSound->Playback(vol_percent_to_vchiq(mInitialVolume));
+       mViceSound->Playback(vol_percent_to_vchiq(mVolume), mNumSoundChannels);
     } else {
        // Cores 1/2 are still initializing sound tables. We'll init
        // sound later.  This is to get around the crashing noise you
@@ -1411,7 +1467,7 @@ void CKernel::circle_boot_complete() {
     circle_lock_release();
 #else
     mViceSound = new ViceSound(&mVCHIQ, mViceOptions.GetAudioOut());
-    mViceSound->Playback(vol_percent_to_vchiq(mInitialVolume));
+    mViceSound->Playback(vol_percent_to_vchiq(mVolume), mNumSoundChannels);
 #endif
   }
 
@@ -1421,6 +1477,10 @@ void CKernel::circle_boot_complete() {
 int CKernel::circle_alloc_fbl(int layer, int pixelmode, uint8_t **pixels,
                               int width, int height, int *pitch) {
   return fbl[layer].Allocate(pixelmode, pixels, width, height, pitch);
+}
+
+int CKernel::circle_realloc_fbl(int layer, int shader) {
+  return fbl[layer].ReAllocate(shader);
 }
 
 void CKernel::circle_free_fbl(int layer) {
@@ -1465,8 +1525,8 @@ void CKernel::circle_update_palette_fbl(int layer) {
   fbl[layer].UpdatePalette();
 }
 
-void CKernel::circle_set_stretch_fbl(int layer, double hstretch, double vstretch) {
-  fbl[layer].SetStretch(hstretch, vstretch);
+void CKernel::circle_set_stretch_fbl(int layer, double hstretch, double vstretch, int hintstr, int vintstr, int use_hintstr, int use_vintstr) {
+  fbl[layer].SetStretch(hstretch, vstretch, hintstr, vintstr, use_hintstr, use_vintstr);
 }
 
 void CKernel::circle_set_center_offset(int layer, int cx, int cy) {
@@ -1499,11 +1559,10 @@ int CKernel::circle_get_zlayer_fbl(int layer) {
 
 void CKernel::circle_set_volume(int value) {
   // TODO: This is a race condition between two cores. Fix this.
+  mVolume = value;
   if (mViceSound) {
      mViceSound->SetControl(vol_percent_to_vchiq(value),
                             mViceOptions.GetAudioOut());
-  } else {
-     mInitialVolume = value;
   }
 }
 
@@ -1531,4 +1590,63 @@ void CKernel::circle_kernel_core_init_complete(int core) {
   circle_lock_acquire();
   mNumCoresComplete++;
   circle_lock_release();
+}
+
+void CKernel::circle_get_fbl_dimensions(int layer,
+                               int *display_w, int *display_h,
+                               int *fb_w, int *fb_h,
+                               int *src_w, int *src_h,
+                               int *dst_w, int *dst_h) {
+  return fbl[layer].GetDimensions(display_w, display_h,
+                                  fb_w, fb_h,
+                                  src_w, src_h,
+                                  dst_w, dst_h);
+}
+
+void CKernel::circle_get_scaling_params(int display,
+                                        int *fbw, int *fbh,
+                                        int *sx, int *sy) {
+  mViceOptions.GetScalingParams(display, fbw, fbh, sx, sy);
+}
+
+void CKernel::circle_set_interpolation(int enable) {
+  FrameBufferLayer::SetInterpolation(enable);
+}
+
+void CKernel::circle_set_use_shader(int enable) {
+	// Only the main display (layer 0) ever gets a shader.
+  fbl[0].SetUsesShader(enable);
+}
+
+void CKernel::circle_set_shader_params(int curvature,
+		float curvature_x,
+		float curvature_y,
+		int mask,
+		float mask_brightness,
+		int gamma,
+		int fake_gamma,
+		int scanlines,
+		int multisample,
+		float scanline_weight,
+		float scanline_gap_brightness,
+		float bloom_factor,
+		float input_gamma,
+		float output_gamma,
+		int sharper) {
+  // Only the main display (layer 0) ever gets a shader.
+  fbl[0].SetShaderParams(curvature,
+			curvature_x,
+			curvature_y,
+			mask,
+			mask_brightness,
+			gamma,
+			fake_gamma,
+			scanlines,
+			multisample,
+			scanline_weight,
+			scanline_gap_brightness,
+			bloom_factor,
+			input_gamma,
+			output_gamma,
+			sharper);
 }

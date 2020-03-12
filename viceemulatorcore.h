@@ -45,7 +45,7 @@ public:
   bool Initialize() { return true; }
 #endif
 
-  bool Init(void) override;
+  bool Init(ViceOptions* options) override;
   void LaunchEmulator(char *timing_option) override;
 
 private:
@@ -54,6 +54,7 @@ private:
   int passBandFreq_;
   char timing_option_[8];
   CSpinLock m_Lock;
+  ViceOptions *m_options;
 
   void RunMainVice(bool wait);
   void ComputeResidFilter(int model);

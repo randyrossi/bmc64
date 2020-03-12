@@ -14,11 +14,14 @@
 // limitations under the License.
 
 #include "viceoptions.h"
+
+#include <stdlib.h>
+#include <string.h>
+#include <algorithm>
+
 #include <circle/logger.h>
 #include <circle/sysconfig.h>
 #include <circle/util.h>
-#include <stdlib.h>
-#include <string.h>
 
 extern "C" {
 #include "third_party/common/circle.h"
@@ -32,7 +35,10 @@ ViceOptions::ViceOptions(void)
     : m_nMachineTiming(MACHINE_TIMING_PAL_HDMI),
       m_bDemoEnabled(false), m_bSerialEnabled(false),
       m_bGPIOOutputsEnabled(false), m_nCyclesPerSecond(0),
-      m_audioOut(VCHIQSoundDestinationAuto), m_bDPIEnabled(false) {
+      m_audioOut(VCHIQSoundDestinationAuto), m_bDPIEnabled(false),
+      m_scaling_param_fbw{0,0}, m_scaling_param_fbh{0,0},
+      m_scaling_param_sx{0,0}, m_scaling_param_sy{0,0},
+      m_raster_skip(false) {
   s_pThis = this;
 
   CBcmPropertyTags Tags;
@@ -55,6 +61,8 @@ ViceOptions::ViceOptions(void)
   char *pOption;
   while ((pOption = GetToken()) != 0) {
     char *pValue = GetOptionValue(pOption);
+
+    if (!pValue) continue;
 
     if (strcmp(pOption, "machine_timing") == 0) {
       if (strcmp(pValue, "ntsc") == 0 || strcmp(pValue, "ntsc-hdmi") == 0) {
@@ -114,6 +122,31 @@ ViceOptions::ViceOptions(void)
       } else {
         m_bDPIEnabled = false;
       }
+    } else if (strcmp(pOption, "scaling_params") == 0 ||
+               strcmp(pOption, "scaling_params2") == 0) {
+      int num = 0;
+      if (strcmp(pOption, "scaling_params2") == 0) {
+         num = 1;
+      }
+      char* fbw_s = strtok(pValue, ",");
+      if (!fbw_s) continue;
+      char* fbh_s = strtok(NULL, ",");
+      if (!fbh_s) continue;
+      char* sx_s = strtok(NULL, ",");
+      if (!sx_s) continue;
+      char* sy_s = strtok(NULL, ",");
+      if (!sy_s) continue;
+
+      m_scaling_param_fbw[num] = atoi(fbw_s);
+      m_scaling_param_fbh[num] = atoi(fbh_s);
+      m_scaling_param_sx[num] = atoi(sx_s);
+      m_scaling_param_sy[num] = atoi(sy_s);
+    } else if (strcmp(pOption, "raster_skip") == 0) {
+      if (strcmp(pValue, "true") == 0 || strcmp(pValue, "1") == 0) {
+        m_raster_skip = true;
+      } else {
+        m_raster_skip = false;
+      }
     }
   }
 
@@ -159,6 +192,17 @@ bool ViceOptions::GPIOOutputsEnabled(void) const { return m_bGPIOOutputsEnabled;
 bool ViceOptions::DPIEnabled(void) const { return m_bDPIEnabled; }
 
 int ViceOptions::GetDiskPartition(void) const { return m_disk_partition; }
+
+void ViceOptions::GetScalingParams(int display, int *fbw, int *fbh, int *sx, int *sy) const {
+  if (display >=0 && display < 2) {
+     *fbw = m_scaling_param_fbw[display];
+     *fbh = m_scaling_param_fbh[display];
+     *sx = m_scaling_param_sx[display];
+     *sy = m_scaling_param_sy[display];
+  }
+}
+
+bool ViceOptions::GetRasterSkip(void) const { return m_raster_skip; }
 
 const char *ViceOptions::GetDiskVolume(void) const { return m_disk_volume; }
 

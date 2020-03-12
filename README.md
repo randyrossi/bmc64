@@ -12,10 +12,10 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
   * Easily wire real Commodore/Atari Joysticks and nav buttons via GPIO using jumpers (GPIO Config 1)
   * Can use a real Commodore Keyboard and Joysticks via PCB (GPIO Config 2)
   * Can use a Waveshare Game HAT (Pi2 or 3 Only) (GPIO Config 3)
-  * Also works with the Keyrah
+  * Also works with the Keyrah and TheC64 'Maxi' case
 
 # Limitations
-  * USB gamepad support is limited. Not all gamepads will work.
+  * USB gamepad support is limited. Not all gamepads will work (especially wireless).
   * There is no network support.
 
 This project uses VICE for emulation without any O/S (Linux) distribution installed on the Pi.  VICE (Versatile Commodore Emulator) platform dependencies are satisfied using circle-stdlib.
@@ -50,12 +50,13 @@ Inside machines.txt, you can change or add new machine configurations. These wil
 
 Here is an example of a machine entry:
 
-    [C64/NTSC/HDMI/720p@60Hz]
+    [C64/PAL/HDMI/VICE 720p@50Hz]
     disable_overscan=1
-    sdtv_mode=16
+    sdtv_mode=18
     hdmi_group=1
     hdmi_mode=19
-    machine_timing=ntsc-hdmi
+    machine_timing=pal-hdmi
+    scaling_params=384,240,1152,720
 
 NOTE: Even though a config is intended to be used for HDMI or Composite (never both), you should always define both composite and hdmi parameters.
 
@@ -111,6 +112,8 @@ You would then define your machines.txt entry like this:
     machine_timing=pal-custom
     cycles_per_second=980670
 
+    (see below for chosing scaling_params)
+
 And this option will show up in the Machine->Switch menu.
 
 Custom HDMI modes are not supported for plus4emu yet.
@@ -131,6 +134,7 @@ Here are a couple examples you can add to machines.txt that will work with the V
     display_default_lcd=1
     dpi_group=1
     dpi_mode=4
+    scaling_params=384,240,1152,720
 
     [C64/PAL/DPI/VGA666:720p@50hz]
     enable_dpi=true
@@ -140,6 +144,7 @@ Here are a couple examples you can add to machines.txt that will work with the V
     display_default_lcd=1
     dpi_group=1
     dpi_mode=19
+    scaling_params=384,240,1152,720
 
 * It appears these modes are not exactly 50hz/60hz like HDMI. It's likely the case that all DPI modes will require custom timing.  See steps mentioned above for how to find the correct cycles_per_second value for your DPI mode.
 
@@ -155,17 +160,79 @@ If you are experimenting with a video mode and are not getting a picture, you ca
 
 All of the above re: timing applies to the other machines as well.  However, in my opinion, the VIC20 machine is better configured to be an NTSC machine.  Most cartridges were made for NTSC and you will notice they position their screens poorly when inserted into a PAL machine.  Most games gave the option of moving it using cursor keys or joystick but this is annoying.
 
-# Canvas Dimensions
+# Dimensions and Scaling
 
-Since v2.1, the virtual display dimensions are adjusted dynamically from the menu. Under 'Video', you will find Horizontal Border Trim %, Vertical Border Trim % and Aspect Ratio controls for each virtual display available.  Displays are scaled as follows:
+The virtual display dimensions can be adjusted dynamically from the menu. Under 'Video', you will find Horizontal Border (px), Vertical Border (px), and H/V Stretch controls for each virtual display available. Displays are scaled as follows:
 
-      1. The amount of border to trim is removed from top/botom and left/right edges.
-      2. The resulting image is stretched vertically according to vertical stretch factor (1.0 is full vertical height)
-      3. The width is then calculated according to the horizontal stretch factor.
+      1. The main graphics area is trimmed or padded by border level adjustments.
+      2. The resulting image is scaled according to stretch factors (1.0 is full vertical height, horizontal is a scalar of the display height)
+      3. The scaled image is then centered within the display resolution.
 
-Using the three settings available, you should be able to customize how much border is available as well as the aspect ratio of the final image.  Reasonable defaults are provided.
+Using the settings, you should be able to customize the display to your liking. However, if you plan on using scaling_kernel=8 (nearest neighbor) there are benefits to chosing dimensions that result in integer multipliers of the frame buffer (see below).
 
-NOTE: v2.1 and onward will ignore any vic_canvas_* or vicii_canvas_* kernel parameters.  The scaling_kernel option is still applicable.  If you are using a version lower than v2.1, consult the old documentation on how video cropping/sizing works.
+## Integer Scaling
+
+If you want to get better picture quality on your CRT monitor or if you prefer the 'pixel perfect' look on HDMI, integer scaling is what you want. Integer scaling along with scaling_kernel=8 will eliminate scaling artifacts (i.e. variation in thickness of scaled up pixels).  However, you may have to sacrifice some border area and/or not get the exact aspect ratio you want.
+
+When you change the border values, you will see three dimensions displayed; the display dimensions, the frame buffer dimensions (FB) and the scaled frame buffer (SFB) dimensions. When the scaled frame buffer dimensions are an integer multiple of the frame buffer dimensions, they will turn green.
+
+To make this easier, there are video options named 'Next H Integer Scale' and 'Next V Integer Scale'.  They will bump up the horizontal and vertical stretch to the next nearest integer multiple of the frame buffer's dimensions. Keep pressing return to cycle through all integer multipls that will fit.  If the next integer multiple doesn't fill the screen, you will have to adjust the border amount so that it does and try again (not always possible).
+
+Once you have values that work for you, edit the machines.txt file and add or change the scaling_params for the mode you are running:
+
+    scaling_params=fb_width,fb_height,sfb_width,sfb_height
+
+    (For C128 and PET use scaling_params2 for the 80 column displays.)
+
+When sfb_width = fb_width * N, where N is some integer, the width will be integer scaled.
+
+When sfb_height = fb_height * N, where N is some integer, height will be integer scaled.
+
+Using scaling_kernel=8 without integer scaling can cause irregular looking characters. Notice the two O's and S's look odd.
+
+![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/not_integer_scaled.png)
+
+Using scaling_kernel=8 with integer scaling eliminates irregularities.
+
+![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/integer_scaled.png)
+
+## Perfect DPI -> CRT Scanlines
+
+For those using DPI connected to CRTs (via VGA666 for example), you can try a custom resolution like this:
+
+    dpi_timings=1920 1 56 176 208 282 1 5 2 23 0 0 0 50 0 36908040 1
+
+This gives a 1920 x 282 display res.  Then set FB to 384x282.  Then set SFB to 1920x282.  That gives a 5x horizontal scale and 1x vertical.  So the CRT will trace each line of the frame buffer on one scanline.  Once your resolution looks good, follow the custom timing tool instructions to get your cycles_per_second correct.  The above mode was tested on a Sony Trinitron CRT.  Here is the machines.txt entry:
+
+    [C64/PAL/DPI/VGA666:1920x282@50.125hz]
+    enable_dpi=true
+    machine_timing=pal-custom
+    cycles_per_second=985257
+    enable_dpi_lcd=1
+    display_default_lcd=1
+    dpi_group=2
+    dpi_mode=87
+    dpi_timings=1920 1 56 176 208 282 1 5 2 23 0 0 0 50 0 36908040 1
+    scaling_params=384,282,1920,282
+
+NOTE: This mode has a 15khz horizontal refresh rate which many monitors don't support.  You may have to experiment with other resolutions (not necessarily 282 lines) to get something working.
+
+Many thanks goes out to Alessio Scanderebech and Andrea Mazzoleni for their assistance with getting this working.
+
+# VGA Display without 15khz hsync support
+
+If you have a VGA monitor that doesn't support 15khz hsync, you can try using a 1920x1080 resolution and add raster_skip=true to the machine config.  The 'raster_skip' option doubles the vertical height of the frame buffer and draws the emulated display into every other line.  When this is integer scaled up to 1080, you can achieve more or less the same effect you would get with a monitor that could do 15khz.  That is, there will be gaps between each 'scanline' as though there were only ~270 lines.  This looks pretty decent on a Trinitron tube because there are no horizontal gaps in the phosphor bars and the 2 real scanlines that resulted from doubling the one line from the frame buffer looks like one solid scanline (...at least that's what I think is happening)
+
+    [C64/PAL/DPI/VGA666:1920x1080@50hz]
+    enable_dpi=true
+    machine_timing=pal-custom
+    cycles_per_second=985257
+    enable_dpi_lcd=1
+    display_default_lcd=1
+    dpi_group=1
+    dpi_mode=31
+    raster_skip=true
+    scaling_params=1920,540,1920,1080
 
 # Video Scaling Algorithm
 
@@ -178,6 +245,8 @@ The emulated resolutions are small and must be scaled up to the video mode's res
   * (Pixel Perfect Look) This is what scaling_kernel=8 option will look like:
 
 ![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/scaling_kernel_8.jpg)
+
+  NOTE: For scaling_kernel=8, it's best to adjust your FB so that it can be scaled by an integer and fill most of the screen.  See section on Integer Scaling above.
 
 # CRT Scanline alignment
 
@@ -287,13 +356,37 @@ Caution: Fast Resampling in combination with other high CPU intensive tasks (lik
 
 NOTE: For resampling, parameters like Gain and Passband frequency must remain at the default values and cannot be changed (even in vice.ini).
 
+## Dual SIDs
+
+You can enable dual SIDs in v3.5+ for the C64 to get 6 voices and stereo sound. For the second SID to work, your C64 program and the base address for the second SID must match.  If you change the base address, it's best to reset the machine to clear out the registers.
+
+## Pseudo Stereo Effect
+
+BMC64 has modified VICE code to allow the same base address ($d400) for both SIDs as well allowing different SID models on each channel.  You can get a 'pseudo' stereo effect this way due to the different characteristics of the different SID chips.  (Try listening to 'Edge of Disgrace' with headphones and select 6581 for SID1 and 8850 for SID2.)  This will work for any software you run, not just programs that can use a second SID.
+
+Thanks goes out to to github.com user boras-pl (https://github.com/boras-pl) for suggesting this. This simulates this real life mod:
+
+(https://www.youtube.com/watch?v=2Qlqeaxkp14)
+(http://blog.tynemouthsoftware.co.uk/2015/11/commodore-64-pseudo-stereo-dual-sid.html)
+
 # Keyboards
 
 Use F12 to bring up the menu and ESC/RUNSTOP to exit.
 
 If you use a real commodore keyboard (either Keyrah or GPIO via PCB), you can use Commodore Key + F7 in place of F12 (This key combination is configurable). You can also use gamepads with buttons configured for the menu.  Gamepads that have had a button configured to bring up the menu don't have to be assigned to a port to do that.  So even if you have DB9 joysticks wired, you should still be able to plug in a wired/wireless usb gamepad to trigger the menu if you want.
 
-When using a Keyrah, make sure the keyboard mapping is set to 'Positional'.
+What keyboard mapping to use?
+
+Usage         | Keyboard Mapping
+--------------|----------------
+USB           | Positional or Symbolic
+GPIO          | Positional
+Keyrah        | Positional
+TheC64 (Maxi) | Maxi Positional
+
+* Make sure you have the rpi_*.vkm files located in each machine subdir.
+
+* Special thanks goes out to ody81(github) / ody ody (youtube) user who figured out the Maxi keyboard mapping file.  You can watch his tutorial on how to put BMC64 inside a Maxi case here: https://www.youtube.com/channel/UCrXCNM2oXmIA7sTUwXrumiw or read his Reddit post here: https://www.reddit.com/r/Commodore/comments/ejtggy/the_c64_maxi_to_bmc64_conversion_rough_tutorial
 
 ## Plus/4 Keyboard Notes
 
@@ -552,6 +645,7 @@ A: Yes, the original machine ran at 50.125Hz for PAL and 59.826Hz for NTSC. So, 
     hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
     machine_timing=pal-custom
     cycles_per_second=985257
+    scaling_params=0,384,272,768,544
 
 This mode will match the timing of the original machine (for the purists) but may not be compatible with all monitors:
 
@@ -564,6 +658,7 @@ For NTSC, this mode will match the real timing very closely.  But again, since i
     hdmi_timings=768 0 24 72 96 525 1 3 10 9 0 0 0 60 0 31415829 1
     machine_timing=ntsc-custom
     cycles_per_second=1022708
+    scaling_params=0,384,246,768,492
 
 Q: Audio is not coming out of HDMI/Analog jack when I expect it to. Why?
 

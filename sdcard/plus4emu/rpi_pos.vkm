@@ -1,0 +1,87 @@
+# BMC64 keyboard mapping file suitable for both
+# USB and real C64 keyboards using GPIO
+#
+# This is not a VICE keymap file.
+#
+#     0: Del          1: Return       2: £            3: Help
+#     4: F1           5: F2           6: F3           7: @
+#     8: 3            9: W           10: A           11: 4
+#    12: Z           13: S           14: E           15: Shift
+#    16: 5           17: R           18: D           19: 6
+#    20: C           21: F           22: T           23: X
+#    24: 7           25: Y           26: G           27: 8
+#    28: B           29: H           30: U           31: V
+#    32: 9           33: I           34: J           35: 0
+#    36: M           37: K           38: O           39: N
+#    40: Down        41: P           42: L           43: Up
+#    44: .           45: :           46: -           47: ,
+#    48: Left        49: *           50: ;           51: Right
+#    52: Esc         53: =           54: +           55: /
+#    56: 1           57: Home        58: Ctrl        59: 2
+#    60: Space       61: C=          62: Q           63: Stop
+#
+BackSpace     0
+Return        1
+BackSlash     2
+F7            3
+F1            4
+F3            5
+F5            6
+Insert        7
+3             8
+w             9
+a            10
+4            11
+z            12
+s            13
+e            14
+Shift_L      15
+Shift_R      15
+5            16
+r            17
+d            18
+6            19
+c            20
+f            21
+t            22
+x            23
+7            24
+y            25
+g            26
+8            27
+b            28
+h            29
+u            30
+v            31
+9            32
+i            33
+j            34
+0            35
+m            36
+k            37
+o            38
+n            39
+Down         40
+p            41
+l            42
+Up           43
+Period       44
+SemiColon    45
+LeftBracket  46
+Comma        47
+Left         48
+Dash         49
+SingleQuote  50
+Right        51
+BackQuote    52
+RightBracket 53
+Equals       54
+Slash        55
+1            56
+Home         57
+Tab          58
+2            59
+Space        60
+Control_L    61
+q            62
+Escape       63

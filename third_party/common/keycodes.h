@@ -27,6 +27,18 @@
 #ifndef RASPI_KEYCODES_H
 #define RASPI_KEYCODES_H
 
+// These are set according to the keyboard mapping for each emualtor
+// so the UI and other functions know what keys the user wanted these
+// to be instead of hard coded values.
+extern signed long commodore_key_sym;
+extern signed long restore_key_sym;
+extern signed long ctrl_key_sym;
+
+// Used to track whether these are set.
+extern int commodore_key_sym_set;
+extern int restore_key_sym_set;
+extern int ctrl_key_sym_set;
+
 #define KEYCODE_NONE 0x00
 #define KEYCODE_a 0x04
 #define KEYCODE_b 0x05

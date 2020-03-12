@@ -72,6 +72,7 @@ public:
   // New FB2 stuff to replace the default frame buffer
   int circle_alloc_fbl(int layer, int pixelmode, uint8_t **pixels,
                        int width, int height, int *pitch);
+  int circle_realloc_fbl(int layer, int shader);
   void circle_free_fbl(int layer);
   void circle_clear_fbl(int layer);
   void circle_show_fbl(int layer);
@@ -80,7 +81,7 @@ public:
   void circle_set_palette_fbl(int layer, uint8_t index, uint16_t rgb565);
   void circle_set_palette32_fbl(int layer, uint8_t index, uint32_t argb);
   void circle_update_palette_fbl(int layer);
-  void circle_set_stretch_fbl(int layer, double hstretch, double vstretch);
+  void circle_set_stretch_fbl(int layer, double hstretch, double vstretch, int hintstr, int vintstr, int use_hintstr, int use_vintstr);
   void circle_set_center_offset(int layer, int cx, int cy);
   void circle_set_src_rect_fbl(int layer, int x, int y, int w, int h);
   void circle_set_valign_fbl(int layer, int align, int padding);
@@ -108,6 +109,31 @@ public:
   int circle_gpio_outputs_enabled();
   void circle_kernel_core_init_complete(int core);
   unsigned circle_get_arm_clock();
+  void circle_get_fbl_dimensions(int layer, int *display_w, int *display_h,
+                                 int *fb_w, int *fb_h,
+                                 int *src_w, int *src_h,
+                                 int *dst_w, int *dst_h);
+  void circle_get_scaling_params(int display,
+                                 int *fbw, int *fbh,
+                                 int *sx, int *sy);
+  void circle_set_interpolation(int enable);
+  void circle_set_use_shader(int enable);
+  void circle_set_shader_params(
+		    int curvature,
+			float curvature_x,
+			float curvature_y,
+			int mask,
+			float mask_brightness,
+			int gamma,
+			int fake_gamma,
+			int scanlines,
+			int multisample,
+			float scanline_weight,
+			float scanline_gap_brightness,
+			float bloom_factor,
+			float input_gamma,
+			float output_gamma,
+			int sharper);
 
 private:
   void InitSound();
@@ -125,9 +151,10 @@ private:
   CCPUThrottle mCPUThrottle;
   CSpinLock m_Lock;
   int mNumJoy;
-  int mInitialVolume;
+  int mVolume;
   int mNumCoresComplete;
   bool mNeedSoundInit;
+  int mNumSoundChannels;
 
   int gpio_debounce_state[NUM_GPIO_PINS];
 

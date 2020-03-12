@@ -83,6 +83,10 @@ struct sound_s
 
     /* resid sid implementation */
     reSID::SID *sid;
+
+#ifdef RASPI_COMPILE
+    int chip_num;
+#endif
 };
 
 typedef struct sound_s sound_t;
@@ -104,13 +108,21 @@ static short *getbuf(int len)
     return buf;
 }
 
+#ifdef RASPI_COMPILE
+static sound_t *resid_open(uint8_t *sidstate, int chip_num)
+#else
 static sound_t *resid_open(uint8_t *sidstate)
+#endif
 {
     sound_t *psid;
     int i;
 
     psid = new sound_t;
     psid->sid = new reSID::SID;
+
+#ifdef RASPI_COMPILE
+    psid->chip_num = chip_num;
+#endif
 
     for (i = 0x00; i <= 0x18; i++) {
         psid->sid->write(i, sidstate[i]);
@@ -131,9 +143,18 @@ static int resid_init(sound_t *psid, int speed, int cycles_per_sec, int factor)
         return 0;
     }
 
+#ifdef RASPI_COMPILE
+    if (psid->chip_num == 0 && resources_get_int("SidModel", &model) < 0) {
+        return 0;
+    }
+    if (psid->chip_num == 1 && resources_get_int("Sid2Model", &model) < 0) {
+        return 0;
+    }
+#else
     if (resources_get_int("SidModel", &model) < 0) {
         return 0;
     }
+#endif
 
     if (resources_get_int("SidResidSampling", &sampling) < 0) {
         return 0;

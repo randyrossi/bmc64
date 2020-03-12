@@ -81,3 +81,6 @@
 * Custom keysets , test pot x works with SMB
 * Test button assignments for key bindings honor up/down
 * Button assignments for dirs should work in ui too
+* Dolphon DOS works
+* Keyboard works in CP/M mode on C128
+* PET scanlines on/off appears right

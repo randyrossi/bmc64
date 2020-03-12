@@ -39,6 +39,7 @@
 #include "menu.h"
 #include "ui.h"
 #include "overlay.h"
+#include "keycodes.h"
 
 // TODO: Should really move 40/80 stuff into here...
 extern struct menu_item *c40_80_column_item;
@@ -102,10 +103,12 @@ void emux_set_color_saturation(int display_num, int value) {
 
 void emux_set_video_cache(int value) {
   resources_set_int("VICIIVideoCache", value);
+  resources_set_int("VDCVideoCache", value);
 }
 
 void emux_set_hw_scale(int value) {
   resources_set_int("VICIIHwScale", value);
+  resources_set_int("VDCHwScale", value);
 }
 
 int emux_get_color_brightness(int display_num) {
@@ -214,4 +217,17 @@ struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
 }
 
 void emux_machine_load_settings_done(void) {
+}
+
+void machine_keymap_changed(int row, int col, signed long sym) {
+  if (row == 7 && col == 5 && !commodore_key_sym_set) {
+     commodore_key_sym = sym;
+     commodore_key_sym_set = 1;
+  } else if (row == 7 && col == 2 && !ctrl_key_sym_set) {
+     ctrl_key_sym = sym;
+     ctrl_key_sym_set = 1;
+  } else if (row == -3 && col == 0 && !restore_key_sym_set) {
+     restore_key_sym = sym;
+     restore_key_sym_set = 1;
+  }
 }

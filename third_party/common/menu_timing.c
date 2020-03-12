@@ -90,9 +90,9 @@ static void calc_popped(struct menu_item *new_root,
 
   char timing_str[64];
   if (fps >= 49 && fps <= 51) {
-    sprintf(timing_str, "machine_timing=custom-pal");
+    sprintf(timing_str, "machine_timing=pal-custom");
   } else if (fps >= 59 && fps <= 61) {
-    sprintf(timing_str, "machine_timing=custom-ntsc");
+    sprintf(timing_str, "machine_timing=ntsc-custom");
   } else {
     sprintf(timing_str, "machine_timing=ERROR: FPS OUT OF RANGE, %f", fps);
   }
