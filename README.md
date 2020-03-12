@@ -264,7 +264,7 @@ NOTE: It may not be possible for EVERY scanline to line up from top to bottom bu
 
 # CRT Shader
 
-For HDMI displays, you can enable davej's shader which emulates a CRT. To use the shader properly, you will need at the very least integer scaling (see above).  I recommend at least 3x in both dimensions.  This will produce acceptable results on just about any resolution. However, if you want every scanline and every 'phosphor' (if using a mask) to be precicely the same height/width, you will also need to use a resolution that matches your monitor's native resolution.  That's because unless you have a resolution that matches your monitor's native resolution, your monitor will end up scaling the image itself.
+For HDMI displays, you can enable davej's shader which emulates a CRT. To use the shader properly, you will need to use (at the very least) integer scaling (see above).  I recommend at least 3x in both dimensions.  This will produce acceptable results on just about any resolution. However, if you want every scanline and every 'phosphor' (if using a mask) to be precicely the same height/width, you will also need to use a resolution that matches your monitor's native resolution.  That's because unless you have a resolution that matches your monitor's native resolution, your monitor will end up scaling the image itself.
 
   * Here is the CRT shader using a 1280x720 display resolution while the monitor is 1600x900.  Notice every few scanlines are slightly thicker.
 
