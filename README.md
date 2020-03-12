@@ -262,6 +262,20 @@ If you are using a CRT, you may want to use the 'V Stretch Factor' to better ali
 
 NOTE: It may not be possible for EVERY scanline to line up from top to bottom but you should be able to get most of the display to look less 'fuzzy'.
 
+# CRT Shader
+
+For HDMI displays, you can enable davej's shader which emulates a CRT. To use the shader properly, you will need at the very least integer scaling (see above).  I recommend at least 3x in both dimensions.  This will produce acceptable results on just about any resolution. However, if you want every scanline and every 'phosphor' (if using a mask) to be precicely the same height/width, you will also need to use a resolution that matches your monitor's native resolution.  That's because unless you have a resolution that matches your monitor's native resolution, your monitor will end up scaling the image itself.
+
+  * Here is the CRT shader using a 1280x720 display resolution while the monitor is 1600x900.  Notice every few scanlines are slightly thicker.
+
+![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/shader_nonative.png)
+
+  * Here is the same CRT shader using the monitor's 1600x900 native resolution.  Notice every scan line height is identical.
+
+![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/shader_native.png)
+
+The shader is not available if the mode is marked for composite. There's no reason to put fake scanlines underneath real scanlines.  For DPI output, using the shader depends on your resolution.  If you are able to use a (near) 240p resolution, don't enable the shader. However, if you are using a VGA666 adapter and a high display resolution on a very sharp display (i.e. Trinitron), you might want to use the shader for scanlines.
+
 # Files Organization
 
 File browsers will by default look in directories off the SD card using this convention:

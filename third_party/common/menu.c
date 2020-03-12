@@ -2773,7 +2773,7 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_SHADER_ENABLE:
     sanity_check_shader_params(item->id);
     ui_canvas_reveal_temp(FB_LAYER_VIC);
-    circle_realloc_fbl(FB_LAYER_VIC, item->value);
+    circle_realloc_fbl(FB_LAYER_VIC, (circle_get_model() <= 3 && !is_composite()) ? item->value : 0);
     handle_shader_param_change();
     vic_showing = 0;
     break;
@@ -3346,7 +3346,8 @@ void build_menu(struct menu_item *root) {
      MENU_USE_SCALING_PARAMS_0, parent, "Apply scaling params at boot", 1,
         "No","Yes");
 
-  struct menu_item *shader = ui_menu_add_folder(parent, "CRT Shader");
+  if (circle_get_model() <=3 && !is_composite()) {
+     struct menu_item *shader = ui_menu_add_folder(parent, "CRT Shader");
 
      s_enable_shader_item =
         ui_menu_add_toggle_labels(MENU_SHADER_ENABLE, shader,
@@ -3414,6 +3415,7 @@ void build_menu(struct menu_item *root) {
            0, 500, 10, 220);
 
      ui_menu_add_button(MENU_SHADER_RESET_ALL, shader, "Reset");
+  }
 
   palette_item[0] = emux_add_palette_options(MENU_COLOR_PALETTE_0, parent);
 
@@ -3759,7 +3761,7 @@ void build_menu(struct menu_item *root) {
 
   // Apply shader params
   sanity_check_shader_params(s_enable_shader_item->id);
-  circle_realloc_fbl(FB_LAYER_VIC, s_enable_shader_item->value);
+  circle_realloc_fbl(FB_LAYER_VIC, (circle_get_model() <= 3 && !is_composite()) ? s_enable_shader_item->value : 0);
   handle_shader_param_change();
 
   if (use_scaling_params_item[0]->value) {
