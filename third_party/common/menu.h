@@ -436,7 +436,6 @@ typedef enum {
    MENU_USERPORT_TYPE,
 
    MENU_DIR_CONVENTION,
-   MENU_SCANLINES,
 
    MENU_INTEGER_SCALE_W_0,
    MENU_INTEGER_SCALE_H_0,
@@ -583,6 +582,12 @@ typedef enum {
    MENU_DIR_CONVENTION_FOLDER_EMU = 0,
    MENU_DIR_CONVENTION_EMU_FOLDER,
 } MenuDirConvention;
+
+// Make these match vice
+typedef enum {
+   MENU_VIDEO_FILTER_NONE = 0,
+   MENU_VIDEO_FILTER_CRTC,
+} MenuVideoFilter;
 
 extern long keyset_codes[2][7];
 extern long key_bindings[6];

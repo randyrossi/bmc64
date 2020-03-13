@@ -324,3 +324,7 @@
   * Changed PET resolutions to 1080p in default machines.txt
   * Fixed bug with PET screen init after model switch
   * Added menu optionm to turn scaling interpolation off
+
+## 3.6
+  * Added davej's CRT shader
+  * Removed 'cheap' scanlines from PET (replaced by shader)

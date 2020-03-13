@@ -1021,7 +1021,6 @@ static int save_settings() {
      fprintf (fp, "custom_gpio=%d,%d\n", i, gpio_bindings[i]);
   }
 
-  fprintf(fp,"s_enable_shader=%d\n", s_enable_shader_item->value);
   fprintf(fp,"s_curvature=%d\n", s_curvature_item->value);
   fprintf(fp,"s_curvature_x=%d\n", s_curvature_x_item->value);
   fprintf(fp,"s_curvature_y=%d\n", s_curvature_y_item->value);
@@ -1340,8 +1339,6 @@ static void load_settings() {
       use_scaling_params_item[0]->value = value;
     } else if (strcmp(name, "use_int_scaling_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       use_scaling_params_item[1]->value = value;
-    } else if (strcmp(name, "s_enable_shader") == 0) {
-      s_enable_shader_item->value = value;
     } else if (strcmp(name, "s_curvature") == 0) {
       s_curvature_item->value = value;
     } else if (strcmp(name, "s_curvature_x") == 0) {
@@ -2773,7 +2770,10 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_SHADER_ENABLE:
     sanity_check_shader_params(item->id);
     ui_canvas_reveal_temp(FB_LAYER_VIC);
+    // Despite what the menu says, don't allow this to enable the shader
+    // when conditions apply.
     circle_realloc_fbl(FB_LAYER_VIC, (circle_get_model() <= 3 && !is_composite()) ? item->value : 0);
+    emux_set_int(Setting_CrtcFilter, item->value ? MENU_VIDEO_FILTER_CRTC : MENU_VIDEO_FILTER_NONE);
     handle_shader_param_change();
     vic_showing = 0;
     break;
@@ -3346,12 +3346,20 @@ void build_menu(struct menu_item *root) {
      MENU_USE_SCALING_PARAMS_0, parent, "Apply scaling params at boot", 1,
         "No","Yes");
 
-  if (circle_get_model() <=3 && !is_composite()) {
-     struct menu_item *shader = ui_menu_add_folder(parent, "CRT Shader");
+  struct menu_item *shader = ui_menu_add_folder(parent, "CRT Shader");
 
+     int crt_filter;
+     emux_get_int(Setting_CrtcFilter, &crt_filter);
      s_enable_shader_item =
         ui_menu_add_toggle_labels(MENU_SHADER_ENABLE, shader,
-           "Enable CRT Shader?", 1, "No", "Yes");
+           "Enable CRT Shader?", crt_filter != MENU_VIDEO_FILTER_NONE, "No", "Yes");
+
+     if (circle_get_model() > 3 || is_composite()) {
+        s_enable_shader_item->value = 0;
+        s_enable_shader_item->disabled = 1;
+        strcpy (s_enable_shader_item->custom_toggle_label[0], "Disabled");
+        strcpy (s_enable_shader_item->custom_toggle_label[1], "Disabled");
+     }
 
      s_curvature_item =
        ui_menu_add_toggle(MENU_SHADER_CURVATURE, shader, "Curvature", 0);
@@ -3415,7 +3423,6 @@ void build_menu(struct menu_item *root) {
            0, 500, 10, 220);
 
      ui_menu_add_button(MENU_SHADER_RESET_ALL, shader, "Reset");
-  }
 
   palette_item[0] = emux_add_palette_options(MENU_COLOR_PALETTE_0, parent);
 
@@ -3759,11 +3766,6 @@ void build_menu(struct menu_item *root) {
 
   load_settings();
 
-  // Apply shader params
-  sanity_check_shader_params(s_enable_shader_item->id);
-  circle_realloc_fbl(FB_LAYER_VIC, (circle_get_model() <= 3 && !is_composite()) ? s_enable_shader_item->value : 0);
-  handle_shader_param_change();
-
   if (use_scaling_params_item[0]->value) {
      if (!do_use_int_scaling(FB_LAYER_VIC, 1 /* silent */)) {
         use_scaling_params_item[VIC_INDEX]->value = 0;
@@ -3775,6 +3777,11 @@ void build_menu(struct menu_item *root) {
         use_scaling_params_item[VDC_INDEX]->value = 0;
      }
   }
+
+  // Apply shader params
+  sanity_check_shader_params(s_enable_shader_item->id);
+  circle_realloc_fbl(FB_LAYER_VIC, (circle_get_model() <= 3 && !is_composite()) ? s_enable_shader_item->value : 0);
+  handle_shader_param_change();
 
   set_current_dir_names();
 

@@ -77,6 +77,7 @@ int color_contrast = 666;
 int color_gamma = 800;
 int color_tint = 1000;
 int raster_skip = 1;
+int crt_filter = 1;
 
 static struct menu_item *sid_model_item;
 static struct menu_item *sid_write_access_item;
@@ -1336,6 +1337,9 @@ void emux_set_int(IntSetting setting, int value) {
     case Setting_Datasette:
        // Not applicable
        break;
+    case Setting_CrtcFilter:
+       crt_filter = value;
+       break;
     default:
        printf ("Unhandled set int %d\n", setting);
   }
@@ -1365,6 +1369,9 @@ void emux_get_int(IntSetting setting, int* dest) {
       case Setting_DriveSoundEmulationVolume:
           *dest = 0;
           // Not applicable
+          break;
+      case Setting_CrtcFilter:
+          *dest = crt_filter;
           break;
       default:
           printf ("WARNING: Tried to get unsupported setting %d\n",setting);
@@ -1545,6 +1552,8 @@ void emux_load_additional_settings() {
        color_tint = value;
     } else if (strcmp(name,"keyboard_mapping") == 0) {
        keyboard_mapping = value;
+    } else if (strcmp(name,"crt_filter") == 0) {
+       crt_filter = value;
     }
   }
 
@@ -1589,6 +1598,7 @@ void emux_save_additional_settings(FILE *fp) {
   fprintf (fp,"color_gamma=%d\n", color_gamma);
   fprintf (fp,"tintcolor_=%d\n", color_tint);
   fprintf (fp,"keyboard_mapping=%d\n", keyboard_mapping_item->value);
+  fprintf (fp,"crt_filter=%d\n", crt_filter);
 }
 
 void emux_get_default_color_setting(int *brightness, int *contrast,

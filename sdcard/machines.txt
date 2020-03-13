@@ -284,8 +284,8 @@ sdtv_mode=16
 hdmi_group=1
 hdmi_mode=16
 machine_timing=ntsc-hdmi
-scaling_params=376,464,1504,928
-scaling_params2=696,464,1392,928
+scaling_params=376,270,1504,1080
+scaling_params2=696,270,1392,1080
 
 [PET/NTSC/Composite/VICE 480p@60Hz]
 disable_overscan=1
@@ -300,8 +300,8 @@ sdtv_mode=18
 hdmi_group=1
 hdmi_mode=31
 machine_timing=pal-hdmi
-scaling_params=376,464,1504,928
-scaling_params2=696,464,1392,928
+scaling_params=376,270,1504,1080
+scaling_params2=696,270,1392,1080
 
 [PET/PAL/Composite/VICE 576p@50Hz]
 disable_overscan=1

@@ -60,12 +60,6 @@ static void menu_value_changed(struct menu_item *item) {
         petmodel_set(item->sub_id);
         ui_pop_all_and_toggle();
         break;
-     case MENU_SCANLINES:
-        vic_canvas->raster_lines = item->value;
-        circle_clear_fbl(FB_LAYER_VIC);
-        resources_set_int("CrtcFilter",
-           item->value ? VIDEO_FILTER_CRT : VIDEO_FILTER_NONE);
-        break;
      default:
         break;
   }
@@ -152,22 +146,6 @@ void cartridge_freeze(void) { }
 void cartridge_detach_image (int type) { }
 
 struct menu_item* emux_add_palette_options(int menu_id, struct menu_item* parent) {
-  // TODO: Rename this method to machine specific video options.
-  vic_canvas->raster_lines = 0;
-  if (!is_composite()) {
-     int value;
-     resources_get_int("CrtcFilter", &value);
-     if (value == VIDEO_FILTER_CRT) {
-        value = 1;
-     } else {
-        value = 0;
-     }
-     struct menu_item* scanlines_item =
-        ui_menu_add_toggle(MENU_SCANLINES, parent, "Scanlines", value);
-     vic_canvas->raster_lines = value;
-     scanlines_item->on_value_changed = menu_value_changed;
-  }
-
   struct menu_item* palette_item =
       ui_menu_add_multiple_choice(menu_id, parent, "Color Palette");
   palette_item->num_choices = 3;

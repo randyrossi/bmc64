@@ -154,15 +154,8 @@ void emu_machine_init(int raster_skip_enabled) {
        break;
   }
 
-  if (emux_machine_class == BMC64_MACHINE_CLASS_PET &&
-         !is_composite()) {
-     // For the PET, we always double the vertical height of the
-     // frame buffer so we can do our 'cheap' scanlines effect.
-     canvas_state[VIC_INDEX].raster_skip = 2;
-  } else {
-     canvas_state[VIC_INDEX].raster_skip = raster_skip_enabled ? 2 : 1;
-     canvas_state[VDC_INDEX].raster_skip = raster_skip_enabled ? 2 : 1;
-  }
+  canvas_state[VIC_INDEX].raster_skip = raster_skip_enabled ? 2 : 1;
+  canvas_state[VDC_INDEX].raster_skip = raster_skip_enabled ? 2 : 1;
 
   // If raster skip enabled via kernel params, enable lines.
   set_raster_lines(raster_skip_enabled);
@@ -865,6 +858,9 @@ void emux_set_int(IntSetting setting, int value) {
    case Setting_RAMBlock5:
      resources_set_int("RAMBlock5", value);
      break;
+   case Setting_CrtcFilter:
+     resources_set_int("CrtcFilter", value);
+     break;
    default:
      assert(0);
  }
@@ -908,6 +904,9 @@ void emux_get_int(IntSetting setting, int* dest) {
       break;
     case Setting_VideoSize:
       resources_get_int("VideoSize", dest);
+      break;
+    case Setting_CrtcFilter:
+      resources_get_int("CrtcFilter", dest);
       break;
     default:
       assert(0);

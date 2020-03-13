@@ -97,7 +97,7 @@ void set_canvas_size(int index, int *w, int *h, int *gw, int *gh) {
     return;
   }
   *w = 704;
-  *h = 532;
+  *h = 288;
   *gw = 80*8;
   *gh = 25*8;
 }
