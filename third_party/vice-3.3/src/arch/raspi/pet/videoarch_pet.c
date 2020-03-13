@@ -104,5 +104,5 @@ void set_canvas_size(int index, int *w, int *h, int *gw, int *gh) {
 
 void set_canvas_borders(int index, int *w, int *h) {
   *w = 32;
-  *h = 32;
+  *h = 40;
 }

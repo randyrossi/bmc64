@@ -797,7 +797,7 @@ static int do_use_int_scaling(int layer, int silent) {
   } else if (h_border_item[canvas_index]->value <
                 h_border_item[canvas_index]->min) {
      if (!silent)
-        ui_error("fbh too small");
+        ui_error("fbw too small");
      h_border_item[canvas_index]->value =
         h_border_item[canvas_index]->min;
      return 0;
