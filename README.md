@@ -196,7 +196,7 @@ Using scaling_kernel=8 with integer scaling eliminates irregularities.
 
 ![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/integer_scaled.png)
 
-## Perfect DPI -> CRT Scanlines
+## Perfect DPI -> (Real) CRT Scanlines
 
 For those using DPI connected to CRTs (via VGA666 for example), you can try a custom resolution like this:
 
@@ -248,7 +248,7 @@ The emulated resolutions are small and must be scaled up to the video mode's res
 
   NOTE: For scaling_kernel=8, it's best to adjust your FB so that it can be scaled by an integer and fill most of the screen.  See section on Integer Scaling above.
 
-# CRT Scanline alignment
+# (Real) CRT Scanline alignment
 
 If you are using a CRT, you may want to use the 'V Stretch Factor' to better align the video to your monitr's real scanlines.  A mis-alignment can make characters look fuzzy.
 
@@ -262,7 +262,7 @@ If you are using a CRT, you may want to use the 'V Stretch Factor' to better ali
 
 NOTE: It may not be possible for EVERY scanline to line up from top to bottom but you should be able to get most of the display to look less 'fuzzy'.
 
-# CRT Shader
+# CRT Filter
 
 For HDMI displays, you can enable davej's shader which emulates a CRT. To use the shader properly, you will need to use (at the very least) integer scaling (see above).  I recommend at least 3x in both dimensions.  This will produce acceptable results on just about any resolution. However, if you want every scanline and every 'phosphor' (if using a mask) to be precicely the same height/width, you will also need to use a resolution that matches your monitor's native resolution.  That's because unless you have a resolution that matches your monitor's native resolution, your monitor will end up scaling the image itself.
 
@@ -274,7 +274,7 @@ For HDMI displays, you can enable davej's shader which emulates a CRT. To use th
 
 ![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/shader_native.png)
 
-The shader is not available if the mode is marked for composite. There's no reason to put fake scanlines underneath real scanlines.  For DPI output, using the shader depends on your resolution.  If you are able to use a (near) 240p resolution, don't enable the shader. However, if you are using a VGA666 adapter and a high display resolution on a very sharp display (i.e. Trinitron), you might want to use the shader for scanlines.
+The shader is not available if the mode is marked for composite. There's no reason to put fake scanlines underneath real scanlines.  For DPI output, using the shader depends on your resolution.  If you are able to use a (near) 240p resolution, don't enable the shader. However, if you are using a VGA666 adapter and a high display resolution on a very sharp display (i.e. Trinitron), you might want to use the shader for scanlines.  The shader should work up to 1080p resolution at 60fps but some options might affect performance (i.e. curvature).
 
 # Files Organization
 
