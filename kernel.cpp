@@ -1506,11 +1506,9 @@ void CKernel::circle_frames_ready_fbl(int layer1, int layer2, int sync) {
   if (layer2 >= 0) {
      fbl[layer2].FrameReady(sync);
   }
-  if (sync) {
-     // Flip the buffers and wait for vblank.
-     FrameBufferLayer::SwapResources(
-         &fbl[layer1], layer2 >= 0 ? &fbl[layer2] : nullptr);
-  }
+  // Flip the buffers and wait for vblank.
+  FrameBufferLayer::SwapResources(sync,
+      &fbl[layer1], layer2 >= 0 ? &fbl[layer2] : nullptr);
 }
 
 void CKernel::circle_set_palette_fbl(int layer, uint8_t index, uint16_t rgb565) {

@@ -116,6 +116,8 @@ public:
 
   bool UsesShader();
 
+  bool Showing();
+
   void SetUsesShader(bool enable);
 
   // NOTE: This will implicitly Hide the layer since the shader must be
@@ -139,14 +141,15 @@ public:
 
   // make off screen resources for fb1 (and optionally fb2) visible
   // then swap destination resources in prep for next frame
-  static void SwapResources(FrameBufferLayer* fb1, FrameBufferLayer* fb2);
+  static void SwapResources(bool sync, FrameBufferLayer* fb1, FrameBufferLayer* fb2);
 
   static void SetInterpolation(int enable);
 
 private:
   void FreeInternal(bool keepPixels);
   void Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update);
-  void RenderGL(bool sync);
+  void SwapGL(bool sync);
+  void RenderGL();
 
   void ShaderInit();
   void ShaderDestroy();

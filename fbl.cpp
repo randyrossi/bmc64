@@ -863,10 +863,6 @@ void FrameBufferLayer::Show() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // Set swap interval to 0. We never use swap buffers to
-    // wait for sync.  We always use dispmanx submit after
-    // resource swap to time things even if we aren't using
-    // dispmanx to deliver pixels.
     eglSwapInterval(egl_display_, 0);
     eglSwapBuffers(egl_display_, egl_surface_);
   }
@@ -877,6 +873,7 @@ void FrameBufferLayer::Show() {
 
   FrameReady(0);
   showing_ = true;
+  SwapResources(false, this, nullptr);
 }
 
 void FrameBufferLayer::Hide() {
@@ -914,7 +911,7 @@ void FrameBufferLayer::FrameReady(int to_offscreen) {
                                       pixels_,
                                       &copy_dst_rect_);
   } else {
-      RenderGL(to_offscreen);
+      RenderGL();
   }
 }
 
@@ -922,6 +919,9 @@ void FrameBufferLayer::FrameReady(int to_offscreen) {
 // element to the off screen resource and toggle the resource
 // index in preparation for the off screen data to be shown.
 void FrameBufferLayer::Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update) {
+  if (uses_shader_ || !showing_)
+     return;
+
   rnum_ = 1 - rnum_;
 
   vc_dispmanx_element_change_source(dispman_update,
@@ -929,7 +929,12 @@ void FrameBufferLayer::Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update) {
                                     dispman_resource_[rnum_]);
 }
 
-void FrameBufferLayer::RenderGL(bool sync) {
+void FrameBufferLayer::SwapGL(bool sync) {
+  eglSwapInterval(egl_display_, sync ? 1 : 0);
+  eglSwapBuffers(egl_display_, egl_surface_);
+}
+
+void FrameBufferLayer::RenderGL() {
     // Our pixels_ framebuffer includes a lot of black border area around
     // the visible pixels we want to see. When shader curvature is needed,
     // we need to provide a texture with only the pixels we actually want
@@ -984,24 +989,34 @@ void FrameBufferLayer::RenderGL(bool sync) {
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    eglSwapBuffers(egl_display_, egl_surface_);
 }
 
+
 // Static
-void FrameBufferLayer::SwapResources(FrameBufferLayer* fb1,
+void FrameBufferLayer::SwapResources(bool sync,
+                                     FrameBufferLayer* fb1,
                                      FrameBufferLayer* fb2) {
 
-  // We always use dispmanx submit after resource swap to
-  // time things even if we aren't using dispmanx to deliver
-  // pixels.
-  DISPMANX_UPDATE_HANDLE_T dispman_update;
-  dispman_update = vc_dispmanx_update_start(0);
-  fb1->Swap(dispman_update);
-  if (fb2) {
-     fb2->Swap(dispman_update);
+  // We need to know whether the dispmanx code below
+  // is actually going to cause a sync. It turns out if we
+  // don't actually change resources on either fb1 or fb2,
+  // the start/submit doesn't perform the sync.  So we
+  // predict what will happen based on the same conditions
+  // in Swap() above. If sync is requested but the code below
+  // won't sync, let SwapGL take care of it.
+  bool will_sync = !fb1->UsesShader() && fb1->Showing() &&
+                         (!fb2 || (fb2 && !fb2->UsesShader() && fb2->Showing()));
+  fb1->SwapGL(sync && !will_sync);
+
+  if (sync) {
+    DISPMANX_UPDATE_HANDLE_T dispman_update;
+    dispman_update = vc_dispmanx_update_start(0);
+    fb1->Swap(dispman_update);
+    if (fb2) {
+       fb2->Swap(dispman_update);
+    }
+    vc_dispmanx_update_submit_sync(dispman_update);
   }
-  vc_dispmanx_update_submit_sync(dispman_update);
 }
 
 void FrameBufferLayer::SetPalette(uint8_t index, uint16_t rgb565) {
@@ -1041,7 +1056,8 @@ void FrameBufferLayer::UpdatePalette() {
      } else {
 	  glBindTexture(GL_TEXTURE_2D,pal_);
 	  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 1, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, pal_565_);
-	  RenderGL(true);
+	  RenderGL();
+          SwapResources(false, this, nullptr);
      }
   }
 }
@@ -1056,6 +1072,10 @@ int FrameBufferLayer::GetLayer() {
 
 bool FrameBufferLayer::UsesShader() {
 	return uses_shader_;
+}
+
+bool FrameBufferLayer::Showing() {
+	return showing_;
 }
 
 void FrameBufferLayer::SetTransparency(bool transparency) {
