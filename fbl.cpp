@@ -862,6 +862,12 @@ void FrameBufferLayer::Show() {
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    // Set swap interval to 0. We never use swap buffers to
+    // wait for sync.  We always use dispmanx submit after
+    // resource swap to time things even if we aren't using
+    // dispmanx to deliver pixels.
+    eglSwapInterval(egl_display_, 0);
     eglSwapBuffers(egl_display_, egl_surface_);
   }
 
@@ -908,7 +914,7 @@ void FrameBufferLayer::FrameReady(int to_offscreen) {
                                       pixels_,
                                       &copy_dst_rect_);
   } else {
-	  RenderGL(to_offscreen);
+      RenderGL(to_offscreen);
   }
 }
 
@@ -979,7 +985,6 @@ void FrameBufferLayer::RenderGL(bool sync) {
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    eglSwapInterval(egl_display_, sync ? 1 : 0);
     eglSwapBuffers(egl_display_, egl_surface_);
 }
 
@@ -987,16 +992,16 @@ void FrameBufferLayer::RenderGL(bool sync) {
 void FrameBufferLayer::SwapResources(FrameBufferLayer* fb1,
                                      FrameBufferLayer* fb2) {
 
+  // We always use dispmanx submit after resource swap to
+  // time things even if we aren't using dispmanx to deliver
+  // pixels.
   DISPMANX_UPDATE_HANDLE_T dispman_update;
   dispman_update = vc_dispmanx_update_start(0);
-  if (!fb1->UsesShader()) {
-     fb1->Swap(dispman_update);
-  }
-  if (fb2 && !fb2->UsesShader()) {
+  fb1->Swap(dispman_update);
+  if (fb2) {
      fb2->Swap(dispman_update);
   }
-  int ret = vc_dispmanx_update_submit_sync(dispman_update);
-  assert(ret == 0);
+  vc_dispmanx_update_submit_sync(dispman_update);
 }
 
 void FrameBufferLayer::SetPalette(uint8_t index, uint16_t rgb565) {
