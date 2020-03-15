@@ -274,7 +274,11 @@ For HDMI displays, you can enable davej's shader which emulates a CRT. To use th
 
 ![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/shader_native.png)
 
-The shader is not available if the mode is marked for composite. There's no reason to put fake scanlines underneath real scanlines.  For DPI output, using the shader depends on your resolution.  If you are able to use a (near) 240p resolution, don't enable the shader. However, if you are using a VGA666 adapter and a high display resolution on a very sharp display (i.e. Trinitron), you might want to use the shader for scanlines.  The shader should work up to 1080p resolution at 60fps but some options might affect performance (i.e. curvature).
+The shader is not available if the mode is marked for composite. (There's no reason to put fake scanlines underneath real scanlines.)  For DPI output, using the shader depends on your resolution.  If you are able to use a (near) 240p resolution, don't enable the shader. However, if you are using a VGA666 adapter and a high display resolution on a very sharp display (i.e. Trinitron), you might want to use the shader for scanlines.  The shader should work up to 1080p resolution at 60fps but some options might affect performance (i.e. curvature).
+
+## CRT Filter + Performance
+
+On lower powered Pi's (Pi0 and Pi2) some shader parameter combinations may cause stuttering or frame drops. Curvature + MultiSample + Filter will probably be too much for the Pi0.  But possibly two out of three may work without performance problems.  If you see bad performance, try disabling the shader altogether to determine if that's the cause.  Then try disabling different features to see if you can isolate which option pushes your system over the limit. It's likely most games won't experience any problems but some demos may.  I have not tested the shader's performance or how it impacts emulation at all the resolutions. Your mileage may vary.
 
 # Files Organization
 
