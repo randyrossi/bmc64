@@ -1337,7 +1337,7 @@ void emux_set_int(IntSetting setting, int value) {
     case Setting_Datasette:
        // Not applicable
        break;
-    case Setting_CrtcFilter:
+    case Setting_VideoFilter:
        crt_filter = value;
        break;
     default:
@@ -1370,7 +1370,7 @@ void emux_get_int(IntSetting setting, int* dest) {
           *dest = 0;
           // Not applicable
           break;
-      case Setting_CrtcFilter:
+      case Setting_VideoFilter:
           *dest = crt_filter;
           break;
       default:
