@@ -586,7 +586,7 @@ typedef enum {
 // Make these match vice
 typedef enum {
    MENU_VIDEO_FILTER_NONE = 0,
-   MENU_VIDEO_FILTER_CRTC,
+   MENU_VIDEO_FILTER_CRT,
 } MenuVideoFilter;
 
 extern long keyset_codes[2][7];

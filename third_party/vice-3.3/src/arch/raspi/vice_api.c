@@ -858,8 +858,22 @@ void emux_set_int(IntSetting setting, int value) {
    case Setting_RAMBlock5:
      resources_set_int("RAMBlock5", value);
      break;
-   case Setting_CrtcFilter:
-     resources_set_int("CrtcFilter", value);
+   case Setting_VideoFilter:
+     switch (machine_class) {
+       case VICE_MACHINE_VIC20:
+         resources_set_int("VICFilter", value);
+         break;
+       case VICE_MACHINE_C64:
+       case VICE_MACHINE_C128:
+         resources_set_int("VICIIFilter", value);
+         break;
+       case VICE_MACHINE_PET:
+         resources_set_int("CrtcFilter", value);
+         break;
+       case VICE_MACHINE_PLUS4:
+         resources_set_int("TedFilter", value);
+         break;
+     }
      break;
    default:
      assert(0);
@@ -905,8 +919,22 @@ void emux_get_int(IntSetting setting, int* dest) {
     case Setting_VideoSize:
       resources_get_int("VideoSize", dest);
       break;
-    case Setting_CrtcFilter:
-      resources_get_int("CrtcFilter", dest);
+    case Setting_VideoFilter:
+      switch (machine_class) {
+        case VICE_MACHINE_VIC20:
+          resources_get_int("VICFilter", dest);
+          break;
+        case VICE_MACHINE_C64:
+        case VICE_MACHINE_C128:
+          resources_get_int("VICIIFilter", dest);
+          break;
+        case VICE_MACHINE_PET:
+          resources_get_int("CrtcFilter", dest);
+          break;
+        case VICE_MACHINE_PLUS4:
+          resources_get_int("TedFilter", dest);
+          break;
+      }
       break;
     default:
       assert(0);

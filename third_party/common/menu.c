@@ -2773,7 +2773,7 @@ static void menu_value_changed(struct menu_item *item) {
     // Despite what the menu says, don't allow this to enable the shader
     // when conditions apply.
     circle_realloc_fbl(FB_LAYER_VIC, (circle_get_model() <= 3 && !is_composite()) ? item->value : 0);
-    emux_set_int(Setting_CrtcFilter, item->value ? MENU_VIDEO_FILTER_CRTC : MENU_VIDEO_FILTER_NONE);
+    emux_set_int(Setting_VideoFilter, item->value ? MENU_VIDEO_FILTER_CRT : MENU_VIDEO_FILTER_NONE);
     handle_shader_param_change();
     vic_showing = 0;
     break;
@@ -3349,7 +3349,7 @@ void build_menu(struct menu_item *root) {
   struct menu_item *shader = ui_menu_add_folder(parent, "CRT Shader");
 
      int crt_filter;
-     emux_get_int(Setting_CrtcFilter, &crt_filter);
+     emux_get_int(Setting_VideoFilter, &crt_filter);
      s_enable_shader_item =
         ui_menu_add_toggle_labels(MENU_SHADER_ENABLE, shader,
            "Enable CRT Shader?", crt_filter != MENU_VIDEO_FILTER_NONE, "No", "Yes");

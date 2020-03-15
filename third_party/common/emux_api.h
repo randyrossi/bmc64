@@ -89,7 +89,7 @@ typedef enum {
   Setting_SidDigiblaster, // Plus4Emu
   Setting_WarpMode,
   Setting_VideoSize, // PET
-  Setting_CrtcFilter,
+  Setting_VideoFilter,
 } IntSetting;
 
 typedef enum {
