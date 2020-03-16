@@ -295,8 +295,7 @@ int is_composite() {
       timing == MACHINE_TIMING_PAL_COMPOSITE;
 }
 
-// Disable shader for composite or models < 1 or > 3
-// TODO: pi0 crashes consistently with shader enabled
+// Disable shader for composite or models > 3
 int allow_shader() {
-  return circle_get_model() >= 2 && circle_get_model() <= 3 && !is_composite();
+  return circle_get_model() <= 3 && !is_composite();
 }
