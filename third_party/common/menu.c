@@ -2772,7 +2772,7 @@ static void menu_value_changed(struct menu_item *item) {
     ui_canvas_reveal_temp(FB_LAYER_VIC);
     // Despite what the menu says, don't allow this to enable the shader
     // when conditions apply.
-    circle_realloc_fbl(FB_LAYER_VIC, (circle_get_model() <= 3 && !is_composite()) ? item->value : 0);
+    circle_realloc_fbl(FB_LAYER_VIC, allow_shader() ? item->value : 0);
     emux_set_int(Setting_VideoFilter, item->value ? MENU_VIDEO_FILTER_CRT : MENU_VIDEO_FILTER_NONE);
     handle_shader_param_change();
     vic_showing = 0;
@@ -3354,7 +3354,7 @@ void build_menu(struct menu_item *root) {
         ui_menu_add_toggle_labels(MENU_SHADER_ENABLE, shader,
            "Enable CRT Shader?", crt_filter != MENU_VIDEO_FILTER_NONE, "No", "Yes");
 
-     if (circle_get_model() > 3 || is_composite()) {
+     if (!allow_shader()) {
         s_enable_shader_item->value = 0;
         s_enable_shader_item->disabled = 1;
         strcpy (s_enable_shader_item->custom_toggle_label[0], "Disabled");
@@ -3780,7 +3780,7 @@ void build_menu(struct menu_item *root) {
 
   // Apply shader params
   sanity_check_shader_params(s_enable_shader_item->id);
-  circle_realloc_fbl(FB_LAYER_VIC, (circle_get_model() <= 3 && !is_composite()) ? s_enable_shader_item->value : 0);
+  circle_realloc_fbl(FB_LAYER_VIC, allow_shader() ? s_enable_shader_item->value : 0);
   handle_shader_param_change();
 
   set_current_dir_names();
