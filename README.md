@@ -278,7 +278,7 @@ The shader is not available if the mode is marked for composite. (There's no rea
 
 ## CRT Filter + Performance
 
-Some shader parameter combinations may cause stuttering or frame drops on the Pi2. Curvature + MultiSample + Filter might be too much (especially for the Pi0), but two out of three may work. If you see bad performance, try disabling the shader altogether to determine if that's the cause.  Then try disabling different features to see if you can isolate which option pushes your system over the limit. It's likely most games won't experience any problems but some demos might.  I have not tested the shader's performance or how it impacts emulation at all resolutions. Your mileage may vary.
+Some shader parameter combinations may cause stuttering or frame drops on the Pi0/2. Curvature + MultiSample + Filter might be too much (especially for the Pi0), but two out of three may work. If you see bad performance, try disabling the shader altogether to determine if that's the cause.  Then try disabling different features to see if you can isolate which option pushes your system over the limit. It's likely most games won't experience any problems but some demos might.  I have not tested the shader's performance or how it impacts emulation at all resolutions. Your mileage may vary.
 
 The shader may crash the Pi on higher resolutions/fps. (My Pi0 crashes @ 1600x900 @60fps consistently.) 720p and 1080p @ 50fps seem to operate okay.
 

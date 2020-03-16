@@ -328,3 +328,4 @@
 ## 3.6
   * Added davej's CRT shader
   * Removed 'cheap' scanlines from PET (replaced by shader)
+  * Increased Pi0 audio sample rate to 44100
