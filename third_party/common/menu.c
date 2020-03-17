@@ -2157,6 +2157,9 @@ static void menu_value_changed(struct menu_item *item) {
     ui_canvas_reveal_temp(FB_LAYER_VDC);
     emux_change_palette(1, item->value);
     return;
+  case MENU_AUTOSTART_WARP:
+    emux_set_int(Setting_AutostartWarp, item->value);
+    return;
   case MENU_AUTOSTART:
     show_files(DIR_ROOT, FILTER_NONE, MENU_AUTOSTART_FILE, 0);
     return;
@@ -3186,6 +3189,8 @@ void build_menu(struct menu_item *root) {
      break;
     default:
      ui_menu_add_button(MENU_AUTOSTART, root, "Autostart Prg/Disk...");
+     emux_get_int(Setting_AutostartWarp, &tmp);
+     ui_menu_add_toggle(MENU_AUTOSTART_WARP, root, "Autostart Warp", tmp);
      break;
   }
 
@@ -3194,17 +3199,18 @@ void build_menu(struct menu_item *root) {
     menu_build_machine_switch(machine_parent);
 
   drive_parent = ui_menu_add_folder(root, "Drives");
+    // (-1) Options applicable to all drives
+    emux_add_drive_option(drive_parent, -1);
 
     parent = ui_menu_add_folder(drive_parent, "Drive 8");
-
+    ui_menu_add_button(MENU_ATTACH_DISK_8, parent, "Attach Disk...");
+    ui_menu_add_button(MENU_DETACH_DISK_8, parent, "Detach Disk");
     if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 && emux_machine_class != BMC64_MACHINE_CLASS_PET) {
      emux_get_int_1(Setting_IECDeviceN, &tmp, 8);
      ui_menu_add_toggle(MENU_IECDEVICE_8, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_8, parent, "Select IEC Dir...");
     }
     emux_add_drive_option(parent, 8);
-    ui_menu_add_button(MENU_ATTACH_DISK_8, parent, "Attach Disk...");
-    ui_menu_add_button(MENU_DETACH_DISK_8, parent, "Detach Disk");
 
     if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
       ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_8, parent, "Change Model...");
@@ -3213,41 +3219,41 @@ void build_menu(struct menu_item *root) {
   // More than 1 drive costs too much. Limit to drive 8.
   if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
     parent = ui_menu_add_folder(drive_parent, "Drive 9");
+    ui_menu_add_button(MENU_ATTACH_DISK_9, parent, "Attach Disk...");
+    ui_menu_add_button(MENU_DETACH_DISK_9, parent, "Detach Disk");
     if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 && emux_machine_class != BMC64_MACHINE_CLASS_PET) {
      emux_get_int_1(Setting_IECDeviceN, &tmp, 9);
      ui_menu_add_toggle(MENU_IECDEVICE_9, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_9, parent, "Select IEC Dir...");
     }
     emux_add_drive_option(parent, 9);
-    ui_menu_add_button(MENU_ATTACH_DISK_9, parent, "Attach Disk...");
-    ui_menu_add_button(MENU_DETACH_DISK_9, parent, "Detach Disk");
 
     if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
       ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_9, parent, "Change Model...");
     }
 
     parent = ui_menu_add_folder(drive_parent, "Drive 10");
+    ui_menu_add_button(MENU_ATTACH_DISK_10, parent, "Attach Disk...");
+    ui_menu_add_button(MENU_DETACH_DISK_10, parent, "Detach Disk");
     if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 && emux_machine_class != BMC64_MACHINE_CLASS_PET) {
      emux_get_int_1(Setting_IECDeviceN, &tmp, 10);
      ui_menu_add_toggle(MENU_IECDEVICE_10, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_10, parent, "Select IEC Dir...");
     }
     emux_add_drive_option(parent, 10);
-    ui_menu_add_button(MENU_ATTACH_DISK_10, parent, "Attach Disk...");
-    ui_menu_add_button(MENU_DETACH_DISK_10, parent, "Detach Disk");
     if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
       ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_10, parent, "Change Model...");
     }
 
     parent = ui_menu_add_folder(drive_parent, "Drive 11");
+    ui_menu_add_button(MENU_ATTACH_DISK_11, parent, "Attach Disk...");
+    ui_menu_add_button(MENU_DETACH_DISK_11, parent, "Detach Disk");
     if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 && emux_machine_class != BMC64_MACHINE_CLASS_PET) {
      emux_get_int_1(Setting_IECDeviceN, &tmp, 11);
      ui_menu_add_toggle(MENU_IECDEVICE_11, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_11, parent, "Select IEC Dir...");
     }
     emux_add_drive_option(parent, 11);
-    ui_menu_add_button(MENU_ATTACH_DISK_11, parent, "Attach Disk...");
-    ui_menu_add_button(MENU_DETACH_DISK_11, parent, "Detach Disk");
     if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
       ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");
     }

@@ -355,14 +355,24 @@ void emux_drive_change_model(int unit) {
 }
 
 void emux_add_drive_option(struct menu_item* root, int drive) {
+  int tmp;
+
   if (emux_machine_class != BMC64_MACHINE_CLASS_C64 &&
       emux_machine_class != BMC64_MACHINE_CLASS_C128) {
     return;
   }
 
+  if (drive < 0) {
+     // Options applicable to all drives
+     resources_get_int("DriveTrueEmulation", &tmp);
+     ui_menu_add_toggle(MENU_DRIVE_TRUE_EMULATION, root, "True Emulation", tmp);
+     return;
+  }
+
+  assert (drive >=8 && drive <=11);
+
   struct menu_item* parent = ui_menu_add_folder(root, "Options");
 
-  int tmp;
   resources_get_int_sprintf("Drive%iParallelCable", &tmp, drive);
 
   int index = 0;
@@ -875,6 +885,9 @@ void emux_set_int(IntSetting setting, int value) {
          break;
      }
      break;
+   case Setting_AutostartWarp:
+     resources_set_int("AutostartWarp", value);
+     break;
    default:
      assert(0);
  }
@@ -935,6 +948,9 @@ void emux_get_int(IntSetting setting, int* dest) {
           resources_get_int("TedFilter", dest);
           break;
       }
+      break;
+    case Setting_AutostartWarp:
+      resources_get_int("AutostartWarp", dest);
       break;
     default:
       assert(0);
@@ -1027,6 +1043,9 @@ int emux_handle_menu_change(struct menu_item* item) {
          resources_set_string("KeymapUserPosFile", "rpi_maxi_pos.vkm");
       }
       resources_set_int("KeymapIndex", item->choice_ints[item->value]);
+      return 1;
+    case MENU_DRIVE_TRUE_EMULATION:
+      resources_set_int("DriveTrueEmulation", item->value);
       return 1;
     default:
       break;

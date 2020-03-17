@@ -90,6 +90,7 @@ typedef enum {
   Setting_WarpMode,
   Setting_VideoSize, // PET
   Setting_VideoFilter,
+  Setting_AutostartWarp,
 } IntSetting;
 
 typedef enum {
