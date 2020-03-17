@@ -967,8 +967,8 @@ static int save_settings() {
      fprintf(fp, "v_center_1=%d\n", v_center_item[1]->value);
      fprintf(fp, "h_border_1=%d\n", h_border_item[1]->value);
      fprintf(fp, "v_border_1=%d\n", v_border_item[1]->value);
-     fprintf(fp, "hstretch_1=%d\n", h_stretch_item[1]->value);
-     fprintf(fp, "vstretch_1=%d\n", v_stretch_item[1]->value);
+     fprintf(fp, "h_stretch_1=%d\n", h_stretch_item[1]->value);
+     fprintf(fp, "v_stretch_1=%d\n", v_stretch_item[1]->value);
   }
 
   int drive_type;
