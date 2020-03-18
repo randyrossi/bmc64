@@ -6,7 +6,7 @@ CIRCLEHOME = third_party/circle-stdlib/libs/circle
 NEWLIBDIR = third_party/circle-stdlib/install/arm-none-circle
 
 OBJS	= main.o kernel.o vicesound.o vicesoundbasedevice.o \
-          viceoptions.o viceapp.o fbl.o
+          viceoptions.o viceapp.o fbl.o crt_pi_idx.o crt_pi_rgb.o
 
 ifeq ($(MACHINE_CLASS),RASPI_PLUS4EMU)
 OBJS	+= plus4emulatorcore.o

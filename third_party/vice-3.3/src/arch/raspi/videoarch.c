@@ -83,7 +83,6 @@ const unsigned long video_tick_inc = 10000;
 unsigned long video_freq;
 unsigned long video_frame_count;
 
-int raspi_warp;
 static int raspi_boot_warp = 1;
 
 static int vdc_map[] = {0, 12, 6, 14, 5, 13, 11, 3, 2, 10, 8, 4, 9, 7, 15, 1};
@@ -374,6 +373,8 @@ void vsyncarch_postsync(void) {
   }
 
   // Hold for vsync unless warping or in boot warp.
+  int raspi_warp;
+  resources_get_int("WarpMode", &raspi_warp);
   circle_frames_ready_fbl(FB_LAYER_VIC,
                          machine_class == VICE_MACHINE_C128 ? FB_LAYER_VDC : -1,
                          !raspi_boot_warp && !raspi_warp);

@@ -776,7 +776,6 @@ void emux_add_sound_options(struct menu_item* parent) {
 
 void emux_set_warp(int warp) {
   resources_set_int("WarpMode", warp);
-  raspi_warp = warp;
 }
 
 void emux_handle_rom_change(struct menu_item* item, fullpath_func fullpath) {

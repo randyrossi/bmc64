@@ -26,6 +26,9 @@
 #include <stdio.h>
 #include <circle/bcmframebuffer.h>
 
+#include "crt_pi_idx.h"
+#include "crt_pi_rgb.h"
+
 #ifndef ALIGN_UP
 #define ALIGN_UP(x,y)  ((x + (y)-1) & ~((y)-1))
 #endif
@@ -87,9 +90,10 @@ bool FrameBufferLayer::initialized_ = false;
 DISPMANX_DISPLAY_HANDLE_T FrameBufferLayer::dispman_display_;
 EGLDisplay FrameBufferLayer::egl_display_;
 EGLContext FrameBufferLayer::egl_context_;
-static char* file_shader_txt_;
-static long file_shader_txt__len_;
+static char* fshader_txt_;
+static char* vshader_txt_;
 
+/*
 static void check(const char* msg) {
 	int g = glGetError();
 	if (g != 0) {
@@ -99,6 +103,7 @@ static void check(const char* msg) {
 		assert(false);
 	}
 }
+*/
 
 FrameBufferLayer::FrameBufferLayer() :
 		pixels_(nullptr), dispman_element_(0),egl_config_(nullptr),egl_surface_(nullptr),
@@ -276,8 +281,8 @@ void FrameBufferLayer::ShaderInit() {
       return;
   }
 
+/*
   if (!file_shader_txt_) {
-     FILE *f;
      if (mode_ == VC_IMAGE_8BPP) {
         // Use indexed texture version
         f = fopen("crt-pi-idx.gls", "r");
@@ -286,25 +291,54 @@ void FrameBufferLayer::ShaderInit() {
         f = fopen("crt-pi-rgb.gls", "r");
      }
      fseek(f, 0, SEEK_END);
-     file_shader_txt__len_ = ftell(f);
+     file_shader_txt_len_ = ftell(f);
      fseek(f, 0, SEEK_SET);
-     file_shader_txt_ = (char*) malloc(file_shader_txt__len_ + 1);
-     fread(file_shader_txt_, 1, file_shader_txt__len_, f);
+     file_shader_txt_ = (char*) malloc(file_shader_txt_len_ + 1);
+     fread(file_shader_txt_, 1, file_shader_txt_len_, f);
      fclose(f);
-     file_shader_txt_[file_shader_txt__len_] = 0;
+     file_shader_txt_[file_shader_txt_len_] = 0;
+  }
+*/
+
+  int len = (mode_ == VC_IMAGE_8BPP ? strlen(idx_shader) : strlen(rgb_shader));
+
+  if (vshader_txt_) {
+     free(vshader_txt_);
+  }
+  char vheader[] = "#define VERTEX\n";
+  vshader_txt_ = (char*) malloc(len + 1 +
+                                strlen(vheader) +
+                                strlen(header_template));
+  vshader_txt_[0] = '\0';
+  strcpy(vshader_txt_, vheader);
+  ConcatShaderDefines(vshader_txt_);
+  if (mode_ == VC_IMAGE_8BPP) {
+     strcat(vshader_txt_, idx_shader);
+  } else {
+     strcat(vshader_txt_, rgb_shader);
   }
 
-  char vheader[] = "#define VERTEX\n";
-  char *vshader = (char*) malloc(file_shader_txt__len_ + 1 + strlen(vheader) + strlen(header_template));
-  strcpy(vshader, vheader);
-  ConcatShaderDefines(vshader);
-  strcat(vshader, file_shader_txt_);
+  if (fshader_txt_) {
+     free(fshader_txt_);
+  }
+  char fheader[] = "#define FRAGMENT\n";
+  fshader_txt_ = (char*) malloc(len + 1 +
+                                strlen(fheader) +
+                                strlen(header_template));
+  fshader_txt_[0] = '\0';
+  strcpy(fshader_txt_, fheader);
+  ConcatShaderDefines(fshader_txt_);
+  if (mode_ == VC_IMAGE_8BPP) {
+     strcat(fshader_txt_, idx_shader);
+  } else {
+     strcat(fshader_txt_, rgb_shader);
+  }
 
-  const GLchar *vshader_source = (const GLchar*) vshader;
+  const GLchar *vshader_source = (const GLchar*) vshader_txt_;
   vshader_ = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vshader_, 1, &vshader_source, 0);
   glCompileShader(vshader_);
-  check("glCompileShader");
+  //check("glCompileShader");
 
 //  char log[1024];
 //  strcpy(log,"");
@@ -313,17 +347,11 @@ void FrameBufferLayer::ShaderInit() {
 //  fprintf(fp,"%s\n",log);
 //  fclose(fp);
 
-  char fheader[] = "#define FRAGMENT\n";
-  char *fshader = (char*) malloc(file_shader_txt__len_ + 1 + strlen(fheader) + strlen(header_template));
-  strcpy(fshader, fheader);
-  ConcatShaderDefines(fshader);
-  strcat(fshader, file_shader_txt_);
-
-  const GLchar *fshader_source = (const GLchar*) fshader;
+  const GLchar *fshader_source = (const GLchar*) fshader_txt_;
   fshader_ = glCreateShader(GL_FRAGMENT_SHADER);
   glShaderSource(fshader_, 1, &fshader_source, 0);
   glCompileShader(fshader_);
-  check("glCompileShader2");
+  //check("glCompileShader2");
 
 //  glGetShaderInfoLog(fshader_,sizeof log,NULL,log);
 //  fp = fopen("shader2.log","w");
@@ -334,7 +362,7 @@ void FrameBufferLayer::ShaderInit() {
   glAttachShader(shader_program_, vshader_);
   glAttachShader(shader_program_, fshader_);
   glLinkProgram(shader_program_);
-  check("linkProgram");
+  //check("linkProgram");
 
 //  GLint status;
 //  glGetProgramiv (shader_program_, GL_LINK_STATUS, &status);
@@ -855,7 +883,7 @@ void FrameBufferLayer::Show() {
     EGLBoolean result;
     result = eglMakeCurrent(egl_display_, egl_surface_, egl_surface_, egl_context_);
     assert(EGL_FALSE != result);
-    check("eglMakeCurrent");
+    //check("eglMakeCurrent");
 
     ShaderInit();
     ShaderUpdate();
