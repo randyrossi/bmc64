@@ -137,7 +137,8 @@ public:
 			float bloom_factor,
 			float input_gamma,
 			float output_gamma,
-			bool sharper);
+			bool sharper,
+			bool bilinear_interpolation);
 
   // make off screen resources for fb1 (and optionally fb2) visible
   // then swap destination resources in prep for next frame
@@ -260,6 +261,7 @@ private:
   GLuint input_size_;
   GLuint output_size_;
   GLuint texture_size_;
+  GLuint texel_size_;
 
   // Curvature requires the texture to have only
   // the visible pixels in it. We can't get away
@@ -290,6 +292,7 @@ private:
   float input_gamma_;
   float output_gamma_;
   bool sharper_;
+  bool bilinear_interpolation_;
 };
 
 #endif

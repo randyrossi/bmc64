@@ -301,7 +301,8 @@ void circle_set_shader_params(int curvature,
 		float bloom_factor,
 		float input_gamma,
 		float output_gamma,
-		int sharper) {
+		int sharper,
+                int bilinear_interpolation) {
   static_kernel->circle_set_shader_params(curvature,
 			curvature_x,
 			curvature_y,
@@ -316,7 +317,8 @@ void circle_set_shader_params(int curvature,
 			bloom_factor,
 			input_gamma,
 			output_gamma,
-			sharper);
+			sharper,
+                        bilinear_interpolation);
 }
 };
 
@@ -1630,7 +1632,8 @@ void CKernel::circle_set_shader_params(int curvature,
 		float bloom_factor,
 		float input_gamma,
 		float output_gamma,
-		int sharper) {
+		int sharper,
+                int bilinear_interpolation) {
   // Only the main display (layer 0) ever gets a shader.
   fbl[0].SetShaderParams(curvature,
 			curvature_x,
@@ -1646,5 +1649,6 @@ void CKernel::circle_set_shader_params(int curvature,
 			bloom_factor,
 			input_gamma,
 			output_gamma,
-			sharper);
+			sharper,
+                        bilinear_interpolation);
 }

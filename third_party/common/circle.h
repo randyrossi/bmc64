@@ -257,7 +257,8 @@ extern void circle_set_shader_params(int curvature,
 			float bloom_factor,
 			float input_gamma,
 			float output_gamma,
-			int sharper);
+			int sharper,
+			int bilinear_interpolation);
 
 // -----------------------------------------------------------------------
 // Functions called from kernel layer into emulator layer

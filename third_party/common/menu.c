@@ -53,7 +53,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "3.6"
+#define VERSION_STRING "3.6-beta"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -2063,6 +2063,7 @@ static void handle_shader_param_change() {
   float input_gamma;
   float output_gamma;
   int sharper;
+  int bilinear_interpolation;
 
   curvature = s_curvature_item->value;
   curvature_x = (float)s_curvature_x_item->value / 100.0f;
@@ -2079,6 +2080,7 @@ static void handle_shader_param_change() {
   input_gamma = (float)s_input_gamma_item->value / 100.0f;
   output_gamma = (float)s_output_gamma_item->value / 100.0f;
   sharper = s_sharper_item->value;
+  bilinear_interpolation = scaling_interp_item->value;
 
   circle_set_shader_params(curvature,
                         curvature_x,
@@ -2094,7 +2096,8 @@ static void handle_shader_param_change() {
                         bloom_factor,
                         input_gamma,
                         output_gamma,
-                        sharper);
+                        sharper,
+                        bilinear_interpolation);
 
   // Setting shader params hides the layer.
   vic_showing = 0;
@@ -2825,7 +2828,12 @@ static void menu_value_changed(struct menu_item *item) {
     }
     break;
   case MENU_SCALING_INTERPOLATION:
-    circle_set_interpolation(item->value);
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
+    circle_set_interpolation(item->value); // dispmanx interpolation
+    if (s_enable_shader_item->value) {
+       sanity_check_shader_params(item->id);
+       handle_shader_param_change();
+    }
     break;
   }
 
@@ -3314,7 +3322,7 @@ void build_menu(struct menu_item *root) {
 
   scaling_interp_item = ui_menu_add_toggle_labels(
      MENU_SCALING_INTERPOLATION, parent,
-        "Scaling Interpolation", 1, "Off", "Cfg Default"); // default cfg
+        "Scaling Interpolation", 1, "Off", "On");
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      // For C128, we split video options under video into VICII

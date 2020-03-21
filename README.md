@@ -276,6 +276,8 @@ For HDMI displays, you can enable davej's shader which emulates a CRT. To use th
 
 The shader is not available if the mode is marked for composite. (There's no reason to put fake scanlines underneath real scanlines.)  For DPI output, using the shader depends on your resolution.  If you are able to use a (near) 240p resolution, don't enable the shader. However, if you are using a VGA666 adapter and a high display resolution on a very sharp display (i.e. Trinitron), you might want to use the shader for scanlines.  The shader should work up to 1080p resolution at 60fps but some options might affect performance (i.e. curvature).
 
+Vertical centering will be reset to 0 if the shader is enabled.
+
 ## CRT Filter + Performance
 
 Some shader parameter combinations may cause stuttering or frame drops on the Pi0/2. Curvature + MultiSample + Filter might be too much (especially for the Pi0), but two out of three may work. If you see bad performance, try disabling the shader altogether to determine if that's the cause.  Then try disabling different features to see if you can isolate which option pushes your system over the limit. It's likely most games won't experience any problems but some demos might.  I have not tested the shader's performance or how it impacts emulation at all resolutions. Your mileage may vary.

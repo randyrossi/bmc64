@@ -93,6 +93,13 @@ EGLContext FrameBufferLayer::egl_context_;
 static char* fshader_txt_;
 static char* vshader_txt_;
 
+// For testing.
+//#define LOAD_SHADER_FROM_FILE
+
+#ifdef LOAD_SHADER_FROM_FILE
+static char *file_shader_txt_;
+#endif
+
 /*
 static void check(const char* msg) {
 	int g = glGetError();
@@ -125,7 +132,7 @@ FrameBufferLayer::FrameBufferLayer() :
         attr_vertex_(-1), attr_texcoord_(-1),
         texture_sampler_(-1), palette_sampler_(-1),
         tex_(-1), pal_(-1), mvp_(0),
-        input_size_(0), output_size_(0), texture_size_(0),
+        input_size_(0), output_size_(0), texture_size_(0), texel_size_(0),
         need_cpu_crop_(true), cropped_pixels_(0),
         curvature_(false) {
   alpha_.flags = DISPMANX_FLAGS_ALPHA_FROM_SOURCE;
@@ -168,10 +175,12 @@ void FrameBufferLayer::CreateTexture() {
   int tx = need_cpu_crop_ ? src_w_ : fb_pitch_ / bytes_per_pixel_;
   int ty = need_cpu_crop_ ? src_h_ : fb_height_;
   float textureSize[2] = { (float) tx, (float) ty };
+  float texelSize[2] = { 1.0f / (float) tx, 1.0f / (float) ty };
 
   glUniform2fv(input_size_, 1, inputSize);
   glUniform2fv(output_size_, 1, outputSize);
   glUniform2fv(texture_size_, 1, textureSize);
+  glUniform2fv(texel_size_, 1, texelSize);
 
   glBindTexture(GL_TEXTURE_2D,tex_);
   if (mode_ == VC_IMAGE_8BPP) {
@@ -247,6 +256,9 @@ void FrameBufferLayer::ConcatShaderDefines(char *dst) {
   if (sharper_) {
 	  strcat (dst, "#define SHARPER\n");
   }
+  if (bilinear_interpolation_) {
+	  strcat (dst, "#define BILINEAR_INTERPOLATION\n");
+  }
 }
 
 void FrameBufferLayer::ShaderInit() {
@@ -269,7 +281,8 @@ void FrameBufferLayer::ShaderInit() {
            "#define BLOOM_FACTOR 1.5            "
            "#define INPUT_GAMMA 2.4             "
            "#define OUTPUT_GAMMA 2.2            "
-           "#define SHARPER                     ";
+           "#define SHARPER                     "
+           "#define BILINEAR_INTERPOLATION      ";
 
   // orthographic projection matrix
   static const GLfloat mvp_ortho[16] = { 2.0f,  0.0f,  0.0f,  0.0f,
@@ -281,8 +294,12 @@ void FrameBufferLayer::ShaderInit() {
       return;
   }
 
-/*
+  const char *shader_txt;
+  int len;
+
+#ifdef LOAD_SHADER_FROM_FILE
   if (!file_shader_txt_) {
+     FILE *f;
      if (mode_ == VC_IMAGE_8BPP) {
         // Use indexed texture version
         f = fopen("crt-pi-idx.gls", "r");
@@ -291,17 +308,25 @@ void FrameBufferLayer::ShaderInit() {
         f = fopen("crt-pi-rgb.gls", "r");
      }
      fseek(f, 0, SEEK_END);
-     file_shader_txt_len_ = ftell(f);
+     len = ftell(f);
      fseek(f, 0, SEEK_SET);
-     file_shader_txt_ = (char*) malloc(file_shader_txt_len_ + 1);
-     fread(file_shader_txt_, 1, file_shader_txt_len_, f);
+     // Never freed.
+     file_shader_txt_ = (char*) malloc(len + 1);
+     fread(file_shader_txt_, 1, len, f);
      fclose(f);
-     file_shader_txt_[file_shader_txt_len_] = 0;
+     file_shader_txt_[len] = 0;
   }
-*/
+  shader_txt = file_shader_txt_;
+#else
+  // Use statically linked shader txt.
+  if (mode_ == VC_IMAGE_8BPP) {
+     shader_txt = idx_shader;
+  } else {
+     shader_txt = rgb_shader;
+  }
+#endif
 
-  int len = (mode_ == VC_IMAGE_8BPP ? strlen(idx_shader) : strlen(rgb_shader));
-
+  len = strlen(shader_txt);
   if (vshader_txt_) {
      free(vshader_txt_);
   }
@@ -312,11 +337,7 @@ void FrameBufferLayer::ShaderInit() {
   vshader_txt_[0] = '\0';
   strcpy(vshader_txt_, vheader);
   ConcatShaderDefines(vshader_txt_);
-  if (mode_ == VC_IMAGE_8BPP) {
-     strcat(vshader_txt_, idx_shader);
-  } else {
-     strcat(vshader_txt_, rgb_shader);
-  }
+  strcat(vshader_txt_, shader_txt);
 
   if (fshader_txt_) {
      free(fshader_txt_);
@@ -328,11 +349,7 @@ void FrameBufferLayer::ShaderInit() {
   fshader_txt_[0] = '\0';
   strcpy(fshader_txt_, fheader);
   ConcatShaderDefines(fshader_txt_);
-  if (mode_ == VC_IMAGE_8BPP) {
-     strcat(fshader_txt_, idx_shader);
-  } else {
-     strcat(fshader_txt_, rgb_shader);
-  }
+  strcat(fshader_txt_, shader_txt);
 
   const GLchar *vshader_source = (const GLchar*) vshader_txt_;
   vshader_ = glCreateShader(GL_VERTEX_SHADER);
@@ -384,6 +401,7 @@ void FrameBufferLayer::ShaderInit() {
   input_size_ = glGetUniformLocation (shader_program_, "InputSize");
   output_size_= glGetUniformLocation (shader_program_, "OutputSize");
   texture_size_ = glGetUniformLocation (shader_program_, "TextureSize");
+  texel_size_ = glGetUniformLocation (shader_program_, "TexelSize");
 
   mvp_ = glGetUniformLocation (shader_program_, "MVPMatrix");
   if (mvp_ > -1) {
@@ -517,7 +535,8 @@ void FrameBufferLayer::SetShaderParams(
 		float bloom_factor,
 		float input_gamma,
 		float output_gamma,
-		bool sharper) {
+		bool sharper,
+                bool bilinear_interpolation) {
   if (uses_shader_) {
      ShaderDestroy();
   }
@@ -537,6 +556,7 @@ void FrameBufferLayer::SetShaderParams(
   input_gamma_ = input_gamma;
   output_gamma_ = output_gamma;
   sharper_ = sharper;
+  bilinear_interpolation_ = bilinear_interpolation;
   Hide();
 }
 
