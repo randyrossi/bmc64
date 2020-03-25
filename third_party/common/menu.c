@@ -3573,8 +3573,8 @@ void build_menu(struct menu_item *root) {
               500, 1000, 5, DEFAULT_VDC_V_STRETCH);
      child->divisor = 1000;
 
-     ui_menu_add_button(MENU_INTEGER_SCALE_W_1, parent, "Integer Scale W");
-     ui_menu_add_button(MENU_INTEGER_SCALE_H_1, parent, "Integer Scale H");
+     ui_menu_add_button(MENU_INTEGER_SCALE_W_1, parent, "Next H Integer Scale");
+     ui_menu_add_button(MENU_INTEGER_SCALE_H_1, parent, "Next V Integer Scale");
   }
 
   if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {

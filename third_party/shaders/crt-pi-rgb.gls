@@ -170,7 +170,14 @@ void main()
 	vec2 texcoord = TEX0;
 #endif
 	{
-		vec2 texcoordInPixels = texcoord * TextureSize;
+
+#if defined(BILINEAR_INTERPOLATION)
+                vec2 adj = vec2(0, .5);
+                vec2 texcoordInPixels = texcoord * TextureSize + adj;
+#else
+                vec2 texcoordInPixels = texcoord * TextureSize;
+#endif
+
 #if defined(SHARPER)
 		vec2 tempCoord = floor(texcoordInPixels) + 0.5;
 		vec2 coord = tempCoord / TextureSize;
@@ -200,7 +207,7 @@ void main()
 #endif
 
 #if defined(BILINEAR_INTERPOLATION)
-                vec3 colour = texture2DBL(Texture, tc, TextureSize, TexelSize).rgb;
+                vec3 colour = texture2DBL(Texture, texcoord, TextureSize, TexelSize).rgb;
 #else
 		vec3 colour = texture2D(Texture, tc).rgb;
 #endif
