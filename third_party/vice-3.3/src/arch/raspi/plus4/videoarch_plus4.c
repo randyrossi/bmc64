@@ -29,6 +29,7 @@
 #include <stdlib.h>
 
 #include "emux_api.h"
+#include "resources.h"
 #include "plus4/plus4.h"
 #include "plus4/plus4memrom.h"
 #include "plus4/tedtypes.h"
@@ -148,4 +149,14 @@ void set_canvas_borders(int index, int *w, int *h) {
       *w = 32;
       *h = 40;
   }
+}
+
+void set_filter(int value) {
+  resources_set_int("TedFilter", value);
+}
+
+int get_filter(void) {
+  int value;
+  resources_get_int("TedFilter", &value);
+  return value;
 }

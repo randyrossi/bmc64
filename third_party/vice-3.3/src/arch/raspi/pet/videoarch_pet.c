@@ -106,3 +106,13 @@ void set_canvas_borders(int index, int *w, int *h) {
   *w = 32;
   *h = 40;
 }
+
+void set_filter(int value) {
+  resources_set_int("CrtcFilter", value);
+}
+
+int get_filter(void) {
+  int value;
+  resources_get_int("CrtcFilter", &value);
+  return value;
+}

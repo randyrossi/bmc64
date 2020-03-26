@@ -27,6 +27,7 @@
 #include "videoarch_vic20.h"
 
 #include "emux_api.h"
+#include "resources.h"
 #include "vic20/vic20.h"
 #include "vic20/vic20mem.h"
 #include "vic20/vic20memrom.h"
@@ -110,4 +111,14 @@ void set_canvas_borders(int index, int *w, int *h) {
       *w = 96;
       *h = 48;
   }
+}
+
+void set_filter(int value) {
+  resources_set_int("VICFilter", value);
+}
+
+int get_filter(void) {
+  int value;
+  resources_get_int("VICFilter", &value);
+  return value;
 }

@@ -27,6 +27,7 @@
 #include "videoarch_c64.h"
 
 #include "emux_api.h"
+#include "resources.h"
 #include "c64/c64.h"
 #include "c64/c64mem.h"
 
@@ -120,4 +121,14 @@ void set_canvas_borders(int index, int *w, int *h) {
      *w = 32;
      *h = 36;
   }
+}
+
+void set_filter(int value) {
+  resources_set_int("VICIIFilter", value);
+}
+
+int get_filter(void) {
+  int value;
+  resources_get_int("VICIIFilter", &value);
+  return value;
 }
