@@ -154,12 +154,20 @@ void set_canvas_borders(int index, int *w, int *h) {
   }
 }
 
-void set_filter(int value) {
-  resources_set_int("VICIIFilter", value);
+void set_filter(int display, int value) {
+  if (display == 0) {
+     resources_set_int("VICIIFilter", value);
+  } else {
+     resources_set_int("VDCFilter", value);
+  }
 }
 
-int get_filter(void) {
+int get_filter(int display) {
   int value;
-  resources_get_int("VICIIFilter", &value);
+  if (display == 0) {
+     resources_get_int("VICIIFilter", &value);
+  } else {
+     resources_get_int("VDCFilter", &value);
+  }
   return value;
 }

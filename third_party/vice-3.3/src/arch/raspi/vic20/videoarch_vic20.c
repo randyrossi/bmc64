@@ -113,11 +113,11 @@ void set_canvas_borders(int index, int *w, int *h) {
   }
 }
 
-void set_filter(int value) {
+void set_filter(int display, int value) {
   resources_set_int("VICFilter", value);
 }
 
-int get_filter(void) {
+int get_filter(int display) {
   int value;
   resources_get_int("VICFilter", &value);
   return value;

@@ -46,7 +46,7 @@ void machine_keymap_changed(int, int, signed long);
 extern uint8_t userport_get_ddr(void);
 extern uint8_t userport_get(void);
 extern void userport_set(uint8_t value);
-extern void set_filter(int value);
-extern int get_filter(void);
+extern void set_filter(int display, int value);
+extern int get_filter(int display);
 
 #endif

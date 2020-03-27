@@ -109,12 +109,10 @@ void emux_change_palette(int display_num, int palette_index) {
   // don't get any updates for color settings changed. Bug in VICE?
   // We will temporarily switch to CRT, then switch back just to get
   // the updates working.
-  int current_filter = get_filter();
-  if (display_num == 0)
-     set_filter(VIDEO_FILTER_CRT);
+  int current_filter = get_filter(display_num);
+  set_filter(display_num, VIDEO_FILTER_CRT);
   video_color_update_palette(canvases[display_num]);
-  if (display_num == 0)
-     set_filter(current_filter);
+  set_filter(display_num, current_filter);
 }
 
 // Called when a color setting has changed
@@ -122,12 +120,10 @@ void emux_video_color_setting_changed(int display_num) {
   // This will call set_palette below to get called after color controls
   // have been applied to the palette.
   // See above for temp filter change here.
-  int current_filter = get_filter();
-  if (display_num == 0)
-     set_filter(VIDEO_FILTER_CRT);
+  int current_filter = get_filter(display_num);
+  set_filter(display_num, VIDEO_FILTER_CRT);
   video_color_update_palette(canvases[display_num]);
-  if (display_num == 0)
-     set_filter(current_filter);
+  set_filter(display_num, current_filter);
 }
 
 int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
