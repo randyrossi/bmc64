@@ -332,3 +332,5 @@
   * Added AutostartWarp switch
   * Added DriveTrueEmulation switch
   * Fixed stretch params not saving for VDC (C128)
+  * Fixed bug with raster_skip (cmdline.txt)
+  * Fixed incorrect scaling param in machines.txt NTSC C128 59.825hz
