@@ -1157,8 +1157,14 @@ static void load_settings() {
       port_4_menu_item->value = value;
     } else if (strcmp(name, "palette") == 0) {
       palette_item[0]->value = value;
+      if (value >= palette_item[0]->num_choices) {
+         palette_item[1]->value = palette_item[0]->num_choices - 1;
+      }
     } else if (strcmp(name, "palette2") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       palette_item[1]->value = value;
+      if (value >= palette_item[1]->num_choices) {
+         palette_item[1]->value = palette_item[1]->num_choices - 1;
+      }
     } else if (strcmp(name, "alt_f12") == 0) {
       // Old. Equivalent to cf7 = Menu
       hotkey_cf7_item->value = HOTKEY_CHOICE_MENU;

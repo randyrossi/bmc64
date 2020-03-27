@@ -77,7 +77,7 @@ void set_video_font(void) {
   }
 }
 
-unsigned int *raspi_get_palette(int index) {
+unsigned int *raspi_get_palette(int display, int index) {
   switch (index) {
   case 0:
     return vice_color_palette;

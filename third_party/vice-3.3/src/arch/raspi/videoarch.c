@@ -85,8 +85,6 @@ unsigned long video_frame_count;
 
 static int raspi_boot_warp = 1;
 
-static int vdc_map[] = {0, 12, 6, 14, 5, 13, 11, 3, 2, 10, 8, 4, 9, 7, 15, 1};
-
 // Should be set only when raster_skip=true is present
 // in the kernel args.
 int raster_lines;
@@ -146,10 +144,9 @@ int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
   } else {
     layer = FB_LAYER_VDC;
     for (int i = 0; i < 16; i++) {
-      int j = vdc_map[i];
       circle_set_palette_fbl(layer, i,
-                     COLOR16(p->entries[j].red, p->entries[j].green,
-                             p->entries[j].blue));
+                     COLOR16(p->entries[i].red, p->entries[i].green,
+                             p->entries[i].blue));
     }
   }
 
@@ -508,9 +505,9 @@ palette_t *raspi_video_load_palette(int num_entries, char *name) {
   unsigned int *pal;
   // RASPI2 is for VDC
   if (strcmp(name, "RASPI2") == 0) {
-     pal = raspi_get_palette(canvas_state[1].palette_index);
+     pal = raspi_get_palette(1, canvas_state[1].palette_index);
   } else {
-     pal = raspi_get_palette(canvas_state[0].palette_index);
+     pal = raspi_get_palette(0, canvas_state[0].palette_index);
   }
   for (int i = 0; i < num_entries; i++) {
     palette->entries[i].red = pal[i * 3];

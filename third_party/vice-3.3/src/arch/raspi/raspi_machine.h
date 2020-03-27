@@ -34,7 +34,7 @@
 
 extern void set_refresh_rate(struct video_canvas_s *canvas);
 extern void set_video_font(void);
-extern unsigned int *raspi_get_palette(int index);
+extern unsigned int *raspi_get_palette(int display, int index);
 extern int is_vic(struct video_canvas_s *canvas);
 extern int is_vdc(struct video_canvas_s *canvas);
 void cartridge_freeze(void);
