@@ -519,8 +519,5 @@ palette_t *raspi_video_load_palette(int num_entries, char *name) {
 }
 
 void set_raster_lines(int v) {
-  vic_canvas->raster_lines = v;
-  if (vdc_canvas) {
-     vdc_canvas->raster_lines = v;
-  }
+  raster_lines = v;
 }
