@@ -93,7 +93,7 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
   printf("Starting emulator main loop\n");
 
 #if defined(RASPI_C64)
-  int argc = 10;
+  int argc = 9;
   char *argv[] = {
       (char *)"vice", timing_option_, (char *)"-sounddev", (char *)"raspi",
       (char *)"-soundsync", (char *)"0",
