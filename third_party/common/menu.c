@@ -3866,7 +3866,9 @@ int statusbar_always(void) {
 }
 
 // Stuff to do when menu is activated
-void menu_about_to_activate() {}
+void menu_about_to_activate() {
+  emux_get_int(Setting_WarpMode, &warp_item->value);
+}
 
 // Stuff to do before going back to emulator
 void menu_about_to_deactivate() {}
