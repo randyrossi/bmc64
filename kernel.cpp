@@ -48,10 +48,10 @@ static bool kbdMatrixStates[8][8];
 // These for translating row/col scans into equivalent keycodes.
 #if defined(RASPI_PLUS4) | defined(RASPI_PLUS4EMU)
 static long kbdMatrixKeyCodes[8][8] = {
- {KEYCODE_Backspace,  KEYCODE_3,         KEYCODE_5, KEYCODE_7, KEYCODE_9, KEYCODE_Down,         KEYCODE_Left,         KEYCODE_1},
+ {KEYCODE_Backspace,  KEYCODE_3,         KEYCODE_5, KEYCODE_7, KEYCODE_9, KEYCODE_Left,         KEYCODE_Up,           KEYCODE_1},
  {KEYCODE_Return,     KEYCODE_w,         KEYCODE_r, KEYCODE_y, KEYCODE_i, KEYCODE_p,            KEYCODE_Dash,         KEYCODE_BackQuote},
  {KEYCODE_BackSlash,  KEYCODE_a,         KEYCODE_d, KEYCODE_g, KEYCODE_j, KEYCODE_l,            KEYCODE_SingleQuote,  KEYCODE_Tab},
- {KEYCODE_F7,         KEYCODE_4,         KEYCODE_6, KEYCODE_8, KEYCODE_0, KEYCODE_Up,           KEYCODE_Right,        KEYCODE_2},
+ {KEYCODE_F7,         KEYCODE_4,         KEYCODE_6, KEYCODE_8, KEYCODE_0, KEYCODE_Right,        KEYCODE_Down,         KEYCODE_2},
  {KEYCODE_F1,         KEYCODE_z,         KEYCODE_c, KEYCODE_b, KEYCODE_m, KEYCODE_Period,       KEYCODE_RightShift,   KEYCODE_Space},
  {KEYCODE_F3,         KEYCODE_s,         KEYCODE_f, KEYCODE_h, KEYCODE_k, KEYCODE_SemiColon,    KEYCODE_RightBracket, KEYCODE_LeftControl},
  {KEYCODE_F5,         KEYCODE_e,         KEYCODE_t, KEYCODE_u, KEYCODE_o, KEYCODE_LeftBracket,  KEYCODE_Equals,       KEYCODE_q},
