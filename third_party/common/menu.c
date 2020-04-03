@@ -164,7 +164,6 @@ struct menu_item* s_curvature_y_item;
 struct menu_item* s_mask_item;
 struct menu_item* s_mask_brightness_item;
 struct menu_item* s_gamma_item;
-struct menu_item* s_fake_gamma_item;
 struct menu_item* s_scanlines_item;
 struct menu_item* s_multisample_item;
 struct menu_item* s_scanline_weight_item;
@@ -1985,7 +1984,6 @@ static void sanity_check_shader_params(int itemid) {
     s_mask_item->disabled = 0;
     s_mask_brightness_item->disabled = 0;
     s_gamma_item->disabled = 0;
-    s_fake_gamma_item->disabled = 0;
     s_scanlines_item->disabled = 0;
     s_multisample_item->disabled = 0;
     s_scanline_weight_item->disabled = 0;
@@ -2001,7 +1999,6 @@ static void sanity_check_shader_params(int itemid) {
        s_mask_item->disabled = 1;
        s_mask_brightness_item->disabled = 1;
        s_gamma_item->disabled = 1;
-       s_fake_gamma_item->disabled = 1;
        s_scanlines_item->disabled = 1;
        s_multisample_item->disabled = 1;
        s_scanline_weight_item->disabled = 1;
