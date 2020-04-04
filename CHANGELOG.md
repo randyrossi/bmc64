@@ -334,3 +334,4 @@
   * Fixed stretch params not saving for VDC (C128)
   * Fixed bug with raster_skip (cmdline.txt)
   * Fixed incorrect scaling param in machines.txt NTSC C128 59.825hz
+  * Fixed "Sound running too slow" problem on Pi0
