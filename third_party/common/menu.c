@@ -53,7 +53,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "3.6-beta"
+#define VERSION_STRING "3.6"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
