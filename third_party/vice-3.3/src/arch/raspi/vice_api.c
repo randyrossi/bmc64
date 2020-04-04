@@ -868,7 +868,7 @@ void emux_set_int(IntSetting setting, int value) {
      resources_set_int("RAMBlock5", value);
      break;
    case Setting_VideoFilter:
-     set_filter(value, 0);
+     set_filter(0, value);
      break;
    case Setting_AutostartWarp:
      resources_set_int("AutostartWarp", value);
