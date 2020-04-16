@@ -41,6 +41,7 @@
 #include "kbd.h"
 #include "text.h"
 #include "menu_confirm_osd.h"
+#include "menu_reset_osd.h"
 #include "menu_tape_osd.h"
 #include "menu_timing.h"
 #include "menu_usb.h"
@@ -2902,6 +2903,7 @@ static void set_hotkey_choices(struct menu_item *item) {
   strcpy(item->choices[HOTKEY_CHOICE_TAPE_MENU], function_to_string(BTN_ASSIGN_TAPE_MENU));
   strcpy(item->choices[HOTKEY_CHOICE_CART_MENU], function_to_string(BTN_ASSIGN_CART_MENU));
   strcpy(item->choices[HOTKEY_CHOICE_CART_FREEZE], function_to_string(BTN_ASSIGN_CART_FREEZE));
+  strcpy(item->choices[HOTKEY_CHOICE_RESET_MENU], function_to_string(BTN_ASSIGN_RESET_MENU));
   strcpy(item->choices[HOTKEY_CHOICE_RESET_HARD], function_to_string(BTN_ASSIGN_RESET_HARD));
   strcpy(item->choices[HOTKEY_CHOICE_RESET_SOFT], function_to_string(BTN_ASSIGN_RESET_SOFT));
   strcpy(item->choices[HOTKEY_CHOICE_ACTIVE_DISPLAY], function_to_string(BTN_ASSIGN_ACTIVE_DISPLAY));
@@ -2916,6 +2918,7 @@ static void set_hotkey_choices(struct menu_item *item) {
   item->choice_ints[HOTKEY_CHOICE_TAPE_MENU] = BTN_ASSIGN_TAPE_MENU;
   item->choice_ints[HOTKEY_CHOICE_CART_MENU] = BTN_ASSIGN_CART_MENU;
   item->choice_ints[HOTKEY_CHOICE_CART_FREEZE] = BTN_ASSIGN_CART_FREEZE;
+  item->choice_ints[HOTKEY_CHOICE_RESET_MENU] = BTN_ASSIGN_RESET_MENU;
   item->choice_ints[HOTKEY_CHOICE_RESET_HARD] = BTN_ASSIGN_RESET_HARD;
   item->choice_ints[HOTKEY_CHOICE_RESET_SOFT] = BTN_ASSIGN_RESET_SOFT;
   item->choice_ints[HOTKEY_CHOICE_ACTIVE_DISPLAY] = BTN_ASSIGN_ACTIVE_DISPLAY;
@@ -3913,6 +3916,9 @@ void menu_quick_func(int button_assignment) {
   case BTN_ASSIGN_CART_MENU:
     emux_show_cart_osd_menu();
     break;
+  case BTN_ASSIGN_RESET_MENU:
+    show_reset_osd_menu();
+    return;
   case BTN_ASSIGN_RESET_HARD:
     if (reset_confirm_item->value) {
       // Will come back here with HARD2 if confirmed.
@@ -4005,6 +4011,8 @@ const char* function_to_string(int button_func) {
        return "Cart OSD";
     case BTN_ASSIGN_CART_FREEZE:
        return "Cart Freeze";
+    case BTN_ASSIGN_RESET_MENU:
+       return "Reset OSD";
     case BTN_ASSIGN_RESET_HARD:
        return "Hard Reset";
     case BTN_ASSIGN_RESET_SOFT:

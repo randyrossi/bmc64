@@ -42,7 +42,7 @@ int custom_gpio_pins[NUM_GPIO_PINS] = {
     5, 20, 19, 16, 13, 6, 12, 26, 8, 25, 24,
     18, 23, 27, 17, 22, 4, 7, 21 };
 
-#define NUM_GPIO_BINDINGS 36
+#define NUM_GPIO_BINDINGS 37
 
 // Button function and bank (if applicable)
 static int menu_items_list[NUM_GPIO_BINDINGS][2] = {
@@ -68,6 +68,7 @@ static int menu_items_list[NUM_GPIO_BINDINGS][2] = {
     { BTN_ASSIGN_TAPE_MENU, 0 },
     { BTN_ASSIGN_CART_MENU, 0 },
     { BTN_ASSIGN_CART_FREEZE, 0 },
+    { BTN_ASSIGN_RESET_MENU, 0 },
     { BTN_ASSIGN_RESET_HARD, 0 },
     { BTN_ASSIGN_RESET_SOFT, 0 },
     { BTN_ASSIGN_RUN_STOP_BACK, 0 },

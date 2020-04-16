@@ -221,6 +221,7 @@ static void add_button_choices(struct menu_item *tmp_item) {
   strcpy(tmp_item->choices[BTN_ASSIGN_TAPE_MENU], function_to_string(BTN_ASSIGN_TAPE_MENU));
   strcpy(tmp_item->choices[BTN_ASSIGN_CART_MENU], function_to_string(BTN_ASSIGN_CART_MENU));
   strcpy(tmp_item->choices[BTN_ASSIGN_CART_FREEZE], function_to_string(BTN_ASSIGN_CART_FREEZE));
+  strcpy(tmp_item->choices[BTN_ASSIGN_RESET_MENU], function_to_string(BTN_ASSIGN_RESET_MENU));
   strcpy(tmp_item->choices[BTN_ASSIGN_RESET_HARD], function_to_string(BTN_ASSIGN_RESET_HARD));
   strcpy(tmp_item->choices[BTN_ASSIGN_RESET_SOFT], function_to_string(BTN_ASSIGN_RESET_SOFT));
 
