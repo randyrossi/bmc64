@@ -416,6 +416,7 @@ static void ui_key_released(long key) {
     ui_action(ACTION_Return);
     return;
   case KEYCODE_Escape:
+  case KEYCODE_BackQuote:
     ui_action(ACTION_Escape);
     return;
   case KEYCODE_F12:

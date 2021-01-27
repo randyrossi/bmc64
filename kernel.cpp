@@ -1185,6 +1185,9 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
       case 0: // LeftControl
         emu_key_pressed(KEYCODE_LeftControl);
         break;
+      case 4: // RightControl
+        emu_key_pressed(KEYCODE_RightControl);
+        break;
       case 1: // LeftShift
         if (emu_is_ui_activated()) {
           uiLeftShift = true;
@@ -1213,6 +1216,9 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
       switch (i) {
       case 0: // LeftControl
         emu_key_released(KEYCODE_LeftControl);
+        break;
+      case 4: // RightControl
+        emu_key_released(KEYCODE_RightControl);
         break;
       case 1: // LeftShift
         if (emu_is_ui_activated()) {
