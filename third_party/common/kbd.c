@@ -355,6 +355,7 @@ static void handle_key_combo_function() {
         ui_toggle_pending = 2;
         circle_lock_release();
         break;
+      case BTN_ASSIGN_RESET_MENU:
       case BTN_ASSIGN_RESET_HARD:
       case BTN_ASSIGN_RESET_SOFT:
       case BTN_ASSIGN_TAPE_MENU:
