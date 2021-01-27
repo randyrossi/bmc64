@@ -358,6 +358,19 @@ index ff011e8..c6a0e8f 100644
  	m_pStatusHandler (0),
  	m_usReportSize (0),
  	m_nDeviceNumber (0)	// not assigned
+diff --git a/lib/usb/usbgamepadxbox360.cpp b/lib/usb/usbgamepadxbox360.cpp
+index 71b0af5..29632d2 100644
+--- a/lib/usb/usbgamepadxbox360.cpp
++++ b/lib/usb/usbgamepadxbox360.cpp
+@@ -36,7 +36,7 @@ struct TXbox360Report
+ #define REPORT_HEADER			0x1400
+ 
+ 	u16	Buttons;
+-#define REPORT_BUTTONS			16
++#define REPORT_BUTTONS			17
+ 
+ #define REPORT_ANALOG_BUTTONS		2
+ 	u8	AnalogButton[REPORT_ANALOG_BUTTONS];
 diff --git a/lib/usb/usbhiddevice.cpp b/lib/usb/usbhiddevice.cpp
 index 2893a86..9aac786 100644
 --- a/lib/usb/usbhiddevice.cpp
