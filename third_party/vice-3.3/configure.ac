@@ -285,7 +285,7 @@ if test x"$enable_native_gtk3ui" = "xno" -a x"$enable_sdlui" = "xno" -a x"$enabl
 fi
 
 dnl Check if a GUI order check needs to be done
-if test x"$enable_native_gtk3ui" != "xyes" -a x"$enable_sdlui" != "xyes" -a x"$enable_sdlui2" != "xyes"; then
+if test x"$enable_native_gtk3ui" != "xyes" -a x"$enable_sdlui" != "xyes" -a x"$enable_sdlui2" != "xyes" -a x"$enable_raspiui" != "xyes"; then
   check_guis=yes
 fi
 
@@ -2666,8 +2666,8 @@ if test x"$enable_static_ffmpeg" = "xyes"; then
     fi
     dnl Add -lws2_32
     LIBS="$LIBS -lws2_32"
-  else
-    AC_CHECK_LIB(pthread, pthread_create,,)
+  #else
+    #AC_CHECK_LIB(pthread, pthread_create,,)
   fi
 
   FFMPEG_DO_SUBDIRS=yes
