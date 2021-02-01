@@ -68,6 +68,7 @@
 
 #define USB_PREF_ANALOG 0
 #define USB_PREF_HAT 1
+#define USB_PREF_HAT_AND_PADDLES 2
 
 // NOTE: BTN_ASSIGN_* are used as indices into choice
 // arrays.

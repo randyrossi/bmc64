@@ -287,7 +287,7 @@ void build_usb_menu(int dev, struct menu_item *root) {
   ui_menu_add_divider(root);
   usb_pref_item =
       ui_menu_add_multiple_choice(MENU_USB_0_PREF+dev, root, "");
-  sprintf (usb_pref_item->name, "USB %d Uses", dev+1);
+  sprintf (usb_pref_item->name, "USB %d Directions", dev+1);
   usb_pref_item->value = usb_pref[dev];
 
   x_axis_item = ui_menu_add_range(MENU_USB_0_X_AXIS+dev, root, "",
@@ -334,9 +334,10 @@ void build_usb_menu(int dev, struct menu_item *root) {
   poty_low_item = ui_menu_add_range(MENU_POTY_LOW, root, "POT Y Down Value", 0,
                                     255, 1, pot_y_low_value);
 
-  usb_pref_item->num_choices = 2;
+  usb_pref_item->num_choices = 3;
   strcpy(usb_pref_item->choices[0], "Analog Stick");
-  strcpy(usb_pref_item->choices[1], "First Hat");
+  strcpy(usb_pref_item->choices[1], "Hat+POTX/Y Buttons");
+  strcpy(usb_pref_item->choices[2], "Hat+POTX/Y Paddles");
 
   define_bindings_item->on_value_changed = menu_usb_value_changed;
   usb_pref_item->on_value_changed = menu_usb_value_changed;

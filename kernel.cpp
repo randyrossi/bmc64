@@ -496,6 +496,8 @@ if (static_kernel->circle_get_ticks() - entry_start >= entry_delay) {
   static unsigned int prev_buttons[MAX_USB_DEVICES] = {0, 0, 0, 0};
   static int prev_dpad[MAX_USB_DEVICES] = {8, 8, 8, 8};
   static int prev_axes_dirs[MAX_USB_DEVICES][4] = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
+  static int prev_xaxes_values[MAX_USB_DEVICES] = {0,0,0,0};
+  static int prev_yaxes_values[MAX_USB_DEVICES] = {0,0,0,0};
 
   if (nDeviceIndex >= MAX_USB_DEVICES)
     return;
@@ -527,10 +529,22 @@ if (static_kernel->circle_get_ticks() - entry_start >= entry_delay) {
   if (axis_y > max_index)
     max_index = axis_y;
 
-  if (usb_pref == USB_PREF_HAT && pState->nhats > 0) {
+  if ((usb_pref == USB_PREF_HAT || usb_pref == USB_PREF_HAT_AND_PADDLES) &&
+        pState->nhats > 0) {
     int dpad = pState->hats[0];
     bool has_changed =
         (prev_buttons[nDeviceIndex] != b) || (prev_dpad[nDeviceIndex] != dpad);
+
+    if (usb_pref == USB_PREF_HAT_AND_PADDLES) {
+       int xval = pState->axes[axis_x].value;
+       int yval = pState->axes[axis_y].value;
+       has_changed |=
+          prev_xaxes_values[nDeviceIndex] != xval ||
+	   prev_yaxes_values[nDeviceIndex] != yval;
+       prev_xaxes_values[nDeviceIndex] = xval;
+       prev_yaxes_values[nDeviceIndex] = yval;
+    }
+
     if (has_changed) {
       int old_dpad = prev_dpad[nDeviceIndex];
       prev_buttons[nDeviceIndex] = b;
@@ -568,8 +582,32 @@ if (static_kernel->circle_get_ticks() - entry_start >= entry_delay) {
       if (dpad < 8)
         value |= dpad_to_joy[dpad];
       value |= emu_add_button_values(nDeviceIndex, b);
+
+      // Handle axes as paddles here. This will potentially overwrite
+      // 2nd/3rd button configs from the call above if they were
+      // assigned.  The UI does not prevent the user from assigning
+      // potx/poty as buttons and specifying axes as paddles at the same
+      // time.
+      if (usb_pref == USB_PREF_HAT_AND_PADDLES && pState->naxes > max_index) {
+         int minx = pState->axes[axis_x].minimum;
+         int maxx = pState->axes[axis_x].maximum;
+         int miny = pState->axes[axis_y].minimum;
+         int maxy = pState->axes[axis_y].maximum;
+         int distx = maxx - minx;
+         int disty = maxy - miny;
+         double scalex = distx / 255.0d;
+         double scaley = disty / 255.0d;
+         unsigned char valuex = (pState->axes[axis_x].value - minx) / scalex;
+         unsigned char valuey = (pState->axes[axis_y].value - miny) / scaley;
+         value &= ~ 0x1fffe0; // null out potx and poty
+         value |= (valuex << 5);
+         value |= (valuey << 13);
+      }
+
       emu_set_joy_usb_interrupt(nDeviceIndex, value);
     }
+
+
   } else if (usb_pref == USB_PREF_ANALOG && pState->naxes > max_index) {
     // TODO: Do this just once at init
     int minx = pState->axes[axis_x].minimum;
