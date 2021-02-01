@@ -90,9 +90,6 @@ void videoarch_swap(void);
 void draw(uint8_t *src, int srcw, int srch, int src_pitch, uint8_t *dst,
           int dst_pitch, int off_x, int off_y);
 
-// Make sure ui also sets this when turning on/off warp
-extern int raspi_warp;
-
 palette_t *raspi_video_load_palette(int num_entries, char *name);
 void main_exit(void);
 

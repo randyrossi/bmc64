@@ -89,6 +89,8 @@ typedef enum {
   Setting_SidDigiblaster, // Plus4Emu
   Setting_WarpMode,
   Setting_VideoSize, // PET
+  Setting_VideoFilter,
+  Setting_AutostartWarp,
 } IntSetting;
 
 typedef enum {
@@ -405,6 +407,7 @@ void emux_get_default_color_setting(int *brightness, int *contrast, int *gamma, 
 
 int is_ntsc();
 int is_composite();
+int allow_shader();
 
 void emux_add_userport_joys(struct menu_item* parent);
 

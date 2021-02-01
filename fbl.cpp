@@ -26,6 +26,9 @@
 #include <stdio.h>
 #include <circle/bcmframebuffer.h>
 
+#include "crt_pi_idx.h"
+#include "crt_pi_rgb.h"
+
 #ifndef ALIGN_UP
 #define ALIGN_UP(x,y)  ((x + (y)-1) & ~((y)-1))
 #endif
@@ -87,9 +90,17 @@ bool FrameBufferLayer::initialized_ = false;
 DISPMANX_DISPLAY_HANDLE_T FrameBufferLayer::dispman_display_;
 EGLDisplay FrameBufferLayer::egl_display_;
 EGLContext FrameBufferLayer::egl_context_;
-static char* file_shader_txt_;
-static long file_shader_txt__len_;
+static char* fshader_txt_;
+static char* vshader_txt_;
 
+// For testing.
+//#define LOAD_SHADER_FROM_FILE
+
+#ifdef LOAD_SHADER_FROM_FILE
+static char *file_shader_txt_;
+#endif
+
+/*
 static void check(const char* msg) {
 	int g = glGetError();
 	if (g != 0) {
@@ -99,6 +110,7 @@ static void check(const char* msg) {
 		assert(false);
 	}
 }
+*/
 
 FrameBufferLayer::FrameBufferLayer() :
 		pixels_(nullptr), dispman_element_(0),egl_config_(nullptr),egl_surface_(nullptr),
@@ -120,7 +132,7 @@ FrameBufferLayer::FrameBufferLayer() :
         attr_vertex_(-1), attr_texcoord_(-1),
         texture_sampler_(-1), palette_sampler_(-1),
         tex_(-1), pal_(-1), mvp_(0),
-        input_size_(0), output_size_(0), texture_size_(0),
+        input_size_(0), output_size_(0), texture_size_(0), texel_size_(0),
         need_cpu_crop_(true), cropped_pixels_(0),
         curvature_(false) {
   alpha_.flags = DISPMANX_FLAGS_ALPHA_FROM_SOURCE;
@@ -163,10 +175,12 @@ void FrameBufferLayer::CreateTexture() {
   int tx = need_cpu_crop_ ? src_w_ : fb_pitch_ / bytes_per_pixel_;
   int ty = need_cpu_crop_ ? src_h_ : fb_height_;
   float textureSize[2] = { (float) tx, (float) ty };
+  float texelSize[2] = { 1.0f / (float) tx, 1.0f / (float) ty };
 
   glUniform2fv(input_size_, 1, inputSize);
   glUniform2fv(output_size_, 1, outputSize);
   glUniform2fv(texture_size_, 1, textureSize);
+  glUniform2fv(texel_size_, 1, texelSize);
 
   glBindTexture(GL_TEXTURE_2D,tex_);
   if (mode_ == VC_IMAGE_8BPP) {
@@ -242,6 +256,9 @@ void FrameBufferLayer::ConcatShaderDefines(char *dst) {
   if (sharper_) {
 	  strcat (dst, "#define SHARPER\n");
   }
+  if (bilinear_interpolation_) {
+	  strcat (dst, "#define BILINEAR_INTERPOLATION\n");
+  }
 }
 
 void FrameBufferLayer::ShaderInit() {
@@ -264,7 +281,8 @@ void FrameBufferLayer::ShaderInit() {
            "#define BLOOM_FACTOR 1.5            "
            "#define INPUT_GAMMA 2.4             "
            "#define OUTPUT_GAMMA 2.2            "
-           "#define SHARPER                     ";
+           "#define SHARPER                     "
+           "#define BILINEAR_INTERPOLATION      ";
 
   // orthographic projection matrix
   static const GLfloat mvp_ortho[16] = { 2.0f,  0.0f,  0.0f,  0.0f,
@@ -276,6 +294,10 @@ void FrameBufferLayer::ShaderInit() {
       return;
   }
 
+  const char *shader_txt;
+  int len;
+
+#ifdef LOAD_SHADER_FROM_FILE
   if (!file_shader_txt_) {
      FILE *f;
      if (mode_ == VC_IMAGE_8BPP) {
@@ -286,25 +308,54 @@ void FrameBufferLayer::ShaderInit() {
         f = fopen("crt-pi-rgb.gls", "r");
      }
      fseek(f, 0, SEEK_END);
-     file_shader_txt__len_ = ftell(f);
+     len = ftell(f);
      fseek(f, 0, SEEK_SET);
-     file_shader_txt_ = (char*) malloc(file_shader_txt__len_ + 1);
-     fread(file_shader_txt_, 1, file_shader_txt__len_, f);
+     // Never freed.
+     file_shader_txt_ = (char*) malloc(len + 1);
+     fread(file_shader_txt_, 1, len, f);
      fclose(f);
-     file_shader_txt_[file_shader_txt__len_] = 0;
+     file_shader_txt_[len] = 0;
   }
+  shader_txt = file_shader_txt_;
+#else
+  // Use statically linked shader txt.
+  if (mode_ == VC_IMAGE_8BPP) {
+     shader_txt = idx_shader;
+  } else {
+     shader_txt = rgb_shader;
+  }
+#endif
 
+  len = strlen(shader_txt);
+  if (vshader_txt_) {
+     free(vshader_txt_);
+  }
   char vheader[] = "#define VERTEX\n";
-  char *vshader = (char*) malloc(file_shader_txt__len_ + 1 + strlen(vheader) + strlen(header_template));
-  strcpy(vshader, vheader);
-  ConcatShaderDefines(vshader);
-  strcat(vshader, file_shader_txt_);
+  vshader_txt_ = (char*) malloc(len + 1 +
+                                strlen(vheader) +
+                                strlen(header_template));
+  vshader_txt_[0] = '\0';
+  strcpy(vshader_txt_, vheader);
+  ConcatShaderDefines(vshader_txt_);
+  strcat(vshader_txt_, shader_txt);
 
-  const GLchar *vshader_source = (const GLchar*) vshader;
+  if (fshader_txt_) {
+     free(fshader_txt_);
+  }
+  char fheader[] = "#define FRAGMENT\n";
+  fshader_txt_ = (char*) malloc(len + 1 +
+                                strlen(fheader) +
+                                strlen(header_template));
+  fshader_txt_[0] = '\0';
+  strcpy(fshader_txt_, fheader);
+  ConcatShaderDefines(fshader_txt_);
+  strcat(fshader_txt_, shader_txt);
+
+  const GLchar *vshader_source = (const GLchar*) vshader_txt_;
   vshader_ = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vshader_, 1, &vshader_source, 0);
   glCompileShader(vshader_);
-  check("glCompileShader");
+  //check("glCompileShader");
 
 //  char log[1024];
 //  strcpy(log,"");
@@ -313,17 +364,11 @@ void FrameBufferLayer::ShaderInit() {
 //  fprintf(fp,"%s\n",log);
 //  fclose(fp);
 
-  char fheader[] = "#define FRAGMENT\n";
-  char *fshader = (char*) malloc(file_shader_txt__len_ + 1 + strlen(fheader) + strlen(header_template));
-  strcpy(fshader, fheader);
-  ConcatShaderDefines(fshader);
-  strcat(fshader, file_shader_txt_);
-
-  const GLchar *fshader_source = (const GLchar*) fshader;
+  const GLchar *fshader_source = (const GLchar*) fshader_txt_;
   fshader_ = glCreateShader(GL_FRAGMENT_SHADER);
   glShaderSource(fshader_, 1, &fshader_source, 0);
   glCompileShader(fshader_);
-  check("glCompileShader2");
+  //check("glCompileShader2");
 
 //  glGetShaderInfoLog(fshader_,sizeof log,NULL,log);
 //  fp = fopen("shader2.log","w");
@@ -334,7 +379,7 @@ void FrameBufferLayer::ShaderInit() {
   glAttachShader(shader_program_, vshader_);
   glAttachShader(shader_program_, fshader_);
   glLinkProgram(shader_program_);
-  check("linkProgram");
+  //check("linkProgram");
 
 //  GLint status;
 //  glGetProgramiv (shader_program_, GL_LINK_STATUS, &status);
@@ -356,6 +401,7 @@ void FrameBufferLayer::ShaderInit() {
   input_size_ = glGetUniformLocation (shader_program_, "InputSize");
   output_size_= glGetUniformLocation (shader_program_, "OutputSize");
   texture_size_ = glGetUniformLocation (shader_program_, "TextureSize");
+  texel_size_ = glGetUniformLocation (shader_program_, "TexelSize");
 
   mvp_ = glGetUniformLocation (shader_program_, "MVPMatrix");
   if (mvp_ > -1) {
@@ -489,7 +535,8 @@ void FrameBufferLayer::SetShaderParams(
 		float bloom_factor,
 		float input_gamma,
 		float output_gamma,
-		bool sharper) {
+		bool sharper,
+                bool bilinear_interpolation) {
   if (uses_shader_) {
      ShaderDestroy();
   }
@@ -509,6 +556,7 @@ void FrameBufferLayer::SetShaderParams(
   input_gamma_ = input_gamma;
   output_gamma_ = output_gamma;
   sharper_ = sharper;
+  bilinear_interpolation_ = bilinear_interpolation;
   Hide();
 }
 
@@ -855,13 +903,15 @@ void FrameBufferLayer::Show() {
     EGLBoolean result;
     result = eglMakeCurrent(egl_display_, egl_surface_, egl_surface_, egl_context_);
     assert(EGL_FALSE != result);
-    check("eglMakeCurrent");
+    //check("eglMakeCurrent");
 
     ShaderInit();
     ShaderUpdate();
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    eglSwapInterval(egl_display_, 0);
     eglSwapBuffers(egl_display_, egl_surface_);
   }
 
@@ -871,6 +921,7 @@ void FrameBufferLayer::Show() {
 
   FrameReady(0);
   showing_ = true;
+  SwapResources(false, this, nullptr);
 }
 
 void FrameBufferLayer::Hide() {
@@ -908,7 +959,7 @@ void FrameBufferLayer::FrameReady(int to_offscreen) {
                                       pixels_,
                                       &copy_dst_rect_);
   } else {
-	  RenderGL(to_offscreen);
+      RenderGL();
   }
 }
 
@@ -916,6 +967,9 @@ void FrameBufferLayer::FrameReady(int to_offscreen) {
 // element to the off screen resource and toggle the resource
 // index in preparation for the off screen data to be shown.
 void FrameBufferLayer::Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update) {
+  if (uses_shader_ || !showing_)
+     return;
+
   rnum_ = 1 - rnum_;
 
   vc_dispmanx_element_change_source(dispman_update,
@@ -923,7 +977,12 @@ void FrameBufferLayer::Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update) {
                                     dispman_resource_[rnum_]);
 }
 
-void FrameBufferLayer::RenderGL(bool sync) {
+void FrameBufferLayer::SwapGL(bool sync) {
+  eglSwapInterval(egl_display_, sync ? 1 : 0);
+  eglSwapBuffers(egl_display_, egl_surface_);
+}
+
+void FrameBufferLayer::RenderGL() {
     // Our pixels_ framebuffer includes a lot of black border area around
     // the visible pixels we want to see. When shader curvature is needed,
     // we need to provide a texture with only the pixels we actually want
@@ -978,25 +1037,34 @@ void FrameBufferLayer::RenderGL(bool sync) {
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    eglSwapInterval(egl_display_, sync ? 1 : 0);
-    eglSwapBuffers(egl_display_, egl_surface_);
 }
 
+
 // Static
-void FrameBufferLayer::SwapResources(FrameBufferLayer* fb1,
+void FrameBufferLayer::SwapResources(bool sync,
+                                     FrameBufferLayer* fb1,
                                      FrameBufferLayer* fb2) {
 
-  DISPMANX_UPDATE_HANDLE_T dispman_update;
-  dispman_update = vc_dispmanx_update_start(0);
-  if (!fb1->UsesShader()) {
-     fb1->Swap(dispman_update);
+  // We need to know whether the dispmanx code below
+  // is actually going to cause a sync. It turns out if we
+  // don't actually change resources on either fb1 or fb2,
+  // the start/submit doesn't perform the sync.  So we
+  // predict what will happen based on the same conditions
+  // in Swap() above. If sync is requested but the code below
+  // won't sync, let SwapGL take care of it.
+  bool will_sync = !fb1->UsesShader() && fb1->Showing() &&
+                         (!fb2 || (fb2 && !fb2->UsesShader() && fb2->Showing()));
+  fb1->SwapGL(sync && !will_sync);
+
+  if (sync) {
+    DISPMANX_UPDATE_HANDLE_T dispman_update;
+    dispman_update = vc_dispmanx_update_start(0);
+    fb1->Swap(dispman_update);
+    if (fb2) {
+       fb2->Swap(dispman_update);
+    }
+    vc_dispmanx_update_submit_sync(dispman_update);
   }
-  if (fb2 && !fb2->UsesShader()) {
-     fb2->Swap(dispman_update);
-  }
-  int ret = vc_dispmanx_update_submit_sync(dispman_update);
-  assert(ret == 0);
 }
 
 void FrameBufferLayer::SetPalette(uint8_t index, uint16_t rgb565) {
@@ -1036,7 +1104,8 @@ void FrameBufferLayer::UpdatePalette() {
      } else {
 	  glBindTexture(GL_TEXTURE_2D,pal_);
 	  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 1, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, pal_565_);
-	  RenderGL(true);
+	  RenderGL();
+          SwapResources(false, this, nullptr);
      }
   }
 }
@@ -1051,6 +1120,10 @@ int FrameBufferLayer::GetLayer() {
 
 bool FrameBufferLayer::UsesShader() {
 	return uses_shader_;
+}
+
+bool FrameBufferLayer::Showing() {
+	return showing_;
 }
 
 void FrameBufferLayer::SetTransparency(bool transparency) {

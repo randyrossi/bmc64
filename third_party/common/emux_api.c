@@ -294,3 +294,8 @@ int is_composite() {
       timing == MACHINE_TIMING_NTSC_COMPOSITE ||
       timing == MACHINE_TIMING_PAL_COMPOSITE;
 }
+
+// Disable shader for composite or models > 3
+int allow_shader() {
+  return circle_get_model() <= 3 && !is_composite();
+}

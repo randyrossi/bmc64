@@ -154,15 +154,8 @@ void emu_machine_init(int raster_skip_enabled) {
        break;
   }
 
-  if (emux_machine_class == BMC64_MACHINE_CLASS_PET &&
-         !is_composite()) {
-     // For the PET, we always double the vertical height of the
-     // frame buffer so we can do our 'cheap' scanlines effect.
-     canvas_state[VIC_INDEX].raster_skip = 2;
-  } else {
-     canvas_state[VIC_INDEX].raster_skip = raster_skip_enabled ? 2 : 1;
-     canvas_state[VDC_INDEX].raster_skip = raster_skip_enabled ? 2 : 1;
-  }
+  canvas_state[VIC_INDEX].raster_skip = raster_skip_enabled ? 2 : 1;
+  canvas_state[VDC_INDEX].raster_skip = raster_skip_enabled ? 2 : 1;
 
   // If raster skip enabled via kernel params, enable lines.
   set_raster_lines(raster_skip_enabled);
@@ -362,14 +355,24 @@ void emux_drive_change_model(int unit) {
 }
 
 void emux_add_drive_option(struct menu_item* root, int drive) {
+  int tmp;
+
   if (emux_machine_class != BMC64_MACHINE_CLASS_C64 &&
       emux_machine_class != BMC64_MACHINE_CLASS_C128) {
     return;
   }
 
+  if (drive < 0) {
+     // Options applicable to all drives
+     resources_get_int("DriveTrueEmulation", &tmp);
+     ui_menu_add_toggle(MENU_DRIVE_TRUE_EMULATION, root, "True Emulation", tmp);
+     return;
+  }
+
+  assert (drive >=8 && drive <=11);
+
   struct menu_item* parent = ui_menu_add_folder(root, "Options");
 
-  int tmp;
   resources_get_int_sprintf("Drive%iParallelCable", &tmp, drive);
 
   int index = 0;
@@ -773,7 +776,6 @@ void emux_add_sound_options(struct menu_item* parent) {
 
 void emux_set_warp(int warp) {
   resources_set_int("WarpMode", warp);
-  raspi_warp = warp;
 }
 
 void emux_handle_rom_change(struct menu_item* item, fullpath_func fullpath) {
@@ -865,6 +867,12 @@ void emux_set_int(IntSetting setting, int value) {
    case Setting_RAMBlock5:
      resources_set_int("RAMBlock5", value);
      break;
+   case Setting_VideoFilter:
+     set_filter(0, value);
+     break;
+   case Setting_AutostartWarp:
+     resources_set_int("AutostartWarp", value);
+     break;
    default:
      assert(0);
  }
@@ -908,6 +916,12 @@ void emux_get_int(IntSetting setting, int* dest) {
       break;
     case Setting_VideoSize:
       resources_get_int("VideoSize", dest);
+      break;
+    case Setting_VideoFilter:
+      *dest = get_filter(0);
+      break;
+    case Setting_AutostartWarp:
+      resources_get_int("AutostartWarp", dest);
       break;
     default:
       assert(0);
@@ -1000,6 +1014,9 @@ int emux_handle_menu_change(struct menu_item* item) {
          resources_set_string("KeymapUserPosFile", "rpi_maxi_pos.vkm");
       }
       resources_set_int("KeymapIndex", item->choice_ints[item->value]);
+      return 1;
+    case MENU_DRIVE_TRUE_EMULATION:
+      resources_set_int("DriveTrueEmulation", item->value);
       return 1;
     default:
       break;

@@ -48,10 +48,10 @@ static bool kbdMatrixStates[8][8];
 // These for translating row/col scans into equivalent keycodes.
 #if defined(RASPI_PLUS4) | defined(RASPI_PLUS4EMU)
 static long kbdMatrixKeyCodes[8][8] = {
- {KEYCODE_Backspace,  KEYCODE_3,         KEYCODE_5, KEYCODE_7, KEYCODE_9, KEYCODE_Down,         KEYCODE_Left,         KEYCODE_1},
+ {KEYCODE_Backspace,  KEYCODE_3,         KEYCODE_5, KEYCODE_7, KEYCODE_9, KEYCODE_Left,         KEYCODE_Up,           KEYCODE_1},
  {KEYCODE_Return,     KEYCODE_w,         KEYCODE_r, KEYCODE_y, KEYCODE_i, KEYCODE_p,            KEYCODE_Dash,         KEYCODE_BackQuote},
  {KEYCODE_BackSlash,  KEYCODE_a,         KEYCODE_d, KEYCODE_g, KEYCODE_j, KEYCODE_l,            KEYCODE_SingleQuote,  KEYCODE_Tab},
- {KEYCODE_F7,         KEYCODE_4,         KEYCODE_6, KEYCODE_8, KEYCODE_0, KEYCODE_Up,           KEYCODE_Right,        KEYCODE_2},
+ {KEYCODE_F7,         KEYCODE_4,         KEYCODE_6, KEYCODE_8, KEYCODE_0, KEYCODE_Right,        KEYCODE_Down,         KEYCODE_2},
  {KEYCODE_F1,         KEYCODE_z,         KEYCODE_c, KEYCODE_b, KEYCODE_m, KEYCODE_Period,       KEYCODE_RightShift,   KEYCODE_Space},
  {KEYCODE_F3,         KEYCODE_s,         KEYCODE_f, KEYCODE_h, KEYCODE_k, KEYCODE_SemiColon,    KEYCODE_RightBracket, KEYCODE_LeftControl},
  {KEYCODE_F5,         KEYCODE_e,         KEYCODE_t, KEYCODE_u, KEYCODE_o, KEYCODE_LeftBracket,  KEYCODE_Equals,       KEYCODE_q},
@@ -301,7 +301,8 @@ void circle_set_shader_params(int curvature,
 		float bloom_factor,
 		float input_gamma,
 		float output_gamma,
-		int sharper) {
+		int sharper,
+                int bilinear_interpolation) {
   static_kernel->circle_set_shader_params(curvature,
 			curvature_x,
 			curvature_y,
@@ -316,7 +317,8 @@ void circle_set_shader_params(int curvature,
 			bloom_factor,
 			input_gamma,
 			output_gamma,
-			sharper);
+			sharper,
+                        bilinear_interpolation);
 }
 };
 
@@ -1183,6 +1185,9 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
       case 0: // LeftControl
         emu_key_pressed(KEYCODE_LeftControl);
         break;
+      case 4: // RightControl
+        emu_key_pressed(KEYCODE_RightControl);
+        break;
       case 1: // LeftShift
         if (emu_is_ui_activated()) {
           uiLeftShift = true;
@@ -1211,6 +1216,9 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
       switch (i) {
       case 0: // LeftControl
         emu_key_released(KEYCODE_LeftControl);
+        break;
+      case 4: // RightControl
+        emu_key_released(KEYCODE_RightControl);
         break;
       case 1: // LeftShift
         if (emu_is_ui_activated()) {
@@ -1506,11 +1514,9 @@ void CKernel::circle_frames_ready_fbl(int layer1, int layer2, int sync) {
   if (layer2 >= 0) {
      fbl[layer2].FrameReady(sync);
   }
-  if (sync) {
-     // Flip the buffers and wait for vblank.
-     FrameBufferLayer::SwapResources(
-         &fbl[layer1], layer2 >= 0 ? &fbl[layer2] : nullptr);
-  }
+  // Flip the buffers and wait for vblank.
+  FrameBufferLayer::SwapResources(sync,
+      &fbl[layer1], layer2 >= 0 ? &fbl[layer2] : nullptr);
 }
 
 void CKernel::circle_set_palette_fbl(int layer, uint8_t index, uint16_t rgb565) {
@@ -1632,7 +1638,8 @@ void CKernel::circle_set_shader_params(int curvature,
 		float bloom_factor,
 		float input_gamma,
 		float output_gamma,
-		int sharper) {
+		int sharper,
+                int bilinear_interpolation) {
   // Only the main display (layer 0) ever gets a shader.
   fbl[0].SetShaderParams(curvature,
 			curvature_x,
@@ -1648,5 +1655,6 @@ void CKernel::circle_set_shader_params(int curvature,
 			bloom_factor,
 			input_gamma,
 			output_gamma,
-			sharper);
+			sharper,
+                        bilinear_interpolation);
 }

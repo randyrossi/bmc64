@@ -70,7 +70,7 @@ void set_video_font(void) {
   }
 }
 
-unsigned int *raspi_get_palette(int index) {
+unsigned int *raspi_get_palette(int display, int index) {
   switch (index) {
   case 0:
     return green_color_palette;
@@ -97,12 +97,22 @@ void set_canvas_size(int index, int *w, int *h, int *gw, int *gh) {
     return;
   }
   *w = 704;
-  *h = 532;
+  *h = 288;
   *gw = 80*8;
   *gh = 25*8;
 }
 
 void set_canvas_borders(int index, int *w, int *h) {
   *w = 32;
-  *h = 32;
+  *h = 40;
+}
+
+void set_filter(int display, int value) {
+  resources_set_int("CrtcFilter", value);
+}
+
+int get_filter(int display) {
+  int value;
+  resources_get_int("CrtcFilter", &value);
+  return value;
 }

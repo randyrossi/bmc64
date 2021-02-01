@@ -17,10 +17,6 @@
 #define KERNEL_DEFS_H
 
 // The sample rate we're asking vice to produce.
-#ifdef RASPI_LITE
-#define SAMPLE_RATE 33075
-#else
 #define SAMPLE_RATE 44100
-#endif
 
 #endif

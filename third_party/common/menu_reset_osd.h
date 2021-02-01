@@ -1,8 +1,9 @@
 /*
- * videoarch_pet.h
+ * menu_reset_osd.h
  *
  * Written by
  *  Randy Rossi <randy.rossi@gmail.com>
+ *  Sven Oliver Moll <svolli@svolli.de>
  *
  * This file is part of VICE, the Versatile Commodore Emulator.
  * See README for copyright notice.
@@ -23,9 +24,10 @@
  *  02111-1307  USA.
  *
  */
-#ifndef RASPI_VIDEOARCH_PET_H
-#define RASPI_VIDEOARCH_PET_H
 
-#include "arch/raspi/raspi_machine.h"
+#ifndef RASPI_MENU_RESET_OSD_H
+#define RASPI_MENU_RESET_OSD_H
+
+void show_reset_osd_menu();
 
 #endif

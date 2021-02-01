@@ -27,6 +27,7 @@
 #include "videoarch_c128.h"
 
 #include "emux_api.h"
+#include "resources.h"
 #include "c128/c128.h"
 #include "c128/c128mem.h"
 #include "vicii.h"
@@ -67,6 +68,13 @@ static unsigned int pepto_pal_color_palette[] = {
     0x6c, 0x6c, 0x6c, 0x9a, 0xd2, 0x84, 0x6c, 0x5e, 0xb5, 0x95, 0x95, 0x95,
 };
 
+static unsigned int vdc_color_palette[] = {
+    0x00, 0x00, 0x00, 0x55, 0x55, 0x55, 0x00, 0x00, 0xAA, 0x55, 0x55, 0xFF,
+    0x00, 0xAA, 0x00, 0x55, 0xFF, 0x55, 0x00, 0xAA, 0xAA, 0x55, 0xFF, 0xFF,
+    0xAA, 0x00, 0x00, 0xFF, 0x55, 0x55, 0xAA, 0x00, 0xAA, 0xFF, 0x55, 0xFF,
+    0xAA, 0x55, 0x00, 0xFF, 0xFF, 0x55, 0xAA, 0xAA, 0xAA, 0xFF, 0xFF, 0xFF,
+};
+
 void set_refresh_rate(struct video_canvas_s *canvas) {
   if (is_ntsc()) {
     canvas->refreshrate = C128_NTSC_RFSH_PER_SEC;
@@ -84,25 +92,29 @@ void set_video_font(void) {
   }
 }
 
-unsigned int *raspi_get_palette(int index) {
-  switch (index) {
-  case 0:
-    return default_color_palette;
-    break;
-  case 1:
-    return vice_color_palette;
-    break;
-  case 2:
-    return c64hq_color_palette;
-    break;
-  case 3:
-    return pepto_ntsc_color_palette;
-    break;
-  case 4:
-    return pepto_pal_color_palette;
-    break;
-  default:
-    return NULL;
+unsigned int *raspi_get_palette(int display, int index) {
+  if (display == 0) {
+    switch (index) {
+    case 0:
+      return default_color_palette;
+      break;
+    case 1:
+      return vice_color_palette;
+      break;
+    case 2:
+      return c64hq_color_palette;
+      break;
+    case 3:
+      return pepto_ntsc_color_palette;
+      break;
+    case 4:
+      return pepto_pal_color_palette;
+      break;
+    default:
+      return NULL;
+    }
+  } else {
+    return vdc_color_palette;
   }
 }
 
@@ -140,4 +152,22 @@ void set_canvas_borders(int index, int *w, int *h) {
       *w = 112;
       *h = 38;
   }
+}
+
+void set_filter(int display, int value) {
+  if (display == 0) {
+     resources_set_int("VICIIFilter", value);
+  } else {
+     resources_set_int("VDCFilter", value);
+  }
+}
+
+int get_filter(int display) {
+  int value;
+  if (display == 0) {
+     resources_get_int("VICIIFilter", &value);
+  } else {
+     resources_get_int("VDCFilter", &value);
+  }
+  return value;
 }

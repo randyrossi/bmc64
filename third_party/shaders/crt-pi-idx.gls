@@ -79,6 +79,7 @@ uniform COMPAT_PRECISION float OUTPUT_GAMMA;
 */
 
 uniform vec2 TextureSize;
+uniform vec2 TexelSize;
 #if defined(CURVATURE)
 varying vec2 screenScale;
 #endif
@@ -145,6 +146,33 @@ float CalcScanLine(float dy)
 	return scanLineWeight;
 }
 
+// Bi-linear interpolation - indexed palette version
+vec4 texture2DBL(in sampler2D t, in sampler2D p, in vec2 uv, in vec2 textureSize, in vec2 texelSize)
+{
+    vec2 f = fract( uv * textureSize );
+    uv += ( .5 - f ) * texelSize;    // move uv to texel centre
+
+    vec4 idx_tl = texture2D(t, uv);
+    vec2 tci_tl = vec2(idx_tl.x, 0);
+    vec4 tl = texture2D(p, tci_tl);
+
+    vec4 idx_tr = texture2D(t, uv + vec2(texelSize.x, 0.0));
+    vec2 tci_tr = vec2(idx_tr.x, 0);
+    vec4 tr = texture2D(p, tci_tr);
+
+    vec4 idx_bl = texture2D(t, uv + vec2(0.0, texelSize.y));
+    vec2 tci_bl = vec2(idx_bl.x, 0);
+    vec4 bl = texture2D(p, tci_bl);
+
+    vec4 idx_br = texture2D(t, uv + vec2(texelSize.x, texelSize.y));
+    vec2 tci_br = vec2(idx_br.x, 0);
+    vec4 br = texture2D(p, tci_br);
+
+    vec4 tA = mix( tl, tr, f.x );
+    vec4 tB = mix( bl, br, f.x );
+    return mix( tA, tB, f.y );
+}
+
 void main()
 {
 #if defined(CURVATURE)
@@ -156,7 +184,13 @@ void main()
 	vec2 texcoord = TEX0;
 #endif
 	{
-		vec2 texcoordInPixels = texcoord * TextureSize;
+#if defined(BILINEAR_INTERPOLATION)
+                vec2 adj = vec2(0, .5);
+                vec2 texcoordInPixels = texcoord * TextureSize + adj;
+#else
+                vec2 texcoordInPixels = texcoord * TextureSize;
+#endif
+
 #if defined(SHARPER)
 		vec2 tempCoord = floor(texcoordInPixels) + 0.5;
 		vec2 coord = tempCoord / TextureSize;
@@ -184,9 +218,15 @@ void main()
 		dy *= signY;
 		vec2 tc = vec2(texcoord.x, yCoord + dy);
 #endif
+
+#if defined(BILINEAR_INTERPOLATION)
+		vec3 colour = texture2DBL(Texture, Palette, texcoord, TextureSize, TexelSize).rgb;
+#else
                 vec4 idx = texture2D(Texture, tc);
                 vec2 tci = vec2(idx.x, 0);
 		vec3 colour = texture2D(Palette, tci).rgb;
+#endif
+
 
 #if defined(SCANLINES)
 #if defined(GAMMA)

@@ -116,6 +116,8 @@ public:
 
   bool UsesShader();
 
+  bool Showing();
+
   void SetUsesShader(bool enable);
 
   // NOTE: This will implicitly Hide the layer since the shader must be
@@ -135,18 +137,20 @@ public:
 			float bloom_factor,
 			float input_gamma,
 			float output_gamma,
-			bool sharper);
+			bool sharper,
+			bool bilinear_interpolation);
 
   // make off screen resources for fb1 (and optionally fb2) visible
   // then swap destination resources in prep for next frame
-  static void SwapResources(FrameBufferLayer* fb1, FrameBufferLayer* fb2);
+  static void SwapResources(bool sync, FrameBufferLayer* fb1, FrameBufferLayer* fb2);
 
   static void SetInterpolation(int enable);
 
 private:
   void FreeInternal(bool keepPixels);
   void Swap(DISPMANX_UPDATE_HANDLE_T& dispman_update);
-  void RenderGL(bool sync);
+  void SwapGL(bool sync);
+  void RenderGL();
 
   void ShaderInit();
   void ShaderDestroy();
@@ -257,6 +261,7 @@ private:
   GLuint input_size_;
   GLuint output_size_;
   GLuint texture_size_;
+  GLuint texel_size_;
 
   // Curvature requires the texture to have only
   // the visible pixels in it. We can't get away
@@ -287,6 +292,7 @@ private:
   float input_gamma_;
   float output_gamma_;
   bool sharper_;
+  bool bilinear_interpolation_;
 };
 
 #endif

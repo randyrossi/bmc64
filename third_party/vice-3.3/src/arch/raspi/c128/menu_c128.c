@@ -169,13 +169,19 @@ void cartridge_freeze(void) {
 struct menu_item* emux_add_palette_options(int menu_id, struct menu_item* parent) {
   struct menu_item* palette_item =
       ui_menu_add_multiple_choice(menu_id, parent, "Color Palette");
-  palette_item->num_choices = 5;
-  palette_item->value = 1;
-  strcpy(palette_item->choices[0], "Default");
-  strcpy(palette_item->choices[1], "Vice");
-  strcpy(palette_item->choices[2], "C64hq");
-  strcpy(palette_item->choices[3], "Pepto-Ntsc");
-  strcpy(palette_item->choices[4], "Pepto-Pal");
+  if (menu_id == MENU_COLOR_PALETTE_1) {
+    palette_item->num_choices = 1;
+    palette_item->value = 0;
+    strcpy(palette_item->choices[0], "Default");
+  } else {
+    palette_item->num_choices = 5;
+    palette_item->value = 1;
+    strcpy(palette_item->choices[0], "Default");
+    strcpy(palette_item->choices[1], "Vice");
+    strcpy(palette_item->choices[2], "C64hq");
+    strcpy(palette_item->choices[3], "Pepto-Ntsc");
+    strcpy(palette_item->choices[4], "Pepto-Pal");
+  }
   return palette_item;
 }
 

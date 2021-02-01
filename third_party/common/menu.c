@@ -41,6 +41,7 @@
 #include "kbd.h"
 #include "text.h"
 #include "menu_confirm_osd.h"
+#include "menu_reset_osd.h"
 #include "menu_tape_osd.h"
 #include "menu_timing.h"
 #include "menu_usb.h"
@@ -53,7 +54,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "3.5"
+#define VERSION_STRING "3.6"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -164,7 +165,6 @@ struct menu_item* s_curvature_y_item;
 struct menu_item* s_mask_item;
 struct menu_item* s_mask_brightness_item;
 struct menu_item* s_gamma_item;
-struct menu_item* s_fake_gamma_item;
 struct menu_item* s_scanlines_item;
 struct menu_item* s_multisample_item;
 struct menu_item* s_scanline_weight_item;
@@ -797,7 +797,7 @@ static int do_use_int_scaling(int layer, int silent) {
   } else if (h_border_item[canvas_index]->value <
                 h_border_item[canvas_index]->min) {
      if (!silent)
-        ui_error("fbh too small");
+        ui_error("fbw too small");
      h_border_item[canvas_index]->value =
         h_border_item[canvas_index]->min;
      return 0;
@@ -967,8 +967,8 @@ static int save_settings() {
      fprintf(fp, "v_center_1=%d\n", v_center_item[1]->value);
      fprintf(fp, "h_border_1=%d\n", h_border_item[1]->value);
      fprintf(fp, "v_border_1=%d\n", v_border_item[1]->value);
-     fprintf(fp, "hstretch_1=%d\n", h_stretch_item[1]->value);
-     fprintf(fp, "vstretch_1=%d\n", v_stretch_item[1]->value);
+     fprintf(fp, "h_stretch_1=%d\n", h_stretch_item[1]->value);
+     fprintf(fp, "v_stretch_1=%d\n", v_stretch_item[1]->value);
   }
 
   int drive_type;
@@ -1021,7 +1021,6 @@ static int save_settings() {
      fprintf (fp, "custom_gpio=%d,%d\n", i, gpio_bindings[i]);
   }
 
-  fprintf(fp,"s_enable_shader=%d\n", s_enable_shader_item->value);
   fprintf(fp,"s_curvature=%d\n", s_curvature_item->value);
   fprintf(fp,"s_curvature_x=%d\n", s_curvature_x_item->value);
   fprintf(fp,"s_curvature_y=%d\n", s_curvature_y_item->value);
@@ -1158,8 +1157,14 @@ static void load_settings() {
       port_4_menu_item->value = value;
     } else if (strcmp(name, "palette") == 0) {
       palette_item[0]->value = value;
+      if (value >= palette_item[0]->num_choices) {
+         palette_item[1]->value = palette_item[0]->num_choices - 1;
+      }
     } else if (strcmp(name, "palette2") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       palette_item[1]->value = value;
+      if (value >= palette_item[1]->num_choices) {
+         palette_item[1]->value = palette_item[1]->num_choices - 1;
+      }
     } else if (strcmp(name, "alt_f12") == 0) {
       // Old. Equivalent to cf7 = Menu
       hotkey_cf7_item->value = HOTKEY_CHOICE_MENU;
@@ -1340,8 +1345,6 @@ static void load_settings() {
       use_scaling_params_item[0]->value = value;
     } else if (strcmp(name, "use_int_scaling_1") == 0 && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
       use_scaling_params_item[1]->value = value;
-    } else if (strcmp(name, "s_enable_shader") == 0) {
-      s_enable_shader_item->value = value;
     } else if (strcmp(name, "s_curvature") == 0) {
       s_curvature_item->value = value;
     } else if (strcmp(name, "s_curvature_x") == 0) {
@@ -1982,7 +1985,6 @@ static void sanity_check_shader_params(int itemid) {
     s_mask_item->disabled = 0;
     s_mask_brightness_item->disabled = 0;
     s_gamma_item->disabled = 0;
-    s_fake_gamma_item->disabled = 0;
     s_scanlines_item->disabled = 0;
     s_multisample_item->disabled = 0;
     s_scanline_weight_item->disabled = 0;
@@ -1998,7 +2000,6 @@ static void sanity_check_shader_params(int itemid) {
        s_mask_item->disabled = 1;
        s_mask_brightness_item->disabled = 1;
        s_gamma_item->disabled = 1;
-       s_fake_gamma_item->disabled = 1;
        s_scanlines_item->disabled = 1;
        s_multisample_item->disabled = 1;
        s_scanline_weight_item->disabled = 1;
@@ -2066,6 +2067,7 @@ static void handle_shader_param_change() {
   float input_gamma;
   float output_gamma;
   int sharper;
+  int bilinear_interpolation;
 
   curvature = s_curvature_item->value;
   curvature_x = (float)s_curvature_x_item->value / 100.0f;
@@ -2082,6 +2084,7 @@ static void handle_shader_param_change() {
   input_gamma = (float)s_input_gamma_item->value / 100.0f;
   output_gamma = (float)s_output_gamma_item->value / 100.0f;
   sharper = s_sharper_item->value;
+  bilinear_interpolation = scaling_interp_item->value;
 
   circle_set_shader_params(curvature,
                         curvature_x,
@@ -2097,7 +2100,8 @@ static void handle_shader_param_change() {
                         bloom_factor,
                         input_gamma,
                         output_gamma,
-                        sharper);
+                        sharper,
+                        bilinear_interpolation);
 
   // Setting shader params hides the layer.
   vic_showing = 0;
@@ -2159,6 +2163,9 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_COLOR_PALETTE_1:
     ui_canvas_reveal_temp(FB_LAYER_VDC);
     emux_change_palette(1, item->value);
+    return;
+  case MENU_AUTOSTART_WARP:
+    emux_set_int(Setting_AutostartWarp, item->value);
     return;
   case MENU_AUTOSTART:
     show_files(DIR_ROOT, FILTER_NONE, MENU_AUTOSTART_FILE, 0);
@@ -2773,7 +2780,10 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_SHADER_ENABLE:
     sanity_check_shader_params(item->id);
     ui_canvas_reveal_temp(FB_LAYER_VIC);
-    circle_realloc_fbl(FB_LAYER_VIC, item->value);
+    // Despite what the menu says, don't allow this to enable the shader
+    // when conditions apply.
+    circle_realloc_fbl(FB_LAYER_VIC, allow_shader() ? item->value : 0);
+    emux_set_int(Setting_VideoFilter, item->value ? MENU_VIDEO_FILTER_CRT : MENU_VIDEO_FILTER_NONE);
     handle_shader_param_change();
     vic_showing = 0;
     break;
@@ -2822,7 +2832,12 @@ static void menu_value_changed(struct menu_item *item) {
     }
     break;
   case MENU_SCALING_INTERPOLATION:
-    circle_set_interpolation(item->value);
+    ui_canvas_reveal_temp(FB_LAYER_VIC);
+    circle_set_interpolation(item->value); // dispmanx interpolation
+    if (s_enable_shader_item->value) {
+       sanity_check_shader_params(item->id);
+       handle_shader_param_change();
+    }
     break;
   }
 
@@ -2888,6 +2903,7 @@ static void set_hotkey_choices(struct menu_item *item) {
   strcpy(item->choices[HOTKEY_CHOICE_TAPE_MENU], function_to_string(BTN_ASSIGN_TAPE_MENU));
   strcpy(item->choices[HOTKEY_CHOICE_CART_MENU], function_to_string(BTN_ASSIGN_CART_MENU));
   strcpy(item->choices[HOTKEY_CHOICE_CART_FREEZE], function_to_string(BTN_ASSIGN_CART_FREEZE));
+  strcpy(item->choices[HOTKEY_CHOICE_RESET_MENU], function_to_string(BTN_ASSIGN_RESET_MENU));
   strcpy(item->choices[HOTKEY_CHOICE_RESET_HARD], function_to_string(BTN_ASSIGN_RESET_HARD));
   strcpy(item->choices[HOTKEY_CHOICE_RESET_SOFT], function_to_string(BTN_ASSIGN_RESET_SOFT));
   strcpy(item->choices[HOTKEY_CHOICE_ACTIVE_DISPLAY], function_to_string(BTN_ASSIGN_ACTIVE_DISPLAY));
@@ -2902,6 +2918,7 @@ static void set_hotkey_choices(struct menu_item *item) {
   item->choice_ints[HOTKEY_CHOICE_TAPE_MENU] = BTN_ASSIGN_TAPE_MENU;
   item->choice_ints[HOTKEY_CHOICE_CART_MENU] = BTN_ASSIGN_CART_MENU;
   item->choice_ints[HOTKEY_CHOICE_CART_FREEZE] = BTN_ASSIGN_CART_FREEZE;
+  item->choice_ints[HOTKEY_CHOICE_RESET_MENU] = BTN_ASSIGN_RESET_MENU;
   item->choice_ints[HOTKEY_CHOICE_RESET_HARD] = BTN_ASSIGN_RESET_HARD;
   item->choice_ints[HOTKEY_CHOICE_RESET_SOFT] = BTN_ASSIGN_RESET_SOFT;
   item->choice_ints[HOTKEY_CHOICE_ACTIVE_DISPLAY] = BTN_ASSIGN_ACTIVE_DISPLAY;
@@ -3186,6 +3203,8 @@ void build_menu(struct menu_item *root) {
      break;
     default:
      ui_menu_add_button(MENU_AUTOSTART, root, "Autostart Prg/Disk...");
+     emux_get_int(Setting_AutostartWarp, &tmp);
+     ui_menu_add_toggle(MENU_AUTOSTART_WARP, root, "Autostart Warp", tmp);
      break;
   }
 
@@ -3194,17 +3213,18 @@ void build_menu(struct menu_item *root) {
     menu_build_machine_switch(machine_parent);
 
   drive_parent = ui_menu_add_folder(root, "Drives");
+    // (-1) Options applicable to all drives
+    emux_add_drive_option(drive_parent, -1);
 
     parent = ui_menu_add_folder(drive_parent, "Drive 8");
-
+    ui_menu_add_button(MENU_ATTACH_DISK_8, parent, "Attach Disk...");
+    ui_menu_add_button(MENU_DETACH_DISK_8, parent, "Detach Disk");
     if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 && emux_machine_class != BMC64_MACHINE_CLASS_PET) {
      emux_get_int_1(Setting_IECDeviceN, &tmp, 8);
      ui_menu_add_toggle(MENU_IECDEVICE_8, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_8, parent, "Select IEC Dir...");
     }
     emux_add_drive_option(parent, 8);
-    ui_menu_add_button(MENU_ATTACH_DISK_8, parent, "Attach Disk...");
-    ui_menu_add_button(MENU_DETACH_DISK_8, parent, "Detach Disk");
 
     if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
       ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_8, parent, "Change Model...");
@@ -3213,41 +3233,41 @@ void build_menu(struct menu_item *root) {
   // More than 1 drive costs too much. Limit to drive 8.
   if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
     parent = ui_menu_add_folder(drive_parent, "Drive 9");
+    ui_menu_add_button(MENU_ATTACH_DISK_9, parent, "Attach Disk...");
+    ui_menu_add_button(MENU_DETACH_DISK_9, parent, "Detach Disk");
     if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 && emux_machine_class != BMC64_MACHINE_CLASS_PET) {
      emux_get_int_1(Setting_IECDeviceN, &tmp, 9);
      ui_menu_add_toggle(MENU_IECDEVICE_9, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_9, parent, "Select IEC Dir...");
     }
     emux_add_drive_option(parent, 9);
-    ui_menu_add_button(MENU_ATTACH_DISK_9, parent, "Attach Disk...");
-    ui_menu_add_button(MENU_DETACH_DISK_9, parent, "Detach Disk");
 
     if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
       ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_9, parent, "Change Model...");
     }
 
     parent = ui_menu_add_folder(drive_parent, "Drive 10");
+    ui_menu_add_button(MENU_ATTACH_DISK_10, parent, "Attach Disk...");
+    ui_menu_add_button(MENU_DETACH_DISK_10, parent, "Detach Disk");
     if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 && emux_machine_class != BMC64_MACHINE_CLASS_PET) {
      emux_get_int_1(Setting_IECDeviceN, &tmp, 10);
      ui_menu_add_toggle(MENU_IECDEVICE_10, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_10, parent, "Select IEC Dir...");
     }
     emux_add_drive_option(parent, 10);
-    ui_menu_add_button(MENU_ATTACH_DISK_10, parent, "Attach Disk...");
-    ui_menu_add_button(MENU_DETACH_DISK_10, parent, "Detach Disk");
     if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
       ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_10, parent, "Change Model...");
     }
 
     parent = ui_menu_add_folder(drive_parent, "Drive 11");
+    ui_menu_add_button(MENU_ATTACH_DISK_11, parent, "Attach Disk...");
+    ui_menu_add_button(MENU_DETACH_DISK_11, parent, "Detach Disk");
     if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 && emux_machine_class != BMC64_MACHINE_CLASS_PET) {
      emux_get_int_1(Setting_IECDeviceN, &tmp, 11);
      ui_menu_add_toggle(MENU_IECDEVICE_11, parent, "IEC FileSystem", tmp);
      ui_menu_add_button(MENU_IECDIR_11, parent, "Select IEC Dir...");
     }
     emux_add_drive_option(parent, 11);
-    ui_menu_add_button(MENU_ATTACH_DISK_11, parent, "Attach Disk...");
-    ui_menu_add_button(MENU_DETACH_DISK_11, parent, "Detach Disk");
     if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
       ui_menu_add_button(MENU_DRIVE_CHANGE_MODEL_11, parent, "Change Model...");
     }
@@ -3308,7 +3328,7 @@ void build_menu(struct menu_item *root) {
 
   scaling_interp_item = ui_menu_add_toggle_labels(
      MENU_SCALING_INTERPOLATION, parent,
-        "Scaling Interpolation", 1, "Off", "Cfg Default"); // default cfg
+        "Scaling Interpolation", 1, "Off", "On");
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      // For C128, we split video options under video into VICII
@@ -3348,9 +3368,18 @@ void build_menu(struct menu_item *root) {
 
   struct menu_item *shader = ui_menu_add_folder(parent, "CRT Shader");
 
+     int crt_filter;
+     emux_get_int(Setting_VideoFilter, &crt_filter);
      s_enable_shader_item =
         ui_menu_add_toggle_labels(MENU_SHADER_ENABLE, shader,
-           "Enable CRT Shader?", 1, "No", "Yes");
+           "Enable CRT Shader?", crt_filter != MENU_VIDEO_FILTER_NONE, "No", "Yes");
+
+     if (!allow_shader()) {
+        s_enable_shader_item->value = 0;
+        s_enable_shader_item->disabled = 1;
+        strcpy (s_enable_shader_item->custom_toggle_label[0], "Disabled");
+        strcpy (s_enable_shader_item->custom_toggle_label[1], "Disabled");
+     }
 
      s_curvature_item =
        ui_menu_add_toggle(MENU_SHADER_CURVATURE, shader, "Curvature", 0);
@@ -3550,8 +3579,8 @@ void build_menu(struct menu_item *root) {
               500, 1000, 5, DEFAULT_VDC_V_STRETCH);
      child->divisor = 1000;
 
-     ui_menu_add_button(MENU_INTEGER_SCALE_W_1, parent, "Integer Scale W");
-     ui_menu_add_button(MENU_INTEGER_SCALE_H_1, parent, "Integer Scale H");
+     ui_menu_add_button(MENU_INTEGER_SCALE_W_1, parent, "Next H Integer Scale");
+     ui_menu_add_button(MENU_INTEGER_SCALE_H_1, parent, "Next V Integer Scale");
   }
 
   if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
@@ -3757,11 +3786,6 @@ void build_menu(struct menu_item *root) {
 
   load_settings();
 
-  // Apply shader params
-  sanity_check_shader_params(s_enable_shader_item->id);
-  circle_realloc_fbl(FB_LAYER_VIC, s_enable_shader_item->value);
-  handle_shader_param_change();
-
   if (use_scaling_params_item[0]->value) {
      if (!do_use_int_scaling(FB_LAYER_VIC, 1 /* silent */)) {
         use_scaling_params_item[VIC_INDEX]->value = 0;
@@ -3773,6 +3797,11 @@ void build_menu(struct menu_item *root) {
         use_scaling_params_item[VDC_INDEX]->value = 0;
      }
   }
+
+  // Apply shader params
+  sanity_check_shader_params(s_enable_shader_item->id);
+  circle_realloc_fbl(FB_LAYER_VIC, allow_shader() ? s_enable_shader_item->value : 0);
+  handle_shader_param_change();
 
   set_current_dir_names();
 
@@ -3837,7 +3866,9 @@ int statusbar_always(void) {
 }
 
 // Stuff to do when menu is activated
-void menu_about_to_activate() {}
+void menu_about_to_activate() {
+  emux_get_int(Setting_WarpMode, &warp_item->value);
+}
 
 // Stuff to do before going back to emulator
 void menu_about_to_deactivate() {}
@@ -3885,6 +3916,9 @@ void menu_quick_func(int button_assignment) {
   case BTN_ASSIGN_CART_MENU:
     emux_show_cart_osd_menu();
     break;
+  case BTN_ASSIGN_RESET_MENU:
+    show_reset_osd_menu();
+    return;
   case BTN_ASSIGN_RESET_HARD:
     if (reset_confirm_item->value) {
       // Will come back here with HARD2 if confirmed.
@@ -3977,6 +4011,8 @@ const char* function_to_string(int button_func) {
        return "Cart OSD";
     case BTN_ASSIGN_CART_FREEZE:
        return "Cart Freeze";
+    case BTN_ASSIGN_RESET_MENU:
+       return "Reset OSD";
     case BTN_ASSIGN_RESET_HARD:
        return "Hard Reset";
     case BTN_ASSIGN_RESET_SOFT:

@@ -90,6 +90,7 @@
 #define BTN_ASSIGN_TAPE_MENU 12
 #define BTN_ASSIGN_CART_MENU 13
 #define BTN_ASSIGN_CART_FREEZE 14
+#define BTN_ASSIGN_RESET_MENU 29
 #define BTN_ASSIGN_RESET_HARD 15
 #define BTN_ASSIGN_RESET_SOFT 16
 
@@ -257,7 +258,8 @@ extern void circle_set_shader_params(int curvature,
 			float bloom_factor,
 			float input_gamma,
 			float output_gamma,
-			int sharper);
+			int sharper,
+			int bilinear_interpolation);
 
 // -----------------------------------------------------------------------
 // Functions called from kernel layer into emulator layer

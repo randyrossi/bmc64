@@ -83,10 +83,7 @@ const unsigned long video_tick_inc = 10000;
 unsigned long video_freq;
 unsigned long video_frame_count;
 
-int raspi_warp;
 static int raspi_boot_warp = 1;
-
-static int vdc_map[] = {0, 12, 6, 14, 5, 13, 11, 3, 2, 10, 8, 4, 9, 7, 15, 1};
 
 // Should be set only when raster_skip=true is present
 // in the kernel args.
@@ -107,14 +104,26 @@ void emux_change_palette(int display_num, int palette_index) {
   canvas_state[display_num].palette_index = palette_index;
   // This will call set_palette below to get called after color controls
   // have been applied to the palette.
+
+  // Unless we set the filter to something other than NONE, it looks we
+  // don't get any updates for color settings changed. Bug in VICE?
+  // We will temporarily switch to CRT, then switch back just to get
+  // the updates working.
+  int current_filter = get_filter(display_num);
+  set_filter(display_num, VIDEO_FILTER_CRT);
   video_color_update_palette(canvases[display_num]);
+  set_filter(display_num, current_filter);
 }
 
 // Called when a color setting has changed
 void emux_video_color_setting_changed(int display_num) {
   // This will call set_palette below to get called after color controls
   // have been applied to the palette.
+  // See above for temp filter change here.
+  int current_filter = get_filter(display_num);
+  set_filter(display_num, VIDEO_FILTER_CRT);
   video_color_update_palette(canvases[display_num]);
+  set_filter(display_num, current_filter);
 }
 
 int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
@@ -131,10 +140,9 @@ int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
   } else {
     layer = FB_LAYER_VDC;
     for (int i = 0; i < 16; i++) {
-      int j = vdc_map[i];
       circle_set_palette_fbl(layer, i,
-                     COLOR16(p->entries[j].red, p->entries[j].green,
-                             p->entries[j].blue));
+                     COLOR16(p->entries[i].red, p->entries[i].green,
+                             p->entries[i].blue));
     }
   }
 
@@ -374,6 +382,8 @@ void vsyncarch_postsync(void) {
   }
 
   // Hold for vsync unless warping or in boot warp.
+  int raspi_warp;
+  resources_get_int("WarpMode", &raspi_warp);
   circle_frames_ready_fbl(FB_LAYER_VIC,
                          machine_class == VICE_MACHINE_C128 ? FB_LAYER_VDC : -1,
                          !raspi_boot_warp && !raspi_warp);
@@ -491,9 +501,9 @@ palette_t *raspi_video_load_palette(int num_entries, char *name) {
   unsigned int *pal;
   // RASPI2 is for VDC
   if (strcmp(name, "RASPI2") == 0) {
-     pal = raspi_get_palette(canvas_state[1].palette_index);
+     pal = raspi_get_palette(1, canvas_state[1].palette_index);
   } else {
-     pal = raspi_get_palette(canvas_state[0].palette_index);
+     pal = raspi_get_palette(0, canvas_state[0].palette_index);
   }
   for (int i = 0; i < num_entries; i++) {
     palette->entries[i].red = pal[i * 3];
@@ -505,8 +515,5 @@ palette_t *raspi_video_load_palette(int num_entries, char *name) {
 }
 
 void set_raster_lines(int v) {
-  vic_canvas->raster_lines = v;
-  if (vdc_canvas) {
-     vdc_canvas->raster_lines = v;
-  }
+  raster_lines = v;
 }

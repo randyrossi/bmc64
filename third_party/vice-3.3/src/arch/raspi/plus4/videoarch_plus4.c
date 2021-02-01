@@ -29,6 +29,7 @@
 #include <stdlib.h>
 
 #include "emux_api.h"
+#include "resources.h"
 #include "plus4/plus4.h"
 #include "plus4/plus4memrom.h"
 #include "plus4/tedtypes.h"
@@ -120,7 +121,7 @@ void set_video_font(void) {
   }
 }
 
-unsigned int *raspi_get_palette(int index) {
+unsigned int *raspi_get_palette(int display, int index) {
   switch (index) {
   case 0:
     return pal_color_palette;
@@ -148,4 +149,14 @@ void set_canvas_borders(int index, int *w, int *h) {
       *w = 32;
       *h = 40;
   }
+}
+
+void set_filter(int display, int value) {
+  resources_set_int("TedFilter", value);
+}
+
+int get_filter(int display) {
+  int value;
+  resources_get_int("TedFilter", &value);
+  return value;
 }

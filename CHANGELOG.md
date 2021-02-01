@@ -324,3 +324,14 @@
   * Changed PET resolutions to 1080p in default machines.txt
   * Fixed bug with PET screen init after model switch
   * Added menu optionm to turn scaling interpolation off
+
+## 3.6
+  * Added davej's CRT shader
+  * Removed 'cheap' scanlines from PET (replaced by shader)
+  * Increased Pi0 audio sample rate to 44100
+  * Added AutostartWarp switch
+  * Added DriveTrueEmulation switch
+  * Fixed stretch params not saving for VDC (C128)
+  * Fixed bug with raster_skip (cmdline.txt)
+  * Fixed incorrect scaling param in machines.txt NTSC C128 59.825hz
+  * Fixed "Sound running too slow" problem on Pi0
