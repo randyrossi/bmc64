@@ -632,7 +632,7 @@ protected:
   static int n_param;
 
   // DAC gate voltage
-  int kVgt;
+  int nVgt;
 
   // Lookup tables for resonance
   static unsigned short resonance[16][1 << 16];
@@ -1623,10 +1623,10 @@ following substitution:
 
   Vds = Vgst - (Vgst - Vds) = Vgst - Vgdt
 
-  Ids = K*W/L*(2*Vgst - Vds)*Vds
-  = K*W/L*(2*Vgst - (Vgst - Vgdt)*(Vgst - Vgdt)
-  = K*W/L*(Vgst + Vgdt)*(Vgst - Vgdt)
-  = K*W/L*(Vgst^2 - Vgdt^2)
+  Ids = K/2*W/L*(2*Vgst - Vds)*Vds
+  = K/2*W/L*(2*Vgst - (Vgst - Vgdt)*(Vgst - Vgdt)
+  = K/2*W/L*(Vgst + Vgdt)*(Vgst - Vgdt)
+  = K/2*W/L*(Vgst^2 - Vgdt^2)
 
 This turns out to be a general equation which covers both the triode
 and saturation modes (where the second term is 0 in saturation mode).
@@ -1649,7 +1649,7 @@ The EKV model (Enz, Krummenacher and Vittoz) essentially performs this
 blending using an elegant mathematical formulation:
 
   Ids = Is*(if - ir)
-  Is = 2*u*Cox*Ut^2/k*W/L
+  Is = ((2*u*Cox*Ut^2)/k)*W/L
   if = ln^2(1 + e^((k*(Vg - Vt) - Vs)/(2*Ut))
   ir = ln^2(1 + e^((k*(Vg - Vt) - Vd)/(2*Ut))
 
@@ -1758,7 +1758,7 @@ is driven by a temperature dependent voltage divider.
   vc = vc0 - n*(IRfc(vi,vx))
   vc = vc0 - n*(IRfc(vi,g(vc)))
 
-IRfc = K*W/L*(Vgst^2 - Vgdt^2) = n*((Vgt - vx)^2 - (Vgt - vi)^2)
+IRfc = K/2*W/L*(Vgst^2 - Vgdt^2) = n*((Vgt - vx)^2 - (Vgt - vi)^2)
 */
 RESID_INLINE
 int Filter::solve_integrate_8580(int dt, int vi, int& vx, int& vc, model_filter_t& mf)
@@ -1769,8 +1769,8 @@ int Filter::solve_integrate_8580(int dt, int vi, int& vx, int& vc, model_filter_
   // (a - t) - (b - t) = a - b
 
   // Dac voltages.
-  unsigned int Vgst = kVgt - vx;
-  unsigned int Vgdt = (vi < kVgt) ? kVgt - vi : 0;  // triode/saturation mode
+  unsigned int Vgst = nVgt - vx;
+  unsigned int Vgdt = (vi < nVgt) ? nVgt - vi : 0;  // triode/saturation mode
 
   // Dac current, scaled by (1/m)*2^13*m*2^16*m*2^16*2^-15 = m*2^30
   int n_I_rfc = n_dac*(int(Vgst*Vgst - Vgdt*Vgdt) >> 15);
