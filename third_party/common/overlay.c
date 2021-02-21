@@ -233,6 +233,8 @@ uint8_t *overlay_init(int padding, int c40_80_state, int vkbd_transparency) {
   }
   circle_update_palette_fbl(FB_LAYER_STATUS);
 
+  overlay_change_vkbd_transparency(vkbd_transparency);
+
   overlay_dirty = 1;
   return overlay_buf;
 }
