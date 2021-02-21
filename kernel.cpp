@@ -991,6 +991,7 @@ void CKernel::ReadCustomGPIO() {
   int js_poty_2 = HIGH;
 
   int ui_activated = emu_is_ui_activated();
+  int port_is_gpio_joy[2] = {0,0};
 
   for (i = 0 ; i < NUM_GPIO_PINS; i++) {
     bank = gpio_bindings[i] >> 8;
@@ -1016,6 +1017,8 @@ void CKernel::ReadCustomGPIO() {
         } else {
           continue;
         }
+
+        port_is_gpio_joy[port-1] = 1;
 
         switch (func) {
           case BTN_ASSIGN_UP:
@@ -1079,8 +1082,10 @@ void CKernel::ReadCustomGPIO() {
      }
    }
 
+   // Only send a value if there was a device match
    // The device here doesn't really matter.
-   emu_joy_interrupt_abs(1, JOYDEV_GPIO_0,
+   if (port_is_gpio_joy[0]) {
+      emu_joy_interrupt_abs(1, JOYDEV_GPIO_0,
                          js_up_1 == LOW,
                          js_down_1 == LOW,
                          js_left_1 == LOW,
@@ -1088,9 +1093,11 @@ void CKernel::ReadCustomGPIO() {
                          js_fire_1 == LOW,
                          js_potx_1 == LOW,
                          js_poty_1 == LOW);
+   }
 
    // The device here doesn't really matter.
-   emu_joy_interrupt_abs(2, JOYDEV_GPIO_1,
+   if (port_is_gpio_joy[1]) {
+      emu_joy_interrupt_abs(2, JOYDEV_GPIO_1,
                          js_up_2 == LOW,
                          js_down_2 == LOW,
                          js_left_2 == LOW,
@@ -1098,6 +1105,7 @@ void CKernel::ReadCustomGPIO() {
                          js_fire_2 == LOW,
                          js_potx_2 == LOW,
                          js_poty_2 == LOW);
+   }
 }
 
 // Configure user port DDR
