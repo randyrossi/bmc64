@@ -238,13 +238,13 @@ uint8_t read_joyport_potx(void)
 
     if (id1 != JOYPORT_ID_NONE) {
         if (joyport_device[id1].read_potx) {
-            ret1 = joyport_device[id1].read_potx();
+            ret1 = joyport_device[id1].read_potx(pot_port1);
         }
     }
 
     if (id2 != JOYPORT_ID_NONE) {
         if (joyport_device[id2].read_potx) {
-            ret2 = joyport_device[id2].read_potx();
+            ret2 = joyport_device[id2].read_potx(pot_port2);
         }
     }
 
@@ -286,13 +286,13 @@ uint8_t read_joyport_poty(void)
 
     if (id1 != JOYPORT_ID_NONE) {
         if (joyport_device[id1].read_poty) {
-            ret1 = joyport_device[id1].read_poty();
+            ret1 = joyport_device[id1].read_poty(pot_port1);
         }
     }
 
     if (id2 != JOYPORT_ID_NONE) {
         if (joyport_device[id2].read_poty) {
-            ret2 = joyport_device[id2].read_poty();
+            ret2 = joyport_device[id2].read_poty(pot_port2);
         }
     }
 

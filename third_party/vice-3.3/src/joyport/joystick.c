@@ -96,8 +96,8 @@ static uint8_t network_joystick_value[JOYSTICK_NUM + 1] = { 0 };
 static uint8_t latch_joystick_value[JOYSTICK_NUM + 1] = { 0 };
 
 #ifdef RASPI_COMPILE
-static uint8_t joystick_potx_value = 0xff;
-static uint8_t joystick_poty_value = 0xff;
+static uint8_t joystick_potx_value[2] = {0xff, 0xff};
+static uint8_t joystick_poty_value[2] = {0xff, 0xff};
 #endif
 
 /* mapping of the joystick ports */
@@ -530,8 +530,8 @@ static uint8_t read_joystick(int port)
 static int joystick_snapshot_write_module(snapshot_t *s, int port);
 static int joystick_snapshot_read_module(snapshot_t *s, int port);
 #ifdef RASPI_COMPILE
-static uint8_t joystick_read_potx(void);
-static uint8_t joystick_read_poty(void);
+static uint8_t joystick_read_potx(int);
+static uint8_t joystick_read_poty(int);
 #endif
 
 static joyport_t joystick_device = {
@@ -780,43 +780,43 @@ static int joystick_snapshot_read_module(snapshot_t *s, int port)
 }
 
 #ifdef RASPI_COMPILE
-void joystick_set_potx(uint8_t value)
+void joystick_set_potx(int port, uint8_t value)
 {
-    joystick_potx_value = value;
+    joystick_potx_value[port] = value;
 }
 
-void joystick_set_poty(uint8_t value)
+void joystick_set_poty(int port, uint8_t value)
 {
-    joystick_poty_value = value;
+    joystick_poty_value[port] = value;
 }
 
-void joystick_set_potx_and(uint8_t value)
+void joystick_set_potx_and(int port, uint8_t value)
 {
-    joystick_potx_value &= value;
+    joystick_potx_value[port] &= value;
 }
 
-void joystick_set_poty_and(uint8_t value)
+void joystick_set_poty_and(int port, uint8_t value)
 {
-    joystick_poty_value &= value;
+    joystick_poty_value[port] &= value;
 }
 
-void joystick_set_potx_or(uint8_t value)
+void joystick_set_potx_or(int port, uint8_t value)
 {
-    joystick_potx_value |= value;
+    joystick_potx_value[port] |= value;
 }
 
-void joystick_set_poty_or(uint8_t value)
+void joystick_set_poty_or(int port, uint8_t value)
 {
-    joystick_poty_value |= value;
+    joystick_poty_value[port] |= value;
 }
 
-static uint8_t joystick_read_potx(void)
+static uint8_t joystick_read_potx(int port)
 {
-    return joystick_potx_value;
+    return joystick_potx_value[port];
 }
 
-static uint8_t joystick_read_poty(void)
+static uint8_t joystick_read_poty(int port)
 {
-    return joystick_poty_value;
+    return joystick_poty_value[port];
 }
 #endif

@@ -3825,8 +3825,10 @@ void build_menu(struct menu_item *root) {
                c40_80_column_item->value,
                vkbd_transparency_item->value);
 
-  emux_set_joy_pot_x(pot_x_high_value);
-  emux_set_joy_pot_y(pot_y_high_value);
+  emux_set_joy_pot_x(0, pot_x_high_value);
+  emux_set_joy_pot_x(1, pot_x_high_value);
+  emux_set_joy_pot_y(0, pot_y_high_value);
+  emux_set_joy_pot_y(1, pot_y_high_value);
 
   emux_set_video_cache(0);
   emux_set_hw_scale(0);

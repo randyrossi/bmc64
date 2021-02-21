@@ -1067,11 +1067,11 @@ void emux_create_disk(struct menu_item* item, fullpath_func fullpath) {
 void emux_set_joy_port_device(int port_num, int dev_id) {
 }
 
-void emux_set_joy_pot_x(int value) {
+void emux_set_joy_pot_x(int port,int value) {
   // Not supported on plus4emu
 }
 
-void emux_set_joy_pot_y(int value) {
+void emux_set_joy_pot_y(int port, int value) {
   // Not supported on plus4emu
 }
 

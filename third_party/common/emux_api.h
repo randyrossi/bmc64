@@ -307,8 +307,8 @@ void emux_create_disk(struct menu_item* item, fullpath_func fullpath);
 // Set the joy port device to JOYDEV_*
 void emux_set_joy_port_device(int port_num, int dev_id);
 
-void emux_set_joy_pot_x(int value);
-void emux_set_joy_pot_y(int value);
+void emux_set_joy_pot_x(int port, int value);
+void emux_set_joy_pot_y(int port, int value);
 
 void emux_add_tape_options(struct menu_item* parent);
 void emux_add_sound_options(struct menu_item* parent);

@@ -98,6 +98,10 @@ then
 CFLAGS=-DBMC64_REPORT_THROTTLE make -j4
 else
 make -j4
+if [ "$?" != "0" ]
+then
+       exit
+fi
 fi
 
 echo ==============================================================
@@ -107,26 +111,54 @@ echo ==============================================================
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon/fatfs
 make clean
 make
+if [ "$?" != "0" ]
+then
+       exit
+fi
 
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon/linux
 make clean
 make
+if [ "$?" != "0" ]
+then
+       exit
+fi
 
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon/vc4/vchiq
 make clean
 make 
+if [ "$?" != "0" ]
+then
+       exit
+fi
 
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon/vc4/interface/bcm_host
 make
+if [ "$?" != "0" ]
+then
+       exit
+fi
 
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon/vc4/interface/khronos
 make
+if [ "$?" != "0" ]
+then
+       exit
+fi
 
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon/vc4/interface/vmcs_host
 make
+if [ "$?" != "0" ]
+then
+       exit
+fi
 
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon/vc4/interface/vcos
 make
+if [ "$?" != "0" ]
+then
+       exit
+fi
 
 # Common
 cd $SRC_DIR/third_party/common
@@ -135,6 +167,10 @@ BOARD=$BOARD make
 # Plus4Emu
 cd $SRC_DIR/third_party/plus4emu
 make
+if [ "$?" != "0" ]
+then
+       exit
+fi
 
 # Vice
 cd $SRC_DIR/third_party/vice-3.3
@@ -172,9 +208,18 @@ fi
 
 cd src
 make libarchdep
+if [ "$?" != "0" ]
+then
+       exit
+fi
 make libhvsc
+if [ "$?" != "0" ]
+then
+       exit
+fi
 cd ..
 
+# These will fail
 make x64
 make x128
 make xvic

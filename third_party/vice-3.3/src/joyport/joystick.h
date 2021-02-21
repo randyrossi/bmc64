@@ -48,12 +48,12 @@ extern void joystick_set_value_absolute(unsigned int joyport, uint8_t value);
 extern void joystick_set_value_or(unsigned int joyport, uint8_t value);
 extern void joystick_set_value_and(unsigned int joyport, uint8_t value);
 #ifdef RASPI_COMPILE
-extern void joystick_set_potx(uint8_t value);
-extern void joystick_set_poty(uint8_t value);
-extern void joystick_set_potx_and(uint8_t value);
-extern void joystick_set_poty_and(uint8_t value);
-extern void joystick_set_potx_or(uint8_t value);
-extern void joystick_set_poty_or(uint8_t value);
+extern void joystick_set_potx(int port, uint8_t value);
+extern void joystick_set_poty(int port, uint8_t value);
+extern void joystick_set_potx_and(int port, uint8_t value);
+extern void joystick_set_poty_and(int port, uint8_t value);
+extern void joystick_set_potx_or(int port, uint8_t value);
+extern void joystick_set_poty_or(int port, uint8_t value);
 #endif
 extern void joystick_clear(unsigned int joyport);
 extern void joystick_clear_all(void);

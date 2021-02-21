@@ -21,6 +21,10 @@ fi
 
 cd third_party/common
 make
+if [ "$?" != "0" ]
+then
+	exit
+fi
 cd ../..
 
 cd third_party/vice-3.3

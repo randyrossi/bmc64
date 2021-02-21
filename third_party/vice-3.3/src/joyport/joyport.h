@@ -104,8 +104,8 @@ typedef struct joyport_s {
     int (*enable)(int port, int val);
     uint8_t (*read_digital)(int port);
     void (*store_digital)(uint8_t val);
-    uint8_t (*read_potx)(void);
-    uint8_t (*read_poty)(void);
+    uint8_t (*read_potx)(int);
+    uint8_t (*read_poty)(int);
     int (*write_snapshot)(struct snapshot_s *s, int port);
     int (*read_snapshot)(struct snapshot_s *s, int port);
 } joyport_t;

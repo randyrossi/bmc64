@@ -451,23 +451,31 @@ void vsyncarch_postsync(void) {
       }
     } else {
       switch (pending_emu_joy.type[i]) {
+      // NOTE: VICE's joystick_set_value functions have ports indexed starting
+      // at 1 but our pot functions are indexed at 0. Hence -1.
       case PENDING_EMU_JOY_TYPE_ABSOLUTE:
         joystick_set_value_absolute(pending_emu_joy.port[i],
                                   pending_emu_joy.value[i] & 0x1f);
-        joystick_set_potx((pending_emu_joy.value[i] & POTX_BIT_MASK) >> 5);
-        joystick_set_poty((pending_emu_joy.value[i] & POTY_BIT_MASK) >> 13);
+        joystick_set_potx(pending_emu_joy.port[i]-1,
+			  (pending_emu_joy.value[i] & POTX_BIT_MASK) >> 5);
+        joystick_set_poty(pending_emu_joy.port[i]-1,
+			  (pending_emu_joy.value[i] & POTY_BIT_MASK) >> 13);
         break;
       case PENDING_EMU_JOY_TYPE_AND:
         joystick_set_value_and(pending_emu_joy.port[i],
                              pending_emu_joy.value[i] & 0x1f);
-        joystick_set_potx_and((pending_emu_joy.value[i] & POTX_BIT_MASK) >> 5);
-        joystick_set_poty_and((pending_emu_joy.value[i] & POTY_BIT_MASK) >> 13);
+        joystick_set_potx_and(pending_emu_joy.port[i]-1,
+			  (pending_emu_joy.value[i] & POTX_BIT_MASK) >> 5);
+        joystick_set_poty_and(pending_emu_joy.port[i]-1,
+			  (pending_emu_joy.value[i] & POTY_BIT_MASK) >> 13);
         break;
       case PENDING_EMU_JOY_TYPE_OR:
         joystick_set_value_or(pending_emu_joy.port[i],
                             pending_emu_joy.value[i] & 0x1f);
-        joystick_set_potx_or((pending_emu_joy.value[i] & POTX_BIT_MASK) >> 5);
-        joystick_set_poty_or((pending_emu_joy.value[i] & POTY_BIT_MASK) >> 13);
+        joystick_set_potx_or(pending_emu_joy.port[i]-1,
+			  (pending_emu_joy.value[i] & POTX_BIT_MASK) >> 5);
+        joystick_set_poty_or(pending_emu_joy.port[i]-1,
+			  (pending_emu_joy.value[i] & POTY_BIT_MASK) >> 13);
         break;
       default:
         break;
