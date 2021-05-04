@@ -665,7 +665,7 @@ void emux_add_sound_options(struct menu_item* parent) {
      return;
   }
 
-  int supports_dual_sid = machine_class == VICE_MACHINE_C64 &&
+  int supports_dual_sid = (machine_class == VICE_MACHINE_C64 || machine_class == VICE_MACHINE_C128) &&
                            circle_get_model() >= 2;
 
   // Resid by default
