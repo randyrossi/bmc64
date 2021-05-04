@@ -335,7 +335,7 @@ void build_usb_menu(int dev, struct menu_item *root) {
                                     255, 1, pot_y_low_value);
 
   usb_pref_item->num_choices = 3;
-  strcpy(usb_pref_item->choices[0], "Analog Stick");
+  strcpy(usb_pref_item->choices[0], "Analog+POTX/Y Buttons");
   strcpy(usb_pref_item->choices[1], "Hat+POTX/Y Buttons");
   strcpy(usb_pref_item->choices[2], "Hat+POTX/Y Paddles");
 
