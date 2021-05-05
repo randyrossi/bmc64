@@ -1066,10 +1066,8 @@ static void load_settings() {
 
   int tmp_value;
 
-#ifndef RASPI_LITE
   emux_get_int(Setting_DriveSoundEmulation, &drive_sounds_item->value);
   emux_get_int(Setting_DriveSoundEmulationVolume, &drive_sounds_vol_item->value);
-#endif
 
   brightness_item[0]->value = emux_get_color_brightness(0);
   contrast_item[0]->value = emux_get_color_contrast(0);
@@ -3726,7 +3724,6 @@ void build_menu(struct menu_item *root) {
 
   parent = ui_menu_add_folder(root, "Prefs");
 
-#ifndef RASPI_LITE
   if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
     drive_sounds_item = ui_menu_add_toggle(MENU_DRIVE_SOUND_EMULATION, parent,
                                          "Drive sound emulation", 0);
@@ -3734,7 +3731,6 @@ void build_menu(struct menu_item *root) {
         ui_menu_add_range(MENU_DRIVE_SOUND_EMULATION_VOLUME, parent,
                         "Drive sound emulation volume", 0, 1000, 100, 1000);
   }
-#endif
 
   statusbar_item =
       ui_menu_add_multiple_choice(MENU_OVERLAY, parent, "Show Status Bar");
@@ -3833,10 +3829,8 @@ void build_menu(struct menu_item *root) {
   emux_set_video_cache(0);
   emux_set_hw_scale(0);
 
-#ifdef RASPI_LITE
   emux_set_int(Setting_DriveSoundEmulation, 0);
   emux_set_int(Setting_DriveSoundEmulationVolume, 0);
-#endif
 
   // This can somehow get turned off. Make sure its always 1.
   emux_set_int(Setting_Datasette, 1);
