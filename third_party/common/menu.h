@@ -466,6 +466,8 @@ typedef enum {
    MENU_SHADER_OUTPUT_GAMMA,
    MENU_SHADER_SHARPER,
    MENU_SHADER_RESET_ALL,
+
+   MENU_VIRTUAL_DEVICES,
 } MenuID;
 
 typedef enum {
