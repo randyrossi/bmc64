@@ -366,6 +366,8 @@ void emux_add_drive_option(struct menu_item* root, int drive) {
      // Options applicable to all drives
      resources_get_int("DriveTrueEmulation", &tmp);
      ui_menu_add_toggle(MENU_DRIVE_TRUE_EMULATION, root, "True Emulation", tmp);
+     resources_get_int("VirtualDevices", &tmp);
+     ui_menu_add_toggle(MENU_VIRTUAL_DEVICES, root, "Virtual Devices", tmp);
      return;
   }
 
@@ -1017,6 +1019,9 @@ int emux_handle_menu_change(struct menu_item* item) {
       return 1;
     case MENU_DRIVE_TRUE_EMULATION:
       resources_set_int("DriveTrueEmulation", item->value);
+      return 1;
+    case MENU_VIRTUAL_DEVICES:
+      resources_set_int("VirtualDevices", item->value);
       return 1;
     default:
       break;
