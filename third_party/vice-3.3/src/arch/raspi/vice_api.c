@@ -169,6 +169,8 @@ static int vice_keymap_index_to_bmc(int value) {
          return KEYBOARD_MAPPING_POS;
       case KBD_INDEX_USERPOS:
          return KEYBOARD_MAPPING_MAXI;
+      case KBD_INDEX_USERSYM:
+         return KEYBOARD_MAPPING_PETSCIIBOARD;
       default:
          return KEYBOARD_MAPPING_SYM;
    }
@@ -629,7 +631,7 @@ void emux_add_tape_options(struct menu_item* parent) {
 void emux_add_keyboard_options(struct menu_item* parent) {
   keyboard_mapping_item = ui_menu_add_multiple_choice(
       MENU_KEYBOARD_MAPPING, parent, "Mapping");
-  keyboard_mapping_item->num_choices = 3;
+  keyboard_mapping_item->num_choices = 4;
 
   int tmp_value;
   resources_get_int("KeymapIndex", &tmp_value);
@@ -640,6 +642,8 @@ void emux_add_keyboard_options(struct menu_item* parent) {
   keyboard_mapping_item->choice_ints[KEYBOARD_MAPPING_POS] = KBD_INDEX_POS;
   strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_MAXI], "Maxi Positional");
   keyboard_mapping_item->choice_ints[KEYBOARD_MAPPING_MAXI] = KBD_INDEX_USERPOS;
+  strcpy(keyboard_mapping_item->choices[KEYBOARD_MAPPING_PETSCIIBOARD], "PETSCIIBOARD");
+  keyboard_mapping_item->choice_ints[KEYBOARD_MAPPING_PETSCIIBOARD] = KBD_INDEX_USERSYM;
 }
 
 // NOTES: 0xd400 is normally not an option in VICE for the 2nd SID but
@@ -1014,6 +1018,9 @@ int emux_handle_menu_change(struct menu_item* item) {
     case MENU_KEYBOARD_MAPPING:
       if (item->value == KEYBOARD_MAPPING_MAXI) {
          resources_set_string("KeymapUserPosFile", "rpi_maxi_pos.vkm");
+      }
+      else if (item->value == KEYBOARD_MAPPING_PETSCIIBOARD) {
+         resources_set_string("KeymapUserSymFile", "rpi_petsciiboard_sym.vkm");
       }
       resources_set_int("KeymapIndex", item->choice_ints[item->value]);
       return 1;
