@@ -485,6 +485,7 @@ typedef enum {
    KEYBOARD_MAPPING_SYM = 0,
    KEYBOARD_MAPPING_POS,
    KEYBOARD_MAPPING_MAXI,
+   KEYBOARD_MAPPING_PETSCIIBOARD,
 } MenuKeyboardMapping;
 
 // Used as indices
