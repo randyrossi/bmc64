@@ -302,7 +302,7 @@ void emux_add_drive_option(struct menu_item* parent, int drive);
 void emux_add_keyboard_options(struct menu_item* parent);
 
 // Create an empty disk image
-void emux_create_disk(struct menu_item* item, fullpath_func fullpath);
+void emux_create_disk(struct menu_item* item, fullpath_func f_fullpath);
 
 // Set the joy port device to JOYDEV_*
 void emux_set_joy_port_device(int port_num, int dev_id);
@@ -366,7 +366,7 @@ int emux_get_vkbd_height(void);
 int emux_get_vkbd_size(void);
 
 // Handles one of the MENU_*_FILE rom change events from the menu
-void emux_handle_rom_change(struct menu_item* item, fullpath_func fullpath);
+void emux_handle_rom_change(struct menu_item* item, fullpath_func f_fullpath);
 
 // Sets the directory for IEC emulation.
 void emux_set_iec_dir(int unit, char* dir);
@@ -390,7 +390,7 @@ void emu_pause_trap(uint16_t addr, void *data);
 
 // Return 1 to indicate item was handled, 0 otherwise
 int emux_handle_menu_change(struct menu_item* item);
-int emux_handle_quick_func(int button_func);
+int emux_handle_quick_func(int button_func, fullpath_func fullpath);
 
 // Restore emulator specific settings that are set via emux_get_*/emux_set_*.
 void emux_load_additional_settings(void);

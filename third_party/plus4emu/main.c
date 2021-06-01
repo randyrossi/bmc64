@@ -1459,7 +1459,7 @@ int emux_handle_menu_change(struct menu_item* item) {
   }
 }
 
-int emux_handle_quick_func(int button_func) {
+int emux_handle_quick_func(int button_func, fullpath_func fullpath) {
   return 0;
 }
 

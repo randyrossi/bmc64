@@ -1391,7 +1391,6 @@ void ui_confirm_wrapped(char *title, const char *txt, int ok_value, int ok_id) {
      ui_menu_add_button(MENU_INFO_DIALOG, root, line);
   }
 
-
   ui_render_single_frame();
 }
 

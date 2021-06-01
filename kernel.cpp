@@ -406,6 +406,7 @@ static void exec_button_func(int button_func, int is_press, int is_ui) {
      case BTN_ASSIGN_TAPE_MENU:
      case BTN_ASSIGN_CART_MENU:
      case BTN_ASSIGN_CART_FREEZE:
+     case BTN_ASSIGN_RESET_MENU:
      case BTN_ASSIGN_RESET_HARD:
      case BTN_ASSIGN_RESET_SOFT:
      case BTN_ASSIGN_ACTIVE_DISPLAY:
@@ -413,6 +414,7 @@ static void exec_button_func(int button_func, int is_press, int is_ui) {
      case BTN_ASSIGN_PIP_SWAP:
      case BTN_ASSIGN_40_80_COLUMN:
      case BTN_ASSIGN_VKBD_TOGGLE:
+     case BTN_ASSIGN_FLUSH_DISK:
        if (is_press) {
           emu_quick_func_interrupt(button_func);
        }

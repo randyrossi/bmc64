@@ -28,11 +28,13 @@
 
 #include "circle.h"
 
+#include "emux_api.h"
+
 #ifndef RASPI_MENU_H
 #define RASPI_MENU_H
 
 // Make sure does not exceed max choices in ui.h
-#define NUM_BUTTON_ASSIGNMENTS 29
+#define NUM_BUTTON_ASSIGNMENTS 31
 
 // Never used as values. Can be reorged.
 typedef enum {
@@ -532,6 +534,7 @@ typedef enum {
    HOTKEY_CHOICE_PIP_LOCATION,
    HOTKEY_CHOICE_PIP_SWAP,
    HOTKEY_CHOICE_40_80_COLUMN,
+   HOTKEY_CHOICE_FLUSH_DISK,
 } HotKeyChoice;
 
 enum {
@@ -598,6 +601,7 @@ typedef enum {
 
 extern long keyset_codes[2][7];
 extern long key_bindings[6];
+extern char attached_disk_name[4][MAX_STR_VAL_LEN];
 
 extern int pot_x_high_value;
 extern int pot_x_low_value;

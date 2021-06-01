@@ -445,7 +445,7 @@ void emux_add_drive_option(struct menu_item* root, int drive) {
      ->sub_id = drive;
 }
 
-void emux_create_disk(struct menu_item* item, fullpath_func fullpath) {
+void emux_create_disk(struct menu_item* item, fullpath_func f_fullpath) {
      char ext[5];
      int image_type;
      switch (item->id) {
@@ -533,7 +533,7 @@ void emux_create_disk(struct menu_item* item, fullpath_func fullpath) {
 
     ui_info("Creating...");
     if (vdrive_internal_create_format_disk_image(
-         fullpath(DIR_DISKS, fname), "DISK", image_type) < 0) {
+         f_fullpath(DIR_DISKS, fname), "DISK", image_type) < 0) {
       ui_pop_menu();
       ui_error("Create disk image failed");
     } else {
@@ -784,7 +784,7 @@ void emux_set_warp(int warp) {
   resources_set_int("WarpMode", warp);
 }
 
-void emux_handle_rom_change(struct menu_item* item, fullpath_func fullpath) {
+void emux_handle_rom_change(struct menu_item* item, fullpath_func f_fullpath) {
   // Make the rom change. These can't be fullpath or VICE complains.
   switch (item->id) {
      case MENU_DRIVE_ROM_FILE_1541:
@@ -1037,10 +1037,32 @@ int emux_handle_menu_change(struct menu_item* item) {
   return 0;
 }
 
-int emux_handle_quick_func(int button_func) {
+int emux_handle_quick_func(int button_func, fullpath_func f_fullpath) {
+  int drive;
+  struct menu_item *root;
+  struct menu_item *child;
   switch (button_func) {
     case BTN_ASSIGN_CART_FREEZE:
        cartridge_freeze();
+       return 1;
+    case BTN_ASSIGN_FLUSH_DISK:
+       if (ui_enabled) {
+         ui_dismiss_osd_if_active();
+         return 1;
+       }
+
+       for (drive=0;drive<4;drive++) {
+          emux_detach_disk(drive+8);
+          if (strlen(attached_disk_name[drive]) > 0) {
+             emux_attach_disk_image(drive+8,
+                f_fullpath(DIR_DISKS, attached_disk_name[drive]));
+          }
+       }
+
+       root = ui_push_menu(18, 3);
+       root->on_popped_off = glob_osd_popped;
+       child = ui_menu_add_button(MENU_ID_DO_NOTHING, root, "Disks flushed...");
+       ui_enable_osd();
        return 1;
     default:
        break;

@@ -91,7 +91,6 @@
 #define BTN_ASSIGN_TAPE_MENU 12
 #define BTN_ASSIGN_CART_MENU 13
 #define BTN_ASSIGN_CART_FREEZE 14
-#define BTN_ASSIGN_RESET_MENU 29
 #define BTN_ASSIGN_RESET_HARD 15
 #define BTN_ASSIGN_RESET_SOFT 16
 
@@ -110,6 +109,8 @@
 #define BTN_ASSIGN_PIP_SWAP 26
 #define BTN_ASSIGN_40_80_COLUMN 27
 #define BTN_ASSIGN_VKBD_TOGGLE 28
+#define BTN_ASSIGN_RESET_MENU 29
+#define BTN_ASSIGN_FLUSH_DISK 30
 
 // These are intermediate values not meant to
 // be directly assigned to buttons. Never used as
