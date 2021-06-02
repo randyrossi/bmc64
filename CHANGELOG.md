@@ -347,6 +347,8 @@
   * Enable dual sid menu for C128
   * Enabled sound drive emulation for Pi0
   * Added virtual devices menu option (#140)
+  * Added disk drive flush function
+  * Added PETSCIIBOARD keyboard mapping
   * Fix build issue due to -pthread being added
 
   
