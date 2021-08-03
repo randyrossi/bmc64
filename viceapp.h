@@ -122,6 +122,11 @@
 #define GPIO_JS1_SELECT_INDEX             17 // GPIO 7
 #define GPIO_JS2_SELECT_INDEX             18 // GPIO 21
 
+#define NO_FIXED_PURPOSE_1_INDEX          19 // GPIO 2
+#define NO_FIXED_PURPOSE_2_INDEX          20 // GPIO 3
+#define NO_FIXED_PURPOSE_3_INDEX          21 // GPIO 9
+#define NO_FIXED_PURPOSE_4_INDEX          22 // GPIO 10
+
 // Used as indices into the joystickPins arrays
 #define JOY_UP    0
 #define JOY_DOWN  1
