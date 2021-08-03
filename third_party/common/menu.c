@@ -3844,9 +3844,6 @@ void build_menu(struct menu_item *root) {
   emux_set_video_cache(0);
   emux_set_hw_scale(0);
 
-  emux_set_int(Setting_DriveSoundEmulation, 0);
-  emux_set_int(Setting_DriveSoundEmulationVolume, 0);
-
   // This can somehow get turned off. Make sure its always 1.
   emux_set_int(Setting_Datasette, 1);
 
