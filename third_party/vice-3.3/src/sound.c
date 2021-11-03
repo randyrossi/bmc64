@@ -802,10 +802,10 @@ static void enablesound(void)
 static int sound_error(const char *msg)
 {
     sound_close();
+    
+    log_message(sound_log, "%s", msg);
 
-    if (console_mode || video_disabled_mode) {
-        log_message(sound_log, "%s", msg);
-    } else {
+    if (!console_mode && !video_disabled_mode) {
         char *txt = lib_msprintf("Sound: %s", msg);
         ui_error(txt);
         lib_free(txt);
@@ -904,12 +904,6 @@ static int sid_init(void)
     speed_factor = speed_percent ? speed_percent : 100;
     speed = sample_rate * 100 / speed_factor;
 
-    for (c = 0; c < snddata.sound_chip_channels; c++) {
-        if (!sound_machine_init(snddata.psid[c], speed, cycles_per_sec)) {
-            return sound_error("Cannot initialize SID engine");
-        }
-    }
-
     snddata.clkstep = SOUNDCLK_CONSTANT(cycles_per_sec) / sample_rate;
 
     snddata.origclkstep = snddata.clkstep;
@@ -917,6 +911,12 @@ static int sid_init(void)
     snddata.fclk = SOUNDCLK_CONSTANT(maincpu_clk);
     snddata.wclk = maincpu_clk;
     snddata.lastclk = maincpu_clk;
+
+    for (c = 0; c < snddata.sound_chip_channels; c++) {
+        if (!sound_machine_init(snddata.psid[c], speed, cycles_per_sec) || !playback_enabled) {
+            return sound_error("Cannot initialize SID engine");
+        }
+    }
 
     return 0;
 }

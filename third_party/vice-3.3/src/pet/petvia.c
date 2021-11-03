@@ -170,7 +170,7 @@ static void store_acr(via_context_t *via_context, uint8_t byte)
 
 static void store_sr(via_context_t *via_context, uint8_t byte)
 {
-    petsound_store_sample(byte);
+    petsound_store_waveform(byte);
 }
 
 static void store_t2l(via_context_t *via_context, uint8_t byte)
