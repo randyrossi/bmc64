@@ -490,6 +490,10 @@ void emux_create_disk(struct menu_item* item, fullpath_func f_fullpath) {
          image_type = DISK_IMAGE_TYPE_G64;
          strcpy(ext, ".g64");
          break;
+       case MENU_CREATE_G71_FILE:
+         image_type = DISK_IMAGE_TYPE_G71;
+         strcpy(ext, ".g71");
+         break;
        case MENU_CREATE_P64_FILE:
          image_type = DISK_IMAGE_TYPE_P64;
          strcpy(ext, ".p64");
