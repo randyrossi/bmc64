@@ -199,6 +199,18 @@ index 4d716ff..79343b5 100644
  
  #ifndef __circle__
  	/* Partial cache lines (fragments) require special measures */
+diff --git a/include/circle/machineinfo.h b/include/circle/machineinfo.h
+index 922c700..8f9714d 100644
+--- a/include/circle/machineinfo.h
++++ b/include/circle/machineinfo.h
+@@ -35,6 +35,7 @@ enum TMachineModel
+ 	MachineModelBPlus,
+ 	MachineModelZero,
+ 	MachineModelZeroW,
++        MachineModelZero2W,
+ 	MachineModel2B,
+ 	MachineModel3B,
+ 	MachineModel3APlus,
 diff --git a/include/circle/memorymap.h b/include/circle/memorymap.h
 index 3fe23ed..e934688 100644
 --- a/include/circle/memorymap.h
@@ -267,6 +279,31 @@ index 2ef7052..c45440e 100644
  
  ///////////////////////////////////////////////////////////////////////
  //
+diff --git a/include/circle/usb/usbgamepad.h b/include/circle/usb/usbgamepad.h
+index 9c6e943..fab9ffb 100644
+--- a/include/circle/usb/usbgamepad.h
++++ b/include/circle/usb/usbgamepad.h
+@@ -2,7 +2,7 @@
+ // usbgamepad.h
+ //
+ // Circle - A C++ bare metal environment for Raspberry Pi
+-// Copyright (C) 2014-2018  R. Stange <rsta2@o2online.de>
++// Copyright (C) 2014-2021  R. Stange <rsta2@o2online.de>
+ //
+ // Ported from the USPi driver which is:
+ // 	Copyright (C) 2014  M. Maccaferri <macca@maccasoft.com>
+@@ -85,6 +85,11 @@ enum TGamePadButton		// Digital button (bit masks)
+ 	GamePadButtonTouchpad	= BIT(21)		// optional
+ };
+ 
++// Number of digital buttons for known gamepads:
++#define GAMEPAD_BUTTONS_STANDARD      19
++#define GAMEPAD_BUTTONS_ALTERNATIVE   21
++#define GAMEPAD_BUTTONS_WITH_TOUCHPAD 22
++
+ enum TGamePadAxis		// Axis or analog button
+ {
+ 	GamePadAxisLeftX,
 diff --git a/include/circle/usb/usbhiddevice.h b/include/circle/usb/usbhiddevice.h
 index 4e7f682..c8173b7 100644
 --- a/include/circle/usb/usbhiddevice.h
@@ -312,6 +349,36 @@ index eb6fe49..f6e0776 100644
  
  static TPageBucket s_PageBucket;
  
+diff --git a/lib/machineinfo.cpp b/lib/machineinfo.cpp
+index c2a7068..d2ccdd6 100644
+--- a/lib/machineinfo.cpp
++++ b/lib/machineinfo.cpp
+@@ -71,7 +71,8 @@ s_NewInfo[]
+ 	{13, MachineModel3BPlus,	3},
+ 	{14, MachineModel3APlus,	3},
+ 	{16, MachineModelCM3Plus,	3},
+-	{17, MachineModel4B,		4}
++	{17, MachineModel4B,		4},
++	{18, MachineModelZero2W,	3},
+ };
+ 
+ static const char *s_MachineName[] =		// must match TMachineModel
+@@ -84,6 +85,7 @@ static const char *s_MachineName[] =		// must match TMachineModel
+ 	"Raspberry Pi Model B+",
+ 	"Raspberry Pi Zero",
+ 	"Raspberry Pi Zero W",
++        "Raspberry Pi Zero 2 W",
+ 	"Raspberry Pi 2 Model B",
+ 	"Raspberry Pi 3 Model B",
+ 	"Raspberry Pi 3 Model A+",
+@@ -114,6 +116,7 @@ static unsigned s_ActLEDInfo[] =		// must match TMachineModel
+ 	47,				// B+
+ 	47 | ACTLED_ACTIVE_LOW,		// Zero
+ 	47 | ACTLED_ACTIVE_LOW,		// Zero W
++        29 | ACTLED_ACTIVE_LOW,         // Zero 2 W
+ 	47,				// 2B
+ 	0 | ACTLED_VIRTUAL_PIN,		// 3B
+ 	29,				// 3A+
 diff --git a/lib/sysinit.cpp b/lib/sysinit.cpp
 index 3c96caf..e9e4127 100644
 --- a/lib/sysinit.cpp
@@ -358,10 +425,85 @@ index ff011e8..c6a0e8f 100644
  	m_pStatusHandler (0),
  	m_usReportSize (0),
  	m_nDeviceNumber (0)	// not assigned
+diff --git a/lib/usb/usbgamepadps3.cpp b/lib/usb/usbgamepadps3.cpp
+index 809df13..696632e 100644
+--- a/lib/usb/usbgamepadps3.cpp
++++ b/lib/usb/usbgamepadps3.cpp
+@@ -2,7 +2,7 @@
+ // usbgamepadps3.cpp
+ //
+ // Circle - A C++ bare metal environment for Raspberry Pi
+-// Copyright (C) 2014-2019  R. Stange <rsta2@o2online.de>
++// Copyright (C) 2014-2021  R. Stange <rsta2@o2online.de>
+ //
+ // Information to implement this was taken from:
+ //	https://github.com/felis/USB_Host_Shield_2.0/blob/master/PS3USB.cpp
+@@ -108,7 +108,7 @@ boolean CUSBGamePadPS3Device::Configure (void)
+ 		return FALSE;
+ 	}
+ 
+-	m_State.nbuttons = REPORT_BUTTONS;
++	m_State.nbuttons = GAMEPAD_BUTTONS_STANDARD;
+ 	m_State.naxes = REPORT_AXES+REPORT_ANALOG_BUTTONS;
+ 	for (unsigned i = 0; i < REPORT_AXES+REPORT_ANALOG_BUTTONS; i++)
+ 	{
+diff --git a/lib/usb/usbgamepadps4.cpp b/lib/usb/usbgamepadps4.cpp
+index 0455698..2f2e6df 100644
+--- a/lib/usb/usbgamepadps4.cpp
++++ b/lib/usb/usbgamepadps4.cpp
+@@ -2,7 +2,7 @@
+ // usbgamepadps4.cpp
+ //
+ // Circle - A C++ bare metal environment for Raspberry Pi
+-// Copyright (C) 2014-2018  R. Stange <rsta2@o2online.de>
++// Copyright (C) 2014-2021  R. Stange <rsta2@o2online.de>
+ //
+ // This driver was developed by:
+ //	Jose Luis Sanchez, http://jspeccy.speccy.org/
+@@ -163,7 +163,7 @@ boolean CUSBGamePadPS4Device::Configure (void)
+ 		assert (m_pMouseDevice != 0);
+ 	}
+ 
+-	m_State.nbuttons = REPORT_BUTTONS;
++	m_State.nbuttons = GAMEPAD_BUTTONS_WITH_TOUCHPAD;
+ 	m_State.nhats = REPORT_HATS;
+ 	m_State.naxes = REPORT_AXIS + REPORT_ANALOG_BUTTONS;
+ 	for (int axis = 0; axis < REPORT_AXIS + REPORT_ANALOG_BUTTONS; axis++) {
+diff --git a/lib/usb/usbgamepadswitchpro.cpp b/lib/usb/usbgamepadswitchpro.cpp
+index 2b2968d..0d714a2 100644
+--- a/lib/usb/usbgamepadswitchpro.cpp
++++ b/lib/usb/usbgamepadswitchpro.cpp
+@@ -2,7 +2,7 @@
+ // usbgamepadswitchpro.cpp
+ //
+ // Circle - A C++ bare metal environment for Raspberry Pi
+-// Copyright (C) 2014-2019  R. Stange <rsta2@o2online.de>
++// Copyright (C) 2014-2021  R. Stange <rsta2@o2online.de>
+ //
+ // This driver was developed by:
+ //	Jose Luis Sanchez, jspeccy@gmail.com, jsanchezv@github.com
+@@ -112,7 +112,7 @@ boolean CUSBGamePadSwitchProDevice::Configure (void)
+ 		return FALSE;
+ 	}
+ 
+-	m_State.nbuttons = REPORT_BUTTONS;
++	m_State.nbuttons = GAMEPAD_BUTTONS_ALTERNATIVE;
+ 	m_State.nhats = REPORT_HATS;
+ 	m_State.naxes = REPORT_AXIS + REPORT_ANALOG_BUTTONS;
+ 	for (int axis = 0; axis < REPORT_AXIS + REPORT_ANALOG_BUTTONS; axis++) {
 diff --git a/lib/usb/usbgamepadxbox360.cpp b/lib/usb/usbgamepadxbox360.cpp
-index 71b0af5..29632d2 100644
+index 71b0af5..c9a0013 100644
 --- a/lib/usb/usbgamepadxbox360.cpp
 +++ b/lib/usb/usbgamepadxbox360.cpp
+@@ -2,7 +2,7 @@
+ // usbgamepadxbox360.cpp
+ //
+ // Circle - A C++ bare metal environment for Raspberry Pi
+-// Copyright (C) 2018  R. Stange <rsta2@o2online.de>
++// Copyright (C) 2018-2021  R. Stange <rsta2@o2online.de>
+ //
+ // Information to implement this was taken from:
+ //	https://github.com/felis/USB_Host_Shield_2.0/blob/master/XBOXUSB.cpp
 @@ -36,7 +36,7 @@ struct TXbox360Report
  #define REPORT_HEADER			0x1400
  
@@ -371,6 +513,37 @@ index 71b0af5..29632d2 100644
  
  #define REPORT_ANALOG_BUTTONS		2
  	u8	AnalogButton[REPORT_ANALOG_BUTTONS];
+@@ -75,7 +75,7 @@ boolean CUSBGamePadXbox360Device::Configure (void)
+ 		return FALSE;
+ 	}
+ 
+-	m_State.nbuttons = REPORT_BUTTONS+REPORT_ANALOG_BUTTONS;
++	m_State.nbuttons = GAMEPAD_BUTTONS_STANDARD;
+ 	m_State.naxes = REPORT_AXES+REPORT_ANALOG_BUTTONS;
+ 	for (unsigned i = 0; i < REPORT_AXES; i++)
+ 	{
+diff --git a/lib/usb/usbgamepadxboxone.cpp b/lib/usb/usbgamepadxboxone.cpp
+index ee59519..7cf69db 100644
+--- a/lib/usb/usbgamepadxboxone.cpp
++++ b/lib/usb/usbgamepadxboxone.cpp
+@@ -2,7 +2,7 @@
+ // usbgamepadxboxone.cpp
+ //
+ // Circle - A C++ bare metal environment for Raspberry Pi
+-// Copyright (C) 2018  R. Stange <rsta2@o2online.de>
++// Copyright (C) 2018-2021  R. Stange <rsta2@o2online.de>
+ //
+ // This driver was developed by:
+ //	Jose Luis Sanchez, jspeccy@gmail.com, jsanchezv@github.com
+@@ -102,7 +102,7 @@ boolean CUSBGamePadXboxOneDevice::Configure (void)
+ 		return FALSE;
+ 	}
+ 
+-	m_State.nbuttons = REPORT_BUTTONS+REPORT_ANALOG_BUTTONS;
++	m_State.nbuttons = GAMEPAD_BUTTONS_STANDARD;
+ 	m_State.naxes = REPORT_AXES+REPORT_ANALOG_BUTTONS;
+ 	for (unsigned i = 0; i < REPORT_AXES; i++)
+ 	{
 diff --git a/lib/usb/usbhiddevice.cpp b/lib/usb/usbhiddevice.cpp
 index 2893a86..9aac786 100644
 --- a/lib/usb/usbhiddevice.cpp
@@ -426,132 +599,3 @@ index 2893a86..9aac786 100644
  
  	delete m_pURB;
  	m_pURB = 0;
-diff -ruN circle-old/include/circle/usb/usbgamepad.h circle/include/circle/usb/usbgamepad.h
---- circle-old/include/circle/usb/usbgamepad.h	2021-02-02 15:24:52.620000000 -0500
-+++ circle/include/circle/usb/usbgamepad.h	2021-02-02 15:32:20.870000000 -0500
-@@ -2,7 +2,7 @@
- // usbgamepad.h
- //
- // Circle - A C++ bare metal environment for Raspberry Pi
--// Copyright (C) 2014-2018  R. Stange <rsta2@o2online.de>
-+// Copyright (C) 2014-2021  R. Stange <rsta2@o2online.de>
- //
- // Ported from the USPi driver which is:
- // 	Copyright (C) 2014  M. Maccaferri <macca@maccasoft.com>
-@@ -85,6 +85,11 @@
- 	GamePadButtonTouchpad	= BIT(21)		// optional
- };
- 
-+// Number of digital buttons for known gamepads:
-+#define GAMEPAD_BUTTONS_STANDARD      19
-+#define GAMEPAD_BUTTONS_ALTERNATIVE   21
-+#define GAMEPAD_BUTTONS_WITH_TOUCHPAD 22
-+
- enum TGamePadAxis		// Axis or analog button
- {
- 	GamePadAxisLeftX,
-diff -ruN circle-old/lib/usb/usbgamepadps3.cpp circle/lib/usb/usbgamepadps3.cpp
---- circle-old/lib/usb/usbgamepadps3.cpp	2021-02-02 15:24:52.630000000 -0500
-+++ circle/lib/usb/usbgamepadps3.cpp	2021-02-02 15:32:58.920000000 -0500
-@@ -2,7 +2,7 @@
- // usbgamepadps3.cpp
- //
- // Circle - A C++ bare metal environment for Raspberry Pi
--// Copyright (C) 2014-2019  R. Stange <rsta2@o2online.de>
-+// Copyright (C) 2014-2021  R. Stange <rsta2@o2online.de>
- //
- // Information to implement this was taken from:
- //	https://github.com/felis/USB_Host_Shield_2.0/blob/master/PS3USB.cpp
-@@ -108,7 +108,7 @@
- 		return FALSE;
- 	}
- 
--	m_State.nbuttons = REPORT_BUTTONS;
-+	m_State.nbuttons = GAMEPAD_BUTTONS_STANDARD;
- 	m_State.naxes = REPORT_AXES+REPORT_ANALOG_BUTTONS;
- 	for (unsigned i = 0; i < REPORT_AXES+REPORT_ANALOG_BUTTONS; i++)
- 	{
-diff -ruN circle-old/lib/usb/usbgamepadps4.cpp circle/lib/usb/usbgamepadps4.cpp
---- circle-old/lib/usb/usbgamepadps4.cpp	2021-02-02 15:24:52.630000000 -0500
-+++ circle/lib/usb/usbgamepadps4.cpp	2021-02-02 15:33:44.070000000 -0500
-@@ -2,7 +2,7 @@
- // usbgamepadps4.cpp
- //
- // Circle - A C++ bare metal environment for Raspberry Pi
--// Copyright (C) 2014-2018  R. Stange <rsta2@o2online.de>
-+// Copyright (C) 2014-2021  R. Stange <rsta2@o2online.de>
- //
- // This driver was developed by:
- //	Jose Luis Sanchez, http://jspeccy.speccy.org/
-@@ -163,7 +163,7 @@
- 		assert (m_pMouseDevice != 0);
- 	}
- 
--	m_State.nbuttons = REPORT_BUTTONS;
-+	m_State.nbuttons = GAMEPAD_BUTTONS_WITH_TOUCHPAD;
- 	m_State.nhats = REPORT_HATS;
- 	m_State.naxes = REPORT_AXIS + REPORT_ANALOG_BUTTONS;
- 	for (int axis = 0; axis < REPORT_AXIS + REPORT_ANALOG_BUTTONS; axis++) {
-diff -ruN circle-old/lib/usb/usbgamepadswitchpro.cpp circle/lib/usb/usbgamepadswitchpro.cpp
---- circle-old/lib/usb/usbgamepadswitchpro.cpp	2021-02-02 15:24:52.630000000 -0500
-+++ circle/lib/usb/usbgamepadswitchpro.cpp	2021-02-02 15:34:18.780000000 -0500
-@@ -2,7 +2,7 @@
- // usbgamepadswitchpro.cpp
- //
- // Circle - A C++ bare metal environment for Raspberry Pi
--// Copyright (C) 2014-2019  R. Stange <rsta2@o2online.de>
-+// Copyright (C) 2014-2021  R. Stange <rsta2@o2online.de>
- //
- // This driver was developed by:
- //	Jose Luis Sanchez, jspeccy@gmail.com, jsanchezv@github.com
-@@ -112,7 +112,7 @@
- 		return FALSE;
- 	}
- 
--	m_State.nbuttons = REPORT_BUTTONS;
-+	m_State.nbuttons = GAMEPAD_BUTTONS_ALTERNATIVE;
- 	m_State.nhats = REPORT_HATS;
- 	m_State.naxes = REPORT_AXIS + REPORT_ANALOG_BUTTONS;
- 	for (int axis = 0; axis < REPORT_AXIS + REPORT_ANALOG_BUTTONS; axis++) {
-diff -ruN circle-old/lib/usb/usbgamepadxbox360.cpp circle/lib/usb/usbgamepadxbox360.cpp
---- circle-old/lib/usb/usbgamepadxbox360.cpp	2021-02-02 15:24:52.630000000 -0500
-+++ circle/lib/usb/usbgamepadxbox360.cpp	2021-02-02 15:35:14.610000000 -0500
-@@ -2,7 +2,7 @@
- // usbgamepadxbox360.cpp
- //
- // Circle - A C++ bare metal environment for Raspberry Pi
--// Copyright (C) 2018  R. Stange <rsta2@o2online.de>
-+// Copyright (C) 2018-2021  R. Stange <rsta2@o2online.de>
- //
- // Information to implement this was taken from:
- //	https://github.com/felis/USB_Host_Shield_2.0/blob/master/XBOXUSB.cpp
-@@ -75,7 +75,7 @@
- 		return FALSE;
- 	}
- 
--	m_State.nbuttons = REPORT_BUTTONS+REPORT_ANALOG_BUTTONS;
-+	m_State.nbuttons = GAMEPAD_BUTTONS_STANDARD;
- 	m_State.naxes = REPORT_AXES+REPORT_ANALOG_BUTTONS;
- 	for (unsigned i = 0; i < REPORT_AXES; i++)
- 	{
-diff -ruN circle-old/lib/usb/usbgamepadxboxone.cpp circle/lib/usb/usbgamepadxboxone.cpp
---- circle-old/lib/usb/usbgamepadxboxone.cpp	2021-02-02 15:24:52.630000000 -0500
-+++ circle/lib/usb/usbgamepadxboxone.cpp	2021-02-02 15:35:51.020000000 -0500
-@@ -2,7 +2,7 @@
- // usbgamepadxboxone.cpp
- //
- // Circle - A C++ bare metal environment for Raspberry Pi
--// Copyright (C) 2018  R. Stange <rsta2@o2online.de>
-+// Copyright (C) 2018-2021  R. Stange <rsta2@o2online.de>
- //
- // This driver was developed by:
- //	Jose Luis Sanchez, jspeccy@gmail.com, jsanchezv@github.com
-@@ -102,7 +102,7 @@
- 		return FALSE;
- 	}
- 
--	m_State.nbuttons = REPORT_BUTTONS+REPORT_ANALOG_BUTTONS;
-+	m_State.nbuttons = GAMEPAD_BUTTONS_STANDARD;
- 	m_State.naxes = REPORT_AXES+REPORT_ANALOG_BUTTONS;
- 	for (unsigned i = 0; i < REPORT_AXES; i++)
- 	{
