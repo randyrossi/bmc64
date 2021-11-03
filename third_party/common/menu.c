@@ -443,7 +443,7 @@ static void show_files(DirType dir_type, FileFilter filter, int menu_id,
   file_root->cursor_listener_func = files_cursor_listener;
 
   if (menu_id == MENU_SAVE_SNAP_FILE ||
-      (menu_id >= MENU_CREATE_D64_FILE && menu_id <= MENU_CREATE_X64_FILE)) {
+      (menu_id >= MENU_CREATE_D64_FILE && menu_id <= MENU_CREATE_TAP_FILE)) {
     struct menu_item *file_name_item = ui_menu_add_text_field(
        menu_id, file_root, "Enter name:", "");
     file_name_item->sub_id = MENU_SUB_PICK_FILE;
@@ -1630,6 +1630,11 @@ static void select_file(struct menu_item *item) {
            item->id <= MENU_CREATE_X64_FILE) {
     emux_create_disk(item, fullpath);
   }
+
+  // Handle creating empty tape
+  else if (item->id == MENU_CREATE_TAP_FILE) {
+    emux_create_tape(item, fullpath);
+  }
 }
 
 // Utility to determine current dir index from a menu file item
@@ -1654,6 +1659,7 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
   case MENU_CREATE_X64_FILE:
     return DIR_DISKS;
   case MENU_TAPE_FILE:
+  case MENU_CREATE_TAP_FILE:
     return DIR_TAPES;
   case MENU_C64_CART_FILE:
   case MENU_C64_CART_8K_FILE:
@@ -1724,6 +1730,7 @@ static void relist_files_after_dir_change(struct menu_item *item) {
     show_files(DIR_DISKS, FILTER_DISK, item->id, 1);
     break;
   case MENU_TAPE_FILE:
+  case MENU_CREATE_TAP_FILE:
     show_files(DIR_TAPES, FILTER_TAPE, item->id, 1);
     break;
   case MENU_C64_CART_FILE:
@@ -2216,6 +2223,9 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_CREATE_X64:
     show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_X64_FILE, 0);
+    return;
+  case MENU_CREATE_TAP:
+    show_files(DIR_TAPES, FILTER_NONE, MENU_CREATE_TAP_FILE, 0);
     return;
 
   case MENU_IECDEVICE_8:
@@ -3326,6 +3336,8 @@ void build_menu(struct menu_item *root) {
       ui_menu_add_toggle(MENU_TAPE_RESET_WITH_MACHINE, tape_parent,
                          "Reset Tape with Machine Reset", tmp);
     emux_add_tape_options(tape_parent);
+
+    ui_menu_add_button(MENU_CREATE_TAP, parent, "Create empty Tape...");
 
   ui_menu_add_divider(root);
 
