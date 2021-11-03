@@ -123,10 +123,10 @@ struct menu_item* emux_add_palette_options(int menu_id, struct menu_item* parent
       ui_menu_add_multiple_choice(menu_id, parent, "Color Palette");
   palette_item->num_choices = 4;
   palette_item->value = 0;
-  strcpy(palette_item->choices[0], "Vice");
-  strcpy(palette_item->choices[1], "Colodore");
-  strcpy(palette_item->choices[2], "Mike-Ntsc");
-  strcpy(palette_item->choices[3], "Mike-Pal");
+  strcpy(palette_item->choices[0], "VICE");
+  strcpy(palette_item->choices[1], "Mike (PAL)");
+  strcpy(palette_item->choices[2], "Mike (NTSC)");
+  strcpy(palette_item->choices[3], "Colodore (PAL)");
   return palette_item;
 }
 

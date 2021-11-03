@@ -159,10 +159,11 @@ int emux_get_color_saturation(int display_num) {
 struct menu_item* emux_add_palette_options(int menu_id, struct menu_item* parent) {
   struct menu_item* palette_item =
       ui_menu_add_multiple_choice(menu_id, parent, "Color Palette");
-  palette_item->num_choices = 2;
+  palette_item->num_choices = 3;
   palette_item->value = 0;
-  strcpy(palette_item->choices[0], "Yape-Pal");
-  strcpy(palette_item->choices[1], "Yape-Ntsc");
+  strcpy(palette_item->choices[0], "YAPE (PAL)");
+  strcpy(palette_item->choices[1], "YAPE (NTSC)");
+  strcpy(palette_item->choices[2], "Colodore (PAL)");
   return palette_item;
 }
 
