@@ -56,6 +56,7 @@
 #include "sid.h"
 #include "sid-resources.h"
 #include "userport/userport_joystick.h"
+#include "cbmimage.h"
 
 // RASPI includes
 #include "circle.h"
@@ -489,6 +490,10 @@ void emux_create_disk(struct menu_item* item, fullpath_func f_fullpath) {
          image_type = DISK_IMAGE_TYPE_G64;
          strcpy(ext, ".g64");
          break;
+       case MENU_CREATE_G71_FILE:
+         image_type = DISK_IMAGE_TYPE_G71;
+         strcpy(ext, ".g71");
+         break;
        case MENU_CREATE_P64_FILE:
          image_type = DISK_IMAGE_TYPE_P64;
          strcpy(ext, ".p64");
@@ -540,6 +545,55 @@ void emux_create_disk(struct menu_item* item, fullpath_func f_fullpath) {
       ui_pop_menu();
       ui_pop_menu();
       ui_info("Disk Created");
+    }
+}
+
+void emux_create_tape(struct menu_item* item, fullpath_func f_fullpath) {
+    char ext[5];
+    int image_type;
+
+    image_type = DISK_IMAGE_TYPE_TAP;
+    strcpy(ext, ".tap");
+
+    char *fname = item->str_value;
+    if (item->type == TEXTFIELD) {
+      // Scrub the filename before passing it along
+      fname = item->str_value;
+      if (strlen(fname) == 0) {
+        ui_error("Empty filename");
+        return;
+      } else if (strlen(fname) > MAX_FN_NAME) {
+        ui_error("Too long");
+        return;
+      }
+      char *dot = strchr(fname, '.');
+      if (dot == NULL) {
+        if (strlen(fname) + 4 <= MAX_FN_NAME) {
+          strcat(fname, ext);
+        } else {
+          ui_error("Too long");
+          return;
+        }
+      } else {
+        if (strncasecmp(dot, ext, 4) != 0) {
+          ui_error("Wrong extension");
+          return;
+        }
+      }
+    } else {
+      // Don't allow overwriting an existing file. Just ignore it.
+      return;
+    }
+
+    ui_info("Creating...");
+    if (cbmimage_create_image(
+         f_fullpath(DIR_TAPES, fname), image_type) < 0) {
+      ui_pop_menu();
+      ui_error("Create tape image failed");
+    } else {
+      ui_pop_menu();
+      ui_pop_menu();
+      ui_info("Tape Created");
     }
 }
 

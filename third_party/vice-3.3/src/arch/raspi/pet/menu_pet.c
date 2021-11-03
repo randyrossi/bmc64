@@ -152,7 +152,7 @@ struct menu_item* emux_add_palette_options(int menu_id, struct menu_item* parent
   palette_item->value = 0;
   strcpy(palette_item->choices[0], "Green");
   strcpy(palette_item->choices[1], "Amber");
-  strcpy(palette_item->choices[2], "White");
+  strcpy(palette_item->choices[2], "Black/White");
   return palette_item;
 }
 

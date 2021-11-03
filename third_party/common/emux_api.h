@@ -304,6 +304,9 @@ void emux_add_keyboard_options(struct menu_item* parent);
 // Create an empty disk image
 void emux_create_disk(struct menu_item* item, fullpath_func f_fullpath);
 
+// Create an empty tape image
+void emux_create_tape(struct menu_item* item, fullpath_func f_fullpath);
+
 // Set the joy port device to JOYDEV_*
 void emux_set_joy_port_device(int port_num, int dev_id);
 

@@ -1064,6 +1064,10 @@ void emux_create_disk(struct menu_item* item, fullpath_func fullpath) {
   // Not supported for plus/4
 }
 
+void emux_create_tape(struct menu_item* item, fullpath_func fullpath) {
+  // Not supported for plus/4
+}
+
 void emux_set_joy_port_device(int port_num, int dev_id) {
 }
 

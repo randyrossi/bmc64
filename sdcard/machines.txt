@@ -80,6 +80,32 @@ hdmi_mode=19
 machine_timing=pal-composite
 scaling_params=422,240,668,480
 
+# This matches the timing of a real NTSC machine but may
+# not work on all monitors.
+[VIC20/NTSC/HDMI/VICE 768x525@60.285Hz]
+sdtv_mode=16
+hdmi_group=2
+hdmi_mode=87
+hdmi_timings=768 0 24 72 96 525 1 3 10 9 0 0 0 60 0 31656857 1
+machine_timing=ntsc-custom
+# VICE cycles_per_second is 1022727, custom is 0.000782% faster
+cycles_per_second=1022735
+scaling_params=384,246,768,492
+
+# This matches the timing of a real PAL machine but may
+# not work on all monitors.
+[VIC20/PAL/HDMI/VICE 768x545@50.037Hz]
+sdtv_mode=18
+hdmi_group=2
+hdmi_mode=87
+# Fudging intended 544 lines to 545 by reducing back porch
+# to make shader scanlines visible
+hdmi_timings=768 0 24 72 96 545 1 3 2 13 0 0 0 50 0 27043926 1
+machine_timing=pal-custom
+# VICE cycles_per_second is 1108405, custom is 0.000632% faster
+cycles_per_second=1108412
+scaling_params=384,272,768,544
+
 #
 # C64
 #
@@ -118,26 +144,29 @@ scaling_params=384,272,648,544
 
 # This matches the timing of a real NTSC machine but may
 # not work on all monitors.
-[C64/NTSC/HDMI/VICE 768x525@59.825Hz]
-sdtv_mode=18
+[C64/NTSC/HDMI/VICE 768x525@59.827Hz]
+sdtv_mode=16
 hdmi_group=2
 hdmi_mode=87
-hdmi_timings=768 0 24 72 96 525 1 3 10 9 0 0 0 60 0 31415829 1
+hdmi_timings=768 0 24 72 96 525 1 3 10 9 0 0 0 60 0 31416828 1
 machine_timing=ntsc-custom
-cycles_per_second=1022708
+# VICE cycles_per_second is 1022730, custom is 0.000587% faster
+cycles_per_second=1022736
 scaling_params=384,246,768,492
 
 # This matches the timing of a real PAL machine but may
 # not work on all monitors.
-[C64/PAL/HDMI/VICE 768x544@50.125Hz]
+[C64/PAL/HDMI/VICE 768x545@50.125Hz]
 sdtv_mode=18
 hdmi_group=2
 hdmi_mode=87
-hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
+# Fudging intended 544 lines to 545 by reducing back porch
+# to make shader scanlines visible
+hdmi_timings=768 0 24 72 96 545 1 3 2 13 0 0 0 50 0 27091697 1
 machine_timing=pal-custom
+# VICE cycles_per_second is 985248, custom is 0.000913% faster
 cycles_per_second=985257
 scaling_params=384,272,768,544
-
 
 #
 # C128
@@ -179,28 +208,31 @@ scaling_params=384,272,648,544
 
 # This matches the timing of a real NTSC machine but may
 # not work on all monitors.
-[C128/NTSC/HDMI/VICE 768x525@59.825Hz]
-sdtv_mode=18
+[C128/NTSC/HDMI/VICE 768x525@59.827Hz]
+sdtv_mode=16
 hdmi_group=2
 hdmi_mode=87
-hdmi_timings=768 0 24 72 96 525 1 3 10 9 0 0 0 60 0 31415829 1
+hdmi_timings=768 0 24 72 96 525 1 3 10 9 0 0 0 60 0 31416828 1
 machine_timing=ntsc-custom
-cycles_per_second=1022708
+# VICE cycles_per_second is 1022730, custom is 0.000587% faster
+cycles_per_second=1022736
 scaling_params=384,246,768,492
 scaling_params2=674,228,674,456
 
 # This matches the timing of a real PAL machine but may
 # not work on all monitors.
-[C128/PAL/HDMI/VICE 768x544@50.125Hz]
+[C128/PAL/HDMI/VICE 768x545@50.125Hz]
 sdtv_mode=18
 hdmi_group=2
 hdmi_mode=87
-hdmi_timings=768 0 24 72 96 544 1 3 2 14 0 0 0 50 0 27092000 1
+# Fudging intended 544 lines to 545 by reducing back porch
+# to make shader scanlines visible
+hdmi_timings=768 0 24 72 96 545 1 3 2 13 0 0 0 50 0 27091697 1
 machine_timing=pal-custom
+# VICE cycles_per_second is 985248, custom is 0.000913% faster
 cycles_per_second=985257
 scaling_params=384,272,768,544
 scaling_params2=674,272,674,544
-
 
 #
 # PLUS/4 & C16
@@ -237,6 +269,32 @@ hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-composite
 scaling_params=364,280,640,560
+
+# This matches the timing of a real NTSC machine but may
+# not work on all monitors.
+[PLUS4/NTSC/HDMI/VICE 768x525@59.923Hz]
+sdtv_mode=16
+hdmi_group=2
+hdmi_mode=87
+hdmi_timings=768 0 24 72 96 525 1 3 10 9 0 0 0 60 0 31467501 1
+machine_timing=ntsc-custom
+# VICE cycles_per_second is 1789772, custom is 0.001006% faster
+cycles_per_second=1789790
+scaling_params=384,246,768,492
+
+# This matches the timing of a real PAL machine but may
+# not work on all monitors.
+[PLUS4/PAL/HDMI/VICE 768x545@49.860Hz]
+sdtv_mode=18
+hdmi_group=2
+hdmi_mode=87
+# Fudging intended 544 lines to 545 by reducing back porch
+# to make shader scanlines visible
+hdmi_timings=768 0 24 72 96 545 1 3 2 13 0 0 0 50 0 26948856 1
+machine_timing=pal-custom
+# VICE cycles_per_second is 1773447, custom is 0.001522% slower
+cycles_per_second=1773420
+scaling_params=384,272,768,544
 
 # PLUS4EMU Is only available for Pi3. It is a more
 # accurate Plus/4 emulator but requires more CPU.
@@ -309,3 +367,37 @@ sdtv_mode=18
 hdmi_group=1
 hdmi_mode=19
 machine_timing=pal-composite
+
+# This matches the timing of a real NTSC machine but may
+# not work on all monitors.
+# Remember to manually specify a 60Hz editor ROM in vice.ini!
+[PET/NTSC/HDMI/VICE 768x525@60.060Hz]
+sdtv_mode=16
+hdmi_group=2
+hdmi_mode=87
+# Timing set for exactly 16650 cycles/frame, Circle cycles/second is
+# ignored on PET for actual pixel rate!
+hdmi_timings=768 0 24 72 96 525 1 3 10 9 0 0 0 60 0 31538738 1
+machine_timing=ntsc-custom
+# PET is fixed at 1000000 cycles/sec, setting only to make BMPET happy
+cycles_per_second=1014773
+scaling_params=384,246,768,492
+scaling_params2=674,228,674,456
+
+# This matches the timing of a real PAL machine but may
+# not work on all monitors.
+# Remember to manually specify a 50Hz editor ROM in vice.ini!
+[PET/PAL/HDMI/VICE 768x545@49.875Hz]
+sdtv_mode=18
+hdmi_group=2
+hdmi_mode=87
+# Timing set for exactly 20050 cycles/frame, Circle cycles/second is
+# ignored on PET for actual pixel rate!
+# Fudging intended 544 lines to 545 by reducing back porch
+# to make shader scanlines visible
+hdmi_timings=768 0 24 72 96 545 1 3 2 13 0 0 0 50 0 26956913 1
+machine_timing=pal-custom
+# PET is fixed at 1000000 cycles/sec, setting only to make BMPET happy
+cycles_per_second=999096
+scaling_params=384,272,768,544
+scaling_params2=674,272,674,544

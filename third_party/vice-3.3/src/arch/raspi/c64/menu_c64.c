@@ -123,13 +123,25 @@ void cartridge_freeze(void) {
 struct menu_item* emux_add_palette_options(int menu_id, struct menu_item* parent) {
   struct menu_item* palette_item =
       ui_menu_add_multiple_choice(menu_id, parent, "Color Palette");
-  palette_item->num_choices = 5;
-  palette_item->value = 1;
-  strcpy(palette_item->choices[0], "Default");
-  strcpy(palette_item->choices[1], "Vice");
-  strcpy(palette_item->choices[2], "C64hq");
-  strcpy(palette_item->choices[3], "Pepto-Ntsc");
-  strcpy(palette_item->choices[4], "Pepto-Pal");
+  palette_item->num_choices = 17;
+  palette_item->value = 0;
+  strcpy(palette_item->choices[0], "VICE");
+  strcpy(palette_item->choices[1], "Pepto (PAL)");
+  strcpy(palette_item->choices[2], "Pepto (old PAL)");
+  strcpy(palette_item->choices[3], "Pepto (NTSC, Sony)");
+  strcpy(palette_item->choices[4], "Pepto (NTSC)");
+  strcpy(palette_item->choices[5], "Colodore (PAL)");
+  strcpy(palette_item->choices[6], "ChristopherJam");
+  strcpy(palette_item->choices[7], "C64HQ");
+  strcpy(palette_item->choices[8], "C64S");
+  strcpy(palette_item->choices[9], "CCS64");
+  strcpy(palette_item->choices[10], "Frodo");
+  strcpy(palette_item->choices[11], "Godot");
+  strcpy(palette_item->choices[12], "PC64");
+  strcpy(palette_item->choices[13], "RGB");
+  strcpy(palette_item->choices[14], "Deekay");
+  strcpy(palette_item->choices[15], "Ptoing");
+  strcpy(palette_item->choices[16], "Community Colors");
   return palette_item;
 }
 

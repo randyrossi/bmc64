@@ -194,10 +194,10 @@ static char usb_y_name[MAX_USB_DEVICES][16];
 static char usb_x_t_name[MAX_USB_DEVICES][16];
 static char usb_y_t_name[MAX_USB_DEVICES][16];
 
-const int num_disk_ext = 13;
-static char disk_filt_ext[13][5] = {".d64", ".d67", ".d71", ".d80", ".d81",
+const int num_disk_ext = 14;
+static char disk_filt_ext[14][5] = {".d64", ".d67", ".d71", ".d80", ".d81",
                                     ".d82", ".d1m", ".d2m", ".d4m", ".g64",
-                                    ".g41", ".p64", ".x64"};
+                                    ".g71", ".g41", ".p64", ".x64"};
 
 const int num_tape_ext = 2;
 static char tape_filt_ext[2][5] = {".t64", ".tap"};
@@ -443,7 +443,7 @@ static void show_files(DirType dir_type, FileFilter filter, int menu_id,
   file_root->cursor_listener_func = files_cursor_listener;
 
   if (menu_id == MENU_SAVE_SNAP_FILE ||
-      (menu_id >= MENU_CREATE_D64_FILE && menu_id <= MENU_CREATE_X64_FILE)) {
+      (menu_id >= MENU_CREATE_D64_FILE && menu_id <= MENU_CREATE_TAP_FILE)) {
     struct menu_item *file_name_item = ui_menu_add_text_field(
        menu_id, file_root, "Enter name:", "");
     file_name_item->sub_id = MENU_SUB_PICK_FILE;
@@ -1630,6 +1630,11 @@ static void select_file(struct menu_item *item) {
            item->id <= MENU_CREATE_X64_FILE) {
     emux_create_disk(item, fullpath);
   }
+
+  // Handle creating empty tape
+  else if (item->id == MENU_CREATE_TAP_FILE) {
+    emux_create_tape(item, fullpath);
+  }
 }
 
 // Utility to determine current dir index from a menu file item
@@ -1650,10 +1655,12 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
   case MENU_CREATE_D2M_FILE:
   case MENU_CREATE_D4M_FILE:
   case MENU_CREATE_G64_FILE:
+  case MENU_CREATE_G71_FILE:
   case MENU_CREATE_P64_FILE:
   case MENU_CREATE_X64_FILE:
     return DIR_DISKS;
   case MENU_TAPE_FILE:
+  case MENU_CREATE_TAP_FILE:
     return DIR_TAPES;
   case MENU_C64_CART_FILE:
   case MENU_C64_CART_8K_FILE:
@@ -1719,11 +1726,13 @@ static void relist_files_after_dir_change(struct menu_item *item) {
   case MENU_CREATE_D2M_FILE:
   case MENU_CREATE_D4M_FILE:
   case MENU_CREATE_G64_FILE:
+  case MENU_CREATE_G71_FILE:
   case MENU_CREATE_P64_FILE:
   case MENU_CREATE_X64_FILE:
     show_files(DIR_DISKS, FILTER_DISK, item->id, 1);
     break;
   case MENU_TAPE_FILE:
+  case MENU_CREATE_TAP_FILE:
     show_files(DIR_TAPES, FILTER_TAPE, item->id, 1);
     break;
   case MENU_C64_CART_FILE:
@@ -2211,11 +2220,17 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_CREATE_G64:
     show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_G64_FILE, 0);
     return;
+  case MENU_CREATE_G71:
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_G71_FILE, 0);
+    return;
   case MENU_CREATE_P64:
     show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_P64_FILE, 0);
     return;
   case MENU_CREATE_X64:
     show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_X64_FILE, 0);
+    return;
+  case MENU_CREATE_TAP:
+    show_files(DIR_TAPES, FILTER_NONE, MENU_CREATE_TAP_FILE, 0);
     return;
 
   case MENU_IECDEVICE_8:
@@ -3302,6 +3317,7 @@ void build_menu(struct menu_item *root) {
       ui_menu_add_button(MENU_CREATE_D2M, parent, "D2M...");
       ui_menu_add_button(MENU_CREATE_D4M, parent, "D4M...");
       ui_menu_add_button(MENU_CREATE_G64, parent, "G64...");
+      ui_menu_add_button(MENU_CREATE_G71, parent, "G71...");
       ui_menu_add_button(MENU_CREATE_P64, parent, "P64...");
       ui_menu_add_button(MENU_CREATE_X64, parent, "X64...");
   }
@@ -3326,6 +3342,8 @@ void build_menu(struct menu_item *root) {
       ui_menu_add_toggle(MENU_TAPE_RESET_WITH_MACHINE, tape_parent,
                          "Reset Tape with Machine Reset", tmp);
     emux_add_tape_options(tape_parent);
+
+    ui_menu_add_button(MENU_CREATE_TAP, parent, "Create empty Tape...");
 
   ui_menu_add_divider(root);
 
