@@ -121,16 +121,43 @@ struct pet_sound_s {
 static struct pet_sound_s snd;
 
 /* XXX: this used to be not correct; is a lot better now */
+/*
+ * This function averages several output bits from the Shift Register
+ * into an output sample.
+ * Because the shifting speed and the sample speed don't need to line up
+ * nicely, this can involve fractional bit times at the start and the end.
+ *
+ * s: starting bit in the shift register (remember: counting from left)
+ * e: ending bit in the SR.
+ *
+ * This doesn't work well if s and e are within the same bit time 
+ * (which can happen if snd.bs < 1.0).
+ */
 static uint16_t pet_makesample_downsampled(double s, double e, uint8_t waveform)
 {
     double v;
     int sc, sf, ef, i, nr;
 
-    sc = (int)ceil(s);
-    sf = (int)floor(s);
-    ef = (int)floor(e);
+    /* Determine whole-bit boundaries */
+    sf = (int)floor(s);         /* start floor ("rounded down") */
+    sc = sf + 1;                /* start ceiling ("rounded up"); floor+1 */
+    ef = (int)floor(e);         /* end floor */
     nr = 0;
 
+    /*
+     * Count the value of the signal over whole bit-periods falling in
+     * the interval.
+     *
+     * For example, a time line; | is when the next bit is shifted out:
+     *
+     *      <-----------snd.bs------------->
+     *      s                               e
+     * |----------|----------|----------|----------|....more...bits...
+     * sf         sc                    ef
+     *
+     *            [-------------------->
+     *            i          i
+     */
     for (i = sc; i < ef; i++) {
         if (waveform & (0x80 >> (i % 8))) {
             nr++;
@@ -139,14 +166,47 @@ static uint16_t pet_makesample_downsampled(double s, double e, uint8_t waveform)
 
     v = nr;
 
+    /*
+     * Now add the signal during fractional bit times.
+     * The bit at the start is (if set) sc - s wide.
+     */
     if (waveform & (0x80 >> (sf % 8))) {
         v += sc - s;
     }
+    /* And similar at the end. */
     if (waveform & (0x80 >> (ef % 8))) {
         v += e - ef;
     }
+    /*
+     * The method of counting fractional bits above doesn't work if s and e
+     * fall within the same bit time:
+     * - sc-s is more than the time period we're processing
+     * - e-ef is also more than the time period we're processing
+     *
+     *      <-----------snd.bs------------->
+     *      s                               e
+     * |-------------------------------------------|....more...bits...
+     * sf                                          sc
+     * ef
+     * 
+     * so for that case the contribution of the bit would be
+     *
+     *     if (waveform & (0x80 >> (sf % 8))) {
+     *        v += e - s;
+     *     }
+     *
+     * Since nr == 0 for this case, the final result is always 0 or 4095.
+     * pet_makesample_exact() calculates the same thing much simpler.
+     *
+     * Now that we are only called when snd.bs > 1.0 this case cannot happen
+     * any more.
+     */
 
-    return ((uint16_t)(v * 4095.0 / (e - s)));
+    /*
+     * Average over the whole period (e - s) and scale
+     * to a range of 0 ... 4095.
+     */
+    return (uint16_t)(v * 4095.0 / (e - s));
 }
 
 static uint16_t pet_makesample_exact(uint8_t bit, uint8_t waveform)
