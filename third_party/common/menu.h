@@ -474,6 +474,8 @@ typedef enum {
    MENU_SHADER_RESET_ALL,
 
    MENU_VIRTUAL_DEVICES,
+   MENU_REU,
+   MENU_REU_SIZE
 } MenuID;
 
 typedef enum {
