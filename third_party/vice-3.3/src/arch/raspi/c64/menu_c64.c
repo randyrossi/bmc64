@@ -189,7 +189,7 @@ struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
   int tmp;
   resources_get_int("REU", &tmp);
   struct menu_item* reu_item =
-     ui_menu_add_toggle(MENU_REU, child, "Ran Expansion", tmp);
+     ui_menu_add_toggle(MENU_REU, child, "Ram Expansion", tmp);
   reu_item->on_value_changed = menu_value_changed;
 
   struct menu_item* sizes_item =
