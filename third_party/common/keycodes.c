@@ -26,9 +26,12 @@
 
 #include "keycodes.h"
 
-signed long commodore_key_sym;
-signed long restore_key_sym;
-signed long ctrl_key_sym;
+// Must default these to sane values in case the emulator
+// does not start and we do not discover what these
+// keys are supposed to be.
+signed long commodore_key_sym = KEYCODE_LeftControl;
+signed long restore_key_sym = KEYCODE_PageUp;
+signed long ctrl_key_sym = KEYCODE_Tab;
 int commodore_key_sym_set;
 int restore_key_sym_set;
 int ctrl_key_sym_set;
