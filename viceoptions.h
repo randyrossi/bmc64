@@ -38,6 +38,7 @@ public:
   bool DPIEnabled(void) const;
   void GetScalingParams(int display, int *fbw, int *fbh, int *sx, int *sy) const;
   bool GetRasterSkip(void) const;
+  bool GetRasterSkip2(void) const;
 
   static ViceOptions *Get(void);
 
@@ -69,6 +70,7 @@ private:
   int m_scaling_param_sx[2];
   int m_scaling_param_sy[2];
   bool m_raster_skip;
+  bool m_raster_skip2; // for VDC
 
   static ViceOptions *s_pThis;
 };

@@ -38,7 +38,7 @@ ViceOptions::ViceOptions(void)
       m_audioOut(VCHIQSoundDestinationAuto), m_bDPIEnabled(false),
       m_scaling_param_fbw{0,0}, m_scaling_param_fbh{0,0},
       m_scaling_param_sx{0,0}, m_scaling_param_sy{0,0},
-      m_raster_skip(false) {
+      m_raster_skip(false), m_raster_skip2(false) {
   s_pThis = this;
 
   CBcmPropertyTags Tags;
@@ -147,6 +147,12 @@ ViceOptions::ViceOptions(void)
       } else {
         m_raster_skip = false;
       }
+    } else if (strcmp(pOption, "raster_skip2") == 0) {
+      if (strcmp(pValue, "true") == 0 || strcmp(pValue, "1") == 0) {
+        m_raster_skip2 = true;
+      } else {
+        m_raster_skip2 = false;
+      }
     }
   }
 
@@ -203,6 +209,7 @@ void ViceOptions::GetScalingParams(int display, int *fbw, int *fbh, int *sx, int
 }
 
 bool ViceOptions::GetRasterSkip(void) const { return m_raster_skip; }
+bool ViceOptions::GetRasterSkip2(void) const { return m_raster_skip2; }
 
 const char *ViceOptions::GetDiskVolume(void) const { return m_disk_volume; }
 

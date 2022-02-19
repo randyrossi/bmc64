@@ -785,7 +785,7 @@ int main_program(int argc, char **argv)
 
 // Begin emu_api impl.
 
-void emu_machine_init(int raster_skip_enabled) {
+void emu_machine_init(int raster_skip_enabled, int raster_skip2_enabled) {
   emux_machine_class = BMC64_MACHINE_CLASS_PLUS4EMU;
 
   raster_skip = raster_skip_enabled ? 2 : 1;

@@ -269,7 +269,7 @@ extern void circle_set_shader_params(int curvature,
 
 // Init some common layer stuff about the machine being emulated.
 // Must be called before launching emulator's main_program func.
-extern void emu_machine_init(int raster_skip_enabled);
+extern void emu_machine_init(int raster_skip_enabled, int raster_skip2_enabled);
 
 // Compares the previous button state for 'button_num' with
 // the current state and will return a press or release event

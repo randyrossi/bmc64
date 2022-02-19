@@ -88,6 +88,7 @@ static int raspi_boot_warp = 1;
 // Should be set only when raster_skip=true is present
 // in the kernel args.
 int raster_lines;
+int raster2_lines;
 
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
@@ -151,7 +152,8 @@ int video_canvas_set_palette(struct video_canvas_s *canvas, palette_t *p) {
 
 static void check_dimensions(struct video_canvas_s* canvas,
                              int canvas_index,
-                             int fb_width, int fb_height) {
+                             int fb_width, int fb_height,
+                             int rlines) {
    if (canvas_state[canvas_index].fb_width != fb_width ||
        canvas_state[canvas_index].fb_height != fb_height) {
       // width/height has changed
@@ -193,7 +195,7 @@ static void check_dimensions(struct video_canvas_s* canvas,
    canvas_state[canvas_index].max_padding_h = max_padding_h;
 
    // If config says raster lines, do it here.
-   canvas->raster_lines |= raster_lines;
+   canvas->raster_lines |= rlines;
 }
 
 // Draw buffer bridge functions back to kernel
@@ -204,14 +206,14 @@ static int draw_buffer_alloc(struct video_canvas_s *canvas,
    int status;
    if (is_vdc(canvas)) {
       check_dimensions(canvas, VDC_INDEX, fb_width,
-                          fb_height * canvas->raster_skip);
+                          fb_height * canvas->raster_skip, raster2_lines);
       status = circle_alloc_fbl(FB_LAYER_VDC, 0 /* indexed */, draw_buffer,
                               fb_width, fb_height * canvas->raster_skip,
                               fb_pitch);
       emux_frame_buffer_changed(FB_LAYER_VDC);
    } else {
       check_dimensions(canvas, VIC_INDEX, fb_width,
-                          fb_height * canvas->raster_skip);
+                          fb_height * canvas->raster_skip, raster_lines);
       status = circle_alloc_fbl(FB_LAYER_VIC, 0 /* indexed */, draw_buffer,
                               fb_width, fb_height * canvas->raster_skip,
                               fb_pitch);
@@ -522,6 +524,7 @@ palette_t *raspi_video_load_palette(int num_entries, char *name) {
   return palette;
 }
 
-void set_raster_lines(int v) {
+void set_raster_lines(int v, int v2) {
   raster_lines = v;
+  raster2_lines = v2;
 }

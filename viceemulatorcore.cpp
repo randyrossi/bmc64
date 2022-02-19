@@ -140,7 +140,7 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
 #else
 #error "RASPI_[model] NOT DEFINED"
 #endif
-  emu_machine_init(m_options->GetRasterSkip());
+  emu_machine_init(m_options->GetRasterSkip(), m_options->GetRasterSkip2());
   main_program(argc, argv);
   emu_exit();
 }
