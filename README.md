@@ -286,7 +286,7 @@ The shader may crash the Pi on higher resolutions/fps. (My Pi0 crashes @ 1600x90
 
 # Commodore 128 VDC raster_skip2 flag
 
-The shader does not apply to the Commodore 128's VDC display.  However, you can get a raster line effect by adding raster_skip2=true to cmdline.txt (or the corresponding machines.txt entry.)  This will skip every other raster line giving (something close to) a raster lines effect. Results will look better with an integer multiple of the native vertical resolution for the frame buffer height.  However, non-integer values should work too.
+The shader does not apply to the Commodore 128's VDC display.  However, you can get a raster line effect by adding raster_skip2=true to cmdline.txt (or the corresponding machines.txt entry.)  This will skip every other frame buffer line when rendering the display giving (something close to) a raster lines effect. Results will look better with an integer multiple of the native vertical resolution for the frame buffer height.  However, non-integer values should work too.
 
 NOTE: raster_skip=true (no 2) can also be used for the main display on other emulators (i.e. VIC-II on the C64) but is not recommended since the shader produces much better results.  Do not use both raster_skip=true AND enable the shader at the same time or the results will look terrible.
 
