@@ -351,4 +351,7 @@
   * Added PETSCIIBOARD keyboard mapping
   * Fix build issue due to -pthread being added
 
-  
+## 4.0
+  * Boot to VDC if 80 column key is down (C128)
+  * Fix CNTRL-F7 safety switch problem if roms not found
+  * Add raster_skip2 to enable raster skip for VDC only
