@@ -290,6 +290,8 @@ The shader does not apply to the Commodore 128's VDC display.  However, you can 
 
 NOTE: raster_skip=true (no 2) can also be used for the main display on other emulators (i.e. VIC-II on the C64) but is not recommended since the shader produces much better results.  Do not use both raster_skip=true AND enable the shader at the same time or the results will look terrible.
 
+![alt text](https://raw.githubusercontent.com/randyrossi/bmc64/master/images/raster_skip.jpg)
+
 # Files Organization
 
 File browsers will by default look in directories off the SD card using this convention:
