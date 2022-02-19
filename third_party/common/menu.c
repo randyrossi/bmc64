@@ -3847,6 +3847,17 @@ void build_menu(struct menu_item *root) {
   do_video_settings(FB_LAYER_VIC);
   circle_set_interpolation(scaling_interp_item->value);
 
+  // If we were saved with the 80 column key down, let's make the
+  // active display the VDC.  If this is not wanted, we'll need
+  // another flag to control this behavior.  But this is probably
+  // what most people want.
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C128 &&
+      c40_80_column_item->value == 0) {
+    active_display_item->value = MENU_ACTIVE_DISPLAY_VDC;
+    vdc_enabled = 1;
+    vic_enabled = 0;
+  }
+
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      do_video_settings(FB_LAYER_VDC);
   }
