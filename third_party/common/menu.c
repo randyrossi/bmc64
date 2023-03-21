@@ -3998,6 +3998,21 @@ void menu_quick_func(int button_assignment) {
     c40_80_column_item->value = 1 - c40_80_column_item->value;
     menu_value_changed(c40_80_column_item);
     break;
+  case BTN_ASSIGN_VOLUME_DOWN:
+    volume_item->value -= 10;
+    if (volume_item->value < 0) {
+      // TODO: '0' isn't completely quiet. Find out if muting is possible for this case.
+      volume_item->value = 0;
+    }
+    menu_value_changed(volume_item);
+    break;
+  case BTN_ASSIGN_VOLUME_UP:
+    volume_item->value += 10;
+    if (volume_item->value > 100) {
+      volume_item->value = 100;
+    }
+    menu_value_changed(volume_item);
+    break;
   default:
     break;
   }

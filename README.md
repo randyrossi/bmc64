@@ -2,6 +2,14 @@
 
 BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio. Four other Commodore machines are available as well; C128, Vic20, Plus/4 and PET.
 
+# How this fork differs from the original
+At the time of writing, these are the differences:
+  * Volume down/up using F10/F11
+  * FPS out of range message in the timing menu outputs the measured FPS. (Helpful when creating custom timings.)
+  * make_machines.sh makes C64 the default kernel image
+  * C64 machine settings for the Waveshare 3.5" 640x480 DPI LCD
+  * Dockerfile that sets up a build environment with all the needed dependencies and some useful tools
+
 # BMC64 Features
   * Quick boot time (C64 in 4.1 seconds over composite!)
   * Frames are timed to vsync for true 50/60 hz smooth scrolling (no horizontal tearing!)

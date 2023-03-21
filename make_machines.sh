@@ -39,7 +39,7 @@ cd third_party/plus4emu
 make
 cd ../..
 
-MACHINES="C64:c64 C128:c128 VIC20:vic20 Plus4:plus4 Plus4Emu:plus4emu PET:pet"
+MACHINES="C128:c128 VIC20:vic20 Plus4:plus4 Plus4Emu:plus4emu PET:pet C64:c64"
 
 for m in $MACHINES
 do
