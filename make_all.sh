@@ -51,17 +51,17 @@ echo APPLY PATCHES
 echo ==============================================================
 
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle-newlib
-patch -p1 < ../../../../circle_newlib_patch.diff
+patch -N -p1 < ../../../../circle_newlib_patch.diff
 
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle
 
 if [ "$BOARD" = "pi0" ]
 then
-cat ../../../../circle_patch.diff | sed 's@+#define ARM_ALLOW_MULTI_CORE@+//#define ARM_ALLOW_MULTI_CORE@' | patch -p1
+cat ../../../../circle_patch.diff | sed 's@+#define ARM_ALLOW_MULTI_CORE@+//#define ARM_ALLOW_MULTI_CORE@' | patch -N -p1
 perl -pi -e 's@#define USE_PHYSICAL_COUNTER@//#define USE_PHYSICAL_COUNTER@' ./include/circle/sysconfig.h
 perl -pi -e 's@//#define SAVE_VFP_REGS_ON_IRQ@#define SAVE_VFP_REGS_ON_IRQ@' ./include/circle/sysconfig.h
 else
-patch -p1 < ../../../../circle_patch.diff
+patch -N -p1 < ../../../../circle_patch.diff
 fi
 
 echo ==============================================================
@@ -73,19 +73,19 @@ cd $SRC_DIR/third_party/circle-stdlib
 
 if [ "$BOARD" = "pi2" ]
 then
-cat ../../circle_stdlib_patch.diff  | sed 's/-std=c++14//' | patch -p1
+cat ../../circle_stdlib_patch.diff  | sed 's/-std=c++14//' | patch -N -p1
 ./configure --raspberrypi=2
 elif [ "$BOARD" = "pi0" ]
 then
-cat ../../circle_stdlib_patch.diff | patch -p1
+cat ../../circle_stdlib_patch.diff | patch -N -p1
 ./configure --raspberrypi=1
 elif [ "$BOARD" = "pi3" ]
 then
-cat ../../circle_stdlib_patch.diff  | patch -p1
+cat ../../circle_stdlib_patch.diff  | patch -N -p1
 ./configure --raspberrypi=3
 elif [ "$BOARD" = "pi4" ]
 then
-cat ../../circle_stdlib_patch.diff  | patch -p1
+cat ../../circle_stdlib_patch.diff  | patch -N -p1
 ./configure --raspberrypi=4
 else
 echo "I don't know what to do for $BOARD"

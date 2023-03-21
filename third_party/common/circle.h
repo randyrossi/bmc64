@@ -112,6 +112,10 @@
 #define BTN_ASSIGN_RESET_MENU 29
 #define BTN_ASSIGN_FLUSH_DISK 30
 
+// For devices without external volume control
+#define BTN_ASSIGN_VOLUME_UP 100
+#define BTN_ASSIGN_VOLUME_DOWN 101
+
 // These are intermediate values not meant to
 // be directly assigned to buttons. Never used as
 // an index into anything.

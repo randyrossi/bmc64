@@ -109,7 +109,7 @@ static void calc_popped(struct menu_item *new_root,
     tmp_item = ui_menu_add_button(MENU_TEXT, root, "");
     sprintf(tmp_item->name, "Actual fps = %f", fps);
   } else {
-    ui_error("FPS OUT OF RANGE!");
+    ui_error("OUT OF RANGE: %f", fps);
   }
 
   hdmi_timing_count = 0;

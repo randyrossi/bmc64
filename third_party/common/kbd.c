@@ -453,6 +453,14 @@ void emu_key_released(long key) {
     return;
   }
 
+  if (key == KEYCODE_F10) {
+    emu_quick_func_interrupt(BTN_ASSIGN_VOLUME_DOWN);
+  }
+
+  if (key == KEYCODE_F11) {
+    emu_quick_func_interrupt(BTN_ASSIGN_VOLUME_UP);
+  }
+
   // Intercept keys meant to become joystick values
   if (joydevs[0].device == JOYDEV_NUMS_1 ||
       joydevs[0].device == JOYDEV_NUMS_2 ||
