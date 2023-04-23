@@ -315,7 +315,7 @@ void emux_drive_change_model(int unit) {
     strcat(item->displayed_value, " (*)");
   }
 
-  static int num_supported_drives = 12;
+  static int num_supported_drives = 13;
   static int supported_drives[] = {
      DRIVE_TYPE_1541,
      DRIVE_TYPE_1541II,
@@ -329,6 +329,7 @@ void emux_drive_change_model(int unit) {
      DRIVE_TYPE_1001,
      DRIVE_TYPE_8050,
      DRIVE_TYPE_8250,
+     DRIVE_TYPE_CMDHD,
   };
 
   static const char* drive_labels[] = {
@@ -344,6 +345,7 @@ void emux_drive_change_model(int unit) {
      "1001",
      "8050",
      "8250",
+     "CMDHD",
   };
 
   for (int i = 0 ; i < num_supported_drives; i++) {
@@ -444,6 +446,48 @@ void emux_add_drive_option(struct menu_item* root, int drive) {
   resources_get_int_sprintf("Drive%iRAMA000", &tmp, drive);
   ui_menu_add_toggle(MENU_DRIVE_RAM_A000, parent, "RAM A000", tmp)
      ->sub_id = drive;
+
+  int button;
+  switch (drive) {
+     case 8:
+        id = MENU_CMDHD_MODE_8;
+        button = drive_get_button(0);
+        break;
+     case 9:
+        id = MENU_CMDHD_MODE_9;
+        button = drive_get_button(1);
+        break;
+     case 10:
+        id = MENU_CMDHD_MODE_10;
+        button = drive_get_button(2);
+        break;
+     case 11:
+        id = MENU_CMDHD_MODE_11;
+        button = drive_get_button(3);
+        break;
+     default:
+        id = MENU_CMDHD_MODE_8;
+        button = drive_get_button(0);
+        break;
+  }
+
+  if (button == 1) {
+     index = 2; // Configuration
+  } else if (button == 6) {
+     index = 1; // Initialization
+  } else {
+     index = 0; // Normal
+  }
+
+  child = ui_menu_add_multiple_choice(id, parent, "CMDHD Mode");
+  child->num_choices = 3;
+  child->value = index;
+  strcpy(child->choices[0], "Normal");
+  strcpy(child->choices[1], "Initialization");
+  strcpy(child->choices[2], "Configuration");
+  child->choice_ints[0] = 0; // all switches off
+  child->choice_ints[1] = 6; // swap8 and swap9 on
+  child->choice_ints[2] = 1; // write protect on
 }
 
 void emux_create_disk(struct menu_item* item, fullpath_func f_fullpath) {
@@ -501,6 +545,10 @@ void emux_create_disk(struct menu_item* item, fullpath_func f_fullpath) {
        case MENU_CREATE_X64_FILE:
          image_type = DISK_IMAGE_TYPE_X64;
          strcpy(ext, ".x64");
+         break;
+       case MENU_CREATE_DHD_FILE:
+         image_type = DISK_IMAGE_TYPE_DHD;
+         strcpy(ext, ".dhd");
          break;
        default:
          return;
@@ -856,6 +904,9 @@ void emux_handle_rom_change(struct menu_item* item, fullpath_func f_fullpath) {
      case MENU_DRIVE_ROM_FILE_1581:
        resources_set_string("DosName1581", item->str_value);
        return;
+     case MENU_DRIVE_ROM_FILE_CMDHD:
+       resources_set_string("DosNameCMDHD", item->str_value);
+       return;
      case MENU_KERNAL_FILE:
        resources_set_string("KernalName", item->str_value);
        return;
@@ -951,6 +1002,9 @@ void emux_set_int_1(IntSetting setting, int value, int param) {
      break;
    case Setting_IECDeviceN:
      resources_set_int_sprintf("IECDevice%i", value, param);
+     break;
+   case Setting_DriveNCMDHDMode:
+     drive_cpu_trigger_reset_button(param-8, value);
      break;
    default:
      assert(0);

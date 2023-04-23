@@ -74,6 +74,7 @@ typedef enum {
   Setting_Datasette,
   Setting_DatasetteResetWithCPU,
   Setting_DriveNParallelCable,
+  Setting_DriveNCMDHDMode,
   Setting_DriveNType,
   Setting_DriveSoundEmulation,
   Setting_DriveSoundEmulationVolume,

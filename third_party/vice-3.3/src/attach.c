@@ -269,13 +269,13 @@ const char *file_system_get_disk_name(unsigned int unit)
 int file_system_bam_get_disk_id(unsigned int unit, uint8_t *id)
 {
     //return vdrive_bam_get_disk_id(unit, id);
-    return vdrive_bam_get_disk_id(unit, unit-8, id); // VDRIVE_EFFORT
+    return vdrive_bam_get_disk_id(unit, 0, id); // VDRIVE_EFFORT
 }
 
 int file_system_bam_set_disk_id(unsigned int unit, uint8_t *id)
 {
     //return vdrive_bam_set_disk_id(unit, id);
-    return vdrive_bam_set_disk_id(unit, unit-8, id); // VDRIVE_EFFORT
+    return vdrive_bam_set_disk_id(unit, 0, id); // VDRIVE_EFFORT
 }
 
 /* ------------------------------------------------------------------------- */
@@ -432,22 +432,22 @@ static void detach_disk_image(disk_image_t *image, vdrive_t *floppy,
         case 8:
             machine_drive_image_detach(image, 8);
             drive_image_detach(image, 8);
-            vdrive_detach_image(image, 8, 8-8, floppy); // VDRIVE_EFFORT
+            vdrive_detach_image(image, 8, 0, floppy); // VDRIVE_EFFORT
             break;
         case 9:
             machine_drive_image_detach(image, 9);
             drive_image_detach(image, 9);
-            vdrive_detach_image(image, 9, 9-8, floppy); // VDRIVE_EFFORT
+            vdrive_detach_image(image, 9, 0, floppy); // VDRIVE_EFFORT
             break;
         case 10:
             machine_drive_image_detach(image, 10);
             drive_image_detach(image, 10);
-            vdrive_detach_image(image, 10, 10-8, floppy); // VDRIVE_EFFORT
+            vdrive_detach_image(image, 10, 0, floppy); // VDRIVE_EFFORT
             break;
         case 11:
             machine_drive_image_detach(image, 11);
             drive_image_detach(image, 11);
-            vdrive_detach_image(image, 11, 11-8, floppy); // VDRIVE_EFFORT
+            vdrive_detach_image(image, 11, 0, floppy); // VDRIVE_EFFORT
             break;
     }
     disk_image_close(image);
@@ -543,7 +543,7 @@ static int attach_disk_image(disk_image_t **imgptr, vdrive_t *floppy,
         case 10:
         case 11:
             err = drive_image_attach(image, unit);
-            err &= vdrive_attach_image(image, unit, unit-8, floppy); // VDRIVE_EFFORT
+            err &= vdrive_attach_image(image, unit, 0, floppy); // VDRIVE_EFFORT
             err &= machine_drive_image_attach(image, unit);
             break;
     }

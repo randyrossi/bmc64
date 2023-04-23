@@ -401,6 +401,6 @@ extern int drive_resources_type_init(unsigned int default_type);
 
 extern int drive_has_buttons(unsigned int dnr);
 extern void drive_cpu_trigger_reset_button(unsigned int dnr, unsigned int button);
-extern int drive_get_bitton(unsigned int dnr);
+extern int drive_get_button(unsigned int dnr);
 
 #endif

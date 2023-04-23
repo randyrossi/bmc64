@@ -43,10 +43,10 @@ index affc0f644..8c4d47f03 100644
  
  stub_warning(_getpid)
 diff --git a/libgloss/circle/io.cpp b/libgloss/circle/io.cpp
-index 4c8358738..5598f1c8f 100644
+index 4c8358738..36d93f573 100644
 --- a/libgloss/circle/io.cpp
 +++ b/libgloss/circle/io.cpp
-@@ -1,375 +1,825 @@
+@@ -1,375 +1,1014 @@
  #include "config.h"
  #include <_ansi.h>
  #include <_syslist.h>
@@ -89,8 +89,23 @@ index 4c8358738..5598f1c8f 100644
 +#include <malloc.h>
 +#include <sys/unistd.h>
 +#include <circle/serial.h>
-+
+ 
+-        TFindCurrentEntry mCurrentEntry;
+-        struct dirent mEntry;
+-        unsigned int mFirstRead : 1;
+-        unsigned int mOpen : 1;
 +#include <ff.h>
+ 
+-};
+-
+-namespace
++// For debugging use #define DGB to enable
++#ifdef DBG
++extern "C" {
++int printk (const char *fmt, ...);
++}
++#endif
++
 +
 +// This is a replacement io.cpp specifically for BMC64.
 +// This implementation will sometimes load the entire file
@@ -126,7 +141,7 @@ index 4c8358738..5598f1c8f 100644
 +// will the fatfs system be used to create a new file from the ram.
 +// Again, seeking past the file's current length is not supported.
 +
-+#define MAX_OPEN_FILES 10
++#define MAX_OPEN_FILES 128
 +#define MAX_OPEN_DIRS 10
 +#define READ_BUF_SIZE 1024
 +
@@ -142,31 +157,50 @@ index 4c8358738..5598f1c8f 100644
 + * @return one if the string t occurs at the end of the string s, and zero otherwise
 + */
 +int strend(const char *s, const char *t)
-+{
+ {
+-    struct CircleFile
 +    size_t ls = strlen(s); // find length of s
 +    size_t lt = strlen(t); // find length of t
 +    if (ls >= lt)  // check if t can fit in s
-+    {
+     {
+-    	CircleFile() : mCGlueIO(nullptr) {}
+-    	CGlueIO *mCGlueIO;
+-    };
 +        // point s to where t should start and compare the strings from there
 +        return (0 == memcmp(t, s + (ls - lt), lt));
 +    }
 +    return 0; // t was longer than s
 +}
  
--        TFindCurrentEntry mCurrentEntry;
--        struct dirent mEntry;
--        unsigned int mFirstRead : 1;
--        unsigned int mOpen : 1;
+-    constexpr unsigned int MAX_OPEN_FILES = 20;
+-    constexpr unsigned int MAX_OPEN_DIRS = 20;
 +static void reverse(char *x, int begin, int end) {
 +  char c;
  
+-    CFATFileSystem *circle_fat_fs = nullptr;
 +  if (begin >= end)
 +    return;
-+
+ 
+-    CircleFile fileTab[MAX_OPEN_FILES];
+-    _CIRCLE_DIR dirTab[MAX_OPEN_DIRS];
 +  c = *(x + begin);
 +  *(x + begin) = *(x + end);
 +  *(x + end) = c;
-+
+ 
+-    int FindFreeFileSlot(void)
+-    {
+-    	int slotNr = -1;
+-
+-    	for (auto const& slot: fileTab)
+-    	{
+-    		if (slot.mCGlueIO == nullptr)
+-    		{
+-    			slotNr = &slot - fileTab;
+-    			break;
+-    		}
+-    	}
+-
+-    	return slotNr;
 +  reverse(x, ++begin, --end);
 +}
 +
@@ -203,7 +237,11 @@ index 4c8358738..5598f1c8f 100644
 +struct CirclePath {
 +   CirclePath(const char* p) {
 +      path[0] = '\0';
++      slurpable = 1;
 +
++#ifdef DBG
++      printk("CirclePath %s\n",p);
++#endif
 +      if (p == nullptr) {
 +         return;
 +      }
@@ -212,6 +250,33 @@ index 4c8358738..5598f1c8f 100644
 +      if (len == 0) {
 +         return;
 +      }
++
++      // Don't slurp .DHD files
++      if (len > 4) {
++         if (p[len-4] == '.' && p[len-3] == 'd' && p[len-2] == 'h' && p[len-1] == 'd')
++            slurpable = 0;
++         else if (p[len-4] == '.' && p[len-3] == 'D' && p[len-2] == 'H' && p[len-1] == 'D')
++            slurpable = 0;
++         else {
++            for (int i=len-1;i>=1;i--) {
++               if (p[i] == '.') {
++                   if (i+1 < len && (p[i+1] == 's' || p[i+1] == 'S')) {
++                      int nums=1;
++                      for (int j=i+2;j<len;j++) {
++                         if (p[j] <'0' || p[j] >'9') {
++                            nums = 0; break;
++                         }
++                      }
++                      if (nums) { slurpable = 0; }
++                   }
++                   break;
++               }
++            }
++         }
++      }
++#ifdef DBG
++      printk("%s slurpable %d\n",p,slurpable);
++#endif
 +
 +      if (p[0] == '/') {
 +         // Absolute
@@ -240,15 +305,9 @@ index 4c8358738..5598f1c8f 100644
 +   }
 +
 +   char path[256];
- };
- 
--namespace
--{
--    struct CircleFile
--    {
--    	CircleFile() : mCGlueIO(nullptr) {}
--    	CGlueIO *mCGlueIO;
--    };
++   int slurpable;
++};
++
 +struct CircleFile {
 +  FIL file;
 +  int in_use;
@@ -257,11 +316,13 @@ index 4c8358738..5598f1c8f 100644
 +  char readBuf[READ_BUF_SIZE]; // tmp read buffer
 +  char *contents; // bytes for file in memory
 +  int allocated; // total bytes allocated for in memory file
-+  unsigned size; // total size of file in memory file
++  unsigned int size; // total size of file in memory file
++  unsigned int need_size_for_seek; // do we need real size for fatfs seek?
 +  unsigned position; // current in memory write position
 +  int mode; // remembers mode this file was opened under
 +  int written_to; // at least one write was performed on this file
 +  int fopen_called; // f_open was called and thus f_close needs to be called
++  int slurpable; // inherited from CirclePath
 +};
 +
 +struct CircleDir {
@@ -276,35 +337,16 @@ index 4c8358738..5598f1c8f 100644
 +  int in_use;
 +  struct dirent mEntry;
 +};
- 
--    constexpr unsigned int MAX_OPEN_FILES = 20;
--    constexpr unsigned int MAX_OPEN_DIRS = 20;
++
 +CircleFile fileTab[MAX_OPEN_FILES];
 +CircleDir dirTab[MAX_OPEN_DIRS];
- 
--    CFATFileSystem *circle_fat_fs = nullptr;
++
 +static const char* const VolumeStr[FF_VOLUMES] = {FF_VOLUME_STRS};
 +PARTITION VolToPart[FF_VOLUMES];
- 
--    CircleFile fileTab[MAX_OPEN_FILES];
--    _CIRCLE_DIR dirTab[MAX_OPEN_DIRS];
++
 +void CGlueStdioInit(CSerialDevice *serial) {
 +  g_serial = serial;
- 
--    int FindFreeFileSlot(void)
--    {
--    	int slotNr = -1;
--
--    	for (auto const& slot: fileTab)
--    	{
--    		if (slot.mCGlueIO == nullptr)
--    		{
--    			slotNr = &slot - fileTab;
--    			break;
--    		}
--    	}
--
--    	return slotNr;
++
 +  // Initialize stdio, stderr and stdin
 +  fileTab[0].in_use = 1;
 +  fileTab[1].in_use = 1;
@@ -429,12 +471,15 @@ index 4c8358738..5598f1c8f 100644
 +// freed on error and file.contents nulled.
 +static int slurp_file(CircleFile &file) {
 +  if (file.contents == nullptr) {
++#ifdef DBG
++    printk("Slurping %s\n",file.fname);
++#endif
 +    // Read the entire contents of the file into memory.
 +    file.size = 0;
 +    unsigned total = 0;
 +    if (f_lseek(&file.file, 0) != FR_OK) {
 +       return -1;
-     }
++    }
 +    while (true) {
 +      unsigned int num_read;
 +      if (f_read(&file.file, file.readBuf, READ_BUF_SIZE, &num_read) != FR_OK) {
@@ -460,7 +505,10 @@ index 4c8358738..5598f1c8f 100644
 +      memcpy(file.contents + total, file.readBuf, num_read);
 +      total += num_read;
 +      file.size = total;
-+    }
++#ifdef DBG
++      printk("Slurped %s %d bytes\n",file.fname, file.size);
++#endif
+     }
 +  }
 +  return 0;
  }
@@ -494,15 +542,34 @@ index 4c8358738..5598f1c8f 100644
 +
 +    int result;
 +    if (masked_flags == O_RDONLY) {
++#ifdef DBG
++      printk("Open %s RDONLY\n", file);
++#endif
 +      result = f_open(&newFile.file, circlePath.path, FA_READ);
 +    } else if (masked_flags == O_WRONLY) {
++#ifdef DBG
++      printk("Open %s WRONLY\n", file);
++#endif
 +      result = f_open(&newFile.file, circlePath.path, 
 +         FA_WRITE | FA_CREATE_ALWAYS);
 +    } else {
++#ifdef DBG
++      printk("Open %s RDWRITE\n", file);
++#endif
 +      assert(masked_flags == O_RDWR);
-+      // Note: We open read only because this will be slurped and changed
-+      // in memory.
-+      result = f_open(&newFile.file, circlePath.path, FA_READ);
++      if (circlePath.slurpable) {
++          // Note: We open read only because this will be slurped and changed
++          // in memory below.
++#ifdef DBG
++          printk("Will slurp so open RONLY %s\n", file);
++#endif
++          result = f_open(&newFile.file, circlePath.path, FA_READ);
++      } else {
++#ifdef DBG
++          printk("Will not Slurping %s\n", file);
++#endif
++          result = f_open(&newFile.file, circlePath.path, FA_READ | FA_WRITE);
++      }
 +    }
 +
 +    if (result != FR_OK) {
@@ -514,13 +581,15 @@ index 4c8358738..5598f1c8f 100644
 +    newFile.contents = nullptr;
 +    newFile.position = 0;
 +    newFile.size = 0;
++    newFile.need_size_for_seek = 1;
 +    newFile.allocated = 0;
 +    newFile.mode = masked_flags;
 +    newFile.written_to = 0;
++    newFile.slurpable = circlePath.slurpable;
 +    strcpy(newFile.fname, circlePath.path);
 +
 +    // When file is opened O_RDWR, slurp it into memory.
-+    if (masked_flags == O_RDWR) {
++    if (newFile.slurpable && masked_flags == O_RDWR) {
 +       if (slurp_file(newFile)) {
 +          errno = ENFILE;
 +          return -1;
@@ -545,18 +614,31 @@ index 4c8358738..5598f1c8f 100644
 +extern "C" int _close(int fildes) {
 +  if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
 +    errno = EBADF;
++#ifdef DBG
++    printk("Close EBADF1\n");
++#endif
 +    return -1;
 +  }
 +
 +  CircleFile &file = fileTab[fildes];
++#ifdef DBG
++  printk("Close %s\n", file.fname);
++#endif
 +  if (!file.in_use) {
 +    errno = EBADF;
++#ifdef DBG
++    printk("Close EBADF2%s\n", file.fname);
++#endif
 +    return -1;
 +  }
 +
++  // Slurped?
 +  if (file.contents) {
 +     // Only open if something was actually written to memory
 +     if (file.mode == O_RDWR && file.written_to) {
++#ifdef DBG
++        printk("Need to open %s because we're gonna flush and close\n", file.fname);
++#endif
 +        // Assert FIL is not used
 +        file.fopen_called = 1;
 +        if (f_open(&file.file, file.fname,
@@ -567,11 +649,17 @@ index 4c8358738..5598f1c8f 100644
 +
 +     // Always flush to disk for WRONLY but only if written to for RDRW
 +     if ((file.mode == O_RDWR && file.written_to) || file.mode == O_WRONLY) {
++#ifdef DBG
++        printk("Write back to fs on close %s\n", file.fname);
++#endif
 +        // Dump contents of memory buffer to actual file.
 +        unsigned int num_written;
 +        if (f_write(&file.file, file.contents,
 +                      file.size, &num_written) != FR_OK) {
 +           // Can't write new file or modified file contents back to disk.
++#ifdef DBG
++            printk("trouble writing\n");
++#endif
 +        }
 +     }
 +  }
@@ -580,11 +668,13 @@ index 4c8358738..5598f1c8f 100644
 +
 +  file.allocated = 0;
 +  file.size = 0;
++  file.need_size_for_seek = 1;
 +  file.mode = 0;
 +  file.in_use = 0;
 +  file.written_to = 0;
 +  file.fopen_called = 0;
 +  file.fname[0] = '\0';
++  file.slurpable = 0;
 +
 +  if (file.contents) {
 +    free(file.contents);
@@ -594,9 +684,15 @@ index 4c8358738..5598f1c8f 100644
 +  // If we opened for RDWR but never wrote, nothing do to.
 +  if (need_close && f_close(&file.file) != FR_OK) {
 +    errno = EIO;
++#ifdef DBG
++    printk("Close EIO %s\n", file.fname);
++#endif
 +    return -1;
 +  }
 +
++#ifdef DBG
++  printk("Close OK\n");
++#endif
 +  return 0;
  }
  
@@ -617,6 +713,9 @@ index 4c8358738..5598f1c8f 100644
 +
 +  unsigned int num_read;
 +  if (file.contents == nullptr) {
++#ifdef DBG
++     printk("Fatfs backed read of %d bytes for %s\n",len, file.fname);
++#endif
 +     // Assert file.FIL has been opened
 +     // else EBADF -1
 +
@@ -629,6 +728,9 @@ index 4c8358738..5598f1c8f 100644
 +     file.position += num_read;
 +     return static_cast<int>(num_read);
 +  } else {
++#ifdef DBG
++     printk("Mem backed read of %d bytes for %s\n",len, file.fname);
++#endif
 +     // Read data from our internal buffer
 +     unsigned int max = len;
 +     unsigned int remain = file.size - file.position;
@@ -711,27 +813,44 @@ index 4c8358738..5598f1c8f 100644
 +    return -1;
 +  }
 +
-+  // Mark this dirty so it will be flushed from memory to disk on close
-+  file.written_to = 1;
++  if (file.slurpable) {
++     // Mark this dirty so it will be flushed from memory to disk on close
++     file.written_to = 1;
 +
-+  // Nothing allocated yet? Allocate now.
-+  if (file.contents == nullptr) {
-+     file.allocated = READ_BUF_SIZE;
-+     file.contents = (char *) malloc(file.allocated);
-+  }
++     // Nothing allocated yet? Allocate now.
++     if (file.contents == nullptr) {
++        file.allocated = READ_BUF_SIZE;
++        file.contents = (char *) malloc(file.allocated);
++     }
 +
-+  // Make sure we always have enough room allocated for the
-+  // next write.
-+  while (file.position + len >= file.allocated) {
-+     file.allocated *= 2;
-+     file.contents = (char *)realloc(file.contents, file.allocated);
-+  }
++     // Make sure we always have enough room allocated for the
++     // next write.
++     while (file.position + len >= file.allocated) {
++        file.allocated *= 2;
++        file.contents = (char *)realloc(file.contents, file.allocated);
++     }
 +
-+  // Do the write.
-+  memcpy(file.contents + file.position, ptr, len);
-+  file.position += len;
-+  if (file.position > file.size) {
-+     file.size = file.position;
++     // Do the write.
++     memcpy(file.contents + file.position, ptr, len);
++     file.position += len;
++     if (file.position > file.size) {
++        file.size = file.position;
++     }
++#ifdef DBG
++     printk("Mem backed write for %s %d bytes\n",file.fname,len);
++#endif
++  } else {
++#ifdef DBG
++     printk("fsfat backed write for %s %d bytes\n",file.fname,len);
++#endif
++     unsigned int num_written;
++     if (f_write(&file.file, ptr, len, &num_written) != FR_OK) {
++        // TODO: Can check if we actually wrote intended bytes
++     }
++     file.position += len;
++     if (file.position > file.size) {
++        file.size = file.position;
++     }
 +  }
 +
 +  return len;
@@ -1046,7 +1165,9 @@ index 4c8358738..5598f1c8f 100644
 +    return -1;
 +  }
 +
-+  if (file.mode == O_RDONLY) {
++
++  // Ensure slurped if possible
++  if (file.slurpable && file.mode == O_RDONLY) {
 +    // Assert FIL has been opened
 +    if (slurp_file(file)) {
 +       errno = EACCES;
@@ -1054,19 +1175,87 @@ index 4c8358738..5598f1c8f 100644
 +    }
 +  }
 +
-+  if (dir == SEEK_SET) {
-+    file.position = ptr;
-+  } else if (dir == SEEK_CUR) {
-+    file.position += ptr;
-+  } else if (dir == SEEK_END) {
-+    file.position = file.size + ptr;
++  if (file.contents) {
++#ifdef DBG
++     printk("Seeking a slurped file\n");
++#endif
++     // If we've slurped, we can seek anywhere
++     if (dir == SEEK_SET) {
++#ifdef DBG
++       printk("SEEK SET %d\n",ptr);
++#endif
++       file.position = ptr;
++     } else if (dir == SEEK_CUR) {
++#ifdef DBG
++       printk("SEEK CUR %d\n",ptr);
++#endif
++       file.position += ptr;
++     } else if (dir == SEEK_END) {
++#ifdef DBG
++       printk("SEEK END %d\n",ptr);
++#endif
++       file.position = file.size + ptr;
++     } else {
++       errno = EINVAL;
++       return -1;
++     }
++#ifdef DBG
++     printk("POS NOW %d\n",file.position);
++#endif
++     assert(file.position >= 0 && file.position <= file.size);
 +  } else {
-+    errno = EINVAL;
-+    return -1;
-+  }
++     // If not...
++#ifdef DBG
++     printk("Seeking a fatfs file\n");
++#endif
++     if (dir == SEEK_SET) {
++#ifdef DBG
++       printk("SEEK SET %d\n",ptr);
++#endif
++       file.position = ptr;
++     } else if (dir == SEEK_CUR) {
++#ifdef DBG
++       printk("SEEK CUR %d\n",ptr);
++#endif
++       file.position += ptr;
++     } else if (dir == SEEK_END) {
++#ifdef DBG
++       printk("SEEK END %d\n",ptr);
++#endif
++       if (file.need_size_for_seek) {
++#ifdef DBG
++          printk("Need file size\n");
++#endif
++          struct stat st;
++          if(_fstat(fildes, &st) < 0) {
++             errno = EBADF;
++             return -1;
++          }
++#ifdef DBG
++          printk("Got file size %d\n", st.st_size);
++#endif
++          file.size = st.st_size;
++          file.need_size_for_seek = 0;
++       }
++       file.position = file.size + ptr;
++#ifdef DBG
++       printk("POS NOW %d\n",file.position);
++#endif
++     } else {
++       errno = EINVAL;
++       return -1;
++     }
 +
-+  // Bail
-+  assert(file.position >= 0 && file.position <= file.size);
++     // Now use ff seek
++     if (f_lseek(&file.file, file.position) != FR_OK) {
++       errno = EACCES;
++       return -1;
++     }
++
++     if (file.position >= file.size) {
++         file.size = file.position;
++     }
++  }
 +
 +  return file.position;
 +}

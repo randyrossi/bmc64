@@ -194,10 +194,10 @@ static char usb_y_name[MAX_USB_DEVICES][16];
 static char usb_x_t_name[MAX_USB_DEVICES][16];
 static char usb_y_t_name[MAX_USB_DEVICES][16];
 
-const int num_disk_ext = 14;
-static char disk_filt_ext[14][5] = {".d64", ".d67", ".d71", ".d80", ".d81",
+const int num_disk_ext = 15;
+static char disk_filt_ext[15][5] = {".d64", ".d67", ".d71", ".d80", ".d81",
                                     ".d82", ".d1m", ".d2m", ".d4m", ".g64",
-                                    ".g71", ".g41", ".p64", ".x64"};
+                                    ".g71", ".g41", ".p64", ".x64", ".dhd"};
 
 const int num_tape_ext = 2;
 static char tape_filt_ext[2][5] = {".t64", ".tap"};
@@ -575,6 +575,7 @@ static void drive_change_rom() {
   item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1551, root, "1551...");
   item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1571, root, "1571...");
   item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1581, root, "1581...");
+  item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_CMDHD, root, "CMDHD...");
 }
 
 static void ui_set_hotkeys() {
@@ -1505,6 +1506,7 @@ static void select_file(struct menu_item *item) {
      case MENU_DRIVE_ROM_FILE_1551:
      case MENU_DRIVE_ROM_FILE_1571:
      case MENU_DRIVE_ROM_FILE_1581:
+     case MENU_DRIVE_ROM_FILE_CMDHD:
        emux_handle_rom_change(item, fullpath);
        // Two pops necessary here.
        ui_pop_menu();
@@ -1627,7 +1629,7 @@ static void select_file(struct menu_item *item) {
 
   // Handle creating empty disk
   else if (item->id >= MENU_CREATE_D64_FILE &&
-           item->id <= MENU_CREATE_X64_FILE) {
+           item->id <= MENU_CREATE_DHD_FILE) {
     emux_create_disk(item, fullpath);
   }
 
@@ -1658,6 +1660,7 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
   case MENU_CREATE_G71_FILE:
   case MENU_CREATE_P64_FILE:
   case MENU_CREATE_X64_FILE:
+  case MENU_CREATE_DHD_FILE:
     return DIR_DISKS;
   case MENU_TAPE_FILE:
   case MENU_CREATE_TAP_FILE:
@@ -1729,6 +1732,7 @@ static void relist_files_after_dir_change(struct menu_item *item) {
   case MENU_CREATE_G71_FILE:
   case MENU_CREATE_P64_FILE:
   case MENU_CREATE_X64_FILE:
+  case MENU_CREATE_DHD_FILE:
     show_files(DIR_DISKS, FILTER_DISK, item->id, 1);
     break;
   case MENU_TAPE_FILE:
@@ -2130,6 +2134,7 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_IECDIR_8:
   case MENU_DRIVE_CHANGE_MODEL_8:
   case MENU_PARALLEL_8:
+  case MENU_CMDHD_MODE_8:
     unit = 8;
     break;
   case MENU_ATTACH_DISK_9:
@@ -2137,6 +2142,7 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_IECDIR_9:
   case MENU_DRIVE_CHANGE_MODEL_9:
   case MENU_PARALLEL_9:
+  case MENU_CMDHD_MODE_9:
     unit = 9;
     break;
   case MENU_ATTACH_DISK_10:
@@ -2144,6 +2150,7 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_IECDIR_10:
   case MENU_DRIVE_CHANGE_MODEL_10:
   case MENU_PARALLEL_10:
+  case MENU_CMDHD_MODE_10:
     unit = 10;
     break;
   case MENU_ATTACH_DISK_11:
@@ -2151,6 +2158,7 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_IECDIR_11:
   case MENU_DRIVE_CHANGE_MODEL_11:
   case MENU_PARALLEL_11:
+  case MENU_CMDHD_MODE_11:
     unit = 11;
     break;
   }
@@ -2229,6 +2237,9 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_CREATE_X64:
     show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_X64_FILE, 0);
     return;
+  case MENU_CREATE_DHD:
+    show_files(DIR_DISKS, FILTER_NONE, MENU_CREATE_DHD_FILE, 0);
+    return;
   case MENU_CREATE_TAP:
     show_files(DIR_TAPES, FILTER_NONE, MENU_CREATE_TAP_FILE, 0);
     return;
@@ -2244,6 +2255,13 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_PARALLEL_10:
   case MENU_PARALLEL_11:
     emux_set_int_1(Setting_DriveNParallelCable,
+       item->choice_ints[item->value], unit);
+    return;
+  case MENU_CMDHD_MODE_8:
+  case MENU_CMDHD_MODE_9:
+  case MENU_CMDHD_MODE_10:
+  case MENU_CMDHD_MODE_11:
+    emux_set_int_1(Setting_DriveNCMDHDMode,
        item->choice_ints[item->value], unit);
     return;
   case MENU_IECDIR_8:
@@ -2272,6 +2290,9 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_DRIVE_CHANGE_ROM_1581:
     show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_1581, 0);
+    return;
+  case MENU_DRIVE_CHANGE_ROM_CMDHD:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_CMDHD, 0);
     return;
   case MENU_ATTACH_TAPE:
     show_files(DIR_TAPES, FILTER_TAPE, MENU_TAPE_FILE, 0);
@@ -3320,6 +3341,7 @@ void build_menu(struct menu_item *root) {
       ui_menu_add_button(MENU_CREATE_G71, parent, "G71...");
       ui_menu_add_button(MENU_CREATE_P64, parent, "P64...");
       ui_menu_add_button(MENU_CREATE_X64, parent, "X64...");
+      //ui_menu_add_button(MENU_CREATE_DHD, parent, "DHD..."); // VICE doesn't do this
   }
 
   parent = emux_add_cartridge_options(root);
