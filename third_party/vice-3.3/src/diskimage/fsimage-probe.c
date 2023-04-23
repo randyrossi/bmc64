@@ -38,6 +38,7 @@
 #include "fsimage.h"
 #include "lib.h"
 #include "log.h"
+#include "machine-drive.h"
 #include "types.h"
 #include "util.h"
 #include "x64.h"
@@ -53,6 +54,7 @@
 #define IS_D1M_LEN(x) (((x) == D1M_FILE_SIZE) || ((x) == D1M_FILE_SIZE_E))
 #define IS_D2M_LEN(x) (((x) == D2M_FILE_SIZE) || ((x) == D2M_FILE_SIZE_E))
 #define IS_D4M_LEN(x) (((x) == D4M_FILE_SIZE) || ((x) == D4M_FILE_SIZE_E))
+
 
 static log_t disk_image_probe_log = LOG_ERR;
 
@@ -667,6 +669,95 @@ static int disk_image_check_for_d4m(disk_image_t *image)
     return 1;
 }
 
+static int disk_image_check_for_dhd(disk_image_t *image)
+{
+    off_t blk = 0;
+    uint8_t sector[512];
+    fsimage_t *fsimage;
+    off_t pos;
+    unsigned char hdmagic[16] = {0x43, 0x4d, 0x44, 0x20, 0x48, 0x44, 0x20, 0x20,
+        0x8d, 0x03, 0x88, 0x8e, 0x02, 0x88, 0xea, 0x60};
+
+    fsimage = image->media.fsimage;
+    image->tracks = 65535;
+
+    blk = util_file_length(fsimage->fd);
+
+    /* only allow blank images to be attached if the CMDHD rom is loaded */
+    if (blk == 0) {
+        if (!machine_drive_rom_check_loaded(DISK_IMAGE_TYPE_DHD)) {
+            goto good;
+        }
+        log_error(disk_image_probe_log,
+                  "Sorry, you can't attach an empty DHD image unless " \
+                  "the CMDHD boot ROM is loaded.");
+        return 0;
+    }
+
+    /* next make sure the file is a multiple of 256 bytes and greater than
+       equal 73728 bytes (which is the smallest possible running DHD image */
+    /* we used to look for multiples of 512 bytes, but writes of 256 bytes
+       to expanding images in vdrive might make this fail. */
+    /* FIXME: perhaps this can be made more strict to prevent false positives? */
+    if ((blk % 256 != 0) || ( blk < 73728 )) {
+        return 0;
+    }
+
+    /* since the size check(s) are weak, check CRT header to prevent CRT files
+       being detected as DHD images (bug #1489). having a crt header at the start
+       of a DHD container seems unlikely enough for this to work fine. */
+
+/*
+    BMC64 - Removing this check as this function is not available for all
+    emulators in 3.3. Could run into this bug.
+    if (crt_getid(image->media.fsimage->name) >= 0) {
+        log_error(disk_image_probe_log, "trying to attach a CRT file as DHD image, aborting.");
+        return 0;
+    }
+*/
+    /* FIXME: perhaps other headers (g64, t64, p64...) need to be checked here */
+
+    /* if the CMDHD rom is loaded, allow it regardless */
+    if (!machine_drive_rom_check_loaded(DISK_IMAGE_TYPE_DHD)) {
+        goto good;
+    }
+
+    /* at this point, make sure the image is good for vdrive */
+
+    /* look for configuration block */
+    rewind(fsimage->fd);
+    /* start at LBA 2 or 1024 */
+    pos = 1024;
+
+    while ( pos < blk ) {
+        if (fseeko(fsimage->fd, pos, SEEK_SET)) {
+            /* hit the end of file */
+            break;
+        }
+        if (fread(sector, 512, 1, fsimage->fd) != 1) {
+            /* hit the end of file */
+            break;
+        }
+        /* otherwise check the cmd sig */
+        if ( memcmp(&(sector[0x1f0]), hdmagic, 16) == 0 ) {
+            goto good;
+        }
+        /* try next 128 sectors of 64 KiB bytes */
+        pos += 65536;
+    }
+    /* hit the end of file */
+
+    /* no good */
+    return 0;
+
+good:
+    /* image is allowed */
+    image->type = DISK_IMAGE_TYPE_DHD;
+    image->max_half_tracks = 0;
+
+    disk_image_check_log(image, "DHD");
+    return 1;
+}
 
 int fsimage_probe(disk_image_t *image)
 {
@@ -704,6 +795,9 @@ int fsimage_probe(disk_image_t *image)
         return 0;
     }
     if (disk_image_check_for_d4m(image)) {
+        return 0;
+    }
+    if (disk_image_check_for_dhd(image)) {
         return 0;
     }
 

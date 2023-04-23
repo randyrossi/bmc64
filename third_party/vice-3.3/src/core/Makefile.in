@@ -108,10 +108,11 @@ am__v_AR_1 =
 libcore_a_AR = $(AR) $(ARFLAGS)
 libcore_a_LIBADD =
 am_libcore_a_OBJECTS = ata.$(OBJEXT) ciacore.$(OBJEXT) \
-	ciatimer.$(OBJEXT) cs8900.$(OBJEXT) flash040core.$(OBJEXT) \
-	fmopl.$(OBJEXT) mc6821core.$(OBJEXT) m93c86.$(OBJEXT) \
-	riotcore.$(OBJEXT) ser-eeprom.$(OBJEXT) spi-sdcard.$(OBJEXT) \
-	t6721.$(OBJEXT) tpicore.$(OBJEXT) viacore.$(OBJEXT)
+	ciatimer.$(OBJEXT) cs8900.$(OBJEXT) i8255a.$(OBJEXT) \
+	flash040core.$(OBJEXT) fmopl.$(OBJEXT) mc6821core.$(OBJEXT) \
+	m93c86.$(OBJEXT) riotcore.$(OBJEXT) scsi.$(OBJEXT) \
+	ser-eeprom.$(OBJEXT) spi-sdcard.$(OBJEXT) t6721.$(OBJEXT) \
+	tpicore.$(OBJEXT) viacore.$(OBJEXT)
 libcore_a_OBJECTS = $(am_libcore_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -407,6 +408,8 @@ libcore_a_SOURCES = \
 	ciatimer.h \
 	cs8900.c \
 	cs8900.h \
+        i8255a.c \
+        i8255a.h \
 	flash040core.c \
 	fmopl.c \
 	fmopl.h \
@@ -415,6 +418,8 @@ libcore_a_SOURCES = \
 	m93c86.c \
 	m93c86.h \
 	riotcore.c \
+	scsi.c \
+	scsi.h \
 	ser-eeprom.c \
 	ser-eeprom.h \
 	spi-sdcard.c \
@@ -478,9 +483,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cs8900.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/flash040core.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fmopl.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/i8255a.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m93c86.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mc6821core.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/riotcore.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scsi.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ser-eeprom.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/spi-sdcard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t6721.Po@am__quote@

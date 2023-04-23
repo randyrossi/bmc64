@@ -177,6 +177,17 @@ int fsimage_check_sector(const disk_image_t *image, unsigned int track,
             }
             sectors = (track - 1) * 256 + sector;
             break;
+        case DISK_IMAGE_TYPE_DHD:
+            /* for DHD images, just assume track/sector can be 16 bits each,
+            which gives us LARGE disks */
+            if (track > 0xffff) {
+               return FSIMAGE_BAD_TRKNUM;
+            }
+            if (sector > 0xffff) {
+                return FSIMAGE_BAD_SECNUM;
+            }
+            sectors = (track - 1) * 65536 + sector;
+            break;
         default:
             return -1;
     }

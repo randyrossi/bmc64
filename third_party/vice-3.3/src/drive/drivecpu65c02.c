@@ -499,6 +499,13 @@ int drivecpu65c02_snapshot_write_module(drive_context_t *drv, snapshot_t *s)
         }
     }
 
+    if (drv->drive->type == DRIVE_TYPE_CMDHD) {
+        if (SMW_BA(m, drv->drive->drive_ram, 0x10000) < 0) {
+            goto fail;
+        }
+    }
+
+
     if (interrupt_write_new_snapshot(cpu->int_status, m) < 0) {
         goto fail;
     }

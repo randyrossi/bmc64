@@ -27,6 +27,7 @@
 #ifndef VICE_DISKIMAGE_H
 #define VICE_DISKIMAGE_H
 
+#include <sys/types.h>
 #include "types.h"
 
 #define D64_FILE_SIZE_35   174848        /* D64 image, 35 tracks */
@@ -71,6 +72,7 @@
 #define DISK_IMAGE_TYPE_D1M 1000
 #define DISK_IMAGE_TYPE_D2M 2000
 #define DISK_IMAGE_TYPE_D4M 4000
+#define DISK_IMAGE_TYPE_DHD 4844
 
 struct fsimage_s;
 struct rawimage_s;
@@ -87,6 +89,7 @@ struct disk_image_s {
     unsigned int device;
     unsigned int type;
     unsigned int tracks;
+    unsigned int sectors;
     unsigned int max_half_tracks;
     struct gcr_s *gcr;
     struct TP64Image *p64;
@@ -108,6 +111,7 @@ extern void disk_image_fsimage_name_set(disk_image_t *image, const char *name);
 extern const char *disk_image_fsimage_name_get(const disk_image_t *image);
 extern void *disk_image_fsimage_fd_get(const disk_image_t *image);
 extern int disk_image_fsimage_create(const char *name, unsigned int type);
+extern int disk_image_fsimage_create_dxm(const char *name, const char *diskname, unsigned int type);
 
 extern void disk_image_rawimage_name_set(disk_image_t *image, const char *name);
 extern void disk_image_rawimage_driver_name_set(disk_image_t *image);
@@ -146,5 +150,6 @@ extern void disk_image_attach_log(const disk_image_t *image, signed int lognum,
                                   unsigned int unit);
 extern void disk_image_detach_log(const disk_image_t *image, signed int lognum,
                                   unsigned int unit);
+extern off_t disk_image_size(const disk_image_t *image);
 
 #endif

@@ -401,6 +401,23 @@ static void on_drive_reset_clicked(GtkWidget *widget, gpointer data)
     drive_cpu_trigger_reset(GPOINTER_TO_INT(data));
 }
 
+/** \brief  Handler for the 'activate' event of the 'Reset drive \#X in ... mode' item
+ *
+ * Triggers a reset for drive ((int)data + 8).
+ *
+ * \param[in]   widget  menu item triggering the event (unused)
+ * \param[in]   data    drive number (0-3)
+ */
+static void on_drive_reset_config_clicked(GtkWidget *widget, gpointer data)
+{
+#if 0
+    debug_gtk3("Resetting drive %d (button=%d)", ((GPOINTER_TO_INT(data)>>4)&15) + 8,
+       GPOINTER_TO_INT(data) & 15 );
+#endif
+    drive_cpu_trigger_reset_button(((GPOINTER_TO_INT(data)>>4)&15),
+       GPOINTER_TO_INT(data) & 15 );
+}
+
 
 /** \brief Draw the LED associated with some drive's LED state.
  *
@@ -781,6 +798,28 @@ static gboolean ui_do_drive_popup(GtkWidget *widget, GdkEvent *event, gpointer d
     g_signal_connect(drive_menu_item, "activate",
             G_CALLBACK(on_drive_reset_clicked), GINT_TO_POINTER(i));
     gtk_container_add(GTK_CONTAINER(drive_menu), drive_menu_item);
+
+    /* Add reset to configuration mode for CMD HDs */
+    if ((drive_has_buttons(i) & 1) == 1) {
+        g_snprintf(buffer, sizeof(buffer),
+                "Reset drive #%d to Configuration Mode", i + 8);
+        drive_menu_item = gtk_menu_item_new_with_label(buffer);
+        g_signal_connect(drive_menu_item, "activate",
+               G_CALLBACK(on_drive_reset_config_clicked),
+               GINT_TO_POINTER((i << 4) + 1));
+        gtk_container_add(GTK_CONTAINER(drive_menu), drive_menu_item);
+    }
+    /* Add reset to installation mode for CMD HDs */
+    if ((drive_has_buttons(i) & 6) == 6) {
+        g_snprintf(buffer, sizeof(buffer),
+                "Reset drive #%d to Installation Mode", i + 8);
+        drive_menu_item = gtk_menu_item_new_with_label(buffer);
+        g_signal_connect(drive_menu_item, "activate",
+               G_CALLBACK(on_drive_reset_config_clicked),
+               GINT_TO_POINTER((i << 4) + 6));
+        gtk_container_add(GTK_CONTAINER(drive_menu), drive_menu_item);
+    }
+
 
     gtk_widget_show_all(drive_menu);
     /* 3.22 isn't available on the latest stable version of all

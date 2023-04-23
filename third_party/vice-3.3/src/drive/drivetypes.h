@@ -163,6 +163,7 @@ struct tpi_context_s;
 struct via_context_s;
 struct pc8477_s;
 struct wd1770_s;
+struct cmdhd_context_s;
 
 typedef struct drive_context_s {
     int mynumber;         /* init to [0123] */
@@ -183,6 +184,7 @@ typedef struct drive_context_s {
     struct tpi_context_s *tpid;
     struct pc8477_s *pc8477;
     struct wd1770_s *wd1770;
+    struct cmdhd_context_s *cmdhd;
 } drive_context_t;
 
 #endif

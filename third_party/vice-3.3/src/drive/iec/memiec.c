@@ -40,6 +40,7 @@
 #include "wd1770.h"
 #include "via4000.h"
 #include "pc8477.h"
+#include "cmdhd.h"
 
 static uint8_t drive_read_rom(drive_context_t *drv, uint16_t address)
 {
@@ -172,6 +173,13 @@ void memiec_init(struct drive_context_s *drv, unsigned int type)
         /* for performance reasons it's only this page */
         drivemem_set_func(cpud, 0xf0, 0xf1, drive_read_rom_ds1216, NULL, NULL, &drv->drive->trap_rom[0x7000], 0x8000fffd);
         break;
+    case DRIVE_TYPE_CMDHD:
+        drv->cpu->pageone = drv->drive->drive_ram + 0x100;
+        drivemem_set_func(cpud, 0x00, 0x01, drive_read_zero, drive_store_zero, NULL, drv->drive->drive_ram, 0x00003ffd);
+        drivemem_set_func(cpud, 0x01, 0x40, drive_read_ram, drive_store_ram, NULL, &drv->drive->drive_ram[0x0100], 0x00003ffd);
+        /* CMDHD uses a lot of weird registers to mamage the memory above 0x4000
+        so the granularity here doesn't work. We just group it all together */
+        drivemem_set_func(cpud, 0x40, 0x100, cmdhd_read, cmdhd_store, NULL, NULL, 0x0000fffd);
     default:
         return;
     }

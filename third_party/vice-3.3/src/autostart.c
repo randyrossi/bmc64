@@ -651,7 +651,7 @@ static void disk_eof_callback(void)
         /* FIXME: shouldnt this loop over all drives? */
         if (orig_drive_true_emulation_state) {
             log_message(autostart_log, "Turning true drive emulation on.");
-            if (vdrive_bam_get_disk_id(8, id) == 0) {
+            if (vdrive_bam_get_disk_id(8, 8-8, id) == 0) { // VDRIVE_EFFORT
                 vdrive_get_last_read(&track, &sector, &buffer);
             }
         }

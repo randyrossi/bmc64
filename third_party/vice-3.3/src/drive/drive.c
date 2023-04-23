@@ -194,6 +194,7 @@ int drive_init(void)
         machine_drive_port_default(drive_context[dnr]);
 
         if (drive_check_type(drive->type, dnr) < 1) {
+printf ("RANDY **********************************\n");
             resources_set_int_sprintf("Drive%iType", DRIVE_TYPE_NONE, dnr + 8);
         }
 
@@ -241,7 +242,8 @@ int drive_init(void)
 
         rotation_init((drive->clock_frequency == 2) ? 1 : 0, dnr);
 
-        if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000) {
+        if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000 ||
+            drive->type == DRIVE_TYPE_CMDHD) {
             drivecpu65c02_init(drive_context[dnr], drive->type);
         } else {
             drivecpu_init(drive_context[dnr], drive->type);
@@ -269,7 +271,8 @@ void drive_shutdown(void)
     }
 
     for (dnr = 0; dnr < DRIVE_NUM; dnr++) {
-        if (drive_context[dnr]->drive->type == DRIVE_TYPE_2000 || drive_context[dnr]->drive->type == DRIVE_TYPE_4000) {
+        if (drive_context[dnr]->drive->type == DRIVE_TYPE_2000 || drive_context[dnr]->drive->type == DRIVE_TYPE_4000 ||
+            drive_context[dnr]->drive->type == DRIVE_TYPE_CMDHD) {
             drivecpu65c02_shutdown(drive_context[dnr]);
         } else {
             drivecpu_shutdown(drive_context[dnr]);
@@ -311,6 +314,7 @@ void drive_set_active_led_color(unsigned int type, unsigned int dnr)
             break;
         case DRIVE_TYPE_2000:   /* red power, green activity, red error, horizontal, line */
         case DRIVE_TYPE_4000:   /* red power, green activity, red error, horizontal, line */
+        case DRIVE_TYPE_CMDHD:   /* red power, green activity, red error, horizontal, line */
             drive_led_color[dnr] = DRIVE_LED1_GREEN | DRIVE_LED2_RED;
             break;
         case DRIVE_TYPE_2040:   /* red drive1, red power, red drive2, horizontal, round */
@@ -347,7 +351,8 @@ int drive_set_disk_drive_type(unsigned int type, struct drive_context_s *drv)
 
     rotation_init(0, dnr);
     drive->type = type;
-    if (type == DRIVE_TYPE_2000 || type == DRIVE_TYPE_4000) {
+    if (type == DRIVE_TYPE_2000 || type == DRIVE_TYPE_4000 ||
+        type == DRIVE_TYPE_CMDHD) {
         drivecpu65c02_setup_context(drv, 0);
     } else {
         drivecpu_setup_context(drv, 0);
@@ -369,7 +374,8 @@ int drive_set_disk_drive_type(unsigned int type, struct drive_context_s *drv)
         drive1->drive0 = NULL;
     }
 
-    if (type == DRIVE_TYPE_2000 || type == DRIVE_TYPE_4000) {
+    if (type == DRIVE_TYPE_2000 || type == DRIVE_TYPE_4000 ||
+        type == DRIVE_TYPE_CMDHD) {
         drivecpu65c02_init(drv, type);
     } else {
         drivecpu_init(drv, type);
@@ -445,7 +451,8 @@ int drive_enable(drive_context_t *drv)
     /* resync */
     drv->cpu->stop_clk = *(drv->clk_ptr);
 
-    if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000) {
+    if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000 ||
+        drive->type == DRIVE_TYPE_CMDHD) {
         drivecpu65c02_wake_up(drv);
     } else {
         drivecpu_wake_up(drv);
@@ -471,7 +478,8 @@ void drive_disable(drive_context_t *drv)
     resources_get_int("DriveTrueEmulation", &drive_true_emulation);
 
     if (rom_loaded) {
-        if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000) {
+        if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000 ||
+            drive->type == DRIVE_TYPE_CMDHD) {
             drivecpu65c02_sleep(drv);
         } else {
             drivecpu_sleep(drv);
@@ -516,7 +524,7 @@ void drive_cpu_prevent_clk_overflow_all(CLOCK sub)
 void drive_cpu_trigger_reset(unsigned int dnr)
 {
     drive_t *drive = drive_context[dnr]->drive;
-    if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000) {
+    if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000 || drive->type == DRIVE_TYPE_CMDHD) {
         drivecpu65c02_trigger_reset(dnr);
     } else {
         drivecpu_trigger_reset(dnr);
@@ -532,7 +540,7 @@ void drive_reset(void)
     for (dnr = 0; dnr < DRIVE_NUM; dnr++) {
         drive = drive_context[dnr]->drive;
 
-        if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000) {
+        if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000 || drive->type == DRIVE_TYPE_CMDHD) {
             drivecpu65c02_reset(drive_context[dnr]);
         } else {
             drivecpu_reset(drive_context[dnr]);
@@ -876,4 +884,29 @@ void drive_setup_context(void)
         drive_context[dnr] = lib_calloc(1, sizeof(drive_context_t));
         drive_setup_context_for_drive(drive_context[dnr], dnr);
     }
+}
+
+int drive_has_buttons(unsigned int dnr)
+{
+    drive_t *drive = drive_context[dnr]->drive;
+    if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000) {
+        return 8; /* single swap */
+    } else if (drive->type == DRIVE_TYPE_CMDHD) {
+        return 1 | 2 | 4; /* write protect, swap 8, swap 9 */
+    }
+
+    return 0;
+}
+
+void drive_cpu_trigger_reset_button(unsigned int dnr, unsigned int button)
+{
+    drive_t *drive = drive_context[dnr]->drive;
+    drive->button = button;
+    drive_cpu_trigger_reset(dnr);
+}
+
+int drive_get_button(unsigned int dnr)
+{
+    drive_t *drive = drive_context[dnr]->drive;
+    return drive->button;
 }

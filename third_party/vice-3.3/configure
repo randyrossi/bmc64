@@ -710,8 +710,6 @@ JOY_LIBS
 DYNLIB_LIBS
 MAKE_BINDIST_FALSE
 MAKE_BINDIST_TRUE
-HAVE_TRANSLATION_FALSE
-HAVE_TRANSLATION_TRUE
 SUPPORT_CMDLINE_TOOLS_FALSE
 SUPPORT_CMDLINE_TOOLS_TRUE
 UNIX_MACOSX_COMPILE_FALSE
@@ -722,8 +720,6 @@ BEOS_COMPILE_FALSE
 BEOS_COMPILE_TRUE
 OS2_COMPILE_FALSE
 OS2_COMPILE_TRUE
-MSDOS_COMPILE_FALSE
-MSDOS_COMPILE_TRUE
 WIN32_COMPILE_FALSE
 WIN32_COMPILE_TRUE
 SYLLABLE_COMPILE_FALSE
@@ -754,6 +750,10 @@ UNIX_SKYOS_COMPILE_FALSE
 UNIX_SKYOS_COMPILE_TRUE
 UNIX_COMPILE_FALSE
 UNIX_COMPILE_TRUE
+HAVE_TRANSLATION_FALSE
+HAVE_TRANSLATION_TRUE
+MSDOS_COMPILE_FALSE
+MSDOS_COMPILE_TRUE
 RASPI_LITE_FALSE
 RASPI_LITE_TRUE
 RASPI_COMPILE_FALSE
@@ -14307,6 +14307,38 @@ _ACEOF
 
 dynlib_support=no
 DYNLIB_LIBS=
+ if false; then
+  RASPI_COMPILE_TRUE=
+  RASPI_COMPILE_FALSE='#'
+else
+  RASPI_COMPILE_TRUE='#'
+  RASPI_COMPILE_FALSE=
+fi
+
+ if false; then
+  RASPI_LITE_TRUE=
+  RASPI_LITE_FALSE='#'
+else
+  RASPI_LITE_TRUE='#'
+  RASPI_LITE_FALSE=
+fi
+
+ if false; then
+  MSDOS_COMPILE_TRUE=
+  MSDOS_COMPILE_FALSE='#'
+else
+  MSDOS_COMPILE_TRUE='#'
+  MSDOS_COMPILE_FALSE=
+fi
+
+ if false; then
+  HAVE_TRANSLATION_TRUE=
+  HAVE_TRANSLATION_FALSE='#'
+else
+  HAVE_TRANSLATION_TRUE='#'
+  HAVE_TRANSLATION_FALSE=
+fi
+
 if test x"$is_unix" = "xyes" -o x"$is_beos" = "xyes"; then
   ac_fn_c_check_header_mongrel "$LINENO" "dlfcn.h" "ac_cv_header_dlfcn_h" "$ac_includes_default"
 if test "x$ac_cv_header_dlfcn_h" = xyes; then :
@@ -22509,6 +22541,22 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${NATIVE_TOOLS_TRUE}" && test -z "${NATIVE_TOOLS_FALSE}"; then
   as_fn_error $? "conditional \"NATIVE_TOOLS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${RASPI_COMPILE_TRUE}" && test -z "${RASPI_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"RASPI_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${RASPI_LITE_TRUE}" && test -z "${RASPI_LITE_FALSE}"; then
+  as_fn_error $? "conditional \"RASPI_LITE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MSDOS_COMPILE_TRUE}" && test -z "${MSDOS_COMPILE_FALSE}"; then
+  as_fn_error $? "conditional \"MSDOS_COMPILE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_TRANSLATION_TRUE}" && test -z "${HAVE_TRANSLATION_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_TRANSLATION\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${RASPI_COMPILE_TRUE}" && test -z "${RASPI_COMPILE_FALSE}"; then

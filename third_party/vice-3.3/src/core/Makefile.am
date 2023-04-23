@@ -13,6 +13,8 @@ libcore_a_SOURCES = \
 	ciatimer.h \
 	cs8900.c \
 	cs8900.h \
+        i8255a.c \
+        i8255a.h \
 	flash040core.c \
 	fmopl.c \
 	fmopl.h \
@@ -21,6 +23,8 @@ libcore_a_SOURCES = \
 	m93c86.c \
 	m93c86.h \
 	riotcore.c \
+	scsi.c \
+	scsi.h \
 	ser-eeprom.c \
 	ser-eeprom.h \
 	spi-sdcard.c \

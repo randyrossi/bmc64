@@ -38,7 +38,7 @@
 #include "via.h"
 #include "types.h"
 #include "serial.h"
-
+#include "drive/iec/cmdhd.h"
 
 #define IECBUS_DEVICE_NONE      0
 #define IECBUS_DEVICE_TRUEDRIVE 1
@@ -248,6 +248,11 @@ static void iecbus_cpu_write_conf1(uint8_t data, CLOCK clock)
                 viacore_signal(drive_context[0]->via4000, VIA_SIG_CA2,
                                iec_old_atn ? 0 : VIA_SIG_RISE);
                 break;
+            case DRIVE_TYPE_CMDHD:
+                viacore_signal(drive_context[0]->cmdhd->via10, VIA_SIG_CA1,
+                               iec_old_atn ? VIA_SIG_RISE : VIA_SIG_FALL);
+                break;
+
             default:
                 viacore_signal(drive_context[0]->via1d1541, VIA_SIG_CA1,
                                iec_old_atn ? 0 : VIA_SIG_RISE);
@@ -258,6 +263,7 @@ static void iecbus_cpu_write_conf1(uint8_t data, CLOCK clock)
         case DRIVE_TYPE_1581:
         case DRIVE_TYPE_2000:
         case DRIVE_TYPE_4000:
+        case DRIVE_TYPE_CMDHD:
             iecbus.drv_bus[8] = (((iecbus.drv_data[8] << 3) & 0x40)
                                  | ((iecbus.drv_data[8] << 6)
                                     & ((iecbus.drv_data[8] | iecbus.cpu_bus) << 3)
@@ -306,6 +312,10 @@ static void iecbus_cpu_write_conf2(uint8_t data, CLOCK clock)
                 viacore_signal(drive_context[1]->via4000, VIA_SIG_CA2,
                                iec_old_atn ? 0 : VIA_SIG_RISE);
                 break;
+            case DRIVE_TYPE_CMDHD:
+                viacore_signal(drive_context[1]->cmdhd->via10, VIA_SIG_CA1,
+                               iec_old_atn ? VIA_SIG_RISE : VIA_SIG_FALL);
+                break;
             default:
                 viacore_signal(drive_context[1]->via1d1541, VIA_SIG_CA1,
                                iec_old_atn ? 0 : VIA_SIG_RISE);
@@ -316,11 +326,13 @@ static void iecbus_cpu_write_conf2(uint8_t data, CLOCK clock)
         case DRIVE_TYPE_1581:
         case DRIVE_TYPE_2000:
         case DRIVE_TYPE_4000:
+        case DRIVE_TYPE_CMDHD:
             iecbus.drv_bus[9] = (((iecbus.drv_data[9] << 3) & 0x40)
                                  | ((iecbus.drv_data[9] << 6)
                                     & ((iecbus.drv_data[9] | iecbus.cpu_bus) << 3)
                                     & 0x80));
             break;
+
         default:
             iecbus.drv_bus[9] = (((iecbus.drv_data[9] << 3) & 0x40)
                                  | ((iecbus.drv_data[9] << 6)
@@ -368,6 +380,10 @@ static void iecbus_cpu_write_conf3(uint8_t data, CLOCK clock)
                         viacore_signal(drive_context[dnr]->via4000, VIA_SIG_CA2,
                                        iec_old_atn ? 0 : VIA_SIG_RISE);
                         break;
+                    case DRIVE_TYPE_CMDHD:
+                        viacore_signal(drive_context[dnr]->cmdhd->via10, VIA_SIG_CA1,
+                                       iec_old_atn ? VIA_SIG_RISE : VIA_SIG_FALL);
+                        break;
                     default:
                         viacore_signal(drive_context[dnr]->via1d1541, VIA_SIG_CA1,
                                        iec_old_atn ? 0 : VIA_SIG_RISE);
@@ -384,6 +400,7 @@ static void iecbus_cpu_write_conf3(uint8_t data, CLOCK clock)
                 case DRIVE_TYPE_1581:
                 case DRIVE_TYPE_2000:
                 case DRIVE_TYPE_4000:
+                case DRIVE_TYPE_CMDHD:
                     iecbus.drv_bus[unit] = (((iecbus.drv_data[unit] << 3) & 0x40)
                                             | ((iecbus.drv_data[unit] << 6)
                                                & ((iecbus.drv_data[unit]

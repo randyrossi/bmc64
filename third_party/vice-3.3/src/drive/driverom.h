@@ -50,6 +50,7 @@ struct snapshot_s;
 #define DRIVE_ROM2040_SIZE            0x2000
 #define DRIVE_ROM3040_SIZE            0x3000
 #define DRIVE_ROM4040_SIZE            0x3000
+#define DRIVE_ROMCMDHD_SIZE           0x4000
 
 extern void driverom_init(void);
 extern void driverom_initialize_traps(struct drive_s *drive);

@@ -76,6 +76,7 @@ static disk_image_type_t disk_image_types[] = {
     { "d1m", DISK_IMAGE_TYPE_D1M },
     { "d2m", DISK_IMAGE_TYPE_D2M },
     { "d4m", DISK_IMAGE_TYPE_D4M },
+    { "dhd", DISK_IMAGE_TYPE_DHD },
     { "g64", DISK_IMAGE_TYPE_G64 },
     { "g71", DISK_IMAGE_TYPE_G71 },
     { "p64", DISK_IMAGE_TYPE_P64 },

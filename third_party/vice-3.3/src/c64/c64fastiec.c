@@ -35,7 +35,7 @@
 #include "iecdrive.h"
 #include "maincpu.h"
 #include "types.h"
-
+#include "drive/iec/cmdhd.h"
 
 /* Fast IEC for C64 with burst mod */
 
@@ -87,6 +87,9 @@ void c64fastiec_fast_cpu_write(uint8_t data)
                 case DRIVE_TYPE_2000:
                 case DRIVE_TYPE_4000:
                     viacore_set_sr(drive_context[dnr]->via4000, data);
+                    break;
+                case DRIVE_TYPE_CMDHD:
+                    viacore_set_sr(drive_context[dnr]->cmdhd->via10, data);
                     break;
             }
         }

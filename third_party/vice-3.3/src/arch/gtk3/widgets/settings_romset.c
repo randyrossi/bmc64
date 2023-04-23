@@ -274,6 +274,7 @@ static const romset_entry_t c64_vic20_drive_roms[] = {
     { "DosName1581",    "1581",     NULL },
     { "DosName2000",    "2000",     NULL },
     { "DosName4000",    "4000",     NULL },
+    { "DosNameCMDHD",   "CMD HD",   NULL },
     { "DosName2031",    "2031",     NULL },
     { "DosName2040",    "2040",     NULL },
     { "DosName3040",    "3040",     NULL },

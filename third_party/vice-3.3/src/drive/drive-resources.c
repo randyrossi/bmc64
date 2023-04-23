@@ -83,9 +83,11 @@ static int set_drive_true_emulation(int val, void *param)
         for (dnr = 0; dnr < DRIVE_NUM; dnr++) {
             drive = drive_context[dnr]->drive;
             drive_disable(drive_context[dnr]);
+#if 0 // VDRIVE_EFFORT
             if (drive->image != NULL) {
-                vdrive_bam_reread_bam(dnr + 8);
+                vdrive_bam_read_bam(dnr + 8);
             }
+#endif
         }
     }
     return 0;
@@ -193,6 +195,7 @@ static int drive_resources_type(int val, void *param)
         case DRIVE_TYPE_1581:
         case DRIVE_TYPE_2000:
         case DRIVE_TYPE_4000:
+        case DRIVE_TYPE_CMDHD:
         case DRIVE_TYPE_2031:
         case DRIVE_TYPE_1001:
         case DRIVE_TYPE_2040:

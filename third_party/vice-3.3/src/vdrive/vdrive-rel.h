@@ -32,12 +32,30 @@
 
 struct vdrive_s;
 
+#define SIDE_SECTORS_MAX 6
+#define SIDE_INDEX_MAX   120
+
+#define OFFSET_NEXT_TRACK  0
+#define OFFSET_NEXT_SECTOR 1
+#define OFFSET_SECTOR_NUM  2
+#define OFFSET_RECORD_LEN  3
+#define OFFSET_SIDE_SECTOR 4
+#define OFFSET_POINTER     16
+
+#define OFFSET_SUPER_254     2
+#define OFFSET_SUPER_POINTER 3
+#define SIDE_SUPER_MAX       126
+
 extern void vdrive_rel_init(void);
-extern int vdrive_rel_open(struct vdrive_s *vdrive, unsigned int secondary, cbmdos_cmd_parse_t *cmd_parse, const uint8_t *name);
+extern int vdrive_rel_open(struct vdrive_s *vdrive, unsigned int secondary, cbmdos_cmd_parse_plus_t *cmd_parse);
 extern int vdrive_rel_position(struct vdrive_s *vdrive, unsigned int channel, unsigned int rec_lo, unsigned int rec_hi, unsigned int position);
 extern int vdrive_rel_read(struct vdrive_s *vdrive, uint8_t *data, unsigned int secondary);
 extern int vdrive_rel_write(struct vdrive_s *vdrive, uint8_t data, unsigned int secondary);
 extern int vdrive_rel_close(struct vdrive_s *vdrive, unsigned int secondary);
 extern void vdrive_rel_listen(struct vdrive_s *vdrive, unsigned int secondary);
+extern void vdrive_rel_scratch(struct vdrive_s *vdrive, unsigned int t, unsigned int s);
+extern int vdrive_rel_setup_ss_buffers(struct vdrive_s *vdrive, unsigned int secondary);
+extern void vdrive_rel_shutdown_ss_buffers(struct vdrive_s *vdrive, unsigned int secondary);
+
 
 #endif

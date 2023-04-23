@@ -204,6 +204,7 @@ int fsimage_read_sector(const disk_image_t *image, uint8_t *buf, const disk_addr
         case DISK_IMAGE_TYPE_D1M:
         case DISK_IMAGE_TYPE_D2M:
         case DISK_IMAGE_TYPE_D4M:
+        case DISK_IMAGE_TYPE_DHD:
             return fsimage_dxx_read_sector(image, buf, dadr);
         case DISK_IMAGE_TYPE_G64:
         case DISK_IMAGE_TYPE_G71:
@@ -241,6 +242,7 @@ int fsimage_write_sector(disk_image_t *image, const uint8_t *buf,
         case DISK_IMAGE_TYPE_D1M:
         case DISK_IMAGE_TYPE_D2M:
         case DISK_IMAGE_TYPE_D4M:
+        case DISK_IMAGE_TYPE_DHD:
             if (fsimage_dxx_write_sector(image, buf, dadr) < 0) {
                 return -1;
             }
@@ -273,3 +275,12 @@ void fsimage_init(void)
     fsimage_p64_init();
     fsimage_probe_init();
 }
+
+off_t fsimage_size(const disk_image_t *image)
+{
+    fsimage_t *fsimage;
+
+    fsimage = image->media.fsimage;
+    return util_file_length(fsimage->fd);
+}
+

@@ -60,6 +60,7 @@ static uint8_t drive_rom1581[DRIVE_ROM1581_SIZE];
 
 static uint8_t drive_rom2000[DRIVE_ROM2000_SIZE];
 static uint8_t drive_rom4000[DRIVE_ROM4000_SIZE];
+static uint8_t drive_romCMDHD[DRIVE_ROMCMDHD_SIZE];
 
 /* If nonzero, the ROM image has been loaded.  */
 static unsigned int rom1540_loaded = 0;
@@ -70,6 +71,7 @@ static unsigned int rom1571_loaded = 0;
 static unsigned int rom1581_loaded = 0;
 static unsigned int rom2000_loaded = 0;
 static unsigned int rom4000_loaded = 0;
+static unsigned int romCMDHD_loaded = 0;
 
 static unsigned int drive_rom1540_size;
 static unsigned int drive_rom1541_size;
@@ -146,6 +148,12 @@ int iecrom_load_4000(void)
             DRIVE_ROM4000_SIZE, DRIVE_ROM4000_SIZE, "4000", DRIVE_TYPE_4000, NULL);
 }
 
+int iecrom_load_CMDHD(void)
+{
+    return driverom_load("DosNameCMDHD", drive_romCMDHD, &romCMDHD_loaded,
+            DRIVE_ROMCMDHD_SIZE, DRIVE_ROMCMDHD_SIZE, "CMDHD", DRIVE_TYPE_CMDHD, NULL);
+}
+
 void iecrom_setup_image(drive_t *drive)
 {
     if (rom_loaded) {
@@ -201,6 +209,8 @@ void iecrom_setup_image(drive_t *drive)
             case DRIVE_TYPE_4000:
                 memcpy(drive->rom, drive_rom4000, DRIVE_ROM4000_SIZE);
                 break;
+            case DRIVE_TYPE_CMDHD:
+                memcpy(drive->rom, drive_romCMDHD, DRIVE_ROMCMDHD_SIZE);
             default:
                 /* NOP */
                 break;
@@ -253,10 +263,15 @@ int iecrom_check_loaded(unsigned int type)
                 return -1;
             }
             break;
+        case DRIVE_TYPE_CMDHD:
+            if (romCMDHD_loaded < 1 && rom_loaded) {
+                return -1;
+            }
+            break;
         case DRIVE_TYPE_ANY:
             if ((!rom1540_loaded && !rom1541_loaded && !rom1541ii_loaded && !rom1570_loaded
                  && !rom1571_loaded && !rom1581_loaded && !rom2000_loaded)
-                && !rom4000_loaded && rom_loaded) {
+                && !rom4000_loaded && !romCMDHD_loaded && rom_loaded) {
                 return -1;
             }
             break;

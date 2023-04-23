@@ -47,6 +47,7 @@
 #include "wd1770.h"
 #include "via4000.h"
 #include "pc8477.h"
+#include "cmdhd.h"
 
 
 /* Pointer to the IEC bus structure.  */
@@ -77,6 +78,7 @@ void iec_drive_init(struct drive_context_s *drv)
     via4000_init(drv);
     wd1770d_init(drv);
     pc8477d_init(drv);
+    cmdhd_init(drv);
 }
 
 void iec_drive_reset(struct drive_context_s *drv)
@@ -114,6 +116,11 @@ void iec_drive_reset(struct drive_context_s *drv)
     } else {
         viacore_disable(drv->via4000);
     }
+    if (drv->drive->type == DRIVE_TYPE_CMDHD ) {
+    /* due to the complexity of the CMD HD memory addressing and IO,
+        we keep the setup of it in separate functions */
+        cmdhd_reset(drv->cmdhd);
+    }
 }
 
 void iec_drive_mem_init(struct drive_context_s *drv, unsigned int type)
@@ -128,6 +135,7 @@ void iec_drive_setup_context(struct drive_context_s *drv)
     cia1581_setup_context(drv);
     via4000_setup_context(drv);
     pc8477_setup_context(drv);
+    cmdhd_setup_context(drv);
 }
 
 void iec_drive_shutdown(struct drive_context_s *drv)
@@ -138,6 +146,7 @@ void iec_drive_shutdown(struct drive_context_s *drv)
     viacore_shutdown(drv->via4000);
     wd1770_shutdown(drv->wd1770);
     pc8477_shutdown(drv->pc8477);
+    cmdhd_shutdown(drv->cmdhd);
 }
 
 void iec_drive_idling_method(unsigned int dnr)
@@ -161,6 +170,7 @@ void iec_drive_rom_load(void)
     iecrom_load_1581();
     iecrom_load_2000();
     iecrom_load_4000();
+    iecrom_load_CMDHD();
 }
 
 void iec_drive_rom_setup_image(unsigned int dnr)
@@ -213,6 +223,11 @@ int iec_drive_snapshot_read(struct drive_context_s *ctxptr,
             return -1;
         }
         break;
+    case DRIVE_TYPE_CMDHD:
+        if (cmdhd_snapshot_read_module(ctxptr->cmdhd, s) < 0) {
+            return -1;
+        }
+        break;
     default:
         break;
     }
@@ -255,6 +270,11 @@ int iec_drive_snapshot_write(struct drive_context_s *ctxptr,
             return -1;
         }
         break;
+    case DRIVE_TYPE_CMDHD:
+        if (cmdhd_snapshot_write_module(ctxptr->cmdhd, s) < 0) {
+            return -1;
+        }
+        break;
     default:
         break;
     }
@@ -264,12 +284,14 @@ int iec_drive_snapshot_write(struct drive_context_s *ctxptr,
 
 int iec_drive_image_attach(struct disk_image_s *image, unsigned int unit)
 {
-    return wd1770_attach_image(image, unit) & pc8477_attach_image(image, unit);
+    return wd1770_attach_image(image, unit) & pc8477_attach_image(image, unit) &
+        cmdhd_attach_image(image, unit);
 }
 
 int iec_drive_image_detach(struct disk_image_s *image, unsigned int unit)
 {
-    return wd1770_detach_image(image, unit) & pc8477_detach_image(image, unit);
+    return wd1770_detach_image(image, unit) & pc8477_detach_image(image, unit) &
+        cmdhd_detach_image(image, unit);
 }
 
 void iec_drive_port_default(struct drive_context_s *drv)

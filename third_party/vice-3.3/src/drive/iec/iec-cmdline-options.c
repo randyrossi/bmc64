@@ -59,6 +59,9 @@ static const cmdline_option_t cmdline_options[] =
     { "-dos4000", SET_RESOURCE, CMDLINE_ATTRIB_NEED_ARGS,
       NULL, NULL, "DosName4000", NULL,
       "<Name>", "Specify name of 4000 DOS ROM image" },
+    { "-dosCMDHD", SET_RESOURCE, CMDLINE_ATTRIB_NEED_ARGS,
+      NULL, NULL, "DosNameCMDHD", NULL,
+      "<Name>", "Specify name of CMD HD Boot ROM image" },
     CMDLINE_LIST_END
 };
 

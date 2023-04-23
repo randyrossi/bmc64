@@ -108,10 +108,11 @@ am__v_AR_1 =
 libdriveiec_a_AR = $(AR) $(ARFLAGS)
 libdriveiec_a_LIBADD =
 am_libdriveiec_a_OBJECTS = cia1571d.$(OBJEXT) cia1581d.$(OBJEXT) \
-	fdd.$(OBJEXT) glue1571.$(OBJEXT) iec-cmdline-options.$(OBJEXT) \
-	iec-resources.$(OBJEXT) iec.$(OBJEXT) iecrom.$(OBJEXT) \
-	memiec.$(OBJEXT) pc8477.$(OBJEXT) via1d1541.$(OBJEXT) \
-	via4000.$(OBJEXT) wd1770.$(OBJEXT)
+	cmdhd.$(OBJEXT) fdd.$(OBJEXT) glue1571.$(OBJEXT) \
+	iec-cmdline-options.$(OBJEXT) iec-resources.$(OBJEXT) \
+	iec.$(OBJEXT) iecrom.$(OBJEXT) memiec.$(OBJEXT) \
+	pc8477.$(OBJEXT) via1d1541.$(OBJEXT) via4000.$(OBJEXT) \
+	wd1770.$(OBJEXT)
 libdriveiec_a_OBJECTS = $(am_libdriveiec_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -451,6 +452,8 @@ libdriveiec_a_SOURCES = \
 	cia1571d.c \
 	cia1581d.c \
 	ciad.h \
+        cmdhd.c \
+        cmdhd.h \
 	fdd.c \
 	fdd.h \
 	glue1571.c \
@@ -523,6 +526,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cia1571d.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cia1581d.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmdhd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fdd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/glue1571.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iec-cmdline-options.Po@am__quote@

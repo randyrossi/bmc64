@@ -29,10 +29,21 @@
 #include <stdio.h>
 
 #include "attach.h"
+#include "diskimage.h"
+#include "drive.h"
 #include "log.h"
+#include "resources.h"
 #include "snapshot.h"
 #include "vdrive-snapshot.h"
 #include "vdrive.h"
+
+/** \brief  Size of a snapshot module name
+ *
+ * len('VDRIVEIMAGE') + 11 (for %i) + 1 = 24
+ * Prepare for dual drives (ie '8:0') -> 32 to be safe
+ */
+#define SNAP_MODNAME_SIZE   32
+
 
 static log_t vdrive_snapshot_log = LOG_ERR;
 
@@ -41,51 +52,65 @@ void vdrive_snapshot_init(void)
     vdrive_snapshot_log = log_open("VDriveSnapshot");
 }
 
-#define SNAP_MAJOR 1
+#define SNAP_MAJOR 2
 #define SNAP_MINOR 0
 
-int vdrive_snapshot_module_write(snapshot_t *s, int start)
+int vdrive_snapshot_module_write(snapshot_t *s)
 {
-    int i;
-    char snap_module_name[14];
+    int i, j, tde;
+    char snap_module_name[SNAP_MODNAME_SIZE];
     snapshot_module_t *m;
     vdrive_t *floppy;
+    disk_image_t *image;
 
-    for (i = start; i <= 11; i++) {
-        floppy = file_system_get_vdrive(i);
-        if (floppy->image != NULL) {
-            sprintf(snap_module_name, "VDRIVEIMAGE%i", i);
-            m = snapshot_module_create(s, snap_module_name, ((uint8_t)SNAP_MAJOR),
-                                       ((uint8_t)SNAP_MINOR));
-            if (m == NULL) {
-                return -1;
+    for (i = 8; i <= 11; i++) {
+        resources_get_int_sprintf("Drive%iTrueEmulation", &tde, i);
+        if (tde == 0) {
+            floppy = file_system_get_vdrive(i);
+            for (j = 0; j <= 3; j++) {
+                image = vdrive_get_image(floppy, j);
+                if (image != NULL) {
+                    snprintf(snap_module_name, SNAP_MODNAME_SIZE, "VDRIVEIMAGE%i", i);
+                    m = snapshot_module_create(s, snap_module_name, ((uint8_t)SNAP_MAJOR),
+                                            ((uint8_t)SNAP_MINOR));
+                    if (m == NULL) {
+                        return -1;
+                    }
+                    snapshot_module_close(m);
+                }
             }
-            snapshot_module_close(m);
         }
     }
     return 0;
 }
 
-int vdrive_snapshot_module_read(snapshot_t *s, int start)
+int vdrive_snapshot_module_read(snapshot_t *s)
 {
     uint8_t major_version, minor_version;
-    int i;
+    int i, j, tde;
     snapshot_module_t *m;
-    char snap_module_name[14];
+    char snap_module_name[SNAP_MODNAME_SIZE];
 
-    for (i = start; i <= 11; i++) {
-        sprintf(snap_module_name, "VDRIVEIMAGE%i", i);
-        m = snapshot_module_open(s, snap_module_name, &major_version, &minor_version);
-        if (m == NULL) {
-            return 0;
-        }
+    for (i = 8; i <= 11; i++) {
+        resources_get_int_sprintf("Drive%iTrueEmulation", &tde, i);
+        if (tde == 0) {
+            for (j = 0; j <= 3; j++) {
+                snprintf(snap_module_name, SNAP_MODNAME_SIZE, "VDRIVEIMAGE%i", i);
+                m = snapshot_module_open(s, snap_module_name, &major_version, &minor_version);
+                if (m == NULL) {
+                    return 0;
+                }
 
-        if (major_version > SNAP_MAJOR || minor_version > SNAP_MINOR) {
-            log_message(vdrive_snapshot_log,
-                        "Snapshot module version (%d.%d) newer than %d.%d.",
-                        major_version, minor_version, SNAP_MAJOR, SNAP_MINOR);
+                /* FIXME: this gives a linker error? */
+                /* if (snapshot_version_is_bigger(major_version, minor_version, SNAP_MAJOR, SNAP_MINOR)) { */
+                if (major_version > SNAP_MAJOR || minor_version > SNAP_MINOR) {
+                    log_message(vdrive_snapshot_log,
+                                "Snapshot module version (%d.%d) newer than %d.%d.",
+                                major_version, minor_version, SNAP_MAJOR, SNAP_MINOR);
+                }
+                snapshot_module_close(m);
+            }
         }
-        snapshot_module_close(m);
     }
     return 0;
 }
