@@ -361,11 +361,28 @@ See 'What to put on the SDCard' for the directory structure expected.
 
 Since v2.4, you can mount up to 3 USB thumb drives and load cartridges, tapes, disks etc from them.  However, keep in mind that if you save your settings with custom kernels or attached cartridges that were loaded from a USB drive, they will not load on boot.  That's because all USB drives are lazy mounted on the first access via any file dialog.  For custom kernels or saved cartridges, it's best to load those from the SD card.
 
+BMC64 cannot mount some USB sticks (especially newer/larger models). If this happens, try a different (possibly lower capacity) stick.
+
 ## IEC Mode (C64/C128 Only)
 
 You can make any drive an IECDevice and select the directory you want to mount from the 'Disks' menu. However, I don't recommend loading programs this way. The SDcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk operations anyway.  It's mostly used for testing purposes.
 
 NOTE: If you select a directory off a USB device (not the SD card), then the IEC drive will not be accessible until you navigate to the USB device in any file dialog at least once.  This is because all USB drives are lazy mounted.  No USB drives are mounted at boot time, only the SD card.
+
+# CMDHD Support
+
+CMDHD drive support was added in v4.1.  You can switch a drive model to CMDHD and mount .DHD images.  However, there are some limitations to be aware of:
+
+1. .DHD files are very slow to attach and parse from SDCards.  If possible, use a USB thumbstick instead. Performance will be much better.
+2. Whenever you attach an image, you must RESET the CMDHD drive by using the Options CMDHD Mode.  Cycle through the options until you reach 'Normal' again (even if you started on Normal).  Please be aware that every time you RESET a CMDHD drive, the emulator will freeze for a period of time.  This makes it looks like it has crashed but it is actually just processing the RESET.  When using SDCard mounted .DHD files, this pause can be quite long.  Again, use a USB thumbstick for more reasonable wait times.
+3. Auto-expanding .DHD files are not supported. You may come across instructions on the web telling you to create a 0 byte .DHD file and then create partitions. This may work on VICE desktop builds, but this will not work with BMC64. Instead, you must pre-allocate the storage space you need. Do this with the dd command like this:
+
+    dd if=/dev/zero of=my.dhd bs=1M count=16
+
+This will create a 16Mb image.  You can then use CREATE SYS and HD-TOOLS.64 to create a partition.  To change the drive mode to 'Initialization' or 'Configuration', use the Options menu. Although creating partitions is possible from BMC64, it is better to prepare your CMDHD disk images using a desktop/laptop VICE installation and then make them available to BMC64 on a USB thumbstick.
+4. Saving snapshots with .DHD disks attached does not work. The emulator will likely crash.
+
+NOTE: Adding CMDHD support is on a best-effort basis as this feature was added in later revisions of VICE and back-ported to BMC64. Not all functions may work as expected.
 
 # Sound
 
