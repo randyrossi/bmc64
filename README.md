@@ -384,6 +384,10 @@ This will create a 16Mb image.  You can then use CREATE SYS and HD-TOOLS.64 to c
 
 NOTE: Adding CMDHD support is on a best-effort basis as this feature was added in later revisions of VICE and back-ported to BMC64. Not all functions may work as expected.
 
+# C64OS Support
+
+C64OS will work with BMC64 from 4.1 onward but only with JiffyDOS kernal replacement installed.  For some reason, the regular kernal hangs on application launches.  This happens on desktop versions of VICE as well so I don't think it's a problem with BMC64 specifically.  If you are able to use C64OS without JiffyDOS on VICE, let me know.
+
 # Sound
 
 The default Sid engine is 'ReSid' which more accurately reproduces the sound chip.
