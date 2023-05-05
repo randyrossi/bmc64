@@ -194,6 +194,8 @@ signed long kbd_arch_keyname_to_keynum(char *keyname) {
     return (long)KEYCODE_SemiColon;
   } else if (KCMP("Home")) {
     return (long)KEYCODE_Home;
+  } else if (KCMP("End")) {
+    return (long)KEYCODE_End;
   } else if (KCMP("Slash") || LEGACY_KCMP("slash")) {
     return (long)KEYCODE_Slash;
   } else if (KCMP("BackSlash")) {
