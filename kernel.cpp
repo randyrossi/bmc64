@@ -57,8 +57,8 @@ static long kbdMatrixKeyCodes[8][8] = {
  {KEYCODE_F5,         KEYCODE_e,         KEYCODE_t, KEYCODE_u, KEYCODE_o, KEYCODE_LeftBracket,  KEYCODE_Equals,       KEYCODE_q},
  {KEYCODE_Insert,     KEYCODE_LeftShift, KEYCODE_x, KEYCODE_v, KEYCODE_n, KEYCODE_Comma,        KEYCODE_Slash,        KEYCODE_Escape},
 };
-#else if defined(RASPI_C128)
-static long kbdMatrixKeyCodes[11][8] = {
+#elif defined(RASPI_C128)
+static long kbdMatrixKeyCodes[8][11] = {
 {KEYCODE_Backspace, KEYCODE_3, KEYCODE_5, KEYCODE_7, KEYCODE_9, KEYCODE_Dash, KEYCODE_Insert, KEYCODE_1, KEYCODE_RightAlt, KEYCODE_Escape, KEYCODE_LeftAlt},
 {KEYCODE_Return, KEYCODE_w, KEYCODE_r, KEYCODE_y, KEYCODE_i, KEYCODE_p, KEYCODE_RightBracket, KEYCODE_BackQuote, KEYCODE_KP8, KEYCODE_KP_Add, KEYCODE_KP0},
 {KEYCODE_Right, KEYCODE_a, KEYCODE_d, KEYCODE_g, KEYCODE_j, KEYCODE_l, KEYCODE_SingleQuote, KEYCODE_Tab, KEYCODE_KP5, KEYCODE_KP_Subtract, KEYCODE_KP_Decimal},
@@ -777,13 +777,13 @@ void CKernel::ScanKeyboard() {
   kbdRestoreState = restore;
 
   // Keyboard scan
-  for (int kbdPA = 0; kbdPA < 8; kbdPA++) {
+  for (int kbdPA = 0; kbdPA < 11; kbdPA++) {
     gpioPins[kbdPA]->SetMode(GPIOModeOutput);
     gpioPins[kbdPA]->Write(LOW);
     circle_sleep(10);
-    for (int kbdPB = 0; kbdPB < 8; kbdPB++) {
+    for (int kbdPB = 0; kbdPB < 11; kbdPB++) {
       // Read PB line
-      int val = gpioPins[kbdPB + 8]->Read();
+      int val = gpioPins[kbdPB + 11]->Read();
 
       // My PA/PB to keycode matrix is transposed and I'm too lazy to fix
       // it. Just swap PB and PA here for the keycode lookup.
