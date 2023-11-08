@@ -45,9 +45,9 @@ static int vol_percent_to_vchiq(int percent) {
 
 // Real keyboard matrix states
 #if defined(RASPI_C128)
-static bool kbdMatrixStates[11][11];
+  static bool kbdMatrixStates[11][11];
 #else
-static bool kbdMatrixStates[8][8];
+  static bool kbdMatrixStates[8][8];
 #endif
 
 // These for translating row/col scans into equivalent keycodes.
@@ -64,14 +64,14 @@ static long kbdMatrixKeyCodes[8][8] = {
 };
 #elif defined(RASPI_C128)
 static long kbdMatrixKeyCodes[8][11] = {
-{KEYCODE_Backspace, 	KEYCODE_3, 	KEYCODE_5, 	KEYCODE_7, 	KEYCODE_9, 	KEYCODE_Dash, 	KEYCODE_Insert, 	KEYCODE_1, 		KEYCODE_RightAlt, 	KEYCODE_Escape, 	KEYCODE_LeftAlt},
-{KEYCODE_Return, 	KEYCODE_w, 	KEYCODE_r, 	KEYCODE_y, 	KEYCODE_i, 	KEYCODE_p, 	KEYCODE_RightBracket, 	KEYCODE_BackQuote, 	KEYCODE_KP8, 		KEYCODE_KP_Add, 	KEYCODE_KP0},
-{KEYCODE_Right, 	KEYCODE_a, 	KEYCODE_d, 	KEYCODE_g, 	KEYCODE_j, 	KEYCODE_l, 	KEYCODE_SingleQuote, 	KEYCODE_Tab, 		KEYCODE_KP5, 		KEYCODE_KP_Subtract, 	KEYCODE_KP_Decimal},
-{KEYCODE_F7, 		KEYCODE_4, 	KEYCODE_6, 	KEYCODE_8, 	KEYCODE_0, 	KEYCODE_Equals, KEYCODE_Home, 		KEYCODE_2, 		KEYCODE_Tab, 		KEYCODE_LeftSuper, 	KEYCODE_Up},
-{KEYCODE_F1, 		KEYCODE_z, 	KEYCODE_c, 	KEYCODE_b, 	KEYCODE_m, 	KEYCODE_Period, KEYCODE_RightShift, 	KEYCODE_Space, 		KEYCODE_KP2, 		KEYCODE_KP_Enter, 	KEYCODE_Down},
-{KEYCODE_F3, 		KEYCODE_s, 	KEYCODE_f, 	KEYCODE_h, 	KEYCODE_k, 	KEYCODE_SemiColon, KEYCODE_BackSlash, 	KEYCODE_LeftControl, 	KEYCODE_KP4, 		KEYCODE_KP6, 		KEYCODE_Left},
-{KEYCODE_F5, 		KEYCODE_e, 	KEYCODE_t, 	KEYCODE_u, 	KEYCODE_o, 	KEYCODE_LeftBracket, KEYCODE_Delete, 	KEYCODE_q, 		KEYCODE_KP7, 		KEYCODE_KP9, 		KEYCODE_Right},
-{KEYCODE_Down, 		KEYCODE_LeftShift, KEYCODE_x, 	KEYCODE_v, 	KEYCODE_n, 	KEYCODE_Comma, 	KEYCODE_Slash, 		KEYCODE_Escape, 	KEYCODE_KP1, 		KEYCODE_KP3, 		KEYCODE_ScrollLock},
+{KEYCODE_Backspace, KEYCODE_3, KEYCODE_5, KEYCODE_7, KEYCODE_9, KEYCODE_Dash, KEYCODE_Insert, KEYCODE_1, KEYCODE_RightAlt, KEYCODE_Escape, KEYCODE_LeftAlt},
+{KEYCODE_Return, KEYCODE_w, KEYCODE_r, KEYCODE_y, KEYCODE_i, KEYCODE_p, KEYCODE_RightBracket, KEYCODE_BackQuote, KEYCODE_KP8, KEYCODE_KP_Add, KEYCODE_KP0},
+{KEYCODE_Right, KEYCODE_a, KEYCODE_d, KEYCODE_g, KEYCODE_j, KEYCODE_l, KEYCODE_SingleQuote, KEYCODE_Tab, KEYCODE_KP5, KEYCODE_KP_Subtract, KEYCODE_KP_Decimal},
+{KEYCODE_F7, KEYCODE_4, KEYCODE_6, KEYCODE_8, KEYCODE_0, KEYCODE_Equals, KEYCODE_Home, KEYCODE_2, KEYCODE_Tab, KEYCODE_LeftSuper, KEYCODE_Up},
+{KEYCODE_F1, KEYCODE_z, KEYCODE_c, KEYCODE_b, KEYCODE_m, KEYCODE_Period, KEYCODE_RightShift, KEYCODE_Space, KEYCODE_KP2, KEYCODE_KP_Enter, KEYCODE_Down},
+{KEYCODE_F3, KEYCODE_s, KEYCODE_f, KEYCODE_h, KEYCODE_k, KEYCODE_SemiColon, KEYCODE_BackSlash, KEYCODE_LeftControl, KEYCODE_KP4, KEYCODE_KP6, KEYCODE_Left},
+{KEYCODE_F5, KEYCODE_e, KEYCODE_t, KEYCODE_u, KEYCODE_o, KEYCODE_LeftBracket, KEYCODE_Delete, KEYCODE_q, KEYCODE_KP7, KEYCODE_KP9, KEYCODE_Right},
+{KEYCODE_Down, KEYCODE_LeftShift, KEYCODE_x, KEYCODE_v, KEYCODE_n, KEYCODE_Comma, KEYCODE_Slash, KEYCODE_Escape, KEYCODE_KP1, KEYCODE_KP3, KEYCODE_ScrollLock},
 };
 #else
 static long kbdMatrixKeyCodes[8][8] = {
@@ -87,9 +87,9 @@ static long kbdMatrixKeyCodes[8][8] = {
 #endif
 
 #if defined(RASPI_C128)
-	static int intC128 = 1;
+  static int intC128 = 1;
 #else
-	static int intC128 = 0;
+  static int intC128 = 0;
 #endif
 
 static int kbdRestoreState;
@@ -788,121 +788,85 @@ void CKernel::ScanKeyboard() {
   }
   kbdRestoreState = restore;
 
+  //Keyboard scan extra keys on C128
   if (intC128 == 1) {
-  	// Keyboard scan C128
-  	for (int kbdPA = 0; kbdPA < 8; kbdPA++) {
-  	  gpioPins[kbdPA]->SetMode(GPIOModeOutput);
-  	  gpioPins[kbdPA]->Write(LOW);
-  	  circle_sleep(10);
-  	  for (int kbdPB = 0; kbdPB < 8; kbdPB++) {
-  	    // Read PB line
-  	    int val = gpioPins[kbdPB + 8]->Read();
-	
-  	    // My PA/PB to keycode matrix is transposed and I'm too lazy to fix
-  	    // it. Just swap PB and PA here for the keycode lookup.
-  	    long keycode = kbdMatrixKeyCodes[kbdPB][kbdPA];
-	
-  	    if (ui_activated) {
-  	      if (val == LOW && kbdMatrixStates[kbdPA][kbdPB] == HIGH) {
-  	        if (keycode == KEYCODE_LeftShift) {
-  	           uiLeftShift = true;
-  	        } else if (keycode == KEYCODE_RightShift) {
-  	           uiRightShift = true;
-  	        }
-	
-  	        if (keycode == KEYCODE_Right && (uiLeftShift || uiRightShift)) {
-  	           emu_key_pressed(KEYCODE_Left);
-  	        } else if (keycode == KEYCODE_Down && (uiLeftShift || uiRightShift)) {
-  	           emu_key_pressed(KEYCODE_Up);
-  	        } else {
-  	           emu_key_pressed(keycode);
-  	        }
-  	      } else if (val == HIGH && kbdMatrixStates[kbdPA][kbdPB] == LOW) {
-  	        if (keycode == KEYCODE_LeftShift) {
-  	           uiLeftShift = false;
-  	        } else if (keycode == KEYCODE_RightShift) {
-  	           uiRightShift = false;
-  	        }
-  	        if (keycode == KEYCODE_Right && (uiLeftShift || uiRightShift)) {
-  	           emu_key_released(KEYCODE_Left);
-  	        } else if (keycode == KEYCODE_Down && (uiLeftShift || uiRightShift)) {
-  	           emu_key_released(KEYCODE_Up);
-  	        } else {
-  	           emu_key_released(keycode);
-  	        }
-  	      }
-  	    } else {
-  	      // TODO: Need to watch out for key combos here.  Hook into
-  	      // the handle functions directly in kbd.c so we can invoke the
-  	      // same hotkey funcs.
-  	      if (val == LOW && kbdMatrixStates[kbdPA][kbdPB] == HIGH) {
-  	        emu_key_pressed(keycode);
-  	      } else if (val == HIGH && kbdMatrixStates[kbdPA][kbdPB] == LOW) {
-  	        emu_key_released(keycode);
-  	      }
-  	    }
-  	    kbdMatrixStates[kbdPA][kbdPB] = val;
-  	  }
-  	  gpioPins[kbdPA]->SetMode(GPIOModeInputPullUp);
-  	}
-  }
-  else {
-  	// Keyboard scan All others NOT C128
-	  for (int kbdPA = 0; kbdPA < 8; kbdPA++) {
-	    gpioPins[kbdPA]->SetMode(GPIOModeOutput);
-	    gpioPins[kbdPA]->Write(LOW);
-	    circle_sleep(10);
-	    for (int kbdPB = 0; kbdPB < 8; kbdPB++) {
-	      // Read PB line
-	      int val = gpioPins[kbdPB + 8]->Read();
-
-	      // My PA/PB to keycode matrix is transposed and I'm too lazy to fix
-	      // it. Just swap PB and PA here for the keycode lookup.
-	      long keycode = kbdMatrixKeyCodes[kbdPB][kbdPA];
-
-	      if (ui_activated) {
-	        if (val == LOW && kbdMatrixStates[kbdPA][kbdPB] == HIGH) {
-        	  if (keycode == KEYCODE_LeftShift) {
-	             uiLeftShift = true;
-	          } else if (keycode == KEYCODE_RightShift) {
-	             uiRightShift = true;
-	          }
-
-	          if (keycode == KEYCODE_Right && (uiLeftShift || uiRightShift)) {
-	             emu_key_pressed(KEYCODE_Left);
-	          } else if (keycode == KEYCODE_Down && (uiLeftShift || uiRightShift)) {
-	             emu_key_pressed(KEYCODE_Up);
-	          } else {
-	             emu_key_pressed(keycode);
-	          }
-	        } else if (val == HIGH && kbdMatrixStates[kbdPA][kbdPB] == LOW) {
-	          if (keycode == KEYCODE_LeftShift) {
-        	     uiLeftShift = false;
-        	  } else if (keycode == KEYCODE_RightShift) {
-        	     uiRightShift = false;
-        	  }
-        	  if (keycode == KEYCODE_Right && (uiLeftShift || uiRightShift)) {
-        	     emu_key_released(KEYCODE_Left);
-        	  } else if (keycode == KEYCODE_Down && (uiLeftShift || uiRightShift)) {
-        	     emu_key_released(KEYCODE_Up);
-        	  } else {
-        	     emu_key_released(keycode);
-        	  }
+    
+    for (int kbdPA = 19; kbdPA < 22; kbdPA++) {
+      gpioPins[kbdPA]->SetMode(GPIOModeOutput);
+      gpioPins[kbdPA]->Write(LOW);
+          
+      for (int kbdPB = 0; kbdPB < 8; kbdPB++) {
+        // Read PB line
+        int val = gpioPins[kbdPB + 8]->Read();
+        long keycode = kbdMatrixKeyCodes[kbdPB][kbdPA-11];
+	      	
+        if (val == LOW && kbdMatrixStates[kbdPA-11][kbdPB] == HIGH) {
+          emu_key_pressed(keycode);
+        } else if (val == HIGH && kbdMatrixStates[kbdPA-11][kbdPB] == LOW) {
+          emu_key_released(keycode);
         }
-	      } else {
-	        // TODO: Need to watch out for key combos here.  Hook into
-        	// the handle functions directly in kbd.c so we can invoke the
-        	// same hotkey funcs.
-        	if (val == LOW && kbdMatrixStates[kbdPA][kbdPB] == HIGH) {
-        	  emu_key_pressed(keycode);
-        	} else if (val == HIGH && kbdMatrixStates[kbdPA][kbdPB] == LOW) {
-        	  emu_key_released(keycode);
-        	}
-	      }	
-	      kbdMatrixStates[kbdPA][kbdPB] = val;
-	    }
-	    gpioPins[kbdPA]->SetMode(GPIOModeInputPullUp);
-	  }
+        kbdMatrixStates[kbdPA-11][kbdPB] = val;
+      }
+      gpioPins[kbdPA]->SetMode(GPIOModeInputPullUp);
+    }
+    
+  }
+  	
+  // Keyboard scan
+  for (int kbdPA = 0; kbdPA < 8; kbdPA++) {
+    gpioPins[kbdPA]->SetMode(GPIOModeOutput);
+    gpioPins[kbdPA]->Write(LOW);
+    circle_sleep(10);
+    for (int kbdPB = 0; kbdPB < 8; kbdPB++) {
+      // Read PB line
+      int val = gpioPins[kbdPB + 8]->Read();
+
+      // My PA/PB to keycode matrix is transposed and I'm too lazy to fix
+      // it. Just swap PB and PA here for the keycode lookup.
+      long keycode = kbdMatrixKeyCodes[kbdPB][kbdPA];
+
+      if (ui_activated) {
+        if (val == LOW && kbdMatrixStates[kbdPA][kbdPB] == HIGH) {
+          if (keycode == KEYCODE_LeftShift) {
+             uiLeftShift = true;
+          } else if (keycode == KEYCODE_RightShift) {
+             uiRightShift = true;
+          }
+
+          if (keycode == KEYCODE_Right && (uiLeftShift || uiRightShift)) {
+             emu_key_pressed(KEYCODE_Left);
+          } else if (keycode == KEYCODE_Down && (uiLeftShift || uiRightShift)) {
+             emu_key_pressed(KEYCODE_Up);
+          } else {
+             emu_key_pressed(keycode);
+          }
+        } else if (val == HIGH && kbdMatrixStates[kbdPA][kbdPB] == LOW) {
+          if (keycode == KEYCODE_LeftShift) {
+             uiLeftShift = false;
+          } else if (keycode == KEYCODE_RightShift) {
+             uiRightShift = false;
+          }
+          if (keycode == KEYCODE_Right && (uiLeftShift || uiRightShift)) {
+             emu_key_released(KEYCODE_Left);
+          } else if (keycode == KEYCODE_Down && (uiLeftShift || uiRightShift)) {
+             emu_key_released(KEYCODE_Up);
+          } else {
+             emu_key_released(keycode);
+          }
+        }
+      } else {
+        // TODO: Need to watch out for key combos here.  Hook into
+        // the handle functions directly in kbd.c so we can invoke the
+        // same hotkey funcs.
+        if (val == LOW && kbdMatrixStates[kbdPA][kbdPB] == HIGH) {
+          emu_key_pressed(keycode);
+        } else if (val == HIGH && kbdMatrixStates[kbdPA][kbdPB] == LOW) {
+          emu_key_released(keycode);
+        }
+      }
+      kbdMatrixStates[kbdPA][kbdPB] = val;
+    }
+    gpioPins[kbdPA]->SetMode(GPIOModeInputPullUp);
   }
 
 }
