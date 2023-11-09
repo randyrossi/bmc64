@@ -39,19 +39,21 @@ These instructions have been tested on Debian/Ubuntu/Mint distributions. If you 
 
         export ARM_HOME=/path/to/extracted/toolchain/directory
 
-3. Set the PATH environment variable to point to the Arm toolchain's *bin* directory:
+        e.g. "export ARM_HOME=~/software/gcc-arm-none-eabi-9-2019-q4-major"
+     
+2. Set the PATH environment variable to point to the Arm toolchain's *bin* directory:
 
         export PATH=$PATH:$ARM_HOME/bin
 
-4. Set the ARM_VERSION environment variable to the version number you noted previously:
+3. Set the ARM_VERSION environment variable to the version number you noted previously:
 
         export ARM_VERSION=9.2.1
 
-5. UPDATE - another PREFIX needs to be set:
+4. UPDATE - another PREFIX needs to be set:
 
         export PREFIX=arm-none-eabi-
    
-6. UPDATE - to fix the bug with LEX/FLEX stopping the compile please edit third_party/vice-3.3/configure.proto
+5. UPDATE - to fix the bug with LEX/FLEX stopping the compile please edit third_party/vice-3.3/configure.proto
 
         Comment out this (using dnl):
 
@@ -69,13 +71,12 @@ These instructions have been tested on Debian/Ubuntu/Mint distributions. If you 
    
            ./autogen.sh
         
-
-8. If this is your first time building, run *clean_all.sh* from the bmc64 directory:
+6. If this is your first time building, run *clean_all.sh* from the bmc64 directory:
 
         cd /path/to/store/files/bmc64/
         ./clean_all.sh
 
-9. Run *make_all.sh* from the bmc64 directory to build the third party libraries and kernel:
+7. Run *make_all.sh* from the bmc64 directory to build the third party libraries and kernel:
 
         cd /path/to/store/files/bmc64/
         ./make_all.sh [pi0|pi2|pi3]
@@ -84,7 +85,7 @@ These instructions have been tested on Debian/Ubuntu/Mint distributions. If you 
 
         Its worth noting there will be compile warnings / errors - but it should build your kernal image.
 
-11. Run *make_machines.sh* to build the kernel images for each machine (C64, C128, etc):
+8. Run *make_machines.sh* to build the kernel images for each machine (C64, C128, etc):
 
         cd /path/to/store/files/bmc64/
         ./make_machines.sh [pi0|pi2|pi3]
