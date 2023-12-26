@@ -488,13 +488,10 @@ bool ViceStdioApp::Initialize(void) {
 
   CGlueStdioSetPartitionForVolume(volumeName, partition, ss);
 
-  if (f_mount(&mFileSystemSD, fatFsVol, 1) != FR_OK) {
-    f_mount(&mFileSystemSD, fatFsVol, 0);
-    if (f_mount(&mFileSystemSD, fatFsVol, 1) != FR_OK) {
-      mLogger.Write(GetKernelName(), LogError, "Cannot mount partition: %s",
+  if (f_mount(&mFileSystemSD, fatFsVol, 0) != FR_OK) {
+    mLogger.Write(GetKernelName(), LogError, "Cannot mount partition: %s",
                     fatFsVol);
-      return false;
-    }
+    return false;
   }
 
   InitBootStat();
