@@ -30,7 +30,7 @@
 #elif defined(RASPI_PET)
 #include "bootstat_pet.h"
 #else
-  #error Unknown RASPI_ variant
+#error Unknown RASPI_ variant
 #endif
 
 //
@@ -168,7 +168,7 @@ int ViceApp::circle_cycles_per_second() {
   }
 }
 #else
-  #error Unknown RASPI_ variant
+#error Unknown RASPI_ variant
 #endif
 
 //
@@ -181,13 +181,13 @@ bool ViceScreenApp::Initialize(void) {
   }
 
   if (mViceOptions.SerialEnabled()) {
-     if (!mLogger.Initialize(&mSerial)) {
-        return false;
-     }
+    if (!mLogger.Initialize(&mSerial)) {
+      return false;
+    }
   } else {
-     if (!mLogger.Initialize(&mNullDevice)) {
-        return false;
-     }
+    if (!mLogger.Initialize(&mNullDevice)) {
+      return false;
+    }
   }
 
   if (!mEmulatorCore->Init(&mViceOptions)) {
@@ -348,17 +348,17 @@ void ViceScreenApp::SetupGPIOForInput() {
 
 // Setup GPIO pins for DPI
 void ViceScreenApp::SetupGPIOForDPI() {
-  for (int i=0; i< 28; i++) {
+  for (int i = 0; i < 28; i++) {
     DPIPins[i] =
-      new CGPIOPin(i, GPIOModeAlternateFunction2, &mGPIOManager);
+        new CGPIOPin(i, GPIOModeAlternateFunction2, &mGPIOManager);
   }
 }
 
 void ViceScreenApp::SetupGPIO() {
   if (mViceOptions.DPIEnabled()) {
-     SetupGPIOForDPI();
+    SetupGPIOForDPI();
   } else {
-     SetupGPIOForInput();
+    SetupGPIOForInput();
   }
 }
 
@@ -381,7 +381,7 @@ void ViceStdioApp::InitBootStat() {
 #elif defined(RASPI_PET)
   fp = fopen("/PET/bootstat.txt", "r");
 #else
-  #error Unknown RASPI_ variant
+#error Unknown RASPI_ variant
 #endif
 
   if (fp == NULL) {
@@ -430,7 +430,7 @@ void ViceStdioApp::InitBootStat() {
       }
       mBootStatWhat[num] = BOOTSTAT_WHAT_STAT;
     } else if (strcmp(what, "fail") == 0) {
-      if (strcmp(file,"rpi_pos.vkm") == 0) {
+      if (strcmp(file, "rpi_pos.vkm") == 0) {
         // Ignore legacy mistake blocking rpi_pos.vkm
         printf("Ignoring rpi_pos.vkm in bootstat.txt\n");
         continue;
@@ -442,7 +442,7 @@ void ViceStdioApp::InitBootStat() {
     }
 
     // These never get freed...
-    mBootStatFile[num] = (char *)malloc(MAX_BOOTSTAT_FLEN);
+    mBootStatFile[num] = (char *) malloc(MAX_BOOTSTAT_FLEN);
     strncpy(mBootStatFile[num], file, MAX_BOOTSTAT_FLEN);
     mBootStatSize[num] = atoi(size);
 
@@ -451,7 +451,7 @@ void ViceStdioApp::InitBootStat() {
 
   fclose(fp);
 
-  CGlueStdioInitBootStat(num, mBootStatWhat, (const char **)mBootStatFile,
+  CGlueStdioInitBootStat(num, mBootStatWhat, (const char **) mBootStatFile,
                          mBootStatSize);
 }
 
@@ -489,9 +489,12 @@ bool ViceStdioApp::Initialize(void) {
   CGlueStdioSetPartitionForVolume(volumeName, partition, ss);
 
   if (f_mount(&mFileSystemSD, fatFsVol, 1) != FR_OK) {
-    mLogger.Write(GetKernelName(), LogError, "Cannot mount partition: %s",
-                  fatFsVol);
-    return false;
+    f_mount(&mFileSystemSD, fatFsVol, 0);
+    if (f_mount(&mFileSystemSD, fatFsVol, 1) != FR_OK) {
+      mLogger.Write(GetKernelName(), LogError, "Cannot mount partition: %s",
+                    fatFsVol);
+      return false;
+    }
   }
 
   InitBootStat();
@@ -536,27 +539,28 @@ void ViceStdioApp::Cleanup(void) {
 }
 
 void ViceStdioApp::circle_find_usb(int (*usb)[3]) {
-  CDevice* usb1 = CDeviceNameService::Get()->GetDevice ("umsd1", TRUE);
+  CDevice *usb1 = CDeviceNameService::Get()->GetDevice("umsd1", TRUE);
   (*usb)[0] = usb1 ? 1 : 0;
-  CDevice* usb2 = CDeviceNameService::Get()->GetDevice ("umsd2", TRUE);
+  CDevice *usb2 = CDeviceNameService::Get()->GetDevice("umsd2", TRUE);
   (*usb)[1] = usb2 ? 1 : 0;
-  CDevice* usb3 = CDeviceNameService::Get()->GetDevice ("umsd3", TRUE);
+  CDevice *usb3 = CDeviceNameService::Get()->GetDevice("umsd3", TRUE);
   (*usb)[2] = usb3 ? 1 : 0;
 }
 
 int ViceStdioApp::circle_mount_usb(int usb) {
   int status;
   switch (usb) {
-     case 0:
-       status = f_mount(&mFileSystemUSB1, "USB:", 1);
-       break;
-     case 1:
-       status = f_mount(&mFileSystemUSB1, "USB2:", 1);
-       break;
-     case 2:
-       status = f_mount(&mFileSystemUSB1, "USB3:", 1);
-       break;
-     default: return 0;
+    case 0:
+      status = f_mount(&mFileSystemUSB1, "USB:", 1);
+      break;
+    case 1:
+      status = f_mount(&mFileSystemUSB1, "USB2:", 1);
+      break;
+    case 2:
+      status = f_mount(&mFileSystemUSB1, "USB3:", 1);
+      break;
+    default:
+      return 0;
   }
 
   if (status != FR_OK) {
@@ -570,16 +574,17 @@ int ViceStdioApp::circle_mount_usb(int usb) {
 int ViceStdioApp::circle_unmount_usb(int usb) {
   int status;
   switch (usb) {
-     case 0:
-       status = f_mount(0, "USB:", 1);
-       break;
-     case 1:
-       status = f_mount(0, "USB2:", 1);
-       break;
-     case 2:
-       status = f_mount(0, "USB3:", 1);
-       break;
-     default: return 0;
+    case 0:
+      status = f_mount(0, "USB:", 1);
+      break;
+    case 1:
+      status = f_mount(0, "USB2:", 1);
+      break;
+    case 2:
+      status = f_mount(0, "USB3:", 1);
+      break;
+    default:
+      return 0;
   }
 
   if (status != FR_OK) {
