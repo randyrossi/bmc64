@@ -466,8 +466,8 @@ static void show_about() {
 
   switch (emux_machine_class) {
   case BMC64_MACHINE_CLASS_C64:
-    snprintf (title, 15, "%s%s %s", "BMC64", VARIANT_STRING, VERSION_STRING);
-    strncpy (desc, "A Bare Metal C64 Emulator", 31);
+    snprintf (title, 15, "%s%s %s", "PBMC64", VARIANT_STRING, VERSION_STRING);
+    strncpy (desc, "PBMC64 Personal Computer", 31);
     break;
   case BMC64_MACHINE_CLASS_C128:
     snprintf (title, 15, "%s%s %s", "BMC128", VARIANT_STRING, VERSION_STRING);
@@ -498,12 +498,12 @@ static void show_about() {
 #ifdef RASPI_LITE
   ui_menu_add_button(MENU_TEXT, about_root, "For the Rasbperry Pi Zero");
 #else
-  ui_menu_add_button(MENU_TEXT, about_root, "For the Rasbperry Pi 2/3");
+  ui_menu_add_button(MENU_TEXT, about_root, "");
 #endif
 
   ui_menu_add_divider(about_root);
   ui_menu_add_button(MENU_TEXT, about_root, "https://github.com/");
-  ui_menu_add_button(MENU_TEXT, about_root, "         randyrossi/bmc64");
+  ui_menu_add_button(MENU_TEXT, about_root, "         henrikenblom/bmc64");
 }
 
 static void show_license() {
