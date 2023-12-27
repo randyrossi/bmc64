@@ -458,6 +458,10 @@ void emu_key_released(long key) {
   }
 
   if (key == KEYCODE_F11) {
+    emu_quick_func_interrupt(BTN_ASSIGN_VOLUME_UP);
+  }
+
+  if (key == KEYCODE_KP_Add) {
     emu_quick_func_interrupt(BTN_ASSIGN_VKBD_TOGGLE);
   }
 
