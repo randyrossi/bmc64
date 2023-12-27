@@ -36,6 +36,7 @@
 #include "menu_keyset.h"
 #include "ui.h"
 #include "overlay.h"
+#include "vkdb.h"
 
 // Global usb gamepad info.
 int joy_num_pads;
@@ -94,6 +95,49 @@ int joy_key_up(unsigned int device, int key) {
         return 1;
       default:
         return 0;
+      }
+    }
+    return 0;
+  } else if (sdl_vkbd_state & SDL_VKBD_ACTIVE) {
+    if (joydevs[device].device == JOYDEV_NUMS_1) {
+      switch (key) {
+        case KEYCODE_KP8:
+          sdl_vkbd_process(ui_menu_action_t.MENU_ACTION_UP);
+          return 1;
+        case KEYCODE_KP2:
+          sdl_vkbd_process(ui_menu_action_t.MENU_ACTION_DOWN);
+          return 1;
+        case KEYCODE_KP4:
+          sdl_vkbd_process(ui_menu_action_t.MENU_ACTION_LEFT);
+          return 1;
+        case KEYCODE_KP6:
+          sdl_vkbd_process(ui_menu_action_t.MENU_ACTION_RIGHT);
+          return 1;
+        case KEYCODE_KP5:
+          sdl_vkbd_process(ui_menu_action_t.MENU_ACTION_SELECT);
+          return 1;
+        default:
+          return 0;
+      }
+    } else if (joydevs[device].device == JOYDEV_NUMS_2) {
+      switch (key) {
+        case KEYCODE_KP9:
+          sdl_vkbd_process(ui_menu_action_t.MENU_ACTION_UP);
+          return 1;
+        case KEYCODE_KP3:
+          sdl_vkbd_process(ui_menu_action_t.MENU_ACTION_DOWN);
+          return 1;
+        case KEYCODE_KP7:
+          sdl_vkbd_process(ui_menu_action_t.MENU_ACTION_LEFT);
+          return 1;
+        case KEYCODE_KP1:
+          sdl_vkbd_process(ui_menu_action_t.MENU_ACTION_RIGHT);
+          return 1;
+        case KEYCODE_KP0:
+          sdl_vkbd_process(ui_menu_action_t.MENU_ACTION_SELECT);
+          return 1;
+        default:
+          return 0;
       }
     }
     return 0;
@@ -272,6 +316,8 @@ int joy_key_down(unsigned int device, int key) {
       }
     } 
     return 0;
+  } else if (sdl_vkbd_state & SDL_VKBD_ACTIVE) {
+    return 1;
   }
 
   int port = joydevs[device].port;
