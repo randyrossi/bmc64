@@ -434,6 +434,7 @@ static void files_cursor_listener(struct menu_item* parent,
 
 static void show_files(DirType dir_type, FileFilter filter, int menu_id,
                        int reset_cur_pos) {
+  if (!usb1_mounted) { circle_mount_usb(0); usb1_mounted = 1; }
   // Show files
   struct menu_item *file_root = ui_push_menu(-1, -1);
 
@@ -3114,9 +3115,6 @@ void build_menu(struct menu_item *root) {
     joydevs[dev].port = dev + 1;
     joydevs[dev].device = JOYDEV_NONE;
   }
-
-  int available_usb_drives[3];
-  circle_find_usb(&available_usb_drives);
 
   strcpy(current_volume_name, default_volume_name);
 
