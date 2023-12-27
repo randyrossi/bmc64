@@ -3121,7 +3121,7 @@ void build_menu(struct menu_item *root) {
   if (available_usb_drives[0]) {
     circle_mount_usb(0);
     usb1_mounted = 1;
-    strcpy(current_volume_name, "USB1:");
+    strcpy(current_volume_name, "USB:");
   } else {
     strcpy(current_volume_name, default_volume_name);
   }
