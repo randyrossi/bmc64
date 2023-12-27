@@ -4,26 +4,6 @@
 
 #include "emux_api.h"
 
-struct vkbd_key {
-    int x;
-    int y;
-    int w;
-    int h;
-    int row;
-    int col;
-    int layout_row;
-    int layout_col;
-    int toggle;
-    int code;
-    int shift_code;
-    int comm_code;
-    int up;
-    int down;
-    int left;
-    int right;
-    int state;
-};
-
 struct vkbd_key vkbd[] = {
     {8 ,0 ,33 ,41 ,1 ,7 ,0 ,0 ,0 ,31 ,31 ,31 ,0 ,17 ,0 ,1 ,0 ,},  /* 0 LeftArrow */
     {43 ,0 ,33 ,41 ,0 ,7 ,0 ,1 ,0 ,49 ,33 ,49 ,1 ,18 ,0 ,2 ,0 ,},  /* 1 1 */
