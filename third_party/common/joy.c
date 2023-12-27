@@ -97,7 +97,7 @@ int joy_key_up(unsigned int device, int key) {
       }
     }
     return 0;
-  } else if (sdl_vkbd_state & SDL_VKBD_ACTIVE) {
+  } else if (vkbd_showing) {
     if (joydevs[device].device == JOYDEV_NUMS_1) {
       switch (key) {
         case KEYCODE_KP8:
@@ -315,7 +315,7 @@ int joy_key_down(unsigned int device, int key) {
       }
     } 
     return 0;
-  } else if (sdl_vkbd_state & SDL_VKBD_ACTIVE) {
+  } else if (vkbd_showing) {
     return 1;
   }
 
