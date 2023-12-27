@@ -228,7 +228,7 @@ const char prg_filt_ext[1][5] = {".prg"};
 // What directories to initialize file search dialogs with for
 // each type of file.
 // TODO: Make these start dirs configurable.
-static const char default_volume_name[8] = "SD:";
+static const char default_volume_name[8] = "USB1:";
 static const char default_dir_names[NUM_DIR_TYPES][16] = {
     "/", "/disks", "/tapes", "/carts", "/snapshots", "/roms", "/"};
 
@@ -3118,13 +3118,7 @@ void build_menu(struct menu_item *root) {
   int available_usb_drives[3];
   circle_find_usb(&available_usb_drives);
 
-  if (available_usb_drives[0]) {
-    circle_mount_usb(0);
-    usb1_mounted = 1;
-    strcpy(current_volume_name, "USB:");
-  } else {
-    strcpy(current_volume_name, default_volume_name);
-  }
+  strcpy(current_volume_name, default_volume_name);
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
      strcpy(snap_filt_ext[0],".p4s");
