@@ -3,7 +3,7 @@
 #define RASPI_VIRTUAL_KEYBOARD_H
 
 #define NUM_KEYS 66
-#define VKBD_WIDTH 512
-#define VKBD_HEIGHT 174
+#define VKBD_WIDTH 640
+#define VKBD_HEIGHT 217
 
 #endif
