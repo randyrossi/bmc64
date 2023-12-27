@@ -3115,7 +3115,16 @@ void build_menu(struct menu_item *root) {
     joydevs[dev].device = JOYDEV_NONE;
   }
 
-  strcpy(current_volume_name, default_volume_name);
+  int available_usb_drives[3];
+  circle_find_usb(&available_usb_drives);
+
+  if (available_usb_drives[0]) {
+    circle_mount_usb(0);
+    usb1_mounted = 1;
+    strcpy(current_volume_name, "USB1");
+  } else {
+    strcpy(current_volume_name, default_volume_name);
+  }
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
      strcpy(snap_filt_ext[0],".p4s");
