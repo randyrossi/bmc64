@@ -228,7 +228,7 @@ const char prg_filt_ext[1][5] = {".prg"};
 // What directories to initialize file search dialogs with for
 // each type of file.
 // TODO: Make these start dirs configurable.
-static const char default_volume_name[8] = "USB1:";
+static const char default_volume_name[8] = "USB1";
 static const char default_dir_names[NUM_DIR_TYPES][16] = {
     "/", "/disks", "/tapes", "/carts", "/snapshots", "/roms", "/"};
 
