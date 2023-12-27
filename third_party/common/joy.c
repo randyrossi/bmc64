@@ -100,19 +100,24 @@ int joy_key_up(unsigned int device, int key) {
   } else if (vkbd_showing) {
     if (joydevs[device].device == JOYDEV_NUMS_1 || joydevs[device].device == JOYDEV_NUMS_2) {
       switch (key) {
-        case KEYCODE_KP8, KEYCODE_KP9:
+        case KEYCODE_KP8:
+        case KEYCODE_KP9:
           vkbd_nav_up();
           return 1;
-        case KEYCODE_KP2, KEYCODE_KP3:
+        case KEYCODE_KP2:
+        case KEYCODE_KP3:
           vkbd_nav_down();
           return 1;
-        case KEYCODE_KP4, KEYCODE_KP7:
+        case KEYCODE_KP4:
+        case KEYCODE_KP7:
           vkbd_nav_left();
           return 1;
-        case KEYCODE_KP6, KEYCODE_KP1:
+        case KEYCODE_KP6:
+        case KEYCODE_KP1:
           vkbd_nav_right();
           return 1;
-        case KEYCODE_KP5, KEYCODE_KP0:
+        case KEYCODE_KP5:
+        case KEYCODE_KP0:
           vkbd_nav_press(0, device);
           return 1;
         default:
