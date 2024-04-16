@@ -73,7 +73,7 @@
 !VSHIFT RSHIFT
 
 
-Tab 7 2 8       /* CTRL */
+CTRL 7 2 8       /* CTRL */
 Control_L 7 5 8 /* Commodore Key */
 Alt_L 7 5 8     /* Commodore Key */
 BackSpace 0 0 8
