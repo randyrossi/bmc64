@@ -74,11 +74,10 @@
 
 
 CTRL 7 2 8       /* CTRL */
-Control_L 7 5 8 /* Commodore Key */
-Alt_L 7 5 8     /* Commodore Key */
+CKEY 7 5 8 /* Commodore Key */
 BackSpace 0 0 8
 Down 0 7 8
-Escape 7 7 8    /* RunStop */
+RUNSTOP 7 7 8    /* RunStop */
 F1 0 4 8
 F2 0 4 1
 F3 0 5 8
@@ -162,6 +161,7 @@ KP_Separator 10 2 8
 KP_Decimal 10 2 8
 KP_Add 9 1 8
 
+Escape 9 0 8
 Tab 8 3 8 /* Tab */
 LeftAlt 10 0 8 /* Alt */
 Alt_R 8 0 8 /* Help */
