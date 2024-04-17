@@ -162,12 +162,12 @@ KP_Separator 10 2 8
 KP_Decimal 10 2 8
 KP_Add 9 1 8
 
-128Escape 9 0 8 /* 128 Escape */
-128Tab 8 3 8 /* 128 Tab */
-128Alt 10 0 8 /* 128 Alt */
-128Help 8 0 8 /* 128 Help */
-128LineFeed 9 3 8 /* 128 LineFeed */
-128ScrollLock 10 7 8 /* 128 NoScroll */
+LeftAlt 8 0 8 /* 128 Help */
+LeftSuper 9 0 8 /* 128 Escape */
+RightAlt 10 0 8 /* 128 Alt */
+RightSuper 8 3 8 /* 128 Tab *//
+RightControl 9 3 8 /* 128 LineFeed */
+ScrollLock 10 7 8 /* 128 NoScroll */
 
 # Restore key mappings
 PageUp -3 0
