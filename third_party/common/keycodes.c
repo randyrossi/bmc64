@@ -251,18 +251,6 @@ const char* keycode_to_string(long keycode) {
        return "LeftSuper";
     case KEYCODE_RightSuper:
        return "RightSuper";
-    case KEYCODE_128Escape:
-       return "128Escape";
-    case KEYCODE_128Tab:
-       return "128Tab";
-    case KEYCODE_128Alt:
-       return "128Alt";
-    case KEYCODE_128Help:
-       return "128Help";
-    case KEYCODE_128LineFeed:
-       return "128LineFeed";
-    case KEYCODE_128ScrollLock:
-       return "128ScrollLock";
     default:
        return "undefined";
   }
