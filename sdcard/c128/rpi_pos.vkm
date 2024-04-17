@@ -73,11 +73,12 @@
 !VSHIFT RSHIFT
 
 
-CTRL 7 2 8       /* CTRL */
-CKEY 7 5 8       /* Commodore Key */
+Tab 7 2 8       /* CTRL */
+Control_L 7 5 8 /* Commodore Key */
+Alt_L 7 5 8     /* Commodore Key */
 BackSpace 0 0 8
 Down 0 7 8
-RunStop 7 7 8    /* RunStop */
+Escape 7 7 8    /* RunStop */
 F1 0 4 8
 F2 0 4 1
 F3 0 5 8
@@ -161,12 +162,12 @@ KP_Separator 10 2 8
 KP_Decimal 10 2 8
 KP_Add 9 1 8
 
-Escape 9 0 8
-Tab 8 3 8 /* Tab */
-Alt 10 0 8 /* Alt */
-Help 8 0 8 /* Help */
-LineFeed 9 3 8 /* LineFeed */
-ScrollLock 10 7 8 /* NoScroll */
+128Escape 9 0 8 /* 128 Escape */
+128Tab 8 3 8 /* 128 Tab */
+128Alt 10 0 8 /* 128 Alt */
+128Help 8 0 8 /* 128 Help */
+128LineFeed 9 3 8 /* 128 LineFeed */
+128ScrollLock 10 7 8 /* 128 NoScroll */
 
 # Restore key mappings
 PageUp -3 0
