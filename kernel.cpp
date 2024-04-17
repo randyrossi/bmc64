@@ -64,14 +64,14 @@ static long kbdMatrixKeyCodes[8][8] = {
 };
 #elif defined(RASPI_C128)
 static long kbdMatrixKeyCodes[8][11] = {
- {KEYCODE_Backspace, KEYCODE_3,         KEYCODE_5, KEYCODE_7, KEYCODE_9, KEYCODE_Dash,        KEYCODE_Insert,       KEYCODE_1,		KEYCODE_128Help, 		KEYCODE_128Escape, 	KEYCODE_128Alt},
+ {KEYCODE_Backspace, KEYCODE_3,         KEYCODE_5, KEYCODE_7, KEYCODE_9, KEYCODE_Dash,        KEYCODE_Insert,       KEYCODE_1,		KEYCODE_LeftAlt, 		KEYCODE_LeftSuper, 	KEYCODE_RightAlt},
  {KEYCODE_Return,    KEYCODE_w,         KEYCODE_r, KEYCODE_y, KEYCODE_i, KEYCODE_p,           KEYCODE_RightBracket, KEYCODE_BackQuote,	KEYCODE_KP8,			KEYCODE_KP_Add,		KEYCODE_KP0},
  {KEYCODE_Right,     KEYCODE_a,         KEYCODE_d, KEYCODE_g, KEYCODE_j, KEYCODE_l,           KEYCODE_SingleQuote,  KEYCODE_Tab,	KEYCODE_KP5, 			KEYCODE_KP_Subtract, 	KEYCODE_KP_Decimal},
- {KEYCODE_F7,        KEYCODE_4,         KEYCODE_6, KEYCODE_8, KEYCODE_0, KEYCODE_Equals,      KEYCODE_Home,         KEYCODE_2,		KEYCODE_128Tab,			KEYCODE_128LineFeed, 	KEYCODE_Up},
+ {KEYCODE_F7,        KEYCODE_4,         KEYCODE_6, KEYCODE_8, KEYCODE_0, KEYCODE_Equals,      KEYCODE_Home,         KEYCODE_2,		KEYCODE_RightSuper,		KEYCODE_RightControl, 	KEYCODE_Up},
  {KEYCODE_F1,        KEYCODE_z,         KEYCODE_c, KEYCODE_b, KEYCODE_m, KEYCODE_Period,      KEYCODE_RightShift,   KEYCODE_Space,	KEYCODE_KP2, 			KEYCODE_KP_Enter,	KEYCODE_Down},
  {KEYCODE_F3,        KEYCODE_s,         KEYCODE_f, KEYCODE_h, KEYCODE_k, KEYCODE_SemiColon,   KEYCODE_BackSlash,    KEYCODE_LeftControl,KEYCODE_KP4, 			KEYCODE_KP6, 		KEYCODE_Left},
  {KEYCODE_F5,        KEYCODE_e,         KEYCODE_t, KEYCODE_u, KEYCODE_o, KEYCODE_LeftBracket, KEYCODE_Delete,       KEYCODE_q,		KEYCODE_KP7, 			KEYCODE_KP9, 		KEYCODE_Right},
- {KEYCODE_Down,      KEYCODE_LeftShift, KEYCODE_x, KEYCODE_v, KEYCODE_n, KEYCODE_Comma,       KEYCODE_Slash,        KEYCODE_Escape,	KEYCODE_KP1, 			KEYCODE_KP3, 		KEYCODE_128ScrollLock},
+ {KEYCODE_Down,      KEYCODE_LeftShift, KEYCODE_x, KEYCODE_v, KEYCODE_n, KEYCODE_Comma,       KEYCODE_Slash,        KEYCODE_Escape,	KEYCODE_KP1, 			KEYCODE_KP3, 		KEYCODE_ScrollLock},
 };
 #else
 static long kbdMatrixKeyCodes[8][8] = {
@@ -1754,3 +1754,4 @@ void CKernel::circle_set_shader_params(int curvature,
 			sharper,
                         bilinear_interpolation);
 }
+
