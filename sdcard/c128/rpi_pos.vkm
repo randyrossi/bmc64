@@ -162,11 +162,11 @@ KP_Separator 10 2 8
 KP_Decimal 10 2 8
 KP_Add 9 1 8
 
-LeftAlt 8 0 8 /* 128 Help */
-LeftSuper 9 0 8 /* 128 Escape */
-RightAlt 10 0 8 /* 128 Alt */
-RightSuper 8 3 8 /* 128 Tab *//
-RightControl 9 3 8 /* 128 LineFeed */
+NumLock 8 0 8 /* 128 Help */
+KP_Divide 9 0 8 /* 128 Escape */
+Application 10 0 8 /* 128 Alt */
+KP_BackSlash 8 3 8 /* 128 Tab *//
+KP_Multiply 9 3 8 /* 128 LineFeed */
 ScrollLock 10 7 8 /* 128 NoScroll */
 
 # Restore key mappings
