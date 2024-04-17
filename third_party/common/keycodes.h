@@ -147,14 +147,6 @@ extern int ctrl_key_sym_set;
 #define KEYCODE_LeftSuper 0x106
 #define KEYCODE_RightSuper 0x107
 
-//Extra keys for 128 mode - as some conflicted with 64 keys.  I.E. Tab is CTRL but is an extra 128 key
-#define KEYCODE_128Help 0x200
-#define KEYCODE_128Escape 0x201
-#define KEYCODE_128Alt 0x202
-#define KEYCODE_128Tab 0x203
-#define KEYCODE_128LineFeed 0x204
-#define KEYCODE_128ScrollLock 0x205
-
 // If not 0, will intercept all usb key events and
 // forward to this function.  Used to listen to keys
 // during keyset or key binding assignments.
