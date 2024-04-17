@@ -74,7 +74,7 @@
 
 
 CTRL 7 2 8       /* CTRL */
-CKEY 7 5 8 /* Commodore Key */
+CKEY 7 5 8       /* Commodore Key */
 BackSpace 0 0 8
 Down 0 7 8
 RunStop 7 7 8    /* RunStop */
@@ -163,9 +163,9 @@ KP_Add 9 1 8
 
 Escape 9 0 8
 Tab 8 3 8 /* Tab */
-LeftAlt 10 0 8 /* Alt */
-Alt_R 8 0 8 /* Help */
-Super_L 9 3 8 /* LineFeed */
+Alt 10 0 8 /* Alt */
+Help 8 0 8 /* Help */
+LineFeed 9 3 8 /* LineFeed */
 ScrollLock 10 7 8 /* NoScroll */
 
 # Restore key mappings
