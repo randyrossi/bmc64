@@ -162,10 +162,10 @@ KP_Separator 10 2 8
 KP_Decimal 10 2 8
 KP_Add 9 1 8
 
-NumLock 8 0 8 /* 128 Help */
+PageDown 8 0 8 /* 128 Help */
 KP_Divide 9 0 8 /* 128 Escape */
-Application 10 0 8 /* 128 Alt */
-KP_BackSlash 8 3 8 /* 128 Tab *//
+F10 10 0 8 /* 128 Alt */
+F9 8 3 8 /* 128 Tab *//
 KP_Multiply 9 3 8 /* 128 LineFeed */
 ScrollLock 10 7 8 /* 128 NoScroll */
 
