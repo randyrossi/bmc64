@@ -1224,7 +1224,7 @@ void emux_add_machine_options(struct menu_item* parent) {
 
   ram_size_item =
       ui_menu_add_multiple_choice(MENU_MEMORY, parent, "Memory");
-  ram_size_item->num_choices = 3;
+  ram_size_item->num_choices = 5;
 
   switch (ram_size) {
     case 16:
@@ -1234,17 +1234,27 @@ void emux_add_machine_options(struct menu_item* parent) {
       ram_size_item->value = 1;
       break;
     case 64:
-    default:
       ram_size_item->value = 2;
+      break;
+    case 256:
+      ram_size_item->value = 3;
+      break;
+    case 1024:
+    default:
+      ram_size_item->value = 4;
       break;
   }
 
   strcpy(ram_size_item->choices[0], "16k");
   strcpy(ram_size_item->choices[1], "32k");
   strcpy(ram_size_item->choices[2], "64k");
+  strcpy(ram_size_item->choices[3], "256k");
+  strcpy(ram_size_item->choices[4], "1024k");
   ram_size_item->choice_ints[0] = 16;
   ram_size_item->choice_ints[1] = 32;
   ram_size_item->choice_ints[2] = 64;
+  ram_size_item->choice_ints[3] = 256;
+  ram_size_item->choice_ints[4] = 1024;
   ram_size_item->on_value_changed = menu_value_changed;
 
   attach_3plus1_roms_item = ui_menu_add_toggle(MENU_PLUS4_3PLUS1_ROMS, parent,
