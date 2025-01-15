@@ -405,6 +405,23 @@ index 3c96caf..e9e4127 100644
  
  	CMachineInfo MachineInfo;
  
+diff --git a/lib/usb/usbconfigparser.cpp b/lib/usb/usbconfigparser.cpp
+index c608554..d301c9c 100644
+--- a/lib/usb/usbconfigparser.cpp
++++ b/lib/usb/usbconfigparser.cpp
+@@ -61,6 +61,12 @@ CUSBConfigurationParser::CUSBConfigurationParser (const void *pBuffer, unsigned
+ 		u8 ucDescLen  = pCurrentPosition->Header.bLength;
+ 		u8 ucDescType = pCurrentPosition->Header.bDescriptorType;
+ 
++		if (ucDescLen == 0)
++		{
++			m_pEndPosition = pCurrentPosition;
++			break;
++		}
++
+ 		TUSBDescriptor *pDescEnd = SKIP_BYTES (pCurrentPosition, ucDescLen);
+ 		if (pDescEnd > m_pEndPosition)
+ 		{
 diff --git a/lib/usb/usbgamepad.cpp b/lib/usb/usbgamepad.cpp
 index ff011e8..c6a0e8f 100644
 --- a/lib/usb/usbgamepad.cpp
