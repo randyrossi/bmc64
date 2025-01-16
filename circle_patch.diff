@@ -616,3 +616,64 @@ index 2893a86..9aac786 100644
  
  	delete m_pURB;
  	m_pURB = 0;
+diff --git a/lib/usb/usbkeyboard.cpp b/lib/usb/usbkeyboard.cpp
+index 1f0f2c0..0ab2f54 100644
+--- a/lib/usb/usbkeyboard.cpp
++++ b/lib/usb/usbkeyboard.cpp
+@@ -31,7 +31,8 @@ static const char FromUSBKbd[] = "usbkbd";
+ static const char DevicePrefix[] = "ukbd";
+ 
+ CUSBKeyboardDevice::CUSBKeyboardDevice (CUSBFunction *pFunction)
+-:	CUSBHIDDevice (pFunction, USBKEYB_REPORT_SIZE),
++:	CUSBHIDDevice (pFunction),
++        m_nReportSize (USBKEYB_REPORT_SIZE),
+ 	m_pKeyStatusHandlerRaw (0),
+ 	m_ucLastLEDStatus (0),
+ 	m_nDeviceNumber (0)		// not assigned
+@@ -48,7 +49,17 @@ CUSBKeyboardDevice::~CUSBKeyboardDevice (void)
+ 
+ boolean CUSBKeyboardDevice::Configure (void)
+ {
+-	if (!CUSBHIDDevice::Configure ())
++	// The HideLink THEC64 keyboard sends the report ID in the first byte,
++	// which has to be ignored.
++	const TUSBDeviceDescriptor *pDeviceDesc = GetDevice ()->GetDeviceDescriptor ();
++	assert (pDeviceDesc != 0);
++	if (   pDeviceDesc->idVendor == 0x1C59
++	    && pDeviceDesc->idProduct == 0x99)
++	{
++		m_nReportSize++;
++	}
++
++	if (!CUSBHIDDevice::Configure (m_nReportSize))
+ 	{
+ 		CLogger::Get ()->Write (FromUSBKbd, LogError, "Cannot configure HID device");
+ 
+@@ -143,6 +154,14 @@ boolean CUSBKeyboardDevice::SetLEDs (u8 ucStatus)
+ 
+ void CUSBKeyboardDevice::ReportHandler (const u8 *pReport, unsigned nReportSize)
+ {
++	// Ignore report ID, if it is included.
++	if (   pReport != 0
++	    && m_nReportSize > USBKEYB_REPORT_SIZE)
++	{
++		pReport++;
++		nReportSize--;
++	}
++
+ 	if (   pReport == 0
+ 	    || nReportSize != USBKEYB_REPORT_SIZE)
+ 	{
+diff --git a/include/circle/usb/usbkeyboard.h b/include/circle/usb/usbkeyboard.h
+index 94954f7..df18eb8 100644
+--- a/include/circle/usb/usbkeyboard.h
++++ b/include/circle/usb/usbkeyboard.h
+@@ -61,6 +61,8 @@ private:
+ 	static boolean FindByte (const u8 *pBuffer, u8 ucByte, unsigned nLength);
+ 
+ private:
++        unsigned m_nReportSize;
++
+ 	CKeyboardBehaviour m_Behaviour;
+ 
+ 	TKeyStatusHandlerRaw *m_pKeyStatusHandlerRaw;
