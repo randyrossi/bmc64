@@ -355,3 +355,13 @@
   * Boot to VDC if 80 column key is down (C128)
   * Fix CNTRL-F7 safety switch problem if roms not found
   * Add raster_skip2 to enable raster skip for VDC only
+
+## 4.1
+  * VIC20 symbolic keymap - F3 maps to C=
+  * Add cmdhd support for C64OS (requires JiffyDOS)
+
+## 4.2
+  * Fix incorrect END key mapping
+  * Add 256k and 1024k memory options to plus4emu
+  * Support more recent Maxi keyboard
+
