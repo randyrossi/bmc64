@@ -347,6 +347,11 @@ void build_usb_menu(int dev, struct menu_item *root) {
   y_axis_item->on_value_changed = menu_usb_value_changed;
   x_thresh_item->on_value_changed = menu_usb_value_changed;
   y_thresh_item->on_value_changed = menu_usb_value_changed;
+
+  potx_high_item->on_value_changed = menu_usb_value_changed;
+  potx_low_item->on_value_changed = menu_usb_value_changed;
+  poty_high_item->on_value_changed = menu_usb_value_changed;
+  poty_low_item->on_value_changed = menu_usb_value_changed;
 }
 
 int emu_wants_raw_usb(void) {
