@@ -132,6 +132,11 @@ static uint8_t sid_read_chip(uint16_t addr, int chipno)
     if (chipno == 0 && (addr == 0x19 || addr == 0x1a)) {
         if ((maincpu_clk ^ pot_cycle) & ~511) {
             pot_cycle = maincpu_clk & ~511; /* simplistic 512 cycle sampling */
+
+            if (_mouse_enabled) {
+                mouse_poll();
+            }
+
             val_pot_x = read_joyport_potx();
             val_pot_y = read_joyport_poty();
         }

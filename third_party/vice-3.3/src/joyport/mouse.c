@@ -198,20 +198,12 @@ static uint8_t mouse_digital_val = 0;
 
 static uint8_t mouse_get_1351_x(int port)
 {
-    if (_mouse_enabled) {
-        mouse_poll();
-        return (uint8_t)((last_mouse_x & 0x7f) + 0x40);
-    }
-    return 0xff;
+    return (uint8_t)((last_mouse_x & 0x7f) + 0x40);
 }
 
 static uint8_t mouse_get_1351_y(int port)
 {
-    if (_mouse_enabled) {
-        mouse_poll();
-        return (uint8_t)((last_mouse_y & 0x7f) + 0x40);
-    }
-    return 0xff;
+    return (uint8_t)((last_mouse_y & 0x7f) + 0x40);
 }
 
 /* --------------------------------------------------------- */
