@@ -444,8 +444,6 @@ static const uint8_t SZP[256] = {
 
 /* ------------------------------------------------------------------------- */
 
-z80_regs_t z80_regs;
-
 static void import_registers(void)
 {
     reg_a = z80_regs.reg_af >> 8;

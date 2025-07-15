@@ -1218,9 +1218,9 @@ dnl fi
 
 AC_PROG_LEX
 
-if test x"$LEX" = "x:"; then
-  AC_MSG_ERROR([Could not find either flex or lex!])
-fi
+dnl if test x"$LEX" = "x:"; then
+dnl  AC_MSG_ERROR([Could not find either flex or lex!])
+dnl fi
 
 AM_PROG_AS
 
