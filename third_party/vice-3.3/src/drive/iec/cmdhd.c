@@ -55,9 +55,9 @@
 #define LOG LOG_DEFAULT
 #define ERR LOG_ERR
 
-#define CMDLOG
-#define CMDIO
-#define CMDBUS
+/* #define CMDLOG */
+/* #define CMDIO */
+/* #define CMDBUS */
 
 #ifdef CMDLOG
 #define CLOG(_x_) log_message _x_
@@ -551,6 +551,11 @@ static void updateleds(drive_t *ctxptr)
 
 void cmdhd_store(struct drive_context_s *ctxptr, uint16_t addr, uint8_t data)
 {
+    /* leave if no image provided */
+    if (!ctxptr->cmdhd->image) {
+        return;
+    }
+
 #ifdef CMDIO
     static uint8_t oldd;
     static uint16_t olda;
@@ -643,6 +648,11 @@ if (olda != addr || oldd != data) { \
 
 uint8_t cmdhd_read(struct drive_context_s *ctxptr, uint16_t addr)
 {
+    /* leave if no image provided */
+    if (!ctxptr->cmdhd->image) {
+        return 0;
+    }
+
 #ifdef CMDIO
     static CLOCK oldc = 0;
     drivecpu_context_t *cpu = ctxptr->cpu;
