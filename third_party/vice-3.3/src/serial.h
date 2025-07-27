@@ -85,7 +85,7 @@ extern int serial_trap_ready(void);
 extern void serial_traps_reset(void);
 extern void serial_trap_eof_callback_set(void (*func)(void));
 extern void serial_trap_attention_callback_set(void (*func)(void));
-extern void serial_trap_truedrive_set(unsigned int flag);
+extern void serial_trap_truedrive_set(unsigned int unit, unsigned int flag);
 
 extern int serial_realdevice_enable(void);
 extern void serial_realdevice_disable(void);

@@ -24,6 +24,8 @@
  *
  */
 
+/* #define DEBUGDRIVE */
+
 #include "vice.h"
 
 #include <stdio.h>
@@ -46,9 +48,11 @@
 #include "resources.h"
 #include "vdrive-bam.h"
 
-
-/* Is true drive emulation switched on?  */
-static int drive_true_emulation;
+#ifdef DEBUGDRIVE
+#define DBG(x)  printf x
+#else
+#define DBG(x)
+#endif
 
 /* Is drive sound emulation switched on?  */
 int drive_sound_emulation;
@@ -58,38 +62,43 @@ int drive_sound_emulation_volume;
 static int set_drive_true_emulation(int val, void *param)
 {
     unsigned int dnr;
-    drive_t *drive;
+    unsigned int drive_true_emulation = val ? 1 : 0;
+    unsigned int thisdnr = vice_ptr_to_int(param);
 
-    drive_true_emulation = val ? 1 : 0;
+    DBG(("set_drive_true_emulation unit %u enabled: %u\n", thisdnr + 8, drive_true_emulation));
 
-    machine_bus_status_truedrive_set((unsigned int)drive_true_emulation);
+    /* enable TDE */
+    drive_context[thisdnr]->drive->true_emulation = drive_true_emulation;
 
-    if (val) {
-        for (dnr = 0; dnr < DRIVE_NUM; dnr++) {
-            drive = drive_context[dnr]->drive;
-            if (drive->type != DRIVE_TYPE_NONE) {
-                drive->enable = 1;
-                if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000) {
-                    drivecpu65c02_reset_clk(drive_context[dnr]);
+    for (dnr = 0; dnr < DRIVE_NUM; dnr++) {
+        machine_bus_status_truedrive_set(dnr + 8, drive_context[dnr]->drive->true_emulation);
+    }
+
+    for (dnr = 0; dnr < DRIVE_NUM; dnr++) {
+        drive_context_t *unit = drive_context[dnr];
+
+        if (drive_context[dnr]->drive->true_emulation) {
+            if (unit->drive->type != DRIVE_TYPE_NONE) {
+                unit->drive->enable = 1;
+                if (unit->drive->type == DRIVE_TYPE_2000 || 
+                    unit->drive->type == DRIVE_TYPE_4000 ||
+                    unit->drive->type == DRIVE_TYPE_CMDHD) {
+                    drivecpu65c02_reset_clk(unit);
                 } else {
-                    drivecpu_reset_clk(drive_context[dnr]);
+                    drivecpu_reset_clk(unit);
                 }
             }
-        }
-        for (dnr = 0; dnr < DRIVE_NUM; dnr++) {
-            drive_enable(drive_context[dnr]);
-        }
-    } else {
-        for (dnr = 0; dnr < DRIVE_NUM; dnr++) {
-            drive = drive_context[dnr]->drive;
-            drive_disable(drive_context[dnr]);
-#if 0 // VDRIVE_EFFORT
-            if (drive->image != NULL) {
-                vdrive_bam_read_bam(dnr + 8);
-            }
-#endif
+            drive_enable(unit);
+        } else {
+            drive_disable(unit);
+    #if 0 /* VDRIVE_EFFORT */
+                if (drive->image != NULL) {
+                    vdrive_bam_read_bam(dnr + 8);
+                }
+    #endif
         }
     }
+
     return 0;
 }
 
@@ -212,7 +221,7 @@ static int drive_resources_type(int val, void *param)
                 }
             }
             drive->type = type;
-            if (drive_true_emulation) {
+            if (drive->true_emulation) {
                 drive->enable = 1;
                 drive_enable(drive_context[dnr]);
                 /* 1551 drive does not use the IEC bus */
@@ -335,8 +344,6 @@ static int set_drive_rtc_save(int val, void *param)
 }
 
 static const resource_int_t resources_int[] = {
-    { "DriveTrueEmulation", 1, RES_EVENT_STRICT, (resource_value_t)1,
-      &drive_true_emulation, set_drive_true_emulation, NULL },
     { "DriveSoundEmulation", 0, RES_EVENT_NO, (resource_value_t)0,
       &drive_sound_emulation, set_drive_sound_emulation, NULL },
     { "DriveSoundEmulationVolume", 1000, RES_EVENT_NO, (resource_value_t)1000,
@@ -353,6 +360,8 @@ static resource_int_t res_drive[] = {
       NULL, set_drive_rpm, NULL },
     { NULL, 50, RES_EVENT_SAME, NULL,
       NULL, set_drive_rpm_wobble, NULL },
+    { NULL, 1, RES_EVENT_STRICT, NULL,
+      NULL, set_drive_true_emulation, NULL },
     RESOURCE_INT_LIST_END
 };
 
@@ -396,6 +405,9 @@ int drive_resources_init(void)
         res_drive[3].name = lib_msprintf("Drive%iWobble", dnr + 8);
         res_drive[3].value_ptr = &(drive->rpm_wobble);
         res_drive[3].param = uint_to_void_ptr(dnr);
+        res_drive[4].name = lib_msprintf("Drive%iTrueEmulation", dnr + 8);
+        res_drive[4].value_ptr = &(drive->true_emulation);
+        res_drive[4].param = uint_to_void_ptr(dnr);
 
         if (has_iec) {
             res_drive_rtc[0].name = lib_msprintf("Drive%iRTCSave", dnr + 8);
@@ -410,7 +422,7 @@ int drive_resources_init(void)
             return -1;
         }
 
-        for (i = 0; i < 4; i++) {
+        for (i = 0; i <= 4; i++) {
             lib_free(res_drive[i].name);
         }
         if (has_iec) {

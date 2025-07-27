@@ -333,6 +333,8 @@ typedef struct drive_s {
     int button;
     int rpm;
     int rpm_wobble;
+    
+    int true_emulation;     /* from the resource */
 } drive_t;
 
 
