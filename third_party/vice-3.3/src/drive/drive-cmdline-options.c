@@ -24,6 +24,7 @@
  *  02111-1307  USA.
  *
  */
+/* #define DEBUGDRIVE */
 
 #include "vice.h"
 
@@ -36,14 +37,14 @@
 #include "machine.h"
 #include "machine-drive.h"
 
+#ifdef DEBUGDRIVE
+#define DBG(x)  printf x
+#else
+#define DBG(x)
+#endif
+
 static const cmdline_option_t cmdline_options[] =
 {
-    { "-truedrive", SET_RESOURCE, CMDLINE_ATTRIB_NONE,
-      NULL, NULL, "DriveTrueEmulation", (void *)1,
-      NULL, "Enable hardware-level emulation of disk drives" },
-    { "+truedrive", SET_RESOURCE, CMDLINE_ATTRIB_NONE,
-      NULL, NULL, "DriveTrueEmulation", (void *)0,
-      NULL, "Disable hardware-level emulation of disk drives" },
     { "-drivesound", SET_RESOURCE, CMDLINE_ATTRIB_NONE,
       NULL, NULL, "DriveSoundEmulation", (void *)1,
       NULL, "Enable sound emulation of disk drives" },
@@ -73,6 +74,12 @@ static cmdline_option_t cmd_drive[] =
     { NULL, SET_RESOURCE, CMDLINE_ATTRIB_NEED_ARGS,
       NULL, NULL, NULL, NULL,
       "<Wobble>", "Set drive wobble (100 = +/-0.5rpm)" },
+    { NULL, SET_RESOURCE, CMDLINE_ATTRIB_NONE,
+      NULL, NULL, NULL, (void *)1,
+      NULL, "Enable hardware-level emulation of disk drive" },
+    { NULL, SET_RESOURCE, CMDLINE_ATTRIB_NONE,
+      NULL, NULL, NULL, (void *)0,
+      NULL, "Disable hardware-level emulation of disk drive" },      
     CMDLINE_LIST_END
 };
 
@@ -163,6 +170,12 @@ int drive_cmdline_options_init(void)
         cmd_drive[4].name = lib_msprintf("-drive%iwobble", dnr + 8);
         cmd_drive[4].resource_name
             = lib_msprintf("Drive%iWobble", dnr + 8);
+        cmd_drive[5].name = lib_msprintf("-drive%itruedrive", dnr + 8);
+        cmd_drive[5].resource_name
+            = lib_msprintf("Drive%iTrueEmulation", dnr + 8);
+        cmd_drive[6].name = lib_msprintf("+drive%itruedrive", dnr + 8);
+        cmd_drive[6].resource_name
+            = lib_msprintf("Drive%iTrueEmulation", dnr + 8);
 
         if (has_iec) {
             cmd_drive_rtc[0].name = lib_msprintf("-drive%irtcsave", dnr + 8);
@@ -179,7 +192,7 @@ int drive_cmdline_options_init(void)
             return -1;
         }
 
-        for (i = 0; i < 5; i++) {
+        for (i = 0; i <= 6; i++) {
             lib_free(cmd_drive[i].name);
             lib_free(cmd_drive[i].resource_name);
         }
