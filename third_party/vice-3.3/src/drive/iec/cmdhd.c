@@ -55,9 +55,9 @@
 #define LOG LOG_DEFAULT
 #define ERR LOG_ERR
 
-/* #define CMDLOG */
-/* #define CMDIO */
-/* #define CMDBUS */
+#define CMDLOG
+#define CMDIO
+#define CMDBUS
 
 #ifdef CMDLOG
 #define CLOG(_x_) log_message _x_
@@ -215,7 +215,7 @@ static void reset_alarm_handler(CLOCK offset, void *data)
     cmdhd_context_t *hd = (cmdhd_context_t *)data;
 
     CLOG((LOG, "CMDHD: alarm triggered at %u; releasing buttons",
-        *(hd->mycontext->clk_ptr)));
+        *(hd->mycontext->clk)));
     /* stop pressing WP, SWAP8, and SWAP9 buttons */
     hd->i8255a_i[1] |= (0x08 | 0x04 | 0x02);
     /* update in drive context too */
@@ -557,10 +557,10 @@ void cmdhd_store(struct drive_context_s *ctxptr, uint16_t addr, uint8_t data)
     static CLOCK oldc = 0;
     drivecpu_context_t *cpu = ctxptr->cpu;
 #define storedebug() \
-if (olda != addr || olds != data) { \
+if (olda != addr || oldd != data) { \
     IDBG((LOG, "CMDHD: IO write %02x to %04x PC=%04x CYCLE=%u", data, addr, \
-        cpu->cpu_R65C02_regs.pc, *(ctxptr->clk_ptr)-oldc); \
-    old=data; \
+        cpu->cpu_R65C02_regs.pc, *(ctxptr->clk_ptr)-oldc)); \
+    oldd=data; \
     olda=addr; \
     oldc=*(ctxptr->clk_ptr); \
 }
@@ -648,7 +648,7 @@ uint8_t cmdhd_read(struct drive_context_s *ctxptr, uint16_t addr)
     drivecpu_context_t *cpu = ctxptr->cpu;
 #define readdebug() \
     IDBG((LOG, "CMDHD: IO read %02x from %04x PC=%04x CYCLE=%u", data, addr, \
-        cpu->cpu_R65C02_regs.pc, *(ctxptr->clk_ptr)-oldc); \
+        cpu->cpu_R65C02_regs.pc, *(ctxptr->clk_ptr)-oldc)); \
     oldc=*(ctxptr->clk_ptr);
 #else
 #define readdebug()
@@ -1264,7 +1264,7 @@ void cmdhd_reset(cmdhd_context_t *hd)
     c = *(drive_context[hd->mycontext->mynumber]->clk_ptr) +
         cmdhd_has_sig(&(hd->mycontext->drive_ram[0x9000])) ? 8000000 : 500000;
 
-    CLOG((LOG, "CMDHD: alarm set for %u from %u", c, *(hd->mycontext->clk_ptr)));
+    CLOG((LOG, "CMDHD: alarm set for %u from %u", c, *(hd->mycontext->clk)));
     alarm_set(hd->reset_alarm, c);
 
     /* look for base lba as it may have changed on reset */
