@@ -24,6 +24,8 @@
  *
  */
 
+/* #define DEBUG_JOYPORT */
+ 
 #include "vice.h"
 
 #include <string.h>
@@ -34,6 +36,12 @@
 #include "resources.h"
 #include "uiapi.h"
 #include "util.h"
+#include "log.h"
+
+/* Log descriptor.  */
+#ifdef DEBUG_JOYPORT
+static log_t joyport_log = LOG_ERR;
+#endif
 
 static joyport_t joyport_device[JOYPORT_MAX_DEVICES];
 static uint8_t joyport_display[6] = { 0, 0, 0, 0, 0, 0};
@@ -70,6 +78,9 @@ static char *res2text(int joyport_id)
 
 void set_joyport_pot_mask(int mask)
 {
+#ifdef DEBUG_JOYPORT
+    log_message(joyport_log, "set_joyport_pot_mask pot_port_mask:%d, new value: %d", pot_port_mask, mask);
+#endif
     pot_port_mask = mask;
 }
 
@@ -162,6 +173,20 @@ uint8_t read_joyport_dig(int port)
     if (!joyport_device[id].read_digital) {
         return 0xff;
     }
+
+#ifdef DEBUG_JOYPORT
+    static uint8_t debug_port1_last_read_value = 0;
+
+    if (port == JOYPORT_1) {
+        if (joyport_device[id].read_digital(port) != debug_port1_last_read_value) {
+            log_message(joyport_log, "read_joyport_dig port:%d, value: 0x%02x, last value: 0x%02x", 
+                port, joyport_device[id].read_digital(port), debug_port1_last_read_value);
+        }
+                
+        debug_port1_last_read_value = joyport_device[id].read_digital(port);
+    }
+#endif
+
     return joyport_device[id].read_digital(port);
 }
 
@@ -210,6 +235,10 @@ static void find_pot_ports(void)
     if (pot_port2 == -1) {
         pot_port2 = -2;
     }
+
+#ifdef DEBUG_JOYPORT
+    log_message(joyport_log, "find_pot_ports pot_port1: %d, pot_port2: %d", pot_port1, pot_port2);
+#endif
 }
 
 uint8_t read_joyport_potx(void)
@@ -247,6 +276,19 @@ uint8_t read_joyport_potx(void)
             ret2 = joyport_device[id2].read_potx(pot_port2);
         }
     }
+
+#ifdef DEBUG_JOYPORT
+    static uint8_t last_ret1 = 0xff;
+    static uint8_t last_ret2 = 0xff;
+    
+    if ((ret1 != last_ret1) || (ret2 != last_ret2)) {
+        log_message(joyport_log, "read_joyport_potx id1: %d, id2: %d, ret1: 0x%02x, ret2: 0x%02x, ret1 & ret2: 0x%02x, pot_port_mask: %d, pot_port1: %d, pot_port2: %d", 
+            id1, id2, ret1, ret2, ret1 & ret2, pot_port_mask, pot_port1, pot_port2);
+
+        last_ret1 = ret1;
+        last_ret2 = ret2;
+    }
+#endif
 
     switch (pot_port_mask) {
         case 1:

@@ -56,6 +56,12 @@
 #include "userport_joystick.h"
 #include "vice-event.h"
 
+#ifdef HAVE_MOUSE
+#ifdef RASPI_COMPILE
+#include "mouse.h"
+#endif
+#endif
+
 /* Control port <--> Joystick connections:
 
    cport | joystick | I/O
@@ -812,11 +818,11 @@ void joystick_set_poty_or(int port, uint8_t value)
 
 static uint8_t joystick_read_potx(int port)
 {
-    return joystick_potx_value[port];
+    return _mouse_enabled == 0 ? joystick_potx_value[port] : 0xff;
 }
 
 static uint8_t joystick_read_poty(int port)
 {
-    return joystick_poty_value[port];
+    return _mouse_enabled == 0 ? joystick_poty_value[port] : 0xff;
 }
 #endif

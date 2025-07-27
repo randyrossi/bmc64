@@ -27,6 +27,7 @@
  *  02111-1307  USA.
  *
  */
+/* #define DEBUG_SID */
 
 #include "vice.h"
 
@@ -48,6 +49,13 @@
 #include "sound.h"
 #include "ssi2001.h"
 #include "types.h"
+#include "log.h"
+
+#ifdef DEBUG_SID
+#define DBG(_x_)  log_debug _x_
+#else
+#define DBG(_x_)
+#endif
 
 #ifdef RASPI_COMPILE
 int (*sid_job_func)(struct sound_s *psid, short *pbuf,
@@ -87,6 +95,11 @@ static int sid_enable, sid_engine_type = -1;
 #ifdef HAVE_MOUSE
 static CLOCK pot_cycle = 0;  /* pot sampling cycle */
 static uint8_t val_pot_x = 0xff, val_pot_y = 0xff; /* last sampling value */
+#endif
+
+/* Log descriptor.  */
+#ifdef DEBUG_SID
+static log_t sid_log = LOG_ERR;
 #endif
 
 uint8_t *sid_get_siddata(unsigned int channel)
@@ -132,8 +145,35 @@ static uint8_t sid_read_chip(uint16_t addr, int chipno)
     if (chipno == 0 && (addr == 0x19 || addr == 0x1a)) {
         if ((maincpu_clk ^ pot_cycle) & ~511) {
             pot_cycle = maincpu_clk & ~511; /* simplistic 512 cycle sampling */
+
+            if (_mouse_enabled) {
+                mouse_poll();
+            }
+
             val_pot_x = read_joyport_potx();
             val_pot_y = read_joyport_poty();
+
+#ifdef DEBUG_SID
+            static uint8_t last_val_pot_x = 0;
+            static uint8_t last_val_pot_y = 0;
+            static uint8_t last_val_pot_x_2 = 0;
+            static uint8_t last_val_pot_y_2 = 0;
+
+            if (addr == 0x19 && ((val_pot_x != last_val_pot_x) || (val_pot_y != last_val_pot_y))) {
+                log_message(sid_log, "sid_read_chip 0x19 addr: 0x%02x, val_pot_x 0x%02x, val_pot_y 0x%02x", 
+                    addr, val_pot_x, val_pot_y);
+
+                last_val_pot_x = val_pot_x;
+                last_val_pot_y = val_pot_y;
+            }
+            if (addr == 0x1a && ((val_pot_x != last_val_pot_x_2) || (val_pot_y != last_val_pot_y_2))) {
+                log_message(sid_log, "sid_read_chip 0x1a addr: 0x%02x, val_pot_x 0x%02x, val_pot_y 0x%02x", 
+                    addr, val_pot_x, val_pot_y);
+
+                last_val_pot_x_2 = val_pot_x;
+                last_val_pot_y_2 = val_pot_y;
+            }
+#endif            
         }
         val = (addr == 0x19) ? val_pot_x : val_pot_y;
 

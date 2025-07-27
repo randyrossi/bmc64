@@ -198,20 +198,21 @@ static uint8_t mouse_digital_val = 0;
 
 static uint8_t mouse_get_1351_x(int port)
 {
-    if (_mouse_enabled) {
-        mouse_poll();
-        return (uint8_t)((last_mouse_x & 0x7f) + 0x40);
+#ifdef DEBUG_MOUSE
+    static int last_last_mouse_x = 0;
+
+    if (last_last_mouse_x != last_mouse_x) {
+        log_message(mouse_log, "mouse_get_1351_x port %d, last_mouse_x %u, last_mouse_x calc %u", 
+            port, (uint8_t)(last_mouse_x & 0xff), (uint8_t)((last_mouse_x & 0x7f) + 0x40));
+        last_last_mouse_x = last_mouse_x;
     }
-    return 0xff;
+#endif
+    return (uint8_t)((last_mouse_x & 0x7f) + 0x40);
 }
 
 static uint8_t mouse_get_1351_y(int port)
 {
-    if (_mouse_enabled) {
-        mouse_poll();
-        return (uint8_t)((last_mouse_y & 0x7f) + 0x40);
-    }
-    return 0xff;
+    return (uint8_t)((last_mouse_y & 0x7f) + 0x40);
 }
 
 /* --------------------------------------------------------- */
@@ -1085,6 +1086,11 @@ static void mouse_button_left(int pressed)
 {
     uint8_t old_val = mouse_digital_val;
     uint8_t joypin = (((mouse_type == MOUSE_TYPE_PADDLE) || (mouse_type == MOUSE_TYPE_KOALAPAD)) ? 4 : 16);
+
+#ifdef DEBUG_MOUSE
+    log_message(mouse_log, "mouse_button_left mouse_type:%d, joypin:%d, new_x:%d new_y:%d, pressed:%d", 
+        mouse_type, joypin, (int16_t)mousedrv_get_x(), (int16_t)mousedrv_get_y(), pressed);
+#endif
 
     if (pressed) {
         mouse_digital_val |= joypin;
