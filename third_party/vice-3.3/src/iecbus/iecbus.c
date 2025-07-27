@@ -23,6 +23,7 @@
  *  02111-1307  USA.
  *
  */
+/* #define DEBUG_IECBUS */
 
 #include "vice.h"
 
@@ -39,6 +40,13 @@
 #include "types.h"
 #include "serial.h"
 #include "drive/iec/cmdhd.h"
+
+#ifdef DEBUG_IECBUS
+#include "log.h"
+#define DBG(x) log_printf  x
+#else
+#define DBG(x)
+#endif
 
 #define IECBUS_DEVICE_NONE      0
 #define IECBUS_DEVICE_TRUEDRIVE 1
@@ -474,7 +482,7 @@ TDE DE ID VD                                       iecbus_device
  1  1  1  0  IEC device enabled                    IECBUS_DEVICE_IECDEVICE
  1  1  1  1  IEC device enabled                    IECBUS_DEVICE_IECDEVICE
 
-TDE = true drive emulation (global switch)
+TDE = true drive emulation (device switch)
 DE = device enable (device switch)
 ID = IEC devices (device switch)
 VD = virtual devices (global switch)
@@ -503,13 +511,15 @@ static const unsigned int iecbus_device_index[16] = {
 void iecbus_status_set(unsigned int type, unsigned int unit,
                        unsigned int enable)
 {
-    static unsigned int truedrive, drivetype[IECBUS_NUM], iecdevice[IECBUS_NUM],
-                        virtualdevices;
+    static unsigned int truedrive[IECBUS_NUM], drivetype[IECBUS_NUM], iecdevice[IECBUS_NUM],
+                        virtualdevices[IECBUS_NUM];
     unsigned int dev;
+
+    DBG(("iecbus_status_set unit: %u type: %u enabled: %u", unit, type, enable));
 
     switch (type) {
         case IECBUS_STATUS_TRUEDRIVE:
-            truedrive = enable ? (1 << 3) : 0;
+            truedrive[unit] = enable ? (1 << 3) : 0;
             break;
         case IECBUS_STATUS_DRIVETYPE:
             drivetype[unit] = enable ? (1 << 2) : 0;
@@ -518,15 +528,20 @@ void iecbus_status_set(unsigned int type, unsigned int unit,
             iecdevice[unit] = enable ? (1 << 1) : 0;
             break;
         case IECBUS_STATUS_VIRTUALDEVICES:
-            virtualdevices = enable ? (1 << 0) : 0;
+            virtualdevices[unit] = enable ? (1 << 0) : 0;
             break;
     }
 
     for (dev = 0; dev < IECBUS_NUM; dev++) {
         unsigned int index;
 
-        index = truedrive | drivetype[dev] | iecdevice[dev] | virtualdevices;
+        index = truedrive[dev] | drivetype[dev] | iecdevice[dev] | virtualdevices[dev];
         iecbus_device[dev] = iecbus_device_index[index];
+#if 0
+        DBG(("iecbus_status_set dev: %u uses (idx:%d): %s", dev, index,
+             iecbus_device[dev] == IECBUS_DEVICE_IECDEVICE ? "IECBUS_DEVICE_IECDEVICE" :
+             iecbus_device[dev] == IECBUS_DEVICE_TRUEDRIVE ? "IECBUS_DEVICE_TRUEDRIVE" : "IECBUS_DEVICE_NONE"));
+#endif
     }
 
     calculate_callback_index();
