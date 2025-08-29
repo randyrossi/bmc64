@@ -590,8 +590,18 @@ GND  |              | KBD1 (GND)
 
 NOTE: There are no analog inputs so paddles won't function.
 
-Both real VIC20 and C64 keyboards should work in all emulated machines.  However, the additional keys found on the C128's keyboard are not available.
+Both real VIC20 and C64 keyboards should work in all emulated machines.  
 
+The additional keys on a Commodore 128 (NUMERIC KEYPAD / CURSOR KEYS / ESC / TAB / ALT / HELP / LINE FEED / NO SCROLL) are now supported in 128 mode, but the Latching switches (CAPS LOCK / ASCII and 40/80) are not currently.
+
+To use these you will need to connect 3 more additional GPIO pins to these additional connections on the 128 keyboard connector :
+
+GPIO | KEYBOARD CONNECTOR
+-----|-------------------
+ 02  | KDB21
+ 03  | KBD22
+ 09  | KBD23
+ 
 (One cool side-effect of using a real keyboard is if you boot the C128 and hold down the commodore key, it will boot into 64 mode like the real thing! That's something I could never get to work with USB keyboards.)
 
 ## GPIO Config 3 : Waveshare Game HAT

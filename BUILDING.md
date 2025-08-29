@@ -6,7 +6,7 @@ These instructions have been tested on Debian/Ubuntu/Mint distributions. If you 
 ## Prerequisites
 1. If your system doesn't already have them, install all of the regular build tools:
 
-        sudo apt-get install git build-essential automake autoconf libtool pkg-config autoconf-archive autotools-dev
+        sudo apt-get install git build-essential automake autoconf libtool pkg-config autoconf-archive autotools-dev bison flex
 
 2. Install the 65xx cross assembler:
 
@@ -16,26 +16,31 @@ These instructions have been tested on Debian/Ubuntu/Mint distributions. If you 
 ----
 ## Downloading The Required Files
 
-1. Clone the repo:
-
+1. Clone the repo. Note the bmc64 directory will be created automatically in the folder you are in:
+   
         cd /path/to/store/files/
+           
         git clone https://github.com/randyrossi/bmc64.git --recursive
 
-2. Download and unpack the *GNU Embedded Toolchain for Arm*:
+3. Download and unpack the *GNU Embedded Toolchain for Arm*:
 
     * Visit [https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
     * Download the package for your system. For example, at the time of writing [gcc-arm-none-eabi-9-2019-q4-major-x86\_64-linux.tar.bz2](https://developer.arm.com/-/media/Files/downloads/gnu-rm/9-2019q4/gcc-arm-none-eabi-9-2019-q4-major-x86_64-linux.tar.bz2) was available for Linux x86\_64.
     * Once downloaded, extract the file somewhere. Note down the path to the extracted directory. This will be used later.
     * In the extracted directory, find the /lib/gcc/arm-none-eabi/ directory and note down the version number. This will be used later.
-
+    * UPDATE - recent attempts only the 2019-q4 version seems to work
 
 ----
 ## Building
 
 1. Set the ARM_HOME environment variable to point to the extracted Arm toolchain directory:
 
+   * Note this is the directory just before the first 'bin' directory.  In my case "~/software/gcc-arm-none-eabi-9-2019-q4-major" 
+
         export ARM_HOME=/path/to/extracted/toolchain/directory
 
+        e.g. "export ARM_HOME=~/software/gcc-arm-none-eabi-9-2019-q4-major"
+     
 2. Set the PATH environment variable to point to the Arm toolchain's *bin* directory:
 
         export PATH=$PATH:$ARM_HOME/bin
@@ -44,19 +49,43 @@ These instructions have been tested on Debian/Ubuntu/Mint distributions. If you 
 
         export ARM_VERSION=9.2.1
 
-4. If this is your first time building, run *clean_all.sh* from the bmc64 directory:
+4. UPDATE - another PREFIX needs to be set:
+
+        export PREFIX=arm-none-eabi-
+   
+5. UPDATE - to fix the bug with LEX/FLEX stopping the compile please edit third_party/vice-3.3/configure.proto
+
+        Comment out this (using dnl):
+
+        if test x"$LEX" = "x:"; then
+        AC_MSG_ERROR([Could not find either flex or lex!])
+        fi
+
+        so that it reads:
+
+        dnl if test x"$LEX" = "x:"; then
+        dnl AC_MSG_ERROR([Could not find either flex or lex!])
+        dnl fi
+
+        IMPORTANT: Now run this from the same folder (third_party/vice-3.3):
+   
+           ./autogen.sh
+        
+6. If this is your first time building, run *clean_all.sh* from the bmc64 directory:
 
         cd /path/to/store/files/bmc64/
         ./clean_all.sh
 
-5. Run *make_all.sh* from the bmc64 directory to build the third party libraries and kernel:
+7. Run *make_all.sh* from the bmc64 directory to build the third party libraries and kernel:
 
         cd /path/to/store/files/bmc64/
         ./make_all.sh [pi0|pi2|pi3]
 
         NOTE: In the above, set the required Pi version, such as ./make_all.sh pi3
 
-6. Run *make_machines.sh* to build the kernel images for each machine (C64, C128, etc):
+        Its worth noting there will be compile warnings / errors - but it should build your kernal image.
+
+8. Run *make_machines.sh* to build the kernel images for each machine (C64, C128, etc):
 
         cd /path/to/store/files/bmc64/
         ./make_machines.sh [pi0|pi2|pi3]
