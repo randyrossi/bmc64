@@ -54,7 +54,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "4.2 Patched"
+#define VERSION_STRING "4.2-p1"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
