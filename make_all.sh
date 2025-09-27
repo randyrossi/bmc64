@@ -175,6 +175,14 @@ fi
 # Vice
 cd $SRC_DIR/third_party/vice-3.3
 
+# Run autogen to ensure build system is up-to-date
+echo "Running autogen for VICE..."
+./autogen.sh
+if [ "$?" != "0" ]; then
+    echo "autogen failed!"
+    exit 1
+fi
+
 if [ "$BOARD" = "pi0" ]
 then
 # We have to configure resid even though we don't link it for pi0 to
@@ -217,6 +225,19 @@ if [ "$?" != "0" ]
 then
        exit
 fi
+
+# Build teensy-resid for pi0
+if [ "$BOARD" = "pi0" ]
+then
+cd teensy-resid
+make libresid.a
+if [ "$?" != "0" ]
+then
+       exit
+fi
+cd ..
+fi
+
 cd ..
 
 # These will fail
