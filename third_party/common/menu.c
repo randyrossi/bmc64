@@ -461,33 +461,33 @@ static void show_files(DirType dir_type, FileFilter filter, int menu_id,
 
 static void show_about() {
   struct menu_item *about_root = ui_push_menu(32, 8);
-  char title[16];
+  char title[32];
   char desc[32];
 
   switch (emux_machine_class) {
   case BMC64_MACHINE_CLASS_C64:
-    snprintf (title, 15, "%s%s %s", "BMC64", VARIANT_STRING, VERSION_STRING);
+    snprintf (title, 31, "%s%s %s", "BMC64", VARIANT_STRING, VERSION_STRING);
     strncpy (desc, "A Bare Metal C64 Emulator", 31);
     break;
   case BMC64_MACHINE_CLASS_C128:
-    snprintf (title, 15, "%s%s %s", "BMC128", VARIANT_STRING, VERSION_STRING);
+    snprintf (title, 31, "%s%s %s", "BMC128", VARIANT_STRING, VERSION_STRING);
     strncpy (desc, "A Bare Metal C128 Emulator", 31);
     break;
   case BMC64_MACHINE_CLASS_VIC20:
-    snprintf (title, 15, "%s%s %s", "BMVIC20", VARIANT_STRING, VERSION_STRING);
+    snprintf (title, 31, "%s%s %s", "BMVIC20", VARIANT_STRING, VERSION_STRING);
     strncpy (desc, "A Bare Metal VIC20 Emulator", 31);
     break;
   case BMC64_MACHINE_CLASS_PLUS4:
   case BMC64_MACHINE_CLASS_PLUS4EMU:
-    snprintf (title, 15, "%s%s %s", "BMPLUS4", VARIANT_STRING, VERSION_STRING);
+    snprintf (title, 31, "%s%s %s", "BMPLUS4", VARIANT_STRING, VERSION_STRING);
     strncpy (desc, "A Bare Metal PLUS/4 Emulator", 31);
     break;
   case BMC64_MACHINE_CLASS_PET:
-    snprintf (title, 15, "%s%s %s", "BMPET", VARIANT_STRING, VERSION_STRING);
+    snprintf (title, 31, "%s%s %s", "BMPET", VARIANT_STRING, VERSION_STRING);
     strncpy (desc, "A Bare Metal PET Emulator", 31);
     break;
   default:
-    strncpy (title, "ERROR", 15);
+    strncpy (title, "ERROR", 31);
     strncpy (desc, "Unknown Emulator", 31);
     break;
   }
