@@ -465,7 +465,7 @@ bool SID::set_sampling_parameters(double clock_freq, sampling_method method,
 				  double sample_freq, double pass_freq,
 				  double filter_scale)
 {
-   set_sampling_parameters((float)clock_freq, method,
+   return set_sampling_parameters((float)clock_freq, method,
                            (float)sample_freq, (float)pass_freq,
                            (float)filter_scale);
 }
