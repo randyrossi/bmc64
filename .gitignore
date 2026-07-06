@@ -15,3 +15,23 @@ kernel8-32.img*
 kernel8-32.img.*
 kernel7.img.*
 *.o
+
+# Root build outputs
+/*.a
+/*.d
+
+# Machine-specific kernel images
+/kernel*.img.*
+
+# Editor/autotools byproducts
+*~
+**/config.cache
+**/autom4te.cache/
+**/.deps/
+
+# Third-party native build outputs
+third_party/**/*.a
+third_party/**/*.la
+third_party/**/*.lo
+third_party/**/*.d
+third_party/**/*.o
