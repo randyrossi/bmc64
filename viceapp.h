@@ -37,7 +37,7 @@
 #include <circle/usb/usbhcidevice.h>
 #include <ff.h>
 
-#include <circle_glue.h>
+#include "circle_glue.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -443,7 +443,8 @@ void ViceStdioApp::InitBootStat() {
 
     // These never get freed...
     mBootStatFile[num] = (char *)malloc(MAX_BOOTSTAT_FLEN);
-    strncpy(mBootStatFile[num], file, MAX_BOOTSTAT_FLEN);
+    strncpy(mBootStatFile[num], file, MAX_BOOTSTAT_FLEN - 1);
+    mBootStatFile[num][MAX_BOOTSTAT_FLEN - 1] = '\0';
     mBootStatSize[num] = atoi(size);
 
     num++;

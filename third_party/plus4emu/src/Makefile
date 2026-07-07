@@ -8,7 +8,12 @@ OBJ = acia6551.o bplist.o cfg_db.o charconv.o cia8520.o compress.o comprlib.o cp
 
 UNSUPPORTED = fldisp.o gldisp.o guicolor.o sndio_pa.o
 
-INCLUDES = -I $(CIRCLE_STDLIB_HOME)/install/arm-none-circle/include -I $(CIRCLE_STDLIB_HOME)/libs/circle/addon/fatfs -I $(TOP)/src -I $(TOP)
+INCLUDES = -I $(CIRCLE_STDLIB_HOME)/install/arm-none-circle/include \
+	-I $(CIRCLE_STDLIB_HOME)/include \
+	-I $(CIRCLE_STDLIB_HOME)/libs/circle/include \
+	-I $(CIRCLE_STDLIB_HOME)/libs/circle/addon \
+	-I $(CIRCLE_STDLIB_HOME)/libs/circle/addon/fatfs \
+	-I $(TOP)/src -I $(TOP)
 
 all: libplus4.a
 

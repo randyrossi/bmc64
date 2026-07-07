@@ -52,7 +52,8 @@ public:
   bool Initialize(void) override;
   TShutdownMode Run(void);
 
-  static void MouseStatusHandler(unsigned nButtons, int nPosX, int nPosY);
+  static void MouseStatusHandler(unsigned nButtons, int nPosX, int nPosY,
+                                 int nWheelMove);
   static void KeyStatusHandlerRaw(unsigned char ucModifiers,
                                   const unsigned char RawKeys[6]);
   static void GamePadStatusHandler(unsigned nDeviceIndex,

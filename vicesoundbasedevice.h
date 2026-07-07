@@ -19,7 +19,7 @@
 #include <stdint.h>
 #include <circle/interrupt.h>
 #include <circle/sched/synchronizationevent.h>
-#include <circle/soundbasedevice.h>
+#include <circle/sound/soundbasedevice.h>
 #include <circle/types.h>
 #include <vc4/sound/vc_vchi_audioserv_defs.h>
 #include <vc4/vchi/vchi.h>

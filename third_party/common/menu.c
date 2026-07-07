@@ -29,6 +29,7 @@
 #include <math.h>
 #include <assert.h>
 #include <dirent.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -310,6 +311,30 @@ static void remove_dir(char *path) {
   }
 }
 
+static int is_directory(DirType dir_type, const char *name) {
+  char path[MAX_STR_VAL_LEN * 2];
+  struct stat statbuf;
+
+  if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) {
+    return 1;
+  }
+
+  strncpy(path, fullpath(dir_type, ""), sizeof(path) - 1);
+  path[sizeof(path) - 1] = '\0';
+
+  if (path[0] != '\0' && path[strlen(path) - 1] != '/') {
+    strncat(path, "/", sizeof(path) - strlen(path) - 1);
+  }
+
+  strncat(path, name, sizeof(path) - strlen(path) - 1);
+
+  if (stat(path, &statbuf) != 0) {
+    return 0;
+  }
+
+  return S_ISDIR(statbuf.st_mode);
+}
+
 // Clears the file menu and populates it with files.
 static void list_files(struct menu_item *parent,
                        DirType dir_type, FileFilter filter,
@@ -373,7 +398,7 @@ static void list_files(struct menu_item *parent,
 
   if (dp != NULL) {
     while (ep = readdir(dp)) {
-      if (ep->d_type & DT_DIR) {
+      if (is_directory(dir_type, ep->d_name)) {
         ui_menu_add_button_with_value(menu_id, &dirs_root, ep->d_name, 0,
                                       ep->d_name, "(dir)")
             ->sub_id = MENU_SUB_ENTER_DIR;

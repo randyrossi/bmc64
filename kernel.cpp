@@ -1198,8 +1198,11 @@ int CKernel::circle_sound_bufferspace(void) {
 
 void CKernel::circle_yield(void) { CScheduler::Get()->Yield(); }
 
-void CKernel::MouseStatusHandler(unsigned nButtons, int deltaX, int deltaY) {
+void CKernel::MouseStatusHandler(unsigned nButtons, int deltaX, int deltaY,
+                                 int nWheelMove) {
   static unsigned int prev_buttons = {0};
+
+  (void)nWheelMove;
 
   emu_mouse_move(deltaX, deltaY);
 

@@ -4,12 +4,13 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
+#include "third_party/circle-stdlib/include/wrap_fatfs.h"
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #undef errno
 extern int errno;
-#include "warning.h"
+#include "third_party/circle-stdlib/libs/circle-newlib/libgloss/circle/warning.h"
 
 #include "circle_glue.h"
 #include <assert.h>
@@ -18,7 +19,17 @@ extern int errno;
 #include <sys/unistd.h>
 #include <circle/serial.h>
 
-#include <ff.h>
+struct _CIRCLE_DIR {
+  _CIRCLE_DIR() : mFirstRead(0), mOpen(0) {
+    mEntry.d_ino = 0;
+    mEntry.d_name[0] = 0;
+  }
+
+  FATFS_DIR mCurrentEntry;
+  struct dirent mEntry;
+  unsigned int mFirstRead : 1;
+  unsigned int mOpen : 1;
+};
 
 // This is a replacement io.cpp specifically for BMC64.
 // This implementation will sometimes load the entire file
@@ -183,22 +194,20 @@ struct CircleFile {
 
 struct CircleDir {
   CircleDir() {
-    mEntry.d_ino = 0;
-    mEntry.d_name[0] = 0;
-    dir.pat = pattern;
     in_use = 0;
   }
 
   DIR dir;
   int in_use;
-  struct dirent mEntry;
 };
 
 CircleFile fileTab[MAX_OPEN_FILES];
 CircleDir dirTab[MAX_OPEN_DIRS];
 
 static const char* const VolumeStr[FF_VOLUMES] = {FF_VOLUME_STRS};
+#if FF_MULTI_PARTITION
 PARTITION VolToPart[FF_VOLUMES];
+#endif
 
 void CGlueStdioInit(CSerialDevice *serial) {
   g_serial = serial;
@@ -209,10 +218,12 @@ void CGlueStdioInit(CSerialDevice *serial) {
   fileTab[2].in_use = 1;
 
   // By default, use the first partition of each physical drive.
+#if FF_MULTI_PARTITION
   for (int pd = 0; pd < FF_VOLUMES; pd++) {
     VolToPart[pd].pd = pd;
     VolToPart[pd].pt = 0;
   }
+#endif
 
   strcpy (currentDir, "/");
 }
@@ -234,14 +245,18 @@ void CGlueStdioInitBootStat (int num,
 }
 
 void CGlueStdioSetPartitionForVolume (const char* volume, int part, unsigned int ss) {
+#if FF_MULTI_PARTITION
   for (int pd = 0; pd < FF_VOLUMES; pd++) {
      if (strcmp(volume, VolumeStr[pd]) == 0) {
         VolToPart[pd].pt = part;
-	// Start sector only forced if part == 5
-        VolToPart[pd].ss = ss;
         return;
      }
   }
+#else
+  (void) volume;
+  (void) part;
+  (void) ss;
+#endif
 }
 
 static int FindFreeFileSlot(void) {
@@ -328,8 +343,8 @@ static int slurp_file(CircleFile &file) {
   return 0;
 }
 
-extern "C" int _DEFUN(_open, (file, flags, mode),
-                      char *file _AND int flags _AND int mode) {
+extern "C" int _open(char *file, int flags, int mode) {
+  (void) mode;
   int const masked_flags = flags & 7;
   if (masked_flags != O_RDONLY && masked_flags != O_WRONLY &&
       masked_flags != O_RDWR) {
@@ -399,7 +414,7 @@ extern "C" int _DEFUN(_open, (file, flags, mode),
   return slot;
 }
 
-extern "C" int _DEFUN(_close, (fildes), int fildes) {
+extern "C" int _close(int fildes) {
   if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
     errno = EBADF;
     return -1;
@@ -457,8 +472,7 @@ extern "C" int _DEFUN(_close, (fildes), int fildes) {
   return 0;
 }
 
-extern "C" int _DEFUN(_read, (fildes, ptr, len),
-                      int fildes _AND char *ptr _AND int len) {
+extern "C" int _read(int fildes, char *ptr, int len) {
   if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
     errno = EBADF;
     return -1;
@@ -500,8 +514,7 @@ extern "C" int _DEFUN(_read, (fildes, ptr, len),
   }
 }
 
-extern "C" int _DEFUN(_write, (fildes, ptr, len),
-                      int fildes _AND char *ptr _AND int len) {
+extern "C" int _write(int fildes, char *ptr, int len) {
   if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
     errno = EBADF;
     return -1;
@@ -546,6 +559,63 @@ extern "C" int _DEFUN(_write, (fildes, ptr, len),
   return len;
 }
 
+extern "C" int _isatty(int fildes) {
+  if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
+    errno = EBADF;
+    return -1;
+  }
+
+  CircleFile &file = fileTab[fildes];
+  if (!file.in_use) {
+    errno = EBADF;
+    return -1;
+  }
+
+  return (fildes == 0 || fildes == 1 || fildes == 2) ? 1 : 0;
+}
+
+extern "C" int _fcntl(int fildes, int cmd, int arg) {
+  (void) arg;
+
+  if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
+    errno = EBADF;
+    return -1;
+  }
+
+  CircleFile &file = fileTab[fildes];
+  if (!file.in_use) {
+    errno = EBADF;
+    return -1;
+  }
+
+  switch (cmd) {
+  case F_GETFL:
+    if (file.mode != 0) {
+      return file.mode;
+    }
+    if (fildes == 0) {
+      return O_RDONLY;
+    }
+    if (fildes == 1 || fildes == 2) {
+      return O_WRONLY;
+    }
+    return 0;
+
+  case F_SETFL:
+#ifdef F_GETFD
+  case F_GETFD:
+#endif
+#ifdef F_SETFD
+  case F_SETFD:
+#endif
+    return 0;
+
+  default:
+    errno = EINVAL;
+    return -1;
+  }
+}
+
 extern "C" DIR *opendir(const char *name) {
   CirclePath circlePath(name); 
   
@@ -556,32 +626,48 @@ extern "C" DIR *opendir(const char *name) {
   }
 
   CircleDir &slot = dirTab[slotNum];
-  if (f_opendir(&slot.dir, circlePath.path) != FR_OK) {
+  if (f_opendir(&slot.dir.mCurrentEntry, circlePath.path) != FR_OK) {
     errno = ENFILE;
     return 0;
   }
 
+  slot.dir.mOpen = 1;
+  slot.dir.mFirstRead = 1;
   slot.in_use = 1;
   return &slot.dir;
 }
 
-static struct dirent *do_readdir(CircleDir *dir, struct dirent *de) {
+static bool read_next_entry(FATFS_DIR *currentEntry, FILINFO *filinfo) {
+  if (f_readdir(currentEntry, filinfo) == FR_OK) {
+    return filinfo->fname[0] != 0;
+  }
 
-  assert(dir->in_use);
+  errno = EBADF;
+  return false;
+}
+
+static struct dirent *do_readdir(DIR *dir, struct dirent *de) {
+  assert(dir->mOpen);
 
   FILINFO fno;
+  bool haveEntry;
   struct dirent *result = nullptr;
 
-  FRESULT res = f_findnext(&dir->dir, &fno);
-  if (res == FR_OK && fno.fname[0] != 0) {
+  if (dir->mFirstRead) {
+    if (f_readdir(&dir->mCurrentEntry, nullptr) == FR_OK) {
+      haveEntry = read_next_entry(&dir->mCurrentEntry, &fno);
+    } else {
+      errno = EBADF;
+      haveEntry = false;
+    }
+    dir->mFirstRead = 0;
+  } else {
+    haveEntry = read_next_entry(&dir->mCurrentEntry, &fno);
+  }
+
+  if (haveEntry) {
     strcpy(de->d_name, fno.fname);
     de->d_ino = 0;
-    de->d_type = 0;
-    if (fno.fattrib & AM_DIR) {
-      de->d_type |= DT_DIR;
-    } else {
-      de->d_type |= DT_REG;
-    }
     result = de;
   }
 
@@ -589,15 +675,18 @@ static struct dirent *do_readdir(CircleDir *dir, struct dirent *de) {
 }
 
 extern "C" struct dirent *readdir(DIR *dir) {
-  struct dirent *result;
-
   CircleDir *c_dir = FindCircleDirFromDIR(dir);
   if (c_dir == nullptr) {
     errno = EBADF;
     return nullptr;
   }
 
-  return do_readdir(c_dir, &c_dir->mEntry);
+  if (!dir->mOpen) {
+    errno = EBADF;
+    return nullptr;
+  }
+
+  return do_readdir(dir, &dir->mEntry);
 }
 
 extern "C" int readdir_r(DIR *__restrict dir, dirent *__restrict de,
@@ -608,15 +697,20 @@ extern "C" int readdir_r(DIR *__restrict dir, dirent *__restrict de,
   if (c_dir == nullptr) {
     *ode = nullptr;
     result = EBADF;
+  } else if (!dir->mOpen) {
+    *ode = nullptr;
+    result = EBADF;
   } else {
-    *ode = do_readdir(c_dir, de);
+    *ode = do_readdir(dir, de);
     result = 0;
   }
 
   return result;
 }
 
-extern "C" void rewinddir(DIR *dir) { f_rewinddir(dir); }
+extern "C" void rewinddir(DIR *dir) {
+  dir->mFirstRead = 1;
+}
 
 extern "C" int closedir(DIR *dir) {
   CircleDir *c_dir = FindCircleDirFromDIR(dir);
@@ -625,9 +719,15 @@ extern "C" int closedir(DIR *dir) {
     return -1;
   }
 
-  c_dir->in_use = 0;
+  if (!dir->mOpen) {
+    errno = EBADF;
+    return -1;
+  }
 
-  if (f_closedir(dir) != FR_OK) {
+  c_dir->in_use = 0;
+  dir->mOpen = 0;
+
+  if (f_closedir(&dir->mCurrentEntry) != FR_OK) {
     errno = EIO;
     return -1;
   }
@@ -635,8 +735,7 @@ extern "C" int closedir(DIR *dir) {
   return 0;
 }
 
-extern "C" int _DEFUN(_stat, (file, st),
-                      const char *file _AND struct stat *st) {
+extern "C" int _stat(const char *file, struct stat *st) {
   CirclePath circlePath(file);
   memset(st, 0, sizeof(struct stat));
 
@@ -644,7 +743,7 @@ extern "C" int _DEFUN(_stat, (file, st),
   for (int i=0;i<g_bootStatNum;i++) {
      if (g_bootStatWhat[i] == BOOTSTAT_WHAT_STAT) {
         if (strend(circlePath.path, g_bootStatFile[i])) {
-           st->st_mode = S_IFREG | S_IREAD | S_IWRITE;
+          st->st_mode = S_IFREG | S_IRUSR | S_IWUSR;
            st->st_size = g_bootStatSize[i];
         }
         return 0;
@@ -665,9 +764,9 @@ extern "C" int _DEFUN(_stat, (file, st),
       st->st_mode |= S_IFREG;
     }
     if (fno.fattrib & AM_RDO) {
-      st->st_mode |= S_IREAD;
+      st->st_mode |= S_IRUSR;
     } else {
-      st->st_mode |= S_IREAD | S_IWRITE;
+      st->st_mode |= S_IRUSR | S_IWUSR;
     }
 
     st->st_size = fno.fsize;
@@ -678,7 +777,7 @@ extern "C" int _DEFUN(_stat, (file, st),
   return -1;
 }
 
-extern "C" int _DEFUN(_fstat, (fildes, st), int fildes _AND struct stat *st) {
+extern "C" int _fstat(int fildes, struct stat *st) {
 
   CircleFile &file = fileTab[fildes];
   if (!file.in_use) {
@@ -689,8 +788,7 @@ extern "C" int _DEFUN(_fstat, (fildes, st), int fildes _AND struct stat *st) {
   return _stat(file.fname, st);
 }
 
-extern "C" int _DEFUN(_lseek, (fildes, ptr, dir),
-                      int fildes _AND int ptr _AND int dir) {
+extern "C" int _lseek(int fildes, int ptr, int dir) {
 
   if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
     errno = EBADF;
@@ -728,7 +826,7 @@ extern "C" int _DEFUN(_lseek, (fildes, ptr, dir),
   return file.position;
 }
 
-int chdir (const char *path)
+extern "C" int chdir (const char *path)
 {
   int i;
 
@@ -778,7 +876,7 @@ int chdir (const char *path)
   return 0;
 }
 
-char *getwd(char *buf) {
+extern "C" char *getwd(char *buf) {
    if (buf) {
       strcpy(buf, currentDir);
       if (strlen(buf) > 1 && buf[strlen(buf)-1] == '/') {
@@ -788,10 +886,27 @@ char *getwd(char *buf) {
    return buf;
 }
 
-extern "C" int
-_DEFUN (_link, (existing, newname),
-        char *existing _AND char *newname)
+extern "C" int access(const char *fn, int flags)
 {
+  struct stat st;
+
+  if (stat(fn, &st) != 0) {
+    return -1;
+  }
+
+  if (st.st_mode & S_IFDIR) {
+    return 0;
+  }
+
+  if ((flags & W_OK) != 0 && (st.st_mode & S_IWUSR) == 0) {
+    errno = EACCES;
+    return -1;
+  }
+
+  return 0;
+}
+
+extern "C" int _link(char *existing, char *newname) {
   int result = f_rename(existing, newname);
   if (result != FR_OK) {
      if (result == FR_EXIST) errno = EEXIST;
@@ -801,10 +916,7 @@ _DEFUN (_link, (existing, newname),
   return 0;
 }
 
-extern "C" int
-_DEFUN (_unlink, (name),
-        char *name)
-{
+extern "C" int _unlink(char *name) {
   f_unlink(name);
   return 0;
 }

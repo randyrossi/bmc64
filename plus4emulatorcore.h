@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef plus4emualtorcore_h
+#ifndef plus4emulatorcore_h
 #define plus4emulatorcore_h
 
 #include <circle/memory.h>
