@@ -53,7 +53,14 @@ echo APPLY PATCHES
 echo ==============================================================
 
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle-newlib
-#patch -p1 < ../../../../circle_newlib_patch.diff
+if ! grep -q '__errno_location' libgloss/circle/errno.c
+then
+patch -p1 < ../../../../circle_newlib_patch.diff
+if [ "$?" != "0" ]
+then
+       exit
+fi
+fi
 
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle
 

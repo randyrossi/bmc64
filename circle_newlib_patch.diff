@@ -1460,54 +1460,18 @@ index 4613ac81f..f12adbdcc 100644
  #define	_TIME_T_DECLARED
  #endif
 diff --git a/newlib/libc/sys/circle/sys/dirent.h b/newlib/libc/sys/circle/sys/dirent.h
-index 1f73230c6..4157027bf 100644
+index 767ad56be..0f6d97f88 100644
 --- a/newlib/libc/sys/circle/sys/dirent.h
 +++ b/newlib/libc/sys/circle/sys/dirent.h
-@@ -7,16 +7,43 @@ extern "C" {
+@@ -7,8 +7,11 @@ extern "C" {
  
  #include <sys/types.h>
  
--#include <circle/fs/fsdef.h>
--
--typedef struct _CIRCLE_DIR DIR;
-+#include <ff.h>
+-#include <wrap_fatfs.h>
++#define DIR FATFS_DIR
++#include <fatfs/ff.h>
++#undef DIR
  
- /* Directory entry as returned by readdir */
- struct dirent {
-         ino_t  d_ino;
--        char   d_name[FS_TITLE_LEN + 1];
-+        unsigned char d_type;
-+        char   d_name[FF_MAX_LFN + 1];
-+};
-+#define _DIRENT_HAVE_D_TYPE
-+
-+/* File types for `d_type'.  */
-+enum
-+{
-+  DT_UNKNOWN = 0,
-+# define DT_UNKNOWN     DT_UNKNOWN
-+  DT_FIFO = 1,
-+# define DT_FIFO        DT_FIFO
-+  DT_CHR = 2,
-+# define DT_CHR         DT_CHR
-+  DT_DIR = 4,
-+# define DT_DIR         DT_DIR
-+  DT_BLK = 6,
-+# define DT_BLK         DT_BLK
-+  DT_REG = 8,
-+# define DT_REG         DT_REG
-+  DT_LNK = 10,
-+# define DT_LNK         DT_LNK
-+  DT_SOCK = 12,
-+# define DT_SOCK        DT_SOCK
-+  DT_WHT = 14
-+# define DT_WHT         DT_WHT
- };
- 
-+/* Convert between stat structure types and directory types.  */
-+# define IFTODT(mode)           (((mode) & 0170000) >> 12)
-+# define DTTOIF(dirtype)        ((dirtype) << 12)
-+
  DIR *opendir(const char *);
  struct dirent *readdir(DIR *);
  int readdir_r(DIR *__restrict, struct dirent *__restrict,
