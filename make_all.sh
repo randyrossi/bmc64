@@ -53,7 +53,7 @@ echo APPLY PATCHES
 echo ==============================================================
 
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle-newlib
-if ! grep -q '__errno_location' libgloss/circle/errno.c
+if ! grep -q '#define DIR FATFS_DIR' newlib/libc/sys/circle/sys/dirent.h
 then
 patch -p1 < ../../../../circle_newlib_patch.diff
 if [ "$?" != "0" ]
