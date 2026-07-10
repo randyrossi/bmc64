@@ -83,19 +83,19 @@ cd $SRC_DIR/third_party/circle-stdlib
 if [ "$BOARD" = "pi2" ]
 then
 #cat ../../circle_stdlib_patch.diff  | sed 's/-std=c++14//' | patch -p1
-./configure --raspberrypi=2
+./configure --raspberrypi=2 --kernel-max-size 16
 elif [ "$BOARD" = "pi0" ]
 then
 #cat ../../circle_stdlib_patch.diff | patch -p1
-./configure --raspberrypi=1
+./configure --raspberrypi=1 --kernel-max-size 16
 elif [ "$BOARD" = "pi3" ]
 then
 #cat ../../circle_stdlib_patch.diff  | patch -p1
-./configure --raspberrypi=3
+./configure --raspberrypi=3 --kernel-max-size 16
 elif [ "$BOARD" = "pi4" ]
 then
 #cat ../../circle_stdlib_patch.diff  | patch -p1
-./configure --raspberrypi=4
+./configure --raspberrypi=4 --kernel-max-size 16
 else
 echo "I don't know what to do for $BOARD"
 exit

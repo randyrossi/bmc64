@@ -30,7 +30,7 @@ endif
 include $(CIRCLEHOME)/Rules.mk
 
 CFLAGS += $(APP_INCLUDES) -D $(MACHINE_CLASS)
-CPPFLAGS += $(APP_INCLUDES) -D $(MACHINE_CLASS)
+CPPFLAGS += $(APP_INCLUDES) -D $(MACHINE_CLASS) -fno-exceptions -fno-rtti
 
 FILTERED_CIRCLE_NEWLIB = libcirclenewlib-bmc64.a
 
