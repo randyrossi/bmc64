@@ -1,8 +1,213 @@
+diff --git a/libgloss/circle/io.cpp b/libgloss/circle/io.cpp
+index 8fb96bd77..7803ffff5 100644
+--- a/libgloss/circle/io.cpp
++++ b/libgloss/circle/io.cpp
+@@ -542,10 +542,13 @@ namespace _CircleStdlib
+             return { true, true, true, true };
+         }
+ 
++    public:
+         FIL mFile;
+         char *mFilename;
+     };
+ 
++#include "io_slurp.h"
++
+     void
+     CGlueInitConsole (CConsole &rConsole)
+     {
+@@ -585,7 +588,7 @@ _open (char *file, int flags, int mode)
+     {
+         assert(circleFile != nullptr);
+ 
+-        auto const newFatFs = new _CircleStdlib::CGlueIoFatFs ();
++        auto const newFatFs = new _CircleStdlib::CGlueIoSlurpFatFs ();
+ 
+         if (newFatFs->Open (file, flags, mode))
+         {
+diff --git a/libgloss/circle/io_slurp.h b/libgloss/circle/io_slurp.h
+new file mode 100644
+index 000000000..268ea8aaa
+--- /dev/null
++++ b/libgloss/circle/io_slurp.h
+@@ -0,0 +1,172 @@
++#ifndef _CIRCNEWLIB_IO_SLURP_H
++#define _CIRCNEWLIB_IO_SLURP_H
++
++#include "cglueio.h"
++#include "wrap_fatfs.h"
++#include <fcntl.h>
++#include <stdlib.h>
++#include <string.h>
++
++
++    struct CGlueIoSlurpFatFs : public CGlueIoFatFs
++    {
++        char *mRAMBuffer;
++        int mAllocated;
++        unsigned mSize;
++        unsigned mPosition;
++        int mMode;
++        int mWrittenTo;
++
++        CGlueIoSlurpFatFs()
++            : mRAMBuffer(nullptr), mAllocated(0), mSize(0), mPosition(0), mMode(0), mWrittenTo(0)
++        {
++        }
++
++        ~CGlueIoSlurpFatFs()
++        {
++            if (mRAMBuffer) {
++                free(mRAMBuffer);
++                mRAMBuffer = nullptr;
++            }
++        }
++
++        int slurp_file() {
++            if (mRAMBuffer == nullptr) {
++                mSize = 0;
++                unsigned total = 0;
++                if (f_lseek(&mFile, 0) != FR_OK) {
++                   return -1;
++                }
++                while (true) {
++                  char readBuf[1024];
++                  unsigned int num_read;
++                  if (f_read(&mFile, readBuf, 1024, &num_read) != FR_OK) {
++                    if (mRAMBuffer) {
++                       free(mRAMBuffer);
++                       mRAMBuffer = nullptr;
++                    }  
++                    return -1;
++                  }
++                  if (num_read == 0) {
++                    break;
++                  }
++                  if (mRAMBuffer == nullptr) {
++                    mAllocated = 1024;
++                    mRAMBuffer = (char *)malloc(mAllocated);
++                  } else if ((unsigned int)mAllocated < total + num_read) {
++                    mAllocated *= 2;
++                    mRAMBuffer = (char *)realloc(mRAMBuffer, mAllocated);
++                  }
++                  memcpy(mRAMBuffer + total, readBuf, num_read);
++                  total += num_read;
++                  mSize = total;
++                }
++            }
++            return 0;
++        }
++
++        bool Open(char *file, int flags, int mode)
++        {
++            mMode = flags & 7;
++
++            // Call base fatfs open to init the FIL struct
++            bool r = CGlueIoFatFs::Open(file, flags, mode);
++            if (!r) return false;
++
++            // When file is opened O_RDWR or O_RDONLY, slurp it into memory.
++            if (mMode == O_RDWR || mMode == O_RDONLY) {
++               if (slurp_file()) {
++                  errno = ENFILE;
++                  return false;
++               }
++            }
++            return true;
++        }
++
++        int Read(void *pBuffer, int nCount)
++        {
++            if (mRAMBuffer == nullptr) {
++                return CGlueIoFatFs::Read(pBuffer, nCount);
++            } else {
++                 unsigned int max = nCount;
++                 unsigned int remain = mSize - mPosition;
++                 if (max > remain) max = remain;
++                 if (max > 0) {
++                    memcpy(pBuffer, mRAMBuffer + mPosition, max);
++                    mPosition += max;
++                 }
++                 return static_cast<int>(max);
++            }
++        }
++
++        int Write(const void *pBuffer, int nCount)
++        {
++            mWrittenTo = 1;
++
++            if (mRAMBuffer == nullptr) {
++                mAllocated = 1024;
++                mRAMBuffer = (char *) malloc(mAllocated);
++            }
++
++            // Make sure we always have enough room allocated for the next write.
++            while (mPosition + nCount >= (unsigned int)mAllocated) {
++                mAllocated *= 2;
++                mRAMBuffer = (char *)realloc(mRAMBuffer, mAllocated);
++            }
++
++            memcpy(mRAMBuffer + mPosition, pBuffer, nCount);
++            mPosition += nCount;
++            if (mPosition > mSize) {
++                mSize = mPosition;
++            }
++
++            // Sync down to the actual file incrementally for WRONLY
++            if (mMode == O_WRONLY) {
++                UINT bytesWritten = 0;
++                f_write(&mFile, pBuffer, static_cast<UINT>(nCount), &bytesWritten);
++            }
++            
++            return nCount;
++        }
++
++        int LSeek(int ptr, int dir)
++        {
++            if (mRAMBuffer == nullptr) {
++                return CGlueIoFatFs::LSeek(ptr, dir);
++            }
++
++            int new_pos;
++            switch (dir) {
++                case SEEK_SET: new_pos = ptr; break;
++                case SEEK_CUR: new_pos = mPosition + ptr; break;
++                case SEEK_END: new_pos = mSize + ptr; break;
++                default: errno = EINVAL; return -1;
++            }
++
++            if (new_pos < 0 || (unsigned int)new_pos > mSize) {
++                errno = EINVAL;
++                return -1;
++            }
++
++            mPosition = new_pos;
++            return mPosition;
++        }
++
++        int Close(void)
++        {
++            if (mRAMBuffer) {
++                // If it was opened O_RDWR and written to, we need to flush it to disk on close.
++                // Reopen the file with CREATE_ALWAYS to truncate it and write our RAM buffer down.
++                if (mMode == O_RDWR && mWrittenTo) {
++                    f_close(&mFile);
++                    if (f_open(&mFile, mFilename, FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {
++                        UINT bytesWritten = 0;
++                        f_write(&mFile, mRAMBuffer, mSize, &bytesWritten);
++                    }
++                }
++            }
++            
++            return CGlueIoFatFs::Close();
++        }
++    };
++#endif
 diff --git a/newlib/libc/sys/circle/sys/dirent.h b/newlib/libc/sys/circle/sys/dirent.h
-index 7330dd1cc..483cd072d 100644
+index 2f4d48dcf..5098efe89 100644
 --- a/newlib/libc/sys/circle/sys/dirent.h
 +++ b/newlib/libc/sys/circle/sys/dirent.h
-@@ -6,7 +6,9 @@ extern "C" {
+@@ -7,7 +7,9 @@ extern "C" {
  
  #include <sys/types.h>
  
@@ -12,3 +217,4 @@ index 7330dd1cc..483cd072d 100644
 +#undef DIR
  
  typedef struct _CIRCLE_DIR DIR;
+ 
