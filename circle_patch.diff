@@ -12,7 +12,7 @@ index 6b80534d..656accef 100644
  
  void __warn (const char *file, const int line);
 diff --git a/include/circle/sysconfig.h b/include/circle/sysconfig.h
-index 566e6eb7..32afd0a8 100644
+index 566e6eb7..fed5f043 100644
 --- a/include/circle/sysconfig.h
 +++ b/include/circle/sysconfig.h
 @@ -155,7 +155,7 @@
@@ -22,5 +22,23 @@ index 566e6eb7..32afd0a8 100644
 -//#define ARM_ALLOW_MULTI_CORE
 +#define ARM_ALLOW_MULTI_CORE
  
+ #endif
+ 
+@@ -236,7 +236,7 @@
+ // used for other purposes. This option has no influence on the
+ // Raspberry Pi 4 and 5.
+ 
+-//#define USE_USB_FIQ
++#define USE_USB_FIQ
+ 
+ #ifdef USE_USB_FIQ
+ #define USE_USB_SOF_INTR
+@@ -251,7 +251,7 @@
+ 
+ #ifndef NO_SCREEN_DMA_BURST_LENGTH
+ #ifndef SCREEN_DMA_BURST_LENGTH
+-#define SCREEN_DMA_BURST_LENGTH	2
++#define NO_SCREEN_DMA_BURST_LENGTH
+ #endif
  #endif
  
