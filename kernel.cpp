@@ -690,9 +690,11 @@ if (static_kernel->circle_get_ticks() - entry_start >= entry_delay) {
 
 void CKernel::MouseRemovedHandler(CDevice *pDevice, void *pContext) {
   if (static_kernel) static_kernel->m_pMouse = 0;
+  CLogger::Get()->Write("kernel", LogNotice, "Mouse removed.");
 }
 void CKernel::KeyRemovedHandler(CDevice *pDevice, void *pContext) {
   if (static_kernel) static_kernel->m_pKeyboard = 0;
+  CLogger::Get()->Write("kernel", LogNotice, "Keyboard removed.");
 }
 void CKernel::GamePadRemovedHandler(CDevice *pDevice, void *pContext) {
   // Just let the update scan clear nulls
@@ -700,6 +702,7 @@ void CKernel::GamePadRemovedHandler(CDevice *pDevice, void *pContext) {
      for (int i=0; i<MAX_USB_DEVICES; i++) {
          if (static_kernel->m_pGamePad[i] == pDevice) {
              static_kernel->m_pGamePad[i] = 0;
+             CLogger::Get()->Write("kernel", LogNotice, "Gamepad %d removed.", i);
          }
      }
   }
@@ -711,6 +714,7 @@ void CKernel::SetupUSBKeyboard() {
     if (m_pKeyboard != 0) {
       m_pKeyboard->RegisterRemovedHandler(KeyRemovedHandler);
       m_pKeyboard->RegisterKeyStatusHandlerRaw(KeyStatusHandlerRaw);
+      CLogger::Get()->Write("kernel", LogNotice, "Keyboard connected and registered.");
     }
   }
 }
@@ -721,6 +725,7 @@ void CKernel::SetupUSBMouse() {
     if (m_pMouse != 0) {
       m_pMouse->RegisterRemovedHandler(MouseRemovedHandler);
       m_pMouse->RegisterStatusHandler(MouseStatusHandler);
+      CLogger::Get()->Write("kernel", LogNotice, "Mouse connected and registered.");
     }
   }
 }
@@ -748,6 +753,7 @@ void CKernel::SetupUSBGamepads() {
     if (m_pGamePad[nDevice-1] != 0) {
       m_pGamePad[nDevice-1]->RegisterRemovedHandler(GamePadRemovedHandler);
       m_pGamePad[nDevice-1]->RegisterStatusHandler(GamePadStatusHandler);
+      CLogger::Get()->Write("kernel", LogNotice, "Gamepad %d connected and registered.", nDevice);
 
       const TGamePadState *pState = m_pGamePad[nDevice-1]->GetInitialState();
       num_axes[num_pads] = pState->naxes;
