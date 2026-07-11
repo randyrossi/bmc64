@@ -148,8 +148,16 @@ private:
   void ReadCustomGPIO();
   void SetupUserport();
   void ReadWriteUserport();
-
   ViceSound *mViceSound;
+
+  static void MouseRemovedHandler(CDevice *pDevice, void *pContext);
+  static void KeyRemovedHandler(CDevice *pDevice, void *pContext);
+  static void GamePadRemovedHandler(CDevice *pDevice, void *pContext);
+  
+  CUSBKeyboardDevice *m_pKeyboard;
+  CMouseDevice *m_pMouse;
+  CUSBGamePadDevice *m_pGamePad[MAX_USB_DEVICES];
+
   CCPUThrottle mCPUThrottle;
   CSpinLock m_Lock;
   int mNumJoy;
