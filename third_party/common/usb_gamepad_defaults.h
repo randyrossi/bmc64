@@ -2,7 +2,7 @@
 #define BMC64_USB_GAMEPAD_DEFAULTS_H
 
 #define USB_GAMEPAD_DEFAULT_PROFILE_NONE 0
-#define USB_GAMEPAD_DEFAULT_PROFILE_8BITDO_ULTIMATE_C 1
+#define USB_GAMEPAD_DEFAULT_PROFILE_8BITDO_XBOX360 1
 
 struct usb_gamepad_button_default {
   unsigned button;
@@ -22,6 +22,7 @@ struct usb_gamepad_default_profile {
 };
 
 void emu_set_usb_gamepad_mapping_profile(int device, unsigned profile);
+void emu_set_usb_gamepad_display_name(int device, const char *display_name);
 const struct usb_gamepad_default_profile *usb_gamepad_default_profile_for_device(
     int device);
 const char *usb_gamepad_default_profile_display_name_for_device(int device);

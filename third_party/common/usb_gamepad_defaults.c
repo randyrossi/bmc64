@@ -2,7 +2,13 @@
 #include "joy.h"
 #include "usb_gamepad_defaults.h"
 
+#include <string.h>
+
+#define USB_GAMEPAD_DISPLAY_NAME_MAX 32
+
 static unsigned usb_gamepad_mapping_profiles[MAX_USB_DEVICES];
+static char usb_gamepad_display_names[MAX_USB_DEVICES]
+                                           [USB_GAMEPAD_DISPLAY_NAME_MAX + 1];
 
 extern int usb_pref[MAX_USB_DEVICES];
 extern int usb_x_axis[MAX_USB_DEVICES];
@@ -20,7 +26,7 @@ static const struct usb_gamepad_button_default usb_gamepad_generic_button_defaul
   { 8, BTN_ASSIGN_MENU },
 };
 
-static const struct usb_gamepad_button_default usb_gamepad_8bitdo_ultimate_c_button_defaults[] = {
+static const struct usb_gamepad_button_default usb_gamepad_8bitdo_xbox360_button_defaults[] = {
   { 5, BTN_ASSIGN_RUN_STOP_BACK },
   { 7, BTN_ASSIGN_FIRE },
   { 8, BTN_ASSIGN_FIRE },
@@ -35,16 +41,16 @@ static const struct usb_gamepad_button_default usb_gamepad_8bitdo_ultimate_c_but
 
 static const struct usb_gamepad_default_profile usb_gamepad_default_profiles[] = {
   {
-    USB_GAMEPAD_DEFAULT_PROFILE_8BITDO_ULTIMATE_C,
-    "8BitDo Ultimate C 2.4G",
+    USB_GAMEPAD_DEFAULT_PROFILE_8BITDO_XBOX360,
+    "8BitDo Xbox 360-Compatible",
     USB_PREF_ANALOG,
     0,
     1,
     .50,
     .50,
-    usb_gamepad_8bitdo_ultimate_c_button_defaults,
-    sizeof(usb_gamepad_8bitdo_ultimate_c_button_defaults) /
-        sizeof(usb_gamepad_8bitdo_ultimate_c_button_defaults[0]),
+    usb_gamepad_8bitdo_xbox360_button_defaults,
+    sizeof(usb_gamepad_8bitdo_xbox360_button_defaults) /
+      sizeof(usb_gamepad_8bitdo_xbox360_button_defaults[0]),
   },
 };
 
@@ -52,6 +58,31 @@ void emu_set_usb_gamepad_mapping_profile(int device, unsigned profile) {
   if (device >= 0 && device < MAX_USB_DEVICES) {
     usb_gamepad_mapping_profiles[device] = profile;
   }
+}
+
+void emu_set_usb_gamepad_display_name(int device, const char *display_name) {
+  if (device < 0 || device >= MAX_USB_DEVICES) {
+    return;
+  }
+
+  if (display_name == 0) {
+    usb_gamepad_display_names[device][0] = '\0';
+    return;
+  }
+
+  size_t display_length = strlen(display_name);
+  if (display_length > USB_GAMEPAD_DISPLAY_NAME_MAX) {
+    display_length = USB_GAMEPAD_DISPLAY_NAME_MAX;
+    while (display_length > 0 && display_name[display_length] != ' ') {
+      display_length--;
+    }
+    if (display_length == 0) {
+      display_length = USB_GAMEPAD_DISPLAY_NAME_MAX;
+    }
+  }
+
+  memcpy(usb_gamepad_display_names[device], display_name, display_length);
+  usb_gamepad_display_names[device][display_length] = '\0';
 }
 
 const struct usb_gamepad_default_profile *usb_gamepad_default_profile_for_device(
@@ -74,6 +105,11 @@ const struct usb_gamepad_default_profile *usb_gamepad_default_profile_for_device
 }
 
 const char *usb_gamepad_default_profile_display_name_for_device(int device) {
+  if (device >= 0 && device < MAX_USB_DEVICES &&
+      usb_gamepad_display_names[device][0] != '\0') {
+    return usb_gamepad_display_names[device];
+  }
+
   const struct usb_gamepad_default_profile *profile =
       usb_gamepad_default_profile_for_device(device);
   return profile != 0 ? profile->display_name : 0;

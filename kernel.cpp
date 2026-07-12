@@ -49,11 +49,16 @@ static unsigned gamepad_mapping_profile(CUSBGamePadDevice *gamepad) {
     return USB_GAMEPAD_DEFAULT_PROFILE_NONE;
   }
 
-  boolean is_8bitdo_ultimate_c = vendor->Compare("ven2dc8-3106") == 0;
+  boolean is_8bitdo_xbox360 = vendor->Compare("ven2dc8-3106") == 0;
   delete vendor;
 
-  return is_8bitdo_ultimate_c ? USB_GAMEPAD_DEFAULT_PROFILE_8BITDO_ULTIMATE_C
-                              : USB_GAMEPAD_DEFAULT_PROFILE_NONE;
+  return is_8bitdo_xbox360 ? USB_GAMEPAD_DEFAULT_PROFILE_8BITDO_XBOX360
+                            : USB_GAMEPAD_DEFAULT_PROFILE_NONE;
+}
+
+static const char *gamepad_product_name(CUSBGamePadDevice *gamepad) {
+  const char *product_name = gamepad->GetDevice()->GetProductName();
+  return product_name[0] != '\0' ? product_name : 0;
 }
 
 static int vol_percent_to_vchiq(int percent) {
@@ -780,6 +785,9 @@ void CKernel::SetupUSBGamepads() {
       emu_set_usb_gamepad_mapping_profile(
           nDevice - 1,
           gamepad_mapping_profile(m_pGamePad[nDevice-1]));
+      emu_set_usb_gamepad_display_name(
+        nDevice - 1,
+        gamepad_product_name(m_pGamePad[nDevice-1]));
       m_pGamePad[nDevice-1]->RegisterRemovedHandler(GamePadRemovedHandler);
       m_pGamePad[nDevice-1]->RegisterStatusHandler(GamePadStatusHandler);
       CLogger::Get()->Write("kernel", LogNotice, "Gamepad %d connected and registered.", nDevice);
