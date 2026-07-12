@@ -62,6 +62,51 @@ index d188be66..86db89dd 100644
  
  #if RASPPI >= 4
  	unsigned m_nRootHubPortID;
+diff --git a/include/circle/usb/usbgamepad8bitdo.h b/include/circle/usb/usbgamepad8bitdo.h
+new file mode 100644
+index 00000000..f1bff156
+--- /dev/null
++++ b/include/circle/usb/usbgamepad8bitdo.h
+@@ -0,0 +1,24 @@
++//
++// usbgamepad8bitdo.h
++//
++
++#ifndef _circle_usb_usbgamepad8bitdo_h
++#define _circle_usb_usbgamepad8bitdo_h
++
++#include <circle/usb/usbgamepadxbox360.h>
++
++class CUSBGamePad8BitDoDevice : public CUSBGamePadXbox360Device
++{
++public:
++	CUSBGamePad8BitDoDevice (CUSBFunction *pFunction);
++	~CUSBGamePad8BitDoDevice (void);
++
++	boolean Configure (void);
++
++	unsigned GetProperties (void)
++	{
++		return GamePadPropertyIsKnown | GamePadPropertyHasRumble;
++	}
++};
++
++#endif
+\ No newline at end of file
+diff --git a/include/circle/usb/usbgamepadxbox360.h b/include/circle/usb/usbgamepadxbox360.h
+index 6ca080be..2a11e944 100644
+--- a/include/circle/usb/usbgamepadxbox360.h
++++ b/include/circle/usb/usbgamepadxbox360.h
+@@ -41,6 +41,9 @@ public:
+ 	boolean SetLEDMode (TGamePadLEDMode Mode);
+ 	boolean SetRumbleMode (TGamePadRumbleMode Mode);
+ 
++protected:
++	boolean ConfigureGamePad (boolean bSetLEDMode);
++
+ private:
+ 	void ReportHandler (const u8 *pReport, unsigned nReportSize);
+ 
 diff --git a/include/circle/usb/usbkeyboard.h b/include/circle/usb/usbkeyboard.h
 index 373b0d26..10f04b04 100644
 --- a/include/circle/usb/usbkeyboard.h
@@ -74,6 +119,19 @@ index 373b0d26..10f04b04 100644
  
  	CKeyboardBehaviour m_Behaviour;
  
+diff --git a/lib/usb/Makefile b/lib/usb/Makefile
+index 14471753..1d26f7a0 100644
+--- a/lib/usb/Makefile
++++ b/lib/usb/Makefile
+@@ -26,7 +26,7 @@ include $(CIRCLEHOME)/Rules.mk
+ 
+ OBJS	= lan7800.o smsc951x.o usbbluetooth.o usbcdcethernet.o usbfloppydevice.o \
+ 	  usbconfigparser.o usbdevice.o usbdevicefactory.o usbendpoint.o usbfunction.o \
+-	  usbgamepad.o usbgamepadps3.o usbgamepadps4.o usbgamepadstandard.o usbgamepadswitchpro.o \
++	  usbgamepad.o usbgamepad8bitdo.o usbgamepadps3.o usbgamepadps4.o usbgamepadstandard.o usbgamepadswitchpro.o \
+ 	  usbgamepadxbox360.o usbgamepadxboxone.o usbhiddevice.o usbhostcontroller.o \
+ 	  usbkeyboard.o usbmassdevice.o usbmidi.o usbmidihost.o usbmouse.o usbprinter.o usbrequest.o \
+ 	  usbstandardhub.o usbstring.o usbserial.o usbserialhost.o usbserialch341.o usbserialcp210x.o \
 diff --git a/lib/usb/usbdevice.cpp b/lib/usb/usbdevice.cpp
 index dbc710c3..2cf41d3d 100644
 --- a/lib/usb/usbdevice.cpp
@@ -99,18 +157,82 @@ index dbc710c3..2cf41d3d 100644
  {
  #if RASPPI <= 3
 diff --git a/lib/usb/usbdevicefactory.cpp b/lib/usb/usbdevicefactory.cpp
-index 75210581..4b9d9fb0 100644
+index 75210581..5d40105c 100644
 --- a/lib/usb/usbdevicefactory.cpp
 +++ b/lib/usb/usbdevicefactory.cpp
-@@ -130,7 +130,8 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
+@@ -34,6 +34,7 @@
+ #include <circle/usb/usbgamepadstandard.h>
+ #include <circle/usb/usbgamepadps3.h>
+ #include <circle/usb/usbgamepadps4.h>
++#include <circle/usb/usbgamepad8bitdo.h>
+ #include <circle/usb/usbgamepadxbox360.h>
+ #include <circle/usb/usbgamepadxboxone.h>
+ #include <circle/usb/usbgamepadswitchpro.h>
+@@ -129,8 +130,13 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
+ 	{
  		pResult = new CUSBGamePadPS4Device (pParent);
  	}
++	else if (pName->Compare ("ven2dc8-3106") == 0)
++	{
++		pResult = new CUSBGamePad8BitDoDevice (pParent);
++	}
  	else if (   pName->Compare ("ven45e-28e") == 0
 -		 || pName->Compare ("ven45e-28f") == 0)
 +		 || pName->Compare ("ven45e-28f") == 0
 +		 || pName->Compare ("ven2dc8-3106") == 0) // 8BitDo Ultimate C 2.4G
  	{
  		pResult = new CUSBGamePadXbox360Device (pParent);
+ 	}
+diff --git a/lib/usb/usbgamepad8bitdo.cpp b/lib/usb/usbgamepad8bitdo.cpp
+new file mode 100644
+index 00000000..fbbb7a9e
+--- /dev/null
++++ b/lib/usb/usbgamepad8bitdo.cpp
+@@ -0,0 +1,19 @@
++//
++// usbgamepad8bitdo.cpp
++//
++
++#include <circle/usb/usbgamepad8bitdo.h>
++
++CUSBGamePad8BitDoDevice::CUSBGamePad8BitDoDevice (CUSBFunction *pFunction)
++: CUSBGamePadXbox360Device (pFunction)
++{
++}
++
++CUSBGamePad8BitDoDevice::~CUSBGamePad8BitDoDevice (void)
++{
++}
++
++boolean CUSBGamePad8BitDoDevice::Configure (void)
++{
++	return ConfigureGamePad (FALSE);
++}
+\ No newline at end of file
+diff --git a/lib/usb/usbgamepadxbox360.cpp b/lib/usb/usbgamepadxbox360.cpp
+index 2064c369..e8143802 100644
+--- a/lib/usb/usbgamepadxbox360.cpp
++++ b/lib/usb/usbgamepadxbox360.cpp
+@@ -66,6 +66,11 @@ CUSBGamePadXbox360Device::~CUSBGamePadXbox360Device (void)
+ }
+ 
+ boolean CUSBGamePadXbox360Device::Configure (void)
++{
++	return ConfigureGamePad (TRUE);
++}
++
++boolean CUSBGamePadXbox360Device::ConfigureGamePad (boolean bSetLEDMode)
+ {
+ 	m_usReportSize = REPORT_SIZE;
+ 
+@@ -90,7 +95,7 @@ boolean CUSBGamePadXbox360Device::Configure (void)
+ 	}
+ 	m_State.nhats = 0;
+ 
+-	if (!SetLEDMode ((TGamePadLEDMode) m_nDeviceNumber))
++	if (bSetLEDMode && !SetLEDMode ((TGamePadLEDMode) m_nDeviceNumber))
+ 	{
+ 		return FALSE;
  	}
 diff --git a/lib/usb/usbkeyboard.cpp b/lib/usb/usbkeyboard.cpp
 index 05fe2fab..178b766d 100644
