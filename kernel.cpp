@@ -22,6 +22,11 @@
 #include <string.h>
 
 #include <circle/gpiopin.h>
+#include <circle/usb/usbdevice.h>
+
+extern "C" {
+#include "third_party/common/usb_gamepad_defaults.h"
+}
 
 CKernel *static_kernel = NULL;
 
@@ -37,6 +42,19 @@ static bool key_states[MAX_KEY_CODES];
 static unsigned char mod_states;
 static bool uiLeftShift = false;
 static bool uiRightShift = false;
+
+static unsigned gamepad_mapping_profile(CUSBGamePadDevice *gamepad) {
+  CString *vendor = gamepad->GetDevice()->GetName(DeviceNameVendor);
+  if (vendor == 0) {
+    return USB_GAMEPAD_DEFAULT_PROFILE_NONE;
+  }
+
+  boolean is_8bitdo_ultimate_c = vendor->Compare("ven2dc8-3106") == 0;
+  delete vendor;
+
+  return is_8bitdo_ultimate_c ? USB_GAMEPAD_DEFAULT_PROFILE_8BITDO_ULTIMATE_C
+                              : USB_GAMEPAD_DEFAULT_PROFILE_NONE;
+}
 
 static int vol_percent_to_vchiq(int percent) {
   int range = VCHIQ_SOUND_VOLUME_MAX-(-2720);
@@ -683,6 +701,14 @@ if (static_kernel->circle_get_ticks() - entry_start >= entry_delay) {
       value |= emu_add_button_values(nDeviceIndex, b);
       emu_set_joy_usb_interrupt(nDeviceIndex, value);
     }
+  } else if (prev_buttons[nDeviceIndex] != b) {
+    prev_buttons[nDeviceIndex] = b;
+    handle_button_function(ui_activated, nDeviceIndex, b);
+
+    if (!ui_activated) {
+      emu_set_joy_usb_interrupt(nDeviceIndex,
+                                emu_add_button_values(nDeviceIndex, b));
+    }
   }
 }
 
@@ -751,6 +777,9 @@ void CKernel::SetupUSBGamepads() {
     m_pGamePad[nDevice-1] = (CUSBGamePadDevice *)mDeviceNameService.GetDevice(DeviceName, FALSE);
     
     if (m_pGamePad[nDevice-1] != 0) {
+      emu_set_usb_gamepad_mapping_profile(
+          nDevice - 1,
+          gamepad_mapping_profile(m_pGamePad[nDevice-1]));
       m_pGamePad[nDevice-1]->RegisterRemovedHandler(GamePadRemovedHandler);
       m_pGamePad[nDevice-1]->RegisterStatusHandler(GamePadStatusHandler);
       CLogger::Get()->Write("kernel", LogNotice, "Gamepad %d connected and registered.", nDevice);

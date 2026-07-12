@@ -54,6 +54,20 @@ index 373b0d26..10f04b04 100644
  
  	CKeyboardBehaviour m_Behaviour;
  
+diff --git a/lib/usb/usbdevicefactory.cpp b/lib/usb/usbdevicefactory.cpp
+index 75210581..4b9d9fb0 100644
+--- a/lib/usb/usbdevicefactory.cpp
++++ b/lib/usb/usbdevicefactory.cpp
+@@ -130,7 +130,8 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
+ 		pResult = new CUSBGamePadPS4Device (pParent);
+ 	}
+ 	else if (   pName->Compare ("ven45e-28e") == 0
+-		 || pName->Compare ("ven45e-28f") == 0)
++		 || pName->Compare ("ven45e-28f") == 0
++		 || pName->Compare ("ven2dc8-3106") == 0) // 8BitDo Ultimate C 2.4G
+ 	{
+ 		pResult = new CUSBGamePadXbox360Device (pParent);
+ 	}
 diff --git a/lib/usb/usbkeyboard.cpp b/lib/usb/usbkeyboard.cpp
 index 05fe2fab..178b766d 100644
 --- a/lib/usb/usbkeyboard.cpp

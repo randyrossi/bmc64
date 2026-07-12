@@ -52,6 +52,7 @@
 #include "overlay.h"
 #include "raspi_util.h"
 #include "ui.h"
+#include "usb_gamepad_defaults.h"
 
 extern void reboot(void);
 
@@ -3744,19 +3745,12 @@ void build_menu(struct menu_item *root) {
   ui_menu_add_button(MENU_USB_2_CONFIGURE, parent, "Configure USB Gamepad 3...");
   ui_menu_add_button(MENU_USB_3_CONFIGURE, parent, "Configure USB Gamepad 4...");
 
-  for (int k = 0; k < MAX_USB_DEVICES; k++) {
-    usb_pref[k] = 0;
-    usb_x_axis[k] = 0;
-    usb_y_axis[k] = 1;
-    usb_x_thresh[k] = .50;
-    usb_y_thresh[k] = .50;
+  for (j = 0; j < MAX_USB_BUTTONS; j++) {
+    usb_button_bits[j] = 1 << j;
   }
 
-  for (j = 0; j < MAX_USB_BUTTONS; j++) {
-    for (k = 0; k < MAX_USB_DEVICES; k++) {
-      usb_button_assignments[k][j] = (j == 0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
-    }
-    usb_button_bits[j] = 1 << j;
+  for (k = 0; k < MAX_USB_DEVICES; k++) {
+    usb_gamepad_reset_to_defaults(k);
   }
 
   ui_menu_add_button(MENU_CONFIGURE_KEYSET1, parent, "Configure Keyset 1...");

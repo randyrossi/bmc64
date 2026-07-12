@@ -339,6 +339,8 @@ extern void emu_set_gamepad_info(int num_pads,
                                  int axes[2],
                                  int hats[2]);
 
+extern void emu_set_usb_gamepad_mapping_profile(int device, unsigned profile);
+
 // Test whether emulator is in a config mode where it wants to receive
 // raw usb data.
 extern int emu_wants_raw_usb(void);
