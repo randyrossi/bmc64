@@ -64,10 +64,10 @@ index d188be66..86db89dd 100644
  	unsigned m_nRootHubPortID;
 diff --git a/include/circle/usb/usbgamepad8bitdo.h b/include/circle/usb/usbgamepad8bitdo.h
 new file mode 100644
-index 00000000..b76c460a
+index 00000000..ca04d1b2
 --- /dev/null
 +++ b/include/circle/usb/usbgamepad8bitdo.h
-@@ -0,0 +1,39 @@
+@@ -0,0 +1,31 @@
 +//
 +// usbgamepad8bitdo.h
 +//
@@ -77,17 +77,10 @@ index 00000000..b76c460a
 +
 +#include <circle/usb/usbgamepadxbox360.h>
 +
-+enum T8BitDoGamePadProtocol
-+{
-+	EightBitDoGamePadProtocolXbox360,
-+	EightBitDoGamePadProtocolPro3Receiver
-+};
-+
 +class CUSBGamePad8BitDoDevice : public CUSBGamePadXbox360Device
 +{
 +public:
-+	CUSBGamePad8BitDoDevice (CUSBFunction *pFunction,
-+				   T8BitDoGamePadProtocol Protocol = EightBitDoGamePadProtocolXbox360);
++	CUSBGamePad8BitDoDevice (CUSBFunction *pFunction);
 +	~CUSBGamePad8BitDoDevice (void);
 +
 +	boolean Configure (void);
@@ -102,7 +95,6 @@ index 00000000..b76c460a
 +	boolean InitializeDevice (void);
 +
 +private:
-+	T8BitDoGamePadProtocol m_Protocol;
 +	unsigned m_nLoggedReports;
 +};
 +
@@ -264,7 +256,7 @@ index dbc710c3..96cf65b5 100644
  {
  #if RASPPI <= 3
 diff --git a/lib/usb/usbdevicefactory.cpp b/lib/usb/usbdevicefactory.cpp
-index 75210581..34259220 100644
+index 75210581..d8d0a384 100644
 --- a/lib/usb/usbdevicefactory.cpp
 +++ b/lib/usb/usbdevicefactory.cpp
 @@ -34,6 +34,7 @@
@@ -275,7 +267,7 @@ index 75210581..34259220 100644
  #include <circle/usb/usbgamepadxbox360.h>
  #include <circle/usb/usbgamepadxboxone.h>
  #include <circle/usb/usbgamepadswitchpro.h>
-@@ -69,7 +70,17 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
+@@ -69,7 +70,16 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
  
  	CUSBFunction *pResult = 0;
  
@@ -287,40 +279,28 @@ index 75210581..34259220 100644
 +	    && pParent->GetInterfaceSubClass () == 0x5D
 +	    && pParent->GetInterfaceProtocol () == 0x01)
 +	{
-+		pResult = new CUSBGamePad8BitDoDevice (pParent,
-+								 EightBitDoGamePadProtocolPro3Receiver);
++		pResult = new CUSBGamePad8BitDoDevice (pParent);
 +	}
 +	else if (   pName->Compare ("int9-0-0") == 0
  	    || pName->Compare ("int9-0-2") == 0)
  	{
  		pResult = new CUSBStandardHub (pParent);
-@@ -112,7 +123,8 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
- 		CString *pVendor = pParent->GetDevice ()->GetName (DeviceNameVendor);
- 		assert (pVendor != 0);
- 
--		if (pVendor->Compare ("ven5ac-21e") != 0)	// Apple Aluminum Mini Keyboard
-+		if (   pVendor->Compare ("ven2dc8-310b") != 0
-+		    && pVendor->Compare ("ven5ac-21e") != 0)	// Apple Aluminum Mini Keyboard
- 		{
- 			pResult = GetGenericHIDDevice (pParent);
- 		}
-@@ -129,6 +141,10 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
- 	{
+@@ -130,7 +140,8 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
  		pResult = new CUSBGamePadPS4Device (pParent);
  	}
-+	else if (pName->Compare ("ven2dc8-3106") == 0)
-+	{
-+		pResult = new CUSBGamePad8BitDoDevice (pParent);
-+	}
  	else if (   pName->Compare ("ven45e-28e") == 0
- 		 || pName->Compare ("ven45e-28f") == 0)
+-		 || pName->Compare ("ven45e-28f") == 0)
++		 || pName->Compare ("ven45e-28f") == 0
++		 || pName->Compare ("ven2dc8-3106") == 0) // 8BitDo Ultimate C 2.4G
  	{
+ 		pResult = new CUSBGamePadXbox360Device (pParent);
+ 	}
 diff --git a/lib/usb/usbgamepad8bitdo.cpp b/lib/usb/usbgamepad8bitdo.cpp
 new file mode 100644
-index 00000000..7f01df4e
+index 00000000..7e60a948
 --- /dev/null
 +++ b/lib/usb/usbgamepad8bitdo.cpp
-@@ -0,0 +1,110 @@
+@@ -0,0 +1,106 @@
 +//
 +// usbgamepad8bitdo.cpp
 +//
@@ -332,10 +312,10 @@ index 00000000..7f01df4e
 +
 +static const char FromUSBPad8BitDo[] = "usbpad8bitdo";
 +
-+CUSBGamePad8BitDoDevice::CUSBGamePad8BitDoDevice (CUSBFunction *pFunction,
-+							    T8BitDoGamePadProtocol Protocol)
++#define USB_GAMEPAD_8BITDO_REPORT_SIZE 20
++
++CUSBGamePad8BitDoDevice::CUSBGamePad8BitDoDevice (CUSBFunction *pFunction)
 +: CUSBGamePadXbox360Device (pFunction),
-+	m_Protocol (Protocol),
 +	m_nLoggedReports (0)
 +{
 +}
@@ -376,8 +356,7 @@ index 00000000..7f01df4e
 +		CLogger::Get ()->Write (FromUSBPad8BitDo, LogError, "No HID report descriptor");
 +	}
 +
-+	unsigned nReportSize = m_Protocol == EightBitDoGamePadProtocolPro3Receiver ? 20 : 0;
-+	boolean bResult = ConfigureGamePad (FALSE, nReportSize);
++	boolean bResult = ConfigureGamePad (FALSE, USB_GAMEPAD_8BITDO_REPORT_SIZE);
 +	if (!bResult)
 +	{
 +		CLogger::Get ()->Write (FromUSBPad8BitDo, LogError, "Cannot start input request");
@@ -393,7 +372,9 @@ index 00000000..7f01df4e
 +		if (m_nLoggedReports == 1)
 +		{
 +			CLogger::Get ()->Write (FromUSBPad8BitDo, LogNotice,
-+						  "Report %u received", m_nLoggedReports);
++						  "Report %u received (%u byte(s), %02X %02X)",
++						  m_nLoggedReports, nReportSize,
++						  pReport[0], nReportSize > 1 ? pReport[1] : 0);
 +		}
 +
 +		/*CLogger::Get ()->Write (FromUSBPad8BitDo, LogNotice,
@@ -406,11 +387,6 @@ index 00000000..7f01df4e
 +
 +boolean CUSBGamePad8BitDoDevice::InitializeDevice (void)
 +{
-+	if (m_Protocol != EightBitDoGamePadProtocolPro3Receiver)
-+	{
-+		return TRUE;
-+	}
-+
 +	DMA_BUFFER (u8, Command, 3) = {0x01, 0x03, 0x02};
 +	if (!SendToEndpointOut (Command, sizeof Command))
 +	{
