@@ -26,7 +26,7 @@ static const struct usb_gamepad_button_default usb_gamepad_generic_button_defaul
   { 8, BTN_ASSIGN_MENU },
 };
 
-static const struct usb_gamepad_button_default usb_gamepad_8bitdo_xbox360_button_defaults[] = {
+static const struct usb_gamepad_button_default usb_gamepad_xbox360_button_defaults[] = {
   { 5, BTN_ASSIGN_RUN_STOP_BACK },
   { 7, BTN_ASSIGN_FIRE },
   { 8, BTN_ASSIGN_FIRE },
@@ -41,16 +41,16 @@ static const struct usb_gamepad_button_default usb_gamepad_8bitdo_xbox360_button
 
 static const struct usb_gamepad_default_profile usb_gamepad_default_profiles[] = {
   {
-    USB_GAMEPAD_DEFAULT_PROFILE_8BITDO_XBOX360,
-    "8BitDo Xbox 360-Compatible",
+    USB_GAMEPAD_DEFAULT_PROFILE_XBOX360,
+    "Xbox 360-Compatible",
     USB_PREF_ANALOG,
     0,
     1,
     .50,
     .50,
-    usb_gamepad_8bitdo_xbox360_button_defaults,
-    sizeof(usb_gamepad_8bitdo_xbox360_button_defaults) /
-      sizeof(usb_gamepad_8bitdo_xbox360_button_defaults[0]),
+    usb_gamepad_xbox360_button_defaults,
+    sizeof(usb_gamepad_xbox360_button_defaults) /
+      sizeof(usb_gamepad_xbox360_button_defaults[0]),
   },
 };
 
