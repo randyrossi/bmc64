@@ -49,7 +49,9 @@ static unsigned gamepad_mapping_profile(CUSBGamePadDevice *gamepad) {
     return USB_GAMEPAD_DEFAULT_PROFILE_NONE;
   }
 
-  boolean is_8bitdo_xbox360 = vendor->Compare("ven2dc8-3106") == 0;
+  boolean is_8bitdo_xbox360 =
+      vendor->Compare("ven2dc8-3106") == 0 ||
+      vendor->Compare("ven2dc8-310b") == 0;
   delete vendor;
 
   return is_8bitdo_xbox360 ? USB_GAMEPAD_DEFAULT_PROFILE_8BITDO_XBOX360
