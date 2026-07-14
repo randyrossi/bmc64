@@ -39,6 +39,15 @@ static const struct usb_gamepad_button_default usb_gamepad_xbox360_button_defaul
   { 18, BTN_ASSIGN_LEFT },
 };
 
+static const struct usb_gamepad_button_default usb_gamepad_8bitdo_m30_2_4g_button_defaults[] = {
+  { 0, BTN_ASSIGN_FIRE },
+  { 1, BTN_ASSIGN_FIRE },
+  { 2, BTN_ASSIGN_FIRE },
+  { 3, BTN_ASSIGN_FIRE },
+  { 6, BTN_ASSIGN_RUN_STOP_BACK },
+  { 8, BTN_ASSIGN_MENU },
+};
+
 static const struct usb_gamepad_default_profile usb_gamepad_default_profiles[] = {
   {
     USB_GAMEPAD_DEFAULT_PROFILE_XBOX360,
@@ -51,6 +60,18 @@ static const struct usb_gamepad_default_profile usb_gamepad_default_profiles[] =
     usb_gamepad_xbox360_button_defaults,
     sizeof(usb_gamepad_xbox360_button_defaults) /
       sizeof(usb_gamepad_xbox360_button_defaults[0]),
+  },
+  {
+    USB_GAMEPAD_DEFAULT_PROFILE_8BITDO_M30_2_4G,
+    "8bitdo M30 2.4g Controller",
+    USB_PREF_ANALOG,
+    3,
+    4,
+    .50,
+    .50,
+    usb_gamepad_8bitdo_m30_2_4g_button_defaults,
+    sizeof(usb_gamepad_8bitdo_m30_2_4g_button_defaults) /
+      sizeof(usb_gamepad_8bitdo_m30_2_4g_button_defaults[0]),
   },
 };
 

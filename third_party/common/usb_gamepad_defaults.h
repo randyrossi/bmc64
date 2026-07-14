@@ -3,6 +3,7 @@
 
 #define USB_GAMEPAD_DEFAULT_PROFILE_NONE 0
 #define USB_GAMEPAD_DEFAULT_PROFILE_XBOX360 1
+#define USB_GAMEPAD_DEFAULT_PROFILE_8BITDO_M30_2_4G 2
 
 struct usb_gamepad_button_default {
   unsigned button;
