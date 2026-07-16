@@ -200,7 +200,11 @@ DIRS="src/resid src/teensy-resid"
 for d in $DIRS
 do
 cd $d
-CXXFLAGS="-std=c++11 -funsafe-math-optimizations -DAARCH=32 -march=armv6k -mtune=arm1176jzf-s -marm -mfpu=vfp -mfloat-abi=hard -O3 -I$CIRCLE_HOME/install/arm-none-circle/include/ $CIRCLE_PUBLIC_INCLUDES -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include-fixed" LDFLAGS="-L$CIRCLE_HOME/install/arm-none-circle/lib" ./configure --host=arm-none-eabi
+if ! CXXFLAGS="-std=c++11 -funsafe-math-optimizations -DAARCH=32 -march=armv6k -mtune=arm1176jzf-s -marm -mfpu=vfp -mfloat-abi=hard -O3 -I$CIRCLE_HOME/install/arm-none-circle/include/ $CIRCLE_PUBLIC_INCLUDES -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include-fixed" LDFLAGS="-nostdlib -Wl,-e,main" ./configure --host=arm-none-eabi
+then
+       echo "Failed to configure $d"
+       exit 1
+fi
 cd ../..
 done
 
