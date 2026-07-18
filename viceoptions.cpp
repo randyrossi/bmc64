@@ -34,7 +34,7 @@ ViceOptions *ViceOptions::s_pThis = 0;
 ViceOptions::ViceOptions(void)
     : m_nMachineTiming(MACHINE_TIMING_PAL_HDMI),
       m_bDemoEnabled(false), m_bSerialEnabled(false),
-      m_bGPIOOutputsEnabled(false), m_nCyclesPerSecond(0),
+  m_bWiFiEnabled(false), m_bGPIOOutputsEnabled(false), m_nCyclesPerSecond(0),
       m_audioOut(VCHIQSoundDestinationAuto), m_bDPIEnabled(false),
       m_scaling_param_fbw{0,0}, m_scaling_param_fbh{0,0},
       m_scaling_param_sx{0,0}, m_scaling_param_sy{0,0},
@@ -94,6 +94,8 @@ ViceOptions::ViceOptions(void)
       } else {
         m_bSerialEnabled = false;
       }
+    } else if (strcmp(pOption, "enable_wifi") == 0) {
+      m_bWiFiEnabled = strcmp(pValue, "true") == 0 || strcmp(pValue, "1") == 0;
     } else if (strcmp(pOption, "enable_gpio_outputs") == 0) {
       // Unless this is true, OUTPUT HIGH should not be allowed on any pin.
       if (strcmp(pValue,"true") == 0 || strcmp(pValue, "1") == 0) {
@@ -192,6 +194,8 @@ unsigned ViceOptions::GetMachineTiming(void) const { return m_nMachineTiming; }
 bool ViceOptions::DemoEnabled(void) const { return m_bDemoEnabled; }
 
 bool ViceOptions::SerialEnabled(void) const { return m_bSerialEnabled; }
+
+bool ViceOptions::WiFiEnabled(void) const { return m_bWiFiEnabled; }
 
 bool ViceOptions::GPIOOutputsEnabled(void) const { return m_bGPIOOutputsEnabled; }
 

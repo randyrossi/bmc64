@@ -36,6 +36,10 @@
 #include <circle/timer.h>
 #include <circle/usb/usbhcidevice.h>
 #include <ff.h>
+#if RASPPI == 3
+#include <wlan/bcm4343.h>
+#include <wlan/hostap/wpa_supplicant/wpasupplicant.h>
+#endif
 
 #include "circle_glue.h"
 #include <stdio.h>
@@ -285,8 +289,11 @@ private:
 class ViceStdioApp : public ViceScreenApp {
 public:
   ViceStdioApp(const char *kernel)
-  : ViceScreenApp(kernel), mUSBHCII(&mInterrupt, &mTimer, TRUE),
-        mEMMC(&mInterrupt, &mTimer, &mActLED)
+    : ViceScreenApp(kernel), mUSBHCII(&mInterrupt, &mTimer, TRUE),
+          mEMMC(&mInterrupt, &mTimer, &mActLED)
+#if RASPPI == 3
+  , mWLAN(nullptr), mNet(nullptr), mWPASupplicant(nullptr)
+#endif
         {}
 
   virtual bool Initialize(void);
@@ -303,6 +310,7 @@ private:
   // to answer questions about a set of known files. This speeds
   // up boot time.
   void InitBootStat();
+  void InitializeWiFi();
 
 protected:
   // Called after VICE has completed booting so we no longer
@@ -311,6 +319,11 @@ protected:
 
   CUSBHCIDevice mUSBHCII;
   CEMMCDevice mEMMC;
+#if RASPPI == 3
+  CBcm4343Device *mWLAN;
+  CNetSubSystem *mNet;
+  CWPASupplicant *mWPASupplicant;
+#endif
   FATFS mFileSystemSD;
   FATFS mFileSystemUSB1;
   FATFS mFileSystemUSB2;

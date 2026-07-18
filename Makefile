@@ -59,6 +59,8 @@ LIBS := $(VICELIBS) \
 	$(CIRCLEHOME)/addon/vc4/interface/vmcs_host/libvmcs_host.a \
   	$(CIRCLEHOME)/addon/linux/liblinuxemu.a \
 	$(CIRCLEHOME)/addon/fatfs/libfatfs.a \
+	$(CIRCLEHOME)/addon/wlan/hostap/wpa_supplicant/libwpa_supplicant.a \
+	$(CIRCLEHOME)/addon/wlan/libwlan.a \
 	$(CIRCLEHOME)/lib/sound/libsound.a \
   	$(CIRCLEHOME)/lib/sched/libsched.a \
   	$(CIRCLEHOME)/lib/libcircle.a

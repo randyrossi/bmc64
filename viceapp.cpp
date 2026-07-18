@@ -460,6 +460,53 @@ void ViceStdioApp::DisableBootStat() {
   CGlueStdioInitBootStat(0, nullptr, nullptr, nullptr);
 }
 
+void ViceStdioApp::InitializeWiFi() {
+#if RASPPI == 3
+  if (!mViceOptions.WiFiEnabled()) {
+    return;
+  }
+
+  CString firmwarePath;
+  CString configPath;
+  firmwarePath.Format("%s:/firmware/", mViceOptions.GetDiskVolume());
+  configPath.Format("%s:/wpa_supplicant.conf", mViceOptions.GetDiskVolume());
+
+  FIL configFile;
+  if (f_open(&configFile, (const char *)configPath, FA_READ) != FR_OK) {
+    mLogger.Write(GetKernelName(), LogError,
+                  "Wi-Fi enabled but WPA config is missing: %s",
+                  (const char *)configPath);
+    return;
+  }
+  f_close(&configFile);
+
+  mWLAN = new CBcm4343Device((const char *)firmwarePath);
+  if (!mWLAN->Initialize()) {
+    mLogger.Write(GetKernelName(), LogError, "Cannot initialize WLAN");
+    delete mWLAN;
+    mWLAN = nullptr;
+    return;
+  }
+
+  mNet = new CNetSubSystem(0, 0, 0, 0, "bmc64", NetDeviceTypeWLAN);
+  if (!mNet->Initialize(FALSE)) {
+    mLogger.Write(GetKernelName(), LogError, "Cannot initialize WLAN network stack");
+    delete mNet;
+    mNet = nullptr;
+    delete mWLAN;
+    mWLAN = nullptr;
+    return;
+  }
+
+  mWPASupplicant = new CWPASupplicant((const char *)configPath);
+  if (!mWPASupplicant->Initialize()) {
+    mLogger.Write(GetKernelName(), LogError, "Cannot initialize WPA supplicant");
+    delete mWPASupplicant;
+    mWPASupplicant = nullptr;
+  }
+#endif
+}
+
 bool ViceStdioApp::Initialize(void) {
   if (!ViceScreenApp::Initialize()) {
     return false;
@@ -496,6 +543,7 @@ bool ViceStdioApp::Initialize(void) {
   }
 
   InitBootStat();
+  InitializeWiFi();
 
   // Now that emmc is initialized, launch
   // the emulator main loop on CORE 1 before USBHCII.
@@ -523,6 +571,12 @@ bool ViceStdioApp::Initialize(void) {
 }
 
 void ViceStdioApp::Cleanup(void) {
+#if RASPPI == 3
+  delete mWPASupplicant;
+  delete mNet;
+  delete mWLAN;
+#endif
+
   // When mounting, fatfs gets ":" appended.  But StdioInit
   // does not.
   const char *volumeName = mViceOptions.GetDiskVolume();
