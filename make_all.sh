@@ -15,24 +15,32 @@ fi
 CIRCLE_PUBLIC_INCLUDES="-I$CIRCLE_HOME/include -I$CIRCLE_HOME/libs/circle/include -I$CIRCLE_HOME/libs/circle/addon"
 
 
-BOARD=$1
+BOARD=""
+SKIP_PATCHES=0
 
-if [ "$BOARD" = "pi2" ]
+for arg in "$@"
+do
+case "$arg" in
+       pi0|pi2|pi3|pi4)
+              BOARD="$arg"
+              ;;
+       --skip-patches)
+              SKIP_PATCHES=1
+              ;;
+       *)
+              echo "Need arg [pi0|pi2|pi3|pi4] [--skip-patches]"
+              exit 1
+              ;;
+esac
+done
+
+if [ -z "$BOARD" ]
 then
-echo Making for pi2
-elif [ "$BOARD" = "pi3" ]
-then
-echo Making for pi3
-elif [ "$BOARD" = "pi4" ]
-then
-echo Making for pi4
-elif [ "$BOARD" = "pi0" ]
-then
-echo Making for pi0
-else
-echo Need arg [pi0|pi2|pi3|pi4]
-exit
+echo "Need arg [pi0|pi2|pi3|pi4] [--skip-patches]"
+exit 1
 fi
+
+echo "Making for $BOARD"
 
 if [ -f sdcard/config.txt ]
 then
@@ -52,25 +60,39 @@ echo ==============================================================
 echo APPLY PATCHES
 echo ==============================================================
 
-cd $SRC_DIR/third_party/circle-stdlib/libs/circle-newlib
-if ! grep -q '#define DIR FATFS_DIR' newlib/libc/sys/circle/sys/dirent.h
+if [ "$SKIP_PATCHES" = "1" ]
 then
+echo "Skipping patches"
+else
+cd $SRC_DIR/third_party/circle-stdlib/libs/circle-newlib
+git reset --hard HEAD
+git clean -fd
 patch -p1 < ../../../../circle_newlib_patch.diff
 if [ "$?" != "0" ]
 then
        exit
 fi
-fi
 
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle
+git reset --hard HEAD
+git clean -fd
 
 if [ "$BOARD" = "pi0" ]
 then
-cat ../../../../circle_patch.diff | sed 's@+#define ARM_ALLOW_MULTI_CORE@+//#define ARM_ALLOW_MULTI_CORE@' | patch -p1
+sed 's@+#define ARM_ALLOW_MULTI_CORE@+//#define ARM_ALLOW_MULTI_CORE@' \
+  ../../../../circle_patch.diff | patch -p1
 #perl -pi -e 's@#define USE_PHYSICAL_COUNTER@//#define USE_PHYSICAL_COUNTER@' ./include/circle/sysconfig.h
 #perl -pi -e 's@//#define SAVE_VFP_REGS_ON_IRQ@#define SAVE_VFP_REGS_ON_IRQ@' ./include/circle/sysconfig.h
 else
 patch -p1 < ../../../../circle_patch.diff
+fi
+
+patch -p1 < ../../../../circle_8bitdo_keyboard_patch.diff
+patch -p1 < ../../../../circle_8bitdo_gamepad_patch.diff
+if [ -s ../../../../circle_usb_descriptor_patch.diff ]
+then
+patch -p1 < ../../../../circle_usb_descriptor_patch.diff
+fi
 fi
 
 echo ==============================================================
@@ -171,6 +193,7 @@ fi
 
 # Common
 cd $SRC_DIR/third_party/common
+make clean
 BOARD=$BOARD make
 
 # Plus4Emu

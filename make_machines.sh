@@ -20,7 +20,8 @@ exit
 fi
 
 cd third_party/common
-make
+make clean
+BOARD=$BOARD make
 if [ "$?" != "0" ]
 then
 	exit
