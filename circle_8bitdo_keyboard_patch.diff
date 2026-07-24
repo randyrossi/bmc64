@@ -1,180 +1,184 @@
 diff --git a/include/circle/usb/usbkeyboard.h b/include/circle/usb/usbkeyboard.h
-index 373b0d26..10f04b04 100644
+index 373b0d26..3c26d61d 100644
 --- a/include/circle/usb/usbkeyboard.h
 +++ b/include/circle/usb/usbkeyboard.h
-@@ -69,6 +69,7 @@ private:
+@@ -62,9 +62,13 @@ public:
+ 	// works in cooked and raw mode
+ 	boolean SetLEDs (u8 ucStatus);		// must not be called in interrupt context
+ 
+-private:
++
++protected:
++	boolean ConfigureKeyboard (unsigned nReportSize);
+ 	void ReportHandler (const u8 *pReport, unsigned nReportSize);
+ 
++
++private:
+ 	static boolean FindByte (const u8 *pBuffer, u8 ucByte, unsigned nLength);
  
  private:
- 	unsigned m_nReportSize;
-+	boolean m_b8BitDoNKRO;
+diff --git a/include/circle/usb/usbkeyboard8bitdo.h b/include/circle/usb/usbkeyboard8bitdo.h
+new file mode 100644
+index 00000000..4cc7a8f6
+--- /dev/null
++++ b/include/circle/usb/usbkeyboard8bitdo.h
+@@ -0,0 +1,22 @@
++//
++// usbkeyboard8bitdo.h
++//
++
++#ifndef _circle_usb_usbkeyboard8bitdo_h
++#define _circle_usb_usbkeyboard8bitdo_h
++
++#include <circle/usb/usbkeyboard.h>
++
++class CUSBKeyboard8BitDoDevice : public CUSBKeyboardDevice
++{
++public:
++	CUSBKeyboard8BitDoDevice (CUSBFunction *pFunction);
++	~CUSBKeyboard8BitDoDevice (void);
++
++	boolean Configure (void);
++
++protected:
++	void ReportHandler (const u8 *pReport, unsigned nReportSize);
++};
++
++#endif
+\ No newline at end of file
+diff --git a/lib/usb/Makefile b/lib/usb/Makefile
+index 14471753..e3e2e8d4 100644
+--- a/lib/usb/Makefile
++++ b/lib/usb/Makefile
+@@ -28,7 +28,7 @@ OBJS	= lan7800.o smsc951x.o usbbluetooth.o usbcdcethernet.o usbfloppydevice.o \
+ 	  usbconfigparser.o usbdevice.o usbdevicefactory.o usbendpoint.o usbfunction.o \
+ 	  usbgamepad.o usbgamepadps3.o usbgamepadps4.o usbgamepadstandard.o usbgamepadswitchpro.o \
+ 	  usbgamepadxbox360.o usbgamepadxboxone.o usbhiddevice.o usbhostcontroller.o \
+-	  usbkeyboard.o usbmassdevice.o usbmidi.o usbmidihost.o usbmouse.o usbprinter.o usbrequest.o \
++	  usbkeyboard.o usbkeyboard8bitdo.o usbmassdevice.o usbmidi.o usbmidihost.o usbmouse.o usbprinter.o usbrequest.o \
+ 	  usbstandardhub.o usbstring.o usbserial.o usbserialhost.o usbserialch341.o usbserialcp210x.o \
+ 	  usbserialpl2303.o usbserialft231x.o usbserialcdc.o usbtouchscreen.o dwhciregister.o
  
- 	CKeyboardBehaviour m_Behaviour;
+diff --git a/lib/usb/usbdevicefactory.cpp b/lib/usb/usbdevicefactory.cpp
+index 75210581..1009f4fe 100644
+--- a/lib/usb/usbdevicefactory.cpp
++++ b/lib/usb/usbdevicefactory.cpp
+@@ -30,6 +30,7 @@
+ #include <circle/usb/usbmassdevice.h>
+ #include <circle/usb/usbfloppydevice.h>
+ #include <circle/usb/usbkeyboard.h>
++#include <circle/usb/usbkeyboard8bitdo.h>
+ #include <circle/usb/usbmouse.h>
+ #include <circle/usb/usbgamepadstandard.h>
+ #include <circle/usb/usbgamepadps3.h>
+@@ -91,7 +92,12 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
+ 		CString *pVendor = pParent->GetDevice ()->GetName (DeviceNameVendor);
+ 		assert (pVendor != 0);
  
+-		if (pVendor->Compare ("ven3f0-1198") != 0)	// HP USB 1000dpi Laser Mouse
++		if (   pVendor->Compare ("ven2dc8-5200") == 0
++		    || pVendor->Compare ("ven2dc8-5201") == 0)
++		{
++			pResult = new CUSBKeyboard8BitDoDevice (pParent);
++		}
++		else if (pVendor->Compare ("ven3f0-1198") != 0)	// HP USB 1000dpi Laser Mouse
+ 		{
+ 			pResult = new CUSBKeyboardDevice (pParent);
+ 		}
 diff --git a/lib/usb/usbkeyboard.cpp b/lib/usb/usbkeyboard.cpp
-index 05fe2fab..178b766d 100644
+index 05fe2fab..b5adf198 100644
 --- a/lib/usb/usbkeyboard.cpp
 +++ b/lib/usb/usbkeyboard.cpp
-@@ -34,6 +34,7 @@ static const char DevicePrefix[] = "ukbd";
- CUSBKeyboardDevice::CUSBKeyboardDevice (CUSBFunction *pFunction)
- :	CUSBHIDDevice (pFunction),
- 	m_nReportSize (USBKEYB_REPORT_SIZE),
-+	m_b8BitDoNKRO (FALSE),
- 	m_pKeyStatusHandlerRaw (0),
- 	m_pKeyStatusHandlerRawArg (0),
- 	m_bMixedMode (FALSE),
-@@ -61,12 +62,24 @@ boolean CUSBKeyboardDevice::Configure (void)
- 	// which has to be ignored.
- 	const TUSBDeviceDescriptor *pDeviceDesc = GetDevice ()->GetDeviceDescriptor ();
- 	assert (pDeviceDesc != 0);
--	if (   pDeviceDesc->idVendor == 0x1C59
--	    && pDeviceDesc->idProduct == 0x99)
-+	if (pDeviceDesc->idVendor == 0x1C59
-+	 && pDeviceDesc->idProduct == 0x0099)
- 	{
+@@ -67,7 +67,12 @@ boolean CUSBKeyboardDevice::Configure (void)
  		m_nReportSize++;
  	}
  
-+	// 8BitDo Retro Keyboard (ignores Boot Protocol, sends 17-byte NKRO report with ID 0x0C)
-+	// 2DC8:5200 is wired mode
-+	// 2DC8:5201 is 2.4 GHz receiver mode
-+	// Both use the same 0x0C/0x0A NKRO keyboard bitmap
-+	if (   pDeviceDesc->idVendor == 0x2DC8
-+	    && (   pDeviceDesc->idProduct == 0x5200
-+	        || pDeviceDesc->idProduct == 0x5201))
-+	{
-+		m_b8BitDoNKRO = TRUE;
-+		m_nReportSize = 17;
-+	}
+-	if (!CUSBHIDDevice::ConfigureHID (m_nReportSize))
++	return ConfigureKeyboard (m_nReportSize);
++}
 +
- 	if (!CUSBHIDDevice::ConfigureHID (m_nReportSize))
++boolean CUSBKeyboardDevice::ConfigureKeyboard (unsigned nReportSize)
++{
++	if (!CUSBHIDDevice::ConfigureHID (nReportSize))
  	{
  		CLogger::Get ()->Write (FromUSBKbd, LogError, "Cannot configure HID device");
-@@ -183,14 +196,123 @@ boolean CUSBKeyboardDevice::SetLEDs (u8 ucStatus)
  
- void CUSBKeyboardDevice::ReportHandler (const u8 *pReport, unsigned nReportSize)
- {
--	// Ignore report ID, if it is included.
--	if (   pReport != 0
--	    && m_nReportSize > USBKEYB_REPORT_SIZE)
-+	if (pReport != 0)
- 	{
--		pReport++;
--		nReportSize--;
-+		CString Msg;
+diff --git a/lib/usb/usbkeyboard8bitdo.cpp b/lib/usb/usbkeyboard8bitdo.cpp
+new file mode 100644
+index 00000000..2556eb96
+--- /dev/null
++++ b/lib/usb/usbkeyboard8bitdo.cpp
+@@ -0,0 +1,72 @@
++//
++// usbkeyboard8bitdo.cpp
++//
 +
-+		Msg.Format ("Report size=%u :", nReportSize);
++#include <circle/usb/usbkeyboard8bitdo.h>
 +
-+		for (unsigned i = 0; i < nReportSize; i++)
-+		{
-+			CString Hex;
-+			Hex.Format (" %02X", pReport[i]);
-+			Msg.Append (Hex);
-+		}
++#define USBKEYB8BITDO_REPORT_SIZE	17
 +
-+		//CLogger::Get ()->Write (FromUSBKbd, LogNotice, Msg);
- 	}
- 
-+	u8 convertedReport[USBKEYB_REPORT_SIZE] = {0};
++static const char FromUSBKbd8BitDo[] = "ukbd8bitdo";
 +
-+	if (m_b8BitDoNKRO)
++CUSBKeyboard8BitDoDevice::CUSBKeyboard8BitDoDevice (CUSBFunction *pFunction)
++: 	CUSBKeyboardDevice (pFunction)
++{
++}
++
++CUSBKeyboard8BitDoDevice::~CUSBKeyboard8BitDoDevice (void)
++{
++}
++
++boolean CUSBKeyboard8BitDoDevice::Configure (void)
++{
++	return ConfigureKeyboard (USBKEYB8BITDO_REPORT_SIZE);
++}
++
++void CUSBKeyboard8BitDoDevice::ReportHandler (const u8 *pReport, unsigned nReportSize)
++{
++	// Forward HID transfer failures to the common keyboard driver.
++	if (pReport == 0)
 +	{
-+		if (pReport == 0)
++		CUSBKeyboardDevice::ReportHandler (0, 0);
++
++		return;
++	}
++
++	// Convert the 8BitDo NKRO bitmap report to a boot keyboard report.
++	if (   nReportSize == USBKEYB8BITDO_REPORT_SIZE
++	    && (pReport[0] == 0x0A || pReport[0] == 0x0C))
++	{
++		u8 Report[USBKEYB_REPORT_SIZE] = {pReport[1]};
++		unsigned nSlots = 0;
++
++		for (unsigned nUsage = 0x04; nUsage <= 0x77 && nSlots < 6; nUsage++)
 +		{
-+			return;
-+		}
-+
-+		/*
-+		* 8BitDo NKRO report:
-+		*
-+		* Byte 0:     report ID 0x0C or 0x0A
-+		* Byte 1:     modifier bitmap
-+		* Bytes 2-16: keyboard usages 0x00-0x77 as a bitmap
-+		*/
-+		if (   nReportSize == 17
-+			&& (pReport[0] == 0x0C || pReport[0] == 0x0A))
-+		{
-+			convertedReport[0] = pReport[1];	// Modifiers
-+			convertedReport[1] = 0;		// Reserved
-+
-+			unsigned nSlots = 0;
-+
-+			for (unsigned nUsage = 0x04;
-+				nUsage <= 0x77 && nSlots < 6;
-+				nUsage++)
++			// The physical up-arrow can be reported as keypad up (0x60), so map it
++			// to the normal up-arrow usage (0x52).
++			if (pReport[2 + nUsage / 8] & (1U << (nUsage % 8)))
 +			{
-+				const unsigned nByteIndex = 2 + nUsage / 8;
-+				const unsigned nBitMask = 1U << (nUsage % 8);
-+
-+				if (pReport[nByteIndex] & nBitMask)
-+				{
-+					u8 ucUsage = (u8) nUsage;
-+
-+					/*
-+					* This quirk  where the keyboard sends up arrow from
-+					* the numpad code when pressing the actual up arrow
-+					* seems to happen only sometimes
-+					* and in both wired and wireless modes.
-+					*/
-+					if (ucUsage == 0x60)
-+					{
-+						ucUsage = 0x52;
-+					}
-+
-+					convertedReport[2 + nSlots] = ucUsage;
-+					nSlots++;
-+				}
++				Report[2 + nSlots++] = nUsage == 0x60 ? 0x52 : nUsage;
 +			}
++		}
 +
-+			pReport = convertedReport;
-+			nReportSize = USBKEYB_REPORT_SIZE;
-+		}
-+		/*
-+		* Report ID 0x01 followed by a conventional 8-byte
-+		* keyboard report.
-+		*/
-+		else if (nReportSize == 9 && pReport[0] == 0x01)
-+		{
-+			pReport++;
-+			nReportSize = USBKEYB_REPORT_SIZE;
-+		}
-+		/*
-+		* Plain Boot Protocol report.
-+		*/
-+		else if (nReportSize == USBKEYB_REPORT_SIZE)
-+		{
-+			// No conversion required.
-+		}
-+		else
-+		{
-+			CLogger::Get ()->Write (
-+				FromUSBKbd,
-+				LogWarning,
-+				"8BitDo: ignoring non-keyboard report "
-+				"(id %02X, size %u)",
-+				pReport[0],
-+				nReportSize);
++		CUSBKeyboardDevice::ReportHandler (Report, sizeof Report);
 +
-+			return;
-+		}
++		return;
 +	}
-+	else
++
++	// Strip the report ID from a standard boot keyboard report.
++	if (nReportSize == 9 && pReport[0] == 0x01)
 +	{
-+		/*
-+		* Existing THEC64 workaround.
-+		*
-+		* THEC64 supplies a report ID followed by an otherwise
-+		* normal 8-byte Boot Keyboard report.
-+		*/
-+		if (   pReport != 0
-+			&& m_nReportSize > USBKEYB_REPORT_SIZE)
-+		{
-+			pReport++;
-+			nReportSize--;
-+		}
++		CUSBKeyboardDevice::ReportHandler (pReport + 1, USBKEYB_REPORT_SIZE);
++
++		return;
 +	}
 +
++	// Forward an unprefixed standard boot keyboard report.
++	if (nReportSize == USBKEYB_REPORT_SIZE)
++	{
++		CUSBKeyboardDevice::ReportHandler (pReport, nReportSize);
 +
-+
- 	if (   pReport == 0
- 	    || nReportSize != USBKEYB_REPORT_SIZE)
- 	{
++		return;
++	}
++}
+\ No newline at end of file
