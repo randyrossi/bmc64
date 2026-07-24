@@ -1,0 +1,450 @@
+diff --git a/include/circle/usb/usbdevice.h b/include/circle/usb/usbdevice.h
+index d188be66..86db89dd 100644
+--- a/include/circle/usb/usbdevice.h
++++ b/include/circle/usb/usbdevice.h
+@@ -58,6 +58,7 @@ public:
+ 
+ 	CString *GetName (TDeviceNameSelector Selector) const;	// string deleted by caller
+ 	CString *GetNames (void) const;				// string deleted by caller
++	const char *GetProductName (void) const;
+ 
+ 	u8 GetAddress (void) const;		// xHCI: slot ID
+ 	TUSBSpeed GetSpeed (void) const;
+@@ -124,6 +125,7 @@ private:
+ 	CUSBConfigurationParser *m_pConfigParser;
+ 
+ 	CUSBFunction *m_pFunction[USBDEV_MAX_FUNCTIONS];
++	CString		m_ProductName;
+ 
+ #if RASPPI >= 4
+ 	unsigned m_nRootHubPortID;
+diff --git a/include/circle/usb/usbgamepad8bitdo.h b/include/circle/usb/usbgamepad8bitdo.h
+new file mode 100644
+index 00000000..ca04d1b2
+--- /dev/null
++++ b/include/circle/usb/usbgamepad8bitdo.h
+@@ -0,0 +1,31 @@
++//
++// usbgamepad8bitdo.h
++//
++
++#ifndef _circle_usb_usbgamepad8bitdo_h
++#define _circle_usb_usbgamepad8bitdo_h
++
++#include <circle/usb/usbgamepadxbox360.h>
++
++class CUSBGamePad8BitDoDevice : public CUSBGamePadXbox360Device
++{
++public:
++	CUSBGamePad8BitDoDevice (CUSBFunction *pFunction);
++	~CUSBGamePad8BitDoDevice (void);
++
++	boolean Configure (void);
++
++	unsigned GetProperties (void)
++	{
++		return GamePadPropertyIsKnown | GamePadPropertyHasRumble;
++	}
++
++protected:
++	void ReportHandler (const u8 *pReport, unsigned nReportSize);
++	boolean InitializeDevice (void);
++
++private:
++	unsigned m_nLoggedReports;
++};
++
++#endif
+\ No newline at end of file
+diff --git a/include/circle/usb/usbgamepadxbox360.h b/include/circle/usb/usbgamepadxbox360.h
+index 6ca080be..fb520cf9 100644
+--- a/include/circle/usb/usbgamepadxbox360.h
++++ b/include/circle/usb/usbgamepadxbox360.h
+@@ -41,9 +41,12 @@ public:
+ 	boolean SetLEDMode (TGamePadLEDMode Mode);
+ 	boolean SetRumbleMode (TGamePadRumbleMode Mode);
+ 
+-private:
++protected:
++	boolean ConfigureGamePad (boolean bSetLEDMode, unsigned nReportSize = 0);
+ 	void ReportHandler (const u8 *pReport, unsigned nReportSize);
++	virtual boolean InitializeDevice (void) { return TRUE; }
+ 
++private:
+ 	void DecodeReport (const u8 *pReport);
+ };
+ 
+diff --git a/lib/usb/Makefile b/lib/usb/Makefile
+index 14471753..1d26f7a0 100644
+--- a/lib/usb/Makefile
++++ b/lib/usb/Makefile
+@@ -26,7 +26,7 @@ include $(CIRCLEHOME)/Rules.mk
+ 
+ OBJS	= lan7800.o smsc951x.o usbbluetooth.o usbcdcethernet.o usbfloppydevice.o \
+ 	  usbconfigparser.o usbdevice.o usbdevicefactory.o usbendpoint.o usbfunction.o \
+-	  usbgamepad.o usbgamepadps3.o usbgamepadps4.o usbgamepadstandard.o usbgamepadswitchpro.o \
++	  usbgamepad.o usbgamepad8bitdo.o usbgamepadps3.o usbgamepadps4.o usbgamepadstandard.o usbgamepadswitchpro.o \
+ 	  usbgamepadxbox360.o usbgamepadxboxone.o usbhiddevice.o usbhostcontroller.o \
+ 	  usbkeyboard.o usbmassdevice.o usbmidi.o usbmidihost.o usbmouse.o usbprinter.o usbrequest.o \
+ 	  usbstandardhub.o usbstring.o usbserial.o usbserialhost.o usbserialch341.o usbserialcp210x.o \
+diff --git a/lib/usb/usbdevice.cpp b/lib/usb/usbdevice.cpp
+index dbc710c3..96cf65b5 100644
+--- a/lib/usb/usbdevice.cpp
++++ b/lib/usb/usbdevice.cpp
+@@ -377,6 +377,7 @@ boolean CUSBDevice::Initialize (void)
+ 		LogWrite (LogNotice, "Product: %s%s%s",
+ 			  Vendor.c_str (), Vendor.GetLength () > 0 ? " " : "", Product.c_str ());
+ 	}
++	m_ProductName = Product;
+ 
+ 	if (!m_pHost->SetConfiguration (m_pEndpoint0, m_pConfigDesc->bConfigurationValue))
+ 	{
+@@ -409,6 +410,17 @@ boolean CUSBDevice::Initialize (void)
+ 		assert (m_pFunction[nFunction] == 0);
+ 		m_pFunction[nFunction] = new CUSBFunction (this, m_pConfigParser);
+ 		assert (m_pFunction[nFunction] != 0);
++		boolean bPro3Receiver = m_pDeviceDesc->idVendor == 0x2DC8
++					   && m_pDeviceDesc->idProduct == 0x310B;
++		if (bPro3Receiver)
++		{
++			LogWrite (LogNotice, "Pro 3: interface %u (%u/%u/%u, %u endpoint(s))",
++				 (unsigned) pInterfaceDesc->bInterfaceNumber,
++				 (unsigned) pInterfaceDesc->bInterfaceClass,
++				 (unsigned) pInterfaceDesc->bInterfaceSubClass,
++				 (unsigned) pInterfaceDesc->bInterfaceProtocol,
++				 (unsigned) pInterfaceDesc->bNumEndpoints);
++		}
+ 
+ 		CUSBFunction *pChild = 0;
+ 
+@@ -428,13 +440,9 @@ boolean CUSBDevice::Initialize (void)
+ 			if (pName->Compare ("unknown") != 0)
+ 			{
+ 				LogWrite (LogNotice, "Interface %s found", (const char *) *pName);
+-
+-				pChild = CUSBDeviceFactory::GetDevice (m_pFunction[nFunction], pName);
+-			}
+-			else
+-			{
+-				delete pName;
+ 			}
++
++			pChild = CUSBDeviceFactory::GetDevice (m_pFunction[nFunction], pName);
+ 		}
+ 
+ 		delete m_pFunction[nFunction];
+@@ -442,12 +450,22 @@ boolean CUSBDevice::Initialize (void)
+ 
+ 		if (pChild == 0)
+ 		{
++			if (bPro3Receiver)
++			{
++				LogWrite (LogNotice, "Pro 3: interface %u is unsupported",
++					 (unsigned) pInterfaceDesc->bInterfaceNumber);
++			}
+ 			LogWrite (LogWarning, "Function is not supported");
+ 
+ 			continue;
+ 		}
+ 
+ 		m_pFunction[nFunction] = pChild;
++		if (bPro3Receiver)
++		{
++			LogWrite (LogNotice, "Pro 3: interface %u initialized",
++				 (unsigned) pInterfaceDesc->bInterfaceNumber);
++		}
+ 
+ 		if (!m_pFunction[nFunction]->Initialize ())
+ 		{
+@@ -512,8 +530,19 @@ boolean CUSBDevice::Configure (void)
+ 	{
+ 		if (m_pFunction[nFunction] != 0)
+ 		{
++			const TUSBDeviceDescriptor *pDeviceDesc = GetDeviceDescriptor ();
++			boolean bPro3Receiver = pDeviceDesc->idVendor == 0x2DC8
++						   && pDeviceDesc->idProduct == 0x310B;
++			if (bPro3Receiver)
++			{
++				LogWrite (LogNotice, "Pro 3: configuring function slot %u", nFunction);
++			}
+ 			if (!m_pFunction[nFunction]->Configure ())
+ 			{
++				if (bPro3Receiver)
++				{
++					LogWrite (LogNotice, "Pro 3: function slot %u failed", nFunction);
++				}
+ 				//LogWrite (LogError, "Cannot configure device");
+ 
+ 				delete m_pFunction[nFunction];
+@@ -521,6 +550,10 @@ boolean CUSBDevice::Configure (void)
+ 			}
+ 			else
+ 			{
++				if (bPro3Receiver)
++				{
++					LogWrite (LogNotice, "Pro 3: function slot %u configured", nFunction);
++				}
+ 				bResult = TRUE;
+ 			}
+ 		}
+@@ -626,6 +659,11 @@ CString *CUSBDevice::GetNames (void) const
+ 	return pResult;
+ }
+ 
++const char *CUSBDevice::GetProductName (void) const
++{
++	return m_ProductName.c_str ();
++}
++
+ void CUSBDevice::SetAddress (u8 ucAddress)
+ {
+ #if RASPPI <= 3
+diff --git a/lib/usb/usbdevicefactory.cpp b/lib/usb/usbdevicefactory.cpp
+index 75210581..d8d0a384 100644
+--- a/lib/usb/usbdevicefactory.cpp
++++ b/lib/usb/usbdevicefactory.cpp
+@@ -34,6 +34,7 @@
+ #include <circle/usb/usbgamepadstandard.h>
+ #include <circle/usb/usbgamepadps3.h>
+ #include <circle/usb/usbgamepadps4.h>
++#include <circle/usb/usbgamepad8bitdo.h>
+ #include <circle/usb/usbgamepadxbox360.h>
+ #include <circle/usb/usbgamepadxboxone.h>
+ #include <circle/usb/usbgamepadswitchpro.h>
+@@ -69,7 +70,16 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
+ 
+ 	CUSBFunction *pResult = 0;
+ 
+-	if (   pName->Compare ("int9-0-0") == 0
++	const TUSBDeviceDescriptor *pDeviceDesc = pParent->GetDevice ()->GetDeviceDescriptor ();
++	if (   pDeviceDesc->idVendor == 0x2DC8
++	    && pDeviceDesc->idProduct == 0x310B
++	    && pParent->GetInterfaceClass () == 0xFF
++	    && pParent->GetInterfaceSubClass () == 0x5D
++	    && pParent->GetInterfaceProtocol () == 0x01)
++	{
++		pResult = new CUSBGamePad8BitDoDevice (pParent);
++	}
++	else if (   pName->Compare ("int9-0-0") == 0
+ 	    || pName->Compare ("int9-0-2") == 0)
+ 	{
+ 		pResult = new CUSBStandardHub (pParent);
+@@ -130,7 +140,8 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
+ 		pResult = new CUSBGamePadPS4Device (pParent);
+ 	}
+ 	else if (   pName->Compare ("ven45e-28e") == 0
+-		 || pName->Compare ("ven45e-28f") == 0)
++		 || pName->Compare ("ven45e-28f") == 0
++		 || pName->Compare ("ven2dc8-3106") == 0) // 8BitDo Ultimate C 2.4G
+ 	{
+ 		pResult = new CUSBGamePadXbox360Device (pParent);
+ 	}
+diff --git a/lib/usb/usbgamepad8bitdo.cpp b/lib/usb/usbgamepad8bitdo.cpp
+new file mode 100644
+index 00000000..7e60a948
+--- /dev/null
++++ b/lib/usb/usbgamepad8bitdo.cpp
+@@ -0,0 +1,106 @@
++//
++// usbgamepad8bitdo.cpp
++//
++
++#include <circle/usb/usbgamepad8bitdo.h>
++#include <circle/usb/usbhid.h>
++#include <circle/debug.h>
++#include <circle/logger.h>
++
++static const char FromUSBPad8BitDo[] = "usbpad8bitdo";
++
++#define USB_GAMEPAD_8BITDO_REPORT_SIZE 20
++
++CUSBGamePad8BitDoDevice::CUSBGamePad8BitDoDevice (CUSBFunction *pFunction)
++: CUSBGamePadXbox360Device (pFunction),
++	m_nLoggedReports (0)
++{
++}
++
++CUSBGamePad8BitDoDevice::~CUSBGamePad8BitDoDevice (void)
++{
++}
++
++boolean CUSBGamePad8BitDoDevice::Configure (void)
++{
++	CLogger::Get ()->Write (FromUSBPad8BitDo, LogNotice,
++				  "Configuring interface %u (%u/%u/%u, %u endpoint(s))",
++				  GetInterfaceNumber (), GetInterfaceClass (), GetInterfaceSubClass (),
++				  GetInterfaceProtocol (), GetNumEndpoints ());
++
++	TUSBHIDDescriptor *pHIDDesc = (TUSBHIDDescriptor *) GetDescriptor (DESCRIPTOR_HID);
++	if (pHIDDesc != 0 && pHIDDesc->wReportDescriptorLength > 0)
++	{
++		u16 usLength = pHIDDesc->wReportDescriptorLength;
++		u8 *pDescriptor = new u8[usLength];
++		assert (pDescriptor != 0);
++
++		int nResult = GetHost ()->GetDescriptor (
++			GetEndpoint0 (), pHIDDesc->bReportDescriptorType, DESCRIPTOR_INDEX_DEFAULT,
++			pDescriptor, usLength, REQUEST_IN | REQUEST_TO_INTERFACE, GetInterfaceNumber ());
++		CLogger::Get ()->Write (FromUSBPad8BitDo, LogNotice,
++					  "HID report descriptor: requested %u, received %d byte(s)",
++					  usLength, nResult);
++		if (nResult > 0)
++		{
++			debug_hexdump (pDescriptor, nResult, FromUSBPad8BitDo);
++		}
++
++		delete [] pDescriptor;
++	}
++	else
++	{
++		CLogger::Get ()->Write (FromUSBPad8BitDo, LogError, "No HID report descriptor");
++	}
++
++	boolean bResult = ConfigureGamePad (FALSE, USB_GAMEPAD_8BITDO_REPORT_SIZE);
++	if (!bResult)
++	{
++		CLogger::Get ()->Write (FromUSBPad8BitDo, LogError, "Cannot start input request");
++	}
++
++	return bResult;
++}
++
++void CUSBGamePad8BitDoDevice::ReportHandler (const u8 *pReport, unsigned nReportSize)
++{
++	if (pReport != 0 && m_nLoggedReports++ < 32)
++	{
++		if (m_nLoggedReports == 1)
++		{
++			CLogger::Get ()->Write (FromUSBPad8BitDo, LogNotice,
++						  "Report %u received (%u byte(s), %02X %02X)",
++						  m_nLoggedReports, nReportSize,
++						  pReport[0], nReportSize > 1 ? pReport[1] : 0);
++		}
++
++		/*CLogger::Get ()->Write (FromUSBPad8BitDo, LogNotice,
++					  "Report %u (%u byte(s))", m_nLoggedReports, nReportSize);
++		debug_hexdump (pReport, nReportSize, FromUSBPad8BitDo);*/
++	}
++
++	CUSBGamePadXbox360Device::ReportHandler (pReport, nReportSize);
++}
++
++boolean CUSBGamePad8BitDoDevice::InitializeDevice (void)
++{
++	DMA_BUFFER (u8, Command, 3) = {0x01, 0x03, 0x02};
++	if (!SendToEndpointOut (Command, sizeof Command))
++	{
++		CLogger::Get ()->Write (FromUSBPad8BitDo, LogError, "Cannot initialize receiver");
++		return FALSE;
++	}
++
++	DMA_BUFFER (u8, Response, 20);
++	int nResult = GetHost ()->ControlMessage (
++		GetEndpoint0 (), REQUEST_IN | REQUEST_VENDOR | REQUEST_TO_INTERFACE,
++		1, 0x0100, GetInterfaceNumber (), Response, sizeof Response);
++	if (nResult != sizeof Response)
++	{
++		CLogger::Get ()->Write (FromUSBPad8BitDo, LogError,
++					  "Cannot read receiver state (%d byte(s))", nResult);
++		return FALSE;
++	}
++
++	return TRUE;
++}
+\ No newline at end of file
+diff --git a/lib/usb/usbgamepadxbox360.cpp b/lib/usb/usbgamepadxbox360.cpp
+index 2064c369..bc9545a5 100644
+--- a/lib/usb/usbgamepadxbox360.cpp
++++ b/lib/usb/usbgamepadxbox360.cpp
+@@ -67,7 +67,12 @@ CUSBGamePadXbox360Device::~CUSBGamePadXbox360Device (void)
+ 
+ boolean CUSBGamePadXbox360Device::Configure (void)
+ {
+-	m_usReportSize = REPORT_SIZE;
++	return ConfigureGamePad (TRUE);
++}
++
++boolean CUSBGamePadXbox360Device::ConfigureGamePad (boolean bSetLEDMode, unsigned nReportSize)
++{
++	m_usReportSize = nReportSize != 0 ? nReportSize : REPORT_SIZE;
+ 
+ 	if (!CUSBGamePadDevice::Configure ())
+ 	{
+@@ -90,7 +95,12 @@ boolean CUSBGamePadXbox360Device::Configure (void)
+ 	}
+ 	m_State.nhats = 0;
+ 
+-	if (!SetLEDMode ((TGamePadLEDMode) m_nDeviceNumber))
++	if (bSetLEDMode && !SetLEDMode ((TGamePadLEDMode) m_nDeviceNumber))
++	{
++		return FALSE;
++	}
++
++	if (!InitializeDevice ())
+ 	{
+ 		return FALSE;
+ 	}
+@@ -101,7 +111,7 @@ boolean CUSBGamePadXbox360Device::Configure (void)
+ void CUSBGamePadXbox360Device::ReportHandler (const u8 *pReport, unsigned nReportSize)
+ {
+ 	if (   pReport != 0
+-	    && nReportSize == REPORT_SIZE
++	    && nReportSize >= REPORT_SIZE
+ 	    && pReport[0] == (REPORT_HEADER & 0xFF)
+ 	    && pReport[1] == (REPORT_HEADER >> 8)
+ 	    && m_pStatusHandler != 0)
+diff --git a/lib/usb/usbhiddevice.cpp b/lib/usb/usbhiddevice.cpp
+index 7ca87b11..749d16c3 100644
+--- a/lib/usb/usbhiddevice.cpp
++++ b/lib/usb/usbhiddevice.cpp
+@@ -55,6 +55,8 @@ boolean CUSBHIDDevice::ConfigureHID (unsigned nMaxReportSize)
+ {
+ 	if (GetNumEndpoints () < 1)
+ 	{
++		CLogger::Get ()->Write (FromUSBHID, LogError, "HID interface %u has no endpoints",
++					GetInterfaceNumber ());
+ 		ConfigurationError (FromUSBHID);
+ 
+ 		return FALSE;
+@@ -63,6 +65,11 @@ boolean CUSBHIDDevice::ConfigureHID (unsigned nMaxReportSize)
+ 	const TUSBEndpointDescriptor *pEndpointDesc;
+ 	while ((pEndpointDesc = (TUSBEndpointDescriptor *) GetDescriptor (DESCRIPTOR_ENDPOINT)) != 0)
+ 	{
++		CLogger::Get ()->Write (FromUSBHID, LogNotice,
++					"HID interface %u endpoint %02X: type %u, max packet %u, interval %u",
++					GetInterfaceNumber (), pEndpointDesc->bEndpointAddress,
++					pEndpointDesc->bmAttributes & 0x3F, pEndpointDesc->wMaxPacketSize,
++					pEndpointDesc->bInterval);
+ 		if ((pEndpointDesc->bmAttributes & 0x3F) == 0x03)		// Interrupt EP
+ 		{
+ 			if ((pEndpointDesc->bEndpointAddress & 0x80) == 0x80)	// Input EP
+@@ -92,6 +99,8 @@ boolean CUSBHIDDevice::ConfigureHID (unsigned nMaxReportSize)
+ 
+ 	if (m_pReportEndpoint == 0)
+ 	{
++		CLogger::Get ()->Write (FromUSBHID, LogError,
++					"HID interface %u has no interrupt input endpoint", GetInterfaceNumber ());
+ 		ConfigurationError (FromUSBHID);
+ 
+ 		return FALSE;
+diff --git a/lib/usb/usbstandardhub.cpp b/lib/usb/usbstandardhub.cpp
+index c8a78d87..32623589 100644
+--- a/lib/usb/usbstandardhub.cpp
++++ b/lib/usb/usbstandardhub.cpp
+@@ -400,7 +400,6 @@ boolean CUSBStandardHub::EnumeratePorts (void)
+ 		{
+ 			continue;
+ 		}
+-		m_bPortConfigured[nPort] = TRUE;
+ 
+ 		if (!m_pDevice[nPort]->Configure ())
+ 		{
+@@ -412,6 +411,8 @@ boolean CUSBStandardHub::EnumeratePorts (void)
+ 
+ 			continue;
+ 		}
++
++		m_bPortConfigured[nPort] = TRUE;
+ 		
+ 		CLogger::Get ()->Write (FromHub, LogDebug, "Port %u: Device configured", nPort+1);
+ 	}

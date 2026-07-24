@@ -1,0 +1,180 @@
+diff --git a/include/circle/usb/usbkeyboard.h b/include/circle/usb/usbkeyboard.h
+index 373b0d26..10f04b04 100644
+--- a/include/circle/usb/usbkeyboard.h
++++ b/include/circle/usb/usbkeyboard.h
+@@ -69,6 +69,7 @@ private:
+ 
+ private:
+ 	unsigned m_nReportSize;
++	boolean m_b8BitDoNKRO;
+ 
+ 	CKeyboardBehaviour m_Behaviour;
+ 
+diff --git a/lib/usb/usbkeyboard.cpp b/lib/usb/usbkeyboard.cpp
+index 05fe2fab..178b766d 100644
+--- a/lib/usb/usbkeyboard.cpp
++++ b/lib/usb/usbkeyboard.cpp
+@@ -34,6 +34,7 @@ static const char DevicePrefix[] = "ukbd";
+ CUSBKeyboardDevice::CUSBKeyboardDevice (CUSBFunction *pFunction)
+ :	CUSBHIDDevice (pFunction),
+ 	m_nReportSize (USBKEYB_REPORT_SIZE),
++	m_b8BitDoNKRO (FALSE),
+ 	m_pKeyStatusHandlerRaw (0),
+ 	m_pKeyStatusHandlerRawArg (0),
+ 	m_bMixedMode (FALSE),
+@@ -61,12 +62,24 @@ boolean CUSBKeyboardDevice::Configure (void)
+ 	// which has to be ignored.
+ 	const TUSBDeviceDescriptor *pDeviceDesc = GetDevice ()->GetDeviceDescriptor ();
+ 	assert (pDeviceDesc != 0);
+-	if (   pDeviceDesc->idVendor == 0x1C59
+-	    && pDeviceDesc->idProduct == 0x99)
++	if (pDeviceDesc->idVendor == 0x1C59
++	 && pDeviceDesc->idProduct == 0x0099)
+ 	{
+ 		m_nReportSize++;
+ 	}
+ 
++	// 8BitDo Retro Keyboard (ignores Boot Protocol, sends 17-byte NKRO report with ID 0x0C)
++	// 2DC8:5200 is wired mode
++	// 2DC8:5201 is 2.4 GHz receiver mode
++	// Both use the same 0x0C/0x0A NKRO keyboard bitmap
++	if (   pDeviceDesc->idVendor == 0x2DC8
++	    && (   pDeviceDesc->idProduct == 0x5200
++	        || pDeviceDesc->idProduct == 0x5201))
++	{
++		m_b8BitDoNKRO = TRUE;
++		m_nReportSize = 17;
++	}
++
+ 	if (!CUSBHIDDevice::ConfigureHID (m_nReportSize))
+ 	{
+ 		CLogger::Get ()->Write (FromUSBKbd, LogError, "Cannot configure HID device");
+@@ -183,14 +196,123 @@ boolean CUSBKeyboardDevice::SetLEDs (u8 ucStatus)
+ 
+ void CUSBKeyboardDevice::ReportHandler (const u8 *pReport, unsigned nReportSize)
+ {
+-	// Ignore report ID, if it is included.
+-	if (   pReport != 0
+-	    && m_nReportSize > USBKEYB_REPORT_SIZE)
++	if (pReport != 0)
+ 	{
+-		pReport++;
+-		nReportSize--;
++		CString Msg;
++
++		Msg.Format ("Report size=%u :", nReportSize);
++
++		for (unsigned i = 0; i < nReportSize; i++)
++		{
++			CString Hex;
++			Hex.Format (" %02X", pReport[i]);
++			Msg.Append (Hex);
++		}
++
++		//CLogger::Get ()->Write (FromUSBKbd, LogNotice, Msg);
+ 	}
+ 
++	u8 convertedReport[USBKEYB_REPORT_SIZE] = {0};
++
++	if (m_b8BitDoNKRO)
++	{
++		if (pReport == 0)
++		{
++			return;
++		}
++
++		/*
++		* 8BitDo NKRO report:
++		*
++		* Byte 0:     report ID 0x0C or 0x0A
++		* Byte 1:     modifier bitmap
++		* Bytes 2-16: keyboard usages 0x00-0x77 as a bitmap
++		*/
++		if (   nReportSize == 17
++			&& (pReport[0] == 0x0C || pReport[0] == 0x0A))
++		{
++			convertedReport[0] = pReport[1];	// Modifiers
++			convertedReport[1] = 0;		// Reserved
++
++			unsigned nSlots = 0;
++
++			for (unsigned nUsage = 0x04;
++				nUsage <= 0x77 && nSlots < 6;
++				nUsage++)
++			{
++				const unsigned nByteIndex = 2 + nUsage / 8;
++				const unsigned nBitMask = 1U << (nUsage % 8);
++
++				if (pReport[nByteIndex] & nBitMask)
++				{
++					u8 ucUsage = (u8) nUsage;
++
++					/*
++					* This quirk  where the keyboard sends up arrow from
++					* the numpad code when pressing the actual up arrow
++					* seems to happen only sometimes
++					* and in both wired and wireless modes.
++					*/
++					if (ucUsage == 0x60)
++					{
++						ucUsage = 0x52;
++					}
++
++					convertedReport[2 + nSlots] = ucUsage;
++					nSlots++;
++				}
++			}
++
++			pReport = convertedReport;
++			nReportSize = USBKEYB_REPORT_SIZE;
++		}
++		/*
++		* Report ID 0x01 followed by a conventional 8-byte
++		* keyboard report.
++		*/
++		else if (nReportSize == 9 && pReport[0] == 0x01)
++		{
++			pReport++;
++			nReportSize = USBKEYB_REPORT_SIZE;
++		}
++		/*
++		* Plain Boot Protocol report.
++		*/
++		else if (nReportSize == USBKEYB_REPORT_SIZE)
++		{
++			// No conversion required.
++		}
++		else
++		{
++			CLogger::Get ()->Write (
++				FromUSBKbd,
++				LogWarning,
++				"8BitDo: ignoring non-keyboard report "
++				"(id %02X, size %u)",
++				pReport[0],
++				nReportSize);
++
++			return;
++		}
++	}
++	else
++	{
++		/*
++		* Existing THEC64 workaround.
++		*
++		* THEC64 supplies a report ID followed by an otherwise
++		* normal 8-byte Boot Keyboard report.
++		*/
++		if (   pReport != 0
++			&& m_nReportSize > USBKEYB_REPORT_SIZE)
++		{
++			pReport++;
++			nReportSize--;
++		}
++	}
++
++
++
+ 	if (   pReport == 0
+ 	    || nReportSize != USBKEYB_REPORT_SIZE)
+ 	{
