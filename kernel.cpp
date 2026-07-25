@@ -88,11 +88,6 @@ static void log_gamepad_mapping_profile(CUSBGamePadDevice *gamepad,
   }
 }
 
-static const char *gamepad_product_name(CUSBGamePadDevice *gamepad) {
-  const char *product_name = gamepad->GetDevice()->GetProductName();
-  return product_name[0] != '\0' ? product_name : 0;
-}
-
 static int vol_percent_to_vchiq(int percent) {
   int range = VCHIQ_SOUND_VOLUME_MAX-(-2720);
   return range * ((float)percent)/100.0 + (-2720);
@@ -821,7 +816,7 @@ void CKernel::SetupUSBGamepads() {
       log_gamepad_mapping_profile(m_pGamePad[nDevice-1], profile);
       emu_set_usb_gamepad_display_name(
         nDevice - 1,
-        gamepad_product_name(m_pGamePad[nDevice-1]));
+        m_pGamePad[nDevice-1]->GetProperty(CDevice::PropertyProduct));
       m_pGamePad[nDevice-1]->RegisterRemovedHandler(GamePadRemovedHandler);
       m_pGamePad[nDevice-1]->RegisterStatusHandler(GamePadStatusHandler);
       CLogger::Get()->Write("kernel", LogNotice, "Gamepad %d connected and registered.", nDevice);

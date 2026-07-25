@@ -1,434 +1,549 @@
-diff --git a/include/circle/usb/usbdevice.h b/include/circle/usb/usbdevice.h
-index d188be66..86db89dd 100644
---- a/include/circle/usb/usbdevice.h
-+++ b/include/circle/usb/usbdevice.h
-@@ -58,6 +58,7 @@ public:
- 
- 	CString *GetName (TDeviceNameSelector Selector) const;	// string deleted by caller
- 	CString *GetNames (void) const;				// string deleted by caller
-+	const char *GetProductName (void) const;
- 
- 	u8 GetAddress (void) const;		// xHCI: slot ID
- 	TUSBSpeed GetSpeed (void) const;
-@@ -124,6 +125,7 @@ private:
- 	CUSBConfigurationParser *m_pConfigParser;
- 
- 	CUSBFunction *m_pFunction[USBDEV_MAX_FUNCTIONS];
-+	CString		m_ProductName;
- 
- #if RASPPI >= 4
- 	unsigned m_nRootHubPortID;
 diff --git a/include/circle/usb/usbgamepad8bitdo.h b/include/circle/usb/usbgamepad8bitdo.h
 new file mode 100644
-index 00000000..ca04d1b2
+index 00000000..3e59f7e5
 --- /dev/null
 +++ b/include/circle/usb/usbgamepad8bitdo.h
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,50 @@
 +//
 +// usbgamepad8bitdo.h
 +//
-+
++// Circle - A C++ bare metal environment for Raspberry Pi
++// Copyright (C) 2014-2026  R. Stange <rsta2@o2online.de>
++//
++// This program is free software: you can redistribute it and/or modify
++// it under the terms of the GNU General Public License as published by
++// the Free Software Foundation, either version 3 of the License, or
++// (at your option) any later version.
++//
++// This program is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++//
++// You should have received a copy of the GNU General Public License
++// along with this program.  If not, see <http://www.gnu.org/licenses/>.
++//
 +#ifndef _circle_usb_usbgamepad8bitdo_h
 +#define _circle_usb_usbgamepad8bitdo_h
 +
-+#include <circle/usb/usbgamepadxbox360.h>
++#include <circle/usb/usbgamepad.h>
 +
-+class CUSBGamePad8BitDoDevice : public CUSBGamePadXbox360Device
++class CUSBGamePad8bitdoDevice : public CUSBGamePadDevice
 +{
 +public:
-+	CUSBGamePad8BitDoDevice (CUSBFunction *pFunction);
-+	~CUSBGamePad8BitDoDevice (void);
++	CUSBGamePad8bitdoDevice (CUSBFunction *pFunction);
++	~CUSBGamePad8bitdoDevice (void);
 +
 +	boolean Configure (void);
 +
 +	unsigned GetProperties (void)
 +	{
-+		return GamePadPropertyIsKnown | GamePadPropertyHasRumble;
++		return   GamePadPropertyIsKnown
++		       | GamePadPropertyHasRumble;
 +	}
++
++	boolean SetRumbleMode (TGamePadRumbleMode Mode);
 +
 +protected:
 +	void ReportHandler (const u8 *pReport, unsigned nReportSize);
-+	boolean InitializeDevice (void);
++
++	void DecodeReport (const u8 *pReportBuffer);
 +
 +private:
-+	unsigned m_nLoggedReports;
++	boolean m_bInputSeen;
 +};
 +
 +#endif
 \ No newline at end of file
-diff --git a/include/circle/usb/usbgamepadxbox360.h b/include/circle/usb/usbgamepadxbox360.h
-index 6ca080be..fb520cf9 100644
---- a/include/circle/usb/usbgamepadxbox360.h
-+++ b/include/circle/usb/usbgamepadxbox360.h
-@@ -41,9 +41,12 @@ public:
- 	boolean SetLEDMode (TGamePadLEDMode Mode);
- 	boolean SetRumbleMode (TGamePadRumbleMode Mode);
- 
--private:
-+protected:
-+	boolean ConfigureGamePad (boolean bSetLEDMode, unsigned nReportSize = 0);
- 	void ReportHandler (const u8 *pReport, unsigned nReportSize);
-+	virtual boolean InitializeDevice (void) { return TRUE; }
- 
-+private:
- 	void DecodeReport (const u8 *pReport);
- };
- 
-diff --git a/lib/usb/Makefile b/lib/usb/Makefile
-index 14471753..1d26f7a0 100644
---- a/lib/usb/Makefile
-+++ b/lib/usb/Makefile
-@@ -26,7 +26,7 @@ include $(CIRCLEHOME)/Rules.mk
- 
- OBJS	= lan7800.o smsc951x.o usbbluetooth.o usbcdcethernet.o usbfloppydevice.o \
- 	  usbconfigparser.o usbdevice.o usbdevicefactory.o usbendpoint.o usbfunction.o \
--	  usbgamepad.o usbgamepadps3.o usbgamepadps4.o usbgamepadstandard.o usbgamepadswitchpro.o \
-+	  usbgamepad.o usbgamepad8bitdo.o usbgamepadps3.o usbgamepadps4.o usbgamepadstandard.o usbgamepadswitchpro.o \
- 	  usbgamepadxbox360.o usbgamepadxboxone.o usbhiddevice.o usbhostcontroller.o \
- 	  usbkeyboard.o usbmassdevice.o usbmidi.o usbmidihost.o usbmouse.o usbprinter.o usbrequest.o \
- 	  usbstandardhub.o usbstring.o usbserial.o usbserialhost.o usbserialch341.o usbserialcp210x.o \
-diff --git a/lib/usb/usbdevice.cpp b/lib/usb/usbdevice.cpp
-index dbc710c3..96cf65b5 100644
---- a/lib/usb/usbdevice.cpp
-+++ b/lib/usb/usbdevice.cpp
-@@ -377,6 +377,7 @@ boolean CUSBDevice::Initialize (void)
- 		LogWrite (LogNotice, "Product: %s%s%s",
- 			  Vendor.c_str (), Vendor.GetLength () > 0 ? " " : "", Product.c_str ());
- 	}
-+	m_ProductName = Product;
- 
- 	if (!m_pHost->SetConfiguration (m_pEndpoint0, m_pConfigDesc->bConfigurationValue))
- 	{
-@@ -409,6 +410,17 @@ boolean CUSBDevice::Initialize (void)
- 		assert (m_pFunction[nFunction] == 0);
- 		m_pFunction[nFunction] = new CUSBFunction (this, m_pConfigParser);
- 		assert (m_pFunction[nFunction] != 0);
-+		boolean bPro3Receiver = m_pDeviceDesc->idVendor == 0x2DC8
-+					   && m_pDeviceDesc->idProduct == 0x310B;
-+		if (bPro3Receiver)
-+		{
-+			LogWrite (LogNotice, "Pro 3: interface %u (%u/%u/%u, %u endpoint(s))",
-+				 (unsigned) pInterfaceDesc->bInterfaceNumber,
-+				 (unsigned) pInterfaceDesc->bInterfaceClass,
-+				 (unsigned) pInterfaceDesc->bInterfaceSubClass,
-+				 (unsigned) pInterfaceDesc->bInterfaceProtocol,
-+				 (unsigned) pInterfaceDesc->bNumEndpoints);
-+		}
- 
- 		CUSBFunction *pChild = 0;
- 
-@@ -428,13 +440,9 @@ boolean CUSBDevice::Initialize (void)
- 			if (pName->Compare ("unknown") != 0)
- 			{
- 				LogWrite (LogNotice, "Interface %s found", (const char *) *pName);
--
--				pChild = CUSBDeviceFactory::GetDevice (m_pFunction[nFunction], pName);
--			}
--			else
--			{
--				delete pName;
- 			}
+diff --git a/include/circle/usb/usbgamepad8bitdopro.h b/include/circle/usb/usbgamepad8bitdopro.h
+new file mode 100644
+index 00000000..d4b88d89
+--- /dev/null
++++ b/include/circle/usb/usbgamepad8bitdopro.h
+@@ -0,0 +1,37 @@
++//
++// usbgamepad8bitdopro.h
++//
++// Circle - A C++ bare metal environment for Raspberry Pi
++// Copyright (C) 2014-2026  R. Stange <rsta2@o2online.de>
++//
++// This program is free software: you can redistribute it and/or modify
++// it under the terms of the GNU General Public License as published by
++// the Free Software Foundation, either version 3 of the License, or
++// (at your option) any later version.
++//
++// This program is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++//
++// You should have received a copy of the GNU General Public License
++// along with this program.  If not, see <http://www.gnu.org/licenses/>.
++//
++#ifndef _circle_usb_usbgamepad8bitdopro_h
++#define _circle_usb_usbgamepad8bitdopro_h
 +
-+			pChild = CUSBDeviceFactory::GetDevice (m_pFunction[nFunction], pName);
- 		}
- 
- 		delete m_pFunction[nFunction];
-@@ -442,12 +450,22 @@ boolean CUSBDevice::Initialize (void)
- 
- 		if (pChild == 0)
- 		{
-+			if (bPro3Receiver)
-+			{
-+				LogWrite (LogNotice, "Pro 3: interface %u is unsupported",
-+					 (unsigned) pInterfaceDesc->bInterfaceNumber);
-+			}
- 			LogWrite (LogWarning, "Function is not supported");
- 
- 			continue;
- 		}
- 
- 		m_pFunction[nFunction] = pChild;
-+		if (bPro3Receiver)
-+		{
-+			LogWrite (LogNotice, "Pro 3: interface %u initialized",
-+				 (unsigned) pInterfaceDesc->bInterfaceNumber);
-+		}
- 
- 		if (!m_pFunction[nFunction]->Initialize ())
- 		{
-@@ -512,8 +530,19 @@ boolean CUSBDevice::Configure (void)
- 	{
- 		if (m_pFunction[nFunction] != 0)
- 		{
-+			const TUSBDeviceDescriptor *pDeviceDesc = GetDeviceDescriptor ();
-+			boolean bPro3Receiver = pDeviceDesc->idVendor == 0x2DC8
-+						   && pDeviceDesc->idProduct == 0x310B;
-+			if (bPro3Receiver)
-+			{
-+				LogWrite (LogNotice, "Pro 3: configuring function slot %u", nFunction);
-+			}
- 			if (!m_pFunction[nFunction]->Configure ())
- 			{
-+				if (bPro3Receiver)
-+				{
-+					LogWrite (LogNotice, "Pro 3: function slot %u failed", nFunction);
-+				}
- 				//LogWrite (LogError, "Cannot configure device");
- 
- 				delete m_pFunction[nFunction];
-@@ -521,6 +550,10 @@ boolean CUSBDevice::Configure (void)
- 			}
- 			else
- 			{
-+				if (bPro3Receiver)
-+				{
-+					LogWrite (LogNotice, "Pro 3: function slot %u configured", nFunction);
-+				}
- 				bResult = TRUE;
- 			}
- 		}
-@@ -626,6 +659,11 @@ CString *CUSBDevice::GetNames (void) const
- 	return pResult;
- }
- 
-+const char *CUSBDevice::GetProductName (void) const
-+{
-+	return m_ProductName.c_str ();
-+}
-+
- void CUSBDevice::SetAddress (u8 ucAddress)
- {
- #if RASPPI <= 3
-diff --git a/lib/usb/usbdevicefactory.cpp b/lib/usb/usbdevicefactory.cpp
-index 75210581..d8d0a384 100644
---- a/lib/usb/usbdevicefactory.cpp
-+++ b/lib/usb/usbdevicefactory.cpp
-@@ -34,6 +34,7 @@
- #include <circle/usb/usbgamepadstandard.h>
- #include <circle/usb/usbgamepadps3.h>
- #include <circle/usb/usbgamepadps4.h>
 +#include <circle/usb/usbgamepad8bitdo.h>
- #include <circle/usb/usbgamepadxbox360.h>
- #include <circle/usb/usbgamepadxboxone.h>
- #include <circle/usb/usbgamepadswitchpro.h>
-@@ -69,7 +70,16 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
- 
- 	CUSBFunction *pResult = 0;
- 
--	if (   pName->Compare ("int9-0-0") == 0
-+	const TUSBDeviceDescriptor *pDeviceDesc = pParent->GetDevice ()->GetDeviceDescriptor ();
-+	if (   pDeviceDesc->idVendor == 0x2DC8
-+	    && pDeviceDesc->idProduct == 0x310B
-+	    && pParent->GetInterfaceClass () == 0xFF
-+	    && pParent->GetInterfaceSubClass () == 0x5D
-+	    && pParent->GetInterfaceProtocol () == 0x01)
-+	{
-+		pResult = new CUSBGamePad8BitDoDevice (pParent);
-+	}
-+	else if (   pName->Compare ("int9-0-0") == 0
- 	    || pName->Compare ("int9-0-2") == 0)
- 	{
- 		pResult = new CUSBStandardHub (pParent);
-@@ -130,7 +140,8 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
- 		pResult = new CUSBGamePadPS4Device (pParent);
- 	}
- 	else if (   pName->Compare ("ven45e-28e") == 0
--		 || pName->Compare ("ven45e-28f") == 0)
-+		 || pName->Compare ("ven45e-28f") == 0
-+		 || pName->Compare ("ven2dc8-3106") == 0) // 8BitDo Ultimate C 2.4G
- 	{
- 		pResult = new CUSBGamePadXbox360Device (pParent);
- 	}
++
++class CUSBGamePad8BitDoProDevice : public CUSBGamePad8bitdoDevice
++{
++public:
++	CUSBGamePad8BitDoProDevice (CUSBFunction *pFunction);
++	~CUSBGamePad8BitDoProDevice (void);
++
++	boolean Configure (void);
++
++private:
++	boolean m_bInterfaceOK;
++};
++
++#endif
+\ No newline at end of file
+diff --git a/include/circle/usb/usbgamepad8bitdoxinput.h b/include/circle/usb/usbgamepad8bitdoxinput.h
+new file mode 100644
+index 00000000..0026a5cb
+--- /dev/null
++++ b/include/circle/usb/usbgamepad8bitdoxinput.h
+@@ -0,0 +1,34 @@
++//
++// usbgamepad8bitdoxinput.h
++//
++// Circle - A C++ bare metal environment for Raspberry Pi
++// Copyright (C) 2014-2026  R. Stange <rsta2@o2online.de>
++//
++// This program is free software: you can redistribute it and/or modify
++// it under the terms of the GNU General Public License as published by
++// the Free Software Foundation, either version 3 of the License, or
++// (at your option) any later version.
++//
++// This program is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++//
++// You should have received a copy of the GNU General Public License
++// along with this program.  If not, see <http://www.gnu.org/licenses/>.
++//
++#ifndef _circle_usb_usbgamepad8bitdoxinput_h
++#define _circle_usb_usbgamepad8bitdoxinput_h
++
++#include <circle/usb/usbgamepad8bitdo.h>
++
++class CUSBGamePad8BitDoXInputDevice : public CUSBGamePad8bitdoDevice
++{
++public:
++	CUSBGamePad8BitDoXInputDevice (CUSBFunction *pFunction);
++	~CUSBGamePad8BitDoXInputDevice (void);
++
++	boolean Configure (void);
++};
++
++#endif
+\ No newline at end of file
 diff --git a/lib/usb/usbgamepad8bitdo.cpp b/lib/usb/usbgamepad8bitdo.cpp
 new file mode 100644
-index 00000000..7e60a948
+index 00000000..844b3035
 --- /dev/null
 +++ b/lib/usb/usbgamepad8bitdo.cpp
-@@ -0,0 +1,106 @@
+@@ -0,0 +1,212 @@
 +//
 +// usbgamepad8bitdo.cpp
 +//
-+
++// Circle - A C++ bare metal environment for Raspberry Pi
++// Copyright (C) 2014-2026  R. Stange <rsta2@o2online.de>
++//
++// This program is free software: you can redistribute it and/or modify
++// it under the terms of the GNU General Public License as published by
++// the Free Software Foundation, either version 3 of the License, or
++// (at your option) any later version.
++//
++// This program is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++//
++// You should have received a copy of the GNU General Public License
++// along with this program.  If not, see <http://www.gnu.org/licenses/>.
++//
 +#include <circle/usb/usbgamepad8bitdo.h>
-+#include <circle/usb/usbhid.h>
-+#include <circle/debug.h>
 +#include <circle/logger.h>
++#include <circle/macros.h>
++#include <circle/debug.h>
++#include <assert.h>
++#include <string.h>
 +
 +static const char FromUSBPad8BitDo[] = "usbpad8bitdo";
 +
-+#define USB_GAMEPAD_8BITDO_REPORT_SIZE 20
++struct T8BitDoReport
++{
++	u16	Header;
++#define REPORT_HEADER			0x1400
 +
-+CUSBGamePad8BitDoDevice::CUSBGamePad8BitDoDevice (CUSBFunction *pFunction)
-+: CUSBGamePadXbox360Device (pFunction),
-+	m_nLoggedReports (0)
++	u16	Buttons;
++#define REPORT_BUTTONS			16
++
++#define REPORT_ANALOG_BUTTONS		2
++	u8	AnalogButton[REPORT_ANALOG_BUTTONS];
++#define REPORT_ANALOG_BUTTON_MINIMUM	0
++#define REPORT_ANALOG_BUTTON_THRESHOLD	128
++#define REPORT_ANALOG_BUTTON_MAXIMUM	255
++
++#define REPORT_AXES			4
++	s16	Axes[REPORT_AXES];
++#define REPORT_AXES_MINIMUM		(-32768)
++#define REPORT_AXES_MAXIMUM		32767
++}
++PACKED;
++
++#define REPORT_DATA_SIZE	sizeof (T8BitDoReport)
++// 8BitDo input reports contain 14 bytes of controller state followed by six
++// reserved bytes. The interrupt endpoint has a 32-byte maximum packet size,
++// so the host buffer must be large enough for the complete USB packet.
++#define REPORT_SIZE_8BITDO	32 
++
++CUSBGamePad8bitdoDevice::CUSBGamePad8bitdoDevice (CUSBFunction *pFunction)
++: CUSBGamePadDevice (pFunction)
++{
++	m_bInputSeen = FALSE;
++}
++
++CUSBGamePad8bitdoDevice::~CUSBGamePad8bitdoDevice (void)
 +{
 +}
 +
-+CUSBGamePad8BitDoDevice::~CUSBGamePad8BitDoDevice (void)
++boolean CUSBGamePad8bitdoDevice::Configure (void)
 +{
-+}
++	m_usReportSize = REPORT_SIZE_8BITDO;
 +
-+boolean CUSBGamePad8BitDoDevice::Configure (void)
-+{
-+	CLogger::Get ()->Write (FromUSBPad8BitDo, LogNotice,
-+				  "Configuring interface %u (%u/%u/%u, %u endpoint(s))",
-+				  GetInterfaceNumber (), GetInterfaceClass (), GetInterfaceSubClass (),
-+				  GetInterfaceProtocol (), GetNumEndpoints ());
-+
-+	TUSBHIDDescriptor *pHIDDesc = (TUSBHIDDescriptor *) GetDescriptor (DESCRIPTOR_HID);
-+	if (pHIDDesc != 0 && pHIDDesc->wReportDescriptorLength > 0)
++	if (!CUSBGamePadDevice::Configure ())
 +	{
-+		u16 usLength = pHIDDesc->wReportDescriptorLength;
-+		u8 *pDescriptor = new u8[usLength];
-+		assert (pDescriptor != 0);
++		CLogger::Get ()->Write (FromUSBPad8BitDo, LogError, "Cannot configure gamepad device");
 +
-+		int nResult = GetHost ()->GetDescriptor (
-+			GetEndpoint0 (), pHIDDesc->bReportDescriptorType, DESCRIPTOR_INDEX_DEFAULT,
-+			pDescriptor, usLength, REQUEST_IN | REQUEST_TO_INTERFACE, GetInterfaceNumber ());
-+		CLogger::Get ()->Write (FromUSBPad8BitDo, LogNotice,
-+					  "HID report descriptor: requested %u, received %d byte(s)",
-+					  usLength, nResult);
-+		if (nResult > 0)
++		return FALSE;
++	}
++
++	m_State.nbuttons = GAMEPAD_BUTTONS_STANDARD;
++	m_State.naxes = REPORT_AXES+REPORT_ANALOG_BUTTONS;
++	for (unsigned i = 0; i < REPORT_AXES; i++)
++	{
++		m_State.axes[i].minimum = GAMEPAD_AXIS_DEFAULT_MINIMUM;
++		m_State.axes[i].maximum = GAMEPAD_AXIS_DEFAULT_MAXIMUM;
++	}
++	for (unsigned i = 0; i < REPORT_ANALOG_BUTTONS; i++)
++	{
++		m_State.axes[REPORT_AXES+i].minimum = REPORT_ANALOG_BUTTON_MINIMUM;
++		m_State.axes[REPORT_AXES+i].maximum = REPORT_ANALOG_BUTTON_MAXIMUM;
++	}
++	m_State.nhats = 0;
++
++	return TRUE;
++}
++
++void CUSBGamePad8bitdoDevice::ReportHandler (const u8 *pReport, unsigned nReportSize)
++{
++	if (   pReport != 0
++	    && nReportSize >= REPORT_DATA_SIZE
++	    && pReport[0] == (REPORT_HEADER & 0xFF)
++	    && pReport[1] == (REPORT_HEADER >> 8)
++		&& m_pStatusHandler != 0)
++	{
++		//debug_hexdump (pReport, m_usReportSize, FromUSBPad8BitDo);
++
++		DecodeReport (pReport);
++
++		(*m_pStatusHandler) (m_nDeviceNumber-1, &m_State);
++	}
++}
++
++void CUSBGamePad8bitdoDevice::DecodeReport (const u8 *pReportBuffer)
++{
++	const T8BitDoReport *pReport = reinterpret_cast<const T8BitDoReport *> (pReportBuffer);
++	assert (pReport != 0);
++	assert (pReport->Header == REPORT_HEADER);
++
++	static const u32 ButtonMap[] =
++	{
++		GamePadButtonUp,
++		GamePadButtonDown,
++		GamePadButtonLeft,
++		GamePadButtonRight,
++		GamePadButtonStart,
++		GamePadButtonBack,
++		GamePadButtonL3,
++		GamePadButtonR3,
++		GamePadButtonLB,
++		GamePadButtonRB,
++		GamePadButtonXbox,
++		0,
++		GamePadButtonA,
++		GamePadButtonB,
++		GamePadButtonX,
++		GamePadButtonY
++	};
++
++	u32 nButtons = pReport->Buttons;
++	m_State.buttons = 0;
++	for (unsigned i = 0; i < REPORT_BUTTONS; i++)
++	{
++		if (nButtons & 1)
 +		{
-+			debug_hexdump (pDescriptor, nResult, FromUSBPad8BitDo);
++			m_State.buttons |= ButtonMap[i];
 +		}
 +
-+		delete [] pDescriptor;
-+	}
-+	else
-+	{
-+		CLogger::Get ()->Write (FromUSBPad8BitDo, LogError, "No HID report descriptor");
++		nButtons >>= 1;
 +	}
 +
-+	boolean bResult = ConfigureGamePad (FALSE, USB_GAMEPAD_8BITDO_REPORT_SIZE);
-+	if (!bResult)
++	static const unsigned AxisMap[] =
 +	{
-+		CLogger::Get ()->Write (FromUSBPad8BitDo, LogError, "Cannot start input request");
-+	}
++		GamePadAxisLeftX,
++		GamePadAxisLeftY,
++		GamePadAxisRightX,
++		GamePadAxisRightY,
++		GamePadAxisButtonLT,
++		GamePadAxisButtonRT
++	};
 +
-+	return bResult;
-+}
-+
-+void CUSBGamePad8BitDoDevice::ReportHandler (const u8 *pReport, unsigned nReportSize)
-+{
-+	if (pReport != 0 && m_nLoggedReports++ < 32)
++	for (unsigned i = 0; i < REPORT_AXES; i++)
 +	{
-+		if (m_nLoggedReports == 1)
++		int nValue = pReport->Axes[i];
++
++		// remap axis value to default range [0, 255]
++		nValue = (unsigned) (nValue - REPORT_AXES_MINIMUM) >> 8;
++
++		unsigned nAxis = AxisMap[i];
++		if (   nAxis == GamePadAxisLeftY
++		    || nAxis == GamePadAxisRightY)	// Y-axes have to be reversed
 +		{
-+			CLogger::Get ()->Write (FromUSBPad8BitDo, LogNotice,
-+						  "Report %u received (%u byte(s), %02X %02X)",
-+						  m_nLoggedReports, nReportSize,
-+						  pReport[0], nReportSize > 1 ? pReport[1] : 0);
++			nValue = GAMEPAD_AXIS_DEFAULT_MAXIMUM - nValue;
 +		}
 +
-+		/*CLogger::Get ()->Write (FromUSBPad8BitDo, LogNotice,
-+					  "Report %u (%u byte(s))", m_nLoggedReports, nReportSize);
-+		debug_hexdump (pReport, nReportSize, FromUSBPad8BitDo);*/
++		m_State.axes[nAxis].value = nValue;
 +	}
 +
-+	CUSBGamePadXbox360Device::ReportHandler (pReport, nReportSize);
++	for (unsigned i = 0; i < REPORT_ANALOG_BUTTONS; i++)
++	{
++		m_State.axes[AxisMap[REPORT_AXES+i]].value = pReport->AnalogButton[i];
++
++		if (pReport->AnalogButton[i] >= REPORT_ANALOG_BUTTON_THRESHOLD)
++		{
++			m_State.buttons |= GamePadButtonLT << i;
++		}
++	}
 +}
 +
-+boolean CUSBGamePad8BitDoDevice::InitializeDevice (void)
++boolean CUSBGamePad8bitdoDevice::SetRumbleMode (TGamePadRumbleMode Mode)
 +{
-+	DMA_BUFFER (u8, Command, 3) = {0x01, 0x03, 0x02};
-+	if (!SendToEndpointOut (Command, sizeof Command))
++	DMA_BUFFER (u8, Command, 8);
++	memset (Command, 0, sizeof Command);
++	Command[1] = 0x08;
++
++	switch (Mode)
 +	{
-+		CLogger::Get ()->Write (FromUSBPad8BitDo, LogError, "Cannot initialize receiver");
++	case GamePadRumbleModeOff:
++		break;
++
++	case GamePadRumbleModeLow:
++		Command[4] = 0xFF;
++		break;
++
++	case GamePadRumbleModeHigh:
++		Command[3] = 0xFF;
++		break;
++
++	default:
++		assert (0);
++		return FALSE;
++	}
++
++	return SendToEndpointOut (Command, sizeof Command);
++}
++
+diff --git a/lib/usb/usbgamepad8bitdopro.cpp b/lib/usb/usbgamepad8bitdopro.cpp
+new file mode 100644
+index 00000000..66a138a6
+--- /dev/null
++++ b/lib/usb/usbgamepad8bitdopro.cpp
+@@ -0,0 +1,74 @@
++//
++// usbgamepad8bitdopro.cpp
++//
++// Circle - A C++ bare metal environment for Raspberry Pi
++// Copyright (C) 2014-2026  R. Stange <rsta2@o2online.de>
++//
++// This program is free software: you can redistribute it and/or modify
++// it under the terms of the GNU General Public License as published by
++// the Free Software Foundation, either version 3 of the License, or
++// (at your option) any later version.
++//
++// This program is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++//
++// You should have received a copy of the GNU General Public License
++// along with this program.  If not, see <http://www.gnu.org/licenses/>.
++//
++#include <circle/usb/usbgamepad8bitdopro.h>
++#include <circle/usb/usbhostcontroller.h>
++#include <circle/logger.h>
++#include <circle/macros.h>
++
++static const char FromUSBPad8BitDoPro[] = "usbpad8bitdopro";
++
++CUSBGamePad8BitDoProDevice::CUSBGamePad8BitDoProDevice (CUSBFunction *pFunction)
++: CUSBGamePad8bitdoDevice (pFunction),
++	m_bInterfaceOK (SelectInterfaceByClass (0xFF, 0x5D, 0x01, 1))
++{
++}
++
++CUSBGamePad8BitDoProDevice::~CUSBGamePad8BitDoProDevice (void)
++{
++}
++
++boolean CUSBGamePad8BitDoProDevice::Configure (void)
++{
++	if (!m_bInterfaceOK)
++	{
++		ConfigurationError (FromUSBPad8BitDoPro);
++
++		return FALSE;
++	}
++
++	if (!CUSBGamePad8bitdoDevice::Configure ())
++	{
++		return FALSE;
++	}
++
++	// Vendor specific command to initialize the receiver 
++    DMA_BUFFER (u8, Command, 3) = {0x01, 0x03, 0x02};
++	if (!SendToEndpointOut (Command, 3))
++	{
++		CLogger::Get ()->Write (FromUSBPad8BitDoPro, LogError, 
++                                "Cannot initialize receiver");
++
 +		return FALSE;
 +	}
 +
 +	DMA_BUFFER (u8, Response, 20);
 +	int nResult = GetHost ()->ControlMessage (
 +		GetEndpoint0 (), REQUEST_IN | REQUEST_VENDOR | REQUEST_TO_INTERFACE,
-+		1, 0x0100, GetInterfaceNumber (), Response, sizeof Response);
-+	if (nResult != sizeof Response)
++		1, 0x0100, GetInterfaceNumber (), Response, 20);
++	if (nResult != 20)
 +	{
-+		CLogger::Get ()->Write (FromUSBPad8BitDo, LogError,
-+					  "Cannot read receiver state (%d byte(s))", nResult);
++		CLogger::Get ()->Write (FromUSBPad8BitDoPro, LogError,
++					            "Cannot read receiver state (%d byte(s))", nResult);
++
 +		return FALSE;
 +	}
++
++	return StartRequest ();
++}
+diff --git a/lib/usb/usbgamepad8bitdoxinput.cpp b/lib/usb/usbgamepad8bitdoxinput.cpp
+new file mode 100644
+index 00000000..fdfff70a
+--- /dev/null
++++ b/lib/usb/usbgamepad8bitdoxinput.cpp
+@@ -0,0 +1,58 @@
++//
++// usbgamepad8bitdoxinput.cpp
++//
++// Circle - A C++ bare metal environment for Raspberry Pi
++// Copyright (C) 2014-2026  R. Stange <rsta2@o2online.de>
++//
++// This program is free software: you can redistribute it and/or modify
++// it under the terms of the GNU General Public License as published by
++// the Free Software Foundation, either version 3 of the License, or
++// (at your option) any later version.
++//
++// This program is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++//
++// You should have received a copy of the GNU General Public License
++// along with this program.  If not, see <http://www.gnu.org/licenses/>.
++//
++#include <circle/usb/usbgamepad8bitdoxinput.h>
++
++static const char FromUSBPad8BitDoXInput[] = "usbpad8bitdoxinput";
++
++CUSBGamePad8BitDoXInputDevice::CUSBGamePad8BitDoXInputDevice (CUSBFunction *pFunction)
++: CUSBGamePad8bitdoDevice (pFunction)
++{
++}
++
++CUSBGamePad8BitDoXInputDevice::~CUSBGamePad8BitDoXInputDevice (void)
++{
++}
++
++boolean CUSBGamePad8BitDoXInputDevice::Configure (void)
++{
++	if (!CUSBGamePad8bitdoDevice::Configure ())
++	{
++		return FALSE;
++	}
++
++	DMA_BUFFER(u8, Command, 3) = {0x01, 0x03, 0x02};
++	if (!SendToEndpointOut(Command, 3)) {
++		CLogger::Get ()->Write (FromUSBPad8BitDoXInput, LogError, 
++                                "Cannot initialize receiver");
++		return FALSE;
++	}
++
++	if (!StartRequest()) {
++	    return FALSE;
++	}
++
++	DMA_BUFFER(u8, Response, 20);
++	int result = GetHost()->ControlMessage(
++		GetEndpoint0(),
++		REQUEST_IN | REQUEST_VENDOR | REQUEST_TO_INTERFACE,
++		0x01, 0x0100, GetInterfaceNumber(), Response, 20);
 +
 +	return TRUE;
 +}
-\ No newline at end of file
-diff --git a/lib/usb/usbgamepadxbox360.cpp b/lib/usb/usbgamepadxbox360.cpp
-index 2064c369..bc9545a5 100644
---- a/lib/usb/usbgamepadxbox360.cpp
-+++ b/lib/usb/usbgamepadxbox360.cpp
-@@ -67,7 +67,12 @@ CUSBGamePadXbox360Device::~CUSBGamePadXbox360Device (void)
- 
- boolean CUSBGamePadXbox360Device::Configure (void)
- {
--	m_usReportSize = REPORT_SIZE;
-+	return ConfigureGamePad (TRUE);
-+}
-+
-+boolean CUSBGamePadXbox360Device::ConfigureGamePad (boolean bSetLEDMode, unsigned nReportSize)
-+{
-+	m_usReportSize = nReportSize != 0 ? nReportSize : REPORT_SIZE;
- 
- 	if (!CUSBGamePadDevice::Configure ())
+diff --git a/lib/usb/Makefile b/lib/usb/Makefile
+index e3e2e8d4..a15079d2 100644
+--- a/lib/usb/Makefile
++++ b/lib/usb/Makefile
+@@ -27,6 +27,7 @@ include $(CIRCLEHOME)/Rules.mk
+ OBJS	= lan7800.o smsc951x.o usbbluetooth.o usbcdcethernet.o usbfloppydevice.o \
+ 	  usbconfigparser.o usbdevice.o usbdevicefactory.o usbendpoint.o usbfunction.o \
+ 	  usbgamepad.o usbgamepadps3.o usbgamepadps4.o usbgamepadstandard.o usbgamepadswitchpro.o \
++	  usbgamepad8bitdo.o usbgamepad8bitdopro.o usbgamepad8bitdoxinput.o \
+ 	  usbgamepadxbox360.o usbgamepadxboxone.o usbhiddevice.o usbhostcontroller.o \
+ 	  usbkeyboard.o usbkeyboard8bitdo.o usbmassdevice.o usbmidi.o usbmidihost.o usbmouse.o usbprinter.o usbrequest.o \
+ 	  usbstandardhub.o usbstring.o usbserial.o usbserialhost.o usbserialch341.o usbserialcp210x.o \
+diff --git a/lib/usb/usbdevicefactory.cpp b/lib/usb/usbdevicefactory.cpp
+index 1009f4fe..ad1fef07 100644
+--- a/lib/usb/usbdevicefactory.cpp
++++ b/lib/usb/usbdevicefactory.cpp
+@@ -35,6 +35,8 @@
+ #include <circle/usb/usbgamepadstandard.h>
+ #include <circle/usb/usbgamepadps3.h>
+ #include <circle/usb/usbgamepadps4.h>
++#include <circle/usb/usbgamepad8bitdopro.h>
++#include <circle/usb/usbgamepad8bitdoxinput.h>
+ #include <circle/usb/usbgamepadxbox360.h>
+ #include <circle/usb/usbgamepadxboxone.h>
+ #include <circle/usb/usbgamepadswitchpro.h>
+@@ -135,6 +137,14 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
  	{
-@@ -90,7 +95,12 @@ boolean CUSBGamePadXbox360Device::Configure (void)
+ 		pResult = new CUSBGamePadPS4Device (pParent);
  	}
- 	m_State.nhats = 0;
- 
--	if (!SetLEDMode ((TGamePadLEDMode) m_nDeviceNumber))
-+	if (bSetLEDMode && !SetLEDMode ((TGamePadLEDMode) m_nDeviceNumber))
++	else if (pName->Compare ("ven2dc8-310b") == 0) // 8BitDo Pro 3 Bluetooth Gamepad, 8BitDo Ultimate 2.4G Controller, etc
 +	{
-+		return FALSE;
++		pResult = new CUSBGamePad8BitDoProDevice(pParent);
 +	}
-+
-+	if (!InitializeDevice ())
++	else if (pName->Compare ("ven2dc8-3106") == 0) // 8BitDo Ultimate C 2.4G, 8BitDo USB Wireless Adapter 2, etc
++	{
++		pResult = new CUSBGamePad8BitDoXInputDevice (pParent);
++	}
+ 	else if (   pName->Compare ("ven45e-28e") == 0
+ 		 || pName->Compare ("ven45e-28f") == 0)
  	{
- 		return FALSE;
- 	}
-@@ -101,7 +111,7 @@ boolean CUSBGamePadXbox360Device::Configure (void)
- void CUSBGamePadXbox360Device::ReportHandler (const u8 *pReport, unsigned nReportSize)
- {
- 	if (   pReport != 0
--	    && nReportSize == REPORT_SIZE
-+	    && nReportSize >= REPORT_SIZE
- 	    && pReport[0] == (REPORT_HEADER & 0xFF)
- 	    && pReport[1] == (REPORT_HEADER >> 8)
- 	    && m_pStatusHandler != 0)
-diff --git a/lib/usb/usbhiddevice.cpp b/lib/usb/usbhiddevice.cpp
-index 7ca87b11..749d16c3 100644
---- a/lib/usb/usbhiddevice.cpp
-+++ b/lib/usb/usbhiddevice.cpp
-@@ -55,6 +55,8 @@ boolean CUSBHIDDevice::ConfigureHID (unsigned nMaxReportSize)
- {
- 	if (GetNumEndpoints () < 1)
- 	{
-+		CLogger::Get ()->Write (FromUSBHID, LogError, "HID interface %u has no endpoints",
-+					GetInterfaceNumber ());
- 		ConfigurationError (FromUSBHID);
- 
- 		return FALSE;
-@@ -63,6 +65,11 @@ boolean CUSBHIDDevice::ConfigureHID (unsigned nMaxReportSize)
- 	const TUSBEndpointDescriptor *pEndpointDesc;
- 	while ((pEndpointDesc = (TUSBEndpointDescriptor *) GetDescriptor (DESCRIPTOR_ENDPOINT)) != 0)
- 	{
-+		CLogger::Get ()->Write (FromUSBHID, LogNotice,
-+					"HID interface %u endpoint %02X: type %u, max packet %u, interval %u",
-+					GetInterfaceNumber (), pEndpointDesc->bEndpointAddress,
-+					pEndpointDesc->bmAttributes & 0x3F, pEndpointDesc->wMaxPacketSize,
-+					pEndpointDesc->bInterval);
- 		if ((pEndpointDesc->bmAttributes & 0x3F) == 0x03)		// Interrupt EP
- 		{
- 			if ((pEndpointDesc->bEndpointAddress & 0x80) == 0x80)	// Input EP
-@@ -92,6 +99,8 @@ boolean CUSBHIDDevice::ConfigureHID (unsigned nMaxReportSize)
- 
- 	if (m_pReportEndpoint == 0)
- 	{
-+		CLogger::Get ()->Write (FromUSBHID, LogError,
-+					"HID interface %u has no interrupt input endpoint", GetInterfaceNumber ());
- 		ConfigurationError (FromUSBHID);
- 
- 		return FALSE;
 diff --git a/lib/usb/usbstandardhub.cpp b/lib/usb/usbstandardhub.cpp
-index c8a78d87..32623589 100644
+index c8a78d87..8960b1c1 100644
 --- a/lib/usb/usbstandardhub.cpp
 +++ b/lib/usb/usbstandardhub.cpp
 @@ -400,7 +400,6 @@ boolean CUSBStandardHub::EnumeratePorts (void)
@@ -439,11 +554,12 @@ index c8a78d87..32623589 100644
  
  		if (!m_pDevice[nPort]->Configure ())
  		{
-@@ -412,6 +411,8 @@ boolean CUSBStandardHub::EnumeratePorts (void)
+@@ -412,6 +411,9 @@ boolean CUSBStandardHub::EnumeratePorts (void)
  
  			continue;
  		}
 +
++		// Leave failed configurations eligible for retry on the next scan.
 +		m_bPortConfigured[nPort] = TRUE;
  		
  		CLogger::Get ()->Write (FromHub, LogDebug, "Port %u: Device configured", nPort+1);
