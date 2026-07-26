@@ -60,6 +60,34 @@ echo ==============================================================
 echo APPLY PATCHES
 echo ==============================================================
 
+apply_patch_file()
+{
+       patch_file="$1"
+       sed_expression="$2"
+
+       if [ ! -f "$patch_file" ]
+       then
+              echo "Required patch file is missing: $patch_file" >&2
+              exit 1
+       fi
+
+       if [ -n "$sed_expression" ]
+       then
+              sed "$sed_expression" "$patch_file" | patch -p1
+              patch_status=("${PIPESTATUS[@]}")
+              if [ "${patch_status[0]}" != "0" ] || [ "${patch_status[1]}" != "0" ]
+              then
+                     exit 1
+              fi
+       else
+              patch -p1 < "$patch_file"
+              if [ "$?" != "0" ]
+              then
+                     exit 1
+              fi
+       fi
+}
+
 if [ "$SKIP_PATCHES" = "1" ]
 then
 echo "Skipping patches"
@@ -67,32 +95,26 @@ else
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle-newlib
 git reset --hard HEAD
 git clean -fd
-patch -p1 < ../../../../circle_newlib_patch.diff
-if [ "$?" != "0" ]
-then
-       exit
-fi
+apply_patch_file "$SRC_DIR/circle_newlib_patch.diff"
 
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle
 git reset --hard HEAD
 git clean -fd
 
+circle_patch_file="$SRC_DIR/circle_patch.diff"
 if [ "$BOARD" = "pi0" ]
 then
-sed 's@+#define ARM_ALLOW_MULTI_CORE@+//#define ARM_ALLOW_MULTI_CORE@' \
-  ../../../../circle_patch.diff | patch -p1
+       apply_patch_file "$circle_patch_file" 's@+#define ARM_ALLOW_MULTI_CORE@+//#define ARM_ALLOW_MULTI_CORE@'
+else
+       apply_patch_file "$circle_patch_file"
+fi
 #perl -pi -e 's@#define USE_PHYSICAL_COUNTER@//#define USE_PHYSICAL_COUNTER@' ./include/circle/sysconfig.h
 #perl -pi -e 's@//#define SAVE_VFP_REGS_ON_IRQ@#define SAVE_VFP_REGS_ON_IRQ@' ./include/circle/sysconfig.h
-else
-patch -p1 < ../../../../circle_patch.diff
-fi
 
-patch -p1 < ../../../../circle_8bitdo_keyboard_patch.diff
-patch -p1 < ../../../../circle_8bitdo_gamepad_patch.diff
-if [ -s ../../../../circle_usb_descriptor_patch.diff ]
-then
-patch -p1 < ../../../../circle_usb_descriptor_patch.diff
-fi
+apply_patch_file "$SRC_DIR/circle_8bitdo_keyboard_patch.diff"
+apply_patch_file "$SRC_DIR/circle_8bitdo_gamepad_patch.diff"
+apply_patch_file "$SRC_DIR/circle_usb_descriptor_patch.diff"
+apply_patch_file "$SRC_DIR/circle_xbox360_gamepad_patch.diff"
 fi
 
 echo ==============================================================
