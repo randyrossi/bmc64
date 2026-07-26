@@ -60,7 +60,7 @@ index 14471753..e3e2e8d4 100644
  	  usbserialpl2303.o usbserialft231x.o usbserialcdc.o usbtouchscreen.o dwhciregister.o
  
 diff --git a/lib/usb/usbdevicefactory.cpp b/lib/usb/usbdevicefactory.cpp
-index 75210581..1009f4fe 100644
+index 75210581..fefd0f34 100644
 --- a/lib/usb/usbdevicefactory.cpp
 +++ b/lib/usb/usbdevicefactory.cpp
 @@ -30,6 +30,7 @@
@@ -77,7 +77,7 @@ index 75210581..1009f4fe 100644
  
 -		if (pVendor->Compare ("ven3f0-1198") != 0)	// HP USB 1000dpi Laser Mouse
 +		if (   pVendor->Compare ("ven2dc8-5200") == 0
-+		    || pVendor->Compare ("ven2dc8-5201") == 0)
++		    || pVendor->Compare ("ven2dc8-5201") == 0)  // 8bitDo Retro Keyboard
 +		{
 +			pResult = new CUSBKeyboard8BitDoDevice (pParent);
 +		}
@@ -85,6 +85,24 @@ index 75210581..1009f4fe 100644
  		{
  			pResult = new CUSBKeyboardDevice (pParent);
  		}
+@@ -102,7 +108,16 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
+ #ifndef EXCLUDE_USB_MOUSE
+ 	else if (pName->Compare ("int3-1-2") == 0)
+ 	{
+-		pResult = new CUSBMouseDevice (pParent);
++		CString *pVendor = pParent->GetDevice ()->GetName (DeviceNameVendor);
++		assert (pVendor != 0);
++
++		if (   pVendor->Compare ("ven2dc8-5200") != 0
++		    && pVendor->Compare ("ven2dc8-5201") != 0) // 8bitDo Retro Keyboard
++		{
++			pResult = new CUSBMouseDevice (pParent);
++		}
++
++		delete pVendor;
+ 	}
+ #endif
+ 	else if (   pName->Compare ("int3-0-0") == 0
 diff --git a/lib/usb/usbkeyboard.cpp b/lib/usb/usbkeyboard.cpp
 index 05fe2fab..b5adf198 100644
 --- a/lib/usb/usbkeyboard.cpp
