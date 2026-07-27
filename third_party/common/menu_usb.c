@@ -343,13 +343,14 @@ void build_usb_menu(int dev, struct menu_item *root) {
                                     (int)(usb_y_thresh[dev] * 100.0f));
   sprintf (y_thresh_item->name, "USB %d Analog Y Threshold % #", dev+1);
 
+  ui_menu_add_divider(root);
   tmp_item = ui_menu_add_button(MENU_USB_0_WATCH_RAW+dev, root,
                                 "");
-  ui_menu_add_divider(root);
   sprintf (tmp_item->name, "Monitor Raw USB %d data...", dev+1);
   tmp_item->on_value_changed = menu_usb_value_changed;
 
   if (joy_num_pads > dev) {
+    ui_menu_add_divider(root);
     tmp_item = ui_menu_add_button(MENU_USB_0_RESET_DEFAULTS+dev, root,
                                   "Reset to Default Bindings");
     tmp_item->on_value_changed = menu_usb_value_changed;
