@@ -101,10 +101,10 @@ index 00000000..d4b88d89
 \ No newline at end of file
 diff --git a/include/circle/usb/usbgamepad8bitdoxinput.h b/include/circle/usb/usbgamepad8bitdoxinput.h
 new file mode 100644
-index 00000000..0026a5cb
+index 00000000..73c5c969
 --- /dev/null
 +++ b/include/circle/usb/usbgamepad8bitdoxinput.h
-@@ -0,0 +1,34 @@
+@@ -0,0 +1,37 @@
 +//
 +// usbgamepad8bitdoxinput.h
 +//
@@ -136,10 +136,52 @@ index 00000000..0026a5cb
 +	~CUSBGamePad8BitDoXInputDevice (void);
 +
 +	boolean Configure (void);
++
++private:
++	boolean m_bInterfaceOK;
 +};
 +
 +#endif
-\ No newline at end of file
+diff --git a/lib/usb/Makefile b/lib/usb/Makefile
+index 14471753..759d61b0 100644
+--- a/lib/usb/Makefile
++++ b/lib/usb/Makefile
+@@ -27,6 +27,7 @@ include $(CIRCLEHOME)/Rules.mk
+ OBJS	= lan7800.o smsc951x.o usbbluetooth.o usbcdcethernet.o usbfloppydevice.o \
+ 	  usbconfigparser.o usbdevice.o usbdevicefactory.o usbendpoint.o usbfunction.o \
+ 	  usbgamepad.o usbgamepadps3.o usbgamepadps4.o usbgamepadstandard.o usbgamepadswitchpro.o \
++	  usbgamepad8bitdo.o usbgamepad8bitdopro.o usbgamepad8bitdoxinput.o \
+ 	  usbgamepadxbox360.o usbgamepadxboxone.o usbhiddevice.o usbhostcontroller.o \
+ 	  usbkeyboard.o usbmassdevice.o usbmidi.o usbmidihost.o usbmouse.o usbprinter.o usbrequest.o \
+ 	  usbstandardhub.o usbstring.o usbserial.o usbserialhost.o usbserialch341.o usbserialcp210x.o \
+diff --git a/lib/usb/usbdevicefactory.cpp b/lib/usb/usbdevicefactory.cpp
+index 75210581..c79ae485 100644
+--- a/lib/usb/usbdevicefactory.cpp
++++ b/lib/usb/usbdevicefactory.cpp
+@@ -34,6 +34,8 @@
+ #include <circle/usb/usbgamepadstandard.h>
+ #include <circle/usb/usbgamepadps3.h>
+ #include <circle/usb/usbgamepadps4.h>
++#include <circle/usb/usbgamepad8bitdopro.h>
++#include <circle/usb/usbgamepad8bitdoxinput.h>
+ #include <circle/usb/usbgamepadxbox360.h>
+ #include <circle/usb/usbgamepadxboxone.h>
+ #include <circle/usb/usbgamepadswitchpro.h>
+@@ -129,6 +131,14 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
+ 	{
+ 		pResult = new CUSBGamePadPS4Device (pParent);
+ 	}
++	else if (pName->Compare ("ven2dc8-310b") == 0) // 8BitDo Pro 3 Bluetooth Gamepad, 8BitDo Ultimate 2.4G Controller, etc
++	{
++		pResult = new CUSBGamePad8BitDoProDevice(pParent);
++	}
++	else if (pName->Compare ("ven2dc8-3106") == 0) // 8BitDo Ultimate C 2.4G, 8BitDo USB Wireless Adapter 2, etc
++	{
++		pResult = new CUSBGamePad8BitDoXInputDevice (pParent);
++	}
+ 	else if (   pName->Compare ("ven45e-28e") == 0
+ 		 || pName->Compare ("ven45e-28f") == 0)
+ 	{
 diff --git a/lib/usb/usbgamepad8bitdo.cpp b/lib/usb/usbgamepad8bitdo.cpp
 new file mode 100644
 index 00000000..844b3035
@@ -440,10 +482,10 @@ index 00000000..66a138a6
 +}
 diff --git a/lib/usb/usbgamepad8bitdoxinput.cpp b/lib/usb/usbgamepad8bitdoxinput.cpp
 new file mode 100644
-index 00000000..fdfff70a
+index 00000000..5129f6c5
 --- /dev/null
 +++ b/lib/usb/usbgamepad8bitdoxinput.cpp
-@@ -0,0 +1,58 @@
+@@ -0,0 +1,56 @@
 +//
 +// usbgamepad8bitdoxinput.cpp
 +//
@@ -468,7 +510,8 @@ index 00000000..fdfff70a
 +static const char FromUSBPad8BitDoXInput[] = "usbpad8bitdoxinput";
 +
 +CUSBGamePad8BitDoXInputDevice::CUSBGamePad8BitDoXInputDevice (CUSBFunction *pFunction)
-+: CUSBGamePad8bitdoDevice (pFunction)
++: CUSBGamePad8bitdoDevice (pFunction),
++	m_bInterfaceOK (SelectInterfaceByClass (0xFF, 0x5D, 0x01, 1))
 +{
 +}
 +
@@ -478,6 +521,13 @@ index 00000000..fdfff70a
 +
 +boolean CUSBGamePad8BitDoXInputDevice::Configure (void)
 +{
++	if (!m_bInterfaceOK)
++	{
++		ConfigurationError (FromUSBPad8BitDoXInput);
++
++		return FALSE;
++	}
++
 +	if (!CUSBGamePad8bitdoDevice::Configure ())
 +	{
 +		return FALSE;
@@ -490,58 +540,8 @@ index 00000000..fdfff70a
 +		return FALSE;
 +	}
 +
-+	if (!StartRequest()) {
-+	    return FALSE;
-+	}
-+
-+	DMA_BUFFER(u8, Response, 20);
-+	int result = GetHost()->ControlMessage(
-+		GetEndpoint0(),
-+		REQUEST_IN | REQUEST_VENDOR | REQUEST_TO_INTERFACE,
-+		0x01, 0x0100, GetInterfaceNumber(), Response, 20);
-+
-+	return TRUE;
++	return StartRequest ();
 +}
-diff --git a/lib/usb/Makefile b/lib/usb/Makefile
-index e3e2e8d4..a15079d2 100644
---- a/lib/usb/Makefile
-+++ b/lib/usb/Makefile
-@@ -27,6 +27,7 @@ include $(CIRCLEHOME)/Rules.mk
- OBJS	= lan7800.o smsc951x.o usbbluetooth.o usbcdcethernet.o usbfloppydevice.o \
- 	  usbconfigparser.o usbdevice.o usbdevicefactory.o usbendpoint.o usbfunction.o \
- 	  usbgamepad.o usbgamepadps3.o usbgamepadps4.o usbgamepadstandard.o usbgamepadswitchpro.o \
-+	  usbgamepad8bitdo.o usbgamepad8bitdopro.o usbgamepad8bitdoxinput.o \
- 	  usbgamepadxbox360.o usbgamepadxboxone.o usbhiddevice.o usbhostcontroller.o \
- 	  usbkeyboard.o usbkeyboard8bitdo.o usbmassdevice.o usbmidi.o usbmidihost.o usbmouse.o usbprinter.o usbrequest.o \
- 	  usbstandardhub.o usbstring.o usbserial.o usbserialhost.o usbserialch341.o usbserialcp210x.o \
-diff --git a/lib/usb/usbdevicefactory.cpp b/lib/usb/usbdevicefactory.cpp
-index 1009f4fe..ad1fef07 100644
---- a/lib/usb/usbdevicefactory.cpp
-+++ b/lib/usb/usbdevicefactory.cpp
-@@ -35,6 +35,8 @@
- #include <circle/usb/usbgamepadstandard.h>
- #include <circle/usb/usbgamepadps3.h>
- #include <circle/usb/usbgamepadps4.h>
-+#include <circle/usb/usbgamepad8bitdopro.h>
-+#include <circle/usb/usbgamepad8bitdoxinput.h>
- #include <circle/usb/usbgamepadxbox360.h>
- #include <circle/usb/usbgamepadxboxone.h>
- #include <circle/usb/usbgamepadswitchpro.h>
-@@ -135,6 +137,14 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
- 	{
- 		pResult = new CUSBGamePadPS4Device (pParent);
- 	}
-+	else if (pName->Compare ("ven2dc8-310b") == 0) // 8BitDo Pro 3 Bluetooth Gamepad, 8BitDo Ultimate 2.4G Controller, etc
-+	{
-+		pResult = new CUSBGamePad8BitDoProDevice(pParent);
-+	}
-+	else if (pName->Compare ("ven2dc8-3106") == 0) // 8BitDo Ultimate C 2.4G, 8BitDo USB Wireless Adapter 2, etc
-+	{
-+		pResult = new CUSBGamePad8BitDoXInputDevice (pParent);
-+	}
- 	else if (   pName->Compare ("ven45e-28e") == 0
- 		 || pName->Compare ("ven45e-28f") == 0)
- 	{
 diff --git a/lib/usb/usbstandardhub.cpp b/lib/usb/usbstandardhub.cpp
 index c8a78d87..8960b1c1 100644
 --- a/lib/usb/usbstandardhub.cpp
