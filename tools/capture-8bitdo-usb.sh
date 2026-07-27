@@ -132,6 +132,19 @@ if [[ ! -s "${TEMP_CAPTURE}" ]]; then
 fi
 
 sudo chown "$(id -u):$(id -g)" "${TEMP_CAPTURE}"
+if [[ "${DOCK_CYCLE}" -eq 1 ]]; then
+    echo "Keeping the complete bus capture because the receiver can change USB identity."
+    mv "${TEMP_CAPTURE}" "${OUTPUT_CAPTURE}"
+
+    echo "Writing filtered views for each observed 8BitDo device address."
+    tshark -r "${OUTPUT_CAPTURE}" -Y "usb.idVendor == 0x2dc8" -T fields -e usb.device_address \
+        | sort -n -u | while read -r USB_DEVICE_ADDRESS; do
+            if [[ -n "${USB_DEVICE_ADDRESS}" ]]; then
+                tshark -r "${OUTPUT_CAPTURE}" -Y "usb.device_address == ${USB_DEVICE_ADDRESS}" \
+                    -w "${HOME}/${CAPTURE_NAME}-device${USB_DEVICE_ADDRESS}.pcapng"
+            fi
+        done
+else
 USB_DEVICE_ADDRESS="$(sudo lsusb -d "${USB_ID}" | awk 'NR == 1 { print int($4) }')"
 if [[ -z "${USB_DEVICE_ADDRESS}" ]]; then
     echo "Cannot identify the receiver USB address; keeping the unfiltered capture." >&2
@@ -140,6 +153,7 @@ else
     echo "Filtering capture for USB device address ${USB_DEVICE_ADDRESS}."
     tshark -r "${TEMP_CAPTURE}" -Y "usb.device_address == ${USB_DEVICE_ADDRESS}" -w "${OUTPUT_CAPTURE}"
     rm "${TEMP_CAPTURE}"
+fi
 fi
 
 echo "Writing verbose USB text export."
