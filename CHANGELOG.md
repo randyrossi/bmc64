@@ -392,7 +392,7 @@
     * Including 8BitDo Ultimate 2C 2.4G, 8BitDo Pro 3 controller, 8BitDo M30 2.4G controller.
   * Fixed disconnect quirks with 8bitdo controller docks when putting the controller back into the dock and picking it up again.
   * 8BitDo USB Wireless Adapter 2 was already supported as an emulated Xbox360 controller, this allows connection of almost any 8bitdo bluetooth controller.
-  * Added usbpowerdelay=1000 to the default cmdline.txt configuration, to improve USB detection on start up
+  * Added usbpowerdelay=1000 to the default cmdline.txt configuration, to stop 8bitdo controllers connecting as Switch Pro controller on startup
   * Only supports Pi3
 
 ## 4.2-p3
@@ -402,7 +402,7 @@
   * Improved USB controller compatibility, including better 8BitDo XInput
     interface detection and USB device descriptions
   * Clean up of USB gamepad configuration menu
-  * Removed the usbpowerdelay setting from the cmdline.txt configuration
+  * Added usbpowerdelay=1000 to the default cmdline.txt configuration, to stop 8bitdo controllers connecting as Switch Pro controller on startup
   * Improved build scripts to apply patches more reliably and avoid stale
     build artifacts
   * Tested on PiZero, P2, Pi3 models  
