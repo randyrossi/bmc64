@@ -365,3 +365,33 @@
   * Add 256k and 1024k memory options to plus4emu
   * Support more recent Maxi keyboard
 
+## 4.2-p1
+  * Fixed an issue that prevented USB mice from working
+  * TDE per drive support added
+  * CMD HD changed to no operation when detached
+  * Compilation fix for Pi0
+  * teensy-resid initialisation crash fix for Pi0
+
+## 4.2-p2
+  * Ported BMC64 to Circle 51 / circle-stdlib v20
+    * Circle 43 introduced USB PnP, making it possible to switch USB devices while BMC64 is running
+    * Details: https://github.com/rsta2/circle/blob/master/CHANGELOG.md#the-43rd-step
+  * Updated toolchain to GCC 15.2.Rel1
+    * Download: https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads
+  * Reapplied the following original BMC64 patches adapted to new toolchain
+    * Multicore support and enabled USB FIQ handling
+    * Direct loading of files into memory to reduce unnecessary SD-card reads
+  * Fixed PiZero build issues post update
+
+  * Added USB PnP support
+  * Added support for 8bitdo Retro Keyboards inc the C64 model (both wired and via 2.4Ghz USB receiver)
+  * Added "Reset to default bindings" option in USB gamepad configuration menu
+    * Currently supports 8bitdo, Xbox360, and generic controllers
+  * Changed USB gamepad menu to display the name of the device connected instead of "CONNECTED"
+  * Added support for various 8bitdo 2.4Ghz controllers in Xinput mode
+    * Including 8BitDo Ultimate 2C 2.4G, 8BitDo Pro 3 controller, 8BitDo M30 2.4G controller.
+  * Fixed disconnect quirks with 8bitdo controller docks when putting the controller back into the dock and picking it up again.
+  * 8BitDo USB Wireless Adapter 2 was already supported as an emulated Xbox360 controller, this allows connection of almost any 8bitdo bluetooth controller.
+  * Added usbpowerdelay=1000 to the default cmdline.txt configuration, to improve USB detection on start up
+
+## 4.2-p3
