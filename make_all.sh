@@ -108,8 +108,6 @@ then
 else
        apply_patch_file "$circle_patch_file"
 fi
-#perl -pi -e 's@#define USE_PHYSICAL_COUNTER@//#define USE_PHYSICAL_COUNTER@' ./include/circle/sysconfig.h
-#perl -pi -e 's@//#define SAVE_VFP_REGS_ON_IRQ@#define SAVE_VFP_REGS_ON_IRQ@' ./include/circle/sysconfig.h
 
 apply_patch_file "$SRC_DIR/circle_8bitdo_keyboard_patch.diff"
 apply_patch_file "$SRC_DIR/circle_8bitdo_gamepad_patch.diff"
