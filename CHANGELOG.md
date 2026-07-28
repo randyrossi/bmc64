@@ -372,7 +372,7 @@
   * Compilation fix for Pi0
   * teensy-resid initialisation crash fix for Pi0
 
-## 4.2-p2
+## 4.2-p2 (Experimental)
   * Ported BMC64 to Circle 51 / circle-stdlib v20
     * Circle 43 introduced USB PnP, making it possible to switch USB devices while BMC64 is running
     * Details: https://github.com/rsta2/circle/blob/master/CHANGELOG.md#the-43rd-step
@@ -393,6 +393,7 @@
   * Fixed disconnect quirks with 8bitdo controller docks when putting the controller back into the dock and picking it up again.
   * 8BitDo USB Wireless Adapter 2 was already supported as an emulated Xbox360 controller, this allows connection of almost any 8bitdo bluetooth controller.
   * Added usbpowerdelay=1000 to the default cmdline.txt configuration, to improve USB detection on start up
+  * Only supports Pi3
 
 ## 4.2-p3
   * Refactor and clean up of all Circle patches
@@ -404,3 +405,5 @@
   * Removed the usbpowerdelay setting from the cmdline.txt configuration
   * Improved build scripts to apply patches more reliably and avoid stale
     build artifacts
+  * Tested on PiZero, P2, Pi3 models  
+  * Note: PiZero is best used with a powered OTG USB hub as some devices can cause brownouts and device shutdowns
