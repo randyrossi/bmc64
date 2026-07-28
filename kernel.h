@@ -138,10 +138,15 @@ public:
 			int bilinear_interpolation);
 
 private:
+#ifndef ARM_ALLOW_MULTI_CORE
+  class USBPlugAndPlayTask;
+#endif
+
   void InitSound();
   void SetupUSBKeyboard();
   void SetupUSBMouse();
   void SetupUSBGamepads();
+  void UpdateUSBPlugAndPlay();
   int ReadDebounced(int pinIndex);
   void ScanKeyboard();
   void ReadJoystick(int device, int gpioConfig);
@@ -149,6 +154,9 @@ private:
   void SetupUserport();
   void ReadWriteUserport();
   ViceSound *mViceSound;
+#ifndef ARM_ALLOW_MULTI_CORE
+  USBPlugAndPlayTask *mUSBPlugAndPlayTask;
+#endif
 
   static void MouseRemovedHandler(CDevice *pDevice, void *pContext);
   static void KeyRemovedHandler(CDevice *pDevice, void *pContext);

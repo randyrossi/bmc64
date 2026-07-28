@@ -348,8 +348,30 @@ long func_to_keycode(int btn_func) {
 
 }
 
+#ifndef ARM_ALLOW_MULTI_CORE
+class CKernel::USBPlugAndPlayTask : public CTask {
+public:
+  explicit USBPlugAndPlayTask(CKernel *kernel) : mKernel(kernel) {
+    SetName("usbpnp");
+  }
+
+  void Run(void) override {
+    for (;;) {
+      mKernel->UpdateUSBPlugAndPlay();
+      CScheduler::Get()->MsSleep(100);
+    }
+  }
+
+private:
+  CKernel *mKernel;
+};
+#endif
+
 CKernel::CKernel(void)
     : ViceStdioApp("vice"), mViceSound(nullptr),
+#ifndef ARM_ALLOW_MULTI_CORE
+      mUSBPlugAndPlayTask(nullptr),
+#endif
       mNumJoy(emu_get_num_joysticks()),
       mVolume(100), mNumCoresComplete(0),
       mNeedSoundInit(false), mNumSoundChannels(1) {
@@ -795,6 +817,14 @@ void CKernel::SetupUSBGamepads() {
   emu_set_gamepad_info(num_pads, num_buttons, num_axes, num_hats);
 }
 
+void CKernel::UpdateUSBPlugAndPlay() {
+  if (mUSBHCII.UpdatePlugAndPlay()) {
+    SetupUSBKeyboard();
+    SetupUSBMouse();
+    SetupUSBGamepads();
+  }
+}
+
 ViceApp::TShutdownMode CKernel::Run(void) {
 
   SetupUSBKeyboard();
@@ -804,6 +834,7 @@ ViceApp::TShutdownMode CKernel::Run(void) {
   emu_set_demo_mode(mViceOptions.DemoEnabled());
 
 #ifndef ARM_ALLOW_MULTI_CORE
+  mUSBPlugAndPlayTask = new USBPlugAndPlayTask(this);
   mEmulatorCore->LaunchEmulator(mTimingOption);
 #else
   // This core will do nothing but service interrupts from
@@ -811,12 +842,7 @@ ViceApp::TShutdownMode CKernel::Run(void) {
   printf("Core 0 idle\n");
 
   while(1) {
-      boolean bUpdated = mUSBHCII.UpdatePlugAndPlay();
-      if (bUpdated) {
-          SetupUSBKeyboard();
-          SetupUSBMouse();
-          SetupUSBGamepads();
-      }
+      UpdateUSBPlugAndPlay();
       asm("wfi");
   }
 
