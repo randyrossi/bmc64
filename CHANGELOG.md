@@ -395,3 +395,12 @@
   * Added usbpowerdelay=1000 to the default cmdline.txt configuration, to improve USB detection on start up
 
 ## 4.2-p3
+  * Refactor and clean up of all Circle patches
+  * Added support for the Xbox 360 PC Wireless Gaming Receiver (and clones)
+  * Fixed 8BitDo Retro Keyboards being incorrectly detected as USB mice
+  * Improved USB controller compatibility, including better 8BitDo XInput
+    interface detection and USB device descriptions
+  * Clean up of USB gamepad configuration menu
+  * Removed the usbpowerdelay setting from the cmdline.txt configuration
+  * Improved build scripts to apply patches more reliably and avoid stale
+    build artifacts
