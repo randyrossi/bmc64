@@ -16,6 +16,7 @@ extern int errno;
 #include <assert.h>
 
 #include <malloc.h>
+#include <stdio.h>
 #include <sys/unistd.h>
 #include <circle/serial.h>
 
@@ -211,6 +212,11 @@ PARTITION VolToPart[FF_VOLUMES];
 
 void CGlueStdioInit(CSerialDevice *serial) {
   g_serial = serial;
+
+  if (g_serial) {
+    setvbuf(stdout, nullptr, _IOLBF, 0);
+    setvbuf(stderr, nullptr, _IOLBF, 0);
+  }
 
   // Initialize stdio, stderr and stdin
   fileTab[0].in_use = 1;
