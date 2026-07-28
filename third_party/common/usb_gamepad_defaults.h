@@ -24,6 +24,8 @@ struct usb_gamepad_default_profile {
 
 void emu_set_usb_gamepad_mapping_profile(int device, unsigned profile);
 void emu_set_usb_gamepad_display_name(int device, const char *display_name);
+
+unsigned usb_gamepad_default_profile_for_vendor(const char *vendor);
 const struct usb_gamepad_default_profile *usb_gamepad_default_profile_for_device(
     int device);
 const char *usb_gamepad_default_profile_display_name_for_device(int device);

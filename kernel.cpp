@@ -43,53 +43,6 @@ static unsigned char mod_states;
 static bool uiLeftShift = false;
 static bool uiRightShift = false;
 
-struct TGamePadMappingProfile {
-  const char *vendor;
-  unsigned profile;
-};
-
-// Mapping table for known USB gamepad vendors and products to their default mapping profiles.
-static const TGamePadMappingProfile GamePadMappingProfiles[] = {
-  { "ven45e-28e", USB_GAMEPAD_DEFAULT_PROFILE_XBOX360 },
-  { "ven45e-28f", USB_GAMEPAD_DEFAULT_PROFILE_XBOX360 },
-  { "ven45e-719", USB_GAMEPAD_DEFAULT_PROFILE_XBOX360 },
-  { "ven45e-2a9", USB_GAMEPAD_DEFAULT_PROFILE_XBOX360 },
-  { "ven2dc8-3106", USB_GAMEPAD_DEFAULT_PROFILE_XBOX360 },
-  { "ven2dc8-310b", USB_GAMEPAD_DEFAULT_PROFILE_XBOX360 },
-  { "venca3-24", USB_GAMEPAD_DEFAULT_PROFILE_8BITDO_M30_2_4G },
-};
-
-static unsigned gamepad_mapping_profile(CUSBGamePadDevice *gamepad) {
-  CString *vendor = gamepad->GetDevice()->GetName(DeviceNameVendor);
-  if (vendor == 0) {
-    return USB_GAMEPAD_DEFAULT_PROFILE_NONE;
-  }
-
-  unsigned profile = USB_GAMEPAD_DEFAULT_PROFILE_NONE;
-  for (unsigned i = 0;
-       i < sizeof(GamePadMappingProfiles) / sizeof(GamePadMappingProfiles[0]);
-       i++) {
-    if (vendor->Compare(GamePadMappingProfiles[i].vendor) == 0) {
-      profile = GamePadMappingProfiles[i].profile;
-      break;
-    }
-  }
-
-  delete vendor;
-  return profile;
-}
-
-static void log_gamepad_mapping_profile(CUSBGamePadDevice *gamepad,
-                                        unsigned profile) {
-  CString *vendor = gamepad->GetDevice()->GetName(DeviceNameVendor);
-  if (vendor != 0) {
-    CLogger::Get()->Write("kernel", LogNotice,
-                          "Gamepad %s uses mapping profile %u",
-                          (const char *) *vendor, profile);
-    delete vendor;
-  }
-}
-
 static int vol_percent_to_vchiq(int percent) {
   int range = VCHIQ_SOUND_VOLUME_MAX-(-2720);
   return range * ((float)percent)/100.0 + (-2720);
@@ -811,11 +764,18 @@ void CKernel::SetupUSBGamepads() {
     m_pGamePad[nDevice-1] = (CUSBGamePadDevice *)mDeviceNameService.GetDevice(DeviceName, FALSE);
     
     if (m_pGamePad[nDevice-1] != 0) {
-      unsigned profile = gamepad_mapping_profile(m_pGamePad[nDevice-1]);
+      CString *vendor = m_pGamePad[nDevice-1]->GetDevice()->GetName(DeviceNameVendor);
+      unsigned profile = USB_GAMEPAD_DEFAULT_PROFILE_NONE;
+      if (vendor != 0) {
+        profile = usb_gamepad_default_profile_for_vendor((const char *) *vendor);
+        CLogger::Get()->Write("kernel", LogNotice,
+                              "Gamepad %s uses mapping profile %u",
+                              (const char *) *vendor, profile);
+        delete vendor;
+      }
       emu_set_usb_gamepad_mapping_profile(
           nDevice - 1,
           profile);
-      log_gamepad_mapping_profile(m_pGamePad[nDevice-1], profile);
       emu_set_usb_gamepad_display_name(
         nDevice - 1,
         m_pGamePad[nDevice-1]->GetProperty(CDevice::PropertyProduct));

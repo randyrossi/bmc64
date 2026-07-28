@@ -4,6 +4,22 @@
 
 #include <string.h>
 
+struct usb_gamepad_vendor_default_profile {
+  const char *vendor;
+  unsigned profile;
+};
+
+static const struct usb_gamepad_vendor_default_profile
+    usb_gamepad_vendor_default_profiles[] = {
+  { "ven45e-28e", USB_GAMEPAD_DEFAULT_PROFILE_XBOX360 },
+  { "ven45e-28f", USB_GAMEPAD_DEFAULT_PROFILE_XBOX360 },
+  { "ven45e-719", USB_GAMEPAD_DEFAULT_PROFILE_XBOX360 },
+  { "ven45e-2a9", USB_GAMEPAD_DEFAULT_PROFILE_XBOX360 },
+  { "ven2dc8-3106", USB_GAMEPAD_DEFAULT_PROFILE_XBOX360 },
+  { "ven2dc8-310b", USB_GAMEPAD_DEFAULT_PROFILE_XBOX360 },
+  { "venca3-24", USB_GAMEPAD_DEFAULT_PROFILE_8BITDO_M30_2_4G },
+};
+
 #define USB_GAMEPAD_DISPLAY_NAME_MAX 32
 
 static unsigned usb_gamepad_mapping_profiles[MAX_USB_DEVICES];
@@ -104,6 +120,23 @@ void emu_set_usb_gamepad_display_name(int device, const char *display_name) {
 
   memcpy(usb_gamepad_display_names[device], display_name, display_length);
   usb_gamepad_display_names[device][display_length] = '\0';
+}
+
+unsigned usb_gamepad_default_profile_for_vendor(const char *vendor) {
+  if (vendor == 0) {
+    return USB_GAMEPAD_DEFAULT_PROFILE_NONE;
+  }
+
+  for (unsigned i = 0;
+       i < sizeof(usb_gamepad_vendor_default_profiles) /
+               sizeof(usb_gamepad_vendor_default_profiles[0]);
+       i++) {
+    if (strcmp(vendor, usb_gamepad_vendor_default_profiles[i].vendor) == 0) {
+      return usb_gamepad_vendor_default_profiles[i].profile;
+    }
+  }
+
+  return USB_GAMEPAD_DEFAULT_PROFILE_NONE;
 }
 
 const struct usb_gamepad_default_profile *usb_gamepad_default_profile_for_device(
