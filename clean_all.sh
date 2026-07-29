@@ -76,4 +76,4 @@ git reset --hard
 cd $SRC_DIR
 make clean
 
-rm kernel*img.*
+rm -f kernel*img.*

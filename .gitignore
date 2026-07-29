@@ -19,6 +19,7 @@ kernel7.img.*
 # Root build outputs
 /*.a
 /*.d
+/build/
 
 # Machine-specific kernel images
 /kernel*.img.*
