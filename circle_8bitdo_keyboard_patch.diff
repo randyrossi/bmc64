@@ -123,10 +123,10 @@ index 05fe2fab..b5adf198 100644
  
 diff --git a/lib/usb/usbkeyboard8bitdo.cpp b/lib/usb/usbkeyboard8bitdo.cpp
 new file mode 100644
-index 00000000..2556eb96
+index 00000000..0c67c0e3
 --- /dev/null
 +++ b/lib/usb/usbkeyboard8bitdo.cpp
-@@ -0,0 +1,72 @@
+@@ -0,0 +1,70 @@
 +//
 +// usbkeyboard8bitdo.cpp
 +//
@@ -170,11 +170,9 @@ index 00000000..2556eb96
 +
 +		for (unsigned nUsage = 0x04; nUsage <= 0x77 && nSlots < 6; nUsage++)
 +		{
-+			// The physical up-arrow can be reported as keypad up (0x60), so map it
-+			// to the normal up-arrow usage (0x52).
 +			if (pReport[2 + nUsage / 8] & (1U << (nUsage % 8)))
 +			{
-+				Report[2 + nSlots++] = nUsage == 0x60 ? 0x52 : nUsage;
++				Report[2 + nSlots++] = nUsage;
 +			}
 +		}
 +
