@@ -407,3 +407,7 @@
     build artifacts
   * Tested on PiZero, P2, Pi3 models  
   * Note: PiZero is best used with a powered OTG USB hub as some devices can cause brownouts and device shutdowns
+
+## 4.2-p4
+  * Make connecting of 8BitDo USB Wireless Adapter 2 more robust
+  * Handle idle states of 8bitdo receivers 

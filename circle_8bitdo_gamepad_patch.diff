@@ -155,7 +155,7 @@ index 14471753..759d61b0 100644
  	  usbkeyboard.o usbmassdevice.o usbmidi.o usbmidihost.o usbmouse.o usbprinter.o usbrequest.o \
  	  usbstandardhub.o usbstring.o usbserial.o usbserialhost.o usbserialch341.o usbserialcp210x.o \
 diff --git a/lib/usb/usbdevicefactory.cpp b/lib/usb/usbdevicefactory.cpp
-index 75210581..c79ae485 100644
+index 75210581..cca4ba1c 100644
 --- a/lib/usb/usbdevicefactory.cpp
 +++ b/lib/usb/usbdevicefactory.cpp
 @@ -34,6 +34,8 @@
@@ -167,7 +167,7 @@ index 75210581..c79ae485 100644
  #include <circle/usb/usbgamepadxbox360.h>
  #include <circle/usb/usbgamepadxboxone.h>
  #include <circle/usb/usbgamepadswitchpro.h>
-@@ -129,6 +131,14 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
+@@ -129,6 +131,20 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
  	{
  		pResult = new CUSBGamePadPS4Device (pParent);
  	}
@@ -178,6 +178,12 @@ index 75210581..c79ae485 100644
 +	else if (pName->Compare ("ven2dc8-3106") == 0) // 8BitDo Ultimate C 2.4G, 8BitDo USB Wireless Adapter 2, etc
 +	{
 +		pResult = new CUSBGamePad8BitDoXInputDevice (pParent);
++	}
++	else if (	pName->Compare ("ven2dc8-3107") == 0
++		 || pName->Compare ("ven2dc8-3109") == 0
++		 || pName->Compare ("ven2dc8-3016") == 0)	// 8BitDo idle receiver
++	{
++		pResult = new CUSBFunction (pParent);
 +	}
  	else if (   pName->Compare ("ven45e-28e") == 0
  		 || pName->Compare ("ven45e-28f") == 0)
@@ -482,10 +488,10 @@ index 00000000..66a138a6
 +}
 diff --git a/lib/usb/usbgamepad8bitdoxinput.cpp b/lib/usb/usbgamepad8bitdoxinput.cpp
 new file mode 100644
-index 00000000..5129f6c5
+index 00000000..f10a569d
 --- /dev/null
 +++ b/lib/usb/usbgamepad8bitdoxinput.cpp
-@@ -0,0 +1,56 @@
+@@ -0,0 +1,80 @@
 +//
 +// usbgamepad8bitdoxinput.cpp
 +//
@@ -506,6 +512,7 @@ index 00000000..5129f6c5
 +// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 +//
 +#include <circle/usb/usbgamepad8bitdoxinput.h>
++#include <circle/usb/usbdevice.h>
 +
 +static const char FromUSBPad8BitDoXInput[] = "usbpad8bitdoxinput";
 +
@@ -540,7 +547,30 @@ index 00000000..5129f6c5
 +		return FALSE;
 +	}
 +
-+	return StartRequest ();
++	const TUSBDeviceDescriptor *pDeviceDesc = GetDevice ()->GetDeviceDescriptor ();
++	assert (pDeviceDesc != 0);
++	if (pDeviceDesc->bcdDevice == 0x0100)
++	{
++		// Receiver firmware 1.00 is a bootstrap personality. After this init
++		// command it disconnects and re-enumerates as the idle 3107 receiver,
++		// or as runtime 3106 once a controller connects. Do not start interrupt
++		// polling or issue the runtime status request before that transition.
++		CLogger::Get ()->Write (FromUSBPad8BitDoXInput, LogDebug,
++						"Waiting for receiver re-enumeration");
++		return FALSE;
++	}
++
++	if (!StartRequest()) {
++	    return FALSE;
++	}
++
++	DMA_BUFFER(u8, Response, 20);
++	GetHost()->ControlMessage(
++		GetEndpoint0(),
++		REQUEST_IN | REQUEST_VENDOR | REQUEST_TO_INTERFACE,
++		0x01, 0x0100, GetInterfaceNumber(), Response, 20);
++
++	return TRUE;
 +}
 diff --git a/lib/usb/usbstandardhub.cpp b/lib/usb/usbstandardhub.cpp
 index c8a78d87..8960b1c1 100644
