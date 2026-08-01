@@ -5,6 +5,21 @@ set -euo pipefail
 SRC_DIR=$(cd "$(dirname "$0")" && pwd)
 BUILD_DIR="$SRC_DIR/build"
 STAGING_DIR="$BUILD_DIR/sdcard"
+WLAN_FIRMWARE_DIR="$SRC_DIR/third_party/circle-stdlib/libs/circle/addon/wlan/firmware"
+
+pi3_wlan_firmware=(
+    brcmfmac43430-sdio.bin
+    brcmfmac43430-sdio.txt
+    brcmfmac43430-sdio.clm_blob
+    brcmfmac43436-sdio.bin
+    brcmfmac43436-sdio.txt
+    brcmfmac43436-sdio.clm_blob
+    brcmfmac43436s-sdio.bin
+    brcmfmac43436s-sdio.txt
+	brcmfmac43455-sdio.bin
+	brcmfmac43455-sdio.clm_blob
+	brcmfmac43455-sdio.txt    
+)
 
 if ! source "$SRC_DIR/get_gnu_toolchain.sh"
 then
@@ -46,8 +61,21 @@ cd "$SRC_DIR"
 rm -rf "$STAGING_DIR"
 mkdir -p "$STAGING_DIR"
 
+if [[ " ${BOARDS[*]} " == *" pi3 "* ]]
+then
+    make -C "$WLAN_FIRMWARE_DIR" firmware
+    mkdir -p "$STAGING_DIR/firmware"
+
+    for firmware in "${pi3_wlan_firmware[@]}"
+    do
+        cp "$WLAN_FIRMWARE_DIR/$firmware" "$STAGING_DIR/firmware/"
+    done
+fi
+
 cp "$SRC_DIR/sdcard/config.txt" "$SRC_DIR/sdcard/cmdline.txt" \
     "$SRC_DIR/sdcard/machines.txt" "$STAGING_DIR/"
+cp "$SRC_DIR/sdcard/wpa_supplicant.conf.example" \
+    "$STAGING_DIR/wpa_supplicant.conf"
 cp -a "$SRC_DIR/release/common_release_files/." "$STAGING_DIR/"
 cp "$SRC_DIR/LICENSE" "$SRC_DIR/README.md" "$STAGING_DIR/"
 
