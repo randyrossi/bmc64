@@ -311,6 +311,30 @@ make xvic
 make xplus4
 make xpet
 
+VICE_LINK_ARTIFACTS=(
+       src/core/libcore.a
+       src/userport/libuserport.a
+       src/rtc/librtc.a
+       src/usleep.o
+       src/imagecontents/libimagecontents.a
+)
+
+missing_vice_artifacts=()
+for artifact in "${VICE_LINK_ARTIFACTS[@]}"
+do
+       if [ ! -f "$artifact" ]
+       then
+              missing_vice_artifacts+=("$artifact")
+       fi
+done
+
+if [ "${#missing_vice_artifacts[@]}" -ne 0 ]
+then
+       echo "VICE did not produce required BMC64 link artifacts:" >&2
+       printf '  %s\n' "${missing_vice_artifacts[@]}" >&2
+       exit 1
+fi
+
 echo ==============================================================
 echo Link errors above are expected
 echo ==============================================================
