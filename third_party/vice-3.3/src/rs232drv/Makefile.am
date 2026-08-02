@@ -8,6 +8,8 @@ noinst_LIBRARIES = librs232drv.a
 librs232drv_a_SOURCES = \
 	rs232.c \
 	rs232.h \
+	rs232bmc.c \
+	rs232bmc.h \
 	rs232drv.c \
 	rs232net.c \
 	rsuser.c

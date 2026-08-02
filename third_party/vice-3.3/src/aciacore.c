@@ -669,6 +669,16 @@ void myacia_reset(void)
 
     acia_set_int(acia.irq_type, acia.int_num, IK_NONE);
     acia.irq = 0;
+
+#ifdef HAVE_RS232BMC
+    /* The native modem has no physical DTR line; keep its ACIA data path live. */
+    acia.cmd |= ACIA_CMD_BITS_DTR_ENABLE_RECV_AND_IRQ;
+    acia.fd = rs232drv_open(acia.device);
+    if (acia.fd >= 0) {
+        acia.alarm_active_rx = 1;
+        set_acia_ticks();
+    }
+#endif
 }
 
 /******************************************************************/
@@ -951,6 +961,9 @@ void myacia_store(uint16_t addr, uint8_t byte)
             break;
         case ACIA_CMD:
             acia.cmd = byte;
+#ifdef HAVE_RS232BMC
+            acia.cmd |= ACIA_CMD_BITS_DTR_ENABLE_RECV_AND_IRQ;
+#endif
             acia_set_handshake_lines();
             if ((acia.cmd & ACIA_CMD_BITS_DTR_ENABLE_RECV_AND_IRQ) && (acia.fd < 0)) {
                 acia.fd = rs232drv_open(acia.device);

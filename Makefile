@@ -18,7 +18,7 @@ endif
 
 EXTRAINCLUDE += $(APP_INCLUDES)
 
-OBJS	= main.o kernel.o new_io.o vicesound.o vicesoundbasedevice.o \
+OBJS	= main.o kernel.o new_io.o vicesound.o vicesoundbasedevice.o bmcmodem.o \
 		  viceoptions.o viceapp.o fbl.o crt_pi_idx.o crt_pi_rgb.o
 
 ifeq ($(MACHINE_CLASS),RASPI_PLUS4EMU)

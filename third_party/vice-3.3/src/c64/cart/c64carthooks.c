@@ -481,7 +481,7 @@ int cart_resources_init(void)
 #ifdef HAVE_RAWNET
         || ethernetcart_resources_init() < 0
 #endif
-#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET)
+#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET) || defined(HAVE_RS232BMC)
         || aciacart_resources_init() < 0
 #endif
         /* "Main Slot" */
@@ -1238,7 +1238,7 @@ int cartridge_enable(int type)
             ethernetcart_enable();
             break;
 #endif
-#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET)
+#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET) || defined(HAVE_RS232BMC)
         case CARTRIDGE_TURBO232:
             aciacart_enable();
             break;
@@ -1676,7 +1676,7 @@ void cart_init(void)
 #ifdef HAVE_RAWNET
     ethernetcart_init();
 #endif
-#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET)
+#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET) || defined(HAVE_RS232BMC)
     aciacart_init();
 #endif
 }
@@ -1960,7 +1960,7 @@ void cartridge_reset(void)
         ethernetcart_reset();
     }
 #endif
-#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET)
+#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET) || defined(HAVE_RS232BMC)
     if (aciacart_cart_enabled()) {
         aciacart_reset();
     }

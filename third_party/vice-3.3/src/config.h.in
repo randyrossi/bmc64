@@ -506,6 +506,9 @@
 /* Does the `readline' library support `rl_readline_name'? */
 #undef HAVE_RLNAME
 
+/* Enable the BMC64 Circle-backed RS232 modem. */
+#undef HAVE_RS232BMC
+
 /* Enable RS232 device emulation. */
 #undef HAVE_RS232DEV
 

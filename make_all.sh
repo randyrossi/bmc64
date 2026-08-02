@@ -352,6 +352,12 @@ echo "I don't know what to do for $BOARD"
 exit
 fi
 
+if ! grep -q '^#define HAVE_RS232BMC' src/config.h
+then
+echo "VICE configuration did not enable the BMC64 RS232 modem backend." >&2
+exit 1
+fi
+
 cd src
 make libarchdep
 if [ "$?" != "0" ]
