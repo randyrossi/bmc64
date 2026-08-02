@@ -7,13 +7,7 @@ CIRCLE_HOME="$SRC_DIR/third_party/circle-stdlib"
 COMMON_HOME="$SRC_DIR/third_party/common"
 
 # Check for the Arm GNU Toolchain and install it if necessary
-if ! source "$SRC_DIR/get_gnu_toolchain.sh"
-then
-       echo "Arm GNU Toolchain setup failed." >&2
-       exit 1
-fi
-
-export PATH="$ARM_HOME/bin:$PATH"
+source "$SRC_DIR/get_gnu_toolchain"
 
 CIRCLE_PUBLIC_INCLUDES="-I$CIRCLE_HOME/include -I$CIRCLE_HOME/libs/circle/include -I$CIRCLE_HOME/libs/circle/addon"
 
