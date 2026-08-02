@@ -5,12 +5,9 @@
 SRC_DIR=`pwd`
 CIRCLE_HOME="$SRC_DIR/third_party/circle-stdlib"
 COMMON_HOME="$SRC_DIR/third_party/common"
-if [ ! -n "$ARM_HOME" ]; then
-	ARM_HOME="$HOME/gcc-arm-none-eabi-7-2018-q2-update"
-fi
-if [ ! -n "$ARM_VERSION" ]; then
-	ARM_VERSION="7.3.1"
-fi
+
+# Check for the Arm GNU Toolchain and install it if necessary
+source "$SRC_DIR/get_gnu_toolchain"
 
 CIRCLE_PUBLIC_INCLUDES="-I$CIRCLE_HOME/include -I$CIRCLE_HOME/libs/circle/include -I$CIRCLE_HOME/libs/circle/addon"
 
