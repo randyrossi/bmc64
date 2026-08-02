@@ -8,6 +8,12 @@ STAGING_DIR="$BUILD_DIR/sdcard"
 WLAN_FIRMWARE_DIR="$SRC_DIR/third_party/circle-stdlib/libs/circle/addon/wlan/firmware"
 FIRMWARE_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/bmc64/wlan-firmware"
 
+if ! source "$SRC_DIR/get_gnu_toolchain.sh"
+then
+    echo "Arm GNU Toolchain setup failed." >&2
+    exit 1
+fi
+
 pi3_wlan_firmware=(
     brcmfmac43430-sdio.bin
     brcmfmac43430-sdio.txt

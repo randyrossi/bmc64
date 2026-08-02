@@ -1,5 +1,13 @@
 #!/bin/bash
 
+SRC_DIR=$(cd "$(dirname "$0")" && pwd)
+
+if ! source "$SRC_DIR/get_gnu_toolchain.sh"
+then
+   echo "Arm GNU Toolchain setup failed." >&2
+   exit 1
+fi
+
 BOARD=$1
 
 if [ "$BOARD" = "pi3" ]
