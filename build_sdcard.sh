@@ -5,28 +5,12 @@ set -euo pipefail
 SRC_DIR=$(cd "$(dirname "$0")" && pwd)
 BUILD_DIR="$SRC_DIR/build"
 STAGING_DIR="$BUILD_DIR/sdcard"
-WLAN_FIRMWARE_DIR="$SRC_DIR/third_party/circle-stdlib/libs/circle/addon/wlan/firmware"
-FIRMWARE_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/bmc64/wlan-firmware"
 
 if ! source "$SRC_DIR/get_gnu_toolchain.sh"
 then
     echo "Arm GNU Toolchain setup failed." >&2
     exit 1
 fi
-
-pi3_wlan_firmware=(
-    brcmfmac43430-sdio.bin
-    brcmfmac43430-sdio.txt
-    brcmfmac43430-sdio.clm_blob
-    brcmfmac43436-sdio.bin
-    brcmfmac43436-sdio.txt
-    brcmfmac43436-sdio.clm_blob
-    brcmfmac43436s-sdio.bin
-    brcmfmac43436s-sdio.txt
-	brcmfmac43455-sdio.bin
-	brcmfmac43455-sdio.clm_blob
-	brcmfmac43455-sdio.txt    
-)
 
 if [ "$#" -eq 0 ]
 then
@@ -61,36 +45,6 @@ cd "$SRC_DIR"
 
 rm -rf "$STAGING_DIR"
 mkdir -p "$STAGING_DIR"
-
-if [[ " ${BOARDS[*]} " == *" pi3 "* ]]
-then
-    firmware_revision=$(sed -n 's/^FIRMWARE[[:space:]]*?=[[:space:]]*//p' \
-        "$WLAN_FIRMWARE_DIR/Makefile")
-    firmware_marker="$FIRMWARE_CACHE_DIR/$firmware_revision.complete"
-    firmware_missing=0
-
-    for firmware in "${pi3_wlan_firmware[@]}"
-    do
-        if [ ! -s "$WLAN_FIRMWARE_DIR/$firmware" ]
-        then
-            firmware_missing=1
-            break
-        fi
-    done
-
-    if [ ! -f "$firmware_marker" ] || [ "$firmware_missing" -eq 1 ]
-    then
-        make -C "$WLAN_FIRMWARE_DIR" firmware
-        mkdir -p "$FIRMWARE_CACHE_DIR"
-        touch "$firmware_marker"
-    fi
-    mkdir -p "$STAGING_DIR/firmware"
-
-    for firmware in "${pi3_wlan_firmware[@]}"
-    do
-        cp "$WLAN_FIRMWARE_DIR/$firmware" "$STAGING_DIR/firmware/"
-    done
-fi
 
 cp "$SRC_DIR/sdcard/config.txt" "$SRC_DIR/sdcard/cmdline.txt" \
     "$SRC_DIR/sdcard/machines.txt" "$STAGING_DIR/"
