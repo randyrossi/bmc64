@@ -15890,6 +15890,9 @@ fi
 
 printf "%s\n" "#define RASPI_COMPILE /**/" >>confdefs.h
 
+
+printf "%s\n" "#define HAVE_RS232BMC /**/" >>confdefs.h
+
   SOUND_DRIVERS="$SOUND_DRIVERS soundraspi.o"
 
   if test x"$enable_raspilite" = "xyes"; then
