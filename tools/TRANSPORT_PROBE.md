@@ -37,3 +37,7 @@ The probe reports Linux TCP `unacked` and `retrans` counts after the burst and
 before closing. Retain these lines with the BMC64 log: nonzero `unacked` or
 `retrans` indicates a missing acknowledgement; zeros indicate data was
 acknowledged but did not reach the modem receive queue.
+
+A good test is to connect to:
+
+	python3 tools/modem_transport_probe.py --host <development-machine-lan-ip> --fragmented-burst --tcp-nodelay
