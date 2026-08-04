@@ -41,6 +41,9 @@
 #include "machine.h"
 #include "resources.h"
 #include "rs232drv.h"
+#ifdef HAVE_RS232BMC
+#include "rs232drv/rs232bmc.h"
+#endif
 #include "snapshot.h"
 #include "types.h"
 
@@ -671,7 +674,8 @@ void myacia_reset(void)
     acia.irq = 0;
 
 #ifdef HAVE_RS232BMC
-    /* The native modem has no physical DTR line; keep its ACIA data path live. */
+    /* Start the native SwiftLink at 2400 bps instead of external-clock mode. */
+    acia.ctrl = ACIA_CTRL_BITS_BPS_1200;
     acia.cmd |= ACIA_CMD_BITS_DTR_ENABLE_RECV_AND_IRQ;
     acia.fd = rs232drv_open(acia.device);
     if (acia.fd >= 0) {
@@ -1195,6 +1199,10 @@ static void int_acia_rx(CLOCK offset, void *data)
             break;
         }
 
+        if (acia.status & ACIA_SR_BITS_RECEIVE_DR_FULL) {
+            break;
+        }
+
         if (!rs232drv_getc(acia.fd, &received_byte)) {
             break;
         }
@@ -1211,11 +1219,6 @@ static void int_acia_rx(CLOCK offset, void *data)
         if (!(acia.cmd & ACIA_CMD_BITS_IRQ_DISABLED)) {
             acia_set_int(acia.irq_type, acia.int_num, acia.irq_type);
             acia.irq = 1;
-        }
-
-        if (acia.status & ACIA_SR_BITS_RECEIVE_DR_FULL) {
-            acia.status |= ACIA_SR_BITS_OVERRUN_ERROR;
-            break;
         }
 
         acia.status |= ACIA_SR_BITS_RECEIVE_DR_FULL;
