@@ -38,20 +38,21 @@ int rs232bmc_getc(int fd, uint8_t *byte)
 int rs232bmc_set_status(int fd, enum rs232handshake_out status)
 {
     (void) fd;
-    (void) status;
+    bmcmodem_set_status(status);
     return 0;
 }
 
 enum rs232handshake_in rs232bmc_get_status(int fd)
 {
     (void) fd;
-    return RS232_HSI_CTS | RS232_HSI_DSR;
+    return RS232_HSI_CTS
+           | (bmcmodem_has_carrier() ? RS232_HSI_DSR : 0);
 }
 
 void rs232bmc_set_bps(int fd, unsigned int bps)
 {
     (void) fd;
-    (void) bps;
+    bmcmodem_set_bps(bps);
 }
 
 #endif
