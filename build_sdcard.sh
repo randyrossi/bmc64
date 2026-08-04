@@ -7,6 +7,7 @@ BUILD_DIR="$SRC_DIR/build"
 STAGING_DIR="$BUILD_DIR/sdcard"
 WLAN_FIRMWARE_DIR="$SRC_DIR/third_party/circle-stdlib/libs/circle/addon/wlan/firmware"
 FIRMWARE_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/bmc64/wlan-firmware"
+FIRMWARE_LICENSE_URL_BASE="https://raw.githubusercontent.com/RPi-Distro/firmware-nonfree"
 
 pi3_wlan_firmware=(
     brcmfmac43430-sdio.bin
@@ -20,6 +21,12 @@ pi3_wlan_firmware=(
 	brcmfmac43455-sdio.bin
 	brcmfmac43455-sdio.clm_blob
 	brcmfmac43455-sdio.txt    
+)
+
+pi3_wlan_licenses=(
+    LICENCE.broadcom_bcm43xx
+    LICENCE.cypress
+    LICENCE.synaptics
 )
 
 if ! source "$SRC_DIR/get_gnu_toolchain.sh"
@@ -72,6 +79,8 @@ then
     firmware_revision=$(sed -n 's/^FIRMWARE[[:space:]]*?=[[:space:]]*//p' \
         "$WLAN_FIRMWARE_DIR/Makefile")
     firmware_marker="$FIRMWARE_CACHE_DIR/$firmware_revision.complete"
+    license_cache_dir="$FIRMWARE_CACHE_DIR/$firmware_revision/licenses"
+    copyright_cache_file="$license_cache_dir/copyright"
     firmware_missing=0
 
     for firmware in "${pi3_wlan_firmware[@]}"
@@ -89,11 +98,60 @@ then
         mkdir -p "$FIRMWARE_CACHE_DIR"
         touch "$firmware_marker"
     fi
+
+    license_missing=0
+    for license in "${pi3_wlan_licenses[@]}"
+    do
+        if [ ! -s "$license_cache_dir/$license" ]
+        then
+            license_missing=1
+            break
+        fi
+    done
+
+    if [ "$license_missing" -eq 1 ]
+    then
+        mkdir -p "$license_cache_dir"
+        if [ ! -s "$copyright_cache_file" ]
+        then
+            curl -fsSL --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
+                "$FIRMWARE_LICENSE_URL_BASE/$firmware_revision/debian/copyright" \
+                -o "$copyright_cache_file"
+        fi
+
+        extract_license()
+        {
+            local license_name=$1
+            local output_file=$2
+            awk -v license_name="$license_name" '
+                $0 == "License: " license_name {
+                    printing = 1
+                    license_text = $0 ORS
+                    next
+                }
+                printing && /^License:/ { printing = 0 }
+                printing { license_text = license_text $0 ORS }
+                END { printf "%s", license_text }
+            ' "$copyright_cache_file" > "$output_file"
+            test -s "$output_file"
+        }
+
+        extract_license "binary-redist-Broadcom-wifi" \
+            "$license_cache_dir/LICENCE.broadcom_bcm43xx"
+        extract_license "binary-redist-Cypress" \
+            "$license_cache_dir/LICENCE.cypress"
+        extract_license "Synaptics" "$license_cache_dir/LICENCE.synaptics"
+    fi
+
     mkdir -p "$STAGING_DIR/firmware"
 
     for firmware in "${pi3_wlan_firmware[@]}"
     do
         cp "$WLAN_FIRMWARE_DIR/$firmware" "$STAGING_DIR/firmware/"
+    done
+    for license in "${pi3_wlan_licenses[@]}"
+    do
+        cp "$license_cache_dir/$license" "$STAGING_DIR/firmware/"
     done
 fi
 
