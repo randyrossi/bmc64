@@ -140,6 +140,8 @@ struct menu_item *warp_item;
 struct menu_item *reset_confirm_item;
 struct menu_item *gpio_config_item;
 struct menu_item *active_display_item;
+static struct menu_item *network_device_item;
+static struct menu_item *network_status_item;
 
 struct menu_item *use_scaling_params_item[2];
 
@@ -985,6 +987,9 @@ static int save_settings() {
   fprintf(fp, "reset_confirm=%d\n", reset_confirm_item->value);
   fprintf(fp, "scaling_interp=%d\n", scaling_interp_item->value);
   fprintf(fp, "gpio_config=%d\n", gpio_config_item->choice_ints[gpio_config_item->value]);
+  if (network_device_item != NULL) {
+    fprintf(fp, "network_device=%d\n", network_device_item->value);
+  }
   fprintf(fp, "h_center_0=%d\n", h_center_item[0]->value);
   fprintf(fp, "v_center_0=%d\n", v_center_item[0]->value);
   fprintf(fp, "h_border_0=%d\n", h_border_item[0]->value);
@@ -1264,6 +1269,11 @@ static void load_settings() {
 
       // Make sure pins are configured properly after load
       circle_reset_gpio(emu_get_gpio_config());
+    } else if (network_device_item != NULL &&
+               strcmp(name, "network_device") == 0) {
+      if (value >= 0 && value < network_device_item->num_choices) {
+        network_device_item->value = value;
+      }
     } else if (strcmp(name, "keyset_1_up") == 0) {
       keyset_codes[0][KEYSET_UP] = value;
     } else if (strcmp(name, "keyset_1_down") == 0) {
@@ -2517,6 +2527,24 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_GPIO_CONFIG:
     // Ensure GPIO pins are correct for new mode.
     circle_reset_gpio(emu_get_gpio_config());
+    return;
+  case MENU_NETWORKING:
+    if (network_status_item != NULL) {
+      char address[32];
+      const char *status = "DISCONNECTED";
+      if (circle_get_network_ip_address(address, sizeof(address))) {
+        status = address;
+      }
+      strncpy(network_status_item->str_value, status,
+              sizeof(network_status_item->str_value) - 1);
+      network_status_item->str_value[sizeof(network_status_item->str_value) - 1] = '\0';
+      strncpy(network_status_item->displayed_value, status,
+              sizeof(network_status_item->displayed_value) - 1);
+      network_status_item->displayed_value[sizeof(network_status_item->displayed_value) - 1] = '\0';
+    }
+    return;
+  case MENU_NETWORK_ENABLED:
+    circle_set_acia_network_enabled(item->value != 0);
     return;
   case MENU_WARP_MODE:
     toggle_warp(item->value);
@@ -3793,6 +3821,25 @@ void build_menu(struct menu_item *root) {
         ui_menu_add_button(MENU_CONFIGURE_GPIO,
                         parent, "Configure Custom GPIO...");
      }
+
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C64 ||
+      emux_machine_class == BMC64_MACHINE_CLASS_C128) {
+    parent = ui_menu_add_folder(root, "Network");
+    parent->id = MENU_NETWORKING;
+
+    child = network_device_item =
+      ui_menu_add_multiple_choice(MENU_NETWORK_ENABLED, parent, "Network");
+    child->num_choices = 3;
+    child->value = 0;
+    strcpy(child->choices[0], "Off");
+    strcpy(child->choices[1], "Ethernet");
+    strcpy(child->choices[2], "WiFi");
+
+    network_status_item = ui_menu_add_button_with_value(
+        MENU_ID_DO_NOTHING, parent, "IP Address", 0,
+        "DISCONNECTED", "DISCONNECTED");
+    network_status_item->disabled = 1;
+  }
 
   ui_menu_add_divider(root);
 

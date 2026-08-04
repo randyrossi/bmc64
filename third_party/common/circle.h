@@ -94,6 +94,11 @@
 #define BTN_ASSIGN_RESET_HARD 15
 #define BTN_ASSIGN_RESET_SOFT 16
 
+// Returns nonzero and writes the current WLAN address when DHCP is bound.
+int circle_get_network_ip_address(char *address, unsigned int address_size);
+int circle_get_acia_network_enabled(void);
+int circle_set_acia_network_enabled(int enabled);
+
 // More just for usb buttons
 #define BTN_ASSIGN_RUN_STOP_BACK 17
 #define BTN_ASSIGN_CUSTOM_KEY_1 18

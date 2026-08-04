@@ -290,7 +290,7 @@ class ViceStdioApp : public ViceScreenApp {
 public:
   ViceStdioApp(const char *kernel)
     : ViceScreenApp(kernel), mUSBHCII(&mInterrupt, &mTimer, TRUE),
-          mEMMC(&mInterrupt, &mTimer, &mActLED)
+          mEMMC(&mInterrupt, &mTimer, &mActLED), mNetworkDevice(0)
 #if RASPPI == 3
   , mWLAN(nullptr), mNet(nullptr), mWPASupplicant(nullptr)
 #endif
@@ -310,7 +310,8 @@ private:
   // to answer questions about a set of known files. This speeds
   // up boot time.
   void InitBootStat();
-  void InitializeWiFi();
+  void LoadNetworkDevice();
+  void InitializeNetwork();
 
 protected:
   // Called after VICE has completed booting so we no longer
@@ -319,6 +320,7 @@ protected:
 
   CUSBHCIDevice mUSBHCII;
   CEMMCDevice mEMMC;
+  int mNetworkDevice;
 #if RASPPI == 3
   CBcm4343Device *mWLAN;
   CNetSubSystem *mNet;

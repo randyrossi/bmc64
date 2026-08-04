@@ -17,6 +17,59 @@
 
 #include "fbl.h"
 
+static CNetSubSystem *network_subsystem;
+
+#if defined(RASPI_C64) || defined(RASPI_C128)
+extern "C" {
+#include "third_party/vice-3.3/src/resources.h"
+}
+
+extern "C" int circle_get_acia_network_enabled(void) {
+  int enabled = 0;
+  resources_get_int("Acia1Enable", &enabled);
+  return enabled;
+}
+
+extern "C" int circle_set_acia_network_enabled(int enabled) {
+  if (enabled) {
+    if (resources_set_int("Acia1Mode", 1) < 0 ||
+        resources_set_int("Acia1Base", 56832) < 0) {
+      return 0;
+    }
+  }
+  return resources_set_int("Acia1Enable", enabled) == 0;
+}
+#else
+extern "C" int circle_get_acia_network_enabled(void) {
+  return 0;
+}
+
+extern "C" int circle_set_acia_network_enabled(int enabled) {
+  (void) enabled;
+  return 0;
+}
+#endif
+
+extern "C" int circle_get_network_ip_address(char *address,
+                                              unsigned int address_size) {
+#if RASPPI == 3 && (defined(RASPI_C64) || defined(RASPI_C128))
+  if (address == nullptr || address_size == 0 || network_subsystem == nullptr ||
+      !network_subsystem->IsRunning()) {
+    return 0;
+  }
+
+  CString formatted_address;
+  network_subsystem->GetConfig()->GetIPAddress()->Format(&formatted_address);
+  strncpy(address, static_cast<const char *>(formatted_address), address_size - 1);
+  address[address_size - 1] = '\0';
+  return 1;
+#else
+  (void) address;
+  (void) address_size;
+  return 0;
+#endif
+}
+
 #if defined(RASPI_C64)
 #include "bootstat_c64.h"
 #elif defined(RASPI_C128)
@@ -460,9 +513,49 @@ void ViceStdioApp::DisableBootStat() {
   CGlueStdioInitBootStat(0, nullptr, nullptr, nullptr);
 }
 
-void ViceStdioApp::InitializeWiFi() {
-#if RASPPI == 3
-  if (!mViceOptions.WiFiEnabled()) {
+void ViceStdioApp::LoadNetworkDevice() {
+#if defined(RASPI_C64) || defined(RASPI_C128)
+  const char *settings_path;
+#if defined(RASPI_C64)
+  settings_path = "/settings.txt";
+#elif defined(RASPI_C128)
+  settings_path = "/settings-c128.txt";
+#endif
+
+  FILE *settings = fopen(settings_path, "r");
+  if (settings == nullptr) {
+    return;
+  }
+
+  char line[64];
+  while (fgets(line, sizeof(line), settings) != nullptr) {
+    int network_device;
+    if (sscanf(line, "network_device=%d", &network_device) == 1 &&
+        network_device >= 0 && network_device <= 2) {
+      mNetworkDevice = network_device;
+      break;
+    }
+  }
+  fclose(settings);
+#endif
+}
+
+void ViceStdioApp::InitializeNetwork() {
+#if RASPPI == 3 && (defined(RASPI_C64) || defined(RASPI_C128))
+  if (mNetworkDevice == 0) {
+    return;
+  }
+
+  if (mNetworkDevice == 1) {
+    mNet = new CNetSubSystem(0, 0, 0, 0, "bmc64", NetDeviceTypeEthernet);
+    if (!mNet->Initialize(FALSE)) {
+      mLogger.Write(GetKernelName(), LogError,
+                    "Cannot initialize Ethernet network stack");
+      delete mNet;
+      mNet = nullptr;
+    } else {
+      network_subsystem = mNet;
+    }
     return;
   }
 
@@ -497,6 +590,7 @@ void ViceStdioApp::InitializeWiFi() {
     mWLAN = nullptr;
     return;
   }
+  network_subsystem = mNet;
 
   mWPASupplicant = new CWPASupplicant((const char *)configPath);
   if (!mWPASupplicant->Initialize()) {
@@ -543,7 +637,8 @@ bool ViceStdioApp::Initialize(void) {
   }
 
   InitBootStat();
-  InitializeWiFi();
+  LoadNetworkDevice();
+  InitializeNetwork();
 
   // Now that emmc is initialized, launch
   // the emulator main loop on CORE 1 before USBHCII.
@@ -573,6 +668,7 @@ bool ViceStdioApp::Initialize(void) {
 void ViceStdioApp::Cleanup(void) {
 #if RASPPI == 3
   delete mWPASupplicant;
+  network_subsystem = nullptr;
   delete mNet;
   delete mWLAN;
 #endif
