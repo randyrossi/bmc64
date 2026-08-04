@@ -28,24 +28,29 @@ then
     exit 1
 fi
 
-if [ "$#" -eq 0 ]
-then
-    BOARDS=(pi0 pi2 pi3)
-else
-    BOARDS=("$@")
-fi
+BOARDS=()
+SKIP_PATCHES=0
 
-for board in "${BOARDS[@]}"
+for argument in "$@"
 do
-    case "$board" in
+    case "$argument" in
         pi0|pi2|pi3|pi4)
+            BOARDS+=("$argument")
+            ;;
+        --skip-patches)
+            SKIP_PATCHES=1
             ;;
         *)
-            echo "Board arguments must be: pi0 pi2 pi3 pi4" >&2
+            echo "Arguments must be board names or --skip-patches: pi0 pi2 pi3 pi4" >&2
             exit 1
             ;;
     esac
 done
+
+if [ "${#BOARDS[@]}" -eq 0 ]
+then
+    BOARDS=(pi0 pi2 pi3)
+fi
 
 kernel_for_board()
 {
@@ -141,8 +146,18 @@ do
     echo "=============================================================="
     echo "BUILDING $board"
     echo "=============================================================="
-    ./clean_all.sh
-    ./make_all.sh "$board"
+    if [ "$SKIP_PATCHES" -eq 1 ]
+    then
+        echo "Skipping clean_all.sh"
+    else
+        ./clean_all.sh
+    fi
+    make_all_arguments=("$board")
+    if [ "$SKIP_PATCHES" -eq 1 ]
+    then
+        make_all_arguments+=(--skip-patches)
+    fi
+    ./make_all.sh "${make_all_arguments[@]}"
     ./make_machines.sh "$board"
     kernel=$(kernel_for_board "$board")
     machines=(c64 c128 vic20 plus4 pet)
