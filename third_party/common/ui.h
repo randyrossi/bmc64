@@ -49,6 +49,8 @@ typedef enum menu_item_type {
   FOLDER,          // contains sub-items/folders
   DIVIDER,         // just a line
   TEXTFIELD,       // editable text field
+  READ_ONLY_HEADING,
+  READ_ONLY_DESCRIPTION,
 } menu_item_type;
 
 struct menu_item {
@@ -203,6 +205,9 @@ void ui_render_now(int menu_stack_index);
 void ui_error(const char *format, ...);
 void ui_info(const char *format, ...);
 void ui_confirm_wrapped(char *title, const char *txt, int ok_value, int ok_id);
+void ui_confirm_wrapped_labels(char *title, const char *txt, int ok_value,
+                               int ok_id, const char *ok_label,
+                               const char *cancel_label);
 
 struct menu_item *ui_pop_menu(void);
 

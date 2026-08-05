@@ -142,6 +142,9 @@ struct menu_item *gpio_config_item;
 struct menu_item *active_display_item;
 static struct menu_item *network_device_item;
 static struct menu_item *network_status_item;
+static int saved_network_device;
+static int network_device_was_selected;
+static int network_reboot_prompted;
 
 struct menu_item *use_scaling_params_item[2];
 
@@ -458,6 +461,24 @@ static void files_cursor_listener(struct menu_item* parent,
                                   int new_pos) {
   // dir type is in value field
   current_dir_pos[parent->value] = new_pos;
+}
+
+static void main_menu_cursor_listener(struct menu_item* parent, int new_pos) {
+  (void) parent;
+  int network_device_is_selected =
+      network_device_item != NULL &&
+      new_pos == network_device_item->render_index;
+
+  if (network_device_was_selected && !network_device_is_selected &&
+      network_device_item->value != saved_network_device &&
+      !network_reboot_prompted) {
+    network_reboot_prompted = 1;
+    ui_confirm_wrapped_labels("Network settings changed",
+        "Network settings have changed. You need to reboot for them to take effect. Reboot now?",
+      0, MENU_NETWORK_ENABLED, "Yes", "No");
+  }
+
+  network_device_was_selected = network_device_is_selected;
 }
 
 static void show_files(DirType dir_type, FileFilter filter, int menu_id,
@@ -907,29 +928,32 @@ static void next_integer_scaling(int layer,
 
 static int save_settings() {
   FILE *fp;
+  const char *settings_filename;
   switch (emux_machine_class) {
   case BMC64_MACHINE_CLASS_C64:
-    fp = fopen("/settings.txt", "w");
+    settings_filename = "/settings.txt";
     break;
   case BMC64_MACHINE_CLASS_C128:
-    fp = fopen("/settings-c128.txt", "w");
+    settings_filename = "/settings-c128.txt";
     break;
   case BMC64_MACHINE_CLASS_VIC20:
-    fp = fopen("/settings-vic20.txt", "w");
+    settings_filename = "/settings-vic20.txt";
     break;
   case BMC64_MACHINE_CLASS_PLUS4:
-    fp = fopen("/settings-plus4.txt", "w");
+    settings_filename = "/settings-plus4.txt";
     break;
   case BMC64_MACHINE_CLASS_PLUS4EMU:
-    fp = fopen("/settings-plus4emu.txt", "w");
+    settings_filename = "/settings-plus4emu.txt";
     break;
   case BMC64_MACHINE_CLASS_PET:
-    fp = fopen("/settings-pet.txt", "w");
+    settings_filename = "/settings-pet.txt";
     break;
   default:
     printf("ERROR: Unhandled machine\n");
     return 1;
   }
+
+  fp = fopen(settings_filename, "w");
 
   int r = emux_save_settings();
   if (r < 0) {
@@ -989,6 +1013,8 @@ static int save_settings() {
   fprintf(fp, "gpio_config=%d\n", gpio_config_item->choice_ints[gpio_config_item->value]);
   if (network_device_item != NULL) {
     fprintf(fp, "network_device=%d\n", network_device_item->value);
+    saved_network_device = network_device_item->value;
+    network_reboot_prompted = 0;
   }
   fprintf(fp, "h_center_0=%d\n", h_center_item[0]->value);
   fprintf(fp, "v_center_0=%d\n", v_center_item[0]->value);
@@ -1073,6 +1099,7 @@ static int save_settings() {
   emux_save_additional_settings(fp);
 
   fclose(fp);
+  emux_log_settings_file(settings_filename);
 
   return 0;
 }
@@ -1273,6 +1300,7 @@ static void load_settings() {
                strcmp(name, "network_device") == 0) {
       if (value >= 0 && value < network_device_item->num_choices) {
         network_device_item->value = value;
+        saved_network_device = value;
       }
     } else if (strcmp(name, "keyset_1_up") == 0) {
       keyset_codes[0][KEYSET_UP] = value;
@@ -2545,6 +2573,7 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_NETWORK_ENABLED:
     circle_set_acia_network_enabled(item->value != 0);
+    network_reboot_prompted = 0;
     return;
   case MENU_WARP_MODE:
     toggle_warp(item->value);
@@ -2845,13 +2874,15 @@ static void menu_value_changed(struct menu_item *item) {
     ui_confirm_wrapped("Reboot?",SWITCH_MSG,item->value,MENU_SWITCH_MACHINE);
     break;
   case MENU_CONFIRM_OK:
+    int confirmation_id = item->sub_id;
+    int confirmation_value = item->value;
     ui_pop_menu();
-    if (item->sub_id == MENU_SWITCH_MACHINE) {
+    if (confirmation_id == MENU_SWITCH_MACHINE) {
       load_machines(&head);
       struct machine_entry* ptr = head;
       status = 0;
       while (ptr) {
-          if (ptr->id == item->value) {
+          if (ptr->id == confirmation_value) {
             status = switch_apply_files(ptr);
             break;
           }
@@ -2864,6 +2895,12 @@ static void menu_value_changed(struct menu_item *item) {
          ui_confirm_wrapped(failcode, SWITCH_FAIL_MSG,-1,-1);
       } else {
          reboot();
+      }
+    } else if (confirmation_id == MENU_NETWORK_ENABLED) {
+      if (save_settings() == 0) {
+        reboot();
+      } else {
+        ui_error("Cannot save settings");
       }
     }
     break;
@@ -3163,6 +3200,8 @@ void build_menu(struct menu_item *root) {
   int dev;
   int i;
   int j;
+
+  root->cursor_listener_func = main_menu_cursor_listener;
   int k;
   int tmp;
 

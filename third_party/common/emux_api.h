@@ -385,6 +385,9 @@ void emux_get_string_1(StringSetting setting, const char** dest, int param);
 // Persist all settings.
 int emux_save_settings(void);
 
+// Report a completed BMC64 settings-file write.
+void emux_log_settings_file(const char *filename);
+
 void emux_ensure_video(void);
 
 // VICE specific cart attach func.

@@ -543,6 +543,7 @@ void ViceStdioApp::LoadNetworkDevice() {
 void ViceStdioApp::InitializeNetwork() {
 #if RASPPI == 3 && (defined(RASPI_C64) || defined(RASPI_C128))
   if (mNetworkDevice == 0) {
+    mLogger.Write(GetKernelName(), LogNotice, "Networking not enabled");
     return;
   }
 
@@ -555,6 +556,7 @@ void ViceStdioApp::InitializeNetwork() {
       mNet = nullptr;
     } else {
       network_subsystem = mNet;
+      mLogger.Write(GetKernelName(), LogNotice, "Networking: Ethernet initialized");
     }
     return;
   }
@@ -591,6 +593,7 @@ void ViceStdioApp::InitializeNetwork() {
     return;
   }
   network_subsystem = mNet;
+  mLogger.Write(GetKernelName(), LogNotice, "Networking: Wi-Fi initialized");
 
   mWPASupplicant = new CWPASupplicant((const char *)configPath);
   if (!mWPASupplicant->Initialize()) {

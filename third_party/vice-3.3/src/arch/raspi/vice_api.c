@@ -47,6 +47,7 @@
 #include "keyboard.h"
 #include "demo.h"
 #include "datasette.h"
+#include "log.h"
 #include "resources.h"
 #include "drive.h"
 #include "joyport.h"
@@ -1069,6 +1070,10 @@ void emux_get_string_1(StringSetting setting, const char** dest, int param) {
 
 int emux_save_settings(void) {
    return resources_save(NULL);
+}
+
+void emux_log_settings_file(const char *filename) {
+  log_message(LOG_DEFAULT, "Writing settings file `%s'.", filename);
 }
 
 int emux_handle_menu_change(struct menu_item* item) {

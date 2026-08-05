@@ -1424,6 +1424,10 @@ int emux_save_settings(void) {
   return 0;
 }
 
+void emux_log_settings_file(const char *filename) {
+   printf("Writing settings file `%s'.\n", filename);
+}
+
 // Handle any menu item we've created for this emulator.
 int emux_handle_menu_change(struct menu_item* item) {
   switch (item->id) {
