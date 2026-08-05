@@ -46,6 +46,7 @@
 #include "menu_tape_osd.h"
 #include "menu_timing.h"
 #include "menu_usb.h"
+#include "menu_wifi.h"
 #include "menu_keyset.h"
 #include "menu_switch.h"
 #include "menu_gpio.h"
@@ -142,9 +143,25 @@ struct menu_item *gpio_config_item;
 struct menu_item *active_display_item;
 static struct menu_item *network_device_item;
 static struct menu_item *network_status_item;
+static struct menu_item *wifi_settings_item;
+static struct menu_item *wifi_ssid_item;
+static struct menu_item *wifi_security_item;
+static struct menu_item *wifi_country_item;
+static struct menu_item *wifi_connect_item;
+static struct menu_item *wifi_psk_item;
+static char wifi_psk[MAX_STR_VAL_LEN];
 static int saved_network_device;
 static int network_device_was_selected;
 static int network_reboot_prompted;
+
+static void update_wifi_menu_enabled(void) {
+  int enabled = network_device_item != NULL && network_device_item->value == 2;
+  if (wifi_settings_item) wifi_settings_item->disabled = !enabled;
+  if (wifi_ssid_item) wifi_ssid_item->disabled = !enabled;
+  if (wifi_security_item) wifi_security_item->disabled = !enabled;
+  if (wifi_country_item) wifi_country_item->disabled = !enabled;
+  if (wifi_connect_item) wifi_connect_item->disabled = !enabled;
+}
 
 struct menu_item *use_scaling_params_item[2];
 
@@ -290,6 +307,84 @@ static void get_key_and_value(char *line, char **key, char **value) {
    }
    *key = 0;
    *value = 0;
+}
+
+static void unquote_wifi_value(char *value) {
+  size_t length = strlen(value);
+  if (length >= 2 && value[0] == '"' && value[length - 1] == '"') {
+    memmove(value, value + 1, length - 2);
+    value[length - 2] = '\0';
+  }
+}
+
+static void load_wifi_settings(void) {
+  FILE *fp = fopen("/wpa_supplicant.conf", "r");
+  if (fp == NULL) {
+    return;
+  }
+
+  char line[MAX_STR_VAL_LEN];
+  while (fgets(line, sizeof(line), fp) != NULL) {
+    char *name;
+    char *value;
+    get_key_and_value(line, &name, &value);
+    if (name == NULL || value == NULL) {
+      continue;
+    }
+    unquote_wifi_value(value);
+    if (strcmp(name, "ssid") == 0) {
+      strncpy(wifi_ssid_item->str_value, value, wifi_ssid_item->max_length);
+      wifi_ssid_item->str_value[wifi_ssid_item->max_length] = '\0';
+    } else if (strcmp(name, "psk") == 0) {
+      strncpy(wifi_psk, value, sizeof(wifi_psk) - 1);
+      wifi_psk[sizeof(wifi_psk) - 1] = '\0';
+    } else if (strcmp(name, "key_mgmt") == 0) {
+      wifi_security_item->value = strcmp(value, "NONE") == 0 ? 1 : 0;
+    } else if (strcmp(name, "country") == 0) {
+      strncpy(wifi_country_item->str_value, value,
+              wifi_country_item->max_length);
+      wifi_country_item->str_value[wifi_country_item->max_length] = '\0';
+    }
+  }
+  fclose(fp);
+
+  wifi_ssid_item->value = strlen(wifi_ssid_item->str_value);
+  wifi_country_item->value = strlen(wifi_country_item->str_value);
+}
+
+static int save_wifi_settings(void) {
+  FILE *fp = fopen("/wpa_supplicant.conf", "w");
+  if (fp == NULL) {
+    return 1;
+  }
+
+  fprintf(fp, "country=%s\n\n", wifi_country_item->str_value);
+  fprintf(fp, "network={\n");
+  fprintf(fp, "\tssid=\"%s\"\n", wifi_ssid_item->str_value);
+  if (wifi_security_item->value == 0) {
+    fprintf(fp, "\tpsk=\"%s\"\n", wifi_psk);
+    fprintf(fp, "\tkey_mgmt=WPA-PSK\n");
+  } else {
+    fprintf(fp, "\tkey_mgmt=NONE\n");
+  }
+  fprintf(fp, "}\n");
+  fclose(fp);
+  return 0;
+}
+
+static void show_wifi_connect_dialog(void) {
+  struct menu_item *root = ui_push_menu(42, 6);
+  struct menu_item *prompt = ui_menu_add_button(
+      MENU_ID_DO_NOTHING, root, "Enter WiFi PSK");
+  prompt->disabled = 1;
+  ui_menu_add_divider(root);
+  wifi_psk_item = ui_menu_add_text_field_limit(
+      MENU_WIFI_PSK, root, "WiFi PSK", wifi_psk, 63);
+  wifi_psk_item->textfield_right_aligned = 1;
+  wifi_psk_item->textfield_masked = 1;
+  ui_menu_add_button(MENU_WIFI_CONNECT_NOW, root, "Save & Reboot");
+  ui_select_first_interactive_item();
+  ui_render_single_frame();
 }
 
 static char *fullpath(DirType dir_type, char *name) {
@@ -1099,6 +1194,10 @@ static int save_settings() {
   emux_save_additional_settings(fp);
 
   fclose(fp);
+  if (network_device_item != NULL && network_device_item->value == 2 &&
+      save_wifi_settings()) {
+    return 1;
+  }
   emux_log_settings_file(settings_filename);
 
   return 0;
@@ -1174,6 +1273,10 @@ static void load_settings() {
   default:
     printf("ERROR: Unhandled machine\n");
     return;
+  }
+
+  if (wifi_ssid_item != NULL) {
+    load_wifi_settings();
   }
 
   if (fp == NULL)
@@ -1475,6 +1578,7 @@ static void load_settings() {
   }
   fclose(fp);
 
+  update_wifi_menu_enabled();
   emux_load_settings_done();
 
   emux_video_color_setting_changed(0);
@@ -2573,7 +2677,40 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_NETWORK_ENABLED:
     circle_set_acia_network_enabled(item->value != 0);
+    update_wifi_menu_enabled();
     network_reboot_prompted = 0;
+    return;
+  case MENU_WIFI_SSID:
+    if (!circle_wifi_is_running()) {
+      ui_confirm_wrapped_labels("Wi-Fi scan unavailable",
+          "To scan available WiFi APs you must reboot. Reboot now?",
+          0, MENU_NETWORK_ENABLED, "Yes", "No");
+      return;
+    }
+    ui_info("Scanning WiFi networks...");
+    show_wifi_access_points(wifi_ssid_item, wifi_security_item);
+    return;
+  case MENU_WIFI_CONNECT:
+    if (!circle_wifi_is_running()) {
+      ui_confirm_wrapped_labels("Wi-Fi connection unavailable",
+          "To connect to WiFi you must reboot. Reboot now?",
+          0, MENU_NETWORK_ENABLED, "Yes", "No");
+      return;
+    }
+    show_wifi_connect_dialog();
+    return;
+  case MENU_WIFI_PSK:
+    strncpy(wifi_psk, item->str_value, sizeof(wifi_psk) - 1);
+    wifi_psk[sizeof(wifi_psk) - 1] = '\0';
+    return;
+  case MENU_WIFI_CONNECT_NOW:
+    strncpy(wifi_psk, wifi_psk_item->str_value, sizeof(wifi_psk) - 1);
+    wifi_psk[sizeof(wifi_psk) - 1] = '\0';
+    if (save_wifi_settings() != 0) {
+      ui_error("Cannot save WiFi settings");
+    } else {
+      reboot();
+    }
     return;
   case MENU_WARP_MODE:
     toggle_warp(item->value);
@@ -3867,7 +4004,7 @@ void build_menu(struct menu_item *root) {
     parent->id = MENU_NETWORKING;
 
     child = network_device_item =
-      ui_menu_add_multiple_choice(MENU_NETWORK_ENABLED, parent, "Network");
+      ui_menu_add_multiple_choice(MENU_NETWORK_ENABLED, parent, "Network Device");
     child->num_choices = 3;
     child->value = 0;
     strcpy(child->choices[0], "Off");
@@ -3878,6 +4015,22 @@ void build_menu(struct menu_item *root) {
         MENU_ID_DO_NOTHING, parent, "IP Address", 0,
         "DISCONNECTED", "DISCONNECTED");
     network_status_item->disabled = 1;
+
+    parent = wifi_settings_item = ui_menu_add_folder(parent, "WiFi Settings");
+    wifi_ssid_item = ui_menu_add_text_field_limit(
+      MENU_WIFI_SSID, parent, "WiFi SSID", "", 32);
+    wifi_ssid_item->textfield_right_aligned = 1;
+    wifi_security_item = ui_menu_add_multiple_choice(
+      MENU_WIFI_SECURITY, parent, "WiFi Security");
+    wifi_security_item->num_choices = 2;
+    strcpy(wifi_security_item->choices[0], "WPA-PSK");
+    strcpy(wifi_security_item->choices[1], "None");
+    wifi_country_item = ui_menu_add_text_field_limit(
+      MENU_WIFI_COUNTRY, parent, "WiFi Country Code", "US", 2);
+    wifi_country_item->textfield_right_aligned = 1;
+    wifi_connect_item = ui_menu_add_button(MENU_WIFI_CONNECT, parent,
+                         "Enter Password & Reboot");
+    update_wifi_menu_enabled();
   }
 
   ui_menu_add_divider(root);

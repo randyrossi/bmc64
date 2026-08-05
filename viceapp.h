@@ -46,6 +46,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct wifi_access_point;
+
 #if defined(RASPI_PLUS4EMU)
 #include "plus4emulatorcore.h"
 #else
@@ -302,6 +304,10 @@ public:
   void circle_find_usb(int (*usb)[3]);
   int circle_mount_usb(int usb);
   int circle_unmount_usb(int usb);
+  int WifiIsRunning(void) const;
+  int ConnectWifi(void);
+  int ScanWifiAccessPoints(struct wifi_access_point *access_points,
+                           unsigned int max_access_points);
 
 private:
   // Must be called after fatfs/stdio has been initialized

@@ -98,6 +98,18 @@
 int circle_get_network_ip_address(char *address, unsigned int address_size);
 int circle_get_acia_network_enabled(void);
 int circle_set_acia_network_enabled(int enabled);
+int circle_wifi_is_running(void);
+int circle_connect_wifi(void);
+
+#define MAX_WIFI_ACCESS_POINTS 32
+struct wifi_access_point {
+  char ssid[33];
+  int signal;
+  int secure;
+};
+
+int circle_scan_wifi_access_points(struct wifi_access_point *access_points,
+                                   unsigned int max_access_points);
 
 // More just for usb buttons
 #define BTN_ASSIGN_RUN_STOP_BACK 17

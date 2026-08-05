@@ -76,6 +76,15 @@ struct menu_item {
   // cursor position for TEXTFIELD
   int value;
 
+  // Maximum number of characters for TEXTFIELD
+  int max_length;
+
+  // Draw the TEXTFIELD value against the right edge of the menu.
+  int textfield_right_aligned;
+
+  // Render TEXTFIELD characters as asterisks.
+  int textfield_masked;
+
   // For MULTIPLE_CHOICE
   int num_choices;
   char choices[MAX_CHOICES][MAX_MENU_STR];
@@ -162,6 +171,9 @@ struct menu_item *ui_menu_add_folder(struct menu_item *folder, char *name);
 struct menu_item *ui_menu_add_divider(struct menu_item *folder);
 struct menu_item *ui_menu_add_text_field(int id, struct menu_item *folder,
                                          char *name, char *value);
+struct menu_item *ui_menu_add_text_field_limit(int id, struct menu_item *folder,
+                                               char *name, char *value,
+                                               int max_length);
 
 // Move ownership of all children from src onto dest
 void ui_add_all(struct menu_item *src, struct menu_item *dest);
@@ -190,6 +202,8 @@ void ui_draw_rect_buf(int x, int y, int w, int h, int color, int fill,
 void ui_draw_rect(int x, int y, int w, int h, int color, int fill);
 
 int ui_text_width(const char *text);
+void ui_select_first_interactive_item(void);
+void ui_render_single_frame(void);
 
 void ui_check_key(void);
 

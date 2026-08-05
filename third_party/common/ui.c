@@ -304,7 +304,7 @@ static void ui_type_char(char ch) {
               (strlen(str) - cur->value + 1) * sizeof(char));
       cur->value--;
     } else {
-      if (strlen(cur->str_value) >= MAX_FN_NAME)
+      if (strlen(cur->str_value) >= cur->max_length)
         return;
 
       char *str = cur->str_value;
@@ -537,7 +537,7 @@ static int ui_cursor_is_selectable(int index) {
   return item != NULL && !item->disabled && item->type != DIVIDER;
 }
 
-static void ui_select_first_interactive_item(void) {
+void ui_select_first_interactive_item(void) {
   int index = 0;
   int current_index;
 
@@ -954,10 +954,20 @@ static struct menu_item *ui_menu_add_read_only(struct menu_item *folder,
 
 struct menu_item *ui_menu_add_text_field(int id, struct menu_item *folder,
                                          char *name, char *value_str) {
+  return ui_menu_add_text_field_limit(id, folder, name, value_str,
+                                      MAX_FN_NAME);
+}
+
+struct menu_item *ui_menu_add_text_field_limit(int id, struct menu_item *folder,
+                                               char *name, char *value_str,
+                                               int max_length) {
   struct menu_item *new_item = ui_new_item(folder, name, id);
   new_item->type = TEXTFIELD;
-  new_item->value = strlen(value_str);
-  strcpy(new_item->str_value, value_str);
+  new_item->max_length = max_length < MAX_STR_VAL_LEN - 1
+                             ? max_length : MAX_STR_VAL_LEN - 1;
+  strncpy(new_item->str_value, value_str, new_item->max_length);
+  new_item->str_value[new_item->max_length] = '\0';
+  new_item->value = strlen(new_item->str_value);
   append(folder, new_item);
   return new_item;
 }
@@ -1059,13 +1069,22 @@ static void ui_render_children(struct menu_item *node,
                                        ui_text_width(dsp_string),
                        y, colour);
         } else if (node->type == TEXTFIELD) {
+          const char *display_text = node->str_value;
+          if (node->textfield_masked) {
+            size_t length = strlen(node->str_value);
+            memset(node->scratch, '*', length);
+            node->scratch[length] = '\0';
+            display_text = node->scratch;
+          }
+          int value_x = node->menu_left + ui_text_width(node->name) + 8;
+          if (node->textfield_right_aligned) {
+            value_x = node->menu_left + node->menu_width -
+                      ui_text_width(display_text);
+          }
           // draw cursor underneath text
-          ui_draw_rect(node->menu_left + ui_text_width(node->name) + 8 +
-                           node->value * 8,
+          ui_draw_rect(value_x + node->value * 8,
                        y, 8, 8, BORDER_COLOR, 1);
-          ui_draw_text(node->str_value,
-                       node->menu_left + ui_text_width(node->name) + 8, y,
-                       colour);
+          ui_draw_text(display_text, value_x, y, colour);
         }
       }
     }

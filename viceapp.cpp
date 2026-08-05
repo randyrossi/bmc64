@@ -15,9 +15,121 @@
 
 #include "viceapp.h"
 
+#include "third_party/common/circle.h"
 #include "fbl.h"
 
+#include <stddef.h>
+
 static CNetSubSystem *network_subsystem;
+static ViceStdioApp *stdio_app;
+
+#if RASPPI == 3 && (defined(RASPI_C64) || defined(RASPI_C128))
+struct wifi_bss_info {
+  uint32_t version;
+  uint32_t length;
+  uint8_t bssid[6];
+  uint16_t beacon_period;
+  uint16_t capability;
+  uint8_t ssid_length;
+  uint8_t ssid[32];
+  struct {
+    uint32_t count;
+    uint8_t rates[16];
+  } rateset;
+  uint16_t chanspec;
+  uint16_t atim_window;
+  uint8_t dtim_period;
+  int16_t rssi;
+  int8_t phy_noise;
+  uint8_t n_cap;
+  uint32_t nbss_cap;
+  uint8_t ctl_ch;
+  uint32_t reserved32[1];
+  uint8_t flags;
+  uint8_t reserved[3];
+  uint8_t basic_mcs[16];
+  uint16_t ie_offset;
+  uint32_t ie_length;
+  uint16_t snr;
+};
+
+struct wifi_scan_result {
+  uint32_t buffer_length;
+  uint32_t version;
+  uint16_t sync_id;
+  uint16_t bss_count;
+  struct wifi_bss_info bss;
+};
+
+static const unsigned int WIFI_SCAN_DURATION_US = 3000000;
+static const unsigned int WIFI_CONNECT_TIMEOUT_US = 30000000;
+static const uint16_t WIFI_CAPABILITY_PRIVACY = 0x0010;
+
+static unsigned int ParseWifiScanResult(
+    const uint8_t *buffer, unsigned int result_length,
+    struct wifi_access_point *access_points, unsigned int max_access_points,
+    unsigned int count) {
+  const unsigned int minimum_bss_length =
+      offsetof(struct wifi_bss_info, rssi) + sizeof(int16_t);
+
+  if (result_length < sizeof(struct wifi_scan_result)) {
+    return count;
+  }
+
+  const struct wifi_scan_result *scan =
+      (const struct wifi_scan_result *)buffer;
+  const uint8_t *record = (const uint8_t *)&scan->bss;
+  const uint8_t *end = buffer + result_length;
+  for (unsigned int index = 0; index < scan->bss_count &&
+       record + minimum_bss_length <= end; index++) {
+    const struct wifi_bss_info *bss = (const struct wifi_bss_info *)record;
+    if (bss->length < minimum_bss_length || record + bss->length > end) {
+      break;
+    }
+
+    unsigned int ssid_length = bss->ssid_length;
+    if (ssid_length > sizeof(bss->ssid)) {
+      ssid_length = sizeof(bss->ssid);
+    }
+    if (ssid_length <= bss->length - offsetof(struct wifi_bss_info, ssid) &&
+        ssid_length > 0) {
+      bool duplicate = false;
+      for (unsigned int existing = 0; existing < count; existing++) {
+        if (strlen(access_points[existing].ssid) == ssid_length &&
+            memcmp(access_points[existing].ssid, bss->ssid,
+                   ssid_length) == 0) {
+          duplicate = true;
+          break;
+        }
+      }
+      if (!duplicate && count < max_access_points) {
+        memcpy(access_points[count].ssid, bss->ssid, ssid_length);
+        access_points[count].ssid[ssid_length] = '\0';
+        access_points[count].signal = bss->rssi;
+        access_points[count].secure =
+            (bss->capability & WIFI_CAPABILITY_PRIVACY) != 0;
+        count++;
+      }
+    }
+    record += bss->length;
+  }
+  return count;
+}
+
+static unsigned int CollectWifiScanResults(
+    CBcm4343Device *wlan, struct wifi_access_point *access_points,
+    unsigned int max_access_points, unsigned int count,
+    unsigned int *result_messages) {
+  uint8_t buffer[FRAME_BUFFER_SIZE];
+  unsigned int result_length;
+  while (wlan->ReceiveScanResult(buffer, &result_length)) {
+    (*result_messages)++;
+    count = ParseWifiScanResult(buffer, result_length, access_points,
+                                max_access_points, count);
+  }
+  return count;
+}
+#endif
 
 #if defined(RASPI_C64) || defined(RASPI_C128)
 extern "C" {
@@ -68,6 +180,23 @@ extern "C" int circle_get_network_ip_address(char *address,
   (void) address_size;
   return 0;
 #endif
+}
+
+extern "C" int circle_scan_wifi_access_points(
+    struct wifi_access_point *access_points, unsigned int max_access_points) {
+  if (stdio_app == nullptr || access_points == nullptr ||
+      max_access_points == 0) {
+    return 0;
+  }
+  return stdio_app->ScanWifiAccessPoints(access_points, max_access_points);
+}
+
+extern "C" int circle_wifi_is_running(void) {
+  return stdio_app != nullptr && stdio_app->WifiIsRunning();
+}
+
+extern "C" int circle_connect_wifi(void) {
+  return stdio_app != nullptr && stdio_app->ConnectWifi();
 }
 
 #if defined(RASPI_C64)
@@ -604,7 +733,101 @@ void ViceStdioApp::InitializeNetwork() {
 #endif
 }
 
+int ViceStdioApp::WifiIsRunning(void) const {
+#if RASPPI == 3 && (defined(RASPI_C64) || defined(RASPI_C128))
+  return mWLAN != nullptr;
+#else
+  return 0;
+#endif
+}
+
+int ViceStdioApp::ConnectWifi(void) {
+#if RASPPI == 3 && (defined(RASPI_C64) || defined(RASPI_C128))
+  if (mWLAN == nullptr) {
+    mLogger.Write(GetKernelName(), LogError,
+                  "Wi-Fi connection requested without WLAN");
+    return 0;
+  }
+
+  CString config_path;
+  config_path.Format("%s:/wpa_supplicant.conf", mViceOptions.GetDiskVolume());
+  mLogger.Write(GetKernelName(), LogNotice,
+                "Wi-Fi reconnecting with %s", (const char *)config_path);
+  delete mWPASupplicant;
+  mWPASupplicant = new CWPASupplicant((const char *)config_path);
+  if (!mWPASupplicant->Initialize()) {
+    mLogger.Write(GetKernelName(), LogError,
+                  "Cannot restart WPA supplicant");
+    delete mWPASupplicant;
+    mWPASupplicant = nullptr;
+    return 0;
+  }
+
+  unsigned int connect_started_at = CTimer::GetClockTicks();
+  while (!CWPASupplicant::IsConnected()) {
+    if ((unsigned int)(CTimer::GetClockTicks() - connect_started_at) >=
+        WIFI_CONNECT_TIMEOUT_US) {
+      mLogger.Write(GetKernelName(), LogError,
+                    "Wi-Fi connection timed out after %u seconds",
+                    WIFI_CONNECT_TIMEOUT_US / 1000000);
+      return 0;
+    }
+    CScheduler::Get()->MsSleep(100);
+  }
+  mLogger.Write(GetKernelName(), LogNotice, "Wi-Fi connected");
+  return 1;
+#else
+  mLogger.Write(GetKernelName(), LogError,
+                "Wi-Fi connection is not supported by this build");
+  return 0;
+#endif
+}
+
+int ViceStdioApp::ScanWifiAccessPoints(struct wifi_access_point *access_points,
+                                       unsigned int max_access_points) {
+#if RASPPI == 3 && (defined(RASPI_C64) || defined(RASPI_C128))
+  if (mWLAN == nullptr) {
+    mLogger.Write(GetKernelName(), LogNotice,
+                  "Wi-Fi scan unavailable until Wi-Fi is selected and rebooted");
+    return 0;
+  }
+
+  uint8_t buffer[FRAME_BUFFER_SIZE];
+  unsigned int result_length;
+  while (mWLAN->ReceiveScanResult(buffer, &result_length)) {
+  }
+
+  if (!mWLAN->Control("escan %u", 5)) {
+    mLogger.Write(GetKernelName(), LogError, "Cannot start Wi-Fi scan");
+    return 0;
+  }
+
+  unsigned int count = 0;
+  unsigned int result_messages = 0;
+  unsigned int scan_started_at = CTimer::GetClockTicks();
+  do {
+    count = CollectWifiScanResults(mWLAN, access_points, max_access_points,
+                                   count, &result_messages);
+    CScheduler::Get()->MsSleep(100);
+  } while ((unsigned int)(CTimer::GetClockTicks() - scan_started_at) <
+           WIFI_SCAN_DURATION_US);
+
+  mWLAN->Control("escan 0");
+  count = CollectWifiScanResults(mWLAN, access_points, max_access_points,
+                                 count, &result_messages);
+  mLogger.Write(GetKernelName(), LogNotice,
+                "Wi-Fi scan received %u results, found %u access points",
+                result_messages, count);
+  return count;
+#else
+  (void)access_points;
+  (void)max_access_points;
+  return 0;
+#endif
+}
+
 bool ViceStdioApp::Initialize(void) {
+  stdio_app = this;
   if (!ViceScreenApp::Initialize()) {
     return false;
   }
@@ -669,6 +892,7 @@ bool ViceStdioApp::Initialize(void) {
 }
 
 void ViceStdioApp::Cleanup(void) {
+  stdio_app = nullptr;
 #if RASPPI == 3
   delete mWPASupplicant;
   network_subsystem = nullptr;
