@@ -414,3 +414,18 @@
 
 ## 4.2-p5
   * Removed incorrect up arrow key mapping for 8bitdo Retro Keyboards
+
+## 4.2-p6 
+  * Added ethernet and Wifi networking support for C64 (and C128 untested) 
+  * Added Network menu to control device selection and Wifi credentials
+  * Added scanning of Wifi APs
+  * Added BMC Software Modem to connect to BBS (auto configured on network connect)
+    * Select Swift/DE modem (e.g. in CCGMS Ultimate)
+  * Added patch for Circle ACK handling causing networking stalling
+  * Tested on PiZeroW, PiZero2W, Pi2B, Pi3A+, Pi3B+ models
+
+  * Improved development building tools
+    * Build everything in one command `build_sdcard.sh`
+    * Automatic downloading of required toolchain GCC 15.2.Rel1
+    * Added automatic download of networking drivers during SDcard build
+    * Added --skip-patches option to build faster without changing third party libs
