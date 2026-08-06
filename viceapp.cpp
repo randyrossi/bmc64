@@ -34,10 +34,19 @@ static int HasOnboardWLAN(TMachineModel machine_model) {
   case MachineModel400:
   case MachineModelCM4:
   case MachineModelCM4S:
-  case MachineModel5:
-  case MachineModel500:
-  case MachineModelCM5:
-  case MachineModelCM5Lite:
+    return 1;
+  default:
+    return 0;
+  }
+}
+
+static int HasOnboardEthernet(TMachineModel machine_model) {
+  switch (machine_model) {
+  case MachineModel2B:
+  case MachineModel3B:
+  case MachineModel3BPlus:
+  case MachineModel4B:
+  case MachineModel400:
     return 1;
   default:
     return 0;
@@ -210,6 +219,16 @@ extern "C" int circle_scan_wifi_access_points(
     return 0;
   }
   return stdio_app->ScanWifiAccessPoints(access_points, max_access_points);
+}
+
+extern "C" int circle_has_onboard_wifi(void) {
+  return stdio_app != nullptr &&
+         HasOnboardWLAN(CMachineInfo::Get()->GetMachineModel());
+}
+
+extern "C" int circle_has_onboard_ethernet(void) {
+  return stdio_app != nullptr &&
+         HasOnboardEthernet(CMachineInfo::Get()->GetMachineModel());
 }
 
 extern "C" int circle_wifi_is_running(void) {
@@ -697,7 +716,8 @@ void ViceStdioApp::InitializeNetwork() {
     return;
   }
 
-  if (mNetworkDevice == 1) {
+  if (mNetworkDevice == 1 &&
+      HasOnboardEthernet(mMachineInfo.GetMachineModel())) {
     mNet = new CNetSubSystem(0, 0, 0, 0, "bmc64", NetDeviceTypeEthernet);
     if (!mNet->Initialize(FALSE)) {
       mLogger.Write(GetKernelName(), LogError,
@@ -709,6 +729,11 @@ void ViceStdioApp::InitializeNetwork() {
       mLogger.Write(GetKernelName(), LogNotice, "Networking: Ethernet initialized");
     }
     return;
+  }
+
+  if (mNetworkDevice == 1) {
+    mLogger.Write(GetKernelName(), LogNotice,
+                  "Ethernet selected, but this Raspberry Pi has no onboard Ethernet");
   }
 
   if (!HasOnboardWLAN(mMachineInfo.GetMachineModel())) {

@@ -155,6 +155,13 @@ static int network_device_was_selected;
 static int network_reboot_prompted;
 
 static void update_wifi_menu_enabled(void) {
+  if (network_device_item != NULL &&
+      ((network_device_item->value == 1 && !circle_has_onboard_ethernet()) ||
+       (network_device_item->value == 2 && !circle_has_onboard_wifi()))) {
+    network_device_item->value = 0;
+    saved_network_device = 0;
+    circle_set_acia_network_enabled(0);
+  }
   int enabled = network_device_item != NULL && network_device_item->value == 2;
   if (wifi_settings_item) wifi_settings_item->disabled = !enabled;
   if (wifi_ssid_item) wifi_ssid_item->disabled = !enabled;
@@ -4010,6 +4017,8 @@ void build_menu(struct menu_item *root) {
     strcpy(child->choices[0], "Off");
     strcpy(child->choices[1], "Ethernet");
     strcpy(child->choices[2], "WiFi");
+    child->choice_disabled[1] = !circle_has_onboard_ethernet();
+    child->choice_disabled[2] = !circle_has_onboard_wifi();
 
     network_status_item = ui_menu_add_button_with_value(
         MENU_ID_DO_NOTHING, parent, "IP Address", 0,

@@ -98,6 +98,8 @@
 int circle_get_network_ip_address(char *address, unsigned int address_size);
 int circle_get_acia_network_enabled(void);
 int circle_set_acia_network_enabled(int enabled);
+int circle_has_onboard_ethernet(void);
+int circle_has_onboard_wifi(void);
 int circle_wifi_is_running(void);
 int circle_connect_wifi(void);
 
