@@ -36,10 +36,8 @@
 #include <circle/timer.h>
 #include <circle/usb/usbhcidevice.h>
 #include <ff.h>
-#if RASPPI == 3
 #include <wlan/bcm4343.h>
 #include <wlan/hostap/wpa_supplicant/wpasupplicant.h>
-#endif
 
 #include "circle_glue.h"
 #include <stdio.h>
@@ -292,10 +290,8 @@ class ViceStdioApp : public ViceScreenApp {
 public:
   ViceStdioApp(const char *kernel)
     : ViceScreenApp(kernel), mUSBHCII(&mInterrupt, &mTimer, TRUE),
-          mEMMC(&mInterrupt, &mTimer, &mActLED), mNetworkDevice(0)
-#if RASPPI == 3
-  , mWLAN(nullptr), mNet(nullptr), mWPASupplicant(nullptr)
-#endif
+          mEMMC(&mInterrupt, &mTimer, &mActLED), mNetworkDevice(0),
+          mWLAN(nullptr), mNet(nullptr), mWPASupplicant(nullptr)
         {}
 
   virtual bool Initialize(void);
@@ -327,11 +323,9 @@ protected:
   CUSBHCIDevice mUSBHCII;
   CEMMCDevice mEMMC;
   int mNetworkDevice;
-#if RASPPI == 3
   CBcm4343Device *mWLAN;
   CNetSubSystem *mNet;
   CWPASupplicant *mWPASupplicant;
-#endif
   FATFS mFileSystemSD;
   FATFS mFileSystemUSB1;
   FATFS mFileSystemUSB2;

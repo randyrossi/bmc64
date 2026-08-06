@@ -74,7 +74,7 @@ cd "$SRC_DIR"
 rm -rf "$STAGING_DIR"
 mkdir -p "$STAGING_DIR"
 
-if [[ " ${BOARDS[*]} " == *" pi3 "* ]]
+if true
 then
     firmware_revision=$(sed -n 's/^FIRMWARE[[:space:]]*?=[[:space:]]*//p' \
         "$WLAN_FIRMWARE_DIR/Makefile")

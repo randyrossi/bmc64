@@ -23,7 +23,28 @@
 static CNetSubSystem *network_subsystem;
 static ViceStdioApp *stdio_app;
 
-#if RASPPI == 3 && (defined(RASPI_C64) || defined(RASPI_C128))
+static int HasOnboardWLAN(TMachineModel machine_model) {
+  switch (machine_model) {
+  case MachineModelZeroW:
+  case MachineModelZero2W:
+  case MachineModel3B:
+  case MachineModel3APlus:
+  case MachineModel3BPlus:
+  case MachineModel4B:
+  case MachineModel400:
+  case MachineModelCM4:
+  case MachineModelCM4S:
+  case MachineModel5:
+  case MachineModel500:
+  case MachineModelCM5:
+  case MachineModelCM5Lite:
+    return 1;
+  default:
+    return 0;
+  }
+}
+
+#if defined(RASPI_C64) || defined(RASPI_C128)
 struct wifi_bss_info {
   uint32_t version;
   uint32_t length;
@@ -61,7 +82,7 @@ struct wifi_scan_result {
   struct wifi_bss_info bss;
 };
 
-static const unsigned int WIFI_SCAN_DURATION_US = 3000000;
+static const unsigned int WIFI_SCAN_DURATION_US = 4000000;
 static const unsigned int WIFI_CONNECT_TIMEOUT_US = 30000000;
 static const uint16_t WIFI_CAPABILITY_PRIVACY = 0x0010;
 
@@ -164,7 +185,7 @@ extern "C" int circle_set_acia_network_enabled(int enabled) {
 
 extern "C" int circle_get_network_ip_address(char *address,
                                               unsigned int address_size) {
-#if RASPPI == 3 && (defined(RASPI_C64) || defined(RASPI_C128))
+#if defined(RASPI_C64) || defined(RASPI_C128)
   if (address == nullptr || address_size == 0 || network_subsystem == nullptr ||
       !network_subsystem->IsRunning()) {
     return 0;
@@ -670,7 +691,7 @@ void ViceStdioApp::LoadNetworkDevice() {
 }
 
 void ViceStdioApp::InitializeNetwork() {
-#if RASPPI == 3 && (defined(RASPI_C64) || defined(RASPI_C128))
+#if defined(RASPI_C64) || defined(RASPI_C128)
   if (mNetworkDevice == 0) {
     mLogger.Write(GetKernelName(), LogNotice, "Networking not enabled");
     return;
@@ -687,6 +708,12 @@ void ViceStdioApp::InitializeNetwork() {
       network_subsystem = mNet;
       mLogger.Write(GetKernelName(), LogNotice, "Networking: Ethernet initialized");
     }
+    return;
+  }
+
+  if (!HasOnboardWLAN(mMachineInfo.GetMachineModel())) {
+    mLogger.Write(GetKernelName(), LogError,
+                  "Wi-Fi selected, but this Raspberry Pi has no onboard WLAN");
     return;
   }
 
@@ -734,15 +761,19 @@ void ViceStdioApp::InitializeNetwork() {
 }
 
 int ViceStdioApp::WifiIsRunning(void) const {
-#if RASPPI == 3 && (defined(RASPI_C64) || defined(RASPI_C128))
-  return mWLAN != nullptr;
+#if defined(RASPI_C64) || defined(RASPI_C128)
+  return HasOnboardWLAN(mMachineInfo.GetMachineModel()) && mWLAN != nullptr;
 #else
   return 0;
 #endif
 }
 
 int ViceStdioApp::ConnectWifi(void) {
-#if RASPPI == 3 && (defined(RASPI_C64) || defined(RASPI_C128))
+#if defined(RASPI_C64) || defined(RASPI_C128)
+  if (!HasOnboardWLAN(mMachineInfo.GetMachineModel())) {
+    return 0;
+  }
+
   if (mWLAN == nullptr) {
     mLogger.Write(GetKernelName(), LogError,
                   "Wi-Fi connection requested without WLAN");
@@ -785,7 +816,11 @@ int ViceStdioApp::ConnectWifi(void) {
 
 int ViceStdioApp::ScanWifiAccessPoints(struct wifi_access_point *access_points,
                                        unsigned int max_access_points) {
-#if RASPPI == 3 && (defined(RASPI_C64) || defined(RASPI_C128))
+#if defined(RASPI_C64) || defined(RASPI_C128)
+  if (!HasOnboardWLAN(mMachineInfo.GetMachineModel())) {
+    return 0;
+  }
+
   if (mWLAN == nullptr) {
     mLogger.Write(GetKernelName(), LogNotice,
                   "Wi-Fi scan unavailable until Wi-Fi is selected and rebooted");
@@ -797,7 +832,7 @@ int ViceStdioApp::ScanWifiAccessPoints(struct wifi_access_point *access_points,
   while (mWLAN->ReceiveScanResult(buffer, &result_length)) {
   }
 
-  if (!mWLAN->Control("escan %u", 5)) {
+  if (!mWLAN->Control("escan %u", 3)) {
     mLogger.Write(GetKernelName(), LogError, "Cannot start Wi-Fi scan");
     return 0;
   }
@@ -893,12 +928,10 @@ bool ViceStdioApp::Initialize(void) {
 
 void ViceStdioApp::Cleanup(void) {
   stdio_app = nullptr;
-#if RASPPI == 3
   delete mWPASupplicant;
   network_subsystem = nullptr;
   delete mNet;
   delete mWLAN;
-#endif
 
   // When mounting, fatfs gets ":" appended.  But StdioInit
   // does not.
