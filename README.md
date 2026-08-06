@@ -16,8 +16,7 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
 
 # Limitations
   * USB gamepad support is limited. Not all gamepads will work (especially wireless).
-  * There is no network support.
-
+  
 This project uses VICE for emulation without any O/S (Linux) distribution installed on the Pi.  VICE (Versatile Commodore Emulator) platform dependencies are satisfied using circle-stdlib.
 
 For Plus/4 emulation on the Rasbperry Pi 3, a more accurate emulator using Plus4Emu is also available.
@@ -658,6 +657,10 @@ If the pre-defined GPIO configurations don't suit your needs, you can define you
 # CPU Temperature
 
 IMPORTANT : BMC64 v1.0.6 through v1.4 were not properly putting the other 3 (unused) cores to a low powered mode and was causing CPU temperatures to rise close to or beyond automatic throttling limits. The CPU temperature on a RPi 3 Model B clocked at @1.2Ghz hit 70 degrees without a heat sync.  V1.5+ should not have this issue.  If you are experiencing heat issues (thermometer icon in top right corner), please update your installation to the latest version.
+
+## Networking Support
+
+  * Networking is available for C64 and C128; see [NETWORKING.md](/NETWORKING.md) for setup and BBS usage.
 
 # Changelog
 
