@@ -1189,7 +1189,6 @@ static void cmdhd_findbaselba(cmdhd_context_t *hd)
     uint32_t  i;
     disk_addr_t dadr;
     unsigned char buf[256];
-    int rlpresent;
 
     CLOG((LOG, "CMDHD: findbaselba"));
 
@@ -1231,15 +1230,6 @@ static void cmdhd_findbaselba(cmdhd_context_t *hd)
 
     CLOG((LOG, "CMDHD: findbaselba=%u", hd->baselba));
 
-    /* check if RAMLINK is enabled */
-    rlpresent = 0;
-    resources_get_int("RAMLINK", &rlpresent);
-
-    if (!hd->mycontext->parallel_cable && rlpresent) {
-        hd->mycontext->parallel_cable = 1;
-        CRIT((ERR, "CMDHD: RAMLink detected. Drive %d 'parallel cable' set to 'standard'.",
-            hd->mycontext->mynumber + 8));
-    }
 }
 
 void cmdhd_reset(cmdhd_context_t *hd)
