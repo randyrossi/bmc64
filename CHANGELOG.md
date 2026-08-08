@@ -429,3 +429,13 @@
     * Automatic downloading of required toolchain GCC 15.2.Rel1
     * Added automatic download of networking drivers during SDcard build
     * Added --skip-patches option to build faster without changing third party libs
+
+## 4.2-p7
+  * Added support for C64 OS C64 Network Protocol (CNP)
+  * Extend BMC Software Modem to support C64 OS slde.zi driver
+  * Default SwiftLink at $DE00 and route its interrupts through NMI
+  * Various improvements and fixes to aciacore and rs232 for C64 OS support
+  * Update NETWORKING documentation
+  * Fix DEVICE NOT FOUND issue when connecting CMD HD images for the first time
+  * Support alternate version of THEC64 keyboard found
+  * Tested on PiZeroW, PiZero2W, Pi2B, Pi3A+, Pi3B+ models
