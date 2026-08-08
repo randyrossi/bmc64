@@ -36,3 +36,7 @@ third_party/**/*.la
 third_party/**/*.lo
 third_party/**/*.d
 third_party/**/*.o
+
+# Python build outputs from tooling
+*.pyc
+*.pyo
