@@ -294,8 +294,8 @@ static void acia_set_int(int aciairq, unsigned int int_num, int value)
  \param new_irq_res
    The interrupt type to use:
       0 = none,
-      1 = IRQ,
-      2 = NMI.
+     1 = NMI,
+     2 = IRQ.
 
  \param param
    Unused
@@ -311,7 +311,9 @@ static void acia_set_int(int aciairq, unsigned int int_num, int value)
 static int acia_set_irq(int new_irq_res, void *param)
 {
     enum cpu_int new_irq;
-    static const enum cpu_int irq_tab[] = { IK_NONE, IK_IRQ, IK_NMI };
+    /* Resource values are persisted as 0=none, 1=NMI, 2=IRQ; cpu_int uses
+       different numeric values, so this explicit map must not be reordered. */
+    static const enum cpu_int irq_tab[] = { IK_NONE, IK_NMI, IK_IRQ };
 
     /*
      * if an invalid interrupt type has been given, return
@@ -423,7 +425,13 @@ static void set_acia_ticks(void)
      * appropriately. This gives the main program 50 extra cycles.
      * This way, NovaTerm can cope with the transmission at 57600 bps.
      */
+#ifdef HAVE_RS232BMC
+    /* The NovaTerm margin is useful for host serial backends, but slows the
+       TCP modem below its configured SwiftLink rate and stalls CNP transfers. */
+    acia.ticks_rx = acia.ticks;
+#else
     acia.ticks_rx = acia.ticks * 5 / 4;
+#endif
 
     /* adjust the alarm rate for reception */
     if (acia.alarm_active_rx) {
@@ -561,16 +569,11 @@ static int acia_get_status(void)
 
     acia.status &= ~(ACIA_SR_BITS_DCD | ACIA_SR_BITS_DSR);
 
-#if 0
-    /*
-     * CTS is very different from DCD.
-     * In the 6551, CTS is handled completely autonomously.
-     * It is not possible to determine its state from Software.
-     */
-    if (modem_status & RS232_HSI_CTS) {
-        acia.status |= ACIA_SR_BITS_DCD; /* we treat CTS like DCD */
+     /* The BMC backend uses CTS as its carrier indication. DCD is active low:
+         a set 6551 status bit means the TCP connection has no carrier. */
+    if (!(modem_status & RS232_HSI_CTS)) {
+        acia.status |= ACIA_SR_BITS_DCD;
     }
-#endif
 
     if (modem_status & RS232_HSI_DSR) {
         acia.status |= ACIA_SR_BITS_DSR;
@@ -674,11 +677,17 @@ void myacia_reset(void)
     acia.irq = 0;
 
 #ifdef HAVE_RS232BMC
-    /* Start the native SwiftLink at 2400 bps instead of external-clock mode. */
+    /* Start the native SwiftLink at 2400 bps instead of external-clock mode.
+       C64 OS expects an immediately usable modem after reset. */
     acia.ctrl = ACIA_CTRL_BITS_BPS_1200;
     acia.cmd |= ACIA_CMD_BITS_DTR_ENABLE_RECV_AND_IRQ;
     acia.fd = rs232drv_open(acia.device);
     if (acia.fd >= 0) {
+        acia_set_handshake_lines();
+        /* Seed DCD before the first RX alarm. Otherwise the initial
+           disconnected state looks like a carrier-loss edge and NMI can
+           interrupt the C64 ROM while it is still booting. */
+        acia_get_status();
         acia.alarm_active_rx = 1;
         set_acia_ticks();
     }
@@ -925,6 +934,11 @@ void myacia_store(uint16_t addr, uint8_t byte)
 
     switch (addr & acia_register_size) {
         case ACIA_DR:
+#ifdef HAVE_RS232BMC
+            /* Keep a bounded ACIA-level trace for AT+ACIATRACE diagnostics;
+               BmcModem::Put records the later serial-backend handoff. */
+            bmcmodem_note_acia_tx(byte);
+#endif
             acia.txdata = byte;
             if (acia.cmd & ACIA_CMD_BITS_DTR_ENABLE_RECV_AND_IRQ) {
                 if (acia.in_tx == ACIA_TX_STATE_DR_WRITTEN) {
@@ -966,9 +980,19 @@ void myacia_store(uint16_t addr, uint8_t byte)
         case ACIA_CMD:
             acia.cmd = byte;
 #ifdef HAVE_RS232BMC
+                /* BMC64 keeps the virtual modem asserted so C64 OS can use its
+                    normal driver initialization even when software clears DTR. */
             acia.cmd |= ACIA_CMD_BITS_DTR_ENABLE_RECV_AND_IRQ;
 #endif
             acia_set_handshake_lines();
+            if ((acia.cmd & ACIA_CMD_BITS_TRANSMITTER_MASK) == ACIA_CMD_BITS_TRANSMITTER_TX_WITH_IRQ
+                && !acia.alarm_active_tx) {
+                     /* C64 OS fills its transmit queue from TX-empty NMIs, so an
+                         enabled transmitter needs an initial completion alarm. */
+                acia.alarm_clk_tx = myclk + acia.ticks;
+                alarm_set(acia.alarm_tx, acia.alarm_clk_tx);
+                acia.alarm_active_tx = 1;
+            }
             if ((acia.cmd & ACIA_CMD_BITS_DTR_ENABLE_RECV_AND_IRQ) && (acia.fd < 0)) {
                 acia.fd = rs232drv_open(acia.device);
                 /* enable RX alarm */
@@ -1135,15 +1159,17 @@ static void int_acia_tx(CLOCK offset, void *data)
 
         /* tell the status register that the transmit register is empty */
         acia.status |= ACIA_SR_BITS_TRANSMIT_DR_EMPTY;
-
-        /* generate an interrupt if the ACIA was programmed to generate one */
-        if ((acia.cmd & ACIA_CMD_BITS_TRANSMITTER_MASK) == ACIA_CMD_BITS_TRANSMITTER_TX_WITH_IRQ) {
-            acia_set_int(acia.irq_type, acia.int_num, acia.irq_type);
-            acia.irq = 1;
-        }
     }
 
-    if (acia.in_tx != ACIA_TX_STATE_NO_TRANSMIT) {
+     /* C64 OS fills its transmit queue from TX-empty NMIs. Keep reporting an
+         empty register while this mode remains enabled, even without new data. */
+    if ((acia.cmd & ACIA_CMD_BITS_TRANSMITTER_MASK) == ACIA_CMD_BITS_TRANSMITTER_TX_WITH_IRQ) {
+        acia_set_int(acia.irq_type, acia.int_num, acia.irq_type);
+        acia.irq = 1;
+    }
+
+    if (acia.in_tx != ACIA_TX_STATE_NO_TRANSMIT
+        || (acia.cmd & ACIA_CMD_BITS_TRANSMITTER_MASK) == ACIA_CMD_BITS_TRANSMITTER_TX_WITH_IRQ) {
         /*
          * ACIA_TX_STATE_DR_WRITTEN is decremented to ACIA_TX_STATE_TX_STARTED
          * ACIA_TX_STATE_TX_STARTED is decremented to ACIA_TX_STATE_NO_TRANSMIT
@@ -1151,8 +1177,9 @@ static void int_acia_tx(CLOCK offset, void *data)
         acia.in_tx--;
     }
 
-    if (acia.in_tx != ACIA_TX_STATE_NO_TRANSMIT) {
-        /* re-schedule alarm */
+    if (acia.in_tx != ACIA_TX_STATE_NO_TRANSMIT
+        || (acia.cmd & ACIA_CMD_BITS_TRANSMITTER_MASK) == ACIA_CMD_BITS_TRANSMITTER_TX_WITH_IRQ) {
+        /* Continue polling TX-ready in interrupt mode for the next queued byte. */
         acia.alarm_clk_tx = myclk + acia.ticks;
         alarm_set(acia.alarm_tx, acia.alarm_clk_tx);
         acia.alarm_active_tx = 1;
@@ -1191,6 +1218,21 @@ static void int_acia_rx(CLOCK offset, void *data)
     DEBUG_VERBOSE_LOG_MESSAGE((acia.log, "int_acia_rx(offset=%ld, myclk=%d", offset, myclk));
 
     assert(data == NULL);
+
+#ifdef HAVE_RS232BMC
+    {
+        uint8_t old_dcd = acia.status & ACIA_SR_BITS_DCD;
+
+        /* TCP close has no receive byte to wake C64 OS. Poll DCD on the RX
+           cadence and turn a carrier edge into the normal ACIA status NMI. */
+        acia_get_status();
+        if ((acia.status & ACIA_SR_BITS_DCD) != old_dcd
+            && !(acia.cmd & ACIA_CMD_BITS_IRQ_DISABLED)) {
+            acia_set_int(acia.irq_type, acia.int_num, acia.irq_type);
+            acia.irq = 1;
+        }
+    }
+#endif
 
     do {
         uint8_t received_byte;

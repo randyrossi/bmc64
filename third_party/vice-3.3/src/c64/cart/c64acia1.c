@@ -39,11 +39,13 @@
 /* resource defaults */
 #define MYACIA          "Acia1"
 #define MyDevice        0
-#define MyIrq           IK_IRQ
+/* C64 OS installs its SwiftLink handler on the C64 NMI vector ($0318/$0319). */
+#define MyIrq           IK_NMI
 
 #define myaciadev       acia1dev
 
 #ifdef HAVE_RS232BMC
+/* BMC64 exposes its built-in TCP modem as an always-present SwiftLink. */
 #define ACIA1_DEFAULT_ENABLED 1
 #define ACIA1_DEFAULT_MODE ACIA_MODE_SWIFTLINK
 #else

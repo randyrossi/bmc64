@@ -45,8 +45,9 @@ int rs232bmc_set_status(int fd, enum rs232handshake_out status)
 enum rs232handshake_in rs232bmc_get_status(int fd)
 {
     (void) fd;
-    return RS232_HSI_CTS
-           | (bmcmodem_has_carrier() ? RS232_HSI_DSR : 0);
+    /* aciacore maps CTS to active-low DCD for this virtual TCP modem. Report
+       both lines only while the socket (or queued final response) has carrier. */
+    return bmcmodem_has_carrier() ? (RS232_HSI_CTS | RS232_HSI_DSR) : 0;
 }
 
 void rs232bmc_set_bps(int fd, unsigned int bps)

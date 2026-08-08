@@ -12,5 +12,9 @@ int bmcmodem_getc(int device, uint8_t *byte);
 int bmcmodem_has_carrier(void);
 void bmcmodem_set_status(int status);
 void bmcmodem_set_bps(unsigned int bps);
+/* Bounded diagnostics exposed through AT+ACIATRACE and AT+ACIATRACECLEAR. */
+void bmcmodem_note_acia_tx(uint8_t byte);
+unsigned int bmcmodem_acia_trace_read(uint8_t *bytes, unsigned int maximum);
+void bmcmodem_acia_trace_clear(void);
 
 #endif

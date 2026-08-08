@@ -21,6 +21,10 @@ namespace {
 const unsigned kQueueSize = 16384;
 const unsigned kCommandSize = 256;
 const unsigned kSocketSendSize = 256;
+// Keep diagnostic history bounded so serial tracing cannot consume modem RAM.
+const unsigned kTraceSize = 128;
+// C64 OS reports an SSID through ATW; retain a modem-side copy for ATI3.
+const unsigned kSsidSize = 33;
 const u64 kEscapeGuardMicroseconds = 1000000;
 const u64 kTelnetCandidateMicroseconds = 100000;
 const uint8_t kTelnetIac = 255;
@@ -52,17 +56,26 @@ class BmcModem {
 public:
   BmcModem()
       : socket_(0), read_(0), write_(0), transmitLength_(0),
-        commandLength_(0), open_(false), dataMode_(false), echo_(true),
+        commandLength_(0), traceWrite_(0), traceLength_(0),
+        aciaTraceWrite_(0), aciaTraceLength_(0),
+        open_(false),
+        dataMode_(false), echo_(true),
+        quiet_(false), numericResponses_(false), crlf_(true),
+        dtrEnabled_(false),
         commandInputActive_(false), receiveEnabled_(true),
         remoteDisconnectPending_(false), plusCount_(0), worker_(0),
         telnetState_(kTelnetData), telnetCommand_(0),
-        telnetDetected_(false), lastTransmitTime_(0), escapeDeadline_(0),
+        telnetDetected_(false), telnetEnabled_(true), lastTransmitTime_(0),
+        escapeDeadline_(0),
         telnetCandidateDeadline_(0) {}
 
   ~BmcModem() { Disconnect(); }
 
   void Initialize() {
     CMutexGuard guard(lock_);
+    if (wifiSsid_[0] == '\0') {
+      strcpy(wifiSsid_, "BMC64");
+    }
     if (worker_ == 0) {
       worker_ = new NetworkTask(this);
     }
@@ -93,12 +106,17 @@ public:
     commandLength_ = 0;
     dataMode_ = false;
     echo_ = true;
+    quiet_ = false;
+    numericResponses_ = false;
+    crlf_ = true;
+    dtrEnabled_ = false;
     commandInputActive_ = false;
     receiveEnabled_ = true;
     plusCount_ = 0;
     telnetState_ = kTelnetData;
     telnetCommand_ = 0;
     telnetDetected_ = false;
+    telnetEnabled_ = true;
     lastTransmitTime_ = 0;
     escapeDeadline_ = 0;
     telnetCandidateDeadline_ = 0;
@@ -110,6 +128,7 @@ public:
       return -1;
     }
 
+    TraceByte(byte);
     Pump();
     if (dataMode_) {
       PutData(byte);
@@ -118,6 +137,33 @@ public:
     }
     Pump();
     return 0;
+  }
+
+  void NoteAciaTransmit(uint8_t byte) {
+    CMutexGuard guard(lock_);
+    // This precedes the normal serial-backend trace and identifies ACIA writes.
+    aciaTrace_[aciaTraceWrite_] = byte;
+    aciaTraceWrite_ = (aciaTraceWrite_ + 1) % kTraceSize;
+    if (aciaTraceLength_ < kTraceSize) {
+      ++aciaTraceLength_;
+    }
+  }
+
+  unsigned ReadAciaTrace(uint8_t *bytes, unsigned maximum) {
+    CMutexGuard guard(lock_);
+    unsigned length = aciaTraceLength_ < maximum ? aciaTraceLength_ : maximum;
+    unsigned index = (aciaTraceWrite_ + kTraceSize - length) % kTraceSize;
+    for (unsigned position = 0; position < length; ++position) {
+      bytes[position] = aciaTrace_[index];
+      index = (index + 1) % kTraceSize;
+    }
+    return length;
+  }
+
+  void ClearAciaTrace() {
+    CMutexGuard guard(lock_);
+    aciaTraceWrite_ = 0;
+    aciaTraceLength_ = 0;
   }
 
   int Get(uint8_t *byte) {
@@ -143,8 +189,13 @@ public:
 
   void SetStatus(int status) {
     CMutexGuard guard(lock_);
-    bool receiveEnabled = (status & 0x01) != 0;
-    receiveEnabled_ = receiveEnabled;
+    bool dtrEnabled = (status & 0x02) != 0;
+    // Treat a DTR drop as a hardware hangup, matching a physical modem.
+    if (dtrEnabled_ && !dtrEnabled && socket_ != 0) {
+      Disconnect();
+    }
+    dtrEnabled_ = dtrEnabled;
+    receiveEnabled_ = (status & 0x01) != 0;
   }
 
   // Serial timing is handled by the emulated ACIA; retain the backend hook.
@@ -227,10 +278,82 @@ private:
     }
   }
 
+  void TraceByte(uint8_t byte) {
+    trace_[traceWrite_] = byte;
+    traceWrite_ = (traceWrite_ + 1) % kTraceSize;
+    if (traceLength_ < kTraceSize) {
+      ++traceLength_;
+    }
+  }
+
+  void QueueTrace() {
+    // AT+TRACE returns the bounded serial-backend history as hexadecimal text.
+    const char hex[] = "0123456789ABCDEF";
+    unsigned index = (traceWrite_ + kTraceSize - traceLength_) % kTraceSize;
+    for (unsigned count = 0; count < traceLength_; ++count) {
+      uint8_t byte = trace_[index];
+      QueueByte(hex[byte >> 4]);
+      QueueByte(hex[byte & 0x0f]);
+      QueueByte(' ');
+      index = (index + 1) % kTraceSize;
+    }
+  }
+
+  void QueueAciaTrace() {
+    // AT+ACIATRACE separates ACIA register writes from backend serial writes.
+    const char hex[] = "0123456789ABCDEF";
+    uint8_t bytes[kTraceSize];
+    unsigned length = bmcmodem_acia_trace_read(bytes, sizeof bytes);
+    for (unsigned index = 0; index < length; ++index) {
+      QueueByte(hex[bytes[index] >> 4]);
+      QueueByte(hex[bytes[index] & 0x0f]);
+      QueueByte(' ');
+    }
+  }
+
+  void SetWifiSsid(const char *target) {
+    // ATW accepts a quoted SSID and optional comma-delimited Wi-Fi parameters.
+    if (*target == '"') {
+      ++target;
+    }
+    unsigned length = 0;
+    while (*target != '\0' && *target != '"' && *target != ',' &&
+           length + 1 < kSsidSize) {
+      wifiSsid_[length++] = *target++;
+    }
+    wifiSsid_[length] = '\0';
+  }
+
+  void WifiStatus() {
+    // C64 OS probes ATI3 for the active Wi-Fi name before opening CNP.
+    QueueText(wifiSsid_);
+    QueueText(crlf_ ? "\r\n" : "\r");
+    Result("OK");
+  }
+
   void Result(const char *text) {
-    QueueText("\r\n");
-    QueueText(text);
-    QueueText("\r\n");
+    CLogger::Get()->Write(FromBmcModem, LogNotice, "queued result: %s", text);
+    if (quiet_) {
+      return;
+    }
+    QueueText(crlf_ ? "\r\n" : "\r");
+    if (numericResponses_) {
+      // C64 OS requests V0 and expects standard Hayes numeric result codes.
+      if (strcmp(text, "OK") == 0) {
+        QueueText("0");
+      } else if (strcmp(text, "CONNECT") == 0) {
+        QueueText("1");
+      } else if (strcmp(text, "NO CARRIER") == 0) {
+        QueueText("3");
+      } else if (strcmp(text, "ERROR") == 0) {
+        QueueText("4");
+      } else {
+        QueueText(text);
+      }
+    } else {
+      QueueText(text);
+    }
+    QueueText(crlf_ ? "\r\n" : "\r");
   }
 
   // Hayes command/data handling: bytes from the emulated ACIA.
@@ -243,8 +366,7 @@ private:
       if (commandLength_ != 0) {
         command_[commandLength_] = '\0';
         CLogger::Get()->Write(FromBmcModem, LogNotice,
-                              "received modem command (%u bytes)",
-                              commandLength_);
+                              "received modem command: %s", command_);
         ExecuteCommand();
       }
       commandLength_ = 0;
@@ -342,7 +464,14 @@ private:
   }
 
   void HandleTelnetByte(uint8_t byte) {
-  // TCP transport: the scheduler task calls this independently of ACIA polls.
+    // CNP on port 6400 is a binary protocol; every byte, including 0xff,
+    // belongs to its payload rather than Telnet negotiation.
+    if (!telnetEnabled_) {
+      QueueByte(byte);
+      return;
+    }
+
+    // TCP transport: the scheduler task calls this independently of ACIA polls.
     switch (telnetState_) {
       case kTelnetData:
         if (byte == kTelnetIac) {
@@ -431,15 +560,6 @@ private:
     return value;
   }
 
-  bool HasPrefix(const char *prefix) const {
-    for (unsigned index = 0; prefix[index] != '\0'; ++index) {
-      if (Upper(command_[index]) != prefix[index]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   void ExecuteCommand() {
     if (commandLength_ < 2 || Upper(command_[0]) != 'A' ||
         Upper(command_[1]) != 'T') {
@@ -449,37 +569,230 @@ private:
 
     if (commandLength_ == 2) {
       Result("OK");
-    } else if (HasPrefix("ATE0") && commandLength_ == 4) {
-      echo_ = false;
-      Result("OK");
-    } else if (HasPrefix("ATE1") && commandLength_ == 4) {
-      echo_ = true;
-      Result("OK");
-    } else if (HasPrefix("ATZ") && commandLength_ == 3) {
-      Reset();
-      Result("OK");
-    } else if (HasPrefix("ATH") && commandLength_ == 3) {
-      Disconnect();
-      Result("OK");
-    } else if (HasPrefix("ATI") && commandLength_ == 3) {
-      Result("BMC64 WIFI MODEM");
-      Result("OK");
-    } else if (HasPrefix("ATO") && commandLength_ == 3 && socket_ != 0) {
-      dataMode_ = true;
-      lastTransmitTime_ = CTimer::GetClockTicks64();
-      Result("CONNECT");
-    } else if (HasPrefix("ATD")) {
-      Dial(command_ + 3);
-    } else {
-      Result("ERROR");
-    }
-  }
-
-  void Dial(char *target) {
-    if (Upper(command_[2]) != 'D') {
-      Result("ERROR");
       return;
     }
+
+    unsigned index = 2;
+    // Parse a compact Hayes command stream: C64 OS sends several settings in
+    // one initialization command before its quoted ATD dial string.
+    while (index < commandLength_) {
+      char operation = Upper(command_[index++]);
+      if (operation == 'D') {
+        if (index == commandLength_) {
+          if (socket_ == 0) {
+            Result("ERROR");
+          } else {
+            dataMode_ = true;
+            lastTransmitTime_ = CTimer::GetClockTicks64();
+            Result("CONNECT");
+          }
+        } else {
+          Connect(command_ + index, true);
+        }
+        return;
+      }
+      if (operation == 'C') {
+        // ATC connects without data mode; C64 OS uses it for its network test.
+        if (index == commandLength_) {
+          CNetSubSystem *net = CNetSubSystem::Get();
+          Result(net != 0 && net->IsRunning() ? "OK" : "ERROR");
+        } else {
+          Connect(command_ + index, false);
+        }
+        return;
+      }
+      if (operation == 'W') {
+        CLogger::Get()->Write(FromBmcModem, LogNotice,
+                              "received C64 OS WiFi command");
+        // BMC64's host owns Wi-Fi configuration; retain only its reported SSID.
+        if (index < commandLength_) {
+          SetWifiSsid(command_ + index);
+        }
+        CNetSubSystem *net = CNetSubSystem::Get();
+        Result(net != 0 && net->IsRunning() ? "OK" : "ERROR");
+        return;
+      }
+      if (operation == '+') {
+        const char traceCommand[] = "TRACE";
+        unsigned traceIndex = 0;
+        while (traceCommand[traceIndex] != '\0' &&
+               index + traceIndex < commandLength_ &&
+               Upper(command_[index + traceIndex]) == traceCommand[traceIndex]) {
+          ++traceIndex;
+        }
+        if (traceCommand[traceIndex] == '\0' &&
+            index + traceIndex == commandLength_) {
+          QueueTrace();
+          Result("OK");
+          return;
+        }
+        const char clearCommand[] = "TRACECLEAR";
+        traceIndex = 0;
+        while (clearCommand[traceIndex] != '\0' &&
+               index + traceIndex < commandLength_ &&
+               Upper(command_[index + traceIndex]) == clearCommand[traceIndex]) {
+          ++traceIndex;
+        }
+        if (clearCommand[traceIndex] == '\0' &&
+            index + traceIndex == commandLength_) {
+          traceWrite_ = 0;
+          traceLength_ = 0;
+          Result("OK");
+          return;
+        }
+        const char aciaTraceCommand[] = "ACIATRACE";
+        traceIndex = 0;
+        while (aciaTraceCommand[traceIndex] != '\0' &&
+               index + traceIndex < commandLength_ &&
+               Upper(command_[index + traceIndex]) ==
+                   aciaTraceCommand[traceIndex]) {
+          ++traceIndex;
+        }
+        if (aciaTraceCommand[traceIndex] == '\0' &&
+            index + traceIndex == commandLength_) {
+          QueueAciaTrace();
+          Result("OK");
+          return;
+        }
+        const char aciaClearCommand[] = "ACIATRACECLEAR";
+        traceIndex = 0;
+        while (aciaClearCommand[traceIndex] != '\0' &&
+               index + traceIndex < commandLength_ &&
+               Upper(command_[index + traceIndex]) ==
+                   aciaClearCommand[traceIndex]) {
+          ++traceIndex;
+        }
+        if (aciaClearCommand[traceIndex] == '\0' &&
+            index + traceIndex == commandLength_) {
+          bmcmodem_acia_trace_clear();
+          Result("OK");
+          return;
+        }
+        Result("ERROR");
+        return;
+      }
+
+      if (operation == '&') {
+        if (index >= commandLength_) {
+          Result("ERROR");
+          return;
+        }
+        operation = Upper(command_[index++]);
+        if (operation == 'F' || operation == 'K' || operation == 'L' ||
+          operation == 'P' || operation == 'W') {
+          // These ZiModem-compatible persistence commands have no BMC64
+          // equivalent, but accepting their numeric argument keeps init alive.
+          while (index < commandLength_ && command_[index] >= '0' &&
+                 command_[index] <= '9') {
+            ++index;
+          }
+          continue;
+        }
+        Result("ERROR");
+        return;
+      }
+
+      if (operation == 'Z') {
+        if (index != commandLength_) {
+          Result("ERROR");
+          return;
+        }
+        Reset();
+        Result("OK");
+        return;
+      }
+      if (operation == 'H') {
+        // ATH may include an ignored numeric modifier (for example ATH0).
+        Disconnect();
+        while (index < commandLength_ && command_[index] >= '0' &&
+               command_[index] <= '9') {
+          ++index;
+        }
+        continue;
+      }
+      if (operation == 'I') {
+        unsigned info = 0;
+        if (index < commandLength_ && command_[index] >= '0' &&
+            command_[index] <= '9') {
+          while (index < commandLength_ && command_[index] >= '0' &&
+                 command_[index] <= '9') {
+            info = info * 10 + static_cast<unsigned>(command_[index++] - '0');
+          }
+        }
+        if (index != commandLength_) {
+          Result("ERROR");
+          return;
+        }
+        if (info == 3) {
+          WifiStatus();
+          return;
+        }
+        Result("BMC64 ZIMODEM COMPATIBLE");
+        continue;
+      }
+      if (operation == 'O') {
+        if (socket_ == 0 || index != commandLength_) {
+          Result("ERROR");
+          return;
+        }
+        dataMode_ = true;
+        lastTransmitTime_ = CTimer::GetClockTicks64();
+        Result("CONNECT");
+        return;
+      }
+
+      if (index >= commandLength_ || command_[index] < '0' ||
+          command_[index] > '9') {
+        Result("ERROR");
+        return;
+      }
+      unsigned value = 0;
+      while (index < commandLength_ && command_[index] >= '0' &&
+             command_[index] <= '9') {
+        value = value * 10 + static_cast<unsigned>(command_[index++] - '0');
+      }
+
+      switch (operation) {
+        case 'E':
+          echo_ = value != 0;
+          break;
+        case 'F':
+          if (value > 3) {
+            Result("ERROR");
+            return;
+          }
+          break;
+        case 'Q':
+          quiet_ = value != 0;
+          break;
+        case 'R':
+          if (value > 1) {
+            Result("ERROR");
+            return;
+          }
+          crlf_ = value != 0;
+          break;
+        case 'V':
+          if (value > 1) {
+            Result("ERROR");
+            return;
+          }
+          numericResponses_ = value == 0;
+          break;
+        case 'X':
+        case 'B':
+          // Dial-result level and requested baud are modeled by the ACIA/TCP
+          // backend, so preserve compatibility without changing host settings.
+          break;
+        default:
+          Result("ERROR");
+          return;
+      }
+    }
+    Result("OK");
+  }
+
+  void Connect(char *target, bool enterDataMode) {
     if (Upper(*target) == 'T' || Upper(*target) == 'P') {
       ++target;
     }
@@ -540,6 +853,9 @@ private:
     }
 
     Disconnect();
+    // Preserve binary CNP data verbatim. Other ports retain ZiModem-style
+    // Telnet negotiation for traditional BBS connections.
+    telnetEnabled_ = port != 6400;
     socket_ = new CSocket(net, IPPROTO_TCP);
     if (socket_ == 0 || socket_->Connect(address, static_cast<u16>(port)) < 0) {
       Disconnect();
@@ -549,8 +865,11 @@ private:
       return;
     }
 
-    dataMode_ = true;
-    lastTransmitTime_ = CTimer::GetClockTicks64();
+    // ATC leaves command mode active; ATD immediately forwards CNP payload.
+    dataMode_ = enterDataMode;
+    if (enterDataMode) {
+      lastTransmitTime_ = CTimer::GetClockTicks64();
+    }
     CLogger::Get()->Write(FromBmcModem, LogNotice, "TCP connection established");
     Result("CONNECT");
   }
@@ -608,8 +927,6 @@ private:
       BeginRemoteDisconnect();
       return;
     }
-    if (count > 0) {
-    }
     for (int index = 0; index < count; ++index) {
       HandleTelnetByte(received[index]);
     }
@@ -633,14 +950,25 @@ private:
   // Serial data visible to VICE and TCP data waiting to be transmitted.
   uint8_t queue_[kQueueSize];
   uint8_t transmit_[kQueueSize];
+  uint8_t trace_[kTraceSize];
+  uint8_t aciaTrace_[kTraceSize];
+  char wifiSsid_[kSsidSize];
   unsigned read_;
   unsigned write_;
   unsigned transmitLength_;
   char command_[kCommandSize];
   unsigned commandLength_;
+  unsigned traceWrite_;
+  unsigned traceLength_;
+  unsigned aciaTraceWrite_;
+  unsigned aciaTraceLength_;
   bool open_;
   bool dataMode_;
   bool echo_;
+  bool quiet_;
+  bool numericResponses_;
+  bool crlf_;
+  bool dtrEnabled_;
   bool commandInputActive_;
   bool receiveEnabled_;
   bool remoteDisconnectPending_;
@@ -649,6 +977,7 @@ private:
   TelnetState telnetState_;
   uint8_t telnetCommand_;
   bool telnetDetected_;
+  bool telnetEnabled_;
   u64 lastTransmitTime_;
   u64 escapeDeadline_;
   u64 telnetCandidateDeadline_;
@@ -687,6 +1016,19 @@ extern "C" void bmcmodem_set_status(int status) { modem.SetStatus(status); }
 
 extern "C" void bmcmodem_set_bps(unsigned int bps) { modem.SetBps(bps); }
 
-extern "C" void bmcmodem_init(void) { modem.Initialize(); }
+extern "C" void bmcmodem_note_acia_tx(uint8_t byte) {
+  modem.NoteAciaTransmit(byte);
+}
+
+extern "C" unsigned int bmcmodem_acia_trace_read(uint8_t *bytes,
+                                                    unsigned int maximum) {
+  return modem.ReadAciaTrace(bytes, maximum);
+}
+
+extern "C" void bmcmodem_acia_trace_clear(void) { modem.ClearAciaTrace(); }
+
+extern "C" void bmcmodem_init(void) {
+  modem.Initialize();
+}
 
 extern "C" void bmcmodem_reset(void) { modem.Reset(); }
