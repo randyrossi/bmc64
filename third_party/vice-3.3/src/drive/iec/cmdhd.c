@@ -1422,11 +1422,11 @@ int cmdhd_attach_image(disk_image_t *image, unsigned int unit)
     /* release any more memory */
     lib_free(basename);
 
-    /* don't do this yet as a lot of 3rd party CMD tools don't expect this */
-#if 0
     /* attaching a new disk requires a device reset */
+    /* original comment is below, so the use of the reset may have to be revisited */
+    /* in the future but for now if make connecting to C64 OS dhd files more reliable */
+        /* don't do this yet as a lot of 3rd party CMD tools don't expect this */
     drive_cpu_trigger_reset(unit - 8);
-#endif
 
     /* process attachment counter for warning messages */
     hd->numattached++;

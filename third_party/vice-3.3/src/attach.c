@@ -34,6 +34,7 @@
 #include "cmdline.h"
 #include "diskimage.h"
 #include "driveimage.h"
+#include "drivetypes.h"
 #include "fsdevice.h"
 #include "fliplist.h"
 #include "lib.h"
@@ -521,10 +522,37 @@ static int attach_disk_image(disk_image_t **imgptr, vdrive_t *floppy,
     }
 
     if (disk_image_open(&new_image) < 0) {
-        P64ImageDestroy((PP64Image) new_image.p64);
-        lib_free(new_image.p64);
-        disk_image_media_destroy(&new_image);
-        return -1;
+        goto open_error;
+    }
+
+    if (new_image.type == DISK_IMAGE_TYPE_DHD) {
+        int drive_type;
+        int true_emulation;
+
+        resources_get_int_sprintf("Drive%iType", &drive_type, unit);
+        resources_get_int_sprintf("Drive%iTrueEmulation", &true_emulation, unit);
+        log_message(attach_log, "CMDHD: Drive %u before attach: type=%d TDE=%d.",
+                    unit, drive_type, true_emulation);
+
+        if (machine_drive_rom_check_loaded(DISK_IMAGE_TYPE_DHD) < 0) {
+            log_error(attach_log,
+                      "CMDHD: Cannot attach `%s': no CMDHD boot ROM is configured.",
+                      filename);
+            goto open_error;
+        }
+
+        if (resources_set_int_sprintf("Drive%iType", DRIVE_TYPE_CMDHD, unit) < 0
+            || resources_set_int_sprintf("Drive%iTrueEmulation", 1, unit) < 0) {
+            log_error(attach_log,
+                      "CMDHD: Cannot configure drive %u for CMDHD true-drive emulation.",
+                      unit);
+            goto open_error;
+        }
+
+        resources_get_int_sprintf("Drive%iType", &drive_type, unit);
+        resources_get_int_sprintf("Drive%iTrueEmulation", &true_emulation, unit);
+        log_message(attach_log, "CMDHD: Drive %u prepared: type=%d TDE=%d.",
+                    unit, drive_type, true_emulation);
     }
 
     detach_disk_image_and_free(*imgptr, floppy, unit);
@@ -547,6 +575,11 @@ static int attach_disk_image(disk_image_t **imgptr, vdrive_t *floppy,
             err &= machine_drive_image_attach(image, unit);
             break;
     }
+    if (!err && image->type == DISK_IMAGE_TYPE_DHD) {
+        machine_bus_status_truedrive_set(unit, 1);
+        log_message(attach_log,
+                    "CMDHD: Drive %u true-drive serial traps enabled.", unit);
+    }
     if (err) {
         disk_image_close(image);
 #if 0
@@ -558,6 +591,12 @@ static int attach_disk_image(disk_image_t **imgptr, vdrive_t *floppy,
         *imgptr = NULL;
     }
     return err;
+
+open_error:
+        P64ImageDestroy((PP64Image) new_image.p64);
+        lib_free(new_image.p64);
+        disk_image_media_destroy(&new_image);
+        return -1;
 }
 
 /* ------------------------------------------------------------------------- */
