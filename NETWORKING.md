@@ -20,8 +20,10 @@ Current behavior:
 - The modem resolves DNS names and opens TCP connections.
 - The default TCP port is `23`; a different port can be supplied in the dial
   string.
-- Basic Telnet negotiation is handled. Telnet control bytes are kept out of the
-  data delivered to the C64 terminal.
+- Basic Telnet negotiation is handled for BBS-style connections. Telnet
+  control bytes are kept out of the data delivered to the C64 terminal.
+- C64 OS CNP traffic on port `6400` is binary-transparent. Every byte,
+  including `0xff`, reaches C64 OS unchanged.
 - The connection is outbound only. BMC64 does not listen for incoming modem
   calls or provide a BBS server.
 
@@ -98,13 +100,25 @@ implemented command set is:
 | Command | Result |
 | --- | --- |
 | `AT` | Returns `OK`. |
-| `ATI` | Returns the modem identification and `OK`. |
+| `ATI` / `ATI<n>` | Returns the modem identification and `OK`. |
+| `ATI3` | Returns the SSID most recently supplied through `ATW`, then `OK`. |
 | `ATE0` / `ATE1` | Disable or enable command echo. |
+| `ATQ0` / `ATQ1` | Enable or suppress result codes. |
+| `ATV0` / `ATV1` | Select numeric or text result codes. |
+| `ATR0` / `ATR1` | Select Return-only or CR/LF result-code termination. |
+| `ATF0` through `ATF3` | Accepted for ZiModem compatibility. |
+| `ATB<n>` / `ATX<n>` | Accepted; serial rate is controlled by the ACIA configuration. |
+| `AT&P<n>`, `AT&F<n>`, `AT&K<n>`, `AT&L<n>`, `AT&W<n>` | Accepted as ZiModem-compatible no-ops. |
+| `ATW"ssid,password"` | Records an SSID for `ATI3`; it does not change the Pi's Wi-Fi configuration. |
+| `ATC` | Reports whether BMC64's host network is running. |
+| `ATC...` | Resolve a host and open TCP while remaining in command mode. |
 | `ATZ` | Reset the modem state. |
-| `ATD...` | Resolve a host and open a TCP connection. `ATDT` and `ATDP` are accepted. |
+| `ATD...` | Resolve a host and open TCP data mode. `ATDT`, `ATDP`, and quoted targets are accepted. |
 | `ATO` | Return to data mode when a socket is still connected. |
 | `+++` | Leave data mode after the one-second escape guard interval. |
-| `ATH` | Hang up the current connection. |
+| `ATH` / `ATH0` | Hang up the current connection. |
+| `AT+TRACE`, `AT+TRACECLEAR` | Read or clear the last 128 serial-backend bytes for diagnostics. |
+| `AT+ACIATRACE`, `AT+ACIATRACECLEAR` | Read or clear the last 128 SwiftLink data-register writes for diagnostics. |
 
 Dial targets may be hostnames or IPv4 addresses. The port is optional:
 
@@ -117,10 +131,12 @@ ATDT192.168.1.50:6502
 A successful connection returns `CONNECT`. DNS failure, an unavailable network,
 or a refused TCP connection returns `NO CARRIER`.
 
-The modem's serial speed callback is retained for ACIA compatibility; the
-network transport itself is TCP and does not depend on a physical baud rate.
+TCP is independent of a physical serial device, but the emulated ACIA still
+paces bytes at the speed selected by the terminal program or C64 OS driver.
+Set the desired rate in the C64 client; for C64 OS, set both baud fields to
+the same value. `38400` has been validated with CNP transfers.
 
-## Use CCGMS Ultimate With a BBS
+## Using a BBS
 
 [CCGMS Ultimate on CSDb](https://csdb.dk/release/?id=174485) is a C64 BBS
 terminal program released by Alwyz in 2019. Transfer its disk image or program
@@ -145,10 +161,42 @@ hostname and an IPv4 address, so either form can be entered in CCGMS.
 
 For further details on CCGMS Ultimate refer to the CSDb release page.
 
+## Using C64 OS Networking
+
+C64 OS uses its `slde.zi` SwiftLink driver at `$DE00`. The driver sends a
+ZiModem-compatible initialization command, uses `ATW` and `ATI3` to identify
+the host connection, and dials the CNP service using a quoted `ATD` target.
+
+Networking in C64 OS uses C64 Network Protocol (CNP) and you need to connect to a CNP server and have an account on it. For full information on C64 OS Networking read the [C64 OS Networking Guide](https://c64os.com/c64os/networkingguide/).
+
+Quick start for BMC64:
+
+1. Configure Ethernet or Wi-Fi in BMC64 and confirm that `Network` shows an
+  assigned IP address. The C64 OS Wi-Fi fields do not configure the Raspberry
+  Pi; BMC64 retains their SSID only so the driver can query it with `ATI3`.
+1. In C64 OS, open `Settings`, then `Network`. On the `Drvr` tab, select
+  `slde.zi`.
+1. Set both `Ini.Baud` and `Max.Baud` to `38400`, save the settings, and run
+  `Test`. It must report `Pass` before attempting CNP.
+1. On the `WiFi` tab, enter non-empty values and use `Join` so C64 OS can
+  complete its driver workflow. BMC64 leaves the host network unchanged.
+1. On the `CNP` tab, configure `services.c64os.com` as the host and `6400` as
+  the port, then supply your C64 OS service credentials and click `Start`.
+1. Open the C64 OS Wikipedia application, run a search, and select several
+  content links. Each item should download and display; this exercises CNP's
+  binary payload path rather than just the initial connection.
+1. Click `Stop` when finished. C64 OS should leave its active yellow state;
+  BMC64 closes the TCP connection when the driver lowers DTR. A remote CNP
+  disconnect produces the same state transition through the SwiftLink NMI.
+
 ## Testing or Debugging 
 
+### Modem Transport Probe
+
 Before troubleshooting a live BBS, the repository includes a TCP transport
-probe. Run it on another computer on the same LAN as BMC64:
+probe. This was original used to solve TCP stalling issues.
+
+Run it on another computer on the same LAN as BMC64:
 
 ```sh
 hostname -I
@@ -178,5 +226,14 @@ python3 tools/modem_transport_probe.py \
 
 See [tools/TRANSPORT_PROBE.md](tools/TRANSPORT_PROBE.md) for the expected
 probe output and the interpretation of `unacked` and `retrans` counters.
+
+### Modem Command Probe
+
+This probe was use for testing the connection to a CNP server from within C64 OS.
+
+Run it on another computer on the same LAN as BMC64:
+
+For a local, credential-free driver and DTR test before using CNP, follow
+[tools/MODEM_COMMAND_PROBE.md](tools/MODEM_COMMAND_PROBE.md).
 
 
