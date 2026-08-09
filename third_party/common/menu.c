@@ -143,6 +143,7 @@ struct menu_item *gpio_config_item;
 struct menu_item *active_display_item;
 static struct menu_item *network_device_item;
 static struct menu_item *network_status_item;
+static struct menu_item *network_ip_address_item;
 static struct menu_item *wifi_settings_item;
 static struct menu_item *wifi_ssid_item;
 static struct menu_item *wifi_security_item;
@@ -153,6 +154,71 @@ static char wifi_psk[MAX_STR_VAL_LEN];
 static int saved_network_device;
 static int network_device_was_selected;
 static int network_reboot_prompted;
+
+static const char *const network_status_labels[CIRCLE_NETWORK_STATUS_COUNT] = {
+    "Disabled",
+    "Starting Ethernet",
+    "Check Ethernet cable",
+    "Ethernet connected",
+    "Ethernet unavailable",
+    "Ethernet init failed",
+    "Wi-Fi config missing",
+    "Starting Wi-Fi",
+    "Wi-Fi device failed",
+    "Wi-Fi network failed",
+    "Starting Wi-Fi WPA",
+    "Wi-Fi WPA failed",
+    "Wi-Fi connecting",
+    "Wi-Fi connected",
+    "Wi-Fi timeout",
+    "Wi-Fi unavailable",
+    "Wi-Fi device missing",
+    "Wi-Fi unsupported"
+};
+
+static const char *network_status_label(int status) {
+  if (status < 0 || status >= CIRCLE_NETWORK_STATUS_COUNT) {
+    return "Unknown";
+  }
+  return network_status_labels[status];
+}
+
+void menu_update_network_status(void);
+
+static void network_status_changed(void) {
+  menu_update_network_status();
+}
+
+void menu_update_network_status(void) {
+  if (network_status_item == NULL) {
+    return;
+  }
+
+  char status[MAX_STR_VAL_LEN];
+  int status_code = circle_get_network_status();
+    strncpy(status, network_status_label(status_code), sizeof(status) - 1);
+    status[sizeof(status) - 1] = '\0';
+    strncpy(network_status_item->displayed_value, status,
+      sizeof(network_status_item->displayed_value) - 1);
+    network_status_item->displayed_value[
+        sizeof(network_status_item->displayed_value) - 1] = '\0';
+
+    if (network_ip_address_item != NULL) {
+      char address[MAX_STR_VAL_LEN];
+      const char *ip_address = " ";
+      if (circle_get_network_ip_address(address, sizeof(address))) {
+        ip_address = address;
+      }
+      strncpy(network_ip_address_item->str_value, ip_address,
+        sizeof(network_ip_address_item->str_value) - 1);
+      network_ip_address_item->str_value[
+    sizeof(network_ip_address_item->str_value) - 1] = '\0';
+      strncpy(network_ip_address_item->displayed_value, ip_address,
+        sizeof(network_ip_address_item->displayed_value) - 1);
+      network_ip_address_item->displayed_value[
+    sizeof(network_ip_address_item->displayed_value) - 1] = '\0';
+    }
+}
 
 static void update_wifi_menu_enabled(void) {
   if (network_device_item != NULL &&
@@ -567,6 +633,7 @@ static void files_cursor_listener(struct menu_item* parent,
 
 static void main_menu_cursor_listener(struct menu_item* parent, int new_pos) {
   (void) parent;
+  menu_update_network_status();
   int network_device_is_selected =
       network_device_item != NULL &&
       new_pos == network_device_item->render_index;
@@ -2668,19 +2735,7 @@ static void menu_value_changed(struct menu_item *item) {
     circle_reset_gpio(emu_get_gpio_config());
     return;
   case MENU_NETWORKING:
-    if (network_status_item != NULL) {
-      char address[32];
-      const char *status = "DISCONNECTED";
-      if (circle_get_network_ip_address(address, sizeof(address))) {
-        status = address;
-      }
-      strncpy(network_status_item->str_value, status,
-              sizeof(network_status_item->str_value) - 1);
-      network_status_item->str_value[sizeof(network_status_item->str_value) - 1] = '\0';
-      strncpy(network_status_item->displayed_value, status,
-              sizeof(network_status_item->displayed_value) - 1);
-      network_status_item->displayed_value[sizeof(network_status_item->displayed_value) - 1] = '\0';
-    }
+    menu_update_network_status();
     return;
   case MENU_NETWORK_ENABLED:
     circle_set_acia_network_enabled(item->value != 0);
@@ -3481,6 +3536,49 @@ void build_menu(struct menu_item *root) {
 
   ui_menu_add_divider(root);
 
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C64 ||
+    emux_machine_class == BMC64_MACHINE_CLASS_C128) {
+    network_status_item = ui_menu_add_read_only_heading(
+      root, "Network Status:");
+    parent = ui_menu_add_folder(root, "Network");
+    parent->id = MENU_NETWORKING;
+
+    child = network_device_item =
+      ui_menu_add_multiple_choice(MENU_NETWORK_ENABLED, parent, "Network Device");
+    child->num_choices = 3;
+    child->value = 0;
+    strcpy(child->choices[0], "Off");
+    strcpy(child->choices[1], "Ethernet");
+    strcpy(child->choices[2], "WiFi");
+    child->choice_disabled[1] = !circle_has_onboard_ethernet();
+    child->choice_disabled[2] = !circle_has_onboard_wifi();
+
+    network_ip_address_item = ui_menu_add_button_with_value(
+      MENU_ID_DO_NOTHING, parent, "IP Address", 0,
+      " ", " ");
+    network_ip_address_item->disabled = 1;
+
+    parent = wifi_settings_item = ui_menu_add_folder(parent, "WiFi Settings");
+    wifi_ssid_item = ui_menu_add_text_field_limit(
+      MENU_WIFI_SSID, parent, "WiFi SSID", "", 32);
+    wifi_ssid_item->textfield_right_aligned = 1;
+    wifi_security_item = ui_menu_add_multiple_choice(
+      MENU_WIFI_SECURITY, parent, "WiFi Security");
+    wifi_security_item->num_choices = 2;
+    strcpy(wifi_security_item->choices[0], "WPA-PSK");
+    strcpy(wifi_security_item->choices[1], "None");
+    wifi_country_item = ui_menu_add_text_field_limit(
+      MENU_WIFI_COUNTRY, parent, "WiFi Country Code", "US", 2);
+    wifi_country_item->textfield_right_aligned = 1;
+    wifi_connect_item = ui_menu_add_button(MENU_WIFI_CONNECT, parent,
+                         "Enter Password & Reboot");
+    update_wifi_menu_enabled();
+
+    circle_set_network_status_changed_handler(network_status_changed);
+    menu_update_network_status();
+    ui_menu_add_divider(root);
+  }
+
   switch (emux_machine_class) {
     case BMC64_MACHINE_CLASS_PLUS4EMU:
      ui_menu_add_button(MENU_LOADPRG, root, "Load .PRG File...");
@@ -4004,43 +4102,6 @@ void build_menu(struct menu_item *root) {
         ui_menu_add_button(MENU_CONFIGURE_GPIO,
                         parent, "Configure Custom GPIO...");
      }
-
-  if (emux_machine_class == BMC64_MACHINE_CLASS_C64 ||
-      emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-    parent = ui_menu_add_folder(root, "Network");
-    parent->id = MENU_NETWORKING;
-
-    child = network_device_item =
-      ui_menu_add_multiple_choice(MENU_NETWORK_ENABLED, parent, "Network Device");
-    child->num_choices = 3;
-    child->value = 0;
-    strcpy(child->choices[0], "Off");
-    strcpy(child->choices[1], "Ethernet");
-    strcpy(child->choices[2], "WiFi");
-    child->choice_disabled[1] = !circle_has_onboard_ethernet();
-    child->choice_disabled[2] = !circle_has_onboard_wifi();
-
-    network_status_item = ui_menu_add_button_with_value(
-        MENU_ID_DO_NOTHING, parent, "IP Address", 0,
-        "DISCONNECTED", "DISCONNECTED");
-    network_status_item->disabled = 1;
-
-    parent = wifi_settings_item = ui_menu_add_folder(parent, "WiFi Settings");
-    wifi_ssid_item = ui_menu_add_text_field_limit(
-      MENU_WIFI_SSID, parent, "WiFi SSID", "", 32);
-    wifi_ssid_item->textfield_right_aligned = 1;
-    wifi_security_item = ui_menu_add_multiple_choice(
-      MENU_WIFI_SECURITY, parent, "WiFi Security");
-    wifi_security_item->num_choices = 2;
-    strcpy(wifi_security_item->choices[0], "WPA-PSK");
-    strcpy(wifi_security_item->choices[1], "None");
-    wifi_country_item = ui_menu_add_text_field_limit(
-      MENU_WIFI_COUNTRY, parent, "WiFi Country Code", "US", 2);
-    wifi_country_item->textfield_right_aligned = 1;
-    wifi_connect_item = ui_menu_add_button(MENU_WIFI_CONNECT, parent,
-                         "Enter Password & Reboot");
-    update_wifi_menu_enabled();
-  }
 
   ui_menu_add_divider(root);
 

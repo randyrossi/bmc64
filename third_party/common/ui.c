@@ -476,6 +476,8 @@ static void ui_action_frame() {
 }
 
 void ui_render_single_frame() {
+  menu_update_network_status();
+
   // Start with transparent
   memset(ui_fb, TRANSPARENT_COLOR, ui_fb_h * ui_fb_pitch);
 
@@ -952,6 +954,11 @@ static struct menu_item *ui_menu_add_read_only(struct menu_item *folder,
   return new_item;
 }
 
+struct menu_item *ui_menu_add_read_only_heading(struct menu_item *folder,
+                                                const char *name) {
+  return ui_menu_add_read_only(folder, name, READ_ONLY_HEADING);
+}
+
 struct menu_item *ui_menu_add_text_field(int id, struct menu_item *folder,
                                          char *name, char *value_str) {
   return ui_menu_add_text_field_limit(id, folder, name, value_str,
@@ -1008,7 +1015,13 @@ static void ui_render_children(struct menu_item *node,
         ui_draw_text(node->name,
            node->menu_left + (indent + 1) * 8, y, colour);
 
-        if (node->type == FOLDER) {
+        if (node->type == READ_ONLY_HEADING &&
+          node->displayed_value[0] != '\0') {
+          ui_draw_text(node->displayed_value,
+                 node->menu_left + node->menu_width -
+                   ui_text_width(node->displayed_value),
+                 y, colour);
+        } else if (node->type == FOLDER) {
           if (node->is_expanded)
             ui_draw_text("-", node->menu_left + (indent)*8, y, colour);
           else

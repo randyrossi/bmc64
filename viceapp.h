@@ -291,8 +291,8 @@ public:
   ViceStdioApp(const char *kernel)
     : ViceScreenApp(kernel), mUSBHCII(&mInterrupt, &mTimer, TRUE),
           mEMMC(&mInterrupt, &mTimer, &mActLED), mNetworkDevice(0),
-          mWLAN(nullptr), mNet(nullptr), mWPASupplicant(nullptr)
-        {}
+          mWLAN(nullptr), mNet(nullptr), mWPASupplicant(nullptr),
+          mNetworkStatus(0) {}
 
   virtual bool Initialize(void);
   virtual void Cleanup(void);
@@ -302,6 +302,7 @@ public:
   int circle_unmount_usb(int usb);
   int WifiIsRunning(void) const;
   int ConnectWifi(void);
+  int GetNetworkStatus(void) const;
   int ScanWifiAccessPoints(struct wifi_access_point *access_points,
                            unsigned int max_access_points);
 
@@ -314,6 +315,7 @@ private:
   void InitBootStat();
   void LoadNetworkDevice();
   void InitializeNetwork();
+  void SetNetworkStatus(int status);
 
 protected:
   // Called after VICE has completed booting so we no longer
@@ -326,6 +328,7 @@ protected:
   CBcm4343Device *mWLAN;
   CNetSubSystem *mNet;
   CWPASupplicant *mWPASupplicant;
+  int mNetworkStatus;
   FATFS mFileSystemSD;
   FATFS mFileSystemUSB1;
   FATFS mFileSystemUSB2;

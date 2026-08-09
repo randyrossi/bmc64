@@ -169,6 +169,8 @@ struct menu_item *ui_menu_add_range(int id, struct menu_item *folder,
                                     int initial_value);
 struct menu_item *ui_menu_add_folder(struct menu_item *folder, char *name);
 struct menu_item *ui_menu_add_divider(struct menu_item *folder);
+struct menu_item *ui_menu_add_read_only_heading(struct menu_item *folder,
+                                                const char *name);
 struct menu_item *ui_menu_add_text_field(int id, struct menu_item *folder,
                                          char *name, char *value);
 struct menu_item *ui_menu_add_text_field_limit(int id, struct menu_item *folder,

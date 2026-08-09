@@ -94,8 +94,34 @@
 #define BTN_ASSIGN_RESET_HARD 15
 #define BTN_ASSIGN_RESET_SOFT 16
 
-// Returns nonzero and writes the current WLAN address when DHCP is bound.
+enum circle_network_status {
+  CIRCLE_NETWORK_DISABLED,
+  CIRCLE_NETWORK_ETHERNET_INITIALIZING,
+  CIRCLE_NETWORK_ETHERNET_WAITING_FOR_DHCP,
+  CIRCLE_NETWORK_ETHERNET_CONNECTED,
+  CIRCLE_NETWORK_ETHERNET_UNAVAILABLE,
+  CIRCLE_NETWORK_ETHERNET_INIT_FAILED,
+  CIRCLE_NETWORK_WIFI_CONFIG_MISSING,
+  CIRCLE_NETWORK_WIFI_DEVICE_INITIALIZING,
+  CIRCLE_NETWORK_WIFI_DEVICE_INIT_FAILED,
+  CIRCLE_NETWORK_WIFI_NETWORK_INIT_FAILED,
+  CIRCLE_NETWORK_WIFI_WPA_INITIALIZING,
+  CIRCLE_NETWORK_WIFI_WPA_INIT_FAILED,
+  CIRCLE_NETWORK_WIFI_CONNECTING,
+  CIRCLE_NETWORK_WIFI_CONNECTED,
+  CIRCLE_NETWORK_WIFI_CONNECTION_TIMEOUT,
+  CIRCLE_NETWORK_WIFI_UNAVAILABLE,
+  CIRCLE_NETWORK_WIFI_DEVICE_NOT_INITIALIZED,
+  CIRCLE_NETWORK_WIFI_UNSUPPORTED,
+  CIRCLE_NETWORK_STATUS_COUNT
+};
+
+// Returns nonzero and writes the current address when DHCP is bound.
 int circle_get_network_ip_address(char *address, unsigned int address_size);
+int circle_get_network_status(void);
+typedef void circle_network_status_changed_handler_t(void);
+void circle_set_network_status_changed_handler(
+  circle_network_status_changed_handler_t *handler);
 int circle_get_acia_network_enabled(void);
 int circle_set_acia_network_enabled(int enabled);
 int circle_has_onboard_ethernet(void);

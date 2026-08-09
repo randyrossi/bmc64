@@ -22,6 +22,7 @@
 
 static CNetSubSystem *network_subsystem;
 static ViceStdioApp *stdio_app;
+static circle_network_status_changed_handler_t *network_status_changed_handler;
 
 static int HasOnboardWLAN(TMachineModel machine_model) {
   switch (machine_model) {
@@ -202,6 +203,9 @@ extern "C" int circle_get_network_ip_address(char *address,
 
   CString formatted_address;
   network_subsystem->GetConfig()->GetIPAddress()->Format(&formatted_address);
+  if (strcmp(static_cast<const char *>(formatted_address), "0.0.0.0") == 0) {
+    return 0;
+  }
   strncpy(address, static_cast<const char *>(formatted_address), address_size - 1);
   address[address_size - 1] = '\0';
   return 1;
@@ -210,6 +214,20 @@ extern "C" int circle_get_network_ip_address(char *address,
   (void) address_size;
   return 0;
 #endif
+}
+
+extern "C" int circle_get_network_status(void) {
+#if defined(RASPI_C64) || defined(RASPI_C128)
+  if (stdio_app != nullptr) {
+    return stdio_app->GetNetworkStatus();
+  }
+#endif
+  return CIRCLE_NETWORK_DISABLED;
+}
+
+extern "C" void circle_set_network_status_changed_handler(
+    circle_network_status_changed_handler_t *handler) {
+  network_status_changed_handler = handler;
 }
 
 extern "C" int circle_scan_wifi_access_points(
@@ -712,31 +730,37 @@ void ViceStdioApp::LoadNetworkDevice() {
 void ViceStdioApp::InitializeNetwork() {
 #if defined(RASPI_C64) || defined(RASPI_C128)
   if (mNetworkDevice == 0) {
+    SetNetworkStatus(CIRCLE_NETWORK_DISABLED);
     mLogger.Write(GetKernelName(), LogNotice, "Networking not enabled");
     return;
   }
 
   if (mNetworkDevice == 1 &&
       HasOnboardEthernet(mMachineInfo.GetMachineModel())) {
+    SetNetworkStatus(CIRCLE_NETWORK_ETHERNET_INITIALIZING);
     mNet = new CNetSubSystem(0, 0, 0, 0, "bmc64", NetDeviceTypeEthernet);
     if (!mNet->Initialize(FALSE)) {
+      SetNetworkStatus(CIRCLE_NETWORK_ETHERNET_INIT_FAILED);
       mLogger.Write(GetKernelName(), LogError,
                     "Cannot initialize Ethernet network stack");
       delete mNet;
       mNet = nullptr;
     } else {
       network_subsystem = mNet;
+      SetNetworkStatus(CIRCLE_NETWORK_ETHERNET_WAITING_FOR_DHCP);
       mLogger.Write(GetKernelName(), LogNotice, "Networking: Ethernet initialized");
     }
     return;
   }
 
   if (mNetworkDevice == 1) {
+    SetNetworkStatus(CIRCLE_NETWORK_ETHERNET_UNAVAILABLE);
     mLogger.Write(GetKernelName(), LogNotice,
                   "Ethernet selected, but this Raspberry Pi has no onboard Ethernet");
   }
 
   if (!HasOnboardWLAN(mMachineInfo.GetMachineModel())) {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_UNAVAILABLE);
     mLogger.Write(GetKernelName(), LogError,
                   "Wi-Fi selected, but this Raspberry Pi has no onboard WLAN");
     return;
@@ -749,6 +773,7 @@ void ViceStdioApp::InitializeNetwork() {
 
   FIL configFile;
   if (f_open(&configFile, (const char *)configPath, FA_READ) != FR_OK) {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_CONFIG_MISSING);
     mLogger.Write(GetKernelName(), LogError,
                   "Wi-Fi enabled but WPA config is missing: %s",
                   (const char *)configPath);
@@ -756,8 +781,10 @@ void ViceStdioApp::InitializeNetwork() {
   }
   f_close(&configFile);
 
+  SetNetworkStatus(CIRCLE_NETWORK_WIFI_DEVICE_INITIALIZING);
   mWLAN = new CBcm4343Device((const char *)firmwarePath);
   if (!mWLAN->Initialize()) {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_DEVICE_INIT_FAILED);
     mLogger.Write(GetKernelName(), LogError, "Cannot initialize WLAN");
     delete mWLAN;
     mWLAN = nullptr;
@@ -766,6 +793,7 @@ void ViceStdioApp::InitializeNetwork() {
 
   mNet = new CNetSubSystem(0, 0, 0, 0, "bmc64", NetDeviceTypeWLAN);
   if (!mNet->Initialize(FALSE)) {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_NETWORK_INIT_FAILED);
     mLogger.Write(GetKernelName(), LogError, "Cannot initialize WLAN network stack");
     delete mNet;
     mNet = nullptr;
@@ -774,15 +802,42 @@ void ViceStdioApp::InitializeNetwork() {
     return;
   }
   network_subsystem = mNet;
+  SetNetworkStatus(CIRCLE_NETWORK_WIFI_WPA_INITIALIZING);
   mLogger.Write(GetKernelName(), LogNotice, "Networking: Wi-Fi initialized");
 
   mWPASupplicant = new CWPASupplicant((const char *)configPath);
   if (!mWPASupplicant->Initialize()) {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_WPA_INIT_FAILED);
     mLogger.Write(GetKernelName(), LogError, "Cannot initialize WPA supplicant");
     delete mWPASupplicant;
     mWPASupplicant = nullptr;
+  } else {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_CONNECTING);
   }
 #endif
+}
+
+void ViceStdioApp::SetNetworkStatus(int status) {
+  if (mNetworkStatus == status) {
+    return;
+  }
+  mNetworkStatus = status;
+  if (network_status_changed_handler != nullptr) {
+    network_status_changed_handler();
+  }
+}
+
+int ViceStdioApp::GetNetworkStatus(void) const {
+  if (mNet != nullptr && mNet->IsRunning()) {
+    CString address;
+    mNet->GetConfig()->GetIPAddress()->Format(&address);
+    if (strcmp((const char *)address, "0.0.0.0") != 0) {
+      return mNetworkDevice == 1 ? CIRCLE_NETWORK_ETHERNET_CONNECTED
+                                 : CIRCLE_NETWORK_WIFI_CONNECTED;
+    }
+  }
+
+  return mNetworkStatus;
 }
 
 int ViceStdioApp::WifiIsRunning(void) const {
@@ -796,10 +851,12 @@ int ViceStdioApp::WifiIsRunning(void) const {
 int ViceStdioApp::ConnectWifi(void) {
 #if defined(RASPI_C64) || defined(RASPI_C128)
   if (!HasOnboardWLAN(mMachineInfo.GetMachineModel())) {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_UNAVAILABLE);
     return 0;
   }
 
   if (mWLAN == nullptr) {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_DEVICE_NOT_INITIALIZED);
     mLogger.Write(GetKernelName(), LogError,
                   "Wi-Fi connection requested without WLAN");
     return 0;
@@ -807,11 +864,13 @@ int ViceStdioApp::ConnectWifi(void) {
 
   CString config_path;
   config_path.Format("%s:/wpa_supplicant.conf", mViceOptions.GetDiskVolume());
+  SetNetworkStatus(CIRCLE_NETWORK_WIFI_CONNECTING);
   mLogger.Write(GetKernelName(), LogNotice,
                 "Wi-Fi reconnecting with %s", (const char *)config_path);
   delete mWPASupplicant;
   mWPASupplicant = new CWPASupplicant((const char *)config_path);
   if (!mWPASupplicant->Initialize()) {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_WPA_INIT_FAILED);
     mLogger.Write(GetKernelName(), LogError,
                   "Cannot restart WPA supplicant");
     delete mWPASupplicant;
@@ -826,13 +885,16 @@ int ViceStdioApp::ConnectWifi(void) {
       mLogger.Write(GetKernelName(), LogError,
                     "Wi-Fi connection timed out after %u seconds",
                     WIFI_CONNECT_TIMEOUT_US / 1000000);
+      SetNetworkStatus(CIRCLE_NETWORK_WIFI_CONNECTION_TIMEOUT);
       return 0;
     }
     CScheduler::Get()->MsSleep(100);
   }
   mLogger.Write(GetKernelName(), LogNotice, "Wi-Fi connected");
+  SetNetworkStatus(CIRCLE_NETWORK_WIFI_CONNECTED);
   return 1;
 #else
+  SetNetworkStatus(CIRCLE_NETWORK_WIFI_UNSUPPORTED);
   mLogger.Write(GetKernelName(), LogError,
                 "Wi-Fi connection is not supported by this build");
   return 0;

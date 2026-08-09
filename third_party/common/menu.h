@@ -646,6 +646,7 @@ int statusbar_always(void);
 
 void menu_about_to_activate(void);
 void menu_about_to_deactivate(void);
+void menu_update_network_status(void);
 
 void menu_quick_func(int button_assignment);
 const char* function_to_string(int);
