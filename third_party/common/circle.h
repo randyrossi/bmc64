@@ -123,6 +123,8 @@ typedef void circle_network_status_changed_handler_t(void);
 void circle_set_network_status_changed_handler(
   circle_network_status_changed_handler_t *handler);
 int circle_get_acia_network_enabled(void);
+int circle_get_acia_network_address(void);
+int circle_set_acia_network_address(int address);
 int circle_set_acia_network_enabled(int enabled);
 int circle_has_onboard_ethernet(void);
 int circle_has_onboard_wifi(void);

@@ -444,3 +444,6 @@
   * Add Network Status menu item for clearer network state
   * Move Network menu folder below Network Status
 
+## 4.2-p9
+  * Add a $DF00 SwiftLink modem-address option for IDE64 compatibility
+

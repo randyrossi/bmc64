@@ -173,10 +173,23 @@ extern "C" int circle_get_acia_network_enabled(void) {
   return enabled;
 }
 
+extern "C" int circle_get_acia_network_address(void) {
+  int address = 0;
+  resources_get_int("Acia1Base", &address);
+  return address;
+}
+
+extern "C" int circle_set_acia_network_address(int address) {
+  if (address != 0xde00 && address != 0xdf00) {
+    return 0;
+  }
+  return resources_set_int("Acia1Mode", 1) == 0 &&
+         resources_set_int("Acia1Base", address) == 0;
+}
+
 extern "C" int circle_set_acia_network_enabled(int enabled) {
   if (enabled) {
-    if (resources_set_int("Acia1Mode", 1) < 0 ||
-        resources_set_int("Acia1Base", 56832) < 0) {
+    if (resources_set_int("Acia1Mode", 1) < 0) {
       return 0;
     }
   }
@@ -184,6 +197,15 @@ extern "C" int circle_set_acia_network_enabled(int enabled) {
 }
 #else
 extern "C" int circle_get_acia_network_enabled(void) {
+  return 0;
+}
+
+extern "C" int circle_get_acia_network_address(void) {
+  return 0;
+}
+
+extern "C" int circle_set_acia_network_address(int address) {
+  (void) address;
   return 0;
 }
 

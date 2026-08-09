@@ -57,7 +57,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "4.2-p8"
+#define VERSION_STRING "4.2-p9"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -144,6 +144,7 @@ struct menu_item *active_display_item;
 static struct menu_item *network_device_item;
 static struct menu_item *network_status_item;
 static struct menu_item *network_ip_address_item;
+static struct menu_item *network_modem_address_item;
 static struct menu_item *wifi_settings_item;
 static struct menu_item *wifi_ssid_item;
 static struct menu_item *wifi_security_item;
@@ -1185,6 +1186,10 @@ static int save_settings() {
     saved_network_device = network_device_item->value;
     network_reboot_prompted = 0;
   }
+  if (network_modem_address_item != NULL) {
+    fprintf(fp, "network_modem_address=%d\n",
+            network_modem_address_item->value);
+  }
   fprintf(fp, "h_center_0=%d\n", h_center_item[0]->value);
   fprintf(fp, "v_center_0=%d\n", v_center_item[0]->value);
   fprintf(fp, "h_border_0=%d\n", h_border_item[0]->value);
@@ -1478,6 +1483,12 @@ static void load_settings() {
       if (value >= 0 && value < network_device_item->num_choices) {
         network_device_item->value = value;
         saved_network_device = value;
+      }
+    } else if (network_modem_address_item != NULL &&
+               strcmp(name, "network_modem_address") == 0) {
+      if (value >= 0 && value < network_modem_address_item->num_choices &&
+          circle_set_acia_network_address(value == 0 ? 0xde00 : 0xdf00)) {
+        network_modem_address_item->value = value;
       }
     } else if (strcmp(name, "keyset_1_up") == 0) {
       keyset_codes[0][KEYSET_UP] = value;
@@ -2742,6 +2753,12 @@ static void menu_value_changed(struct menu_item *item) {
     update_wifi_menu_enabled();
     network_reboot_prompted = 0;
     return;
+  case MENU_NETWORK_MODEM_ADDRESS:
+    if (!circle_set_acia_network_address(item->value == 0 ? 0xde00 : 0xdf00)) {
+      item->value = circle_get_acia_network_address() == 0xdf00 ? 1 : 0;
+      ui_error("Cannot set modem address");
+    }
+    return;
   case MENU_WIFI_SSID:
     if (!circle_wifi_is_running()) {
       ui_confirm_wrapped_labels("Wi-Fi scan unavailable",
@@ -3552,6 +3569,13 @@ void build_menu(struct menu_item *root) {
     strcpy(child->choices[2], "WiFi");
     child->choice_disabled[1] = !circle_has_onboard_ethernet();
     child->choice_disabled[2] = !circle_has_onboard_wifi();
+
+    child = network_modem_address_item = ui_menu_add_multiple_choice(
+      MENU_NETWORK_MODEM_ADDRESS, parent, "Modem Address");
+    child->num_choices = 2;
+    child->value = circle_get_acia_network_address() == 0xdf00 ? 1 : 0;
+    strcpy(child->choices[0], "DE00");
+    strcpy(child->choices[1], "DF00");
 
     network_ip_address_item = ui_menu_add_button_with_value(
       MENU_ID_DO_NOTHING, parent, "IP Address", 0,

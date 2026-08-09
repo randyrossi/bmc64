@@ -8,13 +8,16 @@ marked as untested in the changelog.
 
 BMC64 runs without Linux. The Raspberry Pi networking stack is initialized at
 startup and is used by a software modem connected to VICE's ACIA1 interface.
-The emulated C64 program sees a SwiftLink/Turbo232-compatible ACIA at `$DE00`.
-The BMC modem translates modem commands into outbound TCP connections.
+The emulated C64 program sees a SwiftLink/Turbo232-compatible ACIA at `$DE00`
+by default. The BMC modem translates modem commands into outbound TCP
+connections.
 
 Current behavior:
 
 - Networking is available from the `Network` menu on C64 and C128.
 - The choices are `Off`, `Ethernet`, and `WiFi`.
+- `Modem Address` selects `$DE00` (default) or `$DF00` for IDE64 systems, which can
+  occupy `$DE00`.
 - Ethernet uses the Raspberry Pi's onboard Ethernet controller when present.
 - Wi-Fi uses the Raspberry Pi's onboard WLAN controller when present.
 - The modem resolves DNS names and opens TCP connections.
@@ -163,9 +166,11 @@ For further details on CCGMS Ultimate refer to the CSDb release page.
 
 ## Using C64 OS Networking
 
-C64 OS uses its `slde.zi` SwiftLink driver at `$DE00`. The driver sends a
-ZiModem-compatible initialization command, uses `ATW` and `ATI3` to identify
-the host connection, and dials the CNP service using a quoted `ATD` target.
+C64 OS uses its `slde.zi` SwiftLink driver at `$DE00`. For IDE64, select
+`DF00 (IDE64)` in BMC64's `Network` menu and use the C64 OS SwiftLink driver
+configured for `$DF00`. The driver sends a ZiModem-compatible initialization
+command, uses `ATW` and `ATI3` to identify the host connection, and dials the
+CNP service using a quoted `ATD` target.
 
 Networking in C64 OS uses C64 Network Protocol (CNP) and you need to connect to a CNP server and have an account on it. For full information on C64 OS Networking read the [C64 OS Networking Guide](https://c64os.com/c64os/networkingguide/).
 
