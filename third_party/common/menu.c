@@ -57,7 +57,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "4.2-p7"
+#define VERSION_STRING "4.2-p8"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
