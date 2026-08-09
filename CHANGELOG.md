@@ -439,3 +439,8 @@
   * Fix DEVICE NOT FOUND issue when connecting CMD HD images for the first time
   * Support alternate version of THEC64 keyboard found
   * Tested on PiZeroW, PiZero2W, Pi2B, Pi3A+, Pi3B+ models
+
+## 4.2-p8
+  * Add Network Status menu item for clearer network state
+  * Move Network menu folder below Network Status
+
