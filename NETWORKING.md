@@ -16,8 +16,8 @@ Current behavior:
 
 - Networking is available from the `Network` menu on C64 and C128.
 - The choices are `Off`, `Ethernet`, and `WiFi`.
-- `Modem Address` selects `$DE00` (default) or `$DF00` for IDE64 systems, which can
-  occupy `$DE00`.
+- `Modem Address` selects `$DE00` (default) or alternatively `$D700` or `$DF00`. 
+  - `$D700` is recommended if you are using an IDE64 and REU at the same time.
 - Ethernet uses the Raspberry Pi's onboard Ethernet controller when present.
 - Wi-Fi uses the Raspberry Pi's onboard WLAN controller when present.
 - The modem resolves DNS names and opens TCP connections.
@@ -58,11 +58,12 @@ firmware on the SD card.
 2. Accept the reboot prompt, or save the settings and reboot.
 3. After reboot, open `Network -> WiFi Settings`.
 4. Use the Wi-Fi scan to select an access point when scanning is available.
-5. Select `WPA-PSK` or `None` as appropriate.
-6. Set the two-letter Wi-Fi country code.
-7. Choose `Enter Password & Reboot`, enter the WPA password, and select
+5. Select the `Modem Address` desired.
+6. Select `WPA-PSK` or `None` as appropriate.
+7. Set the two-letter Wi-Fi country code.
+8. Choose `Enter Password & Reboot`, enter the WPA password, and select
    `Save & Reboot`.
-8. After reboot, open `Network` and verify the assigned `IP Address`.
+9. After reboot, open `Network` and verify the assigned `IP Address`.
 
 Selecting Wi-Fi makes the Wi-Fi stack available at boot. It may take a 5-20 seconds after boot to connect to an access point depending if it needs to retry.
 
@@ -150,8 +151,8 @@ The current BMC64 changelog specifically calls out this setup:
 
 1. Enable Ethernet or Wi-Fi and reboot BMC64.
 2. Start CCGMS Ultimate.
-3. In CCGMS, select the `Swift/DE` modem. `DE` is the ACIA address used by the
-   BMC modem; do not select a physical user-port modem or a PC serial device.
+3. In CCGMS, select the `Swift/DE` or appropriate modem. 
+   * `D7`, `DE` or `DF` should match the Modem address selected.
 4. Use CCGMS's autodialer/connection screen with the BBS hostname or IP address
    and TCP port.
 5. If entering commands directly in the terminal, use the BMC modem syntax,
@@ -166,9 +167,13 @@ For further details on CCGMS Ultimate refer to the CSDb release page.
 
 ## Using C64 OS Networking
 
-C64 OS uses its `slde.zi` SwiftLink driver at `$DE00`. For IDE64, select
-`DF00 (IDE64)` in BMC64's `Network` menu and use the C64 OS SwiftLink driver
-configured for `$DF00`. The driver sends a ZiModem-compatible initialization
+C64 OS provides a SwiftLink driver for each BMC64 modem address: use
+`sld7.zi` for `$D700`, `slde.zi` for `$DE00`, or `sldf.zi` for `$DF00`.
+`$D700` with `sld7.zi` is recommended when using the IDE64 C64 OS image with
+an REU enabled, because it leaves the IDE64 and REU address space available
+and you can use C64 OS fast switching with the REU enabled. 
+
+The driver sends a ZiModem-compatible initialization
 command, uses `ATW` and `ATI3` to identify the host connection, and dials the
 CNP service using a quoted `ATD` target.
 
@@ -176,11 +181,12 @@ Networking in C64 OS uses C64 Network Protocol (CNP) and you need to connect to 
 
 Quick start for BMC64:
 
-1. Configure Ethernet or Wi-Fi in BMC64 and confirm that `Network` shows an
-  assigned IP address. The C64 OS Wi-Fi fields do not configure the Raspberry
-  Pi; BMC64 retains their SSID only so the driver can query it with `ATI3`.
-1. In C64 OS, open `Settings`, then `Network`. On the `Drvr` tab, select
-  `slde.zi`.
+1. Configure Ethernet or Wi-Fi in BMC64 and confirm that `Network Status` shows as
+  connected. 
+    * Note: The C64 OS Wi-Fi fields do not configure the Raspberry Pi WiFi.
+1. In C64 OS, open `Settings`, then `Network`. On the `Drvr` tab, select the
+  driver matching BMC64's `Modem Address`: `sld7.zi` for `$D700`, `slde.zi`
+  for `$DE00`, or `sldf.zi` for `$DF00`.
 1. Set both `Ini.Baud` and `Max.Baud` to `38400`, save the settings, and run
   `Test`. It must report `Pass` before attempting CNP.
 1. On the `WiFi` tab, enter non-empty values and use `Join` so C64 OS can
