@@ -445,5 +445,7 @@
   * Move Network menu folder below Network Status
 
 ## 4.2-p9
-  * Add a $DF00 SwiftLink modem-address option for IDE64 compatibility
-
+  * Add $D700 and $DF00 SwiftLink modem-address options for IDE64 compatibility
+  * Add menu items to be able to configure IDE64 settings
+  * Flush IDE64 and CMD HD image writes to disk to prevent possible data loss
+  * Ignore 0 length seek events to speed up cartridge loading
