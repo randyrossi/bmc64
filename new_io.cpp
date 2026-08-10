@@ -60,11 +60,12 @@ struct _CIRCLE_DIR {
 // mode will not work as expected.
 //
 // When a file is opened for READ_WRITE, fat fs is used to
-// immediately load the contents of the existing file into ram.
-// The input fat fs file is immediatly closed in this case.
-// Writes & seeks use the ram copy. Only when the file is closed
-// will the fatfs system be used to create a new file from the ram.
-// Again, seeking past the file's current length is not supported.
+// immediately load the contents of the existing file into RAM,
+// while retaining the read/write FatFs handle. Reads and seeks use
+// the RAM copy; writes also update the corresponding range in the
+// backing file. The caller's fsync() requests commit those writes to
+// the storage device. Seeking past the current file length is not
+// supported.
 
 #define MAX_OPEN_FILES 10
 #define MAX_OPEN_DIRS 10
@@ -381,9 +382,7 @@ extern "C" int _open(char *file, int flags, int mode) {
          FA_WRITE | FA_CREATE_ALWAYS);
     } else {
       assert(masked_flags == O_RDWR);
-      // Note: We open read only because this will be slurped and changed
-      // in memory.
-      result = f_open(&newFile.file, circlePath.path, FA_READ);
+      result = f_open(&newFile.file, circlePath.path, FA_READ | FA_WRITE);
     }
 
     if (result != FR_OK) {
@@ -403,10 +402,6 @@ extern "C" int _open(char *file, int flags, int mode) {
     // When file is opened O_RDWR, slurp it into memory.
     if (masked_flags == O_RDWR) {
        if (slurp_file(newFile)) {
-          errno = ENFILE;
-          return -1;
-       }
-       if (f_close(&newFile.file) != FR_OK) {
           errno = ENFILE;
           return -1;
        }
@@ -432,19 +427,8 @@ extern "C" int _close(int fildes) {
     return -1;
   }
 
-  if (file.contents) {
-     // Only open if something was actually written to memory
-     if (file.mode == O_RDWR && file.written_to) {
-        // Assert FIL is not used
-        file.fopen_called = 1;
-        if (f_open(&file.file, file.fname,
-                      FA_WRITE | FA_CREATE_ALWAYS) != FR_OK) {
-           // We won't be able to flush in memory changes back to disk.
-        }
-     }
-
-     // Always flush to disk for WRONLY but only if written to for RDRW
-     if ((file.mode == O_RDWR && file.written_to) || file.mode == O_WRONLY) {
+    if (file.contents) {
+      if (file.mode == O_WRONLY) {
         // Dump contents of memory buffer to actual file.
         unsigned int num_written;
         if (f_write(&file.file, file.contents,
@@ -469,8 +453,27 @@ extern "C" int _close(int fildes) {
     file.contents = nullptr;
   } 
   
-  // If we opened for RDWR but never wrote, nothing do to.
   if (need_close && f_close(&file.file) != FR_OK) {
+    errno = EIO;
+    return -1;
+  }
+
+  return 0;
+}
+
+extern "C" int fsync(int fildes) {
+  if (fildes < 0 || static_cast<unsigned int>(fildes) >= MAX_OPEN_FILES) {
+    errno = EBADF;
+    return -1;
+  }
+
+  CircleFile &file = fileTab[fildes];
+  if (!file.in_use || !file.fopen_called) {
+    errno = EBADF;
+    return -1;
+  }
+
+  if (f_sync(&file.file) != FR_OK) {
     errno = EIO;
     return -1;
   }
@@ -539,8 +542,10 @@ extern "C" int _write(int fildes, char *ptr, int len) {
     return -1;
   }
 
-  // Mark this dirty so it will be flushed from memory to disk on close
+  // Keep the RAM cache coherent with the on-disk image.
   file.written_to = 1;
+
+  unsigned int write_position = file.position;
 
   // Nothing allocated yet? Allocate now.
   if (file.contents == nullptr) {
@@ -560,6 +565,16 @@ extern "C" int _write(int fildes, char *ptr, int len) {
   file.position += len;
   if (file.position > file.size) {
      file.size = file.position;
+  }
+
+  if (file.mode == O_RDWR) {
+     unsigned int num_written = 0;
+     if (f_lseek(&file.file, write_position) != FR_OK ||
+         f_write(&file.file, ptr, len, &num_written) != FR_OK ||
+         num_written != static_cast<unsigned int>(len)) {
+       errno = EIO;
+       return -1;
+     }
   }
 
   return len;

@@ -32,6 +32,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "lib.h"
 #include "log.h"
@@ -230,6 +231,11 @@ int32_t scsi_image_write(struct scsi_context_s *context)
         return -4;
     }
     fflush(fhd);
+    if (fsync(fileno(fhd)) < 0) {
+        CRIT((ERR, "SCSI: error synchronizing disk %d at sector 0x%x",
+            context->target, context->address));
+        return -4;
+    }
 
     LOG2((LOG, "SCSI: write disk %d at sector 0x%x", context->target,
         context->address));
