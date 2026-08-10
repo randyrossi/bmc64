@@ -942,6 +942,17 @@ void emux_handle_rom_change(struct menu_item* item, fullpath_func f_fullpath) {
   }
 }
 
+int emux_handle_ide64_image_change(int device, const char *path) {
+  if (device >= 1 && device <= 4) {
+    int result = resources_set_string_sprintf("IDE64Image%i", path, device);
+    if (result == 0) {
+      machine_trigger_reset(MACHINE_RESET_MODE_HARD);
+    }
+    return result;
+  }
+  return -1;
+}
+
 void emux_set_iec_dir(int unit, char* dir) {
   resources_set_string_sprintf("FSDevice%iDir", dir, unit);
 }

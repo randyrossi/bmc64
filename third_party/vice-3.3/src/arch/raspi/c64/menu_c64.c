@@ -43,6 +43,26 @@
 static int reu_size_to_index[8] =
     { 128, 256, 512, 1024, 2048, 4096, 8192, 16384 };
 
+static struct menu_item *ide64_autodetect_items[4];
+static struct menu_item *ide64_cylinders_items[4];
+static struct menu_item *ide64_heads_items[4];
+static struct menu_item *ide64_sectors_items[4];
+
+static void update_ide64_geometry_enabled(int device) {
+  int autodetect = ide64_autodetect_items[device]->value != 0;
+  ide64_cylinders_items[device]->disabled = autodetect;
+  ide64_heads_items[device]->disabled = autodetect;
+  ide64_sectors_items[device]->disabled = autodetect;
+}
+
+#ifdef HAVE_NETWORK
+static struct menu_item *ide64_usb_address_item;
+
+static void update_ide64_usb_enabled(int enabled) {
+  ide64_usb_address_item->disabled = enabled == 0;
+}
+#endif
+
 static void menu_value_changed(struct menu_item *item) {
    switch (item->id) {
       case MENU_REU:
@@ -52,6 +72,52 @@ static void menu_value_changed(struct menu_item *item) {
          if (item->value >=0 && item->value < 8)
             resources_set_int("REUsize", reu_size_to_index[item->value]);
          break;
+      case MENU_IDE64_VERSION:
+        resources_set_int("IDE64version", item->value);
+        break;
+      case MENU_IDE64_RTC_SAVE:
+        resources_set_int("IDE64RTCSave", item->value);
+        break;
+  #ifdef HAVE_NETWORK
+      case MENU_IDE64_USB_SERVER:
+        resources_set_int("IDE64USBServer", item->value);
+        update_ide64_usb_enabled(item->value);
+        break;
+      case MENU_IDE64_USB_SERVER_ADDRESS:
+        resources_set_string("IDE64USBServerAddress", item->str_value);
+        break;
+    #endif
+      case MENU_IDE64_AUTODETECT_1:
+      case MENU_IDE64_AUTODETECT_2:
+      case MENU_IDE64_AUTODETECT_3:
+      case MENU_IDE64_AUTODETECT_4: {
+        int device = item->id - MENU_IDE64_AUTODETECT_1;
+        resources_set_int_sprintf("IDE64AutodetectSize%i", item->value,
+                          device + 1);
+        update_ide64_geometry_enabled(device);
+        break;
+      }
+      case MENU_IDE64_CYLINDERS_1:
+      case MENU_IDE64_CYLINDERS_2:
+      case MENU_IDE64_CYLINDERS_3:
+      case MENU_IDE64_CYLINDERS_4:
+        resources_set_int_sprintf("IDE64Cylinders%i", item->value,
+                          item->id - MENU_IDE64_CYLINDERS_1 + 1);
+        break;
+      case MENU_IDE64_HEADS_1:
+      case MENU_IDE64_HEADS_2:
+      case MENU_IDE64_HEADS_3:
+      case MENU_IDE64_HEADS_4:
+        resources_set_int_sprintf("IDE64Heads%i", item->value,
+                          item->id - MENU_IDE64_HEADS_1 + 1);
+        break;
+      case MENU_IDE64_SECTORS_1:
+      case MENU_IDE64_SECTORS_2:
+      case MENU_IDE64_SECTORS_3:
+      case MENU_IDE64_SECTORS_4:
+        resources_set_int_sprintf("IDE64Sectors%i", item->value,
+                          item->id - MENU_IDE64_SECTORS_1 + 1);
+        break;
       default:
          break;
    }
@@ -184,7 +250,6 @@ struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
   ui_menu_add_button(MENU_SAVE_EASYFLASH, parent, "Save EasyFlash Now");
   ui_menu_add_button(MENU_CART_FREEZE, parent, "Cartridge Freeze");
   struct menu_item* child = ui_menu_add_folder(parent, "Ram Expansion");
-  ui_menu_add_button(MENU_SAVE_EASYFLASH, child, "REU");
 
   int tmp;
   resources_get_int("REU", &tmp);
@@ -212,6 +277,69 @@ struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
   strcpy(sizes_item->choices[5], "4096k");
   strcpy(sizes_item->choices[6], "8192k");
   strcpy(sizes_item->choices[7], "16384k");
+
+    parent = ui_menu_add_folder(parent, "IDE64");
+    child = ui_menu_add_multiple_choice(MENU_IDE64_VERSION, parent,
+                      "Cartridge Version");
+    child->on_value_changed = menu_value_changed;
+    child->num_choices = 3;
+    resources_get_int("IDE64version", &child->value);
+    strcpy(child->choices[0], "V3");
+    strcpy(child->choices[1], "V4.1");
+    strcpy(child->choices[2], "V4.2");
+
+    resources_get_int("IDE64RTCSave", &tmp);
+    child = ui_menu_add_toggle(MENU_IDE64_RTC_SAVE, parent,
+                 "Save RTC When Changed", tmp);
+    child->on_value_changed = menu_value_changed;
+
+  #ifdef HAVE_NETWORK
+    resources_get_int("IDE64USBServer", &tmp);
+    child = ui_menu_add_toggle(MENU_IDE64_USB_SERVER, parent,
+                 "Enable USB Server", tmp);
+    child->on_value_changed = menu_value_changed;
+
+    const char *usb_address;
+    resources_get_string("IDE64USBServerAddress", &usb_address);
+    ide64_usb_address_item = ui_menu_add_text_field_limit(
+      MENU_IDE64_USB_SERVER_ADDRESS, parent, "USB Server Address",
+      (char *)usb_address, MAX_STR_VAL_LEN - 1);
+    ide64_usb_address_item->on_value_changed = menu_value_changed;
+    ide64_usb_address_item->textfield_right_aligned = 1;
+    update_ide64_usb_enabled(tmp);
+  #endif
+
+    for (int device = 0; device < 4; device++) {
+    char label[20];
+    sprintf(label, "ATA Device %d", device + 1);
+    struct menu_item *device_menu = ui_menu_add_folder(parent, label);
+
+    child = ui_menu_add_button(MENU_IDE64_IMAGE_1 + device, device_menu, "Attach Image...");
+
+    resources_get_int_sprintf("IDE64AutodetectSize%i", &tmp, device + 1);
+    ide64_autodetect_items[device] = ui_menu_add_toggle(
+      MENU_IDE64_AUTODETECT_1 + device, device_menu, "Autodetect", tmp);
+    ide64_autodetect_items[device]->on_value_changed = menu_value_changed;
+
+    resources_get_int_sprintf("IDE64Cylinders%i", &tmp, device + 1);
+    ide64_cylinders_items[device] = ui_menu_add_range(
+      MENU_IDE64_CYLINDERS_1 + device, device_menu, "Cylinders", 1, 65535,
+      1, tmp);
+    ide64_cylinders_items[device]->on_value_changed = menu_value_changed;
+
+    resources_get_int_sprintf("IDE64Heads%i", &tmp, device + 1);
+    ide64_heads_items[device] = ui_menu_add_range(
+      MENU_IDE64_HEADS_1 + device, device_menu, "Heads", 1, 16, 1, tmp);
+    ide64_heads_items[device]->on_value_changed = menu_value_changed;
+
+    resources_get_int_sprintf("IDE64Sectors%i", &tmp, device + 1);
+    ide64_sectors_items[device] = ui_menu_add_range(
+      MENU_IDE64_SECTORS_1 + device, device_menu, "Sectors", 1, 63, 1,
+      tmp);
+    ide64_sectors_items[device]->on_value_changed = menu_value_changed;
+
+    update_ide64_geometry_enabled(device);
+    }
 
   return parent;
 }

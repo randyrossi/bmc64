@@ -24,6 +24,19 @@ static CNetSubSystem *network_subsystem;
 static ViceStdioApp *stdio_app;
 static circle_network_status_changed_handler_t *network_status_changed_handler;
 
+static const int acia_network_addresses[] = CIRCLE_ACIA_NETWORK_ADDRESS_VALUES;
+
+static int IsAciaNetworkAddress(int address) {
+  for (int index = 0;
+       index < (int)(sizeof(acia_network_addresses) /
+                     sizeof(acia_network_addresses[0])); index++) {
+    if (acia_network_addresses[index] == address) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
 static int HasOnboardWLAN(TMachineModel machine_model) {
   switch (machine_model) {
   case MachineModelZeroW:
@@ -180,7 +193,7 @@ extern "C" int circle_get_acia_network_address(void) {
 }
 
 extern "C" int circle_set_acia_network_address(int address) {
-  if (address != 0xde00 && address != 0xdf00) {
+  if (!IsAciaNetworkAddress(address)) {
     return 0;
   }
   return resources_set_int("Acia1Mode", 1) == 0 &&

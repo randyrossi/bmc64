@@ -156,6 +156,22 @@ static int saved_network_device;
 static int network_device_was_selected;
 static int network_reboot_prompted;
 
+static const int acia_network_addresses[] = CIRCLE_ACIA_NETWORK_ADDRESS_VALUES;
+static const char *const acia_network_address_labels[] =
+  CIRCLE_ACIA_NETWORK_ADDRESS_LABELS;
+
+static int acia_network_address_index(int address) {
+  int index;
+  for (index = 0;
+       index < (int)(sizeof(acia_network_addresses) /
+                     sizeof(acia_network_addresses[0])); index++) {
+    if (acia_network_addresses[index] == address) {
+      return index;
+    }
+  }
+  return CIRCLE_ACIA_NETWORK_ADDRESS_DEFAULT;
+}
+
 static const char *const network_status_labels[CIRCLE_NETWORK_STATUS_COUNT] = {
     "Disabled",
     "Starting Ethernet",
@@ -1487,7 +1503,7 @@ static void load_settings() {
     } else if (network_modem_address_item != NULL &&
                strcmp(name, "network_modem_address") == 0) {
       if (value >= 0 && value < network_modem_address_item->num_choices &&
-          circle_set_acia_network_address(value == 0 ? 0xde00 : 0xdf00)) {
+          circle_set_acia_network_address(acia_network_addresses[value])) {
         network_modem_address_item->value = value;
       }
     } else if (strcmp(name, "keyset_1_up") == 0) {
@@ -1830,6 +1846,20 @@ static void select_file(struct menu_item *item) {
      case MENU_PLUS4_CART_C2_HI_FILE:
        attach_cart(item->id, item);
        return;
+    case MENU_IDE64_IMAGE_1_FILE:
+    case MENU_IDE64_IMAGE_2_FILE:
+    case MENU_IDE64_IMAGE_3_FILE:
+    case MENU_IDE64_IMAGE_4_FILE:
+      if (emux_machine_class == BMC64_MACHINE_CLASS_C64) {
+        if (emux_handle_ide64_image_change(
+                item->id - MENU_IDE64_IMAGE_1_FILE + 1,
+                fullpath(DIR_DISKS, item->str_value)) == 0) {
+          ui_pop_all_and_toggle();
+        } else {
+          ui_error("Failed to set IDE64 image");
+        }
+      }
+      return;
      default:
        break;
   }
@@ -1900,6 +1930,10 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
   case MENU_SAVE_SNAP_FILE:
     return DIR_SNAPS;
   case MENU_DISK_FILE:
+  case MENU_IDE64_IMAGE_1_FILE:
+  case MENU_IDE64_IMAGE_2_FILE:
+  case MENU_IDE64_IMAGE_3_FILE:
+  case MENU_IDE64_IMAGE_4_FILE:
   case MENU_CREATE_D64_FILE:
   case MENU_CREATE_D67_FILE:
   case MENU_CREATE_D71_FILE:
@@ -1972,6 +2006,10 @@ static void relist_files_after_dir_change(struct menu_item *item) {
     show_files(DIR_SNAPS, FILTER_SNAP, item->id, 1);
     break;
   case MENU_DISK_FILE:
+  case MENU_IDE64_IMAGE_1_FILE:
+  case MENU_IDE64_IMAGE_2_FILE:
+  case MENU_IDE64_IMAGE_3_FILE:
+  case MENU_IDE64_IMAGE_4_FILE:
   case MENU_CREATE_D64_FILE:
   case MENU_CREATE_D67_FILE:
   case MENU_CREATE_D71_FILE:
@@ -1986,7 +2024,12 @@ static void relist_files_after_dir_change(struct menu_item *item) {
   case MENU_CREATE_P64_FILE:
   case MENU_CREATE_X64_FILE:
   case MENU_CREATE_DHD_FILE:
-    show_files(DIR_DISKS, FILTER_DISK, item->id, 1);
+    show_files(DIR_DISKS,
+           item->id >= MENU_IDE64_IMAGE_1_FILE &&
+               item->id <= MENU_IDE64_IMAGE_4_FILE
+             ? FILTER_NONE
+             : FILTER_DISK,
+           item->id, 1);
     break;
   case MENU_TAPE_FILE:
   case MENU_CREATE_TAP_FILE:
@@ -2562,6 +2605,18 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_C64_ATTACH_CART_ULTIMAX:
     show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_ULTIMAX_FILE, 0);
     return;
+  case MENU_IDE64_IMAGE_1:
+    show_files(DIR_DISKS, FILTER_NONE, MENU_IDE64_IMAGE_1_FILE, 0);
+    return;
+  case MENU_IDE64_IMAGE_2:
+    show_files(DIR_DISKS, FILTER_NONE, MENU_IDE64_IMAGE_2_FILE, 0);
+    return;
+  case MENU_IDE64_IMAGE_3:
+    show_files(DIR_DISKS, FILTER_NONE, MENU_IDE64_IMAGE_3_FILE, 0);
+    return;
+  case MENU_IDE64_IMAGE_4:
+    show_files(DIR_DISKS, FILTER_NONE, MENU_IDE64_IMAGE_4_FILE, 0);
+    return;
   case MENU_VIC20_ATTACH_CART_DETECT:
     show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_DETECT_FILE, 0);
     return;
@@ -2754,8 +2809,10 @@ static void menu_value_changed(struct menu_item *item) {
     network_reboot_prompted = 0;
     return;
   case MENU_NETWORK_MODEM_ADDRESS:
-    if (!circle_set_acia_network_address(item->value == 0 ? 0xde00 : 0xdf00)) {
-      item->value = circle_get_acia_network_address() == 0xdf00 ? 1 : 0;
+    if (!circle_set_acia_network_address(
+            acia_network_addresses[item->value])) {
+      item->value = acia_network_address_index(
+          circle_get_acia_network_address());
       ui_error("Cannot set modem address");
     }
     return;
@@ -3572,10 +3629,15 @@ void build_menu(struct menu_item *root) {
 
     child = network_modem_address_item = ui_menu_add_multiple_choice(
       MENU_NETWORK_MODEM_ADDRESS, parent, "Modem Address");
-    child->num_choices = 2;
-    child->value = circle_get_acia_network_address() == 0xdf00 ? 1 : 0;
-    strcpy(child->choices[0], "DE00");
-    strcpy(child->choices[1], "DF00");
+    child->num_choices = sizeof(acia_network_addresses) /
+               sizeof(acia_network_addresses[0]);
+    child->value = acia_network_address_index(
+        circle_get_acia_network_address());
+    for (int address_index = 0; address_index < child->num_choices;
+         address_index++) {
+      strcpy(child->choices[address_index],
+             acia_network_address_labels[address_index]);
+    }
 
     network_ip_address_item = ui_menu_add_button_with_value(
       MENU_ID_DO_NOTHING, parent, "IP Address", 0,

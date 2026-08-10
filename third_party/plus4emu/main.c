@@ -795,6 +795,12 @@ void emu_machine_init(int raster_skip_enabled, int raster_skip2_enabled) {
   // VICE mod.
 }
 
+int emux_handle_ide64_image_change(int device, const char *path) {
+   (void)device;
+   (void)path;
+   return -1;
+}
+
 void emux_trap_main_loop_ui(void) {
   circle_lock_acquire();
   ui_trap = 1;
