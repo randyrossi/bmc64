@@ -449,3 +449,4 @@
   * Add menu items to be able to configure IDE64 settings
   * Flush IDE64 and CMD HD image writes to disk to prevent possible data loss
   * Ignore 0 length seek events to speed up cartridge loading
+  * Add file filter for *.cfa and *.hdd for IDE64 images
