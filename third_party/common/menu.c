@@ -92,6 +92,7 @@ typedef enum {
    FILTER_SNAP,
    FILTER_DIRS,
    FILTER_PRGS,
+   FILTER_IDE64,
 } FileFilter;
 
 // These can be saved
@@ -325,6 +326,9 @@ char snap_filt_ext[1][5];
 const int num_prg_ext = 1;
 const char prg_filt_ext[1][5] = {".prg"};
 
+const int num_ide64_ext = 2;
+const char ide64_filt_ext[2][5] = {".cfa", ".hdd"};
+
 #define TEST_FILTER_MACRO(funcname, numvar, filtarray)                         \
   static int funcname(char *name) {                                            \
     int include = 0;                                                           \
@@ -370,6 +374,7 @@ TEST_FILTER_MACRO(test_tape_name, num_tape_ext, tape_filt_ext);
 TEST_FILTER_MACRO(test_cart_name, num_cart_ext, cart_filt_ext);
 TEST_FILTER_MACRO(test_snap_name, num_snap_ext, snap_filt_ext);
 TEST_FILTER_MACRO(test_prg_name, num_prg_ext, prg_filt_ext);
+TEST_FILTER_MACRO(test_ide64_name, num_ide64_ext, ide64_filt_ext);
 
 static void rtrim(char *txt) {
   if (!txt) return;
@@ -605,6 +610,8 @@ static void list_files(struct menu_item *parent,
           include = test_snap_name(ep->d_name);
         } else if (filter == FILTER_PRGS) {
           include = test_prg_name(ep->d_name);
+        } else if (filter == FILTER_IDE64) {
+          include = test_ide64_name(ep->d_name);
         } else if (filter == FILTER_DIRS) {
           include = 0;
         } else if (filter == FILTER_NONE) {
@@ -2606,16 +2613,16 @@ static void menu_value_changed(struct menu_item *item) {
     show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_ULTIMAX_FILE, 0);
     return;
   case MENU_IDE64_IMAGE_1:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_IDE64_IMAGE_1_FILE, 0);
+    show_files(DIR_DISKS, FILTER_IDE64, MENU_IDE64_IMAGE_1_FILE, 0);
     return;
   case MENU_IDE64_IMAGE_2:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_IDE64_IMAGE_2_FILE, 0);
+    show_files(DIR_DISKS, FILTER_IDE64, MENU_IDE64_IMAGE_2_FILE, 0);
     return;
   case MENU_IDE64_IMAGE_3:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_IDE64_IMAGE_3_FILE, 0);
+    show_files(DIR_DISKS, FILTER_IDE64, MENU_IDE64_IMAGE_3_FILE, 0);
     return;
   case MENU_IDE64_IMAGE_4:
-    show_files(DIR_DISKS, FILTER_NONE, MENU_IDE64_IMAGE_4_FILE, 0);
+    show_files(DIR_DISKS, FILTER_IDE64, MENU_IDE64_IMAGE_4_FILE, 0);
     return;
   case MENU_VIC20_ATTACH_CART_DETECT:
     show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_DETECT_FILE, 0);
