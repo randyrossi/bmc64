@@ -195,7 +195,8 @@ static int set_io_source_base(int address)
             }
             return 0;
         case 0xd700:
-            if (machine_class != VICE_MACHINE_C128) {
+            if (machine_class != VICE_MACHINE_C64
+                && machine_class != VICE_MACHINE_C128) {
                 return -1;
             }
             acia_base = adr;
