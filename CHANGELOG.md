@@ -450,3 +450,6 @@
   * Flush IDE64 and CMD HD image writes to disk to prevent possible data loss
   * Ignore 0 length seek events to speed up cartridge loading
   * Add file filter for *.cfa and *.hdd for IDE64 images
+
+## 4.2-p10
+  * Add $DF80 SwiftLink modem-address option for IDE64 compatibility
