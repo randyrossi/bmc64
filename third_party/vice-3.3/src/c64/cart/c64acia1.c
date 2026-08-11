@@ -186,6 +186,7 @@ static int set_io_source_base(int address)
     switch (adr) {
         case 0xde00:
         case 0xdf00:
+        case 0xdf80:
             acia_base = adr;
             acia_device.start_address = acia_base;
             if (acia_device.cart_id == CARTRIDGE_TURBO232) {
