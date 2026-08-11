@@ -15,6 +15,7 @@
 
 #include "viceapp.h"
 
+#include "network_time_sync.h"
 #include "third_party/common/circle.h"
 #include "fbl.h"
 
@@ -755,7 +756,15 @@ void ViceStdioApp::LoadNetworkDevice() {
     if (sscanf(line, "network_device=%d", &network_device) == 1 &&
         network_device >= 0 && network_device <= 2) {
       mNetworkDevice = network_device;
-      break;
+      continue;
+    }
+
+    int timezone_offset_minutes;
+    if (sscanf(line, "timezone_offset_minutes=%d",
+               &timezone_offset_minutes) == 1 &&
+        timezone_offset_minutes >= -12 * 60 &&
+        timezone_offset_minutes <= 14 * 60) {
+      mTimezoneOffsetMinutes = timezone_offset_minutes;
     }
   }
   fclose(settings);
@@ -782,6 +791,7 @@ void ViceStdioApp::InitializeNetwork() {
       mNet = nullptr;
     } else {
       network_subsystem = mNet;
+      StartNetworkTimeSync(mNet);
       SetNetworkStatus(CIRCLE_NETWORK_ETHERNET_WAITING_FOR_DHCP);
       mLogger.Write(GetKernelName(), LogNotice, "Networking: Ethernet initialized");
     }
@@ -837,6 +847,7 @@ void ViceStdioApp::InitializeNetwork() {
     return;
   }
   network_subsystem = mNet;
+  StartNetworkTimeSync(mNet);
   SetNetworkStatus(CIRCLE_NETWORK_WIFI_WPA_INITIALIZING);
   mLogger.Write(GetKernelName(), LogNotice, "Networking: Wi-Fi initialized");
 
@@ -1021,6 +1032,9 @@ bool ViceStdioApp::Initialize(void) {
 
   InitBootStat();
   LoadNetworkDevice();
+  if (!ConfigureSystemTimeZone(mTimezoneOffsetMinutes)) {
+    mLogger.Write(GetKernelName(), LogWarning, "Cannot configure timezone");
+  }
   InitializeNetwork();
 
   // Now that emmc is initialized, launch

@@ -291,6 +291,7 @@ public:
   ViceStdioApp(const char *kernel)
     : ViceScreenApp(kernel), mUSBHCII(&mInterrupt, &mTimer, TRUE),
           mEMMC(&mInterrupt, &mTimer, &mActLED), mNetworkDevice(0),
+          mTimezoneOffsetMinutes(0),
           mWLAN(nullptr), mNet(nullptr), mWPASupplicant(nullptr),
           mNetworkStatus(0) {}
 
@@ -325,6 +326,7 @@ protected:
   CUSBHCIDevice mUSBHCII;
   CEMMCDevice mEMMC;
   int mNetworkDevice;
+  int mTimezoneOffsetMinutes;
   CBcm4343Device *mWLAN;
   CNetSubSystem *mNet;
   CWPASupplicant *mWPASupplicant;

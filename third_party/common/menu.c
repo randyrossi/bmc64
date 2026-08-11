@@ -146,6 +146,7 @@ static struct menu_item *network_device_item;
 static struct menu_item *network_status_item;
 static struct menu_item *network_ip_address_item;
 static struct menu_item *network_modem_address_item;
+static struct menu_item *timezone_offset_item;
 static struct menu_item *wifi_settings_item;
 static struct menu_item *wifi_ssid_item;
 static struct menu_item *wifi_security_item;
@@ -160,6 +161,36 @@ static int network_reboot_prompted;
 static const int acia_network_addresses[] = CIRCLE_ACIA_NETWORK_ADDRESS_VALUES;
 static const char *const acia_network_address_labels[] =
   CIRCLE_ACIA_NETWORK_ADDRESS_LABELS;
+
+static void configure_timezone_offsets(struct menu_item *item) {
+  int index = 0;
+
+  for (int offset = -12 * 60; offset <= 14 * 60; offset += 30) {
+    int absolute_offset = offset < 0 ? -offset : offset;
+    snprintf(item->choices[index], MAX_MENU_STR, "UTC%c%02d:%02d",
+             offset < 0 ? '-' : '+', absolute_offset / 60,
+             absolute_offset % 60);
+    item->choice_ints[index++] = offset;
+
+    if (offset == 330 || offset == 510 || offset == 750) {
+      int quarter_hour_offset = offset + 15;
+      snprintf(item->choices[index], MAX_MENU_STR, "UTC+%02d:%02d",
+               quarter_hour_offset / 60, quarter_hour_offset % 60);
+      item->choice_ints[index++] = quarter_hour_offset;
+    }
+  }
+
+  item->num_choices = index;
+}
+
+static int timezone_offset_index(int offset) {
+  for (int index = 0; index < timezone_offset_item->num_choices; index++) {
+    if (timezone_offset_item->choice_ints[index] == offset) {
+      return index;
+    }
+  }
+  return 24;
+}
 
 static int acia_network_address_index(int address) {
   int index;
@@ -1209,6 +1240,10 @@ static int save_settings() {
     saved_network_device = network_device_item->value;
     network_reboot_prompted = 0;
   }
+  if (timezone_offset_item != NULL) {
+    fprintf(fp, "timezone_offset_minutes=%d\n",
+            timezone_offset_item->choice_ints[timezone_offset_item->value]);
+  }
   if (network_modem_address_item != NULL) {
     fprintf(fp, "network_modem_address=%d\n",
             network_modem_address_item->value);
@@ -1513,6 +1548,9 @@ static void load_settings() {
           circle_set_acia_network_address(acia_network_addresses[value])) {
         network_modem_address_item->value = value;
       }
+    } else if (timezone_offset_item != NULL &&
+               strcmp(name, "timezone_offset_minutes") == 0) {
+      timezone_offset_item->value = timezone_offset_index(value);
     } else if (strcmp(name, "keyset_1_up") == 0) {
       keyset_codes[0][KEYSET_UP] = value;
     } else if (strcmp(name, "keyset_1_down") == 0) {
@@ -3645,6 +3683,11 @@ void build_menu(struct menu_item *root) {
       strcpy(child->choices[address_index],
              acia_network_address_labels[address_index]);
     }
+
+    timezone_offset_item = ui_menu_add_multiple_choice(
+      MENU_TIMEZONE_OFFSET, parent, "Timezone (reboot)");
+    configure_timezone_offsets(timezone_offset_item);
+    timezone_offset_item->value = timezone_offset_index(0);
 
     network_ip_address_item = ui_menu_add_button_with_value(
       MENU_ID_DO_NOTHING, parent, "IP Address", 0,
