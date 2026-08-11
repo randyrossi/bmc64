@@ -16,7 +16,8 @@ Current behavior:
 
 - Networking is available from the `Network` menu on C64 and C128.
 - The choices are `Off`, `Ethernet`, and `WiFi`.
-- `Modem Address` selects `$DE00` (default) or alternatively `$D700` or `$DF00`. 
+- `Modem Address` selects `$DE00` (default) or alternatively `$D700`, `$DF00`,
+  or `$DF80`.
   - `$D700` is recommended if you are using an IDE64 and REU at the same time.
 - Ethernet uses the Raspberry Pi's onboard Ethernet controller when present.
 - Wi-Fi uses the Raspberry Pi's onboard WLAN controller when present.
@@ -168,8 +169,8 @@ For further details on CCGMS Ultimate refer to the CSDb release page.
 ## Using C64 OS Networking
 
 C64 OS provides a SwiftLink driver for each BMC64 modem address: use
-`sld7.zi` for `$D700`, `slde.zi` for `$DE00`, or `sldf.zi` for `$DF00`.
-`$D700` with `sld7.zi` is recommended when using the IDE64 C64 OS image with
+`sld7.zi` for `$D700`, `slde.zi` for `$DE00`, or `sldf.zi` for `$DF00` or `sld+.zi` for `$DF80`.
+`$DF80` with `sld+.zi` is recommended when using the IDE64 C64 OS image with
 an REU enabled, because it leaves the IDE64 and REU address space available
 and you can use C64 OS fast switching with the REU enabled. 
 
