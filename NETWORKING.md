@@ -170,7 +170,7 @@ For further details on CCGMS Ultimate refer to the CSDb release page.
 
 C64 OS provides a SwiftLink driver for each BMC64 modem address: use
 `sld7.zi` for `$D700`, `slde.zi` for `$DE00`, or `sldf.zi` for `$DF00` or `sld+.zi` for `$DF80`.
-`$DF80` with `sld+.zi` is recommended when using the IDE64 C64 OS image with
+`$D700` with `sld7.zi` is recommended when using the IDE64 C64 OS image with
 an REU enabled, because it leaves the IDE64 and REU address space available
 and you can use C64 OS fast switching with the REU enabled. 
 
