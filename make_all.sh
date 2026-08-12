@@ -133,6 +133,7 @@ apply_patch_file "$SRC_DIR/circle_8bitdo_gamepad_patch.diff"
 apply_patch_file "$SRC_DIR/circle_usb_descriptor_patch.diff"
 apply_patch_file "$SRC_DIR/circle_xbox360_gamepad_patch.diff"
 apply_patch_file "$SRC_DIR/circle_tcpconnection_patch.diff"
+apply_patch_file "$SRC_DIR/circle_ethernet_patch.diff"
 fi
 
 echo ==============================================================
