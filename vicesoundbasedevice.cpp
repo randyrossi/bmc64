@@ -234,6 +234,8 @@ boolean ViceSoundBaseDevice::Start() {
     return FALSE;
   }
 
+  AmountBufferedBytes(m_nWritePos - m_nCompletePos);
+
   vchi_service_release(m_hService);
 
   return TRUE;
