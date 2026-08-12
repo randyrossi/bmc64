@@ -453,3 +453,11 @@
 
 ## 4.2-p10
   * Add $DF80 SwiftLink modem-address option for IDE64 compatibility
+
+## 4.2-p11
+  * Add setting localtime on the Raspberry Pi after a successful network connection
+  * Avoid false VICE audio-underrun messages at startup
+  * Fix emulator slow downs while Ethernet link is down
+  * Correct network connect message when switch a single microSD card between different models of Raspberry Pi
+  * Back port RTC code from Vice 3.10 to set the correct time in CMD-HD images
+  * Time improvements and fixes allow C64 OS to start with the correct time set 
