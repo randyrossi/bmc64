@@ -799,9 +799,11 @@ void ViceStdioApp::InitializeNetwork() {
   }
 
   if (mNetworkDevice == 1) {
-    SetNetworkStatus(CIRCLE_NETWORK_ETHERNET_UNAVAILABLE);
     mLogger.Write(GetKernelName(), LogNotice,
-                  "Ethernet selected, but this Raspberry Pi has no onboard Ethernet");
+                  "Ethernet selected, but this Raspberry Pi has no onboard Ethernet; disabling networking");
+    mNetworkDevice = 0;
+    SetNetworkStatus(CIRCLE_NETWORK_DISABLED);
+    return;
   }
 
   if (!HasOnboardWLAN(mMachineInfo.GetMachineModel())) {
