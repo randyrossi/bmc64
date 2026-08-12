@@ -179,9 +179,21 @@ do
     cp -a "$SRC_DIR/sdcard/$source_dir/." "$STAGING_DIR/$target_dir/"
 done
 
-for release_dir in c64_release_files c128_release_files vic20_release_files plus4_release_files
+for machine in c64 c128 vic20 plus4
 do
-    cp -a "$SRC_DIR/release/$release_dir/." "$STAGING_DIR/"
+    release_path="$SRC_DIR/release/${machine}_release_files"
+    machine_dir=${machine^^}
+
+    for release_entry in "$release_path"/*
+    do
+        if [ "$release_entry" = "$release_path/carts" ]
+        then
+            mkdir -p "$STAGING_DIR/carts/$machine_dir"
+            cp -a "$release_entry/." "$STAGING_DIR/carts/$machine_dir/"
+        else
+            cp -a "$release_entry" "$STAGING_DIR/"
+        fi
+    done
 done
 
 for data_dir in disks tapes snapshots
