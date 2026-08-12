@@ -168,15 +168,15 @@ For further details on CCGMS Ultimate refer to the CSDb release page.
 
 ## Using C64 OS Networking
 
-C64 OS provides a SwiftLink driver for each BMC64 modem address: use
-`sld7.zi` for `$D700`, `slde.zi` for `$DE00`, or `sldf.zi` for `$DF00` or `sld+.zi` for `$DF80`.
-`$D700` with `sld7.zi` is recommended when using the IDE64 C64 OS image with
-an REU enabled, because it leaves the IDE64 and REU address space available
-and you can use C64 OS fast switching with the REU enabled. 
+C64 OS provides SwiftLink drivers for the different Modem addresses that can be set in the BMC64 Networking options.
 
-The driver sends a ZiModem-compatible initialization
-command, uses `ATW` and `ATI3` to identify the host connection, and dials the
-CNP service using a quoted `ATD` target.
+Modem address `$D700` with the `sld7.zi` driver is recommended when using a IDE64 C64 OS image with
+an REU enabled, to avoid address collisions
+
+Modem address `$DE00` with the `slde.zi` driver is recommended when using a CMD-HD C64 OS image with
+an REU enabled, to avoid address collisions
+
+The driver sends a ZiModem-compatible initialization command, uses `ATW` and `ATI3` to identify the host connection, and dials the CNP service using a quoted `ATD` target.
 
 Networking in C64 OS uses C64 Network Protocol (CNP) and you need to connect to a CNP server and have an account on it. For full information on C64 OS Networking read the [C64 OS Networking Guide](https://c64os.com/c64os/networkingguide/).
 
