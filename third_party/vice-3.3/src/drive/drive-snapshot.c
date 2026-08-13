@@ -970,7 +970,7 @@ static int drive_snapshot_read_image_module(snapshot_t *s, unsigned int dnr)
         }
     }
 
-    vdrive_bam_reread_bam(dnr + 8);
+    //vdrive_bam_reread_bam(dnr + 8);// VDRIVE_EFFORT
 
     snapshot_module_close(m);
     m = NULL;

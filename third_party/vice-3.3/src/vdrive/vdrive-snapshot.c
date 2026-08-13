@@ -102,8 +102,7 @@ int vdrive_snapshot_module_read(snapshot_t *s)
                 }
 
                 /* FIXME: this gives a linker error? */
-                /* if (snapshot_version_is_bigger(major_version, minor_version, SNAP_MAJOR, SNAP_MINOR)) { */
-                if (major_version > SNAP_MAJOR || minor_version > SNAP_MINOR) {
+                if (snapshot_version_is_bigger(major_version, minor_version, SNAP_MAJOR, SNAP_MINOR)) {
                     log_message(vdrive_snapshot_log,
                                 "Snapshot module version (%d.%d) newer than %d.%d.",
                                 major_version, minor_version, SNAP_MAJOR, SNAP_MINOR);
