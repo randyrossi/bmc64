@@ -8,6 +8,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Install dependencies
+        run: |
+             sudo apt-get install -y build-essential automake autoconf libtool pkg-config autoconf-archive autotools-dev xa65 make cmake automake m4 bison byacc flex texinfo
+
       - name: Checkout for pi3
         uses: actions/checkout@v4
         with:
