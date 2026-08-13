@@ -36,6 +36,23 @@ HTTP client behavior.
 
 **DO NOT** use it for credentials that must be protected.
 
+# Requirements
+
+Networking requires the Raspberry Pi networking firmware to be present in the
+`/firmware` directory at the root of the SD card. Follow the build instructions
+in [BUILDING.md](BUILDING.md) and use `build_sdcard.sh` to generate an SD-card
+image with the required firmware included.
+
+To install the Wi-Fi firmware manually, build it from the repository root:
+
+```sh
+cd third_party/circle-stdlib/libs/circle/addon/wlan/firmware
+make firmware
+```
+
+Then copy every generated file from that directory to `/firmware` on the SD
+card.
+
 ## Enable Ethernet
 
 1. Connect the Raspberry Pi to the network with Ethernet.
