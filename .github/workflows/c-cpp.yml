@@ -1,7 +1,12 @@
 name: C/C++ Build
 
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -51,8 +56,8 @@ jobs:
       - name: Zip release
         run: ./pi3/make_release.sh
 
-      - name: Upload release
-        uses: actions/upload-artifact@v4
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-            name: release
-            path: bmc64-*.files.zip
+          files: bmc64-*.files.zip
+          generate_release_notes: false
