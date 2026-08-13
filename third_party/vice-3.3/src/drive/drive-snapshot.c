@@ -280,8 +280,14 @@ int drive_snapshot_read_module(snapshot_t *s)
         m = snapshot_module_open(s, snap_module_name,
                                  &major_version, &minor_version);
         if (m == NULL) {
-            resources_set_int_sprintf("Drive%iTrueEmulation", 0, i + 8);
-            has_tde[i] = 0;
+            /* Legacy snapshots use one DRIVE module, not per-drive modules. */
+            /* Preserve existing true drive emulation setting. */
+            resources_get_int_sprintf("Drive%iTrueEmulation", &has_tde[i], i + 8);
+            log_message(drive_snapshot_log,
+                        "Snapshot lacks %s; preserving Drive %i true drive "
+                        "emulation setting (%s).",
+                        snap_module_name, i + 8,
+                        has_tde[i] ? "on" : "off");
             continue;
         }
 
