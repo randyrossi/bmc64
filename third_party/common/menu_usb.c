@@ -39,6 +39,7 @@
 #include "menu_key_binding.h"
 #include "ui.h"
 #include "keycodes.h"
+#include "usb_gamepad_defaults.h"
 
 extern int usb_pref[MAX_USB_DEVICES];
 extern int usb_x_axis[MAX_USB_DEVICES];
@@ -63,6 +64,12 @@ struct menu_item *poty_high_item;
 struct menu_item *poty_low_item;
 
 struct menu_item *define_bindings_item;
+static struct menu_item *usb_pref_items[MAX_USB_DEVICES];
+static struct menu_item *usb_x_axis_items[MAX_USB_DEVICES];
+static struct menu_item *usb_y_axis_items[MAX_USB_DEVICES];
+static struct menu_item *usb_x_thresh_items[MAX_USB_DEVICES];
+static struct menu_item *usb_y_thresh_items[MAX_USB_DEVICES];
+static struct menu_item *usb_button_items[MAX_USB_DEVICES][MAX_USB_BUTTONS];
 
 // Set to one when we are listening for raw usb values for config
 int want_raw_usb = 0;
@@ -132,6 +139,19 @@ static void update_key_binding_descriptions(struct menu_item *new_root,
   }
 }
 
+static void refresh_usb_menu_values(int device) {
+  usb_pref_items[device]->value = usb_pref[device];
+  usb_x_axis_items[device]->value = usb_x_axis[device];
+  usb_y_axis_items[device]->value = usb_y_axis[device];
+  usb_x_thresh_items[device]->value = (int)(usb_x_thresh[device] * 100.0f);
+  usb_y_thresh_items[device]->value = (int)(usb_y_thresh[device] * 100.0f);
+
+  for (int button = 0; button < joy_num_buttons[device]; button++) {
+    usb_button_items[device][button]->value =
+        usb_button_assignments[device][button];
+  }
+}
+
 static void menu_usb_value_changed(struct menu_item *item) {
   struct menu_item* tmp_item;
 
@@ -160,6 +180,15 @@ static void menu_usb_value_changed(struct menu_item *item) {
   case MENU_USB_3_WATCH_RAW:
     show_usb_monitor(item->id - MENU_USB_0_WATCH_RAW);
     break;
+  case MENU_USB_0_RESET_DEFAULTS:
+  case MENU_USB_1_RESET_DEFAULTS:
+  case MENU_USB_2_RESET_DEFAULTS:
+  case MENU_USB_3_RESET_DEFAULTS: {
+    int device = item->id - MENU_USB_0_RESET_DEFAULTS;
+    usb_gamepad_reset_to_defaults(device);
+    refresh_usb_menu_values(device);
+    break;
+  }
   case MENU_USB_0_BTN_ASSIGN:
   case MENU_USB_1_BTN_ASSIGN:
   case MENU_USB_2_BTN_ASSIGN:
@@ -271,52 +300,69 @@ void build_usb_menu(int dev, struct menu_item *root) {
   struct menu_item *x_thresh_item;
   struct menu_item *y_thresh_item;
   struct menu_item *tmp_item;
-  char desc[40];
-  char scratch[32];
+  char scratch[80];
+  const char *profile_name = NULL;
   int i;
   int j;
 
-  sprintf(desc, "USB %d:",dev+1);
   if (joy_num_pads > dev) {
-    strcat(desc, "DETECTED ");
-    sprintf(scratch, "%d hats, %d axes", joy_num_hats[dev], joy_num_axes[dev]);
-    strcat(desc, scratch);
+    profile_name = usb_gamepad_default_profile_display_name_for_device(dev);
+    if (profile_name != NULL) {
+      sprintf(scratch, "USB %d: %s", dev + 1, profile_name);
+      ui_menu_add_button(MENU_TEXT, root, scratch);
+    } else {
+      sprintf(scratch, "USB %d: DETECTED", dev + 1);
+      ui_menu_add_button(MENU_TEXT, root, scratch);
+    }
+    sprintf(scratch, "USB %d: %d hats, %d buttons", dev + 1,
+            joy_num_hats[dev], joy_num_buttons[dev]);
+    ui_menu_add_button(MENU_TEXT, root, scratch);
   } else {
-    strcat(desc, "NOT DETECTED");
+    sprintf(scratch, "USB %d: NOT DETECTED", dev + 1);
+    ui_menu_add_button(MENU_TEXT, root, scratch);
   }
 
-  ui_menu_add_button(MENU_TEXT, root, desc);
   ui_menu_add_divider(root);
-  usb_pref_item =
+  usb_pref_item = usb_pref_items[dev] =
       ui_menu_add_multiple_choice(MENU_USB_0_PREF+dev, root, "");
   sprintf (usb_pref_item->name, "USB %d Directions", dev+1);
   usb_pref_item->value = usb_pref[dev];
 
-  x_axis_item = ui_menu_add_range(MENU_USB_0_X_AXIS+dev, root, "",
+  x_axis_item = usb_x_axis_items[dev] = ui_menu_add_range(MENU_USB_0_X_AXIS+dev, root, "",
                                   0, 12, 1, usb_x_axis[dev]);
   sprintf (x_axis_item->name, "USB %d Analog X #", dev+1);
-  y_axis_item = ui_menu_add_range(MENU_USB_0_Y_AXIS+dev, root, "",
+  y_axis_item = usb_y_axis_items[dev] = ui_menu_add_range(MENU_USB_0_Y_AXIS+dev, root, "",
                                   0, 12, 1, usb_y_axis[dev]);
   sprintf (y_axis_item->name, "USB %d Analog Y #", dev+1);
-  x_thresh_item = ui_menu_add_range(MENU_USB_0_X_THRESH+dev, root,
+  x_thresh_item = usb_x_thresh_items[dev] = ui_menu_add_range(MENU_USB_0_X_THRESH+dev, root,
                                     "", 10, 90, 1,
                                     (int)(usb_x_thresh[dev] * 100.0f));
   sprintf (x_thresh_item->name, "USB %d Analog X Threshold % #", dev+1);
-  y_thresh_item = ui_menu_add_range(MENU_USB_0_Y_THRESH+dev, root,
+  y_thresh_item = usb_y_thresh_items[dev] = ui_menu_add_range(MENU_USB_0_Y_THRESH+dev, root,
                                     "", 10, 90, 1,
                                     (int)(usb_y_thresh[dev] * 100.0f));
   sprintf (y_thresh_item->name, "USB %d Analog Y Threshold % #", dev+1);
 
+  ui_menu_add_divider(root);
   tmp_item = ui_menu_add_button(MENU_USB_0_WATCH_RAW+dev, root,
                                 "");
   sprintf (tmp_item->name, "Monitor Raw USB %d data...", dev+1);
   tmp_item->on_value_changed = menu_usb_value_changed;
+
+  if (joy_num_pads > dev) {
+    ui_menu_add_divider(root);
+    tmp_item = ui_menu_add_button(MENU_USB_0_RESET_DEFAULTS+dev, root,
+                                  "Reset to Default Bindings");
+    tmp_item->on_value_changed = menu_usb_value_changed;
+    ui_menu_add_divider(root);
+  }
 
   for (i = 0; i < joy_num_buttons[dev]; i++) {
     sprintf(scratch, "Button %d Function", i);
     tmp_item =
         ui_menu_add_multiple_choice(MENU_USB_0_BTN_ASSIGN+dev, root, scratch);
     add_button_choices(tmp_item);
+    usb_button_items[dev][i] = tmp_item;
     tmp_item->value = usb_button_assignments[dev][i];
     tmp_item->on_value_changed = menu_usb_value_changed;
     tmp_item->sub_id = i;

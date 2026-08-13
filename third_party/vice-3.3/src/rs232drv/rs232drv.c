@@ -35,7 +35,7 @@
 #include "types.h"
 #include "util.h"
 
-#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET)
+#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET) || defined(HAVE_RS232BMC)
 
 char *rs232_devfile[RS232_NUM_DEVICES] = { NULL };
 

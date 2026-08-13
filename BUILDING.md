@@ -12,8 +12,12 @@ These instructions have been tested on Debian/Ubuntu/Mint distributions. If you 
 
         sudo apt-get install xa65
 
+3. Install other prerequisites you may need:
+
+        sudo apt-get install make cmake automake m4 bison byacc flex texinfo
 
 ----
+
 ## Downloading The Required Files
 
 1. Clone the repo:
@@ -21,42 +25,48 @@ These instructions have been tested on Debian/Ubuntu/Mint distributions. If you 
         cd /path/to/store/files/
         git clone https://github.com/randyrossi/bmc64.git --recursive
 
-2. Download and unpack the *GNU Embedded Toolchain for Arm*:
+
+## Manual Installation of GNU Toolchain for Arm (Optional)
+
+Installation and use of the GNU toolchain is automated by the build scripts. To optonally install it manually follow the steps below
+
+1. Download and unpack the *GNU Embedded Toolchain for Arm*:
 
     * Visit [https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
-    * Download the package for your system. For example, at the time of writing [gcc-arm-none-eabi-9-2019-q4-major-x86\_64-linux.tar.bz2](https://developer.arm.com/-/media/Files/downloads/gnu-rm/9-2019q4/gcc-arm-none-eabi-9-2019-q4-major-x86_64-linux.tar.bz2) was available for Linux x86\_64.
+    * Download the package for your system. For example, at the time of writing [arm-gnu-toolchain-15.2.rel1-x86_64-arm-none-eabi.tar.xz](https://gitlab.arm.com/api/v4/projects/tooling%2Fgnu-toolchains-for-arm/packages/generic/gnu-toolchain/15.2.rel1/arm-gnu-toolchain-15.2.rel1-x86_64-arm-none-eabi.tar.xz) was available for Linux x86\_64.
     * Once downloaded, extract the file somewhere. Note down the path to the extracted directory. This will be used later.
     * In the extracted directory, find the /lib/gcc/arm-none-eabi/ directory and note down the version number. This will be used later.
 
+2. Set the ARM_HOME environment variable to point to the extracted Arm toolchain directory:
+
+        export ARM_HOME=/path/to/extracted/toolchain/directory
+
+3. Set the PATH environment variable to point to the Arm toolchain's *bin* directory:
+
+        export PATH=$PATH:$ARM_HOME/bin
+
+4. Set the ARM_VERSION environment variable to the version number you noted previously:
+
+        export ARM_VERSION=15.2.1
 
 ----
 ## Building
 
-1. Set the ARM_HOME environment variable to point to the extracted Arm toolchain directory:
+Below are the individual steps to clean and build useful when developing. For a one step build process see the `build_sdcard.sh` below.
 
-        export ARM_HOME=/path/to/extracted/toolchain/directory
-
-2. Set the PATH environment variable to point to the Arm toolchain's *bin* directory:
-
-        export PATH=$PATH:$ARM_HOME/bin
-
-3. Set the ARM_VERSION environment variable to the version number you noted previously:
-
-        export ARM_VERSION=9.2.1
-
-4. If this is your first time building, run *clean_all.sh* from the bmc64 directory:
+1. If this is your first time building, run *clean_all.sh* from the bmc64 directory:
 
         cd /path/to/store/files/bmc64/
         ./clean_all.sh
 
-5. Run *make_all.sh* from the bmc64 directory to build the third party libraries and kernel:
+2. Run *make_all.sh* from the bmc64 directory to build the third party libraries and kernel:
 
         cd /path/to/store/files/bmc64/
         ./make_all.sh [pi0|pi2|pi3]
 
         NOTE: In the above, set the required Pi version, such as ./make_all.sh pi3
 
-6. Run *make_machines.sh* to build the kernel images for each machine (C64, C128, etc):
+3. Run *make_machines.sh* to build the kernel images for each machine (C64, C128, etc):
 
         cd /path/to/store/files/bmc64/
         ./make_machines.sh [pi0|pi2|pi3]
@@ -109,6 +119,19 @@ Once the *make_machines.sh* build is complete, you will have kernel files with a
     * Ensure you follow each step above.
     * Ensure you run the build scripts in the following order: *clean\_all.sh*, *make\_all.sh*, *make\_machines.sh*
 
+----
+## Building SDCard Layout
+
+To build a full SDCard layout use the *build_sdcard.sh*. 
+
+This will use all of the above scripts together to build a full SDCard layout in the 'build/sdcard' folder. 
+
+If you pass no arguments it will build all three Pi versions pi0,pi2,pi3. Or you can pass one of the Pi versions to build a single version.
+
+        cd /path/to/store/files/bmc64/
+        ./build_sdcard.sh [pi0|pi2|pi3]
+
+        NOTE: In the above, optinally set the required Pi version, such as ./build_sdcard.sh pi3 to build a single version
 
 ----
 ## Resources

@@ -36,6 +36,8 @@
         - check for byte ready *within* `BVC', `BVS' and `PHP'.
         - serial bus handling might be faster.  */
 
+/* #define DEBUG_DRIVE */
+
 #include "vice.h"
 
 #include <stdio.h>
@@ -72,6 +74,12 @@
 #include "drive-sound.h"
 #include "p64.h"
 #include "monitor.h"
+
+#ifdef DEBUG_DRIVE
+#define DBG(x) printf x
+#else
+#define DBG(x)
+#endif
 
 static int drive_init_was_called = 0;
 
@@ -432,7 +440,8 @@ int drive_enable(drive_context_t *drv)
         return -1;
     }
 
-    resources_get_int("DriveTrueEmulation", &drive_true_emulation);
+    DBG(("drive_enable unit: %d, drv->mynumber: %d\n", 8 + dnr, drv->mynumber));
+    resources_get_int_sprintf("Drive%iTrueEmulation", &drive_true_emulation, 8 + dnr);
 
     /* Always disable kernal traps. */
     if (!drive_true_emulation) {
@@ -451,7 +460,8 @@ int drive_enable(drive_context_t *drv)
     /* resync */
     drv->cpu->stop_clk = *(drv->clk_ptr);
 
-    if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000 ||
+    if (drive->type == DRIVE_TYPE_2000 || 
+        drive->type == DRIVE_TYPE_4000 ||
         drive->type == DRIVE_TYPE_CMDHD) {
         drivecpu65c02_wake_up(drv);
     } else {
@@ -467,18 +477,22 @@ int drive_enable(drive_context_t *drv)
 void drive_disable(drive_context_t *drv)
 {
     int drive_true_emulation = 0;
+    unsigned int dnr;
     drive_t *drive;
 
+    dnr = drv->mynumber;
     drive = drv->drive;
 
     /* This must come first, because this might be called before the true
        drive initialization.  */
     drive->enable = 0;
 
-    resources_get_int("DriveTrueEmulation", &drive_true_emulation);
+    DBG(("drive_disable unit: %d\n", 8 + dnr));
+    resources_get_int_sprintf("Drive%iTrueEmulation", &drive_true_emulation, 8 + dnr);
 
     if (rom_loaded) {
-        if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000 ||
+        if (drive->type == DRIVE_TYPE_2000 || 
+            drive->type == DRIVE_TYPE_4000 ||
             drive->type == DRIVE_TYPE_CMDHD) {
             drivecpu65c02_sleep(drv);
         } else {
@@ -867,6 +881,8 @@ void drive_vsync_hook(void)
 static void drive_setup_context_for_drive(drive_context_t *drv,
                                           unsigned int dnr)
 {
+    DBG(("drive_setup_context_for_drive dnr: %u\n", dnr));
+
     drv->mynumber = dnr;
     drv->drive = lib_calloc(1, sizeof(drive_t));
     drv->clk_ptr = &drive_clk[dnr];

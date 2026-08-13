@@ -49,6 +49,8 @@ typedef enum menu_item_type {
   FOLDER,          // contains sub-items/folders
   DIVIDER,         // just a line
   TEXTFIELD,       // editable text field
+  READ_ONLY_HEADING,
+  READ_ONLY_DESCRIPTION,
 } menu_item_type;
 
 struct menu_item {
@@ -73,6 +75,15 @@ struct menu_item {
   // index for MULTIPLE_CHOICE
   // cursor position for TEXTFIELD
   int value;
+
+  // Maximum number of characters for TEXTFIELD
+  int max_length;
+
+  // Draw the TEXTFIELD value against the right edge of the menu.
+  int textfield_right_aligned;
+
+  // Render TEXTFIELD characters as asterisks.
+  int textfield_masked;
 
   // For MULTIPLE_CHOICE
   int num_choices;
@@ -158,8 +169,13 @@ struct menu_item *ui_menu_add_range(int id, struct menu_item *folder,
                                     int initial_value);
 struct menu_item *ui_menu_add_folder(struct menu_item *folder, char *name);
 struct menu_item *ui_menu_add_divider(struct menu_item *folder);
+struct menu_item *ui_menu_add_read_only_heading(struct menu_item *folder,
+                                                const char *name);
 struct menu_item *ui_menu_add_text_field(int id, struct menu_item *folder,
                                          char *name, char *value);
+struct menu_item *ui_menu_add_text_field_limit(int id, struct menu_item *folder,
+                                               char *name, char *value,
+                                               int max_length);
 
 // Move ownership of all children from src onto dest
 void ui_add_all(struct menu_item *src, struct menu_item *dest);
@@ -188,6 +204,8 @@ void ui_draw_rect_buf(int x, int y, int w, int h, int color, int fill,
 void ui_draw_rect(int x, int y, int w, int h, int color, int fill);
 
 int ui_text_width(const char *text);
+void ui_select_first_interactive_item(void);
+void ui_render_single_frame(void);
 
 void ui_check_key(void);
 
@@ -203,6 +221,9 @@ void ui_render_now(int menu_stack_index);
 void ui_error(const char *format, ...);
 void ui_info(const char *format, ...);
 void ui_confirm_wrapped(char *title, const char *txt, int ok_value, int ok_id);
+void ui_confirm_wrapped_labels(char *title, const char *txt, int ok_value,
+                               int ok_id, const char *ok_label,
+                               const char *cancel_label);
 
 struct menu_item *ui_pop_menu(void);
 

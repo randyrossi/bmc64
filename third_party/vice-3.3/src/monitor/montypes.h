@@ -39,7 +39,7 @@
 
 /* Types */
 
-#ifndef bool
+#if !defined(bool) && (!defined(__STDC_VERSION__) || __STDC_VERSION__ < 202311L)
 typedef int bool;
 #endif
 

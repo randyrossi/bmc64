@@ -24,6 +24,7 @@
 #include "fbl.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <circle/bcmframebuffer.h>
 
 #include "crt_pi_idx.h"
@@ -85,6 +86,25 @@ static uint32_t pal_argb[256] = {
 static const char sNoInt[] = "scaling_kernel 0 0 0 0 0 0 0 0 1 1 1 1 255 255 255 255 255 255 255 255 1 1 1 1 0 0 0 0 0 0 0 0   1";
 
 static char config_scaling_kernel[1024];
+
+static void bcm_get_sclker(char *buffer, size_t buffer_len) {
+  if (buffer_len == 0) {
+    return;
+  }
+
+  if (vc_gencmd(buffer, (int) buffer_len, "scaling_kernel") != 0) {
+    strncpy(buffer, sNoInt, buffer_len - 1);
+    buffer[buffer_len - 1] = '\0';
+  }
+}
+
+static void bcm_set_sclker(const char *kernel) {
+  char response[1024];
+
+  if (vc_gencmd(response, sizeof(response), "%s", kernel) != 0) {
+    printf("Failed to set scaling kernel\n");
+  }
+}
 
 bool FrameBufferLayer::initialized_ = false;
 DISPMANX_DISPLAY_HANDLE_T FrameBufferLayer::dispman_display_;

@@ -38,6 +38,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "archdep.h"
 #include "log.h"
@@ -336,9 +337,8 @@ static int write_sector(ata_drive_t *drv)
     } else {
         drv->pos++;
     }
-
     if (!drv->wcache) {
-        if (fflush(drv->file)) {
+        if (fflush(drv->file) || fsync(fileno(drv->file))) {
             ata_set_command_block(drv);
             drv->error = drv->atapi ? 0x54 : (ATA_UNC | ATA_ABRT);
             drv->cmd = 0x00;
@@ -731,7 +731,7 @@ static void ata_execute_command(ata_drive_t *drv, uint8_t value)
             }
             debug((drv->log, "FLUSH CACHE"));
             if (drv->file) {
-                if (fflush(drv->file)) {
+                if (fflush(drv->file) || fsync(fileno(drv->file))) {
                     drv->error = drv->atapi ? 0x54 : (ATA_UNC | ATA_ABRT);
                 }
             }
@@ -836,7 +836,9 @@ static void ata_execute_command(ata_drive_t *drv, uint8_t value)
                     debug((drv->log, "SET DISABLE WRITE CACHE"));
                     drv->wcache = 0;
                     if (drv->file) {
-                        fflush(drv->file);
+                        if (fflush(drv->file) || fsync(fileno(drv->file))) {
+                            drv->error = drv->atapi ? 0x54 : (ATA_UNC | ATA_ABRT);
+                        }
                     }
                     return;
                 case 0x99:
@@ -1198,7 +1200,8 @@ void ata_register_store(ata_drive_t *drv, uint16_t addr, uint16_t value)
                                     drv->bufp = 0;
                                     return;
                                 }
-                                if (!drv->file || fflush(drv->file)) {
+                                if (!drv->file || fflush(drv->file) ||
+                                    fsync(fileno(drv->file))) {
                                     drv->error = drv->atapi ? 0x54 : (ATA_UNC | ATA_ABRT);
                                     break;
                                 }

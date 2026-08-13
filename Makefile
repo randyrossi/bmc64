@@ -5,8 +5,21 @@
 CIRCLEHOME = third_party/circle-stdlib/libs/circle
 NEWLIBDIR = third_party/circle-stdlib/install/arm-none-circle
 
-OBJS	= main.o kernel.o vicesound.o vicesoundbasedevice.o \
-          viceoptions.o viceapp.o fbl.o crt_pi_idx.o crt_pi_rgb.o
+APP_INCLUDES = -I"$(NEWLIBDIR)/include" -I$(STDDEF_INCPATH) \
+	      -Ithird_party/circle-stdlib/include \
+	      -I$(CIRCLEHOME)/include \
+	      -I$(CIRCLEHOME)/addon \
+	      -Ithird_party/vice-3.3/src \
+	      -I$(CIRCLEHOME)/addon/fatfs
+
+ifeq ($(MACHINE_CLASS),RASPI_PLUS4EMU)
+	APP_INCLUDES += -I "third_party/plus4emu/src"
+endif
+
+EXTRAINCLUDE += $(APP_INCLUDES)
+
+OBJS	= main.o kernel.o new_io.o vicesound.o vicesoundbasedevice.o bmcmodem.o \
+		  viceoptions.o viceapp.o vice_network.o network_time_sync.o fbl.o crt_pi_idx.o crt_pi_rgb.o
 
 ifeq ($(MACHINE_CLASS),RASPI_PLUS4EMU)
 OBJS	+= plus4emulatorcore.o
@@ -16,21 +29,24 @@ endif
 
 include $(CIRCLEHOME)/Rules.mk
 
-ifeq ($(MACHINE_CLASS),RASPI_PLUS4EMU)
-CFLAGS  += -I "third_party/plus4emu/src"
-endif
+CFLAGS += $(APP_INCLUDES) -D $(MACHINE_CLASS)
+CPPFLAGS += $(APP_INCLUDES) -D $(MACHINE_CLASS) -fno-exceptions -fno-rtti
 
-CFLAGS += -I "$(NEWLIBDIR)/include" -I $(STDDEF_INCPATH) \
-          -I third_party/circle-stdlib/include \
-          -I third_party/vice-3.3/src \
-          -I $(CIRCLEHOME)/addon/fatfs \
-          -D $(MACHINE_CLASS)
+FILTERED_CIRCLE_NEWLIB = libcirclenewlib-bmc64.a
+
+$(FILTERED_CIRCLE_NEWLIB): $(NEWLIBDIR)/lib/libcirclenewlib.a
+	@cp $< $@
+	@$(AR) d $@ io.o
+
+EXTRACLEAN += $(FILTERED_CIRCLE_NEWLIB)
+
+$(TARGET).img: $(FILTERED_CIRCLE_NEWLIB)
 
 LIBS := $(VICELIBS) \
         third_party/common/libbmc64common.a \
         $(NEWLIBDIR)/lib/libm.a \
 	$(NEWLIBDIR)/lib/libc.a \
-	$(NEWLIBDIR)/lib/libcirclenewlib.a \
+	$(FILTERED_CIRCLE_NEWLIB) \
  	$(CIRCLEHOME)/addon/SDCard/libsdcard.a \
   	$(CIRCLEHOME)/lib/usb/libusb.a \
  	$(CIRCLEHOME)/lib/input/libinput.a \
@@ -43,6 +59,9 @@ LIBS := $(VICELIBS) \
 	$(CIRCLEHOME)/addon/vc4/interface/vmcs_host/libvmcs_host.a \
   	$(CIRCLEHOME)/addon/linux/liblinuxemu.a \
 	$(CIRCLEHOME)/addon/fatfs/libfatfs.a \
+	$(CIRCLEHOME)/addon/wlan/hostap/wpa_supplicant/libwpa_supplicant.a \
+	$(CIRCLEHOME)/addon/wlan/libwlan.a \
+	$(CIRCLEHOME)/lib/sound/libsound.a \
   	$(CIRCLEHOME)/lib/sched/libsched.a \
   	$(CIRCLEHOME)/lib/libcircle.a
 

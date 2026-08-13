@@ -1,0 +1,7 @@
+country=US
+
+network={
+	ssid="replace-with-network-name"
+	psk="replace-with-network-password"
+	key_mgmt=WPA-PSK
+}

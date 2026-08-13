@@ -94,6 +94,58 @@
 #define BTN_ASSIGN_RESET_HARD 15
 #define BTN_ASSIGN_RESET_SOFT 16
 
+enum circle_network_status {
+  CIRCLE_NETWORK_DISABLED,
+  CIRCLE_NETWORK_ETHERNET_INITIALIZING,
+  CIRCLE_NETWORK_ETHERNET_WAITING_FOR_DHCP,
+  CIRCLE_NETWORK_ETHERNET_CONNECTED,
+  CIRCLE_NETWORK_ETHERNET_UNAVAILABLE,
+  CIRCLE_NETWORK_ETHERNET_INIT_FAILED,
+  CIRCLE_NETWORK_WIFI_CONFIG_MISSING,
+  CIRCLE_NETWORK_WIFI_DEVICE_INITIALIZING,
+  CIRCLE_NETWORK_WIFI_DEVICE_INIT_FAILED,
+  CIRCLE_NETWORK_WIFI_NETWORK_INIT_FAILED,
+  CIRCLE_NETWORK_WIFI_WPA_INITIALIZING,
+  CIRCLE_NETWORK_WIFI_WPA_INIT_FAILED,
+  CIRCLE_NETWORK_WIFI_CONNECTING,
+  CIRCLE_NETWORK_WIFI_CONNECTED,
+  CIRCLE_NETWORK_WIFI_CONNECTION_TIMEOUT,
+  CIRCLE_NETWORK_WIFI_UNAVAILABLE,
+  CIRCLE_NETWORK_WIFI_DEVICE_NOT_INITIALIZED,
+  CIRCLE_NETWORK_WIFI_UNSUPPORTED,
+  CIRCLE_NETWORK_WIFI_FIRMWARE_MISSING,
+  CIRCLE_NETWORK_STATUS_COUNT
+};
+
+#define CIRCLE_ACIA_NETWORK_ADDRESS_DEFAULT 1
+#define CIRCLE_ACIA_NETWORK_ADDRESS_VALUES { 0xd700, 0xde00, 0xdf00, 0xdf80 }
+#define CIRCLE_ACIA_NETWORK_ADDRESS_LABELS { "D700", "DE00", "DF00", "DF80" }
+
+// Returns nonzero and writes the current address when DHCP is bound.
+int circle_get_network_ip_address(char *address, unsigned int address_size);
+int circle_get_network_status(void);
+typedef void circle_network_status_changed_handler_t(void);
+void circle_set_network_status_changed_handler(
+  circle_network_status_changed_handler_t *handler);
+int circle_get_acia_network_enabled(void);
+int circle_get_acia_network_address(void);
+int circle_set_acia_network_address(int address);
+int circle_set_acia_network_enabled(int enabled);
+int circle_has_onboard_ethernet(void);
+int circle_has_onboard_wifi(void);
+int circle_wifi_is_running(void);
+int circle_connect_wifi(void);
+
+#define MAX_WIFI_ACCESS_POINTS 32
+struct wifi_access_point {
+  char ssid[33];
+  int signal;
+  int secure;
+};
+
+int circle_scan_wifi_access_points(struct wifi_access_point *access_points,
+                                   unsigned int max_access_points);
+
 // More just for usb buttons
 #define BTN_ASSIGN_RUN_STOP_BACK 17
 #define BTN_ASSIGN_CUSTOM_KEY_1 18
@@ -338,6 +390,9 @@ extern void emu_set_gamepad_info(int num_pads,
                                  int num_buttons[2],
                                  int axes[2],
                                  int hats[2]);
+
+extern void emu_set_usb_gamepad_mapping_profile(int device, unsigned profile);
+extern void emu_set_usb_gamepad_display_name(int device, const char *display_name);
 
 // Test whether emulator is in a config mode where it wants to receive
 // raw usb data.

@@ -36,11 +36,15 @@
 #include <circle/timer.h>
 #include <circle/usb/usbhcidevice.h>
 #include <ff.h>
+#include <wlan/bcm4343.h>
+#include <wlan/hostap/wpa_supplicant/wpasupplicant.h>
 
-#include <circle_glue.h>
+#include "circle_glue.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+struct wifi_access_point;
 
 #if defined(RASPI_PLUS4EMU)
 #include "plus4emulatorcore.h"
@@ -285,9 +289,11 @@ private:
 class ViceStdioApp : public ViceScreenApp {
 public:
   ViceStdioApp(const char *kernel)
-      : ViceScreenApp(kernel), mUSBHCII(&mInterrupt, &mTimer),
-        mEMMC(&mInterrupt, &mTimer, &mActLED)
-        {}
+    : ViceScreenApp(kernel), mUSBHCII(&mInterrupt, &mTimer, TRUE),
+          mEMMC(&mInterrupt, &mTimer, &mActLED), mNetworkDevice(0),
+          mTimezoneOffsetMinutes(0),
+          mWLAN(nullptr), mNet(nullptr), mWPASupplicant(nullptr),
+          mNetworkStatus(0) {}
 
   virtual bool Initialize(void);
   virtual void Cleanup(void);
@@ -295,6 +301,11 @@ public:
   void circle_find_usb(int (*usb)[3]);
   int circle_mount_usb(int usb);
   int circle_unmount_usb(int usb);
+  int WifiIsRunning(void) const;
+  int ConnectWifi(void);
+  int GetNetworkStatus(void) const;
+  int ScanWifiAccessPoints(struct wifi_access_point *access_points,
+                           unsigned int max_access_points);
 
 private:
   // Must be called after fatfs/stdio has been initialized
@@ -303,6 +314,9 @@ private:
   // to answer questions about a set of known files. This speeds
   // up boot time.
   void InitBootStat();
+  void LoadNetworkDevice();
+  void InitializeNetwork();
+  void SetNetworkStatus(int status);
 
 protected:
   // Called after VICE has completed booting so we no longer
@@ -311,6 +325,12 @@ protected:
 
   CUSBHCIDevice mUSBHCII;
   CEMMCDevice mEMMC;
+  int mNetworkDevice;
+  int mTimezoneOffsetMinutes;
+  CBcm4343Device *mWLAN;
+  CNetSubSystem *mNet;
+  CWPASupplicant *mWPASupplicant;
+  int mNetworkStatus;
   FATFS mFileSystemSD;
   FATFS mFileSystemUSB1;
   FATFS mFileSystemUSB2;

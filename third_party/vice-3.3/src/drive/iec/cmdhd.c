@@ -215,7 +215,7 @@ static void reset_alarm_handler(CLOCK offset, void *data)
     cmdhd_context_t *hd = (cmdhd_context_t *)data;
 
     CLOG((LOG, "CMDHD: alarm triggered at %u; releasing buttons",
-        *(hd->mycontext->clk_ptr)));
+        *(hd->mycontext->clk)));
     /* stop pressing WP, SWAP8, and SWAP9 buttons */
     hd->i8255a_i[1] |= (0x08 | 0x04 | 0x02);
     /* update in drive context too */
@@ -551,16 +551,21 @@ static void updateleds(drive_t *ctxptr)
 
 void cmdhd_store(struct drive_context_s *ctxptr, uint16_t addr, uint8_t data)
 {
+    /* leave if no image provided */
+    if (!ctxptr->cmdhd->image) {
+        return;
+    }
+
 #ifdef CMDIO
     static uint8_t oldd;
     static uint16_t olda;
     static CLOCK oldc = 0;
     drivecpu_context_t *cpu = ctxptr->cpu;
 #define storedebug() \
-if (olda != addr || olds != data) { \
+if (olda != addr || oldd != data) { \
     IDBG((LOG, "CMDHD: IO write %02x to %04x PC=%04x CYCLE=%u", data, addr, \
-        cpu->cpu_R65C02_regs.pc, *(ctxptr->clk_ptr)-oldc); \
-    old=data; \
+        cpu->cpu_R65C02_regs.pc, *(ctxptr->clk_ptr)-oldc)); \
+    oldd=data; \
     olda=addr; \
     oldc=*(ctxptr->clk_ptr); \
 }
@@ -643,12 +648,17 @@ if (olda != addr || olds != data) { \
 
 uint8_t cmdhd_read(struct drive_context_s *ctxptr, uint16_t addr)
 {
+    /* leave if no image provided */
+    if (!ctxptr->cmdhd->image) {
+        return 0;
+    }
+
 #ifdef CMDIO
     static CLOCK oldc = 0;
     drivecpu_context_t *cpu = ctxptr->cpu;
 #define readdebug() \
     IDBG((LOG, "CMDHD: IO read %02x from %04x PC=%04x CYCLE=%u", data, addr, \
-        cpu->cpu_R65C02_regs.pc, *(ctxptr->clk_ptr)-oldc); \
+        cpu->cpu_R65C02_regs.pc, *(ctxptr->clk_ptr)-oldc)); \
     oldc=*(ctxptr->clk_ptr);
 #else
 #define readdebug()
@@ -1179,7 +1189,6 @@ static void cmdhd_findbaselba(cmdhd_context_t *hd)
     uint32_t  i;
     disk_addr_t dadr;
     unsigned char buf[256];
-    int rlpresent;
 
     CLOG((LOG, "CMDHD: findbaselba"));
 
@@ -1221,15 +1230,6 @@ static void cmdhd_findbaselba(cmdhd_context_t *hd)
 
     CLOG((LOG, "CMDHD: findbaselba=%u", hd->baselba));
 
-    /* check if RAMLINK is enabled */
-    rlpresent = 0;
-    resources_get_int("RAMLINK", &rlpresent);
-
-    if (!hd->mycontext->parallel_cable && rlpresent) {
-        hd->mycontext->parallel_cable = 1;
-        CRIT((ERR, "CMDHD: RAMLink detected. Drive %d 'parallel cable' set to 'standard'.",
-            hd->mycontext->mynumber + 8));
-    }
 }
 
 void cmdhd_reset(cmdhd_context_t *hd)
@@ -1264,7 +1264,7 @@ void cmdhd_reset(cmdhd_context_t *hd)
     c = *(drive_context[hd->mycontext->mynumber]->clk_ptr) +
         cmdhd_has_sig(&(hd->mycontext->drive_ram[0x9000])) ? 8000000 : 500000;
 
-    CLOG((LOG, "CMDHD: alarm set for %u from %u", c, *(hd->mycontext->clk_ptr)));
+    CLOG((LOG, "CMDHD: alarm set for %u from %u", c, *(hd->mycontext->clk)));
     alarm_set(hd->reset_alarm, c);
 
     /* look for base lba as it may have changed on reset */
@@ -1422,11 +1422,11 @@ int cmdhd_attach_image(disk_image_t *image, unsigned int unit)
     /* release any more memory */
     lib_free(basename);
 
-    /* don't do this yet as a lot of 3rd party CMD tools don't expect this */
-#if 0
     /* attaching a new disk requires a device reset */
+    /* original comment is below, so the use of the reset may have to be revisited */
+    /* in the future but for now if make connecting to C64 OS dhd files more reliable */
+        /* don't do this yet as a lot of 3rd party CMD tools don't expect this */
     drive_cpu_trigger_reset(unit - 8);
-#endif
 
     /* process attachment counter for warning messages */
     hd->numattached++;

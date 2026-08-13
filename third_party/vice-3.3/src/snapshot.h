@@ -64,6 +64,8 @@ typedef struct snapshot_module_s snapshot_module_t;
 typedef struct snapshot_s snapshot_t;
 
 extern void snapshot_display_error(void);
+extern int snapshot_get_error(void);
+extern const char *snapshot_get_current_module(void);
 
 extern int snapshot_module_write_byte(snapshot_module_t *m, uint8_t data);
 extern int snapshot_module_write_word(snapshot_module_t *m, uint16_t data);

@@ -29,6 +29,7 @@
 #include <math.h>
 #include <assert.h>
 #include <dirent.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,16 +46,18 @@
 #include "menu_tape_osd.h"
 #include "menu_timing.h"
 #include "menu_usb.h"
+#include "menu_wifi.h"
 #include "menu_keyset.h"
 #include "menu_switch.h"
 #include "menu_gpio.h"
 #include "overlay.h"
 #include "raspi_util.h"
 #include "ui.h"
+#include "usb_gamepad_defaults.h"
 
 extern void reboot(void);
 
-#define VERSION_STRING "4.2"
+#define VERSION_STRING "4.2-p12"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -89,6 +92,7 @@ typedef enum {
    FILTER_SNAP,
    FILTER_DIRS,
    FILTER_PRGS,
+   FILTER_IDE64,
 } FileFilter;
 
 // These can be saved
@@ -138,6 +142,149 @@ struct menu_item *warp_item;
 struct menu_item *reset_confirm_item;
 struct menu_item *gpio_config_item;
 struct menu_item *active_display_item;
+static struct menu_item *network_device_item;
+static struct menu_item *network_status_item;
+static struct menu_item *network_ip_address_item;
+static struct menu_item *network_modem_address_item;
+static struct menu_item *timezone_offset_item;
+static struct menu_item *wifi_settings_item;
+static struct menu_item *wifi_ssid_item;
+static struct menu_item *wifi_security_item;
+static struct menu_item *wifi_country_item;
+static struct menu_item *wifi_connect_item;
+static struct menu_item *wifi_psk_item;
+static char wifi_psk[MAX_STR_VAL_LEN];
+static int saved_network_device;
+static int network_device_was_selected;
+static int network_reboot_prompted;
+
+static const int acia_network_addresses[] = CIRCLE_ACIA_NETWORK_ADDRESS_VALUES;
+static const char *const acia_network_address_labels[] =
+  CIRCLE_ACIA_NETWORK_ADDRESS_LABELS;
+
+static void configure_timezone_offsets(struct menu_item *item) {
+  int index = 0;
+
+  for (int offset = -12 * 60; offset <= 14 * 60; offset += 30) {
+    int absolute_offset = offset < 0 ? -offset : offset;
+    snprintf(item->choices[index], MAX_MENU_STR, "UTC%c%02d:%02d",
+             offset < 0 ? '-' : '+', absolute_offset / 60,
+             absolute_offset % 60);
+    item->choice_ints[index++] = offset;
+
+    if (offset == 330 || offset == 510 || offset == 750) {
+      int quarter_hour_offset = offset + 15;
+      snprintf(item->choices[index], MAX_MENU_STR, "UTC+%02d:%02d",
+               quarter_hour_offset / 60, quarter_hour_offset % 60);
+      item->choice_ints[index++] = quarter_hour_offset;
+    }
+  }
+
+  item->num_choices = index;
+}
+
+static int timezone_offset_index(int offset) {
+  for (int index = 0; index < timezone_offset_item->num_choices; index++) {
+    if (timezone_offset_item->choice_ints[index] == offset) {
+      return index;
+    }
+  }
+  return 24;
+}
+
+static int acia_network_address_index(int address) {
+  int index;
+  for (index = 0;
+       index < (int)(sizeof(acia_network_addresses) /
+                     sizeof(acia_network_addresses[0])); index++) {
+    if (acia_network_addresses[index] == address) {
+      return index;
+    }
+  }
+  return CIRCLE_ACIA_NETWORK_ADDRESS_DEFAULT;
+}
+
+static const char *const network_status_labels[CIRCLE_NETWORK_STATUS_COUNT] = {
+    "Disabled",
+    "Starting Ethernet",
+    "Check Ethernet cable",
+    "Ethernet connected",
+    "Ethernet unavailable",
+    "Ethernet init failed",
+    "Wi-Fi config missing",
+    "Starting Wi-Fi",
+    "Wi-Fi device failed",
+    "Wi-Fi network failed",
+    "Starting Wi-Fi WPA",
+    "Wi-Fi WPA failed",
+    "Wi-Fi connecting",
+    "Wi-Fi connected",
+    "Wi-Fi timeout",
+    "Wi-Fi unavailable",
+    "Wi-Fi device missing",
+    "Wi-Fi unsupported",
+    "Missing Wi-Fi firmware"
+};
+
+static const char *network_status_label(int status) {
+  if (status < 0 || status >= CIRCLE_NETWORK_STATUS_COUNT) {
+    return "Unknown";
+  }
+  return network_status_labels[status];
+}
+
+void menu_update_network_status(void);
+
+static void network_status_changed(void) {
+  menu_update_network_status();
+}
+
+void menu_update_network_status(void) {
+  if (network_status_item == NULL) {
+    return;
+  }
+
+  char status[MAX_STR_VAL_LEN];
+  int status_code = circle_get_network_status();
+    strncpy(status, network_status_label(status_code), sizeof(status) - 1);
+    status[sizeof(status) - 1] = '\0';
+    strncpy(network_status_item->displayed_value, status,
+      sizeof(network_status_item->displayed_value) - 1);
+    network_status_item->displayed_value[
+        sizeof(network_status_item->displayed_value) - 1] = '\0';
+
+    if (network_ip_address_item != NULL) {
+      char address[MAX_STR_VAL_LEN];
+      const char *ip_address = " ";
+      if (circle_get_network_ip_address(address, sizeof(address))) {
+        ip_address = address;
+      }
+      strncpy(network_ip_address_item->str_value, ip_address,
+        sizeof(network_ip_address_item->str_value) - 1);
+      network_ip_address_item->str_value[
+    sizeof(network_ip_address_item->str_value) - 1] = '\0';
+      strncpy(network_ip_address_item->displayed_value, ip_address,
+        sizeof(network_ip_address_item->displayed_value) - 1);
+      network_ip_address_item->displayed_value[
+    sizeof(network_ip_address_item->displayed_value) - 1] = '\0';
+    }
+}
+
+static void update_wifi_menu_enabled(void) {
+  if (network_device_item != NULL &&
+      ((network_device_item->value == 1 && !circle_has_onboard_ethernet()) ||
+       (network_device_item->value == 2 && !circle_has_onboard_wifi()))) {
+    network_device_item->value = 0;
+    saved_network_device = 0;
+    circle_set_acia_network_enabled(0);
+  }
+  int enabled = network_device_item != NULL && network_device_item->value == 2;
+  if (wifi_settings_item) wifi_settings_item->disabled = !enabled;
+  if (wifi_ssid_item) wifi_ssid_item->disabled = !enabled;
+  if (wifi_security_item) wifi_security_item->disabled = !enabled;
+  if (wifi_country_item) wifi_country_item->disabled = !enabled;
+  if (wifi_connect_item) wifi_connect_item->disabled = !enabled;
+}
 
 struct menu_item *use_scaling_params_item[2];
 
@@ -211,6 +358,9 @@ char snap_filt_ext[1][5];
 const int num_prg_ext = 1;
 const char prg_filt_ext[1][5] = {".prg"};
 
+const int num_ide64_ext = 2;
+const char ide64_filt_ext[2][5] = {".cfa", ".hdd"};
+
 #define TEST_FILTER_MACRO(funcname, numvar, filtarray)                         \
   static int funcname(char *name) {                                            \
     int include = 0;                                                           \
@@ -256,6 +406,7 @@ TEST_FILTER_MACRO(test_tape_name, num_tape_ext, tape_filt_ext);
 TEST_FILTER_MACRO(test_cart_name, num_cart_ext, cart_filt_ext);
 TEST_FILTER_MACRO(test_snap_name, num_snap_ext, snap_filt_ext);
 TEST_FILTER_MACRO(test_prg_name, num_prg_ext, prg_filt_ext);
+TEST_FILTER_MACRO(test_ide64_name, num_ide64_ext, ide64_filt_ext);
 
 static void rtrim(char *txt) {
   if (!txt) return;
@@ -285,6 +436,84 @@ static void get_key_and_value(char *line, char **key, char **value) {
    *value = 0;
 }
 
+static void unquote_wifi_value(char *value) {
+  size_t length = strlen(value);
+  if (length >= 2 && value[0] == '"' && value[length - 1] == '"') {
+    memmove(value, value + 1, length - 2);
+    value[length - 2] = '\0';
+  }
+}
+
+static void load_wifi_settings(void) {
+  FILE *fp = fopen("/wpa_supplicant.conf", "r");
+  if (fp == NULL) {
+    return;
+  }
+
+  char line[MAX_STR_VAL_LEN];
+  while (fgets(line, sizeof(line), fp) != NULL) {
+    char *name;
+    char *value;
+    get_key_and_value(line, &name, &value);
+    if (name == NULL || value == NULL) {
+      continue;
+    }
+    unquote_wifi_value(value);
+    if (strcmp(name, "ssid") == 0) {
+      strncpy(wifi_ssid_item->str_value, value, wifi_ssid_item->max_length);
+      wifi_ssid_item->str_value[wifi_ssid_item->max_length] = '\0';
+    } else if (strcmp(name, "psk") == 0) {
+      strncpy(wifi_psk, value, sizeof(wifi_psk) - 1);
+      wifi_psk[sizeof(wifi_psk) - 1] = '\0';
+    } else if (strcmp(name, "key_mgmt") == 0) {
+      wifi_security_item->value = strcmp(value, "NONE") == 0 ? 1 : 0;
+    } else if (strcmp(name, "country") == 0) {
+      strncpy(wifi_country_item->str_value, value,
+              wifi_country_item->max_length);
+      wifi_country_item->str_value[wifi_country_item->max_length] = '\0';
+    }
+  }
+  fclose(fp);
+
+  wifi_ssid_item->value = strlen(wifi_ssid_item->str_value);
+  wifi_country_item->value = strlen(wifi_country_item->str_value);
+}
+
+static int save_wifi_settings(void) {
+  FILE *fp = fopen("/wpa_supplicant.conf", "w");
+  if (fp == NULL) {
+    return 1;
+  }
+
+  fprintf(fp, "country=%s\n\n", wifi_country_item->str_value);
+  fprintf(fp, "network={\n");
+  fprintf(fp, "\tssid=\"%s\"\n", wifi_ssid_item->str_value);
+  if (wifi_security_item->value == 0) {
+    fprintf(fp, "\tpsk=\"%s\"\n", wifi_psk);
+    fprintf(fp, "\tkey_mgmt=WPA-PSK\n");
+  } else {
+    fprintf(fp, "\tkey_mgmt=NONE\n");
+  }
+  fprintf(fp, "}\n");
+  fclose(fp);
+  return 0;
+}
+
+static void show_wifi_connect_dialog(void) {
+  struct menu_item *root = ui_push_menu(42, 6);
+  struct menu_item *prompt = ui_menu_add_button(
+      MENU_ID_DO_NOTHING, root, "Enter WiFi PSK");
+  prompt->disabled = 1;
+  ui_menu_add_divider(root);
+  wifi_psk_item = ui_menu_add_text_field_limit(
+      MENU_WIFI_PSK, root, "WiFi PSK", wifi_psk, 63);
+  wifi_psk_item->textfield_right_aligned = 1;
+  wifi_psk_item->textfield_masked = 1;
+  ui_menu_add_button(MENU_WIFI_CONNECT_NOW, root, "Save & Reboot");
+  ui_select_first_interactive_item();
+  ui_render_single_frame();
+}
+
 static char *fullpath(DirType dir_type, char *name) {
   strcpy(full_path_str, current_volume_name);
   strcat(full_path_str, current_dir_names[dir_type]);
@@ -308,6 +537,30 @@ static void remove_dir(char *path) {
   if (strlen(path) == 0) {
     strcpy(path, "/");
   }
+}
+
+static int is_directory(DirType dir_type, const char *name) {
+  char path[MAX_STR_VAL_LEN * 2];
+  struct stat statbuf;
+
+  if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) {
+    return 1;
+  }
+
+  strncpy(path, fullpath(dir_type, ""), sizeof(path) - 1);
+  path[sizeof(path) - 1] = '\0';
+
+  if (path[0] != '\0' && path[strlen(path) - 1] != '/') {
+    strncat(path, "/", sizeof(path) - strlen(path) - 1);
+  }
+
+  strncat(path, name, sizeof(path) - strlen(path) - 1);
+
+  if (stat(path, &statbuf) != 0) {
+    return 0;
+  }
+
+  return S_ISDIR(statbuf.st_mode);
 }
 
 // Clears the file menu and populates it with files.
@@ -373,7 +626,7 @@ static void list_files(struct menu_item *parent,
 
   if (dp != NULL) {
     while (ep = readdir(dp)) {
-      if (ep->d_type & DT_DIR) {
+      if (is_directory(dir_type, ep->d_name)) {
         ui_menu_add_button_with_value(menu_id, &dirs_root, ep->d_name, 0,
                                       ep->d_name, "(dir)")
             ->sub_id = MENU_SUB_ENTER_DIR;
@@ -389,6 +642,8 @@ static void list_files(struct menu_item *parent,
           include = test_snap_name(ep->d_name);
         } else if (filter == FILTER_PRGS) {
           include = test_prg_name(ep->d_name);
+        } else if (filter == FILTER_IDE64) {
+          include = test_ide64_name(ep->d_name);
         } else if (filter == FILTER_DIRS) {
           include = 0;
         } else if (filter == FILTER_NONE) {
@@ -432,6 +687,25 @@ static void files_cursor_listener(struct menu_item* parent,
   current_dir_pos[parent->value] = new_pos;
 }
 
+static void main_menu_cursor_listener(struct menu_item* parent, int new_pos) {
+  (void) parent;
+  menu_update_network_status();
+  int network_device_is_selected =
+      network_device_item != NULL &&
+      new_pos == network_device_item->render_index;
+
+  if (network_device_was_selected && !network_device_is_selected &&
+      network_device_item->value != saved_network_device &&
+      !network_reboot_prompted) {
+    network_reboot_prompted = 1;
+    ui_confirm_wrapped_labels("Network settings changed",
+        "Network settings have changed. You need to reboot for them to take effect. Reboot now?",
+      0, MENU_NETWORK_ENABLED, "Yes", "No");
+  }
+
+  network_device_was_selected = network_device_is_selected;
+}
+
 static void show_files(DirType dir_type, FileFilter filter, int menu_id,
                        int reset_cur_pos) {
   // Show files
@@ -461,33 +735,33 @@ static void show_files(DirType dir_type, FileFilter filter, int menu_id,
 
 static void show_about() {
   struct menu_item *about_root = ui_push_menu(32, 8);
-  char title[16];
+  char title[32];
   char desc[32];
 
   switch (emux_machine_class) {
   case BMC64_MACHINE_CLASS_C64:
-    snprintf (title, 15, "%s%s %s", "BMC64", VARIANT_STRING, VERSION_STRING);
+    snprintf (title, 31, "%s%s %s", "BMC64", VARIANT_STRING, VERSION_STRING);
     strncpy (desc, "A Bare Metal C64 Emulator", 31);
     break;
   case BMC64_MACHINE_CLASS_C128:
-    snprintf (title, 15, "%s%s %s", "BMC128", VARIANT_STRING, VERSION_STRING);
+    snprintf (title, 31, "%s%s %s", "BMC128", VARIANT_STRING, VERSION_STRING);
     strncpy (desc, "A Bare Metal C128 Emulator", 31);
     break;
   case BMC64_MACHINE_CLASS_VIC20:
-    snprintf (title, 15, "%s%s %s", "BMVIC20", VARIANT_STRING, VERSION_STRING);
+    snprintf (title, 31, "%s%s %s", "BMVIC20", VARIANT_STRING, VERSION_STRING);
     strncpy (desc, "A Bare Metal VIC20 Emulator", 31);
     break;
   case BMC64_MACHINE_CLASS_PLUS4:
   case BMC64_MACHINE_CLASS_PLUS4EMU:
-    snprintf (title, 15, "%s%s %s", "BMPLUS4", VARIANT_STRING, VERSION_STRING);
+    snprintf (title, 31, "%s%s %s", "BMPLUS4", VARIANT_STRING, VERSION_STRING);
     strncpy (desc, "A Bare Metal PLUS/4 Emulator", 31);
     break;
   case BMC64_MACHINE_CLASS_PET:
-    snprintf (title, 15, "%s%s %s", "BMPET", VARIANT_STRING, VERSION_STRING);
+    snprintf (title, 31, "%s%s %s", "BMPET", VARIANT_STRING, VERSION_STRING);
     strncpy (desc, "A Bare Metal PET Emulator", 31);
     break;
   default:
-    strncpy (title, "ERROR", 15);
+    strncpy (title, "ERROR", 31);
     strncpy (desc, "Unknown Emulator", 31);
     break;
   }
@@ -879,29 +1153,32 @@ static void next_integer_scaling(int layer,
 
 static int save_settings() {
   FILE *fp;
+  const char *settings_filename;
   switch (emux_machine_class) {
   case BMC64_MACHINE_CLASS_C64:
-    fp = fopen("/settings.txt", "w");
+    settings_filename = "/settings.txt";
     break;
   case BMC64_MACHINE_CLASS_C128:
-    fp = fopen("/settings-c128.txt", "w");
+    settings_filename = "/settings-c128.txt";
     break;
   case BMC64_MACHINE_CLASS_VIC20:
-    fp = fopen("/settings-vic20.txt", "w");
+    settings_filename = "/settings-vic20.txt";
     break;
   case BMC64_MACHINE_CLASS_PLUS4:
-    fp = fopen("/settings-plus4.txt", "w");
+    settings_filename = "/settings-plus4.txt";
     break;
   case BMC64_MACHINE_CLASS_PLUS4EMU:
-    fp = fopen("/settings-plus4emu.txt", "w");
+    settings_filename = "/settings-plus4emu.txt";
     break;
   case BMC64_MACHINE_CLASS_PET:
-    fp = fopen("/settings-pet.txt", "w");
+    settings_filename = "/settings-pet.txt";
     break;
   default:
     printf("ERROR: Unhandled machine\n");
     return 1;
   }
+
+  fp = fopen(settings_filename, "w");
 
   int r = emux_save_settings();
   if (r < 0) {
@@ -959,6 +1236,19 @@ static int save_settings() {
   fprintf(fp, "reset_confirm=%d\n", reset_confirm_item->value);
   fprintf(fp, "scaling_interp=%d\n", scaling_interp_item->value);
   fprintf(fp, "gpio_config=%d\n", gpio_config_item->choice_ints[gpio_config_item->value]);
+  if (network_device_item != NULL) {
+    fprintf(fp, "network_device=%d\n", network_device_item->value);
+    saved_network_device = network_device_item->value;
+    network_reboot_prompted = 0;
+  }
+  if (timezone_offset_item != NULL) {
+    fprintf(fp, "timezone_offset_minutes=%d\n",
+            timezone_offset_item->choice_ints[timezone_offset_item->value]);
+  }
+  if (network_modem_address_item != NULL) {
+    fprintf(fp, "network_modem_address=%d\n",
+            network_modem_address_item->value);
+  }
   fprintf(fp, "h_center_0=%d\n", h_center_item[0]->value);
   fprintf(fp, "v_center_0=%d\n", v_center_item[0]->value);
   fprintf(fp, "h_border_0=%d\n", h_border_item[0]->value);
@@ -1042,6 +1332,11 @@ static int save_settings() {
   emux_save_additional_settings(fp);
 
   fclose(fp);
+  if (network_device_item != NULL && network_device_item->value == 2 &&
+      save_wifi_settings()) {
+    return 1;
+  }
+  emux_log_settings_file(settings_filename);
 
   return 0;
 }
@@ -1116,6 +1411,10 @@ static void load_settings() {
   default:
     printf("ERROR: Unhandled machine\n");
     return;
+  }
+
+  if (wifi_ssid_item != NULL) {
+    load_wifi_settings();
   }
 
   if (fp == NULL)
@@ -1238,6 +1537,21 @@ static void load_settings() {
 
       // Make sure pins are configured properly after load
       circle_reset_gpio(emu_get_gpio_config());
+    } else if (network_device_item != NULL &&
+               strcmp(name, "network_device") == 0) {
+      if (value >= 0 && value < network_device_item->num_choices) {
+        network_device_item->value = value;
+        saved_network_device = value;
+      }
+    } else if (network_modem_address_item != NULL &&
+               strcmp(name, "network_modem_address") == 0) {
+      if (value >= 0 && value < network_modem_address_item->num_choices &&
+          circle_set_acia_network_address(acia_network_addresses[value])) {
+        network_modem_address_item->value = value;
+      }
+    } else if (timezone_offset_item != NULL &&
+               strcmp(name, "timezone_offset_minutes") == 0) {
+      timezone_offset_item->value = timezone_offset_index(value);
     } else if (strcmp(name, "keyset_1_up") == 0) {
       keyset_codes[0][KEYSET_UP] = value;
     } else if (strcmp(name, "keyset_1_down") == 0) {
@@ -1411,6 +1725,7 @@ static void load_settings() {
   }
   fclose(fp);
 
+  update_wifi_menu_enabled();
   emux_load_settings_done();
 
   emux_video_color_setting_changed(0);
@@ -1577,6 +1892,20 @@ static void select_file(struct menu_item *item) {
      case MENU_PLUS4_CART_C2_HI_FILE:
        attach_cart(item->id, item);
        return;
+    case MENU_IDE64_IMAGE_1_FILE:
+    case MENU_IDE64_IMAGE_2_FILE:
+    case MENU_IDE64_IMAGE_3_FILE:
+    case MENU_IDE64_IMAGE_4_FILE:
+      if (emux_machine_class == BMC64_MACHINE_CLASS_C64) {
+        if (emux_handle_ide64_image_change(
+                item->id - MENU_IDE64_IMAGE_1_FILE + 1,
+                fullpath(DIR_DISKS, item->str_value)) == 0) {
+          ui_pop_all_and_toggle();
+        } else {
+          ui_error("Failed to set IDE64 image");
+        }
+      }
+      return;
      default:
        break;
   }
@@ -1647,6 +1976,10 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
   case MENU_SAVE_SNAP_FILE:
     return DIR_SNAPS;
   case MENU_DISK_FILE:
+  case MENU_IDE64_IMAGE_1_FILE:
+  case MENU_IDE64_IMAGE_2_FILE:
+  case MENU_IDE64_IMAGE_3_FILE:
+  case MENU_IDE64_IMAGE_4_FILE:
   case MENU_CREATE_D64_FILE:
   case MENU_CREATE_D67_FILE:
   case MENU_CREATE_D71_FILE:
@@ -1719,6 +2052,10 @@ static void relist_files_after_dir_change(struct menu_item *item) {
     show_files(DIR_SNAPS, FILTER_SNAP, item->id, 1);
     break;
   case MENU_DISK_FILE:
+  case MENU_IDE64_IMAGE_1_FILE:
+  case MENU_IDE64_IMAGE_2_FILE:
+  case MENU_IDE64_IMAGE_3_FILE:
+  case MENU_IDE64_IMAGE_4_FILE:
   case MENU_CREATE_D64_FILE:
   case MENU_CREATE_D67_FILE:
   case MENU_CREATE_D71_FILE:
@@ -1733,7 +2070,12 @@ static void relist_files_after_dir_change(struct menu_item *item) {
   case MENU_CREATE_P64_FILE:
   case MENU_CREATE_X64_FILE:
   case MENU_CREATE_DHD_FILE:
-    show_files(DIR_DISKS, FILTER_DISK, item->id, 1);
+    show_files(DIR_DISKS,
+           item->id >= MENU_IDE64_IMAGE_1_FILE &&
+               item->id <= MENU_IDE64_IMAGE_4_FILE
+             ? FILTER_NONE
+             : FILTER_DISK,
+           item->id, 1);
     break;
   case MENU_TAPE_FILE:
   case MENU_CREATE_TAP_FILE:
@@ -2309,6 +2651,18 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_C64_ATTACH_CART_ULTIMAX:
     show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_ULTIMAX_FILE, 0);
     return;
+  case MENU_IDE64_IMAGE_1:
+    show_files(DIR_DISKS, FILTER_IDE64, MENU_IDE64_IMAGE_1_FILE, 0);
+    return;
+  case MENU_IDE64_IMAGE_2:
+    show_files(DIR_DISKS, FILTER_IDE64, MENU_IDE64_IMAGE_2_FILE, 0);
+    return;
+  case MENU_IDE64_IMAGE_3:
+    show_files(DIR_DISKS, FILTER_IDE64, MENU_IDE64_IMAGE_3_FILE, 0);
+    return;
+  case MENU_IDE64_IMAGE_4:
+    show_files(DIR_DISKS, FILTER_IDE64, MENU_IDE64_IMAGE_4_FILE, 0);
+    return;
   case MENU_VIC20_ATTACH_CART_DETECT:
     show_files(DIR_CARTS, FILTER_NONE, MENU_VIC20_CART_DETECT_FILE, 0);
     return;
@@ -2491,6 +2845,54 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_GPIO_CONFIG:
     // Ensure GPIO pins are correct for new mode.
     circle_reset_gpio(emu_get_gpio_config());
+    return;
+  case MENU_NETWORKING:
+    menu_update_network_status();
+    return;
+  case MENU_NETWORK_ENABLED:
+    circle_set_acia_network_enabled(item->value != 0);
+    update_wifi_menu_enabled();
+    network_reboot_prompted = 0;
+    return;
+  case MENU_NETWORK_MODEM_ADDRESS:
+    if (!circle_set_acia_network_address(
+            acia_network_addresses[item->value])) {
+      item->value = acia_network_address_index(
+          circle_get_acia_network_address());
+      ui_error("Cannot set modem address");
+    }
+    return;
+  case MENU_WIFI_SSID:
+    if (!circle_wifi_is_running()) {
+      ui_confirm_wrapped_labels("Wi-Fi scan unavailable",
+          "To scan available WiFi APs you must reboot. Reboot now?",
+          0, MENU_NETWORK_ENABLED, "Yes", "No");
+      return;
+    }
+    ui_info("Scanning WiFi networks...");
+    show_wifi_access_points(wifi_ssid_item, wifi_security_item);
+    return;
+  case MENU_WIFI_CONNECT:
+    if (!circle_wifi_is_running()) {
+      ui_confirm_wrapped_labels("Wi-Fi connection unavailable",
+          "To connect to WiFi you must reboot. Reboot now?",
+          0, MENU_NETWORK_ENABLED, "Yes", "No");
+      return;
+    }
+    show_wifi_connect_dialog();
+    return;
+  case MENU_WIFI_PSK:
+    strncpy(wifi_psk, item->str_value, sizeof(wifi_psk) - 1);
+    wifi_psk[sizeof(wifi_psk) - 1] = '\0';
+    return;
+  case MENU_WIFI_CONNECT_NOW:
+    strncpy(wifi_psk, wifi_psk_item->str_value, sizeof(wifi_psk) - 1);
+    wifi_psk[sizeof(wifi_psk) - 1] = '\0';
+    if (save_wifi_settings() != 0) {
+      ui_error("Cannot save WiFi settings");
+    } else {
+      reboot();
+    }
     return;
   case MENU_WARP_MODE:
     toggle_warp(item->value);
@@ -2791,13 +3193,15 @@ static void menu_value_changed(struct menu_item *item) {
     ui_confirm_wrapped("Reboot?",SWITCH_MSG,item->value,MENU_SWITCH_MACHINE);
     break;
   case MENU_CONFIRM_OK:
+    int confirmation_id = item->sub_id;
+    int confirmation_value = item->value;
     ui_pop_menu();
-    if (item->sub_id == MENU_SWITCH_MACHINE) {
+    if (confirmation_id == MENU_SWITCH_MACHINE) {
       load_machines(&head);
       struct machine_entry* ptr = head;
       status = 0;
       while (ptr) {
-          if (ptr->id == item->value) {
+          if (ptr->id == confirmation_value) {
             status = switch_apply_files(ptr);
             break;
           }
@@ -2810,6 +3214,12 @@ static void menu_value_changed(struct menu_item *item) {
          ui_confirm_wrapped(failcode, SWITCH_FAIL_MSG,-1,-1);
       } else {
          reboot();
+      }
+    } else if (confirmation_id == MENU_NETWORK_ENABLED) {
+      if (save_settings() == 0) {
+        reboot();
+      } else {
+        ui_error("Cannot save settings");
       }
     }
     break;
@@ -3109,6 +3519,8 @@ void build_menu(struct menu_item *root) {
   int dev;
   int i;
   int j;
+
+  root->cursor_listener_func = main_menu_cursor_listener;
   int k;
   int tmp;
 
@@ -3243,6 +3655,66 @@ void build_menu(struct menu_item *root) {
   ui_menu_add_button(MENU_LICENSE, root, "License...");
 
   ui_menu_add_divider(root);
+
+  if (emux_machine_class == BMC64_MACHINE_CLASS_C64 ||
+    emux_machine_class == BMC64_MACHINE_CLASS_C128) {
+    network_status_item = ui_menu_add_read_only_heading(
+      root, "Network Status:");
+    parent = ui_menu_add_folder(root, "Network");
+    parent->id = MENU_NETWORKING;
+
+    child = network_device_item =
+      ui_menu_add_multiple_choice(MENU_NETWORK_ENABLED, parent, "Network Device");
+    child->num_choices = 3;
+    child->value = 0;
+    strcpy(child->choices[0], "Off");
+    strcpy(child->choices[1], "Ethernet");
+    strcpy(child->choices[2], "WiFi");
+    child->choice_disabled[1] = !circle_has_onboard_ethernet();
+    child->choice_disabled[2] = !circle_has_onboard_wifi();
+
+    child = network_modem_address_item = ui_menu_add_multiple_choice(
+      MENU_NETWORK_MODEM_ADDRESS, parent, "Modem Address");
+    child->num_choices = sizeof(acia_network_addresses) /
+               sizeof(acia_network_addresses[0]);
+    child->value = acia_network_address_index(
+        circle_get_acia_network_address());
+    for (int address_index = 0; address_index < child->num_choices;
+         address_index++) {
+      strcpy(child->choices[address_index],
+             acia_network_address_labels[address_index]);
+    }
+
+    timezone_offset_item = ui_menu_add_multiple_choice(
+      MENU_TIMEZONE_OFFSET, parent, "Timezone (reboot)");
+    configure_timezone_offsets(timezone_offset_item);
+    timezone_offset_item->value = timezone_offset_index(0);
+
+    network_ip_address_item = ui_menu_add_button_with_value(
+      MENU_ID_DO_NOTHING, parent, "IP Address", 0,
+      " ", " ");
+    network_ip_address_item->disabled = 1;
+
+    parent = wifi_settings_item = ui_menu_add_folder(parent, "WiFi Settings");
+    wifi_ssid_item = ui_menu_add_text_field_limit(
+      MENU_WIFI_SSID, parent, "WiFi SSID", "", 32);
+    wifi_ssid_item->textfield_right_aligned = 1;
+    wifi_security_item = ui_menu_add_multiple_choice(
+      MENU_WIFI_SECURITY, parent, "WiFi Security");
+    wifi_security_item->num_choices = 2;
+    strcpy(wifi_security_item->choices[0], "WPA-PSK");
+    strcpy(wifi_security_item->choices[1], "None");
+    wifi_country_item = ui_menu_add_text_field_limit(
+      MENU_WIFI_COUNTRY, parent, "WiFi Country Code", "US", 2);
+    wifi_country_item->textfield_right_aligned = 1;
+    wifi_connect_item = ui_menu_add_button(MENU_WIFI_CONNECT, parent,
+                         "Enter Password & Reboot");
+    update_wifi_menu_enabled();
+
+    circle_set_network_status_changed_handler(network_status_changed);
+    menu_update_network_status();
+    ui_menu_add_divider(root);
+  }
 
   switch (emux_machine_class) {
     case BMC64_MACHINE_CLASS_PLUS4EMU:
@@ -3719,19 +4191,12 @@ void build_menu(struct menu_item *root) {
   ui_menu_add_button(MENU_USB_2_CONFIGURE, parent, "Configure USB Gamepad 3...");
   ui_menu_add_button(MENU_USB_3_CONFIGURE, parent, "Configure USB Gamepad 4...");
 
-  for (int k = 0; k < MAX_USB_DEVICES; k++) {
-    usb_pref[k] = 0;
-    usb_x_axis[k] = 0;
-    usb_y_axis[k] = 1;
-    usb_x_thresh[k] = .50;
-    usb_y_thresh[k] = .50;
+  for (j = 0; j < MAX_USB_BUTTONS; j++) {
+    usb_button_bits[j] = 1 << j;
   }
 
-  for (j = 0; j < MAX_USB_BUTTONS; j++) {
-    for (k = 0; k < MAX_USB_DEVICES; k++) {
-      usb_button_assignments[k][j] = (j == 0 ? BTN_ASSIGN_FIRE : BTN_ASSIGN_UNDEF);
-    }
-    usb_button_bits[j] = 1 << j;
+  for (k = 0; k < MAX_USB_DEVICES; k++) {
+    usb_gamepad_reset_to_defaults(k);
   }
 
   ui_menu_add_button(MENU_CONFIGURE_KEYSET1, parent, "Configure Keyset 1...");

@@ -95,7 +95,8 @@ bool Plus4EmulatorCore::Init(ViceOptions* options) {
 }
 
 void Plus4EmulatorCore::LaunchEmulator(char *timing_option) {
-  strncpy(timing_option_, timing_option, 8);
+  strncpy(timing_option_, timing_option, sizeof(timing_option_) - 1);
+  timing_option_[sizeof(timing_option_) - 1] = '\0';
 #ifdef ARM_ALLOW_MULTI_CORE
   m_Lock.Acquire();
   launch_ = true;

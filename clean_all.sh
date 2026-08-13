@@ -12,6 +12,10 @@ SRC_DIR=`pwd`
 
 cd $SRC_DIR/third_party/vice-3.3
 make clean
+# The configured VICE clean target can stop at an unavailable optional
+# subdirectory, leaving objects from a prior Pi target behind.
+find . -type f \( -name '*.o' -o -name '*.a' -o -name '*.lo' \) -delete
+find . -type d \( -name '.deps' -o -name '.libs' \) -prune -exec rm -rf {} +
 git status | grep 'deleted:.*doc' | sed 's/deleted:/git checkout /' | sh
 
 cd $SRC_DIR/third_party/common
@@ -72,4 +76,4 @@ git reset --hard
 cd $SRC_DIR
 make clean
 
-rm kernel*img.*
+rm -f kernel*img.*

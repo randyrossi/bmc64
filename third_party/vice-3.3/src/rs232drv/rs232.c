@@ -38,7 +38,7 @@
 
 #include "vice.h"
 
-#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET)
+#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET) || defined(HAVE_RS232BMC)
 
 #include <assert.h>
 #include <errno.h>
@@ -51,10 +51,23 @@
 #include "log.h"
 #include "rs232.h"
 #include "rs232dev.h"
+#include "rs232bmc.h"
 #include "rs232net.h"
 #include "types.h"
 #include "util.h"
 #include "vicesocket.h"
+
+#ifdef HAVE_RS232BMC
+void rs232bmc_init(void);
+void rs232bmc_reset(void);
+int rs232bmc_open(int device);
+void rs232bmc_close(int fd);
+int rs232bmc_putc(int fd, uint8_t byte);
+int rs232bmc_getc(int fd, uint8_t *byte);
+int rs232bmc_set_status(int fd, enum rs232handshake_out status);
+enum rs232handshake_in rs232bmc_get_status(int fd);
+void rs232bmc_set_bps(int fd, unsigned int bps);
+#endif
 
 #ifdef DEBUG
 # define DEBUG_LOG_MESSAGE(_xxx) log_message _xxx
@@ -65,7 +78,8 @@
 /* ------------------------------------------------------------------------- */
 
 enum {
-    RS232_IS_PHYSICAL_DEVICE = 0x4000
+    RS232_IS_PHYSICAL_DEVICE = 0x4000,
+    RS232_IS_BMC_MODEM = 0x8000
 };
 
 /* ------------------------------------------------------------------------- */
@@ -112,6 +126,9 @@ int rs232_cmdline_options_init(void)
 /* initializes all RS232 stuff */
 void rs232_init(void)
 {
+#ifdef HAVE_RS232BMC
+    rs232bmc_init();
+#endif
 #ifdef HAVE_RS232DEV
     rs232dev_init();
 #endif
@@ -124,6 +141,9 @@ void rs232_init(void)
 /* reset RS232 stuff */
 void rs232_reset(void)
 {
+#ifdef HAVE_RS232BMC
+    rs232bmc_reset();
+#endif
 #ifdef HAVE_RS232DEV
     rs232dev_reset();
 #endif
@@ -162,6 +182,13 @@ int rs232_open(int device)
 
     assert(device < RS232_NUM_DEVICES);
 
+#ifdef HAVE_RS232BMC
+    ret = rs232bmc_open(device);
+    if (ret >= 0) {
+        return ret | RS232_IS_BMC_MODEM;
+    }
+#endif
+
     if (rs232_is_physical_device(device)) {
 #ifdef HAVE_RS232DEV
         ret = rs232dev_open(device);
@@ -180,6 +207,12 @@ int rs232_open(int device)
 /* closes the rs232 window again */
 void rs232_close(int fd)
 {
+    if (fd & RS232_IS_BMC_MODEM) {
+#ifdef HAVE_RS232BMC
+        rs232bmc_close(fd & ~RS232_IS_BMC_MODEM);
+#endif
+        return;
+    }
     if (fd & RS232_IS_PHYSICAL_DEVICE) {
 #ifdef HAVE_RS232DEV
         rs232dev_close(fd & ~RS232_IS_PHYSICAL_DEVICE);
@@ -195,6 +228,11 @@ void rs232_close(int fd)
 /* sends a byte to the RS232 line */
 int rs232_putc(int fd, uint8_t b)
 {
+    if (fd & RS232_IS_BMC_MODEM) {
+#ifdef HAVE_RS232BMC
+        return rs232bmc_putc(fd & ~RS232_IS_BMC_MODEM, b);
+#endif
+    }
     if (fd & RS232_IS_PHYSICAL_DEVICE) {
 #ifdef HAVE_RS232DEV
         return rs232dev_putc(fd & ~RS232_IS_PHYSICAL_DEVICE, b);
@@ -211,6 +249,11 @@ int rs232_putc(int fd, uint8_t b)
 /* gets a byte to the RS232 line, returns !=0 if byte received, byte in *b. */
 int rs232_getc(int fd, uint8_t * b)
 {
+    if (fd & RS232_IS_BMC_MODEM) {
+#ifdef HAVE_RS232BMC
+        return rs232bmc_getc(fd & ~RS232_IS_BMC_MODEM, b);
+#endif
+    }
     if (fd & RS232_IS_PHYSICAL_DEVICE) {
 #ifdef HAVE_RS232DEV
         return rs232dev_getc(fd & ~RS232_IS_PHYSICAL_DEVICE, b);
@@ -227,6 +270,11 @@ int rs232_getc(int fd, uint8_t * b)
 /* set the status lines of the RS232 device */
 int rs232_set_status(int fd, enum rs232handshake_out status)
 {
+    if (fd & RS232_IS_BMC_MODEM) {
+#ifdef HAVE_RS232BMC
+        return rs232bmc_set_status(fd & ~RS232_IS_BMC_MODEM, status);
+#endif
+    }
     if (fd & RS232_IS_PHYSICAL_DEVICE) {
 #ifdef HAVE_RS232DEV
         return rs232dev_set_status(fd & ~RS232_IS_PHYSICAL_DEVICE, status);
@@ -243,6 +291,11 @@ int rs232_set_status(int fd, enum rs232handshake_out status)
 /* get the status lines of the RS232 device */
 enum rs232handshake_in rs232_get_status(int fd)
 {
+    if (fd & RS232_IS_BMC_MODEM) {
+#ifdef HAVE_RS232BMC
+        return rs232bmc_get_status(fd & ~RS232_IS_BMC_MODEM);
+#endif
+    }
     if (fd & RS232_IS_PHYSICAL_DEVICE) {
 #ifdef HAVE_RS232DEV
         return rs232dev_get_status(fd & ~RS232_IS_PHYSICAL_DEVICE);
@@ -259,6 +312,12 @@ enum rs232handshake_in rs232_get_status(int fd)
 /* set the bps rate of the physical device */
 void rs232_set_bps(int fd, unsigned int bps)
 {
+    if (fd & RS232_IS_BMC_MODEM) {
+#ifdef HAVE_RS232BMC
+        rs232bmc_set_bps(fd & ~RS232_IS_BMC_MODEM, bps);
+#endif
+        return;
+    }
     if (fd & RS232_IS_PHYSICAL_DEVICE) {
 #ifdef HAVE_RS232DEV
         rs232dev_set_bps(fd & ~RS232_IS_PHYSICAL_DEVICE, bps);

@@ -14,8 +14,13 @@
 // limitations under the License.
 
 #include "viceapp.h"
-
+#include "vice_network.h"
+#include "network_time_sync.h"
+#include "third_party/common/circle.h"
 #include "fbl.h"
+
+static const unsigned int WIFI_SCAN_DURATION_US = 4000000;
+static const unsigned int WIFI_CONNECT_TIMEOUT_US = 30000000;
 
 #if defined(RASPI_C64)
 #include "bootstat_c64.h"
@@ -443,7 +448,8 @@ void ViceStdioApp::InitBootStat() {
 
     // These never get freed...
     mBootStatFile[num] = (char *)malloc(MAX_BOOTSTAT_FLEN);
-    strncpy(mBootStatFile[num], file, MAX_BOOTSTAT_FLEN);
+    strncpy(mBootStatFile[num], file, MAX_BOOTSTAT_FLEN - 1);
+    mBootStatFile[num][MAX_BOOTSTAT_FLEN - 1] = '\0';
     mBootStatSize[num] = atoi(size);
 
     num++;
@@ -459,7 +465,272 @@ void ViceStdioApp::DisableBootStat() {
   CGlueStdioInitBootStat(0, nullptr, nullptr, nullptr);
 }
 
+void ViceStdioApp::LoadNetworkDevice() {
+#if defined(RASPI_C64) || defined(RASPI_C128)
+  const char *settings_path;
+#if defined(RASPI_C64)
+  settings_path = "/settings.txt";
+#elif defined(RASPI_C128)
+  settings_path = "/settings-c128.txt";
+#endif
+
+  FILE *settings = fopen(settings_path, "r");
+  if (settings == nullptr) {
+    return;
+  }
+
+  char line[64];
+  while (fgets(line, sizeof(line), settings) != nullptr) {
+    int network_device;
+    if (sscanf(line, "network_device=%d", &network_device) == 1 &&
+        network_device >= 0 && network_device <= 2) {
+      mNetworkDevice = network_device;
+      continue;
+    }
+
+    int timezone_offset_minutes;
+    if (sscanf(line, "timezone_offset_minutes=%d",
+               &timezone_offset_minutes) == 1 &&
+        timezone_offset_minutes >= -12 * 60 &&
+        timezone_offset_minutes <= 14 * 60) {
+      mTimezoneOffsetMinutes = timezone_offset_minutes;
+    }
+  }
+  fclose(settings);
+#endif
+}
+void ViceStdioApp::InitializeNetwork() {
+#if defined(RASPI_C64) || defined(RASPI_C128)
+  if (mNetworkDevice == 0) {
+    SetNetworkStatus(CIRCLE_NETWORK_DISABLED);
+    mLogger.Write(GetKernelName(), LogNotice, "Networking not enabled");
+    return;
+  }
+
+  if (mNetworkDevice == 1 &&
+      ViceNetworkHasOnboardEthernet(mMachineInfo.GetMachineModel())) {
+    SetNetworkStatus(CIRCLE_NETWORK_ETHERNET_INITIALIZING);
+    mNet = new CNetSubSystem(0, 0, 0, 0, "bmc64", NetDeviceTypeEthernet);
+    if (!mNet->Initialize(FALSE)) {
+      SetNetworkStatus(CIRCLE_NETWORK_ETHERNET_INIT_FAILED);
+      mLogger.Write(GetKernelName(), LogError,
+                    "Cannot initialize Ethernet network stack");
+      delete mNet;
+      mNet = nullptr;
+    } else {
+      ViceNetworkSetSubsystem(mNet);
+      StartNetworkTimeSync(mNet);
+      SetNetworkStatus(CIRCLE_NETWORK_ETHERNET_WAITING_FOR_DHCP);
+      mLogger.Write(GetKernelName(), LogNotice, "Networking: Ethernet initialized");
+    }
+    return;
+  }
+
+  if (mNetworkDevice == 1) {
+    mLogger.Write(GetKernelName(), LogNotice,
+                  "Ethernet selected, but this Raspberry Pi has no onboard Ethernet; disabling networking");
+    mNetworkDevice = 0;
+    SetNetworkStatus(CIRCLE_NETWORK_DISABLED);
+    return;
+  }
+
+  if (!ViceNetworkHasOnboardWifi(mMachineInfo.GetMachineModel())) {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_UNAVAILABLE);
+    mLogger.Write(GetKernelName(), LogError,
+                  "Wi-Fi selected, but this Raspberry Pi has no onboard WLAN");
+    return;
+  }
+
+  CString firmwarePath;
+  CString configPath;
+  firmwarePath.Format("%s:/firmware/", mViceOptions.GetDiskVolume());
+  configPath.Format("%s:/wpa_supplicant.conf", mViceOptions.GetDiskVolume());
+
+  if (!ViceNetworkHasWifiFirmware((const char *)firmwarePath)) {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_FIRMWARE_MISSING);
+    mLogger.Write(GetKernelName(), LogError,
+                  "Wi-Fi firmware is missing from %s",
+                  (const char *)firmwarePath);
+    return;
+  }
+
+  FIL configFile;
+  if (f_open(&configFile, (const char *)configPath, FA_READ) != FR_OK) {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_CONFIG_MISSING);
+    mLogger.Write(GetKernelName(), LogError,
+                  "Wi-Fi enabled but WPA config is missing: %s",
+                  (const char *)configPath);
+    return;
+  }
+  f_close(&configFile);
+
+  SetNetworkStatus(CIRCLE_NETWORK_WIFI_DEVICE_INITIALIZING);
+  mWLAN = new CBcm4343Device((const char *)firmwarePath);
+  if (!mWLAN->Initialize()) {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_DEVICE_INIT_FAILED);
+    mLogger.Write(GetKernelName(), LogError, "Cannot initialize WLAN");
+    delete mWLAN;
+    mWLAN = nullptr;
+    return;
+  }
+
+  mNet = new CNetSubSystem(0, 0, 0, 0, "bmc64", NetDeviceTypeWLAN);
+  if (!mNet->Initialize(FALSE)) {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_NETWORK_INIT_FAILED);
+    mLogger.Write(GetKernelName(), LogError, "Cannot initialize WLAN network stack");
+    delete mNet;
+    mNet = nullptr;
+    delete mWLAN;
+    mWLAN = nullptr;
+    return;
+  }
+  ViceNetworkSetSubsystem(mNet);
+  StartNetworkTimeSync(mNet);
+  SetNetworkStatus(CIRCLE_NETWORK_WIFI_WPA_INITIALIZING);
+  mLogger.Write(GetKernelName(), LogNotice, "Networking: Wi-Fi initialized");
+
+  mWPASupplicant = new CWPASupplicant((const char *)configPath);
+  if (!mWPASupplicant->Initialize()) {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_WPA_INIT_FAILED);
+    mLogger.Write(GetKernelName(), LogError, "Cannot initialize WPA supplicant");
+    delete mWPASupplicant;
+    mWPASupplicant = nullptr;
+  } else {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_CONNECTING);
+  }
+#endif
+}
+
+void ViceStdioApp::SetNetworkStatus(int status) {
+  if (mNetworkStatus == status) {
+    return;
+  }
+  mNetworkStatus = status;
+  ViceNetworkNotifyStatusChanged();
+}
+
+int ViceStdioApp::GetNetworkStatus(void) const {
+  if (mNet != nullptr && mNet->IsRunning()) {
+    CString address;
+    mNet->GetConfig()->GetIPAddress()->Format(&address);
+    if (strcmp((const char *)address, "0.0.0.0") != 0) {
+      return mNetworkDevice == 1 ? CIRCLE_NETWORK_ETHERNET_CONNECTED
+                                 : CIRCLE_NETWORK_WIFI_CONNECTED;
+    }
+  }
+
+  return mNetworkStatus;
+}
+
+int ViceStdioApp::WifiIsRunning(void) const {
+#if defined(RASPI_C64) || defined(RASPI_C128)
+  return ViceNetworkHasOnboardWifi(mMachineInfo.GetMachineModel()) && mWLAN != nullptr;
+#else
+  return 0;
+#endif
+}
+
+int ViceStdioApp::ConnectWifi(void) {
+#if defined(RASPI_C64) || defined(RASPI_C128)
+  if (!ViceNetworkHasOnboardWifi(mMachineInfo.GetMachineModel())) {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_UNAVAILABLE);
+    return 0;
+  }
+
+  if (mWLAN == nullptr) {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_DEVICE_NOT_INITIALIZED);
+    mLogger.Write(GetKernelName(), LogError,
+                  "Wi-Fi connection requested without WLAN");
+    return 0;
+  }
+
+  CString config_path;
+  config_path.Format("%s:/wpa_supplicant.conf", mViceOptions.GetDiskVolume());
+  SetNetworkStatus(CIRCLE_NETWORK_WIFI_CONNECTING);
+  mLogger.Write(GetKernelName(), LogNotice,
+                "Wi-Fi reconnecting with %s", (const char *)config_path);
+  delete mWPASupplicant;
+  mWPASupplicant = new CWPASupplicant((const char *)config_path);
+  if (!mWPASupplicant->Initialize()) {
+    SetNetworkStatus(CIRCLE_NETWORK_WIFI_WPA_INIT_FAILED);
+    mLogger.Write(GetKernelName(), LogError,
+                  "Cannot restart WPA supplicant");
+    delete mWPASupplicant;
+    mWPASupplicant = nullptr;
+    return 0;
+  }
+
+  unsigned int connect_started_at = CTimer::GetClockTicks();
+  while (!CWPASupplicant::IsConnected()) {
+    if ((unsigned int)(CTimer::GetClockTicks() - connect_started_at) >=
+        WIFI_CONNECT_TIMEOUT_US) {
+      mLogger.Write(GetKernelName(), LogError,
+                    "Wi-Fi connection timed out after %u seconds",
+                    WIFI_CONNECT_TIMEOUT_US / 1000000);
+      SetNetworkStatus(CIRCLE_NETWORK_WIFI_CONNECTION_TIMEOUT);
+      return 0;
+    }
+    CScheduler::Get()->MsSleep(100);
+  }
+  mLogger.Write(GetKernelName(), LogNotice, "Wi-Fi connected");
+  SetNetworkStatus(CIRCLE_NETWORK_WIFI_CONNECTED);
+  return 1;
+#else
+  SetNetworkStatus(CIRCLE_NETWORK_WIFI_UNSUPPORTED);
+  mLogger.Write(GetKernelName(), LogError,
+                "Wi-Fi connection is not supported by this build");
+  return 0;
+#endif
+}
+
+int ViceStdioApp::ScanWifiAccessPoints(struct wifi_access_point *access_points,
+                                       unsigned int max_access_points) {
+#if defined(RASPI_C64) || defined(RASPI_C128)
+  if (!ViceNetworkHasOnboardWifi(mMachineInfo.GetMachineModel())) {
+    return 0;
+  }
+
+  if (mWLAN == nullptr) {
+    mLogger.Write(GetKernelName(), LogNotice,
+                  "Wi-Fi scan unavailable until Wi-Fi is selected and rebooted");
+    return 0;
+  }
+
+  uint8_t buffer[FRAME_BUFFER_SIZE];
+  unsigned int result_length;
+  while (mWLAN->ReceiveScanResult(buffer, &result_length)) {
+  }
+
+  if (!mWLAN->Control("escan %u", 3)) {
+    mLogger.Write(GetKernelName(), LogError, "Cannot start Wi-Fi scan");
+    return 0;
+  }
+
+  unsigned int count = 0;
+  unsigned int result_messages = 0;
+  unsigned int scan_started_at = CTimer::GetClockTicks();
+  do {
+    count = ViceNetworkCollectWifiScanResults(mWLAN, access_points, max_access_points,
+                                   count, &result_messages);
+    CScheduler::Get()->MsSleep(100);
+  } while ((unsigned int)(CTimer::GetClockTicks() - scan_started_at) <
+           WIFI_SCAN_DURATION_US);
+
+  mWLAN->Control("escan 0");
+  count = ViceNetworkCollectWifiScanResults(mWLAN, access_points, max_access_points,
+                                 count, &result_messages);
+  mLogger.Write(GetKernelName(), LogNotice,
+                "Wi-Fi scan received %u results, found %u access points",
+                result_messages, count);
+  return count;
+#else
+  (void)access_points;
+  (void)max_access_points;
+  return 0;
+#endif
+}
 bool ViceStdioApp::Initialize(void) {
+  ViceNetworkSetStdioApp(this);
   if (!ViceScreenApp::Initialize()) {
     return false;
   }
@@ -495,6 +766,11 @@ bool ViceStdioApp::Initialize(void) {
   }
 
   InitBootStat();
+  LoadNetworkDevice();
+  if (!ConfigureSystemTimeZone(mTimezoneOffsetMinutes)) {
+    mLogger.Write(GetKernelName(), LogWarning, "Cannot configure timezone");
+  }
+  InitializeNetwork();
 
   // Now that emmc is initialized, launch
   // the emulator main loop on CORE 1 before USBHCII.
@@ -522,6 +798,12 @@ bool ViceStdioApp::Initialize(void) {
 }
 
 void ViceStdioApp::Cleanup(void) {
+  ViceNetworkSetStdioApp(nullptr);
+  delete mWPASupplicant;
+  ViceNetworkSetSubsystem(nullptr);
+  delete mNet;
+  delete mWLAN;
+
   // When mounting, fatfs gets ":" appended.  But StdioInit
   // does not.
   const char *volumeName = mViceOptions.GetDiskVolume();

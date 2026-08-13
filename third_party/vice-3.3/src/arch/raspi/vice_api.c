@@ -47,7 +47,9 @@
 #include "keyboard.h"
 #include "demo.h"
 #include "datasette.h"
+#include "log.h"
 #include "resources.h"
+#include "snapshot.h"
 #include "drive.h"
 #include "joyport.h"
 #include "joyport/joystick.h"
@@ -213,7 +215,15 @@ void emux_reset(int soft) {
 }
 
 int emux_save_state(char *filename) {
-  return machine_write_snapshot(filename, 1, 1, 0);
+  int status = machine_write_snapshot(filename, 1, 1, 0);
+  if (status < 0) {
+    const char *module = snapshot_get_current_module();
+    log_error(LOG_DEFAULT,
+              "Snapshot save failed: file=%s status=%d error=%d module=%s",
+              filename, status, snapshot_get_error(),
+              module != NULL ? module : "none");
+  }
+  return status;
 }
 
 int emux_load_state(char *filename) {
@@ -369,8 +379,6 @@ void emux_add_drive_option(struct menu_item* root, int drive) {
 
   if (drive < 0) {
      // Options applicable to all drives
-     resources_get_int("DriveTrueEmulation", &tmp);
-     ui_menu_add_toggle(MENU_DRIVE_TRUE_EMULATION, root, "True Emulation", tmp);
      resources_get_int("VirtualDevices", &tmp);
      ui_menu_add_toggle(MENU_VIRTUAL_DEVICES, root, "Virtual Devices", tmp);
      return;
@@ -379,6 +387,10 @@ void emux_add_drive_option(struct menu_item* root, int drive) {
   assert (drive >=8 && drive <=11);
 
   struct menu_item* parent = ui_menu_add_folder(root, "Options");
+
+  resources_get_int_sprintf("Drive%iTrueEmulation", &tmp, drive);
+  ui_menu_add_toggle(MENU_DRIVE_TRUE_EMULATION, parent, "True Drive Emulation", tmp)
+      ->sub_id = drive;
 
   resources_get_int_sprintf("Drive%iParallelCable", &tmp, drive);
 
@@ -939,6 +951,17 @@ void emux_handle_rom_change(struct menu_item* item, fullpath_func f_fullpath) {
   }
 }
 
+int emux_handle_ide64_image_change(int device, const char *path) {
+  if (device >= 1 && device <= 4) {
+    int result = resources_set_string_sprintf("IDE64Image%i", path, device);
+    if (result == 0) {
+      machine_trigger_reset(MACHINE_RESET_MODE_HARD);
+    }
+    return result;
+  }
+  return -1;
+}
+
 void emux_set_iec_dir(int unit, char* dir) {
   resources_set_string_sprintf("FSDevice%iDir", dir, unit);
 }
@@ -1069,6 +1092,10 @@ int emux_save_settings(void) {
    return resources_save(NULL);
 }
 
+void emux_log_settings_file(const char *filename) {
+  log_message(LOG_DEFAULT, "Writing settings file `%s'.", filename);
+}
+
 int emux_handle_menu_change(struct menu_item* item) {
   switch (item->id) {
     case MENU_SID2_ADDRESS:
@@ -1133,7 +1160,7 @@ int emux_handle_menu_change(struct menu_item* item) {
       resources_set_int("KeymapIndex", item->choice_ints[item->value]);
       return 1;
     case MENU_DRIVE_TRUE_EMULATION:
-      resources_set_int("DriveTrueEmulation", item->value);
+      resources_set_int_sprintf("Drive%iTrueEmulation", item->value, item->sub_id);
       return 1;
     case MENU_VIRTUAL_DEVICES:
       resources_set_int("VirtualDevices", item->value);

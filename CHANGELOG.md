@@ -365,3 +365,99 @@
   * Add 256k and 1024k memory options to plus4emu
   * Support more recent Maxi keyboard
 
+## 4.2-p1
+  * Fixed an issue that prevented USB mice from working
+  * TDE per drive support added
+  * CMD HD changed to no operation when detached
+  * Compilation fix for Pi0
+  * teensy-resid initialisation crash fix for Pi0
+
+## 4.2-p2 (Experimental)
+  * Ported BMC64 to Circle 51 / circle-stdlib v20
+    * Circle 43 introduced USB PnP, making it possible to switch USB devices while BMC64 is running
+    * Details: https://github.com/rsta2/circle/blob/master/CHANGELOG.md#the-43rd-step
+  * Updated toolchain to GCC 15.2.Rel1
+    * Download: https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads
+  * Reapplied the following original BMC64 patches adapted to new toolchain
+    * Multicore support and enabled USB FIQ handling
+    * Direct loading of files into memory to reduce unnecessary SD-card reads
+  * Fixed PiZero build issues post update
+
+  * Added USB PnP support
+  * Added support for 8bitdo Retro Keyboards inc the C64 model (both wired and via 2.4Ghz USB receiver)
+  * Added "Reset to default bindings" option in USB gamepad configuration menu
+    * Currently supports 8bitdo, Xbox360, and generic controllers
+  * Changed USB gamepad menu to display the name of the device connected instead of "CONNECTED"
+  * Added support for various 8bitdo 2.4Ghz controllers in Xinput mode
+    * Including 8BitDo Ultimate 2C 2.4G, 8BitDo Pro 3 controller, 8BitDo M30 2.4G controller.
+  * Fixed disconnect quirks with 8bitdo controller docks when putting the controller back into the dock and picking it up again.
+  * 8BitDo USB Wireless Adapter 2 was already supported as an emulated Xbox360 controller, this allows connection of almost any 8bitdo bluetooth controller.
+  * Added usbpowerdelay=1000 to the default cmdline.txt configuration, to stop 8bitdo controllers connecting as Switch Pro controller on startup
+  * Only supports Pi3
+
+## 4.2-p3
+  * Refactor and clean up of all Circle patches
+  * Added support for the Xbox 360 PC Wireless Gaming Receiver (and clones)
+  * Fixed 8BitDo Retro Keyboards being incorrectly detected as USB mice
+  * Improved USB controller compatibility, including better 8BitDo XInput
+    interface detection and USB device descriptions
+  * Clean up of USB gamepad configuration menu
+  * Added usbpowerdelay=1000 to the default cmdline.txt configuration, to stop 8bitdo controllers connecting as Switch Pro controller on startup
+  * Improved build scripts to apply patches more reliably and avoid stale
+    build artifacts
+  * Tested on PiZero, P2, Pi3 models  
+  * Note: PiZero is best used with a powered OTG USB hub as some devices can cause brownouts and device shutdowns
+
+## 4.2-p4
+  * Make connecting of 8BitDo USB Wireless Adapter 2 more robust
+  * Handle idle states of 8bitdo receivers 
+
+## 4.2-p5
+  * Removed incorrect up arrow key mapping for 8bitdo Retro Keyboards
+
+## 4.2-p6 
+  * Added ethernet and Wifi networking support for C64 (and C128 untested) 
+  * Added Network menu to control device selection and Wifi credentials
+  * Added scanning of Wifi APs
+  * Added BMC Software Modem to connect to BBS (auto configured on network connect)
+    * Select Swift/DE modem (e.g. in CCGMS Ultimate)
+  * Added patch for Circle ACK handling causing networking stalling
+  * Tested on PiZeroW, PiZero2W, Pi2B, Pi3A+, Pi3B+ models
+
+  * Improved development building tools
+    * Build everything in one command `build_sdcard.sh`
+    * Automatic downloading of required toolchain GCC 15.2.Rel1
+    * Added automatic download of networking drivers during SDcard build
+    * Added --skip-patches option to build faster without changing third party libs
+
+## 4.2-p7
+  * Added support for C64 OS C64 Network Protocol (CNP)
+  * Extend BMC Software Modem to support C64 OS slde.zi driver
+  * Default SwiftLink at $DE00 and route its interrupts through NMI
+  * Various improvements and fixes to aciacore and rs232 for C64 OS support
+  * Update NETWORKING documentation
+  * Fix DEVICE NOT FOUND issue when connecting CMD HD images for the first time
+  * Support alternate version of THEC64 keyboard found
+  * Tested on PiZeroW, PiZero2W, Pi2B, Pi3A+, Pi3B+ models
+
+## 4.2-p8
+  * Add Network Status menu item for clearer network state
+  * Move Network menu folder below Network Status
+
+## 4.2-p9
+  * Add $D700 and $DF00 SwiftLink modem-address options for IDE64 compatibility
+  * Add menu items to be able to configure IDE64 settings
+  * Flush IDE64 and CMD HD image writes to disk to prevent possible data loss
+  * Ignore 0 length seek events to speed up cartridge loading
+  * Add file filter for *.cfa and *.hdd for IDE64 images
+
+## 4.2-p10
+  * Add $DF80 SwiftLink modem-address option for IDE64 compatibility
+
+## 4.2-p11
+  * Add setting localtime on the Raspberry Pi after a successful network connection
+  * Avoid false VICE audio-underrun messages at startup
+  * Fix emulator slow downs while Ethernet link is down
+  * Correct network connect message when switch a single microSD card between different models of Raspberry Pi
+  * Back port RTC code from Vice 3.10 to set the correct time in CMD-HD images
+  * Time improvements and fixes allow C64 OS to start with the correct time set 

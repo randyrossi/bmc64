@@ -160,7 +160,10 @@ FILE *crt_open(const char *filename, crt_header_t *header)
         strncpy(header->name, (char *)(crt_header + 0x20),
                 sizeof(header->name) - 1);
 
-        fseek(fd, skip, SEEK_CUR); /* skip the rest */
+        /* BMC64 caches an entire read-only file on any seek, including zero so skip them. */
+        if (skip != 0) {
+            fseek(fd, skip, SEEK_CUR); /* skip the rest */
+        }
 
         return fd; /* Ok, exit */
     } while (0);
@@ -243,7 +246,9 @@ int crt_read_chip(uint8_t *rawcart, int offset, crt_chip_header_t *chip, FILE *f
     if (fread(&rawcart[offset], chip->size, 1, fd) < 1) {
         return -1; /* eof?! */
     }
-    fseek(fd, chip->skip, SEEK_CUR); /* skip the rest */
+    if (chip->skip != 0) {
+        fseek(fd, chip->skip, SEEK_CUR); /* skip the rest */
+    }
 
     return 0;
 }

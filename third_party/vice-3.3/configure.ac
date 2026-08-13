@@ -1218,9 +1218,9 @@ dnl fi
 
 AC_PROG_LEX
 
-if test x"$LEX" = "x:"; then
-  AC_MSG_ERROR([Could not find either flex or lex!])
-fi
+dnl if test x"$LEX" = "x:"; then
+dnl  AC_MSG_ERROR([Could not find either flex or lex!])
+dnl fi
 
 AM_PROG_AS
 
@@ -2230,6 +2230,7 @@ elif test x"$is_raspi" = "xyes"; then
   ARCH_LIBS="$ARCH_DIR/libarch.a"
   ARCH_INCLUDES="-I\$(top_srcdir)/src/arch/raspi"
   AC_DEFINE(RASPI_COMPILE,,[Are we compiling for bare metal raspberry pi?])
+  AC_DEFINE(HAVE_RS232BMC,,[Enable the BMC64 Circle-backed RS232 modem.])
   SOUND_DRIVERS="$SOUND_DRIVERS soundraspi.o"
 
   if test x"$enable_raspilite" = "xyes"; then

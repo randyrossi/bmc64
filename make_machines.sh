@@ -1,5 +1,13 @@
 #!/bin/bash
 
+SRC_DIR=$(cd "$(dirname "$0")" && pwd)
+
+if ! source "$SRC_DIR/get_gnu_toolchain.sh"
+then
+   echo "Arm GNU Toolchain setup failed." >&2
+   exit 1
+fi
+
 BOARD=$1
 
 if [ "$BOARD" = "pi3" ]
@@ -20,7 +28,8 @@ exit
 fi
 
 cd third_party/common
-make
+make clean
+BOARD=$BOARD make
 if [ "$?" != "0" ]
 then
 	exit
@@ -32,7 +41,7 @@ make x64
 make x128
 make xvic
 make xplus4
-make xpet
+make xpet || true
 cd ../..
 
 cd third_party/plus4emu
@@ -45,7 +54,27 @@ for m in $MACHINES
 do
    P1=`echo $m | sed 's/:.*$//'`
    P2=`echo $m | sed 's/^.*://'`
-   make clean
-   BOARD=$BOARD make -f Makefile-$P1
-   cp $KERNEL ${KERNEL}.$P2
+   echo "Building $P1 -> ${KERNEL}.$P2"
+   if ! make clean
+   then
+      exit 1
+   fi
+
+   if ! BOARD=$BOARD make -f Makefile-$P1
+   then
+      echo "Build failed for $P1"
+      exit 1
+   fi
+
+   if [ ! -f "$KERNEL" ]
+   then
+      echo "Expected output $KERNEL was not created for $P1"
+      exit 1
+   fi
+
+   if ! cp "$KERNEL" "${KERNEL}.$P2"
+   then
+      echo "Copy failed for ${KERNEL}.$P2"
+      exit 1
+   fi
 done

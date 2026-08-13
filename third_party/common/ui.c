@@ -49,6 +49,7 @@
 #define BG_COLOR 6
 #define FG_COLOR 3
 #define DISABLED_COLOR 11
+#define READ_ONLY_DESCRIPTION_COLOR 15
 #define HILITE_COLOR 2
 #define BORDER_COLOR 14
 #define TRANSPARENT_COLOR 16
@@ -58,6 +59,7 @@
 #define BG_COLOR 0
 #define FG_COLOR 1
 #define DISABLED_COLOR 11
+#define READ_ONLY_DESCRIPTION_COLOR 15
 #define HILITE_COLOR 2
 #define BORDER_COLOR 3
 #define TRANSPARENT_COLOR 16
@@ -302,7 +304,7 @@ static void ui_type_char(char ch) {
               (strlen(str) - cur->value + 1) * sizeof(char));
       cur->value--;
     } else {
-      if (strlen(cur->str_value) >= MAX_FN_NAME)
+      if (strlen(cur->str_value) >= cur->max_length)
         return;
 
       char *str = cur->str_value;
@@ -474,6 +476,8 @@ static void ui_action_frame() {
 }
 
 void ui_render_single_frame() {
+  menu_update_network_status();
+
   // Start with transparent
   memset(ui_fb, TRANSPARENT_COLOR, ui_fb_h * ui_fb_pitch);
 
@@ -506,28 +510,87 @@ static void cursor_pos_updated() {
   }
 }
 
+static struct menu_item *ui_item_at_index(struct menu_item *node,
+                                          int target_index, int *index) {
+  while (node != NULL) {
+    if (*index == target_index) {
+      return node;
+    }
+
+    *index = *index + 1;
+    if (node->type == FOLDER && node->is_expanded &&
+        node->first_child != NULL) {
+      struct menu_item *item = ui_item_at_index(node->first_child,
+                                                target_index, index);
+      if (item != NULL) {
+        return item;
+      }
+    }
+    node = node->next;
+  }
+
+  return NULL;
+}
+
+static int ui_cursor_is_selectable(int index) {
+  int current_index = 0;
+  struct menu_item *item = ui_item_at_index(
+      menu_roots[current_menu].first_child, index, &current_index);
+  return item != NULL && !item->disabled && item->type != DIVIDER;
+}
+
+void ui_select_first_interactive_item(void) {
+  int index = 0;
+  int current_index;
+
+  while (1) {
+    current_index = 0;
+    if (ui_item_at_index(menu_roots[current_menu].first_child, index,
+                         &current_index) == NULL) {
+      break;
+    }
+    if (ui_cursor_is_selectable(index)) {
+      menu_cursor[current_menu] = index;
+      return;
+    }
+    index++;
+  }
+}
+
+static void ui_move_cursor(int direction) {
+  int old_cursor = menu_cursor[current_menu];
+
+  do {
+    menu_cursor[current_menu] += direction;
+    if (menu_cursor[current_menu] < 0) {
+      menu_cursor[current_menu] = 0;
+      break;
+    }
+    if (menu_cursor[current_menu] >= max_index[current_menu]) {
+      menu_cursor[current_menu] = max_index[current_menu] - 1;
+      break;
+    }
+  } while (!ui_cursor_is_selectable(menu_cursor[current_menu]));
+
+  if (!ui_cursor_is_selectable(menu_cursor[current_menu])) {
+    menu_cursor[current_menu] = old_cursor;
+  }
+
+  cursor_pos_updated();
+}
+
 static void ui_action(long action) {
   struct menu_item *cur = menu_cursor_item[current_menu];
   switch (action) {
   case ACTION_Up:
-    menu_cursor[current_menu]--;
-    cursor_pos_updated();
-    if (menu_cursor[current_menu] < 0) {
-      menu_cursor[current_menu] = 0;
-      cursor_pos_updated();
-    }
+    ui_move_cursor(-1);
     if (menu_cursor[current_menu] <= (menu_window_top[current_menu] - 1)) {
       menu_window_top[current_menu]--;
       menu_window_bottom[current_menu]--;
     }
     break;
   case ACTION_Down:
-    menu_cursor[current_menu]++;
-    cursor_pos_updated();
-    if (menu_cursor[current_menu] >= max_index[current_menu]) {
-      menu_cursor[current_menu] = max_index[current_menu] - 1;
-      cursor_pos_updated();
-    }
+    ui_move_cursor(1);
     if (menu_cursor[current_menu] >= menu_window_bottom[current_menu]) {
       menu_window_top[current_menu]++;
       menu_window_bottom[current_menu]++;
@@ -881,12 +944,37 @@ struct menu_item *ui_menu_add_divider(struct menu_item *folder) {
   return new_item;
 }
 
+static struct menu_item *ui_menu_add_read_only(struct menu_item *folder,
+                                               const char *name,
+                                               menu_item_type type) {
+  struct menu_item *new_item = ui_new_item(folder, name, MENU_ID_DO_NOTHING);
+  new_item->type = type;
+  new_item->disabled = 1;
+  append(folder, new_item);
+  return new_item;
+}
+
+struct menu_item *ui_menu_add_read_only_heading(struct menu_item *folder,
+                                                const char *name) {
+  return ui_menu_add_read_only(folder, name, READ_ONLY_HEADING);
+}
+
 struct menu_item *ui_menu_add_text_field(int id, struct menu_item *folder,
                                          char *name, char *value_str) {
+  return ui_menu_add_text_field_limit(id, folder, name, value_str,
+                                      MAX_FN_NAME);
+}
+
+struct menu_item *ui_menu_add_text_field_limit(int id, struct menu_item *folder,
+                                               char *name, char *value_str,
+                                               int max_length) {
   struct menu_item *new_item = ui_new_item(folder, name, id);
   new_item->type = TEXTFIELD;
-  new_item->value = strlen(value_str);
-  strcpy(new_item->str_value, value_str);
+  new_item->max_length = max_length < MAX_STR_VAL_LEN - 1
+                             ? max_length : MAX_STR_VAL_LEN - 1;
+  strncpy(new_item->str_value, value_str, new_item->max_length);
+  new_item->str_value[new_item->max_length] = '\0';
+  new_item->value = strlen(new_item->str_value);
   append(folder, new_item);
   return new_item;
 }
@@ -897,6 +985,11 @@ static void ui_render_children(struct menu_item *node,
     node->render_index = *index;
 
     int colour = node->disabled ? DISABLED_COLOR : FG_COLOR;
+    if (node->type == READ_ONLY_HEADING) {
+      colour = FG_COLOR;
+    } else if (node->type == READ_ONLY_DESCRIPTION) {
+      colour = READ_ONLY_DESCRIPTION_COLOR;
+    }
 
     // Render a row
     if (*index >= menu_window_top[stack_index] &&
@@ -922,7 +1015,13 @@ static void ui_render_children(struct menu_item *node,
         ui_draw_text(node->name,
            node->menu_left + (indent + 1) * 8, y, colour);
 
-        if (node->type == FOLDER) {
+        if (node->type == READ_ONLY_HEADING &&
+          node->displayed_value[0] != '\0') {
+          ui_draw_text(node->displayed_value,
+                 node->menu_left + node->menu_width -
+                   ui_text_width(node->displayed_value),
+                 y, colour);
+        } else if (node->type == FOLDER) {
           if (node->is_expanded)
             ui_draw_text("-", node->menu_left + (indent)*8, y, colour);
           else
@@ -983,13 +1082,22 @@ static void ui_render_children(struct menu_item *node,
                                        ui_text_width(dsp_string),
                        y, colour);
         } else if (node->type == TEXTFIELD) {
+          const char *display_text = node->str_value;
+          if (node->textfield_masked) {
+            size_t length = strlen(node->str_value);
+            memset(node->scratch, '*', length);
+            node->scratch[length] = '\0';
+            display_text = node->scratch;
+          }
+          int value_x = node->menu_left + ui_text_width(node->name) + 8;
+          if (node->textfield_right_aligned) {
+            value_x = node->menu_left + node->menu_width -
+                      ui_text_width(display_text);
+          }
           // draw cursor underneath text
-          ui_draw_rect(node->menu_left + ui_text_width(node->name) + 8 +
-                           node->value * 8,
+          ui_draw_rect(value_x + node->value * 8,
                        y, 8, 8, BORDER_COLOR, 1);
-          ui_draw_text(node->str_value,
-                       node->menu_left + ui_text_width(node->name) + 8, y,
-                       colour);
+          ui_draw_text(display_text, value_x, y, colour);
         }
       }
     }
@@ -1348,18 +1456,12 @@ void ui_info(const char *format, ...) {
   ui_render_single_frame();
 }
 
-void ui_confirm_wrapped(char *title, const char *txt, int ok_value, int ok_id) {
+void ui_confirm_wrapped_labels(char *title, const char *txt, int ok_value,
+                               int ok_id, const char *ok_label,
+                               const char *cancel_label) {
   struct menu_item *root = ui_push_menu(30, 10);
-  ui_menu_add_button(MENU_ERROR_DIALOG, root, title);
-
-  struct menu_item *child;
-  if (ok_value >=0 && ok_id >=0) {
-     child = ui_menu_add_button(MENU_CONFIRM_OK, root, "OK");
-     child->value = ok_value;
-     child->sub_id = ok_id;
-
-     ui_menu_add_button(MENU_CONFIRM_CANCEL, root, "CANCEL");
-  }
+  struct menu_item *child = ui_menu_add_read_only(root, title,
+                                                   READ_ONLY_HEADING);
 
   ui_menu_add_divider(root);
   char buf[512];
@@ -1378,7 +1480,7 @@ void ui_confirm_wrapped(char *title, const char *txt, int ok_value, int ok_id) {
            strcat(line, " ");
            line_pos += word_len + 1;
         } else {
-           ui_menu_add_button(MENU_INFO_DIALOG, root, line);
+            child = ui_menu_add_read_only(root, line, READ_ONLY_DESCRIPTION);
            strcpy(line, word);
            strcat(line, " ");
            line_pos = word_len + 1;
@@ -1388,10 +1490,25 @@ void ui_confirm_wrapped(char *title, const char *txt, int ok_value, int ok_id) {
      word = strtok(NULL," ");
   }
   if (strlen(line) > 0) {
-     ui_menu_add_button(MENU_INFO_DIALOG, root, line);
+      child = ui_menu_add_read_only(root, line, READ_ONLY_DESCRIPTION);
   }
 
+  ui_menu_add_divider(root);
+  if (ok_value >=0 && ok_id >=0) {
+    child = ui_menu_add_button(MENU_CONFIRM_OK, root, ok_label);
+    child->value = ok_value;
+    child->sub_id = ok_id;
+
+    ui_menu_add_button(MENU_CONFIRM_CANCEL, root, cancel_label);
+  }
+
+  ui_select_first_interactive_item();
+
   ui_render_single_frame();
+}
+
+void ui_confirm_wrapped(char *title, const char *txt, int ok_value, int ok_id) {
+  ui_confirm_wrapped_labels(title, txt, ok_value, ok_id, "OK", "CANCEL");
 }
 
 // These nav functions are really inefficient...but oh well.
@@ -1624,6 +1741,9 @@ void ui_geometry_changed(int dpx, int dpy,
      circle_alloc_fbl(FB_LAYER_UI, 0 /* indexed */, &ui_fb,
                       fbw, fbh, &ui_fb_pitch);
      circle_clear_fbl(FB_LAYER_UI);
+    circle_set_palette32_fbl(FB_LAYER_UI, READ_ONLY_DESCRIPTION_COLOR,
+              0xFFE0E0E0);
+    circle_update_palette_fbl(FB_LAYER_UI);
      ui_fb_w = fbw;
      ui_fb_h = fbh;
    }

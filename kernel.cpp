@@ -22,6 +22,11 @@
 #include <string.h>
 
 #include <circle/gpiopin.h>
+#include <circle/usb/usbdevice.h>
+
+extern "C" {
+#include "third_party/common/usb_gamepad_defaults.h"
+}
 
 CKernel *static_kernel = NULL;
 
@@ -343,8 +348,30 @@ long func_to_keycode(int btn_func) {
 
 }
 
+#ifndef ARM_ALLOW_MULTI_CORE
+class CKernel::USBPlugAndPlayTask : public CTask {
+public:
+  explicit USBPlugAndPlayTask(CKernel *kernel) : mKernel(kernel) {
+    SetName("usbpnp");
+  }
+
+  void Run(void) override {
+    for (;;) {
+      mKernel->UpdateUSBPlugAndPlay();
+      CScheduler::Get()->MsSleep(100);
+    }
+  }
+
+private:
+  CKernel *mKernel;
+};
+#endif
+
 CKernel::CKernel(void)
     : ViceStdioApp("vice"), mViceSound(nullptr),
+#ifndef ARM_ALLOW_MULTI_CORE
+      mUSBPlugAndPlayTask(nullptr),
+#endif
       mNumJoy(emu_get_num_joysticks()),
       mVolume(100), mNumCoresComplete(0),
       mNeedSoundInit(false), mNumSoundChannels(1) {
@@ -357,8 +384,11 @@ CKernel::CKernel(void)
     gpio_debounce_state[i] = BTN_UP;
     gpio_prev_state[i] = HIGH;
   }
-
+  m_pKeyboard = 0;
+  m_pMouse = 0;
+  for (int i=0; i<MAX_USB_DEVICES; i++) m_pGamePad[i]=0;
   kbdRestoreState = HIGH;
+
   for (int i = 0; i < 8; i++) {
     for (int j = 0; j < 8; j++) {
       kbdMatrixStates[i][j] = HIGH;
@@ -680,22 +710,58 @@ if (static_kernel->circle_get_ticks() - entry_start >= entry_delay) {
       value |= emu_add_button_values(nDeviceIndex, b);
       emu_set_joy_usb_interrupt(nDeviceIndex, value);
     }
+  } else if (prev_buttons[nDeviceIndex] != b) {
+    prev_buttons[nDeviceIndex] = b;
+    handle_button_function(ui_activated, nDeviceIndex, b);
+
+    if (!ui_activated) {
+      emu_set_joy_usb_interrupt(nDeviceIndex,
+                                emu_add_button_values(nDeviceIndex, b));
+    }
+  }
+}
+
+
+
+void CKernel::MouseRemovedHandler(CDevice *pDevice, void *pContext) {
+  if (static_kernel) static_kernel->m_pMouse = 0;
+  CLogger::Get()->Write("kernel", LogNotice, "Mouse removed.");
+}
+void CKernel::KeyRemovedHandler(CDevice *pDevice, void *pContext) {
+  if (static_kernel) static_kernel->m_pKeyboard = 0;
+  CLogger::Get()->Write("kernel", LogNotice, "Keyboard removed.");
+}
+void CKernel::GamePadRemovedHandler(CDevice *pDevice, void *pContext) {
+  // Just let the update scan clear nulls
+  if (static_kernel) {
+     for (int i=0; i<MAX_USB_DEVICES; i++) {
+         if (static_kernel->m_pGamePad[i] == pDevice) {
+             static_kernel->m_pGamePad[i] = 0;
+             CLogger::Get()->Write("kernel", LogNotice, "Gamepad %d removed.", i);
+         }
+     }
   }
 }
 
 void CKernel::SetupUSBKeyboard() {
-  CUSBKeyboardDevice *pKeyboard =
-      (CUSBKeyboardDevice *)mDeviceNameService.GetDevice("ukbd1", FALSE);
-  if (pKeyboard) {
-    pKeyboard->RegisterKeyStatusHandlerRaw(KeyStatusHandlerRaw);
+  if (m_pKeyboard == 0) {
+    m_pKeyboard = (CUSBKeyboardDevice *)mDeviceNameService.GetDevice("ukbd1", FALSE);
+    if (m_pKeyboard != 0) {
+      m_pKeyboard->RegisterRemovedHandler(KeyRemovedHandler);
+      m_pKeyboard->RegisterKeyStatusHandlerRaw(KeyStatusHandlerRaw);
+      CLogger::Get()->Write("kernel", LogNotice, "Keyboard connected and registered.");
+    }
   }
 }
 
 void CKernel::SetupUSBMouse() {
-  CMouseDevice *pMouse =
-      (CMouseDevice *)mDeviceNameService.GetDevice("mouse1", FALSE);
-  if (pMouse) {
-    pMouse->RegisterStatusHandler(MouseStatusHandler);
+  if (m_pMouse == 0) {
+    m_pMouse = (CMouseDevice *)mDeviceNameService.GetDevice("mouse1", FALSE);
+    if (m_pMouse != 0) {
+      m_pMouse->RegisterRemovedHandler(MouseRemovedHandler);
+      m_pMouse->RegisterStatusHandler(MouseStatusHandler);
+      CLogger::Get()->Write("kernel", LogNotice, "Mouse connected and registered.");
+    }
   }
 }
 
@@ -704,33 +770,63 @@ void CKernel::SetupUSBGamepads() {
   int num_buttons[MAX_USB_DEVICES] = {0, 0, 0, 0};
   int num_axes[MAX_USB_DEVICES] = {0, 0, 0, 0};
   int num_hats[MAX_USB_DEVICES] = {0, 0, 0, 0};
-  while (num_pads < MAX_USB_DEVICES) {
-    CString DeviceName;
-    DeviceName.Format("upad%u", num_pads + 1);
 
-    CUSBGamePadDevice *game_pad =
-        (CUSBGamePadDevice *)mDeviceNameService.GetDevice(DeviceName, FALSE);
-
-    if (game_pad == 0) {
-      break;
+  for (unsigned nDevice = 1; nDevice <= MAX_USB_DEVICES; nDevice++) {
+    if (m_pGamePad[nDevice-1] != 0) {
+      const TGamePadState *pState = m_pGamePad[nDevice-1]->GetInitialState();
+      num_axes[num_pads] = pState->naxes;
+      num_hats[num_pads] = pState->nhats;
+      num_buttons[num_pads] = pState->nbuttons;
+      num_pads++;
+      continue;
     }
 
-    const TGamePadState *pState = game_pad->GetInitialState();
-    assert(pState != 0);
+    CString DeviceName;
+    DeviceName.Format("upad%u", nDevice);
+    m_pGamePad[nDevice-1] = (CUSBGamePadDevice *)mDeviceNameService.GetDevice(DeviceName, FALSE);
+    
+    if (m_pGamePad[nDevice-1] != 0) {
+      CString *vendor = m_pGamePad[nDevice-1]->GetDevice()->GetName(DeviceNameVendor);
+      unsigned profile = USB_GAMEPAD_DEFAULT_PROFILE_NONE;
+      if (vendor != 0) {
+        profile = usb_gamepad_default_profile_for_vendor((const char *) *vendor);
+        CLogger::Get()->Write("kernel", LogNotice,
+                              "Gamepad %s uses mapping profile %u",
+                              (const char *) *vendor, profile);
+        delete vendor;
+      }
+      emu_set_usb_gamepad_mapping_profile(
+          nDevice - 1,
+          profile);
+      emu_set_usb_gamepad_display_name(
+        nDevice - 1,
+        m_pGamePad[nDevice-1]->GetProperty(CDevice::PropertyProduct));
+      m_pGamePad[nDevice-1]->RegisterRemovedHandler(GamePadRemovedHandler);
+      m_pGamePad[nDevice-1]->RegisterStatusHandler(GamePadStatusHandler);
+      CLogger::Get()->Write("kernel", LogNotice, "Gamepad %d connected and registered.", nDevice);
 
-    num_axes[num_pads] = pState->naxes;
-    num_hats[num_pads] = pState->nhats;
-    num_buttons[num_pads] = pState->nbuttons;
-
-    game_pad->RegisterStatusHandler(GamePadStatusHandler);
-    num_pads++;
+      const TGamePadState *pState = m_pGamePad[nDevice-1]->GetInitialState();
+      num_axes[num_pads] = pState->naxes;
+      num_hats[num_pads] = pState->nhats;
+      num_buttons[num_pads] = pState->nbuttons;
+      num_pads++;
+    }
   }
 
   // Tell the emulator what we found
   emu_set_gamepad_info(num_pads, num_buttons, num_axes, num_hats);
 }
 
+void CKernel::UpdateUSBPlugAndPlay() {
+  if (mUSBHCII.UpdatePlugAndPlay()) {
+    SetupUSBKeyboard();
+    SetupUSBMouse();
+    SetupUSBGamepads();
+  }
+}
+
 ViceApp::TShutdownMode CKernel::Run(void) {
+
   SetupUSBKeyboard();
   SetupUSBMouse();
   SetupUSBGamepads();
@@ -738,15 +834,18 @@ ViceApp::TShutdownMode CKernel::Run(void) {
   emu_set_demo_mode(mViceOptions.DemoEnabled());
 
 #ifndef ARM_ALLOW_MULTI_CORE
+  mUSBPlugAndPlayTask = new USBPlugAndPlayTask(this);
   mEmulatorCore->LaunchEmulator(mTimingOption);
 #else
   // This core will do nothing but service interrupts from
   // usb or gpio.
   printf("Core 0 idle\n");
 
-  asm("dsb\n\t"
-      "1: wfi\n\t"
-      "b 1b\n\t");
+  while(1) {
+      UpdateUSBPlugAndPlay();
+      asm("wfi");
+  }
+
 #endif
   return ShutdownHalt;
 }
@@ -1198,8 +1297,11 @@ int CKernel::circle_sound_bufferspace(void) {
 
 void CKernel::circle_yield(void) { CScheduler::Get()->Yield(); }
 
-void CKernel::MouseStatusHandler(unsigned nButtons, int deltaX, int deltaY) {
+void CKernel::MouseStatusHandler(unsigned nButtons, int deltaX, int deltaY,
+                                 int nWheelMove) {
   static unsigned int prev_buttons = {0};
+
+  (void)nWheelMove;
 
   emu_mouse_move(deltaX, deltaY);
 

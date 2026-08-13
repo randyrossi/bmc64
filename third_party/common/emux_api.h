@@ -371,6 +371,7 @@ int emux_get_vkbd_size(void);
 
 // Handles one of the MENU_*_FILE rom change events from the menu
 void emux_handle_rom_change(struct menu_item* item, fullpath_func f_fullpath);
+int emux_handle_ide64_image_change(int device, const char *path);
 
 // Sets the directory for IEC emulation.
 void emux_set_iec_dir(int unit, char* dir);
@@ -384,6 +385,9 @@ void emux_get_string_1(StringSetting setting, const char** dest, int param);
 
 // Persist all settings.
 int emux_save_settings(void);
+
+// Report a completed BMC64 settings-file write.
+void emux_log_settings_file(const char *filename);
 
 void emux_ensure_video(void);
 

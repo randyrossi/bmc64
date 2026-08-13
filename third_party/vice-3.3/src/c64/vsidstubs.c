@@ -668,7 +668,7 @@ unsigned int machine_bus_device_type_get(unsigned int unit)
     return 0;
 }
 
-void machine_bus_status_truedrive_set(unsigned int enable)
+void machine_bus_status_truedrive_set(unsigned int unit, unsigned int enable)
 {
 }
 

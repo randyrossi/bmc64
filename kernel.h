@@ -52,7 +52,8 @@ public:
   bool Initialize(void) override;
   TShutdownMode Run(void);
 
-  static void MouseStatusHandler(unsigned nButtons, int nPosX, int nPosY);
+  static void MouseStatusHandler(unsigned nButtons, int nPosX, int nPosY,
+                                 int nWheelMove);
   static void KeyStatusHandlerRaw(unsigned char ucModifiers,
                                   const unsigned char RawKeys[6]);
   static void GamePadStatusHandler(unsigned nDeviceIndex,
@@ -137,18 +138,34 @@ public:
 			int bilinear_interpolation);
 
 private:
+#ifndef ARM_ALLOW_MULTI_CORE
+  class USBPlugAndPlayTask;
+#endif
+
   void InitSound();
   void SetupUSBKeyboard();
   void SetupUSBMouse();
   void SetupUSBGamepads();
+  void UpdateUSBPlugAndPlay();
   int ReadDebounced(int pinIndex);
   void ScanKeyboard();
   void ReadJoystick(int device, int gpioConfig);
   void ReadCustomGPIO();
   void SetupUserport();
   void ReadWriteUserport();
-
   ViceSound *mViceSound;
+#ifndef ARM_ALLOW_MULTI_CORE
+  USBPlugAndPlayTask *mUSBPlugAndPlayTask;
+#endif
+
+  static void MouseRemovedHandler(CDevice *pDevice, void *pContext);
+  static void KeyRemovedHandler(CDevice *pDevice, void *pContext);
+  static void GamePadRemovedHandler(CDevice *pDevice, void *pContext);
+  
+  CUSBKeyboardDevice *m_pKeyboard;
+  CMouseDevice *m_pMouse;
+  CUSBGamePadDevice *m_pGamePad[MAX_USB_DEVICES];
+
   CCPUThrottle mCPUThrottle;
   CSpinLock m_Lock;
   int mNumJoy;

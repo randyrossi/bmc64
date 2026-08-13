@@ -795,6 +795,12 @@ void emu_machine_init(int raster_skip_enabled, int raster_skip2_enabled) {
   // VICE mod.
 }
 
+int emux_handle_ide64_image_change(int device, const char *path) {
+   (void)device;
+   (void)path;
+   return -1;
+}
+
 void emux_trap_main_loop_ui(void) {
   circle_lock_acquire();
   ui_trap = 1;
@@ -1422,6 +1428,10 @@ int emux_save_settings(void) {
   // All our  additional settings are handled by emux_save_additional_settings
   // Nothing to do here.
   return 0;
+}
+
+void emux_log_settings_file(const char *filename) {
+   printf("Writing settings file `%s'.\n", filename);
 }
 
 // Handle any menu item we've created for this emulator.
