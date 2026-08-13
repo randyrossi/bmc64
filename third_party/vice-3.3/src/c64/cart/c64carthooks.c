@@ -2938,7 +2938,7 @@ int cartridge_snapshot_write_modules(struct snapshot_s *s)
                 }
                 break;
 #endif
-#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET)
+#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET) || defined(HAVE_RS232BMC)
             case CARTRIDGE_TURBO232:
                 if (aciacart_snapshot_write_module(s) < 0) {
                     return -1;
@@ -3429,7 +3429,7 @@ int cartridge_snapshot_read_modules(struct snapshot_s *s)
                 }
                 break;
 #endif
-#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET)
+#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET) || defined(HAVE_RS232BMC)
             case CARTRIDGE_TURBO232:
                 if (aciacart_snapshot_read_module(s) < 0) {
                     goto fail2;
