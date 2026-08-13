@@ -1,6 +1,7 @@
 #!/bin/bash
 
-export VERSION=5.0.0
+# Extract version from the menu.c file
+export VERSION=`cat third_party/common/menu.c | grep define.VERSION_STRING | awk '{print $3}' | sed 's/"//g'`
 
 SRC_PI3=pi3
 SRC_PI2=pi2
