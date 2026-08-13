@@ -461,3 +461,11 @@
   * Correct network connect message when switch a single microSD card between different models of Raspberry Pi
   * Back port RTC code from Vice 3.10 to set the correct time in CMD-HD images
   * Time improvements and fixes allow C64 OS to start with the correct time set 
+
+## 5.0-rc1
+  * Fix placement of the CRT files in the building of the SD Card
+  * Update NETWORKING.md with details on firmware files requirement
+  * Add specific WiFi firmware missing warning and fix startup crash with missing firmware
+  * Improve logging on snapshots
+  * Fix snapshot write failure when networking is active
+  * Port drive snapshots to use per-drive TDE for all four drives
