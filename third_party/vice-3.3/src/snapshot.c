@@ -973,6 +973,16 @@ void snapshot_set_error(int error)
     snapshot_error = error;
 }
 
+int snapshot_get_error(void)
+{
+    return snapshot_error;
+}
+
+const char *snapshot_get_current_module(void)
+{
+    return current_module;
+}
+
 int snapshot_version_at_least(uint8_t major_version, uint8_t minor_version, uint8_t major_version_required, uint8_t minor_version_required)
 {
     if (major_version != major_version_required) {

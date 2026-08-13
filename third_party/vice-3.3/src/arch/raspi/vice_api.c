@@ -49,6 +49,7 @@
 #include "datasette.h"
 #include "log.h"
 #include "resources.h"
+#include "snapshot.h"
 #include "drive.h"
 #include "joyport.h"
 #include "joyport/joystick.h"
@@ -214,7 +215,15 @@ void emux_reset(int soft) {
 }
 
 int emux_save_state(char *filename) {
-  return machine_write_snapshot(filename, 1, 1, 0);
+  int status = machine_write_snapshot(filename, 1, 1, 0);
+  if (status < 0) {
+    const char *module = snapshot_get_current_module();
+    log_error(LOG_DEFAULT,
+              "Snapshot save failed: file=%s status=%d error=%d module=%s",
+              filename, status, snapshot_get_error(),
+              module != NULL ? module : "none");
+  }
+  return status;
 }
 
 int emux_load_state(char *filename) {
