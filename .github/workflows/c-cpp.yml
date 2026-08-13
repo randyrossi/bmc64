@@ -11,16 +11,19 @@ jobs:
       - name: Checkout for pi3
         uses: actions/checkout@v4
         with:
+          submodules: recursive
           path: pi3
 
       - name: Checkout for pi2
         uses: actions/checkout@v4
         with:
+          submodules: recursive
           path: pi2
 
       - name: Checkout for pi0
         uses: actions/checkout@v4
         with:
+          submodules: recursive
           path: pi0
 
       - name: Build pi3
