@@ -1,0 +1,48 @@
+name: C/C++ Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout for pi3
+        uses: actions/checkout@v4
+        with:
+          path: pi3
+
+      - name: Checkout for pi2
+        uses: actions/checkout@v4
+        with:
+          path: pi2
+
+      - name: Checkout for pi0
+        uses: actions/checkout@v4
+        with:
+          path: pi0
+
+      - name: Build pi3
+        working-directory: pi3
+        run: ./make_all.sh pi3
+             ./make_machines.sh pi3
+
+      - name: Build pi2
+        working-directory: pi2
+        run: ./make_all.sh pi2
+             ./make_machines.sh pi2
+
+      - name: Build pi0
+        working-directory: pi0
+        run: ./make_all.sh pi0
+             ./make_machines.sh pi0
+
+      - name: Zip release
+        run: ./pi3/make_release.sh
+
+      - name: Upload release
+        uses: actions/upload-artifact@v4
+        with:
+            name: release
+            path: bmc64-*.files.zip
