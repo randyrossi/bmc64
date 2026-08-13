@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export VERSION=4.5
+export VERSION=4.5.0
 
 SRC_PI3=pi3
 SRC_PI2=pi2
@@ -42,12 +42,12 @@ rm -rf stage_dir
 mkdir -p stage_dir
 
 sudo cp -R pi3/release/common_release_files/* stage_dir/
-sudo cp -R ${MACHINE_C64_L}_release_files/* stage_dir/
-sudo cp -R ${MACHINE_C128_L}_release_files/* stage_dir/
-sudo cp -R ${MACHINE_VIC20_L}_release_files/* stage_dir/
-sudo cp -R ${MACHINE_PLUS4_L}_release_files/* stage_dir/
-sudo cp -R ${MACHINE_PLUS4EMU_L}_release_files/* stage_dir/
-sudo cp -R ${MACHINE_PET_L}_release_files/* stage_dir/
+sudo cp -R pi3/${MACHINE_C64_L}_release_files/* stage_dir/
+sudo cp -R pi3/${MACHINE_C128_L}_release_files/* stage_dir/
+sudo cp -R pi3/${MACHINE_VIC20_L}_release_files/* stage_dir/
+sudo cp -R pi3/${MACHINE_PLUS4_L}_release_files/* stage_dir/
+sudo cp -R pi3/${MACHINE_PLUS4EMU_L}_release_files/* stage_dir/
+sudo cp -R pi3/${MACHINE_PET_L}_release_files/* stage_dir/
 
 sudo cp ${SRC_PI0}/kernel.img.${MACHINE_C64_L} stage_dir/kernel.img
 sudo cp ${SRC_PI0}/kernel.img.${MACHINE_C128_L} stage_dir
