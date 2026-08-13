@@ -239,7 +239,8 @@ int drive_snapshot_write_module(snapshot_t *s, int save_disks, int save_roms)
     for (i = 0; i < DRIVE_NUM; i++) {
         drive = drive_context[i]->drive;
         if (drive->enable) {
-            if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000) {
+            if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000 ||
+                drive->type == DRIVE_TYPE_CMDHD) {
                 if (drivecpu65c02_snapshot_write_module(drive_context[i], s) < 0) {
                     return -1;
                 }
@@ -560,6 +561,7 @@ int drive_snapshot_read_module(snapshot_t *s)
         case DRIVE_TYPE_1581:
         case DRIVE_TYPE_2000:
         case DRIVE_TYPE_4000:
+        case DRIVE_TYPE_CMDHD:
         case DRIVE_TYPE_2031:
         case DRIVE_TYPE_1001:
         case DRIVE_TYPE_2040:
@@ -594,6 +596,7 @@ int drive_snapshot_read_module(snapshot_t *s)
         case DRIVE_TYPE_1581:
         case DRIVE_TYPE_2000:
         case DRIVE_TYPE_4000:
+        case DRIVE_TYPE_CMDHD:
         case DRIVE_TYPE_2031:
         case DRIVE_TYPE_1001:
             /* drive 1 does not allow dual disk drive */
@@ -627,6 +630,7 @@ int drive_snapshot_read_module(snapshot_t *s)
         case DRIVE_TYPE_1581:
         case DRIVE_TYPE_2000:
         case DRIVE_TYPE_4000:
+        case DRIVE_TYPE_CMDHD:
         case DRIVE_TYPE_2031:
         case DRIVE_TYPE_1001:
         case DRIVE_TYPE_2040:
@@ -661,6 +665,7 @@ int drive_snapshot_read_module(snapshot_t *s)
         case DRIVE_TYPE_1581:
         case DRIVE_TYPE_2000:
         case DRIVE_TYPE_4000:
+        case DRIVE_TYPE_CMDHD:
         case DRIVE_TYPE_2031:
         case DRIVE_TYPE_1001:
             /* drive 1 does not allow dual disk drive */
@@ -691,7 +696,8 @@ int drive_snapshot_read_module(snapshot_t *s)
     for (i = 0; i < DRIVE_NUM; i++) {
         drive = drive_context[i]->drive;
         if (drive->enable) {
-            if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000) {
+            if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000 ||
+                drive->type == DRIVE_TYPE_CMDHD) {
                 if (drivecpu65c02_snapshot_read_module(drive_context[i], s) < 0) {
                     return -1;
                 }
@@ -791,7 +797,7 @@ static int drive_snapshot_write_image_module(snapshot_t *s, unsigned int dnr)
 
     drive = drive_context[dnr]->drive;
 
-    if (drive->image == NULL) {
+    if (drive->image == NULL || drive->type == DRIVE_TYPE_CMDHD) {
         sprintf(snap_module_name, "NOIMAGE%u", dnr);
     } else {
         sprintf(snap_module_name, "IMAGE%u", dnr);
@@ -803,7 +809,7 @@ static int drive_snapshot_write_image_module(snapshot_t *s, unsigned int dnr)
         return -1;
     }
 
-    if (drive->image == NULL) {
+    if (drive->image == NULL || drive->type == DRIVE_TYPE_CMDHD) {
         if (snapshot_module_close(m) < 0) {
             return -1;
         }
@@ -859,7 +865,10 @@ static int drive_snapshot_read_image_module(snapshot_t *s, unsigned int dnr)
     m = snapshot_module_open(s, snap_module_name,
                              &major_version, &minor_version);
     if (m != NULL) {
-        file_system_detach_disk(dnr + 8);
+        /* do not detach an existing DHD image as they aren't saved in the snapshot */
+        if (drive->type != DRIVE_TYPE_CMDHD) {
+            file_system_detach_disk(dnr + 8);
+        }
         snapshot_module_close(m);
         return 0;
     }
