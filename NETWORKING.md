@@ -38,8 +38,8 @@ HTTP client behavior.
 
 # Requirements
 
-Networking requires the Raspberry Pi networking firmware to be present in the
-`/firmware` directory at the root of the SD card. Follow the build instructions
+Wi-Fi requires Raspberry Pi firmware to be present in the `/firmware` directory
+at the root of the SD card. Follow the build instructions
 in [BUILDING.md](BUILDING.md) and use `build_sdcard.sh` to generate an SD-card
 image with the required firmware included.
 

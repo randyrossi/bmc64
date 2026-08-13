@@ -57,7 +57,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "4.2-p11"
+#define VERSION_STRING "4.2-p12"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -222,7 +222,8 @@ static const char *const network_status_labels[CIRCLE_NETWORK_STATUS_COUNT] = {
     "Wi-Fi timeout",
     "Wi-Fi unavailable",
     "Wi-Fi device missing",
-    "Wi-Fi unsupported"
+    "Wi-Fi unsupported",
+    "Missing Wi-Fi firmware"
 };
 
 static const char *network_status_label(int status) {
