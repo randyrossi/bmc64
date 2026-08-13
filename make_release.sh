@@ -25,13 +25,6 @@ then
 exit -1
 fi
 
-echo -n "Proceed? (y/N):"
-read YN
-if [ "$YN" != "Y" -a "$YN" != "y" ]
-then
-exit
-fi
-
 export MACHINE_C64_L=c64
 export MACHINE_C64_U=C64
 export MACHINE_C128_L=c128
