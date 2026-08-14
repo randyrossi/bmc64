@@ -58,7 +58,7 @@
 #include "p64.h"
 
 
-/* Currently the drive snapshot only handles 2 drives.  */
+/* The drive snapshot handles all DRIVE_NUM drives. */
 
 /* Logging.  */
 static log_t drive_snapshot_log = LOG_ERR;
@@ -78,34 +78,36 @@ This is the format of the DRIVE snapshot module.
 Name                 Type   Size   Description
 
 SyncFactor           DWORD  1      sync factor main cpu <-> drive cpu
+TrueEmulation        BYTE   4      true drive emulation per drive
 
-Accum                DWORD  2
-AttachClk            CLOCK  2      write protect handling on attach
-BitsMoved            DWORD  2      number of bits moved since last access
-ByteReady            BYTE   2      flag: Byte ready
-ClockFrequency       BYTE   2      current clock frequency
-CurrentHalfTrack     WORD   2      current half track of the r/w head
-DetachClk            CLOCK  2      write protect handling on detach
-DiskID1              BYTE   2      disk ID1
-DiskID2              BYTE   2      disk ID2
-ExtendImagePolicy    BYTE   2      Is extending the disk image allowed
-FinishByte           BYTE   2      flag: Mode changed, finish byte
-GCRHeadOffset        DWORD  2      offset from the begin of the track
-GCRRead              BYTE   2      next value to read from disk
-GCRWriteValue        BYTE   2      next value to write to disk
-IdlingMethod         BYTE   2      What idle methode do we use
-LastMode             BYTE   2      flag: Was the last mode read or write
-ParallelCableEnabled BYTE   2      flag: Is the parallel cable enabed
-ReadOnly             BYTE   2      flag: This disk is read only
-RotationLastClk      CLOCK  2
-RotationTablePtr     DWORD  2      pointer to the rotation table
+Accum                DWORD  4
+AttachClk            CLOCK  4      write protect handling on attach
+BitsMoved            DWORD  4      number of bits moved since last access
+ByteReady            BYTE   4      flag: Byte ready
+ClockFrequency       BYTE   4      current clock frequency
+CurrentHalfTrack     WORD   4      current half track of the r/w head
+DetachClk            CLOCK  4      write protect handling on detach
+DiskID1              BYTE   4      disk ID1
+DiskID2              BYTE   4      disk ID2
+ExtendImagePolicy    BYTE   4      Is extending the disk image allowed
+FinishByte           BYTE   4      flag: Mode changed, finish byte
+GCRHeadOffset        DWORD  4      offset from the begin of the track
+GCRRead              BYTE   4      next value to read from disk
+GCRWriteValue        BYTE   4      next value to write to disk
+IdlingMethod         BYTE   4      What idle methode do we use
+LastMode             BYTE   4      flag: Was the last mode read or write
+ParallelCableEnabled BYTE   4      flag: Is the parallel cable enabed
+ReadOnly             BYTE   4      flag: This disk is read only
+RotationLastClk      CLOCK  4
+RotationTablePtr     DWORD  4      pointer to the rotation table
                                    (offset to the rotation table is saved)
-Type                 DWORD  2      drive type
+Type                 DWORD  4      drive type
 
 */
 
+/* Version 1.6 adds the per-drive TrueEmulation bytes after SyncFactor. */
 #define DRIVE_SNAP_MAJOR 1
-#define DRIVE_SNAP_MINOR 5
+#define DRIVE_SNAP_MINOR 6
 
 int drive_snapshot_write_module(snapshot_t *s, int save_disks, int save_roms)
 {
@@ -114,18 +116,25 @@ int drive_snapshot_write_module(snapshot_t *s, int save_disks, int save_roms)
     snapshot_module_t *m;
     uint32_t rotation_table_ptr[DRIVE_NUM];
     uint8_t GCR_image[DRIVE_NUM], P64_image[DRIVE_NUM];
-    int drive_true_emulation;
+    int drive_true_emulation[DRIVE_NUM];
+    int any_true_emulation = 0;
     int sync_factor;
     drive_t *drive;
 
-    resources_get_int("DriveTrueEmulation", &drive_true_emulation);
+    /* A DRIVE module is needed whenever any hardware-emulated unit is active. */
+    for (i = 0; i < DRIVE_NUM; i++) {
+        if (resources_get_int_sprintf("Drive%iTrueEmulation",
+                                      &drive_true_emulation[i], i + 8) < 0) {
+            return -1;
+        }
+        any_true_emulation |= drive_true_emulation[i];
+    }
 
-    //if (vdrive_snapshot_module_write(s, drive_true_emulation ? 10 : 8) < 0) {
     if (vdrive_snapshot_module_write(s) < 0) { // VDRIVE_EFFORT
         return -1;
     }
 
-    if (!drive_true_emulation) {
+    if (!any_true_emulation) {
         return 0;
     }
 
@@ -152,6 +161,14 @@ int drive_snapshot_write_module(snapshot_t *s, int save_disks, int save_roms)
             snapshot_module_close(m);
         }
         return -1;
+    }
+
+    /* Keep this immediately after SyncFactor so the 1.6 layout is explicit. */
+    for (i = 0; i < DRIVE_NUM; i++) {
+        if (SMW_B(m, (uint8_t)drive_true_emulation[i]) < 0) {
+            snapshot_module_close(m);
+            return -1;
+        }
     }
 
     for (i = 0; i < DRIVE_NUM; i++) {
@@ -238,18 +255,20 @@ int drive_snapshot_write_module(snapshot_t *s, int save_disks, int save_roms)
 
     for (i = 0; i < DRIVE_NUM; i++) {
         drive = drive_context[i]->drive;
-        if (drive->enable) {
-            if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000 ||
-                drive->type == DRIVE_TYPE_CMDHD) {
+        if (drive_true_emulation[i] && drive->enable) {
+            /* CMDHD CPU snapshots are not readable: their writer appends 64K
+               of RAM which the 65C02 reader does not consume. */
+            if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000) {
                 if (drivecpu65c02_snapshot_write_module(drive_context[i], s) < 0) {
                     return -1;
                 }
-            } else {
+            } else if (drive->type != DRIVE_TYPE_CMDHD) {
                 if (drivecpu_snapshot_write_module(drive_context[i], s) < 0) {
                     return -1;
                 }
             }
-            if (machine_drive_snapshot_write(drive_context[i], s) < 0) {
+            if (drive->type != DRIVE_TYPE_CMDHD
+                && machine_drive_snapshot_write(drive_context[i], s) < 0) {
                 return -1;
             }
         }
@@ -276,7 +295,7 @@ int drive_snapshot_write_module(snapshot_t *s, int save_disks, int save_roms)
 
     for (i = 0; i < DRIVE_NUM; i++) {
         drive = drive_context[i]->drive;
-        if (save_roms && drive->enable) {
+        if (save_roms && drive_true_emulation[i] && drive->enable) {
             if (driverom_snapshot_write(s, drive) < 0) {
                 return -1;
             }
@@ -290,13 +309,14 @@ int drive_snapshot_read_module(snapshot_t *s)
 {
     uint8_t major_version, minor_version;
     int i;
+    int snapshot_drive_count;
     snapshot_module_t *m;
     char snap_module_name[] = "DRIVE";
     uint32_t rotation_table_ptr[DRIVE_NUM];
     CLOCK attach_clk[DRIVE_NUM];
     CLOCK detach_clk[DRIVE_NUM];
     CLOCK attach_detach_clk[DRIVE_NUM];
-    int drive_true_emulation;
+    int drive_true_emulation[DRIVE_NUM] = { 0 };
     int sync_factor;
     drive_t *drive;
     int dummy;
@@ -305,8 +325,15 @@ int drive_snapshot_read_module(snapshot_t *s)
     m = snapshot_module_open(s, snap_module_name,
                              &major_version, &minor_version);
     if (m == NULL) {
-        /* If this module is not found true emulation is off.  */
-        resources_set_int("DriveTrueEmulation", 0);
+          /* No drive state was saved, so preserve the current TDE configuration.
+
+              Disabling TDE here can persist after a failed or drive-less snapshot
+              load and unintentionally leave a previously enabled drive unusable.
+              So this original code below is now commented out and the TDE state is preserved instead.
+          for (i = 0; i < DRIVE_NUM; i++) {
+                resources_set_int_sprintf("Drive%iTrueEmulation", 0, i + 8);
+          }
+            */
         return 0;
     }
 
@@ -319,23 +346,31 @@ int drive_snapshot_read_module(snapshot_t *s)
         return -1;
     }
 
-    /* reject snapshot modules older than what we can handle (the snapshot is too old) */
-    if (snapshot_version_is_smaller(major_version, minor_version, DRIVE_SNAP_MAJOR, DRIVE_SNAP_MINOR)) {
-        snapshot_set_error(SNAPSHOT_MODULE_INCOMPATIBLE);
-        snapshot_module_close(m);
-        return -1;
-    }
-
-    /* If this module exists true emulation is enabled.  */
-    /* XXX drive_true_emulation = 1 */
-    resources_set_int("DriveTrueEmulation", 1);
-
     if (SMR_DW_INT(m, &sync_factor) < 0) {
         snapshot_module_close(m);
         return -1;
     }
 
-    for (i = 0; i < DRIVE_NUM; i++) {
+    if (snapshot_version_is_equal(major_version, minor_version, 1, 6)) {
+        /* Version 1.6 stores TDE state for all four drive contexts. */
+        snapshot_drive_count = DRIVE_NUM;
+        for (i = 0; i < DRIVE_NUM; i++) {
+            if (SMR_B_INT(m, &drive_true_emulation[i]) < 0) {
+                snapshot_module_close(m);
+                return -1;
+            }
+        }
+    } else if (snapshot_version_is_equal(major_version, minor_version, 1, 5)) {
+        /* Version 1.5 has four contexts but predates per-drive TDE storage. */
+        snapshot_drive_count = DRIVE_NUM;
+    } else {
+        /* Versions 1.0-1.4 contain only the original drive 8 and 9 contexts. */
+        snapshot_drive_count = 2;
+        drive_true_emulation[0] = 1;
+        drive_true_emulation[1] = 1;
+    }
+
+    for (i = 0; i < snapshot_drive_count; i++) {
         drive = drive_context[i]->drive;
 
         /* Partially read 1.0 snapshots */
@@ -532,13 +567,13 @@ int drive_snapshot_read_module(snapshot_t *s)
     }
 
     /* this one is new, so don't test so stay compatible with old snapshots */
-    for (i = 0; i < DRIVE_NUM; i++) {
+    for (i = 0; i < snapshot_drive_count; i++) {
         drive = drive_context[i]->drive;
         SMR_DW(m, &(attach_detach_clk[i]));
     }
 
     /* these are even newer */
-    for (i = 0; i < DRIVE_NUM; i++) {
+    for (i = 0; i < snapshot_drive_count; i++) {
         drive = drive_context[i]->drive;
         SMR_B_INT(m, (int *)&(drive->byte_ready_edge));
         SMR_B_INT(m, (int *)&(drive->byte_ready_active));
@@ -693,26 +728,41 @@ int drive_snapshot_read_module(snapshot_t *s)
         parallel_cable_drive_write(i, 0xff, PARALLEL_WRITE, 1);
     }
 
+    if (snapshot_version_is_equal(major_version, minor_version, 1, 5)) {
+        /* Infer the missing 1.5 TDE state from each restored drive type. */
+        for (i = 0; i < DRIVE_NUM; i++) {
+            drive_true_emulation[i] = drive_context[i]->drive->type != DRIVE_TYPE_NONE;
+        }
+    }
+
     for (i = 0; i < DRIVE_NUM; i++) {
+        if (resources_set_int_sprintf("Drive%iTrueEmulation",
+                                      drive_true_emulation[i], i + 8) < 0) {
+            return -1;
+        }
+    }
+
+    /* CPU snapshot modules are present only for drives with TDE enabled. */
+    for (i = 0; i < snapshot_drive_count; i++) {
         drive = drive_context[i]->drive;
         if (drive->enable) {
-            if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000 ||
-                drive->type == DRIVE_TYPE_CMDHD) {
+            if (drive->type == DRIVE_TYPE_2000 || drive->type == DRIVE_TYPE_4000) {
                 if (drivecpu65c02_snapshot_read_module(drive_context[i], s) < 0) {
                     return -1;
                 }
-            } else {
+            } else if (drive->type != DRIVE_TYPE_CMDHD) {
                 if (drivecpu_snapshot_read_module(drive_context[i], s) < 0) {
                     return -1;
                 }
             }
-            if (machine_drive_snapshot_read(drive_context[i], s) < 0) {
+            if (drive->type != DRIVE_TYPE_CMDHD
+                && machine_drive_snapshot_read(drive_context[i], s) < 0) {
                 return -1;
             }
         }
     }
 
-    for (i = 0; i < DRIVE_NUM; i++) {
+    for (i = 0; i < snapshot_drive_count; i++) {
         if (drive_snapshot_read_image_module(s, i) < 0
             || drive_snapshot_read_gcrimage_module(s, i) < 0
             || drive_snapshot_read_p64image_module(s, i) < 0) {
@@ -720,13 +770,13 @@ int drive_snapshot_read_module(snapshot_t *s)
         }
     }
 
-    for (i = 0; i < DRIVE_NUM; i++) {
+    for (i = 0; i < snapshot_drive_count; i++) {
         if (driverom_snapshot_read(s, drive_context[i]->drive) < 0) {
             return -1;
         }
     }
 
-    for (i = 0; i < DRIVE_NUM; i++) {
+    for (i = 0; i < snapshot_drive_count; i++) {
         drive = drive_context[i]->drive;
         if (drive->type != DRIVE_TYPE_NONE) {
             drive_enable(drive_context[i]);
@@ -736,7 +786,7 @@ int drive_snapshot_read_module(snapshot_t *s)
         }
     }
 
-    for (i = 0; i < DRIVE_NUM; i++) {
+    for (i = 0; i < snapshot_drive_count; i++) {
         int side = 0;
         drive = drive_context[i]->drive;
         if (drive->type == DRIVE_TYPE_1570
@@ -760,9 +810,6 @@ int drive_snapshot_read_module(snapshot_t *s)
     iec_update_ports_embedded();
     drive_update_ui_status();
 
-    resources_get_int("DriveTrueEmulation", &drive_true_emulation);
-
-    //if (vdrive_snapshot_module_read(s, drive_true_emulation ? 10 : 8) < 0) {
     if (vdrive_snapshot_module_read(s) < 0) { // VDRIVE_EFFORT
         return -1;
     }
