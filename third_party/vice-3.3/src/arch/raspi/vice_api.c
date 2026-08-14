@@ -85,31 +85,40 @@ struct menu_item *adapter_type_item;
 
 void raspi_keymap_changed(int, int, signed long);
 
+// SID resource setters mark the engine dirty even when the value is unchanged.
+// Avoid reinitializing state that was just restored from a snapshot.
+static void set_int_if_changed(const char *resource, int value) {
+  int current;
+  if (resources_get_int(resource, &current) < 0 || current != value) {
+    resources_set_int(resource, value);
+  }
+}
+
 // Make sure SID options are sane for this model
 static void check_sid_options() {
   int value;
   resources_get_int("SidResidSampling", &value);
   // For less capable Pi's, we force fast sampling.
   if (circle_get_model() < 3) {
-     resources_set_int("SidResidSampling", SID_RESID_SAMPLING_FAST);
+     set_int_if_changed("SidResidSampling", SID_RESID_SAMPLING_FAST);
   } else if (circle_get_model() < 4) {
      if (value == SID_RESID_SAMPLING_RESAMPLING) {
-       resources_set_int( "SidResidSampling",
-              SID_RESID_SAMPLING_FAST_RESAMPLING);
+       set_int_if_changed("SidResidSampling",
+                          SID_RESID_SAMPLING_FAST_RESAMPLING);
      }
   }
 
   // These can never change and must match the logic in
   // viceemulatorcore.cpp.
   //if (circle_get_arm_clock() < 1400000000) {
-     resources_set_int("SidResidPassband", 60);
-     resources_set_int("SidResid8580Passband", 60);
+     set_int_if_changed("SidResidPassband", 60);
+     set_int_if_changed("SidResid8580Passband", 60);
   //} else {
   //   resources_set_int("SidResidPassband", 90);
   //   resources_set_int("SidResid8580Passband", 90);
   //}
-  resources_set_int("SidResidGain", 97);
-  resources_set_int("SidResid8580Gain", 97);
+  set_int_if_changed("SidResidGain", 97);
+  set_int_if_changed("SidResid8580Gain", 97);
 
   // When dual sid is enabled, SidStereo=1, SoundOutput=2 and
   // the audio driver must be configured for 2 channel output.
@@ -124,14 +133,14 @@ static void check_sid_options() {
   if (circle_get_model() >= 2) {
      resources_get_int("SidStereo", &value);
      if (value > 0) {
-        resources_set_int("SoundOutput", 2);
+        set_int_if_changed("SoundOutput", 2);
      } else {
-        resources_set_int("SoundOutput", 1);
+        set_int_if_changed("SoundOutput", 1);
      }
   } else {
      // Always mono for < Pi2
-     resources_set_int("SidStereo", 0);
-     resources_set_int("SoundOutput", 1);
+      set_int_if_changed("SidStereo", 0);
+      set_int_if_changed("SoundOutput", 1);
   }
 }
 
