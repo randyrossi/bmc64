@@ -1130,8 +1130,8 @@ static int drive_snapshot_write_p64image_module(snapshot_t *s, unsigned int dnr)
     drive = drive_context[dnr]->drive;
     sprintf(snap_module_name, "P64IMAGE%u", dnr);
 
-    m = snapshot_module_create(s, snap_module_name, GCRIMAGE_SNAP_MAJOR,
-                               GCRIMAGE_SNAP_MINOR);
+    m = snapshot_module_create(s, snap_module_name, P64IMAGE_SNAP_MAJOR,
+                               P64IMAGE_SNAP_MINOR);
     if (m == NULL) {
         return -1;
     }
