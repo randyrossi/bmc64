@@ -251,4 +251,6 @@ do
     mv "$STAGING_DIR/$kernel.c64" "$STAGING_DIR/$kernel"
 done
 
+"$SRC_DIR/check_release_files.sh" "$STAGING_DIR"
+
 echo "Staged boot partition files in $STAGING_DIR"

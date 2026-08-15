@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+
 # Extract version from the menu.c file
 SOURCE_VERSION=$(sed -n 's/^#define VERSION_STRING "\(.*\)"$/\1/p' pi3/third_party/common/menu.c)
 VERSION="v${SOURCE_VERSION// /-}"
@@ -89,6 +91,11 @@ cp ${SRC_PI3}/sdcard/cmdline.txt stage_dir
 
 cp ${SRC_PI3}/LICENSE stage_dir
 cp ${SRC_PI3}/README.md stage_dir
+
+if ! "$SCRIPT_DIR/check_release_files.sh" stage_dir
+then
+exit 1
+fi
 
 cd stage_dir
 zip -r ../bmc64-${VERSION}.files.zip .
