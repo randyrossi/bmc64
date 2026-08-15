@@ -151,6 +151,10 @@ extern void snapshot_set_error(int error);
 
 extern int snapshot_version_at_least(uint8_t major_version, uint8_t minor_version, uint8_t major_version_required, uint8_t minor_version_required);
 
+extern int snapshot_version_is_equal(uint8_t major_version, uint8_t minor_version, uint8_t major_version_required, uint8_t minor_version_required);
+extern int snapshot_version_is_bigger(uint8_t major_version, uint8_t minor_version, uint8_t major_version_required, uint8_t minor_version_required);
+extern int snapshot_version_is_smaller(uint8_t major_version, uint8_t minor_version, uint8_t major_version_required, uint8_t minor_version_required);
+
 #define SNAPVAL snapshot_version_at_least
 
 #endif

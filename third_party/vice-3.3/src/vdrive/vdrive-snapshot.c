@@ -67,7 +67,7 @@ int vdrive_snapshot_module_write(snapshot_t *s)
         resources_get_int_sprintf("Drive%iTrueEmulation", &tde, i);
         if (tde == 0) {
             floppy = file_system_get_vdrive(i);
-            for (j = 0; j <= 3; j++) {
+            for (j = 0; j <= 1; j++) {
                 image = vdrive_get_image(floppy, j);
                 if (image != NULL) {
                     snprintf(snap_module_name, SNAP_MODNAME_SIZE, "VDRIVEIMAGE%i", i);
@@ -94,7 +94,7 @@ int vdrive_snapshot_module_read(snapshot_t *s)
     for (i = 8; i <= 11; i++) {
         resources_get_int_sprintf("Drive%iTrueEmulation", &tde, i);
         if (tde == 0) {
-            for (j = 0; j <= 3; j++) {
+            for (j = 0; j <= 1; j++) {
                 snprintf(snap_module_name, SNAP_MODNAME_SIZE, "VDRIVEIMAGE%i", i);
                 m = snapshot_module_open(s, snap_module_name, &major_version, &minor_version);
                 if (m == NULL) {
@@ -102,8 +102,7 @@ int vdrive_snapshot_module_read(snapshot_t *s)
                 }
 
                 /* FIXME: this gives a linker error? */
-                /* if (snapshot_version_is_bigger(major_version, minor_version, SNAP_MAJOR, SNAP_MINOR)) { */
-                if (major_version > SNAP_MAJOR || minor_version > SNAP_MINOR) {
+                if (snapshot_version_is_bigger(major_version, minor_version, SNAP_MAJOR, SNAP_MINOR)) {
                     log_message(vdrive_snapshot_log,
                                 "Snapshot module version (%d.%d) newer than %d.%d.",
                                 major_version, minor_version, SNAP_MAJOR, SNAP_MINOR);
