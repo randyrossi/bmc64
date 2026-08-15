@@ -1,7 +1,14 @@
 #!/bin/bash
 
 # Extract version from the menu.c file
-export VERSION=`cat third_party/common/menu.c | grep define.VERSION_STRING | awk '{print $3}' | sed 's/"//g'`
+SOURCE_VERSION=$(sed -n 's/^#define VERSION_STRING "\(.*\)"$/\1/p' pi3/third_party/common/menu.c)
+VERSION="v${SOURCE_VERSION// /-}"
+
+if [ -z "$SOURCE_VERSION" ]
+then
+echo "Could not read VERSION_STRING from pi3/third_party/common/menu.c" >&2
+exit 1
+fi
 
 SRC_PI3=pi3
 SRC_PI2=pi2
