@@ -1,6 +1,6 @@
 # BMC64
 
-BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smooth scrolling and low latency between input & video/audio. Four other Commodore machines are available as well; C128, Vic20, Plus/4 and PET.
+BMC64 is a bare metal C64 emulator for the Raspberry Pi Zero/2/3 models with true 50hz/60hz smooth scrolling and low latency between input & video/audio. Four other Commodore machines are available as well; C128, Vic20, Plus/4 and PET.
 
 # BMC64 Features
   * Quick boot time (C64 in 4.1 seconds over composite!)
@@ -27,6 +27,7 @@ Version 5.0 and above adds:
   * Time sync on WiFi connect for IDE64 and CMD HD
 
 # Limitations
+  * BMC64 **only** supports Pi Zero, Pi Zero 2W, Pi 2, and Pi 3 based devices. Raspberry Pi 4 and greater is **not supported**.
   * USB Bluetooth gamepads are not supported directly but can be connected via the 8BitDo USB Wireless Adapter 2
   * Not all gamepads will work. Please let me know if yours doesn't.
   
