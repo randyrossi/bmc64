@@ -47,13 +47,15 @@ export MACHINE_PET_L=pet
 export MACHINE_PET_U=PET
 
 rm -rf stage_dir
-mkdir -p stage_dir/$MACHINE_PLUS4EMU_U stage_dir/$MACHINE_PET_U
+mkdir -p stage_dir
 
 cp -R ${SRC_PI3}/release/common_release_files/* stage_dir/
 cp -R ${SRC_PI3}/release/${MACHINE_C64_L}_release_files/* stage_dir/
 cp -R ${SRC_PI3}/release/${MACHINE_C128_L}_release_files/* stage_dir/
 cp -R ${SRC_PI3}/release/${MACHINE_VIC20_L}_release_files/* stage_dir/
 cp -R ${SRC_PI3}/release/${MACHINE_PLUS4_L}_release_files/* stage_dir/
+cp -R ${SRC_PI3}/release/${MACHINE_PLUS4EMU_L}_release_files/* stage_dir/
+cp -R ${SRC_PI3}/release/${MACHINE_PET_L}_release_files/* stage_dir/
 
 cp ${SRC_PI0}/kernel.img.${MACHINE_C64_L} stage_dir/kernel.img
 cp ${SRC_PI0}/kernel.img.${MACHINE_C128_L} stage_dir

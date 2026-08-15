@@ -179,7 +179,7 @@ do
     cp -a "$SRC_DIR/sdcard/$source_dir/." "$STAGING_DIR/$target_dir/"
 done
 
-for machine in c64 c128 vic20 plus4
+for machine in c64 c128 vic20 plus4 plus4emu pet
 do
     release_path="$SRC_DIR/release/${machine}_release_files"
     machine_dir=${machine^^}
@@ -209,7 +209,7 @@ do
     mkdir -p "$STAGING_DIR/carts/$machine_dir"
 done
 
-mkdir -p "$STAGING_DIR/tmp"
+mkdir -p "$STAGING_DIR/DRIVES" "$STAGING_DIR/prg" "$STAGING_DIR/tmp"
 
 for board in "${BOARDS[@]}"
 do
