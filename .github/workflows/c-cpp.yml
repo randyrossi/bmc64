@@ -81,3 +81,4 @@ jobs:
         with:
           files: bmc64-*.files.zip
           generate_release_notes: false
+          draft : true
