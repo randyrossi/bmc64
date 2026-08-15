@@ -35,6 +35,26 @@ jobs:
           submodules: recursive
           path: pi0
 
+      - name: Verify tag matches source version
+        working-directory: pi3
+        env:
+          ACTUAL_TAG: ${{ github.ref_name }}
+        run: |
+             source_version=$(sed -n 's/^#define VERSION_STRING "\(.*\)"$/\1/p' third_party/common/menu.c)
+             expected_tag="v${source_version// /-}"
+
+             if [[ -z "$source_version" ]]
+             then
+               echo "Could not read VERSION_STRING from third_party/common/menu.c"
+               exit 1
+             fi
+
+             if [[ "$ACTUAL_TAG" != "$expected_tag" ]]
+             then
+               echo "Tag must be $expected_tag, but received $ACTUAL_TAG"
+               exit 1
+             fi
+
       - name: Build pi3
         working-directory: pi3
         run: |
