@@ -79,5 +79,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          name: BMC64 ${{ github.ref_name }}
           files: bmc64-*.files.zip
           generate_release_notes: false
+          draft : true
