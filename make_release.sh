@@ -109,6 +109,11 @@ cp ${SRC_PI3}/sdcard/cmdline.txt stage_dir
 cp ${SRC_PI3}/LICENSE stage_dir
 cp ${SRC_PI3}/README.md stage_dir
 
+if ! "$SCRIPT_DIR/make_wifi_firmware.sh" stage_dir
+then
+exit 1
+fi
+
 if ! "$SCRIPT_DIR/check_release_files.sh" stage_dir
 then
 exit 1
