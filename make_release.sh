@@ -49,10 +49,27 @@ export MACHINE_PET_L=pet
 export MACHINE_PET_U=PET
 
 rm -rf stage_dir
+
+# Create the staging directory structure
 mkdir -p stage_dir
+for data_dir in disks tapes snapshots
+do
+	for machine_dir in "$MACHINE_C64_U" "$MACHINE_C128_U" "$MACHINE_VIC20_U" "$MACHINE_PLUS4_U" "$MACHINE_PET_U"
+	do
+		mkdir -p "stage_dir/$data_dir/$machine_dir"
+	done
+done
+
+for machine_dir in "$MACHINE_C64_U" "$MACHINE_C128_U" "$MACHINE_VIC20_U" "$MACHINE_PLUS4_U"
+do
+	mkdir -p "stage_dir/carts/$machine_dir"
+done
+mkdir -p stage_dir/DRIVES stage_dir/prg stage_dir/tmp
+
 
 cp -R ${SRC_PI3}/release/common_release_files/* stage_dir/
-cp -R ${SRC_PI3}/release/${MACHINE_C64_L}_release_files/* stage_dir/
+cp -R ${SRC_PI3}/release/${MACHINE_C64_L}_release_files/C64 stage_dir/
+cp ${SRC_PI3}/release/${MACHINE_C64_L}_release_files/carts/* stage_dir/carts/$MACHINE_C64_U/
 cp -R ${SRC_PI3}/release/${MACHINE_C128_L}_release_files/* stage_dir/
 cp -R ${SRC_PI3}/release/${MACHINE_VIC20_L}_release_files/* stage_dir/
 cp -R ${SRC_PI3}/release/${MACHINE_PLUS4_L}_release_files/* stage_dir/
