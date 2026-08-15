@@ -23,18 +23,6 @@ jobs:
           submodules: recursive
           path: pi3
 
-      - name: Checkout for pi2
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          path: pi2
-
-      - name: Checkout for pi0
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          path: pi0
-
       - name: Verify tag matches source version
         working-directory: pi3
         env:
@@ -54,6 +42,18 @@ jobs:
                echo "Tag must be $expected_tag, but received $ACTUAL_TAG"
                exit 1
              fi
+
+      - name: Checkout for pi2
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: pi2
+
+      - name: Checkout for pi0
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: pi0
 
       - name: Build pi3
         working-directory: pi3
