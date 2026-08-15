@@ -371,7 +371,6 @@
   * CMD HD changed to no operation when detached
   * Compilation fix for Pi0
   * teensy-resid initialisation crash fix for Pi0
-
   * Ported BMC64 to Circle 51 / circle-stdlib v20
     * Circle 43 introduced USB PnP, making it possible to switch USB devices while BMC64 is running
     * Details: https://github.com/rsta2/circle/blob/master/CHANGELOG.md#the-43rd-step
@@ -381,7 +380,6 @@
     * Multicore support and enabled USB FIQ handling
     * Direct loading of files into memory to reduce unnecessary SD-card reads
   * Fixed PiZero build issues post update
-
   * Added USB PnP support
   * Added support for 8bitdo Retro Keyboards inc the C64 model (both wired and via 2.4Ghz USB receiver)
   * Added "Reset to default bindings" option in USB gamepad configuration menu
@@ -392,7 +390,6 @@
   * Fixed disconnect quirks with 8bitdo controller docks when putting the controller back into the dock and picking it up again.
   * 8BitDo USB Wireless Adapter 2 was already supported as an emulated Xbox360 controller, this allows connection of almost any 8bitdo bluetooth controller.
   * Added usbpowerdelay=1000 to the default cmdline.txt configuration, to stop 8bitdo controllers connecting as Switch Pro controller on startup
-
   * Refactor and clean up of all Circle patches
   * Added support for the Xbox 360 PC Wireless Gaming Receiver (and clones)
   * Fixed 8BitDo Retro Keyboards being incorrectly detected as USB mice
@@ -403,25 +400,20 @@
   * Improved build scripts to apply patches more reliably and avoid stale
     build artifacts
   * Note: PiZero is best used with a powered OTG USB hub as some devices can cause brownouts and device shutdowns
-
   * Make connecting of 8BitDo USB Wireless Adapter 2 more robust
   * Handle idle states of 8bitdo receivers 
-
   * Removed incorrect up arrow key mapping for 8bitdo Retro Keyboards
-
   * Added ethernet and Wifi networking support for C64 (and C128 untested) 
   * Added Network menu to control device selection and Wifi credentials
   * Added scanning of Wifi APs
   * Added BMC Software Modem to connect to BBS (auto configured on network connect)
     * Select Swift/DE modem (e.g. in CCGMS Ultimate)
   * Added patch for Circle ACK handling causing networking stalling
-
   * Improved development building tools
     * Build everything in one command `build_sdcard.sh`
     * Automatic downloading of required toolchain GCC 15.2.Rel1
     * Added automatic download of networking drivers during SDcard build
     * Added --skip-patches option to build faster without changing third party libs
-
   * Added support for C64 OS C64 Network Protocol (CNP)
   * Extend BMC Software Modem to support C64 OS slde.zi driver
   * Default SwiftLink at $DE00 and route its interrupts through NMI
@@ -429,25 +421,20 @@
   * Update NETWORKING documentation
   * Fix DEVICE NOT FOUND issue when connecting CMD HD images for the first time
   * Support alternate version of THEC64 keyboard found
-
   * Add Network Status menu item for clearer network state
   * Move Network menu folder below Network Status
-
   * Add $D700 and $DF00 SwiftLink modem-address options for IDE64 compatibility
   * Add menu items to be able to configure IDE64 settings
   * Flush IDE64 and CMD HD image writes to disk to prevent possible data loss
   * Ignore 0 length seek events to speed up cartridge loading
   * Add file filter for *.cfa and *.hdd for IDE64 images
-
   * Add $DF80 SwiftLink modem-address option for IDE64 compatibility
-
   * Add setting localtime on the Raspberry Pi after a successful network connection
   * Avoid false VICE audio-underrun messages at startup
   * Fix emulator slow downs while Ethernet link is down
   * Correct network connect message when switch a single microSD card between different models of Raspberry Pi
   * Back port RTC code from Vice 3.10 to set the correct time in CMD-HD images
   * Time improvements and fixes allow C64 OS to start with the correct time set 
-
   * Fix placement of the CRT files in the building of the SD Card
   * Update NETWORKING.md with details on firmware files requirement
   * Add specific WiFi firmware missing warning and fix startup crash with missing firmware
@@ -461,11 +448,9 @@
   * Implement per-drive TDE in drive snapshots
   * Support backwards compatibility for old drive snapshot versions
   * Fix TDE set to zero bug when saving settings after a snapshot restore
-
   * Improved development building tools
     * Add GitHub workflow to build full SDCard
     * Reworked `make_release.sh` to work with GitHub workflow
     * Refactor `make_release.sh` and `build_sdcard.sh` to share code
     * Add `check_release_files.sh` to confirm SDCard image is correct
-
   * Tested on PiZeroW, PiZero2W, Pi2B, Pi3A+, Pi3B+ models
