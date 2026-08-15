@@ -40,48 +40,46 @@ export MACHINE_PET_L=pet
 export MACHINE_PET_U=PET
 
 rm -rf stage_dir
-mkdir -p stage_dir
+mkdir -p stage_dir/$MACHINE_PLUS4EMU_U stage_dir/$MACHINE_PET_U
 
-sudo cp -R pi3/release/common_release_files/* stage_dir/
-sudo cp -R pi3/release/${MACHINE_C64_L}_release_files/* stage_dir/
-sudo cp -R pi3/release/${MACHINE_C128_L}_release_files/* stage_dir/
-sudo cp -R pi3/release/${MACHINE_VIC20_L}_release_files/* stage_dir/
-sudo cp -R pi3/release/${MACHINE_PLUS4_L}_release_files/* stage_dir/
-sudo cp -R pi3/release/${MACHINE_PLUS4EMU_L}_release_files/* stage_dir/
-sudo cp -R pi3/release/${MACHINE_PET_L}_release_files/* stage_dir/
+cp -R ${SRC_PI3}/release/common_release_files/* stage_dir/
+cp -R ${SRC_PI3}/release/${MACHINE_C64_L}_release_files/* stage_dir/
+cp -R ${SRC_PI3}/release/${MACHINE_C128_L}_release_files/* stage_dir/
+cp -R ${SRC_PI3}/release/${MACHINE_VIC20_L}_release_files/* stage_dir/
+cp -R ${SRC_PI3}/release/${MACHINE_PLUS4_L}_release_files/* stage_dir/
 
-sudo cp ${SRC_PI0}/kernel.img.${MACHINE_C64_L} stage_dir/kernel.img
-sudo cp ${SRC_PI0}/kernel.img.${MACHINE_C128_L} stage_dir
-sudo cp ${SRC_PI0}/kernel.img.${MACHINE_VIC20_L} stage_dir
-sudo cp ${SRC_PI0}/kernel.img.${MACHINE_PLUS4_L} stage_dir
-sudo cp ${SRC_PI0}/kernel.img.${MACHINE_PET_L} stage_dir
+cp ${SRC_PI0}/kernel.img.${MACHINE_C64_L} stage_dir/kernel.img
+cp ${SRC_PI0}/kernel.img.${MACHINE_C128_L} stage_dir
+cp ${SRC_PI0}/kernel.img.${MACHINE_VIC20_L} stage_dir
+cp ${SRC_PI0}/kernel.img.${MACHINE_PLUS4_L} stage_dir
+cp ${SRC_PI0}/kernel.img.${MACHINE_PET_L} stage_dir
 
-sudo cp ${SRC_PI2}/kernel7.img.${MACHINE_C64_L} stage_dir/kernel7.img
-sudo cp ${SRC_PI2}/kernel7.img.${MACHINE_C128_L} stage_dir
-sudo cp ${SRC_PI2}/kernel7.img.${MACHINE_VIC20_L} stage_dir
-sudo cp ${SRC_PI2}/kernel7.img.${MACHINE_PLUS4_L} stage_dir
-sudo cp ${SRC_PI2}/kernel7.img.${MACHINE_PET_L} stage_dir
+cp ${SRC_PI2}/kernel7.img.${MACHINE_C64_L} stage_dir/kernel7.img
+cp ${SRC_PI2}/kernel7.img.${MACHINE_C128_L} stage_dir
+cp ${SRC_PI2}/kernel7.img.${MACHINE_VIC20_L} stage_dir
+cp ${SRC_PI2}/kernel7.img.${MACHINE_PLUS4_L} stage_dir
+cp ${SRC_PI2}/kernel7.img.${MACHINE_PET_L} stage_dir
 
-sudo cp ${SRC_PI3}/kernel8-32.img.${MACHINE_C64_L} stage_dir/kernel8-32.img
-sudo cp ${SRC_PI3}/kernel8-32.img.${MACHINE_C128_L} stage_dir
-sudo cp ${SRC_PI3}/kernel8-32.img.${MACHINE_VIC20_L} stage_dir
-sudo cp ${SRC_PI3}/kernel8-32.img.${MACHINE_PLUS4_L} stage_dir
-sudo cp ${SRC_PI3}/kernel8-32.img.${MACHINE_PLUS4EMU_L} stage_dir
-sudo cp ${SRC_PI3}/kernel8-32.img.${MACHINE_PET_L} stage_dir
+cp ${SRC_PI3}/kernel8-32.img.${MACHINE_C64_L} stage_dir/kernel8-32.img
+cp ${SRC_PI3}/kernel8-32.img.${MACHINE_C128_L} stage_dir
+cp ${SRC_PI3}/kernel8-32.img.${MACHINE_VIC20_L} stage_dir
+cp ${SRC_PI3}/kernel8-32.img.${MACHINE_PLUS4_L} stage_dir
+cp ${SRC_PI3}/kernel8-32.img.${MACHINE_PLUS4EMU_L} stage_dir
+cp ${SRC_PI3}/kernel8-32.img.${MACHINE_PET_L} stage_dir
 
-sudo cp ${SRC_PI3}/sdcard/$MACHINE_C64_L/* stage_dir/$MACHINE_C64_U
-sudo cp ${SRC_PI3}/sdcard/$MACHINE_C128_L/* stage_dir/$MACHINE_C128_U
-sudo cp ${SRC_PI3}/sdcard/$MACHINE_VIC20_L/* stage_dir/$MACHINE_VIC20_U
-sudo cp ${SRC_PI3}/sdcard/$MACHINE_PLUS4_L/* stage_dir/$MACHINE_PLUS4_U
-sudo cp ${SRC_PI3}/sdcard/$MACHINE_PLUS4EMU_L/* stage_dir/$MACHINE_PLUS4EMU_U
-sudo cp ${SRC_PI3}/sdcard/$MACHINE_PET_L/* stage_dir/$MACHINE_PET_U
+cp ${SRC_PI3}/sdcard/$MACHINE_C64_L/* stage_dir/$MACHINE_C64_U
+cp ${SRC_PI3}/sdcard/$MACHINE_C128_L/* stage_dir/$MACHINE_C128_U
+cp ${SRC_PI3}/sdcard/$MACHINE_VIC20_L/* stage_dir/$MACHINE_VIC20_U
+cp ${SRC_PI3}/sdcard/$MACHINE_PLUS4_L/* stage_dir/$MACHINE_PLUS4_U
+cp ${SRC_PI3}/sdcard/$MACHINE_PLUS4EMU_L/* stage_dir/$MACHINE_PLUS4EMU_U
+cp ${SRC_PI3}/sdcard/$MACHINE_PET_L/* stage_dir/$MACHINE_PET_U
 
-sudo cp ${SRC_PI3}/sdcard/machines.txt stage_dir
-sudo cp ${SRC_PI3}/sdcard/config.txt stage_dir
-sudo cp ${SRC_PI3}/sdcard/cmdline.txt stage_dir
+cp ${SRC_PI3}/sdcard/machines.txt stage_dir
+cp ${SRC_PI3}/sdcard/config.txt stage_dir
+cp ${SRC_PI3}/sdcard/cmdline.txt stage_dir
 
-sudo cp ${SRC_PI3}/LICENSE stage_dir
-sudo cp ${SRC_PI3}/README.md stage_dir
+cp ${SRC_PI3}/LICENSE stage_dir
+cp ${SRC_PI3}/README.md stage_dir
 
 cd stage_dir
 zip -r ../bmc64-${VERSION}.files.zip .
