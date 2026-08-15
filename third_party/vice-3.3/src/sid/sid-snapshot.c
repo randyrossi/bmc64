@@ -933,15 +933,28 @@ fail:
     return -1;
 }
 
+static void sid_snapshot_restore_registers(int sidnr)
+{
+    int i;
+    uint8_t *siddata = sid_get_siddata(sidnr);
+
+    for (i = 0; i < 32; ++i) {
+        if (!sidnr) {
+            sid_store((uint16_t)i, siddata[i]);
+        } else if (sidnr == 1) {
+            sid2_store((uint16_t)i, siddata[i]);
+        } else {
+            sid3_store((uint16_t)i, siddata[i]);
+        }
+    }
+}
+
 static int sid_snapshot_read_module_extended(snapshot_t *s, int sidnr)
 {
     uint8_t major_version, minor_version;
     snapshot_module_t *m;
     int sid_engine;
     const char *snap_module_name_extended = NULL;
-    int i;
-    uint8_t *siddata;
-
     resources_get_int("SidEngine", &sid_engine);
 
     switch (sidnr) {
@@ -957,19 +970,19 @@ static int sid_snapshot_read_module_extended(snapshot_t *s, int sidnr)
             break;
     }
 
-    /* If the sid engine data that was save does not match the current engine
-       then don't try to load the data */
+#ifdef RASPI_COMPILE
+    /* reSID's internal state can leave an active voice stalled after restore.
+       The register image is sufficient for the program to resume sound. */
+    if (sid_engine == SID_ENGINE_RESID) {
+        sid_snapshot_restore_registers(sidnr);
+        return 0;
+    }
+#endif
+
+    /* If the SID engine data that was saved does not match the current engine,
+       then don't try to load the data. */
     if (intended_sid_engine != sid_engine) {
-        siddata = sid_get_siddata(sidnr);
-        for (i = 0; i < 32; ++i) {
-            if (!sidnr) {
-                sid_store((uint16_t)i, siddata[i]);
-            } else if (sidnr == 1) {
-                sid2_store((uint16_t)i, siddata[i]);
-            } else {
-                sid3_store((uint16_t)i, siddata[i]);
-            }
-        }
+        sid_snapshot_restore_registers(sidnr);
         return 0;
     }
 
