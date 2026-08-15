@@ -14,24 +14,39 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi with true 50hz/60hz smoo
   * Can use a Waveshare Game HAT (Pi2 or 3 Only) (GPIO Config 3)
   * Also works with the Keyrah and TheC64 'Maxi' case
 
+Version 5.0 and above adds:
+  * USB Plug and Play (PnP): USB devices can be connected, disconnected, and replaced while BMC64 is running
+  * Network support WiFi & Ethernet (e.g BBS, C64 OS networking)
+  * C64 OS with networking on IDE64 or CMD HD
+  * Support for 8BitDo Retro Keyboards, including the C64 model, over USB or a 2.4GHz receiver
+  * Improved gamepad support including:
+    * 8BitDo USB Wireless Adapter 2 (allow connecting almost any bluetooth gamepad)
+    * 8BitDo 2.4GHz controllers in XInput mode (via receiver or wired)
+    * Xbox 360 PC Wireless Receiver (and compatible clones)
+    * Reset to Default Bindings for supported controllers
+  * Time sync on WiFi connect for IDE64 and CMD HD
+
 # Limitations
-  * USB gamepad support is limited. Not all gamepads will work (especially wireless).
+  * USB Bluetooth gamepads are not supported directly but can be connected via the 8BitDo USB Wireless Adapter 2
+  * Not all gamepads will work. Please let me know if yours doesn't.
   
 This project uses VICE for emulation without any O/S (Linux) distribution installed on the Pi.  VICE (Versatile Commodore Emulator) platform dependencies are satisfied using circle-stdlib.
 
 For Plus/4 emulation on the Rasbperry Pi 3, a more accurate emulator using Plus4Emu is also available.
 
-# Known Issues
-
-  * There is no hot plug in/out support for USB devices.  All devices must be plugged in before the device is booted and never removed.  Attempting to remove them will halt the emulator or make it slow down considerably.
-
-  * Some USB gamepads will require manual tweaking of settings from the defaults.
-
 # Precompiled Images
 
   NOTE: Since V3.0, all machines are now bundled into one release for all Pi models. You can switch from the 'Machine' menu.
 
+  Releases from v5.0 onwards are released on GitHub: [latest release](https://github.com/randyrossi/bmc64/releases/latest)
+
+  Older releases can be found here:
+
   * https://accentual.com/bmc64
+
+# Installation
+
+See [INSTALLATION.md](/INSTALLATION.md) for SD-card preparation, required ROM files, and the expected directory layout.
 
 # Github Link
 
@@ -373,8 +388,9 @@ NOTE: If you select a directory off a USB device (not the SD card), then the IEC
 CMDHD drive support was added in v4.1.  You can switch a drive model to CMDHD and mount .DHD images.  However, there are some limitations to be aware of:
 
 1. .DHD files are very slow to attach and parse from SDCards.  If possible, use a USB thumbstick instead. Performance will be much better.
-2. Whenever you attach an image, you must RESET the CMDHD drive by using the Options CMDHD Mode.  Cycle through the options until you reach 'Normal' again (even if you started on Normal).  Please be aware that every time you RESET a CMDHD drive, the emulator will freeze for a period of time.  This makes it looks like it has crashed but it is actually just processing the RESET.  When using SDCard mounted .DHD files, this pause can be quite long.  Again, use a USB thumbstick for more reasonable wait times.
-3. Auto-expanding .DHD files are not supported. You may come across instructions on the web telling you to create a 0 byte .DHD file and then create partitions. This may work on VICE desktop builds, but this will not work with BMC64. Instead, you must pre-allocate the storage space you need. Do this with the dd command like this:
+2. Auto-expanding .DHD files are not supported. You may come across instructions on the web telling you to create a 0 byte .DHD file and then create partitions. This may work on VICE desktop builds, but this will not work with BMC64. Instead, you must pre-allocate the storage space you need. Do this with the dd command like this:
+
+**Note:** Occasionally after attaching a CMDHD image you may get a DEVICE NOT FOUND error. In that case you can RESET the CMDHD by cycling the Options CMDHD Mode.  Cycle through the options until you reach 'Normal' again (even if you started on Normal).  Please be aware that every time you RESET a CMDHD drive, the emulator will freeze for a period of time.  This makes it looks like it has crashed but it is actually just processing the RESET.  When using SDCard mounted .DHD files, this pause can be quite long.  Again, use a USB thumbstick for more reasonable wait times.
 
     dd if=/dev/zero of=my.dhd bs=1M count=16
 
@@ -386,6 +402,10 @@ NOTE: Adding CMDHD support is on a best-effort basis as this feature was added i
 # C64OS Support
 
 C64OS will work with BMC64 from 4.1 onward but only with JiffyDOS kernal replacement installed.  For some reason, the regular kernal hangs on application launches.  This happens on desktop versions of VICE as well so I don't think it's a problem with BMC64 specifically.  If you are able to use C64OS without JiffyDOS on VICE, let me know.
+
+From BMC64 5.0.0 onwards C64OS is supported with networking! Follow the [NETWORKING.md](/NETWORKING.md) readme or this [post](https://retro.minch.io/2026/09/c64-os-on-bmc64-with-networking/) has a step by step to get going.
+
+Please consult the [official C64OS website](https://c64os.com/) for more information.
 
 # Sound
 
@@ -450,7 +470,9 @@ F11 is the 40/80 Column Key for C128
 
 As mentioned, gamepad support is limited.  Some gamepads advertise their dpads as analog sticks so if your dpad setting doesn't work and you want to use a dpad, try switching to analog.  Also, if the analog setting doesn't work, you may have to do some work to find the right axis # for both X and Y.  Usually, axis 0 and 1 are left stick X and Y axes but not always.  My cheap 'Kiwitata' gamepads are 3 & 4.  If your gamepad has two sticks, try 2 & 3 for right X/Y.
 
-There is a configuration sub-menu that will help you configure your usb gamepads.  You can monitor the raw usb values using 'Monitor raw USB data' men option.  The only way to escape from this menu is ESC/RUNSTOP.
+There is a configuration sub-menu that will help you configure your usb gamepads.  You can monitor the raw usb values using 'Monitor raw USB data' menu option.  The only way to escape from this menu is ESC/RUNSTOP.
+
+Version 5.0 and onwards supports "Reset to Default Bindings", which will load default bindings if your gamepad is identified correctly.
 
 # Menu Navigation
 
@@ -526,6 +548,12 @@ Config | Description
 
 NOTE: The default config is 1.  If you are installing BMC64 for the first time and need a GPIO config other than 1 and don't have a USB keyboard to change the option, you will have to manually edit settiongs.txt and ensure a line with 'gpio_config=[0-2]' exists. The number given should be 1 less than the config number in the documentation above.  For example, if you are using a PCB with full keyboard connector, you would add to (or create) a settings.txt file with "gpio_config=1" for the selection of Config 2.  Since each emulator has its own settings file, you would need to do this for settings.txt (C64), settings-c128.txt , settings-vic20.txt, settings-plus4.txt and settings-plus4emu.txt
 
+## BMC64 PCBs for Original C64 Cases
+
+The original [BMC64 Keyboard/Joystick PCB](https://www.pcbway.com/project/shareproject/BMC64_Keyboard_Joystick_PCB.html) connects an original Commodore keyboard and DB9 joysticks directly to the Raspberry Pi GPIO header. It uses GPIO Config 2.
+
+[BMC64 PCB](https://github.com/aminch/bmc64-pcb) is a newer optional all-in-one solution for installing BMC64 in an original C64 breadbin or C64C case. It combines a Raspberry Pi 3B+, original C64 keyboard support, DB9 joystick ports, USB-C power, and accessible HDMI, USB, and MicroSD connections without modifying the case. It uses GPIO Config 1, and a Rasperry Pi Pico to connect an original C64 keyboard over USB.
+
 ## GPIO Config 1 : Menu Nav Buttons and Joysticks
 
 DO NOT ATTEMPT THIS IF YOU ARE NOT COMFORTABLE WITH WIRING THINGS UP TO YOUR PI
@@ -560,7 +588,7 @@ NOTE: There are no analog inputs so paddles won't function.
 
 ## GPIO Config 2 : GPIO Keyboard and Joysticks
 
-This GPIO config option enables real keyboard and joystick scanning code purely from GPIO connections.  It can be used with a PCB specifically designed for BMC64.  The PCB design is available at https://upverter.com/design/rrossi/bmc64  It is possible to breadboard these connections using jumpers but that would mean a mess of wires inside your C64 shell.  The PCB is meant to mount your DB9 joystick ports, a power switch and power connector in the right spots as well as provide power for the shell's LED.
+This GPIO config option enables real keyboard and joystick scanning code purely from GPIO connections.  It can be used with a PCB specifically designed for BMC64.  The PCB design is available at [BMC64 Keyboard/Joystick PCB](https://www.pcbway.com/project/shareproject/BMC64_Keyboard_Joystick_PCB.html) It is possible to breadboard these connections using jumpers but that would mean a mess of wires inside your C64 shell.  The PCB is meant to mount your DB9 joystick ports, a power switch and power connector in the right spots as well as provide power for the shell's LED.
 
 The PIN configuration for joysticks is different than what was described above for the GPIO Config 1 option.  So if you turn this option on, the GPIO joysticks you wired directly to the PI's header will not work unless you re-wire them as described below.
 
@@ -660,11 +688,11 @@ IMPORTANT : BMC64 v1.0.6 through v1.4 were not properly putting the other 3 (unu
 
 ## Networking Support
 
-  * Networking is available for C64 and C128; see [NETWORKING.md](/NETWORKING.md) for setup and BBS usage.
+  * Networking is available for C64 and C128; see [NETWORKING.md](/NETWORKING.md) for setup, BBS and C64OS usage.
 
 # Changelog
 
-  * https://github.com/randyrossi/bmc64/blob/master/CHANGELOG.md
+  * [CHANGELOG.md](/CHANGELOG.md)
 
 # Q&A
 
@@ -746,9 +774,10 @@ Q. What do I put on the SDcard?
         basic
         chargen
         d1541II
-        dos1541 (optional)
-        dos1571 (optional)
-        dos1581 (optional)
+        dos1541  (optional)
+        dos1571  (optional)
+        dos1581  (optional)
+        dosCMDHD (optional)
         rpi_sym.vkm
     /C128
         kernal
@@ -865,6 +894,6 @@ Q. What do I put on the SDcard?
 
 # Build Instructions
 
-Refer to BUILDING.md for instructions.
+Refer to [BUILDING.md](/BUILDING.md) for instructions.
 
 # Performance numbers can be found at https://accentual.com/bmc64
