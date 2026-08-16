@@ -152,6 +152,11 @@ do
     mv "$STAGING_DIR/$kernel.c64" "$STAGING_DIR/$kernel"
 done
 
-"$SRC_DIR/check_release_files.sh" "$STAGING_DIR"
+check_release_arguments=("$STAGING_DIR")
+if [ "${#BOARDS[@]}" -eq 1 ] && [[ "${BOARDS[0]}" =~ ^pi[023]$ ]]
+then
+    check_release_arguments+=("${BOARDS[0]}")
+fi
+"$SRC_DIR/check_release_files.sh" "${check_release_arguments[@]}"
 
 echo "Staged boot partition files in $STAGING_DIR"
