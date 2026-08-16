@@ -53,9 +53,10 @@ public:
   TShutdownMode Run(void);
 
   static void MouseStatusHandler(unsigned nButtons, int nPosX, int nPosY,
-                                 int nWheelMove);
+                                 int nWheelMove, void *pContext);
   static void KeyStatusHandlerRaw(unsigned char ucModifiers,
-                                  const unsigned char RawKeys[6]);
+                                  const unsigned char RawKeys[6],
+                                  void *pContext);
   static void GamePadStatusHandler(unsigned nDeviceIndex,
                                    const TGamePadState *pState);
 
@@ -162,8 +163,8 @@ private:
   static void KeyRemovedHandler(CDevice *pDevice, void *pContext);
   static void GamePadRemovedHandler(CDevice *pDevice, void *pContext);
   
-  CUSBKeyboardDevice *m_pKeyboard;
-  CMouseDevice *m_pMouse;
+  CUSBKeyboardDevice *m_pKeyboard[MAX_USB_DEVICES];
+  CMouseDevice *m_pMouse[MAX_USB_DEVICES];
   CUSBGamePadDevice *m_pGamePad[MAX_USB_DEVICES];
 
   CCPUThrottle mCPUThrottle;

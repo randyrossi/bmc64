@@ -37,9 +37,13 @@ CKernel *static_kernel = NULL;
 // should take effect. Only set when gpio_outputs_enabled is allowed.
 int raspi_userport_enabled;
 
-// Usb key states
-static bool key_states[MAX_KEY_CODES];
-static unsigned char mod_states;
+// USB keyboard and mouse state by device slot.
+static bool key_states[MAX_USB_DEVICES][MAX_KEY_CODES];
+static unsigned char mod_states[MAX_USB_DEVICES];
+static unsigned mouse_button_states[MAX_USB_DEVICES];
+static unsigned usb_input_indices[MAX_USB_DEVICES];
+static bool merged_key_states[MAX_KEY_CODES];
+static unsigned char merged_mod_states;
 static bool uiLeftShift = false;
 static bool uiRightShift = false;
 
@@ -376,17 +380,23 @@ CKernel::CKernel(void)
       mVolume(100), mNumCoresComplete(0),
       mNeedSoundInit(false), mNumSoundChannels(1) {
   static_kernel = this;
-  mod_states = 0;
-  memset(key_states, 0, MAX_KEY_CODES * sizeof(bool));
+  memset(key_states, 0, sizeof(key_states));
+  memset(mod_states, 0, sizeof(mod_states));
+  memset(mouse_button_states, 0, sizeof(mouse_button_states));
+  memset(merged_key_states, 0, sizeof(merged_key_states));
+  merged_mod_states = 0;
 
   // Only used for pins that are used as buttons. See viceapp.h.
   for (int i = 0; i < NUM_GPIO_PINS; i++) {
     gpio_debounce_state[i] = BTN_UP;
     gpio_prev_state[i] = HIGH;
   }
-  m_pKeyboard = 0;
-  m_pMouse = 0;
-  for (int i=0; i<MAX_USB_DEVICES; i++) m_pGamePad[i]=0;
+  for (int i = 0; i < MAX_USB_DEVICES; i++) {
+    m_pKeyboard[i] = 0;
+    m_pMouse[i] = 0;
+    m_pGamePad[i] = 0;
+    usb_input_indices[i] = i;
+  }
   kbdRestoreState = HIGH;
 
   for (int i = 0; i < 8; i++) {
@@ -724,11 +734,28 @@ if (static_kernel->circle_get_ticks() - entry_start >= entry_delay) {
 
 
 void CKernel::MouseRemovedHandler(CDevice *pDevice, void *pContext) {
-  if (static_kernel) static_kernel->m_pMouse = 0;
+  if (static_kernel) {
+    for (unsigned i = 0; i < MAX_USB_DEVICES; i++) {
+      if (static_kernel->m_pMouse[i] == pDevice) {
+        MouseStatusHandler(0, 0, 0, 0, &usb_input_indices[i]);
+        static_kernel->m_pMouse[i] = 0;
+        CLogger::Get()->Write("kernel", LogNotice, "Mouse %d removed.", i + 1);
+      }
+    }
+  }
   CLogger::Get()->Write("kernel", LogNotice, "Mouse removed.");
 }
 void CKernel::KeyRemovedHandler(CDevice *pDevice, void *pContext) {
-  if (static_kernel) static_kernel->m_pKeyboard = 0;
+  if (static_kernel) {
+    static const unsigned char no_keys[6] = {0, 0, 0, 0, 0, 0};
+    for (unsigned i = 0; i < MAX_USB_DEVICES; i++) {
+      if (static_kernel->m_pKeyboard[i] == pDevice) {
+        KeyStatusHandlerRaw(0, no_keys, &usb_input_indices[i]);
+        static_kernel->m_pKeyboard[i] = 0;
+        CLogger::Get()->Write("kernel", LogNotice, "Keyboard %d removed.", i + 1);
+      }
+    }
+  }
   CLogger::Get()->Write("kernel", LogNotice, "Keyboard removed.");
 }
 void CKernel::GamePadRemovedHandler(CDevice *pDevice, void *pContext) {
@@ -744,23 +771,35 @@ void CKernel::GamePadRemovedHandler(CDevice *pDevice, void *pContext) {
 }
 
 void CKernel::SetupUSBKeyboard() {
-  if (m_pKeyboard == 0) {
-    m_pKeyboard = (CUSBKeyboardDevice *)mDeviceNameService.GetDevice("ukbd1", FALSE);
-    if (m_pKeyboard != 0) {
-      m_pKeyboard->RegisterRemovedHandler(KeyRemovedHandler);
-      m_pKeyboard->RegisterKeyStatusHandlerRaw(KeyStatusHandlerRaw);
-      CLogger::Get()->Write("kernel", LogNotice, "Keyboard connected and registered.");
+  for (unsigned i = 0; i < MAX_USB_DEVICES; i++) {
+    if (m_pKeyboard[i] == 0) {
+      CString device_name;
+      device_name.Format("ukbd%u", i + 1);
+      m_pKeyboard[i] = (CUSBKeyboardDevice *)mDeviceNameService.GetDevice(device_name, FALSE);
+      if (m_pKeyboard[i] != 0) {
+        m_pKeyboard[i]->RegisterRemovedHandler(KeyRemovedHandler);
+        m_pKeyboard[i]->RegisterKeyStatusHandlerRaw(KeyStatusHandlerRaw, FALSE,
+                                                     &usb_input_indices[i]);
+        CLogger::Get()->Write("kernel", LogNotice,
+                              "Keyboard %d connected and registered.", i + 1);
+      }
     }
   }
 }
 
 void CKernel::SetupUSBMouse() {
-  if (m_pMouse == 0) {
-    m_pMouse = (CMouseDevice *)mDeviceNameService.GetDevice("mouse1", FALSE);
-    if (m_pMouse != 0) {
-      m_pMouse->RegisterRemovedHandler(MouseRemovedHandler);
-      m_pMouse->RegisterStatusHandler(MouseStatusHandler);
-      CLogger::Get()->Write("kernel", LogNotice, "Mouse connected and registered.");
+  for (unsigned i = 0; i < MAX_USB_DEVICES; i++) {
+    if (m_pMouse[i] == 0) {
+      CString device_name;
+      device_name.Format("mouse%u", i + 1);
+      m_pMouse[i] = (CMouseDevice *)mDeviceNameService.GetDevice(device_name, FALSE);
+      if (m_pMouse[i] != 0) {
+        m_pMouse[i]->RegisterRemovedHandler(MouseRemovedHandler);
+        m_pMouse[i]->RegisterStatusHandler(MouseStatusHandler,
+                                           &usb_input_indices[i]);
+        CLogger::Get()->Write("kernel", LogNotice,
+                              "Mouse %d connected and registered.", i + 1);
+      }
     }
   }
 }
@@ -1298,39 +1337,71 @@ int CKernel::circle_sound_bufferspace(void) {
 void CKernel::circle_yield(void) { CScheduler::Get()->Yield(); }
 
 void CKernel::MouseStatusHandler(unsigned nButtons, int deltaX, int deltaY,
-                                 int nWheelMove) {
-  static unsigned int prev_buttons = {0};
+                                 int nWheelMove, void *pContext) {
+  unsigned input_index = *(unsigned *)pContext;
+  if (input_index >= MAX_USB_DEVICES) {
+    return;
+  }
 
+  unsigned previous_buttons = 0;
+  for (unsigned i = 0; i < MAX_USB_DEVICES; i++) {
+    previous_buttons |= mouse_button_states[i];
+  }
+  mouse_button_states[input_index] = nButtons;
+  unsigned merged_buttons = 0;
+  for (unsigned i = 0; i < MAX_USB_DEVICES; i++) {
+    merged_buttons |= mouse_button_states[i];
+  }
   (void)nWheelMove;
 
   emu_mouse_move(deltaX, deltaY);
 
-  if ((prev_buttons & MOUSE_BUTTON_LEFT) && !(nButtons & MOUSE_BUTTON_LEFT)) {
+  if ((previous_buttons & MOUSE_BUTTON_LEFT) && !(merged_buttons & MOUSE_BUTTON_LEFT)) {
     emu_mouse_button_left(0);
-  } else if (!(prev_buttons & MOUSE_BUTTON_LEFT) &&
-             (nButtons & MOUSE_BUTTON_LEFT)) {
+  } else if (!(previous_buttons & MOUSE_BUTTON_LEFT) &&
+             (merged_buttons & MOUSE_BUTTON_LEFT)) {
     emu_mouse_button_left(1);
   }
-  if ((prev_buttons & MOUSE_BUTTON_RIGHT) && !(nButtons & MOUSE_BUTTON_RIGHT)) {
+  if ((previous_buttons & MOUSE_BUTTON_RIGHT) && !(merged_buttons & MOUSE_BUTTON_RIGHT)) {
     emu_mouse_button_right(0);
-  } else if (!(prev_buttons & MOUSE_BUTTON_RIGHT) &&
-             (nButtons & MOUSE_BUTTON_RIGHT)) {
+  } else if (!(previous_buttons & MOUSE_BUTTON_RIGHT) &&
+             (merged_buttons & MOUSE_BUTTON_RIGHT)) {
     emu_mouse_button_right(1);
   }
-  prev_buttons = nButtons;
 }
 
 void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
-                                  const unsigned char RawKeys[6]) {
+                                  const unsigned char RawKeys[6],
+                                  void *pContext) {
+
+  unsigned input_index = *(unsigned *)pContext;
+  if (input_index >= MAX_USB_DEVICES) {
+    return;
+  }
 
   bool new_states[MAX_KEY_CODES];
   memset(new_states, 0, MAX_KEY_CODES * sizeof(bool));
 
-  // Compare previous to present and handle press/release that come from
-  // modifier keys.
+  // Combine every keyboard report so releasing one device does not release
+  // a key that remains held on another device.
+  mod_states[input_index] = ucModifiers;
+  for (unsigned i = 0; i < 6; i++) {
+    const unsigned char key = RawKeys[i];
+    if (key != 0) {
+      new_states[key] = true;
+    }
+  }
+  memcpy(key_states[input_index], new_states, sizeof(new_states));
+
+  unsigned char new_mod_states = 0;
+  for (unsigned i = 0; i < MAX_USB_DEVICES; i++) {
+    new_mod_states |= mod_states[i];
+  }
+
+  // Compare the merged modifier state to handle modifier key transitions.
   int v = 1;
   for (int i = 0; i < 8; i++) {
-    if ((ucModifiers & v) && !(mod_states & v)) {
+    if ((new_mod_states & v) && !(merged_mod_states & v)) {
       switch (i) {
       case 0: // LeftControl
         emu_key_pressed(KEYCODE_LeftControl);
@@ -1362,7 +1433,7 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
       default:
         break;
       }
-    } else if (!(ucModifiers & v) && (mod_states & v)) {
+    } else if (!(new_mod_states & v) && (merged_mod_states & v)) {
       switch (i) {
       case 0: // LeftControl
         emu_key_released(KEYCODE_LeftControl);
@@ -1397,20 +1468,16 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
     }
     v = v * 2;
   }
-  mod_states = ucModifiers;
+  merged_mod_states = new_mod_states;
 
-  // Set new states
-  for (unsigned i = 0; i < 6; i++) {
-    const unsigned char key = RawKeys[i];
-    if (key != 0) {
-      new_states[key] = true;
-    }
-  }
-
-  // Compare previous to present and handle key press/release events.
+  // Compare merged key state to handle press/release events.
   int ui_activated = emu_is_ui_activated();
   for (unsigned i = 1; i < MAX_KEY_CODES; i++) {
-    if (key_states[i] == true && new_states[i] == false) {
+    bool merged_state = false;
+    for (unsigned device = 0; device < MAX_USB_DEVICES; device++) {
+      merged_state |= key_states[device][i];
+    }
+    if (merged_key_states[i] == true && merged_state == false) {
       if (ui_activated) {
         // We have to handle shift+left/right here or else our ui
         // isn't navigable by keyrah with real C64 board. Keep
@@ -1426,7 +1493,7 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
       } else {
         emu_key_released(i);
       }
-    } else if (key_states[i] == false && new_states[i] == true) {
+    } else if (merged_key_states[i] == false && merged_state == true) {
       if (ui_activated) {
         // See above note on shift.
         if ((uiLeftShift || uiRightShift) && i == KEYCODE_Right) {
@@ -1440,7 +1507,7 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
         emu_key_pressed(i);
       }
     }
-    key_states[i] = new_states[i];
+    merged_key_states[i] = merged_state;
   }
 }
 
