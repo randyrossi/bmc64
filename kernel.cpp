@@ -41,6 +41,7 @@ int raspi_userport_enabled;
 static bool key_states[MAX_USB_DEVICES][MAX_KEY_CODES];
 static unsigned char mod_states[MAX_USB_DEVICES];
 static unsigned mouse_button_states[MAX_USB_DEVICES];
+// Passed as callback context so keyboard and mouse handlers know their slot.
 static unsigned usb_input_indices[MAX_USB_DEVICES];
 static bool merged_key_states[MAX_KEY_CODES];
 static unsigned char merged_mod_states;
