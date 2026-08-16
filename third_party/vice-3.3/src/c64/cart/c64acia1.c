@@ -300,14 +300,14 @@ int acia1_set_mode(int mode)
 
 #if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET) || defined(HAVE_RS232BMC)
 static const resource_int_t resources_i[] = {
+    { "Acia1Base", 0xffff, RES_EVENT_STRICT, int_to_void_ptr(0xffff),
+        &acia_base, set_acia_base, NULL },
     { "Acia1Enable", ACIA1_DEFAULT_ENABLED, RES_EVENT_STRICT, 0,
       &acia_enabled, set_acia_enabled, NULL },
     { "Acia1Irq", MyIrq, RES_EVENT_NO, NULL,
       &acia.irq_res, acia_set_irq, NULL },
     { "Acia1Mode", ACIA1_DEFAULT_MODE, RES_EVENT_NO, NULL,
       &acia.mode, acia_set_mode, NULL },
-    { "Acia1Base", 0xffff, RES_EVENT_STRICT, int_to_void_ptr(0xffff),
-      &acia_base, set_acia_base, NULL },
     RESOURCE_INT_LIST_END
 };
 #endif
