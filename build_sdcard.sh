@@ -14,26 +14,56 @@ fi
 
 BOARDS=()
 SKIP_PATCHES=0
+MACHINE=""
+KASAN=0
 
-for argument in "$@"
+while [ "$#" -gt 0 ]
 do
+    argument=$1
     case "$argument" in
         pi0|pi2|pi3|pi4)
             BOARDS+=("$argument")
             ;;
+        --machine)
+            shift
+            if [ "$#" -eq 0 ]
+            then
+                echo "--machine requires one of: c64 c128 vic20 plus4 plus4emu pet" >&2
+                exit 1
+            fi
+            MACHINE=$1
+            ;;
+        --machine=c64|--machine=c128|--machine=vic20|--machine=plus4|--machine=plus4emu|--machine=pet)
+            MACHINE=${argument#--machine=}
+            ;;
         --skip-patches)
             SKIP_PATCHES=1
             ;;
+        --kasan)
+            KASAN=1
+            ;;
         *)
-            echo "Arguments must be board names or --skip-patches: pi0 pi2 pi3 pi4" >&2
+            echo "Arguments must be board names, --machine MACHINE, or --skip-patches" >&2
             exit 1
             ;;
     esac
+    shift
 done
 
 if [ "${#BOARDS[@]}" -eq 0 ]
 then
     BOARDS=(pi0 pi2 pi3)
+fi
+
+if [ -n "$MACHINE" ]
+then
+    case "$MACHINE" in
+        c64|c128|vic20|plus4|plus4emu|pet) ;;
+        *)
+            echo "Machine must be one of: c64 c128 vic20 plus4 plus4emu pet" >&2
+            exit 1
+            ;;
+    esac
 fi
 
 kernel_for_board()
@@ -43,6 +73,18 @@ kernel_for_board()
         pi2) echo "kernel7.img" ;;
         pi3) echo "kernel8-32.img" ;;
         pi4) echo "kernel7l.img" ;;
+    esac
+}
+
+makefile_for_machine()
+{
+    case "$1" in
+        c64) echo "C64" ;;
+        c128) echo "C128" ;;
+        vic20) echo "VIC20" ;;
+        plus4) echo "Plus4" ;;
+        plus4emu) echo "Plus4Emu" ;;
+        pet) echo "PET" ;;
     esac
 }
 
@@ -128,35 +170,76 @@ do
     then
         make_all_arguments+=(--skip-patches)
     fi
-    ./make_all.sh "${make_all_arguments[@]}"
-    ./make_machines.sh "$board"
-    kernel=$(kernel_for_board "$board")
-    machines=(c64 c128 vic20 plus4 pet)
-
-    if [ "$board" = "pi3" ]
+    if [ "$KASAN" -eq 1 ]
     then
-        machines+=(plus4emu)
+        make_all_arguments+=(--kasan)
     fi
+    ./make_all.sh "${make_all_arguments[@]}"
+    kernel=$(kernel_for_board "$board")
 
-    for machine in "${machines[@]}"
-    do
-        image="$SRC_DIR/$kernel.$machine"
-        if [ ! -f "$image" ]
+    if [ -n "$MACHINE" ]
+    then
+        machine_name=$(makefile_for_machine "$MACHINE")
+        echo "Building $machine_name -> $kernel.$MACHINE"
+        make clean
+        BOARD=$board make -f "Makefile-$machine_name"
+
+        image_artifact="$SRC_DIR/$kernel"
+        if [ ! -f "$image_artifact" ]
         then
-            echo "Expected image was not created: $image" >&2
+            echo "Expected artifact was not created: $image_artifact" >&2
             exit 1
         fi
-        cp "$image" "$STAGING_DIR/"
-    done
+        cp "$image_artifact" "$image_artifact.$MACHINE"
 
-    mv "$STAGING_DIR/$kernel.c64" "$STAGING_DIR/$kernel"
+        artifact_base=${kernel%.img}
+        for artifact in elf lst map
+        do
+            source_artifact="$SRC_DIR/$artifact_base.$artifact"
+            if [ ! -f "$source_artifact" ]
+            then
+                echo "Expected artifact was not created: $source_artifact" >&2
+                exit 1
+            fi
+            cp "$source_artifact" "$source_artifact.$MACHINE"
+        done
+
+        cp "$SRC_DIR/$kernel.$MACHINE" "$STAGING_DIR/$kernel.$MACHINE"
+        printf '\nkernel=%s.%s\n' "$kernel" "$MACHINE" >> "$STAGING_DIR/config.txt"
+    else
+        ./make_machines.sh "$board"
+        machines=(c64 c128 vic20 plus4 pet)
+
+        if [ "$board" = "pi3" ]
+        then
+            machines+=(plus4emu)
+        fi
+
+        for machine in "${machines[@]}"
+        do
+            image="$SRC_DIR/$kernel.$machine"
+            if [ ! -f "$image" ]
+            then
+                echo "Expected image was not created: $image" >&2
+                exit 1
+            fi
+            cp "$image" "$STAGING_DIR/"
+        done
+
+        mv "$STAGING_DIR/$kernel.c64" "$STAGING_DIR/$kernel"
+    fi
 done
 
-check_release_arguments=("$STAGING_DIR")
-if [ "${#BOARDS[@]}" -eq 1 ] && [[ "${BOARDS[0]}" =~ ^pi[023]$ ]]
+if [ -z "$MACHINE" ]
 then
-    check_release_arguments+=("${BOARDS[0]}")
+    check_release_arguments=("$STAGING_DIR")
+    if [ "${#BOARDS[@]}" -eq 1 ] && [[ "${BOARDS[0]}" =~ ^pi[023]$ ]]
+    then
+        check_release_arguments+=("${BOARDS[0]}")
+    fi
+    "$SRC_DIR/check_release_files.sh" "${check_release_arguments[@]}"
+else
+    echo "Skipping full-release check for selected machine: $MACHINE"
 fi
-"$SRC_DIR/check_release_files.sh" "${check_release_arguments[@]}"
 
 echo "Staged boot partition files in $STAGING_DIR"
