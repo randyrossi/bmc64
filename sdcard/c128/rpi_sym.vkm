@@ -63,7 +63,7 @@
 
 # SDL symbolic map for the C64, the SCPU64, and the C64DTV
 
-# C64 keyboard matrix:
+# C128 Keyboard matrix
 #
 #       +-----+-----+-----+-----+-----+-----+-----+-----+
 #       |Bit 0|Bit 1|Bit 2|Bit 3|Bit 4|Bit 5|Bit 6|Bit 7|
@@ -84,6 +84,26 @@
 # +-----+-----+-----+-----+-----+-----+-----+-----+-----+
 # |Bit 7| 1 ! |A_LFT| CTRL| 2 " |SPACE|  C= |  Q  | R/S |
 # +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+#
+#        +-----+-----+-----+-----+-----+-----+-----+-----+
+#        |Bit 0|Bit 1|Bit 2|Bit 3|Bit 4|Bit 5|Bit 6|Bit 7|
+# +------+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 8 |HELP | KP 8| KP 5| TAB | KP 2| KP 4| KP 7| KP 1|
+# +------+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 9 | ESC | KP +| KP -| LF  |KP CR| KP 6| KP 9| KP 3|
+# +------+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 10| ALT | KP 0| KP .|A.UP |A.DWN|A.LFT|A.RGT|NOSCR|
+# +------+-----+-----+-----+-----+-----+-----+-----+-----+
+
+# C128 Keyboard layout:
+#
+#   ESC TAB ALT CAPS       HELP L/F 40/80 NOSCRL     up down left right  F1/2 F3/4 F5/6 F7/8
+#
+#   arrow 1!  2"  3#  4$  5%  6&  7'  8(  9)  0   +   -   pound clr del     7   8   9   +
+#    ctrl   q   w   e   r   t   y   u   i   o   p   @   *   ^   restore     4   5   6   -
+#   r/s SL    a   s   d   f   g   h   j   k   l   :[  ;]  =   return        1   2   3   enter
+#   CBM LSHFT   z   x   c   v   b   n   m   ,<  .>  /?  RSHFT   u/d l/r     0       .
+#                               SPACE
 
 !CLEAR
 !LSHIFT 1 7
@@ -177,5 +197,7 @@ Right 0 2 8          /*         Right -> Right       */
 
 # Restore key mappings
 PageUp -3 0
+
+End 8 0 8 /* HELP key -> End */
 
 F11 -4 0 /* 40/80 Columns */
