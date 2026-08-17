@@ -1,0 +1,105 @@
+diff --git a/lib/kasan.cpp b/lib/kasan.cpp
+index e2760857..97b41e19 100644
+--- a/lib/kasan.cpp
++++ b/lib/kasan.cpp
+@@ -157,7 +157,10 @@ static inline int kasan_check_memory(uintptr addr, size_t size,
+     uintptr addr_end = addr + size - 1;
+     if (   (MEM_SHADOW_START <= addr && addr_end < g_shadow_mem_end)    // shadow region
+         || (g_low_mem_end <= addr && addr_end < GIGABYTE)               // GPU and I/O region
+-        || g_high_mem_end <= addr_end)                                  // behind high heap
++#if RASPPI >= 4
++        || g_high_mem_end <= addr_end                                   // behind high heap
++#endif
++       )
+         return 1;
+ 
+     uintptr const buggy_shadow_address = get_poisoned_shadow_address(addr, size);
+@@ -291,6 +294,7 @@ extern "C"
+ 
+ struct KASAN_HEAP_HEADER
+ {
++    unsigned int size;
+     unsigned int aligned_size;
+ };
+ 
+@@ -313,6 +317,7 @@ static
+ void *kasan_shadow_allocated(char *ptr, size_t nSize, size_t aligned_size)
+ {
+     KASAN_HEAP_HEADER * const kasan_heap_hdr = reinterpret_cast<KASAN_HEAP_HEADER *>(ptr);
++    kasan_heap_hdr->size = nSize;
+     kasan_heap_hdr->aligned_size = aligned_size;
+ 
+     unpoison_shadow((uintptr)(ptr + KASAN_HEAP_HEAD_REDZONE_SIZE), nSize);
+@@ -325,6 +330,20 @@ void *kasan_shadow_allocated(char *ptr, size_t nSize, size_t aligned_size)
+     return ptr + KASAN_HEAP_HEAD_REDZONE_SIZE;
+ }
+ 
++static bool kasan_is_heap_address(uintptr address)
++{
++    if (address < g_low_mem_end)
++    {
++        return true;
++    }
++
++#if RASPPI >= 4
++    return MEM_HIGHMEM_START <= address && address < g_high_mem_end;
++#else
++    return false;
++#endif
++}
++
+ void *KasanAllocateHook (CHeapAllocator &rHeapAllocator, size_t nSize)
+ {
+     kasan_allocate_params const allocate_params = kasan_get_allocate_params(nSize);
+@@ -333,6 +352,14 @@ void *KasanAllocateHook (CHeapAllocator &rHeapAllocator, size_t nSize)
+     if (ptr == nullptr)
+         return nullptr;
+ 
++    if (g_kasan_initialized && !kasan_is_heap_address((uintptr)ptr))
++    {
++        CLogger::Get ()->Write ("kasan", LogError,
++            "Invalid raw heap allocation: address 0x%X, size 0x%X",
++            ptr, allocate_params.total_size);
++        return nullptr;
++    }
++
+     return kasan_shadow_allocated(ptr, nSize, allocate_params.aligned_size);
+ }
+ 
+@@ -358,20 +385,32 @@ void *KasanReAllocateHook (CHeapAllocator &rHeapAllocator, void *pBlock, ssize_t
+         return KasanAllocateHook(rHeapAllocator, nSize);
+     }
+ 
++    if (nSize == 0)
++    {
++        KasanFreeHook(rHeapAllocator, pBlock);
++        return nullptr;
++    }
++
+     char *const old_ptr = static_cast<char *>(pBlock);
+ 
+     KASAN_HEAP_HEADER *const kasan_heap_hdr =
+         reinterpret_cast<struct KASAN_HEAP_HEADER *>(old_ptr - KASAN_HEAP_HEAD_REDZONE_SIZE);
+-
+-    poison_shadow((uintptr)old_ptr, kasan_heap_hdr->aligned_size, ASAN_SHADOW_HEAP_FREE_MAGIC);
++    size_t const old_size = kasan_heap_hdr->size;
+ 
+     kasan_allocate_params const allocate_params = kasan_get_allocate_params(nSize);
+ 
+-    char *const new_ptr = static_cast<char *>(rHeapAllocator.DoReAllocate(kasan_heap_hdr, allocate_params.total_size));
++    char *const new_ptr = static_cast<char *>(rHeapAllocator.DoAllocate(allocate_params.total_size));
+     if (new_ptr == nullptr)
+         return nullptr;
+ 
+-    return kasan_shadow_allocated(new_ptr, nSize, allocate_params.aligned_size);;
++    char *const user_ptr = static_cast<char *>(kasan_shadow_allocated(new_ptr, nSize, allocate_params.aligned_size));
++    size_t const copy_size = old_size < static_cast<size_t>(nSize)
++        ? old_size : static_cast<size_t>(nSize);
++    memcpy(user_ptr, old_ptr, copy_size);
++    rHeapAllocator.DoFree(kasan_heap_hdr);
++    poison_shadow((uintptr)old_ptr, old_size, ASAN_SHADOW_HEAP_FREE_MAGIC);
++
++    return user_ptr;
+ }
+ 
+ // Implement KAsan error reporting routines.

@@ -43,6 +43,7 @@
 
 // TODO: Should really move 40/80 stuff into here...
 extern struct menu_item *c40_80_column_item;
+extern struct menu_item *active_display_item;
 
 unsigned long emux_calculate_timing(double fps) {
   if (fps >= 49 && fps <= 51) {
@@ -204,6 +205,11 @@ void column4080_key_toggled(void) {
   int v;
   resources_get_int("C128ColumnKey", &v);
   c40_80_column_item->value = v;
+  active_display_item->value = v ? MENU_ACTIVE_DISPLAY_VICII :
+                                   MENU_ACTIVE_DISPLAY_VDC;
+  vic_enabled = v;
+  vdc_enabled = !v;
+  emux_ensure_video();
   overlay_40_80_columns_changed(v);
 }
 

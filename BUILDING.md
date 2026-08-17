@@ -133,6 +133,16 @@ If you pass no arguments it will build all three Pi versions pi0,pi2,pi3. Or you
 
         NOTE: In the above, optinally set the required Pi version, such as ./build_sdcard.sh pi3 to build a single version
 
+### Development options
+
+If you need to build a kernel with additional logging and memory debugging you can build just a single machine.
+
+To build and stage one emulator image, add `--machine` followed by `c64`, `c128`, `vic20`, `plus4`, `plus4emu`, or `pet`. The selected build preserves matching image and debug artifacts (`.elf`, `.lst`, and `.map`) with the machine suffix.
+
+        ./build_sdcard.sh pi3 --machine vic20
+
+For a KASAN diagnostic build, set `KASAN_ENABLED = 1` in Circle's `Config.mk` before running the script, or pass `--kasan`. The script preserves an enabled setting when it regenerates Circle's configuration.
+
 ----
 ## Resources
 

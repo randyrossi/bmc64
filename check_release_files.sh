@@ -28,28 +28,6 @@ REQUIRED_FILES=(
     "firmware/LICENCE.cypress"
     "firmware/LICENCE.synaptics"
 
-    # Raspberry Pi Zero kernels
-    "kernel.img"
-    "kernel.img.c128"
-    "kernel.img.pet"
-    "kernel.img.plus4"
-    "kernel.img.vic20"
-
-    # Raspberry Pi 2 kernels
-    "kernel7.img"
-    "kernel7.img.c128"
-    "kernel7.img.pet"
-    "kernel7.img.plus4"
-    "kernel7.img.vic20"
-
-    # Raspberry Pi 3 kernels
-    "kernel8-32.img"
-    "kernel8-32.img.c128"
-    "kernel8-32.img.pet"
-    "kernel8-32.img.plus4"
-    "kernel8-32.img.plus4emu"
-    "kernel8-32.img.vic20"
-
     # C64 files
     "C64/PUT_ROMS_HERE"
     "C64/bootstat.txt"
@@ -98,6 +76,31 @@ REQUIRED_FILES=(
     "carts/C64/delaykey.crt"
 )
 
+PI0_KERNEL_FILES=(
+    "kernel.img"
+    "kernel.img.c128"
+    "kernel.img.pet"
+    "kernel.img.plus4"
+    "kernel.img.vic20"
+)
+
+PI2_KERNEL_FILES=(
+    "kernel7.img"
+    "kernel7.img.c128"
+    "kernel7.img.pet"
+    "kernel7.img.plus4"
+    "kernel7.img.vic20"
+)
+
+PI3_KERNEL_FILES=(
+    "kernel8-32.img"
+    "kernel8-32.img.c128"
+    "kernel8-32.img.pet"
+    "kernel8-32.img.plus4"
+    "kernel8-32.img.plus4emu"
+    "kernel8-32.img.vic20"
+)
+
 # Required directories from the known-good BMC64 4.2 release.
 REQUIRED_DIRECTORIES=(
     # Machine directories
@@ -143,19 +146,39 @@ REQUIRED_DIRECTORIES=(
     "tmp"
 )
 
-if [ "$#" -ne 1 ]
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]
 then
-    echo "Usage: $0 RELEASE_DIRECTORY" >&2
+    echo "Usage: $0 RELEASE_DIRECTORY [pi0|pi2|pi3]" >&2
     exit 2
 fi
 
 RELEASE_DIRECTORY=${1%/}
+PI_MODEL=${2:-}
 
 if [ ! -d "$RELEASE_DIRECTORY" ]
 then
     echo "Release directory does not exist: $RELEASE_DIRECTORY" >&2
     exit 2
 fi
+
+case "$PI_MODEL" in
+    "")
+        REQUIRED_FILES+=("${PI0_KERNEL_FILES[@]}" "${PI2_KERNEL_FILES[@]}" "${PI3_KERNEL_FILES[@]}")
+        ;;
+    pi0)
+        REQUIRED_FILES+=("${PI0_KERNEL_FILES[@]}")
+        ;;
+    pi2)
+        REQUIRED_FILES+=("${PI2_KERNEL_FILES[@]}")
+        ;;
+    pi3)
+        REQUIRED_FILES+=("${PI3_KERNEL_FILES[@]}")
+        ;;
+    *)
+        echo "Pi model must be pi0, pi2, or pi3: $PI_MODEL" >&2
+        exit 2
+        ;;
+esac
 
 missing_entries=0
 
