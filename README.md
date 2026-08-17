@@ -2,6 +2,8 @@
 
 BMC64 is a bare metal C64 emulator for the Raspberry Pi Zero/2/3 models with true 50hz/60hz smooth scrolling and low latency between input & video/audio. Four other Commodore machines are available as well; C128, Vic20, Plus/4 and PET.
 
+**NOTE:** Since V3.0, all machines are all bundled into one release for all Pi models. You can switch from the 'Machine' menu.
+
 # BMC64 Features
   * Quick boot time (C64 in 4.1 seconds over composite!)
   * Frames are timed to vsync for true 50/60 hz smooth scrolling (no horizontal tearing!)
@@ -37,9 +39,20 @@ For Plus/4 emulation on the Rasbperry Pi 3, a more accurate emulator using Plus4
 
 # Precompiled Images
 
-  NOTE: Since V3.0, all machines are now bundled into one release for all Pi models. You can switch from the 'Machine' menu.
+## Releases
 
-  Releases from v5.0 onwards are released on GitHub: [latest release](https://github.com/randyrossi/bmc64/releases/latest)
+  Releases from v5.0 onwards are released on GitHub: 
+  
+  * [latest release](https://github.com/randyrossi/bmc64/releases/latest)
+  * [all releases](https://github.com/randyrossi/bmc64/releases)
+
+## Pre-releases
+
+  Pre-releases will be made between the regular releases for quick release testing or releasing work in progress. These releases are not as well tested and may contain bugs so use with care.
+
+  Pre-release builds are [here](https://github.com/randyrossi/bmc64/releases?q=prerelease%3Atrue&expanded=true)
+
+## Older release (pre v5.0.0)
 
   Older releases can be found here:
 
@@ -47,7 +60,7 @@ For Plus/4 emulation on the Rasbperry Pi 3, a more accurate emulator using Plus4
 
 # Installation
 
-See [INSTALLATION.md](/INSTALLATION.md) for SD-card preparation, required ROM files, and the expected directory layout.
+See [INSTALLATION.md](https://github.com/randyrossi/bmc64/blob/master/INSTALLATION.md) for SD-card preparation, required ROM files, and the expected directory layout.
 
 # Github Link
 
@@ -404,7 +417,7 @@ NOTE: Adding CMDHD support is on a best-effort basis as this feature was added i
 
 C64OS will work with BMC64 from 4.1 onward but only with JiffyDOS kernal replacement installed.  For some reason, the regular kernal hangs on application launches.  This happens on desktop versions of VICE as well so I don't think it's a problem with BMC64 specifically.  If you are able to use C64OS without JiffyDOS on VICE, let me know.
 
-From BMC64 5.0.0 onwards C64OS is supported with networking! Follow the [NETWORKING.md](/NETWORKING.md) readme or this [post](https://retro.minch.io/2026/09/c64-os-on-bmc64-with-networking/) has a step by step to get going.
+From BMC64 5.0.0 onwards C64OS is supported with networking! Follow the [NETWORKING.md](https://github.com/randyrossi/bmc64/blob/master/NETWORKING.md) readme or this [post](https://retro.minch.io/2026/09/c64-os-on-bmc64-with-networking/) has a step by step to get going.
 
 Please consult the [official C64OS website](https://c64os.com/) for more information.
 
@@ -689,11 +702,11 @@ IMPORTANT : BMC64 v1.0.6 through v1.4 were not properly putting the other 3 (unu
 
 ## Networking Support
 
-  * Networking is available for C64 and C128; see [NETWORKING.md](/NETWORKING.md) for setup, BBS and C64OS usage.
+  * Networking is available for C64 and C128; see [NETWORKING.md](https://github.com/randyrossi/bmc64/blob/master/NETWORKING.md) for setup, BBS and C64OS usage.
 
 # Changelog
 
-  * [CHANGELOG.md](/CHANGELOG.md)
+  * [CHANGELOG.md](https://github.com/randyrossi/bmc64/blob/master/CHANGELOG.md)
 
 # Q&A
 
@@ -895,6 +908,6 @@ Q. What do I put on the SDcard?
 
 # Build Instructions
 
-Refer to [BUILDING.md](/BUILDING.md) for instructions.
+Refer to [BUILDING.md](https://github.com/randyrossi/bmc64/blob/master/BUILDING.md) for instructions.
 
 # Performance numbers can be found at https://accentual.com/bmc64
