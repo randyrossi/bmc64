@@ -456,8 +456,12 @@
   * Tested on PiZeroW, PiZero2W, Pi2B, Pi3A+, Pi3B+ models
 
 ## 5.0.1 pre-release
-- Add support for up to 4 keyboards and mice
-- Map End key to Help for C128 keyboard
-- Fix C128 physical 40/80 key display switching
-- Vic20 startup crash fix #319 
-- Add memory debug enabling functionality
+  * Add support for up to 4 keyboards and mice
+  * Map End key to Help for C128 keyboard
+  * Fix C128 physical 40/80 key display switching
+  * Vic20 startup crash fix #319 
+  * Add memory debug enabling functionality
+
+## 5.0.2 pre-release
+  * Fix for networking in C128 mode #320
+  * Add mapping for F9 to Esc in C128 symbolic keymap
