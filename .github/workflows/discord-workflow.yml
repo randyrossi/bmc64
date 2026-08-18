@@ -1,0 +1,90 @@
+name: Announce release on Discord
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  discord:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Post release to Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          RELEASE_NAME: ${{ github.event.release.name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_URL: ${{ github.event.release.html_url }}
+          RELEASE_BODY: ${{ github.event.release.body }}
+          RELEASE_AUTHOR: ${{ github.event.release.author.login }}
+          IS_PRERELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          name = os.environ.get("RELEASE_NAME") or os.environ["RELEASE_TAG"]
+          tag = os.environ["RELEASE_TAG"]
+          url = os.environ["RELEASE_URL"]
+          body = os.environ.get("RELEASE_BODY", "").strip()
+          author = os.environ.get("RELEASE_AUTHOR", "")
+          prerelease = os.environ.get("IS_PRERELEASE", "false").lower() == "true"
+
+          if prerelease:
+              title = f"🧪 {name} Pre-release"
+              footer = "BMC64 • GitHub Pre-release"
+          else:
+              title = f"🚀 {name} Released"
+              footer = "BMC64 • GitHub Release"
+
+          # Discord limits embed descriptions to 4096 characters.
+          # Leave some room and direct people to GitHub if necessary.
+          if len(body) > 3500:
+              body = (
+                  body[:3500].rstrip()
+                  + "\n\n…Release notes truncated. See GitHub for the full details."
+              )
+
+          if not body:
+              body = "See GitHub for release details."
+
+          payload = {
+              "username": "BMC64 Releases",
+              "embeds": [
+                  {
+                      "title": title,
+                      "url": url,
+                      "description": body,
+                      "fields": [
+                          {
+                              "name": "Version",
+                              "value": tag,
+                              "inline": True
+                          },
+                          {
+                              "name": "Published by",
+                              "value": author or "BMC64",
+                              "inline": True
+                          }
+                      ],
+                      "footer": {
+                          "text": footer
+                      }
+                  }
+              ]
+          }
+
+          req = urllib.request.Request(
+              os.environ["DISCORD_WEBHOOK"],
+              data=json.dumps(payload).encode("utf-8"),
+              headers={
+                  "Content-Type": "application/json",
+                  "User-Agent": "BMC64-GitHub-Actions"
+              },
+              method="POST"
+          )
+
+          with urllib.request.urlopen(req) as response:
+              print("Discord response:", response.status)
+          PY
