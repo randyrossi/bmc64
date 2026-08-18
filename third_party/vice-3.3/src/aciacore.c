@@ -677,19 +677,21 @@ void myacia_reset(void)
     acia.irq = 0;
 
 #ifdef HAVE_RS232BMC
-    /* Start the native SwiftLink at 2400 bps instead of external-clock mode.
-       C64 OS expects an immediately usable modem after reset. */
-    acia.ctrl = ACIA_CTRL_BITS_BPS_1200;
-    acia.cmd |= ACIA_CMD_BITS_DTR_ENABLE_RECV_AND_IRQ;
-    acia.fd = rs232drv_open(acia.device);
-    if (acia.fd >= 0) {
-        acia_set_handshake_lines();
-        /* Seed DCD before the first RX alarm. Otherwise the initial
-           disconnected state looks like a carrier-loss edge and NMI can
-           interrupt the C64 ROM while it is still booting. */
-        acia_get_status();
-        acia.alarm_active_rx = 1;
-        set_acia_ticks();
+    if (machine_class == VICE_MACHINE_C64) {
+        /* Start the native SwiftLink at 2400 bps instead of external-clock mode.
+           C64 OS expects an immediately usable modem after reset. */
+        acia.ctrl = ACIA_CTRL_BITS_BPS_1200;
+        acia.cmd |= ACIA_CMD_BITS_DTR_ENABLE_RECV_AND_IRQ;
+        acia.fd = rs232drv_open(acia.device);
+        if (acia.fd >= 0) {
+            acia_set_handshake_lines();
+            /* Seed DCD before the first RX alarm. Otherwise the initial
+               disconnected state looks like a carrier-loss edge and NMI can
+               interrupt the C64 ROM while it is still booting. */
+            acia_get_status();
+            acia.alarm_active_rx = 1;
+            set_acia_ticks();
+        }
     }
 #endif
 }
@@ -980,9 +982,11 @@ void myacia_store(uint16_t addr, uint8_t byte)
         case ACIA_CMD:
             acia.cmd = byte;
 #ifdef HAVE_RS232BMC
-                /* BMC64 keeps the virtual modem asserted so C64 OS can use its
-                    normal driver initialization even when software clears DTR. */
-            acia.cmd |= ACIA_CMD_BITS_DTR_ENABLE_RECV_AND_IRQ;
+            if (machine_class == VICE_MACHINE_C64) {
+                /* C64 OS expects the virtual modem to remain asserted while
+                   its SwiftLink driver clears DTR during initialization. */
+                acia.cmd |= ACIA_CMD_BITS_DTR_ENABLE_RECV_AND_IRQ;
+            }
 #endif
             acia_set_handshake_lines();
             if ((acia.cmd & ACIA_CMD_BITS_TRANSMITTER_MASK) == ACIA_CMD_BITS_TRANSMITTER_TX_WITH_IRQ

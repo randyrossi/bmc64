@@ -576,6 +576,12 @@ private:
     // Parse a compact Hayes command stream: C64 OS sends several settings in
     // one initialization command before its quoted ATD dial string.
     while (index < commandLength_) {
+      while (index < commandLength_ && command_[index] == ' ') {
+        ++index;
+      }
+      if (index == commandLength_) {
+        break;
+      }
       char operation = Upper(command_[index++]);
       if (operation == 'D') {
         if (index == commandLength_) {
@@ -739,6 +745,40 @@ private:
         lastTransmitTime_ = CTimer::GetClockTicks64();
         Result("CONNECT");
         return;
+      }
+
+      if (operation == 'S') {
+        unsigned registerNumber = 0;
+        unsigned registerValue = 0;
+        if (index >= commandLength_ || command_[index] < '0' ||
+            command_[index] > '9') {
+          Result("ERROR");
+          return;
+        }
+        while (index < commandLength_ && command_[index] >= '0' &&
+               command_[index] <= '9') {
+          registerNumber = registerNumber * 10 +
+                           static_cast<unsigned>(command_[index++] - '0');
+        }
+        if (index >= commandLength_ || command_[index++] != '=' ||
+            index >= commandLength_ || command_[index] < '0' ||
+            command_[index] > '9') {
+          Result("ERROR");
+          return;
+        }
+        while (index < commandLength_ && command_[index] >= '0' &&
+               command_[index] <= '9') {
+          registerValue = registerValue * 10 +
+                          static_cast<unsigned>(command_[index++] - '0');
+        }
+        if (registerNumber != 7 && registerNumber != 11) {
+          Result("ERROR");
+          return;
+        }
+        // S7 is a dial wait time and S11 is a dial-tone duration. Neither
+        // applies to BMC64's direct TCP connection backend.
+        (void)registerValue;
+        continue;
       }
 
       if (index >= commandLength_ || command_[index] < '0' ||

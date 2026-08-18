@@ -2,6 +2,7 @@
 
 #ifdef HAVE_RS232BMC
 
+#include "machine.h"
 #include "rs232bmc.h"
 #include "rs232.h"
 
@@ -44,10 +45,15 @@ int rs232bmc_set_status(int fd, enum rs232handshake_out status)
 
 enum rs232handshake_in rs232bmc_get_status(int fd)
 {
+    int carrier = bmcmodem_has_carrier();
+    enum rs232handshake_in status =
+        ((carrier || machine_class == VICE_MACHINE_C128) ? RS232_HSI_CTS : 0)
+        | ((carrier || machine_class == VICE_MACHINE_C128) ? RS232_HSI_DSR : 0);
+
     (void) fd;
-    /* aciacore maps CTS to active-low DCD for this virtual TCP modem. Report
-       both lines only while the socket (or queued final response) has carrier. */
-    return bmcmodem_has_carrier() ? (RS232_HSI_CTS | RS232_HSI_DSR) : 0;
+    /* C128 terminals require CTS and DSR before issuing initial commands.
+       Keep C64 status tied to carrier for its networking disconnect handling. */
+    return status;
 }
 
 void rs232bmc_set_bps(int fd, unsigned int bps)

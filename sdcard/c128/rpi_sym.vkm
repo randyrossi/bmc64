@@ -199,5 +199,5 @@ Right 0 2 8          /*         Right -> Right       */
 PageUp -3 0
 
 End 8 0 8 /* HELP key -> End */
-
+F9  9 0 8 /* ESC -> F9 */
 F11 -4 0 /* 40/80 Columns */
