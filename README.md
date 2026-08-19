@@ -4,6 +4,12 @@ BMC64 is a bare metal C64 emulator for the Raspberry Pi Zero/2/3 models with tru
 
 **NOTE:** Since V3.0, all machines are all bundled into one release for all Pi models. You can switch from the 'Machine' menu.
 
+## Community
+
+Join the official **BMC64 Discord community** to discuss BMC64 and the Commodore 64, get support, share your setup, follow development, and connect with other users.
+
+[![Discord](https://img.shields.io/badge/Discord-Join%20the%20BMC64%20Community-5865F2?logo=discord&logoColor=white)](https://discord.gg/yXU6huQymG)
+
 # BMC64 Features
   * Quick boot time (C64 in 4.1 seconds over composite!)
   * Frames are timed to vsync for true 50/60 hz smooth scrolling (no horizontal tearing!)
@@ -65,6 +71,10 @@ See [INSTALLATION.md](https://github.com/randyrossi/bmc64/blob/master/INSTALLATI
 # Github Link
 
   * https://github.com/randyrossi/bmc64
+
+## Contribution
+
+See [CONTRIBUTING.md](https://github.com/randyrossi/bmc64/blob/master/CONTRIBUTING.md) information
 
 # Machine Selection
 
@@ -910,4 +920,6 @@ Q. What do I put on the SDcard?
 
 Refer to [BUILDING.md](https://github.com/randyrossi/bmc64/blob/master/BUILDING.md) for instructions.
 
-# Performance numbers can be found at https://accentual.com/bmc64
+# Performance 
+
+Performance numbers can be found at https://accentual.com/bmc64
