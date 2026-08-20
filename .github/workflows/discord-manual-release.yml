@@ -1,0 +1,127 @@
+name: Manually announce release on Discord
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release tag to announce (for example: v5.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  discord:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Post release to Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.parse
+          import urllib.request
+
+          tag = os.environ["RELEASE_TAG"]
+          repository = os.environ["GITHUB_REPOSITORY"]
+          token = os.environ["GITHUB_TOKEN"]
+
+          # Fetch the existing published release by tag.
+          encoded_tag = urllib.parse.quote(tag, safe="")
+          api_url = (
+              f"https://api.github.com/repos/"
+              f"{repository}/releases/tags/{encoded_tag}"
+          )
+
+          req = urllib.request.Request(
+              api_url,
+              headers={
+                  "Accept": "application/vnd.github+json",
+                  "Authorization": f"Bearer {token}",
+                  "User-Agent": "BMC64-GitHub-Actions",
+              },
+          )
+
+          try:
+              with urllib.request.urlopen(req) as response:
+                  release = json.load(response)
+          except urllib.error.HTTPError as e:
+              if e.code == 404:
+                  raise SystemExit(
+                      f"Release with tag '{tag}' was not found."
+                  )
+              raise
+
+          name = release.get("name") or release["tag_name"]
+          tag = release["tag_name"]
+          url = release["html_url"]
+          body = (release.get("body") or "").strip()
+          author = (release.get("author") or {}).get("login", "")
+          prerelease = release.get("prerelease", False)
+
+          if prerelease:
+              title = f"🧪 {name} Pre-release"
+              footer = "BMC64 • GitHub Pre-release"
+          else:
+              title = f"🚀 {name} Released"
+              footer = "BMC64 • GitHub Release"
+
+          # Discord limits embed descriptions to 4096 characters.
+          # Leave some room and direct people to GitHub if necessary.
+          if len(body) > 3500:
+              body = (
+                  body[:3500].rstrip()
+                  + "\n\n…Release notes truncated. See GitHub for the full details."
+              )
+
+          if not body:
+              body = "See GitHub for release details."
+
+          payload = {
+              "username": "BMC64 Releases",
+              "embeds": [
+                  {
+                      "title": title,
+                      "url": url,
+                      "description": body,
+                      "fields": [
+                          {
+                              "name": "Version",
+                              "value": tag,
+                              "inline": True
+                          },
+                          {
+                              "name": "Published by",
+                              "value": author or "BMC64",
+                              "inline": True
+                          }
+                      ],
+                      "footer": {
+                          "text": footer
+                      }
+                  }
+              ]
+          }
+
+          req = urllib.request.Request(
+              os.environ["DISCORD_WEBHOOK"],
+              data=json.dumps(payload).encode("utf-8"),
+              headers={
+                  "Content-Type": "application/json",
+                  "User-Agent": "BMC64-GitHub-Actions"
+              },
+              method="POST"
+          )
+
+          with urllib.request.urlopen(req) as response:
+              print("Discord response:", response.status)
+
+          print(f"Announced release {tag}: {url}")
+          PY
