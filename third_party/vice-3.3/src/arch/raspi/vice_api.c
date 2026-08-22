@@ -675,6 +675,9 @@ void emux_set_joy_port_device(int port_num, int dev_id) {
      case JOYDEV_MOUSE:
         vice_id = JOYPORT_ID_MOUSE_1351;
         break;
+      case JOYDEV_MOUSE_MICROMYS:
+        vice_id = JOYPORT_ID_MOUSE_MICROMYS;
+        break;
      default:
         vice_id = JOYPORT_ID_JOYSTICK;
         break;

@@ -899,19 +899,23 @@ static void ui_set_hotkeys() {
 
 // If any joystick is set to mouse, enable it in the emulator.
 // FCIII apparently doesn't like the mouse enabled unless necessary
+static int is_mouse_device(int device) {
+  return device == JOYDEV_MOUSE || device == JOYDEV_MOUSE_MICROMYS;
+}
+
 static void set_need_mouse() {
    int need_mouse = 0;
    int index;
    // Only ports 1 and 2 can be assigned a mouse.
    if (port_1_menu_item) {
       index = port_1_menu_item->value;
-      if (port_1_menu_item->choice_ints[index] == JOYDEV_MOUSE) {
+    if (is_mouse_device(port_1_menu_item->choice_ints[index])) {
          need_mouse = 1;
       }
    }
    if (port_2_menu_item) {
       index = port_2_menu_item->value;
-      if (port_1_menu_item->choice_ints[index] == JOYDEV_MOUSE) {
+    if (is_mouse_device(port_2_menu_item->choice_ints[index])) {
          need_mouse = 1;
       }
    }
@@ -922,7 +926,7 @@ static void set_need_mouse() {
 // all other ports get the mouse turned off if this port got a mouse.
 static void set_joy_item_to_value(int p, int value) {
     joydevs[p-1].device = value;
-    if (value == JOYDEV_MOUSE) {
+  if (is_mouse_device(value)) {
       // If any other port has mouse, set it to none.
       for (int l = 0; l < MAX_JOY_PORTS; l++) {
          if (l == (p-1)) continue;
@@ -940,7 +944,7 @@ static void set_joy_item_to_value(int p, int value) {
             default:
                assert(0);
          }
-         if (other && other->choice_ints[other->value] == JOYDEV_MOUSE) {
+         if (other && is_mouse_device(other->choice_ints[other->value])) {
            emux_set_joy_port_device(l+1, JOYDEV_NONE);
            other->value = 0;
          }
@@ -1737,12 +1741,12 @@ static void load_settings() {
 // Swap ports 1 & 2
 void menu_swap_joysticks() {
   if (port_1_menu_item && port_1_menu_item->choice_ints[port_1_menu_item->value]
-          == JOYDEV_MOUSE) {
+          && is_mouse_device(port_1_menu_item->choice_ints[port_1_menu_item->value])) {
      emux_set_joy_port_device(1, JOYDEV_NONE);
   }
 
   if (port_2_menu_item && port_2_menu_item->choice_ints[port_2_menu_item->value]
-       == JOYDEV_MOUSE) {
+       && is_mouse_device(port_2_menu_item->choice_ints[port_2_menu_item->value])) {
      emux_set_joy_port_device(2, JOYDEV_NONE);
   }
 
@@ -3472,7 +3476,7 @@ struct menu_item* add_joyport_options(struct menu_item* parent, int port) {
   struct menu_item* child = ui_menu_add_multiple_choice(
       menu_id, parent, "");
   sprintf (child->name, "Port %d", port);
-  child->num_choices = 14;
+  child->num_choices = 15;
   child->value = 0;
   strcpy(child->choices[0], "None");
   child->choice_ints[0] = JOYDEV_NONE;
@@ -3494,17 +3498,20 @@ struct menu_item* add_joyport_options(struct menu_item* parent, int port) {
   child->choice_ints[8] = JOYDEV_CURS_LC;
   strcpy(child->choices[9], "USB Mouse (1351)");
   child->choice_ints[9] = JOYDEV_MOUSE;
-  strcpy(child->choices[10], "Custom Keyset 1");
-  child->choice_ints[10] = JOYDEV_KEYSET1;
-  strcpy(child->choices[11], "Custom Keyset 2");
-  child->choice_ints[11] = JOYDEV_KEYSET2;
-  strcpy(child->choices[12], "USB Gamepad 3");
-  child->choice_ints[12] = JOYDEV_USB_2;
-  strcpy(child->choices[13], "USB Gamepad 4");
-  child->choice_ints[13] = JOYDEV_USB_3;
+  strcpy(child->choices[10], "USB Mouse (MicroMys)");
+  child->choice_ints[10] = JOYDEV_MOUSE_MICROMYS;
+  strcpy(child->choices[11], "Custom Keyset 1");
+  child->choice_ints[11] = JOYDEV_KEYSET1;
+  strcpy(child->choices[12], "Custom Keyset 2");
+  child->choice_ints[12] = JOYDEV_KEYSET2;
+  strcpy(child->choices[13], "USB Gamepad 3");
+  child->choice_ints[13] = JOYDEV_USB_2;
+  strcpy(child->choices[14], "USB Gamepad 4");
+  child->choice_ints[14] = JOYDEV_USB_3;
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU || port > 2) {
      child->choice_disabled[9] = 1;
+     child->choice_disabled[10] = 1;
   }
   return child;
 }

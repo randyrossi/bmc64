@@ -1353,7 +1353,6 @@ void CKernel::MouseStatusHandler(unsigned nButtons, int deltaX, int deltaY,
   for (unsigned i = 0; i < MAX_USB_DEVICES; i++) {
     merged_buttons |= mouse_button_states[i];
   }
-  (void)nWheelMove;
 
   emu_mouse_move(deltaX, deltaY);
 
@@ -1368,6 +1367,20 @@ void CKernel::MouseStatusHandler(unsigned nButtons, int deltaX, int deltaY,
   } else if (!(previous_buttons & MOUSE_BUTTON_RIGHT) &&
              (merged_buttons & MOUSE_BUTTON_RIGHT)) {
     emu_mouse_button_right(1);
+  }
+  if ((previous_buttons & MOUSE_BUTTON_MIDDLE) && !(merged_buttons & MOUSE_BUTTON_MIDDLE)) {
+    emu_mouse_button_middle(0);
+  } else if (!(previous_buttons & MOUSE_BUTTON_MIDDLE) &&
+             (merged_buttons & MOUSE_BUTTON_MIDDLE)) {
+    emu_mouse_button_middle(1);
+  }
+  while (nWheelMove > 0) {
+    emu_mouse_wheel_up(1);
+    nWheelMove--;
+  }
+  while (nWheelMove < 0) {
+    emu_mouse_wheel_down(1);
+    nWheelMove++;
   }
 }
 

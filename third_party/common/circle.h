@@ -194,6 +194,7 @@ int circle_scan_wifi_access_points(struct wifi_access_point *access_points,
 #define JOYDEV_MOUSE 20
 #define JOYDEV_USB_2 21
 #define JOYDEV_USB_3 22
+#define JOYDEV_MOUSE_MICROMYS 23
 
 #define GPIO_CONFIG_DISABLED -1
 #define GPIO_CONFIG_NAV_JOY 0
