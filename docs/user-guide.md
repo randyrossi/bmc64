@@ -10,13 +10,7 @@ This guide covers installing, configuring, and using BMC64, including machine se
   - [Contents](#contents)
 - [BMC64 Features](#bmc64-features)
 - [Limitations](#limitations)
-- [Precompiled Images](#precompiled-images)
-  - [Releases](#releases)
-  - [Pre-releases](#pre-releases)
-  - [Older release (pre v5.0.0)](#older-release-pre-v500)
 - [Installation](#installation)
-- [Github Link](#github-link)
-  - [Contribution](#contribution)
 - [Machine Selection](#machine-selection)
 - [Video \& Timing](#video--timing)
   - [machines.txt](#machinestxt)
@@ -99,38 +93,9 @@ This project uses VICE for emulation without any O/S (Linux) distribution instal
 
 For Plus/4 emulation on the Rasbperry Pi 3, a more accurate emulator using Plus4Emu is also available.
 
-# Precompiled Images
-
-## Releases
-
-  Releases from v5.0 onwards are released on GitHub: 
-  
-  * [latest release](https://github.com/randyrossi/bmc64/releases/latest)
-  * [all releases](https://github.com/randyrossi/bmc64/releases)
-
-## Pre-releases
-
-  Pre-releases will be made between the regular releases for quick release testing or releasing work in progress. These releases are not as well tested and may contain bugs so use with care.
-
-  Pre-release builds are [here](https://github.com/randyrossi/bmc64/releases?q=prerelease%3Atrue&expanded=true)
-
-## Older release (pre v5.0.0)
-
-  Older releases can be found here:
-
-  * https://accentual.com/bmc64
-
 # Installation
 
 See [INSTALLATION.md](INSTALLATION.md) for SD-card preparation, required ROM files, and the expected directory layout.
-
-# Github Link
-
-  * https://github.com/randyrossi/bmc64
-
-## Contribution
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) information
 
 # Machine Selection
 
