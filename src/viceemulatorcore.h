@@ -22,7 +22,7 @@
 #include "emulatorcore.h"
 
 extern "C" {
-#include "third_party/common/circle.h"
+#include "../third_party/common/circle.h"
 }
 
 class ViceEmulatorCore

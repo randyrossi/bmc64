@@ -2,7 +2,7 @@
 #define BMC64_CIRCLE_GLUE_WRAPPER_H
 
 #include <circle/serial.h>
-#include "third_party/circle-stdlib/include/circle_glue.h"
+#include "../third_party/circle-stdlib/include/circle_glue.h"
 
 #define MAX_BOOTSTAT_LINES 32
 #define MAX_BOOTSTAT_FLEN 64

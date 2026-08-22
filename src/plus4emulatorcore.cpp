@@ -20,10 +20,10 @@
 #include <string.h>
 
 extern "C" {
-#include "third_party/plus4emu/main.h"
+#include "../third_party/plus4emu/main.h"
 }
 
-#include "third_party/plus4emu/resid/filter.hpp"
+#include "../third_party/plus4emu/resid/filter.hpp"
 
 Plus4EmulatorCore::Plus4EmulatorCore(CMemorySystem *pMemorySystem,
                                      int cyclesPerSecond) :

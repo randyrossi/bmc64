@@ -15,7 +15,7 @@
 #include "viceapp.h"
 #include "vice_network.h"
 #include "network_time_sync.h"
-#include "third_party/common/circle.h"
+#include "../third_party/common/circle.h"
 #include "fbl.h"
 
 #include <stddef.h>
@@ -215,7 +215,7 @@ static unsigned int CollectWifiScanResults(
 
 #if defined(RASPI_C64) || defined(RASPI_C128)
 extern "C" {
-#include "third_party/vice-3.3/src/resources.h"
+#include "../third_party/vice-3.3/src/resources.h"
 }
 
 extern "C" int circle_get_acia_network_enabled(void) {

@@ -25,7 +25,7 @@
 #include <circle/usb/usbdevice.h>
 
 extern "C" {
-#include "third_party/common/usb_gamepad_defaults.h"
+#include "../third_party/common/usb_gamepad_defaults.h"
 }
 
 CKernel *static_kernel = NULL;

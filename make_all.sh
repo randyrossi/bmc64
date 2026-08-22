@@ -116,13 +116,13 @@ else
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle-newlib
 git reset --hard HEAD
 git clean -fd
-apply_patch_file "$SRC_DIR/circle_newlib_patch.diff"
+apply_patch_file "$SRC_DIR/src/patches/circle_newlib_patch.diff"
 
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle
 git reset --hard HEAD
 git clean -fd
 
-circle_patch_file="$SRC_DIR/circle_patch.diff"
+circle_patch_file="$SRC_DIR/src/patches/circle_patch.diff"
 if [ "$BOARD" = "pi0" ]
 then
        apply_patch_file "$circle_patch_file" 's@+#define ARM_ALLOW_MULTI_CORE@+//#define ARM_ALLOW_MULTI_CORE@'
@@ -130,15 +130,15 @@ else
        apply_patch_file "$circle_patch_file"
 fi
 
-apply_patch_file "$SRC_DIR/circle_8bitdo_keyboard_patch.diff"
-apply_patch_file "$SRC_DIR/circle_8bitdo_gamepad_patch.diff"
-apply_patch_file "$SRC_DIR/circle_usb_descriptor_patch.diff"
-apply_patch_file "$SRC_DIR/circle_xbox360_gamepad_patch.diff"
-apply_patch_file "$SRC_DIR/circle_tcpconnection_patch.diff"
-apply_patch_file "$SRC_DIR/circle_ethernet_patch.diff"
+apply_patch_file "$SRC_DIR/src/patches/circle_8bitdo_keyboard_patch.diff"
+apply_patch_file "$SRC_DIR/src/patches/circle_8bitdo_gamepad_patch.diff"
+apply_patch_file "$SRC_DIR/src/patches/circle_usb_descriptor_patch.diff"
+apply_patch_file "$SRC_DIR/src/patches/circle_xbox360_gamepad_patch.diff"
+apply_patch_file "$SRC_DIR/src/patches/circle_tcpconnection_patch.diff"
+apply_patch_file "$SRC_DIR/src/patches/circle_ethernet_patch.diff"
 if [ "$KASAN" = "1" ]
 then
-       apply_patch_file "$SRC_DIR/circle_kasan_patch.diff"
+       apply_patch_file "$SRC_DIR/src/patches/circle_kasan_patch.diff"
 fi
 fi
 
@@ -157,15 +157,15 @@ fi
 
 if [ "$BOARD" = "pi2" ]
 then
-#cat ../../circle_stdlib_patch.diff  | sed 's/-std=c++14//' | patch -p1
+#cat ../../src/patches/circle_stdlib_patch.diff  | sed 's/-std=c++14//' | patch -p1
 ./configure --raspberrypi=2 "${CIRCLE_CONFIGURE_ARGS[@]}"
 elif [ "$BOARD" = "pi0" ]
 then
-#cat ../../circle_stdlib_patch.diff | patch -p1
+#cat ../../src/patches/circle_stdlib_patch.diff | patch -p1
 ./configure --raspberrypi=1 "${CIRCLE_CONFIGURE_ARGS[@]}"
 elif [ "$BOARD" = "pi3" ]
 then
-#cat ../../circle_stdlib_patch.diff  | patch -p1
+#cat ../../src/patches/circle_stdlib_patch.diff  | patch -p1
 ./configure --raspberrypi=3 "${CIRCLE_CONFIGURE_ARGS[@]}"
 elif [ "$BOARD" = "pi4" ]
 then

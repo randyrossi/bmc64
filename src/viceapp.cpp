@@ -16,7 +16,7 @@
 #include "viceapp.h"
 #include "vice_network.h"
 #include "network_time_sync.h"
-#include "third_party/common/circle.h"
+#include "../third_party/common/circle.h"
 #include "fbl.h"
 
 static const unsigned int WIFI_SCAN_DURATION_US = 4000000;

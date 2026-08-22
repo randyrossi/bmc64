@@ -1,5 +1,5 @@
 extern "C" {
-    #include "third_party/vice-3.3/src/rs232drv/rs232bmc.h"
+    #include "../third_party/vice-3.3/src/rs232drv/rs232bmc.h"
 }
 
 #include <string.h>

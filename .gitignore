@@ -40,3 +40,6 @@ third_party/**/*.o
 # Python build outputs from tooling
 *.pyc
 *.pyo
+
+# Local IDE settings
+.vscode/settings.json
