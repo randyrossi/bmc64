@@ -41,6 +41,7 @@ This guide covers installing, configuring, and using BMC64, including machine se
   - [Keyboards](#keyboards)
     - [Plus/4 Keyboard Notes](#plus4-keyboard-notes)
     - [C128 Keyboard Notes](#c128-keyboard-notes)
+  - [Mice](#mice)
   - [Gamepads](#gamepads)
     - [Gamepad config](#gamepad-config)
   - [Menu Navigation](#menu-navigation)
@@ -455,6 +456,11 @@ C64OS will work with BMC64 from 4.1 onward but only with JiffyDOS kernal replace
 
 From BMC64 5.0.0 onwards C64OS is supported with networking! Follow the [NETWORKING.md](NETWORKING.md) readme or this [post](https://retro.minch.io/2026/09/c64-os-on-bmc64-with-networking/) has a step by step to get going.
 
+For mouse-wheel scrolling in C64OS, assign **USB Mouse (MicroMys)** to the
+appropriate port in the Joyports menu. The 1351 mouse protocol does not expose
+the middle button or scroll wheel.
+
+
 Please consult the [official C64OS website](https://c64os.com/) for more information.
 
 # Sound
@@ -518,6 +524,23 @@ If you use a real C64 keyboard via GPIO Config #2, please be aware that BMPLUS4 
 
 F11 is the 40/80 Column Key for C128
 
+## Mice
+
+BMC64 supports USB mice through the Joyports menu. Assign the mouse to the
+desired emulated control port, then select the matching mouse protocol:
+
+* **USB Mouse (1351)** provides analog movement with left and right buttons.
+  Use it for software designed for the Commodore 1351 mouse.
+* **USB Mouse (MicroMys)** provides the same analog movement and left/right
+  buttons, plus the middle button and vertical scroll wheel. Use it only with
+  software that supports the MicroMys protocol.
+
+When using C64OS, select **USB Mouse (MicroMys)** to use the host mouse wheel
+for scrolling.
+
+Only one USB mouse mode can be assigned at a time. The first detected USB mouse
+is used; additional USB mice are combined as a single input device.
+
 ## Gamepads
 
 BMC64 has support for USB connected gamepads, this includes wired, and gamepads with wireless USB dongles. Direct connection of bluetooth gamepads is **not supported** directly, but many can be connected via the 8BitDo USB Wireless Adapter 2.
@@ -562,7 +585,8 @@ USB Gamepad 3 | Third USB gamepad detected
 USB Gamepad 4 | Fourth USB gamepad detected
 GPIO Bank 1 | GPIO Pins as described below (GPIO Config dependent)
 GPIO Bank 2 | GPIO Pins as described below (GPIO Config dependent)
-1351 Mouse | First USB mouse detected
+USB Mouse (1351) | First USB mouse; analog movement and left/right buttons
+USB Mouse (MicroMys) | First USB mouse; adds middle button and vertical scroll wheel for MicroMys-aware software
 Keyrah Keys 1 | Numeric keypad keys 64825 compatible with Keyrah
 Keyrah Keys 2 | Numeric keypad keys 17930 compatible with Keyrah
 Cursor + Space | Cursor keys for directions, space for fire
