@@ -22,15 +22,15 @@
 #include "defs.h"
 
 extern "C" {
-#include "third_party/vice-3.3/src/main.h"
-#include "third_party/common/semaphore.h"
+#include "../third_party/vice-3.3/src/main.h"
+#include "../third_party/common/semaphore.h"
 
 extern void circle_kernel_core_init_complete(int core);
 }
 
-#include "third_party/vice-3.3/src/sid/sid.h"
-#include "third_party/vice-3.3/src/resid/sid.h"
-#include "third_party/vice-3.3/src/resid/filter.h"
+#include "../third_party/vice-3.3/src/sid/sid.h"
+#include "../third_party/vice-3.3/src/resid/sid.h"
+#include "../third_party/vice-3.3/src/resid/filter.h"
 
 ViceEmulatorCore::ViceEmulatorCore(CMemorySystem *pMemorySystem,
                                    int cyclesPerSecond) :

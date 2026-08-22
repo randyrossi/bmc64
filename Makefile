@@ -4,6 +4,7 @@
 
 CIRCLEHOME = third_party/circle-stdlib/libs/circle
 NEWLIBDIR = third_party/circle-stdlib/install/arm-none-circle
+VPATH = src
 
 APP_INCLUDES = -I"$(NEWLIBDIR)/include" -I$(STDDEF_INCPATH) \
 	      -Ithird_party/circle-stdlib/include \

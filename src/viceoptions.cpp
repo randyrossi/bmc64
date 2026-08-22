@@ -24,7 +24,7 @@
 #include <circle/util.h>
 
 extern "C" {
-#include "third_party/common/circle.h"
+#include "../third_party/common/circle.h"
 }
 
 #define INVALID_VALUE ((unsigned)-1)

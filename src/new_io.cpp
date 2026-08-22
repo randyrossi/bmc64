@@ -4,13 +4,13 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
-#include "third_party/circle-stdlib/include/wrap_fatfs.h"
+#include "../third_party/circle-stdlib/include/wrap_fatfs.h"
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #undef errno
 extern int errno;
-#include "third_party/circle-stdlib/libs/circle-newlib/libgloss/circle/warning.h"
+#include "../third_party/circle-stdlib/libs/circle-newlib/libgloss/circle/warning.h"
 
 #include "circle_glue.h"
 #include <assert.h>
