@@ -1,3 +1,7 @@
+## 5.0.3 pre-release
+  * Standardise repository layout, move docs to docs, and source code to src
+  * Add support for USB mouse as Micromys. Brings scrolling to C64 OS.
+
 ## 5.0.2 pre-release
   * Fix for networking in C128 mode #320
   * Add mapping for F9 to Esc in C128 symbolic keymap
