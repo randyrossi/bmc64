@@ -42,7 +42,7 @@ For Plus/4 emulation on the Rasbperry Pi 3, a more accurate emulator using Plus4
 
 ---
 
-- [Changelog](docs/CHANGELOG.md)
+- [Changelog](CHANGELOG.md)
 
 ## Community
 

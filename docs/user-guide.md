@@ -798,7 +798,7 @@ IMPORTANT : BMC64 v1.0.6 through v1.4 were not properly putting the other 3 (unu
 
 # Changelog
 
-  * [CHANGELOG.md](CHANGELOG.md)
+  * [CHANGELOG.md](../CHANGELOG.md)
 
 # FAQ
 

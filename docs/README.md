@@ -20,7 +20,7 @@
 - [Building](BUILDING.md)
 - [Testing](TESTING.md)
 - [Known Bugs](KNOWN_BUGS.md)
-- [Changelog](CHANGELOG.md)
+- [Changelog](../CHANGELOG.md)
 - [Contributing](CONTRIBUTING.md)
 
 ## Archive
