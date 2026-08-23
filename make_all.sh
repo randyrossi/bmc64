@@ -454,6 +454,9 @@ then
        exit 1
 fi
 
+git restore --source=HEAD -- doc/vice.pdf ':(glob)doc/html/vice_*.html' \
+       src/monitor/mon_parse.c src/monitor/mon_parse.h
+
 echo ==============================================================
 echo Link errors above are expected
 echo ==============================================================
