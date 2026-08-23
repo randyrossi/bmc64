@@ -1,15 +1,15 @@
 # BMC64 Networking
 
 This document describes the networking support currently implemented in BMC64.
-It applies to the C64 build and to the C128 build, although the C128 path is
-marked as untested in the changelog.
+Networks is available for C64 and C128 machines. C64 has been tested with BBS
+access and C64 OS network enabled applications and C128 has been tested with BBS.
 
 ## What It Does
 
 BMC64 runs without Linux. The Raspberry Pi networking stack is initialized at
 startup and is used by a software modem connected to VICE's ACIA1 interface.
-The emulated C64 program sees a SwiftLink/Turbo232-compatible ACIA at `$DE00`
-by default. The BMC modem translates modem commands into outbound TCP
+The emulated C64 or C128 program sees a SwiftLink/Turbo232-compatible ACIA at
+`$DE00` by default. The BMC modem translates modem commands into outbound TCP
 connections.
 
 Current behavior:
@@ -112,7 +112,8 @@ network={
 }
 ```
 
-After changing the file, reboot BMC64. You will need to select Wifi as the Network Device (and then reboot when prompted) if Wifi was not already selected.
+After changing the file, reboot BMC64. If Wi-Fi was not already selected, set
+`Network Device` to `WiFi` and reboot when prompted.
 
 ## BMC Modem Commands
 
@@ -160,6 +161,8 @@ the same value. `38400` has been validated with CNP transfers.
 
 ## Using a BBS
 
+### C64
+
 [CCGMS Ultimate on CSDb](https://csdb.dk/release/?id=174485) is a C64 BBS
 terminal program released by Alwyz in 2019. Transfer its disk image or program
 to the BMC64 SD card and load it on the C64 using the normal BMC64 disk or
@@ -169,7 +172,7 @@ The current BMC64 changelog specifically calls out this setup:
 
 1. Enable Ethernet or Wi-Fi and reboot BMC64.
 2. Start CCGMS Ultimate.
-3. In CCGMS, select the `Swift/DE` or appropriate modem. 
+3. In CCGMS, select the `Swift/DE` or appropriate modem.
    * `D7`, `DE` or `DF` should match the Modem address selected.
 4. Use CCGMS's autodialer/connection screen with the BBS hostname or IP address
    and TCP port.
@@ -183,25 +186,59 @@ hostname and an IPv4 address, so either form can be entered in CCGMS.
 
 For further details on CCGMS Ultimate refer to the CSDb release page.
 
+### C128
+
+[DesTerm 128 V3.02 on CSDb](https://csdb.dk/release/?id=171068&show=summary)
+has been tested with the BMC64 modem in C128 mode. Transfer the DesTerm program
+or disk image to the C128 directory on the BMC64 SD card, then load it using
+the normal BMC64 disk or Autostart workflow.
+
+**Note:** DesTerm 128 uses the C128 80-column display.
+
+1. Enable Ethernet or Wi-Fi in BMC64 and reboot it if prompted.
+2. In BMC64's `Network` menu, note the selected `Modem Address`. `$DE00` is
+  the default.
+3. DesTerm should automatically detect the modem and address.
+4. Use DesTerm's dialer to enter the BBS hostname or IPv4 address and its TCP
+  port. Alternatively, enter a dial command in the terminal, for example:
+
+  ```text
+  ATDTbbs.example.org:23
+  ```
+
+5. Wait for `CONNECT`, then log in to the BBS.
+6. Select the character set supported by the BBS if prompted. `DOS CP 437`
+  worked well with the tested BBS.
+7. Use the port published by the BBS operator when it differs from the default
+  Telnet port `23`.
+
+To disconnect from a terminal session, wait at least one second, enter `+++`,
+wait at least one second for `OK`, then enter `ATH`.
+
+**Note:** DesTerm 128 does not use PETSCII. Choose a character set supported
+by the BBS.
+
 ## Using C64 OS Networking
 
-C64 OS provides SwiftLink drivers for the different Modem addresses that can be set in the BMC64 Networking options.
+C64 OS provides SwiftLink drivers for the modem addresses configured in the
+BMC64 `Network` menu.
 
-Modem address `$D700` with the `sld7.zi` driver is recommended when using a IDE64 C64 OS image with
-an REU enabled, to avoid address collisions
+Modem address `$D700` with the `sld7.zi` driver is recommended when using an
+IDE64 C64 OS image with an REU enabled to avoid address collisions.
 
-Modem address `$DE00` with the `slde.zi` driver is recommended when using a CMD-HD C64 OS image with
-an REU enabled, to avoid address collisions
+Modem address `$DE00` with the `slde.zi` driver is recommended when using a
+CMD-HD C64 OS image with an REU enabled to avoid address collisions.
 
 The driver sends a ZiModem-compatible initialization command, uses `ATW` and `ATI3` to identify the host connection, and dials the CNP service using a quoted `ATD` target.
 
-Networking in C64 OS uses C64 Network Protocol (CNP) and you need to connect to a CNP server and have an account on it. For full information on C64 OS Networking read the [C64 OS Networking Guide](https://c64os.com/c64os/networkingguide/).
+Networking in C64 OS uses C64 Network Protocol (CNP), which requires a CNP
+server account. For full information, read the [C64 OS Networking Guide](https://c64os.com/c64os/networkingguide/).
 
 Quick start for BMC64:
 
 1. Configure Ethernet or Wi-Fi in BMC64 and confirm that `Network Status` shows as
   connected. 
-    * Note: The C64 OS Wi-Fi fields do not configure the Raspberry Pi WiFi.
+    * Note: The C64 OS Wi-Fi fields do not configure the Raspberry Pi Wi-Fi.
 1. In C64 OS, open `Settings`, then `Network`. On the `Drvr` tab, select the
   driver matching BMC64's `Modem Address`: `sld7.zi` for `$D700`, `slde.zi`
   for `$DE00`, or `sldf.zi` for `$DF00`.
@@ -218,12 +255,12 @@ Quick start for BMC64:
   BMC64 closes the TCP connection when the driver lowers DTR. A remote CNP
   disconnect produces the same state transition through the SwiftLink NMI.
 
-## Testing or Debugging 
+## Testing and Debugging
 
 ### Modem Transport Probe
 
 Before troubleshooting a live BBS, the repository includes a TCP transport
-probe. This was original used to solve TCP stalling issues.
+probe. It was originally used to diagnose TCP stalling issues.
 
 Run it on another computer on the same LAN as BMC64:
 
@@ -258,7 +295,7 @@ probe output and the interpretation of `unacked` and `retrans` counters.
 
 ### Modem Command Probe
 
-This probe was use for testing the connection to a CNP server from within C64 OS.
+This probe is used to test the connection to a CNP server from within C64 OS.
 
 Run it on another computer on the same LAN as BMC64:
 
