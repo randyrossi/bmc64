@@ -41,6 +41,10 @@ $(FILTERED_CIRCLE_NEWLIB): $(NEWLIBDIR)/lib/libcirclenewlib.a
 
 EXTRACLEAN += $(FILTERED_CIRCLE_NEWLIB)
 EXTRACLEAN += $(OBJS) $(DEPS)
+# make_machines.sh invokes an unqualified "make clean", for which
+# MACHINE_CLASS is unset. Remove both mutually exclusive core objects so a
+# previous machine build cannot link against a differently configured Circle.
+EXTRACLEAN += src/plus4emulatorcore.o src/viceemulatorcore.o
 
 $(TARGET).img: $(FILTERED_CIRCLE_NEWLIB)
 
