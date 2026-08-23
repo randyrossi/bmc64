@@ -19,13 +19,13 @@ endif
 
 EXTRAINCLUDE += $(APP_INCLUDES)
 
-OBJS	= main.o kernel.o new_io.o vicesound.o vicesoundbasedevice.o bmcmodem.o \
-		  viceoptions.o viceapp.o vice_network.o network_time_sync.o fbl.o crt_pi_idx.o crt_pi_rgb.o
+OBJS	= src/main.o src/kernel.o src/new_io.o src/vicesound.o src/vicesoundbasedevice.o src/bmcmodem.o \
+		  src/viceoptions.o src/viceapp.o src/vice_network.o src/network_time_sync.o src/fbl.o src/crt_pi_idx.o src/crt_pi_rgb.o
 
 ifeq ($(MACHINE_CLASS),RASPI_PLUS4EMU)
-OBJS	+= plus4emulatorcore.o
+OBJS	+= src/plus4emulatorcore.o
 else
-OBJS	+= viceemulatorcore.o
+OBJS	+= src/viceemulatorcore.o
 endif
 
 include $(CIRCLEHOME)/Rules.mk
@@ -40,6 +40,7 @@ $(FILTERED_CIRCLE_NEWLIB): $(NEWLIBDIR)/lib/libcirclenewlib.a
 	@$(AR) d $@ io.o
 
 EXTRACLEAN += $(FILTERED_CIRCLE_NEWLIB)
+EXTRACLEAN += $(OBJS) $(DEPS)
 
 $(TARGET).img: $(FILTERED_CIRCLE_NEWLIB)
 
@@ -65,4 +66,3 @@ LIBS := $(VICELIBS) \
 	$(CIRCLEHOME)/lib/sound/libsound.a \
   	$(CIRCLEHOME)/lib/sched/libsched.a \
   	$(CIRCLEHOME)/lib/libcircle.a
-
