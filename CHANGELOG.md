@@ -1,3 +1,6 @@
+## 5.0.4 pre-release
+  * Refactor networking support and decouple ACIA from BMC modem backend
+
 ## 5.0.3 pre-release
   * Standardise repository layout, move docs to docs, and source code to src
   * Add support for USB mouse as Micromys. Brings scrolling to C64 OS.
