@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+unsigned int rs232bmc_get_acia_capabilities(int device);
+void rs232bmc_note_acia_data_write(int device, uint8_t byte);
+
 void bmcmodem_init(void);
 void bmcmodem_reset(void);
 int bmcmodem_open(int device);

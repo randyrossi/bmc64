@@ -50,6 +50,48 @@ enum rs232handshake_in {
     RS232_HSI_DSR = 0x02
 };
 
+/*
+ * Optional ACIA integration requirements of an RS-232 backend.  The ACIA
+ * core remains backend-neutral; a backend returns these bits only when its
+ * transport or supported software needs behavior beyond normal RS-232 I/O.
+ */
+enum rs232_acia_capability {
+    /*
+     * Keep CTS and DSR asserted before a carrier is established.  Some
+     * terminal software, including DesTerm 128, waits for ready lines before
+     * sending its modem initialization sequence.
+     */
+    RS232_ACIA_ASSERT_READY_WHEN_DISCONNECTED = 1 << 0,
+    /*
+     * Open the transport when the ACIA is reset.  C64 OS expects its
+     * SwiftLink modem to be available immediately after reset.
+     */
+    RS232_ACIA_OPEN_ON_RESET = 1 << 1,
+    /*
+     * Use the 2400-baud control register value after reset, matching the
+     * initial SwiftLink state expected by C64 OS.
+     */
+    RS232_ACIA_SET_2400_ON_RESET = 1 << 2,
+    /*
+     * Prevent C64 OS command-register initialization from dropping DTR and
+     * unintentionally hanging up an already open virtual modem transport.
+     */
+    RS232_ACIA_KEEP_DTR_ASSERTED = 1 << 3,
+    /*
+     * Match configured receive timing without the normal 5/4 stretch when
+     * the backend's transport requires byte pacing consistent with the ACIA.
+     */
+    RS232_ACIA_EXACT_RX_TIMING = 1 << 4,
+    /*
+     * Convert a transport carrier change into normal ACIA DCD/interrupt
+     * handling so software sees remote disconnects as a modem event.
+     */
+    RS232_ACIA_NOTIFY_CARRIER_CHANGE = 1 << 5
+};
+
+extern unsigned int rs232drv_get_acia_capabilities(int device);
+extern void rs232drv_note_acia_data_write(int device, uint8_t byte);
+
 /* write the output handshake lines */
 extern int rs232drv_set_status(int fd, enum rs232handshake_out status);
 

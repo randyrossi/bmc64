@@ -324,4 +324,24 @@ void rs232_set_bps(int fd, unsigned int bps)
 #endif
     }
 }
+
+unsigned int rs232_get_acia_capabilities(int device)
+{
+#ifdef HAVE_RS232BMC
+    return rs232bmc_get_acia_capabilities(device);
+#else
+    (void) device;
+    return 0;
+#endif
+}
+
+void rs232_note_acia_data_write(int device, uint8_t byte)
+{
+#ifdef HAVE_RS232BMC
+    rs232bmc_note_acia_data_write(device, byte);
+#else
+    (void) device;
+    (void) byte;
+#endif
+}
 #endif

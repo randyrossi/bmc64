@@ -6,6 +6,35 @@
 #include "rs232bmc.h"
 #include "rs232.h"
 
+unsigned int rs232bmc_get_acia_capabilities(int device)
+{
+    (void) device;
+
+    /* Add the ACIA behavior each machine's modem software needs beyond
+       normal RS-232 transport handling. See rs232_acia_capability enum in
+       rs232drv.h for more details */
+    switch (machine_class) {
+        case VICE_MACHINE_C64:
+            return RS232_ACIA_OPEN_ON_RESET
+                 | RS232_ACIA_SET_2400_ON_RESET
+                 | RS232_ACIA_KEEP_DTR_ASSERTED
+                 | RS232_ACIA_EXACT_RX_TIMING
+                 | RS232_ACIA_NOTIFY_CARRIER_CHANGE;
+        case VICE_MACHINE_C128:
+            return RS232_ACIA_ASSERT_READY_WHEN_DISCONNECTED
+                 | RS232_ACIA_EXACT_RX_TIMING
+                 | RS232_ACIA_NOTIFY_CARRIER_CHANGE;
+        default:
+            return 0;
+    }
+}
+
+void rs232bmc_note_acia_data_write(int device, uint8_t byte)
+{
+    (void) device;
+    bmcmodem_note_acia_tx(byte);
+}
+
 void rs232bmc_init(void)
 {
     bmcmodem_init();
@@ -46,13 +75,12 @@ int rs232bmc_set_status(int fd, enum rs232handshake_out status)
 enum rs232handshake_in rs232bmc_get_status(int fd)
 {
     int carrier = bmcmodem_has_carrier();
+    int ready = carrier || (rs232bmc_get_acia_capabilities(fd)
+                            & RS232_ACIA_ASSERT_READY_WHEN_DISCONNECTED);
     enum rs232handshake_in status =
-        ((carrier || machine_class == VICE_MACHINE_C128) ? RS232_HSI_CTS : 0)
-        | ((carrier || machine_class == VICE_MACHINE_C128) ? RS232_HSI_DSR : 0);
+        (ready ? RS232_HSI_CTS : 0) | (ready ? RS232_HSI_DSR : 0);
 
     (void) fd;
-    /* C128 terminals require CTS and DSR before issuing initial commands.
-       Keep C64 status tied to carrier for its networking disconnect handling. */
     return status;
 }
 

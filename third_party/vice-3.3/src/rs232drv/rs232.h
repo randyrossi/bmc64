@@ -70,6 +70,9 @@ extern enum rs232handshake_in rs232_get_status(int fd);
 /* set the bps rate of the physical device */
 extern void rs232_set_bps(int fd, unsigned int bps);
 
+extern unsigned int rs232_get_acia_capabilities(int device);
+extern void rs232_note_acia_data_write(int device, uint8_t byte);
+
 extern int rs232_resources_init(void);
 extern void rs232_resources_shutdown(void);
 extern int rs232_cmdline_options_init(void);

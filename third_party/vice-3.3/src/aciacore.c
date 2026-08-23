@@ -41,9 +41,6 @@
 #include "machine.h"
 #include "resources.h"
 #include "rs232drv.h"
-#ifdef HAVE_RS232BMC
-#include "rs232drv/rs232bmc.h"
-#endif
 #include "snapshot.h"
 #include "types.h"
 
@@ -425,13 +422,8 @@ static void set_acia_ticks(void)
      * appropriately. This gives the main program 50 extra cycles.
      * This way, NovaTerm can cope with the transmission at 57600 bps.
      */
-#ifdef HAVE_RS232BMC
-    /* The NovaTerm margin is useful for host serial backends, but slows the
-       TCP modem below its configured SwiftLink rate and stalls CNP transfers. */
-    acia.ticks_rx = acia.ticks;
-#else
-    acia.ticks_rx = acia.ticks * 5 / 4;
-#endif
+    acia.ticks_rx = (rs232drv_get_acia_capabilities(acia.device)
+        & RS232_ACIA_EXACT_RX_TIMING) ? acia.ticks : acia.ticks * 5 / 4;
 
     /* adjust the alarm rate for reception */
     if (acia.alarm_active_rx) {
@@ -645,6 +637,9 @@ void myacia_init(void)
 /*! \brief reset the ACIA */
 void myacia_reset(void)
 {
+    unsigned int acia_capabilities =
+        rs232drv_get_acia_capabilities(acia.device);
+
     DEBUG_LOG_MESSAGE((acia.log, "reset_myacia"));
 
     acia.rs232_status_lines = 0;
@@ -676,11 +671,12 @@ void myacia_reset(void)
     acia_set_int(acia.irq_type, acia.int_num, IK_NONE);
     acia.irq = 0;
 
-#ifdef HAVE_RS232BMC
-    if (machine_class == VICE_MACHINE_C64) {
+    if (acia_capabilities & RS232_ACIA_SET_2400_ON_RESET) {
         /* Start the native SwiftLink at 2400 bps instead of external-clock mode.
            C64 OS expects an immediately usable modem after reset. */
         acia.ctrl = ACIA_CTRL_BITS_BPS_1200;
+    }
+    if (acia_capabilities & RS232_ACIA_OPEN_ON_RESET) {
         acia.cmd |= ACIA_CMD_BITS_DTR_ENABLE_RECV_AND_IRQ;
         acia.fd = rs232drv_open(acia.device);
         if (acia.fd >= 0) {
@@ -693,7 +689,6 @@ void myacia_reset(void)
             set_acia_ticks();
         }
     }
-#endif
 }
 
 /******************************************************************/
@@ -936,11 +931,7 @@ void myacia_store(uint16_t addr, uint8_t byte)
 
     switch (addr & acia_register_size) {
         case ACIA_DR:
-#ifdef HAVE_RS232BMC
-            /* Keep a bounded ACIA-level trace for AT+ACIATRACE diagnostics;
-               BmcModem::Put records the later serial-backend handoff. */
-            bmcmodem_note_acia_tx(byte);
-#endif
+            rs232drv_note_acia_data_write(acia.device, byte);
             acia.txdata = byte;
             if (acia.cmd & ACIA_CMD_BITS_DTR_ENABLE_RECV_AND_IRQ) {
                 if (acia.in_tx == ACIA_TX_STATE_DR_WRITTEN) {
@@ -981,13 +972,12 @@ void myacia_store(uint16_t addr, uint8_t byte)
             break;
         case ACIA_CMD:
             acia.cmd = byte;
-#ifdef HAVE_RS232BMC
-            if (machine_class == VICE_MACHINE_C64) {
+            if (rs232drv_get_acia_capabilities(acia.device)
+                & RS232_ACIA_KEEP_DTR_ASSERTED) {
                 /* C64 OS expects the virtual modem to remain asserted while
                    its SwiftLink driver clears DTR during initialization. */
                 acia.cmd |= ACIA_CMD_BITS_DTR_ENABLE_RECV_AND_IRQ;
             }
-#endif
             acia_set_handshake_lines();
             if ((acia.cmd & ACIA_CMD_BITS_TRANSMITTER_MASK) == ACIA_CMD_BITS_TRANSMITTER_TX_WITH_IRQ
                 && !acia.alarm_active_tx) {
@@ -1223,12 +1213,10 @@ static void int_acia_rx(CLOCK offset, void *data)
 
     assert(data == NULL);
 
-#ifdef HAVE_RS232BMC
-    {
+    if (rs232drv_get_acia_capabilities(acia.device)
+        & RS232_ACIA_NOTIFY_CARRIER_CHANGE) {
         uint8_t old_dcd = acia.status & ACIA_SR_BITS_DCD;
 
-        /* TCP close has no receive byte to wake C64 OS. Poll DCD on the RX
-           cadence and turn a carrier edge into the normal ACIA status NMI. */
         acia_get_status();
         if ((acia.status & ACIA_SR_BITS_DCD) != old_dcd
             && !(acia.cmd & ACIA_CMD_BITS_IRQ_DISABLED)) {
@@ -1236,7 +1224,6 @@ static void int_acia_rx(CLOCK offset, void *data)
             acia.irq = 1;
         }
     }
-#endif
 
     do {
         uint8_t received_byte;

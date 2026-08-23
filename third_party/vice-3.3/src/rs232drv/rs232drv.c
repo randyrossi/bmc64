@@ -153,6 +153,16 @@ void rs232drv_set_bps(int fd, unsigned int bps)
     rs232_set_bps(fd, bps);
 }
 
+unsigned int rs232drv_get_acia_capabilities(int device)
+{
+    return rs232_get_acia_capabilities(device);
+}
+
+void rs232drv_note_acia_data_write(int device, uint8_t byte)
+{
+    rs232_note_acia_data_write(device, byte);
+}
+
 #else
 
 void rs232drv_init(void)
@@ -193,6 +203,15 @@ enum rs232handshake_in rs232drv_get_status(int fd)
 }
 
 void rs232drv_set_bps(int fd, unsigned int bps)
+{
+}
+
+unsigned int rs232drv_get_acia_capabilities(int device)
+{
+    return 0;
+}
+
+void rs232drv_note_acia_data_write(int device, uint8_t byte)
 {
 }
 
