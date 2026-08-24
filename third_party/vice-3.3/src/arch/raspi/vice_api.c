@@ -334,13 +334,15 @@ void emux_drive_change_model(int unit) {
     strcat(item->displayed_value, " (*)");
   }
 
-  static int num_supported_drives = 13;
+  static int num_supported_drives = 15;
   static int supported_drives[] = {
      DRIVE_TYPE_1541,
      DRIVE_TYPE_1541II,
      DRIVE_TYPE_1551,
      DRIVE_TYPE_1571,
      DRIVE_TYPE_1581,
+     DRIVE_TYPE_2000,
+     DRIVE_TYPE_4000,
      DRIVE_TYPE_2031,
      DRIVE_TYPE_2040,
      DRIVE_TYPE_3040,
@@ -357,6 +359,8 @@ void emux_drive_change_model(int unit) {
      "1551",
      "1571",
      "1581",
+     "FD2000",
+     "FD4000",
      "2031",
      "2040",
      "3040",
@@ -927,6 +931,12 @@ void emux_handle_rom_change(struct menu_item* item, fullpath_func f_fullpath) {
        return;
      case MENU_DRIVE_ROM_FILE_1581:
        resources_set_string("DosName1581", item->str_value);
+       return;
+     case MENU_DRIVE_ROM_FILE_2000:
+       resources_set_string("DosName2000", item->str_value);
+       return;
+     case MENU_DRIVE_ROM_FILE_4000:
+       resources_set_string("DosName4000", item->str_value);
        return;
      case MENU_DRIVE_ROM_FILE_CMDHD:
        resources_set_string("DosNameCMDHD", item->str_value);

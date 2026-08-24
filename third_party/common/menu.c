@@ -57,7 +57,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "5.0.4"
+#define VERSION_STRING "5.0.5"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -849,6 +849,8 @@ static void drive_change_rom() {
   item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1551, root, "1551...");
   item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1571, root, "1571...");
   item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1581, root, "1581...");
+  item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_2000, root, "FD2000...");
+  item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_4000, root, "FD4000...");
   item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_CMDHD, root, "CMDHD...");
 }
 
@@ -1825,6 +1827,8 @@ static void select_file(struct menu_item *item) {
      case MENU_DRIVE_ROM_FILE_1551:
      case MENU_DRIVE_ROM_FILE_1571:
      case MENU_DRIVE_ROM_FILE_1581:
+     case MENU_DRIVE_ROM_FILE_2000:
+     case MENU_DRIVE_ROM_FILE_4000:
      case MENU_DRIVE_ROM_FILE_CMDHD:
        emux_handle_rom_change(item, fullpath);
        // Two pops necessary here.
@@ -2126,6 +2130,8 @@ static void relist_files_after_dir_change(struct menu_item *item) {
   case MENU_DRIVE_ROM_FILE_1551:
   case MENU_DRIVE_ROM_FILE_1571:
   case MENU_DRIVE_ROM_FILE_1581:
+  case MENU_DRIVE_ROM_FILE_2000:
+  case MENU_DRIVE_ROM_FILE_4000:
     show_files(DIR_ROMS, FILTER_NONE, item->id, 1);
     break;
   case MENU_AUTOSTART_FILE:
@@ -2636,6 +2642,12 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_DRIVE_CHANGE_ROM_1581:
     show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_1581, 0);
+    return;
+  case MENU_DRIVE_CHANGE_ROM_2000:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_2000, 0);
+    return;
+  case MENU_DRIVE_CHANGE_ROM_4000:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_4000, 0);
     return;
   case MENU_DRIVE_CHANGE_ROM_CMDHD:
     show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_CMDHD, 0);
