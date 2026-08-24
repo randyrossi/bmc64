@@ -456,6 +456,12 @@ static int disk_image_check_for_gcr(disk_image_t *image)
         return 0;
     }
 
+    /* This probe runs for every image, so verify GCR magic before its metadata. */
+    if (strncmp("GCR-1541", (char *)header, 8)
+        && strncmp("GCR-1571", (char *)header, 8)) {
+        return 0;
+    }
+
     if (header[8] != 0) {
         log_error(disk_image_probe_log,
                   "Import GCR: Unknown GCR image version %i.",
