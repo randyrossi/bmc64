@@ -1,3 +1,8 @@
+## 5.0.5 pre-release
+  * Expose Vice supported features in BMC64
+    * FD2000 / FD4000 drives
+    * REU Image File settings
+
 ## 5.0.4 pre-release
   * Refactor networking support and decouple ACIA from BMC modem backend
 
