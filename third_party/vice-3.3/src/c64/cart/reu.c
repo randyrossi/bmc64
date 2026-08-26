@@ -232,7 +232,7 @@ static unsigned int old_reu_ram_size = 0;
 
 static log_t reu_log = LOG_ERR; /*!< the log output for the REU */
 
-static int reu_activate(void);
+static int reu_activate(int load_image);
 static int reu_deactivate(void);
 
 static unsigned int reu_int_num;
@@ -325,7 +325,7 @@ static int set_reu_enabled(int value, void *param)
         reu_list_item = NULL;
         reu_enabled = 0;
     } else if ((val) && (!reu_enabled)) {
-        if (reu_activate() < 0) {
+        if (reu_activate(1) < 0) {
             return -1;
         }
         if (export_add(&export_res_reu) < 0) {
@@ -423,7 +423,9 @@ static int set_reu_size(int val, void *param)
     }
 
     if (reu_enabled) {
-        reu_activate();
+        // On BMC64 because of the slow SDCard read speed, 
+        // we don't want to load the REU image on size change.
+        reu_activate(0);
     }
 
     return 0;
@@ -463,7 +465,7 @@ static int set_reu_filename(const char *name, void *param)
     util_string_set(&reu_filename, name);
 
     if (reu_enabled) {
-        reu_activate();
+        reu_activate(1);
     }
 
     return 0;
@@ -607,13 +609,20 @@ void reu_reset(void)
     rec.address_control_reg = REU_REG_RW_ADDR_CONTROL_UNUSED_MASK;
 }
 
-static int reu_activate(void)
+static int reu_activate(int load_image)
 {
+    uint8_t *new_reu_ram;
+
     if (!reu_size) {
         return 0;
     }
 
-    reu_ram = lib_realloc(reu_ram, reu_size);
+    new_reu_ram = lib_realloc(reu_ram, reu_size);
+    if (new_reu_ram == NULL) {
+        log_error(reu_log, "Unable to allocate %dKB REU RAM.", reu_size >> 10);
+        return -1;
+    }
+    reu_ram = new_reu_ram;
 
     /* Clear newly allocated RAM.  */
     if (reu_size > old_reu_ram_size) {
@@ -624,7 +633,7 @@ static int reu_activate(void)
 
     log_message(reu_log, "%dKB unit installed.", reu_size >> 10);
 
-    if (!util_check_null_string(reu_filename)) {
+    if (load_image && !util_check_null_string(reu_filename)) {
         if (util_file_load(reu_filename, reu_ram, (size_t)reu_size, UTIL_FILE_LOAD_RAW) < 0) {
             log_error(reu_log, "Reading REU image %s failed.", reu_filename);
             /* only create a new file if no file exists, so we dont accidently overwrite any files */
@@ -717,14 +726,16 @@ int reu_bin_attach(const char *filename, uint8_t *rawcart)
 int reu_bin_save(const char *filename)
 {
     if (reu_ram == NULL) {
-        return -1;
+        return -3;
     }
 
     if (filename == NULL) {
+        log_error(reu_log, "Cannot save REU image: no filename.");
         return -1;
     }
 
     if (util_file_save(filename, reu_ram, reu_size) < 0) {
+        log_error(reu_log, "Writing REU image %s failed.", filename);
         return -1;
     }
 
