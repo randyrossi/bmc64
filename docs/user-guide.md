@@ -32,6 +32,7 @@ This guide covers installing, configuring, and using BMC64, including machine se
   - [FileSystem/Drives](#filesystemdrives)
     - [USB Drives](#usb-drives)
     - [IEC Mode (C64/C128 Only)](#iec-mode-c64c128-only)
+  - [FD2000/FD4000 Support](#fd2000fd4000-support)
   - [CMDHD Support](#cmdhd-support)
 - [C64OS Support](#c64os-support)
 - [Sound](#sound)
@@ -432,6 +433,12 @@ BMC64 cannot mount some USB sticks (especially newer/larger models). If this hap
 You can make any drive an IECDevice and select the directory you want to mount from the 'Disks' menu. However, I don't recommend loading programs this way. The SDcard has slow access times and this will cause audio/video lag (but only during the load). This is because any native file access effectively blocks VICE's emulation routines.  It's fine to load a .PRG this way but don't try running something that needs frequent disk access.  IEC mode does not support all disk operations anyway.  It's mostly used for testing purposes.
 
 NOTE: If you select a directory off a USB device (not the SD card), then the IEC drive will not be accessible until you navigate to the USB device in any file dialog at least once.  This is because all USB drives are lazy mounted.  No USB drives are mounted at boot time, only the SD card.
+
+## FD2000/FD4000 Support
+
+FD2000 and FD4000 drives are supported. Change a drive model to FD2000 or FD4000, then attach the appropriate disk image from the 'Disks' menu. The supported image formats are `.D1M` (DD), `.D2M` (HD), and `.D4M` (FD4000 ED).
+
+Note: You will need to add the appropriate the drives roms. Roms named dos2000 and dos4000 placed in the `/C64` folder will be automatically loaded.
 
 ## CMDHD Support
 
