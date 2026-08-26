@@ -427,13 +427,14 @@ extern "C" int _close(int fildes) {
     return -1;
   }
 
+    int write_failed = 0;
     if (file.contents) {
       if (file.mode == O_WRONLY) {
         // Dump contents of memory buffer to actual file.
         unsigned int num_written;
-        if (f_write(&file.file, file.contents,
-                      file.size, &num_written) != FR_OK) {
-           // Can't write new file or modified file contents back to disk.
+        if (f_write(&file.file, file.contents, file.size, &num_written) != FR_OK ||
+            num_written != file.size) {
+          write_failed = 1;
         }
      }
   }
@@ -454,6 +455,11 @@ extern "C" int _close(int fildes) {
   } 
   
   if (need_close && f_close(&file.file) != FR_OK) {
+    errno = EIO;
+    return -1;
+  }
+
+  if (write_failed) {
     errno = EIO;
     return -1;
   }

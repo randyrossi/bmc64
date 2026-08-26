@@ -335,6 +335,17 @@ static void ui_key_pressed(long key) {
      return;
   }
 
+  if (menu_cursor_item[current_menu]->type == TEXTFIELD) {
+    if (key == KEYCODE_Comma) {
+      ui_type_char(',');
+      return;
+    }
+    if (key == KEYCODE_Period) {
+      ui_type_char('.');
+      return;
+    }
+  }
+
   switch (key) {
   case KEYCODE_Up:
   case KEYCODE_Down:
@@ -1433,8 +1444,16 @@ void ui_error(const char *format, ...) {
   va_list args;
   va_start(args, format);
   vsnprintf(buffer, 255, format, args);
-  ui_menu_add_button(MENU_ERROR_DIALOG, root, buffer);
   va_end(args);
+
+  char *line = buffer;
+  char *next_line;
+  while ((next_line = strchr(line, '\n')) != NULL) {
+    *next_line = '\0';
+    ui_menu_add_button(MENU_ERROR_DIALOG, root, line);
+    line = next_line + 1;
+  }
+  ui_menu_add_button(MENU_ERROR_DIALOG, root, line);
   ui_render_single_frame();
 }
 

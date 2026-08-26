@@ -34,6 +34,7 @@
 
 // VICE includes
 #include "raspi_machine.h"
+#include "archdep.h"
 #include "autostart.h"
 #include "diskimage.h"
 #include "attach.h"
@@ -55,11 +56,11 @@
 #include "joyport/joystick.h"
 #include "vdrive-internal.h"
 #include "tape.h"
+#include "util.h"
 #include "sid.h"
 #include "sid-resources.h"
 #include "userport/userport_joystick.h"
 #include "cbmimage.h"
-
 // RASPI includes
 #include "circle.h"
 #include "keycodes.h"
@@ -334,13 +335,15 @@ void emux_drive_change_model(int unit) {
     strcat(item->displayed_value, " (*)");
   }
 
-  static int num_supported_drives = 13;
+  static int num_supported_drives = 15;
   static int supported_drives[] = {
      DRIVE_TYPE_1541,
      DRIVE_TYPE_1541II,
      DRIVE_TYPE_1551,
      DRIVE_TYPE_1571,
      DRIVE_TYPE_1581,
+     DRIVE_TYPE_2000,
+     DRIVE_TYPE_4000,
      DRIVE_TYPE_2031,
      DRIVE_TYPE_2040,
      DRIVE_TYPE_3040,
@@ -357,6 +360,8 @@ void emux_drive_change_model(int unit) {
      "1551",
      "1571",
      "1581",
+     "FD2000",
+     "FD4000",
      "2031",
      "2040",
      "3040",
@@ -928,6 +933,12 @@ void emux_handle_rom_change(struct menu_item* item, fullpath_func f_fullpath) {
      case MENU_DRIVE_ROM_FILE_1581:
        resources_set_string("DosName1581", item->str_value);
        return;
+     case MENU_DRIVE_ROM_FILE_2000:
+       resources_set_string("DosName2000", item->str_value);
+       return;
+     case MENU_DRIVE_ROM_FILE_4000:
+       resources_set_string("DosName4000", item->str_value);
+       return;
      case MENU_DRIVE_ROM_FILE_CMDHD:
        resources_set_string("DosNameCMDHD", item->str_value);
        return;
@@ -972,6 +983,35 @@ int emux_handle_ide64_image_change(int device, const char *path) {
     return result;
   }
   return -1;
+}
+
+int emux_handle_reu_image_change(const char *path) {
+  FILE *file;
+  int size;
+
+  file = fopen(path, MODE_READ);
+  if (file == NULL) {
+    return -1;
+  }
+  size = util_file_length(file);
+  fclose(file);
+
+  if (size <= 0 || (size % 1024) != 0) {
+    return -1;
+  }
+
+  if (resources_set_int("REU", 0) < 0 ||
+      resources_set_int("REUsize", size / 1024) < 0 ||
+      resources_set_string("REUfilename", path) < 0) {
+    return -1;
+  }
+
+  if (resources_set_int("REU", 1) < 0) {
+    return -1;
+  }
+
+  emux_reu_image_loaded(size / 1024);
+  return 0;
 }
 
 void emux_set_iec_dir(int unit, char* dir) {
@@ -1141,6 +1181,20 @@ int emux_handle_menu_change(struct menu_item* item) {
         ui_error("Problem saving");
       } else {
         ui_pop_all_and_toggle();
+      }
+      return 1;
+    case MENU_REU_SAVE_IMAGE:
+      if (cartridge_flush_image(CARTRIDGE_REU) < 0) {
+        ui_error("Problem saving");
+      } else {
+        ui_pop_all_and_toggle();
+      }
+      return 1;
+    case MENU_REU_DETACH_IMAGE:
+      if (resources_set_string("REUfilename", "") < 0) {
+        ui_error("Problem detaching REU image");
+      } else {
+        emux_reu_image_loaded(0);
       }
       return 1;
     case MENU_CART_FREEZE:

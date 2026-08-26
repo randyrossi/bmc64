@@ -57,7 +57,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "5.0.4"
+#define VERSION_STRING "5.0.5"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -716,7 +716,7 @@ static void show_files(DirType dir_type, FileFilter filter, int menu_id,
 
   file_root->cursor_listener_func = files_cursor_listener;
 
-  if (menu_id == MENU_SAVE_SNAP_FILE ||
+  if (menu_id == MENU_SAVE_SNAP_FILE || menu_id == MENU_REU_SAVE_IMAGE_AS_FILE ||
       (menu_id >= MENU_CREATE_D64_FILE && menu_id <= MENU_CREATE_TAP_FILE)) {
     struct menu_item *file_name_item = ui_menu_add_text_field(
        menu_id, file_root, "Enter name:", "");
@@ -849,6 +849,8 @@ static void drive_change_rom() {
   item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1551, root, "1551...");
   item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1571, root, "1571...");
   item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1581, root, "1581...");
+  item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_2000, root, "FD2000...");
+  item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_4000, root, "FD4000...");
   item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_CMDHD, root, "CMDHD...");
 }
 
@@ -1792,6 +1794,9 @@ static void set_current_dir_names() {
 }
 
 static void select_file(struct menu_item *item) {
+  int result;
+  char *path;
+
   switch (item->id) {
      case MENU_IEC_DIR:
        emux_set_iec_dir(unit, fullpath(DIR_IEC, ""));
@@ -1825,6 +1830,8 @@ static void select_file(struct menu_item *item) {
      case MENU_DRIVE_ROM_FILE_1551:
      case MENU_DRIVE_ROM_FILE_1571:
      case MENU_DRIVE_ROM_FILE_1581:
+     case MENU_DRIVE_ROM_FILE_2000:
+     case MENU_DRIVE_ROM_FILE_4000:
      case MENU_DRIVE_ROM_FILE_CMDHD:
        emux_handle_rom_change(item, fullpath);
        // Two pops necessary here.
@@ -1896,6 +1903,31 @@ static void select_file(struct menu_item *item) {
      case MENU_PLUS4_CART_C2_HI_FILE:
        attach_cart(item->id, item);
        return;
+    case MENU_REU_ATTACH_IMAGE_FILE:
+      if (emux_handle_reu_image_change(fullpath(DIR_CARTS, item->str_value)) == 0) {
+        ui_pop_all_and_toggle();
+      } else {
+        ui_error("Failed to attach REU image");
+      }
+      return;
+    case MENU_REU_SAVE_IMAGE_AS_FILE:
+      if (item->type == TEXTFIELD && strlen(item->str_value) == 0) {
+        ui_error("Empty filename");
+        return;
+      }
+      path = fullpath(DIR_CARTS, item->str_value);
+      result = emux_save_reu_image(path);
+      if (result == 0) {
+        ui_pop_all_and_toggle();
+      } else if (result == -2) {
+        ui_error("RAM Expansion is not enabled");
+      } else if (result == -3) {
+        ui_error("RAM Expansion memory is unavailable");
+      } else {
+        printf("REU image save failed (%d): %s\n", result, path);
+        ui_error("Unable to create REU image\n%s", path);
+      }
+      return;
     case MENU_IDE64_IMAGE_1_FILE:
     case MENU_IDE64_IMAGE_2_FILE:
     case MENU_IDE64_IMAGE_3_FILE:
@@ -2006,6 +2038,8 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
   case MENU_C64_CART_8K_FILE:
   case MENU_C64_CART_16K_FILE:
   case MENU_C64_CART_ULTIMAX_FILE:
+  case MENU_REU_ATTACH_IMAGE_FILE:
+  case MENU_REU_SAVE_IMAGE_AS_FILE:
   case MENU_VIC20_CART_DETECT_FILE:
   case MENU_VIC20_CART_GENERIC_FILE:
   case MENU_VIC20_CART_16K_2000_FILE:
@@ -2088,6 +2122,10 @@ static void relist_files_after_dir_change(struct menu_item *item) {
   case MENU_C64_CART_FILE:
     show_files(DIR_CARTS, FILTER_CART, item->id, 1);
     break;
+  case MENU_REU_ATTACH_IMAGE_FILE:
+  case MENU_REU_SAVE_IMAGE_AS_FILE:
+    show_files(DIR_CARTS, FILTER_NONE, item->id, 1);
+    break;
   case MENU_C64_CART_8K_FILE:
   case MENU_C64_CART_16K_FILE:
   case MENU_C64_CART_ULTIMAX_FILE:
@@ -2126,6 +2164,8 @@ static void relist_files_after_dir_change(struct menu_item *item) {
   case MENU_DRIVE_ROM_FILE_1551:
   case MENU_DRIVE_ROM_FILE_1571:
   case MENU_DRIVE_ROM_FILE_1581:
+  case MENU_DRIVE_ROM_FILE_2000:
+  case MENU_DRIVE_ROM_FILE_4000:
     show_files(DIR_ROMS, FILTER_NONE, item->id, 1);
     break;
   case MENU_AUTOSTART_FILE:
@@ -2637,6 +2677,12 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_DRIVE_CHANGE_ROM_1581:
     show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_1581, 0);
     return;
+  case MENU_DRIVE_CHANGE_ROM_2000:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_2000, 0);
+    return;
+  case MENU_DRIVE_CHANGE_ROM_4000:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_4000, 0);
+    return;
   case MENU_DRIVE_CHANGE_ROM_CMDHD:
     show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_CMDHD, 0);
     return;
@@ -2654,6 +2700,12 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_C64_ATTACH_CART_ULTIMAX:
     show_files(DIR_CARTS, FILTER_NONE, MENU_C64_CART_ULTIMAX_FILE, 0);
+    return;
+  case MENU_REU_ATTACH_IMAGE:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_REU_ATTACH_IMAGE_FILE, 0);
+    return;
+  case MENU_REU_SAVE_IMAGE_AS:
+    show_files(DIR_CARTS, FILTER_NONE, MENU_REU_SAVE_IMAGE_AS_FILE, 0);
     return;
   case MENU_IDE64_IMAGE_1:
     show_files(DIR_DISKS, FILTER_IDE64, MENU_IDE64_IMAGE_1_FILE, 0);

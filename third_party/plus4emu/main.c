@@ -801,6 +801,20 @@ int emux_handle_ide64_image_change(int device, const char *path) {
    return -1;
 }
 
+int emux_handle_reu_image_change(const char *path) {
+   (void)path;
+   return -1;
+}
+
+int emux_save_reu_image(const char *path) {
+   (void)path;
+   return -1;
+}
+
+void emux_reu_image_loaded(int size_kb) {
+   (void)size_kb;
+}
+
 void emux_trap_main_loop_ui(void) {
   circle_lock_acquire();
   ui_trap = 1;
