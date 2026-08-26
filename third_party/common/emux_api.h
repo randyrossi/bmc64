@@ -372,6 +372,9 @@ int emux_get_vkbd_size(void);
 // Handles one of the MENU_*_FILE rom change events from the menu
 void emux_handle_rom_change(struct menu_item* item, fullpath_func f_fullpath);
 int emux_handle_ide64_image_change(int device, const char *path);
+int emux_handle_reu_image_change(const char *path);
+void emux_reu_image_loaded(int size_kb);
+int emux_save_reu_image(const char *path);
 
 // Sets the directory for IEC emulation.
 void emux_set_iec_dir(int unit, char* dir);

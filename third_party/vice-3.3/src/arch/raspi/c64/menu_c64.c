@@ -30,6 +30,7 @@
 
 // VICE includes
 #include "c64/c64.h"
+#include "c64/cart/reu.h"
 #include "resources.h"
 #include "keyboard.h"
 #include "cartridge.h"
@@ -47,6 +48,45 @@ static struct menu_item *ide64_autodetect_items[4];
 static struct menu_item *ide64_cylinders_items[4];
 static struct menu_item *ide64_heads_items[4];
 static struct menu_item *ide64_sectors_items[4];
+static struct menu_item *reu_image_menu;
+static struct menu_item *reu_attach_image_item;
+static struct menu_item *reu_detach_image_item;
+static struct menu_item *reu_save_image_item;
+static struct menu_item *reu_save_image_as_item;
+static struct menu_item *reu_size_item;
+
+static void update_reu_image_enabled(int enabled);
+
+int emux_save_reu_image(const char *path) {
+  if (!reu_cart_enabled()) {
+    return -2;
+  }
+  return reu_bin_save(path);
+}
+
+void emux_reu_image_loaded(int size_kb) {
+  if (size_kb > 0) {
+    for (int index = 0; index < 8; index++) {
+      if (reu_size_to_index[index] == size_kb) {
+        reu_size_item->value = index;
+        break;
+      }
+    }
+  }
+  update_reu_image_enabled(reu_cart_enabled());
+}
+
+static void update_reu_image_enabled(int enabled) {
+  const char *filename;
+  int disabled = enabled == 0;
+
+  resources_get_string("REUfilename", &filename);
+  reu_image_menu->disabled = disabled;
+  reu_attach_image_item->disabled = disabled;
+  reu_detach_image_item->disabled = disabled || filename == NULL || *filename == '\0';
+  reu_save_image_item->disabled = disabled || filename == NULL || *filename == '\0';
+  reu_save_image_as_item->disabled = disabled;
+}
 
 static void update_ide64_geometry_enabled(int device) {
   int autodetect = ide64_autodetect_items[device]->value != 0;
@@ -66,7 +106,11 @@ static void update_ide64_usb_enabled(int enabled) {
 static void menu_value_changed(struct menu_item *item) {
    switch (item->id) {
       case MENU_REU:
-         resources_set_int("REU", item->value);
+        if (resources_set_int("REU", item->value) < 0) {
+          item->value = 0;
+          ui_error("Unable to enable RAM Expansion");
+        }
+        update_reu_image_enabled(item->value);
          break;
       case MENU_REU_SIZE:
          if (item->value >=0 && item->value < 8)
@@ -257,26 +301,38 @@ struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
      ui_menu_add_toggle(MENU_REU, child, "Ram Expansion", tmp);
   reu_item->on_value_changed = menu_value_changed;
 
-  struct menu_item* sizes_item =
+  reu_size_item =
       ui_menu_add_multiple_choice(MENU_REU_SIZE, child, "Memory Size");
-  sizes_item->on_value_changed = menu_value_changed;
-  sizes_item->num_choices = 8;
+  reu_size_item->on_value_changed = menu_value_changed;
+  reu_size_item->num_choices = 8;
 
   resources_get_int("REUsize", &tmp);
-  sizes_item->value = 2;
+  reu_size_item->value = 2;
   for (int t=0;t<8;t++) {
     if (tmp == reu_size_to_index[t])
-       sizes_item->value = t;
+       reu_size_item->value = t;
   }
 
-  strcpy(sizes_item->choices[0], "128k");
-  strcpy(sizes_item->choices[1], "256k");
-  strcpy(sizes_item->choices[2], "512k");
-  strcpy(sizes_item->choices[3], "1024k");
-  strcpy(sizes_item->choices[4], "2048k");
-  strcpy(sizes_item->choices[5], "4096k");
-  strcpy(sizes_item->choices[6], "8192k");
-  strcpy(sizes_item->choices[7], "16384k");
+  strcpy(reu_size_item->choices[0], "128k");
+  strcpy(reu_size_item->choices[1], "256k");
+  strcpy(reu_size_item->choices[2], "512k");
+  strcpy(reu_size_item->choices[3], "1024k");
+  strcpy(reu_size_item->choices[4], "2048k");
+  strcpy(reu_size_item->choices[5], "4096k");
+  strcpy(reu_size_item->choices[6], "8192k");
+  strcpy(reu_size_item->choices[7], "16384k");
+
+    reu_image_menu = ui_menu_add_folder(child, "Ram Image (optional)");
+    reu_attach_image_item = ui_menu_add_button(
+      MENU_REU_ATTACH_IMAGE, reu_image_menu, "Load Image...");
+    reu_detach_image_item = ui_menu_add_button(
+      MENU_REU_DETACH_IMAGE, reu_image_menu, "Clear image");
+
+    reu_save_image_item = ui_menu_add_button(
+      MENU_REU_SAVE_IMAGE, reu_image_menu, "Save image now");
+    reu_save_image_as_item = ui_menu_add_button(
+      MENU_REU_SAVE_IMAGE_AS, reu_image_menu, "Save image as...");
+    update_reu_image_enabled(reu_item->value);
 
     parent = ui_menu_add_folder(parent, "IDE64");
     child = ui_menu_add_multiple_choice(MENU_IDE64_VERSION, parent,

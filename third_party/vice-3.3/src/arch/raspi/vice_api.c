@@ -34,6 +34,7 @@
 
 // VICE includes
 #include "raspi_machine.h"
+#include "archdep.h"
 #include "autostart.h"
 #include "diskimage.h"
 #include "attach.h"
@@ -55,11 +56,11 @@
 #include "joyport/joystick.h"
 #include "vdrive-internal.h"
 #include "tape.h"
+#include "util.h"
 #include "sid.h"
 #include "sid-resources.h"
 #include "userport/userport_joystick.h"
 #include "cbmimage.h"
-
 // RASPI includes
 #include "circle.h"
 #include "keycodes.h"
@@ -984,6 +985,35 @@ int emux_handle_ide64_image_change(int device, const char *path) {
   return -1;
 }
 
+int emux_handle_reu_image_change(const char *path) {
+  FILE *file;
+  int size;
+
+  file = fopen(path, MODE_READ);
+  if (file == NULL) {
+    return -1;
+  }
+  size = util_file_length(file);
+  fclose(file);
+
+  if (size <= 0 || (size % 1024) != 0) {
+    return -1;
+  }
+
+  if (resources_set_int("REU", 0) < 0 ||
+      resources_set_int("REUsize", size / 1024) < 0 ||
+      resources_set_string("REUfilename", path) < 0) {
+    return -1;
+  }
+
+  if (resources_set_int("REU", 1) < 0) {
+    return -1;
+  }
+
+  emux_reu_image_loaded(size / 1024);
+  return 0;
+}
+
 void emux_set_iec_dir(int unit, char* dir) {
   resources_set_string_sprintf("FSDevice%iDir", dir, unit);
 }
@@ -1151,6 +1181,20 @@ int emux_handle_menu_change(struct menu_item* item) {
         ui_error("Problem saving");
       } else {
         ui_pop_all_and_toggle();
+      }
+      return 1;
+    case MENU_REU_SAVE_IMAGE:
+      if (cartridge_flush_image(CARTRIDGE_REU) < 0) {
+        ui_error("Problem saving");
+      } else {
+        ui_pop_all_and_toggle();
+      }
+      return 1;
+    case MENU_REU_DETACH_IMAGE:
+      if (resources_set_string("REUfilename", "") < 0) {
+        ui_error("Problem detaching REU image");
+      } else {
+        emux_reu_image_loaded(0);
       }
       return 1;
     case MENU_CART_FREEZE:

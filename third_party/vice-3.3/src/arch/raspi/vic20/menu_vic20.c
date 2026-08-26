@@ -184,6 +184,15 @@ struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
   return parent;
 }
 
+int emux_save_reu_image(const char *path) {
+  (void)path;
+  return -1;
+}
+
+void emux_reu_image_loaded(int size_kb) {
+  (void)size_kb;
+}
+
 void emux_machine_load_settings_done(void) {
 }
 
