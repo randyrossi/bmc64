@@ -98,6 +98,8 @@ truncate -s +3584 petrescue.d64
         dos1571  (optional)
         dos1581  (optional)
         dosCMDHD (optional)
+        dos2000  (optional)
+        dos4000  (optional)
         rpi_sym.vkm
     /C128
         kernal
