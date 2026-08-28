@@ -773,14 +773,17 @@ bool ViceStdioApp::Initialize(void) {
   if (mViceOptions.FileLoggingEnabled()) {
     CGlueStdioInit(&mSerial);
     mLogger.SetNewTarget(&mSerial);
-    mLogger.Write(GetKernelName(), LogNotice, "File logging: allocating");
     gLoggingDevice = new CLoggingDevice;
-    mLogger.Write(GetKernelName(), LogNotice, "File logging: opening /bmc64.log");
     gLoggingDevice->Initialize(&mSerial);
     if (!gLoggingDevice->OpenFile()) {
       mLogger.Write(GetKernelName(), LogError, "Cannot open /bmc64.log");
     } else {
-      mLogger.Write(GetKernelName(), LogNotice, "File logging: enabled");
+      char logBuffer[1024];
+      int logBytes;
+      while ((logBytes = mLogger.Read(logBuffer, sizeof logBuffer)) > 0) {
+        gLoggingDevice->Write(logBuffer, logBytes);
+      }
+
       CGlueStdioInit(gLoggingDevice);
       mLogger.SetNewTarget(gLoggingDevice);
     }
