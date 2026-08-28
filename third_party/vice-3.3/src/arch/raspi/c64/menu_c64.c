@@ -324,7 +324,7 @@ struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
 
     reu_image_menu = ui_menu_add_folder(child, "Ram Image (optional)");
     reu_attach_image_item = ui_menu_add_button(
-      MENU_REU_ATTACH_IMAGE, reu_image_menu, "Load Image...");
+      MENU_REU_ATTACH_IMAGE, reu_image_menu, "Load image...");
     reu_detach_image_item = ui_menu_add_button(
       MENU_REU_DETACH_IMAGE, reu_image_menu, "Clear image");
 
@@ -370,7 +370,7 @@ struct menu_item* emux_add_cartridge_options(struct menu_item* root) {
     sprintf(label, "ATA Device %d", device + 1);
     struct menu_item *device_menu = ui_menu_add_folder(parent, label);
 
-    child = ui_menu_add_button(MENU_IDE64_IMAGE_1 + device, device_menu, "Attach Image...");
+    child = ui_menu_add_button(MENU_IDE64_IMAGE_1 + device, device_menu, "Attach image...");
 
     resources_get_int_sprintf("IDE64AutodetectSize%i", &tmp, device + 1);
     ide64_autodetect_items[device] = ui_menu_add_toggle(
