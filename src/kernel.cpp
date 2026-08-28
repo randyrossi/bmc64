@@ -883,6 +883,7 @@ ViceApp::TShutdownMode CKernel::Run(void) {
 
   while(1) {
       UpdateUSBPlugAndPlay();
+      DrainLogging();
       asm("wfi");
   }
 

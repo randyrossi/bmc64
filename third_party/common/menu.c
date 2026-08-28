@@ -49,6 +49,7 @@
 #include "menu_wifi.h"
 #include "menu_keyset.h"
 #include "menu_switch.h"
+#include "menu_logging.h"
 #include "menu_gpio.h"
 #include "overlay.h"
 #include "raspi_util.h"
@@ -157,6 +158,10 @@ static char wifi_psk[MAX_STR_VAL_LEN];
 static int saved_network_device;
 static int network_device_was_selected;
 static int network_reboot_prompted;
+static struct menu_item *logging_destination_item;
+static int saved_logging_destination;
+static int logging_destination_was_selected;
+static int logging_destination_reboot_prompted;
 
 static const int acia_network_addresses[] = CIRCLE_ACIA_NETWORK_ADDRESS_VALUES;
 static const char *const acia_network_address_labels[] =
@@ -703,7 +708,20 @@ static void main_menu_cursor_listener(struct menu_item* parent, int new_pos) {
       0, MENU_NETWORK_ENABLED, "Yes", "No");
   }
 
+    int logging_destination_is_selected =
+      logging_destination_item != NULL &&
+      new_pos == logging_destination_item->render_index;
+    if (logging_destination_was_selected && !logging_destination_is_selected &&
+      logging_destination_item->value != saved_logging_destination &&
+      !logging_destination_reboot_prompted) {
+    logging_destination_reboot_prompted = 1;
+    ui_confirm_wrapped_labels("Logging settings changed",
+        "Logging settings have changed. You need to reboot for them to take effect. Reboot now?",
+      0, MENU_LOGGING_DESTINATION, "Yes", "No");
+  }
+
   network_device_was_selected = network_device_is_selected;
+    logging_destination_was_selected = logging_destination_is_selected;
 }
 
 static void show_files(DirType dir_type, FileFilter filter, int menu_id,
@@ -2561,6 +2579,14 @@ static void menu_value_changed(struct menu_item *item) {
       ui_info("Settings saved");
     }
     return;
+  case MENU_LOGGING_DESTINATION:
+    if (logging_set_destination(item->value) != 0) {
+      item->value = saved_logging_destination;
+      ui_error("Cannot save logging setting");
+    } else {
+      logging_destination_reboot_prompted = 0;
+    }
+    return;
   case MENU_COLOR_PALETTE_0:
     ui_canvas_reveal_temp(FB_LAYER_VIC);
     emux_change_palette(0, item->value);
@@ -3277,6 +3303,8 @@ static void menu_value_changed(struct menu_item *item) {
       } else {
         ui_error("Cannot save settings");
       }
+    } else if (confirmation_id == MENU_LOGGING_DESTINATION) {
+      reboot();
     }
     break;
   case MENU_CONFIRM_CANCEL:
@@ -4354,6 +4382,15 @@ void build_menu(struct menu_item *root) {
   parent = ui_menu_add_folder(root, "Reset");
   ui_menu_add_button(MENU_SOFT_RESET, parent, "Soft Reset");
   ui_menu_add_button(MENU_HARD_RESET, parent, "Hard Reset");
+
+  logging_destination_item = ui_menu_add_multiple_choice(
+    MENU_LOGGING_DESTINATION, root, "Logging");
+  logging_destination_item->num_choices = 3;
+  strcpy(logging_destination_item->choices[LOGGING_DESTINATION_OFF], "Off");
+  strcpy(logging_destination_item->choices[LOGGING_DESTINATION_UART], "UART");
+  strcpy(logging_destination_item->choices[LOGGING_DESTINATION_FILE], "File");
+  logging_destination_item->value = logging_get_destination();
+  saved_logging_destination = logging_destination_item->value;
 
   ui_menu_add_button(MENU_SAVE_SETTINGS, root, "Save settings");
 
