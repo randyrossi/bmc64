@@ -363,6 +363,7 @@ public:
   void Run(void) override {
     for (;;) {
       mKernel->UpdateUSBPlugAndPlay();
+      mKernel->DrainLogging();
       CScheduler::Get()->MsSleep(100);
     }
   }
