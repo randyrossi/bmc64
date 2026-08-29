@@ -1,3 +1,6 @@
+## 5.0.7 pre-release
+  * Fix for wi-fi not connecting to eero7 #335
+
 ## 5.0.6 pre-release
   * Add easy control of logging from main menu, to track down problems or to include with bug reports or issues
     * Details: [User Guide: Logging](docs/USER_GUIDE.md#logging)
