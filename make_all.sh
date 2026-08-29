@@ -285,7 +285,11 @@ fi
 # Common
 cd $SRC_DIR/third_party/common
 make clean
-BOARD=$BOARD make
+if ! BOARD=$BOARD make
+then
+       echo "Failed to build BMC64 common library" >&2
+       exit 1
+fi
 
 # Plus4Emu
 cd $SRC_DIR/third_party/plus4emu

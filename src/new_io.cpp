@@ -18,7 +18,7 @@ extern int errno;
 #include <malloc.h>
 #include <stdio.h>
 #include <sys/unistd.h>
-#include <circle/serial.h>
+#include <circle/device.h>
 
 struct _CIRCLE_DIR {
   _CIRCLE_DIR() : mFirstRead(0), mOpen(0) {
@@ -121,7 +121,7 @@ static void itoa2(int i, char *dst) {
   reverse(dst, 0, strlen(dst) - 1);
 }
 
-CSerialDevice *g_serial;
+CDevice *g_serial;
 
 static void logm(const char *msg) {
    if (g_serial) {
@@ -211,8 +211,8 @@ static const char* const VolumeStr[FF_VOLUMES] = {FF_VOLUME_STRS};
 PARTITION VolToPart[FF_VOLUMES];
 #endif
 
-void CGlueStdioInit(CSerialDevice *serial) {
-  g_serial = serial;
+void CGlueStdioInit(CDevice *output_device) {
+  g_serial = output_device;
 
   if (g_serial) {
     setvbuf(stdout, nullptr, _IOLBF, 0);

@@ -34,6 +34,7 @@ ViceOptions *ViceOptions::s_pThis = 0;
 ViceOptions::ViceOptions(void)
     : m_nMachineTiming(MACHINE_TIMING_PAL_HDMI),
       m_bDemoEnabled(false), m_bSerialEnabled(false),
+      m_bFileLoggingEnabled(false),
       m_bGPIOOutputsEnabled(false), m_nCyclesPerSecond(0),
       m_audioOut(VCHIQSoundDestinationAuto), m_bDPIEnabled(false),
       m_scaling_param_fbw{0,0}, m_scaling_param_fbh{0,0},
@@ -57,6 +58,7 @@ ViceOptions::ViceOptions(void)
   // Set the default volume we mount for fatfs
   m_disk_partition = 0; // this tells fatfs 'auto'
   strcpy(m_disk_volume, "SD");
+  int logging_destination = -1;
 
   char *pOption;
   while ((pOption = GetToken()) != 0) {
@@ -93,6 +95,20 @@ ViceOptions::ViceOptions(void)
         m_bSerialEnabled = true;
       } else {
         m_bSerialEnabled = false;
+      }
+    } else if (strcmp(pOption, "enable_file_logging") == 0) {
+      if (strcmp(pValue,"true") == 0 || strcmp(pValue, "1") == 0) {
+        m_bFileLoggingEnabled = true;
+      } else {
+        m_bFileLoggingEnabled = false;
+      }
+    } else if (strcmp(pOption, "enable_logging") == 0) {
+      if (strcmp(pValue, "uart") == 0) {
+        logging_destination = 1;
+      } else if (strcmp(pValue, "file") == 0) {
+        logging_destination = 2;
+      } else {
+        logging_destination = 0;
       }
     } else if (strcmp(pOption, "enable_gpio_outputs") == 0) {
       // Unless this is true, OUTPUT HIGH should not be allowed on any pin.
@@ -156,6 +172,11 @@ ViceOptions::ViceOptions(void)
     }
   }
 
+  if (logging_destination >= 0) {
+    m_bSerialEnabled = logging_destination == 1;
+    m_bFileLoggingEnabled = logging_destination == 2;
+  }
+
   // When DPI is enabled, use the DPI versions of constants. Behavior
   // is identical. It's just used for display purposes.
   if (m_nMachineTiming == MACHINE_TIMING_PAL_CUSTOM_HDMI &&
@@ -192,6 +213,10 @@ unsigned ViceOptions::GetMachineTiming(void) const { return m_nMachineTiming; }
 bool ViceOptions::DemoEnabled(void) const { return m_bDemoEnabled; }
 
 bool ViceOptions::SerialEnabled(void) const { return m_bSerialEnabled; }
+
+bool ViceOptions::FileLoggingEnabled(void) const {
+  return m_bFileLoggingEnabled;
+}
 
 bool ViceOptions::GPIOOutputsEnabled(void) const { return m_bGPIOOutputsEnabled; }
 

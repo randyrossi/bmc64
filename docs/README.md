@@ -3,15 +3,15 @@
 ## Getting Started
 
 - [Installation](INSTALLATION.md)
-- [Machine Selection](user-guide.md#machine-selection)
-- [User Guide](user-guide.md)
+- [Machine Selection](USER_GUIDE.md#machine-selection)
+- [User Guide](USER_GUIDE.md)
 
 ## Using BMC64
 
-- [Video & Timing](user-guide.md#video--timing)
-- [Files & Drives](user-guide.md#files--drives)
-- [Sound](user-guide.md#sound)
-- [Input & GPIO](user-guide.md#input--gpio)
+- [Video & Timing](USER_GUIDE.md#video--timing)
+- [Files & Drives](USER_GUIDE.md#files--drives)
+- [Sound](USER_GUIDE.md#sound)
+- [Input & GPIO](USER_GUIDE.md#input--gpio)
 - [Networking](NETWORKING.md)
 - [FAQ](FAQ.md)
 

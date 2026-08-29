@@ -363,6 +363,7 @@ public:
   void Run(void) override {
     for (;;) {
       mKernel->UpdateUSBPlugAndPlay();
+      mKernel->DrainLogging();
       CScheduler::Get()->MsSleep(100);
     }
   }
@@ -883,6 +884,7 @@ ViceApp::TShutdownMode CKernel::Run(void) {
 
   while(1) {
       UpdateUSBPlugAndPlay();
+      DrainLogging();
       asm("wfi");
   }
 

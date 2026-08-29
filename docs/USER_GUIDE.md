@@ -55,6 +55,9 @@ This guide covers installing, configuring, and using BMC64, including machine se
     - [GPIO Config 3 : Waveshare Game HAT](#gpio-config-3--waveshare-game-hat)
     - [GPIO Config 4 : Userport and Joysticks](#gpio-config-4--userport-and-joysticks)
     - [GPIO Config 5 : Custom Defined](#gpio-config-5--custom-defined)
+- [Logging](#logging)
+  - [Logging Configuration](#logging-configuration)
+  - [UART Debugging](#uart-debugging)
 - [CPU Temperature](#cpu-temperature)
   - [Networking Support](#networking-support)
 - [Changelog](#changelog)
@@ -467,7 +470,6 @@ For mouse-wheel scrolling in C64OS, assign **USB Mouse (MicroMys)** to the
 appropriate port in the Joyports menu. The 1351 mouse protocol does not expose
 the middle button or scroll wheel.
 
-
 Please consult the [official C64OS website](https://c64os.com/) for more information.
 
 # Sound
@@ -783,6 +785,78 @@ When used as inputs, the pins use pull-up resistors (just like the real C64) so 
 ### GPIO Config 5 : Custom Defined
 
 If the pre-defined GPIO configurations don't suit your needs, you can define your own GPIO mappings if you wish.  Use the 'Configure Custom GPIO' menu option under 'Prefs'.
+
+# Logging
+
+BMC64 has logging for diagnostic output (from v5.0.6) to track down problems and include
+with bug reports or issues. The top-level `Logging` item in the menu changes
+the output destination and prompts for a reboot.
+
+The available modes are:
+
+* `Off`: disables BMC64 diagnostic output.
+* `UART`: sends diagnostic output to the Raspberry Pi UART.
+* `File`: sends diagnostic output to both the UART and `/bmc64.log` on the SD
+  card's root directory. The file is appended to on each boot.
+
+Leave logging set to `Off` during normal use. File logging consumes SD-card
+space and can slow emulation, so it is intended for temporary diagnosis.
+
+## Logging Configuration
+
+Use the menu item to change logging modes, but if you want to set it manually see below.
+
+Logging is controlled by the `enable_logging` option in the active machine's `cmdline.txt` file. 
+Set it manually by appending one of these values to the list of options:
+
+```
+  enable_logging=off
+  enable_logging=uart
+  enable_logging=file
+```
+
+`cmdline.txt` options must be on one line and separated by spaces. For
+example:
+
+```
+  fast=true machine_timing=pal-hdmi enable_logging=file
+```
+
+For compatibility with older configurations, BMC64 also recognizes
+`enable_serial=true` or `enable_serial=1` as UART logging when
+`enable_logging` is not present.
+
+When logging in `File` mode the log is queued and synchronized to the SD card about every three
+seconds to avoid slowing emulation with a write on every log message. Because
+BMC64 is normally powered off or reset without a shutdown sequence, the last few lines
+of logging may be lost.
+
+## UART Debugging
+
+To view UART output, use a USB-to-TTL serial adapter based on an FTDI
+FT232RL. Search AliExpress for `FT232RL USB to TTL serial adapter` (get a USB-C one). Configure
+the adapter for 3.3V logic, then connect its pins to the Raspberry Pi GPIO
+header:
+
+| Raspberry Pi | FT232RL adapter |
+|---|---|
+| Pin 6, GND | GND |
+| Pin 8, GPIO14/TXD | RXD |
+| Pin 10, GPIO15/RXD | TXD |
+
+Do not connect the adapter's 5V or 3.3V power pin to the Raspberry Pi. Connect
+the adapter to a PC, then use a serial terminal at 115200 baud, 8 data bits,
+no parity, 1 stop bit, and no flow control. `picocom` is recommended on Linux:
+
+```sh
+picocom -b 115200 /dev/ttyUSB0
+```
+
+PuTTY can be used instead:
+
+```sh
+sudo putty /dev/ttyUSB0 -serial -sercfg 115200,8,n,1,N
+```
 
 # CPU Temperature
 

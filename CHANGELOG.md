@@ -1,3 +1,7 @@
+## 5.0.6 pre-release
+  * Add easy control of logging from main menu, to track down problems or to include with bug reports or issues
+    * Details: [User Guide: Logging](docs/USER_GUIDE.md#logging)
+
 ## 5.0.5 pre-release
   * Expose Vice supported features in BMC64
     * FD2000 / FD4000 drives

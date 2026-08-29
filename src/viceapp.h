@@ -223,6 +223,7 @@ public:
 
   int circle_get_machine_timing();
   int circle_cycles_per_second();
+  void DrainLogging();
 
 private:
   char const *FromKernel;

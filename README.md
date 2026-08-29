@@ -35,7 +35,7 @@ For Plus/4 emulation on the Rasbperry Pi 3, a more accurate emulator using Plus4
 ## Getting Started
 
 - [Installation](docs/INSTALLATION.md)
-- [User Guide](docs/user-guide.md)
+- [User Guide](docs/USER_GUIDE.md)
 - [Documentation](docs/README.md)
 - [FAQ](docs/FAQ.md)
 

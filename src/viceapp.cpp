@@ -17,10 +17,12 @@
 #include "vice_network.h"
 #include "network_time_sync.h"
 #include "../third_party/common/circle.h"
+#include "../third_party/common/menu_logging.h"
 #include "fbl.h"
 
 static const unsigned int WIFI_SCAN_DURATION_US = 4000000;
 static const unsigned int WIFI_CONNECT_TIMEOUT_US = 30000000;
+static CLoggingDevice *gLoggingDevice = nullptr;
 
 #if defined(RASPI_C64)
 #include "bootstat_c64.h"
@@ -47,9 +49,6 @@ bool ViceApp::Initialize(void) {
     return false;
   }
 
-  // Initialize our replacement newlib stdio. Give it
-  // a pointer to our serial device so we can use printf
-  // to serial as soon as possible.
   CGlueStdioInit(mViceOptions.SerialEnabled() ? &mSerial : nullptr);
 
   if (!mInterrupt.Initialize()) {
@@ -62,6 +61,12 @@ bool ViceApp::Initialize(void) {
 int ViceApp::circle_get_machine_timing() {
   // See circle.h for valid values
   return mViceOptions.GetMachineTiming();
+}
+
+void ViceApp::DrainLogging() {
+  if (gLoggingDevice != nullptr) {
+    gLoggingDevice->Drain();
+  }
 }
 
 #if defined(RASPI_PLUS4) | defined(RASPI_PLUS4EMU)
@@ -186,13 +191,13 @@ bool ViceScreenApp::Initialize(void) {
   }
 
   if (mViceOptions.SerialEnabled()) {
-     if (!mLogger.Initialize(&mSerial)) {
-        return false;
-     }
+    if (!mLogger.Initialize(&mSerial)) {
+      return false;
+    }
   } else {
-     if (!mLogger.Initialize(&mNullDevice)) {
-        return false;
-     }
+    if (!mLogger.Initialize(&mNullDevice)) {
+      return false;
+    }
   }
 
   if (!mEmulatorCore->Init(&mViceOptions)) {
@@ -765,6 +770,25 @@ bool ViceStdioApp::Initialize(void) {
     return false;
   }
 
+  if (mViceOptions.FileLoggingEnabled()) {
+    CGlueStdioInit(&mSerial);
+    mLogger.SetNewTarget(&mSerial);
+    gLoggingDevice = new CLoggingDevice;
+    gLoggingDevice->Initialize(&mSerial);
+    if (!gLoggingDevice->OpenFile()) {
+      mLogger.Write(GetKernelName(), LogError, "Cannot open /bmc64.log");
+    } else {
+      char logBuffer[1024];
+      int logBytes;
+      while ((logBytes = mLogger.Read(logBuffer, sizeof logBuffer)) > 0) {
+        gLoggingDevice->Write(logBuffer, logBytes);
+      }
+
+      CGlueStdioInit(gLoggingDevice);
+      mLogger.SetNewTarget(gLoggingDevice);
+    }
+  }
+
   InitBootStat();
   LoadNetworkDevice();
   if (!ConfigureSystemTimeZone(mTimezoneOffsetMinutes)) {
@@ -803,6 +827,11 @@ void ViceStdioApp::Cleanup(void) {
   ViceNetworkSetSubsystem(nullptr);
   delete mNet;
   delete mWLAN;
+  if (gLoggingDevice != nullptr) {
+    gLoggingDevice->CloseFile();
+    delete gLoggingDevice;
+    gLoggingDevice = nullptr;
+  }
 
   // When mounting, fatfs gets ":" appended.  But StdioInit
   // does not.
