@@ -136,6 +136,7 @@ apply_patch_file "$SRC_DIR/src/patches/circle_usb_descriptor_patch.diff"
 apply_patch_file "$SRC_DIR/src/patches/circle_xbox360_gamepad_patch.diff"
 apply_patch_file "$SRC_DIR/src/patches/circle_tcpconnection_patch.diff"
 apply_patch_file "$SRC_DIR/src/patches/circle_ethernet_patch.diff"
+apply_patch_file "$SRC_DIR/src/patches/circle_wlan_patch.diff"
 if [ "$KASAN" = "1" ]
 then
        apply_patch_file "$SRC_DIR/src/patches/circle_kasan_patch.diff"
