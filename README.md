@@ -57,3 +57,7 @@ See the [contribution guidelines](docs/CONTRIBUTING.md).
 ## Project
 
 - https://github.com/randyrossi/bmc64
+
+## Licensing
+
+See [LICENSE](LICENSE) for BMC64's license and [Third-Party Software](docs/THIRD_PARTY.md) for information about third-party software.

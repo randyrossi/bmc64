@@ -100,6 +100,8 @@ Copy the ROMs for the machine you intend to use into its corresponding directory
 | **Optional ROMs** |  |  |
 | `p4fileio.rom` | N/A | Plus4Emu file I/O cartridge ROM with tape turbo |
 
+Plus4Emu is a separate emulator from VICE. See the original [Plus4Emu project](https://github.com/istvan-v/plus4emu) for information about its ROM requirements.
+
 ### PET
 
 | BMC ROM name | VICE 3.10 ROM name | Description |
