@@ -70,6 +70,9 @@ opened and the network stack has a running address.
 Wi-Fi requires a Raspberry Pi model with onboard WLAN and the required Wi-Fi
 firmware on the SD card.
 
+> [!WARNING]
+> Typing in the SSID and password in the fields in the BMC64 menu currently **ONLY** support letters and numbers. If you have special characters in your Wi-Fi SSID or password you need to enter them manually into `wpa_supplicant.conf`, see below.
+
 ### Configure from the menu
 
 1. Open `Network` and set `Network Device` to `WiFi`.
