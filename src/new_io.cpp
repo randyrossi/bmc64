@@ -771,9 +771,9 @@ extern "C" int _stat(const char *file, struct stat *st) {
      if (g_bootStatWhat[i] == BOOTSTAT_WHAT_STAT) {
         if (strend(circlePath.path, g_bootStatFile[i])) {
           st->st_mode = S_IFREG | S_IRUSR | S_IWUSR;
-           st->st_size = g_bootStatSize[i];
+          st->st_size = g_bootStatSize[i];
+          return 0;
         }
-        return 0;
      }
      else if (g_bootStatWhat[i] == BOOTSTAT_WHAT_FAIL) {
         if (strend(circlePath.path, g_bootStatFile[i])) {
