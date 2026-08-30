@@ -42,7 +42,7 @@ Copy the ROMs for the machine you intend to use into its corresponding directory
 | `chargen` | `chargen-390059-01.bin` | C128 character generator ROM |
 | `kernal64` | `kernal64-901227-03.bin` | C64-mode KERNAL ROM |
 | `basic64` | `basic64-901226-01.bin` | C64-mode BASIC ROM |
-| `charg64` | `chargen` | C64-mode character generator ROM |
+| `charg64` | `chargen-901225-01.bin` | C64-mode character generator ROM |
 | `d1541II` | `dos1541ii-251968-03.bin` | 1541-II drive ROM |
 | **Optional ROMs** |  |  |
 | `dos1541` | `dos1541-325302-01+901229-05.bin` | 1541 drive ROM |
