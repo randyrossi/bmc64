@@ -36,6 +36,13 @@ HTTP client behavior.
 
 **DO NOT** use it for credentials that must be protected.
 
+> [!WARNING]
+> The emulated SwiftLink modem occupies I/O space that some cartridges also
+use (for example REU, IDE64, GeoRAM, EasyFlash, MagicDisk or other `$DE00`/`$DF00` devices). If
+networking is enabled at the same time as a conflicting cartridge you may
+see crashes or a non-responsive modem. Try a different `Modem Address`, or
+set `Network Device` to `Off` when you are not using networking.
+
 # Requirements
 
 Wi-Fi requires Raspberry Pi firmware to be present in the `/firmware` directory
