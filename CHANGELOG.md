@@ -1,3 +1,10 @@
+## 5.0.8 pre-release
+  * Faster storage access
+    * Attaching large files is much faster (a 16 MB REU image went from ~12.5 seconds to ~1.1 seconds)
+    * Directory scanning of large folders is much faster (a 1300-file folder went from ~51 seconds to ~0.08 seconds)
+  * Boot log now reports the SD card bus speed (high-speed or standard)
+  * Added an optional storage-diagnostics build (`--io-stats`) for performance tracing
+
 ## 5.0.7 pre-release
   * Fix for wi-fi not connecting to eero7 #335
 

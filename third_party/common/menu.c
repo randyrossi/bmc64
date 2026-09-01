@@ -29,7 +29,6 @@
 #include <math.h>
 #include <assert.h>
 #include <dirent.h>
-#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,10 +54,14 @@
 #include "raspi_util.h"
 #include "ui.h"
 #include "usb_gamepad_defaults.h"
+#include "circle.h"
+#ifdef BMC64_IO_STATS
+#include "io_stats.h"
+#endif
 
 extern void reboot(void);
 
-#define VERSION_STRING "5.0.7"
+#define VERSION_STRING "5.0.8"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -544,30 +547,6 @@ static void remove_dir(char *path) {
   }
 }
 
-static int is_directory(DirType dir_type, const char *name) {
-  char path[MAX_STR_VAL_LEN * 2];
-  struct stat statbuf;
-
-  if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) {
-    return 1;
-  }
-
-  strncpy(path, fullpath(dir_type, ""), sizeof(path) - 1);
-  path[sizeof(path) - 1] = '\0';
-
-  if (path[0] != '\0' && path[strlen(path) - 1] != '/') {
-    strncat(path, "/", sizeof(path) - strlen(path) - 1);
-  }
-
-  strncat(path, name, sizeof(path) - strlen(path) - 1);
-
-  if (stat(path, &statbuf) != 0) {
-    return 0;
-  }
-
-  return S_ISDIR(statbuf.st_mode);
-}
-
 // Clears the file menu and populates it with files.
 static void list_files(struct menu_item *parent,
                        DirType dir_type, FileFilter filter,
@@ -576,6 +555,12 @@ static void list_files(struct menu_item *parent,
   struct dirent *ep;
   int i;
   int include;
+
+#ifdef BMC64_IO_STATS
+  // I/O test instrumentation: wall time + entry count for this listing.
+  unsigned long io_test_t0 = circle_get_ticks();
+  int io_test_entries = 0;
+#endif
 
   dp = opendir(fullpath(dir_type,""));
   if (dp == NULL) {
@@ -631,7 +616,10 @@ static void list_files(struct menu_item *parent,
 
   if (dp != NULL) {
     while (ep = readdir(dp)) {
-      if (is_directory(dir_type, ep->d_name)) {
+#ifdef BMC64_IO_STATS
+      io_test_entries++;
+#endif
+      if (ep->d_type & DT_DIR) {
         ui_menu_add_button_with_value(menu_id, &dirs_root, ep->d_name, 0,
                                       ep->d_name, "(dir)")
             ->sub_id = MENU_SUB_ENTER_DIR;
@@ -684,6 +672,12 @@ static void list_files(struct menu_item *parent,
 
   assert(dirs_root.first_child == NULL);
   assert(files_root.first_child == NULL);
+
+#ifdef BMC64_IO_STATS
+  printf("[io-test] list_files %s : %d entries, %u ms\n",
+         fullpath(dir_type, ""), io_test_entries,
+         (unsigned)((circle_get_ticks() - io_test_t0) / 1000));
+#endif
 }
 
 static void files_cursor_listener(struct menu_item* parent,
@@ -805,6 +799,33 @@ static void show_license() {
     ui_menu_add_button(MENU_TEXT, license_root, license[i]);
   }
 }
+
+#ifdef BMC64_IO_STATS
+static void show_io_stats() {
+  static char report[2048];
+  struct menu_item *root = ui_push_menu(-1, -1);
+  char *line;
+
+  // Also write the full-detail report to the log/serial.
+  circle_io_stats_dump();
+
+  io_stats_format_compact(report, sizeof(report));
+  line = strtok(report, "\n");
+  while (line != NULL) {
+    // ui menu item names are fixed-width; keep the on-screen view within
+    // bounds (the untruncated report went to the log above).
+    if (strlen(line) >= MAX_MENU_STR) {
+      line[MAX_MENU_STR - 1] = '\0';
+    }
+    ui_menu_add_button(MENU_TEXT, root, line);
+    line = strtok(NULL, "\n");
+  }
+
+  ui_menu_add_divider(root);
+  ui_menu_add_button(MENU_IO_STATS_RESET, root, "Reset counters");
+  ui_menu_add_button(MENU_IO_BENCHMARK, root, "Run I/O benchmark (to log)");
+}
+#endif /* BMC64_IO_STATS */
 
 static void configure_usb(int dev) {
   struct menu_item *usb_root = ui_push_menu(-1, -1);
@@ -1921,13 +1942,24 @@ static void select_file(struct menu_item *item) {
      case MENU_PLUS4_CART_C2_HI_FILE:
        attach_cart(item->id, item);
        return;
-    case MENU_REU_ATTACH_IMAGE_FILE:
-      if (emux_handle_reu_image_change(fullpath(DIR_CARTS, item->str_value)) == 0) {
+    case MENU_REU_ATTACH_IMAGE_FILE: {
+#ifdef BMC64_IO_STATS
+      unsigned long io_test_t0 = circle_get_ticks();
+#endif
+      int rc =
+          emux_handle_reu_image_change(fullpath(DIR_CARTS, item->str_value));
+#ifdef BMC64_IO_STATS
+      printf("[io-test] REU attach %s : rc=%d, %u ms\n",
+             item->str_value, rc,
+             (unsigned)((circle_get_ticks() - io_test_t0) / 1000));
+#endif
+      if (rc == 0) {
         ui_pop_all_and_toggle();
       } else {
         ui_error("Failed to attach REU image");
       }
       return;
+    }
     case MENU_REU_SAVE_IMAGE_AS_FILE:
       if (item->type == TEXTFIELD && strlen(item->str_value) == 0) {
         ui_error("Empty filename");
@@ -2909,6 +2941,20 @@ static void menu_value_changed(struct menu_item *item) {
   case MENU_LICENSE:
     show_license();
     return;
+#ifdef BMC64_IO_STATS
+  case MENU_IO_STATS:
+    show_io_stats();
+    return;
+  case MENU_IO_STATS_RESET:
+    io_stats_reset();
+    ui_info("I/O stats reset");
+    return;
+  case MENU_IO_BENCHMARK:
+    ui_info("Running I/O benchmark...");
+    circle_io_benchmark();
+    ui_info("Benchmark done - see bmc64.log");
+    return;
+#endif
   case MENU_USB_0_CONFIGURE:
   case MENU_USB_1_CONFIGURE:
   case MENU_USB_2_CONFIGURE:
@@ -3740,6 +3786,9 @@ void build_menu(struct menu_item *root) {
 
   ui_menu_add_button(MENU_ABOUT, root, "About...");
   ui_menu_add_button(MENU_LICENSE, root, "License...");
+#ifdef BMC64_IO_STATS
+  ui_menu_add_button(MENU_IO_STATS, root, "I/O Statistics...");
+#endif
 
   ui_menu_add_divider(root);
 

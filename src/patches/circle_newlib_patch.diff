@@ -204,10 +204,10 @@ index 000000000..268ea8aaa
 +    };
 +#endif
 diff --git a/newlib/libc/sys/circle/sys/dirent.h b/newlib/libc/sys/circle/sys/dirent.h
-index 2f4d48dcf..5098efe89 100644
+index 2f4d48dcf..b75867a00 100644
 --- a/newlib/libc/sys/circle/sys/dirent.h
 +++ b/newlib/libc/sys/circle/sys/dirent.h
-@@ -7,7 +7,9 @@ extern "C" {
+@@ -7,13 +7,23 @@ extern "C" {
  
  #include <sys/types.h>
  
@@ -217,4 +217,18 @@ index 2f4d48dcf..5098efe89 100644
 +#undef DIR
  
  typedef struct _CIRCLE_DIR DIR;
+ 
++/* d_type values. BMC64 sets this from the FatFs AM_DIR attribute already
++   returned by f_readdir(), so callers can tell files from directories
++   without an extra stat() per entry. */
++#define DT_UNKNOWN 0
++#define DT_REG     1
++#define DT_DIR     2
++
+ /* Directory entry as returned by readdir */
+ struct dirent {
+         ino_t  d_ino;
++        unsigned char d_type;
+         char   d_name[FF_LFN_BUF + 1];
+ };
  

@@ -143,6 +143,10 @@ To build and stage one emulator image, add `--machine` followed by `c64`, `c128`
 
 For a KASAN diagnostic build, set `KASAN_ENABLED = 1` in Circle's `Config.mk` before running the script, or pass `--kasan`. The script preserves an enabled setting when it regenerates Circle's configuration.
 
+For a build with the storage I/O instrumentation (SD/FatFs counters, the "I/O Statistics" menu screen, the raw-device benchmark, and boot/shutdown counter dumps to `/bmc64.log`), pass `--io-stats`. It is compiled out entirely by default. `--kasan` and `--io-stats` are also accepted directly by `make_all.sh`, e.g. `./make_all.sh pi3 --io-stats`.
+
+If you build with the individual scripts rather than `build_sdcard.sh`, pass `--io-stats` to **both** `make_all.sh` and `make_machines.sh` (e.g. `./make_all.sh pi3 --io-stats` then `./make_machines.sh pi3 --io-stats`) — `make_machines.sh` rebuilds the common library and the per-machine kernels, so it needs the flag too.
+
 ----
 ## Resources
 

@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/stat.h>
 
 // VICE includes
 #include "raspi_machine.h"
@@ -986,15 +987,17 @@ int emux_handle_ide64_image_change(int device, const char *path) {
 }
 
 int emux_handle_reu_image_change(const char *path) {
-  FILE *file;
   int size;
+  struct stat st;
 
-  file = fopen(path, MODE_READ);
-  if (file == NULL) {
+  /* Use stat() for the size. Opening the file and calling util_file_length()
+     seeks to EOF, which makes new_io.cpp slurp the entire (up to 16 MiB) image
+     into RAM just to measure it - one of two redundant full reads on a REU
+     attach. */
+  if (stat(path, &st) != 0 || !S_ISREG(st.st_mode)) {
     return -1;
   }
-  size = util_file_length(file);
-  fclose(file);
+  size = (int)st.st_size;
 
   if (size <= 0 || (size % 1024) != 0) {
     return -1;

@@ -17,8 +17,12 @@
 #include "vice_network.h"
 #include "network_time_sync.h"
 #include "../third_party/common/circle.h"
+#include "../third_party/common/io_stats.h"
 #include "../third_party/common/menu_logging.h"
 #include "fbl.h"
+#include <circle/bcm2835.h>
+#include <circle/bcmpropertytags.h>
+#include <circle/memio.h>
 
 static const unsigned int WIFI_SCAN_DURATION_US = 4000000;
 static const unsigned int WIFI_CONNECT_TIMEOUT_US = 30000000;
@@ -770,6 +774,20 @@ bool ViceStdioApp::Initialize(void) {
     return false;
   }
 
+  // Log the negotiated SD bus clock. The SDHOST clock divider (SDCDIV, 11 bits,
+  // holds divisor - 2) is programmed by Circle/firmware from the core clock;
+  // high-speed (SDR25) mode runs the bus near 50 MHz, the default near 25 MHz.
+  // Reads one documented BCM2835 register - no card I/O, no Circle patch.
+#if RASPPI <= 3
+  {
+    unsigned cdiv = read32(ARM_SDHOST_BASE + 0x0c) & 0x7ff;
+    unsigned sd_khz =
+        mMachineInfo.GetClockRate(CLOCK_ID_CORE) / ((cdiv + 2) * 1000);
+    mLogger.Write(GetKernelName(), LogNotice, "SD bus clock ~%u kHz (%s)",
+                  sd_khz, sd_khz >= 40000 ? "high-speed mode" : "default speed");
+  }
+#endif
+
   if (mViceOptions.FileLoggingEnabled()) {
     CGlueStdioInit(&mSerial);
     mLogger.SetNewTarget(&mSerial);
@@ -822,6 +840,11 @@ bool ViceStdioApp::Initialize(void) {
 }
 
 void ViceStdioApp::Cleanup(void) {
+#ifdef BMC64_IO_STATS
+  // Emit the final I/O counters while the log file is still open.
+  io_stats_dump("shutdown");
+#endif
+
   ViceNetworkSetStdioApp(nullptr);
   delete mWPASupplicant;
   ViceNetworkSetSubsystem(nullptr);

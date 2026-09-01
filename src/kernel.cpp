@@ -26,6 +26,7 @@
 
 extern "C" {
 #include "../third_party/common/usb_gamepad_defaults.h"
+#include "../third_party/common/io_stats.h"
 }
 
 CKernel *static_kernel = NULL;
@@ -249,6 +250,9 @@ int circle_mount_usb(int usb) {
 int circle_unmount_usb(int usb) {
   return static_kernel->circle_unmount_usb(usb);
 }
+
+// circle_io_stats_dump() / circle_io_benchmark() live in src/io_stats_bench.cpp
+// (compiled only with --io-stats).
 
 void circle_set_volume(int value) {
   static_kernel->circle_set_volume(value);
@@ -1711,6 +1715,13 @@ void CKernel::circle_boot_complete() {
     mViceSound->Playback(vol_percent_to_vchiq(mVolume), mNumSoundChannels);
 #endif
   }
+
+#ifdef BMC64_IO_STATS
+  // Report and then clear the I/O counters so post-boot measurements
+  // (directory browsing, image attach, ...) start from a clean slate.
+  io_stats_dump("boot complete");
+  io_stats_reset();
+#endif
 
   DisableBootStat();
 }

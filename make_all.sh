@@ -37,6 +37,7 @@ configure_vice()
 BOARD=""
 SKIP_PATCHES=0
 KASAN=0
+IO_STATS=0
 
 for arg in "$@"
 do
@@ -50,8 +51,11 @@ case "$arg" in
        --kasan)
               KASAN=1
               ;;
+       --io-stats)
+              IO_STATS=1
+              ;;
        *)
-              echo "Need arg [pi0|pi2|pi3|pi4] [--skip-patches] [--kasan]"
+              echo "Need arg [pi0|pi2|pi3|pi4] [--skip-patches] [--kasan] [--io-stats]"
               exit 1
               ;;
 esac
@@ -59,8 +63,16 @@ done
 
 if [ -z "$BOARD" ]
 then
-echo "Need arg [pi0|pi2|pi3|pi4] [--skip-patches] [--kasan]"
+echo "Need arg [pi0|pi2|pi3|pi4] [--skip-patches] [--kasan] [--io-stats]"
 exit 1
+fi
+
+# Opt-in storage I/O instrumentation (SD/FatFs counters, "I/O Statistics" menu
+# screen, raw benchmark). BMC64_IO_STATS is picked up by the common and kernel
+# Makefiles; IO_STATS also gates the diskio stats patch below. See docs/BUILDING.md.
+if [ "$IO_STATS" = "1" ]
+then
+       export BMC64_IO_STATS=1
 fi
 
 echo "Making for $BOARD"
@@ -137,6 +149,10 @@ apply_patch_file "$SRC_DIR/src/patches/circle_xbox360_gamepad_patch.diff"
 apply_patch_file "$SRC_DIR/src/patches/circle_tcpconnection_patch.diff"
 apply_patch_file "$SRC_DIR/src/patches/circle_ethernet_patch.diff"
 apply_patch_file "$SRC_DIR/src/patches/circle_wlan_patch.diff"
+if [ "$IO_STATS" = "1" ]
+then
+       apply_patch_file "$SRC_DIR/src/patches/circle_diskio_stats_patch.diff"
+fi
 if [ "$KASAN" = "1" ]
 then
        apply_patch_file "$SRC_DIR/src/patches/circle_kasan_patch.diff"
