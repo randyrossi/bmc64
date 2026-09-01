@@ -4,7 +4,12 @@
     * Directory scanning of large folders is much faster (a 1300-file folder went from ~51 seconds to ~0.08 seconds)
   * Boot log now reports the SD card bus speed (high-speed or standard)
   * Added an optional storage-diagnostics build (`--io-stats`) for performance tracing
-
+  * Fix BOOTSTAT_WHAT_STAT behaviour to correctly match on listed files (boot up optimisation)
+  * Documentation updates:
+    * [NETWORKING.md](docs/NETWORKING.md): additional clarifications
+    * [INSTALLATION.md](docs/INSTALLATION.md): improve rom information
+    * [THIRD_PARTY.md](docs/THIRD_PARTY.md): add third party details
+  
 ## 5.0.7 pre-release
   * Fix for wi-fi not connecting to eero7 #335
 
