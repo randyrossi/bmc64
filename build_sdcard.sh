@@ -16,6 +16,7 @@ BOARDS=()
 SKIP_PATCHES=0
 MACHINE=""
 KASAN=0
+IO_STATS=0
 
 while [ "$#" -gt 0 ]
 do
@@ -42,8 +43,11 @@ do
         --kasan)
             KASAN=1
             ;;
+        --io-stats)
+            IO_STATS=1
+            ;;
         *)
-            echo "Arguments must be board names, --machine MACHINE, or --skip-patches" >&2
+            echo "Arguments must be board names, --machine MACHINE, --skip-patches, --kasan, or --io-stats" >&2
             exit 1
             ;;
     esac
@@ -53,6 +57,14 @@ done
 if [ "${#BOARDS[@]}" -eq 0 ]
 then
     BOARDS=(pi0 pi2 pi3)
+fi
+
+# Opt-in storage I/O instrumentation. Exported here so every sub-build in this
+# script (make_all.sh, make_machines.sh, and the --machine kernel build below)
+# sees -DBMC64_IO_STATS; the flag is also passed explicitly to those scripts.
+if [ "$IO_STATS" -eq 1 ]
+then
+    export BMC64_IO_STATS=1
 fi
 
 if [ -n "$MACHINE" ]
@@ -174,6 +186,10 @@ do
     then
         make_all_arguments+=(--kasan)
     fi
+    if [ "$IO_STATS" -eq 1 ]
+    then
+        make_all_arguments+=(--io-stats)
+    fi
     ./make_all.sh "${make_all_arguments[@]}"
     kernel=$(kernel_for_board "$board")
 
@@ -207,7 +223,12 @@ do
         cp "$SRC_DIR/$kernel.$MACHINE" "$STAGING_DIR/$kernel.$MACHINE"
         printf '\nkernel=%s.%s\n' "$kernel" "$MACHINE" >> "$STAGING_DIR/config.txt"
     else
-        ./make_machines.sh "$board"
+        make_machines_arguments=("$board")
+        if [ "$IO_STATS" -eq 1 ]
+        then
+            make_machines_arguments+=(--io-stats)
+        fi
+        ./make_machines.sh "${make_machines_arguments[@]}"
         machines=(c64 c128 vic20 plus4 pet)
 
         if [ "$board" = "pi3" ]

@@ -1,0 +1,51 @@
+diff --git a/addon/fatfs/diskio.cpp b/addon/fatfs/diskio.cpp
+index 086bfdbd..ff06b81e 100644
+--- a/addon/fatfs/diskio.cpp
++++ b/addon/fatfs/diskio.cpp
+@@ -12,10 +12,18 @@
+ #include "diskio.h"		/* Declarations of disk functions */
+ #include <circle/device.h>
+ #include <circle/devicenameservice.h>
++#include <circle/timer.h>
+ #include <circle/util.h>
+ #include <circle/types.h>
+ #include <assert.h>
+ 
++/* BMC64 storage I/O instrumentation (third_party/common/io_stats.c).
++   No-ops while io_stats_enabled is zero. */
++extern "C" void io_stats_disk_read (unsigned sectors, unsigned count,
++				    unsigned elapsed_us, int unaligned);
++extern "C" void io_stats_disk_write (unsigned sectors, unsigned count,
++				     unsigned elapsed_us, int unaligned);
++
+ #if FF_MIN_SS != FF_MAX_SS
+ 	#error FF_MIN_SS != FF_MAX_SS is not supported!
+ #endif
+@@ -146,7 +154,12 @@ DRESULT disk_read (
+ 	offset *= SECTOR_SIZE;
+ 	pDevice->Seek (offset);
+ 
+-	if (pDevice->Read (pBuffer, nSize) < 0)
++	unsigned t0 = CTimer::GetClockTicks ();
++	int nResult = pDevice->Read (pBuffer, nSize);
++	io_stats_disk_read (nSize / 512, count, CTimer::GetClockTicks () - t0,
++			    pBuffer != buff);
++
++	if (nResult < 0)
+ 	{
+ 		return RES_ERROR;
+ 	}
+@@ -209,7 +222,12 @@ DRESULT disk_write (
+ 	offset *= SECTOR_SIZE;
+ 	pDevice->Seek (offset);
+ 
+-	if (pDevice->Write (pBuffer, nSize) < 0)
++	unsigned t0 = CTimer::GetClockTicks ();
++	int nResult = pDevice->Write (pBuffer, nSize);
++	io_stats_disk_write (nSize / 512, count, CTimer::GetClockTicks () - t0,
++			     pBuffer != buff);
++
++	if (nResult < 0)
+ 	{
+ 		return RES_ERROR;
+ 	}

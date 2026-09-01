@@ -19,10 +19,15 @@ extern int errno;
 #include <stdio.h>
 #include <sys/unistd.h>
 #include <circle/device.h>
+#include "io_stats.h"
+#ifdef BMC64_IO_STATS
+#include <circle/timer.h>
+#endif
 
 struct _CIRCLE_DIR {
   _CIRCLE_DIR() : mFirstRead(0), mOpen(0) {
     mEntry.d_ino = 0;
+    mEntry.d_type = DT_UNKNOWN;
     mEntry.d_name[0] = 0;
   }
 
@@ -69,7 +74,14 @@ struct _CIRCLE_DIR {
 
 #define MAX_OPEN_FILES 10
 #define MAX_OPEN_DIRS 10
-#define READ_BUF_SIZE 1024
+
+/* Stride for reading a file into RAM in slurp_file(). Each SD transfer pays a
+   large fixed cost (~200us on a Pi 3), so a big stride is ~6x faster than 1 KiB
+   (measured ~2.7 MB/s vs ~17 MB/s through FatFs). */
+#define SLURP_CHUNK 32768
+
+/* Initial size of the in-RAM buffer for a write-only file; grows by doubling. */
+#define WRITE_BUF_SIZE 1024
 
 static const char *pattern = "*";
 
@@ -184,7 +196,6 @@ struct CircleFile {
   int in_use;
   char fname[256];
 
-  char readBuf[READ_BUF_SIZE]; // tmp read buffer
   char *contents; // bytes for file in memory
   int allocated; // total bytes allocated for in memory file
   unsigned size; // total size of file in memory file
@@ -312,40 +323,55 @@ static CircleDir *FindCircleDirFromDIR(DIR *dir) {
 
 // Returns non zero value on any failure. Any memory will be
 // freed on error and file.contents nulled.
-static int slurp_file(CircleFile &file) {
+static int slurp_file(CircleFile &file, int by_lseek) {
+  (void)by_lseek;
   if (file.contents == nullptr) {
-    // Read the entire contents of the file into memory.
+    // Read the whole file into RAM. The size is known up front (f_size is just
+    // a struct field), so allocate it once and read straight into place - no
+    // scratch buffer, no realloc growth, no intermediate copy.
+    unsigned size = (unsigned)f_size(&file.file);
     file.size = 0;
-    unsigned total = 0;
+    if (size == 0) {
+      return 0; // empty file: nothing to buffer, leave contents == nullptr
+    }
+#ifdef BMC64_IO_STATS
+    unsigned slurp_t0 = CTimer::GetClockTicks();
+#endif
+    file.allocated = 0;
+
     if (f_lseek(&file.file, 0) != FR_OK) {
        return -1;
     }
-    while (true) {
+
+    file.contents = (char *)malloc(size);
+    if (file.contents == nullptr) {
+       return -1;
+    }
+    file.allocated = (int)size;
+
+    unsigned total = 0;
+    while (total < size) {
+      unsigned int want = size - total;
+      if (want > SLURP_CHUNK) {
+         want = SLURP_CHUNK;
+      }
       unsigned int num_read;
-      if (f_read(&file.file, file.readBuf, READ_BUF_SIZE, &num_read) != FR_OK) {
-        if (file.contents) {
-           free(file.contents);
-           file.contents = nullptr;
-        }  
+      if (f_read(&file.file, file.contents + total, want, &num_read) != FR_OK) {
+        free(file.contents);
+        file.contents = nullptr;
+        file.allocated = 0;
         return -1;
       }
-
       if (num_read == 0) {
-        break;
+        break; // file is shorter than f_size claimed; keep what we read
       }
-      
-      if (file.contents == nullptr) {
-        file.allocated = READ_BUF_SIZE;
-        file.contents = (char *)malloc(file.allocated);
-      } else if (file.allocated < total + num_read) {
-        file.allocated *= 2;
-        file.contents = (char *)realloc(file.contents, file.allocated);
-      }
-
-      memcpy(file.contents + total, file.readBuf, num_read);
       total += num_read;
-      file.size = total;
     }
+    file.size = total;
+
+#ifdef BMC64_IO_STATS
+    io_stats_slurp(file.size, CTimer::GetClockTicks() - slurp_t0, by_lseek);
+#endif
   }
   return 0;
 }
@@ -363,6 +389,7 @@ extern "C" int _open(char *file, int flags, int mode) {
   for (int i=0;i<g_bootStatNum;i++) {
      if (g_bootStatWhat[i] == BOOTSTAT_WHAT_FAIL) {
         if (strend(file, g_bootStatFile[i])) {
+          io_stats_open(masked_flags, 1);
           errno = EACCES;
           return -1;
         }
@@ -390,6 +417,8 @@ extern "C" int _open(char *file, int flags, int mode) {
       return -1;
     }
 
+    io_stats_open(masked_flags, 0);
+
     newFile.fopen_called = 1;
     newFile.contents = nullptr;
     newFile.position = 0;
@@ -401,7 +430,7 @@ extern "C" int _open(char *file, int flags, int mode) {
 
     // When file is opened O_RDWR, slurp it into memory.
     if (masked_flags == O_RDWR) {
-       if (slurp_file(newFile)) {
+       if (slurp_file(newFile, 0)) {
           errno = ENFILE;
           return -1;
        }
@@ -511,6 +540,7 @@ extern "C" int _read(int fildes, char *ptr, int len) {
      }
 
      file.position += num_read;
+     io_stats_read(0, num_read);
      return static_cast<int>(num_read);
   } else {
      // Read data from our internal buffer
@@ -525,6 +555,7 @@ extern "C" int _read(int fildes, char *ptr, int len) {
         memcpy(ptr, file.contents + file.position, max);
         file.position += max;
      }
+     io_stats_read(1, max);
      return static_cast<int>(max);
   }
 }
@@ -555,7 +586,7 @@ extern "C" int _write(int fildes, char *ptr, int len) {
 
   // Nothing allocated yet? Allocate now.
   if (file.contents == nullptr) {
-     file.allocated = READ_BUF_SIZE;
+     file.allocated = WRITE_BUF_SIZE;
      file.contents = (char *) malloc(file.allocated);
   }
 
@@ -583,6 +614,7 @@ extern "C" int _write(int fildes, char *ptr, int len) {
      }
   }
 
+  io_stats_write(file.mode, len);
   return len;
 }
 
@@ -661,6 +693,7 @@ extern "C" DIR *opendir(const char *name) {
   slot.dir.mOpen = 1;
   slot.dir.mFirstRead = 1;
   slot.in_use = 1;
+  io_stats_opendir();
   return &slot.dir;
 }
 
@@ -695,7 +728,9 @@ static struct dirent *do_readdir(DIR *dir, struct dirent *de) {
   if (haveEntry) {
     strcpy(de->d_name, fno.fname);
     de->d_ino = 0;
+    de->d_type = (fno.fattrib & AM_DIR) ? DT_DIR : DT_REG;
     result = de;
+    io_stats_readdir_entry();
   }
 
   return result;
@@ -772,16 +807,20 @@ extern "C" int _stat(const char *file, struct stat *st) {
         if (strend(circlePath.path, g_bootStatFile[i])) {
           st->st_mode = S_IFREG | S_IRUSR | S_IWUSR;
           st->st_size = g_bootStatSize[i];
+          io_stats_stat(1);
           return 0;
         }
      }
      else if (g_bootStatWhat[i] == BOOTSTAT_WHAT_FAIL) {
         if (strend(circlePath.path, g_bootStatFile[i])) {
+          io_stats_stat(1);
           errno = EBADF;
           return -1;
         }
      }
   }
+
+  io_stats_stat(0);
 
   FILINFO fno;
   if (f_stat(circlePath.path, &fno) == FR_OK) {
@@ -828,9 +867,11 @@ extern "C" int _lseek(int fildes, int ptr, int dir) {
     return -1;
   }
 
+  io_stats_lseek();
+
   if (file.mode == O_RDONLY) {
     // Assert FIL has been opened
-    if (slurp_file(file)) {
+    if (slurp_file(file, 1)) {
        errno = EACCES;
        return -1;
     }

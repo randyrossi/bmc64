@@ -11,6 +11,7 @@ APP_INCLUDES = -I"$(NEWLIBDIR)/include" -I$(STDDEF_INCPATH) \
 	      -I$(CIRCLEHOME)/include \
 	      -I$(CIRCLEHOME)/addon \
 	      -Ithird_party/vice-3.3/src \
+	      -Ithird_party/common \
 	      -I$(CIRCLEHOME)/addon/fatfs
 
 ifeq ($(MACHINE_CLASS),RASPI_PLUS4EMU)
@@ -19,7 +20,7 @@ endif
 
 EXTRAINCLUDE += $(APP_INCLUDES)
 
-OBJS	= src/main.o src/kernel.o src/new_io.o src/vicesound.o src/vicesoundbasedevice.o src/bmcmodem.o \
+OBJS	= src/main.o src/kernel.o src/new_io.o src/io_stats_bench.o src/vicesound.o src/vicesoundbasedevice.o src/bmcmodem.o \
 		  src/viceoptions.o src/viceapp.o src/vice_network.o src/network_time_sync.o src/fbl.o src/crt_pi_idx.o src/crt_pi_rgb.o
 
 ifeq ($(MACHINE_CLASS),RASPI_PLUS4EMU)
@@ -32,6 +33,12 @@ include $(CIRCLEHOME)/Rules.mk
 
 CFLAGS += $(APP_INCLUDES) -D $(MACHINE_CLASS)
 CPPFLAGS += $(APP_INCLUDES) -D $(MACHINE_CLASS) -fno-exceptions -fno-rtti
+
+# Opt-in storage I/O instrumentation.
+ifeq ($(BMC64_IO_STATS),1)
+CFLAGS += -DBMC64_IO_STATS
+CPPFLAGS += -DBMC64_IO_STATS
+endif
 
 FILTERED_CIRCLE_NEWLIB = libcirclenewlib-bmc64.a
 

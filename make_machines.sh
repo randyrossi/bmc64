@@ -8,7 +8,24 @@ then
    exit 1
 fi
 
-BOARD=$1
+BOARD=""
+IO_STATS=0
+
+for arg in "$@"
+do
+case "$arg" in
+       pi0|pi2|pi3|pi4)
+              BOARD="$arg"
+              ;;
+       --io-stats)
+              IO_STATS=1
+              ;;
+       *)
+              echo "Need arg [pi0|pi2|pi3|pi4] [--io-stats]"
+              exit 1
+              ;;
+esac
+done
 
 if [ "$BOARD" = "pi3" ]
 then
@@ -23,8 +40,16 @@ elif [ "$BOARD" = "pi4" ]
 then
 KERNEL=kernel7l.img
 else
-echo "Need arg [pi0|pi2|pi3|pi4]"
+echo "Need arg [pi0|pi2|pi3|pi4] [--io-stats]"
 exit
+fi
+
+# Opt-in storage I/O instrumentation. Must match how make_all.sh was invoked -
+# the diskio stats patch is applied there, and the common + kernel builds below
+# need -DBMC64_IO_STATS so io_stats.o provides the hooks that patch calls.
+if [ "$IO_STATS" = "1" ]
+then
+       export BMC64_IO_STATS=1
 fi
 
 cd third_party/common

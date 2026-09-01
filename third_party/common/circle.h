@@ -271,6 +271,17 @@ extern void circle_boot_complete();
 extern void circle_find_usb(int (*usb)[3]);
 extern int circle_mount_usb(int usb);
 extern int circle_unmount_usb(int usb);
+
+#ifdef BMC64_IO_STATS
+// Storage I/O measurement (see third_party/common/io_stats.h).
+// circle_io_stats_dump prints the accumulated counters to the log/serial.
+// circle_io_benchmark runs a raw-device + FatFs read timing test and logs
+// the result; it blocks core 0 for ~1-2 seconds while the emulator keeps
+// running on core 1.
+extern void circle_io_stats_dump(void);
+extern void circle_io_benchmark(void);
+#endif
+
 extern void circle_set_volume(int value);
 extern int circle_get_model();
 extern unsigned circle_get_arm_clock();
