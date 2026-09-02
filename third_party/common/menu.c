@@ -61,7 +61,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "5.0.8"
+#define VERSION_STRING "5.0.9"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -944,6 +944,24 @@ static int is_mouse_device(int device) {
   return device == JOYDEV_MOUSE || device == JOYDEV_MOUSE_MICROMYS;
 }
 
+// Returns the JOYDEV_* value a joyport menu item currently selects, but
+// only if that choice is valid for this machine. A settings file carried
+// over from another machine/version can select a choice that is out of
+// range or disabled here (e.g. a mouse on a PET userport); pushing that
+// to VICE pops up a "device N is not registered" error. In that case
+// reset the item to "None" (index 0) so the menu stays consistent and a
+// later Save cleans up the file.
+static int validated_port_choice(struct menu_item* it) {
+  if (it == NULL) {
+    return JOYDEV_NONE;
+  }
+  if (it->value < 0 || it->value >= it->num_choices ||
+      it->choice_disabled[it->value]) {
+    it->value = 0;
+  }
+  return it->choice_ints[it->value];
+}
+
 static void set_need_mouse() {
    int need_mouse = 0;
    int index;
@@ -1026,20 +1044,16 @@ void ui_set_joy_items() {
   }
 
   if (port_1_menu_item) {
-     set_joy_item_to_value(1,
-         port_1_menu_item->choice_ints[port_1_menu_item->value]);
+     set_joy_item_to_value(1, validated_port_choice(port_1_menu_item));
   }
   if (port_2_menu_item) {
-     set_joy_item_to_value(2,
-         port_2_menu_item->choice_ints[port_2_menu_item->value]);
+     set_joy_item_to_value(2, validated_port_choice(port_2_menu_item));
   }
   if (port_3_menu_item) {
-     set_joy_item_to_value(3,
-         port_3_menu_item->choice_ints[port_3_menu_item->value]);
+     set_joy_item_to_value(3, validated_port_choice(port_3_menu_item));
   }
   if (port_4_menu_item) {
-     set_joy_item_to_value(4,
-         port_4_menu_item->choice_ints[port_4_menu_item->value]);
+     set_joy_item_to_value(4, validated_port_choice(port_4_menu_item));
   }
   set_need_mouse();
 }
@@ -1053,6 +1067,15 @@ static int do_use_int_scaling(int layer, int silent) {
   } else {
     if (!silent)
        ui_error("Bad display num");
+    return 0;
+  }
+
+  // Needs the border/stretch menu items; nothing to do if the menu is not
+  // built yet (can happen if a video callback fires before build_menu()).
+  if (h_border_item[canvas_index] == NULL ||
+      v_border_item[canvas_index] == NULL ||
+      h_stretch_item[canvas_index] == NULL ||
+      v_stretch_item[canvas_index] == NULL) {
     return 0;
   }
 
@@ -1389,19 +1412,19 @@ static int save_settings() {
 // Make joydev reflect menu choice
 static void ui_set_joy_devs() {
   if (port_1_menu_item) {
-    joydevs[0].device = port_1_menu_item->choice_ints[port_1_menu_item->value];
+    joydevs[0].device = validated_port_choice(port_1_menu_item);
   }
 
   if (port_2_menu_item) {
-    joydevs[1].device = port_2_menu_item->choice_ints[port_2_menu_item->value];
+    joydevs[1].device = validated_port_choice(port_2_menu_item);
   }
 
   if (port_3_menu_item) {
-    joydevs[2].device = port_3_menu_item->choice_ints[port_3_menu_item->value];
+    joydevs[2].device = validated_port_choice(port_3_menu_item);
   }
 
   if (port_4_menu_item) {
-    joydevs[3].device = port_4_menu_item->choice_ints[port_4_menu_item->value];
+    joydevs[3].device = validated_port_choice(port_4_menu_item);
   }
 }
 
@@ -1769,6 +1792,25 @@ static void load_settings() {
     }
   }
   fclose(fp);
+
+  // Pin stretch factors read from the file to a sane value. An
+  // out-of-range value (in particular 0, from a corrupt or very old
+  // hand-edited settings file) would otherwise be sent to the frame
+  // buffer layer as-is and collapse the display. Guard the upper bound
+  // too: the item's max can itself be left bogus if geometry was not
+  // known when the menu was built.
+  struct menu_item* stretch_items[] = {
+    h_stretch_item[0], v_stretch_item[0],
+    emux_machine_class == BMC64_MACHINE_CLASS_C128 ? h_stretch_item[1] : NULL,
+    emux_machine_class == BMC64_MACHINE_CLASS_C128 ? v_stretch_item[1] : NULL,
+  };
+  for (int si = 0; si < 4; si++) {
+    struct menu_item* it = stretch_items[si];
+    if (it == NULL) continue;
+    int lo = it->min > 0 ? it->min : 1;
+    if (it->value < lo) it->value = lo;
+    if (it->max > lo && it->value > it->max) it->value = it->max;
+  }
 
   update_wifi_menu_enabled();
   emux_load_settings_done();
@@ -2298,6 +2340,19 @@ static void do_video_settings(int layer) {
      return;
   }
 
+  // VICE's video callbacks (emux_frame_buffer_changed / emux_geometry_changed)
+  // can fire from crtc_init()/vicii_init(), which run before build_menu()
+  // has created these menu items. We must not dereference them when NULL,
+  // but we must still run to the end of this function: the call it makes
+  // to emux_apply_video_adjustments() is what allocates the UI frame
+  // buffer (via emux_geometry_changed -> ui_geometry_changed). So fall
+  // back to sane defaults for the not-yet-existing items; build_menu()
+  // calls do_video_settings() again with the real values.
+  int menu_ready = h_stretch_item[canvas_index] != NULL;
+  int default_h_stretch =
+      emux_machine_class == BMC64_MACHINE_CLASS_VIC20 ? DEFAULT_VIC_H_STRETCH
+                                                     : DEFAULT_VICII_H_STRETCH;
+
   hcenter_item = h_center_item[canvas_index];
   vcenter_item = v_center_item[canvas_index];
   hborder_item = h_border_item[canvas_index];
@@ -2309,12 +2364,12 @@ static void do_video_settings(int layer) {
   use_h_int_stretch = use_h_integer_stretch[canvas_index];
   use_v_int_stretch = use_v_integer_stretch[canvas_index];
 
-  int hc = hcenter_item->value;
-  int vc = vcenter_item->value;
+  int hc = menu_ready ? hcenter_item->value : 0;
+  int vc = menu_ready ? vcenter_item->value : 0;
   int vid_hc = hc;
   int vid_vc = vc;
 
-  if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
+  if (menu_ready && emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      if ((active_display_item->value == MENU_ACTIVE_DISPLAY_VICII && layer == FB_LAYER_VIC) ||
          (active_display_item->value == MENU_ACTIVE_DISPLAY_VDC && layer == FB_LAYER_VDC)) {
         lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = layer == FB_LAYER_VIC ? 0 : 1;
@@ -2364,13 +2419,13 @@ static void do_video_settings(int layer) {
      lpad = 0; rpad = 0; tpad = 0; bpad = 0; zlayer = 0;
   }
 
-  int h = hborder_item->value;
-  int v = vborder_item->value;
-  double hs = (double)(h_str_item->value) / 1000.0d;
-  double vs = (double)(v_str_item->value) / 1000.0d;
+  int h = menu_ready ? hborder_item->value : 0;
+  int v = menu_ready ? vborder_item->value : 0;
+  double hs = (double)(menu_ready ? h_str_item->value : default_h_stretch) / 1000.0d;
+  double vs = (double)(menu_ready ? v_str_item->value : DEFAULT_VICII_V_STRETCH) / 1000.0d;
 
   double vid_hstretch = hs;
-  if (emux_machine_class == BMC64_MACHINE_CLASS_C128 &&
+  if (menu_ready && emux_machine_class == BMC64_MACHINE_CLASS_C128 &&
           active_display_item->value == MENU_ACTIVE_DISPLAY_SIDE_BY_SIDE) {
      // For side-by-side, it makes more sense to fill horizontal then scale
      // vertical since we just cut horizontal in half. So pass in negative
@@ -4767,7 +4822,12 @@ void emux_geometry_changed(int layer) {
 
 void emux_frame_buffer_changed(int layer) {
   int canvas_index = layer == FB_LAYER_VIC ? VIC_INDEX : VDC_INDEX;
-  if (use_scaling_params_item[canvas_index]->value) {
+  // This can be called from crtc_init()/vicii_init(), before build_menu()
+  // has created the menu items. The integer-scaling check needs them, but
+  // do_video_settings() must always run (it allocates the UI frame buffer),
+  // and it tolerates the items being NULL.
+  if (use_scaling_params_item[canvas_index] != NULL &&
+      use_scaling_params_item[canvas_index]->value) {
      if (!do_use_int_scaling(layer, 1 /* silent */)) {
         use_scaling_params_item[canvas_index]->value = 0;
      }

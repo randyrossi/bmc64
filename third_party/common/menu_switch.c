@@ -47,6 +47,14 @@
 #define ERROR_9 256
 #define ERROR_10 512
 
+// BMC64's default GPU memory split (MB). Most machine profiles are happy
+// with this. A profile that needs more (currently only the PET 1080p HDMI
+// modes, where the CRT shader's triple-buffered full screen EGL surface
+// does not fit a 64MB split) asks for a higher floor with a gpu_mem= line
+// in machines.txt; switching to any profile that doesn't ask resets the
+// split back to this default.
+#define DEFAULT_GPU_MEM 64
+
 struct s_cfg_flags {
   // Have flags for cmdline.txt
   int have_cycles_per_second;
@@ -63,6 +71,7 @@ struct s_cfg_flags {
 
   // Have flags for config.txt
   int have_kernel;
+  int have_gpu_mem;
   int have_hdmi_timings;
   int have_cvt;
   int have_dpi_timings;
@@ -317,6 +326,22 @@ static void apply_override_s(char *line,
        } else {
           line[0] = '\0';
        }
+       return;
+    }
+
+    // gpu_mem: a profile can raise the floor (machines.txt gpu_mem=N) but
+    // never lowers a bigger value the user chose themselves. Any profile
+    // that doesn't ask resets the split back to the BMC64 default.
+    if(strcmp(key, "gpu_mem") == 0) {
+       cfg_flags->have_gpu_mem = 1;
+       struct machine_option* gm = find_option("gpu_mem", head->options);
+       int want = DEFAULT_GPU_MEM;
+       if (gm) {
+          int floor = atoi(gm->value);
+          int current = atoi(value);
+          want = current > floor ? current : floor;
+       }
+       snprintf(line, CONFIG_TXT_LINE_LEN, "gpu_mem=%d\n", want);
        return;
     }
 
@@ -694,6 +719,17 @@ static int apply_config(struct machine_entry* head, int pi_model, struct s_cfg_f
   // now.
   if (!cfg_flags->have_kernel && cfg_flags->need_kernel) {
     fprintf(fp2,"kernel=%s\n", kernel_name);
+  }
+
+  // If config.txt had no gpu_mem line at all, add the floor this profile
+  // asks for (e.g. PET 1080p). Profiles that don't ask inherit the
+  // firmware default and need no line.
+  if (!cfg_flags->have_gpu_mem) {
+    found = find_option("gpu_mem", head->options);
+    if (found) {
+       int floor = atoi(found->value);
+       fprintf(fp2,"gpu_mem=%d\n", floor > DEFAULT_GPU_MEM ? floor : DEFAULT_GPU_MEM);
+    }
   }
 
   // Ensure we add custom timings if present.

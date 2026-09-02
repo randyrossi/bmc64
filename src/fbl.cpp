@@ -781,6 +781,8 @@ void FrameBufferLayer::Show() {
 
   int dst_w;
   int dst_h;
+
+  // SetStretch() refuses a zero component, so these should always hold.
   assert (hstretch_ != 0);
   assert (vstretch_ != 0);
 
@@ -918,21 +920,68 @@ void FrameBufferLayer::Show() {
     egl_native_window_.width = display_width_;
     egl_native_window_.height = display_height_;
     egl_surface_ = eglCreateWindowSurface(egl_display_, egl_config_, &egl_native_window_, NULL );
-    assert(egl_surface_ != EGL_NO_SURFACE);
 
-    EGLBoolean result;
-    result = eglMakeCurrent(egl_display_, egl_surface_, egl_surface_, egl_context_);
-    assert(EGL_FALSE != result);
-    //check("eglMakeCurrent");
+    if (egl_surface_ == EGL_NO_SURFACE) {
+      // The VideoCore could not allocate the window surface. This is
+      // typically GPU memory exhaustion: a triple buffered full screen
+      // surface at 1080p needs ~25MB and does not fit the default
+      // gpu_mem=64 split. Rather than halt the machine, fall back to the
+      // plain dispmanx scaling path so the emulator still runs, just
+      // without the CRT shader for this layer.
+      printf("fbl: eglCreateWindowSurface failed (%dx%d); "
+             "disabling CRT shader for this layer\n",
+             display_width_, display_height_);
 
-    ShaderInit();
-    ShaderUpdate();
+      // Remove the element we just added. It was set up for the shader
+      // (1:1 src rect, no dispmanx scaling); we re-add it below with a
+      // cropping src rect so dispmanx does the scaling instead.
+      dispman_update = vc_dispmanx_update_start(0);
+      vc_dispmanx_element_remove(dispman_update, dispman_element_);
+      vc_dispmanx_update_submit(dispman_update, NULL, NULL);
 
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+      // Drop the GL context created in Allocate(). The dispmanx-only
+      // path does not use it and FreeInternal() keys its cleanup off
+      // uses_shader_, so it would otherwise leak.
+      eglDestroyContext(egl_display_, egl_context_);
+      egl_context_ = EGL_NO_CONTEXT;
+      uses_shader_ = false;
 
-    eglSwapInterval(egl_display_, 0);
-    eglSwapBuffers(egl_display_, egl_surface_);
+      vc_dispmanx_rect_set(&src_rect_,
+                           src_x_ << 16,
+                           src_y_ << 16,
+                           src_w_ << 16,
+                           src_h_ << 16);
+
+      dispman_update = vc_dispmanx_update_start(0);
+      assert( dispman_update );
+      rnum_ = 0;
+      dispman_element_ = vc_dispmanx_element_add(dispman_update,
+                                                dispman_display_,
+                                                layer_,
+                                                &scale_dst_rect_,
+                                                dispman_resource_[rnum_],
+                                                &src_rect_,
+                                                DISPMANX_PROTECTION_NONE,
+                                                &alpha_,
+                                                NULL,             // clamp
+                                                DISPMANX_NO_ROTATE);
+      ret = vc_dispmanx_update_submit(dispman_update, NULL, NULL);
+      assert( ret == 0 );
+    } else {
+      EGLBoolean result;
+      result = eglMakeCurrent(egl_display_, egl_surface_, egl_surface_, egl_context_);
+      assert(EGL_FALSE != result);
+      //check("eglMakeCurrent");
+
+      ShaderInit();
+      ShaderUpdate();
+
+      glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+      glClear(GL_COLOR_BUFFER_BIT);
+
+      eglSwapInterval(egl_display_, 0);
+      eglSwapBuffers(egl_display_, egl_surface_);
+    }
   }
 
   if (mode_ == VC_IMAGE_8BPP) {
@@ -1166,6 +1215,16 @@ void FrameBufferLayer::SetSrcRect(int x, int y, int w, int h) {
 
 // Set horizontal/vertical multipliers
 void FrameBufferLayer::SetStretch(double hstretch, double vstretch, int hintstr, int vintstr, int use_hintstr, int use_vintstr) {
+  if (hstretch == 0 || vstretch == 0) {
+    // A zero component would collapse the destination rect and trips an
+    // assert in Show(). Should not happen now that the menu code passes
+    // defaults before it is built, but keep this as a last resort so a
+    // bad value degrades instead of halting the machine.
+    printf("fbl: SetStretch layer=%d given a zero component; keeping usable value\n",
+           layer_);
+    if (hstretch == 0) hstretch = hstretch_ != 0 ? hstretch_ : 1.0;
+    if (vstretch == 0) vstretch = vstretch_ != 0 ? vstretch_ : 1.0;
+  }
   hstretch_ = hstretch;
   vstretch_ = vstretch;
   hintstr_ = hintstr;

@@ -1,3 +1,10 @@
+## 5.0.9 pre-release
+  * Fix PET 1080p HDMI modes crashing on boot with the CRT shader enabled
+    * Add gpu_mem=128 to machines.txt and enable for PET machine
+    * Add graceful fallback if gpu_mem=64 is exceeded (disable shader)
+  * Fix PET boot crash where VICE's video callbacks run before the menu is built (NULL menu items -> bad stretch -> assert/data abort on Circle 51)
+  * Tolerate stale (PET) settings file entries
+
 ## 5.0.8 pre-release
   * Faster storage access
     * Attaching large files is much faster (a 16 MB REU image went from ~12.5 seconds to ~1.1 seconds)
