@@ -781,6 +781,8 @@ void FrameBufferLayer::Show() {
 
   int dst_w;
   int dst_h;
+
+  // SetStretch() refuses a zero component, so these should always hold.
   assert (hstretch_ != 0);
   assert (vstretch_ != 0);
 
@@ -1213,6 +1215,16 @@ void FrameBufferLayer::SetSrcRect(int x, int y, int w, int h) {
 
 // Set horizontal/vertical multipliers
 void FrameBufferLayer::SetStretch(double hstretch, double vstretch, int hintstr, int vintstr, int use_hintstr, int use_vintstr) {
+  if (hstretch == 0 || vstretch == 0) {
+    // A zero component would collapse the destination rect and trips an
+    // assert in Show(). Should not happen now that the menu code passes
+    // defaults before it is built, but keep this as a last resort so a
+    // bad value degrades instead of halting the machine.
+    printf("fbl: SetStretch layer=%d given a zero component; keeping usable value\n",
+           layer_);
+    if (hstretch == 0) hstretch = hstretch_ != 0 ? hstretch_ : 1.0;
+    if (vstretch == 0) vstretch = vstretch_ != 0 ? vstretch_ : 1.0;
+  }
   hstretch_ = hstretch;
   vstretch_ = vstretch;
   hintstr_ = hintstr;

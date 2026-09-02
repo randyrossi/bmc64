@@ -263,6 +263,10 @@ void ui_draw_rect_buf(int x, int y, int w, int h, int color, int fill,
     dst_pitch = ui_fb_pitch;
     dst = ui_fb;
   }
+  // Still nothing to draw into (ui frame buffer not allocated yet).
+  if (dst == NULL) {
+    return;
+  }
   x2 = x + w;
   y2 = y + h;
   for (xx = x, yy = y; yy < y2; xx++) {
@@ -488,6 +492,11 @@ static void ui_action_frame() {
 
 void ui_render_single_frame() {
   menu_update_network_status();
+
+  // Nothing to render into until ui_geometry_changed() has allocated it.
+  if (ui_fb == NULL) {
+    return;
+  }
 
   // Start with transparent
   memset(ui_fb, TRANSPARENT_COLOR, ui_fb_h * ui_fb_pitch);
@@ -1140,6 +1149,13 @@ static void ui_draw_shadow_text(const char* txt, int *x, int *y, int col) {
 void ui_render_now(int menu_stack_index) {
   int index = 0;
   int indent = 0;
+
+  // The UI frame buffer is allocated lazily by ui_geometry_changed(). If
+  // something tries to render before that has happened (e.g. an early
+  // ui_error()), there is nothing to draw into.
+  if (ui_fb == NULL) {
+    return;
+  }
 
   if (menu_stack_index == -1) {
     menu_stack_index = current_menu;
