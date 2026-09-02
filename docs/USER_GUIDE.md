@@ -133,6 +133,15 @@ Valid video output types are HDMI, Composite, DPI
 For HDMI, you should choose either a 50hz or 60hz mode.
 See below for notes on using DPI.
 
+A `gpu_mem` parameter may be added to a config to raise the GPU memory
+split floor for that mode. This is needed for 1080p HDMI modes with the
+CRT shader enabled, where the default 64MB split is not enough to
+allocate the full screen render surface (the PET 1080p configs set
+`gpu_mem=128` for this reason). Switching to any config that does not
+specify `gpu_mem` resets the split back to the 64MB default, so a value
+you set by hand in `config.txt` will not survive a machine switch unless
+you also add it to the `machines.txt` entry.
+
 If you want to use composite out, you MUST set machine_timing parameter to ntsc-composite or pal-composite and set the corresponding sdtv_mode. Otherwise, you will have audio synchronization issues.
 
 Raspberry Pi Video Mode     | machine_timing | cycles_per_second
