@@ -2,6 +2,8 @@
   * Fix PET 1080p HDMI modes crashing on boot with the CRT shader enabled
     * Add gpu_mem=128 to machines.txt and enable for PET machine
     * Add graceful fallback if gpu_mem=64 is exceeded (disable shader)
+  * Fix PET boot crash where VICE's video callbacks run before the menu is built (NULL menu items -> bad stretch -> assert/data abort on Circle 51)
+  * Tolerate stale (PET) settings file entries
 
 ## 5.0.8 pre-release
   * Faster storage access
