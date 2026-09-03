@@ -1,42 +1,23 @@
-name: Bug report
-description: Report a problem or unexpected behaviour
-title: "[BUG] "
-labels: ["bug"]
+name: Question
+description: Ask for help or guidance with the project
+title: "[QUESTION] "
+labels: ["question"]
 body:
   - type: textarea
-    id: description
+    id: question
     attributes:
-      label: Description
-      description: Please provide a clear description of the problem.
+      label: Question
+      description: What would you like help with? Please describe your question as clearly as possible and include what you are trying to achieve.
     validations:
       required: true
 
   - type: textarea
-    id: steps
+    id: tried
     attributes:
-      label: Steps to Reproduce
-      value: |
-        1.
-        2.
-        3.
-    validations:
-      required: true
-
-  - type: textarea
-    id: expected
-    attributes:
-      label: Expected Behaviour
-      description: What did you expect to happen?
-    validations:
-      required: true
-
-  - type: textarea
-    id: actual
-    attributes:
-      label: Actual Behaviour
-      description: What happened instead?
-    validations:
-      required: true
+      label: What Have You Tried?
+      description: |
+        Tell us what you have already tried, including any troubleshooting steps you have taken.
+        If you followed a guide or instructions, please mention which one.
 
   - type: dropdown
     id: pi-model
@@ -70,12 +51,12 @@ body:
   - type: textarea
     id: logs
     attributes:
-      label: Logs / Error Messages
-      description: Please include any relevant logs, error messages, or console output.
+      label: Logs / Output
+      description: If relevant, include any logs, error messages, commands, or other output that may help us answer your question.
       render: text
 
   - type: textarea
     id: additional
     attributes:
       label: Additional Information
-      description: Add anything else that may help us understand or reproduce the problem.
+      description: Add any other details, screenshots, links, or context that may help us understand your question.

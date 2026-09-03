@@ -1,0 +1,48 @@
+name: Information
+description: Share useful information, discoveries, tips, or knowledge with the community
+title: "[INFO] "
+labels: ["information"]
+body:
+  - type: textarea
+    id: information
+    attributes:
+      label: Information
+      description: |
+        What would you like to share?
+        This could be something you discovered while using the project, a useful tip, hardware or software compatibility information, a workaround, an interesting use case, or anything else you think other users may find helpful.
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: |
+        Please provide enough information for others to understand and make use of what you are sharing.
+        Where relevant, include things such as:
+        - Raspberry Pi model
+        - Operating system and version
+        - Project version or commit
+        - Hardware or peripherals being used
+        - Configuration changes
+        - Commands or steps involved
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why Might This Be Useful?
+      description: Briefly explain who you think this information could help or why it may be useful to other users.
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: If applicable, include links to documentation, discussions, related issues, or other useful resources.
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Information
+      description: Add anything else that may be relevant.
