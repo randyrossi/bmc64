@@ -172,6 +172,11 @@ void cartridge_set_default(void) { }
 void cartridge_freeze(void) { }
 
 void emux_add_machine_options(struct menu_item* parent) {
+  struct menu_item* roms_parent = ui_menu_add_folder(parent, "ROMs...");
+  ui_menu_add_button(MENU_LOAD_KERNAL, roms_parent, "Load Kernal ROM...");
+  ui_menu_add_button(MENU_LOAD_BASIC, roms_parent, "Load Basic ROM...");
+  ui_menu_add_button(MENU_LOAD_CHARGEN, roms_parent, "Load Chargen ROM...");
+
   struct menu_item* model_parent = ui_menu_add_folder(parent, "Model...");
   int timing = circle_get_machine_timing();
 
