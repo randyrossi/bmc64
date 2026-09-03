@@ -202,6 +202,7 @@ static drive_type_info_t drive_type_info_list[] = {
     { DRIVE_NAME_1581, DRIVE_TYPE_1581 },
     { DRIVE_NAME_2000, DRIVE_TYPE_2000 },
     { DRIVE_NAME_4000, DRIVE_TYPE_4000 },
+    { DRIVE_NAME_CMDHD, DRIVE_TYPE_CMDHD },
     { NULL, -1 }
 };
 
