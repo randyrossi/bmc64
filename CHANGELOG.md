@@ -1,3 +1,6 @@
+## 5.0.10 pre-release
+  * Add a `ROMs` sub-menu to the `Machine` menu in Plus/4 mode
+
 ## 5.0.9 pre-release
   * Fix PET 1080p HDMI modes crashing on boot with the CRT shader enabled
     * Add gpu_mem=128 to machines.txt and enable for PET machine
