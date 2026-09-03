@@ -1,3 +1,8 @@
+## 5.0.10 pre-release
+  * Add missing CMD HD drive option for Plus/4, lost in the original backport
+  * Drives > Change ROM... now only lists the drive ROMs each machine supports
+  * [INSTALLATION.md](docs/INSTALLATION.md): now only lists the drive ROMs each machine supports
+
 ## 5.0.9 pre-release
   * Fix PET 1080p HDMI modes crashing on boot with the CRT shader enabled
     * Add gpu_mem=128 to machines.txt and enable for PET machine
