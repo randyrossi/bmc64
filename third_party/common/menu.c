@@ -61,7 +61,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "5.0.9"
+#define VERSION_STRING "5.0.10"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -881,16 +881,42 @@ static void filesystem_change_volume(struct menu_item *item) {
 
 static void drive_change_rom() {
   struct menu_item *root = ui_push_menu(12, 8);
-  struct menu_item *item;
 
-  item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1541, root, "1541...");
-  item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1541II, root, "1541II...");
-  item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1551, root, "1551...");
-  item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1571, root, "1571...");
-  item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1581, root, "1581...");
-  item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_2000, root, "FD2000...");
-  item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_4000, root, "FD4000...");
-  item = ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_CMDHD, root, "CMDHD...");
+  // Only offer the drive ROMs the current machine can actually use. This
+  // mirrors the bus support VICE enforces in drive_check_type(): the IEC
+  // serial drives (incl. CMD HD) on C64/C128/VIC20, those plus the TCBM
+  // 1551 on Plus/4, and the IEEE-488 drives on the PET. BMC64 has no
+  // IEEE-488 interface option, so C64/C128/VIC20 never see the IEEE drive
+  // ROMs.
+  switch (emux_machine_class) {
+  case BMC64_MACHINE_CLASS_PET:
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_2031, root, "2031...");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_2040, root, "2040...");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_3040, root, "3040...");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_4040, root, "4040...");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1001, root, "1001...");
+    break;
+  case BMC64_MACHINE_CLASS_PLUS4:
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1541, root, "1541...");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1541II, root, "1541II...");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1551, root, "1551...");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1571, root, "1571...");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1581, root, "1581...");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_2000, root, "FD2000...");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_4000, root, "FD4000...");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_CMDHD, root, "CMDHD...");
+    break;
+  default:
+    // C64, C128, VIC20
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1541, root, "1541...");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1541II, root, "1541II...");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1571, root, "1571...");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_1581, root, "1581...");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_2000, root, "FD2000...");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_4000, root, "FD4000...");
+    ui_menu_add_button(MENU_DRIVE_CHANGE_ROM_CMDHD, root, "CMDHD...");
+    break;
+  }
 }
 
 static void ui_set_hotkeys() {
@@ -1914,6 +1940,11 @@ static void select_file(struct menu_item *item) {
      case MENU_DRIVE_ROM_FILE_2000:
      case MENU_DRIVE_ROM_FILE_4000:
      case MENU_DRIVE_ROM_FILE_CMDHD:
+     case MENU_DRIVE_ROM_FILE_2031:
+     case MENU_DRIVE_ROM_FILE_2040:
+     case MENU_DRIVE_ROM_FILE_3040:
+     case MENU_DRIVE_ROM_FILE_4040:
+     case MENU_DRIVE_ROM_FILE_1001:
        emux_handle_rom_change(item, fullpath);
        // Two pops necessary here.
        ui_pop_menu();
@@ -2160,6 +2191,14 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
   case MENU_DRIVE_ROM_FILE_1551:
   case MENU_DRIVE_ROM_FILE_1571:
   case MENU_DRIVE_ROM_FILE_1581:
+  case MENU_DRIVE_ROM_FILE_2000:
+  case MENU_DRIVE_ROM_FILE_4000:
+  case MENU_DRIVE_ROM_FILE_CMDHD:
+  case MENU_DRIVE_ROM_FILE_2031:
+  case MENU_DRIVE_ROM_FILE_2040:
+  case MENU_DRIVE_ROM_FILE_3040:
+  case MENU_DRIVE_ROM_FILE_4040:
+  case MENU_DRIVE_ROM_FILE_1001:
     return DIR_ROMS;
   case MENU_AUTOSTART_FILE:
   case MENU_LOADPRG_FILE:
@@ -2258,6 +2297,12 @@ static void relist_files_after_dir_change(struct menu_item *item) {
   case MENU_DRIVE_ROM_FILE_1581:
   case MENU_DRIVE_ROM_FILE_2000:
   case MENU_DRIVE_ROM_FILE_4000:
+  case MENU_DRIVE_ROM_FILE_CMDHD:
+  case MENU_DRIVE_ROM_FILE_2031:
+  case MENU_DRIVE_ROM_FILE_2040:
+  case MENU_DRIVE_ROM_FILE_3040:
+  case MENU_DRIVE_ROM_FILE_4040:
+  case MENU_DRIVE_ROM_FILE_1001:
     show_files(DIR_ROMS, FILTER_NONE, item->id, 1);
     break;
   case MENU_AUTOSTART_FILE:
@@ -2798,6 +2843,21 @@ static void menu_value_changed(struct menu_item *item) {
     return;
   case MENU_DRIVE_CHANGE_ROM_CMDHD:
     show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_CMDHD, 0);
+    return;
+  case MENU_DRIVE_CHANGE_ROM_2031:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_2031, 0);
+    return;
+  case MENU_DRIVE_CHANGE_ROM_2040:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_2040, 0);
+    return;
+  case MENU_DRIVE_CHANGE_ROM_3040:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_3040, 0);
+    return;
+  case MENU_DRIVE_CHANGE_ROM_4040:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_4040, 0);
+    return;
+  case MENU_DRIVE_CHANGE_ROM_1001:
+    show_files(DIR_ROMS, FILTER_NONE, MENU_DRIVE_ROM_FILE_1001, 0);
     return;
   case MENU_ATTACH_TAPE:
     show_files(DIR_TAPES, FILTER_TAPE, MENU_TAPE_FILE, 0);
