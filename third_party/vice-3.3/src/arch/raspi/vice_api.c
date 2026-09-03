@@ -943,6 +943,21 @@ void emux_handle_rom_change(struct menu_item* item, fullpath_func f_fullpath) {
      case MENU_DRIVE_ROM_FILE_CMDHD:
        resources_set_string("DosNameCMDHD", item->str_value);
        return;
+     case MENU_DRIVE_ROM_FILE_2031:
+       resources_set_string("DosName2031", item->str_value);
+       return;
+     case MENU_DRIVE_ROM_FILE_2040:
+       resources_set_string("DosName2040", item->str_value);
+       return;
+     case MENU_DRIVE_ROM_FILE_3040:
+       resources_set_string("DosName3040", item->str_value);
+       return;
+     case MENU_DRIVE_ROM_FILE_4040:
+       resources_set_string("DosName4040", item->str_value);
+       return;
+     case MENU_DRIVE_ROM_FILE_1001:
+       resources_set_string("DosName1001", item->str_value);
+       return;
      case MENU_KERNAL_FILE:
        resources_set_string("KernalName", item->str_value);
        return;
