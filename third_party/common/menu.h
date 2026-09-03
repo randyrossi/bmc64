@@ -298,7 +298,7 @@ typedef enum {
 
    MENU_MAKE_CART_DEFAULT,
 
-   // C64/Vic20
+   // C64/Vic20/Plus4
    MENU_LOAD_KERNAL,
    MENU_KERNAL_FILE,
    MENU_LOAD_BASIC,
