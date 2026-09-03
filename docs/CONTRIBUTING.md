@@ -1,91 +1,56 @@
 # Contributing
 
-When contributing to this repository, please first discuss the change you wish to make via issue,
-email, or any other method with the owners of this repository before making a change.
+Thanks for your interest in contributing! Contributions of all kinds are welcome, including bug fixes, new features, documentation improvements, and other enhancements.
 
-Please note we have a code of conduct, please follow it in all your interactions with the project.
+Before starting a significant change, please open an issue or discussion to describe what you would like to change. This helps avoid duplicated work and gives maintainers and contributors an opportunity to discuss the proposed approach.
+
+Please follow the project's [Code of Conduct](/docs/CODE_OF_CONDUCT.md) in all interactions with the community.
 
 ## Pull Request Process
 
-1. Ensure any install or build dependencies are removed before the end of the layer when doing a
-   build.
-2. Update the README.md with details of changes to the interface, this includes new environment
-   variables, exposed ports, useful file locations and container parameters.
-3. Increase the version numbers in any examples files and the README.md to the new version that this
-   Pull Request would represent.
-4. You may merge the Pull Request in once you have the sign-off of the main developer.
+1. **Fork and branch**
+   Fork the repository and create a new branch for your changes. Use a clear, descriptive branch name.
 
-## Code of Conduct
+2. **Make your changes**
+   Keep changes focused on a single issue or purpose where possible. Follow the existing code style and project conventions.
 
-### Our Pledge
+3. **Review your own changes**
+   Before submitting a pull request, review your changes carefully. Make sure you understand the code you are submitting and check for unnecessary changes, errors, security issues, and unintended behaviour.
 
-In the interest of fostering an open and welcoming environment, we as
-contributors and maintainers pledge to making participation in our project and
-our community a harassment-free experience for everyone, regardless of age, body
-size, disability, ethnicity, gender identity and expression, level of experience,
-nationality, personal appearance, race, religion, or sexual identity and
-orientation.
+   If you used AI-assisted development tools to generate, modify, or suggest code, you are still responsible for the resulting contribution. Review and understand the generated code, verify that it is correct and appropriate for the project, and test it before submitting it. Do not submit AI-generated code that you have not personally reviewed.
 
-### Our Standards
+4. **Test your changes**
+   Test your changes before submitting a pull request and verify that they do not introduce regressions. Run any existing tests and add or update tests where appropriate.
 
-Examples of behavior that contributes to creating a positive environment
-include:
+   In your pull request, clearly state which Raspberry Pi models you have tested your changes on. Supported hardware ranges from the **Raspberry Pi Zero through to the Raspberry Pi 3 Model B+**.
 
-* Using welcoming and inclusive language
-* Being respectful of differing viewpoints and experiences
-* Gracefully accepting constructive criticism
-* Focusing on what is best for the community
-* Showing empathy towards other community members
+   You are not expected to test on every Raspberry Pi model, but please list the models you have personally tested. If your changes have not been tested on physical hardware, state this clearly in the pull request.
 
-Examples of unacceptable behavior by participants include:
+5. **Update documentation**
+   Update the README or other relevant documentation when your changes affect installation, configuration, environment variables, commands, APIs, user-facing behaviour, hardware requirements, or other documented functionality.
 
-* The use of sexualized language or imagery and unwelcome sexual attention or
-advances
-* Trolling, insulting/derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others' private information, such as a physical or electronic
-  address, without explicit permission
-* Other conduct which could reasonably be considered inappropriate in a
-  professional setting
+6. **Commit clearly**
+   Use concise, descriptive commit messages that explain the purpose of your changes.
 
-### Our Responsibilities
+7. **Open a Pull Request against `master`**
+   All pull requests must target the `master` branch. Provide a clear description of what changed and why, and link any related issues where applicable.
 
-Project maintainers are responsible for clarifying the standards of acceptable
-behavior and are expected to take appropriate and fair corrective action in
-response to any instances of unacceptable behavior.
+   Your pull request should also include the Raspberry Pi model(s) on which the changes were tested.
 
-Project maintainers have the right and responsibility to remove, edit, or
-reject comments, commits, code, wiki edits, issues, and other contributions
-that are not aligned to this Code of Conduct, or to ban temporarily or
-permanently any contributor for other behaviors that they deem inappropriate,
-threatening, offensive, or harmful.
+8. **Address reviews and checks**
+   Ensure automated checks pass and respond to review feedback. Additional changes may be requested before the pull request is approved.
 
-### Scope
+9. **Merge**
+   Once the pull request has been approved and all required checks have passed, a project maintainer will merge it.
 
-This Code of Conduct applies both within project spaces and in public spaces
-when an individual is representing the project or its community. Examples of
-representing a project or community include using an official project e-mail
-address, posting via an official social media account, or acting as an appointed
-representative at an online or offline event. Representation of a project may be
-further defined and clarified by project maintainers.
+## Reporting Bugs
 
-### Enforcement
+Before opening a bug report, please check existing issues to see whether the problem has already been reported.
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting the project team at randy.rossi@gmail.com. All
-complaints will be reviewed and investigated and will result in a response that
-is deemed necessary and appropriate to the circumstances. The project team is
-obligated to maintain confidentiality with regard to the reporter of an incident.
-Further details of specific enforcement policies may be posted separately.
+When reporting a bug, please use the [bug report issue template](https://github.com/randyrossi/bmc64/issues/new?template=bug_report.yml).
 
-Project maintainers who do not follow or enforce the Code of Conduct in good
-faith may face temporary or permanent repercussions as determined by other
-members of the project's leadership.
+## Suggesting Features
 
-### Attribution
+Feature requests are welcome. Please use the [feature request issue template](https://github.com/randyrossi/bmc64/issues/new?template=feature_request.yml) to describe the proposed feature, the problem it would solve, and any relevant examples or alternatives.
 
-This Code of Conduct is adapted from the [Contributor Covenant][homepage], version 1.4,
-available at [http://contributor-covenant.org/version/1/4][version]
-
-[homepage]: http://contributor-covenant.org
-[version]: http://contributor-covenant.org/version/1/4/
+Thank you for helping improve the project!
