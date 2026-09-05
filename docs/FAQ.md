@@ -10,6 +10,7 @@
 - [Why is audio not coming out of HDMI or the analog jack?](#why-is-audio-not-coming-out-of-hdmi-or-the-analog-jack)
 - [How do I get Dolphin DOS to work?](#how-do-i-get-dolphin-dos-to-work)
 - [Why won't PetRescue attach in Plus4Emu?](#why-wont-petrescue-attach-in-plus4emu)
+- [Why am I seeing errors when saving settings?](#why-am-i-seeing-errors-when-saving-settings)
 - [What do I put on the SD card?](#what-do-i-put-on-the-sd-card)
 
 ## Can I switch the machine to NTSC?
@@ -84,6 +85,21 @@ From the menu:
 On Linux, this command will work:
 
 truncate -s +3584 petrescue.d64
+
+## Why am I seeing errors when saving settings?
+
+**Answer:** If you get a "Problem saving!" error when trying to save GPIO, video, or other settings, the most common cause is an underpowered power supply.  BMC64 needs to write to the SD card to save settings, and a supply that can't deliver enough current will cause those writes to fail even though the machine otherwise appears to run fine.  This has been reported even on setups that worked with older BMC64 releases.
+
+Things to check:
+
+* Use a supply rated for at least 2.5A (Pi 3) at a steady 5V.
+* Avoid USB-C phone chargers and USB-C-to-micro-USB adapters/cables.  They frequently negotiate a lower voltage or can't sustain the current the Pi needs, which leads to exactly this kind of intermittent SD card write failure.
+* Use a good quality micro-USB cable.
+
+The official Raspberry Pi supply is a known-good option:
+https://www.raspberrypi.com/products/micro-usb-power-supply/
+
+If the errors continue after ruling out power, try a different, freshly formatted (FAT32) SD card from a reputable brand.
 
 ## What do I put on the SD card?
 
