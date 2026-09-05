@@ -1,16 +1,12 @@
-## 5.0.10 pre-release
+## 5.1.0
   * Add missing CMD HD drive option for Plus/4, lost in the original backport
   * Drives > Change ROM... now only lists the drive ROMs each machine supports
   * [INSTALLATION.md](docs/INSTALLATION.md): now only lists the drive ROMs each machine supports
-
-## 5.0.9 pre-release
   * Fix PET 1080p HDMI modes crashing on boot with the CRT shader enabled
     * Add gpu_mem=128 to machines.txt and enable for PET machine
     * Add graceful fallback if gpu_mem=64 is exceeded (disable shader)
   * Fix PET boot crash where VICE's video callbacks run before the menu is built (NULL menu items -> bad stretch -> assert/data abort on Circle 51)
   * Tolerate stale (PET) settings file entries
-
-## 5.0.8 pre-release
   * Faster storage access
     * Attaching large files is much faster (a 16 MB REU image went from ~12.5 seconds to ~1.1 seconds)
     * Directory scanning of large folders is much faster (a 1300-file folder went from ~51 seconds to ~0.08 seconds)
@@ -21,31 +17,17 @@
     * [NETWORKING.md](docs/NETWORKING.md): additional clarifications
     * [INSTALLATION.md](docs/INSTALLATION.md): improve rom information
     * [THIRD_PARTY.md](docs/THIRD_PARTY.md): add third party details
-  
-## 5.0.7 pre-release
   * Fix for wi-fi not connecting to eero7 #335
-
-## 5.0.6 pre-release
   * Add easy control of logging from main menu, to track down problems or to include with bug reports or issues
     * Details: [User Guide: Logging](docs/USER_GUIDE.md#logging)
-
-## 5.0.5 pre-release
   * Expose Vice supported features in BMC64
     * FD2000 / FD4000 drives
     * REU Image File settings
-
-## 5.0.4 pre-release
   * Refactor networking support and decouple ACIA from BMC modem backend
-
-## 5.0.3 pre-release
   * Standardise repository layout, move docs to docs, and source code to src
   * Add support for USB mouse as Micromys. Brings scrolling to C64 OS.
-
-## 5.0.2 pre-release
   * Fix for networking in C128 mode #320
   * Add mapping for F9 to Esc in C128 symbolic keymap
-
-## 5.0.1 pre-release
   * Add support for up to 4 keyboards and mice
   * Map End key to Help for C128 keyboard
   * Fix C128 physical 40/80 key display switching
