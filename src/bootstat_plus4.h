@@ -1,7 +1,7 @@
 #ifndef BOOTSTAT_PLUS4
 #define BOOTSTAT_PLUS4
 
-int dflt_bootStatNum = 22;
+int dflt_bootStatNum = 20;
 
 int dflt_bootStatWhat[] = {
     BOOTSTAT_WHAT_STAT,
@@ -12,8 +12,6 @@ int dflt_bootStatWhat[] = {
     BOOTSTAT_WHAT_STAT,
     BOOTSTAT_WHAT_STAT,
     BOOTSTAT_WHAT_STAT,
-    BOOTSTAT_WHAT_FAIL,
-    BOOTSTAT_WHAT_FAIL,
     BOOTSTAT_WHAT_FAIL,
     BOOTSTAT_WHAT_FAIL,
     BOOTSTAT_WHAT_FAIL,
@@ -42,8 +40,6 @@ const char *dflt_bootStatFile[] = {
     "1520.vpl",
     "dos1540",
     "dos1570",
-    "dos2000",
-    "dos4000",
     "dos2031",
     "dos2040",
     "dos3040",
@@ -59,8 +55,6 @@ int dflt_bootStatSize[] = {
     16384,
     16384,
     16384,
-    0,
-    0,
     0,
     0,
     0,

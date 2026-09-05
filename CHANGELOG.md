@@ -1,3 +1,6 @@
+## 5.1.1 (pre-release)
+  * Remove FD2000 and FD4000 from bootstat code for VIC20 and PLUS/4
+
 ## 5.1.0
   * Add missing CMD HD drive option for Plus/4, lost in the original backport
   * Drives > Change ROM... now only lists the drive ROMs each machine supports
