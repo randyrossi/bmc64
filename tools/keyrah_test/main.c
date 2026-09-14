@@ -300,13 +300,19 @@ static void buttons_task(void) {
 
 static void soak_task(void) {
   static uint32_t next_ms = 0;
+  static bool do_shiftlock = true;
   if (!soak_mode) return;
 
   uint32_t now = to_ms_since_boot(get_absolute_time());
   if (now < next_ms) return;
   next_ms = now + soak_period_ms;
 
-  shiftlock_action();
+  if (do_shiftlock) {
+    shiftlock_action();
+  } else {
+    kbd_tap(ITF_KBD1, KEYBOARD_MODIFIER_LEFTSHIFT, 0);
+  }
+  do_shiftlock = !do_shiftlock;
 }
 
 //--------------------------------------------------------------------+
@@ -333,6 +339,8 @@ static void print_help(void) {
   console_printf("\r\nkeyrah_test console\r\n");
   console_printf("  a       tap letter 'a' on ukbd1\r\n");
   console_printf("  w       tap letter 'a' on ukbd2\r\n");
+  console_printf("  z       tap Left Shift on ukbd1\r\n");
+  console_printf("  x       tap Left Shift on ukbd1 (with duplicate 0xE1 keycode, like the real Keyrah)\r\n");
   console_printf("  j       tap gamepad button A on upad1\r\n");
   console_printf("  l       toggle Shift-Lock (same as the physical button)\r\n");
   console_printf("  1/2/3   LED response mode: fast / slow / silent\r\n");
@@ -364,6 +372,20 @@ static void handle_console_char(int c) {
     case 'w':
       console_printf("[key] tap 'a' on ukbd2\r\n");
       kbd_tap(ITF_KBD2, 0, HID_KEY_A);
+      break;
+
+    case 'z':
+      console_printf("[key] tap Left Shift on ukbd1\r\n");
+      kbd_tap(ITF_KBD1, KEYBOARD_MODIFIER_LEFTSHIFT, 0);
+      break;
+
+    // The real Keyrah also duplicates Left Shift into the keycode array
+    // (mod=0x02, keys=E1 00...) instead of signalling it via the modifier
+    // byte alone. HID_KEY_SHIFT_LEFT (0xE1) is out of range for a plain
+    // keycode consumer sized for the 0x00-0x7F usage range.
+    case 'x':
+      console_printf("[key] tap Left Shift on ukbd1 (with duplicate 0xE1 keycode)\r\n");
+      kbd_tap(ITF_KBD1, KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_SHIFT_LEFT);
       break;
 
     case 'j': {
