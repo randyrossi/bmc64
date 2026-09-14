@@ -38,6 +38,7 @@
 !LSHIFT 1 7
 !RSHIFT 6 4
 !VSHIFT RSHIFT
+!SHIFTL LSHIFT
 
 Tab 7 2 8       /* CTRL */
 Control_L 7 5 8 /* Commodore Key */
@@ -114,4 +115,4 @@ z 1 4 8
 
 # Restore key mappings
 PageUp -3 0
-CapsLock -4 1
+CapsLock 1 7 64

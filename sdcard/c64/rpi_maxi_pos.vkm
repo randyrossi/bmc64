@@ -37,6 +37,7 @@
 !LSHIFT 1 7
 !RSHIFT 6 4
 !VSHIFT RSHIFT
+!SHIFTL LSHIFT
 
 Control_L 7 2 8 /* Ctrl */
 Super_L 7 5 0   /* Commodore Key */
@@ -115,5 +116,5 @@ y 3 1 8
 z 1 4 8
 
 # Restore key mappings
-CapsLock -4 1
+CapsLock 1 7 64
 Tab -3 0
