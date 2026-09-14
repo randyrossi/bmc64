@@ -1457,7 +1457,7 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
   mod_states[input_index] = ucModifiers;
   for (unsigned i = 0; i < 6; i++) {
     const unsigned char key = RawKeys[i];
-    if (key != 0) {
+    if (key != 0 && key < MAX_KEY_CODES) {
       new_states[key] = true;
     }
   }
