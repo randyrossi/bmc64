@@ -143,6 +143,9 @@ static bool     bounce_sim      = false;   // simulate contact bounce around a l
 static bool     soak_mode       = false;   // auto-toggle Shift-Lock unattended
 static uint32_t soak_period_ms  = 2000;
 
+static bool     turbo_mode      = false;   // fast-typist stress test, cycling A-Z
+static uint32_t turbo_period_ms = 100;      // ~600 chars/min between key starts
+
 // Whether the Shift-Lock tap goes out on just ukbd1, or on both ukbd1 and
 // ukbd2. The real Keyrah sends it on one keyboard interface only - the
 // second interface is used for extra simultaneous keys once more are held
@@ -315,6 +318,36 @@ static void soak_task(void) {
   do_shiftlock = !do_shiftlock;
 }
 
+// Turbo test - unattended, fast cycling through A-Z plus modifiers and
+// Shift-Lock (like a fast typist), instead of just one key or Shift-Lock
+// alone, to see whether transfer error counts climb under sustained varied
+// use. Every 8th action is something other than a plain letter, rotating
+// through: proper Left Shift, Right Shift, the malformed Left Shift the
+// real Keyrah sends (duplicate 0xE1 keycode), and a Shift-Lock toggle.
+static void turbo_task(void) {
+  static uint32_t next_ms = 0;
+  static uint8_t letter = 0;
+  static uint8_t action = 0;
+  if (!turbo_mode) return;
+
+  uint32_t now = to_ms_since_boot(get_absolute_time());
+  if (now < next_ms) return;
+  next_ms = now + turbo_period_ms;
+
+  if (action % 8 == 7) {
+    switch ((action / 8) % 4) {
+      case 0: kbd_tap(ITF_KBD1, KEYBOARD_MODIFIER_LEFTSHIFT, 0);                     break;
+      case 1: kbd_tap(ITF_KBD1, KEYBOARD_MODIFIER_RIGHTSHIFT, 0);                    break;
+      case 2: kbd_tap(ITF_KBD1, KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_SHIFT_LEFT);    break;
+      case 3: shiftlock_action();                                                   break;
+    }
+  } else {
+    kbd_tap(ITF_KBD1, 0, HID_KEY_A + (letter % 26));
+    letter++;
+  }
+  action++;
+}
+
 //--------------------------------------------------------------------+
 // Console commands
 //--------------------------------------------------------------------+
@@ -332,6 +365,7 @@ static void print_status(void) {
   console_printf("  tap_mode       : %s\r\n", tap_mode == TAP_BOTH_KBD ? "both (ukbd1+ukbd2)" : "ukbd1 only");
   console_printf("  bounce_sim     : %d\r\n", bounce_sim);
   console_printf("  soak_mode      : %d (period %lu ms)\r\n", soak_mode, (unsigned long) soak_period_ms);
+  console_printf("  turbo_mode     : %d (period %lu ms)\r\n", turbo_mode, (unsigned long) turbo_period_ms);
   console_printf("  bInterval      : %d ms (all HID endpoints, set at build time)\r\n", KEYRAH_POLL_INTERVAL_MS);
 }
 
@@ -348,6 +382,7 @@ static void print_help(void) {
   console_printf("  k       toggle Shift-Lock tap: both keyboard interfaces / ukbd1 only\r\n");
   console_printf("  b       toggle contact-bounce simulation\r\n");
   console_printf("  s       toggle unattended soak test (auto Shift-Lock every %lu ms)\r\n", (unsigned long) soak_period_ms);
+  console_printf("  t       toggle turbo test (fast typing + shifts + Shift-Lock every %lu ms)\r\n", (unsigned long) turbo_period_ms);
   console_printf("  i       print status\r\n");
   console_printf("  h / ?   this help\r\n\r\n");
 }
@@ -440,6 +475,11 @@ static void handle_console_char(int c) {
       console_printf("[cfg] soak test = %d\r\n", soak_mode);
       break;
 
+    case 't':
+      turbo_mode = !turbo_mode;
+      console_printf("[cfg] turbo test = %d\r\n", turbo_mode);
+      break;
+
     case 'i':
       print_status();
       break;
@@ -528,6 +568,7 @@ int main(void) {
     console_task();
     retry_task();
     soak_task();
+    turbo_task();
     heartbeat_task();
     console_heartbeat_task();
   }
