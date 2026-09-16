@@ -1,4 +1,6 @@
 ## 5.1.5 (pre-release)
+  * Include BMC64 version in logging
+  * Update Raspberry Pi firmware files to the latests version
   * Add CapsLock latching for USB keyboards, and setting CapsLock LEDs
   * Fix a rare out-of-bounds memory write in USB channel allocation under heavy device load
   * Fix SetLEDs on 8bitdo Retro keyboards (ensure CapsLock light works)
