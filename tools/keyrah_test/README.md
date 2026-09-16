@@ -27,6 +27,15 @@ registers gamepads with usable input (like Circle's
 `CUSBGamePadStandardDevice`) won't register them as one - matching the real
 Keyrah, where only 2 of its 4 non-keyboard interfaces are usable pads.
 
+All four report descriptor shapes (keyboard, joystick, consumer, system
+control) and `wMaxPacketSize` (48 bytes on every endpoint) are the same as
+the real Keyrah V3 firmware's.
+
+`bInterval` for the keyboard and joystick-shaped interfaces is set at build
+time via `KEYRAH_KBD_POLL_INTERVAL_MS`/`KEYRAH_PAD_POLL_INTERVAL_MS` (see
+`CMakeLists.txt`/`usb_descriptors.h`); both default to 1ms, matching the real
+Keyrah.
+
 Plus a CDC (serial) interface used as this mock's own test console - the
 real Keyrah has no such thing, but it's a separate USB class so it doesn't
 change how the 6 HID interfaces are seen.
@@ -127,16 +136,25 @@ Either way, type single characters:
 ```
 a       tap letter 'a' on ukbd1
 w       tap letter 'a' on ukbd2
-j       tap gamepad button A on upad1
+z       tap Left Shift on ukbd1
+x       tap Left Shift on ukbd1 (with duplicate 0xE1 keycode, like the real Keyrah)
+j       tap gamepad button 1 on upad1
 l       toggle Shift-Lock (same as the physical button)
 1/2/3   LED response mode: fast / slow / silent
 +/-     adjust the retry interval by 10ms (default 100ms)
 k       toggle Shift-Lock tap: both keyboard interfaces / ukbd1 only
 b       toggle contact-bounce simulation
 s       toggle the unattended soak test (auto Shift-Lock on a timer)
+t       toggle turbo mode (fast typing + shifts + Shift-Lock on a timer)
+y       toggle jitter mode (randomly delay USB servicing, simulating a busy real MCU)
+r       toggle continuous resend mode (keep resending ukbd1's state every poll instead of only on change)
 i       print status
 h / ?   this help
 ```
+
+`s`/`t`/`y`/`r` are stress-test modes for reproducing USB transaction errors
+under sustained load rather than one-off manual key taps - they can be
+combined (e.g. `t` and `y` together).
 
 ## Notes
 
