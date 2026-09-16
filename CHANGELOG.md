@@ -5,6 +5,7 @@
   * Update Positional and Maxi Positional vkm file to use Shift Lock code
   * Harden USB connection alive and tolerate some USB transaction errors without dropping the connection.
   * Fix persistent USB errors on full-speed devices behind the onboard hub by widening periodic split-transaction timing to 2 microframes #235
+  * Add rpi_keyrah_v3_pos.vkm mapping file for Keyrah V3 support in C64 machine.
 
 ## 5.1.4 (pre-release)
   * Fix forced start sector partition mounting #369 
