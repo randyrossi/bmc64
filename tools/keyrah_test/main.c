@@ -24,15 +24,19 @@
 //   - USB CDC console (a second serial port after flashing) - type 'h' for
 //     a full command list: change the LED response mode, toggle contact-
 //     bounce simulation, run an unattended soak test, adjust the retry
-//     interval, and check status.
+//     interval, simulate a busy real MCU's USB timing (jitter mode),
+//     continuously resend the current keyboard state instead of only on
+//     change (resend mode), and check status.
 //
 // bInterval for every HID endpoint is set at build time via
-// KEYRAH_POLL_INTERVAL_MS (see CMakeLists.txt / usb_descriptors.h) and is not
+// KEYRAH_KBD_POLL_INTERVAL_MS / KEYRAH_PAD_POLL_INTERVAL_MS (see
+// CMakeLists.txt / usb_descriptors.h) and is not
 // touched at runtime.
 
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "pico/stdlib.h"
 #include "bsp/board_api.h"   // older TinyUSB: "bsp/board.h"
@@ -85,6 +89,10 @@ static bool hid_wait_ready(uint8_t itf, uint32_t timeout_ms) {
   return true;
 }
 
+// Tracks the last state sent on ITF_KBD1, for continuous_resend_task() below.
+static uint8_t kbd1_last_modifier = 0;
+static uint8_t kbd1_last_keycode  = 0;
+
 static void kbd_press(uint8_t itf, uint8_t modifier, uint8_t keycode) {
   if (!hid_wait_ready(itf, 50)) {
     console_printf("[key] WARNING: itf=%u still not ready after 50ms, press DROPPED\r\n", itf);
@@ -93,12 +101,20 @@ static void kbd_press(uint8_t itf, uint8_t modifier, uint8_t keycode) {
   uint8_t keycodes[6] = {0};
   if (keycode) keycodes[0] = keycode;
   tud_hid_n_keyboard_report(itf, 0, modifier, keycodes);
+  if (itf == ITF_KBD1) {
+    kbd1_last_modifier = modifier;
+    kbd1_last_keycode = keycode;
+  }
 }
 
 static void kbd_release(uint8_t itf) {
   if (!hid_wait_ready(itf, 50)) {
     console_printf("[key] WARNING: itf=%u still not ready after 50ms, release DROPPED\r\n", itf);
     return;
+  }
+  if (itf == ITF_KBD1) {
+    kbd1_last_modifier = 0;
+    kbd1_last_keycode = 0;
   }
   tud_hid_n_keyboard_report(itf, 0, 0, NULL);
 }
@@ -145,6 +161,27 @@ static uint32_t soak_period_ms  = 2000;
 
 static bool     turbo_mode      = false;   // fast-typist stress test, cycling A-Z
 static uint32_t turbo_period_ms = 100;      // ~600 chars/min between key starts
+
+// Simulates a real Keyrah's firmware occasionally being busy with its own
+// work (scanning the keyboard matrix, driving LEDs) instead of servicing USB
+// promptly - unlike this mock's own RP2040/TinyUSB stack, which always
+// answers tud_task() immediately. A real transaction error storm starts
+// right at connection, before any load, denser than anything this mock ever
+// reproduced under turbo_mode alone - this is an attempt to approximate that
+// by occasionally delaying the next tud_task() call, rather than by adding
+// more USB traffic.
+static bool     jitter_mode        = false;
+static uint32_t jitter_chance_pct  = 5;      // chance per main loop iteration
+static uint32_t jitter_min_us      = 200;
+static uint32_t jitter_max_us      = 2000;
+
+// Continuous resend mode: instead of only sending a keyboard report when the
+// pressed/released state actually changes, keeps resubmitting whatever the
+// current state is on every main loop iteration (in practice, on every poll
+// once the previous report has been picked up). Tests whether constant
+// per-poll traffic on one endpoint, rather than only occasional per-keystroke
+// traffic, changes the observed USB transaction error rate.
+static bool continuous_resend_mode = false;
 
 // Whether the Shift-Lock tap goes out on just ukbd1, or on both ukbd1 and
 // ukbd2. The real Keyrah sends it on one keyboard interface only - the
@@ -348,6 +385,30 @@ static void turbo_task(void) {
   action++;
 }
 
+// Called right before tud_task() in the main loop (not from within it), so a
+// jitter hit delays the next poll response the same way a real MCU's own
+// busy main loop would, rather than adding extra USB traffic like the other
+// stress tasks do.
+static void jitter_task(void) {
+  if (!jitter_mode) return;
+  if ((uint32_t) (rand() % 100) < jitter_chance_pct) {
+    uint32_t us = jitter_min_us + (uint32_t) (rand() % (jitter_max_us - jitter_min_us + 1));
+    sleep_us(us);
+  }
+}
+
+// See continuous_resend_mode above. Sends on every call where the endpoint
+// is ready, rather than on a timer - the endpoint's own busy/ready state is
+// what paces this to roughly one report per poll.
+static void continuous_resend_task(void) {
+  if (!continuous_resend_mode) return;
+  if (!tud_hid_n_ready(ITF_KBD1)) return;
+
+  uint8_t keycodes[6] = {0};
+  if (kbd1_last_keycode) keycodes[0] = kbd1_last_keycode;
+  tud_hid_n_keyboard_report(ITF_KBD1, 0, kbd1_last_modifier, keycodes);
+}
+
 //--------------------------------------------------------------------+
 // Console commands
 //--------------------------------------------------------------------+
@@ -366,7 +427,11 @@ static void print_status(void) {
   console_printf("  bounce_sim     : %d\r\n", bounce_sim);
   console_printf("  soak_mode      : %d (period %lu ms)\r\n", soak_mode, (unsigned long) soak_period_ms);
   console_printf("  turbo_mode     : %d (period %lu ms)\r\n", turbo_mode, (unsigned long) turbo_period_ms);
-  console_printf("  bInterval      : %d ms (all HID endpoints, set at build time)\r\n", KEYRAH_POLL_INTERVAL_MS);
+  console_printf("  jitter_mode    : %d (%lu%% chance/loop, %lu-%lu us delay)\r\n", jitter_mode,
+                 (unsigned long) jitter_chance_pct, (unsigned long) jitter_min_us, (unsigned long) jitter_max_us);
+  console_printf("  resend_mode    : %d\r\n", continuous_resend_mode);
+  console_printf("  bInterval      : keyboards %d ms, gamepads %d ms (set at build time)\r\n",
+                 KEYRAH_KBD_POLL_INTERVAL_MS, KEYRAH_PAD_POLL_INTERVAL_MS);
 }
 
 static void print_help(void) {
@@ -375,7 +440,7 @@ static void print_help(void) {
   console_printf("  w       tap letter 'a' on ukbd2\r\n");
   console_printf("  z       tap Left Shift on ukbd1\r\n");
   console_printf("  x       tap Left Shift on ukbd1 (with duplicate 0xE1 keycode, like the real Keyrah)\r\n");
-  console_printf("  j       tap gamepad button A on upad1\r\n");
+  console_printf("  j       tap gamepad button 1 on upad1\r\n");
   console_printf("  l       toggle Shift-Lock (same as the physical button)\r\n");
   console_printf("  1/2/3   LED response mode: fast / slow / silent\r\n");
   console_printf("  +/-     adjust retry interval by 10ms\r\n");
@@ -383,6 +448,8 @@ static void print_help(void) {
   console_printf("  b       toggle contact-bounce simulation\r\n");
   console_printf("  s       toggle unattended soak test (auto Shift-Lock every %lu ms)\r\n", (unsigned long) soak_period_ms);
   console_printf("  t       toggle turbo test (fast typing + shifts + Shift-Lock every %lu ms)\r\n", (unsigned long) turbo_period_ms);
+  console_printf("  y       toggle jitter mode (simulate a busy real MCU delaying USB service)\r\n");
+  console_printf("  r       toggle continuous resend mode (keep resending ukbd1's state every poll)\r\n");
   console_printf("  i       print status\r\n");
   console_printf("  h / ?   this help\r\n\r\n");
 }
@@ -424,9 +491,9 @@ static void handle_console_char(int c) {
       break;
 
     case 'j': {
-      console_printf("[joy] tap button A on upad1\r\n");
-      hid_gamepad_report_t report = {0};
-      report.buttons = GAMEPAD_BUTTON_A;
+      console_printf("[joy] tap button 1 on upad1\r\n");
+      keyrah_joy_report_t report = {0};
+      report.buttons = 0x01;   // button 1
       if (hid_wait_ready(ITF_JOY1, 50)) {
         tud_hid_n_report(ITF_JOY1, 0, &report, sizeof(report));
       } else {
@@ -478,6 +545,16 @@ static void handle_console_char(int c) {
     case 't':
       turbo_mode = !turbo_mode;
       console_printf("[cfg] turbo test = %d\r\n", turbo_mode);
+      break;
+
+    case 'y':
+      jitter_mode = !jitter_mode;
+      console_printf("[cfg] jitter mode = %d\r\n", jitter_mode);
+      break;
+
+    case 'r':
+      continuous_resend_mode = !continuous_resend_mode;
+      console_printf("[cfg] continuous resend mode = %d\r\n", continuous_resend_mode);
       break;
 
     case 'i':
@@ -558,10 +635,13 @@ int main(void) {
   gpio_init(PICO_DEFAULT_LED_PIN);
   gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
 
+  srand((unsigned) to_us_since_boot(get_absolute_time()));   // seed for jitter_task()
+
   console_printf("\r\nkeyrah_test starting - Keyrah V3 USB mock\r\n");
   print_help();
 
   while (1) {
+    jitter_task();
     tud_task();
 
     buttons_task();
@@ -569,6 +649,7 @@ int main(void) {
     retry_task();
     soak_task();
     turbo_task();
+    continuous_resend_task();
     heartbeat_task();
     console_heartbeat_task();
   }

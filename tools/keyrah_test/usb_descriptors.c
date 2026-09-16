@@ -51,7 +51,41 @@ uint8_t const desc_hid_report_kbd[] = {
 };
 
 uint8_t const desc_hid_report_joy[] = {
-  TUD_HID_REPORT_DESC_GAMEPAD()
+  HID_USAGE_PAGE ( HID_USAGE_PAGE_DESKTOP ),
+  HID_USAGE      ( HID_USAGE_DESKTOP_GAMEPAD ),
+  HID_COLLECTION ( HID_COLLECTION_APPLICATION ),
+    HID_USAGE_PAGE     ( HID_USAGE_PAGE_DESKTOP ),
+    HID_USAGE          ( HID_USAGE_DESKTOP_X ),
+    HID_USAGE          ( HID_USAGE_DESKTOP_Y ),
+    HID_USAGE          ( HID_USAGE_DESKTOP_RX ),
+    HID_USAGE          ( HID_USAGE_DESKTOP_RY ),
+    HID_LOGICAL_MIN    ( 0x00 ),
+    HID_LOGICAL_MAX_N  ( 0x00ff, 2 ),
+    HID_PHYSICAL_MIN   ( 0x00 ),
+    HID_PHYSICAL_MAX_N ( 0x00ff, 2 ),
+    HID_REPORT_COUNT   ( 4 ),
+    HID_REPORT_SIZE    ( 8 ),
+    HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ),
+
+    HID_USAGE_PAGE     ( HID_USAGE_PAGE_DESKTOP ),
+    HID_USAGE          ( HID_USAGE_DESKTOP_HAT_SWITCH ),
+    HID_LOGICAL_MIN    ( 1 ),
+    HID_LOGICAL_MAX    ( 8 ),
+    HID_PHYSICAL_MIN   ( 0x00 ),
+    HID_PHYSICAL_MAX_N ( 0x013b, 2 ),
+    HID_REPORT_COUNT   ( 1 ),
+    HID_REPORT_SIZE    ( 8 ),
+    HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ),
+
+    HID_USAGE_PAGE     ( HID_USAGE_PAGE_BUTTON ),
+    HID_USAGE_MIN      ( 1 ),
+    HID_USAGE_MAX      ( 3 ),
+    HID_LOGICAL_MIN    ( 0x00 ),
+    HID_LOGICAL_MAX    ( 0x01 ),
+    HID_REPORT_COUNT   ( 8 ),
+    HID_REPORT_SIZE    ( 1 ),
+    HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ),
+  HID_COLLECTION_END
 };
 
 // Consumer Control (volume/media keys) and System Control (power/sleep/wake)
@@ -98,12 +132,12 @@ uint8_t const desc_configuration[] = {
   TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0x00, 100),
 
   //                    itf,      str, boot_protocol,             report_desc,                 ep,         size,        interval
-  TUD_HID_DESCRIPTOR(ITF_KBD1, 0, HID_ITF_PROTOCOL_KEYBOARD, sizeof(desc_hid_report_kbd), EPNUM_KBD1, HID_EP_SIZE, KEYRAH_POLL_INTERVAL_MS),
-  TUD_HID_DESCRIPTOR(ITF_KBD2, 0, HID_ITF_PROTOCOL_KEYBOARD, sizeof(desc_hid_report_kbd), EPNUM_KBD2, HID_EP_SIZE, KEYRAH_POLL_INTERVAL_MS),
-  TUD_HID_DESCRIPTOR(ITF_JOY1, 0, HID_ITF_PROTOCOL_NONE,     sizeof(desc_hid_report_joy), EPNUM_JOY1, HID_EP_SIZE, KEYRAH_POLL_INTERVAL_MS),
-  TUD_HID_DESCRIPTOR(ITF_JOY2, 0, HID_ITF_PROTOCOL_NONE,     sizeof(desc_hid_report_joy), EPNUM_JOY2, HID_EP_SIZE, KEYRAH_POLL_INTERVAL_MS),
-  TUD_HID_DESCRIPTOR(ITF_CONSUMER, 0, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report_consumer),   EPNUM_CONSUMER, HID_EP_SIZE, KEYRAH_POLL_INTERVAL_MS),
-  TUD_HID_DESCRIPTOR(ITF_SYSCTRL,  0, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report_syscontrol), EPNUM_SYSCTRL,  HID_EP_SIZE, KEYRAH_POLL_INTERVAL_MS),
+  TUD_HID_DESCRIPTOR(ITF_KBD1, 0, HID_ITF_PROTOCOL_KEYBOARD, sizeof(desc_hid_report_kbd), EPNUM_KBD1, HID_EP_SIZE, KEYRAH_KBD_POLL_INTERVAL_MS),
+  TUD_HID_DESCRIPTOR(ITF_KBD2, 0, HID_ITF_PROTOCOL_KEYBOARD, sizeof(desc_hid_report_kbd), EPNUM_KBD2, HID_EP_SIZE, KEYRAH_KBD_POLL_INTERVAL_MS),
+  TUD_HID_DESCRIPTOR(ITF_JOY1, 0, HID_ITF_PROTOCOL_NONE,     sizeof(desc_hid_report_joy), EPNUM_JOY1, HID_EP_SIZE, KEYRAH_PAD_POLL_INTERVAL_MS),
+  TUD_HID_DESCRIPTOR(ITF_JOY2, 0, HID_ITF_PROTOCOL_NONE,     sizeof(desc_hid_report_joy), EPNUM_JOY2, HID_EP_SIZE, KEYRAH_PAD_POLL_INTERVAL_MS),
+  TUD_HID_DESCRIPTOR(ITF_CONSUMER, 0, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report_consumer),   EPNUM_CONSUMER, HID_EP_SIZE, KEYRAH_PAD_POLL_INTERVAL_MS),
+  TUD_HID_DESCRIPTOR(ITF_SYSCTRL,  0, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report_syscontrol), EPNUM_SYSCTRL,  HID_EP_SIZE, KEYRAH_PAD_POLL_INTERVAL_MS),
 
   // Interface number, string index, EP notification address & size, EP data address (out, in), size
   TUD_CDC_DESCRIPTOR(ITF_CDC, 4, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, 64),

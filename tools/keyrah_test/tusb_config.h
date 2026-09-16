@@ -47,9 +47,7 @@ extern "C" {
 #define CFG_TUD_CDC_RX_BUFSIZE     64
 #define CFG_TUD_CDC_TX_BUFSIZE     64
 
-// HID report buffer size - must be >= the largest report used (boot keyboard
-// and hid_gamepad_report_t are both 8 bytes; keep headroom for a report ID).
-#define CFG_TUD_HID_EP_BUFSIZE     16
+#define CFG_TUD_HID_EP_BUFSIZE     48
 
 #ifdef __cplusplus
 }

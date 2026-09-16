@@ -15,9 +15,10 @@ add_executable(keyrah_test
 
 target_include_directories(keyrah_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
-# bInterval (ms) for every HID endpoint - see usb_descriptors.h.
+# bInterval (ms), set separately for keyboards vs gamepad-shaped interfaces -
 target_compile_definitions(keyrah_test PRIVATE
-    KEYRAH_POLL_INTERVAL_MS=1
+    KEYRAH_KBD_POLL_INTERVAL_MS=1
+    KEYRAH_PAD_POLL_INTERVAL_MS=1
 )
 
 target_link_libraries(keyrah_test PRIVATE

@@ -27,16 +27,23 @@ enum {
   ITF_NUM_TOTAL = ITF_CDC + 2,
 };
 
-// bInterval (ms, full-speed) applied to every HID interrupt-IN endpoint. Set
-// via CMakeLists.txt target_compile_definitions; defaults to 1 (1000Hz,
+// bInterval (ms, full-speed), set separately for the keyboard and
+// gamepad-shaped interfaces so they can be tuned independently. Set via
+// CMakeLists.txt target_compile_definitions; both default to 1 (1000Hz,
 // matching the real Keyrah's descriptors) if not overridden.
-#ifndef KEYRAH_POLL_INTERVAL_MS
-#define KEYRAH_POLL_INTERVAL_MS   1
+#ifndef KEYRAH_KBD_POLL_INTERVAL_MS
+#define KEYRAH_KBD_POLL_INTERVAL_MS   1
+#endif
+#ifndef KEYRAH_PAD_POLL_INTERVAL_MS
+#define KEYRAH_PAD_POLL_INTERVAL_MS   1
 #endif
 
-// wMaxPacketSize for the keyboard/joystick endpoints. 8 bytes matches the
-// boot report size and what Circle's CUSBKeyboardDevice expects
-// (USBKEYB_REPORT_SIZE), rather than the real Keyrah's 48.
-#define HID_EP_SIZE               8
+typedef struct TU_ATTR_PACKED {
+  uint8_t x, y, rx, ry;   // 0-255
+  uint8_t hat;            // 1-8 (see above)
+  uint8_t buttons;        // bit0-2 = buttons 1-3, bits 3-7 unused
+} keyrah_joy_report_t;
+
+#define HID_EP_SIZE               48
 
 #endif
