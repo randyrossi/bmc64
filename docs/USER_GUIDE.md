@@ -533,6 +533,8 @@ TheC64 (Maxi) | Maxi Positional
 
 * Make sure you have the rpi_*.vkm files located in each machine subdir.
 
+* Keyrah V3 support has been added (v5.1.5 onwards) but you need to rename the `rpi_keyrah_v3_pos.vkm` file to `rpi_pos.vkm` and replace the exiting file, then select positional mapping. 
+
 * Special thanks goes out to ody81(github) / ody ody (youtube) user who figured out the Maxi keyboard mapping file.  You can watch his tutorial on how to put BMC64 inside a Maxi case here: https://www.youtube.com/channel/UCrXCNM2oXmIA7sTUwXrumiw or read his Reddit post here: https://www.reddit.com/r/Commodore/comments/ejtggy/the_c64_maxi_to_bmc64_conversion_rough_tutorial
 
 ### Plus/4 Keyboard Notes

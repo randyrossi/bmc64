@@ -49,6 +49,35 @@ static unsigned char merged_mod_states;
 static bool uiLeftShift = false;
 static bool uiRightShift = false;
 
+// USB Caps-Lock -> C64 Shift-Lock. BMC64 consumes USB keys in raw mode, so
+// nothing here drove the keyboard LEDs or latched Shift-Lock. VICE's Shift-
+// Lock keymap flag (rpi_sym.vkm: "CapsLock 1 7 64") is momentary - shift is
+// held only while the key is physically down - so a normal Caps-Lock tap did
+// nothing. Track a toggle here, present Caps-Lock to the emulator as a key
+// held for as long as the toggle is engaged, and mirror the toggle to the
+// Caps-Lock LED. The LED matters for adapters that key their Shift-Lock off
+// it (Keyrah V3); on a plain USB keyboard it just lights the Caps LED. State
+// is global (not per device) so a multi-interface keyboard stays in sync.
+// Only Caps-Lock is handled - Num/Scroll Lock have no C64 keymap effect.
+static bool kbd_caps_lock = false;
+static bool caps_phys_prev = false;             // previous physical (any-device) Caps-Lock state
+static volatile bool kbd_leds_dirty = false;    // set in the raw handler, consumed at task level
+static volatile unsigned char kbd_led_state = 0;
+
+// Recompute the HID LED bitmap and flag it for sending. No USB traffic here,
+// so it is safe to call from the raw key handler's interrupt context.
+static void kbd_refresh_led_state() {
+  kbd_led_state = kbd_caps_lock ? 0x02 : 0x00;  // bit 1 = Caps Lock (USB HID LED page)
+  kbd_leds_dirty = true;
+}
+
+// Non-zero while USB Caps-Lock / Shift-Lock is engaged. Read by the BMC64 menu
+// (third_party/common/ui.c), which has its own transient shift tracking and
+// does not run the emulator keymap, so it needs this to shift text entry.
+extern "C" int emu_get_keyboard_shiftlock(void) {
+  return kbd_caps_lock ? 1 : 0;
+}
+
 static int vol_percent_to_vchiq(int percent) {
   int range = VCHIQ_SOUND_VOLUME_MAX-(-2720);
   return range * ((float)percent)/100.0 + (-2720);
@@ -786,9 +815,30 @@ void CKernel::SetupUSBKeyboard() {
         m_pKeyboard[i]->RegisterRemovedHandler(KeyRemovedHandler);
         m_pKeyboard[i]->RegisterKeyStatusHandlerRaw(KeyStatusHandlerRaw, FALSE,
                                                      &usb_input_indices[i]);
+        // A newly attached keyboard powers up with its LEDs off; re-send the
+        // tracked lock state so adapters that rely on it (Keyrah V3) sync.
+        kbd_leds_dirty = true;
         CLogger::Get()->Write("kernel", LogNotice,
                               "Keyboard %d connected and registered.", i + 1);
       }
+    }
+  }
+}
+
+void CKernel::UpdateKeyboardLEDs() {
+  if (!kbd_leds_dirty) {
+    return;
+  }
+  kbd_leds_dirty = false;
+
+  unsigned char state = kbd_led_state;
+  for (unsigned i = 0; i < MAX_USB_DEVICES; i++) {
+    CUSBKeyboardDevice *pKeyboard = m_pKeyboard[i];
+    if (pKeyboard != 0) {
+      // SetLEDs() issues a synchronous control transfer, so this must run at
+      // task level (called once per frame from circle_check_gpio()), never
+      // from KeyStatusHandlerRaw().
+      pKeyboard->SetLEDs(state);
     }
   }
 }
@@ -1407,7 +1457,7 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
   mod_states[input_index] = ucModifiers;
   for (unsigned i = 0; i < 6; i++) {
     const unsigned char key = RawKeys[i];
-    if (key != 0) {
+    if (key != 0 && key < MAX_KEY_CODES) {
       new_states[key] = true;
     }
   }
@@ -1497,6 +1547,23 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
     for (unsigned device = 0; device < MAX_USB_DEVICES; device++) {
       merged_state |= key_states[device][i];
     }
+
+    // Caps Lock -> C64 Shift-Lock. A physical make toggles the lock; the
+    // emulator then sees Caps Lock held for as long as the lock is engaged
+    // (VICE's Shift-Lock keymap flag is momentary), and the Caps LED follows.
+    // Works whether the menu is up or not: the menu reads the state via
+    // emu_get_keyboard_shiftlock(), and menu_about_to_deactivate() re-applies
+    // it to the emulator on the way out (the emulator does not see key events
+    // while the menu holds them).
+    if (i == KEYCODE_CapsLock) {
+      if (!caps_phys_prev && merged_state) {
+        kbd_caps_lock = !kbd_caps_lock;
+        kbd_refresh_led_state();
+      }
+      caps_phys_prev = merged_state;
+      merged_state = kbd_caps_lock; // emulator sees Shift Lock held while engaged
+    }
+
     if (merged_key_states[i] == true && merged_state == false) {
       if (ui_activated) {
         // We have to handle shift+left/right here or else our ui
@@ -1578,6 +1645,10 @@ void CKernel::circle_check_gpio() {
   }
   circle_lock_release();
 #endif
+
+  // Flush any pending USB keyboard Caps-Lock LED change. Runs at task level
+  // here, once per frame, and only sends when the lock state changed.
+  UpdateKeyboardLEDs();
 
   int gpio_config = emu_get_gpio_config();
 

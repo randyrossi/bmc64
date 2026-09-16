@@ -61,7 +61,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "5.1.4"
+#define VERSION_STRING "5.1.5"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -4803,13 +4803,29 @@ int statusbar_always(void) {
   return statusbar_item->value == OVERLAY_ALWAYS || statusbar_forced;
 }
 
+// USB Shift-Lock (Caps-Lock) state at the moment the menu opened. The menu
+// consumes Caps-Lock key events itself, so the emulator does not see a toggle
+// made while the menu is up; menu_about_to_deactivate() replays the net change.
+static int menu_entry_shiftlock;
+
 // Stuff to do when menu is activated
 void menu_about_to_activate() {
   emux_get_int(Setting_WarpMode, &warp_item->value);
+  menu_entry_shiftlock = emu_get_keyboard_shiftlock();
 }
 
 // Stuff to do before going back to emulator
-void menu_about_to_deactivate() {}
+void menu_about_to_deactivate() {
+  if (emu_get_keyboard_shiftlock() != menu_entry_shiftlock) {
+    // Shift-Lock was toggled in the menu. ui_enabled is already 0 here, so
+    // these route to the emulator; the pending-key queue drains the pair
+    // atomically, so there is no shift glitch.
+    emu_key_released(KEYCODE_CapsLock);
+    if (emu_get_keyboard_shiftlock()) {
+      emu_key_pressed(KEYCODE_CapsLock);
+    }
+  }
+}
 
 // These are called on the main loop
 void menu_quick_func(int button_assignment) {

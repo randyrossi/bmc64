@@ -400,8 +400,13 @@ static void ui_key_pressed(long key) {
      return;
   }
 
+  // USB Shift-Lock (Caps-Lock) counts as shift here too. The menu keeps its
+  // own transient shift flag and does not run the emulator keymap, so this is
+  // the only way the lock state reaches text entry.
+  int shift_eff = keyboard_shift || emu_get_keyboard_shiftlock();
+
   if (menu_cursor_item[current_menu]->type == TEXTFIELD) {
-    char ch = menu_text_layout_key_to_char(key, keyboard_shift,
+    char ch = menu_text_layout_key_to_char(key, shift_eff,
                         ui_keyboard_mapping);
     if (ch != '\0') {
       ui_type_char(ch);
@@ -450,7 +455,7 @@ static void ui_key_pressed(long key) {
 
   if (key >= KEYCODE_a && key <= KEYCODE_z) {
     char ch;
-    if (keyboard_shift)
+    if (shift_eff)
       ch = 'A' + key - KEYCODE_a;
     else
       ch = 'a' + key - KEYCODE_a;
@@ -458,7 +463,7 @@ static void ui_key_pressed(long key) {
   } else if (key == KEYCODE_Backspace) {
     ui_type_char('\b');
   } else {
-    char ch = menu_text_layout_key_to_char(key, keyboard_shift,
+    char ch = menu_text_layout_key_to_char(key, shift_eff,
                         ui_keyboard_mapping);
     if (ch != '\0') {
       ui_type_char(ch);

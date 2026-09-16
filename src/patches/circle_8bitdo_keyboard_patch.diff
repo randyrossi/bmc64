@@ -1,28 +1,31 @@
 diff --git a/include/circle/usb/usbkeyboard.h b/include/circle/usb/usbkeyboard.h
-index 373b0d26..3c26d61d 100644
+index 373b0d26..476d462a 100644
 --- a/include/circle/usb/usbkeyboard.h
 +++ b/include/circle/usb/usbkeyboard.h
-@@ -62,9 +62,13 @@ public:
+@@ -60,11 +60,15 @@ public:
+ 	void UnregisterKeyStatusHandlerRaw (void);
+
  	// works in cooked and raw mode
- 	boolean SetLEDs (u8 ucStatus);		// must not be called in interrupt context
- 
+-	boolean SetLEDs (u8 ucStatus);		// must not be called in interrupt context
++	virtual boolean SetLEDs (u8 ucStatus);		// must not be called in interrupt context
+
 -private:
 +
 +protected:
 +	boolean ConfigureKeyboard (unsigned nReportSize);
  	void ReportHandler (const u8 *pReport, unsigned nReportSize);
- 
+
 +
 +private:
  	static boolean FindByte (const u8 *pBuffer, u8 ucByte, unsigned nLength);
- 
+
  private:
 diff --git a/include/circle/usb/usbkeyboard8bitdo.h b/include/circle/usb/usbkeyboard8bitdo.h
 new file mode 100644
-index 00000000..4cc7a8f6
+index 00000000..c87fb9d7
 --- /dev/null
 +++ b/include/circle/usb/usbkeyboard8bitdo.h
-@@ -0,0 +1,22 @@
+@@ -0,0 +1,23 @@
 +//
 +// usbkeyboard8bitdo.h
 +//
@@ -39,6 +42,7 @@ index 00000000..4cc7a8f6
 +	~CUSBKeyboard8BitDoDevice (void);
 +
 +	boolean Configure (void);
++	boolean SetLEDs (u8 ucStatus);		// this device expects report ID 1, not the default 0
 +
 +protected:
 +	void ReportHandler (const u8 *pReport, unsigned nReportSize);
@@ -58,7 +62,7 @@ index 14471753..e3e2e8d4 100644
 +	  usbkeyboard.o usbkeyboard8bitdo.o usbmassdevice.o usbmidi.o usbmidihost.o usbmouse.o usbprinter.o usbrequest.o \
  	  usbstandardhub.o usbstring.o usbserial.o usbserialhost.o usbserialch341.o usbserialcp210x.o \
  	  usbserialpl2303.o usbserialft231x.o usbserialcdc.o usbtouchscreen.o dwhciregister.o
- 
+
 diff --git a/lib/usb/usbdevicefactory.cpp b/lib/usb/usbdevicefactory.cpp
 index 75210581..fefd0f34 100644
 --- a/lib/usb/usbdevicefactory.cpp
@@ -74,7 +78,7 @@ index 75210581..fefd0f34 100644
 @@ -91,7 +92,12 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
  		CString *pVendor = pParent->GetDevice ()->GetName (DeviceNameVendor);
  		assert (pVendor != 0);
- 
+
 -		if (pVendor->Compare ("ven3f0-1198") != 0)	// HP USB 1000dpi Laser Mouse
 +		if (   pVendor->Compare ("ven2dc8-5200") == 0
 +		    || pVendor->Compare ("ven2dc8-5201") == 0)  // 8bitDo Retro Keyboard
@@ -110,7 +114,7 @@ index 05fe2fab..b5adf198 100644
 @@ -67,7 +67,12 @@ boolean CUSBKeyboardDevice::Configure (void)
  		m_nReportSize++;
  	}
- 
+
 -	if (!CUSBHIDDevice::ConfigureHID (m_nReportSize))
 +	return ConfigureKeyboard (m_nReportSize);
 +}
@@ -120,20 +124,22 @@ index 05fe2fab..b5adf198 100644
 +	if (!CUSBHIDDevice::ConfigureHID (nReportSize))
  	{
  		CLogger::Get ()->Write (FromUSBKbd, LogError, "Cannot configure HID device");
- 
+
 diff --git a/lib/usb/usbkeyboard8bitdo.cpp b/lib/usb/usbkeyboard8bitdo.cpp
 new file mode 100644
-index 00000000..0c67c0e3
+index 00000000..3e295404
 --- /dev/null
 +++ b/lib/usb/usbkeyboard8bitdo.cpp
-@@ -0,0 +1,70 @@
+@@ -0,0 +1,84 @@
 +//
 +// usbkeyboard8bitdo.cpp
 +//
 +
 +#include <circle/usb/usbkeyboard8bitdo.h>
++#include <circle/synchronize.h>
 +
 +#define USBKEYB8BITDO_REPORT_SIZE	17
++#define USBKEYB8BITDO_REPORT_ID	1
 +
 +static const char FromUSBKbd8BitDo[] = "ukbd8bitdo";
 +
@@ -149,6 +155,18 @@ index 00000000..0c67c0e3
 +boolean CUSBKeyboard8BitDoDevice::Configure (void)
 +{
 +	return ConfigureKeyboard (USBKEYB8BITDO_REPORT_SIZE);
++}
++
++// This device's Output (LED) report needs Report ID 1, not the default 0.
++boolean CUSBKeyboard8BitDoDevice::SetLEDs (u8 ucStatus)
++{
++	DMA_BUFFER (u8, Buffer, 2) = {USBKEYB8BITDO_REPORT_ID, ucStatus};
++
++	return GetHost ()->ControlMessage (GetEndpoint0 (),
++					   REQUEST_OUT | REQUEST_CLASS | REQUEST_TO_INTERFACE,
++					   SET_REPORT,
++					   (REPORT_TYPE_OUTPUT << 8) | USBKEYB8BITDO_REPORT_ID,
++					   GetInterfaceNumber (), Buffer, 2) >= 0;
 +}
 +
 +void CUSBKeyboard8BitDoDevice::ReportHandler (const u8 *pReport, unsigned nReportSize)

@@ -149,6 +149,9 @@ apply_patch_file "$SRC_DIR/src/patches/circle_xbox360_gamepad_patch.diff"
 apply_patch_file "$SRC_DIR/src/patches/circle_tcpconnection_patch.diff"
 apply_patch_file "$SRC_DIR/src/patches/circle_ethernet_patch.diff"
 apply_patch_file "$SRC_DIR/src/patches/circle_wlan_patch.diff"
+apply_patch_file "$SRC_DIR/src/patches/circle_transfer_error_patch.diff"
+apply_patch_file "$SRC_DIR/src/patches/circle_dwhci_channel_patch.diff"
+apply_patch_file "$SRC_DIR/src/patches/circle_dwhci_periodic_split_patch.diff"
 if [ "$IO_STATS" = "1" ]
 then
        apply_patch_file "$SRC_DIR/src/patches/circle_diskio_stats_patch.diff"

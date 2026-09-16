@@ -20,6 +20,7 @@ kernel7.img.*
 /*.a
 /*.d
 /build/
+/tools/keyrah_test/build/
 
 # Machine-specific kernel images
 /kernel*.img.*
@@ -43,3 +44,4 @@ third_party/**/*.o
 
 # Local IDE settings
 .vscode/settings.json
+

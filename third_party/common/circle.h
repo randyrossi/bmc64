@@ -388,6 +388,10 @@ extern void emu_set_demo_mode(int is_demo);
 // Test whether the UI is currently activated or not.
 extern int emu_is_ui_activated(void);
 
+// Non-zero while USB Caps-Lock / Shift-Lock is engaged. Implemented in
+// src/kernel.cpp; used by the menu so its text entry honours Shift-Lock.
+extern int emu_get_keyboard_shiftlock(void);
+
 // Send a key press/release to the UI. Should be called only when ui
 // is activated.
 extern void emu_ui_key_interrupt(long key, int pressed);

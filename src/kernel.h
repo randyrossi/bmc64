@@ -148,6 +148,9 @@ private:
   void SetupUSBMouse();
   void SetupUSBGamepads();
   void UpdateUSBPlugAndPlay();
+  // Push the tracked Caps-Lock state to every connected USB keyboard's LEDs.
+  // Must run at task level; call once per frame.
+  void UpdateKeyboardLEDs();
   int ReadDebounced(int pinIndex);
   void ScanKeyboard();
   void ReadJoystick(int device, int gpioConfig);
