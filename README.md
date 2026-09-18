@@ -28,6 +28,8 @@ Join the official **BMC64 Discord community** to discuss BMC64 and the Commodore
 - USB Bluetooth gamepads are not supported directly but can be connected via the 8BitDo USB Wireless Adapter 2.
 - Not all gamepads will work. Please let me know if yours doesn't.
 
+See the [project scope](docs/SCOPE.md) for BMC64's priorities and what is considered out of scope.
+
 This project uses VICE for emulation without any O/S (Linux) distribution installed on the Pi. VICE (Versatile Commodore Emulator) platform dependencies are satisfied using circle-stdlib.
 
 For Plus/4 emulation on the Rasbperry Pi 3, a more accurate emulator using Plus4Emu is also available.
@@ -53,7 +55,7 @@ For Plus/4 emulation on the Rasbperry Pi 3, a more accurate emulator using Plus4
 
 ## Contributing
 
-See the [contribution guidelines](docs/CONTRIBUTING.md).
+See the [contribution guidelines](docs/CONTRIBUTING.md) and the [project scope](docs/SCOPE.md).
 
 ## Project
 

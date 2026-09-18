@@ -23,6 +23,7 @@
 - [Known Bugs](KNOWN_BUGS.md)
 - [Changelog](../CHANGELOG.md)
 - [Contributing](CONTRIBUTING.md)
+- [Project Scope](SCOPE.md)
 
 ## Archive
 
