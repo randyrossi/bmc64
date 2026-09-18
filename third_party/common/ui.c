@@ -113,6 +113,10 @@ int ui_showing;
 int ui_toggle_pending;
 // One of the quick functions that can be invoked by button assignments
 int pending_emu_quick_func;
+// Path of a file to autostart, queued from another core (the web UI).
+// Guarded by the circle lock; consumed on the emulator main loop.
+static char pending_emu_autostart_path[PENDING_EMU_AUTOSTART_MAX];
+static volatile int pending_emu_autostart;
 
 static int osd_active;
 static int ui_commodore_down;
@@ -855,6 +859,13 @@ void ui_handle_toggle_or_quick_func() {
   } else if (pending_emu_quick_func) {
     menu_quick_func(pending_emu_quick_func);
     pending_emu_quick_func = 0;
+  } else if (pending_emu_autostart) {
+    char path[PENDING_EMU_AUTOSTART_MAX];
+    circle_lock_acquire();
+    strcpy(path, pending_emu_autostart_path);
+    pending_emu_autostart = 0;
+    circle_lock_release();
+    menu_autostart(path);
   }
 }
 
@@ -1712,6 +1723,14 @@ void ui_set_render_current_item_only(int v) {
 
 void emu_quick_func_interrupt(int button_assignment) {
   pending_emu_quick_func = button_assignment;
+}
+
+void emu_autostart_interrupt(const char *path) {
+  circle_lock_acquire();
+  strncpy(pending_emu_autostart_path, path, PENDING_EMU_AUTOSTART_MAX - 1);
+  pending_emu_autostart_path[PENDING_EMU_AUTOSTART_MAX - 1] = '\0';
+  pending_emu_autostart = 1;
+  circle_lock_release();
 }
 
 // These will revert back to 0 when the user moves off the

@@ -44,6 +44,11 @@ Browse the SD card, and:
 - **Upload** files into the current folder. If a file of the same name already
   exists you are asked to confirm before it is overwritten.
 - **Delete** a file, after a confirmation prompt.
+- **Run** a disk image (`.d64`, `.d71`, `.d81`, `.d82`, `.g64`, `.x64`), tape
+  (`.t64`, `.tap`) or program (`.prg`, `.p00`): click its name or its **Run**
+  button and BMC64 autostarts it, the same as the menu's *Autostart* item.
+  This resets the emulated machine. If the file can't be started, the reason
+  is only written to the log.
 
 There is no rename yet. BMC64's own configuration files (`settings*.txt`,
 `wpa_supplicant.conf`, `cmdline.txt`, `config.txt`, `machines.txt`,

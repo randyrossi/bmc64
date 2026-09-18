@@ -366,6 +366,12 @@ extern void emu_joy_interrupt_abs(int port, int device,
 // Queue a quick function request for the main loop. Interrupt safe.
 extern void emu_quick_func_interrupt(int button_assignment);
 
+// Queue a file (full path including volume, e.g. "SD:/games/x.d64") to be
+// autostarted by the main loop, as if picked from Autostart in the menu.
+// Interrupt safe. A newer request replaces one that hasn't run yet.
+#define PENDING_EMU_AUTOSTART_MAX 560
+extern void emu_autostart_interrupt(const char *path);
+
 // Ask emulator what the current gpio config index is.
 extern int emu_get_gpio_config(void);
 

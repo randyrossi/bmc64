@@ -29,6 +29,9 @@
 
 // Implemented in src/vice_network.cpp.
 extern "C" const char *circle_get_disk_volume(void);
+// Queues a file for the emulator main loop to autostart (interrupt safe;
+// see third_party/common/ui.c).
+extern "C" void emu_autostart_interrupt(const char *path);
 
 using webhttp::CChunkedResponse;
 
@@ -231,6 +234,23 @@ boolean CiEqual(const char *a, const char *b) {
     if (ca != cb) return FALSE;
   }
   return *a == *b;
+}
+
+// Only image/program types that the menu's Autostart accepts as-is.
+boolean IsAutostartable(const char *clean) {
+  const char *dot = 0;
+  for (const char *p = clean; *p != '\0'; p++) {
+    if (*p == '/') dot = 0;
+    else if (*p == '.') dot = p + 1;
+  }
+  if (dot == 0) return FALSE;
+  static const char *const kExt[] = {
+      "d64", "d71", "d81", "d82", "g64", "x64", "t64", "tap", "prg", "p00",
+  };
+  for (unsigned i = 0; i < sizeof(kExt) / sizeof(kExt[0]); i++) {
+    if (CiEqual(dot, kExt[i])) return TRUE;
+  }
+  return FALSE;
 }
 
 // Uploads must not clobber BMC64's own configuration or the Wi-Fi
@@ -566,6 +586,35 @@ void WebUiFsDelete(CSocket *socket, const char *query) {
 
   const char *ok = "{\"ok\":true}";
   webhttp::SendResponse(socket, 200, "OK", "application/json", ok,
+                        (unsigned) strlen(ok));
+}
+
+// ---- autostart ----
+
+void WebUiFsAutostart(CSocket *socket, const char *query) {
+  char clean[512];
+  char fatpath[560];
+  if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
+                    sizeof(fatpath), TRUE) != 0) {
+    return;
+  }
+  if (!IsAutostartable(clean)) {
+    webhttp::SendText(socket, 400, "Bad Request",
+                      "not an autostartable file type\n");
+    return;
+  }
+
+  FILINFO info;
+  if (f_stat(fatpath, &info) != FR_OK || (info.fattrib & AM_DIR)) {
+    webhttp::SendText(socket, 404, "Not Found", "no such file\n");
+    return;
+  }
+
+  // Runs later on the emulator core; failures are only logged there.
+  emu_autostart_interrupt(fatpath);
+
+  const char *ok = "{\"ok\":true}";
+  webhttp::SendResponse(socket, 202, "Accepted", "application/json", ok,
                         (unsigned) strlen(ok));
 }
 

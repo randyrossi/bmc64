@@ -274,7 +274,7 @@ a:hover { text-decoration: underline; }
 .fname .ic.dir { color: var(--blue); }
 .fname .ic.file { color: var(--dim); }
 .col-act { text-align: right; white-space: nowrap; }
-.dl, .del {
+.dl, .del, .run {
   padding: 3px 9px;
   border-radius: 7px;
   border: 1px solid var(--border);
@@ -284,9 +284,10 @@ a:hover { text-decoration: underline; }
   font-family: inherit;
   cursor: pointer;
 }
-.del { margin-left: 6px; }
+.del, .dl { margin-left: 6px; }
 .dl:hover { border-color: var(--green); color: var(--green); text-decoration: none; }
 .del:hover { border-color: var(--red); color: var(--red); }
+.run:hover { border-color: var(--green); color: var(--green); }
 
 /* ---------- footer ---------- */
 

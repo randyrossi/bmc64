@@ -243,6 +243,14 @@ const FILE_ICONS = {
   prg: "▶", crt: "▦", sid: "♪", txt: "≣", nfo: "≣", zip: "▤",
 };
 
+// Types the emulator can autostart (keep in sync with webui_fs.cpp).
+const RUNNABLE = new Set(
+  ["d64", "d71", "d81", "d82", "g64", "x64", "t64", "tap", "prg", "p00"]);
+
+function isRunnable(name) {
+  return RUNNABLE.has((name.split(".").pop() || "").toLowerCase());
+}
+
 function fileIcon(name, isDir) {
   if (isDir) return "▸";
   const ext = (name.split(".").pop() || "").toLowerCase();
@@ -355,6 +363,16 @@ async function loadDir(path) {
       a.href = filesHash(childPath);
       a.textContent = e.name;
       wrap.appendChild(a);
+    } else if (isRunnable(e.name)) {
+      const a = document.createElement("a");
+      a.href = "#";
+      a.title = "Run " + e.name;
+      a.textContent = e.name;
+      a.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        runFile(childPath, e.name);
+      });
+      wrap.appendChild(a);
     } else {
       wrap.appendChild(document.createTextNode(e.name));
     }
@@ -371,6 +389,15 @@ async function loadDir(path) {
     const tdAct = document.createElement("td");
     tdAct.className = "col-act";
     if (!e.dir) {
+      if (isRunnable(e.name)) {
+        const run = document.createElement("button");
+        run.className = "run";
+        run.textContent = "Run";
+        run.title = "Autostart on the emulator";
+        run.addEventListener("click", () => runFile(childPath, e.name));
+        tdAct.appendChild(run);
+      }
+
       const dl = document.createElement("a");
       dl.className = "dl";
       dl.href = "/api/fs/download?vol=" + encodeURIComponent(vol) +
@@ -397,6 +424,24 @@ async function loadDir(path) {
   } else {
     $("fb-status").textContent = entries.length + " item" + (entries.length === 1 ? "" : "s") + ".";
   }
+}
+
+// ---- run (autostart) ----
+
+async function runFile(path, name) {
+  $("fb-status").className = "msg";
+  $("fb-status").textContent = "Starting " + name + "…";
+  try {
+    const r = await fetch(
+      "/api/fs/autostart?vol=" + encodeURIComponent(fbVol) +
+      "&path=" + encodeURIComponent(path), { method: "POST" });
+    if (!r.ok) throw new Error("HTTP " + r.status + " " + (await r.text()).trim());
+  } catch (e) {
+    $("fb-status").className = "msg err";
+    $("fb-status").textContent = "Could not start " + name + " — " + e.message;
+    return;
+  }
+  $("fb-status").textContent = "Started " + name + ".";
 }
 
 // ---- delete ----
