@@ -61,7 +61,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "5.1.5"
+#define VERSION_STRING "5.1.6"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -1381,6 +1381,9 @@ static int save_settings() {
   int r = emux_save_settings();
   if (r < 0) {
     printf("resource_save failed with %d\n", r);
+    if (fp != NULL) {
+      fclose(fp);
+    }
     return 1;
   }
 

@@ -1,3 +1,6 @@
+## 5.1.6 (pre-release)
+  * Fix unable to save settings after multiple hard resets #373
+
 ## 5.1.5 (pre-release)
   * Include BMC64 version in logging
   * Update Raspberry Pi firmware files to the latests version

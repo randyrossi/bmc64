@@ -300,6 +300,9 @@ int sysfile_load(const char *name, uint8_t *dest, int minsize, int maxsize)
     return (int)rsize;  /* return ok */
 
 fail:
+    if (fp != NULL) {
+        fclose(fp);
+    }
     lib_free(complete_path);
     return -1;
 }
