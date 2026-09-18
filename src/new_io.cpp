@@ -84,7 +84,10 @@ struct _CIRCLE_DIR {
 // the newlib off_t / FatFs FSIZE_t limit); larger images are refused at open.
 // See docs/architecture/LARGE_DISK_IMAGE_SUPPORT.md.
 
-#define MAX_OPEN_FILES 10
+/* 3 slots reserved for stdio; peak observed legitimate usage is 10 or 11
+   (4 drive units + IDE64/CMD HD, plus vice.ini/settings.txt saving).
+   leave some headroom for safety */
+#define MAX_OPEN_FILES 32
 #define MAX_OPEN_DIRS 10
 
 /* Stride for reading a file into RAM in slurp_file(). Each SD transfer pays a
