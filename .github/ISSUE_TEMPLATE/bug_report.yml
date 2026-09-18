@@ -3,6 +3,11 @@ description: Report a problem or unexpected behaviour
 title: "[BUG] "
 labels: ["bug"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Before submitting, please read the [Reporting Bugs](https://github.com/randyrossi/bmc64/blob/master/docs/CONTRIBUTING.md#reporting-bugs) section of the contributing guide. 
+
   - type: textarea
     id: description
     attributes:
@@ -15,6 +20,13 @@ body:
     id: steps
     attributes:
       label: Steps to Reproduce
+      description: |
+        Please be as detailed as possible so the problem can be reproduced by someone else. Include:
+        - The machine (C64, C128, VIC-20, PET, Plus/4) and any non-default settings
+        - The exact software used (name, version, media e.g. disk, tape, cartridge or PRG)
+        - How it was loaded (autostart, manual LOAD, file browser, etc.) and any commands typed
+        - Every step taken, in order, including menu selections
+        - Whether it happens every time or only sometimes
       value: |
         1.
         2.

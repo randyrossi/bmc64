@@ -3,6 +3,11 @@ description: Suggest an improvement or new feature
 title: "[FEATURE] "
 labels: ["enhancement"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Please read the [project scope](https://github.com/randyrossi/bmc64/blob/master/docs/SCOPE.md) before submitting. Requests that don't align with the current scope may be declined or closed.
+
   - type: textarea
     id: feature
     attributes:
