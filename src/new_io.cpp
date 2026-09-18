@@ -24,6 +24,9 @@ extern int errno;
 #include <circle/timer.h>
 #endif
 
+// Set to 1 and rebuild to trace fileTab open/close/exhaustion to the log.
+#define BMC64_FILETAB_TRACE 0
+
 struct _CIRCLE_DIR {
   _CIRCLE_DIR() : mFirstRead(0), mOpen(0) {
     mEntry.d_ino = 0;
@@ -323,6 +326,32 @@ static int FindFreeFileSlot(void) {
   return slotNr;
 }
 
+#if BMC64_FILETAB_TRACE
+// fileTab open/close/exhaustion tracing (see BMC64_FILETAB_TRACE above).
+static int FileTabInUseCount(void) {
+  int n = 0;
+  for (const CircleFile &slot : fileTab) {
+    if (slot.in_use) {
+      n++;
+    }
+  }
+  return n;
+}
+
+static void FileTabDumpAll(const char *reason) {
+  printf("FT: %s - table full, dumping all %d slots:\n", reason, MAX_OPEN_FILES);
+  for (int i = 0; i < MAX_OPEN_FILES; i++) {
+    CircleFile &f = fileTab[i];
+    if (f.in_use) {
+      printf("  [%d] OPEN mode=%d streamed=%d fopen_called=%d fname=%s\n",
+             i, f.mode, f.streamed, f.fopen_called, f.fname);
+    } else {
+      printf("  [%d] free\n", i);
+    }
+  }
+}
+#endif // BMC64_FILETAB_TRACE
+
 static char *strdup2(const char *s) {
   char *d = (char *)malloc(strlen(s) + 1);
   if (d == nullptr)
@@ -540,8 +569,15 @@ extern "C" int _open(char *file, int flags, int mode) {
     }
 
     newFile.in_use = 1;
+#if BMC64_FILETAB_TRACE
+    printf("FT: open slot=%d inuse=%d/%d mode=%d fname=%s\n",
+           slot, FileTabInUseCount(), MAX_OPEN_FILES, masked_flags, newFile.fname);
+#endif
   } else {
     errno = ENFILE;
+#if BMC64_FILETAB_TRACE
+    FileTabDumpAll("_open: no free slot (ENFILE)");
+#endif
   }
 
   return slot;
@@ -558,6 +594,11 @@ extern "C" int _close(int fildes) {
     errno = EBADF;
     return -1;
   }
+
+#if BMC64_FILETAB_TRACE
+  printf("FT: close slot=%d inuse=%d/%d fname=%s\n",
+         fildes, FileTabInUseCount(), MAX_OPEN_FILES, file.fname);
+#endif
 
     int write_failed = 0;
     if (file.contents) {
