@@ -47,4 +47,9 @@ void WebUiFsUpload(CSocket *socket, const char *query,
 // empty directory). The same protected paths as upload are refused.
 void WebUiFsDelete(CSocket *socket, const char *query);
 
+// POST /api/fs/autostart?vol=SD&path=/dir/file.d64  -> queue the file to
+// be autostarted on the emulator (disk/tape image or PRG), like the
+// menu's Autostart. Answers 202 once queued; the outcome isn't reported.
+void WebUiFsAutostart(CSocket *socket, const char *query);
+
 #endif

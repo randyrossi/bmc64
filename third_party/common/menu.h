@@ -710,6 +710,8 @@ void menu_about_to_deactivate(void);
 void menu_update_network_status(void);
 
 void menu_quick_func(int button_assignment);
+// Autostart a file on the main loop (see emu_autostart_interrupt).
+void menu_autostart(const char *path);
 const char* function_to_string(int);
 
 #endif

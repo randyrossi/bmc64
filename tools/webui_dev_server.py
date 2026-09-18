@@ -162,6 +162,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.api_fs_upload(parsed.query)
         if path == "/api/fs/delete":
             return self.api_fs_delete(parsed.query)
+        if path == "/api/fs/autostart":
+            return self.api_fs_autostart(parsed.query)
         return self._send(404, "not found\n")
 
     def _drain_body(self):
@@ -330,6 +332,22 @@ class Handler(BaseHTTPRequestHandler):
         os.replace(tmp, target)
         sys.stderr.write("  [mock] uploaded %s (%d bytes)\n" % (target, got))
         self._json(200, {"ok": True, "size": got})
+
+    def api_fs_autostart(self, query):
+        self._drain_body()
+        q = urllib.parse.parse_qs(query)
+        rel = (q.get("path") or [""])[0]
+        target = safe_join(ARGS.root, rel)
+        if target is None or rel in ("", "/"):
+            return self._send(400, "bad path\n")
+        ext = os.path.splitext(target)[1].lstrip(".").lower()
+        if ext not in ("d64", "d71", "d81", "d82", "g64", "x64", "t64",
+                       "tap", "prg", "p00"):
+            return self._send(400, "not an autostartable file type\n")
+        if not os.path.isfile(target):
+            return self._send(404, "no such file\n")
+        sys.stderr.write("  [mock] autostart %s (no-op)\n" % target)
+        self._json(202, {"ok": True})
 
     def api_fs_delete(self, query):
         self._drain_body()

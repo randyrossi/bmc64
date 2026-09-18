@@ -4830,6 +4830,20 @@ void menu_about_to_deactivate() {
   }
 }
 
+// Called on the main loop
+void menu_autostart(const char *path) {
+  char buf[PENDING_EMU_AUTOSTART_MAX];
+  strcpy(buf, path);
+  if (emux_autostart_file(buf) < 0) {
+    printf("Autostart failed: %s\n", buf);
+    return;
+  }
+  // Autostart may have been requested while the menu was open.
+  if (ui_enabled) {
+    ui_pop_all_and_toggle();
+  }
+}
+
 // These are called on the main loop
 void menu_quick_func(int button_assignment) {
   int value;

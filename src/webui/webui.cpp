@@ -8,7 +8,8 @@
 //
 // Endpoints: GET static assets, GET /api/status, POST /api/reboot,
 // POST /api/reset, GET /api/volumes, GET /api/fs/list, GET /api/fs/download,
-// POST /api/fs/upload, POST /api/fs/delete, POST /api/webui/disable.
+// POST /api/fs/upload, POST /api/fs/delete, POST /api/fs/autostart,
+// POST /api/webui/disable.
 //
 // When a PIN is configured, every request must carry HTTP Basic Auth
 // (Authorization: Basic base64(<user>:<pin>)); the username is ignored.
@@ -432,6 +433,11 @@ boolean HandleConnection(CSocket *socket) {
 
   if (is_post && strcmp(target, "/api/fs/delete") == 0) {
     WebUiFsDelete(socket, query);
+    return FALSE;
+  }
+
+  if (is_post && strcmp(target, "/api/fs/autostart") == 0) {
+    WebUiFsAutostart(socket, query);
     return FALSE;
   }
 

@@ -1,5 +1,6 @@
 ## 5.1.6 (pre-release)
   * Fix unable to save settings after multiple hard resets #373
+  * Web UI: click a disk image, tape or PRG in the file browser to autostart it
 
 ## 5.1.5 (pre-release)
   * Include BMC64 version in logging
