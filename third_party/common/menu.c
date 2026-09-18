@@ -1381,6 +1381,9 @@ static int save_settings() {
   int r = emux_save_settings();
   if (r < 0) {
     printf("resource_save failed with %d\n", r);
+    if (fp != NULL) {
+      fclose(fp);
+    }
     return 1;
   }
 

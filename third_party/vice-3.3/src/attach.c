@@ -607,6 +607,13 @@ static int file_system_attach_disk_internal(unsigned int unit,
     vdrive_t *vdrive;
 
     vdrive = file_system_get_vdrive(unit);
+
+    /* vdrive_device_setup() below clears vdrive->image without closing it,
+       leaking a file handle on every re-attach. Close it first. */
+    if (vdrive->image != NULL) {
+        detach_disk_image_and_free(vdrive->image, vdrive, unit);
+    }
+
     /* FIXME: Is this clever?  */
     vdrive_device_setup(vdrive, unit);
     serial_device_type_set(SERIAL_DEVICE_VIRT, unit);
