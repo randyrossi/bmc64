@@ -142,6 +142,20 @@ else
        apply_patch_file "$circle_patch_file"
 fi
 
+if [ "$BOARD" = "pi0" ]
+then
+       # The Pi Zero has a single core, so interrupt handlers (including the
+       # USB FIQ) run on the emulator's core and can clobber the floating
+       # point registers sound.c is using. That shows up as "Sound: running
+       # too slow". Circle only enables these by default for Pi 2 and later.
+       perl -pi -e 's@//#define SAVE_VFP_REGS_ON_(IRQ|FIQ)@#define SAVE_VFP_REGS_ON_$1@' ./include/circle/sysconfig.h
+       if grep -q '^//#define SAVE_VFP_REGS_ON_' ./include/circle/sysconfig.h
+       then
+              echo "Failed to enable SAVE_VFP_REGS_ON_IRQ/FIQ in sysconfig.h" >&2
+              exit 1
+       fi
+fi
+
 apply_patch_file "$SRC_DIR/src/patches/circle_8bitdo_keyboard_patch.diff"
 apply_patch_file "$SRC_DIR/src/patches/circle_8bitdo_gamepad_patch.diff"
 apply_patch_file "$SRC_DIR/src/patches/circle_usb_descriptor_patch.diff"

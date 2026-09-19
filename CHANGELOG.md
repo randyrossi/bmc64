@@ -1,3 +1,7 @@
+## 5.1.7 (pre-release)
+  * Fix Pi Zero playing no sound for volume register digis (e.g. Impossible Mission speech) with the 8580 SID model
+  * Re-enable saving VFP registers in interrupt handlers on Pi Zero, prevents sound error
+
 ## 5.1.6 (pre-release)
   * Fix unable to save settings after multiple hard resets #373
   * Web UI: click a disk image, tape or PRG in the file browser to autostart it
