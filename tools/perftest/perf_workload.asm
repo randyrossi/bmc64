@@ -22,6 +22,15 @@
 
 zp_last = $fb                   ; last raster line seen by the IRQ handler
 
+; Copies of the SID registers the per-frame sweep changes. The SID registers
+; are write-only - reading one returns the decayed data bus, not the value last
+; written - so the sweep keeps its own copy and only ever writes the SID.
+; Indexed by X ($00 for SID 1, $20 for SID 2), so each SID gets its own copy.
+sh_fc   = $c000                 ; filter cutoff high ($d416)
+sh_p1   = $c001                 ; voice 1 frequency low ($d400)
+sh_p2   = $c002                 ; voice 2 frequency low ($d407)
+sh_p3   = $c003                 ; voice 3 frequency low ($d40e)
+
 ; xa writes no PRG load address, so emit it ourselves at $07ff. The code
 ; follows the 12 byte BASIC stub directly, so start = $080d = 2061.
 *=$07ff
@@ -111,13 +120,22 @@ frametick
 
 #ifdef SID
 ; X = SID base offset from $D400 ($00 for SID 1, $20 for SID 2)
-sidmod  inc $d416,x             ; filter cutoff sweep
-        inc $d400,x             ; voice 1 pitch up
-        dec $d407,x             ; voice 2 pitch down
-        inc $d40e,x             ; voice 3 pitch up
+sidmod  inc sh_fc,x             ; filter cutoff sweep
+        lda sh_fc,x
+        sta $d416,x
+        inc sh_p1,x             ; voice 1 pitch up
+        lda sh_p1,x
+        sta $d400,x
+        dec sh_p2,x             ; voice 2 pitch down
+        lda sh_p2,x
+        sta $d407,x
+        inc sh_p3,x             ; voice 3 pitch up
+        lda sh_p3,x
+        sta $d40e,x
         rts
 
 sidinit lda #$00                ; voice 1
+        sta sh_p1,x
         sta $d400,x
         lda #$1c
         sta $d401,x
@@ -130,6 +148,7 @@ sidinit lda #$00                ; voice 1
         lda #$f0
         sta $d406,x             ; sustain 15
         lda #$00                ; voice 2
+        sta sh_p2,x
         sta $d407,x
         lda #$22
         sta $d408,x
@@ -142,6 +161,7 @@ sidinit lda #$00                ; voice 1
         lda #$f0
         sta $d40d,x
         lda #$80                ; voice 3
+        sta sh_p3,x
         sta $d40e,x
         lda #$15
         sta $d40f,x
@@ -152,6 +172,7 @@ sidinit lda #$00                ; voice 1
         lda #$00                ; filter - cutoff, resonance 15, all voices
         sta $d415,x
         lda #$40
+        sta sh_fc,x
         sta $d416,x
         lda #$f7
         sta $d417,x
