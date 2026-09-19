@@ -27,6 +27,7 @@
 extern "C" {
 #include "../third_party/common/usb_gamepad_defaults.h"
 #include "../third_party/common/io_stats.h"
+#include "../third_party/common/perf_stats.h"
 }
 
 CKernel *static_kernel = NULL;
@@ -397,6 +398,7 @@ public:
     for (;;) {
       mKernel->UpdateUSBPlugAndPlay();
       mKernel->DrainLogging();
+      perf_stats_service();
       CScheduler::Get()->MsSleep(100);
     }
   }
@@ -939,6 +941,7 @@ ViceApp::TShutdownMode CKernel::Run(void) {
   while(1) {
       UpdateUSBPlugAndPlay();
       DrainLogging();
+      perf_stats_service();
       asm("wfi");
   }
 
@@ -1371,7 +1374,10 @@ int CKernel::circle_sound_init(const char *param, int *speed, int *fragsize,
 // Called from VICE: Core 1
 int CKernel::circle_sound_write(int16_t *pbuf, size_t nr) {
   if (mViceSound) {
-    return mViceSound->AddChunk(pbuf, nr);
+    unsigned perf_t0 = perf_now();
+    int result = mViceSound->AddChunk(pbuf, nr);
+    perf_audio_write(perf_now() - perf_t0);
+    return result;
   }
   return 0;
 }
@@ -1794,6 +1800,10 @@ void CKernel::circle_boot_complete() {
   io_stats_reset();
 #endif
 
+  // Start frame/audio measurement from a clean slate now that boot warp is
+  // over and audio playback has been started.
+  perf_stats_reset();
+
   DisableBootStat();
 }
 
@@ -1823,15 +1833,36 @@ void CKernel::circle_hide_fbl(int layer) {
 }
 
 void CKernel::circle_frames_ready_fbl(int layer1, int layer2, int sync) {
+  unsigned perf_t0 = perf_now();
+
   // If we're going to sync to vblank, indicate this frame data should go
   // to the offscreen resource.
   fbl[layer1].FrameReady(sync);
   if (layer2 >= 0) {
      fbl[layer2].FrameReady(sync);
   }
+
+  unsigned perf_t1 = perf_now();
+
   // Flip the buffers and wait for vblank.
   FrameBufferLayer::SwapResources(sync,
       &fbl[layer1], layer2 >= 0 ? &fbl[layer2] : nullptr);
+
+  if (layer1 == FB_LAYER_VIC) {
+    unsigned perf_t2 = perf_now();
+    unsigned audio_fill = 0;
+    unsigned audio_capacity = 0;
+#ifdef BMC64_PERF_STATS
+    // Sampled just after the vblank wait: the point in the frame where the
+    // buffer is at its lowest.
+    if (mViceSound) {
+      audio_capacity = FRAG_SIZE * NUM_FRAGS;
+      audio_fill = audio_capacity - mViceSound->BufferSpaceSamples();
+    }
+#endif
+    perf_frame_present(perf_t1 - perf_t0, perf_t2 - perf_t1, sync, audio_fill,
+                       audio_capacity);
+  }
 }
 
 void CKernel::circle_set_palette_fbl(int layer, uint8_t index, uint16_t rgb565) {

@@ -54,6 +54,7 @@
 #include "menu_usb.h"
 #include "menu_tape_osd.h"
 #include "overlay.h"
+#include "perf_stats.h"
 #include "raspi_machine.h"
 #include "ui.h"
 
@@ -350,6 +351,10 @@ void vsyncarch_init(void) {
 void vsyncarch_presync(void) { kbdbuf_flush(); }
 
 void vsyncarch_postsync(void) {
+  // Frame budget measurement (opt-in, see perf_stats.h). nominal frame
+  // period in us = 1e6 / refresh rate, where video_freq is refresh * tick inc.
+  perf_frame_begin((unsigned)(1000000.0 * video_tick_inc / video_freq));
+
   emux_ensure_video();
 
   // This render will handle any OSDs we have. ODSs don't pause emulation.
@@ -386,6 +391,7 @@ void vsyncarch_postsync(void) {
   // Hold for vsync unless warping or in boot warp.
   int raspi_warp;
   resources_get_int("WarpMode", &raspi_warp);
+  perf_frame_post_done();
   circle_frames_ready_fbl(FB_LAYER_VIC,
                          machine_class == VICE_MACHINE_C128 ? FB_LAYER_VDC : -1,
                          !raspi_boot_warp && !raspi_warp);
@@ -496,6 +502,8 @@ void vsyncarch_postsync(void) {
   if (raspi_demo_mode) {
     demo_check();
   }
+
+  perf_frame_end();
 }
 
 void vsyncarch_sleep(unsigned long delay) {

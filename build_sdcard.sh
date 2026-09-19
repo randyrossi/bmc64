@@ -17,6 +17,7 @@ SKIP_PATCHES=0
 MACHINE=""
 KASAN=0
 IO_STATS=0
+PERF_STATS=0
 
 while [ "$#" -gt 0 ]
 do
@@ -46,8 +47,11 @@ do
         --io-stats)
             IO_STATS=1
             ;;
+        --perf-stats)
+            PERF_STATS=1
+            ;;
         *)
-            echo "Arguments must be board names, --machine MACHINE, --skip-patches, --kasan, or --io-stats" >&2
+            echo "Arguments must be board names, --machine MACHINE, --skip-patches, --kasan, --io-stats, or --perf-stats" >&2
             exit 1
             ;;
     esac
@@ -65,6 +69,12 @@ fi
 if [ "$IO_STATS" -eq 1 ]
 then
     export BMC64_IO_STATS=1
+fi
+
+# Opt-in frame/audio performance instrumentation, same idea as above.
+if [ "$PERF_STATS" -eq 1 ]
+then
+    export BMC64_PERF_STATS=1
 fi
 
 if [ -n "$MACHINE" ]
@@ -166,6 +176,21 @@ done
 
 mkdir -p "$STAGING_DIR/DRIVES" "$STAGING_DIR/prg" "$STAGING_DIR/tmp"
 
+# A --perf-stats build is for running the performance workloads, so stage them
+# where the file browser will find them. See tools/perftest/README.md.
+if [ "$PERF_STATS" -eq 1 ]
+then
+    shopt -s nullglob
+    perf_workloads=("$SRC_DIR"/tools/perftest/perf_*.prg)
+    shopt -u nullglob
+    if [ "${#perf_workloads[@]}" -eq 0 ]
+    then
+        echo "No performance workloads found in tools/perftest (run 'make' there)" >&2
+        exit 1
+    fi
+    cp "${perf_workloads[@]}" "$STAGING_DIR/prg/"
+fi
+
 for board in "${BOARDS[@]}"
 do
     echo "=============================================================="
@@ -189,6 +214,10 @@ do
     if [ "$IO_STATS" -eq 1 ]
     then
         make_all_arguments+=(--io-stats)
+    fi
+    if [ "$PERF_STATS" -eq 1 ]
+    then
+        make_all_arguments+=(--perf-stats)
     fi
     ./make_all.sh "${make_all_arguments[@]}"
     kernel=$(kernel_for_board "$board")
@@ -227,6 +256,10 @@ do
         if [ "$IO_STATS" -eq 1 ]
         then
             make_machines_arguments+=(--io-stats)
+        fi
+        if [ "$PERF_STATS" -eq 1 ]
+        then
+            make_machines_arguments+=(--perf-stats)
         fi
         ./make_machines.sh "${make_machines_arguments[@]}"
         machines=(c64 c128 vic20 plus4 pet)

@@ -147,6 +147,8 @@ For a build with the storage I/O instrumentation (SD/FatFs counters, the "I/O St
 
 If you build with the individual scripts rather than `build_sdcard.sh`, pass `--io-stats` to **both** `make_all.sh` and `make_machines.sh` (e.g. `./make_all.sh pi3 --io-stats` then `./make_machines.sh pi3 --io-stats`) — `make_machines.sh` rebuilds the common library and the per-machine kernels, so it needs the flag too.
 
+For a build with the frame-budget and audio performance instrumentation, pass `--perf-stats`. Every 10 seconds it prints one `[perf] {...}` line to `/bmc64.log` and the serial console (enable one of them in `cmdline.txt`) describing how much of each frame's time budget the emulator used, missed vertical blanks and the audio buffer level. It is compiled out entirely by default and can be combined with `--io-stats`. As with `--io-stats`, pass `--perf-stats` to **both** `make_all.sh` and `make_machines.sh` when using the individual scripts; `make_all.sh` is also what passes it into the VICE build. See [PERFORMANCE_TEST_PLAN.md](architecture/PERFORMANCE_TEST_PLAN.md) and `tools/perftest/`. `build_sdcard.sh --perf-stats` also copies the test workloads from `tools/perftest/` into `prg/` on the staged card. It currently instruments the VICE-based machines only, not Plus4Emu.
+
 ----
 ## Resources
 

@@ -282,6 +282,15 @@ extern void circle_io_stats_dump(void);
 extern void circle_io_benchmark(void);
 #endif
 
+#ifdef BMC64_PERF_STATS
+// Frame/audio performance measurement (see third_party/common/perf_stats.h).
+// Reads SoC temperature (millidegrees C, 0 if unavailable), the firmware
+// get_throttled bitmask and the current ARM clock (Hz). Mailbox calls, so only
+// from the reporting context (core 0), never from an emulator-core hook.
+extern void circle_perf_get_env(int *temp_millic, unsigned *throttled,
+                                unsigned *arm_hz);
+#endif
+
 extern void circle_set_volume(int value);
 extern int circle_get_model();
 extern unsigned circle_get_arm_clock();

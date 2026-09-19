@@ -25,6 +25,8 @@ extern "C" {
 
 #include <circle/sched/scheduler.h>
 
+#include "../third_party/common/perf_stats.h"
+
 ViceSound::ViceSound(CVCHIQDevice *pVCHIQDevice,
                      TVCHIQSoundDestination Destination)
     : ViceSoundBaseDevice(pVCHIQDevice, SAMPLE_RATE, CHUNK_SIZE, Destination) {
@@ -80,12 +82,16 @@ unsigned ViceSound::GetChunk(s16 *pBuffer, unsigned nChunkSize) {
 
   // VICE expects us to 'block' if our buffer is full. But
   // this shouldn't happen.
+  if (bytes_buffered >= FRAG_SIZE * NUM_FRAGS * BYTES_PER_SAMPLE) {
+    perf_audio_full_wait();
+  }
   while (bytes_buffered >= FRAG_SIZE * NUM_FRAGS * BYTES_PER_SAMPLE) {
     CScheduler::Get()->Yield();
   }
 
   if (src_buffer == 0 || src_size == 0) {
     // Nothing to give? Give a silent packet.
+    perf_audio_silent_packet();
     memset(pBuffer, 0, FRAG_SIZE * BYTES_PER_SAMPLE);
     src_size = FRAG_SIZE;
   } else {
