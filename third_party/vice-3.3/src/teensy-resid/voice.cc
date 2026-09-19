@@ -102,9 +102,14 @@ void Voice::set_chip_model(chip_model model)
     voice_DC = 0x800*0xff;
   }
   else {
-    // No DC offsets in the MOS8580.
+    // No waveform DC offset in the MOS8580, but a small voice DC is still
+    // needed. Volume register samples ($D418 digis, e.g. the Impossible
+    // Mission speech) are only heard as a step of (DC * volume); with no DC
+    // they are completely silent. The stock resid library (Pi 2/3) gets a
+    // DC from its op-amp model, where the 8580 digi step is about a tenth of
+    // the 6581's, so use a tenth of the 6581 voice DC to match.
     wave_zero = 0x800;
-    voice_DC = 0;
+    voice_DC = 0x800*0xff/10;
   }
 }
 

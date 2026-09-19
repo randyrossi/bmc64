@@ -73,8 +73,9 @@ void ExternalFilter::set_chip_model(chip_model model)
     mixer_DC = ((((0x800 - 0x380) + 0x800)*0xff*3 - 0xfff*0xff/18) >> 7)*0x0f;
   }
   else {
-    // No DC offsets in the MOS8580.
-    mixer_DC = 0;
+    // Only the small voice DC set in voice.cc; to be removed if the
+    // external filter is turned off: (voice DC*voices)*volume
+    mixer_DC = ((0x800*0xff/10*3) >> 7)*0x0f;
   }
 }
 
