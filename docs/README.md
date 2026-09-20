@@ -14,6 +14,7 @@
 - [Input & GPIO](USER_GUIDE.md#input--gpio)
 - [Networking](NETWORKING.md)
 - [Web UI](WEBUI.md)
+- [Optimising BMC64](OPTIMISING.md)
 - [FAQ](FAQ.md)
 
 ## Development

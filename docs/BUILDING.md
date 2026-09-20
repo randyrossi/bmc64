@@ -28,7 +28,7 @@ These instructions have been tested on Debian/Ubuntu/Mint distributions. If you 
 
 ## Manual Installation of GNU Toolchain for Arm (Optional)
 
-Installation and use of the GNU toolchain is automated by the build scripts. To optonally install it manually follow the steps below
+Installation and use of the GNU toolchain is automated by the build scripts. To optionally install it manually follow the steps below
 
 1. Download and unpack the *GNU Embedded Toolchain for Arm*:
 
@@ -141,13 +141,19 @@ To build and stage one emulator image, add `--machine` followed by `c64`, `c128`
 
         ./build_sdcard.sh pi3 --machine vic20
 
+#### KASAN memory debugging
+
 For a KASAN diagnostic build, set `KASAN_ENABLED = 1` in Circle's `Config.mk` before running the script, or pass `--kasan`. The script preserves an enabled setting when it regenerates Circle's configuration.
 
 For a build with the storage I/O instrumentation (SD/FatFs counters, the "I/O Statistics" menu screen, the raw-device benchmark, and boot/shutdown counter dumps to `/bmc64.log`), pass `--io-stats`. It is compiled out entirely by default. `--kasan` and `--io-stats` are also accepted directly by `make_all.sh`, e.g. `./make_all.sh pi3 --io-stats`.
 
+#### IO performance metrics
+
 If you build with the individual scripts rather than `build_sdcard.sh`, pass `--io-stats` to **both** `make_all.sh` and `make_machines.sh` (e.g. `./make_all.sh pi3 --io-stats` then `./make_machines.sh pi3 --io-stats`) — `make_machines.sh` rebuilds the common library and the per-machine kernels, so it needs the flag too.
 
-For a build with the frame-budget and audio performance instrumentation, pass `--perf-stats`. Every 10 seconds it prints one `[perf] {...}` line to `/bmc64.log` and the serial console (enable one of them in `cmdline.txt`) describing how much of each frame's time budget the emulator used, missed vertical blanks and the audio buffer level. It is compiled out entirely by default and can be combined with `--io-stats`. As with `--io-stats`, pass `--perf-stats` to **both** `make_all.sh` and `make_machines.sh` when using the individual scripts; `make_all.sh` is also what passes it into the VICE build. See [PERFORMANCE_TEST_PLAN.md](architecture/PERFORMANCE_TEST_PLAN.md) and `tools/perftest/`. `build_sdcard.sh --perf-stats` also copies the test workloads from `tools/perftest/` into `prg/` on the staged card. It currently instruments the VICE-based machines only, not Plus4Emu.
+#### General performance metrics
+
+For a build with the frame-budget and audio performance instrumentation, pass `--perf-stats`. Every 10 seconds it prints one `[perf] {...}` line to `/bmc64.log` and the serial console (enable one of them in `cmdline.txt`) describing how much of each frame's time budget the emulator used, missed vertical blanks and the audio buffer level. It is compiled out entirely by default and can be combined with `--io-stats`. As with `--io-stats`, pass `--perf-stats` to **both** `make_all.sh` and `make_machines.sh` when using the individual scripts; `make_all.sh` is also what passes it into the VICE build. See [tools/perftest/README.md](../tools/perftest/README.md) for how to capture and read the report. `build_sdcard.sh --perf-stats` also copies the test workloads from `tools/perftest/` into `prg/` on the staged card. It currently instruments the VICE-based machines only, not Plus4Emu.
 
 ----
 ## Resources

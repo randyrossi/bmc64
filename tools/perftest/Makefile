@@ -1,5 +1,5 @@
 # Builds the C64 performance workloads used by the BMC64 performance test
-# suite (see docs/architecture/PERFORMANCE_TEST_PLAN.md).
+# suite (see README.md).
 #
 # Needs the xa assembler (xa65). On Debian/Ubuntu: sudo apt install xa65
 #
