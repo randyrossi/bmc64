@@ -40,6 +40,7 @@ For Plus/4 emulation on the Rasbperry Pi 3, a more accurate emulator using Plus4
 - [User Guide](docs/USER_GUIDE.md)
 - [Documentation](docs/README.md)
 - [Web UI](docs/WEBUI.md)
+- [Optimising BMC64](docs/OPTIMISING.md)
 - [FAQ](docs/FAQ.md)
 
 ## Releases

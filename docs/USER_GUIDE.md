@@ -12,6 +12,7 @@ This guide covers installing, configuring, and using BMC64, including machine se
 - [Limitations](#limitations)
 - [Installation](#installation)
 - [Machine Selection](#machine-selection)
+- [Optimising BMC64](#optimising-bmc64)
 - [Video \& Timing](#video--timing)
   - [machines.txt](#machinestxt)
     - [How to add your own custom HDMI mode (VICE emulators only)](#how-to-add-your-own-custom-hdmi-mode-vice-emulators-only)
@@ -106,6 +107,12 @@ See [INSTALLATION.md](INSTALLATION.md) for SD-card preparation, required ROM fil
 # Machine Selection
 
 The default machine is a C64.  You can switch to VIC20, C128, Plus/4 or PET from the 'Machines->Switch' menu option.  These configurations are defined in machines.txt. There you will find configurations for each machine type for NTSC/PAL over HDMI/Composite combinations.  Most video modes are 720p but you can change this (see below).
+
+# Optimising BMC64
+
+If BMC64 is running slowly, or the sound or picture glitches, see [Optimising BMC64](OPTIMISING.md). It explains which
+settings and options add load and how to reduce it, starting with recommended settings for the Raspberry Pi Zero and
+Zero W.
 
 # Video & Timing
 

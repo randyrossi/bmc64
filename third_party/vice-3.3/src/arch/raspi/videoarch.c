@@ -32,12 +32,18 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 // VICE includes
 #include "joyport/joystick.h"
+#include "diskimage.h"
+#include "diskimage/fsimage.h"
+#include "drive.h"
 #include "kbdbuf.h"
 #include "keyboard.h"
+#include "log.h"
 #include "machine.h"
+#include "machine-drive.h"
 #include "mem.h"
 #include "monitor.h"
 #include "resources.h"
@@ -54,6 +60,9 @@
 #include "menu_usb.h"
 #include "menu_tape_osd.h"
 #include "overlay.h"
+#ifdef BMC64_PERF_STATS
+  #include "perf_stats.h"
+#endif
 #include "raspi_machine.h"
 #include "ui.h"
 
@@ -349,7 +358,56 @@ void vsyncarch_init(void) {
 
 void vsyncarch_presync(void) { kbdbuf_flush(); }
 
+// BMC64 needed: no shutdown sequence, so push floppy image writes to the card
+// while the drive is idle. Detach does the same (writeback + f_close).
+#define DRIVE_IDLE_POLL_FRAMES 30
+
+static void drive_idle_flush_poll(void) {
+  int i;
+  int mode = menu_get_drive_flush();
+
+  if (mode == DRIVE_FLUSH_ON_DETACH) {
+    return;
+  }
+
+  for (i = 0; i < DRIVE_NUM; i++) {
+    drive_t *drive;
+    FILE *fd;
+    unsigned long t0;
+    if (drive_context[i] == NULL) {
+      continue;
+    }
+    drive = drive_context[i]->drive;
+    if (drive->image == NULL || drive->image->device != DISK_IMAGE_DEVICE_FS) {
+      continue;
+    }
+    // Only touch FatFs when the drive actually wrote something.
+    if (!(drive->GCR_dirty_track || drive->P64_dirty)) {
+      continue;
+    }
+    if (drive->read_write_mode == 0 || (drive->led_status & 1)) {
+      continue; // busy
+    }
+    t0 = circle_get_ticks();
+    machine_drive_flush();
+    fd = (FILE *)fsimage_fd_get(drive->image);
+    if (fd != NULL) {
+      fsync(fileno(fd));
+    }
+    if (mode == DRIVE_FLUSH_ON_WRITE_LOGGED) {
+      log_message(LOG_DEFAULT, "BMC64: idle flush drive %d took %lu us", i + 8,
+                  circle_get_ticks() - t0);
+    }
+  }
+}
+
 void vsyncarch_postsync(void) {
+#ifdef BMC64_PERF_STATS
+  // Frame budget measurement (opt-in, see perf_stats.h). nominal frame
+  // period in us = 1e6 / refresh rate, where video_freq is refresh * tick inc.
+  perf_frame_begin((unsigned)(1000000.0 * video_tick_inc / video_freq));
+#endif
+
   emux_ensure_video();
 
   // This render will handle any OSDs we have. ODSs don't pause emulation.
@@ -377,6 +435,10 @@ void vsyncarch_postsync(void) {
   circle_yield();
 
   video_frame_count++;
+  // BMC64 Poll for idle drives and flush if necessary.
+  if (video_frame_count % DRIVE_IDLE_POLL_FRAMES == 0) {
+    drive_idle_flush_poll();
+  }
   if (raspi_boot_warp && video_frame_count > 120) {
     raspi_boot_warp = 0;
     circle_boot_complete();
@@ -386,6 +448,9 @@ void vsyncarch_postsync(void) {
   // Hold for vsync unless warping or in boot warp.
   int raspi_warp;
   resources_get_int("WarpMode", &raspi_warp);
+#ifdef BMC64_PERF_STATS
+  perf_frame_post_done();
+#endif
   circle_frames_ready_fbl(FB_LAYER_VIC,
                          machine_class == VICE_MACHINE_C128 ? FB_LAYER_VDC : -1,
                          !raspi_boot_warp && !raspi_warp);
@@ -496,6 +561,10 @@ void vsyncarch_postsync(void) {
   if (raspi_demo_mode) {
     demo_check();
   }
+
+#ifdef BMC64_PERF_STATS
+  perf_frame_end();
+#endif
 }
 
 void vsyncarch_sleep(unsigned long delay) {

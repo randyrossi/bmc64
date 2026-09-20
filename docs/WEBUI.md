@@ -7,7 +7,8 @@ is available on **C64 and C128 only** (it shares the network stack described in
 [PIN](#pin).
 
 The server runs on the Raspberry Pi's networking core, not the core emulation core, 
-but it is still recommended to have it disabled if not in use.
+but it is still recommended to have it disabled if not in use. See
+[Optimising BMC64](OPTIMISING.md) for its effect on performance.
 
 ## What it does
 

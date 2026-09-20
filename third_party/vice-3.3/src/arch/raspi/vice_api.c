@@ -65,6 +65,10 @@
 // RASPI includes
 #include "circle.h"
 #include "keycodes.h"
+#ifdef BMC64_PERF_STATS
+  #include "perf_stats.h"
+  #include "config.h" // VERSION, so perf results are labelled with the core
+#endif
 
 struct menu_item *sid_dual_item;
 struct menu_item *sid_base_address_item;
@@ -147,6 +151,9 @@ static void check_sid_options() {
 }
 
 void emu_machine_init(int raster_skip_enabled, int raster_skip2_enabled) {
+#ifdef BMC64_PERF_STATS
+  perf_stats_set_core("vice-" VERSION);
+#endif
   switch (machine_class) {
     case VICE_MACHINE_C64:
        emux_machine_class = BMC64_MACHINE_CLASS_C64;

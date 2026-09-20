@@ -4,6 +4,8 @@ This document describes the networking support currently implemented in BMC64.
 Networks is available for C64 and C128 machines. C64 has been tested with BBS
 access and C64 OS network enabled applications and C128 has been tested with BBS.
 
+On the Raspberry Pi Zero, see [Optimising BMC64](OPTIMISING.md) for how networking affects performance.
+
 ## What It Does
 
 BMC64 runs without Linux. The Raspberry Pi networking stack is initialized at

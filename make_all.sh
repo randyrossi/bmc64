@@ -38,6 +38,7 @@ BOARD=""
 SKIP_PATCHES=0
 KASAN=0
 IO_STATS=0
+PERF_STATS=0
 
 for arg in "$@"
 do
@@ -54,8 +55,11 @@ case "$arg" in
        --io-stats)
               IO_STATS=1
               ;;
+       --perf-stats)
+              PERF_STATS=1
+              ;;
        *)
-              echo "Need arg [pi0|pi2|pi3|pi4] [--skip-patches] [--kasan] [--io-stats]"
+              echo "Need arg [pi0|pi2|pi3|pi4] [--skip-patches] [--kasan] [--io-stats] [--perf-stats]"
               exit 1
               ;;
 esac
@@ -63,7 +67,7 @@ done
 
 if [ -z "$BOARD" ]
 then
-echo "Need arg [pi0|pi2|pi3|pi4] [--skip-patches] [--kasan] [--io-stats]"
+echo "Need arg [pi0|pi2|pi3|pi4] [--skip-patches] [--kasan] [--io-stats] [--perf-stats]"
 exit 1
 fi
 
@@ -73,6 +77,17 @@ fi
 if [ "$IO_STATS" = "1" ]
 then
        export BMC64_IO_STATS=1
+fi
+
+# Opt-in frame-budget / audio performance instrumentation (see
+# tools/perftest/README.md). BMC64_PERF_STATS is picked up by
+# the common and kernel Makefiles; VICE_PERF_CFLAGS carries it into the VICE
+# build, where a few BMC64 hooks live (arch/raspi and the dual SID wait).
+VICE_PERF_CFLAGS=""
+if [ "$PERF_STATS" = "1" ]
+then
+       export BMC64_PERF_STATS=1
+       VICE_PERF_CFLAGS="-DBMC64_PERF_STATS"
 fi
 
 echo "Making for $BOARD"
@@ -140,6 +155,20 @@ then
        apply_patch_file "$circle_patch_file" 's@+#define ARM_ALLOW_MULTI_CORE@+//#define ARM_ALLOW_MULTI_CORE@'
 else
        apply_patch_file "$circle_patch_file"
+fi
+
+if [ "$BOARD" = "pi0" ]
+then
+       # The Pi Zero has a single core, so interrupt handlers (including the
+       # USB FIQ) run on the emulator's core and can clobber the floating
+       # point registers sound.c is using. That shows up as "Sound: running
+       # too slow". Circle only enables these by default for Pi 2 and later.
+       perl -pi -e 's@//#define SAVE_VFP_REGS_ON_(IRQ|FIQ)@#define SAVE_VFP_REGS_ON_$1@' ./include/circle/sysconfig.h
+       if grep -q '^//#define SAVE_VFP_REGS_ON_' ./include/circle/sysconfig.h
+       then
+              echo "Failed to enable SAVE_VFP_REGS_ON_IRQ/FIQ in sysconfig.h" >&2
+              exit 1
+       fi
 fi
 
 apply_patch_file "$SRC_DIR/src/patches/circle_8bitdo_keyboard_patch.diff"
@@ -356,7 +385,7 @@ fi
 cd ../..
 done
 
-LDFLAGS="-nostdlib -Wl,-e,main -L$CIRCLE_HOME/install/arm-none-circle/lib" CXXFLAGS="-std=c++11 -O3 -ffreestanding -DAARCH=32 -march=armv6k -mtune=arm1176jzf-s -marm -mfpu=vfp -mfloat-abi=hard -fno-exceptions -fno-rtti -nostdinc++ --specs=nosys.specs $CIRCLE_PUBLIC_INCLUDES" CFLAGS="-O3 -I$COMMON_HOME -I$CIRCLE_HOME/install/arm-none-circle/include/ $CIRCLE_PUBLIC_INCLUDES -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include-fixed -I$CIRCLE_HOME/libs/circle/addon/fatfs -fno-exceptions --specs=nosys.specs -mfloat-abi=hard -ffreestanding -nostdlib -march=armv6k -mtune=arm1176jzf-s -marm -mfpu=vfp -nostdinc $VICE_KASAN_CFLAGS" configure_vice ./configure --host=arm-none-eabi --disable-realdevice --disable-ipv6 --disable-ssi2001 --disable-catweasel --disable-hardsid --disable-parsid --disable-portaudio --disable-ahi --disable-bundle --disable-lame --disable-rs232 --disable-midi --disable-hidmgr --disable-hidutils --without-oss --without-alsa --without-pulse --without-zlib --disable-sdlui --disable-sdlui2 --enable-raspiui --enable-raspilite
+LDFLAGS="-nostdlib -Wl,-e,main -L$CIRCLE_HOME/install/arm-none-circle/lib" CXXFLAGS="-std=c++11 -O3 -ffreestanding -DAARCH=32 -march=armv6k -mtune=arm1176jzf-s -marm -mfpu=vfp -mfloat-abi=hard -fno-exceptions -fno-rtti -nostdinc++ --specs=nosys.specs $CIRCLE_PUBLIC_INCLUDES" CFLAGS="-O3 -I$COMMON_HOME -I$CIRCLE_HOME/install/arm-none-circle/include/ $CIRCLE_PUBLIC_INCLUDES -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include-fixed -I$CIRCLE_HOME/libs/circle/addon/fatfs -fno-exceptions --specs=nosys.specs -mfloat-abi=hard -ffreestanding -nostdlib -march=armv6k -mtune=arm1176jzf-s -marm -mfpu=vfp -nostdinc $VICE_KASAN_CFLAGS $VICE_PERF_CFLAGS" configure_vice ./configure --host=arm-none-eabi --disable-realdevice --disable-ipv6 --disable-ssi2001 --disable-catweasel --disable-hardsid --disable-parsid --disable-portaudio --disable-ahi --disable-bundle --disable-lame --disable-rs232 --disable-midi --disable-hidmgr --disable-hidutils --without-oss --without-alsa --without-pulse --without-zlib --disable-sdlui --disable-sdlui2 --enable-raspiui --enable-raspilite
 if [ "$?" != "0" ]
 then
        echo "Failed to configure VICE" >&2
@@ -368,7 +397,7 @@ cd src/resid
 CXXFLAGS="-std=c++11 -funsafe-math-optimizations -mfloat-abi=hard -march=armv7-a -marm -mfpu=neon-vfpv4 -O3 -I$CIRCLE_HOME/install/arm-none-circle/include/ $CIRCLE_PUBLIC_INCLUDES -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include-fixed" LDFLAGS="-L$CIRCLE_HOME/install/arm-none-circle/lib" ./configure --host=arm-none-eabi
 cd ../..
 
-LDFLAGS="-nostdlib -Wl,-e,main -L$CIRCLE_HOME/install/arm-none-circle/lib" CXXFLAGS="-std=c++11 -O3 -mfloat-abi=hard -ffreestanding -march=armv7-a -marm -mfpu=neon-vfpv4 -fno-exceptions -fno-rtti -nostdinc++ --specs=nosys.specs $CIRCLE_PUBLIC_INCLUDES" CFLAGS="-O3 -I$COMMON_HOME -I$CIRCLE_HOME/install/arm-none-circle/include/ $CIRCLE_PUBLIC_INCLUDES -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include-fixed -I$CIRCLE_HOME/libs/circle/addon/fatfs -fno-exceptions --specs=nosys.specs -mfloat-abi=hard -ffreestanding -nostdlib -march=armv7-a -marm -mfpu=neon-vfpv4 -nostdinc $VICE_KASAN_CFLAGS" configure_vice ./configure --host=arm-none-eabi --disable-realdevice --disable-ipv6 --disable-ssi2001 --disable-catweasel --disable-hardsid --disable-parsid --disable-portaudio --disable-ahi --disable-bundle --disable-lame --disable-rs232 --disable-midi --disable-hidmgr --disable-hidutils --without-oss --without-alsa --without-pulse --without-zlib --disable-sdlui --disable-sdlui2 --enable-raspiui
+LDFLAGS="-nostdlib -Wl,-e,main -L$CIRCLE_HOME/install/arm-none-circle/lib" CXXFLAGS="-std=c++11 -O3 -mfloat-abi=hard -ffreestanding -march=armv7-a -marm -mfpu=neon-vfpv4 -fno-exceptions -fno-rtti -nostdinc++ --specs=nosys.specs $CIRCLE_PUBLIC_INCLUDES" CFLAGS="-O3 -I$COMMON_HOME -I$CIRCLE_HOME/install/arm-none-circle/include/ $CIRCLE_PUBLIC_INCLUDES -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include-fixed -I$CIRCLE_HOME/libs/circle/addon/fatfs -fno-exceptions --specs=nosys.specs -mfloat-abi=hard -ffreestanding -nostdlib -march=armv7-a -marm -mfpu=neon-vfpv4 -nostdinc $VICE_KASAN_CFLAGS $VICE_PERF_CFLAGS" configure_vice ./configure --host=arm-none-eabi --disable-realdevice --disable-ipv6 --disable-ssi2001 --disable-catweasel --disable-hardsid --disable-parsid --disable-portaudio --disable-ahi --disable-bundle --disable-lame --disable-rs232 --disable-midi --disable-hidmgr --disable-hidutils --without-oss --without-alsa --without-pulse --without-zlib --disable-sdlui --disable-sdlui2 --enable-raspiui
 if [ "$?" != "0" ]
 then
        echo "Failed to configure VICE" >&2
@@ -380,7 +409,7 @@ cd src/resid
 CXXFLAGS="-O3 -std=c++11 -march=armv8-a -mtune=cortex-a53 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard $CIRCLE_PUBLIC_INCLUDES" ./configure --host=arm-none-eabi
 cd ../..
 
-LDFLAGS="-nostdlib -Wl,-e,main -L$CIRCLE_HOME/install/arm-none-circle/lib" CXXFLAGS="-O3 -std=c++11 -fno-exceptions -march=armv8-a -mtune=cortex-a53 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard -ffreestanding -nostdlib -nostdinc++ $CIRCLE_PUBLIC_INCLUDES" CFLAGS="-O3 -I$COMMON_HOME -I$CIRCLE_HOME/install/arm-none-circle/include/ $CIRCLE_PUBLIC_INCLUDES -I$CIRCLE_HOME/libs/circle/addon/fatfs -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include-fixed -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include -fno-exceptions -march=armv8-a -mtune=cortex-a53 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard -ffreestanding -nostdlib $VICE_KASAN_CFLAGS" configure_vice ./configure --host=arm-none-eabi --disable-realdevice --disable-ipv6 --disable-ssi2001 --disable-catweasel --disable-hardsid --disable-parsid --disable-portaudio --disable-ahi --disable-bundle --disable-lame --disable-rs232 --disable-midi --disable-hidmgr --disable-hidutils --without-oss --without-alsa --without-pulse --without-zlib --disable-sdlui --disable-sdlui2 --enable-raspiui
+LDFLAGS="-nostdlib -Wl,-e,main -L$CIRCLE_HOME/install/arm-none-circle/lib" CXXFLAGS="-O3 -std=c++11 -fno-exceptions -march=armv8-a -mtune=cortex-a53 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard -ffreestanding -nostdlib -nostdinc++ $CIRCLE_PUBLIC_INCLUDES" CFLAGS="-O3 -I$COMMON_HOME -I$CIRCLE_HOME/install/arm-none-circle/include/ $CIRCLE_PUBLIC_INCLUDES -I$CIRCLE_HOME/libs/circle/addon/fatfs -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include-fixed -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include -fno-exceptions -march=armv8-a -mtune=cortex-a53 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard -ffreestanding -nostdlib $VICE_KASAN_CFLAGS $VICE_PERF_CFLAGS" configure_vice ./configure --host=arm-none-eabi --disable-realdevice --disable-ipv6 --disable-ssi2001 --disable-catweasel --disable-hardsid --disable-parsid --disable-portaudio --disable-ahi --disable-bundle --disable-lame --disable-rs232 --disable-midi --disable-hidmgr --disable-hidutils --without-oss --without-alsa --without-pulse --without-zlib --disable-sdlui --disable-sdlui2 --enable-raspiui
 if [ "$?" != "0" ]
 then
        echo "Failed to configure VICE" >&2
@@ -392,7 +421,7 @@ cd src/resid
 CXXFLAGS="-O3 -std=c++11 -march=armv8-a -mtune=cortex-a72 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard $CIRCLE_PUBLIC_INCLUDES" ./configure --host=arm-none-eabi
 cd ../..
 
-LDFLAGS="-nostdlib -Wl,-e,main -L$CIRCLE_HOME/install/arm-none-circle/lib" CXXFLAGS="-O3 -std=c++11 -fno-exceptions -march=armv8-a -mtune=cortex-a72 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard -ffreestanding -nostdlib -nostdinc++ $CIRCLE_PUBLIC_INCLUDES" CFLAGS="-O3 -I$COMMON_HOME -I$CIRCLE_HOME/install/arm-none-circle/include/ $CIRCLE_PUBLIC_INCLUDES -I$CIRCLE_HOME/libs/circle/addon/fatfs -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include-fixed -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include -fno-exceptions -march=armv8-a -mtune=cortex-a72 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard -ffreestanding -nostdlib $VICE_KASAN_CFLAGS" configure_vice ./configure --host=arm-none-eabi --disable-realdevice --disable-ipv6 --disable-ssi2001 --disable-catweasel --disable-hardsid --disable-parsid --disable-portaudio --disable-ahi --disable-bundle --disable-lame --disable-rs232 --disable-midi --disable-hidmgr --disable-hidutils --without-oss --without-alsa --without-pulse --without-zlib --disable-sdlui --disable-sdlui2 --enable-raspiui
+LDFLAGS="-nostdlib -Wl,-e,main -L$CIRCLE_HOME/install/arm-none-circle/lib" CXXFLAGS="-O3 -std=c++11 -fno-exceptions -march=armv8-a -mtune=cortex-a72 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard -ffreestanding -nostdlib -nostdinc++ $CIRCLE_PUBLIC_INCLUDES" CFLAGS="-O3 -I$COMMON_HOME -I$CIRCLE_HOME/install/arm-none-circle/include/ $CIRCLE_PUBLIC_INCLUDES -I$CIRCLE_HOME/libs/circle/addon/fatfs -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include-fixed -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include -fno-exceptions -march=armv8-a -mtune=cortex-a72 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard -ffreestanding -nostdlib $VICE_KASAN_CFLAGS $VICE_PERF_CFLAGS" configure_vice ./configure --host=arm-none-eabi --disable-realdevice --disable-ipv6 --disable-ssi2001 --disable-catweasel --disable-hardsid --disable-parsid --disable-portaudio --disable-ahi --disable-bundle --disable-lame --disable-rs232 --disable-midi --disable-hidmgr --disable-hidutils --without-oss --without-alsa --without-pulse --without-zlib --disable-sdlui --disable-sdlui2 --enable-raspiui
 if [ "$?" != "0" ]
 then
        echo "Failed to configure VICE" >&2

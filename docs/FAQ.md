@@ -11,6 +11,7 @@
 - [How do I get Dolphin DOS to work?](#how-do-i-get-dolphin-dos-to-work)
 - [Why won't PetRescue attach in Plus4Emu?](#why-wont-petrescue-attach-in-plus4emu)
 - [Why am I seeing errors when saving settings?](#why-am-i-seeing-errors-when-saving-settings)
+- [Things are running slowly or glitching, what can I do?](#things-are-running-slowly-or-glitching-what-can-i-do)
 - [What do I put on the SD card?](#what-do-i-put-on-the-sd-card)
 
 ## Can I switch the machine to NTSC?
@@ -100,6 +101,12 @@ The official Raspberry Pi supply is a known-good option:
 https://www.raspberrypi.com/products/micro-usb-power-supply/
 
 If the errors continue after ruling out power, try a different, freshly formatted (FAT32) SD card from a reputable brand.
+
+## Things are running slowly or glitching, what can I do?
+
+**Answer:** How much BMC64 has to do depends on the Raspberry Pi model and on what is enabled. Emulated drives (each extra drive costs CPU even when idle), networking, logging and display effects such as the CRT shader all use frame time, and the Raspberry Pi Zero has the least headroom. See [Optimising BMC64](OPTIMISING.md) for what each option costs and how to reduce it.
+
+Things to try first: set unused drive units to None, turn networking off if you do not use it, turn the CRT shader off, and leave Logging off.
 
 ## What do I put on the SD card?
 

@@ -10,6 +10,7 @@ fi
 
 BOARD=""
 IO_STATS=0
+PERF_STATS=0
 
 for arg in "$@"
 do
@@ -17,11 +18,14 @@ case "$arg" in
        pi0|pi2|pi3|pi4)
               BOARD="$arg"
               ;;
+       --perf-stats)
+              PERF_STATS=1
+              ;;
        --io-stats)
               IO_STATS=1
               ;;
        *)
-              echo "Need arg [pi0|pi2|pi3|pi4] [--io-stats]"
+              echo "Need arg [pi0|pi2|pi3|pi4] [--io-stats] [--perf-stats]"
               exit 1
               ;;
 esac
@@ -40,7 +44,7 @@ elif [ "$BOARD" = "pi4" ]
 then
 KERNEL=kernel7l.img
 else
-echo "Need arg [pi0|pi2|pi3|pi4] [--io-stats]"
+echo "Need arg [pi0|pi2|pi3|pi4] [--io-stats] [--perf-stats]"
 exit
 fi
 
@@ -50,6 +54,14 @@ fi
 if [ "$IO_STATS" = "1" ]
 then
        export BMC64_IO_STATS=1
+fi
+
+# Opt-in frame/audio performance instrumentation. Must match how make_all.sh
+# was invoked: VICE was configured there with -DBMC64_PERF_STATS, and the
+# common + kernel builds below need it so perf_stats.o provides the hooks.
+if [ "$PERF_STATS" = "1" ]
+then
+       export BMC64_PERF_STATS=1
 fi
 
 cd third_party/common

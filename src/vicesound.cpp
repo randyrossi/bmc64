@@ -25,6 +25,10 @@ extern "C" {
 
 #include <circle/sched/scheduler.h>
 
+#ifdef BMC64_PERF_STATS
+  #include "../third_party/common/perf_stats.h"
+#endif
+
 ViceSound::ViceSound(CVCHIQDevice *pVCHIQDevice,
                      TVCHIQSoundDestination Destination)
     : ViceSoundBaseDevice(pVCHIQDevice, SAMPLE_RATE, CHUNK_SIZE, Destination) {
@@ -78,6 +82,12 @@ unsigned ViceSound::GetChunk(s16 *pBuffer, unsigned nChunkSize) {
   assert(nChunkSize > 0);
   assert((nChunkSize & 1) == 0);
 
+#ifdef BMC64_PERF_STATS
+  if (bytes_buffered >= FRAG_SIZE * NUM_FRAGS * BYTES_PER_SAMPLE) {
+    perf_audio_full_wait();
+  }
+#endif
+
   // VICE expects us to 'block' if our buffer is full. But
   // this shouldn't happen.
   while (bytes_buffered >= FRAG_SIZE * NUM_FRAGS * BYTES_PER_SAMPLE) {
@@ -86,6 +96,9 @@ unsigned ViceSound::GetChunk(s16 *pBuffer, unsigned nChunkSize) {
 
   if (src_buffer == 0 || src_size == 0) {
     // Nothing to give? Give a silent packet.
+#ifdef BMC64_PERF_STATS
+    perf_audio_silent_packet();
+#endif
     memset(pBuffer, 0, FRAG_SIZE * BYTES_PER_SAMPLE);
     src_size = FRAG_SIZE;
   } else {
