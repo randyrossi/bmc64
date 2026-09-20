@@ -497,6 +497,7 @@ typedef enum {
    MENU_USERPORT_TYPE,
 
    MENU_DIR_CONVENTION,
+   MENU_DRIVE_FLUSH,
 
    MENU_INTEGER_SCALE_W_0,
    MENU_INTEGER_SCALE_H_0,
@@ -680,6 +681,13 @@ typedef enum {
    MENU_DIR_CONVENTION_EMU_FOLDER,
 } MenuDirConvention;
 
+// When floppy image writes are pushed to the card. See drive_idle_flush_poll.
+typedef enum {
+   DRIVE_FLUSH_ON_DETACH = 0,
+   DRIVE_FLUSH_ON_WRITE,
+   DRIVE_FLUSH_ON_WRITE_LOGGED,
+} MenuDriveFlush;
+
 // Make these match vice
 typedef enum {
    MENU_VIDEO_FILTER_NONE = 0,
@@ -702,6 +710,7 @@ const char *bmc64_version_string(void);
 void build_menu(struct menu_item *root);
 
 void menu_swap_joysticks(void);
+int menu_get_drive_flush(void);
 int statusbar_never(void);
 int statusbar_always(void);
 

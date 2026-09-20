@@ -148,6 +148,7 @@ struct menu_item *saturation_item[2];
 
 struct menu_item *warp_item;
 struct menu_item *reset_confirm_item;
+struct menu_item *drive_flush_item;
 struct menu_item *gpio_config_item;
 struct menu_item *active_display_item;
 static struct menu_item *network_device_item;
@@ -1435,6 +1436,9 @@ static int save_settings() {
   fprintf(fp, "vkbd_trans=%d\n", vkbd_transparency_item->value);
   fprintf(fp, "tapereset=%d\n", tape_reset_with_machine_item->value);
   fprintf(fp, "reset_confirm=%d\n", reset_confirm_item->value);
+  if (drive_flush_item != NULL) {
+    fprintf(fp, "drive_flush=%d\n", drive_flush_item->value);
+  }
   fprintf(fp, "scaling_interp=%d\n", scaling_interp_item->value);
   fprintf(fp, "gpio_config=%d\n", gpio_config_item->choice_ints[gpio_config_item->value]);
   if (network_device_item != NULL) {
@@ -1714,6 +1718,11 @@ static void load_settings() {
       hotkey_tf7_item->value = value;
     } else if (strcmp(name, "reset_confirm") == 0) {
       reset_confirm_item->value = value;
+    } else if (strcmp(name, "drive_flush") == 0) {
+      if (drive_flush_item != NULL && value >= 0 &&
+          value < drive_flush_item->num_choices) {
+        drive_flush_item->value = value;
+      }
     } else if (strcmp(name, "scaling_interp") == 0) {
       scaling_interp_item->value = value;
     } else if (strcmp(name, "gpio_config") == 0) {
@@ -4658,6 +4667,15 @@ void build_menu(struct menu_item *root) {
     drive_sounds_vol_item =
         ui_menu_add_range(MENU_DRIVE_SOUND_EMULATION_VOLUME, parent,
                         "Drive sound emulation volume", 0, 1000, 100, 1000);
+
+    drive_flush_item = ui_menu_add_multiple_choice(MENU_DRIVE_FLUSH, parent,
+                                                   "Flush disk writes");
+    drive_flush_item->num_choices = 3;
+    strcpy(drive_flush_item->choices[DRIVE_FLUSH_ON_DETACH], "On detach");
+    strcpy(drive_flush_item->choices[DRIVE_FLUSH_ON_WRITE], "On write");
+    strcpy(drive_flush_item->choices[DRIVE_FLUSH_ON_WRITE_LOGGED],
+           "On write (logged)");
+    drive_flush_item->value = DRIVE_FLUSH_ON_WRITE;
   }
 
   statusbar_item =
@@ -4796,6 +4814,11 @@ void build_menu(struct menu_item *root) {
   strcpy (last_iec_dir[2], tmpf);
   emux_get_string_1(Setting_FSDeviceNDir, &tmpf, 11);
   strcpy (last_iec_dir[3], tmpf);
+}
+
+int menu_get_drive_flush(void) {
+  return drive_flush_item != NULL ? drive_flush_item->value
+                                  : DRIVE_FLUSH_ON_DETACH;
 }
 
 int statusbar_never(void) {

@@ -12,6 +12,7 @@ but the same optimisations can be used on any model of Raspberry Pi.
   - [Drives: the biggest cost](#drives-the-biggest-cost)
   - [Networking and the Web UI](#networking-and-the-web-ui)
   - [Sound, video and other settings](#sound-video-and-other-settings)
+  - [Disk writes and shutting down](#disk-writes-and-shutting-down)
   - [If the sound or picture glitches](#if-the-sound-or-picture-glitches)
 
 ## Raspberry Pi Zero and Zero W: Recommended Settings
@@ -108,6 +109,21 @@ as it is.
   [Logging](USER_GUIDE.md#logging).
 * Use a powered OTG USB hub. Some devices can cause brownouts and shut the Pi Zero down.
 
+### Disk writes and shutting down
+
+BMC64 has no shutdown sequence. With True Drive Emulation the drive can hold its last written track, usually the
+directory, in memory, so turning off he Pi can cause data loss. The **Prefs -> Flush disk writes** setting can be 
+configured to when data is written to the SD card.
+
+* **On detach**: only when the disk is detached or the drive moves to another track. 
+* **On write** (default): shortly after the drive stops writing. Reading a disk is unaffected.
+* **On write (logged)**: as **On write**, and logs each flush time. Set **Logging** to UART or File to see it.
+
+Note: This setting does not apply with True Drive Emulation off.
+
+BMC64 has been configured to write to the SD Card shortly after disk writes occur (**On write**). If you have glitches 
+during disk write activity, try **On detach**. 
+
 ### If the sound or picture glitches
 
 The usual signs are audio drop-outs or judder, and, with logging on, `Sound: Warning - Buffer drained` messages. Try
@@ -118,6 +134,7 @@ these in order, cheapest first:
 3. Turn the CRT shader off, or use fewer of its options.
 4. Make sure **Logging** is **Off**.
 5. If you need extra drives, try the idle drive setting above.
+6. If it only glitches just after saving to a disk, set **Prefs -> Flush disk writes** to **On detach**.
 
 If it still glitches, the game or demo may simply be too demanding for a Pi Zero. A Pi 2 or Pi 3 has more processing
 power and more cores.
