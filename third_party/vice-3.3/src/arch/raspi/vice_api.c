@@ -65,9 +65,9 @@
 // RASPI includes
 #include "circle.h"
 #include "keycodes.h"
-#include "perf_stats.h"
 #ifdef BMC64_PERF_STATS
-#include "config.h" // VERSION, so perf results are labelled with the core
+  #include "perf_stats.h"
+  #include "config.h" // VERSION, so perf results are labelled with the core
 #endif
 
 struct menu_item *sid_dual_item;

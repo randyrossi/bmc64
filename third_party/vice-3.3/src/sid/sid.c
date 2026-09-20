@@ -58,7 +58,9 @@
 #endif
 
 #ifdef RASPI_COMPILE
-#include "perf_stats.h"
+  #ifdef BMC64_PERF_STATS
+      #include "perf_stats.h"
+  #endif
 int (*sid_job_func)(struct sound_s *psid, short *pbuf,
                      int nr, int interleave, int *delta_t);
 struct sound_s *sid_job_psid;
@@ -578,9 +580,13 @@ int sid_sound_machine_calculate_samples(sound_t **psid, int16_t *pbuf, int nr, i
         sem_inc(&sid_job);
         tmp_nr = sid_engine.calculate_samples(psid[0], pbuf, nr, 2, delta_t);
         {
+#ifdef BMC64_PERF_STATS
             unsigned perf_t0 = perf_now();
+#endif
             sem_dec(&sid_done);
+#ifdef BMC64_PERF_STATS
             perf_sid_wait(perf_now() - perf_t0);
+#endif
         }
 #else
         tmp_nr = sid_engine.calculate_samples(psid[0], pbuf, nr, 2, &tmp_delta_t);
