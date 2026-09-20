@@ -45,3 +45,12 @@ third_party/**/*.o
 # Local IDE settings
 .vscode/settings.json
 
+# Ignore perf logs
+tools/perftest/*.log
+tools/perftest/*.json
+tools/perftest/*.txt
+
+# Ignore local docs
+*.local.md
+docs/a*/*.md
+
