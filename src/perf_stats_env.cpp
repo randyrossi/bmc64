@@ -3,8 +3,7 @@
 //
 // Kernel-side glue for the opt-in performance instrumentation
 // (third_party/common/perf_stats.c). Compiled to an empty object unless
-// BMC64_PERF_STATS is defined (./make_all.sh <board> --perf-stats). See
-// docs/architecture/PERFORMANCE_TEST_PLAN.md.
+// BMC64_PERF_STATS is defined (./make_all.sh <board> --perf-stats).
 //
 // Reports the conditions that decide whether a run is comparable with another:
 // SoC temperature, the firmware throttle bitmask and the live ARM clock.

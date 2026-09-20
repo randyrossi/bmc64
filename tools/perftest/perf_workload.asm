@@ -1,5 +1,5 @@
 ; perf_workload.asm - deterministic C64 workloads for the BMC64 performance
-; test suite (docs/architecture/PERFORMANCE_TEST_PLAN.md).
+; test suite (see README.md).
 ;
 ; One source, several programs, selected with xa -D defines (see Makefile) -
 ;

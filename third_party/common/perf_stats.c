@@ -1,7 +1,7 @@
 /*
  * perf_stats.c
  *
- * See perf_stats.h and docs/architecture/PERFORMANCE_TEST_PLAN.md.
+ * See perf_stats.h.
  *
  * Entirely compiled out unless BMC64_PERF_STATS is defined - when it is not,
  * this is an empty translation unit and perf_stats.h supplies inline no-ops.

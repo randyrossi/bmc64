@@ -11,8 +11,7 @@ and reports how much of each frame's time budget the emulator used, whether any
 vertical blank was missed, and how the audio buffer behaved. A log that holds
 more than one boot is split per boot (the last usable boot is analysed unless
 --boot says otherwise), and the network state is read from the same log, since
-a network that keeps retrying can add several ms to a frame. See
-docs/architecture/PERFORMANCE_TEST_PLAN.md.
+a network that keeps retrying can add several ms to a frame. See README.md.
 
 Exit status: 0 pass, 1 fail or regression, 2 no data / bad usage,
              3 run is invalid (the Pi was throttled or under-volted).

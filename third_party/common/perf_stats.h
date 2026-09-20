@@ -1,8 +1,8 @@
 /*
  * perf_stats.h
  *
- * Frame-budget, audio and SID performance instrumentation for BMC64. See
- * docs/architecture/PERFORMANCE_TEST_PLAN.md.
+ * Frame-budget, audio and SID performance instrumentation for BMC64. The
+ * report format and metrics are described in tools/perftest/README.md.
  *
  * DESIGN RULE: the metrics here must not depend on VICE internals. The hooks
  * live in BMC64-owned code (the arch/raspi layer, kernel, audio device) so the

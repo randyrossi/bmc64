@@ -80,7 +80,7 @@ then
 fi
 
 # Opt-in frame-budget / audio performance instrumentation (see
-# docs/architecture/PERFORMANCE_TEST_PLAN.md). BMC64_PERF_STATS is picked up by
+# tools/perftest/README.md). BMC64_PERF_STATS is picked up by
 # the common and kernel Makefiles; VICE_PERF_CFLAGS carries it into the VICE
 # build, where a few BMC64 hooks live (arch/raspi and the dual SID wait).
 VICE_PERF_CFLAGS=""
