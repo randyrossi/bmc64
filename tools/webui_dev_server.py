@@ -330,6 +330,13 @@ class Handler(BaseHTTPRequestHandler):
             os.remove(tmp)
             return self._send(400, "upload truncated\n")
         os.replace(tmp, target)
+        # Like the device: keep the file's original (local) modified time.
+        mtime = (q.get("mtime") or [""])[0]
+        try:
+            ts = _dt.datetime.strptime(mtime, "%Y-%m-%dT%H:%M:%S").timestamp()
+            os.utime(target, (ts, ts))
+        except (ValueError, OverflowError, OSError):
+            pass
         sys.stderr.write("  [mock] uploaded %s (%d bytes)\n" % (target, got))
         self._json(200, {"ok": True, "size": got})
 

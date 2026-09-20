@@ -38,7 +38,9 @@ void WebUiFsDownload(CSocket *socket, const char *query);
 // the file. prefetched[0..prefetched_len) are body bytes already read
 // with the request headers; the remainder (up to content_length total)
 // is streamed from the socket. content_length < 0 means no
-// Content-Length header was sent (rejected with 411).
+// Content-Length header was sent (rejected with 411). An optional
+// &mtime=YYYY-MM-DDTHH:MM:SS (local time) query parameter sets the
+// file's modified time; without it the file gets the current FAT time.
 void WebUiFsUpload(CSocket *socket, const char *query,
                    const unsigned char *prefetched, unsigned prefetched_len,
                    long content_length);

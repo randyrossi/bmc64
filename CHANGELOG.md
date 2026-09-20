@@ -1,3 +1,6 @@
+## 5.1.8 (pre-release)
+  * Web UI: uploaded files keep their original modified date and time instead of the upload time
+
 ## 5.1.7 (pre-release)
   * Fix Pi Zero playing no sound for volume register digis (e.g. Impossible Mission speech) with the 8580 SID model
   * Re-enable saving VFP registers in interrupt handlers on Pi Zero, prevents sound error

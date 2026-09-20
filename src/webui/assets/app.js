@@ -465,11 +465,23 @@ async function deleteEntry(path, name) {
 
 // ---- upload ----
 
+// The file's original modified time as local "YYYY-MM-DDTHH:MM:SS" (FAT
+// stores no time zone, and the file list shows the stored value as-is).
+function localMtime(file) {
+  if (!file.lastModified) return "";
+  const d = new Date(file.lastModified);
+  const p = (n) => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) +
+    "T" + p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+}
+
 function uploadOne(file, overwrite) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
+    const mtime = localMtime(file);
     const url = "/api/fs/upload?vol=" + encodeURIComponent(fbVol) +
       "&path=" + encodeURIComponent(normPath(fbPath + "/" + file.name)) +
+      (mtime ? "&mtime=" + encodeURIComponent(mtime) : "") +
       (overwrite ? "&overwrite=1" : "");
     xhr.open("POST", url);
     xhr.upload.onprogress = (e) => {

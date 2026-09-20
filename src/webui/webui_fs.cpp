@@ -122,6 +122,24 @@ void WriteFatDateTime(CChunkedResponse *r, unsigned fdate, unsigned ftime) {
             second);
 }
 
+// Parse "YYYY-MM-DDTHH:MM:SS" (local wall-clock time, as WriteFatDateTime
+// emits) into a FAT date/time pair. Returns FALSE if malformed or outside
+// the FAT range (1980..2107).
+boolean ParseFatDateTime(const char *s, WORD *fdate, WORD *ftime) {
+  unsigned year, month, day, hour, minute, second;
+  if (sscanf(s, "%4u-%2u-%2uT%2u:%2u:%2u", &year, &month, &day, &hour, &minute,
+             &second) != 6) {
+    return FALSE;
+  }
+  if (year < 1980 || year > 2107 || month < 1 || month > 12 || day < 1 ||
+      day > 31 || hour > 23 || minute > 59 || second > 59) {
+    return FALSE;
+  }
+  *fdate = (WORD) (((year - 1980) << 9) | (month << 5) | day);
+  *ftime = (WORD) ((hour << 11) | (minute << 5) | (second / 2));
+  return TRUE;
+}
+
 // Normalise a client path into a sandboxed absolute path within a volume.
 // Returns 0 on success (out starts with '/'), -1 if the path is unsafe.
 int SanitizeRelPath(const char *in, char *out, unsigned out_size) {
@@ -549,6 +567,15 @@ void WebUiFsUpload(CSocket *socket, const char *query,
     webhttp::SendText(socket, 500, "Internal Server Error",
                       "cannot finalise upload\n");
     return;
+  }
+
+  // Keep the file's original modified time when the client supplies it;
+  // otherwise (or if it can't be applied) the file keeps the upload time.
+  char mtime[24];
+  FILINFO stamp;
+  if (webhttp::QueryParam(query, "mtime", mtime, sizeof(mtime)) &&
+      ParseFatDateTime(mtime, &stamp.fdate, &stamp.ftime)) {
+    f_utime(fatpath, &stamp);
   }
 
   char body[64];

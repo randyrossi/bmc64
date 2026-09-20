@@ -43,7 +43,8 @@ Browse the SD card, and:
 
 - **Download** any file.
 - **Upload** files into the current folder. If a file of the same name already
-  exists you are asked to confirm before it is overwritten.
+  exists you are asked to confirm before it is overwritten. Uploaded files
+  keep their original modified date and time from your PC.
 - **Delete** a file, after a confirmation prompt.
 - **Run** a disk image (`.d64`, `.d71`, `.d81`, `.d82`, `.g64`, `.x64`), tape
   (`.t64`, `.tap`) or program (`.prg`, `.p00`): click its name or its **Run**
@@ -167,7 +168,7 @@ browser side by side.
 | `GET /api/volumes` | real free / total space of the browsed folder |
 | `GET /api/fs/list` | lists a **real** local directory (see `--root`) |
 | `GET /api/fs/download` | streams the real local file |
-| `POST /api/fs/upload` | writes a real file into `--root` (same `.part`-then-rename, protected-name, and `overwrite=1` rules as the device) |
+| `POST /api/fs/upload` | writes a real file into `--root` (same `.part`-then-rename, protected-name, `overwrite=1` and `mtime=` rules as the device) |
 | `POST /api/fs/delete` | removes the real file / empty directory (same protected-name rules) |
 | `POST /api/reboot` | logs and does nothing |
 | `POST /api/reset` | logs and does nothing |
