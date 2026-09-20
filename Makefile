@@ -52,7 +52,7 @@ endif
 # generator changes. The generated file is committed, so builds without a
 # Python interpreter fall back to that copy.
 PYTHON ?= $(shell command -v python3 2>/dev/null || command -v python 2>/dev/null)
-WEBUI_ASSET_SRCS = $(wildcard src/webui/assets/*)
+WEBUI_ASSET_SRCS = $(shell find src/webui/assets -type f)
 
 src/webui/webui_assets.c: $(WEBUI_ASSET_SRCS) tools/gen_webui_assets.py
 ifeq ($(PYTHON),)

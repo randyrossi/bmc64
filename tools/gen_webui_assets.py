@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Embed the BMC64 web UI static assets into a C source file.
 
-Reads every file in src/webui/assets/ and writes src/webui/webui_assets.c,
+Reads every file under src/webui/assets/ (including subfolders such as js/)
+and writes src/webui/webui_assets.c,
 which is compiled into the kernel image. Run this after editing any asset:
 
     python3 tools/gen_webui_assets.py
@@ -27,19 +28,28 @@ CONTENT_TYPES = {
 }
 
 
-def request_paths(filename):
+def request_paths(relpath):
     """HTTP request paths that should resolve to this asset."""
-    if filename == "index.html":
+    if relpath == "index.html":
         return ["/", "/index.html"]
-    return ["/" + filename]
+    return ["/" + relpath]
+
+
+def list_assets():
+    """Asset paths relative to ASSET_DIR, with '/' separators, sorted."""
+    found = []
+    for folder, _dirs, names in os.walk(ASSET_DIR):
+        for name in names:
+            rel = os.path.relpath(os.path.join(folder, name), ASSET_DIR)
+            found.append(rel.replace(os.sep, "/"))
+    return sorted(found)
 
 
 def main():
     if not os.path.isdir(ASSET_DIR):
         sys.exit("asset directory not found: " + ASSET_DIR)
 
-    files = sorted(f for f in os.listdir(ASSET_DIR)
-                   if os.path.isfile(os.path.join(ASSET_DIR, f)))
+    files = list_assets()
     if not files:
         sys.exit("no assets found in " + ASSET_DIR)
 
@@ -48,7 +58,7 @@ def main():
     for index, name in enumerate(files):
         ext = os.path.splitext(name)[1].lower()
         ctype = CONTENT_TYPES.get(ext, "application/octet-stream")
-        with open(os.path.join(ASSET_DIR, name), "rb") as fh:
+        with open(os.path.join(ASSET_DIR, *name.split("/")), "rb") as fh:
             data = fh.read()
 
         lines = []
@@ -75,7 +85,8 @@ def main():
         out.write("const unsigned int g_webui_asset_count =\n")
         out.write("    sizeof(g_webui_assets) / sizeof(g_webui_assets[0]);\n")
 
-    total = sum(len(open(os.path.join(ASSET_DIR, n), "rb").read()) for n in files)
+    total = sum(os.path.getsize(os.path.join(ASSET_DIR, *n.split("/")))
+                for n in files)
     print("wrote %s (%d files, %d bytes)" % (
         os.path.relpath(OUT_FILE, REPO_ROOT), len(files), total))
 

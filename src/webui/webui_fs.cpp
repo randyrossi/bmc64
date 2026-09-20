@@ -39,6 +39,8 @@ namespace {
 
 const unsigned WEBUI_FS_MAX_ENTRIES = 6000;
 const unsigned WEBUI_FS_IO_CHUNK = 32 * 1024;
+// Largest file the editor will open or save (the config files are a few KB).
+const unsigned WEBUI_FS_EDIT_MAX = 64 * 1024;
 
 // One request is handled at a time by the web UI task, so a single file
 // scratch buffer is safe and keeps it off the task stack.
@@ -271,6 +273,34 @@ boolean IsAutostartable(const char *clean) {
   return FALSE;
 }
 
+// BMC64's own configuration files. Upload and delete refuse them (in any
+// folder); the editor's save endpoint is the only way the web UI changes them.
+const char *const kConfigFiles[] = {
+    "settings.txt",     "settings-c128.txt",     "settings-vic20.txt",
+    "settings-plus4.txt", "settings-plus4emu.txt", "settings-pet.txt",
+    "wpa_supplicant.conf", "cmdline.txt",         "config.txt",
+    "machines.txt",
+};
+
+boolean IsConfigFile(const char *name) {
+  for (unsigned i = 0; i < sizeof(kConfigFiles) / sizeof(kConfigFiles[0]); i++) {
+    if (CiEqual(name, kConfigFiles[i])) return TRUE;
+  }
+  return FALSE;
+}
+
+// vice.ini is editable too, but (unlike the files above) stays uploadable so
+// a prepared copy can still be dropped on the card.
+boolean IsEditableName(const char *name) {
+  return IsConfigFile(name) || CiEqual(name, "vice.ini");
+}
+
+// Only files in the volume root are editable.
+boolean IsEditablePath(const char *clean) {
+  return clean[0] == '/' && strchr(clean + 1, '/') == 0 &&
+         IsEditableName(clean + 1);
+}
+
 // Uploads must not clobber BMC64's own configuration or the Wi-Fi
 // firmware directory.
 boolean IsProtectedPath(const char *clean) {
@@ -289,16 +319,93 @@ boolean IsProtectedPath(const char *clean) {
   for (const char *p = clean; *p != '\0'; p++) {
     if (*p == '/') base = p + 1;
   }
-  static const char *const kProtected[] = {
-      "settings.txt",     "settings-c128.txt",     "settings-vic20.txt",
-      "settings-plus4.txt", "settings-plus4emu.txt", "settings-pet.txt",
-      "wpa_supplicant.conf", "cmdline.txt",         "config.txt",
-      "machines.txt",     "bmc64.log",
-  };
-  for (unsigned i = 0; i < sizeof(kProtected) / sizeof(kProtected[0]); i++) {
-    if (CiEqual(base, kProtected[i])) return TRUE;
+  return IsConfigFile(base) || CiEqual(base, "bmc64.log");
+}
+
+enum BodyResult {
+  BODY_OK,
+  BODY_CREATE_FAILED,
+  BODY_WRITE_FAILED,  // FatFs write error (disk full?)
+  BODY_TRUNCATED,     // client aborted or timed out
+  BODY_HAS_NUL,       // only when reject_nul is set
+};
+
+// Stream a request body into a new file at temppath: prefetched bytes (read
+// with the headers) first, then the rest from the socket, `total` bytes in
+// all. On anything but BODY_OK the temp file is removed.
+BodyResult ReceiveBodyToFile(CSocket *socket, const char *temppath,
+                             const unsigned char *prefetched,
+                             unsigned prefetched_len, unsigned long total,
+                             boolean reject_nul) {
+  FIL file;
+  if (f_open(&file, temppath, FA_WRITE | FA_CREATE_ALWAYS) != FR_OK) {
+    return BODY_CREATE_FAILED;
   }
-  return FALSE;
+
+  unsigned long written = 0;
+  BodyResult result = BODY_OK;
+
+  if (prefetched_len > total) {
+    prefetched_len = (unsigned) total;
+  }
+  if (prefetched_len > 0) {
+    UINT bw = 0;
+    if (reject_nul && memchr(prefetched, 0, prefetched_len) != 0) {
+      result = BODY_HAS_NUL;
+    } else if (f_write(&file, prefetched, prefetched_len, &bw) != FR_OK ||
+               bw != prefetched_len) {
+      result = BODY_WRITE_FAILED;
+    }
+    written += prefetched_len;
+  }
+
+  while (result == BODY_OK && written < total) {
+    unsigned long remain = total - written;
+    unsigned want = remain < sizeof(s_io_buffer) ? (unsigned) remain
+                                                 : sizeof(s_io_buffer);
+    int n = socket->Receive(s_io_buffer, want, 0);
+    if (n <= 0) {
+      result = BODY_TRUNCATED;
+      break;
+    }
+    if (reject_nul && memchr(s_io_buffer, 0, (unsigned) n) != 0) {
+      result = BODY_HAS_NUL;
+      break;
+    }
+    UINT bw = 0;
+    if (f_write(&file, s_io_buffer, (UINT) n, &bw) != FR_OK ||
+        bw != (UINT) n) {
+      result = BODY_WRITE_FAILED;
+      break;
+    }
+    written += (unsigned) n;
+    CScheduler::Get()->Yield();
+  }
+
+  f_close(&file);
+  if (result != BODY_OK) {
+    f_unlink(temppath);
+  }
+  return result;
+}
+
+void SendBodyFailure(CSocket *socket, BodyResult result) {
+  switch (result) {
+  case BODY_CREATE_FAILED:
+    webhttp::SendText(socket, 500, "Internal Server Error",
+                      "cannot create file\n");
+    break;
+  case BODY_WRITE_FAILED:
+    webhttp::SendText(socket, 507, "Insufficient Storage",
+                      "write failed (disk full?)\n");
+    break;
+  case BODY_HAS_NUL:
+    webhttp::SendText(socket, 400, "Bad Request", "not a text file\n");
+    break;
+  default:
+    webhttp::SendText(socket, 400, "Bad Request", "upload truncated\n");
+    break;
+  }
 }
 
 }  // namespace
@@ -359,6 +466,7 @@ void WebUiFsList(CSocket *socket, const char *query) {
   unsigned count = 0;
   boolean truncated = FALSE;
   boolean first = TRUE;
+  boolean at_root = strcmp(clean, "/") == 0;
   FILINFO info;
   while (f_readdir(&dir, &info) == FR_OK && info.fname[0] != '\0') {
     if (info.fname[0] == '.' &&
@@ -381,7 +489,12 @@ void WebUiFsList(CSocket *socket, const char *query) {
     r.Printf(",\"size\":%lu,\"dir\":%s,\"mtime\":\"",
              (unsigned long) info.fsize, is_dir ? "true" : "false");
     WriteFatDateTime(&r, info.fdate, info.ftime);
-    r.Write("\"}");
+    r.Write("\"");
+    if (at_root && !is_dir && info.fsize <= WEBUI_FS_EDIT_MAX &&
+        IsEditableName(info.fname)) {
+      r.Write(",\"edit\":true");
+    }
+    r.Write("}");
 
     count++;
     if ((count & 63) == 0) {
@@ -506,58 +619,11 @@ void WebUiFsUpload(CSocket *socket, const char *query,
     return;
   }
 
-  FIL file;
-  if (f_open(&file, temppath, FA_WRITE | FA_CREATE_ALWAYS) != FR_OK) {
-    webhttp::SendText(socket, 500, "Internal Server Error",
-                      "cannot create file\n");
-    return;
-  }
-
   unsigned long total = (unsigned long) content_length;
-  unsigned long written = 0;
-  boolean write_failed = FALSE;
-
-  if (prefetched_len > total) {
-    prefetched_len = (unsigned) total;
-  }
-  if (prefetched_len > 0) {
-    UINT bw = 0;
-    if (f_write(&file, prefetched, prefetched_len, &bw) != FR_OK ||
-        bw != prefetched_len) {
-      write_failed = TRUE;
-    }
-    written += prefetched_len;
-  }
-
-  while (!write_failed && written < total) {
-    unsigned long remain = total - written;
-    unsigned want = remain < sizeof(s_io_buffer) ? (unsigned) remain
-                                                 : sizeof(s_io_buffer);
-    int n = socket->Receive(s_io_buffer, want, 0);
-    if (n <= 0) {
-      break;  // client aborted or timed out
-    }
-    UINT bw = 0;
-    if (f_write(&file, s_io_buffer, (UINT) n, &bw) != FR_OK ||
-        bw != (UINT) n) {
-      write_failed = TRUE;
-      break;
-    }
-    written += (unsigned) n;
-    CScheduler::Get()->Yield();
-  }
-
-  f_close(&file);
-
-  if (write_failed) {
-    f_unlink(temppath);
-    webhttp::SendText(socket, 507, "Insufficient Storage",
-                      "write failed (disk full?)\n");
-    return;
-  }
-  if (written != total) {
-    f_unlink(temppath);
-    webhttp::SendText(socket, 400, "Bad Request", "upload truncated\n");
+  BodyResult body_result = ReceiveBodyToFile(
+      socket, temppath, prefetched, prefetched_len, total, FALSE);
+  if (body_result != BODY_OK) {
+    SendBodyFailure(socket, body_result);
     return;
   }
 
@@ -579,7 +645,85 @@ void WebUiFsUpload(CSocket *socket, const char *query,
   }
 
   char body[64];
-  int bn = snprintf(body, sizeof(body), "{\"ok\":true,\"size\":%lu}", written);
+  int bn = snprintf(body, sizeof(body), "{\"ok\":true,\"size\":%lu}", total);
+  webhttp::SendResponse(socket, 200, "OK", "application/json", body,
+                        bn > 0 ? (unsigned) bn : 0);
+}
+
+void WebUiFsSave(CSocket *socket, const char *query,
+                 const unsigned char *prefetched, unsigned prefetched_len,
+                 long content_length) {
+  char clean[512];
+  char fatpath[560];
+  if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
+                    sizeof(fatpath), TRUE) != 0) {
+    return;
+  }
+  if (!IsEditablePath(clean)) {
+    webhttp::SendText(socket, 403, "Forbidden", "that file cannot be edited\n");
+    return;
+  }
+  if (content_length < 0) {
+    webhttp::SendText(socket, 411, "Length Required",
+                      "Content-Length header required\n");
+    return;
+  }
+  if ((unsigned long) content_length > WEBUI_FS_EDIT_MAX) {
+    webhttp::SendText(socket, 413, "Payload Too Large",
+                      "file too large to edit\n");
+    return;
+  }
+
+  FILINFO existing;
+  boolean exists = f_stat(fatpath, &existing) == FR_OK;
+  if (exists && (existing.fattrib & AM_DIR)) {
+    webhttp::SendText(socket, 409, "Conflict", "target is a directory\n");
+    return;
+  }
+
+  // Editable names are short, so these small buffers always fit.
+  char temppath[64];
+  char bakpath[64];
+  if ((unsigned) snprintf(temppath, sizeof(temppath), "%s.part", fatpath) >=
+          sizeof(temppath) ||
+      (unsigned) snprintf(bakpath, sizeof(bakpath), "%s.bak", fatpath) >=
+          sizeof(bakpath)) {
+    webhttp::SendText(socket, 400, "Bad Request", "path too long\n");
+    return;
+  }
+
+  unsigned long total = (unsigned long) content_length;
+  BodyResult body_result = ReceiveBodyToFile(
+      socket, temppath, prefetched, prefetched_len, total, TRUE);
+  if (body_result != BODY_OK) {
+    SendBodyFailure(socket, body_result);
+    return;
+  }
+
+  // Keep the previous version as "<name>.bak". The original is only moved
+  // aside once the new one is fully written, and is put back if the final
+  // rename fails, so a failed save never leaves a config file missing.
+  if (exists) {
+    f_unlink(bakpath);  // ignore result: an older backup may not exist
+    if (f_rename(fatpath, bakpath) != FR_OK) {
+      f_unlink(temppath);
+      webhttp::SendText(socket, 500, "Internal Server Error",
+                        "cannot back up the existing file\n");
+      return;
+    }
+  }
+  if (f_rename(temppath, fatpath) != FR_OK) {
+    if (exists) {
+      f_rename(bakpath, fatpath);
+    }
+    f_unlink(temppath);
+    webhttp::SendText(socket, 500, "Internal Server Error",
+                      "cannot finalise save\n");
+    return;
+  }
+
+  char body[64];
+  int bn = snprintf(body, sizeof(body), "{\"ok\":true,\"size\":%lu}", total);
   webhttp::SendResponse(socket, 200, "OK", "application/json", body,
                         bn > 0 ? (unsigned) bn : 0);
 }

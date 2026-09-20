@@ -2,7 +2,7 @@
 """Local preview server for the BMC64 web UI.
 
 Serves src/webui/assets/ exactly as the on-device server would (root
-paths like /style.css and /app.js resolve), plus mock implementations of
+paths like /style.css and /js/app.js resolve), plus mock implementations of
 the /api/* endpoints so the dashboard and file browser actually work
 without a Raspberry Pi.
 
@@ -54,15 +54,17 @@ RELOAD_SNIPPET = """
 </script>
 """
 
+# Largest file the editor will open or save (matches webui_fs.cpp).
+EDIT_MAX = 64 * 1024
+
 ARGS = None
 
 
 def assets_version():
     newest = 0.0
-    for name in os.listdir(ASSET_DIR):
-        path = os.path.join(ASSET_DIR, name)
-        if os.path.isfile(path):
-            newest = max(newest, os.path.getmtime(path))
+    for folder, _dirs, names in os.walk(ASSET_DIR):
+        for name in names:
+            newest = max(newest, os.path.getmtime(os.path.join(folder, name)))
     return "%.3f" % newest
 
 
@@ -160,6 +162,8 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/api/fs/upload":
             return self.api_fs_upload(parsed.query)
+        if path == "/api/fs/save":
+            return self.api_fs_save(parsed.query)
         if path == "/api/fs/delete":
             return self.api_fs_delete(parsed.query)
         if path == "/api/fs/autostart":
@@ -244,6 +248,7 @@ class Handler(BaseHTTPRequestHandler):
         if target is None or not os.path.isdir(target):
             return self._send(404, "no such directory\n")
         entries = []
+        at_root = not [p for p in rel.split("/") if p not in ("", ".")]
         for name in sorted(os.listdir(target)):
             p = os.path.join(target, name)
             try:
@@ -251,12 +256,16 @@ class Handler(BaseHTTPRequestHandler):
             except OSError:
                 continue
             is_dir = os.path.isdir(p)
-            entries.append({
+            entry = {
                 "name": name,
                 "size": 0 if is_dir else st.st_size,
                 "dir": is_dir,
                 "mtime": iso(st.st_mtime),
-            })
+            }
+            if (at_root and not is_dir and st.st_size <= EDIT_MAX
+                    and name.lower() in self.EDITABLE):
+                entry["edit"] = True
+            entries.append(entry)
             if len(entries) >= 6000:
                 break
         self._json(200, {
@@ -279,12 +288,15 @@ class Handler(BaseHTTPRequestHandler):
                                    % os.path.basename(target),
         })
 
-    PROTECTED = {
+    # Same lists as webui_fs.cpp: upload/delete refuse PROTECTED, and only the
+    # editor's save endpoint may change EDITABLE files (root folder only).
+    CONFIG_FILES = {
         "settings.txt", "settings-c128.txt", "settings-vic20.txt",
         "settings-plus4.txt", "settings-plus4emu.txt", "settings-pet.txt",
         "wpa_supplicant.conf", "cmdline.txt", "config.txt", "machines.txt",
-        "bmc64.log",
     }
+    PROTECTED = CONFIG_FILES | {"bmc64.log"}
+    EDITABLE = CONFIG_FILES | {"vice.ini"}
 
     def api_fs_upload(self, query):
         length = self.headers.get("Content-Length")
@@ -339,6 +351,46 @@ class Handler(BaseHTTPRequestHandler):
             pass
         sys.stderr.write("  [mock] uploaded %s (%d bytes)\n" % (target, got))
         self._json(200, {"ok": True, "size": got})
+
+    def api_fs_save(self, query):
+        if not self.headers.get("X-BMC64-Web"):
+            self._drain_body()
+            return self._send(403, "missing X-BMC64-Web header\n")
+        length = self.headers.get("Content-Length")
+        if length is None:
+            self._drain_body()
+            return self._send(411, "Content-Length header required\n")
+        length = int(length)
+        q = urllib.parse.parse_qs(query)
+        rel = (q.get("path") or [""])[0]
+        target = safe_join(ARGS.root, rel)
+        parts = [p for p in rel.split("/") if p not in ("", ".")]
+        if (target is None or len(parts) != 1
+                or parts[0].lower() not in self.EDITABLE):
+            self._drain_body()
+            return self._send(403, "that file cannot be edited\n")
+        if length > EDIT_MAX:
+            self._drain_body()
+            return self._send(413, "file too large to edit\n")
+        if os.path.isdir(target):
+            self._drain_body()
+            return self._send(409, "target is a directory\n")
+
+        data = self.rfile.read(length)
+        if len(data) != length:
+            return self._send(400, "upload truncated\n")
+        if b"\0" in data:
+            return self._send(400, "not a text file\n")
+
+        # Same .part / .bak dance as the device.
+        tmp = target + ".part"
+        with open(tmp, "wb") as fh:
+            fh.write(data)
+        if os.path.exists(target):
+            os.replace(target, target + ".bak")
+        os.replace(tmp, target)
+        sys.stderr.write("  [mock] saved %s (%d bytes)\n" % (target, length))
+        self._json(200, {"ok": True, "size": length})
 
     def api_fs_autostart(self, query):
         self._drain_body()

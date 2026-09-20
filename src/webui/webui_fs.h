@@ -45,6 +45,16 @@ void WebUiFsUpload(CSocket *socket, const char *query,
                    const unsigned char *prefetched, unsigned prefetched_len,
                    long content_length);
 
+// POST /api/fs/save?vol=SD&path=/settings.txt  <- the raw request body
+// replaces one of the editable root-level config files (vice.ini, settings*.txt,
+// cmdline.txt, config.txt, machines.txt, wpa_supplicant.conf): up to 64 KB of
+// text, no NUL bytes. Written to "<name>.part", with the previous version
+// kept as "<name>.bak". Arguments are as for WebUiFsUpload. GET /api/fs/list
+// marks the editable entries with "edit":true.
+void WebUiFsSave(CSocket *socket, const char *query,
+                 const unsigned char *prefetched, unsigned prefetched_len,
+                 long content_length);
+
 // POST /api/fs/delete?vol=SD&path=/dir/file  -> remove a file (or an
 // empty directory). The same protected paths as upload are refused.
 void WebUiFsDelete(CSocket *socket, const char *query);

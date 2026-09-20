@@ -46,6 +46,26 @@ Browse the SD card, and:
   exists you are asked to confirm before it is overwritten. Uploaded files
   keep their original modified date and time from your PC.
 - **Delete** a file, after a confirmation prompt.
+- **Edit** BMC64's configuration files in the browser: click **Edit** (or the
+  file name) on `vice.ini`, `settings*.txt`, `cmdline.txt`, `config.txt`,
+  `machines.txt` or `wpa_supplicant.conf` in the top folder of the card. The
+  file opens in an overlay with three buttons:
+  - **Cancel** closes it without saving (you are asked first if you have
+    unsaved changes).
+  - **Save** writes the file and closes the overlay.
+  - **Save & Reboot** saves, then reboots BMC64 (after a confirmation).
+
+  Changes take effect after the next reboot, because BMC64 only reads these
+  files at startup. Saving from the emulator's own menus before you reboot
+  rewrites `settings*.txt`, `vice.ini` and `wpa_supplicant.conf` from what is
+  running, so it overwrites your edits. The previous version of a file is kept
+  next to it as `<name>.bak` (for example `settings.txt.bak`).
+
+  A mistake in `cmdline.txt`, `config.txt` or `machines.txt` can stop BMC64
+  from booting, and a mistake in `wpa_supplicant.conf` or the web UI settings
+  in `settings.txt` can lock you out of the web UI; fixing either needs the SD
+  card in a computer (the `.bak` file makes that easy). Only plain UTF-8 text
+  files up to 64 KB can be edited.
 - **Run** a disk image (`.d64`, `.d71`, `.d81`, `.d82`, `.g64`, `.x64`), tape
   (`.t64`, `.tap`) or program (`.prg`, `.p00`): click its name or its **Run**
   button and BMC64 autostarts it, the same as the menu's *Autostart* item.
@@ -55,7 +75,9 @@ Browse the SD card, and:
 There is no rename yet. BMC64's own configuration files (`settings*.txt`,
 `wpa_supplicant.conf`, `cmdline.txt`, `config.txt`, `machines.txt`,
 `bmc64.log`) and the `/firmware` folder are protected: they cannot be uploaded
-to or deleted from the web UI.
+to or deleted from the web UI. The configuration files can still be changed
+with the editor above (`bmc64.log` and `/firmware` cannot be changed at all).
+`vice.ini` can be edited and also uploaded.
 
 > [!WARNING]
 > Do not upload to or delete a disk image that the emulator currently has
@@ -113,8 +135,11 @@ if port `80` is not available (`http://<bmc64-ip>:8080/`).
 > [!WARNING]
 > Without a [PIN](#pin) the web UI has **no authentication** and anyone who can
 > reach BMC64 on the network can view its status, browse / download / upload /
-> delete files on the SD card, and reboot the machine. Even with a PIN, traffic
-> is plain HTTP on the LAN.
+> delete files on the SD card, edit its configuration files (including
+> `cmdline.txt`, `config.txt` and the Wi-Fi settings, and the PIN in
+> `settings.txt`), and reboot the machine. Even with a PIN, traffic is plain
+> HTTP on the LAN, and the PIN and Wi-Fi password are shown in clear text in
+> the editor.
 >
 > Only enable it on a network you trust. Set a PIN. Turn it off
 > (`Network -> Web UI Settings -> Web UI (reboot)` off, then reboot) when you
@@ -130,10 +155,22 @@ source files live in `src/webui/assets/`:
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | page structure |
+| `index.html` | page structure, including the editor overlay |
 | `style.css` | styling |
-| `app.js` | all behaviour (status polling, file browser, upload/delete, reboot) |
+| `js/app.js` | entry point: wires the modules together and switches between views |
+| `js/api.js` | every call to a `/api/*` endpoint; other modules never use `fetch` directly |
+| `js/util.js` | DOM lookup, number formatting, path helpers |
+| `js/dashboard.js` | dashboard, status polling, hardware / storage meters, reboot / reset / disable |
+| `js/files.js` | file browser: list, upload, download, delete, run |
+| `js/editor.js` | overlay editor for the config files |
 | `logo.png`, `title.png` | images |
+
+The scripts are ES modules (`<script type="module">`), so imports use paths
+such as `./api.js`. `index.html` lists every module in a `modulepreload` link
+so the browser fetches them in parallel rather than one import level at a
+time, which matters because the device serves one connection at a time. Add a
+line there when you add a module. Subfolders are supported; the file's path
+under `assets/` is its URL.
 
 These assets are **embedded into the kernel image** as a generated C source,
 `src/webui/webui_assets.c`, produced by `tools/gen_webui_assets.py`. The build
@@ -147,9 +184,9 @@ python3 tools/gen_webui_assets.py
 ## Local preview server
 
 `tools/webui_dev_server.py` serves `src/webui/assets/` exactly the way the
-on-device server does (root paths like `/style.css` and `/app.js` resolve) and
+on-device server does (root paths like `/style.css` and `/js/app.js` resolve) and
 **mocks every `/api/*` endpoint**, so the whole UI — dashboard, file browser,
-upload, delete, reboot, disable — works on your PC with no Raspberry Pi.
+upload, delete, edit, reboot, disable — works on your PC with no Raspberry Pi.
 
 ```sh
 python3 tools/webui_dev_server.py
@@ -169,6 +206,7 @@ browser side by side.
 | `GET /api/fs/list` | lists a **real** local directory (see `--root`) |
 | `GET /api/fs/download` | streams the real local file |
 | `POST /api/fs/upload` | writes a real file into `--root` (same `.part`-then-rename, protected-name, `overwrite=1` and `mtime=` rules as the device) |
+| `POST /api/fs/save` | rewrites an editable config file in `--root` (same allowlist, 64 KB limit, `.part` / `.bak` handling and required `X-BMC64-Web` header as the device); `GET /api/fs/list` marks editable files with `"edit": true` |
 | `POST /api/fs/delete` | removes the real file / empty directory (same protected-name rules) |
 | `POST /api/reboot` | logs and does nothing |
 | `POST /api/reset` | logs and does nothing |

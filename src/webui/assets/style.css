@@ -254,6 +254,8 @@ a:hover { text-decoration: underline; }
 .crumbs .sep { color: var(--dim); }
 .crumbs .cur { color: var(--fg); font-weight: 600; }
 
+/* the table keeps its natural width; on a narrow screen it scrolls instead of widening the page */
+.fb-scroll { overflow-x: auto; }
 .fb-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .fb-table th {
   text-align: left;
@@ -274,7 +276,7 @@ a:hover { text-decoration: underline; }
 .fname .ic.dir { color: var(--blue); }
 .fname .ic.file { color: var(--dim); }
 .col-act { text-align: right; white-space: nowrap; }
-.dl, .del, .run {
+.dl, .del, .run, .edit {
   padding: 3px 9px;
   border-radius: 7px;
   border: 1px solid var(--border);
@@ -284,10 +286,85 @@ a:hover { text-decoration: underline; }
   font-family: inherit;
   cursor: pointer;
 }
-.del, .dl { margin-left: 6px; }
+.del, .dl, .edit { margin-left: 6px; }
+.edit:hover { border-color: var(--purple); color: var(--purple); }
 .dl:hover { border-color: var(--green); color: var(--green); text-decoration: none; }
 .del:hover { border-color: var(--red); color: var(--red); }
 .run:hover { border-color: var(--green); color: var(--green); }
+
+/* ---------- editor overlay ---------- */
+
+body.modal-open { overflow: hidden; }
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(5, 8, 16, 0.72);
+  backdrop-filter: blur(3px);
+}
+.overlay[hidden] { display: none; }
+
+.ed-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(960px, 100%);
+  height: min(720px, 100%);
+  padding: 16px 18px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.7);
+}
+
+.ed-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.ed-head h2 { margin: 0; font-size: 15px; word-break: break-all; }
+.ed-path { color: var(--dim); font-size: 12px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+.ed-close {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+.ed-close:hover { border-color: var(--red); color: var(--red); }
+.ed-close:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+
+.ed-hint { margin: 0; color: var(--muted); font-size: 12.5px; }
+
+.ed-text {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  resize: none;
+  padding: 12px;
+  font: 13px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  tab-size: 4;
+  color: var(--fg);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.ed-text:focus { outline: none; border-color: var(--blue); }
+.ed-text:disabled { opacity: 0.6; }
+
+.ed-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ed-foot .ed-msg { flex: 1; margin: 0; min-width: 160px; }
+.ed-btns { display: flex; gap: 8px; margin-left: auto; }
+
+.btn-primary { background: var(--grad); border-color: transparent; color: #fff; font-weight: 600; }
+.btn-primary:hover { border-color: transparent; filter: brightness(1.12); }
+.btn-reboot { border-color: var(--pink); color: var(--pink); font-weight: 600; }
+.btn-reboot:hover { background: rgba(236, 72, 153, 0.14); }
 
 /* ---------- footer ---------- */
 
@@ -321,4 +398,6 @@ a:hover { text-decoration: underline; }
   .rainbow { display: none; }
   .main { padding: 16px; }
   .motto { text-align: left; }
+  .overlay { padding: 0; }
+  .ed-dialog { height: 100%; border-radius: 0; border: none; }
 }
