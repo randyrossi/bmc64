@@ -3,6 +3,8 @@
   * Re-enable saving VFP registers in interrupt handlers on Pi Zero, prevents sound error
   * Add an "Optimising BMC64" documentation with information on how to reduce load: [OPTIMISING.md](docs/OPTIMISING.md)
   * Add an optional (`--perf-stats`) argument to build a performance diagnostic version of BMC64
+  * Flush disk writes to SD card to prevent data loss. 
+    * Can be disabled by setting "Prefs->Flush disk writes" to "On demand" if performance is impacted.
 
 ## 5.1.6 (pre-release)
   * Fix unable to save settings after multiple hard resets #373
