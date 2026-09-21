@@ -71,8 +71,11 @@ async function load(s) {
   s.loaded = true;
   setMsg("");
   refreshButtons();
-  ta().focus();
+  // Assigning .value leaves the caret at the end, and focusing would scroll
+  // to it; put the caret at the start first and open at the top of the file.
   ta().setSelectionRange(0, 0);
+  ta().focus({ preventScroll: true });
+  ta().scrollTop = 0;
 }
 
 function close(result) {
