@@ -58,6 +58,8 @@ void WebUiFsSave(CSocket *socket, const char *query,
 
 // POST /api/fs/delete?vol=SD&path=/dir/file  -> remove a file (or an
 // empty directory). The same protected paths as upload are refused.
+// With &recursive=1 a directory is removed together with its contents (up
+// to 24 levels deep). If something can't be deleted it stops there with 409.
 void WebUiFsDelete(CSocket *socket, const char *query);
 
 // POST /api/fs/mkdir?vol=SD&path=/dir/newname  -> create a folder. The

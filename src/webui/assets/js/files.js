@@ -107,7 +107,7 @@ function rowActions(e, path) {
   if (!e.protected) {
     items.push({ label: "Rename…", run: () => renameEntry(path, e.name) });
     items.push({ label: "Delete", danger: true,
-                 run: () => deleteEntry(path, e.name) });
+                 run: () => deleteEntry(path, e.name, e.dir) });
   }
   return items;
 }
@@ -258,12 +258,16 @@ async function editFile(path, name) {
 
 // ---- delete ----
 
-async function deleteEntry(path, name) {
-  if (!confirm("Delete “" + name + "”?\n\nThis cannot be undone.")) return;
+async function deleteEntry(path, name, isDir) {
+  const question = isDir
+    ? "Delete the folder “" + name + "” and everything in it?\n\n" +
+      "Detach any disk image inside it first. This cannot be undone."
+    : "Delete “" + name + "”?\n\nThis cannot be undone.";
+  if (!confirm(question)) return;
   $("fb-status").className = "msg";
   $("fb-status").textContent = "Deleting " + name + "…";
   try {
-    await api.deleteFile(fbVol, path);
+    await api.deleteFile(fbVol, path, { recursive: isDir });
   } catch (e) {
     $("fb-status").className = "msg err";
     $("fb-status").textContent = "Could not delete " + name + " — " + e.message;

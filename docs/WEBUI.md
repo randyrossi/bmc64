@@ -50,7 +50,9 @@ Actions button always fits.
 - **Upload** files into the current folder. If a file of the same name already
   exists you are asked to confirm before it is overwritten. Uploaded files
   keep their original modified date and time from your PC.
-- **Delete** a file, or an empty folder, after a confirmation prompt.
+- **Delete** a file, or a folder together with everything in it, after a
+  confirmation prompt. Deleting a folder removes all of its contents, so
+  detach any disk image inside it first. 
 - **New folder** creates a folder in the current folder.
 - **Rename…** renames a file or folder in place. Names must be plain ASCII
   letters, digits and punctuation, without `/ \ : * ? " < > |`, and must not
@@ -221,7 +223,7 @@ browser side by side.
 | `GET /api/fs/download` | streams the real local file |
 | `POST /api/fs/upload` | writes a real file into `--root` (same `.part`-then-rename, protected-name, `overwrite=1` and `mtime=` rules as the device) |
 | `POST /api/fs/save` | rewrites an editable config file in `--root` (same allowlist, 256 KB limit, `.part` / `.bak` handling and required `X-BMC64-Web` header as the device); `GET /api/fs/list` marks editable files with `"edit": true` |
-| `POST /api/fs/delete` | removes the real file / empty directory (same protected-name rules) |
+| `POST /api/fs/delete` | removes the real file / empty directory (same protected-name rules); with `recursive=1` (and the required `X-BMC64-Web` header) a whole folder tree |
 | `POST /api/fs/mkdir` | creates a real folder (same name rules, protected-name rules and required `X-BMC64-Web` header as the device) |
 | `POST /api/fs/rename` | renames a real file or folder in place (same rules as `mkdir`; `to=` is the new bare name); `GET /api/fs/list` marks the entries the device would refuse to rename or delete with `"protected": true` |
 | `POST /api/reboot` | logs and does nothing |

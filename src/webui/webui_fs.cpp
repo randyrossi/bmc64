@@ -444,6 +444,59 @@ void SendBodyFailure(CSocket *socket, BodyResult result) {
   }
 }
 
+// ---- deleting a folder with its contents ----
+//
+// FatFs has no recursive delete (f_unlink refuses a folder that isn't empty),
+// so this is the usual walk: unlink each entry while reading the folder, then
+// the folder itself. It edits one FatFs path in place and shares one FILINFO,
+// so it needs little stack; the depth limit bounds the recursion.
+
+const unsigned WEBUI_FS_TREE_DEPTH = 24;
+
+// Returns FR_OK, or the FatFs error that stopped it (FR_DENIED for a
+// read-only file; FR_INVALID_NAME if the tree is too deep or the path too
+// long). `removed` counts what was deleted so far, for the failure message.
+FRESULT DeleteTree(char *path, unsigned path_size, unsigned depth,
+                   FILINFO *info, unsigned *removed) {
+  if (depth > WEBUI_FS_TREE_DEPTH) return FR_INVALID_NAME;
+  DIR dir;
+  FRESULT fr = f_opendir(&dir, path);
+  if (fr != FR_OK) return fr;
+
+  while (fr == FR_OK && f_readdir(&dir, info) == FR_OK &&
+         info->fname[0] != '\0') {
+    // f_readdir doesn't return these, but following ".." would delete the
+    // parent folder (the listing skips them too).
+    if (strcmp(info->fname, ".") == 0 || strcmp(info->fname, "..") == 0) {
+      continue;
+    }
+    unsigned length = (unsigned) strlen(path);
+    unsigned name_length = (unsigned) strlen(info->fname);
+    if (length + 1 + name_length + 1 > path_size) {
+      fr = FR_INVALID_NAME;
+      break;
+    }
+    path[length] = '/';
+    memcpy(path + length + 1, info->fname, name_length + 1);
+    if (info->fattrib & AM_DIR) {
+      fr = DeleteTree(path, path_size, depth + 1, info, removed);
+    } else {
+      fr = f_unlink(path);
+      if (fr == FR_OK) (*removed)++;
+    }
+    path[length] = '\0';
+    if ((*removed & 15) == 0) {
+      CScheduler::Get()->Yield();
+    }
+  }
+  f_closedir(&dir);
+  if (fr != FR_OK) return fr;
+
+  fr = f_unlink(path);  // the folder itself, now empty
+  if (fr == FR_OK) (*removed)++;
+  return fr;
+}
+
 }  // namespace
 
 void WebUiFsVolumes(CSocket *socket) {
@@ -783,6 +836,30 @@ void WebUiFsDelete(CSocket *socket, const char *query) {
   }
   if (IsProtectedPath(clean)) {
     webhttp::SendText(socket, 403, "Forbidden", "that path is protected\n");
+    return;
+  }
+
+  // &recursive=1 deletes a folder together with its contents; without it
+  // only an empty folder can be removed.
+  char recursive[4];
+  FILINFO stat;
+  if (webhttp::QueryParam(query, "recursive", recursive, sizeof(recursive)) &&
+      recursive[0] == '1' && f_stat(fatpath, &stat) == FR_OK &&
+      (stat.fattrib & AM_DIR)) {
+    FILINFO info;
+    unsigned removed = 0;
+    if (DeleteTree(fatpath, sizeof(fatpath), 0, &info, &removed) == FR_OK) {
+      const char *ok = "{\"ok\":true}";
+      webhttp::SendResponse(socket, 200, "OK", "application/json", ok,
+                            (unsigned) strlen(ok));
+      return;
+    }
+    char text[128];
+    snprintf(text, sizeof(text),
+             "could not delete everything (a file may be read-only): %u "
+             "item%s removed, the rest of the folder is still there\n",
+             removed, removed == 1 ? "" : "s");
+    webhttp::SendText(socket, 409, "Conflict", text);
     return;
   }
 

@@ -20,6 +20,7 @@ import datetime as _dt
 import json
 import os
 import posixpath
+import shutil
 import sys
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -453,6 +454,12 @@ class Handler(BaseHTTPRequestHandler):
         if (parts and parts[0].lower() == "firmware") or \
            os.path.basename(target).lower() in self.PROTECTED:
             return self._send(403, "that path is protected\n")
+        # Like the device: any "recursive" parameter needs the custom header,
+        # and =1 deletes a folder together with its contents.
+        if "recursive" in q and not self.headers.get("X-BMC64-Web"):
+            return self._send(403, "missing X-BMC64-Web header\n")
+        if (q.get("recursive") or [""])[0] == "1" and os.path.isdir(target):
+            return self._delete_tree(target)
         try:
             if os.path.isdir(target):
                 os.rmdir(target)
@@ -463,6 +470,16 @@ class Handler(BaseHTTPRequestHandler):
         except OSError as e:
             return self._send(409, "cannot delete: %s\n" % e)
         sys.stderr.write("  [mock] deleted %s\n" % target)
+        self._json(200, {"ok": True})
+
+    def _delete_tree(self, target):
+        """Folder plus contents (the device also stops at 24 levels deep)."""
+        removed = sum(len(d) + len(f) for _, d, f in os.walk(target)) + 1
+        try:
+            shutil.rmtree(target)
+        except OSError as e:
+            return self._send(409, "could not delete everything: %s\n" % e)
+        sys.stderr.write("  [mock] deleted folder tree %s (%d items)\n" % (target, removed))
         self._json(200, {"ok": True})
 
     def api_fs_mkdir(self, query):

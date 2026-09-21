@@ -54,8 +54,10 @@ export async function readFile(vol, path) {
   return r.arrayBuffer();
 }
 
-export const deleteFile = (vol, path) =>
-  post("/api/fs/delete?" + fsQuery(vol, path));
+// With `recursive`, a folder is deleted together with everything in it.
+export const deleteFile = (vol, path, { recursive = false } = {}) =>
+  post("/api/fs/delete?" + fsQuery(vol, path) + (recursive ? "&recursive=1" : ""),
+       recursive ? { headers: WEB_HEADER } : undefined);
 
 export const autostart = (vol, path) =>
   post("/api/fs/autostart?" + fsQuery(vol, path));

@@ -464,6 +464,14 @@ boolean HandleConnection(CSocket *socket) {
   }
 
   if (is_post && strcmp(target, "/api/fs/delete") == 0) {
+    // Deleting a whole folder is far more destructive than one file, so it
+    // gets the same cross-site protection as /api/fs/save above.
+    char recursive[4];
+    if (webhttp::QueryParam(query, "recursive", recursive, sizeof(recursive)) &&
+        !HasHeader(request, "x-bmc64-web:")) {
+      SendText(socket, 403, "Forbidden", "missing X-BMC64-Web header\n");
+      return FALSE;
+    }
     WebUiFsDelete(socket, query);
     return FALSE;
   }
