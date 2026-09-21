@@ -38,14 +38,41 @@ void WebUiFsDownload(CSocket *socket, const char *query);
 // the file. prefetched[0..prefetched_len) are body bytes already read
 // with the request headers; the remainder (up to content_length total)
 // is streamed from the socket. content_length < 0 means no
-// Content-Length header was sent (rejected with 411).
+// Content-Length header was sent (rejected with 411). An optional
+// &mtime=YYYY-MM-DDTHH:MM:SS (local time) query parameter sets the
+// file's modified time; without it the file gets the current FAT time.
 void WebUiFsUpload(CSocket *socket, const char *query,
                    const unsigned char *prefetched, unsigned prefetched_len,
                    long content_length);
 
+// POST /api/fs/save?vol=SD&path=/settings.txt  <- the raw request body
+// replaces one of the editable root-level config files (vice.ini, settings*.txt,
+// cmdline.txt, config.txt, machines.txt, wpa_supplicant.conf) or a keyboard
+// mapping file (*.vkm) in any folder: up to 256 KB of
+// text, no NUL bytes. Written to "<name>.part", with the previous version
+// kept as "<name>.bak". Arguments are as for WebUiFsUpload. GET /api/fs/list
+// marks the editable entries with "edit":true.
+void WebUiFsSave(CSocket *socket, const char *query,
+                 const unsigned char *prefetched, unsigned prefetched_len,
+                 long content_length);
+
 // POST /api/fs/delete?vol=SD&path=/dir/file  -> remove a file (or an
 // empty directory). The same protected paths as upload are refused.
+// With &recursive=1 a directory is removed together with its contents (up
+// to 24 levels deep). If something can't be deleted it stops there with 409.
 void WebUiFsDelete(CSocket *socket, const char *query);
+
+// POST /api/fs/mkdir?vol=SD&path=/dir/newname  -> create a folder. The
+// last path segment is the new name (plain ASCII); its parent must exist.
+// Refused (403) inside /firmware or under a protected name, and 409 when
+// something of that name already exists.
+void WebUiFsMkdir(CSocket *socket, const char *query);
+
+// POST /api/fs/rename?vol=SD&path=/dir/old&to=new  -> rename a file or
+// folder within its own folder; `to` is a bare plain-ASCII name. The
+// protected paths are refused as the source or the new name, and 409 is
+// answered if the new name is taken (a change of case only is allowed).
+void WebUiFsRename(CSocket *socket, const char *query);
 
 // POST /api/fs/autostart?vol=SD&path=/dir/file.d64  -> queue the file to
 // be autostarted on the emulator (disk/tape image or PRG), like the

@@ -8,7 +8,8 @@
 //
 // Endpoints: GET static assets, GET /api/status, POST /api/reboot,
 // POST /api/reset, GET /api/volumes, GET /api/fs/list, GET /api/fs/download,
-// POST /api/fs/upload, POST /api/fs/delete, POST /api/fs/autostart,
+// POST /api/fs/upload, POST /api/fs/save, POST /api/fs/delete,
+// POST /api/fs/mkdir, POST /api/fs/rename, POST /api/fs/autostart,
 // POST /api/webui/disable.
 //
 // When a PIN is configured, every request must carry HTTP Basic Auth
@@ -153,6 +154,24 @@ long ParseContentLength(const char *request) {
     p = nl + 2;
   }
   return -1;
+}
+
+// TRUE if the raw request has a header whose name-and-colon matches
+// name_colon (lower case, e.g. "x-bmc64-web:"). Stops at the blank line so
+// body text can't pose as a header.
+boolean HasHeader(const char *request, const char *name_colon) {
+  const char *p = request;
+  while (*p != '\0' && !(p[0] == '\r' && p[1] == '\n')) {
+    if (CiPrefix(p, name_colon)) {
+      return TRUE;
+    }
+    const char *nl = strstr(p, "\r\n");
+    if (nl == 0) {
+      break;
+    }
+    p = nl + 2;
+  }
+  return FALSE;
 }
 
 const struct webui_asset *FindAsset(const char *path) {
@@ -431,8 +450,44 @@ boolean HandleConnection(CSocket *socket) {
     return FALSE;
   }
 
+  if (is_post && strcmp(target, "/api/fs/save") == 0) {
+    // Rewrites boot/config files, so demand a header that a cross-site form
+    // or no-cors fetch cannot send (it would need a CORS preflight, which
+    // this server never grants). Stops another site's page from using the
+    // browser's cached PIN to change them.
+    if (!HasHeader(request, "x-bmc64-web:")) {
+      SendText(socket, 403, "Forbidden", "missing X-BMC64-Web header\n");
+      return FALSE;
+    }
+    WebUiFsSave(socket, query, body, body_prefetched, content_length);
+    return FALSE;
+  }
+
   if (is_post && strcmp(target, "/api/fs/delete") == 0) {
+    // Deleting a whole folder is far more destructive than one file, so it
+    // gets the same cross-site protection as /api/fs/save above.
+    char recursive[4];
+    if (webhttp::QueryParam(query, "recursive", recursive, sizeof(recursive)) &&
+        !HasHeader(request, "x-bmc64-web:")) {
+      SendText(socket, 403, "Forbidden", "missing X-BMC64-Web header\n");
+      return FALSE;
+    }
     WebUiFsDelete(socket, query);
+    return FALSE;
+  }
+
+  if (is_post && (strcmp(target, "/api/fs/mkdir") == 0 ||
+                  strcmp(target, "/api/fs/rename") == 0)) {
+    // Same cross-site protection as /api/fs/save above.
+    if (!HasHeader(request, "x-bmc64-web:")) {
+      SendText(socket, 403, "Forbidden", "missing X-BMC64-Web header\n");
+      return FALSE;
+    }
+    if (strcmp(target, "/api/fs/mkdir") == 0) {
+      WebUiFsMkdir(socket, query);
+    } else {
+      WebUiFsRename(socket, query);
+    }
     return FALSE;
   }
 

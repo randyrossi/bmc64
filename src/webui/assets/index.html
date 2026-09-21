@@ -6,6 +6,13 @@
 <title>BMC64</title>
 <link rel="icon" type="image/png" href="/logo.png">
 <link rel="stylesheet" href="/style.css">
+<!-- Fetch every module up front: it saves a round trip per import level on the device. -->
+<link rel="modulepreload" href="/js/util.js">
+<link rel="modulepreload" href="/js/api.js">
+<link rel="modulepreload" href="/js/dashboard.js">
+<link rel="modulepreload" href="/js/editor.js">
+<link rel="modulepreload" href="/js/files.js">
+<link rel="modulepreload" href="/js/menu.js">
 </head>
 <body>
 <div id="app">
@@ -103,15 +110,18 @@
         <div class="fb-bar">
           <button class="btn" id="fb-up">↑ Up</button>
           <div class="crumbs" id="fb-crumbs"></div>
+          <button class="btn" id="fb-mkdir">New folder</button>
           <label class="btn" id="fb-upload-btn">Upload<input type="file" id="fb-upload" multiple hidden></label>
           <button class="btn" id="fb-refresh" title="Refresh">⟳</button>
         </div>
         <p class="fb-note">Uploads write to this folder on the SD card. Don't overwrite a disk image the emulator currently has attached.</p>
         <p class="msg" id="fb-status"></p>
-        <table class="fb-table">
-          <thead><tr><th>Name</th><th class="col-size">Size</th><th class="col-mod">Modified</th><th></th></tr></thead>
-          <tbody id="fb-rows"></tbody>
-        </table>
+        <div class="fb-scroll">
+          <table class="fb-table">
+            <thead><tr><th>Name</th><th class="col-size">Size</th><th class="col-mod">Modified</th><th></th></tr></thead>
+            <tbody id="fb-rows"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -121,6 +131,29 @@
     </footer>
   </main>
 </div>
-<script src="/app.js"></script>
+
+<div class="overlay" id="editor" role="dialog" aria-modal="true" aria-labelledby="ed-title" hidden>
+  <div class="ed-dialog">
+    <div class="ed-head">
+      <div>
+        <h2 id="ed-title"></h2>
+        <span class="ed-path" id="ed-path"></span>
+      </div>
+      <button class="ed-close" id="ed-close" aria-label="Close" title="Close">✕</button>
+    </div>
+    <p class="ed-hint" id="ed-hint"></p>
+    <textarea class="ed-text" id="ed-text" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="File contents"></textarea>
+    <div class="ed-foot">
+      <p class="msg ed-msg" id="ed-msg"></p>
+      <div class="ed-btns">
+        <button class="btn" id="ed-cancel">Cancel</button>
+        <button class="btn btn-primary" id="ed-save">Save</button>
+        <button class="btn btn-reboot" id="ed-save-reboot">Save &amp; Reboot</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/js/app.js"></script>
 </body>
 </html>

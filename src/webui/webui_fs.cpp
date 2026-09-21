@@ -39,6 +39,9 @@ namespace {
 
 const unsigned WEBUI_FS_MAX_ENTRIES = 6000;
 const unsigned WEBUI_FS_IO_CHUNK = 32 * 1024;
+// Largest file the editor will open or save (the config files are a few KB;
+// the body is streamed to a temp file, so this is not a RAM limit).
+const unsigned WEBUI_FS_EDIT_MAX = 256 * 1024;
 
 // One request is handled at a time by the web UI task, so a single file
 // scratch buffer is safe and keeps it off the task stack.
@@ -120,6 +123,24 @@ void WriteFatDateTime(CChunkedResponse *r, unsigned fdate, unsigned ftime) {
   unsigned second = (ftime & 0x1F) * 2;
   r->Printf("%04u-%02u-%02uT%02u:%02u:%02u", year, month, day, hour, minute,
             second);
+}
+
+// Parse "YYYY-MM-DDTHH:MM:SS" (local wall-clock time, as WriteFatDateTime
+// emits) into a FAT date/time pair. Returns FALSE if malformed or outside
+// the FAT range (1980..2107).
+boolean ParseFatDateTime(const char *s, WORD *fdate, WORD *ftime) {
+  unsigned year, month, day, hour, minute, second;
+  if (sscanf(s, "%4u-%2u-%2uT%2u:%2u:%2u", &year, &month, &day, &hour, &minute,
+             &second) != 6) {
+    return FALSE;
+  }
+  if (year < 1980 || year > 2107 || month < 1 || month > 12 || day < 1 ||
+      day > 31 || hour > 23 || minute > 59 || second > 59) {
+    return FALSE;
+  }
+  *fdate = (WORD) (((year - 1980) << 9) | (month << 5) | day);
+  *ftime = (WORD) ((hour << 11) | (minute << 5) | (second / 2));
+  return TRUE;
 }
 
 // Normalise a client path into a sandboxed absolute path within a volume.
@@ -236,7 +257,9 @@ boolean CiEqual(const char *a, const char *b) {
   return *a == *b;
 }
 
-// Only image/program types that the menu's Autostart accepts as-is.
+// Only image/program types that the menu's Autostart accepts as-is. A .crt
+// cartridge image is one: VICE's autostart_autodetect attaches it on the
+// C64 and C128, which are the machines the web UI runs on.
 boolean IsAutostartable(const char *clean) {
   const char *dot = 0;
   for (const char *p = clean; *p != '\0'; p++) {
@@ -246,11 +269,48 @@ boolean IsAutostartable(const char *clean) {
   if (dot == 0) return FALSE;
   static const char *const kExt[] = {
       "d64", "d71", "d81", "d82", "g64", "x64", "t64", "tap", "prg", "p00",
+      "crt",
   };
   for (unsigned i = 0; i < sizeof(kExt) / sizeof(kExt[0]); i++) {
     if (CiEqual(dot, kExt[i])) return TRUE;
   }
   return FALSE;
+}
+
+// BMC64's own configuration files. Upload and delete refuse them (in any
+// folder); the editor's save endpoint is the only way the web UI changes them.
+const char *const kConfigFiles[] = {
+    "settings.txt",     "settings-c128.txt",     "settings-vic20.txt",
+    "settings-plus4.txt", "settings-plus4emu.txt", "settings-pet.txt",
+    "wpa_supplicant.conf", "cmdline.txt",         "config.txt",
+    "machines.txt",
+};
+
+boolean IsConfigFile(const char *name) {
+  for (unsigned i = 0; i < sizeof(kConfigFiles) / sizeof(kConfigFiles[0]); i++) {
+    if (CiEqual(name, kConfigFiles[i])) return TRUE;
+  }
+  return FALSE;
+}
+
+// vice.ini is editable too, but (unlike the files above) stays uploadable so
+// a prepared copy can still be dropped on the card.
+boolean IsEditableName(const char *name) {
+  return IsConfigFile(name) || CiEqual(name, "vice.ini");
+}
+
+// Keyboard mapping files are plain text that lives in the machine folders
+// (C64/rpi_pos.vkm, ...), so they are editable wherever they are on the card.
+boolean IsKeymapName(const char *name) {
+  size_t length = strlen(name);
+  return length > 4 && CiEqual(name + length - 4, ".vkm");
+}
+
+// The config files are editable only in the volume root; keymaps anywhere.
+boolean IsEditablePath(const char *clean) {
+  if (clean[0] != '/') return FALSE;
+  const char *base = strrchr(clean, '/') + 1;
+  return IsKeymapName(base) || (base == clean + 1 && IsEditableName(base));
 }
 
 // Uploads must not clobber BMC64's own configuration or the Wi-Fi
@@ -271,16 +331,173 @@ boolean IsProtectedPath(const char *clean) {
   for (const char *p = clean; *p != '\0'; p++) {
     if (*p == '/') base = p + 1;
   }
-  static const char *const kProtected[] = {
-      "settings.txt",     "settings-c128.txt",     "settings-vic20.txt",
-      "settings-plus4.txt", "settings-plus4emu.txt", "settings-pet.txt",
-      "wpa_supplicant.conf", "cmdline.txt",         "config.txt",
-      "machines.txt",     "bmc64.log",
-  };
-  for (unsigned i = 0; i < sizeof(kProtected) / sizeof(kProtected[0]); i++) {
-    if (CiEqual(base, kProtected[i])) return TRUE;
+  return IsConfigFile(base) || CiEqual(base, "bmc64.log");
+}
+
+// A name typed into New folder / Rename: one path segment that FAT stores
+// exactly as written. Printable ASCII only, because paths reach FatFs
+// unconverted (its OEM code page is CP850, and only the listing translates
+// to UTF-8), so a UTF-8 name would be stored garbled. FatFs would also
+// silently trim a trailing dot or space, so those are refused rather than
+// creating a different name than the one asked for.
+boolean IsValidEntryName(const char *name) {
+  size_t length = strlen(name);
+  if (length == 0 || length > 200) return FALSE;
+  if (name[0] == ' ' || name[length - 1] == ' ' || name[length - 1] == '.') {
+    return FALSE;
   }
-  return FALSE;
+  for (const char *p = name; *p != '\0'; p++) {
+    unsigned char c = (unsigned char) *p;
+    if (c < 0x20 || c >= 0x7F || c == '/' || c == '\\' || c == ':' ||
+        c == '*' || c == '?' || c == '"' || c == '<' || c == '>' ||
+        c == '|') {
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
+const char *const kBadNameText =
+    "invalid name: use plain ASCII without / \\ : * ? \" < > |, and no "
+    "leading space or trailing space or dot\n";
+
+enum BodyResult {
+  BODY_OK,
+  BODY_CREATE_FAILED,
+  BODY_WRITE_FAILED,  // FatFs write error (disk full?)
+  BODY_TRUNCATED,     // client aborted or timed out
+  BODY_HAS_NUL,       // only when reject_nul is set
+};
+
+// Stream a request body into a new file at temppath: prefetched bytes (read
+// with the headers) first, then the rest from the socket, `total` bytes in
+// all. On anything but BODY_OK the temp file is removed.
+BodyResult ReceiveBodyToFile(CSocket *socket, const char *temppath,
+                             const unsigned char *prefetched,
+                             unsigned prefetched_len, unsigned long total,
+                             boolean reject_nul) {
+  FIL file;
+  if (f_open(&file, temppath, FA_WRITE | FA_CREATE_ALWAYS) != FR_OK) {
+    return BODY_CREATE_FAILED;
+  }
+
+  unsigned long written = 0;
+  BodyResult result = BODY_OK;
+
+  if (prefetched_len > total) {
+    prefetched_len = (unsigned) total;
+  }
+  if (prefetched_len > 0) {
+    UINT bw = 0;
+    if (reject_nul && memchr(prefetched, 0, prefetched_len) != 0) {
+      result = BODY_HAS_NUL;
+    } else if (f_write(&file, prefetched, prefetched_len, &bw) != FR_OK ||
+               bw != prefetched_len) {
+      result = BODY_WRITE_FAILED;
+    }
+    written += prefetched_len;
+  }
+
+  while (result == BODY_OK && written < total) {
+    unsigned long remain = total - written;
+    unsigned want = remain < sizeof(s_io_buffer) ? (unsigned) remain
+                                                 : sizeof(s_io_buffer);
+    int n = socket->Receive(s_io_buffer, want, 0);
+    if (n <= 0) {
+      result = BODY_TRUNCATED;
+      break;
+    }
+    if (reject_nul && memchr(s_io_buffer, 0, (unsigned) n) != 0) {
+      result = BODY_HAS_NUL;
+      break;
+    }
+    UINT bw = 0;
+    if (f_write(&file, s_io_buffer, (UINT) n, &bw) != FR_OK ||
+        bw != (UINT) n) {
+      result = BODY_WRITE_FAILED;
+      break;
+    }
+    written += (unsigned) n;
+    CScheduler::Get()->Yield();
+  }
+
+  f_close(&file);
+  if (result != BODY_OK) {
+    f_unlink(temppath);
+  }
+  return result;
+}
+
+void SendBodyFailure(CSocket *socket, BodyResult result) {
+  switch (result) {
+  case BODY_CREATE_FAILED:
+    webhttp::SendText(socket, 500, "Internal Server Error",
+                      "cannot create file\n");
+    break;
+  case BODY_WRITE_FAILED:
+    webhttp::SendText(socket, 507, "Insufficient Storage",
+                      "write failed (disk full?)\n");
+    break;
+  case BODY_HAS_NUL:
+    webhttp::SendText(socket, 400, "Bad Request", "not a text file\n");
+    break;
+  default:
+    webhttp::SendText(socket, 400, "Bad Request", "upload truncated\n");
+    break;
+  }
+}
+
+// ---- deleting a folder with its contents ----
+//
+// FatFs has no recursive delete (f_unlink refuses a folder that isn't empty),
+// so this is the usual walk: unlink each entry while reading the folder, then
+// the folder itself. It edits one FatFs path in place and shares one FILINFO,
+// so it needs little stack; the depth limit bounds the recursion.
+
+const unsigned WEBUI_FS_TREE_DEPTH = 24;
+
+// Returns FR_OK, or the FatFs error that stopped it (FR_DENIED for a
+// read-only file; FR_INVALID_NAME if the tree is too deep or the path too
+// long). `removed` counts what was deleted so far, for the failure message.
+FRESULT DeleteTree(char *path, unsigned path_size, unsigned depth,
+                   FILINFO *info, unsigned *removed) {
+  if (depth > WEBUI_FS_TREE_DEPTH) return FR_INVALID_NAME;
+  DIR dir;
+  FRESULT fr = f_opendir(&dir, path);
+  if (fr != FR_OK) return fr;
+
+  while (fr == FR_OK && f_readdir(&dir, info) == FR_OK &&
+         info->fname[0] != '\0') {
+    // f_readdir doesn't return these, but following ".." would delete the
+    // parent folder (the listing skips them too).
+    if (strcmp(info->fname, ".") == 0 || strcmp(info->fname, "..") == 0) {
+      continue;
+    }
+    unsigned length = (unsigned) strlen(path);
+    unsigned name_length = (unsigned) strlen(info->fname);
+    if (length + 1 + name_length + 1 > path_size) {
+      fr = FR_INVALID_NAME;
+      break;
+    }
+    path[length] = '/';
+    memcpy(path + length + 1, info->fname, name_length + 1);
+    if (info->fattrib & AM_DIR) {
+      fr = DeleteTree(path, path_size, depth + 1, info, removed);
+    } else {
+      fr = f_unlink(path);
+      if (fr == FR_OK) (*removed)++;
+    }
+    path[length] = '\0';
+    if ((*removed & 15) == 0) {
+      CScheduler::Get()->Yield();
+    }
+  }
+  f_closedir(&dir);
+  if (fr != FR_OK) return fr;
+
+  fr = f_unlink(path);  // the folder itself, now empty
+  if (fr == FR_OK) (*removed)++;
+  return fr;
 }
 
 }  // namespace
@@ -341,6 +558,7 @@ void WebUiFsList(CSocket *socket, const char *query) {
   unsigned count = 0;
   boolean truncated = FALSE;
   boolean first = TRUE;
+  boolean at_root = strcmp(clean, "/") == 0;
   FILINFO info;
   while (f_readdir(&dir, &info) == FR_OK && info.fname[0] != '\0') {
     if (info.fname[0] == '.' &&
@@ -363,7 +581,21 @@ void WebUiFsList(CSocket *socket, const char *query) {
     r.Printf(",\"size\":%lu,\"dir\":%s,\"mtime\":\"",
              (unsigned long) info.fsize, is_dir ? "true" : "false");
     WriteFatDateTime(&r, info.fdate, info.ftime);
-    r.Write("\"}");
+    r.Write("\"");
+    if (!is_dir && info.fsize <= WEBUI_FS_EDIT_MAX &&
+        ((at_root && IsEditableName(info.fname)) ||
+         IsKeymapName(info.fname))) {
+      r.Write(",\"edit\":true");
+    }
+    // Entries the web UI won't rename or delete, so the page can leave
+    // those actions out of the row's menu.
+    char child[512];
+    if ((unsigned) snprintf(child, sizeof(child), "%s%s%s", clean,
+                            at_root ? "" : "/", info.fname) < sizeof(child) &&
+        IsProtectedPath(child)) {
+      r.Write(",\"protected\":true");
+    }
+    r.Write("}");
 
     count++;
     if ((count & 63) == 0) {
@@ -488,58 +720,11 @@ void WebUiFsUpload(CSocket *socket, const char *query,
     return;
   }
 
-  FIL file;
-  if (f_open(&file, temppath, FA_WRITE | FA_CREATE_ALWAYS) != FR_OK) {
-    webhttp::SendText(socket, 500, "Internal Server Error",
-                      "cannot create file\n");
-    return;
-  }
-
   unsigned long total = (unsigned long) content_length;
-  unsigned long written = 0;
-  boolean write_failed = FALSE;
-
-  if (prefetched_len > total) {
-    prefetched_len = (unsigned) total;
-  }
-  if (prefetched_len > 0) {
-    UINT bw = 0;
-    if (f_write(&file, prefetched, prefetched_len, &bw) != FR_OK ||
-        bw != prefetched_len) {
-      write_failed = TRUE;
-    }
-    written += prefetched_len;
-  }
-
-  while (!write_failed && written < total) {
-    unsigned long remain = total - written;
-    unsigned want = remain < sizeof(s_io_buffer) ? (unsigned) remain
-                                                 : sizeof(s_io_buffer);
-    int n = socket->Receive(s_io_buffer, want, 0);
-    if (n <= 0) {
-      break;  // client aborted or timed out
-    }
-    UINT bw = 0;
-    if (f_write(&file, s_io_buffer, (UINT) n, &bw) != FR_OK ||
-        bw != (UINT) n) {
-      write_failed = TRUE;
-      break;
-    }
-    written += (unsigned) n;
-    CScheduler::Get()->Yield();
-  }
-
-  f_close(&file);
-
-  if (write_failed) {
-    f_unlink(temppath);
-    webhttp::SendText(socket, 507, "Insufficient Storage",
-                      "write failed (disk full?)\n");
-    return;
-  }
-  if (written != total) {
-    f_unlink(temppath);
-    webhttp::SendText(socket, 400, "Bad Request", "upload truncated\n");
+  BodyResult body_result = ReceiveBodyToFile(
+      socket, temppath, prefetched, prefetched_len, total, FALSE);
+  if (body_result != BODY_OK) {
+    SendBodyFailure(socket, body_result);
     return;
   }
 
@@ -551,8 +736,96 @@ void WebUiFsUpload(CSocket *socket, const char *query,
     return;
   }
 
+  // Keep the file's original modified time when the client supplies it;
+  // otherwise (or if it can't be applied) the file keeps the upload time.
+  char mtime[24];
+  FILINFO stamp;
+  if (webhttp::QueryParam(query, "mtime", mtime, sizeof(mtime)) &&
+      ParseFatDateTime(mtime, &stamp.fdate, &stamp.ftime)) {
+    f_utime(fatpath, &stamp);
+  }
+
   char body[64];
-  int bn = snprintf(body, sizeof(body), "{\"ok\":true,\"size\":%lu}", written);
+  int bn = snprintf(body, sizeof(body), "{\"ok\":true,\"size\":%lu}", total);
+  webhttp::SendResponse(socket, 200, "OK", "application/json", body,
+                        bn > 0 ? (unsigned) bn : 0);
+}
+
+void WebUiFsSave(CSocket *socket, const char *query,
+                 const unsigned char *prefetched, unsigned prefetched_len,
+                 long content_length) {
+  char clean[512];
+  char fatpath[560];
+  if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
+                    sizeof(fatpath), TRUE) != 0) {
+    return;
+  }
+  if (!IsEditablePath(clean)) {
+    webhttp::SendText(socket, 403, "Forbidden", "that file cannot be edited\n");
+    return;
+  }
+  if (content_length < 0) {
+    webhttp::SendText(socket, 411, "Length Required",
+                      "Content-Length header required\n");
+    return;
+  }
+  if ((unsigned long) content_length > WEBUI_FS_EDIT_MAX) {
+    webhttp::SendText(socket, 413, "Payload Too Large",
+                      "file too large to edit\n");
+    return;
+  }
+
+  FILINFO existing;
+  boolean exists = f_stat(fatpath, &existing) == FR_OK;
+  if (exists && (existing.fattrib & AM_DIR)) {
+    webhttp::SendText(socket, 409, "Conflict", "target is a directory\n");
+    return;
+  }
+
+  // A keymap can be in a nested folder, so size these for the longest
+  // resolved path plus the ".part" / ".bak" suffix.
+  char temppath[sizeof(fatpath) + 8];
+  char bakpath[sizeof(fatpath) + 8];
+  if ((unsigned) snprintf(temppath, sizeof(temppath), "%s.part", fatpath) >=
+          sizeof(temppath) ||
+      (unsigned) snprintf(bakpath, sizeof(bakpath), "%s.bak", fatpath) >=
+          sizeof(bakpath)) {
+    webhttp::SendText(socket, 400, "Bad Request", "path too long\n");
+    return;
+  }
+
+  unsigned long total = (unsigned long) content_length;
+  BodyResult body_result = ReceiveBodyToFile(
+      socket, temppath, prefetched, prefetched_len, total, TRUE);
+  if (body_result != BODY_OK) {
+    SendBodyFailure(socket, body_result);
+    return;
+  }
+
+  // Keep the previous version as "<name>.bak". The original is only moved
+  // aside once the new one is fully written, and is put back if the final
+  // rename fails, so a failed save never leaves a config file missing.
+  if (exists) {
+    f_unlink(bakpath);  // ignore result: an older backup may not exist
+    if (f_rename(fatpath, bakpath) != FR_OK) {
+      f_unlink(temppath);
+      webhttp::SendText(socket, 500, "Internal Server Error",
+                        "cannot back up the existing file\n");
+      return;
+    }
+  }
+  if (f_rename(temppath, fatpath) != FR_OK) {
+    if (exists) {
+      f_rename(bakpath, fatpath);
+    }
+    f_unlink(temppath);
+    webhttp::SendText(socket, 500, "Internal Server Error",
+                      "cannot finalise save\n");
+    return;
+  }
+
+  char body[64];
+  int bn = snprintf(body, sizeof(body), "{\"ok\":true,\"size\":%lu}", total);
   webhttp::SendResponse(socket, 200, "OK", "application/json", body,
                         bn > 0 ? (unsigned) bn : 0);
 }
@@ -569,6 +842,30 @@ void WebUiFsDelete(CSocket *socket, const char *query) {
     return;
   }
 
+  // &recursive=1 deletes a folder together with its contents; without it
+  // only an empty folder can be removed.
+  char recursive[4];
+  FILINFO stat;
+  if (webhttp::QueryParam(query, "recursive", recursive, sizeof(recursive)) &&
+      recursive[0] == '1' && f_stat(fatpath, &stat) == FR_OK &&
+      (stat.fattrib & AM_DIR)) {
+    FILINFO info;
+    unsigned removed = 0;
+    if (DeleteTree(fatpath, sizeof(fatpath), 0, &info, &removed) == FR_OK) {
+      const char *ok = "{\"ok\":true}";
+      webhttp::SendResponse(socket, 200, "OK", "application/json", ok,
+                            (unsigned) strlen(ok));
+      return;
+    }
+    char text[128];
+    snprintf(text, sizeof(text),
+             "could not delete everything (a file may be read-only): %u "
+             "item%s removed, the rest of the folder is still there\n",
+             removed, removed == 1 ? "" : "s");
+    webhttp::SendText(socket, 409, "Conflict", text);
+    return;
+  }
+
   FRESULT fr = f_unlink(fatpath);
   if (fr == FR_NO_FILE || fr == FR_NO_PATH || fr == FR_INVALID_NAME) {
     webhttp::SendText(socket, 404, "Not Found", "no such file\n");
@@ -581,6 +878,119 @@ void WebUiFsDelete(CSocket *socket, const char *query) {
   }
   if (fr != FR_OK) {
     webhttp::SendText(socket, 500, "Internal Server Error", "delete failed\n");
+    return;
+  }
+
+  const char *ok = "{\"ok\":true}";
+  webhttp::SendResponse(socket, 200, "OK", "application/json", ok,
+                        (unsigned) strlen(ok));
+}
+
+// ---- new folder / rename ----
+
+void WebUiFsMkdir(CSocket *socket, const char *query) {
+  char clean[512];
+  char fatpath[560];
+  if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
+                    sizeof(fatpath), TRUE) != 0) {
+    return;
+  }
+  if (!IsValidEntryName(strrchr(clean, '/') + 1)) {
+    webhttp::SendText(socket, 400, "Bad Request", kBadNameText);
+    return;
+  }
+  if (IsProtectedPath(clean)) {
+    webhttp::SendText(socket, 403, "Forbidden", "that path is protected\n");
+    return;
+  }
+
+  FILINFO info;
+  if (f_stat(fatpath, &info) == FR_OK) {
+    webhttp::SendText(socket, 409, "Conflict", "already exists\n");
+    return;
+  }
+
+  FRESULT fr = f_mkdir(fatpath);
+  if (fr == FR_EXIST) {
+    webhttp::SendText(socket, 409, "Conflict", "already exists\n");
+    return;
+  }
+  if (fr == FR_NO_PATH || fr == FR_NO_FILE) {
+    webhttp::SendText(socket, 404, "Not Found", "parent folder not found\n");
+    return;
+  }
+  if (fr != FR_OK) {
+    webhttp::SendText(socket, 500, "Internal Server Error",
+                      "cannot create folder\n");
+    return;
+  }
+
+  const char *ok = "{\"ok\":true}";
+  webhttp::SendResponse(socket, 200, "OK", "application/json", ok,
+                        (unsigned) strlen(ok));
+}
+
+// POST /api/fs/rename?path=/dir/old&to=new: renames within the same folder,
+// so `to` is a bare name, never a path.
+void WebUiFsRename(CSocket *socket, const char *query) {
+  char clean[512];
+  char fatpath[560];
+  if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
+                    sizeof(fatpath), TRUE) != 0) {
+    return;
+  }
+
+  char new_name[256];
+  if (!webhttp::QueryParam(query, "to", new_name, sizeof(new_name)) ||
+      !IsValidEntryName(new_name)) {
+    webhttp::SendText(socket, 400, "Bad Request", kBadNameText);
+    return;
+  }
+
+  const char *old_name = strrchr(clean, '/') + 1;
+  char new_clean[512];
+  char new_fatpath[560];
+  if ((unsigned) snprintf(new_clean, sizeof(new_clean), "%.*s/%s",
+                          (int) (old_name - 1 - clean), clean,
+                          new_name) >= sizeof(new_clean) ||
+      BuildFatPath(circle_get_disk_volume(), new_clean, new_fatpath,
+                   sizeof(new_fatpath)) != 0) {
+    webhttp::SendText(socket, 400, "Bad Request", "path too long\n");
+    return;
+  }
+
+  // Neither the source nor the new name may be a protected one (that would
+  // let a rename create or replace settings.txt, or touch /firmware).
+  if (IsProtectedPath(clean) || IsProtectedPath(new_clean)) {
+    webhttp::SendText(socket, 403, "Forbidden", "that path is protected\n");
+    return;
+  }
+
+  FILINFO info;
+  if (f_stat(fatpath, &info) != FR_OK) {
+    webhttp::SendText(socket, 404, "Not Found", "no such file\n");
+    return;
+  }
+
+  boolean unchanged = strcmp(old_name, new_name) == 0;
+  boolean case_only = !unchanged && CiEqual(old_name, new_name);
+  if (!unchanged && !case_only && f_stat(new_fatpath, &info) == FR_OK) {
+    webhttp::SendText(socket, 409, "Conflict", "already exists\n");
+    return;
+  }
+
+  FRESULT fr = unchanged ? FR_OK : f_rename(fatpath, new_fatpath);
+  if (fr == FR_EXIST) {
+    webhttp::SendText(socket, 409, "Conflict", "already exists\n");
+    return;
+  }
+  if (fr == FR_NO_FILE || fr == FR_NO_PATH) {
+    webhttp::SendText(socket, 404, "Not Found", "no such file\n");
+    return;
+  }
+  if (fr != FR_OK) {
+    webhttp::SendText(socket, 500, "Internal Server Error",
+                      "rename failed\n");
     return;
   }
 
