@@ -248,7 +248,7 @@ class Handler(BaseHTTPRequestHandler):
         if target is None or not os.path.isdir(target):
             return self._send(404, "no such directory\n")
         entries = []
-        at_root = not [p for p in rel.split("/") if p not in ("", ".")]
+        dir_parts = [p for p in rel.split("/") if p not in ("", ".")]
         for name in sorted(os.listdir(target)):
             p = os.path.join(target, name)
             try:
@@ -262,8 +262,8 @@ class Handler(BaseHTTPRequestHandler):
                 "dir": is_dir,
                 "mtime": iso(st.st_mtime),
             }
-            if (at_root and not is_dir and st.st_size <= EDIT_MAX
-                    and name.lower() in self.EDITABLE):
+            if (not is_dir and st.st_size <= EDIT_MAX
+                    and self.is_editable(dir_parts + [name])):
                 entry["edit"] = True
             entries.append(entry)
             if len(entries) >= 6000:
@@ -289,7 +289,8 @@ class Handler(BaseHTTPRequestHandler):
         })
 
     # Same lists as webui_fs.cpp: upload/delete refuse PROTECTED, and only the
-    # editor's save endpoint may change EDITABLE files (root folder only).
+    # editor's save endpoint may change EDITABLE files (root folder only) or
+    # keyboard mapping files (*.vkm, any folder).
     CONFIG_FILES = {
         "settings.txt", "settings-c128.txt", "settings-vic20.txt",
         "settings-plus4.txt", "settings-plus4emu.txt", "settings-pet.txt",
@@ -297,6 +298,14 @@ class Handler(BaseHTTPRequestHandler):
     }
     PROTECTED = CONFIG_FILES | {"bmc64.log"}
     EDITABLE = CONFIG_FILES | {"vice.ini"}
+
+    @classmethod
+    def is_editable(cls, parts):
+        """parts: the path segments below --root, the file name last."""
+        name = parts[-1].lower() if parts else ""
+        if name.endswith(".vkm") and len(name) > 4:
+            return True
+        return len(parts) == 1 and name in cls.EDITABLE
 
     def api_fs_upload(self, query):
         length = self.headers.get("Content-Length")
@@ -365,8 +374,7 @@ class Handler(BaseHTTPRequestHandler):
         rel = (q.get("path") or [""])[0]
         target = safe_join(ARGS.root, rel)
         parts = [p for p in rel.split("/") if p not in ("", ".")]
-        if (target is None or len(parts) != 1
-                or parts[0].lower() not in self.EDITABLE):
+        if target is None or not self.is_editable(parts):
             self._drain_body()
             return self._send(403, "that file cannot be edited\n")
         if length > EDIT_MAX:

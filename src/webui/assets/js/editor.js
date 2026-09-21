@@ -10,6 +10,9 @@ import { rebootNow } from "./dashboard.js";
 // made here until the next reboot.
 const MENU_WRITTEN = /^(settings.*\.txt|vice\.ini|wpa_supplicant\.conf)$/i;
 
+// Keyboard mapping files (*.vkm) are editable in any folder.
+const KEYMAP = /\.vkm$/i;
+
 // The open editor, or null. Holds everything about the file being edited.
 let session = null;
 
@@ -33,6 +36,11 @@ function refreshButtons() {
 }
 
 function hintFor(name) {
+  if (KEYMAP.test(name)) {
+    return "Keyboard mapping. Changes take effect after a reboot. A mistake " +
+      "can make keys type the wrong character or stop working; the previous " +
+      "version is kept as " + name + ".bak.";
+  }
   let text = "Changes take effect after a reboot. A mistake in a system " +
     "file can stop BMC64 starting; the previous version is kept as " +
     name + ".bak.";

@@ -48,8 +48,10 @@ Browse the SD card, and:
 - **Delete** a file, after a confirmation prompt.
 - **Edit** BMC64's configuration files in the browser: click **Edit** (or the
   file name) on `vice.ini`, `settings*.txt`, `cmdline.txt`, `config.txt`,
-  `machines.txt` or `wpa_supplicant.conf` in the top folder of the card. The
-  file opens in an overlay with three buttons:
+  `machines.txt` or `wpa_supplicant.conf` in the top folder of the card, or on
+  any keyboard mapping file (`.vkm`) in any folder, such as the `rpi_*.vkm` files
+  in the machine folders (`C64/`, `C128/`, ...). The file opens in an overlay
+  with three buttons:
   - **Cancel** closes it without saving (you are asked first if you have
     unsaved changes).
   - **Save** writes the file and closes the overlay.
@@ -64,8 +66,9 @@ Browse the SD card, and:
   A mistake in `cmdline.txt`, `config.txt` or `machines.txt` can stop BMC64
   from booting, and a mistake in `wpa_supplicant.conf` or the web UI settings
   in `settings.txt` can lock you out of the web UI; fixing either needs the SD
-  card in a computer (the `.bak` file makes that easy). Only plain UTF-8 text
-  files up to 256 KB can be edited.
+  card in a computer (the `.bak` file makes that easy). A mistake in a `.vkm`
+  keymap can make keys type the wrong character or stop working; the `.bak` file
+  restores it. Only plain UTF-8 text files up to 256 KB can be edited.
 - **Run** a disk image (`.d64`, `.d71`, `.d81`, `.d82`, `.g64`, `.x64`), tape
   (`.t64`, `.tap`) or program (`.prg`, `.p00`): click its name or its **Run**
   button and BMC64 autostarts it, the same as the menu's *Autostart* item.

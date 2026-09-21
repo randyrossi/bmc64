@@ -296,10 +296,18 @@ boolean IsEditableName(const char *name) {
   return IsConfigFile(name) || CiEqual(name, "vice.ini");
 }
 
-// Only files in the volume root are editable.
+// Keyboard mapping files are plain text that lives in the machine folders
+// (C64/rpi_pos.vkm, ...), so they are editable wherever they are on the card.
+boolean IsKeymapName(const char *name) {
+  size_t length = strlen(name);
+  return length > 4 && CiEqual(name + length - 4, ".vkm");
+}
+
+// The config files are editable only in the volume root; keymaps anywhere.
 boolean IsEditablePath(const char *clean) {
-  return clean[0] == '/' && strchr(clean + 1, '/') == 0 &&
-         IsEditableName(clean + 1);
+  if (clean[0] != '/') return FALSE;
+  const char *base = strrchr(clean, '/') + 1;
+  return IsKeymapName(base) || (base == clean + 1 && IsEditableName(base));
 }
 
 // Uploads must not clobber BMC64's own configuration or the Wi-Fi
@@ -491,8 +499,9 @@ void WebUiFsList(CSocket *socket, const char *query) {
              (unsigned long) info.fsize, is_dir ? "true" : "false");
     WriteFatDateTime(&r, info.fdate, info.ftime);
     r.Write("\"");
-    if (at_root && !is_dir && info.fsize <= WEBUI_FS_EDIT_MAX &&
-        IsEditableName(info.fname)) {
+    if (!is_dir && info.fsize <= WEBUI_FS_EDIT_MAX &&
+        ((at_root && IsEditableName(info.fname)) ||
+         IsKeymapName(info.fname))) {
       r.Write(",\"edit\":true");
     }
     r.Write("}");
@@ -682,9 +691,10 @@ void WebUiFsSave(CSocket *socket, const char *query,
     return;
   }
 
-  // Editable names are short, so these small buffers always fit.
-  char temppath[64];
-  char bakpath[64];
+  // A keymap can be in a nested folder, so size these for the longest
+  // resolved path plus the ".part" / ".bak" suffix.
+  char temppath[sizeof(fatpath) + 8];
+  char bakpath[sizeof(fatpath) + 8];
   if ((unsigned) snprintf(temppath, sizeof(temppath), "%s.part", fatpath) >=
           sizeof(temppath) ||
       (unsigned) snprintf(bakpath, sizeof(bakpath), "%s.bak", fatpath) >=
