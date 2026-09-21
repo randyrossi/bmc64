@@ -245,7 +245,7 @@ a:hover { text-decoration: underline; }
 }
 .btn:hover { border-color: var(--blue); }
 .btn:disabled, .btn.disabled { opacity: 0.4; cursor: default; pointer-events: none; }
-#fb-upload-btn { margin-left: auto; }
+#fb-mkdir { margin-left: auto; }
 
 .fb-note { color: var(--dim); font-size: 12px; margin: 0 0 10px; }
 
@@ -272,25 +272,45 @@ a:hover { text-decoration: underline; }
 .col-mod { white-space: nowrap; color: var(--muted); }
 .fb-table td.col-size { font-variant-numeric: tabular-nums; color: var(--muted); }
 .fname { display: flex; align-items: center; gap: 9px; }
-.fname .ic { width: 16px; text-align: center; }
+.fname .ic { width: 16px; text-align: center; flex: none; }
+/* long names wrap rather than widen the table */
+.fname .nm { min-width: 0; overflow-wrap: anywhere; }
+/* size and date under the name; only shown on a phone (see the media query) */
+.fmeta { display: none; margin: 1px 0 0 25px; color: var(--dim); font-size: 12px; }
 .fname .ic.dir { color: var(--blue); }
 .fname .ic.file { color: var(--dim); }
 .col-act { text-align: right; white-space: nowrap; }
-.dl, .del, .run, .edit {
-  padding: 3px 9px;
-  border-radius: 7px;
+.act-btn { padding: 4px 10px; font-size: 12.5px; border-radius: 7px; white-space: nowrap; }
+
+/* the shared pop-up behind the Actions buttons (see js/menu.js) */
+.act-menu {
+  position: fixed;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+  padding: 4px;
+  background: var(--panel-2);
   border: 1px solid var(--border);
-  color: var(--muted);
-  font-size: 12px;
+  border-radius: 10px;
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6);
+}
+.act-menu[hidden] { display: none; }
+.act-item {
+  display: block;
+  width: 100%;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 7px;
   background: none;
-  font-family: inherit;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
   cursor: pointer;
 }
-.del, .dl, .edit { margin-left: 6px; }
-.edit:hover { border-color: var(--purple); color: var(--purple); }
-.dl:hover { border-color: var(--green); color: var(--green); text-decoration: none; }
-.del:hover { border-color: var(--red); color: var(--red); }
-.run:hover { border-color: var(--green); color: var(--green); }
+.act-item:hover, .act-item:focus-visible { background: rgba(255, 255, 255, 0.07); outline: none; text-decoration: none; }
+.act-item.danger { color: var(--red); }
+.act-item.danger:hover, .act-item.danger:focus-visible { background: rgba(248, 113, 113, 0.12); }
 
 /* ---------- editor overlay ---------- */
 
@@ -400,4 +420,14 @@ body.modal-open { overflow: hidden; }
   .motto { text-align: left; }
   .overlay { padding: 0; }
   .ed-dialog { height: 100%; border-radius: 0; border: none; }
+}
+
+/* phone: the size and date columns move under the name so the Actions button fits */
+@media (max-width: 600px) {
+  /* buttons on the first row, the path on its own row below them */
+  .fb-bar .crumbs { order: 1; flex: 1 0 100%; }
+  .fb-table .col-size, .fb-table .col-mod { display: none; }
+  .fmeta { display: block; }
+  .fb-table td { padding: 10px 6px; }
+  .act-btn { padding: 7px 12px; }
 }

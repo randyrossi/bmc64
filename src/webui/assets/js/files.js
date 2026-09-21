@@ -1,9 +1,12 @@
-// Files view: browse the SD card, upload, download, delete, autostart, and
-// open the config-file editor.
+// Files view: browse the SD card, upload, download, rename, delete, create
+// folders, autostart, and open the config-file editor. Each row has one
+// "Actions" button that opens a menu of what applies to that entry;
+// clicking the name does the most common one (open a folder, run, edit).
 
 import { $, fmtBytes, normPath, parentPath } from "./util.js";
 import * as api from "./api.js";
 import { openEditor } from "./editor.js";
+import { toggleMenu } from "./menu.js";
 
 // current location (set by loadDir)
 let fbVol = "SD";
@@ -88,14 +91,43 @@ function nameLink(name, title, action) {
   return a;
 }
 
-function actionButton(cls, label, title, action) {
+// The entries of a row's Actions menu; empty when nothing applies (the
+// device marks its own config files and /firmware as protected).
+function rowActions(e, path) {
+  const items = [];
+  if (!e.dir && isRunnable(e.name)) {
+    items.push({ label: "Run", run: () => runFile(path, e.name) });
+  }
+  if (!e.dir && e.edit) {
+    items.push({ label: "Edit", run: () => editFile(path, e.name) });
+  }
+  if (!e.dir) {
+    items.push({ label: "Download", href: api.downloadUrl(fbVol, path) });
+  }
+  if (!e.protected) {
+    items.push({ label: "Rename…", run: () => renameEntry(path, e.name) });
+    items.push({ label: "Delete", danger: true,
+                 run: () => deleteEntry(path, e.name) });
+  }
+  return items;
+}
+
+function actionsButton(e, path) {
+  const items = rowActions(e, path);
+  if (!items.length) return null;
   const b = document.createElement("button");
-  b.className = cls;
-  b.textContent = label;
-  if (title) b.title = title;
-  b.addEventListener("click", action);
+  b.className = "btn act-btn";
+  b.textContent = "Actions ▾";
+  b.title = "Actions for " + e.name;
+  b.setAttribute("aria-haspopup", "menu");
+  b.setAttribute("aria-expanded", "false");
+  b.addEventListener("click", () => toggleMenu(b, items));
   return b;
 }
+
+// "YYYY-MM-DDTHH:MM:SS" -> "YYYY-MM-DD HH:MM" (the phone layout has no
+// room for the seconds).
+const shortTime = (mtime) => mtime.slice(0, 16).replace("T", " ");
 
 export async function loadDir(path) {
   path = normPath(path);
@@ -137,21 +169,35 @@ export async function loadDir(path) {
     ic.className = "ic " + (e.dir ? "dir" : "file");
     ic.textContent = fileIcon(e.name, e.dir);
     wrap.appendChild(ic);
+    let nm;
     if (e.dir) {
-      const a = document.createElement("a");
-      a.href = filesHash(childPath);
-      a.textContent = e.name;
-      wrap.appendChild(a);
+      nm = document.createElement("a");
+      nm.href = filesHash(childPath);
+      nm.textContent = e.name;
     } else if (isRunnable(e.name)) {
-      wrap.appendChild(nameLink(e.name, "Run " + e.name,
-                                () => runFile(childPath, e.name)));
+      nm = nameLink(e.name, "Run " + e.name,
+                    () => runFile(childPath, e.name));
     } else if (e.edit) {
-      wrap.appendChild(nameLink(e.name, "Edit " + e.name,
-                                () => editFile(childPath, e.name)));
+      nm = nameLink(e.name, "Edit " + e.name,
+                    () => editFile(childPath, e.name));
     } else {
-      wrap.appendChild(document.createTextNode(e.name));
+      nm = document.createElement("span");
+      nm.textContent = e.name;
     }
+    nm.classList.add("nm");
+    wrap.appendChild(nm);
     tdName.appendChild(wrap);
+
+    // Size and date sit under the name on a phone, where their own columns
+    // are hidden.
+    const meta = [e.dir ? "" : fmtBytes(e.size),
+                  e.mtime ? shortTime(e.mtime) : ""].filter(Boolean).join(" · ");
+    if (meta) {
+      const sub = document.createElement("div");
+      sub.className = "fmeta";
+      sub.textContent = meta;
+      tdName.appendChild(sub);
+    }
 
     const tdSize = document.createElement("td");
     tdSize.className = "col-size";
@@ -163,25 +209,8 @@ export async function loadDir(path) {
 
     const tdAct = document.createElement("td");
     tdAct.className = "col-act";
-    if (!e.dir) {
-      if (isRunnable(e.name)) {
-        tdAct.appendChild(actionButton("run", "Run", "Autostart on the emulator",
-                                       () => runFile(childPath, e.name)));
-      }
-      if (e.edit) {
-        tdAct.appendChild(actionButton("edit", "Edit", "Edit this file here",
-                                       () => editFile(childPath, e.name)));
-      }
-
-      const dl = document.createElement("a");
-      dl.className = "dl";
-      dl.href = api.downloadUrl(vol, childPath);
-      dl.textContent = "Download";
-      tdAct.appendChild(dl);
-
-      tdAct.appendChild(actionButton("del", "Delete", "",
-                                     () => deleteEntry(childPath, e.name)));
-    }
+    const actions = actionsButton(e, childPath);
+    if (actions) tdAct.appendChild(actions);
 
     tr.append(tdName, tdSize, tdMod, tdAct);
     frag.appendChild(tr);
@@ -241,6 +270,58 @@ async function deleteEntry(path, name) {
     return;
   }
   loadDir(fbPath);
+}
+
+// ---- new folder / rename ----
+
+// A folder or file name is one path segment; the device checks the rest.
+const hasSlash = (name) => /[\/\\]/.test(name);
+
+function showError(text) {
+  $("fb-status").className = "msg err";
+  $("fb-status").textContent = text;
+}
+
+async function makeFolder() {
+  const input = prompt("New folder name:");
+  if (input === null) return;
+  const name = input.trim();
+  if (!name) return;
+  if (hasSlash(name) || /^\.+$/.test(name)) {
+    showError("“" + name + "” is not a valid folder name.");
+    return;
+  }
+  $("fb-status").className = "msg";
+  $("fb-status").textContent = "Creating " + name + "…";
+  try {
+    await api.makeDir(fbVol, normPath(fbPath + "/" + name));
+  } catch (e) {
+    showError("Could not create " + name + " — " + e.message);
+    return;
+  }
+  await loadDir(fbPath);
+  $("fb-status").textContent = "Created folder " + name + ".";
+}
+
+async function renameEntry(path, name) {
+  const input = prompt("Rename “" + name + "” to:", name);
+  if (input === null) return;
+  const newName = input.trim();
+  if (!newName || newName === name) return;
+  if (hasSlash(newName) || /^\.+$/.test(newName)) {
+    showError("“" + newName + "” is not a valid name.");
+    return;
+  }
+  $("fb-status").className = "msg";
+  $("fb-status").textContent = "Renaming " + name + "…";
+  try {
+    await api.renameEntry(fbVol, path, newName);
+  } catch (e) {
+    showError("Could not rename " + name + " — " + e.message);
+    return;
+  }
+  await loadDir(fbPath);
+  $("fb-status").textContent = "Renamed " + name + " to " + newName + ".";
 }
 
 // ---- upload ----
@@ -318,5 +399,6 @@ export function initFiles() {
     location.hash = filesHash(parentPath(pathFromHash()));
   });
   $("fb-refresh").addEventListener("click", () => loadDir(pathFromHash()));
+  $("fb-mkdir").addEventListener("click", makeFolder);
   $("fb-upload").addEventListener("change", (e) => uploadFiles(e.target.files));
 }

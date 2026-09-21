@@ -60,6 +60,18 @@ void WebUiFsSave(CSocket *socket, const char *query,
 // empty directory). The same protected paths as upload are refused.
 void WebUiFsDelete(CSocket *socket, const char *query);
 
+// POST /api/fs/mkdir?vol=SD&path=/dir/newname  -> create a folder. The
+// last path segment is the new name (plain ASCII); its parent must exist.
+// Refused (403) inside /firmware or under a protected name, and 409 when
+// something of that name already exists.
+void WebUiFsMkdir(CSocket *socket, const char *query);
+
+// POST /api/fs/rename?vol=SD&path=/dir/old&to=new  -> rename a file or
+// folder within its own folder; `to` is a bare plain-ASCII name. The
+// protected paths are refused as the source or the new name, and 409 is
+// answered if the new name is taken (a change of case only is allowed).
+void WebUiFsRename(CSocket *socket, const char *query);
+
 // POST /api/fs/autostart?vol=SD&path=/dir/file.d64  -> queue the file to
 // be autostarted on the emulator (disk/tape image or PRG), like the
 // menu's Autostart. Answers 202 once queued; the outcome isn't reported.

@@ -4,6 +4,7 @@
 //   util.js       DOM lookup, formatting, path helpers
 //   dashboard.js  status polling, hardware / storage meters, reboot & reset
 //   files.js      SD card file browser
+//   menu.js       pop-up menu for a file row's Actions button
 //   editor.js     overlay editor for config files
 
 import { $ } from "./util.js";

@@ -1,6 +1,8 @@
 ## 5.1.8 (pre-release)
   * Web UI: uploaded files keep their original modified date and time instead of the upload time
   * Web UI: Add file editor for direct editing of configuration files
+  * Web UI: file browser can create folders and rename files and folders
+  * Web UI: convert action buttons to Actions menu (Run, Edit, Download, Rename, Delete)
 
 ## 5.1.7 (pre-release)
   * Fix Pi Zero playing no sound for volume register digis (e.g. Impossible Mission speech) with the 8580 SID model

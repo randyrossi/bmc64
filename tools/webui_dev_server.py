@@ -76,6 +76,19 @@ def safe_join(root, rel):
     return os.path.join(root, *parts)
 
 
+BAD_NAME_TEXT = ("invalid name: use plain ASCII without / \\ : * ? \" < > |, and no "
+                 "leading space or trailing space or dot\n")
+
+
+def valid_entry_name(name):
+    """Same rule as IsValidEntryName in webui_fs.cpp."""
+    if not name or len(name) > 200:
+        return False
+    if name[0] == " " or name[-1] in " .":
+        return False
+    return all(0x20 <= ord(c) < 0x7F and c not in '/\\:*?"<>|' for c in name)
+
+
 def iso(ts):
     return _dt.datetime.fromtimestamp(ts).strftime("%Y-%m-%dT%H:%M:%S")
 
@@ -166,6 +179,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.api_fs_save(parsed.query)
         if path == "/api/fs/delete":
             return self.api_fs_delete(parsed.query)
+        if path == "/api/fs/mkdir":
+            return self.api_fs_mkdir(parsed.query)
+        if path == "/api/fs/rename":
+            return self.api_fs_rename(parsed.query)
         if path == "/api/fs/autostart":
             return self.api_fs_autostart(parsed.query)
         return self._send(404, "not found\n")
@@ -265,6 +282,8 @@ class Handler(BaseHTTPRequestHandler):
             if (not is_dir and st.st_size <= EDIT_MAX
                     and self.is_editable(dir_parts + [name])):
                 entry["edit"] = True
+            if self.is_protected(dir_parts + [name]):
+                entry["protected"] = True
             entries.append(entry)
             if len(entries) >= 6000:
                 break
@@ -298,6 +317,13 @@ class Handler(BaseHTTPRequestHandler):
     }
     PROTECTED = CONFIG_FILES | {"bmc64.log"}
     EDITABLE = CONFIG_FILES | {"vice.ini"}
+
+    @classmethod
+    def is_protected(cls, parts):
+        """parts: the path segments below --root, the name last. The entries
+        the device will not rename or delete."""
+        return bool(parts) and (parts[0].lower() == "firmware"
+                                or parts[-1].lower() in cls.PROTECTED)
 
     @classmethod
     def is_editable(cls, parts):
@@ -437,6 +463,61 @@ class Handler(BaseHTTPRequestHandler):
         except OSError as e:
             return self._send(409, "cannot delete: %s\n" % e)
         sys.stderr.write("  [mock] deleted %s\n" % target)
+        self._json(200, {"ok": True})
+
+    def api_fs_mkdir(self, query):
+        self._drain_body()
+        if not self.headers.get("X-BMC64-Web"):
+            return self._send(403, "missing X-BMC64-Web header\n")
+        q = urllib.parse.parse_qs(query)
+        rel = (q.get("path") or [""])[0]
+        target = safe_join(ARGS.root, rel)
+        parts = [p for p in rel.split("/") if p not in ("", ".")]
+        if target is None or not parts:
+            return self._send(400, "bad path\n")
+        if not valid_entry_name(parts[-1]):
+            return self._send(400, BAD_NAME_TEXT)
+        if self.is_protected(parts):
+            return self._send(403, "that path is protected\n")
+        if os.path.lexists(target):
+            return self._send(409, "already exists\n")
+        if not os.path.isdir(os.path.dirname(target)):
+            return self._send(404, "parent folder not found\n")
+        try:
+            os.mkdir(target)
+        except OSError as e:
+            return self._send(500, "cannot create folder: %s\n" % e)
+        sys.stderr.write("  [mock] created folder %s\n" % target)
+        self._json(200, {"ok": True})
+
+    def api_fs_rename(self, query):
+        self._drain_body()
+        if not self.headers.get("X-BMC64-Web"):
+            return self._send(403, "missing X-BMC64-Web header\n")
+        q = urllib.parse.parse_qs(query)
+        rel = (q.get("path") or [""])[0]
+        new_name = (q.get("to") or [""])[0]
+        target = safe_join(ARGS.root, rel)
+        parts = [p for p in rel.split("/") if p not in ("", ".")]
+        if target is None or not parts:
+            return self._send(400, "bad path\n")
+        if not valid_entry_name(new_name):
+            return self._send(400, BAD_NAME_TEXT)
+        if self.is_protected(parts) or self.is_protected(parts[:-1] + [new_name]):
+            return self._send(403, "that path is protected\n")
+        if not os.path.lexists(target):
+            return self._send(404, "no such file\n")
+        new_target = os.path.join(os.path.dirname(target), new_name)
+        if parts[-1] == new_name:
+            return self._json(200, {"ok": True})
+        # On the card a change of case only is the same name, not a clash.
+        if os.path.lexists(new_target) and not os.path.samefile(target, new_target):
+            return self._send(409, "already exists\n")
+        try:
+            os.rename(target, new_target)
+        except OSError as e:
+            return self._send(500, "rename failed: %s\n" % e)
+        sys.stderr.write("  [mock] renamed %s -> %s\n" % (target, new_target))
         self._json(200, {"ok": True})
 
 

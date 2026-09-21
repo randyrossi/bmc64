@@ -26,6 +26,10 @@ async function post(url, init) {
 const fsQuery = (vol, path) =>
   "vol=" + encodeURIComponent(vol) + "&path=" + encodeURIComponent(path);
 
+// Required by the device on every call that changes the card's config or
+// layout (see webui.cpp); it keeps other sites from triggering them.
+const WEB_HEADER = { "X-BMC64-Web": "1" };
+
 // ---- status ----
 
 export const getStatus = () => getJson("/api/status");
@@ -56,14 +60,21 @@ export const deleteFile = (vol, path) =>
 export const autostart = (vol, path) =>
   post("/api/fs/autostart?" + fsQuery(vol, path));
 
-// Replace an editable config file with `text`. The custom header is
-// required by the device (see webui.cpp); it keeps other sites from
-// triggering this call.
+// Replace an editable config file with `text`.
 export const saveFile = (vol, path, text) =>
   post("/api/fs/save?" + fsQuery(vol, path), {
-    headers: { "X-BMC64-Web": "1" },
+    headers: WEB_HEADER,
     body: text,
   });
+
+// Create the folder `path` (its parent must exist).
+export const makeDir = (vol, path) =>
+  post("/api/fs/mkdir?" + fsQuery(vol, path), { headers: WEB_HEADER });
+
+// Rename the file or folder at `path` to `newName`, in the same folder.
+export const renameEntry = (vol, path, newName) =>
+  post("/api/fs/rename?" + fsQuery(vol, path) +
+       "&to=" + encodeURIComponent(newName), { headers: WEB_HEADER });
 
 // The file's original modified time as local "YYYY-MM-DDTHH:MM:SS" (FAT
 // stores no time zone, and the file list shows the stored value as-is).

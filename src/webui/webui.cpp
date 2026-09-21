@@ -9,7 +9,8 @@
 // Endpoints: GET static assets, GET /api/status, POST /api/reboot,
 // POST /api/reset, GET /api/volumes, GET /api/fs/list, GET /api/fs/download,
 // POST /api/fs/upload, POST /api/fs/save, POST /api/fs/delete,
-// POST /api/fs/autostart, POST /api/webui/disable.
+// POST /api/fs/mkdir, POST /api/fs/rename, POST /api/fs/autostart,
+// POST /api/webui/disable.
 //
 // When a PIN is configured, every request must carry HTTP Basic Auth
 // (Authorization: Basic base64(<user>:<pin>)); the username is ignored.
@@ -464,6 +465,21 @@ boolean HandleConnection(CSocket *socket) {
 
   if (is_post && strcmp(target, "/api/fs/delete") == 0) {
     WebUiFsDelete(socket, query);
+    return FALSE;
+  }
+
+  if (is_post && (strcmp(target, "/api/fs/mkdir") == 0 ||
+                  strcmp(target, "/api/fs/rename") == 0)) {
+    // Same cross-site protection as /api/fs/save above.
+    if (!HasHeader(request, "x-bmc64-web:")) {
+      SendText(socket, 403, "Forbidden", "missing X-BMC64-Web header\n");
+      return FALSE;
+    }
+    if (strcmp(target, "/api/fs/mkdir") == 0) {
+      WebUiFsMkdir(socket, query);
+    } else {
+      WebUiFsRename(socket, query);
+    }
     return FALSE;
   }
 

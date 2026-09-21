@@ -39,13 +39,23 @@ boot unless you also turn off `Web UI (reboot)` in
 
 ### Files
 
-Browse the SD card, and:
+Browse the SD card. Click a folder to open it. Every file and folder has an
+**Actions** button that opens a menu of what applies to it: **Run**, **Edit**,
+**Download**, **Rename…** and **Delete**. Clicking a file's name does its main
+action: it runs a disk, tape or program, edits a config file, and does nothing
+for other files. On a phone the size and date are shown under the name so the
+Actions button always fits.
 
 - **Download** any file.
 - **Upload** files into the current folder. If a file of the same name already
   exists you are asked to confirm before it is overwritten. Uploaded files
   keep their original modified date and time from your PC.
-- **Delete** a file, after a confirmation prompt.
+- **Delete** a file, or an empty folder, after a confirmation prompt.
+- **New folder** creates a folder in the current folder.
+- **Rename…** renames a file or folder in place. Names must be plain ASCII
+  letters, digits and punctuation, without `/ \ : * ? " < > |`, and must not
+  start with a space or end with a space or a dot. Changing only the case of a
+  name is allowed.
 - **Edit** BMC64's configuration files in the browser: click **Edit** (or the
   file name) on `vice.ini`, `settings*.txt`, `cmdline.txt`, `config.txt`,
   `machines.txt` or `wpa_supplicant.conf` in the top folder of the card, or on
@@ -75,16 +85,17 @@ Browse the SD card, and:
   This resets the emulated machine. If the file can't be started, the reason
   is only written to the log.
 
-There is no rename yet. BMC64's own configuration files (`settings*.txt`,
+BMC64's own configuration files (`settings*.txt`,
 `wpa_supplicant.conf`, `cmdline.txt`, `config.txt`, `machines.txt`,
 `bmc64.log`) and the `/firmware` folder are protected: they cannot be uploaded
-to or deleted from the web UI. The configuration files can still be changed
+to, deleted, renamed or renamed onto from the web UI, and their rows have no
+Rename or Delete action. The configuration files can still be changed
 with the editor above (`bmc64.log` and `/firmware` cannot be changed at all).
 `vice.ini` can be edited and also uploaded.
 
 > [!WARNING]
-> Do not upload to or delete a disk image that the emulator currently has
-> attached. Detach it first.
+> Do not upload to, delete or rename a disk image that the emulator currently
+> has attached, or a folder that contains one. Detach it first.
 
 ## Requirements
 
@@ -211,6 +222,8 @@ browser side by side.
 | `POST /api/fs/upload` | writes a real file into `--root` (same `.part`-then-rename, protected-name, `overwrite=1` and `mtime=` rules as the device) |
 | `POST /api/fs/save` | rewrites an editable config file in `--root` (same allowlist, 256 KB limit, `.part` / `.bak` handling and required `X-BMC64-Web` header as the device); `GET /api/fs/list` marks editable files with `"edit": true` |
 | `POST /api/fs/delete` | removes the real file / empty directory (same protected-name rules) |
+| `POST /api/fs/mkdir` | creates a real folder (same name rules, protected-name rules and required `X-BMC64-Web` header as the device) |
+| `POST /api/fs/rename` | renames a real file or folder in place (same rules as `mkdir`; `to=` is the new bare name); `GET /api/fs/list` marks the entries the device would refuse to rename or delete with `"protected": true` |
 | `POST /api/reboot` | logs and does nothing |
 | `POST /api/reset` | logs and does nothing |
 | `POST /api/webui/disable` | actually stops the dev server, like the device |

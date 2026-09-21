@@ -331,6 +331,33 @@ boolean IsProtectedPath(const char *clean) {
   return IsConfigFile(base) || CiEqual(base, "bmc64.log");
 }
 
+// A name typed into New folder / Rename: one path segment that FAT stores
+// exactly as written. Printable ASCII only, because paths reach FatFs
+// unconverted (its OEM code page is CP850, and only the listing translates
+// to UTF-8), so a UTF-8 name would be stored garbled. FatFs would also
+// silently trim a trailing dot or space, so those are refused rather than
+// creating a different name than the one asked for.
+boolean IsValidEntryName(const char *name) {
+  size_t length = strlen(name);
+  if (length == 0 || length > 200) return FALSE;
+  if (name[0] == ' ' || name[length - 1] == ' ' || name[length - 1] == '.') {
+    return FALSE;
+  }
+  for (const char *p = name; *p != '\0'; p++) {
+    unsigned char c = (unsigned char) *p;
+    if (c < 0x20 || c >= 0x7F || c == '/' || c == '\\' || c == ':' ||
+        c == '*' || c == '?' || c == '"' || c == '<' || c == '>' ||
+        c == '|') {
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
+const char *const kBadNameText =
+    "invalid name: use plain ASCII without / \\ : * ? \" < > |, and no "
+    "leading space or trailing space or dot\n";
+
 enum BodyResult {
   BODY_OK,
   BODY_CREATE_FAILED,
@@ -503,6 +530,14 @@ void WebUiFsList(CSocket *socket, const char *query) {
         ((at_root && IsEditableName(info.fname)) ||
          IsKeymapName(info.fname))) {
       r.Write(",\"edit\":true");
+    }
+    // Entries the web UI won't rename or delete, so the page can leave
+    // those actions out of the row's menu.
+    char child[512];
+    if ((unsigned) snprintf(child, sizeof(child), "%s%s%s", clean,
+                            at_root ? "" : "/", info.fname) < sizeof(child) &&
+        IsProtectedPath(child)) {
+      r.Write(",\"protected\":true");
     }
     r.Write("}");
 
@@ -763,6 +798,119 @@ void WebUiFsDelete(CSocket *socket, const char *query) {
   }
   if (fr != FR_OK) {
     webhttp::SendText(socket, 500, "Internal Server Error", "delete failed\n");
+    return;
+  }
+
+  const char *ok = "{\"ok\":true}";
+  webhttp::SendResponse(socket, 200, "OK", "application/json", ok,
+                        (unsigned) strlen(ok));
+}
+
+// ---- new folder / rename ----
+
+void WebUiFsMkdir(CSocket *socket, const char *query) {
+  char clean[512];
+  char fatpath[560];
+  if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
+                    sizeof(fatpath), TRUE) != 0) {
+    return;
+  }
+  if (!IsValidEntryName(strrchr(clean, '/') + 1)) {
+    webhttp::SendText(socket, 400, "Bad Request", kBadNameText);
+    return;
+  }
+  if (IsProtectedPath(clean)) {
+    webhttp::SendText(socket, 403, "Forbidden", "that path is protected\n");
+    return;
+  }
+
+  FILINFO info;
+  if (f_stat(fatpath, &info) == FR_OK) {
+    webhttp::SendText(socket, 409, "Conflict", "already exists\n");
+    return;
+  }
+
+  FRESULT fr = f_mkdir(fatpath);
+  if (fr == FR_EXIST) {
+    webhttp::SendText(socket, 409, "Conflict", "already exists\n");
+    return;
+  }
+  if (fr == FR_NO_PATH || fr == FR_NO_FILE) {
+    webhttp::SendText(socket, 404, "Not Found", "parent folder not found\n");
+    return;
+  }
+  if (fr != FR_OK) {
+    webhttp::SendText(socket, 500, "Internal Server Error",
+                      "cannot create folder\n");
+    return;
+  }
+
+  const char *ok = "{\"ok\":true}";
+  webhttp::SendResponse(socket, 200, "OK", "application/json", ok,
+                        (unsigned) strlen(ok));
+}
+
+// POST /api/fs/rename?path=/dir/old&to=new: renames within the same folder,
+// so `to` is a bare name, never a path.
+void WebUiFsRename(CSocket *socket, const char *query) {
+  char clean[512];
+  char fatpath[560];
+  if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
+                    sizeof(fatpath), TRUE) != 0) {
+    return;
+  }
+
+  char new_name[256];
+  if (!webhttp::QueryParam(query, "to", new_name, sizeof(new_name)) ||
+      !IsValidEntryName(new_name)) {
+    webhttp::SendText(socket, 400, "Bad Request", kBadNameText);
+    return;
+  }
+
+  const char *old_name = strrchr(clean, '/') + 1;
+  char new_clean[512];
+  char new_fatpath[560];
+  if ((unsigned) snprintf(new_clean, sizeof(new_clean), "%.*s/%s",
+                          (int) (old_name - 1 - clean), clean,
+                          new_name) >= sizeof(new_clean) ||
+      BuildFatPath(circle_get_disk_volume(), new_clean, new_fatpath,
+                   sizeof(new_fatpath)) != 0) {
+    webhttp::SendText(socket, 400, "Bad Request", "path too long\n");
+    return;
+  }
+
+  // Neither the source nor the new name may be a protected one (that would
+  // let a rename create or replace settings.txt, or touch /firmware).
+  if (IsProtectedPath(clean) || IsProtectedPath(new_clean)) {
+    webhttp::SendText(socket, 403, "Forbidden", "that path is protected\n");
+    return;
+  }
+
+  FILINFO info;
+  if (f_stat(fatpath, &info) != FR_OK) {
+    webhttp::SendText(socket, 404, "Not Found", "no such file\n");
+    return;
+  }
+
+  boolean unchanged = strcmp(old_name, new_name) == 0;
+  boolean case_only = !unchanged && CiEqual(old_name, new_name);
+  if (!unchanged && !case_only && f_stat(new_fatpath, &info) == FR_OK) {
+    webhttp::SendText(socket, 409, "Conflict", "already exists\n");
+    return;
+  }
+
+  FRESULT fr = unchanged ? FR_OK : f_rename(fatpath, new_fatpath);
+  if (fr == FR_EXIST) {
+    webhttp::SendText(socket, 409, "Conflict", "already exists\n");
+    return;
+  }
+  if (fr == FR_NO_FILE || fr == FR_NO_PATH) {
+    webhttp::SendText(socket, 404, "Not Found", "no such file\n");
+    return;
+  }
+  if (fr != FR_OK) {
+    webhttp::SendText(socket, 500, "Internal Server Error",
+                      "rename failed\n");
     return;
   }
 
