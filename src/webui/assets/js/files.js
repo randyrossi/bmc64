@@ -20,11 +20,18 @@ const FILE_ICONS = {
 
 // Types the emulator can autostart (keep in sync with webui_fs.cpp).
 const RUNNABLE = new Set(
-  ["d64", "d71", "d81", "d82", "g64", "x64", "t64", "tap", "prg", "p00"]);
+  ["d64", "d71", "d81", "d82", "g64", "x64", "t64", "tap", "prg", "p00", "crt"]);
+
+const extOf = (name) => (name.split(".").pop() || "").toLowerCase();
 
 function isRunnable(name) {
-  return RUNNABLE.has((name.split(".").pop() || "").toLowerCase());
+  return RUNNABLE.has(extOf(name));
 }
+
+// Disks, tapes and programs are autostarted, like the menu's Autostart item;
+// a cartridge image is attached (which resets the machine).
+const runVerb = (name) =>
+  extOf(name) === "crt" ? "Attach cartridge" : "Autostart";
 
 function fileIcon(name, isDir) {
   if (isDir) return "▸";
@@ -96,7 +103,7 @@ function nameLink(name, title, action) {
 function rowActions(e, path) {
   const items = [];
   if (!e.dir && isRunnable(e.name)) {
-    items.push({ label: "Run", run: () => runFile(path, e.name) });
+    items.push({ label: runVerb(e.name), run: () => runFile(path, e.name) });
   }
   if (!e.dir && e.edit) {
     items.push({ label: "Edit", run: () => editFile(path, e.name) });
@@ -175,7 +182,7 @@ export async function loadDir(path) {
       nm.href = filesHash(childPath);
       nm.textContent = e.name;
     } else if (isRunnable(e.name)) {
-      nm = nameLink(e.name, "Run " + e.name,
+      nm = nameLink(e.name, runVerb(e.name) + " " + e.name,
                     () => runFile(childPath, e.name));
     } else if (e.edit) {
       nm = nameLink(e.name, "Edit " + e.name,

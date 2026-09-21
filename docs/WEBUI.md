@@ -40,7 +40,7 @@ boot unless you also turn off `Web UI (reboot)` in
 ### Files
 
 Browse the SD card. Click a folder to open it. Every file and folder has an
-**Actions** button that opens a menu of what applies to it: **Run**, **Edit**,
+**Actions** button that opens a menu of what applies to it: **Autostart**, **Edit**,
 **Download**, **Rename…** and **Delete**. Clicking a file's name does its main
 action: it runs a disk, tape or program, edits a config file, and does nothing
 for other files. On a phone the size and date are shown under the name so the
@@ -81,11 +81,17 @@ Actions button always fits.
   card in a computer (the `.bak` file makes that easy). A mistake in a `.vkm`
   keymap can make keys type the wrong character or stop working; the `.bak` file
   restores it. Only plain UTF-8 text files up to 256 KB can be edited.
-- **Run** a disk image (`.d64`, `.d71`, `.d81`, `.d82`, `.g64`, `.x64`), tape
-  (`.t64`, `.tap`) or program (`.prg`, `.p00`): click its name or its **Run**
-  button and BMC64 autostarts it, the same as the menu's *Autostart* item.
+- **Autostart** a disk image (`.d64`, `.d71`, `.d81`, `.d82`, `.g64`, `.x64`),
+  tape (`.t64`, `.tap`) or program (`.prg`, `.p00`): click its name or its
+  **Autostart** action and BMC64 starts it, the same as the menu's *Autostart* item.
   This resets the emulated machine. If the file can't be started, the reason
   is only written to the log.
+- **Attach a cartridge**: a `.crt` file has an **Attach cartridge** action
+  (clicking the name does the same). It attaches the cartridge like the menu's
+  *Attach CRT* item and, by default, hard resets the machine so it starts
+  (VICE's *reset on cartridge change* setting). Only `.crt` files work; raw
+  8K/16K/Ultimax images need their type chosen in the emulator's menu. There
+  is no detach here yet, so use the menu's *Detach cartridge*.
 
 BMC64's own configuration files (`settings*.txt`,
 `wpa_supplicant.conf`, `cmdline.txt`, `config.txt`, `machines.txt`,

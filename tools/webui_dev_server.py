@@ -436,7 +436,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(400, "bad path\n")
         ext = os.path.splitext(target)[1].lstrip(".").lower()
         if ext not in ("d64", "d71", "d81", "d82", "g64", "x64", "t64",
-                       "tap", "prg", "p00"):
+                       "tap", "prg", "p00", "crt"):
             return self._send(400, "not an autostartable file type\n")
         if not os.path.isfile(target):
             return self._send(404, "no such file\n")

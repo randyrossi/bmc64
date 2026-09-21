@@ -3,7 +3,8 @@
   * Web UI: Add file editor for direct editing of configuration files
   * Web UI: file browser can create folders and rename files and folders
   * Web UI: folders can be deleted together with their contents
-  * Web UI: convert action buttons to Actions menu (Run, Edit, Download, Rename, Delete)
+  * Web UI: `.crt` cartridge images can be attached from the file browser (Attach cartridge)
+  * Web UI: convert action buttons to Actions menu (Autostart, Edit, Download, Rename, Delete)
 
 ## 5.1.7 (pre-release)
   * Fix Pi Zero playing no sound for volume register digis (e.g. Impossible Mission speech) with the 8580 SID model

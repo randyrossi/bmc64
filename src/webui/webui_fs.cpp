@@ -257,7 +257,9 @@ boolean CiEqual(const char *a, const char *b) {
   return *a == *b;
 }
 
-// Only image/program types that the menu's Autostart accepts as-is.
+// Only image/program types that the menu's Autostart accepts as-is. A .crt
+// cartridge image is one: VICE's autostart_autodetect attaches it on the
+// C64 and C128, which are the machines the web UI runs on.
 boolean IsAutostartable(const char *clean) {
   const char *dot = 0;
   for (const char *p = clean; *p != '\0'; p++) {
@@ -267,6 +269,7 @@ boolean IsAutostartable(const char *clean) {
   if (dot == 0) return FALSE;
   static const char *const kExt[] = {
       "d64", "d71", "d81", "d82", "g64", "x64", "t64", "tap", "prg", "p00",
+      "crt",
   };
   for (unsigned i = 0; i < sizeof(kExt) / sizeof(kExt[0]); i++) {
     if (CiEqual(dot, kExt[i])) return TRUE;
