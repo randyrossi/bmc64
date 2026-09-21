@@ -39,8 +39,9 @@ namespace {
 
 const unsigned WEBUI_FS_MAX_ENTRIES = 6000;
 const unsigned WEBUI_FS_IO_CHUNK = 32 * 1024;
-// Largest file the editor will open or save (the config files are a few KB).
-const unsigned WEBUI_FS_EDIT_MAX = 64 * 1024;
+// Largest file the editor will open or save (the config files are a few KB;
+// the body is streamed to a temp file, so this is not a RAM limit).
+const unsigned WEBUI_FS_EDIT_MAX = 256 * 1024;
 
 // One request is handled at a time by the web UI task, so a single file
 // scratch buffer is safe and keeps it off the task stack.

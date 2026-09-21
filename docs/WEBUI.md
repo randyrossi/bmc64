@@ -65,7 +65,7 @@ Browse the SD card, and:
   from booting, and a mistake in `wpa_supplicant.conf` or the web UI settings
   in `settings.txt` can lock you out of the web UI; fixing either needs the SD
   card in a computer (the `.bak` file makes that easy). Only plain UTF-8 text
-  files up to 64 KB can be edited.
+  files up to 256 KB can be edited.
 - **Run** a disk image (`.d64`, `.d71`, `.d81`, `.d82`, `.g64`, `.x64`), tape
   (`.t64`, `.tap`) or program (`.prg`, `.p00`): click its name or its **Run**
   button and BMC64 autostarts it, the same as the menu's *Autostart* item.
@@ -206,7 +206,7 @@ browser side by side.
 | `GET /api/fs/list` | lists a **real** local directory (see `--root`) |
 | `GET /api/fs/download` | streams the real local file |
 | `POST /api/fs/upload` | writes a real file into `--root` (same `.part`-then-rename, protected-name, `overwrite=1` and `mtime=` rules as the device) |
-| `POST /api/fs/save` | rewrites an editable config file in `--root` (same allowlist, 64 KB limit, `.part` / `.bak` handling and required `X-BMC64-Web` header as the device); `GET /api/fs/list` marks editable files with `"edit": true` |
+| `POST /api/fs/save` | rewrites an editable config file in `--root` (same allowlist, 256 KB limit, `.part` / `.bak` handling and required `X-BMC64-Web` header as the device); `GET /api/fs/list` marks editable files with `"edit": true` |
 | `POST /api/fs/delete` | removes the real file / empty directory (same protected-name rules) |
 | `POST /api/reboot` | logs and does nothing |
 | `POST /api/reset` | logs and does nothing |

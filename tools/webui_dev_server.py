@@ -55,7 +55,7 @@ RELOAD_SNIPPET = """
 """
 
 # Largest file the editor will open or save (matches webui_fs.cpp).
-EDIT_MAX = 64 * 1024
+EDIT_MAX = 256 * 1024
 
 ARGS = None
 
