@@ -1,9 +1,12 @@
-// Overlay text editor for the device's config files (vice.ini, settings*.txt,
-// cmdline.txt, config.txt, machines.txt, wpa_supplicant.conf). Which files
-// may be edited is decided by the device: the file list marks them "edit".
+// Overlay text editor. It edits the device's config files (vice.ini,
+// settings*.txt, cmdline.txt, config.txt, machines.txt, wpa_supplicant.conf,
+// *.vkm), which the device decides: the file list marks them "edit". It is
+// also the editor for C64 BASIC programs: the same overlay shows a program's
+// listing and saves it back as a tokenised .prg (see basic.js).
 
-import { $ } from "./util.js";
+import { $, normPath } from "./util.js";
 import * as api from "./api.js";
+import { BasicError, isExact, listing, tokenise } from "./basic.js";
 import { rebootNow } from "./dashboard.js";
 
 // Files the emulator's own menus also write; a menu save overwrites edits
@@ -18,8 +21,13 @@ let session = null;
 
 const ta = () => $("ed-text");
 
+const nameInput = () => $("ed-name");
+
+// A BASIC program can also be changed by saving it under another name.
 function isDirty() {
-  return session.loaded && ta().value !== session.original;
+  return session.loaded &&
+    (ta().value !== session.original ||
+     (session.basic && nameInput().value !== session.origName));
 }
 
 function setMsg(text, isErr) {
@@ -27,13 +35,27 @@ function setMsg(text, isErr) {
   $("ed-msg").textContent = text;
 }
 
+function canSave() {
+  let ok = session.loaded && !session.busy && isDirty();
+  if (session.basic) {
+    ok = ok && nameInput().value.trim() !== "" &&
+      (!session.isNew || ta().value.trim() !== "");
+  }
+  return ok;
+}
+
 function refreshButtons() {
-  const canSave = session.loaded && !session.busy && isDirty();
-  $("ed-save").disabled = !canSave;
-  $("ed-save-reboot").disabled = !canSave;
+  const ok = canSave();
+  $("ed-save").disabled = !ok;
+  $("ed-save-reboot").disabled = !ok;
   $("ed-cancel").disabled = session.busy;
   $("ed-close").disabled = session.busy;
 }
+
+const BASIC_HINT =
+  "C64 BASIC V2. Keywords are tokenised when you save, and letters of either " +
+  "case give the C64's default upper case. In quotes use {clr}, {home}, " +
+  "{red}, {down}… for control characters, or {$xx} for any byte.";
 
 function hintFor(name) {
   if (KEYMAP.test(name)) {
@@ -102,9 +124,81 @@ function requestCancel() {
   close({ saved: false, rebooting: false });
 }
 
+// The name to save a BASIC program under, or null (with a message shown) if
+// it is not usable. A .prg extension is added when missing.
+function basicFileName() {
+  let name = nameInput().value.trim();
+  if (/[\/\\]/.test(name) || /^\.+$/.test(name)) {
+    setMsg("“" + name + "” is not a valid file name.", true);
+    return null;
+  }
+  if (!/\.prg$/i.test(name)) name += ".prg";
+  return name;
+}
+
+// Tokenises the listing and uploads it as a .prg, resolving to the saved
+// file's name and size (or null after showing why it could not be saved).
+async function saveBasic(s) {
+  let bytes;
+  try {
+    bytes = tokenise(ta().value).bytes;
+  } catch (e) {
+    if (!(e instanceof BasicError)) throw e;
+    setMsg(e.message, true);
+    return null;
+  }
+  // Data after the BASIC program (usually machine code) is kept as it was.
+  if (s.tail && s.tail.length) {
+    const joined = new Uint8Array(bytes.length + s.tail.length);
+    joined.set(bytes);
+    joined.set(s.tail, bytes.length);
+    bytes = joined;
+  }
+
+  const name = basicFileName();
+  if (name === null) return null;
+  const path = normPath(s.dir + "/" + name);
+  // Saving over the file being edited is the point of editing it; any other
+  // existing file is only replaced after asking.
+  const sameFile = !s.isNew && name === s.name;
+  const file = new File([bytes], name, { lastModified: Date.now() });
+
+  s.busy = true;
+  ta().readOnly = true;
+  nameInput().disabled = true;
+  refreshButtons();
+  setMsg("Saving…");
+  try {
+    try {
+      await api.upload(s.vol, path, file, { overwrite: sameFile });
+    } catch (e) {
+      if (!e.conflict) throw e;
+      if (!confirm("“" + name + "” already exists here. Overwrite it?")) {
+        setMsg("");
+        return null;
+      }
+      await api.upload(s.vol, path, file, { overwrite: true });
+    }
+  } catch (e) {
+    setMsg("Save failed — " + e.message, true);
+    return null;
+  } finally {
+    s.busy = false;
+    ta().readOnly = false;
+    nameInput().disabled = false;
+    refreshButtons();
+  }
+  return { name, size: bytes.length };
+}
+
 async function save(andReboot) {
   const s = session;
-  if (s.busy || !s.loaded || !isDirty()) return;
+  if (!canSave()) return;
+  if (s.basic) {
+    const saved = await saveBasic(s);
+    if (saved) close({ saved: true, rebooting: false, ...saved });
+    return;
+  }
   if (andReboot && !confirm(
       "Save " + s.name + " and reboot BMC64 now?\n\n" +
       "Any unsaved emulator state will be lost.")) return;
@@ -134,7 +228,7 @@ async function save(andReboot) {
 
 // Keep Tab / Shift+Tab inside the dialog while it is open.
 function trapTab(ev) {
-  const items = Array.from($("editor").querySelectorAll("button, textarea"))
+  const items = Array.from($("editor").querySelectorAll("button, textarea, input"))
     .filter((el) => !el.disabled);
   if (!items.length) return;
   const first = items[0];
@@ -148,13 +242,27 @@ function trapTab(ev) {
   }
 }
 
+// Shows the overlay for `s`, laid out for a text file or a BASIC program.
+function show(s) {
+  const basic = s.basic;
+  $("ed-name-row").hidden = !basic;
+  $("ed-save-reboot").hidden = basic;
+  $("ed-save").textContent = basic ? "Save PRG" : "Save";
+  ta().setAttribute("aria-label", basic ? "BASIC listing" : "File contents");
+  ta().placeholder = basic && s.isNew ? '10 PRINT "HELLO"\n20 GOTO 10' : "";
+  ta().readOnly = false;
+  nameInput().disabled = false;
+  $("editor").hidden = false;
+  document.body.classList.add("modal-open");
+}
+
 // Resolves when the editor closes with { saved, rebooting }.
 export function openEditor({ vol, path, name }) {
   if (session) return Promise.resolve({ saved: false, rebooting: false });
 
   return new Promise((resolve) => {
     const s = session = {
-      vol, path, name, resolve,
+      vol, path, name, resolve, basic: false,
       original: "", crlf: false, loaded: false, busy: false,
       opener: document.activeElement,
     };
@@ -164,13 +272,54 @@ export function openEditor({ vol, path, name }) {
     $("ed-hint").textContent = hintFor(name);
     ta().value = "";
     ta().disabled = true;
-    ta().readOnly = false;
     setMsg("Loading…");
-    $("editor").hidden = false;
-    document.body.classList.add("modal-open");
+    show(s);
     refreshButtons();
     $("ed-cancel").focus();
     load(s);
+  });
+}
+
+// The BASIC program editor. With no `parsed` it starts a new program; with
+// `parsed` (from basic.js parsePrg) it shows the listing of the existing
+// program `name` at `path`. `dir` is the folder the program is saved into.
+// Resolves when the editor closes with { saved, rebooting, name, size }.
+export function openBasicEditor({ vol, dir, path, name, parsed }) {
+  if (session) return Promise.resolve({ saved: false, rebooting: false });
+
+  return new Promise((resolve) => {
+    const isNew = !parsed;
+    const fileName = isNew ? "program.prg" : name;
+    const text = isNew ? "" : listing(parsed.lines);
+    const s = session = {
+      vol, dir, path, name, resolve, basic: true, isNew,
+      tail: isNew ? null : parsed.tail,
+      original: "", origName: fileName, crlf: false, loaded: true, busy: false,
+      opener: document.activeElement,
+    };
+
+    $("ed-title").textContent = isNew ? "New BASIC program" : "Edit listing";
+    $("ed-path").textContent = vol + ":" + (isNew ? dir : path);
+    $("ed-hint").textContent = BASIC_HINT;
+    nameInput().value = fileName;
+    ta().value = text;
+    s.original = ta().value; // as the textarea normalised it
+    ta().disabled = false;
+    show(s);
+
+    setMsg("");
+    if (!isNew && parsed.tail.length) {
+      setMsg("This file has " + parsed.tail.length + " bytes after the BASIC " +
+             "program (machine code?). They are kept as they are, so keep the " +
+             "BASIC part the same length if it SYSes into them.");
+    } else if (!isNew && !isExact(parsed)) {
+      setMsg("This program was not made by a normal tokeniser, so saving may " +
+             "change some of its bytes.");
+    }
+    refreshButtons();
+    ta().setSelectionRange(0, 0);
+    ta().focus({ preventScroll: true });
+    ta().scrollTop = 0;
   });
 }
 
@@ -180,6 +329,7 @@ export function initEditor() {
   $("ed-save").addEventListener("click", () => save(false));
   $("ed-save-reboot").addEventListener("click", () => save(true));
   ta().addEventListener("input", refreshButtons);
+  nameInput().addEventListener("input", refreshButtons);
 
   $("editor").addEventListener("keydown", (ev) => {
     if (!session) return;

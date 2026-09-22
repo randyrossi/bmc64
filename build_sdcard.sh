@@ -8,7 +8,7 @@ STAGING_DIR="$BUILD_DIR/sdcard"
 
 if ! source "$SRC_DIR/get_gnu_toolchain.sh"
 then
-    echo "Arm GNU Toolchain setup failed." >&2
+    echo "Toolchain setup failed (Arm GNU Toolchain or Node.js)." >&2
     exit 1
 fi
 

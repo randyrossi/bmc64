@@ -54,7 +54,19 @@ endif
 PYTHON ?= $(shell command -v python3 2>/dev/null || command -v python 2>/dev/null)
 WEBUI_ASSET_SRCS = $(shell find src/webui/assets -type f)
 
-src/webui/webui_assets.c: $(WEBUI_ASSET_SRCS) tools/gen_webui_assets.py
+# The web UI's JavaScript tests must pass before the assets are embedded. They
+# need Node.js, which get_gnu_toolchain.sh puts on PATH. The stamp file means
+# they only run again when the code they test or the tests themselves change.
+WEBUI_TEST_SRCS = src/webui/assets/js/basic.js $(wildcard tools/webui_test/*.js tools/webui_test/*.mjs)
+WEBUI_TEST_STAMP = build/.webui_tests.stamp
+
+$(WEBUI_TEST_STAMP): $(WEBUI_TEST_SRCS)
+	@command -v node >/dev/null 2>&1 || { echo "Node.js is required to run the web UI tests: source get_gnu_toolchain.sh" >&2; exit 1; }
+	@echo "  TEST  web UI"
+	@node tools/webui_test/run_tests.mjs
+	@mkdir -p $(dir $@) && touch $@
+
+src/webui/webui_assets.c: $(WEBUI_ASSET_SRCS) tools/gen_webui_assets.py | $(WEBUI_TEST_STAMP)
 ifeq ($(PYTHON),)
 	@echo "  WARN  no python interpreter found; using committed $@"
 	@touch $@

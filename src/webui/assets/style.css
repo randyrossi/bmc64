@@ -361,6 +361,22 @@ body.modal-open { overflow: hidden; }
 
 .ed-hint { margin: 0; color: var(--muted); font-size: 12.5px; }
 
+.ed-name { display: flex; align-items: center; gap: 10px; }
+.ed-name[hidden] { display: none; }
+.ed-name label { flex: none; color: var(--muted); font-size: 12.5px; }
+.ed-name input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  font: 13px ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color: var(--fg);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.ed-name input:focus { outline: none; border-color: var(--blue); }
+.ed-name input:disabled { opacity: 0.6; }
+
 .ed-text {
   flex: 1;
   min-height: 0;

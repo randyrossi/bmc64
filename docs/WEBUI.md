@@ -40,25 +40,25 @@ boot unless you also turn off `Web UI (reboot)` in
 ### Files
 
 Browse the SD card. Click a folder to open it. Every file and folder has an
-**Actions** button that opens a menu of what applies to it: **Autostart**, **Edit**,
-**Download**, **Rename…** and **Delete**. Clicking a file's name does its main
+**Actions** button that opens a menu of what applies to it: **Autostart**, **Edit…**,
+**Edit listing…**, **Download**, **Rename…** and **Delete**. Clicking a file's name does its main
 action: it runs a disk, tape or program, edits a config file, and does nothing
 for other files. On a phone the size and date are shown under the name so the
 Actions button always fits.
 
 - **Download** any file.
-- **Upload** files into the current folder. If a file of the same name already
+- **Upload…** files into the current folder. If a file of the same name already
   exists you are asked to confirm before it is overwritten. Uploaded files
   keep their original modified date and time from your PC.
 - **Delete** a file, or a folder together with everything in it, after a
   confirmation prompt. Deleting a folder removes all of its contents, so
   detach any disk image inside it first. 
-- **New folder** creates a folder in the current folder.
+- **New folder…** creates a folder in the current folder.
 - **Rename…** renames a file or folder in place. Names must be plain ASCII
   letters, digits and punctuation, without `/ \ : * ? " < > |`, and must not
   start with a space or end with a space or a dot. Changing only the case of a
   name is allowed.
-- **Edit** BMC64's configuration files in the browser: click **Edit** (or the
+- **Edit…** BMC64's configuration files in the browser: click **Edit…** (or the
   file name) on `vice.ini`, `settings*.txt`, `cmdline.txt`, `config.txt`,
   `machines.txt` or `wpa_supplicant.conf` in the top folder of the card, or on
   any keyboard mapping file (`.vkm`) in any folder, such as the `rpi_*.vkm` files
@@ -86,6 +86,30 @@ Actions button always fits.
   **Autostart** action and BMC64 starts it, the same as the menu's *Autostart* item.
   This resets the emulated machine. If the file can't be started, the reason
   is only written to the log.
+- **Write or edit a BASIC program** without leaving the browser (C64 BASIC V2):
+  - **Create BASIC PRG…** opens an editor where you type or paste a program
+    listing (`10 PRINT "HELLO"`), give it a file name and press **Save PRG**. The
+    listing is converted to a real tokenised `.prg` in the current folder, ready
+    to Autostart. `.prg` is added to the name if it is missing.
+  - **Edit listing…** (in a `.prg` file's Actions menu) shows the program as a
+    listing, which you can change and save again. It works on any BASIC program
+    that loads at `$0801`; for other files it tells you they are not BASIC.
+    Change the file name before saving to keep the original and save a copy.
+
+  Keywords can be typed in either case, and letters of either case give the
+  C64's default upper case, so `print "hello"` shows HELLO on the C64. Anything
+  that isn't a plain character is written in braces: `{clr}`, `{home}`,
+  `{down}`, `{red}`, `{f1}` and so on (the names VICE's `petcat` uses), or
+  `{$xx}` for any byte value, for example `{$c1}` for a shifted A. A count
+  repeats a code: `{right*39}`. `?` is
+  stored as `PRINT`. Saving a line that is just a number deletes that line, and
+  lines are stored in number order.
+
+  If a program has data after its BASIC part (typically machine code that a
+  `SYS` line calls), that data is kept, but it isn't shown, so don't change the
+  length of the BASIC part unless the program allows for it. A program that
+  wasn't made by a normal tokeniser can change slightly when saved; the editor
+  warns you when it sees this.
 - **Attach a cartridge**: a `.crt` file has an **Attach cartridge** action
   (clicking the name does the same). It attaches the cartridge like the menu's
   *Attach CRT* item and, by default, hard resets the machine so it starts
@@ -184,7 +208,8 @@ source files live in `src/webui/assets/`:
 | `js/util.js` | DOM lookup, number formatting, path helpers |
 | `js/dashboard.js` | dashboard, status polling, hardware / storage meters, reboot / reset / disable |
 | `js/files.js` | file browser: list, upload, download, delete, run |
-| `js/editor.js` | overlay editor for the config files |
+| `js/editor.js` | overlay editor for the config files and BASIC listings |
+| `js/basic.js` | C64 BASIC V2 tokeniser and detokeniser (listing <-> PRG); tested in `tools/webui_test/` |
 | `logo.png`, `title.png` | images |
 
 The scripts are ES modules (`<script type="module">`), so imports use paths
@@ -219,6 +244,12 @@ With **live reload** on (the default), the browser refreshes automatically
 whenever you save a file in `src/webui/assets/`. Put your editor and the
 browser side by side.
 
+Before it starts serving, it runs the tests in `tools/webui_test/` (needs
+Node.js 22.12+ on `PATH`; `source get_gnu_toolchain.sh` if you don't have one)
+and refuses to start if they fail, printing what failed. Pass `--skip-tests`
+to start anyway; if no Node.js can be found at all, that only prints a
+warning and does not stop the server starting.
+
 ### What the mocks do
 
 | Endpoint | Mock behaviour |
@@ -245,6 +276,32 @@ browser side by side.
 | `--pin <pin>` | require this PIN via HTTP Basic Auth, like the device |
 | `--port <n>` | listen port (default `8000`) |
 | `--no-watch` | disable live reload |
+| `--skip-tests` | start even if `tools/webui_test/` fails or can't run |
+
+### Tests
+
+The BASIC tokeniser (`src/webui/assets/js/basic.js`) has tests in
+`tools/webui_test/`. They run under Node.js 22.12 or newer:
+
+```sh
+source get_gnu_toolchain.sh               # also puts a suitable Node.js on PATH
+node tools/webui_test/run_tests.mjs       # exit status 0 = all passed
+```
+
+**The build requires them to pass.** `make_all.sh` runs them right after setting
+up the toolchain, and the `Makefile` runs them again before it embeds the web UI
+assets (only when `basic.js` or the tests have changed since they last passed),
+so a failing test stops the build.
+
+The build also requires Node.js. `get_gnu_toolchain.sh` uses a Node.js already on
+your `PATH` if it is new enough, and otherwise downloads a pinned release
+(checksum verified, needs `curl` or `wget`) into the same cache as the Arm
+toolchain. If it can't get one, the build stops.
+
+The tests do not need VICE: the expected results are stored in
+`basic_vectors.js`. That file was made with VICE's `petcat` and the C64 BASIC
+ROM's keyword table by `gen_basic_vectors.py`, which is only needed to add test
+cases.
 
 ## Folding changes back into the image
 
