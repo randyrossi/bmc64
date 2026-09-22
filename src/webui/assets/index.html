@@ -9,6 +9,7 @@
 <!-- Fetch every module up front: it saves a round trip per import level on the device. -->
 <link rel="modulepreload" href="/js/util.js">
 <link rel="modulepreload" href="/js/api.js">
+<link rel="modulepreload" href="/js/basic.js">
 <link rel="modulepreload" href="/js/dashboard.js">
 <link rel="modulepreload" href="/js/editor.js">
 <link rel="modulepreload" href="/js/files.js">
@@ -110,8 +111,9 @@
         <div class="fb-bar">
           <button class="btn" id="fb-up">↑ Up</button>
           <div class="crumbs" id="fb-crumbs"></div>
-          <button class="btn" id="fb-mkdir">New folder</button>
-          <label class="btn" id="fb-upload-btn">Upload<input type="file" id="fb-upload" multiple hidden></label>
+          <button class="btn" id="fb-mkdir">New folder…</button>
+          <button class="btn" id="fb-newbasic">Create BASIC PRG…</button>
+          <label class="btn" id="fb-upload-btn">Upload…<input type="file" id="fb-upload" multiple hidden></label>
           <button class="btn" id="fb-refresh" title="Refresh">⟳</button>
         </div>
         <p class="fb-note">Uploads write to this folder on the SD card. Don't overwrite a disk image the emulator currently has attached.</p>
@@ -142,6 +144,10 @@
       <button class="ed-close" id="ed-close" aria-label="Close" title="Close">✕</button>
     </div>
     <p class="ed-hint" id="ed-hint"></p>
+    <div class="ed-name" id="ed-name-row" hidden>
+      <label for="ed-name">File name</label>
+      <input id="ed-name" spellcheck="false" autocomplete="off" autocapitalize="off">
+    </div>
     <textarea class="ed-text" id="ed-text" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="File contents"></textarea>
     <div class="ed-foot">
       <p class="msg ed-msg" id="ed-msg"></p>

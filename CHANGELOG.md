@@ -1,3 +1,7 @@
+## 5.1.9 (pre-release)
+  * Web UI: create and edit C64 BASIC programs in the file browser, saved as `.prg` files
+  * Web UI: add automated tests to build runs and development web server launches
+
 ## 5.1.8 (pre-release)
   * Web UI: uploaded files keep their original modified date and time instead of the upload time
   * Web UI: Add file editor for direct editing of configuration files

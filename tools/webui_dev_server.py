@@ -12,6 +12,11 @@ without a Raspberry Pi.
 
 With live reload on (default) the browser refreshes whenever a file in
 src/webui/assets/ changes, so you can edit and watch side by side.
+
+Before serving, the tests in tools/webui_test/ are run (needs Node.js 22.12+
+on PATH; `source get_gnu_toolchain.sh` first if you don't have one). A
+failure refuses to start, printing what failed. Pass --skip-tests to start
+anyway; a missing Node.js only prints a warning and does not block starting.
 """
 
 import argparse
@@ -21,12 +26,33 @@ import json
 import os
 import posixpath
 import shutil
+import subprocess
 import sys
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSET_DIR = os.path.join(REPO_ROOT, "src", "webui", "assets")
+WEBUI_TEST_RUNNER = os.path.join(REPO_ROOT, "tools", "webui_test", "run_tests.mjs")
+
+
+def run_webui_tests():
+    """Runs tools/webui_test/ under Node.js. Returns True unless the tests
+    ran and failed (a missing/too-old Node.js only warns and returns True,
+    same as it not blocking a dev preview)."""
+    node = shutil.which("node")
+    if not node:
+        print("  tests  : SKIPPED (no Node.js on PATH; source get_gnu_toolchain.sh)")
+        return True
+    print("  tests  : running tools/webui_test/ ...")
+    result = subprocess.run([node, WEBUI_TEST_RUNNER], cwd=REPO_ROOT)
+    if result.returncode == 0:
+        return True
+    if result.returncode == 2:
+        print("  tests  : SKIPPED (%s)" % node)
+        return True
+    print("Web UI tests failed; not starting. Pass --skip-tests to start anyway.")
+    return False
 
 CONTENT_TYPES = {
     ".html": "text/html; charset=utf-8",
@@ -551,14 +577,19 @@ def main():
                         help="require this PIN via HTTP Basic Auth (like the device)")
     parser.add_argument("--no-watch", dest="watch", action="store_false",
                         help="disable browser live reload")
+    parser.add_argument("--skip-tests", action="store_true",
+                        help="start even if tools/webui_test/ fails or can't run")
     ARGS = parser.parse_args()
     ARGS.root = os.path.abspath(os.path.expanduser(ARGS.root))
 
     if not os.path.isdir(ASSET_DIR):
         sys.exit("asset directory not found: " + ASSET_DIR)
 
-    server = ThreadingHTTPServer(("0.0.0.0", ARGS.port), Handler)
     print("BMC64 web UI dev server")
+    if not ARGS.skip_tests and not run_webui_tests():
+        sys.exit(1)
+
+    server = ThreadingHTTPServer(("0.0.0.0", ARGS.port), Handler)
     print("  assets : %s" % ASSET_DIR)
     print("  browse : %s" % ARGS.root)
     print("  reload : %s" % ("on" if ARGS.watch else "off"))

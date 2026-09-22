@@ -9,7 +9,15 @@ COMMON_HOME="$SRC_DIR/third_party/common"
 # Check for the Arm GNU Toolchain and install it if necessary
 if ! source "$SRC_DIR/get_gnu_toolchain.sh"
 then
-       echo "Arm GNU Toolchain setup failed." >&2
+       echo "Toolchain setup failed (Arm GNU Toolchain or Node.js)." >&2
+       exit 1
+fi
+
+# The web UI's JavaScript tests must pass. Checked here so a failure shows up
+# before the long build; the Makefile checks again before embedding the assets.
+if ! node "$SRC_DIR/tools/webui_test/run_tests.mjs"
+then
+       echo "Web UI tests failed." >&2
        exit 1
 fi
 

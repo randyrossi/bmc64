@@ -5,7 +5,8 @@
 //   dashboard.js  status polling, hardware / storage meters, reboot & reset
 //   files.js      SD card file browser
 //   menu.js       pop-up menu for a file row's Actions button
-//   editor.js     overlay editor for config files
+//   editor.js     overlay editor for config files and BASIC listings
+//   basic.js      C64 BASIC V2 tokeniser / detokeniser (listing <-> PRG)
 
 import { $ } from "./util.js";
 import { initDashboard, refreshVolumes, startStatusPolling } from "./dashboard.js";

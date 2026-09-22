@@ -1,11 +1,12 @@
 // Files view: browse the SD card, upload, download, rename, delete, create
-// folders, autostart, and open the config-file editor. Each row has one
+// folders, autostart, and open the config-file and BASIC editors. Each row has one
 // "Actions" button that opens a menu of what applies to that entry;
 // clicking the name does the most common one (open a folder, run, edit).
 
 import { $, fmtBytes, normPath, parentPath } from "./util.js";
 import * as api from "./api.js";
-import { openEditor } from "./editor.js";
+import { openEditor, openBasicEditor } from "./editor.js";
+import { LOAD_ADDRESS, parsePrg } from "./basic.js";
 import { toggleMenu } from "./menu.js";
 
 // current location (set by loadDir)
@@ -106,7 +107,12 @@ function rowActions(e, path) {
     items.push({ label: runVerb(e.name), run: () => runFile(path, e.name) });
   }
   if (!e.dir && e.edit) {
-    items.push({ label: "Edit", run: () => editFile(path, e.name) });
+    items.push({ label: "Edit…", run: () => editFile(path, e.name) });
+  }
+  // Whether a .prg is BASIC can only be told by reading it, which is left to
+  // the click rather than done for every file in a folder listing.
+  if (!e.dir && extOf(e.name) === "prg") {
+    items.push({ label: "Edit listing…", run: () => editListing(path, e) });
   }
   if (!e.dir) {
     items.push({ label: "Download", href: api.downloadUrl(fbVol, path) });
@@ -263,6 +269,49 @@ async function editFile(path, name) {
     "Saved " + name + ". Changes take effect after the next reboot.";
 }
 
+// ---- BASIC programs ----
+
+// A BASIC program can't be bigger than the memory from its load address to
+// the end of BASIC RAM ($A000), plus the two load address bytes.
+const BASIC_FILE_MAX = 0xa000 - LOAD_ADDRESS + 2;
+
+async function newBasic() {
+  const result = await openBasicEditor({ vol: fbVol, dir: fbPath });
+  await savedBasic(result);
+}
+
+async function editListing(path, e) {
+  if (e.size > BASIC_FILE_MAX) {
+    showError(e.name + " is too big to be a BASIC program.");
+    return;
+  }
+  $("fb-status").className = "msg";
+  $("fb-status").textContent = "Reading " + e.name + "…";
+  let parsed;
+  try {
+    parsed = parsePrg(new Uint8Array(await api.readFile(fbVol, path)));
+  } catch (err) {
+    showError("Could not read " + e.name + " — " + err.message);
+    return;
+  }
+  if (!parsed) {
+    showError(e.name + " is not a C64 BASIC program, so it has no listing to edit.");
+    return;
+  }
+  $("fb-status").textContent = "";
+  const result = await openBasicEditor({
+    vol: fbVol, dir: fbPath, path, name: e.name, parsed,
+  });
+  await savedBasic(result);
+}
+
+async function savedBasic(result) {
+  if (!result.saved) return;
+  await loadDir(fbPath);
+  $("fb-status").textContent =
+    "Saved " + result.name + " (" + result.size + " bytes).";
+}
+
 // ---- delete ----
 
 async function deleteEntry(path, name, isDir) {
@@ -411,5 +460,6 @@ export function initFiles() {
   });
   $("fb-refresh").addEventListener("click", () => loadDir(pathFromHash()));
   $("fb-mkdir").addEventListener("click", makeFolder);
+  $("fb-newbasic").addEventListener("click", newBasic);
   $("fb-upload").addEventListener("change", (e) => uploadFiles(e.target.files));
 }

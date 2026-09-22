@@ -26,29 +26,6 @@ These instructions have been tested on Debian/Ubuntu/Mint distributions. If you 
         git clone https://github.com/randyrossi/bmc64.git --recursive
 
 
-## Manual Installation of GNU Toolchain for Arm (Optional)
-
-Installation and use of the GNU toolchain is automated by the build scripts. To optionally install it manually follow the steps below
-
-1. Download and unpack the *GNU Embedded Toolchain for Arm*:
-
-    * Visit [https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
-    * Download the package for your system. For example, at the time of writing [arm-gnu-toolchain-15.2.rel1-x86_64-arm-none-eabi.tar.xz](https://gitlab.arm.com/api/v4/projects/tooling%2Fgnu-toolchains-for-arm/packages/generic/gnu-toolchain/15.2.rel1/arm-gnu-toolchain-15.2.rel1-x86_64-arm-none-eabi.tar.xz) was available for Linux x86\_64.
-    * Once downloaded, extract the file somewhere. Note down the path to the extracted directory. This will be used later.
-    * In the extracted directory, find the /lib/gcc/arm-none-eabi/ directory and note down the version number. This will be used later.
-
-2. Set the ARM_HOME environment variable to point to the extracted Arm toolchain directory:
-
-        export ARM_HOME=/path/to/extracted/toolchain/directory
-
-3. Set the PATH environment variable to point to the Arm toolchain's *bin* directory:
-
-        export PATH=$PATH:$ARM_HOME/bin
-
-4. Set the ARM_VERSION environment variable to the version number you noted previously:
-
-        export ARM_VERSION=15.2.1
-
 ----
 ## Building
 
@@ -171,3 +148,34 @@ These are the git hashes for the repos under circle-stdlib this project is known
 * libs/circle: fe24b6bebd1532f2a0ee981af12eaf50cc9e97fb
 * libs/circle-newlib: c01f95bcb08278d9e00f9795c7641284d4f89931
 * libs/mbedtls: d81c11b8ab61fd5b2da8133aa73c5fe33a0633eb
+
+----
+## Manual Installation of GNU Toolchain for Arm (Optional)
+
+Installation and use of the GNU toolchain is automated by the build scripts. To optionally install it manually follow the steps below
+
+1. Download and unpack the *GNU Embedded Toolchain for Arm*:
+
+    * Visit [https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
+    * Download the package for your system. For example, at the time of writing [arm-gnu-toolchain-15.2.rel1-x86_64-arm-none-eabi.tar.xz](https://gitlab.arm.com/api/v4/projects/tooling%2Fgnu-toolchains-for-arm/packages/generic/gnu-toolchain/15.2.rel1/arm-gnu-toolchain-15.2.rel1-x86_64-arm-none-eabi.tar.xz) was available for Linux x86\_64.
+    * Once downloaded, extract the file somewhere. Note down the path to the extracted directory. This will be used later.
+    * In the extracted directory, find the /lib/gcc/arm-none-eabi/ directory and note down the version number. This will be used later.
+
+2. Set the ARM_HOME environment variable to point to the extracted Arm toolchain directory:
+
+        export ARM_HOME=/path/to/extracted/toolchain/directory
+
+3. Set the PATH environment variable to point to the Arm toolchain's *bin* directory:
+
+        export PATH=$PATH:$ARM_HOME/bin
+
+4. Set the ARM_VERSION environment variable to the version number you noted previously:
+
+        export ARM_VERSION=15.2.1
+
+## Manual Installation of Node.js (Optional)
+
+Node.js 22.12 or newer is needed to run the web UI tests, which must pass for the build to succeed. You don't need to install it: the build scripts use the one on your `PATH` if it is new enough, and otherwise download one (with `curl` or `wget`) along with the Arm toolchain. To optionally install it manually instead, follow the instructions for your system at [https://nodejs.org/en/download](https://nodejs.org/en/download), then check it's new enough and on your `PATH`:
+
+    node --version   # must print v22.12.0 or newer
+
