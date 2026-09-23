@@ -142,12 +142,12 @@ For a build with the frame-budget and audio performance instrumentation, pass `-
 ----
 ## Dependencies
 
-These are the git hashes for the repos under circle-stdlib this project is known to work with. If the patches don't apply successfully, it's possible those projects have moved forward causing incompatibilities. If that happens, reset these repos using "git reset HASH --hard" commands in the following directories:
+These are the git hashes for the repos under circle-stdlib this project is known to work with. BMC64 follows the submodule revisions pinned by circle-stdlib, except for Circle itself: circle-stdlib pins an older Circle, so `make_all.sh` checks out Circle 51.1 (and the WLAN addon's hostap commit it references) before applying patches. If the patches don't apply successfully, reset the other repos using "git reset HASH --hard" in the following directories:
 
-* circle-stdlib: dda16112cdb5470240cd51fb33bf72b311634340
-* libs/circle: fe24b6bebd1532f2a0ee981af12eaf50cc9e97fb
-* libs/circle-newlib: c01f95bcb08278d9e00f9795c7641284d4f89931
-* libs/mbedtls: d81c11b8ab61fd5b2da8133aa73c5fe33a0633eb
+* circle-stdlib: a4fbed9b369e8285e4a12b2bb0588511210b83a6 (v20)
+* libs/circle: c776b3c614c2cc66ee4007a761d8786b9402db44 (tag Step51.1, checked out by `make_all.sh`)
+* libs/circle-newlib: 30d0f0a1b2105870f037b3c0449319e7d0a314ea
+* libs/mbedtls: 2fc8413bfcb51354c8e679141b17b3f1a5942561 (v2.28.10)
 
 ----
 ## Manual Installation of GNU Toolchain for Arm (Optional)
