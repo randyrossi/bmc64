@@ -1,3 +1,6 @@
+## 5.1.10 (pre-release)
+  * Update to Circle Step 51.1 and remove patches now included
+
 ## 5.1.9 (pre-release)
   * Web UI: create and edit C64 BASIC programs in the file browser, saved as `.prg` files
   * Web UI: add automated tests to build runs and development web server launches
