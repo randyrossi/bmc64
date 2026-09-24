@@ -29,7 +29,10 @@
 .up-step.ok::before { content: "✓"; color: var(--green); }
 .up-step.fail { color: var(--red); }
 .up-step.fail::before { content: "✗"; color: var(--red); }
+.up-step.warn { color: var(--amber); }
+.up-step.warn::before { content: "!"; color: var(--amber); font-weight: 700; }
 .up-note { color: var(--muted); }
+.up-step.warn .up-note { color: var(--amber); }
 .up-step.fail .up-note { color: var(--red); }
 
 .up-waiting { border-color: var(--pink); }

@@ -25,6 +25,10 @@ for (const size of [0, 1, 55, 56, 63, 64, 65, 119, 120, 1000, 1048579]) {
   check(await sha256Hex(data) === nodeSha(data), "sha256Hex over 3 MB");
 }
 
+// The warning shown before uploading a zip that doesn't match GitHub.
+check(/own risk/.test(logic.UNOFFICIAL_WARNING) && /GitHub/.test(logic.UNOFFICIAL_WARNING),
+      "unofficial-zip warning text");
+
 // Version compare.
 check(logic.compareVersions("v5.1.10", "5.1.9") > 0, "5.1.10 > 5.1.9");
 check(logic.compareVersions("5.1.0", "v5.1.0") === 0, "5.1.0 == v5.1.0");

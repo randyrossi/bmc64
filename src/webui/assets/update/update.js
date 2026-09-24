@@ -14,14 +14,15 @@ import { readZipDirectory, readEntry } from "./zip.js";
 import {
   RELEASES_URL, MANIFEST, UPDATE_PATH, compareVersions, latestReleases,
   zipAsset, findOfficial, parseManifest, checkPackage, checkOlderPackage,
-  olderReleaseWarning,
+  olderReleaseWarning, UNOFFICIAL_WARNING,
 } from "./logic.js";
 
 let root;
 let vol = "SD";
 let installed = "";
 let releasesPromise = null;
-let pending = null;   // { file, target, direction, older } once a zip passed the checks
+// { file, target, direction, older, unofficial } once a zip passed the checks
+let pending = null;
 
 const el = (id) => root.querySelector("#" + id);
 
@@ -123,6 +124,7 @@ function step(text) {
   const end = (cls, t) => { li.classList.add(cls); note.textContent = t ? " — " + t : ""; };
   return {
     ok: (t) => end("ok", t),
+    warn: (t) => end("warn", t),
     fail: (t) => end("fail", t),
     note: (t) => { note.textContent = " " + t; },
   };
@@ -165,12 +167,24 @@ async function checkFile(file) {
     }
   } catch (err) { s.fail(err.message); return; }
 
+  // A zip that doesn't match a GitHub release (a test build, or GitHub can't
+  // be reached) may still be uploaded, after a warning.
+  let unofficial = false;
   s = step("Official release");
   try {
-    const releases = await getReleases();
+    let releases;
+    try {
+      releases = await getReleases();
+    } catch (err) {
+      throw Object.assign(new Error("couldn't check it against GitHub (" + err.message + ")"),
+                          { unverified: true });
+    }
     const sha = await sha256Hex(bytes, (f) => { s.note(Math.round(f * 100) + "%"); });
     const match = findOfficial(releases, sha);
-    if (!match) throw new Error("it doesn't match any official BMC64 release on GitHub");
+    if (!match) {
+      throw Object.assign(new Error("it doesn't match any official BMC64 release on GitHub"),
+                          { unverified: true });
+    }
     if (older) {
       info.target = match.release.tag_name;
     } else if (match.release.tag_name !== info.target) {
@@ -179,19 +193,23 @@ async function checkFile(file) {
     s.ok("matches " + match.release.tag_name + (match.release.prerelease ? " (pre-release)" : "") +
          " on GitHub");
   } catch (err) {
-    s.fail(err instanceof TypeError || /GitHub answered/.test(err.message)
-      ? "couldn't check it against GitHub (" + err.message + ")"
-      : err.message);
-    el("up-msg").textContent = "Only files that can be checked against GitHub are uploaded here. " +
-      "You can still copy a zip to the card as bmc64-update.zip yourself, at your own risk.";
-    return;
+    if (!err.unverified) { s.fail(err.message); return; }
+    s.warn(err.message);
+    unofficial = true;
   }
 
-  const direction = compareVersions(info.target, installed);
+  // Without a manifest or a GitHub match the version isn't known here; BMC64
+  // works it out from the card's manifest when it starts.
+  const known = !!info.target;
+  const direction = known ? compareVersions(info.target, installed) : 0;
   s = step("Version");
-  s.ok(direction > 0 ? "update from v" + installed + " to " + info.target
-     : direction === 0 ? info.target + " is already installed; this repairs missing or damaged files"
-     : "downgrade from v" + installed + " to " + info.target);
+  if (!known) {
+    s.warn("unknown; BMC64 recognises it from the card's " + MANIFEST + " when it starts");
+  } else {
+    s.ok(direction > 0 ? "update from v" + installed + " to " + info.target
+       : direction === 0 ? info.target + " is already installed; this repairs missing or damaged files"
+       : "downgrade from v" + installed + " to " + info.target);
+  }
 
   s = step("Space on the SD card");
   try {
@@ -203,21 +221,31 @@ async function checkFile(file) {
     s.ok();
   } catch (err) { s.fail(err.message); return; }
 
-  pending = { file, target: info.target, direction, older };
-  if (older) {
+  const target = info.target || "This release";
+  pending = { file, target, direction, older, unofficial };
+  const warnings = [];
+  if (unofficial) warnings.push(UNOFFICIAL_WARNING);
+  if (older) warnings.push(olderReleaseWarning(target));
+  if (warnings.length) {
     el("up-msg").className = "msg up-warn";
-    el("up-msg").textContent = olderReleaseWarning(info.target);
+    el("up-msg").textContent = warnings.join(" ");
   }
-  el("up-go").textContent = direction < 0 ? "Upload downgrade to BMC64" : "Upload to BMC64";
+  el("up-go").textContent = unofficial ? "Upload anyway, at my own risk"
+    : direction < 0 ? "Upload downgrade to BMC64" : "Upload to BMC64";
   el("up-go").hidden = false;
 }
 
 async function uploadPending() {
   if (!pending) return;
-  const { file, target, direction, older } = pending;
-  if (direction < 0 && !confirm("Install the older version " + target + "?" +
-                                (older ? "\n\n" + olderReleaseWarning(target) : ""))) {
-    return;
+  const { file, target, direction, older, unofficial } = pending;
+  // Ask before anything is uploaded when there is something to warn about.
+  const warnings = [];
+  if (unofficial) warnings.push(UNOFFICIAL_WARNING);
+  if (older) warnings.push(olderReleaseWarning(target));
+  if (direction < 0 || warnings.length) {
+    const question = unofficial ? "Upload this file anyway?"
+      : "Install the older version " + target + "?";
+    if (!confirm([question, ...warnings].join("\n\n"))) return;
   }
   el("up-go").hidden = true;
   const msg = el("up-msg");

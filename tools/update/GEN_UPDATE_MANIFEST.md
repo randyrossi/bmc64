@@ -128,8 +128,8 @@ This makes a `bmc64-update.zip` from any staged SD-card folder, such as
 release. It does not change the history file or the stage folder. Put the
 zip at the root of a card and boot.
 
-The Web UI's Update page refuses such a zip, because it doesn't match a
-release on GitHub. Copy it to the card yourself.
+The Web UI's Update page accepts such a zip after warning that it doesn't
+match a release on GitHub; you can also copy it to the card yourself.
 
 ## How `add` and `seed` change the history
 

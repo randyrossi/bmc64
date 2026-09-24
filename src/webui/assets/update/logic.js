@@ -94,6 +94,13 @@ export function olderReleaseWarning(tag) {
     "to use the updater; to update again, copy a newer release to the card by hand.";
 }
 
+// The warning for a zip that doesn't match an official release on GitHub.
+export const UNOFFICIAL_WARNING =
+  "This file doesn't match an official BMC64 release on GitHub, or GitHub couldn't be " +
+  "reached to check it. It may be a test build, modified or damaged. Uploading and " +
+  "installing it is at your own risk. BMC64 still checks every file it installs against " +
+  "its recorded checksum, but can't tell whether the zip itself is genuine.";
+
 // Checks the zip's directory against its manifest. Throws an Error with a
 // message for the user; returns { target, unpackedSize }.
 export function checkPackage(entries, manifest) {

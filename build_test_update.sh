@@ -41,4 +41,5 @@ python3 "$SRC_DIR/tools/update/gen_update_manifest.py" package \
 python3 "$SRC_DIR/tools/update/gen_update_manifest.py" check "$OUT"
 
 echo "Copy $OUT to the top folder of the SD card (keep the name"
-echo "bmc64-update.zip), then boot. The Web UI's Update page refuses test zips;"
+echo "bmc64-update.zip), then boot. The Web UI's Update page also takes it,"
+echo "after warning that it doesn't match a release on GitHub."

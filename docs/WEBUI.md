@@ -126,7 +126,9 @@ on the card) and uploaded as
 `/bmc64-update.zip`, which BMC64 installs on the next boot. The page also shows
 an update waiting on the card (**Reboot to update** / **Remove**) and the
 report of the last update. A release from before the updater is accepted too,
-with a warning that the updater can't be used after installing it. See
+with a warning that the updater can't be used after installing it. A zip that
+doesn't match a GitHub release (a test build, or GitHub can't be reached) can
+still be uploaded after a warning that it is at your own risk. See
 [UPDATING.md](UPDATING.md).
 
 Only the page itself talks to GitHub (your browser fetches the release list);
