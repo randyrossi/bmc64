@@ -115,9 +115,11 @@ exit 1
 fi
 
 # The updater's manifest: this release's files plus every earlier release's
-# (release/manifest_history.txt, which this also updates; commit it).
+# (release/manifest_history.txt). This runs on the build machine, so it does
+# not record the release; run "gen_update_manifest.py seed" after it is
+# published to add it to the history and the release list.
 if ! python3 "$SCRIPT_DIR/tools/update/gen_update_manifest.py" release \
-    --stage stage_dir --version "$VERSION" --update-history
+    --stage stage_dir --version "$VERSION"
 then
 exit 1
 fi

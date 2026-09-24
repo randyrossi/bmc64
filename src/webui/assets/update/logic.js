@@ -42,6 +42,13 @@ export function latestReleases(releases) {
   return { stable, pre };
 }
 
+// A release from the built-in list (official_releases.js) whose zip has this
+// SHA-256, in the same shape as findOfficial(), or null.
+export function findKnownRelease(list, sha) {
+  const r = list.find((x) => x.sha256 === sha);
+  return r ? { release: { tag_name: r.tag, prerelease: r.prerelease } } : null;
+}
+
 // The release whose zip has this SHA-256, or null.
 export function findOfficial(releases, sha) {
   for (const r of releases) {
@@ -102,12 +109,12 @@ export const UNOFFICIAL_WARNING =
   "its recorded checksum, but can't tell whether the zip itself is genuine.";
 
 // Checks the zip's directory against its manifest. Throws an Error with a
-// message for the user; returns { target, unpackedSize }.
+// message for the user; returns { target, unpackedSize, missing }. BMC64 only
+// needs the files the manifest lists, so a partial package (a test build for
+// one Pi model) is allowed: missing lists the usual release files it lacks.
 export function checkPackage(entries, manifest) {
   const byName = new Map(entries.filter((e) => !e.isDir).map((e) => [e.name.toLowerCase(), e]));
-  for (const f of CORE_FILES) {
-    if (!byName.has(f)) throw new Error("This is not a BMC64 release zip (no " + f + ").");
-  }
+  const missing = CORE_FILES.filter((f) => !byName.has(f));
   let unpackedSize = 0;
   for (const [path, size] of manifest.files) {
     const e = byName.get(path.toLowerCase());
@@ -115,5 +122,5 @@ export function checkPackage(entries, manifest) {
     if (e.flags & 1) throw new Error("Encrypted zips are not supported.");
     unpackedSize += size;
   }
-  return { target: manifest.target, unpackedSize };
+  return { target: manifest.target, unpackedSize, missing };
 }

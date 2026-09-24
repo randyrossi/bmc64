@@ -22,14 +22,17 @@ To tell these apart, the updater needs the SHA-256 of every file of the new
 version and of **every release before it**. The manifest carries both, and
 is packed inside each release zip.
 
-## The two files
+## The files
 
 | File | What it is |
 | --- | --- |
 | `release/manifest_history.txt` | In the repository. Every file of every release so far: version, SHA-256, size and path. It only ever grows. |
 | `bmc64-manifest.txt` | In each release zip (and at the root of a card after installing). This release's files marked as the `target`, plus the whole history. |
+| `release/release_digests.txt` | In the repository. Every official release zip: tag, `stable` or `pre`, and the SHA-256 of the whole `.files.zip`. It only ever grows. |
+| `src/webui/assets/update/official_releases.js` | Generated from `release_digests.txt`. The Web UI's Update page checks a dropped zip against GitHub first and then this list, so a pre-release deleted from GitHub, or any release while GitHub can't be reached, is still recognised as official. |
 
-Both use the same plain-text format, one record per line:
+The history and the manifest use the same plain-text format, one record per
+line:
 
 ```
 # BMC64 update manifest
@@ -73,17 +76,25 @@ Run from the repository root. `--history` defaults to
 
 ```sh
 python3 tools/update/gen_update_manifest.py release \
-    --stage stage_dir --version v5.1.11 --update-history
+    --stage stage_dir --version v5.1.11
 ```
 
-This hashes every file in the staged release folder, writes
-`stage_dir/bmc64-manifest.txt` (this version plus the history) and, with
-`--update-history`, adds the version to the history file. If the history
-already has that version, it is replaced.
+This hashes every file in the staged release folder and writes
+`stage_dir/bmc64-manifest.txt` (this version plus the history).
+`--update-history` also adds the version to the history file, but
+`make_release.sh` doesn't use it: releases are built on a GitHub runner,
+where a change to the history would be lost.
 
 `make_release.sh` runs this before zipping, and `check_release_files.sh`
-requires `bmc64-manifest.txt`. **Commit `release/manifest_history.txt`
-with every release**, or the next release will not know about this one.
+requires `bmc64-manifest.txt`.
+
+### After publishing a release
+
+Run `seed` (below) and commit `release/manifest_history.txt`,
+`release/release_digests.txt` and `src/webui/assets/update/official_releases.js`.
+Until then the next release doesn't know about this one. Do it before
+deleting any pre-releases from GitHub; if one is already gone, use `add` with
+its zip.
 
 ### add: releases from local zips
 
@@ -91,10 +102,12 @@ with every release**, or the next release will not know about this one.
 python3 tools/update/gen_update_manifest.py add ~/Desktop/bmc64-v5.0.*.files.zip
 ```
 
-This adds release zips you have locally to the history. It reads the version
-from the file name (`bmc64-v5.0.1.files.zip` → `v5.0.1`); use `--version`
-if the name doesn't follow that pattern. Use it for releases that are no
-longer on GitHub.
+This adds release zips you have locally to the history and the release list,
+and regenerates `official_releases.js`. It reads the version from the file
+name (`bmc64-v5.0.1.files.zip` → `v5.0.1`); use `--version` if the name
+doesn't follow that pattern. A release keeps the kind (`stable` or `pre`) it
+already has in the list; a new one is a pre-release unless you give
+`--kind stable`. Use it for releases that are no longer on GitHub.
 
 ### seed: releases on GitHub
 
@@ -104,8 +117,19 @@ python3 tools/update/gen_update_manifest.py seed --cache ~/bmc64-release-zips
 
 This downloads every non-draft release's `.files.zip` from
 `randyrossi/bmc64` (with `gh`, into `--cache`, skipping files already
-there). It checks each zip against GitHub's SHA-256 and adds it to the
-history. `--repo` picks another repository.
+there). It checks each zip against GitHub's SHA-256, adds it to the
+history and the release list (with GitHub's stable or pre-release flag), and
+regenerates `official_releases.js`. `--repo` picks another repository.
+
+### webui: regenerate the Web UI's list
+
+```sh
+python3 tools/update/gen_update_manifest.py webui
+```
+
+This writes `official_releases.js` from `release_digests.txt`, only if it
+changed. `seed` and `add` do this themselves, and `tools/gen_webui_assets.py`
+runs it on every Web UI build, so it can't fall behind the list.
 
 ### check: a finished release zip
 
@@ -131,11 +155,12 @@ zip at the root of a card and boot.
 The Web UI's Update page accepts such a zip after warning that it doesn't
 match a release on GitHub; you can also copy it to the card yourself.
 
-## How `add` and `seed` change the history
+## How `add` and `seed` change the history and the release list
 
 Both merge by whole version, and neither ever removes one. Releases can
 disappear from GitHub, but the files they put on SD cards are still out
-there. For each version they report one of:
+there, and a deleted pre-release is still an official release. For each
+version they report one of:
 
 - `added`: the version was new;
 - `already in the history, identical`: nothing changed;
@@ -143,7 +168,8 @@ there. For each version they report one of:
   was recorded. **Check why before committing.** A published release should
   never change.
 
-Don't edit the history file by hand.
+The release list reports `added to the release list` or `REPLACED in the
+release list` the same way. Don't edit either file by hand.
 
 ## Tests
 

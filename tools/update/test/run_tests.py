@@ -536,6 +536,30 @@ def test_real_release(exe, work, cache):
     check(same, "card matches v5.1.9 after the downgrade")
 
 
+def test_release_list(work, zip0, zip1):
+    print("release list (release_digests.txt and official_releases.js)")
+    hist = os.path.join(work, "list-history.txt")
+    digests = os.path.join(work, "list-digests.txt")
+    js = os.path.join(work, "list.js")
+    run = lambda *args: subprocess.run([sys.executable, GEN] + list(args) + [
+        "--history", hist, "--digests", digests, "--webui-js", js],
+        check=True, capture_output=True, text=True).stdout
+    first, second = zip0, zip1   # named bmc64-v1.0.0.files.zip, bmc64-v1.1.0...
+    run("add", first, "--kind", "stable")
+    out = run("add", second)
+    check("v1.1.0: added to the release list (pre)" in out, "add defaults to a pre-release")
+    lines = [l.split() for l in open(digests) if not l.startswith("#")]
+    sha = lambda p: hashlib.sha256(open(p, "rb").read()).hexdigest()
+    check(lines == [["v1.1.0", "pre", sha(second)], ["v1.0.0", "stable", sha(first)]],
+          "release list has both zips, newest first, with their SHA-256")
+    out = run("add", first)
+    check("REPLACED" not in out and "v1.0.0 stable" in open(digests).read(),
+          "adding again keeps a release's kind and changes nothing")
+    text = open(js).read()
+    check('{ tag: "v1.0.0", prerelease: false, sha256: "%s" }' % sha(first) in text and
+          '{ tag: "v1.1.0", prerelease: true' in text, "official_releases.js matches the list")
+
+
 def find_node():
     node = shutil.which("node")
     if node:
@@ -574,6 +598,7 @@ def main():
         test_inflate(exe, work)
         hist, stage0, zip0, stage1, zip1 = test_update(exe, work)
         test_second_update_and_downgrade(exe, work, hist, stage0, zip0, stage1, zip1)
+        test_release_list(work, zip0, zip1)
         test_older_release(exe, work, stage0, zip0, stage1)
         test_bad_packages(exe, work, hist, stage0)
         test_web(work, zip1)

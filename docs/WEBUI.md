@@ -127,8 +127,10 @@ on the card) and uploaded as
 an update waiting on the card (**Reboot to update** / **Remove**) and the
 report of the last update. A release from before the updater is accepted too,
 with a warning that the updater can't be used after installing it. A zip that
-doesn't match a GitHub release (a test build, or GitHub can't be reached) can
-still be uploaded after a warning that it is at your own risk. See
+doesn't match a GitHub release can still be uploaded after a warning that it
+is at your own risk. Releases deleted from GitHub, and any release while
+GitHub can't be reached, are still recognised from a list of official
+releases built into the Web UI. See
 [UPDATING.md](UPDATING.md).
 
 Only the page itself talks to GitHub (your browser fetches the release list);
@@ -230,6 +232,7 @@ source files live in `src/webui/assets/`:
 | `update/update.js` | the Update page: release list, zip checks, upload of `bmc64-update.zip` |
 | `update/logic.js` | the Update page's checks (version compare, manifest, package); tested in `tools/update/test/` |
 | `update/zip.js`, `update/sha256.js` | zip reading and SHA-256 for the Update page |
+| `update/official_releases.js` | the official releases known to this build; **generated** from `release/release_digests.txt` by `tools/update/gen_update_manifest.py` (the build refreshes it) |
 | `update/update.css` | the Update page's styles |
 | `logo.png`, `title.png` | images |
 

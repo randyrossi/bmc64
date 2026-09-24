@@ -14,8 +14,9 @@ import { readZipDirectory, readEntry } from "./zip.js";
 import {
   RELEASES_URL, MANIFEST, UPDATE_PATH, compareVersions, latestReleases,
   zipAsset, findOfficial, parseManifest, checkPackage, checkOlderPackage,
-  olderReleaseWarning, UNOFFICIAL_WARNING,
+  olderReleaseWarning, UNOFFICIAL_WARNING, findKnownRelease,
 } from "./logic.js";
+import { OFFICIAL_RELEASES } from "./official_releases.js";
 
 let root;
 let vol = "SD";
@@ -119,7 +120,8 @@ async function showCardState() {
 // One line of the check list; ends as ok (✓) or fail (✗) with a note.
 function step(text) {
   const note = h("span", { className: "up-note" });
-  const li = h("li", { className: "up-step" }, text, note);
+  const label = document.createTextNode(text);
+  const li = h("li", { className: "up-step" }, label, note);
   el("up-steps").append(li);
   const end = (cls, t) => { li.classList.add(cls); note.textContent = t ? " — " + t : ""; };
   return {
@@ -127,6 +129,7 @@ function step(text) {
     warn: (t) => end("warn", t),
     fail: (t) => end("fail", t),
     note: (t) => { note.textContent = " " + t; },
+    label: (t) => { label.textContent = t; },
   };
 }
 
@@ -148,13 +151,21 @@ async function checkFile(file) {
   // A zip without a manifest is a release from before the updater: BMC64
   // recognises it from the card's own manifest. Its version comes from GitHub.
   let older = false;
+  let partial = false;
   s = step("Update package");
   try {
     const entry = entries.find((e) => e.name.toLowerCase() === MANIFEST);
     if (entry) {
       manifest = parseManifest(new TextDecoder().decode(await readEntry(bytes, entry)));
       info = checkPackage(entries, manifest);
-      s.ok("BMC64 " + info.target + ", " + manifest.files.size + " files");
+      const what = "BMC64 " + info.target + ", " + manifest.files.size + " files";
+      if (info.missing.length) {
+        // Not a full release (for example a test build for one Pi model).
+        s.warn(what + "; not a complete release (no " + info.missing.join(", ") + ")");
+        partial = true;
+      } else {
+        s.ok(what);
+      }
     } else {
       info = checkOlderPackage(entries);
       older = true;
@@ -169,31 +180,40 @@ async function checkFile(file) {
 
   // A zip that doesn't match a GitHub release (a test build, or GitHub can't
   // be reached) may still be uploaded, after a warning.
-  let unofficial = false;
+  let unofficial = partial;
+  // GitHub first; then the list of releases built into this version, which
+  // still knows pre-releases deleted from GitHub and works offline.
   s = step("Official release");
   try {
-    let releases;
-    try {
-      releases = await getReleases();
-    } catch (err) {
-      throw Object.assign(new Error("couldn't check it against GitHub (" + err.message + ")"),
-                          { unverified: true });
-    }
     const sha = await sha256Hex(bytes, (f) => { s.note(Math.round(f * 100) + "%"); });
-    const match = findOfficial(releases, sha);
+    let match = null;
+    let where = "on GitHub";
+    let githubError = null;
+    try {
+      match = findOfficial(await getReleases(), sha);
+    } catch (err) {
+      githubError = err;
+    }
     if (!match) {
-      throw Object.assign(new Error("it doesn't match any official BMC64 release on GitHub"),
-                          { unverified: true });
+      match = findKnownRelease(OFFICIAL_RELEASES, sha);
+      where = "in BMC64's list of releases";
+    }
+    if (!match) {
+      throw Object.assign(new Error(githubError
+        ? "couldn't check it against GitHub (" + githubError.message + ") and it isn't a " +
+          "release BMC64 knows"
+        : "it doesn't match any official BMC64 release"), { unverified: true });
     }
     if (older) {
       info.target = match.release.tag_name;
     } else if (match.release.tag_name !== info.target) {
-      throw new Error("it is " + match.release.tag_name + " on GitHub but says " + info.target);
+      throw new Error("it is official " + match.release.tag_name + " but says " + info.target);
     }
     s.ok("matches " + match.release.tag_name + (match.release.prerelease ? " (pre-release)" : "") +
-         " on GitHub");
+         " " + where);
   } catch (err) {
     if (!err.unverified) { s.fail(err.message); return; }
+    s.label("Unofficial release");
     s.warn(err.message);
     unofficial = true;
   }
@@ -237,16 +257,8 @@ async function checkFile(file) {
 
 async function uploadPending() {
   if (!pending) return;
-  const { file, target, direction, older, unofficial } = pending;
-  // Ask before anything is uploaded when there is something to warn about.
-  const warnings = [];
-  if (unofficial) warnings.push(UNOFFICIAL_WARNING);
-  if (older) warnings.push(olderReleaseWarning(target));
-  if (direction < 0 || warnings.length) {
-    const question = unofficial ? "Upload this file anyway?"
-      : "Install the older version " + target + "?";
-    if (!confirm([question, ...warnings].join("\n\n"))) return;
-  }
+  // Any warnings are already on the page, and the button says what it does.
+  const { file, target, older } = pending;
   el("up-go").hidden = true;
   const msg = el("up-msg");
   msg.className = "msg";

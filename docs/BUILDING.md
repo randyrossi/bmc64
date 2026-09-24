@@ -148,7 +148,7 @@ To test it:
 
 1. The Pi must run a build that includes the updater: copy a staged `build/sdcard` to the SD card first.
 2. Make the card differ from the package, or there is nothing to update. For example, edit `C64/rpi_pos.vkm` (shows as *Changed*), delete `C64/rpi_sym.vkm` (shows as *New*), or build again after changing the code so the kernels differ (shows as *Update*).
-3. Copy `build/bmc64-update.zip` to the top folder of the SD card, keeping the name, with a card reader or the Web UI's *Files* or *Update* page. The *Update* page warns that a test package doesn't match a release on GitHub and asks before uploading it.
+3. Copy `build/bmc64-update.zip` to the top folder of the SD card, keeping the name, with a card reader or the Web UI's *Files* or *Update* page. The *Update* page warns that a test package doesn't match a release on GitHub; upload it with *Upload anyway, at my own risk*.
 4. Boot. The update view lists the files that differ; after applying, `/backup/v<old version>/update-report.txt` lists what was replaced, added and kept.
 
 For more on the package and its manifest see [tools/update/GEN_UPDATE_MANIFEST.md](../tools/update/GEN_UPDATE_MANIFEST.md).

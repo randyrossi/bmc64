@@ -19,9 +19,12 @@ official release zip, including releases from before the updater (see
    it fits on the card, then copies it to the card as `bmc64-update.zip`.
 4. Click **Reboot to update**, or reboot whenever it suits you.
 
-If the zip doesn't match an official release on GitHub (for example a test
-build), or GitHub can't be reached to check it, the page warns you and asks
-before uploading it. Installing such a zip is at your own risk.
+The page recognises official releases from GitHub, and from a list built into
+BMC64, which also covers pre-releases no longer on GitHub and works when
+GitHub can't be reached. If the zip doesn't match an official release (for
+example a test build), the page warns you, and you
+upload it with **Upload anyway, at my own risk**. Installing such a zip is at
+your own risk.
 
 ### By copying the file yourself (any machine)
 

@@ -75,7 +75,7 @@ $(WEBUI_TEST_STAMP): $(WEBUI_TEST_SRCS)
 	@node tools/webui_test/run_tests.mjs
 	@mkdir -p $(dir $@) && touch $@
 
-src/webui/webui_assets.c: $(WEBUI_ASSET_SRCS) tools/gen_webui_assets.py | $(WEBUI_TEST_STAMP)
+src/webui/webui_assets.c: $(WEBUI_ASSET_SRCS) tools/gen_webui_assets.py release/release_digests.txt | $(WEBUI_TEST_STAMP)
 ifeq ($(PYTHON),)
 	@echo "  WARN  no python interpreter found; using committed $@"
 	@touch $@

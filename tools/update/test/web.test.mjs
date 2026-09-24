@@ -29,6 +29,17 @@ for (const size of [0, 1, 55, 56, 63, 64, 65, 119, 120, 1000, 1048579]) {
 check(/own risk/.test(logic.UNOFFICIAL_WARNING) && /GitHub/.test(logic.UNOFFICIAL_WARNING),
       "unofficial-zip warning text");
 
+// The built-in list of official releases, and finding a release in it.
+const { OFFICIAL_RELEASES } = await import(new URL("official_releases.js", base));
+check(Array.isArray(OFFICIAL_RELEASES) && OFFICIAL_RELEASES.every((r) =>
+      /^v\d/.test(r.tag) && /^[0-9a-f]{64}$/.test(r.sha256) && typeof r.prerelease === "boolean"),
+      "official_releases.js is a well-formed list");
+const known = [{ tag: "v5.1.3", prerelease: true, sha256: "ab".repeat(32) }];
+const hit = logic.findKnownRelease(known, "ab".repeat(32));
+check(hit && hit.release.tag_name === "v5.1.3" && hit.release.prerelease === true,
+      "a release deleted from GitHub is found in the built-in list");
+check(logic.findKnownRelease(known, "cd".repeat(32)) === null, "unknown zip not in the list");
+
 // Version compare.
 check(logic.compareVersions("v5.1.10", "5.1.9") > 0, "5.1.10 > 5.1.9");
 check(logic.compareVersions("5.1.0", "v5.1.0") === 0, "5.1.0 == v5.1.0");
@@ -73,6 +84,14 @@ if (zipPath) {
     const data = await readEntry(bytes, e);
     check(nodeSha(data) === shas.get(e.name), "entry " + e.name + " unpacks to its manifest hash");
   }
+
+  check(info.missing.length === 0, "a full release has no missing release files");
+  const partialManifest = { target: manifest.target,
+    files: new Map([...manifest.files].filter(([p]) => p !== "kernel.img")) };
+  const partial = logic.checkPackage(entries.filter((e) => e.name !== "kernel.img"),
+                                     partialManifest);
+  check(partial.missing.join() === "kernel.img",
+        "a partial package (one Pi model) is allowed and reports what it lacks");
 
   const missing = entries.filter((e) => e.name !== "kernel7.img");
   let threw = "";

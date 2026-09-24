@@ -11,6 +11,7 @@ The generated file is checked in so a normal build needs no extra tooling.
 """
 
 import os
+import subprocess
 import sys
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -48,6 +49,12 @@ def list_assets():
 def main():
     if not os.path.isdir(ASSET_DIR):
         sys.exit("asset directory not found: " + ASSET_DIR)
+
+    # The Update page's built-in list of official releases is generated from
+    # release/release_digests.txt; refresh it before embedding the assets.
+    subprocess.run([sys.executable,
+                    os.path.join(REPO_ROOT, "tools", "update", "gen_update_manifest.py"),
+                    "webui"], check=True)
 
     files = list_assets()
     if not files:
