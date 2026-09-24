@@ -279,4 +279,24 @@ extern uint8_t *raw_video_font;
 // item.
 extern void ui_canvas_reveal_temp(int layer);
 
+// ---- External full-screen views ----
+// For a view that is not built from menu items (the updater, src/update/).
+// The view runs its own loop; these let it own the UI layer and key queue.
+
+// Take (1) or give back (0) the UI layer and the UI key queue.
+void ui_set_external_owner(int active);
+// Pops the next UI key event. Returns 0 when the queue is empty.
+int ui_read_key_event(long *key, int *pressed);
+// Clears the UI layer and returns the top left of the 40x25 character area
+// the root menu uses. Returns 0 if the layer isn't allocated yet.
+int ui_external_begin_frame(int *left, int *top);
+// Presents what was drawn since ui_external_begin_frame().
+void ui_external_end_frame(void);
+
+struct ui_external_colors {
+  int bg, fg, hilite, border, dim, note;
+};
+// The menu's palette indices, so an external view matches its look.
+void ui_external_colors(struct ui_external_colors *c);
+
 #endif

@@ -12,7 +12,8 @@ APP_INCLUDES = -I"$(NEWLIBDIR)/include" -I$(STDDEF_INCPATH) \
 	      -I$(CIRCLEHOME)/addon \
 	      -Ithird_party/vice-3.3/src \
 	      -Ithird_party/common \
-	      -I$(CIRCLEHOME)/addon/fatfs
+	      -I$(CIRCLEHOME)/addon/fatfs \
+	      -Ithird_party/zlib
 
 ifeq ($(MACHINE_CLASS),RASPI_PLUS4EMU)
 	APP_INCLUDES += -I "third_party/plus4emu/src"
@@ -22,7 +23,12 @@ EXTRAINCLUDE += $(APP_INCLUDES)
 
 OBJS	= src/main.o src/kernel.o src/new_io.o src/io_stats_bench.o src/perf_stats_env.o src/vicesound.o src/vicesoundbasedevice.o src/bmcmodem.o \
 		  src/viceoptions.o src/viceapp.o src/vice_network.o src/network_time_sync.o src/fbl.o src/crt_pi_idx.o src/crt_pi_rgb.o \
-		  src/webui/webui.o src/webui/webui_http.o src/webui/webui_fs.o src/webui/webui_assets.o
+		  src/webui/webui.o src/webui/webui_http.o src/webui/webui_fs.o src/webui/webui_assets.o \
+		  src/update/update_boot.o src/update/update_view.o src/update/update_host.o \
+		  src/update/update_apply.o src/update/update_plan.o src/update/update_manifest.o \
+		  src/update/update_zip.o src/update/update_hash.o src/update/update_fs_fatfs.o \
+		  third_party/zlib/inflate.o third_party/zlib/inftrees.o third_party/zlib/inffast.o \
+		  third_party/zlib/zutil.o third_party/zlib/crc32.o third_party/zlib/adler32.o
 
 ifeq ($(MACHINE_CLASS),RASPI_PLUS4EMU)
 OBJS	+= src/plus4emulatorcore.o
@@ -33,6 +39,9 @@ endif
 include $(CIRCLEHOME)/Rules.mk
 
 CFLAGS += $(APP_INCLUDES) -D $(MACHINE_CLASS)
+# zlib (third_party/zlib, decompression for the updater) without its gz* file
+# functions; the updater supplies zalloc/zfree.
+CFLAGS += -DZ_SOLO
 CPPFLAGS += $(APP_INCLUDES) -D $(MACHINE_CLASS) -fno-exceptions -fno-rtti
 
 # Opt-in storage I/O instrumentation.

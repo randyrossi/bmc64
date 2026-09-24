@@ -117,6 +117,19 @@ Actions button always fits.
   8K/16K/Ultimax images need their type chosen in the emulator's menu. There
   is no detach here yet, so use the menu's *Detach cartridge*.
 
+### Update
+
+Shows the installed version and the latest stable and pre-release versions on
+GitHub, each with a **Download** link. Drop a downloaded release zip on the
+page: it is checked (a complete release with a `bmc64-manifest.txt`, the same
+file GitHub published, room on the card) and uploaded as
+`/bmc64-update.zip`, which BMC64 installs on the next boot. The page also shows
+an update waiting on the card (**Reboot to update** / **Remove**) and the
+report of the last update. See [UPDATING.md](UPDATING.md).
+
+Only the page itself talks to GitHub (your browser fetches the release list);
+BMC64 never connects to GitHub.
+
 BMC64's own configuration files (`settings*.txt`,
 `wpa_supplicant.conf`, `cmdline.txt`, `config.txt`, `machines.txt`,
 `bmc64.log`) and the `/firmware` folder are protected: they cannot be uploaded
@@ -210,6 +223,10 @@ source files live in `src/webui/assets/`:
 | `js/files.js` | file browser: list, upload, download, delete, run |
 | `js/editor.js` | overlay editor for the config files and BASIC listings |
 | `js/basic.js` | C64 BASIC V2 tokeniser and detokeniser (listing <-> PRG); tested in `tools/webui_test/` |
+| `update/update.js` | the Update page: release list, zip checks, upload of `bmc64-update.zip` |
+| `update/logic.js` | the Update page's checks (version compare, manifest, package); tested in `tools/update/test/` |
+| `update/zip.js`, `update/sha256.js` | zip reading and SHA-256 for the Update page |
+| `update/update.css` | the Update page's styles |
 | `logo.png`, `title.png` | images |
 
 The scripts are ES modules (`<script type="module">`), so imports use paths
@@ -302,6 +319,12 @@ The tests do not need VICE: the expected results are stored in
 `basic_vectors.js`. That file was made with VICE's `petcat` and the C64 BASIC
 ROM's keyword table by `gen_basic_vectors.py`, which is only needed to add test
 cases.
+
+The Update page's modules (`update/logic.js`, `zip.js`, `sha256.js`) are tested
+together with the on-device updater by `tools/update/test/run_tests.py`.
+`make_all.sh` runs them too and stops if they fail. Besides Python 3 they need
+the PC's C compiler (`cc`, or set `HOST_CC`) with AddressSanitizer, as gcc and
+clang on Linux have.
 
 ## Folding changes back into the image
 

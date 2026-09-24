@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include "kernel.h"
+#include "update/update.h"
 
 #include <errno.h>
 #include <math.h>
@@ -1817,6 +1818,10 @@ void CKernel::circle_boot_complete() {
 #endif
 
   DisableBootStat();
+
+  // If /bmc64-update.zip is waiting, show the update view now. It runs on
+  // the emulator's main loop, so emulation is stopped while it is shown.
+  update_run_if_pending();
 }
 
 int CKernel::circle_alloc_fbl(int layer, int pixelmode, uint8_t **pixels,

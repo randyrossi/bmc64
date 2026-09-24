@@ -114,6 +114,14 @@ then
 exit 1
 fi
 
+# The updater's manifest: this release's files plus every earlier release's
+# (release/manifest_history.txt, which this also updates; commit it).
+if ! python3 "$SCRIPT_DIR/tools/update/gen_update_manifest.py" release \
+    --stage stage_dir --version "$VERSION" --update-history
+then
+exit 1
+fi
+
 if ! "$SCRIPT_DIR/check_release_files.sh" stage_dir
 then
 exit 1

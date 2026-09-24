@@ -23,6 +23,14 @@ then
        exit 1
 fi
 
+# The updater's tests (src/update/ and the Web UI's Update page) must pass.
+# They build the updater with the PC's C compiler and run it on test cards.
+if ! python3 "$SRC_DIR/tools/update/test/run_tests.py"
+then
+       echo "Updater tests failed." >&2
+       exit 1
+fi
+
 CIRCLE_PUBLIC_INCLUDES="-I$CIRCLE_HOME/include -I$CIRCLE_HOME/libs/circle/include -I$CIRCLE_HOME/libs/circle/addon"
 
 if ! command -v flex >/dev/null 2>&1
