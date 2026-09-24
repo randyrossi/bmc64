@@ -1,3 +1,7 @@
+## 5.1.11 (pre-release)
+  * Add an updater: put a release zip on the card as `bmc64-update.zip` and choose which files to replace at boot. See [UPDATING.md](docs/UPDATING.md)
+  * Web UI: Update page shows the latest GitHub releases and allows upload of a zip file which is saved as `bmc64-update.zip`, ready for update on next boot.
+
 ## 5.1.10 (pre-release)
   * Update to Circle Step 51.1 and remove patches now included
 

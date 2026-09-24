@@ -6,7 +6,10 @@
 2. If using a release image instead, write it to the SD card with Raspberry Pi Imager, balenaEtcher, or a similar tool.
 3. Insert the SD card into a supported Raspberry Pi and power it on.
 
-For upgrades, back up your existing configuration and ROM files first, then replace the release files on the SD card.
+To upgrade, you can either:
+
+- copy the new release files over the old ones on the SD card. Back up your existing configuration and ROM files first, as this replaces every release file, including any you have changed; or
+- use the updater, if your installed version includes it. It replaces only what has changed, keeps files you changed unless you choose otherwise, and backs up the originals. See [UPDATING.md](UPDATING.md).
 
 ## ROM Files
 

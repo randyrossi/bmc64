@@ -24,6 +24,12 @@ BMC64 incorporates source code from the [Plus4Emu project](https://github.com/is
 
 See [`third_party/plus4emu/`](../third_party/plus4emu/) for the source incorporated into BMC64 and its accompanying copyright and license information.
 
+## zlib
+
+BMC64 incorporates source code from [zlib](https://github.com/madler/zlib), v1.3.2.
+
+See [`third_party/zlib/`](../third_party/zlib/) for the source incorporated into BMC64 and its accompanying copyright and license information.
+
 ## Other Third-Party Components
 
 Additional third-party components and supporting materials may be present in the BMC64 source tree. Where such material is accompanied by its own copyright, license, or attribution notices, those notices and terms continue to apply.

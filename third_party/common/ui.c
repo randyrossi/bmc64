@@ -119,6 +119,8 @@ static char pending_emu_autostart_path[PENDING_EMU_AUTOSTART_MAX];
 static volatile int pending_emu_autostart;
 
 static int osd_active;
+// Set while a view outside the menu system owns the UI layer and key queue.
+static int ui_external_owner;
 static int ui_commodore_down;
 static int ui_transparent;
 static int ui_transparent_layer; // which layer we are revealing for adjustment
@@ -811,7 +813,7 @@ void ui_check_key(void) {
   static long process_ui_key[16];
   static int process_ui_key_pressed[16];
 
-  if (!ui_enabled) {
+  if (!ui_enabled || ui_external_owner) {
     return;
   }
 
@@ -1863,4 +1865,58 @@ void ui_geometry_changed(int dpx, int dpy,
    menu_roots[0].menu_left = calc_root_menu_left();
    ui_update_children(&menu_roots[0],
       menu_roots[0].menu_top, menu_roots[0].menu_left);
+}
+
+// ---- External full-screen views ----
+// A view that is not built from menu items (the updater, src/update/) can
+// take over the UI layer and the UI key queue. While it owns them, ui_enabled
+// is set so every input device (USB, GPIO keyboard, joysticks) routes to the
+// UI key queue, and the menu does not consume that queue.
+
+void ui_set_external_owner(int active) {
+  ui_external_owner = active;
+  ui_enabled = active;
+  ui_showing = active;
+  if (active) {
+    circle_show_fbl(FB_LAYER_UI);
+  } else {
+    circle_hide_fbl(FB_LAYER_UI);
+  }
+}
+
+int ui_read_key_event(long *key, int *pressed) {
+  int got = 0;
+  circle_lock_acquire();
+  if (pending_ui_key_head != pending_ui_key_tail) {
+    int i = pending_ui_key_head & 0xf;
+    *key = pending_ui_key[i];
+    *pressed = pending_ui_key_pressed[i];
+    pending_ui_key_head++;
+    got = 1;
+  }
+  circle_lock_release();
+  return got;
+}
+
+int ui_external_begin_frame(int *left, int *top) {
+  if (ui_fb == NULL) {
+    return 0;
+  }
+  memset(ui_fb, TRANSPARENT_COLOR, ui_fb_h * ui_fb_pitch);
+  *left = calc_root_menu_left();
+  *top = calc_root_menu_top();
+  return 1;
+}
+
+void ui_external_end_frame(void) {
+  circle_frames_ready_fbl(FB_LAYER_UI, -1 /* no 2nd layer */, 1 /* sync */);
+}
+
+void ui_external_colors(struct ui_external_colors *c) {
+  c->bg = BG_COLOR;
+  c->fg = FG_COLOR;
+  c->hilite = HILITE_COLOR;
+  c->border = BORDER_COLOR;
+  c->dim = DISABLED_COLOR;
+  c->note = READ_ONLY_DESCRIPTION_COLOR;
 }

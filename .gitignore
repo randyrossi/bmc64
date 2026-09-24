@@ -54,3 +54,6 @@ tools/perftest/*.txt
 *.local.md
 docs/a*/*.md
 
+# SD Card simulation files
+bmc64-manifest.txt
+

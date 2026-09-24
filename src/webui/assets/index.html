@@ -6,6 +6,7 @@
 <title>BMC64</title>
 <link rel="icon" type="image/png" href="/logo.png">
 <link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/update/update.css">
 <!-- Fetch every module up front: it saves a round trip per import level on the device. -->
 <link rel="modulepreload" href="/js/util.js">
 <link rel="modulepreload" href="/js/api.js">
@@ -14,6 +15,11 @@
 <link rel="modulepreload" href="/js/editor.js">
 <link rel="modulepreload" href="/js/files.js">
 <link rel="modulepreload" href="/js/menu.js">
+<link rel="modulepreload" href="/update/update.js">
+<link rel="modulepreload" href="/update/logic.js">
+<link rel="modulepreload" href="/update/zip.js">
+<link rel="modulepreload" href="/update/sha256.js">
+<link rel="modulepreload" href="/update/official_releases.js">
 </head>
 <body>
 <div id="app">
@@ -22,6 +28,7 @@
     <nav class="nav">
       <a class="nav-item" href="#/dashboard" data-view="dashboard"><span class="ni-ico">▦</span>Dashboard</a>
       <a class="nav-item" href="#/files" data-view="files"><span class="ni-ico">▤</span>Files</a>
+      <a class="nav-item" href="#/update" data-view="update"><span class="ni-ico">⇪</span>Update</a>
       <span class="nav-item disabled"><span class="ni-ico">▢</span>System<span class="soon">soon</span></span>
       <span class="nav-item disabled"><span class="ni-ico">♪</span>Media<span class="soon">soon</span></span>
       <span class="nav-item disabled"><span class="ni-ico">≣</span>Logs<span class="soon">soon</span></span>
@@ -126,6 +133,8 @@
         </div>
       </div>
     </section>
+
+    <section class="view" id="view-update" hidden></section>
 
     <footer class="footer">
       <span>BMC64 &nbsp;·&nbsp; Bare Metal</span>

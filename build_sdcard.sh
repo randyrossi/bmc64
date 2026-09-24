@@ -122,8 +122,6 @@ fi
 
 cp "$SRC_DIR/sdcard/config.txt" "$SRC_DIR/sdcard/cmdline.txt" \
     "$SRC_DIR/sdcard/machines.txt" "$STAGING_DIR/"
-cp "$SRC_DIR/sdcard/wpa_supplicant.conf.example" \
-    "$STAGING_DIR/wpa_supplicant.conf"
 cp -a "$SRC_DIR/release/common_release_files/." "$STAGING_DIR/"
 cp "$SRC_DIR/LICENSE" "$SRC_DIR/README.md" "$STAGING_DIR/"
 
@@ -283,6 +281,17 @@ do
         mv "$STAGING_DIR/$kernel.c64" "$STAGING_DIR/$kernel"
     fi
 done
+
+# The updater's manifest, as a release has (see make_release.sh). The
+# history file is left alone; only make_release.sh adds a version to it.
+SOURCE_VERSION=$(sed -n 's/^#define VERSION_STRING "\(.*\)"$/\1/p' "$SRC_DIR/third_party/common/menu.c")
+if [ -z "$SOURCE_VERSION" ] ||
+   ! python3 "$SRC_DIR/tools/update/gen_update_manifest.py" release \
+       --stage "$STAGING_DIR" --version "v${SOURCE_VERSION// /-}"
+then
+    echo "Could not create bmc64-manifest.txt" >&2
+    exit 1
+fi
 
 if [ -z "$MACHINE" ]
 then

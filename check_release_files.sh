@@ -12,6 +12,9 @@ REQUIRED_FILES=(
     "machines.txt"
     "start.elf"
 
+    # Updater manifest (tools/update/gen_update_manifest.py)
+    "bmc64-manifest.txt"
+
     # Wi-Fi firmware and redistribution licences
     "firmware/brcmfmac43430-sdio.bin"
     "firmware/brcmfmac43430-sdio.clm_blob"

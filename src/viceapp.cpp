@@ -17,6 +17,7 @@
 #include "vice_network.h"
 #include "network_time_sync.h"
 #include "webui/webui.h"
+#include "update/update.h"
 #include "../third_party/common/circle.h"
 #include "../third_party/common/io_stats.h"
 #include "../third_party/common/menu_logging.h"
@@ -836,6 +837,10 @@ bool ViceStdioApp::Initialize(void) {
       mLogger.SetNewTarget(gLoggingDevice);
     }
   }
+
+  // Before any BMC64 file is read: finish an interrupted update and note
+  // whether /bmc64-update.zip is waiting.
+  update_boot_check();
 
   InitBootStat();
   LoadNetworkDevice();
