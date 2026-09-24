@@ -525,6 +525,27 @@ void uv_run(void) {
     return;
   }
 
+  if (p.legacy) {
+    // A release from before the updater: once it is installed, updates are
+    // by hand again.
+    char text[240];
+    snprintf(text, sizeof(text),
+             "%s was released before the updater. After installing it you "
+             "won't be able to use the updater; to update again, copy a newer "
+             "release to the card by hand.", p.target);
+    int b = ask("OLDER VERSION", text, "Continue", "Not now",
+                "Skip this update");
+    if (b != 0) {
+      if (b == 2) {
+        rename_zip(".skipped");
+      }
+      up_free(&p);
+      um_free(&m);
+      uz_close(&z);
+      return;
+    }
+  }
+
   list l;
   memset(&l, 0, sizeof(l));
   l.plan = &p;

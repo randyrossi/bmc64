@@ -24,6 +24,8 @@ typedef struct {
 
 typedef struct {
   char target[32];
+  int legacy;            // the zip had no manifest: a release from before the
+                         // updater, recognised from the card's history
   um_record *recs;
   int count;
   int cap;

@@ -121,11 +121,13 @@ Actions button always fits.
 
 Shows the installed version and the latest stable and pre-release versions on
 GitHub, each with a **Download** link. Drop a downloaded release zip on the
-page: it is checked (a complete release with a `bmc64-manifest.txt`, the same
-file GitHub published, room on the card) and uploaded as
+page: it is checked (a complete release, the same file GitHub published, room
+on the card) and uploaded as
 `/bmc64-update.zip`, which BMC64 installs on the next boot. The page also shows
 an update waiting on the card (**Reboot to update** / **Remove**) and the
-report of the last update. See [UPDATING.md](UPDATING.md).
+report of the last update. A release from before the updater is accepted too,
+with a warning that the updater can't be used after installing it. See
+[UPDATING.md](UPDATING.md).
 
 Only the page itself talks to GitHub (your browser fetches the release list);
 BMC64 never connects to GitHub.

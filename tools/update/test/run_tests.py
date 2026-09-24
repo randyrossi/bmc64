@@ -84,6 +84,7 @@ def parse_plan(out):
         w = line.split()
         if w[0] == "target":
             plan["target"], plan["direction"], plan["up_to_date"] = w[1], int(w[3]), int(w[5])
+            plan["legacy"] = int(w[7])
         elif w[0] == "item":
             plan["items"][w[6]] = {"group": w[1], "status": w[2], "choice": w[3],
                                    "this_board": w[4] == "1"}
@@ -378,6 +379,69 @@ def test_second_update_and_downgrade(exe, work, hist, stage0, zip0, stage1, zip1
     check(read(card, "start.elf") == release_files("v1.0.0")["start.elf"], "kept firmware unchanged")
 
 
+def without_manifest(zpath, out):
+    """A copy of a release zip without its manifest, like releases made before
+    the updater."""
+    with zipfile.ZipFile(zpath) as src, zipfile.ZipFile(out, "w") as dst:
+        for info in src.infolist():
+            if info.filename != "bmc64-manifest.txt":
+                dst.writestr(info, src.read(info))
+    return out
+
+
+def test_older_release(exe, work, stage0, zip0, stage1):
+    print("older release without a manifest (from before the updater)")
+    legacy = without_manifest(zip0, os.path.join(work, "legacy-v1.0.0.zip"))
+    card = os.path.join(work, "card4")
+    install_fresh(card, stage1)   # v1.1.0: its manifest's history knows v1.0.0
+    drop_zip(card, legacy)
+    rc, out = cli(exe, card, "plan", "1.1.0", "kernel8-32.img")
+    plan = parse_plan(out)
+    check(plan.get("target") == "v1.0.0" and plan.get("legacy") == 1 and
+          plan.get("direction") == 1, "older release recognised from the card's manifest")
+    check(plan["items"].get("kernel7.img", {}).get("status") == "update" and
+          "C64/new.vkm" not in plan["items"], "older release is planned like a downgrade")
+    rc, out = cli(exe, card, "apply", "1.1.0", "kernel8-32.img")
+    check(parse_plan(out).get("apply") == 0, "older release applies")
+    old = release_files("v1.0.0")
+    check(read(card, "kernel7.img") == old["kernel7.img"] and
+          read(card, "C64/rpi_pos.vkm") == old["C64/rpi_pos.vkm"], "older release installed")
+    check(b"target v1.1.0" in read(card, "bmc64-manifest.txt"),
+          "the card keeps its manifest (the older release has none)")
+    report = read(card, "backup/v1.1.0/update-report.txt").decode()
+    check("before the updater" in report, "report says the updater can't be used again")
+
+    install_fresh(card, stage1)
+    os.remove(os.path.join(card, "bmc64-manifest.txt"))
+    drop_zip(card, legacy)
+    rc, out = cli(exe, card, "plan", "1.1.0", "kernel8-32.img")
+    check(rc == 1 and "card has no" in out, "without the card's manifest it is refused")
+
+    tampered = os.path.join(work, "legacy-tampered.zip")
+    with zipfile.ZipFile(legacy) as src, zipfile.ZipFile(tampered, "w") as dst:
+        for info in src.infolist():
+            data = src.read(info)
+            if info.filename == "kernel8-32.img":
+                data = bytes([data[0] ^ 1]) + data[1:]   # same size, other bytes
+            dst.writestr(info, data)
+    install_fresh(card, stage1)
+    drop_zip(card, tampered)
+    before = tree(card)
+    rc, out = cli(exe, card, "apply", "1.1.0", "kernel8-32.img")
+    check(rc == 1 and "damaged" in out and tree(card) == before,
+          "a changed file in an older release stops the update, card unchanged")
+
+    missing = os.path.join(work, "legacy-missing.zip")
+    with zipfile.ZipFile(legacy) as src, zipfile.ZipFile(missing, "w") as dst:
+        for info in src.infolist():
+            if info.filename != "README.md":
+                dst.writestr(info, src.read(info))
+    install_fresh(card, stage1)
+    drop_zip(card, missing)
+    rc, out = cli(exe, card, "plan", "1.1.0", "kernel8-32.img")
+    check(rc == 1 and "doesn't match" in out, "an incomplete older release is refused")
+
+
 def test_bad_packages(exe, work, hist, stage0):
     print("bad packages")
     card = os.path.join(work, "card3")
@@ -386,7 +450,8 @@ def test_bad_packages(exe, work, hist, stage0):
     install_fresh(card, stage0)
     drop_zip(card, nomanifest)
     rc, out = cli(exe, card, "plan", "1.0.0", "kernel8-32.img")
-    check(rc == 1 and "bmc64-manifest.txt" in out, "zip without a manifest is refused")
+    check(rc == 1 and "bmc64-manifest.txt" in out,
+          "a zip without a manifest that the card doesn't know is refused")
 
     _, missing = make_package(work, "v1.1.0", hist,
                               tamper=lambda s: os.remove(os.path.join(s, "kernel7.img")))
@@ -457,6 +522,19 @@ def test_real_release(exe, work, cache):
     check(same, "card matches v5.1.10 after the update")
     print("  applied in %.1f s on this PC (with sanitizers)" % (time.time() - start))
 
+    print("real release: official v5.1.9 zip (no manifest) as a downgrade")
+    drop_zip(card, old)
+    rc, out = cli(exe, card, "plan", "5.1.11", "kernel8-32.img")
+    plan = parse_plan(out)
+    check(plan.get("target") == "v5.1.9" and plan.get("legacy") == 1,
+          "official v5.1.9 zip recognised from the card's manifest")
+    rc, out = cli(exe, card, "apply", "5.1.11", "kernel8-32.img")
+    check(parse_plan(out).get("apply") == 0, "official v5.1.9 zip applies")
+    with zipfile.ZipFile(old) as zf:
+        same = all(read(card, i.filename) == zf.read(i) for i in zf.infolist()
+                   if not i.is_dir())
+    check(same, "card matches v5.1.9 after the downgrade")
+
 
 def find_node():
     node = shutil.which("node")
@@ -496,6 +574,7 @@ def main():
         test_inflate(exe, work)
         hist, stage0, zip0, stage1, zip1 = test_update(exe, work)
         test_second_update_and_downgrade(exe, work, hist, stage0, zip0, stage1, zip1)
+        test_older_release(exe, work, stage0, zip0, stage1)
         test_bad_packages(exe, work, hist, stage0)
         test_web(work, zip1)
         if opts.cache:

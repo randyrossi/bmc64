@@ -58,6 +58,12 @@ The Pi also reads the card's copy of `bmc64-manifest.txt` (from the version
 that is installed) and adds it to the history. That is what lets a downgrade
 recognise the newer release's untouched files.
 
+Release zips from before the updater have no manifest. For those the Pi uses
+the card's copy alone: it finds the release whose files match the zip's names
+and sizes, confirms it with the SHA-256 of a kernel, and installs it with that
+release's records as the target. So the history must keep every release,
+including ones no longer on GitHub.
+
 ## Commands
 
 Run from the repository root. `--history` defaults to

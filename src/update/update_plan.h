@@ -34,6 +34,8 @@ typedef struct {
   char running[32];      // "5.1.10"
   char target[32];       // "v5.1.11"
   int direction;         // < 0 update, 0 same version, > 0 downgrade
+  int legacy;            // a release from before the updater (no manifest in
+                         // the zip): once installed, the updater is gone
 } up_plan;
 
 // Called while card files are being checked.
@@ -42,6 +44,8 @@ typedef void (*up_progress_fn)(void *ctx, const char *name, int done,
 
 // Loads the zip's manifest, then the card's copy of the installed one, which
 // adds the history a downgrade needs to recognise the newer release's files.
+// A zip without a manifest (a release from before the updater) is recognised
+// from the card's copy instead, which lists every earlier release.
 // Returns 0 on success; err explains a failure in a sentence for the user.
 int up_load_manifests(uz_zip *z, um_manifest *m, char *err, unsigned errlen);
 

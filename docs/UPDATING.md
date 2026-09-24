@@ -3,10 +3,9 @@
 BMC64 can update itself from a release zip. It never checks for, downloads
 or installs anything on its own: you start every update.
 
-Updating needs a BMC64 version that includes the updater, and a release zip
-made since the updater was added (it contains a `bmc64-manifest.txt`). Older
-versions are installed by hand, as described in
-[INSTALLATION.md](INSTALLATION.md).
+Updating needs a BMC64 version that includes the updater. It can install any
+official release zip, including releases from before the updater (see
+[Older versions](#older-versions)).
 
 ## Two ways to start an update
 
@@ -57,6 +56,21 @@ Then choose:
 
 Your own files (`settings*.txt`, `vice.ini`, `wpa_supplicant.conf`, ROMs,
 disks, tapes, snapshots, ...) are never touched.
+
+## Older versions
+
+Release zips from before the updater have no `bmc64-manifest.txt`. BMC64
+recognises them from the card's own `bmc64-manifest.txt`, which lists every
+earlier release, so you can go back to any official release the same way:
+download it from the [GitHub releases page](https://github.com/randyrossi/bmc64/releases)
+and use it as `bmc64-update.zip`. The card needs its `bmc64-manifest.txt`,
+which every install or update with the updater puts there.
+
+These versions don't include the updater, so after installing one you can't
+use the updater again: to update, copy a newer release to the card by hand, as
+described in [INSTALLATION.md](INSTALLATION.md). The Web UI warns about this
+when you drop such a zip and after it is uploaded, and the update view asks
+you to **Continue** before it lists the files.
 
 ## Backups
 

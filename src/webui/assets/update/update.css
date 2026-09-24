@@ -33,6 +33,7 @@
 .up-step.fail .up-note { color: var(--red); }
 
 .up-waiting { border-color: var(--pink); }
+.msg.up-warn { color: var(--amber); }
 .up-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
 
 .up-report {

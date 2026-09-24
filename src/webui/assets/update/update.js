@@ -13,14 +13,15 @@ import { sha256Hex } from "./sha256.js";
 import { readZipDirectory, readEntry } from "./zip.js";
 import {
   RELEASES_URL, MANIFEST, UPDATE_PATH, compareVersions, latestReleases,
-  zipAsset, findOfficial, parseManifest, checkPackage,
+  zipAsset, findOfficial, parseManifest, checkPackage, checkOlderPackage,
+  olderReleaseWarning,
 } from "./logic.js";
 
 let root;
 let vol = "SD";
 let installed = "";
 let releasesPromise = null;
-let pending = null;   // { file, target, direction } once a zip passed the checks
+let pending = null;   // { file, target, direction, older } once a zip passed the checks
 
 const el = (id) => root.querySelector("#" + id);
 
@@ -142,16 +143,26 @@ async function checkFile(file) {
     s.ok();
   } catch (err) { s.fail(err.message); return; }
 
+  // A zip without a manifest is a release from before the updater: BMC64
+  // recognises it from the card's own manifest. Its version comes from GitHub.
+  let older = false;
   s = step("Update package");
   try {
     const entry = entries.find((e) => e.name.toLowerCase() === MANIFEST);
-    if (!entry) {
-      throw new Error("It has no " + MANIFEST + ". Only releases made since the updater was " +
-                      "added can be installed this way.");
+    if (entry) {
+      manifest = parseManifest(new TextDecoder().decode(await readEntry(bytes, entry)));
+      info = checkPackage(entries, manifest);
+      s.ok("BMC64 " + info.target + ", " + manifest.files.size + " files");
+    } else {
+      info = checkOlderPackage(entries);
+      older = true;
+      const root = (await api.listDir("/")).entries || [];
+      if (!root.some((e) => !e.dir && e.name.toLowerCase() === MANIFEST)) {
+        throw new Error("it is a release from before the updater, which BMC64 recognises " +
+                        "from the card's " + MANIFEST + ", and the card has none");
+      }
+      s.ok("a release from before the updater");
     }
-    manifest = parseManifest(new TextDecoder().decode(await readEntry(bytes, entry)));
-    info = checkPackage(entries, manifest);
-    s.ok("BMC64 " + info.target + ", " + manifest.files.size + " files");
   } catch (err) { s.fail(err.message); return; }
 
   s = step("Official release");
@@ -160,7 +171,9 @@ async function checkFile(file) {
     const sha = await sha256Hex(bytes, (f) => { s.note(Math.round(f * 100) + "%"); });
     const match = findOfficial(releases, sha);
     if (!match) throw new Error("it doesn't match any official BMC64 release on GitHub");
-    if (match.release.tag_name !== info.target) {
+    if (older) {
+      info.target = match.release.tag_name;
+    } else if (match.release.tag_name !== info.target) {
       throw new Error("it is " + match.release.tag_name + " on GitHub but says " + info.target);
     }
     s.ok("matches " + match.release.tag_name + (match.release.prerelease ? " (pre-release)" : "") +
@@ -190,15 +203,22 @@ async function checkFile(file) {
     s.ok();
   } catch (err) { s.fail(err.message); return; }
 
-  pending = { file, target: info.target, direction };
+  pending = { file, target: info.target, direction, older };
+  if (older) {
+    el("up-msg").className = "msg up-warn";
+    el("up-msg").textContent = olderReleaseWarning(info.target);
+  }
   el("up-go").textContent = direction < 0 ? "Upload downgrade to BMC64" : "Upload to BMC64";
   el("up-go").hidden = false;
 }
 
 async function uploadPending() {
   if (!pending) return;
-  const { file, target, direction } = pending;
-  if (direction < 0 && !confirm("Install the older version " + target + "?")) return;
+  const { file, target, direction, older } = pending;
+  if (direction < 0 && !confirm("Install the older version " + target + "?" +
+                                (older ? "\n\n" + olderReleaseWarning(target) : ""))) {
+    return;
+  }
   el("up-go").hidden = true;
   const msg = el("up-msg");
   msg.className = "msg";
@@ -211,6 +231,10 @@ async function uploadPending() {
     const zip = (data.entries || []).find((e) => e.name.toLowerCase() === "bmc64-update.zip");
     if (!zip || zip.size !== file.size) throw new Error("the file on the card has the wrong size");
     msg.textContent = target + " is on the card. It is installed on the next boot.";
+    if (older) {
+      msg.className = "msg up-warn";
+      msg.textContent += " " + olderReleaseWarning(target);
+    }
     pending = null;
     showCardState();
   } catch (err) {

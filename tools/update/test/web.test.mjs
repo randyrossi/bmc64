@@ -75,6 +75,16 @@ if (zipPath) {
   try { logic.checkPackage(missing, manifest); } catch (err) { threw = err.message; }
   check(/kernel7\.img/.test(threw), "a missing file is reported");
 
+  const older = entries.filter((e) => e.name !== logic.MANIFEST);
+  check(logic.checkOlderPackage(older).unpackedSize === info.unpackedSize,
+        "an older release (no manifest) passes its checks");
+  let notRelease = "";
+  try { logic.checkOlderPackage(older.filter((e) => e.name !== "start.elf")); }
+  catch (err) { notRelease = err.message; }
+  check(/start\.elf/.test(notRelease), "a zip that isn't a release is refused");
+  check(/before the updater/.test(logic.olderReleaseWarning("v5.0.3")) &&
+        /v5\.0\.3/.test(logic.olderReleaseWarning("v5.0.3")), "older-release warning text");
+
   let bad = "";
   try { logic.parseManifest("format 2\ntarget v1\n"); } catch (err) { bad = err.message; }
   check(/format/.test(bad), "unknown manifest format is refused");

@@ -76,6 +76,24 @@ export function parseManifest(text) {
   return { target, files };
 }
 
+// A release from before the updater has no manifest. BMC64 recognises it from
+// the card's own bmc64-manifest.txt; here it only has to look like a release.
+// Returns { unpackedSize }.
+export function checkOlderPackage(entries) {
+  const names = new Set(entries.filter((e) => !e.isDir).map((e) => e.name.toLowerCase()));
+  for (const f of CORE_FILES) {
+    if (!names.has(f)) throw new Error("This is not a BMC64 release zip (no " + f + ").");
+  }
+  if (entries.some((e) => e.flags & 1)) throw new Error("Encrypted zips are not supported.");
+  return { unpackedSize: entries.reduce((n, e) => n + (e.isDir ? 0 : e.size), 0) };
+}
+
+// The warning for a release from before the updater.
+export function olderReleaseWarning(tag) {
+  return tag + " was released before the updater. After installing it you won't be able " +
+    "to use the updater; to update again, copy a newer release to the card by hand.";
+}
+
 // Checks the zip's directory against its manifest. Throws an Error with a
 // message for the user; returns { target, unpackedSize }.
 export function checkPackage(entries, manifest) {

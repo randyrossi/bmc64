@@ -88,8 +88,8 @@ int main(int argc, char **argv) {
         }
       }
     }
-    printf("target %s direction %d up_to_date %d\n", p.target, p.direction,
-           p.up_to_date);
+    printf("target %s direction %d up_to_date %d legacy %d\n", p.target,
+           p.direction, p.up_to_date, p.legacy);
     for (int i = 0; i < p.count; i++) {
       const up_item *it = &p.items[i];
       printf("item %s %s %s %d %d %s\n", group_names[it->group],

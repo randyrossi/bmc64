@@ -325,6 +325,11 @@ static void write_report(const up_plan *p, const char *bdir, const char *kdir,
   text_add(t, "BMC64 update report\n\nFrom: v%s\nTo:   %s\n\n",
            p->running[0] == 'v' ? p->running + 1 : p->running, p->target);
   text_add(t, "Original files are saved in %s (kernels in %s).\n", bdir, kdir);
+  if (p->legacy) {
+    text_add(t, "%s was released before the updater, so the updater can't be "
+                "used again. To update, copy a newer release to the card by "
+                "hand.\n", p->target);
+  }
   for (int section = 0; section < 3; section++) {
     int any = 0;
     for (int i = 0; i < p->count; i++) {
@@ -369,8 +374,10 @@ int ua_apply(const up_plan *p, uz_zip *z, ua_progress_fn progress, void *ctx,
   ua_backup_dir(p->running, bdir, sizeof(bdir));
   snprintf(kdir, sizeof(kdir), "%s/kernel%s", UA_BACKUP, bdir + strlen(UA_BACKUP));
 
+  // A release from before the updater has no manifest; the card keeps its
+  // own copy (the updater is not used again after such a release).
   int manifest_index = uz_find(z, UM_NAME);
-  if (manifest_index < 0) {
+  if (manifest_index < 0 && !p->legacy) {
     snprintf(err, errlen, "no " UM_NAME " in the zip");
     return -1;
   }
@@ -382,7 +389,7 @@ int ua_apply(const up_plan *p, uz_zip *z, ua_progress_fn progress, void *ctx,
     return -1;
   }
   int nchosen = 0;
-  uint64_t bytes = z->entries[manifest_index].usize;
+  uint64_t bytes = manifest_index < 0 ? 0 : z->entries[manifest_index].usize;
   for (int i = 0; i < p->count; i++) {
     if (p->items[i].replace) {
       chosen[nchosen++] = &p->items[i];
@@ -421,7 +428,8 @@ int ua_apply(const up_plan *p, uz_zip *z, ua_progress_fn progress, void *ctx,
       return -1;
     }
   }
-  if (extract_to(z, manifest_index, UA_TMP "/" UM_NAME, NULL) != 0) {
+  if (manifest_index >= 0 &&
+      extract_to(z, manifest_index, UA_TMP "/" UM_NAME, NULL) != 0) {
     snprintf(err, errlen, UM_NAME " is damaged in the zip");
     ua_rmtree(UA_TMP);
     free(chosen);
@@ -499,10 +507,12 @@ int ua_apply(const up_plan *p, uz_zip *z, ua_progress_fn progress, void *ctx,
     }
     text_add(&j, "move %s/%s %s\n", UA_TMP, it->rec->path, path);
   }
-  if (exists("/" UM_NAME)) {
-    text_add(&j, "move /" UM_NAME " %s/" UM_NAME "\n", bdir);
+  if (manifest_index >= 0) {
+    if (exists("/" UM_NAME)) {
+      text_add(&j, "move /" UM_NAME " %s/" UM_NAME "\n", bdir);
+    }
+    text_add(&j, "move " UA_TMP "/" UM_NAME " /" UM_NAME "\n");
   }
-  text_add(&j, "move " UA_TMP "/" UM_NAME " /" UM_NAME "\n");
   text_add(&j, "move " UA_TMP "/update-report.txt %s/update-report.txt\n", bdir);
   text_add(&j, "move " UA_TMP "/RESTORE.txt %s/RESTORE.txt\n", bdir);
   text_add(&j, "move " UA_TMP "/" UA_MARKER " %s/" UA_MARKER "\n", bdir);
