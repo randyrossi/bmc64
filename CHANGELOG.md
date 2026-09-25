@@ -1,3 +1,7 @@
+## 5.1.12 (pre-release)
+  * Update to circle-stdlib v21 (inc Circle Step 51.1.1) and remove the manual Circle 51.1 checkout
+  * Fix 1551 read errors on Plus4 after changing drive type at runtime #73
+
 ## 5.1.11 (pre-release)
   * Add an updater: put a release zip on the card as `bmc64-update.zip` and choose which files to replace at boot. See [UPDATING.md](docs/UPDATING.md)
   * Web UI: Update page shows the latest GitHub releases and allows upload of a zip file which is saved as `bmc64-update.zip`, ready for update on next boot.

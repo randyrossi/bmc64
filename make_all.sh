@@ -5,8 +5,6 @@
 SRC_DIR=`pwd`
 CIRCLE_HOME="$SRC_DIR/third_party/circle-stdlib"
 COMMON_HOME="$SRC_DIR/third_party/common"
-CIRCLE_RELEASE_TAG="Step51.1"
-CIRCLE_RELEASE_COMMIT="c776b3c614c2cc66ee4007a761d8786b9402db44"
 
 # Check for the Arm GNU Toolchain and install it if necessary
 if ! source "$SRC_DIR/get_gnu_toolchain.sh"
@@ -167,17 +165,6 @@ cd $SRC_DIR/third_party/circle-stdlib/libs/circle
 git reset --hard HEAD
 git clean -fd
 
-# circle-stdlib's submodule pointer references an older Circle than the release
-# BMC64 is built against, so check that release out if it is not already.
-if [ "$(git rev-parse HEAD)" != "$CIRCLE_RELEASE_COMMIT" ]
-then
-       echo "Checking out Circle $CIRCLE_RELEASE_TAG"
-       git fetch --no-tags origin tag "$CIRCLE_RELEASE_TAG" || exit 1
-       git checkout -q "$CIRCLE_RELEASE_COMMIT" || exit 1
-fi
-# Keep the WLAN addon's hostap at the commit this Circle release references.
-git submodule update --init addon/wlan/hostap || exit 1
-
 circle_patch_file="$SRC_DIR/src/patches/circle_patch.diff"
 if [ "$BOARD" = "pi0" ]
 then
@@ -200,7 +187,8 @@ then
        fi
 fi
 
-apply_patch_file "$SRC_DIR/src/patches/circle_8bitdo_gamepad_patch.diff"
+# Add Circle patches here if needed
+
 if [ "$IO_STATS" = "1" ]
 then
        apply_patch_file "$SRC_DIR/src/patches/circle_diskio_stats_patch.diff"

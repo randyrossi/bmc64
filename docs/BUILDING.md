@@ -163,11 +163,12 @@ For more on the package and its manifest see [tools/update/GEN_UPDATE_MANIFEST.m
 ----
 ## Dependencies
 
-These are the git hashes for the repos under circle-stdlib this project is known to work with. BMC64 follows the submodule revisions pinned by circle-stdlib, except for Circle itself: circle-stdlib pins an older Circle, so `make_all.sh` checks out Circle 51.1 (and the WLAN addon's hostap commit it references) before applying patches. If the patches don't apply successfully, reset the other repos using "git reset HASH --hard" in the following directories:
+These are the git hashes for the repos under circle-stdlib this project is known to work with. BMC64 follows the submodule revisions pinned by circle-stdlib. After pulling a BMC64 update that moves circle-stdlib, run `git submodule update --init --recursive`. If the patches don't apply successfully, reset the repos using "git reset HASH --hard" in the following directories:
 
-* circle-stdlib: a4fbed9b369e8285e4a12b2bb0588511210b83a6 (v20)
-* libs/circle: c776b3c614c2cc66ee4007a761d8786b9402db44 (tag Step51.1, checked out by `make_all.sh`)
-* libs/circle-newlib: 30d0f0a1b2105870f037b3c0449319e7d0a314ea
+* circle-stdlib: 4fbab627a86f2bfba1697c1b4d3f310c48be27aa (v21)
+* libs/circle: 7a81e1b480fe7d19fc1fc695b89bff0a0848f44b (tag Step51.1.1)
+* libs/circle/addon/wlan/hostap: 966cab4a3bc958e7ff304a46d91a6172a1bfecaf
+* libs/circle-newlib: 5b9ff4ce0c0b2ba6e16a206de4d6891ad6efae22
 * libs/mbedtls: 2fc8413bfcb51354c8e679141b17b3f1a5942561 (v2.28.10)
 
 ----
