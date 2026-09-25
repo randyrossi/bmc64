@@ -116,8 +116,8 @@ fi
 
 # The updater's manifest: this release's files plus every earlier release's
 # (release/manifest_history.txt). This runs on the build machine, so it does
-# not record the release; run "gen_update_manifest.py seed" after it is
-# published to add it to the history and the release list.
+# not record the release; the next make_all.sh after it is published does
+# ("gen_update_manifest.py sync").
 if ! python3 "$SCRIPT_DIR/tools/update/gen_update_manifest.py" release \
     --stage stage_dir --version "$VERSION"
 then

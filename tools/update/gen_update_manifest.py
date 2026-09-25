@@ -9,8 +9,10 @@ this script.
 
   seed     Hash every published release zip of the official repository and
            add it to the history file (release/manifest_history.txt) and the
-           release list (release/release_digests.txt). Run it after each
-           release is published.
+           release list (release/release_digests.txt).
+  sync     Add any published release missing from the release list, and
+           update stable/pre-release flags that changed on GitHub. make_all.sh
+           runs it on every build; it does nothing when all is up to date.
   add      Add local release zips (bmc64-vX.Y.Z.files.zip) to the history and
            the release list, for releases no longer on GitHub.
   webui    Write the Web UI's list of official releases
@@ -38,8 +40,10 @@ import hashlib
 import json
 import os
 import re
-import subprocess
+import shutil
 import sys
+import tempfile
+import urllib.request
 import zipfile
 
 MANIFEST_NAME = "bmc64-manifest.txt"
@@ -145,9 +149,58 @@ def write_manifest(path, target, records):
             f.write("%s %s %d %s\n" % r)
 
 
-def gh_json(args):
-    out = subprocess.run(["gh"] + args, check=True, capture_output=True, text=True).stdout
-    return json.loads(out)
+def github_get(url):
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "bmc64-gen-update-manifest",
+        "Accept": "application/vnd.github+json",
+    })
+    return urllib.request.urlopen(req, timeout=60)
+
+
+def published_releases(repo):
+    """The repository's non-draft releases that have a .files.zip, from
+    GitHub's public API (no login needed), as a list of
+    (tag, kind, asset name, download URL, sha256 or None)."""
+    releases = []
+    page = 1
+    while True:
+        with github_get("https://api.github.com/repos/%s/releases?per_page=100&page=%d"
+                        % (repo, page)) as resp:
+            batch = json.load(resp)
+        if not batch:
+            break
+        releases += batch
+        page += 1
+    found = []
+    for rel in releases:
+        if rel.get("draft"):
+            continue
+        tag = rel["tag_name"]
+        assets = [a for a in rel.get("assets", []) if a["name"].endswith(".files.zip")]
+        if not assets:
+            print("skip %s: no .files.zip asset" % tag)
+            continue
+        asset = assets[0]
+        digest = asset.get("digest") or ""
+        found.append((tag, "pre" if rel.get("prerelease") else "stable", asset["name"],
+                      asset["browser_download_url"],
+                      digest[7:] if digest.startswith("sha256:") else None))
+    return found
+
+
+def download_release(name, url, sha256, folder):
+    """Downloads a release zip into folder unless it is already there, and
+    checks it against GitHub's SHA-256. Returns the zip's SHA-256."""
+    local = os.path.join(folder, name)
+    if not os.path.exists(local):
+        print("download %s" % name)
+        with github_get(url) as resp, open(local + ".part", "wb") as f:
+            shutil.copyfileobj(resp, f)
+        os.replace(local + ".part", local)
+    local_sha = sha256_file(local)
+    if sha256 and local_sha != sha256:
+        sys.exit("%s does not match GitHub's digest" % local)
+    return local, local_sha
 
 
 def merge_history(path, new):
@@ -239,36 +292,54 @@ def cmd_webui(opts):
 
 
 def cmd_seed(opts):
-    releases = gh_json(["api", "--paginate", "--slurp",
-                        "repos/%s/releases?per_page=100" % opts.repo])
-    releases = [r for page in releases for r in page]
     os.makedirs(opts.cache, exist_ok=True)
     records = []
     digests = {}
-    for rel in releases:
-        if rel.get("draft"):
-            continue
-        tag = rel["tag_name"]
-        assets = [a for a in rel.get("assets", []) if a["name"].endswith(".files.zip")]
-        if not assets:
-            print("skip %s: no .files.zip asset" % tag)
-            continue
-        asset = assets[0]
-        local = os.path.join(opts.cache, asset["name"])
-        if not os.path.exists(local):
-            print("download %s" % asset["name"])
-            subprocess.run(["gh", "release", "download", tag, "-R", opts.repo,
-                            "-p", asset["name"], "-D", opts.cache, "--clobber"],
-                           check=True)
-        digest = asset.get("digest") or ""
-        local_sha = sha256_file(local)
-        if digest.startswith("sha256:") and local_sha != digest[7:]:
-            sys.exit("%s does not match GitHub's digest" % local)
+    for tag, kind, name, url, sha256 in published_releases(opts.repo):
+        local, local_sha = download_release(name, url, sha256, opts.cache)
         records += records_from_zip(local, tag)
-        digests[tag] = ("pre" if rel.get("prerelease") else "stable", local_sha)
+        digests[tag] = (kind, local_sha)
     merge_history(opts.history, records)
     merge_digests(opts.digests, digests)
     write_webui_list(opts.digests, opts.webui_js)
+
+
+def cmd_sync(opts):
+    try:
+        releases = published_releases(opts.repo)
+    except OSError as e:
+        # Offline, or GitHub unreachable: build with the committed files.
+        print("Could not check GitHub for new releases (%s); "
+              "the release history may be out of date." % e)
+        return
+    known = read_digests(opts.digests)
+    missing = []
+    digests = {}
+    for tag, kind, name, url, sha256 in releases:
+        old = known.get(tag)
+        if old is None:
+            missing.append((tag, kind, name, url, sha256))
+        elif sha256 and old[1] != sha256:
+            # A published release should never change; don't record it.
+            sys.exit("%s on GitHub does not match release/release_digests.txt "
+                     "(%s, recorded %s). Check why before changing the history."
+                     % (tag, sha256[:12], old[1][:12]))
+        elif old[0] != kind:
+            digests[tag] = (kind, old[1])
+    if not missing and not digests:
+        print("Release history is up to date (%d releases on GitHub)." % len(releases))
+        return
+    records = []
+    with tempfile.TemporaryDirectory() as tmp:
+        for tag, kind, name, url, sha256 in missing:
+            local, local_sha = download_release(name, url, sha256, tmp)
+            records += records_from_zip(local, tag)
+            digests[tag] = (kind, local_sha)
+    merge_history(opts.history, records)
+    merge_digests(opts.digests, digests)
+    write_webui_list(opts.digests, opts.webui_js)
+    print("The release history changed. Commit %s, %s and %s." % tuple(
+        os.path.relpath(p, REPO_ROOT) for p in (opts.history, opts.digests, opts.webui_js)))
 
 
 def cmd_add(opts):
@@ -386,6 +457,13 @@ def main():
     s.add_argument("--digests", default=DEFAULT_DIGESTS)
     s.add_argument("--webui-js", default=DEFAULT_WEBUI_JS)
     s.set_defaults(func=cmd_seed)
+
+    y = sub.add_parser("sync")
+    y.add_argument("--repo", default=DEFAULT_REPO)
+    y.add_argument("--history", default=DEFAULT_HISTORY)
+    y.add_argument("--digests", default=DEFAULT_DIGESTS)
+    y.add_argument("--webui-js", default=DEFAULT_WEBUI_JS)
+    y.set_defaults(func=cmd_sync)
 
     a = sub.add_parser("add")
     a.add_argument("zips", nargs="+", help="release zips, bmc64-vX.Y.Z.files.zip")

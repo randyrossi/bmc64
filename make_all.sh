@@ -13,6 +13,19 @@ then
        exit 1
 fi
 
+# Record any newly published release in the updater's history, so it is
+# committed before the next release is built (see
+# tools/update/GEN_UPDATE_MANIFEST.md). Skipped on GitHub's release build,
+# which must use exactly the committed history.
+if [ -z "$GITHUB_ACTIONS" ]
+then
+       if ! python3 "$SRC_DIR/tools/update/gen_update_manifest.py" sync
+       then
+              echo "Updating the release history failed." >&2
+              exit 1
+       fi
+fi
+
 # The web UI's JavaScript tests must pass. Checked here so a failure shows up
 # before the long build; the Makefile checks again before embedding the assets.
 if ! node "$SRC_DIR/tools/webui_test/run_tests.mjs"

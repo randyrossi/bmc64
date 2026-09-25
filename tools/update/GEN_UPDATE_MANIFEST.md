@@ -90,11 +90,30 @@ requires `bmc64-manifest.txt`.
 
 ### After publishing a release
 
-Run `seed` (below) and commit `release/manifest_history.txt`,
+The next build after a release is published records it: `make_all.sh` runs
+`sync` (below), which updates `release/manifest_history.txt`,
 `release/release_digests.txt` and `src/webui/assets/update/official_releases.js`.
-Until then the next release doesn't know about this one. Do it before
-deleting any pre-releases from GitHub; if one is already gone, use `add` with
-its zip.
+Commit them. Until then the next release doesn't know about this one. Build
+before deleting any pre-releases from GitHub. If one is already gone, use
+`add` with its zip.
+
+### sync: new releases on GitHub
+
+```sh
+python3 tools/update/gen_update_manifest.py sync
+```
+
+This checks GitHub's public API (no login needed) for published releases
+missing from the release list, downloads only those zips, and adds them to
+the history and the release list. It also updates a release's `stable` or
+`pre` flag if that changed on GitHub. When all is up to date it changes
+nothing. `make_all.sh` runs it on every build, except on GitHub's release
+build, which uses the committed files.
+
+If GitHub can't be reached it warns and changes nothing, so the build
+carries on. It stops with an error, changing nothing, if a release zip on
+GitHub differs from the one recorded: a published release should never
+change.
 
 ### add: releases from local zips
 
@@ -116,8 +135,7 @@ python3 tools/update/gen_update_manifest.py seed --cache ~/bmc64-release-zips
 ```
 
 This downloads every non-draft release's `.files.zip` from
-`randyrossi/bmc64` (with `gh`, into `--cache`, skipping files already
-there). It checks each zip against GitHub's SHA-256, adds it to the
+`randyrossi/bmc64` (into `--cache`, skipping files already there). It checks each zip against GitHub's SHA-256, adds it to the
 history and the release list (with GitHub's stable or pre-release flag), and
 regenerates `official_releases.js`. `--repo` picks another repository.
 
@@ -155,9 +173,9 @@ zip at the root of a card and boot.
 The Web UI's Update page accepts such a zip after warning that it doesn't
 match a release on GitHub; you can also copy it to the card yourself.
 
-## How `add` and `seed` change the history and the release list
+## How `add`, `seed` and `sync` change the history and the release list
 
-Both merge by whole version, and neither ever removes one. Releases can
+All three merge by whole version, and none ever removes one. Releases can
 disappear from GitHub, but the files they put on SD cards are still out
 there, and a deleted pre-release is still an official release. For each
 version they report one of:
