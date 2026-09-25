@@ -357,7 +357,7 @@ int drive_set_disk_drive_type(unsigned int type, struct drive_context_s *drv)
 
     drivesync_clock_frequency(type, drive);
 
-    rotation_init(0, dnr);
+    rotation_init((drive->clock_frequency == 2) ? 1 : 0, dnr);
     drive->type = type;
     if (type == DRIVE_TYPE_2000 || type == DRIVE_TYPE_4000 ||
         type == DRIVE_TYPE_CMDHD) {
