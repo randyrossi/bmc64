@@ -1,39 +1,25 @@
-## 5.1.12 (pre-release)
-  * Update to circle-stdlib v21 (inc Circle Step 51.1.1) and remove the manual Circle 51.1 checkout
+## 5.2.0
+  * Make the BMC64 Updater configurable for forked repositories 
+  * Update to circle-stdlib v21 (inc Circle Step 51.1.1) and remove patches now included
   * Fix 1551 read errors on Plus4 after changing drive type at runtime #73
-
-## 5.1.11 (pre-release)
   * Add an updater: put a release zip on the card as `bmc64-update.zip` and choose which files to replace at boot. See [UPDATING.md](docs/UPDATING.md)
   * Web UI: Update page shows the latest GitHub releases and allows upload of a zip file which is saved as `bmc64-update.zip`, ready for update on next boot.
-
-## 5.1.10 (pre-release)
-  * Update to Circle Step 51.1 and remove patches now included
-
-## 5.1.9 (pre-release)
   * Web UI: create and edit C64 BASIC programs in the file browser, saved as `.prg` files
   * Web UI: add automated tests to build runs and development web server launches
-
-## 5.1.8 (pre-release)
   * Web UI: uploaded files keep their original modified date and time instead of the upload time
   * Web UI: Add file editor for direct editing of configuration files
   * Web UI: file browser can create folders and rename files and folders
   * Web UI: folders can be deleted together with their contents
   * Web UI: `.crt` cartridge images can be attached from the file browser (Attach cartridge)
   * Web UI: convert action buttons to Actions menu (Autostart, Edit, Download, Rename, Delete)
-
-## 5.1.7 (pre-release)
   * Fix Pi Zero playing no sound for volume register digis (e.g. Impossible Mission speech) with the 8580 SID model
   * Re-enable saving VFP registers in interrupt handlers on Pi Zero, prevents sound error
   * Add an "Optimising BMC64" documentation with information on how to reduce load: [OPTIMISING.md](docs/OPTIMISING.md)
   * Add an optional (`--perf-stats`) argument to build a performance diagnostic version of BMC64
   * Flush disk writes to SD card to prevent data loss. 
     * Can be disabled by setting "Prefs->Flush disk writes" to "On demand" if performance is impacted.
-
-## 5.1.6 (pre-release)
   * Fix unable to save settings after multiple hard resets #373
   * Web UI: click a disk image, tape or PRG in the file browser to autostart it
-
-## 5.1.5 (pre-release)
   * Include BMC64 version in logging
   * Update Raspberry Pi firmware files to the latests version
   * Add CapsLock latching for USB keyboards, and setting CapsLock LEDs
@@ -43,13 +29,9 @@
   * Harden USB connection alive and tolerate some USB transaction errors without dropping the connection.
   * Fix persistent USB errors on full-speed devices behind the onboard hub by widening periodic split-transaction timing to 2 microframes #235
   * Add rpi_keyrah_v3_pos.vkm mapping file for Keyrah V3 support in C64 machine.
-
-## 5.1.4 (pre-release)
   * Fix forced start sector partition mounting #369 
     * Refactor of original 4.2 fix 410cd4f
-
-## 5.1.2 (pre-release)
-  * Add an optional LAN web UI 
+  * Add an optional LAN Web UI 
     * Active only for C64/C128 machines (default off)
     * Reports SoC temperature and Raspberry Pi under-voltage / throttling state
     * SD card file browser: download, upload, and delete files 
@@ -57,8 +39,6 @@
     * Optional PIN ("Web UI PIN" in the same menu) gates access via HTTP Basic Auth
     * Details: [docs/WEBUI.md](docs/WEBUI.md)
   * Switch modem default to D700 to stop cartridge clashes
-
-## 5.1.1 (pre-release)
   * Remove FD2000 and FD4000 from bootstat code for VIC20 and PLUS/4
   * Expose VICE REU settings for C128 machine
   * Support large CMD HD and IDE64 hard-disk images that do not fit in RAM
@@ -134,7 +114,6 @@
     * Including 8BitDo Ultimate 2C 2.4G, 8BitDo Pro 3 controller, 8BitDo M30 2.4G controller.
   * Fixed disconnect quirks with 8bitdo controller docks when putting the controller back into the dock and picking it up again.
   * 8BitDo USB Wireless Adapter 2 was already supported as an emulated Xbox360 controller, this allows connection of almost any 8bitdo bluetooth controller.
-  * Added usbpowerdelay=1000 to the default cmdline.txt configuration, to stop 8bitdo controllers connecting as Switch Pro controller on startup
   * Refactor and clean up of all Circle patches
   * Added support for the Xbox 360 PC Wireless Gaming Receiver (and clones)
   * Fixed 8BitDo Retro Keyboards being incorrectly detected as USB mice
