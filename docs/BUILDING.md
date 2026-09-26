@@ -130,13 +130,54 @@ If you build with the individual scripts rather than `build_sdcard.sh`, pass `--
 
 #### General performance metrics
 
-For a build with the frame-budget and audio performance instrumentation, pass `--perf-stats`. Every 10 seconds it prints one `[perf] {...}` line to `/bmc64.log` and the serial console (enable one of them in `cmdline.txt`) describing how much of each frame's time budget the emulator used, missed vertical blanks and the audio buffer level. It is compiled out entirely by default and can be combined with `--io-stats`. As with `--io-stats`, pass `--perf-stats` to **both** `make_all.sh` and `make_machines.sh` when using the individual scripts; `make_all.sh` is also what passes it into the VICE build. See [tools/perftest/README.md](../tools/perftest/README.md) for how to capture and read the report. `build_sdcard.sh --perf-stats` also copies the test workloads from `tools/perftest/` into `prg/` on the staged card. It currently instruments the VICE-based machines only, not Plus4Emu.
+For a build with the frame-budget and audio performance instrumentation, pass `--perf-stats`. Every 10 seconds it prints one `[perf] {...}` line to `/bmc64.log` and the serial console (enable one of them in `cmdline.txt`) describing how much of each frame's time budget the emulator used, missed vertical blanks and the audio buffer level. It is compiled out entirely by default and can be combined with `--io-stats`. As with `--io-stats`, pass `--perf-stats` to **both** `make_all.sh` and `make_machines.sh` when using the individual scripts. `make_all.sh` is also what passes it into the VICE build. See [tools/perftest/README.md](../tools/perftest/README.md) for how to capture and read the report. `build_sdcard.sh --perf-stats` also copies the test workloads from `tools/perftest/` into `prg/` on the staged card. It currently instruments the VICE-based machines only, not Plus4Emu.
+
+## Configuring The Updater
+
+The updater (see [UPDATING.md](UPDATING.md)) is configured by *updater.cfg* in the top folder of the repository. It has two settings:
+
+        # on, kernel_only or off
+        updater = on
+
+        # GitHub repository (owner/name) whose releases are official
+        repo = randyrossi/bmc64
+
+| `updater` | What is built |
+| --- | --- |
+| `on` | The updater in BMC64 and the Web UI's Update page. |
+| `kernel_only` | The updater in BMC64 only, with no Update page: an update is just a release zip copied to the card as `bmc64-update.zip`, which BMC64 applies at boot. |
+| `off` | No updater: `src/update/` and zlib are left out and `bmc64-update.zip` is ignored. There is no Update page, releases get no `bmc64-manifest.txt`, and `make_all.sh` skips the updater's tests and its check for new releases. |
+
+**To remove the updater completely, delete *updater.cfg*.** No file is the same as `updater = off`.
+
+`repo` is used for two things:
+
+- the Update page (`on` only) lists and trusts that repository's releases
+- the release tools (`tools/update/gen_update_manifest.py`, which `make_all.sh` runs) find its newly published releases and add them to the release history that every release's `bmc64-manifest.txt` is made from.
+
+With `kernel_only`, BMC64 itself never uses `repo`. The kernel only reads the `bmc64-update.zip` on the card. Leave `repo` empty to never contact GitHub: the Update page then shows no release list and recognises only the releases built into it, and the release history has to be kept by hand (`gen_update_manifest.py add`). It isn't used with `off`.
+
+The settings are read by `tools/update/updater_cfg.py`, which the `Makefile`, the build and release scripts, `tools/gen_webui_assets.py` and `tools/update/gen_update_manifest.py` all use. The Web UI gets them in `src/webui/assets/update/settings.js`, which the build writes, don't edit it. Run a build after changing *updater.cfg*.
+
+### For forks
+
+If you publish your own releases, set `repo` to your own GitHub repository, so the Update page offers and recognises your releases instead of these ones. Then:
+
+1. Make your releases official in the Web UI: empty `release/release_digests.txt` (so these releases are no longer recognised as official in your builds) and run:
+
+        python3 tools/update/gen_update_manifest.py seed --cache /path/to/zip/cache
+
+   This adds your published releases to `release/release_digests.txt` and `release/manifest_history.txt`, and regenerates `src/webui/assets/update/official_releases.js`.
+2. Keep `release/manifest_history.txt` as it is. It lists the files of these releases, which lets the updater recognise untouched files on cards that came from them.
+3. Commit the changed files. After that, each build's `make_all.sh` adds your newly published releases (`gen_update_manifest.py sync`).
+
+See [tools/update/GEN_UPDATE_MANIFEST.md](../tools/update/GEN_UPDATE_MANIFEST.md) for the release history and the manifest.
 
 ## Building A Test Update
 
 Use *build_test_update.sh* when you change the updater, anything it installs, or the release layout, and want to try an update on a real Pi before making a release. See [UPDATING.md](UPDATING.md) for how updates work for users.
 
-It turns the card staged by `build_sdcard.sh` into an update package, `build/bmc64-update.zip`, the same way a release zip is made (with a `bmc64-manifest.txt`). The zip holds exactly what is in `build/sdcard`; neither that folder nor `release/manifest_history.txt` is changed.
+It turns the card staged by `build_sdcard.sh` into an update package, `build/bmc64-update.zip`, the same way a release zip is made (with a `bmc64-manifest.txt`). The zip holds exactly what is in `build/sdcard`, neither that folder nor `release/manifest_history.txt` is changed.
 
         cd /path/to/store/files/bmc64/
         ./build_sdcard.sh pi3
@@ -148,8 +189,8 @@ To test it:
 
 1. The Pi must run a build that includes the updater: copy a staged `build/sdcard` to the SD card first.
 2. Make the card differ from the package, or there is nothing to update. For example, edit `C64/rpi_pos.vkm` (shows as *Changed*), delete `C64/rpi_sym.vkm` (shows as *New*), or build again after changing the code so the kernels differ (shows as *Update*).
-3. Copy `build/bmc64-update.zip` to the top folder of the SD card, keeping the name, with a card reader or the Web UI's *Files* or *Update* page. The *Update* page warns that a test package doesn't match a release on GitHub; upload it with *Upload anyway, at my own risk*.
-4. Boot. The update view lists the files that differ; after applying, `/backup/v<old version>/update-report.txt` lists what was replaced, added and kept.
+3. Copy `build/bmc64-update.zip` to the top folder of the SD card, keeping the name, with a card reader or the Web UI's *Files* or *Update* page. The *Update* page warns that a test package doesn't match a release on GitHub, upload it with *Upload anyway, at my own risk*.
+4. Boot. The update view lists the files that differ after applying, `/backup/v<old version>/update-report.txt` lists what was replaced, added and kept.
 
 For more on the package and its manifest see [tools/update/GEN_UPDATE_MANIFEST.md](../tools/update/GEN_UPDATE_MANIFEST.md).
 

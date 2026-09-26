@@ -40,6 +40,13 @@ check(hit && hit.release.tag_name === "v5.1.3" && hit.release.prerelease === tru
       "a release deleted from GitHub is found in the built-in list");
 check(logic.findKnownRelease(known, "cd".repeat(32)) === null, "unknown zip not in the list");
 
+// The settings generated from updater.cfg, and the release list address.
+const { UPDATER } = await import(new URL("settings.js", base));
+check(typeof UPDATER.enabled === "boolean" && typeof UPDATER.repo === "string",
+      "settings.js is well-formed");
+check(logic.releasesUrl("someone/bmc64") ===
+      "https://api.github.com/repos/someone/bmc64/releases?per_page=100", "releases address");
+
 // Version compare.
 check(logic.compareVersions("v5.1.10", "5.1.9") > 0, "5.1.10 > 5.1.9");
 check(logic.compareVersions("5.1.0", "v5.1.0") === 0, "5.1.0 == v5.1.0");

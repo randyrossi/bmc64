@@ -12,11 +12,12 @@ import { fmtBytes } from "../js/util.js";
 import { sha256Hex } from "./sha256.js";
 import { readZipDirectory, readEntry } from "./zip.js";
 import {
-  RELEASES_URL, MANIFEST, UPDATE_PATH, compareVersions, latestReleases,
+  releasesUrl, MANIFEST, UPDATE_PATH, compareVersions, latestReleases,
   zipAsset, findOfficial, parseManifest, checkPackage, checkOlderPackage,
   olderReleaseWarning, UNOFFICIAL_WARNING, findKnownRelease,
 } from "./logic.js";
 import { OFFICIAL_RELEASES } from "./official_releases.js";
+import { UPDATER } from "./settings.js";
 
 let root;
 let vol = "SD";
@@ -37,7 +38,11 @@ function h(tag, props = {}, ...children) {
 // GitHub's release list, fetched once per page load.
 function getReleases() {
   if (!releasesPromise) {
-    releasesPromise = fetch(RELEASES_URL, { cache: "no-store" }).then((r) => {
+    if (!UPDATER.repo) {
+      // No repo in updater.cfg: this build never contacts GitHub.
+      return Promise.reject(new Error("this build doesn't check GitHub"));
+    }
+    releasesPromise = fetch(releasesUrl(UPDATER.repo), { cache: "no-store" }).then((r) => {
       if (!r.ok) throw new Error("GitHub answered " + r.status);
       return r.json();
     });
@@ -74,6 +79,11 @@ function releaseRow(label, release) {
 
 async function showReleases() {
   const box = el("up-releases");
+  if (!UPDATER.repo) {
+    box.replaceChildren(h("p", { className: "fb-note",
+      textContent: "This build doesn't check GitHub for releases. Drop a release zip below." }));
+    return;
+  }
   box.textContent = "Checking GitHub…";
   try {
     const { stable, pre } = latestReleases(await getReleases());

@@ -14,11 +14,12 @@ import { initDashboard, refreshVolumes, startStatusPolling } from "./dashboard.j
 import { initFiles, loadDir, filesHash, pathFromHash } from "./files.js";
 import { initEditor } from "./editor.js";
 import { initUpdate, showUpdate } from "../update/update.js";
+import { UPDATER } from "../update/settings.js";
 
 function route() {
   const hash = location.hash || "#/dashboard";
   const view = hash.startsWith("#/files") ? "files"
-             : hash.startsWith("#/update") ? "update" : "dashboard";
+             : hash.startsWith("#/update") && UPDATER.enabled ? "update" : "dashboard";
   $("view-dashboard").hidden = view !== "dashboard";
   $("view-files").hidden = view !== "files";
   $("view-update").hidden = view !== "update";
@@ -39,7 +40,12 @@ function route() {
 initDashboard();
 initFiles();
 initEditor();
-initUpdate($("view-update"));
+// The Update page is left out when updater.cfg turns it off.
+if (UPDATER.enabled) {
+  initUpdate($("view-update"));
+} else {
+  document.querySelector('.nav-item[data-view="update"]').remove();
+}
 
 $("qa-files").addEventListener("click", () => { location.hash = filesHash("/"); });
 window.addEventListener("hashchange", route);

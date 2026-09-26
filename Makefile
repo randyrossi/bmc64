@@ -23,12 +23,22 @@ EXTRAINCLUDE += $(APP_INCLUDES)
 
 OBJS	= src/main.o src/kernel.o src/new_io.o src/io_stats_bench.o src/perf_stats_env.o src/vicesound.o src/vicesoundbasedevice.o src/bmcmodem.o \
 		  src/viceoptions.o src/viceapp.o src/vice_network.o src/network_time_sync.o src/fbl.o src/crt_pi_idx.o src/crt_pi_rgb.o \
-		  src/webui/webui.o src/webui/webui_http.o src/webui/webui_fs.o src/webui/webui_assets.o \
-		  src/update/update_boot.o src/update/update_view.o src/update/update_host.o \
+		  src/webui/webui.o src/webui/webui_http.o src/webui/webui_fs.o src/webui/webui_assets.o
+
+# The updater (src/update/, with zlib) is built in when updater.cfg says
+# updater = on or kernel_only; otherwise a stub whose two entry points do
+# nothing.
+UPDATER_KERNEL := $(shell python3 tools/update/updater_cfg.py kernel 2>/dev/null)
+UPDATER_OBJS = src/update/update_boot.o src/update/update_view.o src/update/update_host.o \
 		  src/update/update_apply.o src/update/update_plan.o src/update/update_manifest.o \
 		  src/update/update_zip.o src/update/update_hash.o src/update/update_fs_fatfs.o \
 		  third_party/zlib/inflate.o third_party/zlib/inftrees.o third_party/zlib/inffast.o \
 		  third_party/zlib/zutil.o third_party/zlib/crc32.o third_party/zlib/adler32.o
+ifeq ($(UPDATER_KERNEL),yes)
+OBJS	+= $(UPDATER_OBJS)
+else
+OBJS	+= src/update/update_stub.o
+endif
 
 ifeq ($(MACHINE_CLASS),RASPI_PLUS4EMU)
 OBJS	+= src/plus4emulatorcore.o
@@ -75,7 +85,7 @@ $(WEBUI_TEST_STAMP): $(WEBUI_TEST_SRCS)
 	@node tools/webui_test/run_tests.mjs
 	@mkdir -p $(dir $@) && touch $@
 
-src/webui/webui_assets.c: $(WEBUI_ASSET_SRCS) tools/gen_webui_assets.py release/release_digests.txt | $(WEBUI_TEST_STAMP)
+src/webui/webui_assets.c: $(WEBUI_ASSET_SRCS) tools/gen_webui_assets.py release/release_digests.txt $(wildcard updater.cfg) | $(WEBUI_TEST_STAMP)
 ifeq ($(PYTHON),)
 	@echo "  WARN  no python interpreter found; using committed $@"
 	@touch $@
@@ -96,6 +106,7 @@ EXTRACLEAN += $(OBJS) $(DEPS)
 # MACHINE_CLASS is unset. Remove both mutually exclusive core objects so a
 # previous machine build cannot link against a differently configured Circle.
 EXTRACLEAN += src/plus4emulatorcore.o src/viceemulatorcore.o
+EXTRACLEAN += $(UPDATER_OBJS) src/update/update_stub.o
 
 $(TARGET).img: $(FILTERED_CIRCLE_NEWLIB)
 

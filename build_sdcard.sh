@@ -282,15 +282,18 @@ do
     fi
 done
 
-# The updater's manifest, as a release has (see make_release.sh). The
-# history file is left alone; only make_release.sh adds a version to it.
-SOURCE_VERSION=$(sed -n 's/^#define VERSION_STRING "\(.*\)"$/\1/p' "$SRC_DIR/third_party/common/menu.c")
-if [ -z "$SOURCE_VERSION" ] ||
-   ! python3 "$SRC_DIR/tools/update/gen_update_manifest.py" release \
-       --stage "$STAGING_DIR" --version "v${SOURCE_VERSION// /-}"
+# The updater's manifest, as a release has (see make_release.sh), when the
+# updater is built in (updater.cfg). The history file is left alone.
+if [ "$(python3 "$SRC_DIR/tools/update/updater_cfg.py" kernel)" = "yes" ]
 then
-    echo "Could not create bmc64-manifest.txt" >&2
-    exit 1
+    SOURCE_VERSION=$(sed -n 's/^#define VERSION_STRING "\(.*\)"$/\1/p' "$SRC_DIR/third_party/common/menu.c")
+    if [ -z "$SOURCE_VERSION" ] ||
+       ! python3 "$SRC_DIR/tools/update/gen_update_manifest.py" release \
+           --stage "$STAGING_DIR" --version "v${SOURCE_VERSION// /-}"
+    then
+        echo "Could not create bmc64-manifest.txt" >&2
+        exit 1
+    fi
 fi
 
 if [ -z "$MACHINE" ]

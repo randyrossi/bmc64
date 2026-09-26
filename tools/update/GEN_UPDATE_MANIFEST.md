@@ -70,7 +70,9 @@ including ones no longer on GitHub.
 ## Commands
 
 Run from the repository root. `--history` defaults to
-`release/manifest_history.txt`.
+`release/manifest_history.txt`, and `--repo` to the `repo` setting in
+`updater.cfg` (see "Configuring The Updater" in
+[docs/BUILDING.md](../../docs/BUILDING.md)).
 
 ### release: used by make_release.sh
 
@@ -134,8 +136,8 @@ already has in the list; a new one is a pre-release unless you give
 python3 tools/update/gen_update_manifest.py seed --cache ~/bmc64-release-zips
 ```
 
-This downloads every non-draft release's `.files.zip` from
-`randyrossi/bmc64` (into `--cache`, skipping files already there). It checks each zip against GitHub's SHA-256, adds it to the
+This downloads every non-draft release's `.files.zip` from the repository in
+`updater.cfg` (into `--cache`, skipping files already there). It checks each zip against GitHub's SHA-256, adds it to the
 history and the release list (with GitHub's stable or pre-release flag), and
 regenerates `official_releases.js`. `--repo` picks another repository.
 

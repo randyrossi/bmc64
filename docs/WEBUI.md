@@ -232,6 +232,7 @@ source files live in `src/webui/assets/`:
 | `update/update.js` | the Update page: release list, zip checks, upload of `bmc64-update.zip` |
 | `update/logic.js` | the Update page's checks (version compare, manifest, package); tested in `tools/update/test/` |
 | `update/zip.js`, `update/sha256.js` | zip reading and SHA-256 for the Update page |
+| `update/settings.js` | the updater settings (Update page on or off, GitHub repository); **generated** from `updater.cfg` by `tools/update/updater_cfg.py` (the build and the preview server refresh it) |
 | `update/official_releases.js` | the official releases known to this build; **generated** from `release/release_digests.txt` by `tools/update/gen_update_manifest.py` (the build refreshes it) |
 | `update/update.css` | the Update page's styles |
 | `logo.png`, `title.png` | images |
