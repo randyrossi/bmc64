@@ -586,6 +586,10 @@ def main():
         sys.exit("asset directory not found: " + ASSET_DIR)
 
     print("BMC64 web UI dev server")
+    # The Update page's settings come from updater.cfg, as in a build.
+    subprocess.run([sys.executable,
+                    os.path.join(REPO_ROOT, "tools", "update", "updater_cfg.py"),
+                    "webui-js"], check=True)
     if not ARGS.skip_tests and not run_webui_tests():
         sys.exit(1)
 

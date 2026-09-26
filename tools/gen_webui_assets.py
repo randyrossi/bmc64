@@ -50,10 +50,13 @@ def main():
     if not os.path.isdir(ASSET_DIR):
         sys.exit("asset directory not found: " + ASSET_DIR)
 
-    # The Update page's built-in list of official releases is generated from
-    # release/release_digests.txt; refresh it before embedding the assets.
-    subprocess.run([sys.executable,
-                    os.path.join(REPO_ROOT, "tools", "update", "gen_update_manifest.py"),
+    # The Update page's settings (from updater.cfg) and its built-in list of
+    # official releases (from release/release_digests.txt) are generated;
+    # refresh them before embedding the assets.
+    update_tools = os.path.join(REPO_ROOT, "tools", "update")
+    subprocess.run([sys.executable, os.path.join(update_tools, "updater_cfg.py"),
+                    "webui-js"], check=True)
+    subprocess.run([sys.executable, os.path.join(update_tools, "gen_update_manifest.py"),
                     "webui"], check=True)
 
     files = list_assets()

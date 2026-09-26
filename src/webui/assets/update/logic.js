@@ -2,8 +2,9 @@
 // Node (tools/update/test/). The Pi repeats its own checks when it applies
 // the update (src/update/).
 
-export const REPO = "randyrossi/bmc64";
-export const RELEASES_URL = "https://api.github.com/repos/" + REPO + "/releases?per_page=100";
+// GitHub's release list for a repository ("owner/name", from updater.cfg).
+export const releasesUrl = (repo) =>
+  "https://api.github.com/repos/" + repo + "/releases?per_page=100";
 export const MANIFEST = "bmc64-manifest.txt";
 export const UPDATE_PATH = "/bmc64-update.zip";
 

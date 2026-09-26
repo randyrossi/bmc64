@@ -12,9 +12,6 @@ REQUIRED_FILES=(
     "machines.txt"
     "start.elf"
 
-    # Updater manifest (tools/update/gen_update_manifest.py)
-    "bmc64-manifest.txt"
-
     # Wi-Fi firmware and redistribution licences
     "firmware/brcmfmac43430-sdio.bin"
     "firmware/brcmfmac43430-sdio.clm_blob"
@@ -184,6 +181,12 @@ case "$PI_MODEL" in
 esac
 
 missing_entries=0
+
+# The updater's manifest, when the updater is built in (updater.cfg).
+if [ "$(python3 "$(dirname "$0")/tools/update/updater_cfg.py" kernel)" = "yes" ]
+then
+    REQUIRED_FILES+=("bmc64-manifest.txt")
+fi
 
 for required_file in "${REQUIRED_FILES[@]}"
 do

@@ -118,8 +118,10 @@ fi
 # (release/manifest_history.txt). This runs on the build machine, so it does
 # not record the release; the next make_all.sh after it is published does
 # ("gen_update_manifest.py sync").
-if ! python3 "$SCRIPT_DIR/tools/update/gen_update_manifest.py" release \
-    --stage stage_dir --version "$VERSION"
+# Only when the updater is built in (updater.cfg).
+if [ "$(python3 "$SCRIPT_DIR/tools/update/updater_cfg.py" kernel)" = "yes" ] &&
+   ! python3 "$SCRIPT_DIR/tools/update/gen_update_manifest.py" release \
+       --stage stage_dir --version "$VERSION"
 then
 exit 1
 fi

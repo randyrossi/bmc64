@@ -560,6 +560,44 @@ def test_release_list(work, zip0, zip1):
           '{ tag: "v1.1.0", prerelease: true' in text, "official_releases.js matches the list")
 
 
+def test_updater_cfg(work):
+    print("updater.cfg settings")
+    tool = os.path.join(REPO, "tools", "update", "updater_cfg.py")
+    cfg = os.path.join(work, "updater.cfg")
+
+    def get(key, text):
+        if text is None:
+            if os.path.exists(cfg):
+                os.remove(cfg)
+        else:
+            open(cfg, "w").write(text)
+        r = subprocess.run([sys.executable, tool, key, "--cfg", cfg],
+                           capture_output=True, text=True)
+        return r.stdout.strip() if r.returncode == 0 else "error: " + r.stderr.strip()
+
+    on = "# comment\nupdater = on\nrepo = someone/bmc64\n"
+    check(get("kernel", on) == "yes" and
+          get("webui", on) == "yes" and get("repo", on) == "someone/bmc64", "updater = on")
+    kernel_only = "updater = kernel_only\n"
+    check(get("kernel", kernel_only) == "yes" and get("webui", kernel_only) == "no",
+          "updater = kernel_only builds the updater without the Update page")
+    off = "updater = off\n"
+    check(get("kernel", off) == "no" and get("webui", off) == "no", "updater = off")
+    check(get("kernel", None) == "no" and get("webui", None) == "no" and
+          get("repo", None) == "", "no updater.cfg is the same as off")
+    check(get("repo", "updater = on\nrepo =\n") == "", "repo can be left empty")
+    check(get("kernel", "updater = maybe\n").startswith("error"), "a bad updater value is refused")
+    check(get("kernel", "kernel = yes\n").startswith("error"), "an unknown setting is refused")
+    check(get("repo", "repo = just-a-name\n").startswith("error"), "repo must be owner/name")
+
+    js = os.path.join(work, "settings.js")
+    open(cfg, "w").write("updater = kernel_only\nrepo = someone/bmc64\n")
+    subprocess.run([sys.executable, tool, "webui-js", "--cfg", cfg, "--out", js],
+                   check=True, capture_output=True)
+    check('export const UPDATER = { enabled: false, repo: "someone/bmc64" };' in open(js).read(),
+          "settings.js carries the Update page switch and the repo")
+
+
 def find_node():
     node = shutil.which("node")
     if node:
@@ -598,6 +636,7 @@ def main():
         test_inflate(exe, work)
         hist, stage0, zip0, stage1, zip1 = test_update(exe, work)
         test_second_update_and_downgrade(exe, work, hist, stage0, zip0, stage1, zip1)
+        test_updater_cfg(work)
         test_release_list(work, zip0, zip1)
         test_older_release(exe, work, stage0, zip0, stage1)
         test_bad_packages(exe, work, hist, stage0)

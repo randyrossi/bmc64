@@ -17,7 +17,8 @@ fi
 # committed before the next release is built (see
 # tools/update/GEN_UPDATE_MANIFEST.md). Skipped on GitHub's release build,
 # which must use exactly the committed history.
-if [ -z "$GITHUB_ACTIONS" ]
+UPDATER_KERNEL=$(python3 "$SRC_DIR/tools/update/updater_cfg.py" kernel)
+if [ -z "$GITHUB_ACTIONS" ] && [ "$UPDATER_KERNEL" = "yes" ]
 then
        if ! python3 "$SRC_DIR/tools/update/gen_update_manifest.py" sync
        then
@@ -34,9 +35,10 @@ then
        exit 1
 fi
 
-# The updater's tests (src/update/ and the Web UI's Update page) must pass.
-# They build the updater with the PC's C compiler and run it on test cards.
-if ! python3 "$SRC_DIR/tools/update/test/run_tests.py"
+# The updater's tests (src/update/ and the Web UI's Update page) must pass,
+# when the updater is built in (updater.cfg). They build the updater with the
+# PC's C compiler and run it on test cards.
+if [ "$UPDATER_KERNEL" = "yes" ] && ! python3 "$SRC_DIR/tools/update/test/run_tests.py"
 then
        echo "Updater tests failed." >&2
        exit 1

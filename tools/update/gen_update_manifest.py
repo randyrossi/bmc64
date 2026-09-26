@@ -48,7 +48,11 @@ import zipfile
 
 MANIFEST_NAME = "bmc64-manifest.txt"
 FORMAT = 1
-DEFAULT_REPO = "randyrossi/bmc64"
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import updater_cfg  # noqa: E402
+
+# The repository whose releases are official: updater.cfg's repo.
+DEFAULT_REPO = updater_cfg.load()["repo"]
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
 DEFAULT_HISTORY = os.path.join(REPO_ROOT, "release", "manifest_history.txt")
@@ -292,6 +296,8 @@ def cmd_webui(opts):
 
 
 def cmd_seed(opts):
+    if not opts.repo:
+        sys.exit("No repo in updater.cfg; give one with --repo owner/name.")
     os.makedirs(opts.cache, exist_ok=True)
     records = []
     digests = {}
@@ -305,6 +311,9 @@ def cmd_seed(opts):
 
 
 def cmd_sync(opts):
+    if not opts.repo:
+        print("No repo in updater.cfg; not checking GitHub for new releases.")
+        return
     try:
         releases = published_releases(opts.repo)
     except OSError as e:
