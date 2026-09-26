@@ -172,7 +172,7 @@ int SanitizeRelPath(const char *in, char *out, unsigned out_size) {
     if (seg_len == 0) {
       continue;
     }
-    if (seg_len > 200) {
+    if (seg_len > FF_MAX_LFN) {
       return -1;
     }
     if (seg_len == 1 && seg[0] == '.') {
@@ -217,7 +217,7 @@ int ResolveTarget(CSocket *socket, const char *query, char *clean,
                   unsigned clean_size, char *fatpath, unsigned fatpath_size,
                   boolean require_file) {
   char vol[24];
-  char raw[512];
+  char raw[560];
   const char *disk = circle_get_disk_volume();
 
   if (!webhttp::QueryParam(query, "vol", vol, sizeof(vol)) || vol[0] == '\0') {
@@ -229,6 +229,11 @@ int ResolveTarget(CSocket *socket, const char *query, char *clean,
     return -1;
   }
   if (!webhttp::QueryParam(query, "path", raw, sizeof(raw))) {
+    if (query != 0 &&
+        (strncmp(query, "path=", 5) == 0 || strstr(query, "&path=") != 0)) {
+      webhttp::SendText(socket, 400, "Bad Request", "path too long or invalid\n");
+      return -1;
+    }
     strcpy(raw, "/");
   }
   if (SanitizeRelPath(raw, clean, clean_size) != 0) {
@@ -342,7 +347,7 @@ boolean IsProtectedPath(const char *clean) {
 // creating a different name than the one asked for.
 boolean IsValidEntryName(const char *name) {
   size_t length = strlen(name);
-  if (length == 0 || length > 200) return FALSE;
+  if (length == 0 || length > FF_MAX_LFN) return FALSE;
   if (name[0] == ' ' || name[length - 1] == ' ' || name[length - 1] == '.') {
     return FALSE;
   }
@@ -529,7 +534,7 @@ void WebUiFsVolumes(CSocket *socket) {
 }
 
 void WebUiFsList(CSocket *socket, const char *query) {
-  char clean[512];
+  char clean[560];
   char fatpath[560];
   if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
                     sizeof(fatpath), FALSE) != 0) {
@@ -589,7 +594,7 @@ void WebUiFsList(CSocket *socket, const char *query) {
     }
     // Entries the web UI won't rename or delete, so the page can leave
     // those actions out of the row's menu.
-    char child[512];
+    char child[560];
     if ((unsigned) snprintf(child, sizeof(child), "%s%s%s", clean,
                             at_root ? "" : "/", info.fname) < sizeof(child) &&
         IsProtectedPath(child)) {
@@ -609,7 +614,7 @@ void WebUiFsList(CSocket *socket, const char *query) {
 }
 
 void WebUiFsDownload(CSocket *socket, const char *query) {
-  char clean[512];
+  char clean[560];
   char fatpath[560];
   if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
                     sizeof(fatpath), TRUE) != 0) {
@@ -678,7 +683,7 @@ void WebUiFsDownload(CSocket *socket, const char *query) {
 void WebUiFsUpload(CSocket *socket, const char *query,
                    const unsigned char *prefetched, unsigned prefetched_len,
                    long content_length) {
-  char clean[512];
+  char clean[560];
   char fatpath[560];
   if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
                     sizeof(fatpath), TRUE) != 0) {
@@ -754,7 +759,7 @@ void WebUiFsUpload(CSocket *socket, const char *query,
 void WebUiFsSave(CSocket *socket, const char *query,
                  const unsigned char *prefetched, unsigned prefetched_len,
                  long content_length) {
-  char clean[512];
+  char clean[560];
   char fatpath[560];
   if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
                     sizeof(fatpath), TRUE) != 0) {
@@ -831,7 +836,7 @@ void WebUiFsSave(CSocket *socket, const char *query,
 }
 
 void WebUiFsDelete(CSocket *socket, const char *query) {
-  char clean[512];
+  char clean[560];
   char fatpath[560];
   if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
                     sizeof(fatpath), TRUE) != 0) {
@@ -889,7 +894,7 @@ void WebUiFsDelete(CSocket *socket, const char *query) {
 // ---- new folder / rename ----
 
 void WebUiFsMkdir(CSocket *socket, const char *query) {
-  char clean[512];
+  char clean[560];
   char fatpath[560];
   if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
                     sizeof(fatpath), TRUE) != 0) {
@@ -933,7 +938,7 @@ void WebUiFsMkdir(CSocket *socket, const char *query) {
 // POST /api/fs/rename?path=/dir/old&to=new: renames within the same folder,
 // so `to` is a bare name, never a path.
 void WebUiFsRename(CSocket *socket, const char *query) {
-  char clean[512];
+  char clean[560];
   char fatpath[560];
   if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
                     sizeof(fatpath), TRUE) != 0) {
@@ -948,7 +953,7 @@ void WebUiFsRename(CSocket *socket, const char *query) {
   }
 
   const char *old_name = strrchr(clean, '/') + 1;
-  char new_clean[512];
+  char new_clean[560];
   char new_fatpath[560];
   if ((unsigned) snprintf(new_clean, sizeof(new_clean), "%.*s/%s",
                           (int) (old_name - 1 - clean), clean,
@@ -1002,7 +1007,7 @@ void WebUiFsRename(CSocket *socket, const char *query) {
 // ---- autostart ----
 
 void WebUiFsAutostart(CSocket *socket, const char *query) {
-  char clean[512];
+  char clean[560];
   char fatpath[560];
   if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
                     sizeof(fatpath), TRUE) != 0) {

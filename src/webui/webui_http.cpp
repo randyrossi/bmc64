@@ -82,17 +82,21 @@ unsigned UrlDecode(char *dst, unsigned dst_size, const char *src) {
   if (dst_size == 0) {
     return 0;
   }
-  for (const char *p = src; *p != '\0' && out + 1 < dst_size; p++) {
+  for (const char *p = src; *p != '\0'; p++) {
+    char decoded;
     if (*p == '+') {
-      dst[out++] = ' ';
-    } else if (*p == '%' && HexValue(p[1]) >= 0 && HexValue(p[2]) >= 0) {
-      dst[out++] = (char) ((HexValue(p[1]) << 4) | HexValue(p[2]));
+      decoded = ' ';
+    } else if (*p == '%' && p[1] != '\0' && p[2] != '\0' &&
+               HexValue(p[1]) >= 0 && HexValue(p[2]) >= 0) {
+      decoded = (char) ((HexValue(p[1]) << 4) | HexValue(p[2]));
       p += 2;
     } else {
-      dst[out++] = *p;
+      decoded = *p;
     }
+    if (out + 1 < dst_size) dst[out] = decoded;
+    out++;
   }
-  dst[out] = '\0';
+  dst[out < dst_size ? out : dst_size - 1] = '\0';
   return out;
 }
 
@@ -108,15 +112,15 @@ boolean QueryParam(const char *query, const char *key,
     unsigned pair_len = amp != 0 ? (unsigned) (amp - p) : (unsigned) strlen(p);
     if (pair_len > key_len && p[key_len] == '=' &&
         strncmp(p, key, key_len) == 0) {
-      char raw[512];
+      char raw[2048];
       unsigned n = pair_len - key_len - 1;
       if (n >= sizeof(raw)) {
-        n = sizeof(raw) - 1;
+        return FALSE;
       }
       memcpy(raw, p + key_len + 1, n);
       raw[n] = '\0';
-      UrlDecode(out, out_size, raw);
-      return TRUE;
+      unsigned decoded_len = UrlDecode(out, out_size, raw);
+      return decoded_len < out_size && strlen(out) == decoded_len;
     }
     if (amp == 0) {
       break;

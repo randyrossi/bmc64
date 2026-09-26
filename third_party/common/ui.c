@@ -939,7 +939,7 @@ static struct menu_item *ui_new_item(struct menu_item *parent, const char *name,
   struct menu_item *new_item =
       (struct menu_item *)malloc(sizeof(struct menu_item));
   memset(new_item, 0, sizeof(struct menu_item));
-  strncpy(new_item->name, name, MAX_MENU_STR);
+  strncpy(new_item->name, name, MAX_MENU_STR - 1);
   new_item->id = id;
 
   // Inherit parent dimensions

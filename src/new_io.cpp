@@ -92,6 +92,7 @@ struct _CIRCLE_DIR {
    leave some headroom for safety */
 #define MAX_OPEN_FILES 32
 #define MAX_OPEN_DIRS 10
+#define MAX_CIRCLE_PATH 560
 
 /* Stride for reading a file into RAM in slurp_file(). Each SD transfer pays a
    large fixed cost (~200us on a Pi 3), so a big stride is ~6x faster than 1 KiB
@@ -183,14 +184,19 @@ static void logi(int i) {
 }
 
 struct CirclePath {
-   CirclePath(const char* p) {
+  CirclePath(const char* p) : valid(true) {
       path[0] = '\0';
 
       if (p == nullptr) {
+      valid = false;
          return;
       }
 
-      int len = strlen(p);
+    size_t len = strlen(p);
+    if (len >= sizeof(path)) {
+      valid = false;
+      return;
+    }
       if (len == 0) {
          return;
       }
@@ -210,6 +216,10 @@ struct CirclePath {
 
       // Handle ./ at start but we don't in the middle.
       if (len >= 2 && p[0] == '.' && p[1] == '/') {
+         if (strlen(path) + len - 2 >= sizeof(path)) {
+            valid = false;
+            return;
+         }
          strcat (path, p+2);
       } else {
          strcpy (path, p);
@@ -221,13 +231,14 @@ struct CirclePath {
       }
    }
 
-   char path[256];
+   char path[MAX_CIRCLE_PATH];
+   bool valid;
 };
 
 struct CircleFile {
   FIL file;
   int in_use;
-  char fname[256];
+  char fname[MAX_CIRCLE_PATH];
 
   char *contents; // bytes for file in memory
   int allocated; // total bytes allocated for in memory file
@@ -510,6 +521,10 @@ extern "C" int _open(char *file, int flags, int mode) {
 
   if (slot != -1) {
     CirclePath circlePath(file);
+    if (!circlePath.valid) {
+      errno = ENAMETOOLONG;
+      return -1;
+    }
     CircleFile &newFile = fileTab[slot];
 
     int result;
@@ -860,6 +875,10 @@ extern "C" int _fcntl(int fildes, int cmd, int arg) {
 
 extern "C" DIR *opendir(const char *name) {
   CirclePath circlePath(name); 
+  if (!circlePath.valid) {
+    errno = ENAMETOOLONG;
+    return nullptr;
+  }
   
   int const slotNum = FindFreeDirSlot();
   if (slotNum == -1) {
@@ -983,6 +1002,10 @@ extern "C" int closedir(DIR *dir) {
 extern "C" int _stat(const char *file, struct stat *st) {
   CirclePath circlePath(file);
   memset(st, 0, sizeof(struct stat));
+  if (!circlePath.valid) {
+    errno = ENAMETOOLONG;
+    return -1;
+  }
 
   // Fastfail or fastsucceed
   for (int i=0;i<g_bootStatNum;i++) {
@@ -1142,6 +1165,14 @@ extern "C" int chdir (const char *path)
   }
 
   CirclePath circlePath(path);
+  size_t path_len = strlen(circlePath.path);
+  size_t dir_len = strlen(currentDir);
+  int add_slash = dir_len == 0 || currentDir[dir_len - 1] != '/';
+  if (!circlePath.valid || (path[0] == '/' ? path_len :
+      dir_len + add_slash + path_len) >= sizeof(currentDir)) {
+     errno = ENAMETOOLONG;
+     return -1;
+  }
   if (path[0] == '/') {
      // Absolute
      strcpy(currentDir, circlePath.path);

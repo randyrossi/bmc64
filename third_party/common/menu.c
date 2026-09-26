@@ -61,7 +61,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "5.2.0"
+#define VERSION_STRING "5.2.1"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -422,7 +422,8 @@ static int usb2_mounted;
 static int usb3_mounted;
 
 // Temp storage for full path name concatenations.
-static char full_path_str[256];
+static char full_path_str[sizeof(current_volume_name) +
+                          sizeof(current_dir_names[0]) + MAX_STR_VAL_LEN + 1];
 
 // Keep track of last known position in the file list.
 static int current_dir_pos[NUM_DIR_TYPES];
@@ -541,14 +542,10 @@ static void show_wifi_connect_dialog(void) {
 }
 
 static char *fullpath(DirType dir_type, char *name) {
-  strcpy(full_path_str, current_volume_name);
-  strcat(full_path_str, current_dir_names[dir_type]);
-  // Put a trailing slash unless we are at the root
-  if (current_dir_names[dir_type][strlen(
-      current_dir_names[dir_type])-1] != '/'){
-    strcat(full_path_str, "/");
-  }
-  strcat(full_path_str, name);
+  const char *dir = current_dir_names[dir_type];
+  snprintf(full_path_str, sizeof(full_path_str), "%s%s%s%s",
+           current_volume_name, dir, dir[strlen(dir) - 1] == '/' ? "" : "/",
+           name);
   return full_path_str;
 }
 
@@ -2480,9 +2477,15 @@ static void enter_dir(struct menu_item *item) {
   int dir_index = menu_file_item_to_dir_index(item);
   if (dir_index < 0)
     return;
+  size_t dir_len = strlen(current_dir_names[dir_index]);
+  int add_slash = current_dir_names[dir_index][dir_len - 1] != '/';
+  if (dir_len + add_slash + strlen(item->str_value) >=
+      sizeof(current_dir_names[dir_index])) {
+    ui_error("Path too long");
+    return;
+  }
   // Append this item's value to current dir
-  if (current_dir_names[dir_index][strlen(current_dir_names[dir_index]) - 1] !=
-      '/') {
+  if (add_slash) {
     strcat(current_dir_names[dir_index], "/");
   }
   strcat(current_dir_names[dir_index], item->str_value);

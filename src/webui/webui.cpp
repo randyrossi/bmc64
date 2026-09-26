@@ -400,8 +400,8 @@ boolean HandleConnection(CSocket *socket) {
   long content_length = ParseContentLength(request);
 
   char method[8];
-  char target[512];
-  if (sscanf(request, "%7s %511s", method, target) != 2) {
+  char target[WEBUI_REQUEST_MAX];
+  if (sscanf(request, "%7s %4095s", method, target) != 2) {
     SendText(socket, 400, "Bad Request", "bad request line\n");
     return FALSE;
   }

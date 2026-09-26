@@ -1,3 +1,8 @@
+## 5.2.1 (pre-release)
+  * Fix long filenames crashing disk attach and autostart #386
+  * Support 255-byte names in the OSD and Web UI
+  * Prevent Web UI rename truncation
+
 ## 5.2.0
   * Make the BMC64 Updater configurable for forked repositories 
   * Update to circle-stdlib v21 (inc Circle Step 51.1.1) and remove patches now included

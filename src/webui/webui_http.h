@@ -39,12 +39,12 @@ void SendResponse(CSocket *socket, int status, const char *reason,
 void SendText(CSocket *socket, int status, const char *reason,
               const char *text);
 
-// Percent-decode src into dst (always NUL-terminated, truncated to fit).
-// Returns the decoded length.
+// Percent-decode src into dst (always NUL-terminated). Returns the full
+// decoded length, even if dst is too small to hold it.
 unsigned UrlDecode(char *dst, unsigned dst_size, const char *src);
 
 // Look up key in an "a=b&c=d" query string and percent-decode its value
-// into out. Returns TRUE when the key is present.
+// into out. Returns TRUE when the key is present and the value fits.
 boolean QueryParam(const char *query, const char *key,
                    char *out, unsigned out_size);
 
