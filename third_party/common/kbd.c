@@ -25,6 +25,7 @@
  */
 
 #include "kbd.h"
+#include "../../src/keyboard/keyboard_feature.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -39,6 +40,9 @@
 #include "menu_switch.h"
 #include "ui.h"
 
+void kbd_arch_init(void) {}
+
+#if !BMC64_NEW_KEYBOARD_INPUT
 #define NUM_KEY_COMBOS 8
 #define TICKS_PER_SECOND 1000000L
 
@@ -52,8 +56,6 @@ key_combo_state_t key_combo_states[NUM_KEY_COMBOS];
 
 extern void reboot(void);
 
-void kbd_arch_init(void) {}
-
 void kbd_set_hotkey_function(unsigned int slot, long key, int function) {
   if (slot >= NUM_KEY_COMBOS)
     return;
@@ -61,6 +63,7 @@ void kbd_set_hotkey_function(unsigned int slot, long key, int function) {
   key_combo_states[slot].invoked = 0;
   key_combo_states[slot].function = function;
 }
+#endif
 
 // Tests keyname var against given string
 #define KCMP(x) (strcmp(keyname, x) == 0)
@@ -289,6 +292,7 @@ const char *kbd_arch_keynum_to_keyname(signed long keynum) { return 0; }
 
 void kbd_initialize_numpad_joykeys(int *joykeys) {}
 
+#if !BMC64_NEW_KEYBOARD_INPUT
 // Return 1 if press is consumed
 static int handle_key_combo_press(long key) {
   int i;
@@ -492,3 +496,4 @@ void emu_key_released(long key) {
     handle_key_combo_function();
   }
 }
+#endif
