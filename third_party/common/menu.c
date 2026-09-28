@@ -25,6 +25,7 @@
  */
 
 #include "menu.h"
+#include "../../src/keyboard/keyboard_feature.h"
 
 #include <math.h>
 #include <assert.h>
@@ -150,6 +151,15 @@ struct menu_item *warp_item;
 struct menu_item *reset_confirm_item;
 struct menu_item *drive_flush_item;
 struct menu_item *gpio_config_item;
+#if BMC64_NEW_KEYBOARD_INPUT
+static struct menu_item *keyboard_preset_item;
+static struct menu_item *keyboard_backend_map_item;
+static int keyboard_active_preset;
+
+static void apply_keyboard_preset(void) {
+  emux_handle_menu_change(keyboard_preset_item);
+}
+#endif
 struct menu_item *active_display_item;
 static struct menu_item *network_device_item;
 static struct menu_item *network_status_item;
@@ -1438,6 +1448,12 @@ static int save_settings() {
   }
   fprintf(fp, "scaling_interp=%d\n", scaling_interp_item->value);
   fprintf(fp, "gpio_config=%d\n", gpio_config_item->choice_ints[gpio_config_item->value]);
+#if BMC64_NEW_KEYBOARD_INPUT
+  if (keyboard_preset_item != NULL) {
+    fprintf(fp, "keyboard_preset=%d\n", keyboard_preset_item->choice_ints[keyboard_preset_item->value]);
+    fprintf(fp, "keyboard_preset_format=2\n");
+  }
+#endif
   if (network_device_item != NULL) {
     fprintf(fp, "network_device=%d\n", network_device_item->value);
     saved_network_device = network_device_item->value;
@@ -1576,6 +1592,9 @@ static void ui_set_joy_devs() {
 static void load_settings() {
 
   int tmp_value;
+#if BMC64_NEW_KEYBOARD_INPUT
+  int keyboard_preset_format = 0;
+#endif
 
   emux_get_int(Setting_DriveSoundEmulation, &drive_sounds_item->value);
   emux_get_int(Setting_DriveSoundEmulationVolume, &drive_sounds_vol_item->value);
@@ -1630,8 +1649,14 @@ static void load_settings() {
     load_wifi_settings();
   }
 
-  if (fp == NULL)
+  if (fp == NULL) {
+#if BMC64_NEW_KEYBOARD_INPUT
+    if (keyboard_preset_item != NULL) {
+      apply_keyboard_preset();
+    }
+#endif
     return;
+  }
 
   char name_value[256];
   size_t len;
@@ -1755,6 +1780,15 @@ static void load_settings() {
 
       // Make sure pins are configured properly after load
       circle_reset_gpio(emu_get_gpio_config());
+#if BMC64_NEW_KEYBOARD_INPUT
+    } else if (keyboard_preset_item != NULL && strcmp(name, "keyboard_preset") == 0) {
+      int index = keyboard_preset_index(emux_machine_class, value);
+      if (index >= 0) {
+        keyboard_preset_item->value = index;
+      }
+    } else if (keyboard_preset_item != NULL && strcmp(name, "keyboard_preset_format") == 0) {
+      keyboard_preset_format = value;
+#endif
     } else if (network_device_item != NULL &&
                strcmp(name, "network_device") == 0) {
       if (value >= 0 && value < network_device_item->num_choices) {
@@ -1977,6 +2011,16 @@ static void load_settings() {
 
   update_wifi_menu_enabled();
   emux_load_settings_done();
+#if BMC64_NEW_KEYBOARD_INPUT
+  if (keyboard_preset_item != NULL) {
+    if (keyboard_preset_format < 2 &&
+        keyboard_preset_item->choice_ints[keyboard_preset_item->value] == KEYBOARD_PRESET_NORWEGIAN_USB) {
+      keyboard_preset_item->value = keyboard_preset_index(emux_machine_class, KEYBOARD_PRESET_C64_GPIO);
+    }
+    apply_keyboard_preset();
+    keyboard_active_preset = keyboard_preset_item->value;
+  }
+#endif
 
   emux_video_color_setting_changed(0);
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
@@ -2842,6 +2886,13 @@ static void menu_value_changed(struct menu_item *item) {
     break;
   }
 
+#if BMC64_NEW_KEYBOARD_INPUT
+  if (item->id == MENU_KEYBOARD_PRESET) {
+    apply_keyboard_preset();
+    keyboard_active_preset = item->value;
+    return;
+  }
+#endif
   if (emux_handle_menu_change(item)) {
     return;
   }
@@ -4543,6 +4594,26 @@ void build_menu(struct menu_item *root) {
   parent = ui_menu_add_folder(root, "Keyboard");
 
   emux_add_keyboard_options(parent);
+#if BMC64_NEW_KEYBOARD_INPUT
+  keyboard_preset_item = NULL;
+  keyboard_backend_map_item = NULL;
+  keyboard_active_preset = 0;
+  if (keyboard_preset_count(emux_machine_class) > 0) {
+    keyboard_backend_map_item = parent->first_child;
+    parent->first_child = keyboard_backend_map_item->next;
+    keyboard_backend_map_item->next = NULL;
+
+    child = keyboard_preset_item =
+        ui_menu_add_multiple_choice(MENU_KEYBOARD_PRESET, parent, "Keyboard");
+    child->num_choices = keyboard_preset_count(emux_machine_class);
+    child->value = 0;
+    for (int index = 0; index < child->num_choices; index++) {
+      const KeyboardPreset *preset = keyboard_preset_at(emux_machine_class, index);
+      child->choice_ints[index] = preset->preset;
+      strcpy(child->choices[index], preset->label);
+    }
+  }
+#endif
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      c40_80_column_item = ui_menu_add_toggle_labels(

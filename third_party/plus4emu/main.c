@@ -87,6 +87,9 @@ static struct menu_item *ram_size_item;
 static struct menu_item *drive_model_8_item;
 static struct menu_item *attach_3plus1_roms_item;
 static struct menu_item *keyboard_mapping_item;
+#if BMC64_NEW_KEYBOARD_INPUT
+static const char *keyboard_preset_file;
+#endif
 
 static struct menu_item *c0_lo_item;
 static struct menu_item *c0_hi_item;
@@ -628,12 +631,21 @@ static void videoFrameCallback(void *userData)
 }
 
 static void load_keymap(void) {
-  FILE *fp = NULL;
+   const char *keymap_file = NULL;
    if (keyboard_mapping_item->value == KEYBOARD_MAPPING_POS) {
-     fp = fopen("/PLUS4EMU/rpi_pos.vkm", "r");
-  } else if (keyboard_mapping_item->value == KEYBOARD_MAPPING_MAXI) {
-     fp = fopen("/PLUS4EMU/rpi_maxi_pos.vkm", "r");
+      keymap_file = "rpi_pos.vkm";
+   } else if (keyboard_mapping_item->value == KEYBOARD_MAPPING_MAXI) {
+      keymap_file = "rpi_maxi_pos.vkm";
   }
+#if BMC64_NEW_KEYBOARD_INPUT
+   if (keyboard_preset_file != NULL) keymap_file = keyboard_preset_file;
+#endif
+   FILE *fp = NULL;
+   if (keymap_file != NULL) {
+      char path[80];
+      snprintf(path, sizeof(path), "/PLUS4EMU/%s", keymap_file);
+      fp = fopen(path, "r");
+   }
   char line[TEXT_LINE_LEN];
   if (fp != NULL) {
     while (fgets(line, TEXT_LINE_LEN - 1, fp)) {
@@ -1490,10 +1502,33 @@ int emux_handle_menu_change(struct menu_item* item) {
       Plus4VM_Reset(vm, 1);
       return 1;
     case MENU_KEYBOARD_MAPPING:
+#if BMC64_NEW_KEYBOARD_INPUT
+         keyboard_preset_file = NULL;
+#endif
          ui_set_keyboard_mapping(item->value);
       load_keymap();
       machine_kbd_init();
       return 1;
+#if BMC64_NEW_KEYBOARD_INPUT
+      case MENU_KEYBOARD_PRESET: {
+         const KeyboardPreset *preset = keyboard_preset_find(emux_machine_class,
+                                                                     item->choice_ints[item->value]);
+         if (preset == NULL) return 1;
+         char path[80];
+         snprintf(path, sizeof(path), "/PLUS4EMU/%s", preset->vkm_file);
+         FILE *fp = fopen(path, "r");
+         if (fp == NULL) {
+            ui_error("Keyboard map not found");
+            return 1;
+         }
+         fclose(fp);
+         keyboard_preset_file = preset->vkm_file;
+         ui_set_keyboard_layout(preset->layout);
+         load_keymap();
+         machine_kbd_init();
+         return 1;
+      }
+#endif
     default:
       return 0;
   }

@@ -28,6 +28,7 @@
 #define RASPI_UI_H_
 
 #include <stdint.h>
+#include "../../src/keyboard/keyboard_layout.h"
 
 #define NUM_MENU_ROOTS 5
 #define MAX_CHOICES    64
@@ -209,6 +210,9 @@ void ui_render_single_frame(void);
 
 void ui_check_key(void);
 void ui_set_keyboard_mapping(int mapping);
+#if BMC64_NEW_KEYBOARD_INPUT
+void ui_set_keyboard_layout(MenuKeyboardLayout layout);
+#endif
 
 void ui_pop_all_and_toggle(void);
 

@@ -1,13 +1,17 @@
 #include <assert.h>
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "circle.h"
 #include "joy.h"
 #include "kbd.h"
 #include "keycodes.h"
+#include "emux_api.h"
 #include "ui.h"
 #include "../../src/keyboard/keyboard_router.h"
+#include "../../src/keyboard/keyboard_layout.h"
 
 struct joydev_config joydevs[MAX_JOY_PORTS];
 volatile int ui_enabled;
@@ -72,6 +76,129 @@ static void capture_key(long key) {
 }
 
 int main(void) {
+  static const char *machine_dirs[] = {
+    NULL, "vic20", "c64", "c128", "plus4", "plus4emu", "pet"
+  };
+  static const int expected_counts[] = {0, 3, 7, 3, 3, 3, 4};
+  for (int machine = BMC64_MACHINE_CLASS_VIC20; machine <= BMC64_MACHINE_CLASS_PET; machine++) {
+    assert(keyboard_preset_count(machine) == expected_counts[machine]);
+    for (int index = 0; index < keyboard_preset_count(machine); index++) {
+      const KeyboardPreset *preset = keyboard_preset_at(machine, index);
+      assert(keyboard_preset_find(machine, preset->preset) == preset);
+      assert(keyboard_preset_index(machine, preset->preset) == index);
+      char path[128];
+      snprintf(path, sizeof(path), "sdcard/%s/%s", machine_dirs[machine], preset->vkm_file);
+      FILE *file = fopen(path, "r");
+      assert(file != NULL);
+      fclose(file);
+    }
+    char directory[64];
+    snprintf(directory, sizeof(directory), "sdcard/%s", machine_dirs[machine]);
+    DIR *maps = opendir(directory);
+    assert(maps != NULL);
+    struct dirent *map;
+    while ((map = readdir(maps)) != NULL) {
+      size_t length = strlen(map->d_name);
+      if (length < 4 || strcmp(map->d_name + length - 4, ".vkm") != 0) continue;
+      int found = 0;
+      for (int index = 0; index < keyboard_preset_count(machine); index++) {
+        if (strcmp(keyboard_preset_at(machine, index)->vkm_file, map->d_name) == 0) found++;
+      }
+      assert(found > 0);
+    }
+    closedir(maps);
+  }
+  assert(keyboard_preset_count(BMC64_MACHINE_CLASS_C64) == 7);
+  for (int index = 0; index < keyboard_preset_count(BMC64_MACHINE_CLASS_C64); index++) {
+    const KeyboardPreset *preset = keyboard_preset_at(BMC64_MACHINE_CLASS_C64, index);
+    assert(preset && (int)preset->preset == index + KEYBOARD_PRESET_US_USB);
+    assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, preset->preset) == preset);
+    assert(keyboard_preset_index(BMC64_MACHINE_CLASS_C64, preset->preset) == index);
+  }
+  assert(keyboard_preset_at(BMC64_MACHINE_CLASS_C64, -1) == NULL);
+  assert(keyboard_preset_at(BMC64_MACHINE_CLASS_C64, 7) == NULL);
+  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, 0) == NULL);
+  assert(keyboard_preset_index(BMC64_MACHINE_CLASS_C64, 0) == -1);
+  assert(keyboard_preset_count(BMC64_MACHINE_CLASS_UNKNOWN) == 0);
+  assert(keyboard_preset_at(BMC64_MACHINE_CLASS_UNKNOWN, 0) == NULL);
+  for (int machine = BMC64_MACHINE_CLASS_VIC20; machine <= BMC64_MACHINE_CLASS_PET; machine++) {
+    if (machine == BMC64_MACHINE_CLASS_C64) continue;
+    const KeyboardPreset *preset = keyboard_preset_at(machine, 0);
+    assert(preset && preset->preset == KEYBOARD_PRESET_US_USB);
+    assert(preset->layout == KEYBOARD_LAYOUT_US);
+    assert(keyboard_preset_find(machine, KEYBOARD_PRESET_US_USB) == preset);
+    assert(keyboard_preset_index(machine, KEYBOARD_PRESET_US_USB) == 0);
+    assert(keyboard_preset_at(machine, expected_counts[machine]) == NULL);
+    assert(strcmp(preset->vkm_file, machine == BMC64_MACHINE_CLASS_PET
+        ? "rpi_grus_sym.vkm" : machine == BMC64_MACHINE_CLASS_PLUS4EMU
+        ? "rpi_pos.vkm" : "rpi_sym.vkm") == 0);
+  }
+  assert(strcmp(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_US_USB)->vkm_file, "rpi_sym.vkm") == 0);
+  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_NORWEGIAN_USB)->layout == KEYBOARD_LAYOUT_NO);
+  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_FRENCH_USB)->layout == KEYBOARD_LAYOUT_FR);
+  assert(strcmp(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_C64_GPIO)->vkm_file, "rpi_pos.vkm") == 0);
+  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_C64_KEYRAH_V3)->layout == KEYBOARD_LAYOUT_C64);
+  assert(strcmp(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_C64_KEYRAH_V3)->vkm_file, "rpi_keyrah_v3_pos.vkm") == 0);
+  assert(strcmp(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_C64_MAXI)->vkm_file, "rpi_maxi_pos.vkm") == 0);
+  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_C64_MAXI)->layout == KEYBOARD_LAYOUT_MAXI);
+  assert(strcmp(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_PETSCIIBOARD)->vkm_file, "rpi_petsciiboard_sym.vkm") == 0);
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_US, KEYCODE_2, 1, 0) == '@');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_2, 1, 0) == '"');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_4, 1, 0) == 0xA4);
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_LeftBracket, 0, 0) == 0xE5);
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_SemiColon, 1, 0) == 0xD8);
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_SingleQuote, 0, 0) == 0xE6);
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_RightBracket, 0, 0) == 0xA8);
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_KP_BackSlash, 1, 0) == '>');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_2, 0, 0) == 0xE9);
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_2, 1, 0) == '2');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_7, 0, 0) == 0xE8);
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_9, 0, 0) == 0xE7);
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_q, 0, 0) == 'a');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_z, 1, 0) == 'W');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_m, 0, 0) == ',');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_SemiColon, 1, 0) == 'M');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_LeftBracket, 1, 0) == 0xA8);
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_2, 0, 1) == '@');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_4, 0, 1) == '$');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_4, 1, 1) == 0);
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_7, 0, 1) == '{');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_Dash, 0, 1) == '\\');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_0, 0, 1) == '@');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_4, 1, 1) == '$');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_8, 0, 1) == '\\');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_2, 0, 1) == '~');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_1, 0, 1) == 0);
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_US, KEYCODE_2, 0, 1) == '2');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_C64, KEYCODE_2, 1, 0) == '"');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_POSITIONAL, KEYCODE_Dash, 0, 0) == '+');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_MAXI, KEYCODE_KP_Add, 0, 0) == '+');
+  assert(keyboard_layout_key_to_codepoint(0, KEYCODE_2, 1, 0) == 0);
+  assert(keyboard_layout_has_altgr(KEYBOARD_LAYOUT_NO));
+  assert(keyboard_layout_has_altgr(KEYBOARD_LAYOUT_FR));
+  assert(!keyboard_layout_has_altgr(KEYBOARD_LAYOUT_US));
+
+    assert(keyboard_layout_effective_shift(0, 0, 0) == 0);
+    assert(keyboard_layout_effective_shift(1, 0, 0) == 1);
+    assert(keyboard_layout_effective_shift(0, 1, 0) == 1);
+    assert(keyboard_layout_effective_shift(1, 1, 0) == 1);
+    assert(keyboard_layout_effective_shift(0, 1, 1) == 0);
+    assert(keyboard_layout_effective_shift(1, 1, 1) == 1);
+    assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_US, KEYCODE_2,
+      keyboard_layout_effective_shift(0, 0, 0), 0) == '2');
+    assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_US, KEYCODE_2,
+      keyboard_layout_effective_shift(1, 0, 0), 0) == '@');
+    assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_US, KEYCODE_2,
+      keyboard_layout_effective_shift(0, 1, 0), 0) == '@');
+    assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_2,
+      keyboard_layout_effective_shift(0, 1, 0), 0) == '"');
+    assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_2,
+      keyboard_layout_effective_shift(0, 1, 0), 0) == '2');
+    assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_4,
+      keyboard_layout_effective_shift(0, 1, 1), 1) == '$');
+    assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_q,
+      keyboard_layout_effective_shift(0, 1, 0), 0) == 'A');
+
   emu_key_pressed(KEYCODE_a);
   emu_key_released(KEYCODE_a);
   assert(emulator_events == 2 && last_key == KEYCODE_a && !last_pressed);
@@ -80,6 +207,15 @@ int main(void) {
   emu_key_pressed(KEYCODE_b);
   emu_key_released(KEYCODE_b);
   assert(menu_events == 2 && last_key == KEYCODE_b && !last_pressed);
+  emu_key_pressed(KEYCODE_RightAlt);
+  emu_key_released(KEYCODE_RightAlt);
+  assert(menu_events == 4 && last_key == KEYCODE_RightAlt && !last_pressed);
+  emu_key_pressed(KEYCODE_LeftShift);
+  assert(menu_events == 5 && last_key == KEYCODE_LeftShift && last_pressed);
+  emu_key_pressed(KEYCODE_2);
+  emu_key_released(KEYCODE_2);
+  emu_key_released(KEYCODE_LeftShift);
+  assert(menu_events == 8 && last_key == KEYCODE_LeftShift && !last_pressed);
   ui_enabled = 0;
 
   emu_key_pressed(KEYCODE_F12);
