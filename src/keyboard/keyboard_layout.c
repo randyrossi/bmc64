@@ -6,7 +6,7 @@
 static const KeyboardPreset c64_presets[] = {
    {KEYBOARD_PRESET_US_USB, "USB keyboard - US", "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
    {KEYBOARD_PRESET_NORWEGIAN_USB, "USB keyboard - Norwegian", "rpi_sym_no.vkm", KEYBOARD_LAYOUT_NO},
-   {KEYBOARD_PRESET_FRENCH_USB, "USB keyboard - French", "rpi_sym.vkm", KEYBOARD_LAYOUT_FR},
+   {KEYBOARD_PRESET_FRENCH_USB, "USB keyboard - French", "rpi_sym_fr.vkm", KEYBOARD_LAYOUT_FR},
    {KEYBOARD_PRESET_C64_GPIO, "C64 keyboard - GPIO / C64P", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64},
    {KEYBOARD_PRESET_C64_KEYRAH_V3, "C64 keyboard - Keyrah V3", "rpi_keyrah_v3_pos.vkm", KEYBOARD_LAYOUT_C64},
    {KEYBOARD_PRESET_C64_MAXI, "TheC64 Maxi keyboard", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},

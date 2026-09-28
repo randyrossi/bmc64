@@ -144,6 +144,7 @@ int main(void) {
   assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_NORWEGIAN_USB)->layout == KEYBOARD_LAYOUT_NO);
   assert(strcmp(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_NORWEGIAN_USB)->vkm_file, "rpi_sym_no.vkm") == 0);
   assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_FRENCH_USB)->layout == KEYBOARD_LAYOUT_FR);
+  assert(strcmp(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_FRENCH_USB)->vkm_file, "rpi_sym_fr.vkm") == 0);
   assert(strcmp(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_C64_GPIO)->vkm_file, "rpi_pos.vkm") == 0);
   assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_C64_KEYRAH_V3)->layout == KEYBOARD_LAYOUT_C64);
   assert(strcmp(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_C64_KEYRAH_V3)->vkm_file, "rpi_keyrah_v3_pos.vkm") == 0);
