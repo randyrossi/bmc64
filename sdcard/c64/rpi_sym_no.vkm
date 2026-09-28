@@ -151,8 +151,8 @@ SingleQuote 6 2 8    /*       Norwegian ae -> ; ]                */
 BackQuote 7 1 8      /*          | section -> Left Arrow         */
 Shift_L 1 7 2        /*         Left Shift -> Left Shift         */
 CapsLock 1 7 64      /*          Caps Lock -> Shift Lock         */
-BackSlash 5 7 33     /*                  < -> <                  */
-BackSlash 5 4 129    /*                  > -> >                  */
+KP_BackSlash 5 7 33  /*                  < -> <                  */
+KP_BackSlash 5 4 129 /*                  > -> >                  */
 z 1 4 8              /*                  Z -> Z                  */
 x 2 7 8              /*                  X -> X                  */
 c 2 4 8              /*                  C -> C                  */
