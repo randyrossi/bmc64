@@ -1518,7 +1518,7 @@ int emux_handle_menu_change(struct menu_item* item) {
          snprintf(path, sizeof(path), "/PLUS4EMU/%s", preset->vkm_file);
          FILE *fp = fopen(path, "r");
          if (fp == NULL) {
-            ui_error("Keyboard map not found");
+            ui_error("Could not load keyboard map:\n%s", path);
             return 1;
          }
          fclose(fp);

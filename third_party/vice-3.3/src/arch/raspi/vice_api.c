@@ -1302,7 +1302,7 @@ int emux_handle_menu_change(struct menu_item* item) {
           lib_free(keyboard_saved_user_sym_file);
           keyboard_saved_user_sym_file = NULL;
         }
-        ui_error("Keyboard map not found");
+        ui_error("Could not load keyboard map:\n%s", entry->vkm_file);
         return 1;
       }
       keyboard_preset_active = preset;
