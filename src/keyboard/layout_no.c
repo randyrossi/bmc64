@@ -4,7 +4,7 @@
 #if BMC64_NEW_KEYBOARD_INPUT
 static const KeyboardLayoutKey keys[] = {
    {KEYCODE_1, '1', '!', 0, 0}, {KEYCODE_2, '2', '"', '@', 0},
-   {KEYCODE_3, '3', '#', 0, 0}, {KEYCODE_4, '4', 0xA4, '$', 0},
+   {KEYCODE_3, '3', '#', 0xA3, 0}, {KEYCODE_4, '4', 0xA4, '$', 0},
    {KEYCODE_5, '5', '%', 0, 0}, {KEYCODE_6, '6', '&', 0, 0},
    {KEYCODE_7, '7', '/', '{', 0}, {KEYCODE_8, '8', '(', '[', 0},
    {KEYCODE_9, '9', ')', ']', 0}, {KEYCODE_0, '0', '=', '}', 0},
