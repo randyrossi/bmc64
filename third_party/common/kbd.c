@@ -255,6 +255,8 @@ signed long kbd_arch_keyname_to_keynum(char *keyname) {
     return (long)KEYCODE_KP_Divide;
   } else if (KCMP("KP_Decimal")) {
     return (long)KEYCODE_KP_Decimal;
+  } else if (KCMP("KP_BackSlash")) {
+    return (long)KEYCODE_KP_BackSlash;
   } else if (KCMP("KP_Multiply")) {
     return (long)KEYCODE_KP_Multiply;
   } else if (KCMP("KP_Subtract")) {
