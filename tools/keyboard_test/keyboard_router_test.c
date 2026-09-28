@@ -27,6 +27,7 @@ static int captured_key;
 static int joystick_events;
 static long last_key;
 static int last_pressed;
+static int last_mod;
 static unsigned long ticks;
 static int safe_video_calls;
 static int reboot_calls;
@@ -40,6 +41,11 @@ void emux_key_interrupt(long key, int pressed) {
   emulator_events++;
   last_key = key;
   last_pressed = pressed;
+}
+
+void emux_key_interrupt_mod(long key, int pressed, int mod) {
+  emux_key_interrupt(key, pressed);
+  last_mod = mod;
 }
 
 void emu_ui_key_interrupt(long key, int pressed) {
@@ -99,7 +105,8 @@ int main(void) {
     struct dirent *map;
     while ((map = readdir(maps)) != NULL) {
       size_t length = strlen(map->d_name);
-      if (length < 4 || strcmp(map->d_name + length - 4, ".vkm") != 0) continue;
+      if (length < 4 || strncmp(map->d_name, "rpi_", 4) != 0 ||
+          strcmp(map->d_name + length - 4, ".vkm") != 0) continue;
       int found = 0;
       for (int index = 0; index < keyboard_preset_count(machine); index++) {
         if (strcmp(keyboard_preset_at(machine, index)->vkm_file, map->d_name) == 0) found++;
@@ -135,6 +142,7 @@ int main(void) {
   }
   assert(strcmp(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_US_USB)->vkm_file, "rpi_sym.vkm") == 0);
   assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_NORWEGIAN_USB)->layout == KEYBOARD_LAYOUT_NO);
+  assert(strcmp(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_NORWEGIAN_USB)->vkm_file, "rpi_sym_no.vkm") == 0);
   assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_FRENCH_USB)->layout == KEYBOARD_LAYOUT_FR);
   assert(strcmp(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_C64_GPIO)->vkm_file, "rpi_pos.vkm") == 0);
   assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_C64_KEYRAH_V3)->layout == KEYBOARD_LAYOUT_C64);
@@ -160,6 +168,7 @@ int main(void) {
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_SemiColon, 1, 0) == 'M');
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_LeftBracket, 1, 0) == 0xA8);
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_2, 0, 1) == '@');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_3, 0, 1) == 0xA3);
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_4, 0, 1) == '$');
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_4, 1, 1) == 0);
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_7, 0, 1) == '{');
@@ -320,6 +329,15 @@ int main(void) {
   keyboard_router_physical_key(KEYBOARD_SOURCE_GPIO, 64, KEYCODE_PageUp, 1);
   keyboard_router_physical_key(KEYBOARD_SOURCE_GPIO, 64, KEYCODE_PageUp, 0);
   assert(emulator_events == emulator_before + 4 && last_key == KEYCODE_PageUp && !last_pressed);
+
+  keyboard_router_physical_key(KEYBOARD_SOURCE_USB, KEYCODE_RightAlt, KEYCODE_RightAlt, 1);
+  keyboard_router_physical_key(KEYBOARD_SOURCE_GPIO, 65, KEYCODE_2, 1);
+  assert(last_key == KEYCODE_2 && last_pressed && (last_mod & EMUX_KEY_MOD_RALT));
+  keyboard_router_physical_key(KEYBOARD_SOURCE_GPIO, 65, KEYCODE_2, 0);
+  keyboard_router_physical_key(KEYBOARD_SOURCE_USB, KEYCODE_RightAlt, KEYCODE_RightAlt, 0);
+  keyboard_router_physical_key(KEYBOARD_SOURCE_GPIO, 65, KEYCODE_2, 1);
+  assert(last_key == KEYCODE_2 && last_pressed && !(last_mod & EMUX_KEY_MOD_RALT));
+  keyboard_router_physical_key(KEYBOARD_SOURCE_GPIO, 65, KEYCODE_2, 0);
 
   return 0;
 }

@@ -267,9 +267,11 @@ enum shift_type {
     ALLOW_OTHER = (1 << 5),   /* Allow another key code to be assigned if
                                  SHIFT is pressed. */
     SHIFT_LOCK = (1 << 6),    /* Key is shift lock. */
+    MAP_MOD_SHIFT = (1 << 7),
 
-    ALT_MAP  = (1 << 8)       /* Key is used for an alternative keyboard
-                                 mapping */
+    ALT_MAP = (1 << 8),      /* Key is used for an alternative keyboard mapping. */
+    MAP_MOD_RIGHT_ALT = (1 << 9),
+    MAP_MOD_CTRL = (1 << 10)
 };
 
 struct keyboard_conv_s {
@@ -429,6 +431,11 @@ static void keyboard_restore_released(void)
 
 void keyboard_key_pressed(signed long key)
 {
+    keyboard_key_pressed_mod(key, 0);
+}
+
+void keyboard_key_pressed_mod(signed long key, int mod)
+{
     int i, j, latch;
 
     if (event_playback_active()) {
@@ -490,13 +497,21 @@ void keyboard_key_pressed(signed long key)
             if ((keyconvmap[i].shift & ALT_MAP) && !key_alternative) {
                 continue;
             }
+            if ((keyconvmap[i].shift & MAP_MOD_RIGHT_ALT) && !(mod & KBD_MOD_RALT)) {
+                continue;
+            }
+            if ((keyconvmap[i].shift & MAP_MOD_CTRL) && !(mod & (KBD_MOD_LCTRL | KBD_MOD_RCTRL))) {
+                continue;
+            }
+            if ((keyconvmap[i].shift & MAP_MOD_SHIFT) && !(mod & (KBD_MOD_LSHIFT | KBD_MOD_RSHIFT))) {
+                continue;
+            }
 
             if (keyboard_key_pressed_matrix(keyconvmap[i].row,
                                             keyconvmap[i].column,
                                             keyconvmap[i].shift)) {
                 latch = 1;
-                if (!(keyconvmap[i].shift & ALLOW_OTHER)
-                    || (right_shift_down + left_shift_down) == 0) {
+                if (!(keyconvmap[i].shift & ALLOW_OTHER)) {
                     break;
                 }
             }

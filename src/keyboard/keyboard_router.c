@@ -31,10 +31,23 @@ static struct {
 
 static int commodore_down;
 static int control_down;
+static int host_modifiers;
 static int safe_reset_armed;
 static unsigned long video_reset_start;
 
 extern void reboot(void);
+
+static int host_modifier(long key) {
+	switch (key) {
+	case KEYCODE_LeftShift: return EMUX_KEY_MOD_LSHIFT;
+	case KEYCODE_RightShift: return EMUX_KEY_MOD_RSHIFT;
+	case KEYCODE_LeftControl: return EMUX_KEY_MOD_LCTRL;
+	case KEYCODE_RightControl: return EMUX_KEY_MOD_RCTRL;
+	case KEYCODE_LeftAlt: return EMUX_KEY_MOD_LALT;
+	case KEYCODE_RightAlt: return EMUX_KEY_MOD_RALT;
+	default: return 0;
+	}
+}
 
 void kbd_set_hotkey_function(unsigned int slot, long key, int function) {
 	if (slot >= HOTKEY_COUNT) {
@@ -163,6 +176,7 @@ void emu_key_pressed(long key) {
 	if (raw_keycode_func) {
 		return;
 	}
+	host_modifiers |= host_modifier(key);
 
 	if (key == commodore_key_sym) {
 		commodore_down = 1;
@@ -180,7 +194,7 @@ void emu_key_pressed(long key) {
 	if (ui_enabled) {
 		emu_ui_key_interrupt(key, 1);
 	} else {
-		emux_key_interrupt(key, 1);
+		emux_key_interrupt_mod(key, 1, host_modifiers);
 	}
 }
 
@@ -189,6 +203,7 @@ static void release_key(long key, int to_ui) {
 		raw_keycode_func(key);
 		return;
 	}
+	host_modifiers &= ~host_modifier(key);
 
 	if (key == commodore_key_sym) {
 		commodore_down = 0;
@@ -211,7 +226,7 @@ static void release_key(long key, int to_ui) {
 	if (to_ui) {
 		emu_ui_key_interrupt(key, 0);
 	} else {
-		emux_key_interrupt(key, 0);
+		emux_key_interrupt_mod(key, 0, host_modifiers);
 	}
 
 	if (key == KEYCODE_F12 && !to_ui) {

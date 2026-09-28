@@ -1,0 +1,178 @@
+# VICE keyboard mapping file
+#
+# A keyboard map is read in as a patch to the current map.
+#
+# File format:
+# - comment lines start with '#'
+# - keyword lines start with '!keyword'
+# - normal lines have 'keyname row column shiftflag'
+#
+# Keywords and their lines are:
+# '!CLEAR'               clear whole table
+# '!INCLUDE filename'    read file as mapping file
+# '!LSHIFT row col'      left shift keyboard row/column
+# '!RSHIFT row col'      right shift keyboard row/column
+# '!VSHIFT shiftkey'     virtual shift key (RSHIFT or LSHIFT)
+# '!SHIFTL shiftkey'     shift lock key (RSHIFT or LSHIFT)
+# '!UNDEF keyname'       remove keyname from table
+#
+# Shiftflag values (may be combined):
+# 0      key is not shifted
+# 1      key is shifted on the C64
+# 2      left shift
+# 4      right shift
+# 8      key can be shifted or not
+# 16     deshift key
+# 32     another definition follows for this key
+# 64     shift lock
+# 128    key requires Shift on the host
+# 256    alternative keyboard mapping
+# 512    key requires Right Alt (AltGr) on the host
+# 1024   key requires Ctrl on the host
+#
+# Key names below are BMC64 USB physical positions, not SDL keysyms.
+# The comment on each entry names the Norwegian physical key and the C64 key
+# it activates. AltGr combinations use the same USB position with flag 512.
+#
+# Negative row values:
+# 'keyname -1 n' joystick keymap A, direction n
+# 'keyname -2 n' joystick keymap B, direction n
+# 'keyname -3 0' first RESTORE key
+# 'keyname -3 1' second RESTORE key
+# 'keyname -4 0' 40/80 column key
+# 'keyname -4 1' CAPS (ASCII/DIN) key
+# 'keyname -5 n' joyport keypad, key n
+#
+# Joystick direction values:
+# 0      Fire
+# 1      South/West
+# 2      South
+# 3      South/East
+# 4      West
+# 5      East
+# 6      North/West
+# 7      North
+# 8      North/East
+#
+# Joyport keypad key layout:
+# --------------------------
+# |  0 |  1 |  2 |  3 |  4 |
+# --------------------------
+# |  5 |  6 |  7 |  8 |  9 |
+# --------------------------
+# | 10 | 11 | 12 | 13 | 14 |
+# --------------------------
+# | 15 | 16 | 17 | 18 | 19 |
+# --------------------------
+#
+# When a bigger spaced key is used, it uses the upper leftmost key value.
+#
+# Norwegian USB keyboard, C64 symbolic mapping for BMC64.
+#
+# C64 keyboard matrix (row = Bit number at left, column = Bit number above):
+#
+#       +-----+-----+-----+-----+-----+-----+-----+-----+
+#       |Bit 0|Bit 1|Bit 2|Bit 3|Bit 4|Bit 5|Bit 6|Bit 7|
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 0| DEL |Retrn|C_L/R|  F7 |  F1 |  F3 |  F5 |C_U/D|
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 1| 3 # |  W  |  A  | 4 $ |  Z  |  S  |  E  | S_L |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 2| 5 % |  R  |  D  | 6 & |  C  |  F  |  T  |  X  |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 3| 7 ' |  Y  |  G  | 8 ( |  B  |  H  |  U  |  V  |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 4| 9 ) |  I  |  J  |  0  |  M  |  K  |  O  |  N  |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 5|  +  |  P  |  L  |  -  | . > | : [ |  @  | , < |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 6|POUND|  *  | ; ] | HOME| S_R |  =  |A_UP | / ? |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 7| 1 ! |A_LFT| CTRL| 2 " |SPACE|  C= |  Q  | R/S |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+
+!CLEAR
+!LSHIFT 1 7
+!RSHIFT 6 4
+!VSHIFT RSHIFT
+!SHIFTL LSHIFT
+
+Escape 7 7 8          /* Escape -> Run/Stop         */
+1 7 0 8               /* 1 ! -> 1 !                 */
+2 7 3 40              /* 2 " -> 2 "                 */
+2 5 6 512             /* AltGr+2 @ -> @             */
+3 1 0 40              /* 3 # -> 3 #                 */
+3 6 0 512             /* AltGr+3 pound -> POUND     */
+4 1 3 40              /* 4 currency -> 4 $          */
+4 1 3 513             /* AltGr+4 $ -> $             */
+5 2 0 8               /* 5 % -> 5 %                 */
+6 2 3 8               /* 6 & -> 6 &                 */
+7 6 7 8               /* 7 / -> / ?                 */
+8 3 3 40              /* 8 ( -> 8 (                 */
+8 5 5 513             /* AltGr+8 [ -> [             */
+9 4 0 40              /* 9 ) -> 9 )                 */
+9 6 2 513             /* AltGr+9 ] -> ]             */
+0 4 3 8               /* 0 = -> 0                   */
+Dash 5 0 8            /* + ? -> +                   */
+Equals 6 0 8          /* backslash grave -> POUND  */
+Pound 3 0 1           /* apostrophe * -> 7 '        */
+BackSpace 0 0 8       /* Backspace -> DEL           */
+Control_L 7 5 8       /* Left Control -> CBM        */
+q 7 6 8               /* Q -> Q                     */
+w 1 1 8               /* W -> W                     */
+e 1 6 8               /* E -> E                     */
+r 2 1 8               /* R -> R                     */
+t 2 6 8               /* T -> T                     */
+y 3 1 8               /* Y -> Y                     */
+u 3 6 8               /* U -> U                     */
+i 4 1 8               /* I -> I                     */
+o 4 6 8               /* O -> O                     */
+p 5 1 8               /* P -> P                     */
+LeftBracket 5 6 8     /* Norwegian aa -> @          */
+RightBracket 6 6 8    /* diaeresis ^ -> Up Arrow    */
+Return 0 1 8          /* Return -> Return           */
+Tab 7 2 8             /* Tab -> CTRL                */
+a 1 2 8               /* A -> A                     */
+s 1 5 8               /* S -> S                     */
+d 2 2 8               /* D -> D                     */
+f 2 5 8               /* F -> F                     */
+g 3 2 8               /* G -> G                     */
+h 3 5 8               /* H -> H                     */
+j 4 2 8               /* J -> J                     */
+k 4 5 8               /* K -> K                     */
+l 5 2 8               /* L -> L                     */
+SemiColon 5 5 8       /* Norwegian oe -> : [        */
+SingleQuote 6 2 8     /* Norwegian ae -> ; ]        */
+BackQuote 7 1 8       /* | section -> Left Arrow    */
+BackSlash 3 0 1       /* apostrophe * -> 7 '        */
+Shift_L 1 7 2         /* Left Shift -> Left Shift   */
+CapsLock 1 7 64       /* Caps Lock -> Shift Lock    */
+z 1 4 8               /* Z -> Z                     */
+x 2 7 8               /* X -> X                     */
+c 2 4 8               /* C -> C                     */
+v 3 7 8               /* V -> V                     */
+b 3 4 8               /* B -> B                     */
+n 4 7 8               /* N -> N                     */
+m 4 4 8               /* M -> M                     */
+Comma 5 7 8           /* , ; -> , <                 */
+Period 5 4 8          /* . : -> . >                 */
+Slash 5 3 8           /* - _ -> -                   */
+Shift_R 6 4 4         /* Right Shift -> Right Shift */
+Space 7 4 8           /* Space -> Space             */
+F1 0 4 8              /* F1 -> F1                   */
+F2 0 4 1              /* F2 -> F2                   */
+F3 0 5 8              /* F3 -> F3                   */
+F4 0 5 1              /* F4 -> F4                   */
+F5 0 6 8              /* F5 -> F5                   */
+F6 0 6 1              /* F6 -> F6                   */
+F7 0 3 8              /* F7 -> F7                   */
+F8 0 3 1              /* F8 -> F8                   */
+Home 6 3 8            /* Home -> CLR/HOME           */
+Up 0 7 1              /* Up -> CRSR UP              */
+Down 0 7 8            /* Down -> CRSR DOWN          */
+Insert 0 0 1          /* Insert -> INS              */
+Del 0 0 8             /* Delete -> DEL              */
+Left 0 2 1            /* Left -> CRSR LEFT          */
+Right 0 2 8           /* Right -> CRSR RIGHT        */
+
+PageUp -3 0           /* Page Up -> RESTORE         */

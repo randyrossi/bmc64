@@ -68,10 +68,15 @@ struct CanvasState canvas_state[2];
 
 // queue a key for press/release for the main loop
 void emux_key_interrupt(long key, int pressed) {
+   emux_key_interrupt_mod(key, pressed, 0);
+}
+
+void emux_key_interrupt_mod(long key, int pressed, int mod) {
   circle_lock_acquire();
   int i = pending_emu_key.tail & 0xf;
   pending_emu_key.key[i] = key;
   pending_emu_key.pressed[i] = pressed;
+   pending_emu_key.mod[i] = mod;
   pending_emu_key.tail++;
   circle_lock_release();
 }
@@ -81,6 +86,7 @@ void emux_key_interrupt_locked(long key, int pressed) {
   int i = pending_emu_key.tail & 0xf;
   pending_emu_key.key[i] = key;
   pending_emu_key.pressed[i] = pressed;
+   pending_emu_key.mod[i] = 0;
   pending_emu_key.tail++;
 }
 

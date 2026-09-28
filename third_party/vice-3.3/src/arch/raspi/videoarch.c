@@ -471,7 +471,7 @@ void vsyncarch_postsync(void) {
       vkbd_sync_event(pending_emu_key.key[i], pending_emu_key.pressed[i]);
     }
     if (pending_emu_key.pressed[i]) {
-      keyboard_key_pressed(pending_emu_key.key[i]);
+      keyboard_key_pressed_mod(pending_emu_key.key[i], pending_emu_key.mod[i]);
     } else {
       keyboard_key_released(pending_emu_key.key[i]);
     }
