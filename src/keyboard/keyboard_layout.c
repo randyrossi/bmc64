@@ -4,44 +4,43 @@
 #include "../../third_party/common/emux_api.h"
 
 static const KeyboardPreset c64_presets[] = {
-   {KEYBOARD_PRESET_US_USB, "USB keyboard - US", "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PRESET_NORWEGIAN_USB, "USB keyboard - Norwegian", "rpi_sym_no.vkm", KEYBOARD_LAYOUT_NO},
-   {KEYBOARD_PRESET_FRENCH_USB, "USB keyboard - French", "rpi_sym_fr.vkm", KEYBOARD_LAYOUT_FR},
-   {KEYBOARD_PRESET_C64_GPIO, "C64 keyboard - GPIO / C64P", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64},
-   {KEYBOARD_PRESET_C64_KEYRAH_V3, "C64 keyboard - Keyrah V3", "rpi_keyrah_v3_pos.vkm", KEYBOARD_LAYOUT_C64},
-   {KEYBOARD_PRESET_C64_MAXI, "TheC64 Maxi keyboard", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},
-   {KEYBOARD_PRESET_PETSCIIBOARD, "PETSCIIBOARD keyboard", "rpi_petsciiboard_sym.vkm", KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PRESET_US_USB, "USB keyboard - US", "rpi_sym.vkm", "rpi_pos.vkm", KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PRESET_NORWEGIAN_USB, "USB keyboard - Norwegian", "rpi_sym_no.vkm", NULL, KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_NO},
+   {KEYBOARD_PRESET_FRENCH_USB, "USB keyboard - French", "rpi_sym_fr.vkm", NULL, KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_FR},
+   {KEYBOARD_PRESET_GERMAN_USB, "USB keyboard - German", "rpi_sym_de.vkm", NULL, KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_DE},
+   {KEYBOARD_PRESET_C64_GPIO, "C64 keyboard - GPIO / C64P", NULL, "rpi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_C64},
+   {KEYBOARD_PRESET_C64_KEYRAH_V3, "C64 keyboard - Keyrah V3", NULL, "rpi_keyrah_v3_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_C64},
+   {KEYBOARD_PRESET_C64_MAXI, "TheC64 Maxi keyboard", NULL, "rpi_maxi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_MAXI},
+   {KEYBOARD_PRESET_PETSCIIBOARD, "PETSCIIBOARD keyboard", "rpi_petsciiboard_sym.vkm", NULL, KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_US},
 };
 
 static const KeyboardPreset c128_presets[] = {
-   {KEYBOARD_PRESET_US_USB, "USB keyboard - US", "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PRESET_C64_GPIO, "C64 keyboard - GPIO / C64P", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64},
-   {KEYBOARD_PRESET_C64_MAXI, "TheC64 Maxi keyboard", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},
+   {KEYBOARD_PRESET_US_USB, "USB keyboard - US", "rpi_sym.vkm", "rpi_pos.vkm", KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PRESET_C64_GPIO, "C64 keyboard - GPIO / C64P", NULL, "rpi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_C64},
+   {KEYBOARD_PRESET_C64_MAXI, "TheC64 Maxi keyboard", NULL, "rpi_maxi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_MAXI},
 };
 
 static const KeyboardPreset vic20_presets[] = {
-   {KEYBOARD_PRESET_US_USB, "USB keyboard - US", "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PRESET_C64_GPIO, "C64 keyboard - GPIO / C64P", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64},
-   {KEYBOARD_PRESET_C64_MAXI, "TheC64 Maxi keyboard", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},
+   {KEYBOARD_PRESET_US_USB, "USB keyboard - US", "rpi_sym.vkm", "rpi_pos.vkm", KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PRESET_C64_GPIO, "C64 keyboard - GPIO / C64P", NULL, "rpi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_C64},
+   {KEYBOARD_PRESET_C64_MAXI, "TheC64 Maxi keyboard", NULL, "rpi_maxi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_MAXI},
 };
 
 static const KeyboardPreset plus4_presets[] = {
-   {KEYBOARD_PRESET_US_USB, "USB keyboard - US", "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PRESET_C64_GPIO, "C64 keyboard - GPIO / C64P", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64},
-   {KEYBOARD_PRESET_C64_MAXI, "TheC64 Maxi keyboard", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},
+   {KEYBOARD_PRESET_US_USB, "USB keyboard - US", "rpi_sym.vkm", "rpi_pos.vkm", KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PRESET_C64_GPIO, "C64 keyboard - GPIO / C64P", NULL, "rpi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_C64},
+   {KEYBOARD_PRESET_C64_MAXI, "TheC64 Maxi keyboard", NULL, "rpi_maxi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_MAXI},
 };
 
 static const KeyboardPreset plus4emu_presets[] = {
-   {KEYBOARD_PRESET_US_USB, "USB keyboard - US", "rpi_pos.vkm", KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PRESET_C64_MAXI, "TheC64 Maxi keyboard", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},
-   {KEYBOARD_PRESET_C16_KEYRAH, "C16 keyboard - Keyrah V2", "rpi_c16_keyrah_pos.vkm", KEYBOARD_LAYOUT_POSITIONAL},
+   {KEYBOARD_PRESET_US_USB, "USB keyboard - US", NULL, "rpi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PRESET_C64_MAXI, "TheC64 Maxi keyboard", NULL, "rpi_maxi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_MAXI},
+   {KEYBOARD_PRESET_C16_KEYRAH, "C16 keyboard - Keyrah V2", NULL, "rpi_c16_keyrah_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_POSITIONAL},
 };
 
 static const KeyboardPreset pet_presets[] = {
-   {KEYBOARD_PRESET_US_USB, "PET Graphics - US", "rpi_grus_sym.vkm", KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PRESET_PET_GRAPHICS_POS, "PET Graphics - positional", "rpi_grus_pos.vkm", KEYBOARD_LAYOUT_POSITIONAL},
-   {KEYBOARD_PRESET_PET_BUSINESS_SYM, "PET Business - symbolic", "rpi_buus_sym.vkm", KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PRESET_PET_BUSINESS_POS, "PET Business - positional", "rpi_buus_pos.vkm", KEYBOARD_LAYOUT_POSITIONAL},
+   {KEYBOARD_PRESET_US_USB, "PET Graphics", "rpi_grus_sym.vkm", "rpi_grus_pos.vkm", KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PRESET_PET_BUSINESS, "PET Business", "rpi_buus_sym.vkm", "rpi_buus_pos.vkm", KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_US},
 };
 
 typedef struct {
@@ -95,6 +94,18 @@ int keyboard_preset_index(int machine_class, int preset) {
    return -1;
 }
 
+const char *keyboard_preset_file(const KeyboardPreset *preset, KeyboardMode mode) {
+   if (!preset) return NULL;
+   if (mode == KEYBOARD_MODE_SYMBOLIC) return preset->symbolic_vkm_file;
+   if (mode == KEYBOARD_MODE_POSITIONAL) return preset->positional_vkm_file;
+   return NULL;
+}
+
+MenuKeyboardLayout keyboard_preset_layout(const KeyboardPreset *preset, KeyboardMode mode) {
+   if (mode == KEYBOARD_MODE_POSITIONAL && preset->symbolic_vkm_file) return KEYBOARD_LAYOUT_POSITIONAL;
+   return preset->layout;
+}
+
 unsigned int keyboard_layout_lookup(const KeyboardLayoutKey *keys, unsigned count,
                                     long key, int shifted, int altgr) {
    for (unsigned index = 0; index < count; index++) {
@@ -112,6 +123,7 @@ unsigned int keyboard_layout_key_to_codepoint(MenuKeyboardLayout layout, long ke
    case KEYBOARD_LAYOUT_US: return keyboard_layout_us_char(key, shifted);
    case KEYBOARD_LAYOUT_NO: return keyboard_layout_no_char(key, shifted, altgr);
    case KEYBOARD_LAYOUT_FR: return keyboard_layout_fr_char(key, shifted, altgr);
+   case KEYBOARD_LAYOUT_DE: return keyboard_layout_de_char(key, shifted, altgr);
    case KEYBOARD_LAYOUT_POSITIONAL: return keyboard_layout_positional_char(key, shifted);
    case KEYBOARD_LAYOUT_MAXI: return keyboard_layout_maxi_char(key, shifted);
    default: return '\0';
@@ -119,7 +131,7 @@ unsigned int keyboard_layout_key_to_codepoint(MenuKeyboardLayout layout, long ke
 }
 
 int keyboard_layout_has_altgr(MenuKeyboardLayout layout) {
-   return layout == KEYBOARD_LAYOUT_NO || layout == KEYBOARD_LAYOUT_FR;
+   return layout == KEYBOARD_LAYOUT_NO || layout == KEYBOARD_LAYOUT_FR || layout == KEYBOARD_LAYOUT_DE;
 }
 
 int keyboard_layout_effective_shift(int shifted, int caps_lock, int altgr) {

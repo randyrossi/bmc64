@@ -153,8 +153,22 @@ struct menu_item *drive_flush_item;
 struct menu_item *gpio_config_item;
 #if BMC64_NEW_KEYBOARD_INPUT
 static struct menu_item *keyboard_preset_item;
+static struct menu_item *keyboard_mode_item;
 static struct menu_item *keyboard_backend_map_item;
 static int keyboard_active_preset;
+
+static void set_keyboard_mode(const KeyboardPreset *preset, KeyboardMode requested) {
+  keyboard_mode_item->num_choices = 0;
+  keyboard_mode_item->value = 0;
+  for (int mode = KEYBOARD_MODE_SYMBOLIC; mode <= KEYBOARD_MODE_POSITIONAL; mode++) {
+    if (!keyboard_preset_file(preset, mode)) continue;
+    int index = keyboard_mode_item->num_choices++;
+    keyboard_mode_item->choice_ints[index] = mode;
+    strcpy(keyboard_mode_item->choices[index], mode == KEYBOARD_MODE_SYMBOLIC ? "Symbolic" : "Positional");
+    if (mode == requested) keyboard_mode_item->value = index;
+  }
+  keyboard_mode_item->disabled = keyboard_mode_item->num_choices < 2;
+}
 
 static void apply_keyboard_preset(void) {
   emux_handle_menu_change(keyboard_preset_item);
@@ -1452,6 +1466,7 @@ static int save_settings() {
   if (keyboard_preset_item != NULL) {
     fprintf(fp, "keyboard_preset=%d\n", keyboard_preset_item->choice_ints[keyboard_preset_item->value]);
     fprintf(fp, "keyboard_preset_format=2\n");
+    fprintf(fp, "keyboard_mode=%d\n", keyboard_mode_item->choice_ints[keyboard_mode_item->value]);
   }
 #endif
   if (network_device_item != NULL) {
@@ -1594,6 +1609,7 @@ static void load_settings() {
   int tmp_value;
 #if BMC64_NEW_KEYBOARD_INPUT
   int keyboard_preset_format = 0;
+  int saved_keyboard_mode = -1;
 #endif
 
   emux_get_int(Setting_DriveSoundEmulation, &drive_sounds_item->value);
@@ -1788,6 +1804,8 @@ static void load_settings() {
       }
     } else if (keyboard_preset_item != NULL && strcmp(name, "keyboard_preset_format") == 0) {
       keyboard_preset_format = value;
+    } else if (keyboard_mode_item != NULL && strcmp(name, "keyboard_mode") == 0) {
+      saved_keyboard_mode = value;
 #endif
     } else if (network_device_item != NULL &&
                strcmp(name, "network_device") == 0) {
@@ -2017,8 +2035,13 @@ static void load_settings() {
         keyboard_preset_item->choice_ints[keyboard_preset_item->value] == KEYBOARD_PRESET_NORWEGIAN_USB) {
       keyboard_preset_item->value = keyboard_preset_index(emux_machine_class, KEYBOARD_PRESET_C64_GPIO);
     }
+    const KeyboardPreset *preset = keyboard_preset_at(emux_machine_class, keyboard_preset_item->value);
+    KeyboardMode mode = saved_keyboard_mode < 0 ? preset->default_mode : (KeyboardMode)saved_keyboard_mode;
+    if (!keyboard_preset_file(preset, mode)) mode = preset->default_mode;
+    set_keyboard_mode(preset, mode);
     apply_keyboard_preset();
     keyboard_active_preset = keyboard_preset_item->value;
+    if (mode != preset->default_mode) emux_handle_menu_change(keyboard_mode_item);
   }
 #endif
 
@@ -2888,8 +2911,14 @@ static void menu_value_changed(struct menu_item *item) {
 
 #if BMC64_NEW_KEYBOARD_INPUT
   if (item->id == MENU_KEYBOARD_PRESET) {
+    int selected = item->value;
+    const KeyboardPreset *previous = keyboard_preset_at(emux_machine_class, keyboard_active_preset);
+    KeyboardMode previous_mode = keyboard_mode_item->choice_ints[keyboard_mode_item->value];
+    const KeyboardPreset *preset = keyboard_preset_at(emux_machine_class, selected);
+    set_keyboard_mode(preset, preset->default_mode);
     apply_keyboard_preset();
     keyboard_active_preset = item->value;
+    if (item->value != selected) set_keyboard_mode(previous, previous_mode);
     return;
   }
 #endif
@@ -4596,6 +4625,7 @@ void build_menu(struct menu_item *root) {
   emux_add_keyboard_options(parent);
 #if BMC64_NEW_KEYBOARD_INPUT
   keyboard_preset_item = NULL;
+  keyboard_mode_item = NULL;
   keyboard_backend_map_item = NULL;
   keyboard_active_preset = 0;
   if (keyboard_preset_count(emux_machine_class) > 0) {
@@ -4612,6 +4642,9 @@ void build_menu(struct menu_item *root) {
       child->choice_ints[index] = preset->preset;
       strcpy(child->choices[index], preset->label);
     }
+    keyboard_mode_item = ui_menu_add_multiple_choice(MENU_KEYBOARD_MODE, parent, "Keyboard Mapping");
+    const KeyboardPreset *preset = keyboard_preset_at(emux_machine_class, 0);
+    set_keyboard_mode(preset, preset->default_mode);
   }
 #endif
 
