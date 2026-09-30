@@ -13,6 +13,7 @@
     * Improve missing keymap file error message
     * Correct ISO keyboard extra-key handling and add NonUSBackSlash to the C64 positional keymap
     * Add automated keyboard regression tests and run keyboard and Web UI tests at the start of the build for earlier failures
+    * Add missing PET positional vkm files
     * Make Keyrah V3 selectable from OSD menu
 
 ## 5.2.0
