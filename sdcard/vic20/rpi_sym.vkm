@@ -25,6 +25,7 @@
 # 16     deshift key for this keysym/scancode
 # 32     another definition for this keysym/scancode follows
 # 64     shift lock
+# 128    shift modifier required on host
 # 256    key is used for an alternative keyboard mapping
 #
 # When a bigger spaced key is used,
@@ -39,25 +40,25 @@
 Escape 0 3 8         /*          ESC -> Run/Stop     */
 1 0 0 8              /*            1 -> 1            */
 2 0 7 32             /*            2 -> 2            */
-2 5 6 16             /*            @ -> @            */
+2 5 6 144            /*            @ -> @            */
 3 1 0 8              /*            3 -> 3            */
 4 1 7 8              /*            4 -> 4            */
 5 2 0 8              /*            5 -> 5            */
 6 2 7 32             /*            6 -> 6            */
-6 6 6 16             /*            ^ -> ^            */
+6 6 6 144            /*            ^ -> ^            */
 7 3 0 32             /*            7 -> 7            */
-7 2 7 1              /*            & -> &            */
+7 2 7 129            /*            & -> &            */
 8 3 7 32             /*            8 -> 8            */
-8 6 1 16             /*            * -> *            */
+8 6 1 144            /*            * -> *            */
 9 4 0 32             /*            9 -> 9            */
-9 3 7 1              /*            ( -> (            */
+9 3 7 129            /*            ( -> (            */
 0 4 7 32             /*            0 -> 0            */
-0 4 0 1              /*            ) -> )            */
+0 4 0 129            /*            ) -> )            */
 Dash 5 7 8           /*        Minus -> Minus        */
 Equals 6 5 32        /*            = -> =            */
-Equals 5 0 16        /*            + -> +            */
+Equals 5 0 144       /*            + -> +            */
 Pound 5 7 32         /*            = -> =            */
-Pound 5 0 16         /*            + -> +            */
+Pound 5 0 144        /*            + -> +            */
 BackSpace 7 0 8      /*    Backspace -> DEL          */
 Control_L 0 5 8      /*        Cntrl -> CBM          */
 q 0 6 8              /*            Q -> Q            */
@@ -84,11 +85,11 @@ j 4 2 8              /*            J -> J            */
 k 4 5 8              /*            K -> K            */
 l 5 2 8              /*            L -> L            */
 SemiColon 6 2 32     /*            ; -> ;            */
-SemiColon 5 5 16     /*            : -> :            */
+SemiColon 5 5 144    /*            : -> :            */
 SingleQuote 3 0 33   /*            ' -> '            */
-SingleQuote 0 7 1    /*            " -> "            */
+SingleQuote 0 7 129  /*            " -> "            */
 BackQuote 0 1 32     /*            ` -> Left Arrow   */
-BackQuote 6 6 1      /*            ~ -> Pi           */
+BackQuote 6 6 129    /*            ~ -> Pi           */
 BackSlash 6 0 8      /*            \ -> Lira         */
 Shift_L 1 3 2        /*   Left Shift -> Left Shift   */
 CapsLock 1 3 64      /*    Caps Lock -> Shift Lock   */
