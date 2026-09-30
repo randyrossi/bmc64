@@ -41,6 +41,10 @@ This guide covers installing, configuring, and using BMC64, including machine se
   - [Pseudo Stereo Effect](#pseudo-stereo-effect)
 - [Input \& GPIO](#input--gpio)
   - [Keyboards](#keyboards)
+    - [Choosing your keyboard](#choosing-your-keyboard)
+    - [Symbolic or Positional?](#symbolic-or-positional)
+    - [Typing in the menu](#typing-in-the-menu)
+    - [If you use your own keymap files (.vkm)](#if-you-use-your-own-keymap-files-vkm)
     - [Plus/4 Keyboard Notes](#plus4-keyboard-notes)
     - [C128 Keyboard Notes](#c128-keyboard-notes)
   - [Mice](#mice)
@@ -541,6 +545,62 @@ TheC64 (Maxi) | Maxi Positional
 * Make sure you have the rpi_*.vkm files located in each machine subdir.
 
 * Keyrah V3 support has been added (v5.1.5 onwards) but you need to rename the `rpi_keyrah_v3_pos.vkm` file to `rpi_pos.vkm` and replace the exiting file, then select positional mapping. 
+
+### Choosing your keyboard
+
+From v5.2.1 BMC64 supports international keyboard layout and there are new settings and input handling as detailed below:
+
+The **Keyboard** menu has two settings:
+
+* **Keyboard Layout**: the keyboard you are typing on.
+* **Keyboard Mapping**: how its keys are turned into keys on the emulated machine.
+
+Choose the layout first. The mapping then only offers the choices that make sense for that layout, and it is greyed out when there is only one. Use **Save Settings** to keep your choice.
+
+On the C64:
+
+Keyboard Layout | Keyboard Mapping | Use it for
+----------------|------------------|-----------
+Commodore | Positional | A real Commodore keyboard on GPIO or a C64P, or any USB keyboard used by key position
+Commodore | TheC64 Maxi | TheC64 Maxi keyboard
+Commodore | Keyrah V3 | A real Commodore keyboard through a Keyrah V3
+US English, UK English, German, French, Norwegian | Symbolic or Positional | A USB keyboard with that layout
+PETSCIIBOARD | Symbolic | A PETSCIIBOARD keyboard
+
+On the other machines:
+
+Machine | Keyboard Layout | Keyboard Mapping
+--------|-----------------|-----------------
+C128, VIC-20, Plus/4 | Commodore | Positional, TheC64 Maxi
+C128, VIC-20, Plus/4 | US English | Symbolic
+Plus/4 (plus4emu) | Commodore | Positional, TheC64 Maxi, Keyrah V2 (C16)
+PET | PET Graphics, PET Business | Symbolic, Positional
+
+The default is US English / Symbolic. On plus4emu it is Commodore / Positional, and on the PET it is PET Graphics / Symbolic.
+
+Your keyboard setting from earlier versions is not carried over, so choose your keyboard again after updating.
+
+### Symbolic or Positional?
+
+* **Symbolic** types the character printed on your key. On a German keyboard, for example, Shift+2 gives `"` and AltGr+Q gives `@`, just as on a PC. This is best for typing BASIC and text. Characters the Commodore does not have are left out or replaced with the closest match.
+* **Positional** maps each key to the Commodore key in the same position, whatever is printed on it. This is best for games and for software that expects the Commodore layout. It works the same way for every national keyboard. The extra key next to left Shift on European keyboards types £.
+
+### Typing in the menu
+
+Text fields in the menu, such as file names, follow your Keyboard Layout, including AltGr characters and accented letters such as æ, ø, å, ä, ö, ü and é. With a Commodore keyboard, use Shift+CRSR to move left and up in the menu.
+
+### If you use your own keymap files (.vkm)
+
+**This is a breaking change.** The symbolic keymaps now use the same format as VICE 3.4. If you have edited a symbolic `rpi_*.vkm` file, or made your own, back it up before copying the new files to your SD card, because the new files replace yours.
+
+A symbolic keymap in the old format types shifted characters without Shift, for example `2` types `@`. To fix one, add 128 to the last number on each line that should only apply while Shift is held:
+
+    2 5 6 16    becomes    2 5 6 144
+    7 2 3 1     becomes    7 2 3 129
+
+You can also use 512 for lines that need AltGr and 1024 for lines that need Ctrl. Positional keymaps are not affected.
+
+
 
 * Special thanks goes out to ody81(github) / ody ody (youtube) user who figured out the Maxi keyboard mapping file.  You can watch his tutorial on how to put BMC64 inside a Maxi case here: https://www.youtube.com/channel/UCrXCNM2oXmIA7sTUwXrumiw or read his Reddit post here: https://www.reddit.com/r/Commodore/comments/ejtggy/the_c64_maxi_to_bmc64_conversion_rough_tutorial
 
