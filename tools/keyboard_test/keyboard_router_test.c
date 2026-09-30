@@ -180,7 +180,7 @@ int main(void) {
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_SemiColon, 1, 0) == 0xD8);
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_SingleQuote, 0, 0) == 0xE6);
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_RightBracket, 0, 0) == 0xA8);
-  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_KP_BackSlash, 1, 0) == '>');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_NonUSBackSlash, 1, 0) == '>');
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_2, 0, 0) == 0xE9);
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_DE, KEYCODE_y, 0, 0) == 'z');
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_DE, KEYCODE_z, 0, 0) == 'y');
@@ -195,7 +195,7 @@ int main(void) {
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_DE, KEYCODE_9, 0, 1) == ']');
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_DE, KEYCODE_q, 0, 1) == '@');
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_DE, KEYCODE_e, 0, 1) == 0x20AC);
-  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_DE, KEYCODE_KP_BackSlash, 0, 1) == '|');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_DE, KEYCODE_NonUSBackSlash, 0, 1) == '|');
   assert(keyboard_layout_has_altgr(KEYBOARD_LAYOUT_DE));
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_2, 1, 0) == '2');
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_FR, KEYCODE_7, 0, 0) == 0xE8);

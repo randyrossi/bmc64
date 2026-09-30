@@ -231,8 +231,8 @@ const char* keycode_to_string(long keycode) {
        return "KP 0";
     case KEYCODE_KP_Decimal:
        return "KP Decimal";
-    case KEYCODE_KP_BackSlash:
-       return "KP BackSlash";
+    case KEYCODE_NonUSBackSlash:
+       return "NonUS BackSlash";
     case KEYCODE_Application:
        return "App";
     case KEYCODE_LeftShift:

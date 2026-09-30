@@ -97,90 +97,90 @@
 !VSHIFT RSHIFT
 !SHIFTL LSHIFT
 
-Escape 7 7 8         /*             Escape -> Run/Stop           */
-1 7 0 8              /*                1 ! -> 1 !                */
-2 7 3 40             /*                2 " -> 2 "                */
-2 5 6 512            /*          AltGr+2 @ -> @                  */
-3 1 0 40             /*                3 # -> 3 #                */
-3 6 0 512            /*      AltGr+3 pound -> POUND              */
-4 1 3 40             /*         4 currency -> 4 $                */
-4 1 3 513            /*          AltGr+4 $ -> $                  */
-5 2 0 8              /*                5 % -> 5 %                */
-6 2 3 8              /*                6 & -> 6 &                */
-7 3 0 40             /*                7 / -> 7 /                */
-7 6 7 144            /*          Shift+7 / -> /                  */
-8 3 3 40             /*                8 ( -> 8 (                */
-8 5 5 513            /*          AltGr+8 [ -> [                  */
-9 4 0 40             /*                9 ) -> 9 )                */
-9 6 2 513            /*          AltGr+9 ] -> ]                  */
-0 4 3 8              /*                0 = -> 0                  */
-Dash 5 0 40          /*                  + -> +                  */
-Dash 6 7 160         /*                  ? -> ?                  */
-Dash 5 0 513         /*            AltGr++ -> Shift++            */
-Equals 6 0 8         /*    backslash grave -> POUND              */
-Pound 3 0 33         /*         apostrophe -> '                  */
-Pound 6 1 176        /*   Shift+apostrophe -> *                  */
-Pound 6 6 513        /*   AltGr+apostrophe -> Pi                 */
-BackSpace 0 0 8      /*          Backspace -> DEL                */
-Control_L 7 5 8      /*       Left Control -> CBM                */
-q 7 6 8              /*                  Q -> Q                  */
-w 1 1 8              /*                  W -> W                  */
-e 1 6 8              /*                  E -> E                  */
-r 2 1 8              /*                  R -> R                  */
-t 2 6 8              /*                  T -> T                  */
-y 3 1 8              /*                  Y -> Y                  */
-u 3 6 8              /*                  U -> U                  */
-i 4 1 8              /*                  I -> I                  */
-o 4 6 8              /*                  O -> O                  */
-p 5 1 8              /*                  P -> P                  */
-LeftBracket 5 6 8    /*       Norwegian aa -> @                  */
-RightBracket 6 6 8   /*        diaeresis ^ -> Up Arrow           */
-Return 0 1 8         /*             Return -> Return             */
-Tab 7 2 8            /*                Tab -> CTRL               */
-a 1 2 8              /*                  A -> A                  */
-s 1 5 8              /*                  S -> S                  */
-d 2 2 8              /*                  D -> D                  */
-f 2 5 8              /*                  F -> F                  */
-g 3 2 8              /*                  G -> G                  */
-h 3 5 8              /*                  H -> H                  */
-j 4 2 8              /*                  J -> J                  */
-k 4 5 8              /*                  K -> K                  */
-l 5 2 8              /*                  L -> L                  */
-SemiColon 5 5 8      /*       Norwegian oe -> : [                */
-SingleQuote 6 2 8    /*       Norwegian ae -> ; ]                */
-BackQuote 7 1 8      /*          | section -> Left Arrow         */
-Shift_L 1 7 2        /*         Left Shift -> Left Shift         */
-CapsLock 1 7 64      /*          Caps Lock -> Shift Lock         */
-KP_BackSlash 5 7 33  /*                  < -> <                  */
-KP_BackSlash 5 4 129 /*                  > -> >                  */
-z 1 4 8              /*                  Z -> Z                  */
-x 2 7 8              /*                  X -> X                  */
-c 2 4 8              /*                  C -> C                  */
-v 3 7 8              /*                  V -> V                  */
-b 3 4 8              /*                  B -> B                  */
-n 4 7 8              /*                  N -> N                  */
-m 4 4 8              /*                  M -> M                  */
-Comma 5 7 40         /*                  , -> ,                  */
-Comma 6 2 144        /*            Shift+, -> ;                  */
-Period 5 4 40        /*                  . -> .                  */
-Period 5 5 144       /*            Shift+. -> :                  */
-Slash 5 3 8          /*                - _ -> -                  */
-Shift_R 6 4 4        /*        Right Shift -> Right Shift        */
-Space 7 4 8          /*              Space -> Space              */
-F1 0 4 8             /*                 F1 -> F1                 */
-F2 0 4 1             /*                 F2 -> F2                 */
-F3 0 5 8             /*                 F3 -> F3                 */
-F4 0 5 1             /*                 F4 -> F4                 */
-F5 0 6 8             /*                 F5 -> F5                 */
-F6 0 6 1             /*                 F6 -> F6                 */
-F7 0 3 8             /*                 F7 -> F7                 */
-F8 0 3 1             /*                 F8 -> F8                 */
-Home 6 3 8           /*               Home -> CLR/HOME           */
-Up 0 7 1             /*                 Up -> CRSR UP            */
-Down 0 7 8           /*               Down -> CRSR DOWN          */
-Insert 0 0 1         /*             Insert -> INS                */
-Del 0 0 8            /*             Delete -> DEL                */
-Left 0 2 1           /*               Left -> CRSR LEFT          */
-Right 0 2 8          /*              Right -> CRSR RIGHT         */
+Escape 7 7 8           /*             Escape -> Run/Stop           */
+1 7 0 8                /*                1 ! -> 1 !                */
+2 7 3 40               /*                2 " -> 2 "                */
+2 5 6 512              /*          AltGr+2 @ -> @                  */
+3 1 0 40               /*                3 # -> 3 #                */
+3 6 0 512              /*      AltGr+3 pound -> POUND              */
+4 1 3 40               /*         4 currency -> 4 $                */
+4 1 3 513              /*          AltGr+4 $ -> $                  */
+5 2 0 8                /*                5 % -> 5 %                */
+6 2 3 8                /*                6 & -> 6 &                */
+7 3 0 40               /*                7 / -> 7 /                */
+7 6 7 144              /*          Shift+7 / -> /                  */
+8 3 3 40               /*                8 ( -> 8 (                */
+8 5 5 513              /*          AltGr+8 [ -> [                  */
+9 4 0 40               /*                9 ) -> 9 )                */
+9 6 2 513              /*          AltGr+9 ] -> ]                  */
+0 4 3 8                /*                0 = -> 0                  */
+Dash 5 0 40            /*                  + -> +                  */
+Dash 6 7 160           /*                  ? -> ?                  */
+Dash 5 0 513           /*            AltGr++ -> Shift++            */
+Equals 6 0 8           /*    backslash grave -> POUND              */
+Pound 3 0 33           /*         apostrophe -> '                  */
+Pound 6 1 176          /*   Shift+apostrophe -> *                  */
+Pound 6 6 513          /*   AltGr+apostrophe -> Pi                 */
+BackSpace 0 0 8        /*          Backspace -> DEL                */
+Control_L 7 5 8        /*       Left Control -> CBM                */
+q 7 6 8                /*                  Q -> Q                  */
+w 1 1 8                /*                  W -> W                  */
+e 1 6 8                /*                  E -> E                  */
+r 2 1 8                /*                  R -> R                  */
+t 2 6 8                /*                  T -> T                  */
+y 3 1 8                /*                  Y -> Y                  */
+u 3 6 8                /*                  U -> U                  */
+i 4 1 8                /*                  I -> I                  */
+o 4 6 8                /*                  O -> O                  */
+p 5 1 8                /*                  P -> P                  */
+LeftBracket 5 6 8      /*       Norwegian aa -> @                  */
+RightBracket 6 6 8     /*        diaeresis ^ -> Up Arrow           */
+Return 0 1 8           /*             Return -> Return             */
+Tab 7 2 8              /*                Tab -> CTRL               */
+a 1 2 8                /*                  A -> A                  */
+s 1 5 8                /*                  S -> S                  */
+d 2 2 8                /*                  D -> D                  */
+f 2 5 8                /*                  F -> F                  */
+g 3 2 8                /*                  G -> G                  */
+h 3 5 8                /*                  H -> H                  */
+j 4 2 8                /*                  J -> J                  */
+k 4 5 8                /*                  K -> K                  */
+l 5 2 8                /*                  L -> L                  */
+SemiColon 5 5 8        /*       Norwegian oe -> : [                */
+SingleQuote 6 2 8      /*       Norwegian ae -> ; ]                */
+BackQuote 7 1 8        /*          | section -> Left Arrow         */
+Shift_L 1 7 2          /*         Left Shift -> Left Shift         */
+CapsLock 1 7 64        /*          Caps Lock -> Shift Lock         */
+NonUSBackSlash 5 7 33  /*                  < -> <                  */
+NonUSBackSlash 5 4 129 /*                  > -> >                  */
+z 1 4 8                /*                  Z -> Z                  */
+x 2 7 8                /*                  X -> X                  */
+c 2 4 8                /*                  C -> C                  */
+v 3 7 8                /*                  V -> V                  */
+b 3 4 8                /*                  B -> B                  */
+n 4 7 8                /*                  N -> N                  */
+m 4 4 8                /*                  M -> M                  */
+Comma 5 7 40           /*                  , -> ,                  */
+Comma 6 2 144          /*            Shift+, -> ;                  */
+Period 5 4 40          /*                  . -> .                  */
+Period 5 5 144         /*            Shift+. -> :                  */
+Slash 5 3 8            /*                - _ -> -                  */
+Shift_R 6 4 4          /*        Right Shift -> Right Shift        */
+Space 7 4 8            /*              Space -> Space              */
+F1 0 4 8               /*                 F1 -> F1                 */
+F2 0 4 1               /*                 F2 -> F2                 */
+F3 0 5 8               /*                 F3 -> F3                 */
+F4 0 5 1               /*                 F4 -> F4                 */
+F5 0 6 8               /*                 F5 -> F5                 */
+F6 0 6 1               /*                 F6 -> F6                 */
+F7 0 3 8               /*                 F7 -> F7                 */
+F8 0 3 1               /*                 F8 -> F8                 */
+Home 6 3 8             /*               Home -> CLR/HOME           */
+Up 0 7 1               /*                 Up -> CRSR UP            */
+Down 0 7 8             /*               Down -> CRSR DOWN          */
+Insert 0 0 1           /*             Insert -> INS                */
+Del 0 0 8              /*             Delete -> DEL                */
+Left 0 2 1             /*               Left -> CRSR LEFT          */
+Right 0 2 8            /*              Right -> CRSR RIGHT         */
 
-PageUp -3 0          /*            Page Up -> RESTORE            */
+PageUp -3 0            /*            Page Up -> RESTORE            */

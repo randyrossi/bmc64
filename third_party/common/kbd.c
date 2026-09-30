@@ -255,8 +255,10 @@ signed long kbd_arch_keyname_to_keynum(char *keyname) {
     return (long)KEYCODE_KP_Divide;
   } else if (KCMP("KP_Decimal")) {
     return (long)KEYCODE_KP_Decimal;
-  } else if (KCMP("KP_BackSlash")) {
-    return (long)KEYCODE_KP_BackSlash;
+  } else if (KCMP("NonUSBackSlash") || KCMP("KP_BackSlash")) {
+    // ISO key next to left Shift. KP_BackSlash is the old name, kept so
+    // existing user vkm files still load.
+    return (long)KEYCODE_NonUSBackSlash;
   } else if (KCMP("KP_Multiply")) {
     return (long)KEYCODE_KP_Multiply;
   } else if (KCMP("KP_Subtract")) {

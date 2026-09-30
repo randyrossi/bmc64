@@ -135,7 +135,7 @@ extern int ctrl_key_sym_set;
 #define KEYCODE_KP9 0x61
 #define KEYCODE_KP0 0x62
 #define KEYCODE_KP_Decimal 0x63
-#define KEYCODE_KP_BackSlash 0x64
+#define KEYCODE_NonUSBackSlash 0x64
 #define KEYCODE_Application 0x65
 
 #define KEYCODE_LeftShift 0x100

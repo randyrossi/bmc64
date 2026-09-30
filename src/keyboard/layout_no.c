@@ -14,7 +14,7 @@ static const KeyboardLayoutKey keys[] = {
    {KEYCODE_SemiColon, 0xF8, 0xD8, 0, 0}, {KEYCODE_SingleQuote, 0xE6, 0xC6, 0, 0},
    {KEYCODE_BackQuote, '|', 0xA7, 0, 0}, {KEYCODE_Comma, ',', ';', 0, 0},
    {KEYCODE_Period, '.', ':', 0, 0}, {KEYCODE_Slash, '-', '_', 0, 0},
-   {KEYCODE_KP_BackSlash, '<', '>', 0, 0}, {KEYCODE_Space, ' ', ' ', 0, 0},
+   {KEYCODE_NonUSBackSlash, '<', '>', 0, 0}, {KEYCODE_Space, ' ', ' ', 0, 0},
 };
 
 unsigned int keyboard_layout_no_char(long key, int shifted, int altgr) {
