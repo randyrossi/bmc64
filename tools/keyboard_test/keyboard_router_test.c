@@ -85,8 +85,8 @@ int main(void) {
   static const char *machine_dirs[] = {
     NULL, "vic20", "c64", "c128", "plus4", "plus4emu", "pet"
   };
-  static const int expected_counts[] = {0, 3, 14, 3, 3, 3, 4};
-  static const int expected_layouts[] = {0, 2, 7, 2, 2, 1, 2};
+  static const int expected_counts[] = {0, 3, 14, 3, 3, 3, 2};
+  static const int expected_layouts[] = {0, 2, 7, 2, 2, 1, 1};
   for (int machine = BMC64_MACHINE_CLASS_VIC20; machine <= BMC64_MACHINE_CLASS_PET; machine++) {
     assert(keyboard_preset_count(machine) == expected_counts[machine]);
     assert(keyboard_preset_at(machine, expected_counts[machine]) == NULL);
@@ -99,6 +99,7 @@ int main(void) {
       assert(keyboard_preset_find(machine, preset->layout, preset->mapping) == preset);
       assert(strlen(preset->layout_label) < 36 && strlen(preset->mapping_label) < 36);
       assert(keyboard_preset_layout_index(machine, preset->layout) >= 0);
+      if (preset->vkm_file == NULL) continue; // the emulator picks the file
       char path[128];
       snprintf(path, sizeof(path), "sdcard/%s/%s", machine_dirs[machine], preset->vkm_file);
       FILE *file = fopen(path, "r");
@@ -131,9 +132,17 @@ int main(void) {
       size_t length = strlen(map->d_name);
       if (length < 4 || strncmp(map->d_name, "rpi_", 4) != 0 ||
           strcmp(map->d_name + length - 4, ".vkm") != 0) continue;
+      // Used when a row names it, or when a row without a file lets the
+      // emulator pick rpi_<keyboard type>_sym/pos.vkm for that mapping.
       int found = 0;
       for (int index = 0; index < keyboard_preset_count(machine); index++) {
-        if (strcmp(keyboard_preset_at(machine, index)->vkm_file, map->d_name) == 0) found++;
+        const KeyboardPreset *preset = keyboard_preset_at(machine, index);
+        if (preset->vkm_file != NULL) {
+          if (strcmp(preset->vkm_file, map->d_name) == 0) found++;
+        } else if (length > 8 && strcmp(map->d_name + length - 8,
+                   preset->mapping == KEYBOARD_MAP_POSITIONAL ? "_pos.vkm" : "_sym.vkm") == 0) {
+          found++;
+        }
       }
       assert(found > 0);
     }
@@ -191,16 +200,32 @@ int main(void) {
     assert(strcmp(preset->vkm_file, "rpi_sym.vkm") == 0);
   }
   assert(strcmp(keyboard_preset_default(BMC64_MACHINE_CLASS_PLUS4EMU)->vkm_file, "rpi_pos.vkm") == 0);
-  assert(strcmp(keyboard_preset_default(BMC64_MACHINE_CLASS_PET)->vkm_file, "rpi_grus_sym.vkm") == 0);
+  assert(keyboard_preset_default(BMC64_MACHINE_CLASS_PET)->mapping == KEYBOARD_MAP_SYMBOLIC);
 
-  // PET: two keyboards, each Symbolic (default) or Positional.
+  // PET: one layout, hidden in the menu so only Keyboard Mapping shows; Symbolic
+  // (default) or Positional. The PET model picks the Graphics or Business
+  // keymap, so no row names a file, and menu text entry is always US.
   const int pet = BMC64_MACHINE_CLASS_PET;
-  assert(keyboard_preset_layout_index(pet, KEYBOARD_PHYSICAL_PET_BUSINESS) == 1);
-  assert(keyboard_preset_mapping_count(pet, KEYBOARD_PHYSICAL_PET_BUSINESS) == 2);
-  assert(keyboard_preset_mapping_at(pet, KEYBOARD_PHYSICAL_PET_BUSINESS, 0)->mapping == KEYBOARD_MAP_SYMBOLIC);
-  assert(strcmp(keyboard_preset_find(pet, KEYBOARD_PHYSICAL_PET_BUSINESS, KEYBOARD_MAP_POSITIONAL)->vkm_file, "rpi_buus_pos.vkm") == 0);
-  assert(keyboard_preset_find(pet, KEYBOARD_PHYSICAL_PET_GRAPHICS, KEYBOARD_MAP_POSITIONAL)->text_layout == KEYBOARD_LAYOUT_POSITIONAL);
-  assert(keyboard_preset_find(pet, KEYBOARD_PHYSICAL_PET_GRAPHICS, KEYBOARD_MAP_SYMBOLIC)->text_layout == KEYBOARD_LAYOUT_US);
+  assert(keyboard_preset_layout_hidden(pet));
+  for (int machine = BMC64_MACHINE_CLASS_VIC20; machine < BMC64_MACHINE_CLASS_PET; machine++) {
+    assert(!keyboard_preset_layout_hidden(machine));
+  }
+  assert(!keyboard_preset_layout_hidden(BMC64_MACHINE_CLASS_UNKNOWN));
+  assert(keyboard_preset_mapping_count(pet, KEYBOARD_PHYSICAL_MACHINE) == 2);
+  assert(keyboard_preset_mapping_at(pet, KEYBOARD_PHYSICAL_MACHINE, 0)->mapping == KEYBOARD_MAP_SYMBOLIC);
+  assert(keyboard_preset_mapping_at(pet, KEYBOARD_PHYSICAL_MACHINE, 1)->mapping == KEYBOARD_MAP_POSITIONAL);
+  for (int index = 0; index < keyboard_preset_count(pet); index++) {
+    assert(keyboard_preset_at(pet, index)->vkm_file == NULL);
+    assert(keyboard_preset_at(pet, index)->text_layout == KEYBOARD_LAYOUT_US);
+  }
+  static const char *pet_maps[] = {"rpi_grus_sym.vkm", "rpi_grus_pos.vkm", "rpi_buus_sym.vkm", "rpi_buus_pos.vkm"};
+  for (unsigned index = 0; index < sizeof(pet_maps) / sizeof(pet_maps[0]); index++) {
+    char path[64];
+    snprintf(path, sizeof(path), "sdcard/pet/%s", pet_maps[index]);
+    FILE *file = fopen(path, "r");
+    assert(file != NULL);
+    fclose(file);
+  }
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_US, KEYCODE_2, 1, 0) == '@');
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_UK, KEYCODE_2, 1, 0) == '"');
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_UK, KEYCODE_3, 1, 0) == 0xA3);

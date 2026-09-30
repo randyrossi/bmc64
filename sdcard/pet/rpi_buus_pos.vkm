@@ -1,7 +1,6 @@
 # this is a PET business (uk) keyboard mapping (positional)
 
-# FIXME: this is incomplete
-!INCLUDE rpi_buus_sym.vkm
+# Adapted from VICE 3.5 sdl_buuk_pos.vkm: SDL key numbers converted to BMC64 key names.
 
 # Business (UK) keyboard matrix:
 #
@@ -47,3 +46,82 @@
 # 5 |        |        |        |        |        |        |   ]    |        |
 #   +--------+--------+--------+--------+--------+--------+--------+--------+
 
+!CLEAR
+!LSHIFT 6 0
+!RSHIFT 6 6
+!VSHIFT RSHIFT
+!SHIFTL LSHIFT
+Escape 2 0 8         /*          ESC -> ESC          */
+1 1 0 8              /*            1 -> 1            */
+2 0 0 8              /*            2 -> 2            */
+3 9 1 8              /*            3 -> 3            */
+4 1 1 8              /*            4 -> 4            */
+5 0 1 8              /*            5 -> 5            */
+6 9 2 8              /*            6 -> 6            */
+7 1 2 8              /*            7 -> 7            */
+8 0 2 8              /*            8 -> 8            */
+9 9 3 8              /*            9 -> 9            */
+0 1 3 8              /*            0 -> 0            */
+Dash 9 5 8           /*        Minus -> :            */
+Equals 0 3 8         /*        Equal -> Minus        */
+BackSpace 4 7 8      /*    Backspace -> Del          */
+Tab 4 0 8            /*          TAB -> TAB          */
+q 5 0 8              /*            Q -> Q            */
+w 4 1 8              /*            W -> W            */
+e 5 1 8              /*            E -> E            */
+r 4 2 8              /*            R -> R            */
+t 5 2 8              /*            T -> T            */
+y 4 3 8              /*            Y -> Y            */
+u 5 3 8              /*            U -> U            */
+i 4 5 8              /*            I -> I            */
+o 5 5 8              /*            O -> O            */
+p 4 6 8              /*            P -> P            */
+LeftBracket 5 6 8    /*            [ -> [            */
+RightBracket 2 4 8   /*            ] -> ]            */
+Return 3 4 8         /*       Return -> Return       */
+Control_L 8 0 8      /*    Left Ctrl -> RVS          */
+a 3 0 8              /*            A -> A            */
+s 2 1 8              /*            S -> S            */
+d 3 1 8              /*            D -> D            */
+f 2 2 8              /*            F -> F            */
+g 3 2 8              /*            G -> G            */
+h 2 3 8              /*            H -> H            */
+j 3 3 8              /*            J -> J            */
+k 2 5 8              /*            K -> K            */
+l 3 5 8              /*            L -> L            */
+SemiColon 2 6 8      /*            ; -> ;            */
+SingleQuote 3 6 8    /*            ' -> @            */
+BackQuote 9 0 8      /*            ` -> Left Arrow   */
+Shift_L 6 0 2        /*   Left Shift -> Left Shift   */
+BackSlash 4 4 8      /*            \ -> \            */
+z 7 0 8              /*            Z -> Z            */
+x 8 1 8              /*            X -> X            */
+c 6 1 8              /*            C -> C            */
+v 7 1 8              /*            V -> V            */
+b 6 2 8              /*            B -> B            */
+n 7 2 8              /*            N -> N            */
+m 8 3 8              /*            M -> M            */
+Comma 7 3 8          /*            , -> ,            */
+Period 6 3 8         /*            . -> .            */
+Slash 8 6 8          /*            / -> /            */
+Shift_R 6 6 4        /*  Right Shift -> Right Shift  */
+Space 8 2 8          /*        Space -> Space        */
+Home 8 4 8           /*         Home -> CLR/HOME     */
+Up 5 4 1             /*           Up -> CRSR UP      */
+Left 0 5 1           /*         Left -> CRSR LEFT    */
+Right 0 5 8          /*        Right -> CRSR RIGHT   */
+Down 5 4 8           /*         Down -> CRSR DOWN    */
+Insert 9 4 8         /*          Ins -> STOP         */
+Delete 1 5 8         /*          Del -> Up Arrow     */
+Control_R 7 6 8      /*   Right Ctrl -> RPT          */
+KP_7 1 4 8           /*     Numpad 7 -> Numpad 7     */
+KP_8 0 4 8           /*     Numpad 8 -> Numpad 8     */
+KP_9 1 7 8           /*     Numpad 9 -> Numpad 9     */
+KP_4 5 7 8           /*     Numpad 4 -> Numpad 4     */
+KP_5 2 7 8           /*     Numpad 5 -> Numpad 5     */
+KP_6 3 7 8           /*     Numpad 6 -> Numpad 6     */
+KP_1 8 7 8           /*     Numpad 1 -> Numpad 1     */
+KP_2 7 7 8           /*     Numpad 2 -> Numpad 2     */
+KP_3 6 7 8           /*     Numpad 3 -> Numpad 3     */
+KP_0 7 4 8           /*     Numpad 0 -> Numpad 0     */
+KP_Decimal 6 4 8     /*     Numpad . -> Numpad .     */

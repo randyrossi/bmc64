@@ -88,6 +88,12 @@ static int keyboard_saved_index;
 static char *keyboard_saved_user_sym_file;
 
 static int keyboard_apply_preset(const KeyboardPreset *entry) {
+  if (entry->vkm_file == NULL) {
+    // VICE picks rpi_<keyboard type>_sym/pos.vkm, and reloads it when the
+    // machine model changes the keyboard type (PET).
+    return resources_set_int("KeymapIndex",
+        entry->mapping == KEYBOARD_MAP_POSITIONAL ? KBD_INDEX_POS : KBD_INDEX_SYM);
+  }
   const char *file = entry->vkm_file;
   if (!file || resources_set_string("KeymapUserSymFile", file) < 0) return -1;
   int index;

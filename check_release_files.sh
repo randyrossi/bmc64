@@ -60,7 +60,6 @@ REQUIRED_FILES=(
 
     # Plus/4 emulator files
     "PLUS4EMU/PUT_ROMS_HERE"
-    "PLUS4EMU/README.md"
     "PLUS4EMU/rpi_c16_keyrah_pos.vkm"
     "PLUS4EMU/rpi_maxi_pos.vkm"
     "PLUS4EMU/rpi_pos.vkm"

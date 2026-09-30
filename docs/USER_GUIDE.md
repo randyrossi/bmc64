@@ -574,9 +574,11 @@ Machine | Keyboard Layout | Keyboard Mapping
 C128, VIC-20, Plus/4 | Commodore | Positional, TheC64 Maxi
 C128, VIC-20, Plus/4 | US English | Symbolic
 Plus/4 (plus4emu) | Commodore | Positional, TheC64 Maxi, Keyrah V2 (C16)
-PET | PET Graphics, PET Business | Symbolic, Positional
+PET | (not shown) | Symbolic, Positional
 
-The default is US English / Symbolic. On plus4emu it is Commodore / Positional, and on the PET it is PET Graphics / Symbolic.
+The default is US English / Symbolic. On plus4emu it is Commodore / Positional, and on the PET it is Symbolic.
+
+On the PET, the menu only shows **Keyboard Mapping**. Whether the emulated PET has a Graphics or a Business keyboard depends on the PET model you choose, and BMC64 picks the matching keymap for it automatically.
 
 Your keyboard setting from earlier versions is not carried over, so choose your keyboard again after updating.
 

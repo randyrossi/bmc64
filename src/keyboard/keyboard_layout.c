@@ -46,16 +46,18 @@ static const KeyboardPreset plus4emu_presets[] = {
    {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_KEYRAH, "Keyrah V2 (C16)", "rpi_c16_keyrah_pos.vkm", KEYBOARD_LAYOUT_POSITIONAL},
 };
 
+// The PET's keyboard (Graphics or Business) follows the PET model, so the
+// emulator picks rpi_grus_* or rpi_buus_* itself. The menu hides Keyboard
+// Layout (see machine_tables), and menu text entry is always US.
 static const KeyboardPreset pet_presets[] = {
-   {KEYBOARD_PHYSICAL_PET_GRAPHICS, "PET Graphics", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_grus_sym.vkm", KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PHYSICAL_PET_GRAPHICS, "PET Graphics", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_grus_pos.vkm", KEYBOARD_LAYOUT_POSITIONAL},
-   {KEYBOARD_PHYSICAL_PET_BUSINESS, "PET Business", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_buus_sym.vkm", KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PHYSICAL_PET_BUSINESS, "PET Business", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_buus_pos.vkm", KEYBOARD_LAYOUT_POSITIONAL},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_SYMBOLIC, "Symbolic", NULL, KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", NULL, KEYBOARD_LAYOUT_US},
 };
 
 typedef struct {
    const KeyboardPreset *presets;
    int count;
+   int hide_layout; // show only "Keyboard Mapping" in the menu
 } KeyboardPresetTable;
 
 static const KeyboardPresetTable machine_tables[] = {
@@ -64,7 +66,7 @@ static const KeyboardPresetTable machine_tables[] = {
    [BMC64_MACHINE_CLASS_VIC20] = {vic20_presets, sizeof(vic20_presets) / sizeof(vic20_presets[0])},
    [BMC64_MACHINE_CLASS_PLUS4] = {plus4_presets, sizeof(plus4_presets) / sizeof(plus4_presets[0])},
    [BMC64_MACHINE_CLASS_PLUS4EMU] = {plus4emu_presets, sizeof(plus4emu_presets) / sizeof(plus4emu_presets[0])},
-   [BMC64_MACHINE_CLASS_PET] = {pet_presets, sizeof(pet_presets) / sizeof(pet_presets[0])},
+   [BMC64_MACHINE_CLASS_PET] = {pet_presets, sizeof(pet_presets) / sizeof(pet_presets[0]), 1},
 };
 
 static const KeyboardPreset *machine_presets(int machine_class, int *count) {
@@ -74,6 +76,11 @@ static const KeyboardPreset *machine_presets(int machine_class, int *count) {
    }
    *count = machine_tables[machine_class].count;
    return machine_tables[machine_class].presets;
+}
+
+int keyboard_preset_layout_hidden(int machine_class) {
+   int count;
+   return machine_presets(machine_class, &count) != 0 && machine_tables[machine_class].hide_layout;
 }
 
 int keyboard_preset_count(int machine_class) {
