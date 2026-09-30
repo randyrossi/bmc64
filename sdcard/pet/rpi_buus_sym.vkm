@@ -184,8 +184,7 @@ RightBracket 2 4 129 /*            } -> Shift+]      */
 Insert 4 7 1         /*       Insert -> INS          */
 Left 0 5 1           /*         Left -> CRSR LEFT    */
 Up 5 4 1             /*           Up -> CRSR UP      */
-# 31 looks like a typo for 33 (press Shift+7, which gives ' on the Business keyboard)
-SingleQuote 1 2 31   /*            ' -> Shift+7      */
+SingleQuote 1 2 33   /*            ' -> Shift+7      */
 SingleQuote 0 0 129  /*            " -> Shift+2      */
 Equals 0 3 33        /*            = -> Shift+-      */
 Equals 2 6 129       /*            + -> Shift+;      */
