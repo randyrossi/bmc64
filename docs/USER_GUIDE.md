@@ -585,6 +585,19 @@ Your keyboard setting from earlier versions is not carried over, so choose your 
 * **Symbolic** types the character printed on your key. On a German keyboard, for example, Shift+2 gives `"` and AltGr+Q gives `@`, just as on a PC. This is best for typing BASIC and text. Characters the Commodore does not have are left out or replaced with the closest match.
 * **Positional** maps each key to the Commodore key in the same position, whatever is printed on it. This is best for games and for software that expects the Commodore layout. It works the same way for every national keyboard. The extra key next to left Shift on European keyboards types £.
 
+### Graphics characters with a US keyboard
+
+In US English Symbolic on the C64, some Commodore symbols already need Shift on a US keyboard, so Shift cannot also reach the graphics character on that Commodore key. For these keys, hold Shift and right Alt together:
+
+Keys | Types on the C64
+-----|-----------------
+Shift + right Alt + `2` | Shift + `@`
+Shift + right Alt + `6` | Shift + `↑` (π)
+Shift + right Alt + `8` | Shift + `*`
+Shift + right Alt + `=` | Shift + `+`
+
+If your keyboard has no right Alt key, switch **Keyboard Mapping** to **Positional**. Every Commodore key is then in its own position and works with Shift and the Commodore key as normal.
+
 ### Typing in the menu
 
 Text fields in the menu, such as file names, follow your Keyboard Layout, including AltGr characters and accented letters such as æ, ø, å, ä, ö, ü and é. With a Commodore keyboard, use Shift+CRSR to move left and up in the menu.
