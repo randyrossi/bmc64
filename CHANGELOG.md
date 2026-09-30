@@ -6,6 +6,7 @@
     * Add support for international keyboard layouts, in OSD and Vice
     * Backport VICE 3.4 Shift, Ctrl and AltGr keymap conditions, and improve shift handling for symbolic mappings
     * Add UK English, German, French, Norwegian, layouts
+    * Add Alt-GR modifier for US English to be able to print shifted PETSCII glyphs
     * Separate Keyboard Layout and Keyboard Mapping choices, with per-machine presets and saved settings
     * Handle Shift+cursor navigation in the menu, avoiding duplication
     * Add Split Shift and key latch changes (`BMC64_KEYBOARD_SPLIT_LATCH`), to stop random incorrect char output for when inputting shifted chars 
