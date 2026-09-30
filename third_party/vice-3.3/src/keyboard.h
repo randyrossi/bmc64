@@ -95,7 +95,15 @@ extern int keyboard_set_keymap_index(int vak, void *param);
 extern int keyboard_set_keymap_file(const char *val, void *param);
 extern int keyboard_keymap_dump(const char *filename);
 
+#define KBD_MOD_LSHIFT (1 << 0)
+#define KBD_MOD_RSHIFT (1 << 1)
+#define KBD_MOD_LCTRL  (1 << 2)
+#define KBD_MOD_RCTRL  (1 << 3)
+#define KBD_MOD_LALT   (1 << 4)
+#define KBD_MOD_RALT   (1 << 5)
+
 extern void keyboard_key_pressed(signed long key);
+extern void keyboard_key_pressed_mod(signed long key, int mod);
 extern void keyboard_key_released(signed long key);
 extern void keyboard_key_clear(void);
 

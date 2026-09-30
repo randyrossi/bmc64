@@ -1,0 +1,20 @@
+#include "keyboard_layout.h"
+#include "../../third_party/common/keycodes.h"
+
+#if BMC64_NEW_KEYBOARD_INPUT
+static const KeyboardLayoutKey keys[] = {
+   {KEYCODE_1, '1', '!', 0, 0}, {KEYCODE_2, '2', '"', 0, 0}, {KEYCODE_3, '3', '#', 0, 0},
+   {KEYCODE_4, '4', '$', 0, 0}, {KEYCODE_5, '5', '%', 0, 0}, {KEYCODE_6, '6', '&', 0, 0},
+   {KEYCODE_7, '7', '\'', 0, 0}, {KEYCODE_8, '8', '(', 0, 0}, {KEYCODE_9, '9', ')', 0, 0},
+   {KEYCODE_0, '0', '0', 0, 0}, {KEYCODE_KP_Add, '+', '+', 0, 0},
+   {KEYCODE_KP_Subtract, '-', '-', 0, 0}, {KEYCODE_LeftBracket, ':', '[', 0, 0},
+   {KEYCODE_SemiColon, '*', '*', 0, 0}, {KEYCODE_BackSlash, '@', '@', 0, 0},
+   {KEYCODE_Equals, '=', '=', 0, 0}, {KEYCODE_RightBracket, ';', ']', 0, 0},
+   {KEYCODE_Comma, ',', '<', 0, 0}, {KEYCODE_Period, '.', '>', 0, 0},
+   {KEYCODE_Slash, '/', '?', 0, 0}, {KEYCODE_Space, ' ', ' ', 0, 0},
+};
+
+char keyboard_layout_maxi_char(long key, int shifted) {
+   return keyboard_layout_lookup(keys, sizeof(keys) / sizeof(keys[0]), key, shifted, 0);
+}
+#endif

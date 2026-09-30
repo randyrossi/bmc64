@@ -44,6 +44,15 @@ then
        exit 1
 fi
 
+# The keyboard tests (key routing, layout tables, keyboard presets) must pass.
+# They are built with the PC's C compiler. Checked here so a failure shows up
+# before the long build; the Makefile checks again before building the kernel.
+if ! "$SRC_DIR/tools/keyboard_test/run_tests.sh"
+then
+       echo "Keyboard tests failed." >&2
+       exit 1
+fi
+
 CIRCLE_PUBLIC_INCLUDES="-I$CIRCLE_HOME/include -I$CIRCLE_HOME/libs/circle/include -I$CIRCLE_HOME/libs/circle/addon"
 
 if ! command -v flex >/dev/null 2>&1

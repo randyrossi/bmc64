@@ -23,7 +23,9 @@ EXTRAINCLUDE += $(APP_INCLUDES)
 
 OBJS	= src/main.o src/kernel.o src/new_io.o src/io_stats_bench.o src/perf_stats_env.o src/vicesound.o src/vicesoundbasedevice.o src/bmcmodem.o \
 		  src/viceoptions.o src/viceapp.o src/vice_network.o src/network_time_sync.o src/fbl.o src/crt_pi_idx.o src/crt_pi_rgb.o \
-		  src/webui/webui.o src/webui/webui_http.o src/webui/webui_fs.o src/webui/webui_assets.o
+				  src/webui/webui.o src/webui/webui_http.o src/webui/webui_fs.o src/webui/webui_assets.o src/keyboard/keyboard_router.o \
+				  src/keyboard/keyboard_layout.o src/keyboard/layout_us.o src/keyboard/layout_uk.o src/keyboard/layout_no.o \
+				  src/keyboard/layout_fr.o src/keyboard/layout_de.o src/keyboard/layout_c64.o src/keyboard/layout_positional.o src/keyboard/layout_maxi.o
 
 # The updater (src/update/, with zlib) is built in when updater.cfg says
 # updater = on or kernel_only; otherwise a stub whose two entry points do
@@ -94,6 +96,20 @@ else
 	@$(PYTHON) tools/gen_webui_assets.py
 endif
 
+KEYBOARD_TEST_CC ?= cc
+KEYBOARD_TEST_STAMP = build/.keyboard_tests.stamp
+KEYBOARD_TEST_BIN = build/.keyboard_router_test
+KEYBOARD_TEST_SRCS = tools/keyboard_test/keyboard_router_test.c tools/keyboard_test/run_tests.sh src/keyboard/keyboard_router.c \
+					 src/keyboard/keyboard_router.h src/keyboard/keyboard_feature.h third_party/common/kbd.c \
+					 src/keyboard/keyboard_layout.h src/keyboard/keyboard_layout.c $(wildcard src/keyboard/layout_*.c)
+
+$(KEYBOARD_TEST_STAMP): $(KEYBOARD_TEST_SRCS)
+	@echo "  TEST  keyboard"
+	@KEYBOARD_TEST_CC=$(KEYBOARD_TEST_CC) tools/keyboard_test/run_tests.sh
+	@mkdir -p $(dir $@) && touch $@
+
+src/keyboard/keyboard_router.o: $(KEYBOARD_TEST_STAMP)
+
 FILTERED_CIRCLE_NEWLIB = libcirclenewlib-bmc64.a
 
 $(FILTERED_CIRCLE_NEWLIB): $(NEWLIBDIR)/lib/libcirclenewlib.a
@@ -107,6 +123,7 @@ EXTRACLEAN += $(OBJS) $(DEPS)
 # previous machine build cannot link against a differently configured Circle.
 EXTRACLEAN += src/plus4emulatorcore.o src/viceemulatorcore.o
 EXTRACLEAN += $(UPDATER_OBJS) src/update/update_stub.o
+EXTRACLEAN += $(KEYBOARD_TEST_STAMP) $(KEYBOARD_TEST_BIN)
 
 $(TARGET).img: $(FILTERED_CIRCLE_NEWLIB)
 

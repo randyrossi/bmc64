@@ -35,6 +35,7 @@ REQUIRED_FILES=(
     "C64/rpi_petsciiboard_sym.vkm"
     "C64/rpi_pos.vkm"
     "C64/rpi_sym.vkm"
+    "C64/rpi_sym_no.vkm"
 
     # C128 files
     "C128/PUT_ROMS_HERE"
@@ -59,7 +60,6 @@ REQUIRED_FILES=(
 
     # Plus/4 emulator files
     "PLUS4EMU/PUT_ROMS_HERE"
-    "PLUS4EMU/README.md"
     "PLUS4EMU/rpi_c16_keyrah_pos.vkm"
     "PLUS4EMU/rpi_maxi_pos.vkm"
     "PLUS4EMU/rpi_pos.vkm"

@@ -73,6 +73,7 @@ SingleQuote 6 2 8     /* semicolon */
 Slash 6 7 8           /* slash */
 Space 7 4 8           /* space */
 Insert 6 0 8          /* sterling */
+NonUSBackSlash 6 0 8  /* sterling (ISO key left of Z) */
 RightBracket 6 1 8    /* asterisk */
 BackQuote 7 1 0       /* arrowleft */
 Del 6 6 8             /* arrowup */

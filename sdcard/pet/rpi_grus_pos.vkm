@@ -1,7 +1,6 @@
 # this is a PET graphics keyboard mapping (positional)
 
-# FIXME: this is incomplete
-!INCLUDE rpi_grus_sym.vkm
+# Adapted from VICE 3.5 sdl_grus_pos.vkm: SDL key numbers converted to BMC64 key names.
 
 #
 # Graphics keyboard matrix:
@@ -38,3 +37,84 @@
 #          LS ^r  @  [  ]  SPACE <  > ^c  RS      0  .  -  =
 # 
 # http://www.6502.org/users/andre/petindex/keyboards.html
+
+!CLEAR
+!LSHIFT 8 0
+!RSHIFT 8 5
+!VSHIFT RSHIFT
+!SHIFTL LSHIFT
+1 0 0 8              /*            1 -> !            */
+2 1 0 8              /*            2 -> "            */
+3 0 1 8              /*            3 -> #            */
+4 1 1 8              /*            4 -> $            */
+5 0 2 8              /*            5 -> %            */
+6 1 2 8              /*            6 -> '            */
+7 0 3 8              /*            7 -> &            */
+8 1 3 8              /*            8 -> \            */
+9 0 4 8              /*            9 -> (            */
+0 1 4 8              /*            0 -> )            */
+Dash 0 5 8           /*        Minus -> Left arrow   */
+Home 9 1 8           /*         Home -> [            */
+PageUp 8 2 8         /*         PgUp -> ]            */
+Control_L 9 0 8      /*    Left Ctrl -> RVS ON/OFF   */
+q 2 0 8              /*            Q -> Q            */
+w 3 0 8              /*            W -> W            */
+e 2 1 8              /*            E -> E            */
+r 3 1 8              /*            R -> R            */
+t 2 2 8              /*            T -> T            */
+y 3 2 8              /*            Y -> Y            */
+u 2 3 8              /*            U -> U            */
+i 3 3 8              /*            I -> I            */
+o 2 4 8              /*            O -> O            */
+p 3 4 8              /*            P -> P            */
+LeftBracket 2 5 8    /*            [ -> Up arrow     */
+End 9 3 8            /*          End -> <            */
+PageDown 8 4 8       /*       PgDown -> >            */
+a 4 0 8              /*            A -> A            */
+s 5 0 8              /*            S -> S            */
+d 4 1 8              /*            D -> D            */
+f 5 1 8              /*            F -> F            */
+g 4 2 8              /*            G -> G            */
+h 5 2 8              /*            H -> H            */
+j 4 3 8              /*            J -> J            */
+k 5 3 8              /*            K -> K            */
+l 4 4 8              /*            L -> L            */
+SemiColon 5 4 8      /*            ; -> :            */
+Escape 9 4 8         /*          ESC -> Run/Stop     */
+Return 6 5 8         /*       Return -> Return       */
+Shift_L 8 0 2        /*   Left Shift -> Left Shift   */
+z 6 0 8              /*            Z -> Z            */
+x 7 0 8              /*            X -> X            */
+c 6 1 8              /*            C -> C            */
+v 7 1 8              /*            V -> V            */
+b 6 2 8              /*            B -> B            */
+n 7 2 8              /*            N -> N            */
+m 6 3 8              /*            M -> M            */
+Comma 7 3 8          /*            , -> ,            */
+Period 6 4 8         /*            . -> ;            */
+Slash 7 4 8          /*            / -> ?            */
+Shift_R 8 5 4        /*  Right Shift -> Right Shift  */
+Space 9 2 8          /*        Space -> Space        */
+KP_7 2 6 8           /*     Numpad 7 -> 7            */
+KP_8 3 6 8           /*     Numpad 8 -> 8            */
+KP_9 2 7 8           /*     Numpad 9 -> 9            */
+KP_Divide 3 7 8      /*     Numpad / -> /            */
+KP_4 4 6 8           /*     Numpad 4 -> 4            */
+KP_5 5 6 8           /*     Numpad 5 -> 5            */
+KP_6 4 7 8           /*     Numpad 6 -> 6            */
+KP_1 6 6 8           /*     Numpad 1 -> 1            */
+KP_2 7 6 8           /*     Numpad 2 -> 2            */
+KP_3 6 7 8           /*     Numpad 3 -> 3            */
+KP_Add 7 7 8         /*     Numpad + -> +            */
+KP_0 8 6 8           /*     Numpad 0 -> 0            */
+KP_Decimal 9 6 8     /*     Numpad . -> .            */
+KP_Subtract 8 7 8    /*     Numpad - -> Minus        */
+KP_Enter 9 7 8       /* Numpad Enter -> =            */
+Up 1 6 1             /*           Up -> CRSR UP      */
+Left 0 7 1           /*         Left -> CRSR LEFT    */
+Right 0 7 8          /*        Right -> CRSR RIGHT   */
+Down 1 6 8           /*         Down -> CRSR DOWN    */
+BackSpace 1 7 8      /*    Backspace -> Del          */
+Insert 8 1 8         /*          Ins -> @            */
+Delete 0 6 8         /*          Del -> CLR/HOME     */
+Control_R 9 4 8      /*   Right Ctrl -> RUN/STOP     */

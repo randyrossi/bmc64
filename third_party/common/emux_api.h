@@ -108,6 +108,7 @@ struct pending_emu_key_s {
   int tail;
   long key[16];
   int pressed[16];
+  int mod[16];
 };
 
 struct pending_emu_joy_s {
@@ -361,7 +362,16 @@ void emux_joy_interrupt(int type, int port, int device, int value);
 
 // Set key latch value for a keycode
 // Safe to call from ISR
+enum {
+  EMUX_KEY_MOD_LSHIFT = 1 << 0,
+  EMUX_KEY_MOD_RSHIFT = 1 << 1,
+  EMUX_KEY_MOD_LCTRL = 1 << 2,
+  EMUX_KEY_MOD_RCTRL = 1 << 3,
+  EMUX_KEY_MOD_LALT = 1 << 4,
+  EMUX_KEY_MOD_RALT = 1 << 5
+};
 void emux_key_interrupt(long key, int pressed);
+void emux_key_interrupt_mod(long key, int pressed, int mod);
 void emux_key_interrupt_locked(long key, int pressed);
 
 vkbd_key_array emux_get_vkbd(void);
@@ -401,6 +411,11 @@ void emu_pause_trap(uint16_t addr, void *data);
 
 // Return 1 to indicate item was handled, 0 otherwise
 int emux_handle_menu_change(struct menu_item* item);
+
+// Loads the keymap for a keyboard preset (new keyboard path only).
+// Returns 0 on success, or -1 and keeps the previous keymap.
+struct KeyboardPreset;
+int emux_set_keyboard_preset(const struct KeyboardPreset *preset);
 int emux_handle_quick_func(int button_func, fullpath_func fullpath);
 
 // Restore emulator specific settings that are set via emux_get_*/emux_set_*.

@@ -38,6 +38,18 @@
 
 #ifdef RASPI_COMPILE
 extern void raspi_keymap_changed(int, int, signed long);
+#include "../../../src/keyboard/keyboard_feature.h"
+/* BMC64: when one host key event changes both C64 Shift and another key
+   (symbolic keymap DESHIFT / virtual shift), latch the two changes one
+   frame apart so a keyboard scan cannot mix old Shift with the new key.
+   Only enabled with the new keyboard input path.
+   Upstream VICE considers this unfixable (use a positional keymap), see:
+     https://sourceforge.net/p/vice-emu/bugs/1658/ (Shift+8 sometimes gives a graphic char)
+     https://sourceforge.net/p/vice-emu/bugs/2172/ (crsr up sometimes gives crsr down)
+     https://vice-emu.sourceforge.io/vice_1.html#SEC10 (manual: symbolic keymap shift issues) */
+#if BMC64_NEW_KEYBOARD_INPUT
+#define BMC64_KEYBOARD_SPLIT_LATCH 1
+#endif
 #endif
 
 #ifndef RAND_MAX
@@ -90,6 +102,27 @@ static int network_rev_keyarr[KBD_COLS];
 
 static alarm_t *keyboard_alarm = NULL;
 
+#ifdef BMC64_KEYBOARD_SPLIT_LATCH
+/* Split latch: when one host key event changes both C64 Shift and another
+   key, the two changes are latched one frame apart, so a keyboard scan in
+   progress can never read the old Shift state together with the new key.
+   Press: Shift change first, then key. Release: key first, then Shift.
+   Host key events arriving meanwhile are queued and replayed afterwards. */
+enum { SPLIT_IDLE, SPLIT_FIRST, SPLIT_SECOND, SPLIT_HOLD };
+static int split_stage = SPLIT_IDLE;
+static int split_hold;
+static int split_keyarr[KBD_ROWS];
+static alarm_t *split_alarm = NULL;
+
+#define SPLIT_QUEUE_SIZE 16
+static struct {
+    signed long key;
+    int mod;
+    int pressed;
+} split_queue[SPLIT_QUEUE_SIZE];
+static int split_queue_read, split_queue_len;
+
+#endif
 static log_t keyboard_log = LOG_DEFAULT;
 
 static keyboard_machine_func_t keyboard_machine_func = NULL;
@@ -167,6 +200,13 @@ static void keyboard_latch_handler(CLOCK offset, void *data)
     keyboard_latch_matrix(offset);
 
     keyboard_event_record();
+#ifdef BMC64_KEYBOARD_SPLIT_LATCH
+
+    if (split_stage == SPLIT_FIRST) {
+        split_stage = SPLIT_SECOND;
+        alarm_set(split_alarm, maincpu_clk + machine_get_cycles_per_frame());
+    }
+#endif
 }
 
 void keyboard_event_delayed_playback(void *data)
@@ -200,11 +240,28 @@ void keyboard_set_keyarr(int row, int col, int value)
         return;
     }
 
+#ifdef BMC64_KEYBOARD_SPLIT_LATCH
+    if (split_stage != SPLIT_IDLE) {
+        if (value) {
+            split_keyarr[row] |= 1 << col;
+        } else {
+            split_keyarr[row] &= ~(1 << col);
+        }
+    }
+
+#endif
     alarm_set(keyboard_alarm, maincpu_clk + KEYBOARD_RAND());
 }
 
 void keyboard_clear_keymatrix(void)
 {
+#ifdef BMC64_KEYBOARD_SPLIT_LATCH
+    split_stage = SPLIT_IDLE;
+    split_queue_len = 0;
+    if (split_alarm != NULL) {
+        alarm_unset(split_alarm);
+    }
+#endif
     memset(keyarr, 0, sizeof(keyarr));
     memset(rev_keyarr, 0, sizeof(rev_keyarr));
     memset(latch_keyarr, 0, sizeof(latch_keyarr));
@@ -267,9 +324,11 @@ enum shift_type {
     ALLOW_OTHER = (1 << 5),   /* Allow another key code to be assigned if
                                  SHIFT is pressed. */
     SHIFT_LOCK = (1 << 6),    /* Key is shift lock. */
+    MAP_MOD_SHIFT = (1 << 7),
 
-    ALT_MAP  = (1 << 8)       /* Key is used for an alternative keyboard
-                                 mapping */
+    ALT_MAP = (1 << 8),      /* Key is used for an alternative keyboard mapping. */
+    MAP_MOD_RIGHT_ALT = (1 << 9),
+    MAP_MOD_CTRL = (1 << 10)
 };
 
 struct keyboard_conv_s {
@@ -336,6 +395,85 @@ static void keyboard_key_shift(void)
     }
 }
 
+#ifdef BMC64_KEYBOARD_SPLIT_LATCH
+/* Bits of the C64 Shift keys within one matrix row. */
+static int keyboard_shift_mask(int row)
+{
+    int mask = 0;
+
+    if (row == kbd_lshiftrow && kbd_lshiftcol >= 0) {
+        mask |= 1 << kbd_lshiftcol;
+    }
+    if (row == kbd_rshiftrow && kbd_rshiftcol >= 0) {
+        mask |= 1 << kbd_rshiftcol;
+    }
+    return mask;
+}
+
+static void keyboard_set_latch_rows(const int *rows)
+{
+    int row, col;
+
+    for (row = 0; row < KBD_ROWS; row++) {
+        for (col = 0; col < KBD_COLS; col++) {
+            keyboard_set_latch_keyarr(row, col, rows[row] & (1 << col));
+        }
+    }
+}
+
+/* Queue a host key event while a split latch is in progress.
+   Returns 1 if the event was queued (or dropped) and must not be processed now. */
+static int keyboard_split_queue(signed long key, int mod, int pressed)
+{
+    int pos;
+
+    if (split_stage == SPLIT_IDLE) {
+        return 0;
+    }
+    if (split_queue_len == SPLIT_QUEUE_SIZE) {
+        log_warning(keyboard_log, "Keyboard split queue full, key event dropped.");
+        return 1;
+    }
+    pos = (split_queue_read + split_queue_len++) % SPLIT_QUEUE_SIZE;
+    split_queue[pos].key = key;
+    split_queue[pos].mod = mod;
+    split_queue[pos].pressed = pressed;
+    return 1;
+}
+
+/* Called after a host key event updated latch_keyarr. If it changed both
+   Shift and another key, hold back the part that must come second. */
+static void keyboard_split_check(const int *prev, int pressed)
+{
+    int row, mask, shift_diff = 0, key_diff = 0;
+    int first[KBD_ROWS];
+
+    for (row = 0; row < KBD_ROWS; row++) {
+        mask = keyboard_shift_mask(row);
+        shift_diff |= (prev[row] ^ latch_keyarr[row]) & mask;
+        key_diff |= (prev[row] ^ latch_keyarr[row]) & ~mask;
+    }
+    if (!shift_diff || !key_diff) {
+        return;
+    }
+
+    memcpy(split_keyarr, latch_keyarr, sizeof(split_keyarr));
+    for (row = 0; row < KBD_ROWS; row++) {
+        mask = keyboard_shift_mask(row);
+        if (pressed) {
+            first[row] = (latch_keyarr[row] & mask) | (prev[row] & ~mask);
+        } else {
+            first[row] = (prev[row] & mask) | (latch_keyarr[row] & ~mask);
+        }
+    }
+    keyboard_set_latch_rows(first);
+
+    /* keep a split press visible for a frame before later events apply */
+    split_hold = pressed;
+    split_stage = SPLIT_FIRST;
+}
+
+#endif
 static int keyboard_key_pressed_matrix(int row, int column, int shift)
 {
     if (row >= 0) {
@@ -429,7 +567,15 @@ static void keyboard_restore_released(void)
 
 void keyboard_key_pressed(signed long key)
 {
+    keyboard_key_pressed_mod(key, 0);
+}
+
+void keyboard_key_pressed_mod(signed long key, int mod)
+{
     int i, j, latch;
+#ifdef BMC64_KEYBOARD_SPLIT_LATCH
+    int prev[KBD_ROWS];
+#endif
 
     if (event_playback_active()) {
         return;
@@ -483,6 +629,13 @@ void keyboard_key_pressed(signed long key)
         return;
     }
 
+#ifdef BMC64_KEYBOARD_SPLIT_LATCH
+    if (keyboard_split_queue(key, mod, 1)) {
+        return;
+    }
+    memcpy(prev, latch_keyarr, sizeof(prev));
+
+#endif
     latch = 0;
 
     for (i = 0; i < keyc_num; ++i) {
@@ -490,13 +643,21 @@ void keyboard_key_pressed(signed long key)
             if ((keyconvmap[i].shift & ALT_MAP) && !key_alternative) {
                 continue;
             }
+            if ((keyconvmap[i].shift & MAP_MOD_RIGHT_ALT) && !(mod & KBD_MOD_RALT)) {
+                continue;
+            }
+            if ((keyconvmap[i].shift & MAP_MOD_CTRL) && !(mod & (KBD_MOD_LCTRL | KBD_MOD_RCTRL))) {
+                continue;
+            }
+            if ((keyconvmap[i].shift & MAP_MOD_SHIFT) && !(mod & (KBD_MOD_LSHIFT | KBD_MOD_RSHIFT))) {
+                continue;
+            }
 
             if (keyboard_key_pressed_matrix(keyconvmap[i].row,
                                             keyconvmap[i].column,
                                             keyconvmap[i].shift)) {
                 latch = 1;
-                if (!(keyconvmap[i].shift & ALLOW_OTHER)
-                    || (right_shift_down + left_shift_down) == 0) {
+                if (!(keyconvmap[i].shift & ALLOW_OTHER)) {
                     break;
                 }
             }
@@ -510,6 +671,9 @@ void keyboard_key_pressed(signed long key)
             network_event_record(EVENT_KEYBOARD_DELAY, (void *)&delay, sizeof(delay));
             network_event_record(EVENT_KEYBOARD_MATRIX, (void *)latch_keyarr, sizeof(latch_keyarr));
         } else {
+#ifdef BMC64_KEYBOARD_SPLIT_LATCH
+            keyboard_split_check(prev, 1);
+#endif
             alarm_set(keyboard_alarm, maincpu_clk + KEYBOARD_RAND());
         }
     }
@@ -572,6 +736,9 @@ static int keyboard_key_released_matrix(int row, int column, int shift)
 void keyboard_key_released(signed long key)
 {
     int i, j, latch;
+#ifdef BMC64_KEYBOARD_SPLIT_LATCH
+    int prev[KBD_ROWS];
+#endif
 
     if (event_playback_active()) {
         return;
@@ -611,6 +778,13 @@ void keyboard_key_released(signed long key)
         return;
     }
 
+#ifdef BMC64_KEYBOARD_SPLIT_LATCH
+    if (keyboard_split_queue(key, 0, 0)) {
+        return;
+    }
+    memcpy(prev, latch_keyarr, sizeof(prev));
+
+#endif
     latch = 0;
 
     for (i = 0; i < keyc_num; i++) {
@@ -639,11 +813,52 @@ void keyboard_key_released(signed long key)
             network_event_record(EVENT_KEYBOARD_DELAY, (void *)&delay, sizeof(delay));
             network_event_record(EVENT_KEYBOARD_MATRIX, (void *)latch_keyarr, sizeof(latch_keyarr));
         } else {
+#ifdef BMC64_KEYBOARD_SPLIT_LATCH
+            keyboard_split_check(prev, 0);
+#endif
             alarm_set(keyboard_alarm, maincpu_clk + KEYBOARD_RAND());
         }
     }
 }
 
+#ifdef BMC64_KEYBOARD_SPLIT_LATCH
+/* Replay queued host key events until the queue is empty or one of them
+   starts another split latch. */
+static void keyboard_split_replay(void)
+{
+    while (split_stage == SPLIT_IDLE && split_queue_len > 0) {
+        int pos = split_queue_read;
+
+        split_queue_read = (split_queue_read + 1) % SPLIT_QUEUE_SIZE;
+        split_queue_len--;
+        if (split_queue[pos].pressed) {
+            keyboard_key_pressed_mod(split_queue[pos].key, split_queue[pos].mod);
+        } else {
+            keyboard_key_released(split_queue[pos].key);
+        }
+    }
+}
+
+static void keyboard_split_handler(CLOCK offset, void *data)
+{
+    alarm_unset(split_alarm);
+    alarm_context_update_next_pending(split_alarm->context);
+
+    if (split_stage == SPLIT_SECOND) {
+        keyboard_set_latch_rows(split_keyarr);
+        keyboard_latch_matrix(offset);
+        keyboard_event_record();
+        if (split_hold) {
+            split_stage = SPLIT_HOLD;
+            alarm_set(split_alarm, maincpu_clk + machine_get_cycles_per_frame());
+            return;
+        }
+    }
+    split_stage = SPLIT_IDLE;
+    keyboard_split_replay();
+}
+
+#endif
 static void keyboard_key_clear_internal(void)
 {
     keyboard_clear_keymatrix();
@@ -1755,6 +1970,10 @@ void keyboard_init(void)
 
     keyboard_alarm = alarm_new(maincpu_alarm_context, "Keyboard",
                             keyboard_latch_handler, NULL);
+#ifdef BMC64_KEYBOARD_SPLIT_LATCH
+    split_alarm = alarm_new(maincpu_alarm_context, "KeyboardSplit",
+                            keyboard_split_handler, NULL);
+#endif
     restore_alarm = alarm_new(maincpu_alarm_context, "Restore",
                             restore_alarm_triggered, NULL);
 

@@ -29,6 +29,10 @@
 #include "circle.h"
 
 #include "emux_api.h"
+#include "../../src/keyboard/keyboard_feature.h"
+#if BMC64_NEW_KEYBOARD_INPUT
+#include "../../src/keyboard/keyboard_layout.h"
+#endif
 
 #ifndef RASPI_MENU_H
 #define RASPI_MENU_H
@@ -201,6 +205,8 @@ typedef enum {
    MENU_SAVE_SETTINGS,
    MENU_LOGGING_DESTINATION,
    MENU_KEYBOARD_MAPPING,
+   MENU_KEYBOARD_LAYOUT,
+   MENU_KEYBOARD_LAYOUT_MAPPING,
 
    MENU_TAPE_START,
    MENU_TAPE_STOP,

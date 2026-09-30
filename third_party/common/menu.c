@@ -25,6 +25,7 @@
  */
 
 #include "menu.h"
+#include "../../src/keyboard/keyboard_feature.h"
 
 #include <math.h>
 #include <assert.h>
@@ -150,6 +151,42 @@ struct menu_item *warp_item;
 struct menu_item *reset_confirm_item;
 struct menu_item *drive_flush_item;
 struct menu_item *gpio_config_item;
+#if BMC64_NEW_KEYBOARD_INPUT
+static struct menu_item *keyboard_layout_item;
+static struct menu_item *keyboard_layout_mapping_item;
+static struct menu_item *keyboard_backend_map_item;
+static const KeyboardPreset *keyboard_active_preset;
+
+// Point both menu items at a preset. The mapping item lists only the
+// mappings of that preset's layout and is disabled when there is just one.
+static void show_keyboard_preset(const KeyboardPreset *preset) {
+  struct menu_item *item = keyboard_layout_mapping_item;
+  if (keyboard_layout_item != NULL) {
+    keyboard_layout_item->value = keyboard_preset_layout_index(emux_machine_class, preset->layout);
+  }
+  item->num_choices = keyboard_preset_mapping_count(emux_machine_class, preset->layout);
+  item->value = 0;
+  for (int index = 0; index < item->num_choices; index++) {
+    const KeyboardPreset *choice = keyboard_preset_mapping_at(emux_machine_class, preset->layout, index);
+    item->choice_ints[index] = choice->mapping;
+    strcpy(item->choices[index], choice->mapping_label);
+    if (choice == preset) item->value = index;
+  }
+  item->disabled = item->num_choices < 2;
+}
+
+// Load a preset's keymap. If that fails the previous preset stays active.
+static void apply_keyboard_preset(const KeyboardPreset *preset) {
+  if (preset != NULL) {
+    if (emux_set_keyboard_preset(preset) == 0) {
+      keyboard_active_preset = preset;
+    } else {
+      ui_error("Could not load keyboard map:\n%s", preset->vkm_file ? preset->vkm_file : preset->mapping_label);
+    }
+  }
+  show_keyboard_preset(keyboard_active_preset);
+}
+#endif
 struct menu_item *active_display_item;
 static struct menu_item *network_device_item;
 static struct menu_item *network_status_item;
@@ -1438,6 +1475,12 @@ static int save_settings() {
   }
   fprintf(fp, "scaling_interp=%d\n", scaling_interp_item->value);
   fprintf(fp, "gpio_config=%d\n", gpio_config_item->choice_ints[gpio_config_item->value]);
+#if BMC64_NEW_KEYBOARD_INPUT
+  if (keyboard_layout_mapping_item != NULL) {
+    fprintf(fp, "keyboard_layout=%d\n", keyboard_active_preset->layout);
+    fprintf(fp, "keyboard_layout_mapping=%d\n", keyboard_active_preset->mapping);
+  }
+#endif
   if (network_device_item != NULL) {
     fprintf(fp, "network_device=%d\n", network_device_item->value);
     saved_network_device = network_device_item->value;
@@ -1576,6 +1619,10 @@ static void ui_set_joy_devs() {
 static void load_settings() {
 
   int tmp_value;
+#if BMC64_NEW_KEYBOARD_INPUT
+  int saved_keyboard_layout = -1;
+  int saved_keyboard_mapping = -1;
+#endif
 
   emux_get_int(Setting_DriveSoundEmulation, &drive_sounds_item->value);
   emux_get_int(Setting_DriveSoundEmulationVolume, &drive_sounds_vol_item->value);
@@ -1630,8 +1677,14 @@ static void load_settings() {
     load_wifi_settings();
   }
 
-  if (fp == NULL)
+  if (fp == NULL) {
+#if BMC64_NEW_KEYBOARD_INPUT
+    if (keyboard_layout_mapping_item != NULL) {
+      apply_keyboard_preset(keyboard_active_preset);
+    }
+#endif
     return;
+  }
 
   char name_value[256];
   size_t len;
@@ -1755,6 +1808,12 @@ static void load_settings() {
 
       // Make sure pins are configured properly after load
       circle_reset_gpio(emu_get_gpio_config());
+#if BMC64_NEW_KEYBOARD_INPUT
+    } else if (keyboard_layout_mapping_item != NULL && strcmp(name, "keyboard_layout") == 0) {
+      saved_keyboard_layout = value;
+    } else if (keyboard_layout_mapping_item != NULL && strcmp(name, "keyboard_layout_mapping") == 0) {
+      saved_keyboard_mapping = value;
+#endif
     } else if (network_device_item != NULL &&
                strcmp(name, "network_device") == 0) {
       if (value >= 0 && value < network_device_item->num_choices) {
@@ -1977,6 +2036,15 @@ static void load_settings() {
 
   update_wifi_menu_enabled();
   emux_load_settings_done();
+#if BMC64_NEW_KEYBOARD_INPUT
+  if (keyboard_layout_mapping_item != NULL) {
+    // Saved layout and mapping, else that layout's first mapping, else the default.
+    const KeyboardPreset *preset = keyboard_preset_find(emux_machine_class, saved_keyboard_layout, saved_keyboard_mapping);
+    if (preset == NULL) preset = keyboard_preset_mapping_at(emux_machine_class, saved_keyboard_layout, 0);
+    if (preset == NULL) preset = keyboard_active_preset;
+    apply_keyboard_preset(preset);
+  }
+#endif
 
   emux_video_color_setting_changed(0);
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
@@ -2842,6 +2910,18 @@ static void menu_value_changed(struct menu_item *item) {
     break;
   }
 
+#if BMC64_NEW_KEYBOARD_INPUT
+  if (item->id == MENU_KEYBOARD_LAYOUT) {
+    // A new layout starts on its first mapping.
+    apply_keyboard_preset(keyboard_preset_mapping_at(emux_machine_class, item->choice_ints[item->value], 0));
+    return;
+  }
+  if (item->id == MENU_KEYBOARD_LAYOUT_MAPPING) {
+    apply_keyboard_preset(keyboard_preset_find(emux_machine_class, keyboard_active_preset->layout,
+                                               item->choice_ints[item->value]));
+    return;
+  }
+#endif
   if (emux_handle_menu_change(item)) {
     return;
   }
@@ -4543,6 +4623,33 @@ void build_menu(struct menu_item *root) {
   parent = ui_menu_add_folder(root, "Keyboard");
 
   emux_add_keyboard_options(parent);
+#if BMC64_NEW_KEYBOARD_INPUT
+  keyboard_layout_item = NULL;
+  keyboard_layout_mapping_item = NULL;
+  keyboard_backend_map_item = NULL;
+  keyboard_active_preset = NULL;
+  if (keyboard_preset_count(emux_machine_class) > 0) {
+    keyboard_backend_map_item = parent->first_child;
+    parent->first_child = keyboard_backend_map_item->next;
+    keyboard_backend_map_item->next = NULL;
+
+    // The PET only shows Keyboard Mapping; its model picks the keyboard.
+    if (!keyboard_preset_layout_hidden(emux_machine_class)) {
+      child = keyboard_layout_item =
+          ui_menu_add_multiple_choice(MENU_KEYBOARD_LAYOUT, parent, "Keyboard Layout");
+      child->num_choices = keyboard_preset_layout_count(emux_machine_class);
+      for (int index = 0; index < child->num_choices; index++) {
+        const KeyboardPreset *layout = keyboard_preset_layout_at(emux_machine_class, index);
+        child->choice_ints[index] = layout->layout;
+        strcpy(child->choices[index], layout->layout_label);
+      }
+    }
+    keyboard_layout_mapping_item =
+        ui_menu_add_multiple_choice(MENU_KEYBOARD_LAYOUT_MAPPING, parent, "Keyboard Mapping");
+    keyboard_active_preset = keyboard_preset_default(emux_machine_class);
+    show_keyboard_preset(keyboard_active_preset);
+  }
+#endif
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C128) {
      c40_80_column_item = ui_menu_add_toggle_labels(
