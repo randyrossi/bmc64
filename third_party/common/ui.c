@@ -446,6 +446,17 @@ static void ui_type_char(char ch) {
 
 // Happens on main loop.
 static void ui_key_pressed(long key) {
+#if BMC64_NEW_KEYBOARD_INPUT
+  // A C64 keyboard only has CRSR Right and CRSR Down; Shift gives Left/Up.
+  // Physical Shift only, not Shift Lock. The key release needs no mapping
+  // because releasing any arrow key stops the repeat.
+  if (keyboard_shift && key == KEYCODE_Right) {
+    key = KEYCODE_Left;
+  } else if (keyboard_shift && key == KEYCODE_Down) {
+    key = KEYCODE_Up;
+  }
+#endif
+
   // Anything other than left/right will reset transparency
   // and render current item only flags. They are applicable
   // only while the user is on the item they were triggered
