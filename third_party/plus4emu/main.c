@@ -89,8 +89,6 @@ static struct menu_item *attach_3plus1_roms_item;
 static struct menu_item *keyboard_mapping_item;
 #if BMC64_NEW_KEYBOARD_INPUT
 static const char *active_keyboard_preset_file;
-static int active_keyboard_preset;
-static KeyboardMode active_keyboard_mode;
 #endif
 
 static struct menu_item *c0_lo_item;
@@ -1464,6 +1462,22 @@ void emux_log_settings_file(const char *filename) {
 }
 
 // Handle any menu item we've created for this emulator.
+#if BMC64_NEW_KEYBOARD_INPUT
+int emux_set_keyboard_preset(const struct KeyboardPreset *preset) {
+   if (preset == NULL || preset->vkm_file == NULL) return -1;
+   char path[80];
+   snprintf(path, sizeof(path), "/PLUS4EMU/%s", preset->vkm_file);
+   FILE *fp = fopen(path, "r");
+   if (fp == NULL) return -1;
+   fclose(fp);
+   active_keyboard_preset_file = preset->vkm_file;
+   ui_set_keyboard_layout(preset->text_layout);
+   load_keymap();
+   machine_kbd_init();
+   return 0;
+}
+#endif
+
 int emux_handle_menu_change(struct menu_item* item) {
   switch (item->id) {
     case MENU_SID_MODEL:
@@ -1506,59 +1520,11 @@ int emux_handle_menu_change(struct menu_item* item) {
     case MENU_KEYBOARD_MAPPING:
 #if BMC64_NEW_KEYBOARD_INPUT
          active_keyboard_preset_file = NULL;
-         active_keyboard_preset = 0;
 #endif
          ui_set_keyboard_mapping(item->value);
       load_keymap();
       machine_kbd_init();
       return 1;
-#if BMC64_NEW_KEYBOARD_INPUT
-      case MENU_KEYBOARD_PRESET: {
-         const KeyboardPreset *preset = keyboard_preset_find(emux_machine_class,
-                                                                     item->choice_ints[item->value]);
-         if (preset == NULL) return 1;
-         char path[80];
-         const char *file = keyboard_preset_file(preset, preset->default_mode);
-         if (!file) return 1;
-         snprintf(path, sizeof(path), "/PLUS4EMU/%s", file);
-         FILE *fp = fopen(path, "r");
-         if (fp == NULL) {
-            ui_error("Could not load keyboard map:\n%s", path);
-            return 1;
-         }
-         fclose(fp);
-         active_keyboard_preset_file = file;
-         active_keyboard_preset = preset->preset;
-         active_keyboard_mode = preset->default_mode;
-         ui_set_keyboard_layout(keyboard_preset_layout(preset, preset->default_mode));
-         load_keymap();
-         machine_kbd_init();
-         return 1;
-      }
-      case MENU_KEYBOARD_MODE: {
-         const KeyboardPreset *preset = keyboard_preset_find(emux_machine_class, active_keyboard_preset);
-         KeyboardMode mode = item->choice_ints[item->value];
-         const char *file = keyboard_preset_file(preset, mode);
-         if (!file) return 1;
-         char path[80];
-         snprintf(path, sizeof(path), "/PLUS4EMU/%s", file);
-         FILE *fp = fopen(path, "r");
-         if (fp == NULL) {
-            for (int index = 0; index < item->num_choices; index++) {
-               if (item->choice_ints[index] == (int)active_keyboard_mode) item->value = index;
-            }
-            ui_error("Could not load keyboard map:\n%s", path);
-            return 1;
-         }
-         fclose(fp);
-         active_keyboard_preset_file = file;
-         active_keyboard_mode = mode;
-         ui_set_keyboard_layout(keyboard_preset_layout(preset, mode));
-         load_keymap();
-         machine_kbd_init();
-         return 1;
-      }
-#endif
     default:
       return 0;
   }

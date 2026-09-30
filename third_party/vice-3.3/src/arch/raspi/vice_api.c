@@ -83,13 +83,12 @@ struct menu_item *sid_resampling_item;
 
 struct menu_item *keyboard_mapping_item;
 #if BMC64_NEW_KEYBOARD_INPUT
-static int keyboard_preset_active;
-static KeyboardMode keyboard_mode_active;
+static const KeyboardPreset *keyboard_preset_active;
 static int keyboard_saved_index;
 static char *keyboard_saved_user_sym_file;
 
-static int keyboard_apply_preset(const KeyboardPreset *entry, KeyboardMode mode) {
-  const char *file = keyboard_preset_file(entry, mode);
+static int keyboard_apply_preset(const KeyboardPreset *entry) {
+  const char *file = entry->vkm_file;
   if (!file || resources_set_string("KeymapUserSymFile", file) < 0) return -1;
   int index;
   if (resources_get_int("KeymapIndex", &index) < 0) return -1;
@@ -1193,7 +1192,7 @@ int emux_save_settings(void) {
   }
   int result = resources_save(NULL);
   if (keyboard_preset_active) {
-    keyboard_apply_preset(keyboard_preset_find(emux_machine_class, keyboard_preset_active), keyboard_mode_active);
+    keyboard_apply_preset(keyboard_preset_active);
   }
   return result;
 #else
@@ -1204,6 +1203,33 @@ int emux_save_settings(void) {
 void emux_log_settings_file(const char *filename) {
   log_message(LOG_DEFAULT, "Writing settings file `%s'.", filename);
 }
+
+#if BMC64_NEW_KEYBOARD_INPUT
+int emux_set_keyboard_preset(const struct KeyboardPreset *preset) {
+  if (preset == NULL) return -1;
+  if (!keyboard_preset_active) {
+    // Remember the legacy keymap settings so saving does not overwrite them.
+    const char *old_file = NULL;
+    resources_get_int("KeymapIndex", &keyboard_saved_index);
+    resources_get_string("KeymapUserSymFile", &old_file);
+    keyboard_saved_user_sym_file = lib_stralloc(old_file != NULL ? old_file : "");
+  }
+  if (keyboard_apply_preset(preset) < 0) {
+    if (keyboard_preset_active) {
+      keyboard_apply_preset(keyboard_preset_active);
+    } else {
+      resources_set_int("KeymapIndex", keyboard_saved_index);
+      resources_set_string("KeymapUserSymFile", keyboard_saved_user_sym_file);
+      lib_free(keyboard_saved_user_sym_file);
+      keyboard_saved_user_sym_file = NULL;
+    }
+    return -1;
+  }
+  keyboard_preset_active = preset;
+  ui_set_keyboard_layout(preset->text_layout);
+  return 0;
+}
+#endif
 
 int emux_handle_menu_change(struct menu_item* item) {
   switch (item->id) {
@@ -1283,53 +1309,6 @@ int emux_handle_menu_change(struct menu_item* item) {
       ui_set_keyboard_mapping(item->value);
       resources_set_int("KeymapIndex", item->choice_ints[item->value]);
       return 1;
-#if BMC64_NEW_KEYBOARD_INPUT
-    case MENU_KEYBOARD_PRESET:
-      int preset = item->choice_ints[item->value];
-      const KeyboardPreset *entry = keyboard_preset_find(emux_machine_class, preset);
-      if (entry == NULL) {
-        item->value = keyboard_preset_active ? keyboard_preset_index(emux_machine_class, keyboard_preset_active) : 0;
-        return 1;
-      }
-      if (!keyboard_preset_active) {
-        const char *old_file = NULL;
-        resources_get_int("KeymapIndex", &keyboard_saved_index);
-        resources_get_string("KeymapUserSymFile", &old_file);
-        keyboard_saved_user_sym_file = lib_stralloc(old_file != NULL ? old_file : "");
-      }
-      if (keyboard_apply_preset(entry, entry->default_mode) < 0) {
-        item->value = keyboard_preset_active ? keyboard_preset_index(emux_machine_class, keyboard_preset_active) : 0;
-        if (keyboard_preset_active) {
-          keyboard_apply_preset(keyboard_preset_find(emux_machine_class, keyboard_preset_active), keyboard_mode_active);
-        } else {
-          resources_set_int("KeymapIndex", keyboard_saved_index);
-          resources_set_string("KeymapUserSymFile", keyboard_saved_user_sym_file);
-          lib_free(keyboard_saved_user_sym_file);
-          keyboard_saved_user_sym_file = NULL;
-        }
-        ui_error("Could not load keyboard map:\n%s", keyboard_preset_file(entry, entry->default_mode));
-        return 1;
-      }
-      keyboard_preset_active = preset;
-      keyboard_mode_active = entry->default_mode;
-      ui_set_keyboard_layout(keyboard_preset_layout(entry, entry->default_mode));
-      return 1;
-    case MENU_KEYBOARD_MODE: {
-      const KeyboardPreset *active = keyboard_preset_find(emux_machine_class, keyboard_preset_active);
-      KeyboardMode mode = item->choice_ints[item->value];
-      if (!keyboard_preset_file(active, mode) || keyboard_apply_preset(active, mode) < 0) {
-        for (int index = 0; index < item->num_choices; index++) {
-          if (item->choice_ints[index] == (int)keyboard_mode_active) item->value = index;
-        }
-        if (active) keyboard_apply_preset(active, keyboard_mode_active);
-        ui_error("Could not load keyboard map:\n%s", keyboard_preset_file(active, mode) ? keyboard_preset_file(active, mode) : "(missing)");
-        return 1;
-      }
-      keyboard_mode_active = mode;
-      ui_set_keyboard_layout(keyboard_preset_layout(active, mode));
-      return 1;
-    }
-#endif
     case MENU_DRIVE_TRUE_EMULATION:
       resources_set_int_sprintf("Drive%iTrueEmulation", item->value, item->sub_id);
       return 1;

@@ -411,6 +411,11 @@ void emu_pause_trap(uint16_t addr, void *data);
 
 // Return 1 to indicate item was handled, 0 otherwise
 int emux_handle_menu_change(struct menu_item* item);
+
+// Loads the keymap for a keyboard preset (new keyboard path only).
+// Returns 0 on success, or -1 and keeps the previous keymap.
+struct KeyboardPreset;
+int emux_set_keyboard_preset(const struct KeyboardPreset *preset);
 int emux_handle_quick_func(int button_func, fullpath_func fullpath);
 
 // Restore emulator specific settings that are set via emux_get_*/emux_set_*.

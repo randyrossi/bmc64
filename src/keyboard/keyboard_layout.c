@@ -3,44 +3,52 @@
 #if BMC64_NEW_KEYBOARD_INPUT
 #include "../../third_party/common/emux_api.h"
 
+// One row per choice. Rows with the same layout are the "Keyboard Mapping"
+// choices for that "Keyboard Layout"; the first one is the layout's default.
 static const KeyboardPreset c64_presets[] = {
-   {KEYBOARD_PRESET_US_USB, "USB keyboard - US", "rpi_sym.vkm", "rpi_pos.vkm", KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PRESET_NORWEGIAN_USB, "USB keyboard - Norwegian", "rpi_sym_no.vkm", NULL, KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_NO},
-   {KEYBOARD_PRESET_FRENCH_USB, "USB keyboard - French", "rpi_sym_fr.vkm", NULL, KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_FR},
-   {KEYBOARD_PRESET_GERMAN_USB, "USB keyboard - German", "rpi_sym_de.vkm", NULL, KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_DE},
-   {KEYBOARD_PRESET_C64_GPIO, "C64 keyboard - GPIO / C64P", NULL, "rpi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_C64},
-   {KEYBOARD_PRESET_C64_KEYRAH_V3, "C64 keyboard - Keyrah V3", NULL, "rpi_keyrah_v3_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_C64},
-   {KEYBOARD_PRESET_C64_MAXI, "TheC64 Maxi keyboard", NULL, "rpi_maxi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_MAXI},
-   {KEYBOARD_PRESET_PETSCIIBOARD, "PETSCIIBOARD keyboard", "rpi_petsciiboard_sym.vkm", NULL, KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_MAXI, "TheC64 Maxi", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_KEYRAH, "Keyrah V3", "rpi_keyrah_v3_pos.vkm", KEYBOARD_LAYOUT_C64},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PHYSICAL_DE, "German", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_de.vkm", KEYBOARD_LAYOUT_DE},
+   {KEYBOARD_PHYSICAL_DE, "German", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_DE},
+   {KEYBOARD_PHYSICAL_FR, "French", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_fr.vkm", KEYBOARD_LAYOUT_FR},
+   {KEYBOARD_PHYSICAL_FR, "French", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_FR},
+   {KEYBOARD_PHYSICAL_NO, "Norwegian", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_no.vkm", KEYBOARD_LAYOUT_NO},
+   {KEYBOARD_PHYSICAL_NO, "Norwegian", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_NO},
+   {KEYBOARD_PHYSICAL_PETSCIIBOARD, "PETSCIIBOARD", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_petsciiboard_sym.vkm", KEYBOARD_LAYOUT_US},
 };
 
 static const KeyboardPreset c128_presets[] = {
-   {KEYBOARD_PRESET_US_USB, "USB keyboard - US", "rpi_sym.vkm", "rpi_pos.vkm", KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PRESET_C64_GPIO, "C64 keyboard - GPIO / C64P", NULL, "rpi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_C64},
-   {KEYBOARD_PRESET_C64_MAXI, "TheC64 Maxi keyboard", NULL, "rpi_maxi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_MAXI},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_MAXI, "TheC64 Maxi", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
 };
 
 static const KeyboardPreset vic20_presets[] = {
-   {KEYBOARD_PRESET_US_USB, "USB keyboard - US", "rpi_sym.vkm", "rpi_pos.vkm", KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PRESET_C64_GPIO, "C64 keyboard - GPIO / C64P", NULL, "rpi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_C64},
-   {KEYBOARD_PRESET_C64_MAXI, "TheC64 Maxi keyboard", NULL, "rpi_maxi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_MAXI},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_MAXI, "TheC64 Maxi", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
 };
 
 static const KeyboardPreset plus4_presets[] = {
-   {KEYBOARD_PRESET_US_USB, "USB keyboard - US", "rpi_sym.vkm", "rpi_pos.vkm", KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PRESET_C64_GPIO, "C64 keyboard - GPIO / C64P", NULL, "rpi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_C64},
-   {KEYBOARD_PRESET_C64_MAXI, "TheC64 Maxi keyboard", NULL, "rpi_maxi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_MAXI},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_MAXI, "TheC64 Maxi", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
 };
 
 static const KeyboardPreset plus4emu_presets[] = {
-   {KEYBOARD_PRESET_US_USB, "USB keyboard - US", NULL, "rpi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PRESET_C64_MAXI, "TheC64 Maxi keyboard", NULL, "rpi_maxi_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_MAXI},
-   {KEYBOARD_PRESET_C16_KEYRAH, "C16 keyboard - Keyrah V2", NULL, "rpi_c16_keyrah_pos.vkm", KEYBOARD_MODE_POSITIONAL, KEYBOARD_LAYOUT_POSITIONAL},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_MAXI, "TheC64 Maxi", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_KEYRAH, "Keyrah V2 (C16)", "rpi_c16_keyrah_pos.vkm", KEYBOARD_LAYOUT_POSITIONAL},
 };
 
 static const KeyboardPreset pet_presets[] = {
-   {KEYBOARD_PRESET_US_USB, "PET Graphics", "rpi_grus_sym.vkm", "rpi_grus_pos.vkm", KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PRESET_PET_BUSINESS, "PET Business", "rpi_buus_sym.vkm", "rpi_buus_pos.vkm", KEYBOARD_MODE_SYMBOLIC, KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PHYSICAL_PET_GRAPHICS, "PET Graphics", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_grus_sym.vkm", KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PHYSICAL_PET_GRAPHICS, "PET Graphics", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_grus_pos.vkm", KEYBOARD_LAYOUT_POSITIONAL},
+   {KEYBOARD_PHYSICAL_PET_BUSINESS, "PET Business", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_buus_sym.vkm", KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PHYSICAL_PET_BUSINESS, "PET Business", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_buus_pos.vkm", KEYBOARD_LAYOUT_POSITIONAL},
 };
 
 typedef struct {
@@ -78,32 +86,70 @@ const KeyboardPreset *keyboard_preset_at(int machine_class, int index) {
    return index >= 0 && index < count ? &presets[index] : 0;
 }
 
-const KeyboardPreset *keyboard_preset_find(int machine_class, int preset) {
+const KeyboardPreset *keyboard_preset_find(int machine_class, int layout, int mapping) {
    int count;
    const KeyboardPreset *presets = machine_presets(machine_class, &count);
    for (int index = 0; index < count; index++) {
-      if ((int)presets[index].preset == preset) return &presets[index];
+      if ((int)presets[index].layout == layout && (int)presets[index].mapping == mapping) return &presets[index];
    }
    return 0;
 }
 
-int keyboard_preset_index(int machine_class, int preset) {
-   for (int index = 0; index < keyboard_preset_count(machine_class); index++) {
-      if ((int)keyboard_preset_at(machine_class, index)->preset == preset) return index;
+// US Symbolic where the machine has it, otherwise the first row.
+const KeyboardPreset *keyboard_preset_default(int machine_class) {
+   const KeyboardPreset *preset = keyboard_preset_find(machine_class, KEYBOARD_PHYSICAL_US, KEYBOARD_MAP_SYMBOLIC);
+   return preset ? preset : keyboard_preset_at(machine_class, 0);
+}
+
+// True for the first row of each layout.
+static int starts_layout(const KeyboardPreset *presets, int index) {
+   for (int earlier = 0; earlier < index; earlier++) {
+      if (presets[earlier].layout == presets[index].layout) return 0;
+   }
+   return 1;
+}
+
+int keyboard_preset_layout_count(int machine_class) {
+   int count, layouts = 0;
+   const KeyboardPreset *presets = machine_presets(machine_class, &count);
+   for (int index = 0; index < count; index++) {
+      if (starts_layout(presets, index)) layouts++;
+   }
+   return layouts;
+}
+
+const KeyboardPreset *keyboard_preset_layout_at(int machine_class, int index) {
+   int count;
+   const KeyboardPreset *presets = machine_presets(machine_class, &count);
+   for (int row = 0; index >= 0 && row < count; row++) {
+      if (starts_layout(presets, row) && index-- == 0) return &presets[row];
+   }
+   return 0;
+}
+
+int keyboard_preset_layout_index(int machine_class, int layout) {
+   for (int index = 0; index < keyboard_preset_layout_count(machine_class); index++) {
+      if ((int)keyboard_preset_layout_at(machine_class, index)->layout == layout) return index;
    }
    return -1;
 }
 
-const char *keyboard_preset_file(const KeyboardPreset *preset, KeyboardMode mode) {
-   if (!preset) return NULL;
-   if (mode == KEYBOARD_MODE_SYMBOLIC) return preset->symbolic_vkm_file;
-   if (mode == KEYBOARD_MODE_POSITIONAL) return preset->positional_vkm_file;
-   return NULL;
+int keyboard_preset_mapping_count(int machine_class, int layout) {
+   int count, mappings = 0;
+   const KeyboardPreset *presets = machine_presets(machine_class, &count);
+   for (int index = 0; index < count; index++) {
+      if ((int)presets[index].layout == layout) mappings++;
+   }
+   return mappings;
 }
 
-MenuKeyboardLayout keyboard_preset_layout(const KeyboardPreset *preset, KeyboardMode mode) {
-   if (mode == KEYBOARD_MODE_POSITIONAL && preset->symbolic_vkm_file) return KEYBOARD_LAYOUT_POSITIONAL;
-   return preset->layout;
+const KeyboardPreset *keyboard_preset_mapping_at(int machine_class, int layout, int index) {
+   int count;
+   const KeyboardPreset *presets = machine_presets(machine_class, &count);
+   for (int row = 0; index >= 0 && row < count; row++) {
+      if ((int)presets[row].layout == layout && index-- == 0) return &presets[row];
+   }
+   return 0;
 }
 
 unsigned int keyboard_layout_lookup(const KeyboardLayoutKey *keys, unsigned count,

@@ -85,24 +85,43 @@ int main(void) {
   static const char *machine_dirs[] = {
     NULL, "vic20", "c64", "c128", "plus4", "plus4emu", "pet"
   };
-  static const int expected_counts[] = {0, 3, 8, 3, 3, 3, 2};
+  static const int expected_counts[] = {0, 3, 12, 3, 3, 3, 4};
+  static const int expected_layouts[] = {0, 2, 6, 2, 2, 1, 2};
   for (int machine = BMC64_MACHINE_CLASS_VIC20; machine <= BMC64_MACHINE_CLASS_PET; machine++) {
     assert(keyboard_preset_count(machine) == expected_counts[machine]);
+    assert(keyboard_preset_at(machine, expected_counts[machine]) == NULL);
+    assert(keyboard_preset_layout_count(machine) == expected_layouts[machine]);
+    assert(keyboard_preset_layout_at(machine, expected_layouts[machine]) == NULL);
+    assert(keyboard_preset_default(machine) != NULL);
     for (int index = 0; index < keyboard_preset_count(machine); index++) {
       const KeyboardPreset *preset = keyboard_preset_at(machine, index);
-      assert(keyboard_preset_find(machine, preset->preset) == preset);
-      assert(keyboard_preset_index(machine, preset->preset) == index);
+      // Each (layout, mapping) pair is unique and has labels that fit a menu choice.
+      assert(keyboard_preset_find(machine, preset->layout, preset->mapping) == preset);
+      assert(strlen(preset->layout_label) < 36 && strlen(preset->mapping_label) < 36);
+      assert(keyboard_preset_layout_index(machine, preset->layout) >= 0);
       char path[128];
-      assert(keyboard_preset_file(preset, preset->default_mode) != NULL);
-      for (int mode = KEYBOARD_MODE_SYMBOLIC; mode <= KEYBOARD_MODE_POSITIONAL; mode++) {
-        const char *vkm_file = keyboard_preset_file(preset, mode);
-        if (!vkm_file) continue;
-        snprintf(path, sizeof(path), "sdcard/%s/%s", machine_dirs[machine], vkm_file);
-        FILE *file = fopen(path, "r");
-        assert(file != NULL);
-        fclose(file);
+      snprintf(path, sizeof(path), "sdcard/%s/%s", machine_dirs[machine], preset->vkm_file);
+      FILE *file = fopen(path, "r");
+      assert(file != NULL);
+      fclose(file);
+    }
+    // Walking layouts then mappings visits every preset exactly once.
+    int visited = 0;
+    for (int layout_index = 0; layout_index < keyboard_preset_layout_count(machine); layout_index++) {
+      const KeyboardPreset *layout = keyboard_preset_layout_at(machine, layout_index);
+      assert(keyboard_preset_layout_index(machine, layout->layout) == layout_index);
+      assert(keyboard_preset_mapping_at(machine, layout->layout, 0) == layout);
+      int mappings = keyboard_preset_mapping_count(machine, layout->layout);
+      assert(mappings > 0);
+      assert(keyboard_preset_mapping_at(machine, layout->layout, mappings) == NULL);
+      for (int index = 0; index < mappings; index++) {
+        const KeyboardPreset *preset = keyboard_preset_mapping_at(machine, layout->layout, index);
+        assert(preset->layout == layout->layout);
+        assert(strcmp(preset->layout_label, layout->layout_label) == 0);
+        visited++;
       }
     }
+    assert(visited == keyboard_preset_count(machine));
     char directory[64];
     snprintf(directory, sizeof(directory), "sdcard/%s", machine_dirs[machine]);
     DIR *maps = opendir(directory);
@@ -114,65 +133,73 @@ int main(void) {
           strcmp(map->d_name + length - 4, ".vkm") != 0) continue;
       int found = 0;
       for (int index = 0; index < keyboard_preset_count(machine); index++) {
-        const KeyboardPreset *preset = keyboard_preset_at(machine, index);
-        if ((preset->symbolic_vkm_file && strcmp(preset->symbolic_vkm_file, map->d_name) == 0) ||
-          (preset->positional_vkm_file && strcmp(preset->positional_vkm_file, map->d_name) == 0)) found++;
+        if (strcmp(keyboard_preset_at(machine, index)->vkm_file, map->d_name) == 0) found++;
       }
       assert(found > 0);
     }
     closedir(maps);
   }
-  assert(keyboard_preset_count(BMC64_MACHINE_CLASS_C64) == 8);
-  assert(keyboard_preset_count(BMC64_MACHINE_CLASS_PET) == 2);
-  assert(keyboard_preset_index(BMC64_MACHINE_CLASS_PET, KEYBOARD_PRESET_PET_BUSINESS) == 1);
-  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_PET, KEYBOARD_PRESET_PET_BUSINESS)->default_mode == KEYBOARD_MODE_SYMBOLIC);
-  assert(keyboard_preset_layout(keyboard_preset_at(BMC64_MACHINE_CLASS_PET, 0), KEYBOARD_MODE_POSITIONAL) == KEYBOARD_LAYOUT_POSITIONAL);
-  assert(keyboard_preset_layout(keyboard_preset_at(BMC64_MACHINE_CLASS_PET, 1), KEYBOARD_MODE_SYMBOLIC) == KEYBOARD_LAYOUT_US);
-  for (int index = 0; index < keyboard_preset_count(BMC64_MACHINE_CLASS_C64); index++) {
-    const KeyboardPreset *preset = keyboard_preset_at(BMC64_MACHINE_CLASS_C64, index);
-    assert(preset && (int)preset->preset == index + KEYBOARD_PRESET_US_USB);
-    assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, preset->preset) == preset);
-    assert(keyboard_preset_index(BMC64_MACHINE_CLASS_C64, preset->preset) == index);
-  }
-  assert(keyboard_preset_at(BMC64_MACHINE_CLASS_C64, -1) == NULL);
-  assert(keyboard_preset_at(BMC64_MACHINE_CLASS_C64, 8) == NULL);
-  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, 0) == NULL);
-  assert(keyboard_preset_index(BMC64_MACHINE_CLASS_C64, 0) == -1);
   assert(keyboard_preset_count(BMC64_MACHINE_CLASS_UNKNOWN) == 0);
   assert(keyboard_preset_at(BMC64_MACHINE_CLASS_UNKNOWN, 0) == NULL);
-  for (int machine = BMC64_MACHINE_CLASS_VIC20; machine <= BMC64_MACHINE_CLASS_PET; machine++) {
-    if (machine == BMC64_MACHINE_CLASS_C64) continue;
-    const KeyboardPreset *preset = keyboard_preset_at(machine, 0);
-    assert(preset && preset->preset == KEYBOARD_PRESET_US_USB);
-    assert(preset->layout == KEYBOARD_LAYOUT_US);
-    assert(keyboard_preset_find(machine, KEYBOARD_PRESET_US_USB) == preset);
-    assert(keyboard_preset_index(machine, KEYBOARD_PRESET_US_USB) == 0);
-    assert(keyboard_preset_at(machine, expected_counts[machine]) == NULL);
-    assert(strcmp(keyboard_preset_file(preset, preset->default_mode), machine == BMC64_MACHINE_CLASS_PET
-        ? "rpi_grus_sym.vkm" : machine == BMC64_MACHINE_CLASS_PLUS4EMU
-        ? "rpi_pos.vkm" : "rpi_sym.vkm") == 0);
+  assert(keyboard_preset_default(BMC64_MACHINE_CLASS_UNKNOWN) == NULL);
+  assert(keyboard_preset_layout_count(BMC64_MACHINE_CLASS_UNKNOWN) == 0);
+  assert(keyboard_preset_at(BMC64_MACHINE_CLASS_C64, -1) == NULL);
+  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, 0, 0) == NULL);
+  assert(keyboard_preset_layout_at(BMC64_MACHINE_CLASS_C64, -1) == NULL);
+  assert(keyboard_preset_layout_index(BMC64_MACHINE_CLASS_C64, KEYBOARD_PHYSICAL_PET_BUSINESS) == -1);
+  assert(keyboard_preset_mapping_count(BMC64_MACHINE_CLASS_C64, KEYBOARD_PHYSICAL_PET_BUSINESS) == 0);
+  assert(keyboard_preset_mapping_at(BMC64_MACHINE_CLASS_C64, KEYBOARD_PHYSICAL_US, -1) == NULL);
+
+  // C64: the Commodore layout has three mappings; each locale has Symbolic
+  // (default) and Positional, which keeps the locale's menu text table.
+  const int c64 = BMC64_MACHINE_CLASS_C64;
+  assert(strcmp(keyboard_preset_layout_at(c64, 0)->layout_label, "Commodore") == 0);
+  assert(keyboard_preset_mapping_count(c64, KEYBOARD_PHYSICAL_MACHINE) == 3);
+  assert(strcmp(keyboard_preset_mapping_at(c64, KEYBOARD_PHYSICAL_MACHINE, 0)->vkm_file, "rpi_pos.vkm") == 0);
+  assert(strcmp(keyboard_preset_find(c64, KEYBOARD_PHYSICAL_MACHINE, KEYBOARD_MAP_MAXI)->vkm_file, "rpi_maxi_pos.vkm") == 0);
+  assert(keyboard_preset_find(c64, KEYBOARD_PHYSICAL_MACHINE, KEYBOARD_MAP_MAXI)->text_layout == KEYBOARD_LAYOUT_MAXI);
+  assert(strcmp(keyboard_preset_find(c64, KEYBOARD_PHYSICAL_MACHINE, KEYBOARD_MAP_KEYRAH)->vkm_file, "rpi_keyrah_v3_pos.vkm") == 0);
+  assert(keyboard_preset_find(c64, KEYBOARD_PHYSICAL_MACHINE, KEYBOARD_MAP_KEYRAH)->text_layout == KEYBOARD_LAYOUT_C64);
+  assert(keyboard_preset_find(c64, KEYBOARD_PHYSICAL_MACHINE, KEYBOARD_MAP_SYMBOLIC) == NULL);
+  static const struct { int layout; const char *file; MenuKeyboardLayout text; } c64_locales[] = {
+    {KEYBOARD_PHYSICAL_US, "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
+    {KEYBOARD_PHYSICAL_DE, "rpi_sym_de.vkm", KEYBOARD_LAYOUT_DE},
+    {KEYBOARD_PHYSICAL_FR, "rpi_sym_fr.vkm", KEYBOARD_LAYOUT_FR},
+    {KEYBOARD_PHYSICAL_NO, "rpi_sym_no.vkm", KEYBOARD_LAYOUT_NO},
+  };
+  for (unsigned index = 0; index < sizeof(c64_locales) / sizeof(c64_locales[0]); index++) {
+    int layout = c64_locales[index].layout;
+    assert(keyboard_preset_mapping_count(c64, layout) == 2);
+    const KeyboardPreset *symbolic = keyboard_preset_find(c64, layout, KEYBOARD_MAP_SYMBOLIC);
+    assert(symbolic && keyboard_preset_mapping_at(c64, layout, 0) == symbolic);
+    assert(strcmp(symbolic->vkm_file, c64_locales[index].file) == 0);
+    assert(symbolic->text_layout == c64_locales[index].text);
+    const KeyboardPreset *positional = keyboard_preset_find(c64, layout, KEYBOARD_MAP_POSITIONAL);
+    assert(positional && strcmp(positional->vkm_file, "rpi_pos.vkm") == 0);
+    assert(positional->text_layout == c64_locales[index].text);
   }
-  assert(strcmp(keyboard_preset_file(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_US_USB), KEYBOARD_MODE_SYMBOLIC), "rpi_sym.vkm") == 0);
-  assert(strcmp(keyboard_preset_file(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_US_USB), KEYBOARD_MODE_POSITIONAL), "rpi_pos.vkm") == 0);
-  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_US_USB)->default_mode == KEYBOARD_MODE_SYMBOLIC);
-  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_NORWEGIAN_USB)->layout == KEYBOARD_LAYOUT_NO);
-  assert(strcmp(keyboard_preset_file(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_NORWEGIAN_USB), KEYBOARD_MODE_SYMBOLIC), "rpi_sym_no.vkm") == 0);
-  assert(keyboard_preset_file(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_NORWEGIAN_USB), KEYBOARD_MODE_POSITIONAL) == NULL);
-  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_FRENCH_USB)->layout == KEYBOARD_LAYOUT_FR);
-  assert(strcmp(keyboard_preset_file(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_FRENCH_USB), KEYBOARD_MODE_SYMBOLIC), "rpi_sym_fr.vkm") == 0);
-  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_GERMAN_USB)->layout == KEYBOARD_LAYOUT_DE);
-  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_GERMAN_USB)->default_mode == KEYBOARD_MODE_SYMBOLIC);
-  assert(strcmp(keyboard_preset_file(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_GERMAN_USB), KEYBOARD_MODE_SYMBOLIC), "rpi_sym_de.vkm") == 0);
-  assert(keyboard_preset_file(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_GERMAN_USB), KEYBOARD_MODE_POSITIONAL) == NULL);
-  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C128, KEYBOARD_PRESET_GERMAN_USB) == NULL);
-  assert(strcmp(keyboard_preset_file(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_C64_GPIO), KEYBOARD_MODE_POSITIONAL), "rpi_pos.vkm") == 0);
-  assert(keyboard_preset_file(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_C64_GPIO), KEYBOARD_MODE_SYMBOLIC) == NULL);
-  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_C64_GPIO)->default_mode == KEYBOARD_MODE_POSITIONAL);
-  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_C64_KEYRAH_V3)->layout == KEYBOARD_LAYOUT_C64);
-  assert(strcmp(keyboard_preset_file(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_C64_KEYRAH_V3), KEYBOARD_MODE_POSITIONAL), "rpi_keyrah_v3_pos.vkm") == 0);
-  assert(strcmp(keyboard_preset_file(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_C64_MAXI), KEYBOARD_MODE_POSITIONAL), "rpi_maxi_pos.vkm") == 0);
-  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_C64_MAXI)->layout == KEYBOARD_LAYOUT_MAXI);
-  assert(strcmp(keyboard_preset_file(keyboard_preset_find(BMC64_MACHINE_CLASS_C64, KEYBOARD_PRESET_PETSCIIBOARD), KEYBOARD_MODE_SYMBOLIC), "rpi_petsciiboard_sym.vkm") == 0);
+  const KeyboardPreset *petsciiboard = keyboard_preset_find(c64, KEYBOARD_PHYSICAL_PETSCIIBOARD, KEYBOARD_MAP_SYMBOLIC);
+  assert(petsciiboard && keyboard_preset_mapping_count(c64, KEYBOARD_PHYSICAL_PETSCIIBOARD) == 1);
+  assert(strcmp(petsciiboard->vkm_file, "rpi_petsciiboard_sym.vkm") == 0);
+  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C128, KEYBOARD_PHYSICAL_DE, KEYBOARD_MAP_SYMBOLIC) == NULL);
+
+  // Defaults: US Symbolic where it exists, otherwise the first row.
+  for (int machine = BMC64_MACHINE_CLASS_VIC20; machine <= BMC64_MACHINE_CLASS_PLUS4; machine++) {
+    const KeyboardPreset *preset = keyboard_preset_default(machine);
+    assert(preset->layout == KEYBOARD_PHYSICAL_US && preset->mapping == KEYBOARD_MAP_SYMBOLIC);
+    assert(strcmp(preset->vkm_file, "rpi_sym.vkm") == 0);
+  }
+  assert(strcmp(keyboard_preset_default(BMC64_MACHINE_CLASS_PLUS4EMU)->vkm_file, "rpi_pos.vkm") == 0);
+  assert(strcmp(keyboard_preset_default(BMC64_MACHINE_CLASS_PET)->vkm_file, "rpi_grus_sym.vkm") == 0);
+
+  // PET: two keyboards, each Symbolic (default) or Positional.
+  const int pet = BMC64_MACHINE_CLASS_PET;
+  assert(keyboard_preset_layout_index(pet, KEYBOARD_PHYSICAL_PET_BUSINESS) == 1);
+  assert(keyboard_preset_mapping_count(pet, KEYBOARD_PHYSICAL_PET_BUSINESS) == 2);
+  assert(keyboard_preset_mapping_at(pet, KEYBOARD_PHYSICAL_PET_BUSINESS, 0)->mapping == KEYBOARD_MAP_SYMBOLIC);
+  assert(strcmp(keyboard_preset_find(pet, KEYBOARD_PHYSICAL_PET_BUSINESS, KEYBOARD_MAP_POSITIONAL)->vkm_file, "rpi_buus_pos.vkm") == 0);
+  assert(keyboard_preset_find(pet, KEYBOARD_PHYSICAL_PET_GRAPHICS, KEYBOARD_MAP_POSITIONAL)->text_layout == KEYBOARD_LAYOUT_POSITIONAL);
+  assert(keyboard_preset_find(pet, KEYBOARD_PHYSICAL_PET_GRAPHICS, KEYBOARD_MAP_SYMBOLIC)->text_layout == KEYBOARD_LAYOUT_US);
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_US, KEYCODE_2, 1, 0) == '@');
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_2, 1, 0) == '"');
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_4, 1, 0) == 0xA4);
