@@ -2,6 +2,17 @@
   * Fix long filenames crashing disk attach and autostart #386
   * Support 255-byte names in the OSD and Web UI
   * Prevent Web UI rename truncation
+  * Refactor of keyboard input (`BMC64_NEW_KEYBOARD_INPUT`) 
+    * Add support for international keyboard layouts, in OSD and Vice
+    * Backport VICE 3.4 Shift, Ctrl and AltGr keymap conditions, and improve shift handling for symbolic mappings
+    * Add UK English, German, French, Norwegian, layouts
+    * Separate Keyboard Layout and Keyboard Mapping choices, with per-machine presets and saved settings
+    * Handle Shift+cursor navigation in the menu, avoiding duplication
+    * Add Split Shift and key latch changes (`BMC64_KEYBOARD_SPLIT_LATCH`), to stop random incorrect char output for when inputting shifted chars 
+    * Improve missing keymap file error message
+    * Correct ISO keyboard extra-key handling and add NonUSBackSlash to the C64 positional keymap
+    * Add automated keyboard regression tests and run keyboard and Web UI tests at the start of the build for earlier failures
+    * Make Keyrah V3 selectable from OSD menu
 
 ## 5.2.0
   * Make the BMC64 Updater configurable for forked repositories 

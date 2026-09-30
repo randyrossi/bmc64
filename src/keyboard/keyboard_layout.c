@@ -11,6 +11,8 @@ static const KeyboardPreset c64_presets[] = {
    {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_KEYRAH, "Keyrah V3", "rpi_keyrah_v3_pos.vkm", KEYBOARD_LAYOUT_C64},
    {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
    {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PHYSICAL_UK, "UK English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_uk.vkm", KEYBOARD_LAYOUT_UK},
+   {KEYBOARD_PHYSICAL_UK, "UK English", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_UK},
    {KEYBOARD_PHYSICAL_DE, "German", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_de.vkm", KEYBOARD_LAYOUT_DE},
    {KEYBOARD_PHYSICAL_DE, "German", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_DE},
    {KEYBOARD_PHYSICAL_FR, "French", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_fr.vkm", KEYBOARD_LAYOUT_FR},
@@ -167,6 +169,7 @@ unsigned int keyboard_layout_key_to_codepoint(MenuKeyboardLayout layout, long ke
    switch (layout) {
    case KEYBOARD_LAYOUT_C64: return keyboard_layout_c64_char(key, shifted);
    case KEYBOARD_LAYOUT_US: return keyboard_layout_us_char(key, shifted);
+   case KEYBOARD_LAYOUT_UK: return keyboard_layout_uk_char(key, shifted);
    case KEYBOARD_LAYOUT_NO: return keyboard_layout_no_char(key, shifted, altgr);
    case KEYBOARD_LAYOUT_FR: return keyboard_layout_fr_char(key, shifted, altgr);
    case KEYBOARD_LAYOUT_DE: return keyboard_layout_de_char(key, shifted, altgr);
