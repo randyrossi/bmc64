@@ -99,23 +99,14 @@ endif
 KEYBOARD_TEST_CC ?= cc
 KEYBOARD_TEST_STAMP = build/.keyboard_tests.stamp
 KEYBOARD_TEST_BIN = build/.keyboard_router_test
-KEYBOARD_TEST_SRCS = tools/keyboard_test/keyboard_router_test.c src/keyboard/keyboard_router.c \
+KEYBOARD_TEST_SRCS = tools/keyboard_test/keyboard_router_test.c tools/keyboard_test/run_tests.sh src/keyboard/keyboard_router.c \
 					 src/keyboard/keyboard_router.h src/keyboard/keyboard_feature.h third_party/common/kbd.c \
 					 src/keyboard/keyboard_layout.h src/keyboard/keyboard_layout.c $(wildcard src/keyboard/layout_*.c)
 
 $(KEYBOARD_TEST_STAMP): $(KEYBOARD_TEST_SRCS)
-	@command -v $(KEYBOARD_TEST_CC) >/dev/null 2>&1 || { echo "A host C compiler is required for the keyboard tests" >&2; exit 1; }
 	@echo "  TEST  keyboard"
-	@mkdir -p $(dir $@)
-	@$(KEYBOARD_TEST_CC) -std=c11 -Wall -Wextra -Werror -Wno-unused-parameter \
-		-ffunction-sections -fdata-sections -DBMC64_KEYBOARD_FEATURE_H \
-		-DBMC64_NEW_KEYBOARD_INPUT=1 -Ithird_party/common \
-		-Ithird_party/circle-stdlib/include -I$(CIRCLEHOME)/include \
-		-Wl,--gc-sections tools/keyboard_test/keyboard_router_test.c \
-				src/keyboard/keyboard_router.c third_party/common/kbd.c \
-				src/keyboard/keyboard_layout.c $(wildcard src/keyboard/layout_*.c) -o $(KEYBOARD_TEST_BIN)
-	@./$(KEYBOARD_TEST_BIN)
-	@touch $@
+	@KEYBOARD_TEST_CC=$(KEYBOARD_TEST_CC) tools/keyboard_test/run_tests.sh
+	@mkdir -p $(dir $@) && touch $@
 
 src/keyboard/keyboard_router.o: $(KEYBOARD_TEST_STAMP)
 
