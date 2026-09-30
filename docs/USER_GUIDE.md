@@ -587,12 +587,12 @@ Your keyboard setting from earlier versions is not carried over, so choose your 
 
 ### Graphics characters with a US keyboard
 
-In US English Symbolic on the C64, some Commodore symbols already need Shift on a US keyboard, so Shift cannot also reach the graphics character on that Commodore key. For these keys, hold Shift and right Alt together:
+In US English Symbolic on the C64, C128, VIC-20 and Plus/4, some Commodore symbols already need Shift on a US keyboard, so Shift cannot also reach the graphics character on that Commodore key. For these keys, hold Shift and right Alt together:
 
-Keys | Types on the C64
------|-----------------
+Keys | Types on the Commodore
+-----|----------------------
 Shift + right Alt + `2` | Shift + `@`
-Shift + right Alt + `6` | Shift + `↑` (π)
+Shift + right Alt + `6` | Shift + `↑` (π), not on the Plus/4
 Shift + right Alt + `8` | Shift + `*`
 Shift + right Alt + `=` | Shift + `+`
 
