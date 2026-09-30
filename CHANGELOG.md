@@ -3,6 +3,7 @@
   * Support 255-byte names in the OSD and Web UI
   * Prevent Web UI rename truncation
   * Refactor of keyboard input (`BMC64_NEW_KEYBOARD_INPUT`) 
+    * **Warning:** choose your keyboard again after updating, and back up any customised `.vkm` keymap files before copying the new ones over, as symbolic keymaps now use a new format. See [Keyboards in the User Guide](docs/USER_GUIDE.md#keyboards)
     * Add support for international keyboard layouts, in OSD and Vice
     * Backport VICE 3.4 Shift, Ctrl and AltGr keymap conditions, and improve shift handling for symbolic mappings
     * Add UK English, German, French, Norwegian, layouts
