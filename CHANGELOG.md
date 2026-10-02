@@ -1,3 +1,7 @@
+## 5.2.2 (pre-release)
+  * Fix crash loading snapshots with a 1581 drive (e.g. GEOS D81) #393
+  * Fix possible crash restoring D81/D80/D82 disk images from snapshots #393
+
 ## 5.2.1 (pre-release)
   * Fix long filenames crashing disk attach and autostart #386
   * Support 255-byte names in the OSD and Web UI
