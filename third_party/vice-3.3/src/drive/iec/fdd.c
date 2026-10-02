@@ -76,6 +76,7 @@ struct fd_drive_s {
 fd_drive_t *fdd_init(int num, drive_t *drive)
 {
     fd_drive_t *drv = lib_malloc(sizeof(fd_drive_t));
+    memset(drv, 0, sizeof(fd_drive_t));
     drv->myname = lib_msprintf("FDD%d", num);
     drv->image = NULL;
     drv->number = num & 3;

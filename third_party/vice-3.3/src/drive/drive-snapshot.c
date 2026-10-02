@@ -985,7 +985,6 @@ static int drive_snapshot_read_image_module(snapshot_t *s, unsigned int dnr)
     }
 
     fclose(fp);
-    lib_free(filename);
 
     if (file_system_attach_disk(dnr + 8, filename) < 0) {
         log_error(drive_snapshot_log, "Invalid Disk Image");
@@ -998,6 +997,7 @@ static int drive_snapshot_read_image_module(snapshot_t *s, unsigned int dnr)
                                dnr + 8);
     zfile_close_action(filename, ZFILE_REQUEST, request_str);
     lib_free(request_str);
+    lib_free(filename);
 
     /* we use the return code to step through the tracks. So we do not
        need any geometry info. */
