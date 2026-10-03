@@ -66,7 +66,9 @@ static int joyswap_x;
 static int columns_x;
 
 // Last known state for all status items
-static int drive_led_colors[DRIVE_NUM];
+// Points at the emulator's live LED color array so type changes made after
+// emux_enable_drive_status() are picked up.
+static int *drive_led_colors;
 static int drive_state;
 static int drive_enabled[DRIVE_NUM];
 static int drive_pwm1[DRIVE_NUM];
@@ -137,7 +139,7 @@ static char *template;
 
 int overlay_dirty;
 
-static void draw_drive_status(int state, int *drive_led_color);
+static void draw_drive_status(int state);
 static void draw_drive_led(int drive, unsigned int pwm1, unsigned int pwm2);
 static void draw_tape_counter(int counter);
 static void draw_tape_control_status(int control);
@@ -158,7 +160,7 @@ static void draw_statusbar() {
   ui_draw_text_buf("-", warp_x + inset_x, inset_y, FG_COLOR, overlay_buf,
                    overlay_buf_pitch, SCALE_XY);
 
-  draw_drive_status(drive_state, drive_led_colors);
+  draw_drive_status(drive_state);
   for (int d=0;d<DRIVE_NUM;d++) {
      draw_drive_led(d, drive_pwm1[d], drive_pwm2[d]);
   }
@@ -260,7 +262,7 @@ static void statusbar_triggered_by_activity() {
   }
 }
 
-static void draw_drive_status(int state, int *drive_led_color) {
+static void draw_drive_status(int state) {
   int i, enabled = state;
 
   for (i = 0; i < DRIVE_NUM; ++i) {
@@ -273,7 +275,6 @@ static void draw_drive_status(int state, int *drive_led_color) {
 
     if (enabled & 1) {
       drive_enabled[i] = 1;
-      drive_led_colors[i] = drive_led_color[i];
       ui_draw_rect_buf(drive_x[i] + FONT_ADVANCE * 0 + inset_x,
          inset_y + 2*SCALE_XY, 6*SCALE_XY, 4*SCALE_XY, BLACK_COLOR,
             1, overlay_buf, overlay_buf_pitch);
@@ -292,13 +293,14 @@ static void draw_drive_status(int state, int *drive_led_color) {
 // Enable a drive status lights
 void emux_enable_drive_status(int state, int *drive_led_color) {
   drive_state = state;
+  drive_led_colors = drive_led_color;
   if (!overlay_buf)
     return;
 
   statusbar_triggered_by_activity();
 
   if (!statusbar_enabled) return;
-  draw_drive_status(state, drive_led_color);
+  draw_drive_status(state);
 }
 
 static void draw_drive_led(int drive, unsigned int pwm1, unsigned int pwm2) {
@@ -308,7 +310,7 @@ static void draw_drive_led(int drive, unsigned int pwm1, unsigned int pwm2) {
   // Was i < 2, disabled 2nd LED since it never seems to turn on.
   for (int i = 0; i < 1; i++) {
     unsigned int pwm = i == 0 ? pwm1 : pwm2;
-    int led_color = drive_led_colors[drive] & (1 << i);
+    int led_color = drive_led_colors && (drive_led_colors[drive] & (1 << i));
     int led;
     if (led_color) {
       if (pwm < 333)

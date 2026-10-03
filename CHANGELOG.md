@@ -1,3 +1,6 @@
+## 5.2.3 (pre-release)
+  * Fix drive LED showing previous drive type's colour #112
+
 ## 5.2.2 (pre-release)
   * Fix crash loading snapshots with a 1581 drive (e.g. GEOS D81) #393
   * Fix possible crash restoring D81/D80/D82 disk images from snapshots #393
