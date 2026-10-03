@@ -34,6 +34,10 @@
       <span class="nav-item disabled"><span class="ni-ico">♪</span>Media<span class="soon">soon</span></span>
       <span class="nav-item disabled"><span class="ni-ico">≣</span>Logs<span class="soon">soon</span></span>
     </nav>
+    <label class="up-drop side-drop" id="fb-drop" hidden>
+      <input type="file" id="fb-drop-file" multiple hidden>
+      <span>Drop files here to upload to <b id="fb-drop-dest">/</b></span>
+    </label>
     <div class="sys-card">
       <div class="sys-head"><span class="dot" id="sys-dot"></span><span id="sys-state">Connecting…</span></div>
       <dl>
@@ -114,7 +118,7 @@
     </section>
 
     <section class="view" id="view-files" hidden>
-      <div class="card">
+      <div class="card fb-card" id="fb-card">
         <h2><span class="c-ico">▤</span>Files</h2>
         <div class="fb-bar">
           <button class="btn" id="fb-up">↑ Up</button>

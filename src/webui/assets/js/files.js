@@ -162,6 +162,7 @@ export async function loadDir(path) {
   fbVol = vol;
   fbPath = data.path || path;
   renderCrumbs(vol, fbPath);
+  $("fb-drop-dest").textContent = fbPath;
 
   const entries = (data.entries || []).slice().sort((a, b) => {
     if (!!a.dir !== !!b.dir) return a.dir ? -1 : 1;
@@ -413,9 +414,23 @@ async function uploadWithRetry(file, overwrite) {
   }
 }
 
+// Disables both ways in (the Upload… button and the sidebar drop zone)
+// while an upload runs.
+let uploading = false;
+
+function setUploading(busy) {
+  uploading = busy;
+  $("fb-upload").disabled = busy;
+  $("fb-drop-file").disabled = busy;
+  $("fb-upload-btn").classList.toggle("disabled", busy);
+  $("fb-drop").classList.toggle("disabled", busy);
+  $("fb-upload").value = "";
+  $("fb-drop-file").value = "";
+}
+
 async function uploadFiles(fileList) {
   const files = Array.from(fileList || []);
-  if (!files.length) return;
+  if (!files.length || uploading) return;
 
   const clashes = files.filter((f) => fbNames.has(f.name));
   if (clashes.length && !confirm(
@@ -423,12 +438,12 @@ async function uploadFiles(fileList) {
       " already exist here and will be overwritten:\n\n" +
       clashes.map((f) => f.name).join("\n") + "\n\nContinue?")) {
     $("fb-upload").value = "";
+    $("fb-drop-file").value = "";
     return;
   }
   const overwriteNames = new Set(clashes.map((f) => f.name));
 
-  $("fb-upload").disabled = true;
-  $("fb-upload-btn").classList.add("disabled");
+  setUploading(true);
   $("fb-status").className = "msg";
   let done = 0;
   let skipped = 0;
@@ -443,9 +458,7 @@ async function uploadFiles(fileList) {
       break;
     }
   }
-  $("fb-upload").disabled = false;
-  $("fb-upload-btn").classList.remove("disabled");
-  $("fb-upload").value = "";
+  setUploading(false);
   if (done + skipped === files.length) {
     let msg = "Uploaded " + done + " file" + (done === 1 ? "" : "s") + ".";
     if (skipped) msg += " Skipped " + skipped + " (not overwritten).";
@@ -462,4 +475,50 @@ export function initFiles() {
   $("fb-mkdir").addEventListener("click", makeFolder);
   $("fb-newbasic").addEventListener("click", newBasic);
   $("fb-upload").addEventListener("change", (e) => uploadFiles(e.target.files));
+  $("fb-drop-file").addEventListener("change", (e) => uploadFiles(e.target.files));
+
+  dropTarget($("fb-drop"));
+  dropTarget($("fb-card"));
+}
+
+// Files dropped on `el` upload to the current folder. Only file drags are
+// taken, so dragging text around the page doesn't light it up.
+function dropTarget(el) {
+  const isFiles = (e) => Array.from(e.dataTransfer.types || []).includes("Files");
+  el.addEventListener("dragover", (e) => {
+    if (!isFiles(e)) return;
+    e.preventDefault();
+    el.classList.add("over");
+  });
+  // dragleave also fires when moving onto a child; ignore that.
+  el.addEventListener("dragleave", (e) => {
+    if (!el.contains(e.relatedTarget)) el.classList.remove("over");
+  });
+  el.addEventListener("drop", (e) => {
+    if (!isFiles(e)) return;
+    e.preventDefault();
+    el.classList.remove("over");
+    uploadFiles(droppedFiles(e.dataTransfer));
+  });
+}
+
+// Folders can't be uploaded; a dropped one shows up as a bogus empty file, so
+// leave it out.
+function droppedFiles(dt) {
+  const items = Array.from(dt.items || []);
+  if (!items.length || !items[0].webkitGetAsEntry) return dt.files;
+  const files = [];
+  let folders = 0;
+  for (const item of items) {
+    if (item.kind !== "file") continue;
+    const entry = item.webkitGetAsEntry();
+    if (entry && entry.isDirectory) { folders++; continue; }
+    const f = item.getAsFile();
+    if (f) files.push(f);
+  }
+  if (folders) {
+    $("fb-status").className = "msg err";
+    $("fb-status").textContent = "Folders can't be uploaded — skipped " + folders + ".";
+  }
+  return files;
 }

@@ -53,6 +53,11 @@ a:hover { text-decoration: underline; }
   border-right: 1px solid var(--border-soft);
   padding: 18px 14px;
   gap: 6px;
+  /* stays in view while a long file list scrolls the page */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .sidebar-mark { width: 100%; max-width: 168px; height: auto; margin: 4px auto 16px; display: block; }
@@ -117,6 +122,14 @@ a:hover { text-decoration: underline; }
   border-radius: 12px;
   padding: 12px 14px;
 }
+/* Files view drop zone; borrows .up-drop from update.css */
+.side-drop { min-height: 96px; margin: 0 0 8px; font-size: 12.5px; overflow-wrap: anywhere; }
+.side-drop b { color: var(--fg); font-weight: 600; }
+.side-drop[hidden] { display: none; }
+.side-drop.disabled { opacity: 0.4; pointer-events: none; }
+/* files dragged over the file list itself */
+.fb-card.over { outline: 2px dashed var(--blue); outline-offset: -2px; background: rgba(77, 157, 255, 0.06); }
+
 .sys-head { display: flex; align-items: center; gap: 8px; font-weight: 700; margin-bottom: 8px; }
 .sys-card dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0; }
 .sys-card dt { color: var(--muted); font-size: 12.5px; }
@@ -427,10 +440,11 @@ body.modal-open { overflow: hidden; }
   }
   .sidebar-mark { max-width: 96px; margin: 0 auto 8px; }
   .sys-card { width: 100%; }
-  .sidebar { flex-direction: row; flex-wrap: wrap; align-items: center; border-right: none; border-bottom: 1px solid var(--border-soft); padding: 10px 12px; }
+  .sidebar { position: static; height: auto; overflow-y: visible; flex-direction: row; flex-wrap: wrap; align-items: center; border-right: none; border-bottom: 1px solid var(--border-soft); padding: 10px 12px; }
   .nav, .nav-bottom { flex-direction: row; flex-wrap: wrap; border: none; margin: 0; padding: 0; flex: 0; }
   .nav-item { width: auto; }
   .soon { display: none; }
+  .side-drop { display: none; } /* the Upload… button covers narrow screens */
   .rainbow { display: none; }
   .main { padding: 16px; }
   .motto { text-align: left; }

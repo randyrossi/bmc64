@@ -23,6 +23,7 @@ function route() {
   $("view-dashboard").hidden = view !== "dashboard";
   $("view-files").hidden = view !== "files";
   $("view-update").hidden = view !== "update";
+  $("fb-drop").hidden = view !== "files";
 
   document.querySelectorAll(".nav-item[data-view]").forEach((el) => {
     el.classList.toggle("active", el.dataset.view === view);
