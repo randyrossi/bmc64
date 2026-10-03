@@ -462,8 +462,11 @@ static int usb3_mounted;
 static char full_path_str[sizeof(current_volume_name) +
                           sizeof(current_dir_names[0]) + MAX_STR_VAL_LEN + 1];
 
-// Keep track of last known position in the file list.
-static int current_dir_pos[NUM_DIR_TYPES];
+// Keep track of the last selected item in the file list for each dir type.
+// Remembered by name rather than row index because save/create lists have
+// an extra "Enter name:" row that the matching load lists don't.
+static int current_dir_sel_sub_id[NUM_DIR_TYPES];
+static char current_dir_sel[NUM_DIR_TYPES][MAX_STR_VAL_LEN];
 
 TEST_FILTER_MACRO(test_disk_name, num_disk_ext, disk_filt_ext);
 TEST_FILTER_MACRO(test_tape_name, num_tape_ext, tape_filt_ext);
@@ -732,10 +735,55 @@ static void list_files(struct menu_item *parent,
 #endif
 }
 
+// Files and dirs keep their full name in str_value (the button name may be
+// truncated). Other rows (header, "..", text field) are identified by label.
+static const char *file_item_key(struct menu_item *item) {
+  if (item->type != TEXTFIELD && (item->sub_id == MENU_SUB_PICK_FILE ||
+                                  item->sub_id == MENU_SUB_ENTER_DIR)) {
+    return item->str_value;
+  }
+  return item->name;
+}
+
 static void files_cursor_listener(struct menu_item* parent,
                                   int new_pos) {
+  // File lists are flat so the cursor index is the child index.
+  struct menu_item *item = parent->first_child;
+  while (item != NULL && new_pos-- > 0) {
+    item = item->next;
+  }
+  if (item == NULL) {
+    return;
+  }
+
   // dir type is in value field
-  current_dir_pos[parent->value] = new_pos;
+  current_dir_sel_sub_id[parent->value] = item->sub_id;
+  strncpy(current_dir_sel[parent->value], file_item_key(item),
+          MAX_STR_VAL_LEN - 1);
+  current_dir_sel[parent->value][MAX_STR_VAL_LEN - 1] = '\0';
+}
+
+// Make the next file list for this dir type open on a file we just wrote.
+static void remember_file_selection(DirType dir_type, const char *fname) {
+  current_dir_sel_sub_id[dir_type] = MENU_SUB_PICK_FILE;
+  strncpy(current_dir_sel[dir_type], fname, MAX_STR_VAL_LEN - 1);
+  current_dir_sel[dir_type][MAX_STR_VAL_LEN - 1] = '\0';
+}
+
+// Returns the row of the last selected item for this dir type, or 0 if it
+// isn't in this list.
+static int find_file_item_pos(struct menu_item *file_root, DirType dir_type) {
+  int pos = 0;
+  struct menu_item *item;
+  for (item = file_root->first_child; item != NULL; item = item->next) {
+    if (item->type != DIVIDER &&
+        item->sub_id == current_dir_sel_sub_id[dir_type] &&
+        strcmp(file_item_key(item), current_dir_sel[dir_type]) == 0) {
+      return pos;
+    }
+    pos++;
+  }
+  return 0;
 }
 
 static void main_menu_cursor_listener(struct menu_item* parent, int new_pos) {
@@ -808,10 +856,10 @@ static void show_files(DirType dir_type, FileFilter filter, int menu_id,
   list_files(file_root, dir_type, filter, menu_id);
 
   if (reset_cur_pos) {
-     current_dir_pos[dir_type] = 0;
+     current_dir_sel[dir_type][0] = '\0';
   } else {
-     // Position cursor to last known location for this dir type.
-     ui_set_cur_pos(current_dir_pos[dir_type]);
+     // Position cursor to last selected item for this dir type.
+     ui_set_cur_pos(find_file_item_pos(file_root, dir_type));
   }
 }
 
@@ -2246,6 +2294,7 @@ static void select_file(struct menu_item *item) {
       path = fullpath(DIR_CARTS, item->str_value);
       result = emux_save_reu_image(path);
       if (result == 0) {
+        remember_file_selection(DIR_CARTS, item->str_value);
         ui_pop_all_and_toggle();
       } else if (result == -2) {
         ui_error("RAM Expansion is not enabled");
@@ -2316,6 +2365,7 @@ static void select_file(struct menu_item *item) {
       ui_pop_menu();
       ui_error("Save snapshot failed");
     } else {
+      remember_file_selection(DIR_SNAPS, fname);
       ui_pop_all_and_toggle();
     }
   }
