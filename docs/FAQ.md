@@ -12,6 +12,7 @@
 - [Why won't PetRescue attach in Plus4Emu?](#why-wont-petrescue-attach-in-plus4emu)
 - [Why am I seeing errors when saving settings?](#why-am-i-seeing-errors-when-saving-settings)
 - [Things are running slowly or glitching, what can I do?](#things-are-running-slowly-or-glitching-what-can-i-do)
+- [Why did my custom keymap (.vkm) file stop working?](#why-did-my-custom-keymap-vkm-file-stop-working)
 - [What do I put on the SD card?](#what-do-i-put-on-the-sd-card)
 
 ## Can I switch the machine to NTSC?
@@ -107,6 +108,18 @@ If the errors continue after ruling out power, try a different, freshly formatte
 **Answer:** How much BMC64 has to do depends on the Raspberry Pi model and on what is enabled. Emulated drives (each extra drive costs CPU even when idle), networking, logging and display effects such as the CRT shader all use frame time, and the Raspberry Pi Zero has the least headroom. See [Optimising BMC64](OPTIMISING.md) for what each option costs and how to reduce it.
 
 Things to try first: set unused drive units to None, turn networking off if you do not use it, turn the CRT shader off, and leave Logging off.
+
+## Why did my custom keymap (.vkm) file stop working?
+
+**Answer:** From v5.2.1 the symbolic keymaps (`rpi_sym.vkm` and the other symbolic `rpi_*.vkm` files) use the same format as VICE 3.4, which adds Shift, Ctrl and AltGr conditions to each line. An old-format symbolic keymap still loads, but its shifted mappings also fire without Shift held, so for example `2` types `@`.  Copying the new release files to your SD card will also overwrite any symbolic keymap you edited, so back yours up first.  Positional keymaps are not affected.
+
+To convert an old symbolic keymap, add 128 to the last number on each line that should only apply while Shift is held (use 512 for AltGr and 1024 for Ctrl):
+
+    2 5 6 16    becomes    2 5 6 144
+
+Your keyboard choice from earlier versions is also not carried over, so choose your **Keyboard Layout** and **Keyboard Mapping** again in the Keyboard menu and use **Save Settings**.
+
+See [If you use your own keymap files (.vkm)](USER_GUIDE.md#if-you-use-your-own-keymap-files-vkm) and [Choosing your keyboard](USER_GUIDE.md#choosing-your-keyboard) in the User Guide for the full details.
 
 ## What do I put on the SD card?
 
