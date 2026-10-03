@@ -2,6 +2,7 @@
   * Fix drive LED showing previous drive type's colour #112
   * Fix snapshot load cursor being one row off after save #200
   * Skip macOS AppleDouble metadata files ("._name") #251
+  * Add drag-and-drop uploading of files to the WebUI File manager
 
 ## 5.2.2 (pre-release)
   * Fix crash loading snapshots with a 1581 drive (e.g. GEOS D81) #393
