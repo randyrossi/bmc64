@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: BMC64 Discord
+    url: https://discord.gg/yXU6huQymG
+    about: Get help, share your setup and chat with other BMC64 users.
+  - name: Community projects
+    url: https://github.com/randyrossi/bmc64/blob/master/docs/COMMUNITY_PROJECTS.md
+    about: PCBs, cases and guides made by the community. Contact the project author for support.

@@ -26,6 +26,8 @@ The following are not currently within the intended scope of BMC64:
 
 * **Cycle-exact accuracy at the cost of performance.** Changes such as switching to the x64sc core that would noticeably slow emulation on the older supported Raspberry Pi models are not intended.
 
+* **Support for community projects and third-party products.** The BMC64 project does not provide help with building, wiring or troubleshooting boards, kits, cases or other projects made by the community or third parties, even when they are designed for BMC64. Questions about these should go to the project's author. Bugs in BMC64's own hardware support, such as GPIO connected keyboards and joysticks, are still in scope. See [Community Projects](COMMUNITY_PROJECTS.md).
+
 A feature being technically possible does not necessarily mean that it falls within the intended scope of the project.
 
 ## About This Scope

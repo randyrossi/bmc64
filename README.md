@@ -10,6 +10,8 @@ Join the official **BMC64 Discord community** to discuss BMC64 and the Commodore
 
 [![Discord](https://img.shields.io/badge/Discord-Join%20the%20BMC64%20Community-5865F2?logo=discord&logoColor=white)](https://discord.gg/yXU6huQymG)
 
+See [Community Projects](docs/COMMUNITY_PROJECTS.md) for PCBs, cases, guides and other projects made by the community.
+
 ## Features
 
 - Quick boot time (C64 in 4.1 seconds over composite!)
