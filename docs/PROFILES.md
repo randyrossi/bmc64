@@ -167,8 +167,8 @@ A profile can start a program or disk image by itself every time it starts:
   BMC64 doesn't check that.
 - Main can have an autostart too, one for each machine. Setting one is the
   only thing that creates the `profiles` folder without making a profile.
-- If the file can't be started (moved or deleted, for example), you get a
-  message and the machine starts normally.
+- If the file isn't there any more (moved or deleted, for example), you get
+  a message and the machine starts normally.
 - A hard reset doesn't run the autostart again; only power-on (or a
   restart) does.
 

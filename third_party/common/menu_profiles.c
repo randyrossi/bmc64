@@ -9,10 +9,10 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 
 // RASPI includes
 #include "demo.h"
-#include "emux_api.h"
 #include "menu.h"
 #include "ui.h"
 #include "../../src/profiles/profiles.h"
@@ -405,13 +405,17 @@ void menu_profiles_boot_complete(void) {
     ui_error("%s", message);
   }
 
-  // The profile's autostart, as if picked from Autostart Prg/Disk.
+  // The profile's autostart, as if picked from Autostart Prg/Disk. It's
+  // queued for the main loop rather than started here: this runs while boot
+  // warp is still on, and VICE's autostart puts back the warp state it
+  // started with when it finishes, which would leave warp (and no sound) on.
   const char *autostart = profiles_autostart();
   if (autostart[0] != '\0' && !raspi_demo_mode) {
-    char path[PROFILES_MAX_PATH_LEN];
-    snprintf(path, sizeof(path), "%s", autostart);
-    if (emux_autostart_file(path) < 0) {
-      ui_error("Can't autostart\n%s", base_name(autostart));
+    struct stat st;
+    if (stat(autostart, &st) != 0) {
+      ui_error("Can't find the autostart\n%s", base_name(autostart));
+    } else {
+      emu_autostart_interrupt(autostart);
     }
   }
 }
