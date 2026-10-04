@@ -51,6 +51,7 @@
 #include "menu_switch.h"
 #include "menu_logging.h"
 #include "menu_gpio.h"
+#include "menu_profiles.h"
 #include "overlay.h"
 #include "raspi_util.h"
 #include "ui.h"
@@ -4190,6 +4191,7 @@ void build_menu(struct menu_item *root) {
   }
 
   ui_menu_add_button(MENU_TEXT, root, machine_info_txt);
+  menu_profiles_add_status_line(root);
 
   ui_menu_add_button(MENU_ABOUT, root, "About...");
   ui_menu_add_button(MENU_LICENSE, root, "License...");
@@ -4351,6 +4353,8 @@ void build_menu(struct menu_item *root) {
   if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
     ui_menu_add_button(MENU_DRIVE_CHANGE_ROM, drive_parent, "Change ROM...");
   }
+
+  build_profiles_drive_items(drive_parent);
 
   if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
     parent = ui_menu_add_folder(drive_parent, "Create empty Disk");
@@ -4895,7 +4899,9 @@ void build_menu(struct menu_item *root) {
   logging_destination_item->value = logging_get_destination();
   saved_logging_destination = logging_destination_item->value;
 
-  ui_menu_add_button(MENU_SAVE_SETTINGS, root, "Save settings");
+  build_profiles_menu(root);
+  menu_profiles_label_save_item(
+      ui_menu_add_button(MENU_SAVE_SETTINGS, root, "Save settings"));
 
   ui_set_on_value_changed_callback(menu_value_changed);
 

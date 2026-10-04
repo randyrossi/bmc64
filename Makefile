@@ -25,7 +25,8 @@ OBJS	= src/main.o src/kernel.o src/new_io.o src/io_stats_bench.o src/perf_stats_
 		  src/viceoptions.o src/viceapp.o src/vice_network.o src/network_time_sync.o src/fbl.o src/crt_pi_idx.o src/crt_pi_rgb.o \
 				  src/webui/webui.o src/webui/webui_http.o src/webui/webui_fs.o src/webui/webui_assets.o src/keyboard/keyboard_router.o \
 				  src/keyboard/keyboard_layout.o src/keyboard/layout_us.o src/keyboard/layout_uk.o src/keyboard/layout_no.o \
-				  src/keyboard/layout_fr.o src/keyboard/layout_de.o src/keyboard/layout_c64.o src/keyboard/layout_positional.o src/keyboard/layout_maxi.o
+				  src/keyboard/layout_fr.o src/keyboard/layout_de.o src/keyboard/layout_c64.o src/keyboard/layout_positional.o src/keyboard/layout_maxi.o \
+				  src/profiles/profile_store.o src/profiles/profile_boot.o src/profiles/profile_system.o src/profiles/profile_machine.o
 
 # The updater (src/update/, with zlib) is built in when updater.cfg says
 # updater = on or kernel_only; otherwise a stub whose two entry points do
@@ -110,6 +111,19 @@ $(KEYBOARD_TEST_STAMP): $(KEYBOARD_TEST_SRCS)
 
 src/keyboard/keyboard_router.o: $(KEYBOARD_TEST_STAMP)
 
+PROFILES_TEST_CC ?= cc
+PROFILES_TEST_STAMP = build/.profiles_tests.stamp
+PROFILES_TEST_BIN = build/.profiles_test
+PROFILES_TEST_SRCS = tools/profiles_test/profiles_test.c tools/profiles_test/run_tests.sh \
+					 $(wildcard src/profiles/*.c) $(wildcard src/profiles/*.h)
+
+$(PROFILES_TEST_STAMP): $(PROFILES_TEST_SRCS)
+	@echo "  TEST  profiles"
+	@PROFILES_TEST_CC=$(PROFILES_TEST_CC) tools/profiles_test/run_tests.sh
+	@mkdir -p $(dir $@) && touch $@
+
+src/profiles/profile_store.o: $(PROFILES_TEST_STAMP)
+
 FILTERED_CIRCLE_NEWLIB = libcirclenewlib-bmc64.a
 
 $(FILTERED_CIRCLE_NEWLIB): $(NEWLIBDIR)/lib/libcirclenewlib.a
@@ -124,6 +138,7 @@ EXTRACLEAN += $(OBJS) $(DEPS)
 EXTRACLEAN += src/plus4emulatorcore.o src/viceemulatorcore.o
 EXTRACLEAN += $(UPDATER_OBJS) src/update/update_stub.o
 EXTRACLEAN += $(KEYBOARD_TEST_STAMP) $(KEYBOARD_TEST_BIN)
+EXTRACLEAN += $(PROFILES_TEST_STAMP) $(PROFILES_TEST_BIN)
 
 $(TARGET).img: $(FILTERED_CIRCLE_NEWLIB)
 

@@ -85,7 +85,6 @@ struct _CIRCLE_DIR {
 // matches the R/W slurp path: writes go through to the card immediately and
 // the caller's fsync() flushes them. Hard ceiling STREAM_MAX_BYTES (~2 GiB,
 // the newlib off_t / FatFs FSIZE_t limit); larger images are refused at open.
-// See docs/architecture/LARGE_DISK_IMAGE_SUPPORT.md.
 
 /* 3 slots reserved for stdio; peak observed legitimate usage is 10 or 11
    (4 drive units + IDE64/CMD HD, plus vice.ini/settings.txt saving).
@@ -108,8 +107,7 @@ struct _CIRCLE_DIR {
    longer needs a contiguous heap allocation it can never get on a Pi.
    Chosen well above the 16 MiB maximum REU image and a ~17 MiB REU-state
    snapshot, so every RAM-expansion image and every disk image that works today
-   keeps its current behaviour - only genuine mass-storage images stream.
-   See docs/architecture/LARGE_DISK_IMAGE_SUPPORT.md. */
+   keeps its current behaviour - only genuine mass-storage images stream. */
 #define SLURP_MAX_BYTES (32u * 1024u * 1024u)
 
 /* Hard upper bound for any image. newlib off_t / _lseek are signed 32-bit and
@@ -559,7 +557,6 @@ extern "C" int _open(char *file, int flags, int mode) {
     // When a file is opened O_RDWR, decide how to back it now: a small image is
     // slurped into RAM; one too large to slurp is streamed straight from FatFs.
     // (O_RDONLY defers this to the first _lseek; O_WRONLY always buffers.)
-    // See docs/architecture/LARGE_DISK_IMAGE_SUPPORT.md.
     if (masked_flags == O_RDWR) {
        unsigned sz = (unsigned)f_size(&newFile.file);
        if (sz >= STREAM_MAX_BYTES) {

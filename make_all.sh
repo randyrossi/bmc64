@@ -53,6 +53,14 @@ then
        exit 1
 fi
 
+# The profiles tests (profile files and rules from docs/PROFILES.md) must pass.
+# Built with the PC's C compiler, like the keyboard tests.
+if ! "$SRC_DIR/tools/profiles_test/run_tests.sh"
+then
+       echo "Profiles tests failed." >&2
+       exit 1
+fi
+
 CIRCLE_PUBLIC_INCLUDES="-I$CIRCLE_HOME/include -I$CIRCLE_HOME/libs/circle/include -I$CIRCLE_HOME/libs/circle/addon"
 
 if ! command -v flex >/dev/null 2>&1
