@@ -83,6 +83,10 @@ void profiles_reset_to_main(void);
 const ProfileInfo *profiles_running(void);
 int profiles_running_is_main(void);
 
+// 1 if profiles are in use: /profiles/active.txt was there at start-up.
+// Known from start-up, so it costs nothing to ask.
+int profiles_in_use(void);
+
 // The VICE settings file for the running profile, or NULL for Main (VICE's
 // usual vice.ini).
 const char *profiles_vice_config(void);

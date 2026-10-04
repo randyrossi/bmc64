@@ -434,6 +434,7 @@ static void test_no_profiles(void) {
    profiles_boot_init("C64");
    // [P1], [F1]: Main, and nothing created on the card.
    CHECK(profiles_running_is_main());
+   CHECK(!profiles_in_use());
    CHECK_STR(profiles_running()->id, "main");
    CHECK_STR(profiles_running()->name, "Main");
    CHECK_STR(profiles_running()->machine, "");
@@ -491,10 +492,11 @@ static void test_boot_profile(void) {
    profiles_boot_init("VIC20");
    CHECK_STR(profiles_running()->id, "vic");
 
-   // profile=main is Main without a message.
+   // profile=main is Main without a message, with profiles in use.
    write_file("/profiles/active.txt", "profile=main\n");
    profiles_boot_init("C64");
    CHECK(profiles_running_is_main());
+   CHECK(profiles_in_use());
    CHECK_STR(profiles_boot_message(), "");
 }
 
@@ -697,6 +699,10 @@ static void test_delete(void) {
    write_file("/profiles/elite/vice.ini", "[C64]\n");
    write_file("/profiles/elite/vice.in~", "[C64]\n");
    write_file("/profiles/elite/settings.txt", "palette=1\n");
+   // Left by the web UI's editor.
+   write_file("/profiles/elite/settings.txt.bak", "palette=0\n");
+   write_file("/profiles/elite/profile.txt.bak", "name=Old\nmachine=C64\n");
+   write_file("/profiles/elite/vice.ini.bak", "[C64]\n");
    write_file("/disks/elite.d64", "disk image");
    write_file("/profiles/active.txt", "profile=geos\n");
    profiles_boot_init("C64");

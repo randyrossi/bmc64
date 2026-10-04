@@ -11,6 +11,8 @@
 static char booted_machine[16];
 static ProfileFile running;
 static int running_is_main = 1;
+// active.txt was there at start-up.
+static int in_use;
 // Started with Start once.
 static int running_once;
 // The Start-once entry still has to be removed from active.txt.
@@ -31,6 +33,7 @@ void profiles_boot_init(const char *booted) {
    start_main();
    running_once = 0;
    once_to_remove = 0;
+   in_use = 0;
    boot_message[0] = '\0';
 
    // With no profiles this is the only file access ([F1]).
@@ -38,6 +41,7 @@ void profiles_boot_init(const char *booted) {
    if (active_file_read(&af) != PROFILES_OK) {
       return;
    }
+   in_use = 1;
    const char *id = af.profile;
    if (af.once[0]) {
       id = af.once;
@@ -113,6 +117,10 @@ const ProfileInfo *profiles_running(void) {
 
 int profiles_running_is_main(void) {
    return running_is_main;
+}
+
+int profiles_in_use(void) {
+   return in_use;
 }
 
 void profiles_running_renamed(const char *name) {

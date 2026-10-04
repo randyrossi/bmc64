@@ -13,7 +13,8 @@
 // The on-screen menu for profiles (docs/PROFILES.md). The profile logic is
 // in src/profiles; this file only builds and handles the menu items.
 
-// Adds a "Profile: <name>" line under the machine line, unless Main is running.
+// Adds a "Profile: <name>" line under the machine line once profiles are in
+// use. Choosing it opens Select profile.
 void menu_profiles_add_status_line(struct menu_item *root);
 
 // Adds the "Profiles" folder.

@@ -192,8 +192,13 @@ static void show_select_list(void) {
 
 static void update_name_labels(void) {
   if (status_item != NULL) {
-    snprintf(status_item->name, sizeof(status_item->name), "Profile: %s",
-             profiles_running()->name);
+    if (profiles_running_is_main()) {
+      snprintf(status_item->name, sizeof(status_item->name),
+               "Profile: Main (no profile)");
+    } else {
+      snprintf(status_item->name, sizeof(status_item->name), "Profile: %s",
+               profiles_running()->name);
+    }
   }
   if (save_item != NULL) {
     snprintf(save_item->name, sizeof(save_item->name), "Save settings (%s)",
@@ -340,10 +345,12 @@ static struct menu_item *add_item(int id, struct menu_item *parent,
 }
 
 void menu_profiles_add_status_line(struct menu_item *root) {
-  if (profiles_running_is_main()) {
+  // Shown once profiles are in use, also for Main; choosing it opens the
+  // profile list.
+  if (profiles_running_is_main() && !profiles_in_use()) {
     return;
   }
-  status_item = ui_menu_add_button(MENU_TEXT, root, "");
+  status_item = add_item(MENU_PROFILES_SELECT, root, "");
   update_name_labels();
 }
 

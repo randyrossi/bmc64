@@ -380,9 +380,11 @@ int profiles_rename_running(const char *name) {
 }
 
 // The files a profile's folder can hold. VICE leaves vice.in~ behind if a
-// save of vice.ini is interrupted.
+// save of vice.ini is interrupted; the web UI's editor keeps the previous
+// version of a file it saves as <name>.bak.
 static const char *const profile_files[] = {
    "profile.txt", "vice.ini", "vice.in~", "settings.txt",
+   "profile.txt.bak", "vice.ini.bak", "settings.txt.bak",
 };
 
 int profiles_delete(const char *id) {
