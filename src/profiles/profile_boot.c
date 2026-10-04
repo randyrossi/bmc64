@@ -3,10 +3,10 @@
 #include <stdio.h>
 #include <string.h>
 
-// Start-up: which profile runs, its startup disks and autostart
-// (docs/PROFILES.md, Switch to, or Start once).
+// Start-up: which profile runs, and its autostart
+// (docs/PROFILES.md, Switch to, or Start once; Autostart).
 //
-// Not implemented yet: startup disks and autostart.
+// Not implemented yet: startup disks.
 
 static char booted_machine[16];
 static ProfileFile running;
@@ -17,6 +17,8 @@ static int in_use;
 static int running_once;
 // The Start-once entry still has to be removed from active.txt.
 static int once_to_remove;
+// Main's startup actions (/profiles/main/<machine>.txt), when Main runs.
+static ProfileFile main_extras;
 static char boot_message[128];
 // Kept for as long as the emulator runs: VICE holds on to the vice.ini path.
 static char vice_config_path[PROFILES_MAX_PATH_LEN];
@@ -28,36 +30,24 @@ static void start_main(void) {
    running.info = *profiles_main_info();
 }
 
-void profiles_boot_init(const char *booted) {
-   snprintf(booted_machine, sizeof(booted_machine), "%s", booted ? booted : "");
-   start_main();
-   running_once = 0;
-   once_to_remove = 0;
-   in_use = 0;
-   boot_message[0] = '\0';
-
-   // With no profiles this is the only file access.
-   ActiveFile af;
-   if (active_file_read(&af) != PROFILES_OK) {
-      return;
-   }
-   in_use = 1;
-   const char *id = af.profile;
-   if (af.once[0]) {
-      id = af.once;
+// Picks the profile active.txt asks for, or Main with a message.
+static void start_from_active(const ActiveFile *a) {
+   const char *id = a->profile;
+   if (a->once[0]) {
+      id = a->once;
       running_once = 1;
       once_to_remove = 1;
-   } else if (af.bad_once[0]) {
+   } else if (a->bad_once[0]) {
       // A typo in once=: ignored, the usual profile starts.
       snprintf(boot_message, sizeof(boot_message),
                "once=%s in active.txt\nisn't a profile id.\nIgnored it.",
-               af.bad_once);
+               a->bad_once);
    }
-   if (!af.once[0] && af.bad_profile[0]) {
+   if (!a->once[0] && a->bad_profile[0]) {
       // A typo in profile=: Main starts.
       snprintf(boot_message, sizeof(boot_message),
                "profile=%s in active.txt\nisn't a profile id.\n"
-               "Started Main instead.", af.bad_profile);
+               "Started Main instead.", a->bad_profile);
    }
    if (strcmp(id, PROFILES_MAIN_ID) == 0) {
       return;
@@ -77,6 +67,27 @@ void profiles_boot_init(const char *booted) {
    }
    running = pf;
    running_is_main = 0;
+}
+
+void profiles_boot_init(const char *booted) {
+   snprintf(booted_machine, sizeof(booted_machine), "%s", booted ? booted : "");
+   start_main();
+   memset(&main_extras, 0, sizeof(main_extras));
+   running_once = 0;
+   once_to_remove = 0;
+   in_use = 0;
+   boot_message[0] = '\0';
+
+   // With no profiles this is the only file access.
+   ActiveFile af;
+   if (active_file_read(&af) != PROFILES_OK) {
+      return;
+   }
+   in_use = 1;
+   start_from_active(&af);
+   if (running_is_main) {
+      main_file_read(booted_machine, &main_extras);
+   }
 }
 
 void profiles_after_boot(void) {
@@ -157,16 +168,51 @@ const char *profiles_settings_file(const char *main_file) {
 }
 
 const char *profiles_autostart(void) {
-   return "";
+   return running_is_main ? main_extras.autostart : running.autostart;
+}
+
+// Saves path ("" for none) as the running profile's autostart, straight away.
+static int save_autostart(const char *path) {
+   if (path == NULL || strlen(path) >= sizeof(running.autostart)) {
+      return PROFILES_ERROR;
+   }
+   if (running_is_main) {
+      ProfileFile extras = main_extras;
+      pkv_copy(extras.autostart, sizeof(extras.autostart), path);
+      if (main_file_write(booted_machine, &extras) != PROFILES_OK) {
+         return PROFILES_ERROR;
+      }
+      main_extras = extras;
+      // Start-up only reads Main's file when active.txt exists.
+      ActiveFile af;
+      if (active_file_read(&af) != PROFILES_OK &&
+          active_file_write(&af) != PROFILES_OK) {
+         return PROFILES_ERROR;
+      }
+      return PROFILES_OK;
+   }
+   // Re-read the file so changes made since start-up (a rename) are kept.
+   ProfileFile pf;
+   if (profile_file_read(running.info.id, &pf) != PROFILES_OK) {
+      return PROFILES_ERROR;
+   }
+   pkv_copy(pf.autostart, sizeof(pf.autostart), path);
+   if (profile_file_write(running.info.id, &pf) != PROFILES_OK) {
+      return PROFILES_ERROR;
+   }
+   pkv_copy(running.autostart, sizeof(running.autostart), path);
+   return PROFILES_OK;
 }
 
 int profiles_set_autostart(const char *path) {
-   (void)path;
-   return PROFILES_NOT_IMPLEMENTED;
+   if (path == NULL || path[0] == '\0') {
+      return PROFILES_ERROR;
+   }
+   return save_autostart(path);
 }
 
 int profiles_clear_autostart(void) {
-   return PROFILES_NOT_IMPLEMENTED;
+   return save_autostart("");
 }
 
 int profiles_set_startup_disks(const char *const paths[PROFILES_NUM_DRIVES]) {

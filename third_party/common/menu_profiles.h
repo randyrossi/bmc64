@@ -26,6 +26,9 @@ void build_profiles_drive_items(struct menu_item *drives);
 // Labels "Save settings" with the running profile, unless Main is running.
 void menu_profiles_label_save_item(struct menu_item *item);
 
+// A file was picked for the profile's autostart (path includes the volume).
+void menu_profiles_autostart_chosen(const char *path);
+
 #ifdef __cplusplus
 extern "C" {
 #endif

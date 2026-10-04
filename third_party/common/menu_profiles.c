@@ -11,6 +11,8 @@
 #include <string.h>
 
 // RASPI includes
+#include "demo.h"
+#include "emux_api.h"
 #include "menu.h"
 #include "ui.h"
 #include "../../src/profiles/profiles.h"
@@ -302,9 +304,7 @@ static void profiles_item_chosen(struct menu_item *item) {
     show_delete_list();
     break;
   case MENU_PROFILES_AUTOSTART_FILE:
-  case MENU_PROFILES_AUTOSTART_SNAPSHOT:
-    // Not implemented yet: picking the file.
-    show_result(PROFILES_NOT_IMPLEMENTED);
+    menu_show_autostart_files(MENU_PROFILES_AUTOSTART_PICK);
     break;
   case MENU_PROFILES_CLEAR_AUTOSTART:
     show_saved(profiles_clear_autostart(), "Nothing will autostart");
@@ -366,7 +366,6 @@ void build_profiles_menu(struct menu_item *root) {
   autostart_folder = ui_menu_add_folder(parent, "Set autostart");
   add_item(MENU_PROFILES_AUTOSTART_FILE, autostart_folder,
            "Autostart Prg/Disk...");
-  add_item(MENU_PROFILES_AUTOSTART_SNAPSHOT, autostart_folder, "Snapshot...");
   update_autostart_label();
 
   add_item(MENU_PROFILES_CLEAR_AUTOSTART, parent, "Clear autostart");
@@ -388,10 +387,31 @@ void menu_profiles_label_save_item(struct menu_item *item) {
   update_name_labels();
 }
 
+void menu_profiles_autostart_chosen(const char *path) {
+  ui_pop_menu();  // the file list
+  int result = profiles_set_autostart(path);
+  update_autostart_label();
+  if (result == PROFILES_OK) {
+    ui_info("Autostart set: %s", base_name(path));
+  } else {
+    ui_error("Can't set the autostart");
+  }
+}
+
 void menu_profiles_boot_complete(void) {
   profiles_after_boot();
   const char *message = profiles_boot_message();
   if (message[0] != '\0') {
     ui_error("%s", message);
+  }
+
+  // The profile's autostart, as if picked from Autostart Prg/Disk.
+  const char *autostart = profiles_autostart();
+  if (autostart[0] != '\0' && !raspi_demo_mode) {
+    char path[PROFILES_MAX_PATH_LEN];
+    snprintf(path, sizeof(path), "%s", autostart);
+    if (emux_autostart_file(path) < 0) {
+      ui_error("Can't autostart\n%s", base_name(autostart));
+    }
   }
 }

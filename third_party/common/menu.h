@@ -578,7 +578,7 @@ typedef enum {
    MENU_PROFILES_DELETE_ITEM,
    MENU_PROFILES_DELETE_CONFIRM,
    MENU_PROFILES_AUTOSTART_FILE,
-   MENU_PROFILES_AUTOSTART_SNAPSHOT,
+   MENU_PROFILES_AUTOSTART_PICK,
    MENU_PROFILES_CLEAR_AUTOSTART,
    MENU_PROFILES_AUTO_ATTACH_DISKS,
    MENU_PROFILES_CLEAR_AUTO_ATTACH
@@ -749,6 +749,10 @@ void menu_autostart(const char *path);
 // Saves the current settings into a profile's folder (profiles_create()
 // makes the folder). Returns 0 on success.
 int menu_save_settings_to_profile(const char *id);
+
+// Opens the file list used by Autostart Prg/Disk, for picking a file for
+// menu_id; the choice goes to select_file().
+void menu_show_autostart_files(int menu_id);
 const char* function_to_string(int);
 
 #endif

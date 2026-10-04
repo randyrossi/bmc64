@@ -767,6 +767,108 @@ static void test_delete(void) {
    CHECK(exists("/profiles/keep/my-notes.txt"));
 }
 
+// ---- Autostart ----
+
+static void test_autostart_profile(void) {
+   fresh_card();
+   make_profile("elite", "name=Elite\nmachine=C64\ncategory=Games\n");
+   write_file("/profiles/active.txt", "profile=elite\n");
+   profiles_boot_init("C64");
+   CHECK_STR(profiles_autostart(), "");
+
+   // Saved straight away into profile.txt; other keys are kept.
+   CHECK(profiles_set_autostart("SD:/games/elite.d64") == PROFILES_OK);
+   CHECK_STR(profiles_autostart(), "SD:/games/elite.d64");
+   CHECK_STR(read_file("/profiles/elite/profile.txt"),
+             "name=Elite\ncategory=Games\nmachine=C64\n"
+             "autostart=SD:/games/elite.d64\n");
+
+   // Start-up picks it up.
+   profiles_boot_init("C64");
+   CHECK_STR(profiles_autostart(), "SD:/games/elite.d64");
+
+   // A rename made since start-up isn't lost by a later autostart change.
+   CHECK(profiles_rename_running("Elite Plus") == PROFILES_OK);
+   CHECK(profiles_set_autostart("SD:/games/elite2.d64") == PROFILES_OK);
+   ProfileFile pf;
+   CHECK(profile_file_read("elite", &pf) == PROFILES_OK);
+   CHECK_STR(pf.info.name, "Elite Plus");
+   CHECK_STR(pf.autostart, "SD:/games/elite2.d64");
+
+   // Clearing removes the key.
+   CHECK(profiles_clear_autostart() == PROFILES_OK);
+   CHECK_STR(profiles_autostart(), "");
+   CHECK(strstr(read_file("/profiles/elite/profile.txt"), "autostart") == NULL);
+
+   // An empty or missing path isn't an autostart.
+   CHECK(profiles_set_autostart("") == PROFILES_ERROR);
+   CHECK(profiles_set_autostart(NULL) == PROFILES_ERROR);
+   CHECK_STR(profiles_autostart(), "");
+}
+
+static void test_autostart_main(void) {
+   // Main with no profiles: setting it creates Main's file and active.txt,
+   // so start-up knows to read it.
+   fresh_card();
+   profiles_boot_init("C64");
+   CHECK(profiles_set_autostart("SD:/geos/GEOS64.D81") == PROFILES_OK);
+   CHECK_STR(profiles_autostart(), "SD:/geos/GEOS64.D81");
+   CHECK_STR(read_file("/profiles/main/c64.txt"),
+             "autostart=SD:/geos/GEOS64.D81\n");
+   CHECK_STR(read_file("/profiles/active.txt"), "profile=main\n");
+
+   profiles_boot_init("C64");
+   CHECK(profiles_running_is_main());
+   CHECK(profiles_in_use());
+   CHECK_STR(profiles_autostart(), "SD:/geos/GEOS64.D81");
+
+   // Each machine has its own file.
+   profiles_boot_init("VIC20");
+   CHECK_STR(profiles_autostart(), "");
+   CHECK(profiles_set_autostart("SD:/vic/game.prg") == PROFILES_OK);
+   CHECK_STR(read_file("/profiles/main/vic20.txt"),
+             "autostart=SD:/vic/game.prg\n");
+   profiles_boot_init("Plus4Emu");
+   CHECK(profiles_set_autostart("SD:/p4/game.prg") == PROFILES_OK);
+   CHECK(exists("/profiles/main/plus4emu.txt"));
+   profiles_boot_init("C64");
+   CHECK_STR(profiles_autostart(), "SD:/geos/GEOS64.D81");
+
+   // An existing active.txt is left alone.
+   make_profile("elite", "name=Elite\nmachine=C64\n");
+   write_file("/profiles/active.txt", "profile=main\nonce=elite\n");
+   profiles_boot_init("C64");
+   CHECK_STR(profiles_running()->id, "elite");
+   CHECK_STR(profiles_autostart(), "");
+   write_file("/profiles/active.txt", "profile=main\n");
+   profiles_boot_init("C64");
+   CHECK(profiles_clear_autostart() == PROFILES_OK);
+   CHECK_STR(read_file("/profiles/active.txt"), "profile=main\n");
+   CHECK_STR(read_file("/profiles/main/c64.txt"), "");
+   profiles_boot_init("C64");
+   CHECK_STR(profiles_autostart(), "");
+
+   // Main's file is used when a profile can't start and Main runs instead.
+   CHECK(profiles_set_autostart("SD:/x.prg") == PROFILES_OK);
+   write_file("/profiles/active.txt", "profile=gone\n");
+   profiles_boot_init("C64");
+   CHECK(profiles_running_is_main());
+   CHECK_STR(profiles_autostart(), "SD:/x.prg");
+
+   // Main's file only holds startup actions, never a name or machine.
+   write_file("/profiles/main/c64.txt",
+              "name=Sneaky\nmachine=C64\nautostart=SD:/y.prg\n");
+   profiles_boot_init("C64");
+   CHECK(profiles_set_autostart("SD:/z.prg") == PROFILES_OK);
+   CHECK_STR(read_file("/profiles/main/c64.txt"), "autostart=SD:/z.prg\n");
+
+   // Without active.txt, nothing reads Main's file.
+   fresh_card();
+   write_file("/profiles/main/c64.txt", "autostart=SD:/x.prg\n");
+   profiles_boot_init("C64");
+   CHECK_STR(profiles_autostart(), "");
+}
+
 // ---- Machines ----
 
 static void check_label(const char *machine, const char *expected) {
@@ -827,6 +929,8 @@ int main(void) {
    test_create();
    test_rename();
    test_delete();
+   test_autostart_profile();
+   test_autostart_main();
    test_machines();
 
    remove_tree(root);

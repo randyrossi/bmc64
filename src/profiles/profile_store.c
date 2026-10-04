@@ -169,6 +169,55 @@ int profile_file_write(const char *id, const ProfileFile *pf) {
    return sd_write_file(path, text, len) == 0 ? PROFILES_OK : PROFILES_ERROR;
 }
 
+// ---- Main's file ----
+
+static void main_file_path(const char *booted_machine, char *out, int size) {
+   char machine[16];
+   int i = 0;
+   for (; booted_machine[i] && i < (int)sizeof(machine) - 1; i++) {
+      char c = booted_machine[i];
+      machine[i] = (c >= 'A' && c <= 'Z') ? c - 'A' + 'a' : c;
+   }
+   machine[i] = '\0';
+   snprintf(out, (size_t)size, "%s/%s/%s.txt", PROFILES_DIR, PROFILES_MAIN_ID,
+            machine);
+}
+
+int main_file_read(const char *booted_machine, ProfileFile *pf) {
+   char path[PROFILES_MAX_PATH_LEN];
+   char text[PROFILES_MAX_FILE_LEN];
+   memset(pf, 0, sizeof(*pf));
+   if (booted_machine == NULL || booted_machine[0] == '\0') {
+      return PROFILES_ERROR;
+   }
+   main_file_path(booted_machine, path, sizeof(path));
+   if (sd_read_file(path, text, sizeof(text)) < 0) {
+      return PROFILES_OK;  // no file: nothing set
+   }
+   // It has no name or machine, so it never counts as a valid profile.
+   profile_file_parse(text, pf);
+   return PROFILES_OK;
+}
+
+int main_file_write(const char *booted_machine, const ProfileFile *pf) {
+   char path[PROFILES_MAX_PATH_LEN];
+   char text[PROFILES_MAX_FILE_LEN];
+   if (booted_machine == NULL || booted_machine[0] == '\0') {
+      return PROFILES_ERROR;
+   }
+   ProfileFile extras = *pf;
+   // Only the startup actions belong in Main's file.
+   memset(&extras.info, 0, sizeof(extras.info));
+   extras.description[0] = '\0';
+   int len = profile_file_format(&extras, text, sizeof(text));
+   if (len < 0 || sd_mkdir(PROFILES_DIR) != 0 ||
+       sd_mkdir(PROFILES_DIR "/" PROFILES_MAIN_ID) != 0) {
+      return PROFILES_ERROR;
+   }
+   main_file_path(booted_machine, path, sizeof(path));
+   return sd_write_file(path, text, len) == 0 ? PROFILES_OK : PROFILES_ERROR;
+}
+
 // ---- active.txt ----
 
 static void active_key(void *ctx, const char *key, const char *value) {

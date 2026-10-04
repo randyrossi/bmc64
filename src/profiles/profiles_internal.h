@@ -44,6 +44,12 @@ int profile_file_format(const ProfileFile *pf, char *buf, int size);
 int profile_file_read(const char *id, ProfileFile *pf);
 int profile_file_write(const char *id, const ProfileFile *pf);
 
+// Main's own file, /profiles/main/<machine>.txt (e.g. c64.txt), with the
+// same keys as profile.txt; only the autostart and startup disks are used.
+// A missing file reads as empty.
+int main_file_read(const char *booted_machine, ProfileFile *pf);
+int main_file_write(const char *booted_machine, const ProfileFile *pf);
+
 // ---- active.txt (profile_store.c) ----
 
 typedef struct {

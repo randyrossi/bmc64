@@ -1,8 +1,8 @@
 # BMC64 Profiles
 
 > **Status: in development.** Profiles work as described on this page.
-> *Set autostart*, *Clear autostart* and *Drives → Auto-attach options* are
-> already in the menu but don't do anything yet.
+> *Drives → Auto-attach options* is already in the menu but doesn't do
+> anything yet.
 
 A **profile** is a complete, saved set of BMC64 settings that you can switch
 to from the menu. For example:
@@ -14,8 +14,9 @@ to from the menu. For example:
 - **Couch:** a USB keyboard with a symbolic keymap, while a "Desk" profile uses
   a real Commodore keyboard.
 - **Elite:** set up just for one game: the stock kernal, a 1541 with true drive
-  emulation, the joystick in port 2 and the 6581 SID. Use *Start once* to play
-  it, and the next power-on is back on your usual profile.
+  emulation, the joystick in port 2, the 6581 SID, and the game set to
+  autostart. Use *Start once* to play it, and the next power-on is back on
+  your usual profile.
 
 If you don't create any profiles, BMC64 works exactly as it always has.
 Profiles only do anything when BMC64 starts and when you use the *Profiles*
@@ -38,6 +39,7 @@ SD card.
     - [Switch to, or Start once](#switch-to-or-start-once)
     - [Saving settings](#saving-settings)
     - [Creating, renaming and deleting](#creating-renaming-and-deleting)
+    - [Autostart](#autostart)
   - [What a profile keeps](#what-a-profile-keeps)
   - [Profiles and machines](#profiles-and-machines)
   - [If something goes wrong](#if-something-goes-wrong)
@@ -46,6 +48,7 @@ SD card.
     - [Editing them in the Web UI](#editing-them-in-the-web-ui)
     - [`active.txt`](#activetxt)
     - [`profile.txt`](#profiletxt)
+    - [`main/<machine>.txt`](#mainmachinetxt)
 
 ---
 
@@ -103,6 +106,9 @@ in that profile** and save things as usual by pressing **Save settings**.
     Manage profile
       Rename profile...
       Delete profile...
+    Set autostart: elite.d64
+      Autostart Prg/Disk...
+    Clear autostart
   Save settings (Jiffy REU)               ← saves into the active profile
 ```
 
@@ -143,6 +149,28 @@ A hard reset doesn't change profiles, it resets the emulated machine as usual.
   or the profile that's active. Only the profile's own files are deleted,
   never your disk images or other files. If you've put anything else into a
   profile's folder, it isn't deleted and you get an error instead.
+
+### Autostart
+
+A profile can start a program or disk image by itself every time it starts:
+
+1. Choose *Profiles → Set autostart → Autostart Prg/Disk…* and pick the file,
+   the same way as the main menu's *Autostart Prg/Disk…*.
+2. That's saved straight away (no need for *Save settings*), and the menu
+   shows it, e.g. *Set autostart: elite.d64*.
+
+*Profiles → Clear autostart* removes it.
+
+- The file is started a couple of seconds after power-on, once BMC64 has
+  finished starting, exactly as if you'd picked it from *Autostart
+  Prg/Disk…*. Set up the profile so the file runs (drives, kernal, memory…);
+  BMC64 doesn't check that.
+- Main can have an autostart too, one for each machine. Setting one is the
+  only thing that creates the `profiles` folder without making a profile.
+- If the file can't be started (moved or deleted, for example), you get a
+  message and the machine starts normally.
+- A hard reset doesn't run the autostart again; only power-on (or a
+  restart) does.
 
 ---
 
@@ -201,8 +229,10 @@ don't need to touch these files, but you can.
 ```
 /profiles/
   active.txt          which profile starts at power-on
+  main/               Main's autostart, one file per machine
+    c64.txt
   jiffy-reu/          one folder per profile
-    profile.txt       the profile's name and machine
+    profile.txt       the profile's name, machine and autostart
     vice.ini          the profile's emulator settings
     settings.txt      the profile's BMC64 settings
   stock-c64/
@@ -219,8 +249,8 @@ with `#` are comments.
 
 ### Editing them in the Web UI
 
-The Web UI's file editor can open and save `active.txt` and each profile's
-`profile.txt`, `settings.txt` and `vice.ini`. As with the other config files,
+The Web UI's file editor can open and save `active.txt`, Main's files in
+`main/`, and each profile's `profile.txt`, `settings.txt` and `vice.ini`. As with the other config files,
 the previous version is kept as `<name>.bak`. Changes take effect at the next
 restart; saving from the menus before then overwrites edits to the active
 profile's files.
@@ -245,12 +275,19 @@ once=stock-c64
 | `machine` | yes | The machine: `C64`, `C128`, `VIC20`, `Plus4`, `Plus4Emu` or `Pet` |
 | `category` | no | Groups profiles into folders in *Select profile*, e.g. `Games` |
 | `start` | no | `switch` (the default) or `once`: which choice *Select profile* offers first |
+| `autostart` | no | The program or disk image to start at power-on, with its volume, e.g. `SD:/games/elite.d64` |
 
 ```ini
-name=Jiffy REU
+name=Elite
 machine=C64
-category=Setups
+category=Games
+autostart=SD:/games/elite.d64
 ```
+
+### `main/<machine>.txt`
+
+Main's autostart for one machine: `c64.txt`, `c128.txt`, `vic20.txt`,
+`plus4.txt`, `plus4emu.txt` or `pet.txt`. It only holds the `autostart` key.
 
 `vice.ini` and `settings.txt` have the same format as the files at the root of
 the SD card. BMC64 writes them when you press **Save settings** in that

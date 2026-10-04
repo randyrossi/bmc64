@@ -2238,6 +2238,9 @@ static void select_file(struct menu_item *item) {
          ui_pop_all_and_toggle();
        }
        return;
+     case MENU_PROFILES_AUTOSTART_PICK:
+       menu_profiles_autostart_chosen(fullpath(DIR_ROOT, item->str_value));
+       return;
      case MENU_LOADPRG_FILE:
        ui_info("Loading...");
        if (emux_autostart_file(fullpath(DIR_ROOT, item->str_value)) < 0) {
@@ -2461,6 +2464,7 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
     return DIR_ROMS;
   case MENU_AUTOSTART_FILE:
   case MENU_LOADPRG_FILE:
+  case MENU_PROFILES_AUTOSTART_PICK:
     return DIR_ROOT;
   case MENU_IEC_DIR:
     return DIR_IEC;
@@ -2565,6 +2569,7 @@ static void relist_files_after_dir_change(struct menu_item *item) {
     show_files(DIR_ROMS, FILTER_NONE, item->id, 1);
     break;
   case MENU_AUTOSTART_FILE:
+  case MENU_PROFILES_AUTOSTART_PICK:
     show_files(DIR_ROOT, FILTER_NONE, item->id, 1);
     break;
   case MENU_LOADPRG_FILE:
@@ -5024,6 +5029,10 @@ void menu_about_to_deactivate() {
       emu_key_pressed(KEYCODE_CapsLock);
     }
   }
+}
+
+void menu_show_autostart_files(int menu_id) {
+  show_files(DIR_ROOT, FILTER_NONE, menu_id, 0);
 }
 
 // Called on the main loop
