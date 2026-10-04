@@ -1,5 +1,8 @@
 ## 5.2.4 (pre-release)
   * Fix for Logi Bolt receiver not connecting MX Mini or Mechanical keyboards #396
+  * Add profiles (in development): save complete setups and switch between them from the new *Profiles* menu. See [PROFILES.md](docs/PROFILES.md) #213 #295 #92 
+    * *Switch to* makes a profile the one used at every power-on; *Start once* uses it for one session only
+    * A profile can autostart a program or disk image at power-on #390 #185
 
 ## 5.2.3 (pre-release)
   * Fix drive LED showing previous drive type's colour #112

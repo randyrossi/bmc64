@@ -59,18 +59,19 @@ def build(work):
         objs.append(obj)
     cmd = [cc, "-std=gnu11", "-Wall", "-Wextra", "-Werror"] + common + [
            "-I", SRC, "-o", exe,
-           os.path.join(HERE, "update_cli.c"), os.path.join(HERE, "fs_posix.c")]
+           os.path.join(HERE, "update_cli.c"), os.path.join(REPO, "tools", "sdcard", "sd_fs_posix.c"),
+           os.path.join(REPO, "src", "sdcard", "sd_fs_file.c")]
     cmd += [os.path.join(SRC, s) for s in SOURCES] + objs
     subprocess.run(cmd, check=True)
     return exe
 
 
 def cli(exe, card, *args, crash_after=None, free_kb=None):
-    env = dict(os.environ, UPDATE_TEST_ROOT=card)
+    env = dict(os.environ, SD_TEST_ROOT=card)
     if crash_after is not None:
-        env["UPDATE_TEST_CRASH_AFTER"] = str(crash_after)
+        env["SD_TEST_CRASH_AFTER"] = str(crash_after)
     if free_kb is not None:
-        env["UPDATE_TEST_FREE_KB"] = str(free_kb)
+        env["SD_TEST_FREE_KB"] = str(free_kb)
     r = subprocess.run([exe] + list(args), env=env, capture_output=True, text=True)
     if r.returncode not in (0, 1, 3):
         print(r.stdout, r.stderr)

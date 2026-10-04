@@ -375,6 +375,11 @@ extern void emu_joy_interrupt_abs(int port, int device,
 // Queue a quick function request for the main loop. Interrupt safe.
 extern void emu_quick_func_interrupt(int button_assignment);
 
+// Ask the main loop to switch to the safe video mode and reboot (C=+F7 held
+// for 5 seconds). Interrupt safe: the key handler runs in the USB interrupt,
+// where writing files to the card can lock up.
+extern void emu_safe_mode_interrupt(void);
+
 // Queue a file (full path including volume, e.g. "SD:/games/x.d64") to be
 // autostarted by the main loop, as if picked from Autostart in the menu.
 // Interrupt safe. A newer request replaces one that hasn't run yet.

@@ -1,6 +1,7 @@
 // Overlay text editor. It edits the device's config files (vice.ini,
 // settings*.txt, cmdline.txt, config.txt, machines.txt, wpa_supplicant.conf,
-// *.vkm), which the device decides: the file list marks them "edit". It is
+// *.vkm, and the profile files in /profiles), which the device decides: the
+// file list marks them "edit". It is
 // also the editor for C64 BASIC programs: the same overlay shows a program's
 // listing and saves it back as a tokenised .prg (see basic.js).
 
@@ -11,7 +12,8 @@ import { rebootNow } from "./dashboard.js";
 
 // Files the emulator's own menus also write; a menu save overwrites edits
 // made here until the next reboot.
-const MENU_WRITTEN = /^(settings.*\.txt|vice\.ini|wpa_supplicant\.conf)$/i;
+const MENU_WRITTEN =
+  /^(settings.*\.txt|vice\.ini|wpa_supplicant\.conf|profile\.txt|active\.txt)$/i;
 
 // Keyboard mapping files (*.vkm) are editable in any folder.
 const KEYMAP = /\.vkm$/i;

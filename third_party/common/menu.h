@@ -563,7 +563,25 @@ typedef enum {
    MENU_IDE64_SECTORS_1,
    MENU_IDE64_SECTORS_2,
    MENU_IDE64_SECTORS_3,
-   MENU_IDE64_SECTORS_4
+   MENU_IDE64_SECTORS_4,
+
+   // Profiles (menu_profiles.c)
+   MENU_PROFILES_SELECT,
+   MENU_PROFILES_SELECT_ITEM,
+   MENU_PROFILES_SWITCH_TO,
+   MENU_PROFILES_START_ONCE,
+   MENU_PROFILES_NEW,
+   MENU_PROFILES_NEW_NAME,
+   MENU_PROFILES_RENAME,
+   MENU_PROFILES_RENAME_NAME,
+   MENU_PROFILES_DELETE,
+   MENU_PROFILES_DELETE_ITEM,
+   MENU_PROFILES_DELETE_CONFIRM,
+   MENU_PROFILES_AUTOSTART_FILE,
+   MENU_PROFILES_AUTOSTART_PICK,
+   MENU_PROFILES_CLEAR_AUTOSTART,
+   MENU_PROFILES_AUTO_ATTACH_DISKS,
+   MENU_PROFILES_CLEAR_AUTO_ATTACH
 } MenuID;
 
 typedef enum {
@@ -727,6 +745,14 @@ void menu_update_network_status(void);
 void menu_quick_func(int button_assignment);
 // Autostart a file on the main loop (see emu_autostart_interrupt).
 void menu_autostart(const char *path);
+
+// Saves the current settings into a profile's folder (profiles_create()
+// makes the folder). Returns 0 on success.
+int menu_save_settings_to_profile(const char *id);
+
+// Opens the file list used by Autostart Prg/Disk, for picking a file for
+// menu_id; the choice goes to select_file().
+void menu_show_autostart_files(int menu_id);
 const char* function_to_string(int);
 
 #endif

@@ -6,7 +6,7 @@
 //   update_cli resume
 //   update_cli extract <zip> <entry> <out-file>
 //
-// The card folder is given in UPDATE_TEST_ROOT.
+// The card folder is given in SD_TEST_ROOT.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +14,7 @@
 #include <strings.h>
 
 #include "update_apply.h"
-#include "update_fs.h"
+#include "../../../src/sdcard/sd_fs.h"
 #include "update_manifest.h"
 #include "update_plan.h"
 #include "update_zip.h"
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
   }
 
   if (strcmp(cmd, "extract") == 0 && argc == 5) {
-    // The zip path here is relative to UPDATE_TEST_ROOT like everything else.
+    // The zip path here is relative to SD_TEST_ROOT like everything else.
     uz_zip z;
     char err[200];
     if (uz_open(&z, argv[2], err, sizeof(err)) != 0) {

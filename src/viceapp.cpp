@@ -22,6 +22,7 @@
 #include "../third_party/common/io_stats.h"
 #include "../third_party/common/menu_logging.h"
 #include "fbl.h"
+#include "sdcard/sd_fs.h"
 #include <circle/bcm2835.h>
 #include <circle/bcmpropertytags.h>
 #include <circle/memio.h>
@@ -583,7 +584,7 @@ void ViceStdioApp::InitializeNetwork() {
   firmwarePath.Format("%s:/firmware/", mViceOptions.GetDiskVolume());
   configPath.Format("%s:/wpa_supplicant.conf", mViceOptions.GetDiskVolume());
 
-  if (!ViceNetworkHasWifiFirmware((const char *)firmwarePath)) {
+  if (!ViceNetworkHasWifiFirmware("/firmware/")) {
     SetNetworkStatus(CIRCLE_NETWORK_WIFI_FIRMWARE_MISSING);
     mLogger.Write(GetKernelName(), LogError,
                   "Wi-Fi firmware is missing from %s",
@@ -591,15 +592,13 @@ void ViceStdioApp::InitializeNetwork() {
     return;
   }
 
-  FIL configFile;
-  if (f_open(&configFile, (const char *)configPath, FA_READ) != FR_OK) {
+  if (sd_stat("/wpa_supplicant.conf", 0, 0) != SD_OK) {
     SetNetworkStatus(CIRCLE_NETWORK_WIFI_CONFIG_MISSING);
     mLogger.Write(GetKernelName(), LogError,
                   "Wi-Fi enabled but WPA config is missing: %s",
                   (const char *)configPath);
     return;
   }
-  f_close(&configFile);
 
   SetNetworkStatus(CIRCLE_NETWORK_WIFI_DEVICE_INITIALIZING);
   mWLAN = new CBcm4343Device((const char *)firmwarePath);

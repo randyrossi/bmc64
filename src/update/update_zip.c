@@ -20,9 +20,9 @@ static uint32_t rd32(const uint8_t *p) {
          (uint32_t)p[3] << 24;
 }
 
-static int read_at(uf_file *f, uint32_t pos, void *buf, unsigned len) {
+static int read_at(sd_file *f, uint32_t pos, void *buf, unsigned len) {
   unsigned got = 0;
-  if (uf_seek(f, pos) != 0 || uf_read(f, buf, len, &got) != 0 || got != len) {
+  if (sd_seek(f, pos) != 0 || sd_read(f, buf, len, &got) != 0 || got != len) {
     return -1;
   }
   return 0;
@@ -35,11 +35,11 @@ static int fail(char *err, unsigned errlen, const char *msg) {
 
 int uz_open(uz_zip *z, const char *path, char *err, unsigned errlen) {
   memset(z, 0, sizeof(*z));
-  z->file = uf_open(path, 0);
+  z->file = sd_open(path, 0);
   if (z->file == NULL) {
     return fail(err, errlen, "cannot open the zip");
   }
-  z->size = uf_size(z->file);
+  z->size = sd_size(z->file);
   if (z->size < EOCD_SIZE) {
     uz_close(z);
     return fail(err, errlen, "not a zip file");
@@ -130,7 +130,7 @@ int uz_open(uz_zip *z, const char *path, char *err, unsigned errlen) {
 
 void uz_close(uz_zip *z) {
   if (z->file) {
-    uf_close(z->file);
+    sd_close(z->file);
   }
   free(z->entries);
   free(z->names);
@@ -150,7 +150,7 @@ int uz_find(const uz_zip *z, const char *name) {
 #define OUT_CHUNK 32768
 
 struct reader {
-  uf_file *file;
+  sd_file *file;
   uint32_t left;
 };
 
@@ -161,7 +161,7 @@ static int read_input(struct reader *r, uint8_t *buf, unsigned max) {
   }
   unsigned want = max < r->left ? max : r->left;
   unsigned got = 0;
-  if (uf_read(r->file, buf, want, &got) != 0 || got == 0) {
+  if (sd_read(r->file, buf, want, &got) != 0 || got == 0) {
     return -1;
   }
   r->left -= got;
@@ -258,7 +258,7 @@ int uz_extract(uz_zip *z, int index, uz_out_fn out, void *ctx) {
   }
   uint32_t data = ent->local_offset + 30 + rd16(local + 26) + rd16(local + 28);
   if (data > z->size || ent->csize > z->size - data ||
-      uf_seek(z->file, data) != 0) {
+      sd_seek(z->file, data) != 0) {
     return -1;
   }
 

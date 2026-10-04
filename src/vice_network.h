@@ -10,6 +10,7 @@ struct wifi_access_point;
 
 int ViceNetworkHasOnboardWifi(TMachineModel machine_model);
 int ViceNetworkHasOnboardEthernet(TMachineModel machine_model);
+// firmware_path is a folder on the card, ending in '/' ("/firmware/").
 bool ViceNetworkHasWifiFirmware(const char *firmware_path);
 unsigned int ViceNetworkCollectWifiScanResults(
     CBcm4343Device *wlan, struct wifi_access_point *access_points,

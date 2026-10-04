@@ -9,7 +9,7 @@
 #include <strings.h>
 
 #include "update_apply.h"
-#include "update_fs.h"
+#include "../sdcard/sd_fs.h"
 #include "update_host.h"
 #include "update_manifest.h"
 #include "update_plan.h"
@@ -470,8 +470,8 @@ static int run_list(list *l) {
 static void rename_zip(const char *suffix) {
   char to[64];
   snprintf(to, sizeof(to), UA_ZIP "%s", suffix);
-  uf_unlink(to);
-  if (uf_rename(UA_ZIP, to) != 0) {
+  sd_unlink(to);
+  if (sd_rename(UA_ZIP, to) != 0) {
     uh_log("cannot rename " UA_ZIP " to %s", to);
   }
 }
@@ -517,7 +517,7 @@ void uv_run(void) {
              p.target);
     if (ask("BMC64 UPDATE", text, "Delete bmc64-update.zip and continue",
             "Leave it and continue", NULL) == 0) {
-      uf_unlink(UA_ZIP);
+      sd_unlink(UA_ZIP);
     }
     up_free(&p);
     um_free(&m);

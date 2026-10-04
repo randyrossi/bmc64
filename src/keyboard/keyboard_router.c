@@ -35,7 +35,6 @@ static int host_modifiers;
 static int safe_reset_armed;
 static unsigned long video_reset_start;
 
-extern void reboot(void);
 
 static int host_modifier(long key) {
 	switch (key) {
@@ -211,8 +210,8 @@ static void release_key(long key, int to_ui) {
 		control_down = 0;
 	} else if (key == KEYCODE_F7 && commodore_down && safe_reset_armed &&
 						 circle_get_ticks() - video_reset_start >= 5000000UL) {
-		switch_safe();
-		reboot();
+		// Safe mode writes files; do it on the main loop, not in the interrupt.
+		emu_safe_mode_interrupt();
 	}
 
 	if (key == KEYCODE_F7) {

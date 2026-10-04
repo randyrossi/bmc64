@@ -51,6 +51,8 @@
 #include "menu_switch.h"
 #include "menu_logging.h"
 #include "menu_gpio.h"
+#include "menu_profiles.h"
+#include "../../src/profiles/profiles.h"
 #include "overlay.h"
 #include "raspi_util.h"
 #include "ui.h"
@@ -1436,36 +1438,36 @@ static void next_integer_scaling(int layer,
   }
 }
 
-static int save_settings() {
-  FILE *fp;
-  const char *settings_filename;
+// The machine's usual settings file, which holds Main's settings.
+static const char *main_settings_filename(void) {
   switch (emux_machine_class) {
   case BMC64_MACHINE_CLASS_C64:
-    settings_filename = "/settings.txt";
-    break;
+    return "/settings.txt";
   case BMC64_MACHINE_CLASS_C128:
-    settings_filename = "/settings-c128.txt";
-    break;
+    return "/settings-c128.txt";
   case BMC64_MACHINE_CLASS_VIC20:
-    settings_filename = "/settings-vic20.txt";
-    break;
+    return "/settings-vic20.txt";
   case BMC64_MACHINE_CLASS_PLUS4:
-    settings_filename = "/settings-plus4.txt";
-    break;
+    return "/settings-plus4.txt";
   case BMC64_MACHINE_CLASS_PLUS4EMU:
-    settings_filename = "/settings-plus4emu.txt";
-    break;
+    return "/settings-plus4emu.txt";
   case BMC64_MACHINE_CLASS_PET:
-    settings_filename = "/settings-pet.txt";
-    break;
+    return "/settings-pet.txt";
   default:
     printf("ERROR: Unhandled machine\n");
-    return 1;
+    return NULL;
   }
+}
+
+// Writes the settings to settings_filename, and VICE's to vice_ini_path
+// (NULL: the vice.ini the emulator started with).
+static int save_settings_to(const char *settings_filename,
+                            const char *vice_ini_path) {
+  FILE *fp;
 
   fp = fopen(settings_filename, "w");
 
-  int r = emux_save_settings();
+  int r = emux_save_settings(vice_ini_path);
   if (r < 0) {
     printf("resource_save failed with %d\n", r);
     if (fp != NULL) {
@@ -1649,6 +1651,23 @@ static int save_settings() {
   return 0;
 }
 
+// Saves into the running profile (Main: the machine's usual files).
+static int save_settings() {
+  const char *main_file = main_settings_filename();
+  if (main_file == NULL) {
+    return 1;
+  }
+  return save_settings_to(profiles_settings_file(main_file), NULL);
+}
+
+int menu_save_settings_to_profile(const char *id) {
+  char settings_path[256];
+  char vice_ini_path[256];
+  profiles_path(id, "settings.txt", settings_path, sizeof(settings_path));
+  profiles_path(id, "vice.ini", vice_ini_path, sizeof(vice_ini_path));
+  return save_settings_to(settings_path, vice_ini_path);
+}
+
 // Make joydev reflect menu choice
 static void ui_set_joy_devs() {
   if (port_1_menu_item) {
@@ -1700,30 +1719,11 @@ static void load_settings() {
   pot_y_high_value = 192;
   pot_y_low_value = 64;
 
-  FILE *fp;
-  switch (emux_machine_class) {
-  case BMC64_MACHINE_CLASS_C64:
-    fp = fopen("/settings.txt", "r");
-    break;
-  case BMC64_MACHINE_CLASS_C128:
-    fp = fopen("/settings-c128.txt", "r");
-    break;
-  case BMC64_MACHINE_CLASS_VIC20:
-    fp = fopen("/settings-vic20.txt", "r");
-    break;
-  case BMC64_MACHINE_CLASS_PLUS4:
-    fp = fopen("/settings-plus4.txt", "r");
-    break;
-  case BMC64_MACHINE_CLASS_PLUS4EMU:
-    fp = fopen("/settings-plus4emu.txt", "r");
-    break;
-  case BMC64_MACHINE_CLASS_PET:
-    fp = fopen("/settings-pet.txt", "r");
-    break;
-  default:
-    printf("ERROR: Unhandled machine\n");
+  const char *main_file = main_settings_filename();
+  if (main_file == NULL) {
     return;
   }
+  FILE *fp = fopen(profiles_settings_file(main_file), "r");
 
   if (wifi_ssid_item != NULL) {
     load_wifi_settings();
@@ -2238,6 +2238,9 @@ static void select_file(struct menu_item *item) {
          ui_pop_all_and_toggle();
        }
        return;
+     case MENU_PROFILES_AUTOSTART_PICK:
+       menu_profiles_autostart_chosen(fullpath(DIR_ROOT, item->str_value));
+       return;
      case MENU_LOADPRG_FILE:
        ui_info("Loading...");
        if (emux_autostart_file(fullpath(DIR_ROOT, item->str_value)) < 0) {
@@ -2461,6 +2464,7 @@ static int menu_file_item_to_dir_index(struct menu_item *item) {
     return DIR_ROMS;
   case MENU_AUTOSTART_FILE:
   case MENU_LOADPRG_FILE:
+  case MENU_PROFILES_AUTOSTART_PICK:
     return DIR_ROOT;
   case MENU_IEC_DIR:
     return DIR_IEC;
@@ -2565,6 +2569,7 @@ static void relist_files_after_dir_change(struct menu_item *item) {
     show_files(DIR_ROMS, FILTER_NONE, item->id, 1);
     break;
   case MENU_AUTOSTART_FILE:
+  case MENU_PROFILES_AUTOSTART_PICK:
     show_files(DIR_ROOT, FILTER_NONE, item->id, 1);
     break;
   case MENU_LOADPRG_FILE:
@@ -3420,6 +3425,7 @@ static void menu_value_changed(struct menu_item *item) {
     if (save_wifi_settings() != 0) {
       ui_error("Cannot save WiFi settings");
     } else {
+      profiles_before_reboot();
       reboot();
     }
     return;
@@ -3746,17 +3752,20 @@ static void menu_value_changed(struct menu_item *item) {
       }
     } else if (confirmation_id == MENU_NETWORK_ENABLED) {
       if (save_settings() == 0) {
+        profiles_before_reboot();
         reboot();
       } else {
         ui_error("Cannot save settings");
       }
     } else if (confirmation_id == MENU_WEBUI_ENABLED) {
       if (save_settings() == 0) {
+        profiles_before_reboot();
         reboot();
       } else {
         ui_error("Cannot save settings");
       }
     } else if (confirmation_id == MENU_LOGGING_DESTINATION) {
+      profiles_before_reboot();
       reboot();
     }
     break;
@@ -4190,6 +4199,7 @@ void build_menu(struct menu_item *root) {
   }
 
   ui_menu_add_button(MENU_TEXT, root, machine_info_txt);
+  menu_profiles_add_status_line(root);
 
   ui_menu_add_button(MENU_ABOUT, root, "About...");
   ui_menu_add_button(MENU_LICENSE, root, "License...");
@@ -4351,6 +4361,8 @@ void build_menu(struct menu_item *root) {
   if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
     ui_menu_add_button(MENU_DRIVE_CHANGE_ROM, drive_parent, "Change ROM...");
   }
+
+  build_profiles_drive_items(drive_parent);
 
   if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
     parent = ui_menu_add_folder(drive_parent, "Create empty Disk");
@@ -4895,7 +4907,9 @@ void build_menu(struct menu_item *root) {
   logging_destination_item->value = logging_get_destination();
   saved_logging_destination = logging_destination_item->value;
 
-  ui_menu_add_button(MENU_SAVE_SETTINGS, root, "Save settings");
+  build_profiles_menu(root);
+  menu_profiles_label_save_item(
+      ui_menu_add_button(MENU_SAVE_SETTINGS, root, "Save settings"));
 
   ui_set_on_value_changed_callback(menu_value_changed);
 
@@ -5015,6 +5029,10 @@ void menu_about_to_deactivate() {
       emu_key_pressed(KEYCODE_CapsLock);
     }
   }
+}
+
+void menu_show_autostart_files(int menu_id) {
+  show_files(DIR_ROOT, FILTER_NONE, menu_id, 0);
 }
 
 // Called on the main loop

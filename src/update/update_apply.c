@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "update_fs.h"
+#include "../sdcard/sd_fs.h"
 #include "update_hash.h"
 #include "update_manifest.h"
 
@@ -53,14 +53,14 @@ static void free_names(struct names *n) {
 
 int ua_rmtree(const char *path) {
   int is_dir = 0;
-  if (uf_stat(path, NULL, &is_dir) != 0) {
+  if (sd_stat(path, NULL, &is_dir) != 0) {
     return 0;
   }
   if (is_dir) {
     // Collect the names first; deleting while a folder is open for listing
     // is not safe.
     struct names n = {0};
-    uf_list(path, collect, &n);
+    sd_list(path, collect, &n);
     for (int i = 0; i < n.count; i++) {
       char child[PATH_MAX_LEN];
       snprintf(child, sizeof(child), "%s/%s", path, n.list[i]);
@@ -68,7 +68,7 @@ int ua_rmtree(const char *path) {
     }
     free_names(&n);
   }
-  return uf_unlink(path);
+  return sd_unlink(path);
 }
 
 // Creates every folder along path (a folder path, not a file).
@@ -78,13 +78,13 @@ static int mkdirs(const char *path) {
   for (char *p = buf + 1; *p; p++) {
     if (*p == '/') {
       *p = '\0';
-      if (uf_mkdir(buf) != 0) {
+      if (sd_mkdir(buf) != 0) {
         return -1;
       }
       *p = '/';
     }
   }
-  return uf_mkdir(buf);
+  return sd_mkdir(buf);
 }
 
 // Creates the folders a file at path needs.
@@ -100,12 +100,12 @@ static int mkdirs_for_file(const char *path) {
 }
 
 static int write_text(const char *path, const char *text) {
-  uf_file *f = uf_open(path, 1);
+  sd_file *f = sd_open(path, 1);
   if (f == NULL) {
     return -1;
   }
-  int rc = uf_write(f, text, (unsigned)strlen(text));
-  if (uf_close(f) != 0) {
+  int rc = sd_write(f, text, (unsigned)strlen(text));
+  if (sd_close(f) != 0) {
     rc = -1;
   }
   return rc;
@@ -113,24 +113,24 @@ static int write_text(const char *path, const char *text) {
 
 // Reads a whole (small) file into a NUL-terminated buffer.
 static char *read_text(const char *path) {
-  uf_file *f = uf_open(path, 0);
+  sd_file *f = sd_open(path, 0);
   if (f == NULL) {
     return NULL;
   }
-  uint32_t size = uf_size(f);
+  uint32_t size = sd_size(f);
   char *text = malloc(size + 1);
   unsigned got = 0;
-  if (text == NULL || uf_read(f, text, size, &got) != 0 || got != size) {
+  if (text == NULL || sd_read(f, text, size, &got) != 0 || got != size) {
     free(text);
-    uf_close(f);
+    sd_close(f);
     return NULL;
   }
   text[size] = '\0';
-  uf_close(f);
+  sd_close(f);
   return text;
 }
 
-static int exists(const char *path) { return uf_stat(path, NULL, NULL) == 0; }
+static int exists(const char *path) { return sd_stat(path, NULL, NULL) == 0; }
 
 void ua_backup_dir(const char *running, char *out, unsigned size) {
   char version[32];
@@ -207,7 +207,7 @@ static int run_journal(char *text) {
         if (have_to && (!staged || !have_from)) {
           // Already done.
         } else if (have_from && !have_to) {
-          if (uf_rename(from, to) != 0) {
+          if (sd_rename(from, to) != 0) {
             printf("update: cannot move %s to %s\n", from, to);
             errors++;
           }
@@ -232,8 +232,8 @@ static int journal_complete(const char *text) {
 }
 
 static void finish(void) {
-  uf_unlink(UA_ZIP);
-  uf_unlink(UA_JOURNAL);
+  sd_unlink(UA_ZIP);
+  sd_unlink(UA_JOURNAL);
   ua_rmtree(UA_TMP);
 }
 
@@ -261,14 +261,14 @@ int ua_resume(void) {
 // ---- apply ----
 
 struct extract_ctx {
-  uf_file *out;
+  sd_file *out;
   uh_sha256 sha;
 };
 
 static int write_out(void *ctx, const uint8_t *buf, unsigned len) {
   struct extract_ctx *e = ctx;
   uh_sha256_update(&e->sha, buf, len);
-  return uf_write(e->out, buf, len);
+  return sd_write(e->out, buf, len);
 }
 
 // Extracts one zip entry to path. If sha is given, the data must match it.
@@ -278,13 +278,13 @@ static int extract_to(uz_zip *z, int index, const char *path,
     return -1;
   }
   struct extract_ctx e;
-  e.out = uf_open(path, 1);
+  e.out = sd_open(path, 1);
   if (e.out == NULL) {
     return -1;
   }
   uh_sha256_init(&e.sha);
   int rc = uz_extract(z, index, write_out, &e);
-  if (uf_close(e.out) != 0) {
+  if (sd_close(e.out) != 0) {
     rc = -1;
   }
   if (rc == 0 && sha) {
@@ -400,7 +400,7 @@ int ua_apply(const up_plan *p, uz_zip *z, ua_progress_fn progress, void *ctx,
 
   // 1. Room for the new files. Backups are moves and need no space.
   uint32_t free_kb = 0;
-  if (uf_free_kb(&free_kb) == 0 && (uint64_t)free_kb * 1024 < bytes + 1024 * 1024) {
+  if (sd_free_kb(&free_kb) == 0 && (uint64_t)free_kb * 1024 < bytes + 1024 * 1024) {
     snprintf(err, errlen, "not enough free space: need %lu KB",
              (unsigned long)(bytes / 1024 + 1024));
     free(chosen);
@@ -410,7 +410,7 @@ int ua_apply(const up_plan *p, uz_zip *z, ua_progress_fn progress, void *ctx,
   // 2. Extract and verify everything into the staging folder. Nothing on the
   //    card has changed until the journal is written.
   ua_rmtree(UA_TMP);
-  if (uf_mkdir(UA_TMP) != 0) {
+  if (sd_mkdir(UA_TMP) != 0) {
     snprintf(err, errlen, "cannot create " UA_TMP);
     free(chosen);
     return -1;
@@ -459,7 +459,7 @@ int ua_apply(const up_plan *p, uz_zip *z, ua_progress_fn progress, void *ctx,
     progress(ctx, "Preparing", "", 0, 1);
   }
   struct prune_ctx prune = {bdir + strlen(UA_BACKUP) + 1, {0}};
-  uf_list(UA_BACKUP, find_old_backups, &prune);
+  sd_list(UA_BACKUP, find_old_backups, &prune);
   for (int i = 0; i < prune.found.count; i++) {
     char marker[PATH_MAX_LEN + 16];
     snprintf(path, sizeof(path), "%s/%s", UA_BACKUP, prune.found.list[i]);
@@ -496,7 +496,7 @@ int ua_apply(const up_plan *p, uz_zip *z, ua_progress_fn progress, void *ctx,
     if (exists(path)) {
       if (it->group == UP_GROUP_KERNEL) {
         snprintf(dest, sizeof(dest), "%s/%s", kdir, it->rec->path);
-        uf_unlink(dest); // an older backup of this same version's kernel
+        sd_unlink(dest); // an older backup of this same version's kernel
       } else {
         snprintf(dest, sizeof(dest), "%s/%s", bdir, it->rec->path);
         mkdirs_for_file(dest);

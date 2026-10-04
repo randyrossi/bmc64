@@ -1190,19 +1190,19 @@ void emux_get_string_1(StringSetting setting, const char** dest, int param) {
   }
 }
 
-int emux_save_settings(void) {
+int emux_save_settings(const char *vice_ini_path) {
 #if BMC64_NEW_KEYBOARD_INPUT
   if (keyboard_preset_active) {
     resources_set_int("KeymapIndex", keyboard_saved_index);
     resources_set_string("KeymapUserSymFile", keyboard_saved_user_sym_file);
   }
-  int result = resources_save(NULL);
+  int result = resources_save(vice_ini_path);
   if (keyboard_preset_active) {
     keyboard_apply_preset(keyboard_preset_active);
   }
   return result;
 #else
-   return resources_save(NULL);
+   return resources_save(vice_ini_path);
 #endif
 }
 

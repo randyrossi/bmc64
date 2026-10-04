@@ -396,8 +396,10 @@ void emux_get_int(IntSetting setting, int* dest);
 void emux_get_int_1(IntSetting setting, int* dest, int param);
 void emux_get_string_1(StringSetting setting, const char** dest, int param);
 
-// Persist all settings.
-int emux_save_settings(void);
+// Persist all settings. vice_ini_path is the VICE settings file to write;
+// NULL means the one the emulator started with. Emulators without a VICE
+// settings file ignore it.
+int emux_save_settings(const char *vice_ini_path);
 
 // Report a completed BMC64 settings-file write.
 void emux_log_settings_file(const char *filename);

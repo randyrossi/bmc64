@@ -33,6 +33,7 @@
 extern "C" {
 #include "../third_party/common/usb_gamepad_defaults.h"
 #include "../third_party/common/io_stats.h"
+#include "../third_party/common/menu_profiles.h"
 #ifdef BMC64_PERF_STATS
   #include "../third_party/common/perf_stats.h"
 #endif
@@ -1992,6 +1993,9 @@ void CKernel::circle_boot_complete() {
 #endif
 
   DisableBootStat();
+
+  // Profiles: work that mustn't slow boot down, and any start-up message.
+  menu_profiles_boot_complete();
 
   // If /bmc64-update.zip is waiting, show the update view now. It runs on
   // the emulator's main loop, so emulation is stopped while it is shown.

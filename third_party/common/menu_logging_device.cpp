@@ -11,7 +11,7 @@
 #include <string.h>
 
 CLoggingDevice::CLoggingDevice(void)
-    : mSerial(nullptr), mFileOpen(FALSE), mFileQueue(nullptr),
+    : mSerial(nullptr), mFile(nullptr), mFileOpen(FALSE), mFileQueue(nullptr),
       mWriteBuffer(nullptr), mQueueRead(0), mQueueWrite(0),
       mQueueLength(0), mLastFlushTicks(0) {
 }
@@ -34,11 +34,8 @@ boolean CLoggingDevice::OpenFile(void) {
     return FALSE;
   }
 
-  FRESULT result = f_open(&mFile, "/bmc64.log", FA_WRITE | FA_OPEN_ALWAYS);
-  if (result == FR_OK) {
-    result = f_lseek(&mFile, f_size(&mFile));
-  }
-  mFileOpen = result == FR_OK;
+  mFile = sd_open("/bmc64.log", SD_APPEND);
+  mFileOpen = mFile != nullptr;
   mLastFlushTicks = CTimer::GetClockTicks();
 
   if (!mFileOpen) {
@@ -54,8 +51,9 @@ void CLoggingDevice::CloseFile(void) {
 
   mFileLock.Acquire();
   if (mFileOpen) {
-    f_sync(&mFile);
-    f_close(&mFile);
+    sd_sync(mFile);
+    sd_close(mFile);
+    mFile = nullptr;
     mFileOpen = FALSE;
   }
   mFileLock.Release();
@@ -103,9 +101,7 @@ void CLoggingDevice::Drain(void) {
     return;
   }
 
-  unsigned int written = 0;
-  if (f_write(&mFile, mWriteBuffer, count, &written) != FR_OK ||
-      written != count) {
+  if (sd_write(mFile, mWriteBuffer, count) != SD_OK) {
     mFileLock.Acquire();
     mFileOpen = FALSE;
     mFileLock.Release();
@@ -113,7 +109,7 @@ void CLoggingDevice::Drain(void) {
   }
 
   if ((unsigned)(CTimer::GetClockTicks() - mLastFlushTicks) >= 3 * CLOCKHZ) {
-    if (f_sync(&mFile) != FR_OK) {
+    if (sd_sync(mFile) != SD_OK) {
       mFileLock.Acquire();
       mFileOpen = FALSE;
       mFileLock.Release();
