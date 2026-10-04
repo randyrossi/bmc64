@@ -212,6 +212,7 @@ then
 fi
 
 # Add Circle patches here if needed
+apply_patch_file "$SRC_DIR/src/patches/circle_bolt_keyboard_patch.diff"
 
 if [ "$IO_STATS" = "1" ]
 then

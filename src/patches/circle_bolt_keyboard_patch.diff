@@ -1,0 +1,173 @@
+diff --git a/include/circle/usb/usbhiddevice.h b/include/circle/usb/usbhiddevice.h
+index 51bcce5d..8189b9b5 100644
+--- a/include/circle/usb/usbhiddevice.h
++++ b/include/circle/usb/usbhiddevice.h
+@@ -36,6 +36,8 @@ public:
+ 	boolean ConfigureHID (unsigned nMaxReportSize = 0);
+ 
+ protected:
++	virtual u16 GetHIDProtocol (void) const;
++
+ 	// has to be called from Configure() in derived class, when initialization is done
+ 	boolean StartRequest (void);
+ 
+diff --git a/lib/usb/Makefile b/lib/usb/Makefile
+index 36fe8507..b1a534e0 100644
+--- a/lib/usb/Makefile
++++ b/lib/usb/Makefile
+@@ -29,7 +29,7 @@ OBJS	= lan7800.o smsc951x.o usbbluetooth.o usbcdcethernet.o usbfloppydevice.o \
+ 	  usbgamepad.o usbgamepadps3.o usbgamepadps4.o usbgamepadstandard.o usbgamepadswitchpro.o \
+ 	  usbgamepad8bitdo.o usbgamepad8bitdopro.o usbgamepad8bitdoxinput.o \
+ 	  usbgamepadxbox360.o usbgamepadxbox360pcwireless.o usbgamepadxboxone.o usbhiddevice.o usbhostcontroller.o \
+-	  usbkeyboard.o usbkeyboard8bitdo.o usbmassdevice.o usbmidi.o usbmidihost.o usbmouse.o usbprinter.o usbrequest.o \
++	  usbkeyboard.o usbkeyboard8bitdo.o usbkeyboardbolt.o usbmassdevice.o usbmidi.o usbmidihost.o usbmouse.o usbprinter.o usbrequest.o \
+ 	  usbstandardhub.o usbstring.o usbserial.o usbserialhost.o usbserialch341.o usbserialcp210x.o \
+ 	  usbserialpl2303.o usbserialft231x.o usbserialcdc.o usbtouchscreen.o dwhciregister.o
+ 
+diff --git a/lib/usb/usbdevicefactory.cpp b/lib/usb/usbdevicefactory.cpp
+index d2dba725..aa067aaa 100644
+--- a/lib/usb/usbdevicefactory.cpp
++++ b/lib/usb/usbdevicefactory.cpp
+@@ -31,6 +31,7 @@
+ #include <circle/usb/usbfloppydevice.h>
+ #include <circle/usb/usbkeyboard.h>
+ #include <circle/usb/usbkeyboard8bitdo.h>
++#include <circle/usb/usbkeyboardbolt.h>
+ #include <circle/usb/usbmouse.h>
+ #include <circle/usb/usbgamepadstandard.h>
+ #include <circle/usb/usbgamepadps3.h>
+@@ -100,6 +101,10 @@ CUSBFunction *CUSBDeviceFactory::GetDevice (CUSBFunction *pParent, CString *pNam
+ 		{
+ 			pResult = new CUSBKeyboard8BitDoDevice (pParent);
+ 		}
++		else if (pVendor->Compare ("ven46d-c548") == 0)	// Logi Bolt receiver
++		{
++			pResult = new CUSBKeyboardBoltDevice (pParent);
++		}
+ 		else if (pVendor->Compare ("ven3f0-1198") != 0)	// HP USB 1000dpi Laser Mouse
+ 		{
+ 			pResult = new CUSBKeyboardDevice (pParent);
+diff --git a/lib/usb/usbhiddevice.cpp b/lib/usb/usbhiddevice.cpp
+index 8a2d10ef..42c0f0bb 100644
+--- a/lib/usb/usbhiddevice.cpp
++++ b/lib/usb/usbhiddevice.cpp
+@@ -124,8 +124,7 @@ boolean CUSBHIDDevice::ConfigureHID (unsigned nMaxReportSize)
+ 	{
+ 		if (GetHost ()->ControlMessage (GetEndpoint0 (),
+ 						REQUEST_OUT | REQUEST_CLASS | REQUEST_TO_INTERFACE,
+-						SET_PROTOCOL,   GetInterfaceProtocol () == 2
+-							      ? REPORT_PROTOCOL : BOOT_PROTOCOL,
++						SET_PROTOCOL, GetHIDProtocol (),
+ 						GetInterfaceNumber (), 0, 0) < 0)
+ 		{
+ 			CLogger::Get ()->Write (FromUSBHID, LogError, "Cannot set protocol");
+@@ -147,6 +146,11 @@ boolean CUSBHIDDevice::ConfigureHID (unsigned nMaxReportSize)
+ 	return TRUE;
+ }
+ 
++u16 CUSBHIDDevice::GetHIDProtocol (void) const
++{
++	return GetInterfaceProtocol () == 2 ? REPORT_PROTOCOL : BOOT_PROTOCOL;
++}
++
+ boolean CUSBHIDDevice::SendToEndpointOut (const void *pBuffer, unsigned nBufSize, unsigned nTimeoutMs)
+ {
+ 	if (m_pEndpointOut == 0)
+diff --git a/include/circle/usb/usbkeyboardbolt.h b/include/circle/usb/usbkeyboardbolt.h
+new file mode 100644
+index 00000000..e88563c6
+--- /dev/null
++++ b/include/circle/usb/usbkeyboardbolt.h
+@@ -0,0 +1,17 @@
++#ifndef _circle_usb_usbkeyboardbolt_h
++#define _circle_usb_usbkeyboardbolt_h
++
++#include <circle/usb/usbkeyboard.h>
++
++class CUSBKeyboardBoltDevice : public CUSBKeyboardDevice
++{
++public:
++	CUSBKeyboardBoltDevice (CUSBFunction *pFunction);
++	boolean Configure (void);
++
++protected:
++	u16 GetHIDProtocol (void) const override;
++	void ReportHandler (const u8 *pReport, unsigned nReportSize);
++};
++
++#endif
+diff --git a/lib/usb/usbkeyboardbolt.cpp b/lib/usb/usbkeyboardbolt.cpp
+new file mode 100644
+index 00000000..33aed80a
+--- /dev/null
++++ b/lib/usb/usbkeyboardbolt.cpp
+@@ -0,0 +1,69 @@
++#include <circle/usb/usbkeyboardbolt.h>
++#include <circle/logger.h>
++
++#define USBKEYB_BOLT_REPORT_SIZE 16
++
++// Bolt's bitmap starts at usage 0x04, followed by two international-key ranges.
++static int USBKeyboardBoltDecodeReport (const unsigned char *input,
++				       unsigned length, unsigned char output[8])
++{
++	if (input == 0 || length != USBKEYB_BOLT_REPORT_SIZE)
++	{
++		return 0;
++	}
++
++	output[0] = input[0];
++	for (unsigned i = 1; i < 8; i++)
++	{
++		output[i] = 0;
++	}
++
++	unsigned slot = 2;
++	for (unsigned bit = 0; bit < 120 && slot < 8; bit++)
++	{
++		if (input[1 + bit / 8] & (1U << (bit % 8)))
++		{
++			unsigned usage = bit < 112 ? 0x04 + bit
++				       : bit < 117 ? 0x87 + bit - 112
++				       : 0x90 + bit - 117;
++			output[slot++] = (unsigned char) usage;
++		}
++	}
++
++	return 1;
++}
++
++CUSBKeyboardBoltDevice::CUSBKeyboardBoltDevice (CUSBFunction *pFunction)
++:	CUSBKeyboardDevice (pFunction)
++{
++}
++
++boolean CUSBKeyboardBoltDevice::Configure (void)
++{
++	return ConfigureKeyboard (USBKEYB_BOLT_REPORT_SIZE);
++}
++
++u16 CUSBKeyboardBoltDevice::GetHIDProtocol (void) const
++{
++	// Bolt shares protocol state with its report-protocol mouse interface.
++	return REPORT_PROTOCOL;
++}
++
++void CUSBKeyboardBoltDevice::ReportHandler (const u8 *pReport, unsigned nReportSize)
++{
++	if (pReport == 0 || nReportSize == USBKEYB_REPORT_SIZE)
++	{
++		CUSBKeyboardDevice::ReportHandler (pReport, nReportSize);
++		return;
++	}
++
++	u8 Report[USBKEYB_REPORT_SIZE];
++	if (!USBKeyboardBoltDecodeReport (pReport, nReportSize, Report))
++	{
++		CLogger::Get ()->Write ("ukbd-bolt", LogWarning,
++				       "Unexpected keyboard report size %u", nReportSize);
++		return;
++	}
++
++	CUSBKeyboardDevice::ReportHandler (Report, sizeof Report);
++}

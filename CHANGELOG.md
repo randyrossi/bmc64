@@ -1,3 +1,6 @@
+## 5.2.4 (pre-release)
+  * Fix for Logi Bolt receiver not connecting MX Mini or Mechanical keyboards #396
+
 ## 5.2.3 (pre-release)
   * Fix drive LED showing previous drive type's colour #112
   * Fix snapshot load cursor being one row off after save #200
