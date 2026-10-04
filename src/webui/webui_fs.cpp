@@ -299,11 +299,49 @@ boolean IsKeymapName(const char *name) {
   return length > 4 && CiEqual(name + length - 4, ".vkm");
 }
 
-// The config files are editable only in the volume root; keymaps anywhere.
+// Starts with "/profiles/" (any case); returns the rest, or 0.
+const char *InProfilesFolder(const char *clean) {
+  static const char kProfiles[] = "/profiles/";
+  const unsigned length = sizeof(kProfiles) - 1;
+  if (strlen(clean) <= length) return 0;
+  char start[sizeof(kProfiles)];
+  memcpy(start, clean, length);
+  start[length] = '\0';
+  return CiEqual(start, kProfiles) ? clean + length : 0;
+}
+
+// Profile files (docs/PROFILES.md, File reference): active.txt and
+// system.txt in /profiles, each profile's profile.txt, settings.txt and
+// vice.ini, and Main's /profiles/main/<machine>.txt.
+boolean IsProfileFilePath(const char *clean) {
+  const char *rest = InProfilesFolder(clean);
+  if (rest == 0) return FALSE;
+  const char *slash = strchr(rest, '/');
+  if (slash == 0) {
+    return CiEqual(rest, "active.txt") || CiEqual(rest, "system.txt");
+  }
+  const char *name = slash + 1;
+  if (*name == '\0' || strchr(name, '/') != 0) return FALSE;  // one level only
+  char folder[SD_MAX_NAME_LEN + 1];
+  unsigned folder_length = (unsigned) (slash - rest);
+  if (folder_length == 0 || folder_length > SD_MAX_NAME_LEN) return FALSE;
+  memcpy(folder, rest, folder_length);
+  folder[folder_length] = '\0';
+  if (CiEqual(folder, "main")) {
+    size_t length = strlen(name);
+    return length > 4 && CiEqual(name + length - 4, ".txt");
+  }
+  return CiEqual(name, "profile.txt") || CiEqual(name, "settings.txt") ||
+         CiEqual(name, "vice.ini");
+}
+
+// The config files are editable only in the volume root; keymaps anywhere;
+// profile files in /profiles.
 boolean IsEditablePath(const char *clean) {
   if (clean[0] != '/') return FALSE;
   const char *base = strrchr(clean, '/') + 1;
-  return IsKeymapName(base) || (base == clean + 1 && IsEditableName(base));
+  return IsKeymapName(base) || (base == clean + 1 && IsEditableName(base)) ||
+         IsProfileFilePath(clean);
 }
 
 // Uploads must not clobber BMC64's own configuration or the Wi-Fi
@@ -473,18 +511,18 @@ int ListEntry(void *ctx, const sd_info *info) {
             (unsigned long) info->size, info->is_dir ? "true" : "false");
   WriteDateTime(r, &info->mtime);
   r->Write("\"");
-  if (!info->is_dir && info->size <= WEBUI_FS_EDIT_MAX &&
-      ((state->at_root && IsEditableName(info->name)) ||
-       IsKeymapName(info->name))) {
+  char child[560];
+  boolean child_ok = (unsigned) snprintf(child, sizeof(child), "%s%s%s",
+                                         state->clean,
+                                         state->at_root ? "" : "/",
+                                         info->name) < sizeof(child);
+  if (child_ok && !info->is_dir && info->size <= WEBUI_FS_EDIT_MAX &&
+      IsEditablePath(child)) {
     r->Write(",\"edit\":true");
   }
   // Entries the web UI won't rename or delete, so the page can leave
   // those actions out of the row's menu.
-  char child[560];
-  if ((unsigned) snprintf(child, sizeof(child), "%s%s%s", state->clean,
-                          state->at_root ? "" : "/", info->name) <
-          sizeof(child) &&
-      IsProtectedPath(child)) {
+  if (child_ok && IsProtectedPath(child)) {
     r->Write(",\"protected\":true");
   }
   r->Write("}");
