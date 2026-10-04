@@ -5,7 +5,7 @@
 #include <stddef.h>
 
 #include "update_apply.h"
-#include "update_fs.h"
+#include "../sdcard/sd_fs.h"
 #include "update_host.h"
 #include "update_view.h"
 
@@ -17,7 +17,7 @@ void update_boot_check(void) {
     uh_log("rebooting into the updated version");
     uh_reboot();
   }
-  update_pending = uf_stat(UA_ZIP, NULL, NULL) == 0;
+  update_pending = sd_stat(UA_ZIP, NULL, NULL) == 0;
   if (update_pending) {
     uh_log(UA_ZIP " found");
   }

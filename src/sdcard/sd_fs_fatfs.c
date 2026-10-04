@@ -1,10 +1,10 @@
-// update_fs.h on FatFs. FatFs is built with FF_FS_REENTRANT, so these calls
+// sd_fs.h on FatFs. FatFs is built with FF_FS_REENTRANT, so these calls
 // are safe from the emulator core while the web UI uses the card on core 0.
 //
 // FatFs is used directly rather than stdio: new_io.cpp reads a whole file
 // into RAM on its first seek, which would load the ~29 MB update zip.
 
-#include "update_fs.h"
+#include "sd_fs.h"
 
 #include <ff.h>
 #include <stdio.h>
@@ -13,7 +13,7 @@
 
 extern const char *circle_get_disk_volume(void);
 
-struct uf_file {
+struct sd_file {
   FIL fil;
 };
 
@@ -22,12 +22,12 @@ static int fat_path(const char *path, char *out, unsigned size) {
   return (n > 0 && (unsigned)n < size) ? 0 : -1;
 }
 
-uf_file *uf_open(const char *path, int write) {
+sd_file *sd_open(const char *path, int write) {
   char p[320];
   if (fat_path(path, p, sizeof(p)) != 0) {
     return NULL;
   }
-  uf_file *f = malloc(sizeof(*f));
+  sd_file *f = malloc(sizeof(*f));
   if (f == NULL) {
     return NULL;
   }
@@ -39,31 +39,31 @@ uf_file *uf_open(const char *path, int write) {
   return f;
 }
 
-int uf_read(uf_file *f, void *buf, unsigned len, unsigned *got) {
+int sd_read(sd_file *f, void *buf, unsigned len, unsigned *got) {
   UINT n = 0;
   FRESULT fr = f_read(&f->fil, buf, len, &n);
   *got = n;
   return fr == FR_OK ? 0 : -1;
 }
 
-int uf_write(uf_file *f, const void *buf, unsigned len) {
+int sd_write(sd_file *f, const void *buf, unsigned len) {
   UINT n = 0;
   return (f_write(&f->fil, buf, len, &n) == FR_OK && n == len) ? 0 : -1;
 }
 
-int uf_seek(uf_file *f, uint32_t pos) {
+int sd_seek(sd_file *f, uint32_t pos) {
   return f_lseek(&f->fil, pos) == FR_OK ? 0 : -1;
 }
 
-uint32_t uf_size(uf_file *f) { return (uint32_t)f_size(&f->fil); }
+uint32_t sd_size(sd_file *f) { return (uint32_t)f_size(&f->fil); }
 
-int uf_close(uf_file *f) {
+int sd_close(sd_file *f) {
   FRESULT fr = f_close(&f->fil);
   free(f);
   return fr == FR_OK ? 0 : -1;
 }
 
-int uf_stat(const char *path, uint32_t *size, int *is_dir) {
+int sd_stat(const char *path, uint32_t *size, int *is_dir) {
   char p[320];
   FILINFO info;
   if (fat_path(path, p, sizeof(p)) != 0 || f_stat(p, &info) != FR_OK) {
@@ -78,7 +78,7 @@ int uf_stat(const char *path, uint32_t *size, int *is_dir) {
   return 0;
 }
 
-int uf_rename(const char *from, const char *to) {
+int sd_rename(const char *from, const char *to) {
   char a[320];
   char b[320];
   // f_rename moves between folders of the same volume (it ignores the
@@ -89,7 +89,7 @@ int uf_rename(const char *from, const char *to) {
   return f_rename(a, b) == FR_OK ? 0 : -1;
 }
 
-int uf_unlink(const char *path) {
+int sd_unlink(const char *path) {
   char p[320];
   if (fat_path(path, p, sizeof(p)) != 0) {
     return -1;
@@ -97,7 +97,7 @@ int uf_unlink(const char *path) {
   return f_unlink(p) == FR_OK ? 0 : -1;
 }
 
-int uf_mkdir(const char *path) {
+int sd_mkdir(const char *path) {
   char p[320];
   if (fat_path(path, p, sizeof(p)) != 0) {
     return -1;
@@ -106,7 +106,7 @@ int uf_mkdir(const char *path) {
   return (fr == FR_OK || fr == FR_EXIST) ? 0 : -1;
 }
 
-int uf_list(const char *path, uf_dir_cb cb, void *ctx) {
+int sd_list(const char *path, sd_dir_cb cb, void *ctx) {
   char p[320];
   DIR dir;
   FILINFO info;
@@ -133,7 +133,7 @@ int uf_list(const char *path, uf_dir_cb cb, void *ctx) {
   return rc;
 }
 
-int uf_free_kb(uint32_t *kb) {
+int sd_free_kb(uint32_t *kb) {
   char p[32];
   DWORD clusters = 0;
   FATFS *fs = NULL;

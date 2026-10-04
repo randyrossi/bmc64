@@ -1,8 +1,9 @@
-// update_fs.h on a PC folder, for the host tests. The "card" is the folder
-// in UPDATE_TEST_ROOT. Setting UPDATE_TEST_CRASH_AFTER=N makes the Nth
-// rename exit the process first, to simulate a power cut mid-update.
+// sd_fs.h on a PC folder, for the host tests (updater and profiles). The
+// "card" is the folder in SD_TEST_ROOT. Setting SD_TEST_CRASH_AFTER=N makes
+// the Nth rename exit the process first, to simulate a power cut, and
+// SD_TEST_FREE_KB fakes the free space.
 
-#include "update_fs.h"
+#include "../../src/sdcard/sd_fs.h"
 
 #include <dirent.h>
 #include <errno.h>
@@ -13,41 +14,41 @@
 #include <sys/statvfs.h>
 #include <unistd.h>
 
-struct uf_file {
+struct sd_file {
   FILE *f;
   int write;
 };
 
 static void full(const char *path, char *out, size_t size) {
-  const char *root = getenv("UPDATE_TEST_ROOT");
+  const char *root = getenv("SD_TEST_ROOT");
   snprintf(out, size, "%s%s", root ? root : ".", path);
 }
 
-uf_file *uf_open(const char *path, int write) {
+sd_file *sd_open(const char *path, int write) {
   char p[1024];
   full(path, p, sizeof(p));
   FILE *f = fopen(p, write ? "wb" : "rb");
   if (f == NULL) {
     return NULL;
   }
-  uf_file *u = malloc(sizeof(*u));
+  sd_file *u = malloc(sizeof(*u));
   u->f = f;
   u->write = write;
   return u;
 }
 
-int uf_read(uf_file *f, void *buf, unsigned len, unsigned *got) {
+int sd_read(sd_file *f, void *buf, unsigned len, unsigned *got) {
   *got = (unsigned)fread(buf, 1, len, f->f);
   return ferror(f->f) ? -1 : 0;
 }
 
-int uf_write(uf_file *f, const void *buf, unsigned len) {
+int sd_write(sd_file *f, const void *buf, unsigned len) {
   return fwrite(buf, 1, len, f->f) == len ? 0 : -1;
 }
 
-int uf_seek(uf_file *f, uint32_t pos) { return fseek(f->f, (long)pos, SEEK_SET); }
+int sd_seek(sd_file *f, uint32_t pos) { return fseek(f->f, (long)pos, SEEK_SET); }
 
-uint32_t uf_size(uf_file *f) {
+uint32_t sd_size(sd_file *f) {
   long here = ftell(f->f);
   fseek(f->f, 0, SEEK_END);
   long size = ftell(f->f);
@@ -55,13 +56,13 @@ uint32_t uf_size(uf_file *f) {
   return (uint32_t)size;
 }
 
-int uf_close(uf_file *f) {
+int sd_close(sd_file *f) {
   int rc = fclose(f->f);
   free(f);
   return rc == 0 ? 0 : -1;
 }
 
-int uf_stat(const char *path, uint32_t *size, int *is_dir) {
+int sd_stat(const char *path, uint32_t *size, int *is_dir) {
   char p[1024];
   struct stat st;
   full(path, p, sizeof(p));
@@ -73,9 +74,9 @@ int uf_stat(const char *path, uint32_t *size, int *is_dir) {
   return 0;
 }
 
-int uf_rename(const char *from, const char *to) {
+int sd_rename(const char *from, const char *to) {
   static int count;
-  const char *crash = getenv("UPDATE_TEST_CRASH_AFTER");
+  const char *crash = getenv("SD_TEST_CRASH_AFTER");
   if (crash && ++count > atoi(crash)) {
     fflush(NULL);
     _exit(3); // power cut
@@ -90,7 +91,7 @@ int uf_rename(const char *from, const char *to) {
   return rename(a, b) == 0 ? 0 : -1;
 }
 
-int uf_unlink(const char *path) {
+int sd_unlink(const char *path) {
   char p[1024];
   struct stat st;
   full(path, p, sizeof(p));
@@ -100,13 +101,13 @@ int uf_unlink(const char *path) {
   return (S_ISDIR(st.st_mode) ? rmdir(p) : unlink(p)) == 0 ? 0 : -1;
 }
 
-int uf_mkdir(const char *path) {
+int sd_mkdir(const char *path) {
   char p[1024];
   full(path, p, sizeof(p));
   return (mkdir(p, 0777) == 0 || errno == EEXIST) ? 0 : -1;
 }
 
-int uf_list(const char *path, uf_dir_cb cb, void *ctx) {
+int sd_list(const char *path, sd_dir_cb cb, void *ctx) {
   char p[1024];
   full(path, p, sizeof(p));
   DIR *d = opendir(p);
@@ -130,8 +131,8 @@ int uf_list(const char *path, uf_dir_cb cb, void *ctx) {
   return 0;
 }
 
-int uf_free_kb(uint32_t *kb) {
-  const char *fake = getenv("UPDATE_TEST_FREE_KB");
+int sd_free_kb(uint32_t *kb) {
+  const char *fake = getenv("SD_TEST_FREE_KB");
   if (fake) {
     *kb = (uint32_t)atol(fake);
     return 0;

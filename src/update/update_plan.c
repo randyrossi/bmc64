@@ -5,19 +5,19 @@
 #include <string.h>
 #include <strings.h>
 
-#include "update_fs.h"
+#include "../sdcard/sd_fs.h"
 #include "update_hash.h"
 
 #define HASH_CHUNK 16384
 
 int up_hash_file(const char *path, uint8_t sha[32]) {
-  uf_file *f = uf_open(path, 0);
+  sd_file *f = sd_open(path, 0);
   if (f == NULL) {
     return -1;
   }
   uint8_t *buf = malloc(HASH_CHUNK);
   if (buf == NULL) {
-    uf_close(f);
+    sd_close(f);
     return -1;
   }
   uh_sha256 s;
@@ -25,7 +25,7 @@ int up_hash_file(const char *path, uint8_t sha[32]) {
   int rc = 0;
   for (;;) {
     unsigned got = 0;
-    if (uf_read(f, buf, HASH_CHUNK, &got) != 0) {
+    if (sd_read(f, buf, HASH_CHUNK, &got) != 0) {
       rc = -1;
       break;
     }
@@ -35,7 +35,7 @@ int up_hash_file(const char *path, uint8_t sha[32]) {
     uh_sha256_update(&s, buf, got);
   }
   free(buf);
-  uf_close(f);
+  sd_close(f);
   if (rc == 0) {
     uh_sha256_final(&s, sha);
   }
@@ -155,21 +155,21 @@ static int grow_out(void *ctx, const uint8_t *data, unsigned len) {
 // Reads the card's /bmc64-manifest.txt into m. Returns 0 on success.
 static int load_card_manifest(um_manifest *m, int primary, char *err,
                               unsigned errlen) {
-  uf_file *f = uf_open("/" UM_NAME, 0);
+  sd_file *f = sd_open("/" UM_NAME, 0);
   if (f == NULL) {
     snprintf(err, errlen, "The card has no " UM_NAME ".");
     return -1;
   }
-  uint32_t size = uf_size(f);
+  uint32_t size = sd_size(f);
   char *text = malloc(size + 1);
   unsigned got = 0;
-  if (text == NULL || uf_read(f, text, size, &got) != 0 || got != size) {
+  if (text == NULL || sd_read(f, text, size, &got) != 0 || got != size) {
     free(text);
-    uf_close(f);
+    sd_close(f);
     snprintf(err, errlen, "Can't read the card's " UM_NAME ".");
     return -1;
   }
-  uf_close(f);
+  sd_close(f);
   text[size] = '\0';
   return um_parse(m, text, primary, err, errlen);
 }
@@ -366,7 +366,7 @@ int up_build(up_plan *p, uz_zip *z, const um_manifest *m, const char *running,
     snprintf(card, sizeof(card), "/%s", rec->path);
     uint32_t size = 0;
     int is_dir = 0;
-    if (uf_stat(card, &size, &is_dir) != 0) {
+    if (sd_stat(card, &size, &is_dir) != 0) {
       it.status = UP_NEW;
     } else if (is_dir) {
       up_free(p);

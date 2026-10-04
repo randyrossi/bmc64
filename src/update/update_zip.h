@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-#include "update_fs.h"
+#include "../sdcard/sd_fs.h"
 
 // Receives extracted data. Returns 0 on success.
 typedef int (*uz_out_fn)(void *ctx, const uint8_t *buf, unsigned len);
@@ -24,7 +24,7 @@ typedef struct {
 } uz_entry;
 
 typedef struct {
-  uf_file *file;
+  sd_file *file;
   uint32_t size;
   int count;
   uz_entry *entries;
