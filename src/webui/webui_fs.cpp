@@ -310,7 +310,7 @@ const char *InProfilesFolder(const char *clean) {
   return CiEqual(start, kProfiles) ? clean + length : 0;
 }
 
-// Profile files (docs/PROFILES.md, File reference): active.txt and
+// Profile files (docs/PROFILES.md, Profile files): active.txt and
 // system.txt in /profiles, each profile's profile.txt, settings.txt and
 // vice.ini, and Main's /profiles/main/<machine>.txt.
 boolean IsProfileFilePath(const char *clean) {

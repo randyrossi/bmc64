@@ -2,10 +2,10 @@
 
 #include <string.h>
 
-// Shared settings: the settings.txt keys kept in /profiles/system.txt for
-// every profile instead of in each profile (docs/PROFILES.md, Shared
-// settings). Wi-Fi (wpa_supplicant.conf) and logging (cmdline.txt) are
-// already outside settings.txt, so they aren't listed.
+// Shared settings: the settings.txt keys to be kept in /profiles/system.txt
+// for every profile instead of in each profile. Wi-Fi (wpa_supplicant.conf)
+// and logging (cmdline.txt) are already outside settings.txt, so they aren't
+// listed.
 //
 // Not implemented yet: reading and writing system.txt.
 

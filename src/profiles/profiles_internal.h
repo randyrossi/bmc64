@@ -64,7 +64,7 @@ int active_file_write(const ActiveFile *af);
 // 1 for a valid profile id: 1 to 32 lowercase letters, digits and '-'.
 int profiles_id_valid(const char *id);
 
-// Makes an unused id from a name (docs/PROFILES.md, Profile ids).
+// Makes an unused id from a name (docs/PROFILES.md, Profile files).
 int profiles_make_id(const char *name, char *out, int out_size);
 
 // ---- State (profile_store.c / profile_boot.c) ----

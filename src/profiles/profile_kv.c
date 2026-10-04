@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 
-// The key=value format shared by all profile files (docs/PROFILES.md, File
-// reference): one entry per line, '#' starts a comment line, spaces around
-// keys and values are ignored, and Windows line endings are accepted.
+// The key=value format shared by all profile files (docs/PROFILES.md,
+// Profile files): one entry per line, '#' starts a comment line, spaces
+// around keys and values are ignored, and Windows line endings are accepted.
 
 static int is_space(char c) {
    return c == ' ' || c == '\t' || c == '\r';

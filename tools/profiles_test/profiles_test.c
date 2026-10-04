@@ -1,7 +1,6 @@
-// Tests for src/profiles. Rule numbers ([P2], [F1], ...) refer to the
-// behaviour reference in docs/PROFILES.md. Profile files are created in a
-// temporary folder that stands in for the SD card
-// (tools/sdcard/sd_fs_posix.c, given the folder in SD_TEST_ROOT).
+// Tests for src/profiles, against the behaviour in docs/PROFILES.md.
+// Profile files are created in a temporary folder that stands in for the SD
+// card (tools/sdcard/sd_fs_posix.c, given the folder in SD_TEST_ROOT).
 
 #define _POSIX_C_SOURCE 200809L
 
@@ -405,7 +404,7 @@ static void test_ids(void) {
    CHECK_STR(id, "profile");
    profiles_make_id("!!!", id, sizeof(id));
    CHECK_STR(id, "profile");
-   // main is reserved ([P5]).
+   // "main" is reserved.
    profiles_make_id("Main", id, sizeof(id));
    CHECK_STR(id, "main-2");
 
@@ -432,7 +431,7 @@ static void test_ids(void) {
 static void test_no_profiles(void) {
    fresh_card();
    profiles_boot_init("C64");
-   // [P1], [F1]: Main, and nothing created on the card.
+   // Main, and nothing created on the card.
    CHECK(profiles_running_is_main());
    CHECK(!profiles_in_use());
    CHECK_STR(profiles_running()->id, "main");
@@ -448,7 +447,7 @@ static void test_no_profiles(void) {
    profiles_reset_to_main();
    CHECK(!exists("/profiles"));
 
-   // [P2]: Main is always in the list.
+   // Main is always in the list.
    CHECK(profiles_list_open() == 1);
    CHECK_STR(profiles_list_at(0)->id, "main");
    CHECK(profiles_list_at(1) == NULL);
@@ -472,7 +471,7 @@ static void test_boot_profile(void) {
    profiles_boot_init("c64");
    CHECK_STR(profiles_running()->id, "geos");
 
-   // [S6]: a missing or invalid profile starts Main, with a message.
+   // A missing or invalid profile starts Main, with a message.
    write_file("/profiles/active.txt", "profile=gone\n");
    profiles_boot_init("C64");
    CHECK(profiles_running_is_main());
@@ -507,18 +506,18 @@ static void test_start_once(void) {
    write_file("/profiles/active.txt", "profile=geos\n");
    profiles_boot_init("C64");
 
-   // [S2]: once is added, profile is unchanged.
+   // Once is added, profile is unchanged.
    CHECK(profiles_start_once("elite") == PROFILES_OK);
    CHECK_STR(read_file("/profiles/active.txt"), "profile=geos\nonce=elite\n");
 
-   // [S3]: the once profile starts; once stays until after boot ([F6]).
+   // The once profile starts; once stays until after boot.
    profiles_boot_init("C64");
    CHECK_STR(profiles_running()->id, "elite");
    CHECK_STR(read_file("/profiles/active.txt"), "profile=geos\nonce=elite\n");
    profiles_after_boot();
    CHECK_STR(read_file("/profiles/active.txt"), "profile=geos\n");
 
-   // [S4]: a restart BMC64 asks for keeps the once profile.
+   // A restart BMC64 asks for keeps the once profile.
    profiles_before_reboot();
    CHECK_STR(read_file("/profiles/active.txt"), "profile=geos\nonce=elite\n");
    profiles_boot_init("C64");
@@ -553,7 +552,7 @@ static void test_switch_to(void) {
    make_profile("vic", "name=PAL 16K\nmachine=VIC20\n");
    profiles_boot_init("C64");
 
-   // [S1]
+
    CHECK(profiles_switch_to("geos") == PROFILES_OK);
    CHECK_STR(read_file("/profiles/active.txt"), "profile=geos\n");
    CHECK(!exists("/profiles/active.new"));
@@ -576,7 +575,7 @@ static void test_safe_mode(void) {
    fresh_card();
    make_profile("geos", "name=GEOS\nmachine=C64\n");
    write_file("/profiles/active.txt", "profile=geos\nonce=geos\n");
-   // [S7]
+
    profiles_reset_to_main();
    CHECK_STR(read_file("/profiles/active.txt"), "profile=main\n");
 }
@@ -634,7 +633,7 @@ static void test_create(void) {
    fresh_card();
    profiles_boot_init("C64");
    char id[PROFILES_MAX_ID_LEN + 1];
-   // [P6]: Main's new profiles are for the booted machine.
+   // Main's new profiles are for the booted machine.
    CHECK(profiles_create("  My GEOS  ", id, sizeof(id)) == PROFILES_OK);
    CHECK_STR(id, "my-geos");
    CHECK_STR(read_file("/profiles/my-geos/profile.txt"),
@@ -670,7 +669,7 @@ static void test_rename(void) {
    write_file("/profiles/active.txt", "profile=geos\n");
    profiles_boot_init("C64");
 
-   // [P5]: only the name changes; the id and other keys stay.
+   // Only the name changes; the id and other keys stay.
    CHECK(profiles_rename_running(" GEOS 2.0 ") == PROFILES_OK);
    CHECK_STR(profiles_running()->name, "GEOS 2.0");
    CHECK_STR(profiles_running()->id, "geos");
@@ -685,7 +684,7 @@ static void test_rename(void) {
    CHECK(profiles_rename_running("  ") == PROFILES_ERROR);
    CHECK_STR(profiles_running()->name, "GEOS 2.0");
 
-   // [P2]: Main can't be renamed.
+   // Main can't be renamed.
    fresh_card();
    profiles_boot_init("C64");
    CHECK(profiles_rename_running("Other") == PROFILES_ERROR);
@@ -707,7 +706,7 @@ static void test_delete(void) {
    write_file("/profiles/active.txt", "profile=geos\n");
    profiles_boot_init("C64");
 
-   // [P2], [P3]: not Main, not the running profile, nothing invalid.
+   // Not Main, not the running profile, nothing invalid.
    CHECK(profiles_delete("main") == PROFILES_ERROR);
    CHECK(profiles_delete("geos") == PROFILES_ERROR);
    CHECK(exists("/profiles/geos/profile.txt"));
@@ -716,7 +715,7 @@ static void test_delete(void) {
    CHECK(profiles_delete(NULL) == PROFILES_ERROR);
    CHECK(profiles_delete("gone") == PROFILES_ERROR);
 
-   // [P4]: the profile's own files and folder go, nothing else.
+   // The profile's own files and folder go, nothing else.
    CHECK(profiles_delete("elite") == PROFILES_OK);
    CHECK(!exists("/profiles/elite"));
    CHECK(exists("/disks/elite.d64"));

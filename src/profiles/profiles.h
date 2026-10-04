@@ -2,8 +2,8 @@
 #define BMC64_PROFILES_H
 
 // Profiles: complete, saved setups of BMC64 that can be switched to from the
-// menu. User behaviour, file formats and the numbered rules ([P1], [S3], ...)
-// are in docs/PROFILES.md.
+// menu. How they work for users, and the file formats, are in
+// docs/PROFILES.md.
 //
 // This is the core logic only (profile files, start-up, shared settings,
 // machines). It doesn't depend on Circle or VICE, so it can be tested on the
@@ -11,8 +11,8 @@
 // on-screen menu is in third_party/common/menu_profiles.c.
 //
 // Nothing here runs per frame, and with no profiles nothing is read or
-// written at boot beyond one attempt to open /profiles/active.txt
-// (docs/PROFILES.md [F1]-[F6]).
+// written at boot beyond one attempt to open /profiles/active.txt. Nothing
+// is written to the card during boot.
 
 #ifdef __cplusplus
 extern "C" {
@@ -64,18 +64,17 @@ typedef struct {
 void profiles_boot_init(const char *booted_machine);
 
 // Called once the emulator is running ("boot complete"). Does the work that
-// mustn't slow boot down, such as removing a used Start-once entry
-// (docs/PROFILES.md [S3], [F6]).
+// mustn't slow boot down, such as removing a used Start-once entry.
 void profiles_after_boot(void);
 
 // A message for the user about how start-up went, or "".
 const char *profiles_boot_message(void);
 
 // Call before BMC64 restarts itself (e.g. a settings change that needs a
-// restart), so a Start-once profile starts again ([S4]).
+// restart), so a Start-once profile starts again.
 void profiles_before_reboot(void);
 
-// Safe mode: Main at the next power-on ([S7]).
+// Safe mode: Main at the next power-on.
 void profiles_reset_to_main(void);
 
 // ---- The running profile (profile_boot.c) ----
@@ -99,8 +98,8 @@ const char *profiles_settings_file(const char *main_file);
 void profiles_path(const char *id, const char *file, char *out, int out_size);
 
 // ---- The profile list (profile_store.c) ----
-// Only read when the menu asks for it, and freed again afterwards
-// (docs/PROFILES.md [F3]). Main is always entry 0; the rest are sorted by
+// Only read when the menu asks for it, and freed again afterwards, so it
+// costs nothing at boot. Main is always entry 0; the rest are sorted by
 // name. Profiles for every machine are listed.
 
 int profiles_list_open(void);
@@ -136,8 +135,9 @@ int profiles_clear_startup_disks(void);
 
 // ---- Shared settings (profile_system.c) ----
 
-// 1 if a settings.txt key is a shared setting, kept in system.txt for all
-// profiles rather than in each profile (docs/PROFILES.md, Shared settings).
+// 1 if a settings.txt key is a shared setting, to be kept in system.txt for
+// all profiles rather than in each profile (network, Web UI, hotkeys,
+// volume and menu preferences).
 int profiles_is_shared_setting(const char *key);
 
 // ---- Machines (profile_machine.c) ----

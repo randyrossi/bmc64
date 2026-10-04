@@ -7,7 +7,7 @@
 
 // Profile files on the SD card: /profiles/active.txt, profile.txt, the
 // profile list, and creating, renaming and deleting profiles
-// (docs/PROFILES.md, File reference).
+// (docs/PROFILES.md, Profile files).
 
 // Most profiles listed; more are ignored.
 #define PROFILES_MAX_LISTED 256
@@ -398,7 +398,8 @@ int profiles_delete(const char *id) {
       profiles_path(id, profile_files[i], path, sizeof(path));
       sd_unlink(path);
    }
-   // Only removes the folder if nothing else is in it ([P4]).
+   // Only removes the folder if nothing else is in it: a user's own files
+   // in there are never deleted.
    snprintf(path, sizeof(path), "%s/%s", PROFILES_DIR, id);
    return sd_unlink(path) == 0 ? PROFILES_OK : PROFILES_ERROR;
 }

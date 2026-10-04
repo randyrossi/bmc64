@@ -206,7 +206,7 @@ static void update_name_labels(void) {
   }
 }
 
-// Saves the current settings as a new profile and restarts into it ([P6]).
+// Saves the current settings as a new profile and restarts into it.
 static void create_profile(const char *name) {
   char id[PROFILES_MAX_ID_LEN + 1];
   if (profiles_create(name, id, sizeof(id)) != PROFILES_OK) {

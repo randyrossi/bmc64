@@ -4,7 +4,7 @@
 #include <string.h>
 
 // Start-up: which profile runs, its startup disks and autostart
-// (docs/PROFILES.md, Switch to or Start once, Auto-attached disks, Autostart).
+// (docs/PROFILES.md, Switch to, or Start once).
 //
 // Not implemented yet: startup disks and autostart.
 
@@ -36,7 +36,7 @@ void profiles_boot_init(const char *booted) {
    in_use = 0;
    boot_message[0] = '\0';
 
-   // With no profiles this is the only file access ([F1]).
+   // With no profiles this is the only file access.
    ActiveFile af;
    if (active_file_read(&af) != PROFILES_OK) {
       return;
