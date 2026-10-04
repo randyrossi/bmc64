@@ -5,8 +5,7 @@
 // menu. How they work for users, and the file formats, are in
 // docs/PROFILES.md.
 //
-// This is the core logic only (profile files, start-up, shared settings,
-// machines). It doesn't depend on Circle or VICE, so it can be tested on the
+// This is the core logic only (profile files, start-up, machines). It doesn't depend on Circle or VICE, so it can be tested on the
 // PC (tools/profiles_test). File access goes through src/sdcard/sd_fs.h. The
 // on-screen menu is in third_party/common/menu_profiles.c.
 //
@@ -132,13 +131,6 @@ int profiles_clear_autostart(void);
 // paths[0] is drive 8; empty or NULL entries mean no disk.
 int profiles_set_startup_disks(const char *const paths[PROFILES_NUM_DRIVES]);
 int profiles_clear_startup_disks(void);
-
-// ---- Shared settings (profile_system.c) ----
-
-// 1 if a settings.txt key is a shared setting, to be kept in system.txt for
-// all profiles rather than in each profile (network, Web UI, hotkeys,
-// volume and menu preferences).
-int profiles_is_shared_setting(const char *key);
 
 // ---- Machines (profile_machine.c) ----
 

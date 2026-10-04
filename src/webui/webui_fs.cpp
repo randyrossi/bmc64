@@ -310,15 +310,15 @@ const char *InProfilesFolder(const char *clean) {
   return CiEqual(start, kProfiles) ? clean + length : 0;
 }
 
-// Profile files (docs/PROFILES.md, Profile files): active.txt and
-// system.txt in /profiles, each profile's profile.txt, settings.txt and
-// vice.ini, and Main's /profiles/main/<machine>.txt.
+// Profile files (docs/PROFILES.md, Profile files): active.txt in /profiles,
+// each profile's profile.txt, settings.txt and vice.ini, and Main's
+// /profiles/main/<machine>.txt.
 boolean IsProfileFilePath(const char *clean) {
   const char *rest = InProfilesFolder(clean);
   if (rest == 0) return FALSE;
   const char *slash = strchr(rest, '/');
   if (slash == 0) {
-    return CiEqual(rest, "active.txt") || CiEqual(rest, "system.txt");
+    return CiEqual(rest, "active.txt");
   }
   const char *name = slash + 1;
   if (*name == '\0' || strchr(name, '/') != 0) return FALSE;  // one level only

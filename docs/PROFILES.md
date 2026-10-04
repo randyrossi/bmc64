@@ -33,6 +33,7 @@ SD card.
 - [BMC64 Profiles](#bmc64-profiles)
   - [Contents](#contents)
   - [The Main profile](#the-main-profile)
+  - [Start with a good Main profile](#start-with-a-good-main-profile)
   - [Using profiles](#using-profiles)
     - [Switch to, or Start once](#switch-to-or-start-once)
     - [Saving settings](#saving-settings)
@@ -57,8 +58,32 @@ Your existing settings are the **Main** profile.
 - Main isn't tied to one machine: it's whatever machine you boot, with that
   machine's usual settings files (`vice.ini`, `settings.txt`,
   `settings-vic20.txt`, …), and **Switch machine** works as before.
+- Main is the starting point for your profiles, so keep it set up the way you
+  want BMC64 to be (see [Start with a good Main profile](#start-with-a-good-main-profile)).
 - If you break your Main settings, fix them in the menu, or start again from a
   fresh SD card or by deleting the settings files.
+
+---
+
+## Start with a good Main profile
+
+Every profile is a **complete copy** of the settings it was made from. Once a
+profile exists, changing Main doesn't change it. So the order matters:
+
+1. **Set up Main first,** with everything you want in every profile: video
+   and scaling, keyboard, joysticks and gamepads, hotkeys, sound, network and
+   Web UI, preferences. Press **Save settings**. In particular, set the
+   **Web UI PIN** before you make profiles: each profile keeps the PIN it was
+   made with.
+2. **Make your profiles from Main:** with Main active, change only what's
+   different (a kernal, drives, a REU…) and choose *New profile from current
+   settings*. Back in Main, the changes you didn't save are gone.
+3. **Make a profile from a profile** when it's closer to what you want, e.g.
+   a game profile from your "Stock C64" profile.
+
+If you later change something that every profile should have (a new video
+mode, say), you have to change it in each profile, or make the profiles again
+from Main.
 
 ---
 
@@ -111,8 +136,8 @@ A hard reset doesn't change profiles, it resets the emulated machine as usual.
 
 - **New profile from current settings** asks for a name (up to 32
   characters), saves the machine exactly as it is now as a new profile, and
-  restarts into it. The easiest way to make a profile is to start from one
-  that's close, change what you need, and save it as a new profile.
+  restarts into it. Start from Main, or from the profile that's closest, change
+  what you need, and save it as a new profile.
 - **Manage profile → Rename profile…** changes the active profile's name.
 - **Manage profile → Delete profile…** deletes a profile. You can't delete Main
   or the profile that's active. Only the profile's own files are deleted,
@@ -126,7 +151,9 @@ A hard reset doesn't change profiles, it resets the emulated machine as usual.
 A profile keeps everything that **Save settings** saves: the emulator settings
 (ROMs, drives, cartridge default, REU, IDE64, SID and so on) and BMC64's own
 settings (video and scaling, keyboard layout and mapping, joysticks and USB
-gamepads, GPIO, hotkeys, network and Web UI options, volume, preferences).
+gamepads, GPIO, hotkeys, network and Web UI options including the Web UI
+PIN, volume, preferences). So, for example, one profile can have the network
+off and another on.
 
 A few things are the same for every profile, because they live in files of
 their own on the SD card:

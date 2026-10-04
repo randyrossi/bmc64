@@ -13,7 +13,7 @@ import { rebootNow } from "./dashboard.js";
 // Files the emulator's own menus also write; a menu save overwrites edits
 // made here until the next reboot.
 const MENU_WRITTEN =
-  /^(settings.*\.txt|vice\.ini|wpa_supplicant\.conf|profile\.txt|active\.txt|system\.txt)$/i;
+  /^(settings.*\.txt|vice\.ini|wpa_supplicant\.conf|profile\.txt|active\.txt)$/i;
 
 // Keyboard mapping files (*.vkm) are editable in any folder.
 const KEYMAP = /\.vkm$/i;

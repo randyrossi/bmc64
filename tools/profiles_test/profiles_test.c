@@ -728,29 +728,7 @@ static void test_delete(void) {
    CHECK(exists("/profiles/keep/my-notes.txt"));
 }
 
-// ---- Shared settings and machines ----
-
-static void test_shared_settings(void) {
-   static const char *const shared[] = {
-      "network_device", "timezone_offset_minutes", "network_modem_address",
-      "webui_enabled", "webui_pin", "hotkey_cf1", "hotkey_cf3", "hotkey_cf5",
-      "hotkey_cf7", "hotkey_tf1", "hotkey_tf3", "hotkey_tf5", "hotkey_tf7",
-      "volume", "overlay", "overlay_padding", "vkbd_trans", "reset_confirm",
-      "dir_convention", "drive_flush",
-   };
-   static const char *const per_profile[] = {
-      "port_1", "palette", "gpio_config", "custom_gpio", "keyboard_layout",
-      "keyboard_layout_mapping", "drive_type_8", "usb_0", "key_binding_1",
-      "h_center_0", "tapereset", "s_scanlines", "",
-   };
-   for (unsigned i = 0; i < sizeof(shared) / sizeof(shared[0]); i++) {
-      CHECK(profiles_is_shared_setting(shared[i]));
-   }
-   for (unsigned i = 0; i < sizeof(per_profile) / sizeof(per_profile[0]); i++) {
-      CHECK(!profiles_is_shared_setting(per_profile[i]));
-   }
-   CHECK(!profiles_is_shared_setting(NULL));
-}
+// ---- Machines ----
 
 static void check_label(const char *machine, const char *expected) {
    char label[16];
@@ -810,7 +788,6 @@ int main(void) {
    test_create();
    test_rename();
    test_delete();
-   test_shared_settings();
    test_machines();
 
    remove_tree(root);
