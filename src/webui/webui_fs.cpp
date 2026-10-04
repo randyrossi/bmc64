@@ -23,9 +23,10 @@
 #include <circle/sched/scheduler.h>
 #include <circle/types.h>
 
-#include <ff.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "../sdcard/sd_fs.h"
 
 // Implemented in src/vice_network.cpp.
 extern "C" const char *circle_get_disk_volume(void);
@@ -111,24 +112,18 @@ void JsonString(CChunkedResponse *r, const char *s) {
   r->Write("\"");
 }
 
-void WriteFatDateTime(CChunkedResponse *r, unsigned fdate, unsigned ftime) {
-  if (fdate == 0) {
+void WriteDateTime(CChunkedResponse *r, const sd_time *t) {
+  if (t->year == 0) {
     return;  // unknown timestamp -> empty string
   }
-  unsigned year = ((fdate >> 9) & 0x7F) + 1980;
-  unsigned month = (fdate >> 5) & 0x0F;
-  unsigned day = fdate & 0x1F;
-  unsigned hour = (ftime >> 11) & 0x1F;
-  unsigned minute = (ftime >> 5) & 0x3F;
-  unsigned second = (ftime & 0x1F) * 2;
-  r->Printf("%04u-%02u-%02uT%02u:%02u:%02u", year, month, day, hour, minute,
-            second);
+  r->Printf("%04u-%02u-%02uT%02u:%02u:%02u", t->year, t->month, t->day,
+            t->hour, t->minute, t->second);
 }
 
-// Parse "YYYY-MM-DDTHH:MM:SS" (local wall-clock time, as WriteFatDateTime
-// emits) into a FAT date/time pair. Returns FALSE if malformed or outside
-// the FAT range (1980..2107).
-boolean ParseFatDateTime(const char *s, WORD *fdate, WORD *ftime) {
+// Parse "YYYY-MM-DDTHH:MM:SS" (local wall-clock time, as WriteDateTime
+// emits). Returns FALSE if malformed or outside what FAT can store
+// (1980..2107).
+boolean ParseDateTime(const char *s, sd_time *t) {
   unsigned year, month, day, hour, minute, second;
   if (sscanf(s, "%4u-%2u-%2uT%2u:%2u:%2u", &year, &month, &day, &hour, &minute,
              &second) != 6) {
@@ -138,8 +133,12 @@ boolean ParseFatDateTime(const char *s, WORD *fdate, WORD *ftime) {
       day > 31 || hour > 23 || minute > 59 || second > 59) {
     return FALSE;
   }
-  *fdate = (WORD) (((year - 1980) << 9) | (month << 5) | day);
-  *ftime = (WORD) ((hour << 11) | (minute << 5) | (second / 2));
+  t->year = (uint16_t) year;
+  t->month = (uint8_t) month;
+  t->day = (uint8_t) day;
+  t->hour = (uint8_t) hour;
+  t->minute = (uint8_t) minute;
+  t->second = (uint8_t) second;
   return TRUE;
 }
 
@@ -172,7 +171,7 @@ int SanitizeRelPath(const char *in, char *out, unsigned out_size) {
     if (seg_len == 0) {
       continue;
     }
-    if (seg_len > FF_MAX_LFN) {
+    if (seg_len > SD_MAX_NAME_LEN) {
       return -1;
     }
     if (seg_len == 1 && seg[0] == '.') {
@@ -204,18 +203,11 @@ int SanitizeRelPath(const char *in, char *out, unsigned out_size) {
   return 0;
 }
 
-int BuildFatPath(const char *vol, const char *clean, char *out,
-                 unsigned out_size) {
-  int n = snprintf(out, out_size, "%s:%s", vol, clean);
-  return (n > 0 && (unsigned) n < out_size) ? 0 : -1;
-}
-
 // Resolve and validate the vol/path query parameters. Returns 0 on
-// success and fills fatpath / clean; on failure it has already sent an
-// error response and returns -1.
+// success and fills clean, a path on the card for sd_fs.h; on failure it has
+// already sent an error response and returns -1.
 int ResolveTarget(CSocket *socket, const char *query, char *clean,
-                  unsigned clean_size, char *fatpath, unsigned fatpath_size,
-                  boolean require_file) {
+                  unsigned clean_size, boolean require_file) {
   char vol[24];
   char raw[560];
   const char *disk = circle_get_disk_volume();
@@ -242,10 +234,6 @@ int ResolveTarget(CSocket *socket, const char *query, char *clean,
   }
   if (require_file && strcmp(clean, "/") == 0) {
     webhttp::SendText(socket, 400, "Bad Request", "not a file\n");
-    return -1;
-  }
-  if (BuildFatPath(vol, clean, fatpath, fatpath_size) != 0) {
-    webhttp::SendText(socket, 400, "Bad Request", "path too long\n");
     return -1;
   }
   return 0;
@@ -347,7 +335,7 @@ boolean IsProtectedPath(const char *clean) {
 // creating a different name than the one asked for.
 boolean IsValidEntryName(const char *name) {
   size_t length = strlen(name);
-  if (length == 0 || length > FF_MAX_LFN) return FALSE;
+  if (length == 0 || length > SD_MAX_NAME_LEN) return FALSE;
   if (name[0] == ' ' || name[length - 1] == ' ' || name[length - 1] == '.') {
     return FALSE;
   }
@@ -369,7 +357,7 @@ const char *const kBadNameText =
 enum BodyResult {
   BODY_OK,
   BODY_CREATE_FAILED,
-  BODY_WRITE_FAILED,  // FatFs write error (disk full?)
+  BODY_WRITE_FAILED,  // write error (disk full?)
   BODY_TRUNCATED,     // client aborted or timed out
   BODY_HAS_NUL,       // only when reject_nul is set
 };
@@ -381,8 +369,8 @@ BodyResult ReceiveBodyToFile(CSocket *socket, const char *temppath,
                              const unsigned char *prefetched,
                              unsigned prefetched_len, unsigned long total,
                              boolean reject_nul) {
-  FIL file;
-  if (f_open(&file, temppath, FA_WRITE | FA_CREATE_ALWAYS) != FR_OK) {
+  sd_file *file = sd_open(temppath, SD_WRITE);
+  if (file == 0) {
     return BODY_CREATE_FAILED;
   }
 
@@ -393,11 +381,9 @@ BodyResult ReceiveBodyToFile(CSocket *socket, const char *temppath,
     prefetched_len = (unsigned) total;
   }
   if (prefetched_len > 0) {
-    UINT bw = 0;
     if (reject_nul && memchr(prefetched, 0, prefetched_len) != 0) {
       result = BODY_HAS_NUL;
-    } else if (f_write(&file, prefetched, prefetched_len, &bw) != FR_OK ||
-               bw != prefetched_len) {
+    } else if (sd_write(file, prefetched, prefetched_len) != SD_OK) {
       result = BODY_WRITE_FAILED;
     }
     written += prefetched_len;
@@ -416,9 +402,7 @@ BodyResult ReceiveBodyToFile(CSocket *socket, const char *temppath,
       result = BODY_HAS_NUL;
       break;
     }
-    UINT bw = 0;
-    if (f_write(&file, s_io_buffer, (UINT) n, &bw) != FR_OK ||
-        bw != (UINT) n) {
+    if (sd_write(file, s_io_buffer, (unsigned) n) != SD_OK) {
       result = BODY_WRITE_FAILED;
       break;
     }
@@ -426,9 +410,11 @@ BodyResult ReceiveBodyToFile(CSocket *socket, const char *temppath,
     CScheduler::Get()->Yield();
   }
 
-  f_close(&file);
+  if (sd_close(file) != SD_OK && result == BODY_OK) {
+    result = BODY_WRITE_FAILED;
+  }
   if (result != BODY_OK) {
-    f_unlink(temppath);
+    sd_unlink(temppath);
   }
   return result;
 }
@@ -452,82 +438,79 @@ void SendBodyFailure(CSocket *socket, BodyResult result) {
   }
 }
 
-// ---- deleting a folder with its contents ----
-//
-// FatFs has no recursive delete (f_unlink refuses a folder that isn't empty),
-// so this is the usual walk: unlink each entry while reading the folder, then
-// the folder itself. It edits one FatFs path in place and shares one FILINFO,
-// so it needs little stack; the depth limit bounds the recursion.
+// Lets other tasks run while a big folder is deleted.
+void YieldWhileDeleting(void *ctx) {
+  (void) ctx;
+  CScheduler::Get()->Yield();
+}
 
-const unsigned WEBUI_FS_TREE_DEPTH = 24;
+// ---- listing a folder ----
 
-// Returns FR_OK, or the FatFs error that stopped it (FR_DENIED for a
-// read-only file; FR_INVALID_NAME if the tree is too deep or the path too
-// long). `removed` counts what was deleted so far, for the failure message.
-FRESULT DeleteTree(char *path, unsigned path_size, unsigned depth,
-                   FILINFO *info, unsigned *removed) {
-  if (depth > WEBUI_FS_TREE_DEPTH) return FR_INVALID_NAME;
-  DIR dir;
-  FRESULT fr = f_opendir(&dir, path);
-  if (fr != FR_OK) return fr;
+struct ListState {
+  CChunkedResponse *r;
+  const char *clean;
+  boolean at_root;
+  boolean first;
+  boolean truncated;
+  unsigned count;
+};
 
-  while (fr == FR_OK && f_readdir(&dir, info) == FR_OK &&
-         info->fname[0] != '\0') {
-    // f_readdir doesn't return these, but following ".." would delete the
-    // parent folder (the listing skips them too).
-    if (strcmp(info->fname, ".") == 0 || strcmp(info->fname, "..") == 0) {
-      continue;
-    }
-    unsigned length = (unsigned) strlen(path);
-    unsigned name_length = (unsigned) strlen(info->fname);
-    if (length + 1 + name_length + 1 > path_size) {
-      fr = FR_INVALID_NAME;
-      break;
-    }
-    path[length] = '/';
-    memcpy(path + length + 1, info->fname, name_length + 1);
-    if (info->fattrib & AM_DIR) {
-      fr = DeleteTree(path, path_size, depth + 1, info, removed);
-    } else {
-      fr = f_unlink(path);
-      if (fr == FR_OK) (*removed)++;
-    }
-    path[length] = '\0';
-    if ((*removed & 15) == 0) {
-      CScheduler::Get()->Yield();
-    }
+int ListEntry(void *ctx, const sd_info *info) {
+  ListState *state = (ListState *) ctx;
+  CChunkedResponse *r = state->r;
+  if (state->count >= WEBUI_FS_MAX_ENTRIES) {
+    state->truncated = TRUE;
+    return 1;
   }
-  f_closedir(&dir);
-  if (fr != FR_OK) return fr;
+  if (!state->first) {
+    r->Write(",");
+  }
+  state->first = FALSE;
 
-  fr = f_unlink(path);  // the folder itself, now empty
-  if (fr == FR_OK) (*removed)++;
-  return fr;
+  r->Write("{\"name\":");
+  JsonString(r, info->name);
+  r->Printf(",\"size\":%lu,\"dir\":%s,\"mtime\":\"",
+            (unsigned long) info->size, info->is_dir ? "true" : "false");
+  WriteDateTime(r, &info->mtime);
+  r->Write("\"");
+  if (!info->is_dir && info->size <= WEBUI_FS_EDIT_MAX &&
+      ((state->at_root && IsEditableName(info->name)) ||
+       IsKeymapName(info->name))) {
+    r->Write(",\"edit\":true");
+  }
+  // Entries the web UI won't rename or delete, so the page can leave
+  // those actions out of the row's menu.
+  char child[560];
+  if ((unsigned) snprintf(child, sizeof(child), "%s%s%s", state->clean,
+                          state->at_root ? "" : "/", info->name) <
+          sizeof(child) &&
+      IsProtectedPath(child)) {
+    r->Write(",\"protected\":true");
+  }
+  r->Write("}");
+
+  state->count++;
+  if ((state->count & 63) == 0) {
+    CScheduler::Get()->Yield();
+  }
+  return 0;
 }
 
 }  // namespace
 
 void WebUiFsVolumes(CSocket *socket) {
   const char *vol = circle_get_disk_volume();
-  char prefix[24];
-  snprintf(prefix, sizeof(prefix), "%s:", vol);
-
-  DWORD free_clusters = 0;
-  FATFS *fs = 0;
-  FRESULT fr = f_getfree(prefix, &free_clusters, &fs);
+  uint32_t total_kb = 0;
+  uint32_t free_kb = 0;
+  int rc = sd_space_kb(&total_kb, &free_kb);
 
   CChunkedResponse r(socket, 200, "OK", "application/json");
   r.Write("{\"volumes\":[");
-  if (fr == FR_OK && fs != 0) {
-    unsigned long total_clusters = fs->n_fatent > 2 ? fs->n_fatent - 2 : 0;
-    unsigned long total_kb =
-        (unsigned long) (((u64) total_clusters * fs->csize) / 2);
-    unsigned long free_kb =
-        (unsigned long) (((u64) free_clusters * fs->csize) / 2);
+  if (rc == SD_OK) {
     r.Write("{\"id\":");
     JsonString(&r, vol);
-    r.Printf(",\"kind\":\"sdcard\",\"total_kb\":%lu,\"free_kb\":%lu}", total_kb,
-             free_kb);
+    r.Printf(",\"kind\":\"sdcard\",\"total_kb\":%lu,\"free_kb\":%lu}",
+             (unsigned long) total_kb, (unsigned long) free_kb);
   }
   r.Write("]}");
   r.Finish();
@@ -535,22 +518,23 @@ void WebUiFsVolumes(CSocket *socket) {
 
 void WebUiFsList(CSocket *socket, const char *query) {
   char clean[560];
-  char fatpath[560];
-  if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
-                    sizeof(fatpath), FALSE) != 0) {
+  if (ResolveTarget(socket, query, clean, sizeof(clean), FALSE) != 0) {
     return;
   }
 
-  DIR dir;
-  FRESULT fr = f_opendir(&dir, fatpath);
-  if (fr == FR_NO_PATH || fr == FR_NO_FILE || fr == FR_INVALID_NAME) {
-    webhttp::SendText(socket, 404, "Not Found", "no such directory\n");
-    return;
-  }
-  if (fr != FR_OK) {
-    webhttp::SendText(socket, 500, "Internal Server Error",
-                      "cannot open directory\n");
-    return;
+  // The root always exists; anything else must be a folder.
+  if (strcmp(clean, "/") != 0) {
+    sd_info info;
+    int rc = sd_stat_info(clean, &info);
+    if (rc == SD_NOT_FOUND || rc == SD_INVALID || (rc == SD_OK && !info.is_dir)) {
+      webhttp::SendText(socket, 404, "Not Found", "no such directory\n");
+      return;
+    }
+    if (rc != SD_OK) {
+      webhttp::SendText(socket, 500, "Internal Server Error",
+                        "cannot open directory\n");
+      return;
+    }
   }
 
   CChunkedResponse r(socket, 200, "OK", "application/json");
@@ -560,73 +544,31 @@ void WebUiFsList(CSocket *socket, const char *query) {
   JsonString(&r, clean);
   r.Write(",\"entries\":[");
 
-  unsigned count = 0;
-  boolean truncated = FALSE;
-  boolean first = TRUE;
-  boolean at_root = strcmp(clean, "/") == 0;
-  FILINFO info;
-  while (f_readdir(&dir, &info) == FR_OK && info.fname[0] != '\0') {
-    if (info.fname[0] == '.' &&
-        (info.fname[1] == '\0' ||
-         (info.fname[1] == '.' && info.fname[2] == '\0'))) {
-      continue;
-    }
-    if (count >= WEBUI_FS_MAX_ENTRIES) {
-      truncated = TRUE;
-      break;
-    }
-    if (!first) {
-      r.Write(",");
-    }
-    first = FALSE;
+  ListState state;
+  state.r = &r;
+  state.clean = clean;
+  state.at_root = strcmp(clean, "/") == 0;
+  state.first = TRUE;
+  state.truncated = FALSE;
+  state.count = 0;
+  sd_list_info(clean, ListEntry, &state);
 
-    boolean is_dir = (info.fattrib & AM_DIR) != 0;
-    r.Write("{\"name\":");
-    JsonString(&r, info.fname);
-    r.Printf(",\"size\":%lu,\"dir\":%s,\"mtime\":\"",
-             (unsigned long) info.fsize, is_dir ? "true" : "false");
-    WriteFatDateTime(&r, info.fdate, info.ftime);
-    r.Write("\"");
-    if (!is_dir && info.fsize <= WEBUI_FS_EDIT_MAX &&
-        ((at_root && IsEditableName(info.fname)) ||
-         IsKeymapName(info.fname))) {
-      r.Write(",\"edit\":true");
-    }
-    // Entries the web UI won't rename or delete, so the page can leave
-    // those actions out of the row's menu.
-    char child[560];
-    if ((unsigned) snprintf(child, sizeof(child), "%s%s%s", clean,
-                            at_root ? "" : "/", info.fname) < sizeof(child) &&
-        IsProtectedPath(child)) {
-      r.Write(",\"protected\":true");
-    }
-    r.Write("}");
-
-    count++;
-    if ((count & 63) == 0) {
-      CScheduler::Get()->Yield();
-    }
-  }
-  f_closedir(&dir);
-
-  r.Printf("],\"truncated\":%s}", truncated ? "true" : "false");
+  r.Printf("],\"truncated\":%s}", state.truncated ? "true" : "false");
   r.Finish();
 }
 
 void WebUiFsDownload(CSocket *socket, const char *query) {
   char clean[560];
-  char fatpath[560];
-  if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
-                    sizeof(fatpath), TRUE) != 0) {
+  if (ResolveTarget(socket, query, clean, sizeof(clean), TRUE) != 0) {
     return;
   }
 
-  FIL file;
-  if (f_open(&file, fatpath, FA_READ) != FR_OK) {
+  sd_file *file = sd_open(clean, SD_READ);
+  if (file == 0) {
     webhttp::SendText(socket, 404, "Not Found", "cannot open file\n");
     return;
   }
-  DWORD size = f_size(&file);
+  uint32_t size = sd_size(file);
 
   const char *base = clean;
   for (const char *p = clean; *p != '\0'; p++) {
@@ -660,13 +602,13 @@ void WebUiFsDownload(CSocket *socket, const char *query) {
                     (unsigned long) size, safe_name);
   if (hn <= 0 || (unsigned) hn >= sizeof(header) ||
       !webhttp::SendAll(socket, header, (unsigned) hn)) {
-    f_close(&file);
+    sd_close(file);
     return;
   }
 
   for (;;) {
-    UINT read_bytes = 0;
-    if (f_read(&file, s_io_buffer, sizeof(s_io_buffer), &read_bytes) != FR_OK) {
+    unsigned read_bytes = 0;
+    if (sd_read(file, s_io_buffer, sizeof(s_io_buffer), &read_bytes) != SD_OK) {
       break;
     }
     if (read_bytes == 0) {
@@ -677,16 +619,14 @@ void WebUiFsDownload(CSocket *socket, const char *query) {
     }
     CScheduler::Get()->Yield();
   }
-  f_close(&file);
+  sd_close(file);
 }
 
 void WebUiFsUpload(CSocket *socket, const char *query,
                    const unsigned char *prefetched, unsigned prefetched_len,
                    long content_length) {
   char clean[560];
-  char fatpath[560];
-  if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
-                    sizeof(fatpath), TRUE) != 0) {
+  if (ResolveTarget(socket, query, clean, sizeof(clean), TRUE) != 0) {
     return;
   }
   if (content_length < 0) {
@@ -704,9 +644,9 @@ void WebUiFsUpload(CSocket *socket, const char *query,
       webhttp::QueryParam(query, "overwrite", overwrite, sizeof(overwrite)) &&
       overwrite[0] == '1';
 
-  FILINFO existing;
-  if (f_stat(fatpath, &existing) == FR_OK) {
-    if (existing.fattrib & AM_DIR) {
+  sd_info existing;
+  if (sd_stat_info(clean, &existing) == SD_OK) {
+    if (existing.is_dir) {
       webhttp::SendText(socket, 409, "Conflict", "target is a directory\n");
       return;
     }
@@ -719,7 +659,7 @@ void WebUiFsUpload(CSocket *socket, const char *query,
   // Write to "<path>.part" and swap it into place on success, so an
   // aborted upload never leaves a truncated file.
   char temppath[576];
-  if ((unsigned) snprintf(temppath, sizeof(temppath), "%s.part", fatpath) >=
+  if ((unsigned) snprintf(temppath, sizeof(temppath), "%s.part", clean) >=
       sizeof(temppath)) {
     webhttp::SendText(socket, 400, "Bad Request", "path too long\n");
     return;
@@ -733,9 +673,9 @@ void WebUiFsUpload(CSocket *socket, const char *query,
     return;
   }
 
-  f_unlink(fatpath);  // ignore result: file may not exist
-  if (f_rename(temppath, fatpath) != FR_OK) {
-    f_unlink(temppath);
+  sd_unlink(clean);  // ignore result: file may not exist
+  if (sd_rename(temppath, clean) != SD_OK) {
+    sd_unlink(temppath);
     webhttp::SendText(socket, 500, "Internal Server Error",
                       "cannot finalise upload\n");
     return;
@@ -744,10 +684,10 @@ void WebUiFsUpload(CSocket *socket, const char *query,
   // Keep the file's original modified time when the client supplies it;
   // otherwise (or if it can't be applied) the file keeps the upload time.
   char mtime[24];
-  FILINFO stamp;
+  sd_time stamp;
   if (webhttp::QueryParam(query, "mtime", mtime, sizeof(mtime)) &&
-      ParseFatDateTime(mtime, &stamp.fdate, &stamp.ftime)) {
-    f_utime(fatpath, &stamp);
+      ParseDateTime(mtime, &stamp)) {
+    sd_set_mtime(clean, &stamp);
   }
 
   char body[64];
@@ -760,9 +700,7 @@ void WebUiFsSave(CSocket *socket, const char *query,
                  const unsigned char *prefetched, unsigned prefetched_len,
                  long content_length) {
   char clean[560];
-  char fatpath[560];
-  if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
-                    sizeof(fatpath), TRUE) != 0) {
+  if (ResolveTarget(socket, query, clean, sizeof(clean), TRUE) != 0) {
     return;
   }
   if (!IsEditablePath(clean)) {
@@ -780,20 +718,20 @@ void WebUiFsSave(CSocket *socket, const char *query,
     return;
   }
 
-  FILINFO existing;
-  boolean exists = f_stat(fatpath, &existing) == FR_OK;
-  if (exists && (existing.fattrib & AM_DIR)) {
+  sd_info existing;
+  boolean exists = sd_stat_info(clean, &existing) == SD_OK;
+  if (exists && existing.is_dir) {
     webhttp::SendText(socket, 409, "Conflict", "target is a directory\n");
     return;
   }
 
   // A keymap can be in a nested folder, so size these for the longest
   // resolved path plus the ".part" / ".bak" suffix.
-  char temppath[sizeof(fatpath) + 8];
-  char bakpath[sizeof(fatpath) + 8];
-  if ((unsigned) snprintf(temppath, sizeof(temppath), "%s.part", fatpath) >=
+  char temppath[sizeof(clean) + 8];
+  char bakpath[sizeof(clean) + 8];
+  if ((unsigned) snprintf(temppath, sizeof(temppath), "%s.part", clean) >=
           sizeof(temppath) ||
-      (unsigned) snprintf(bakpath, sizeof(bakpath), "%s.bak", fatpath) >=
+      (unsigned) snprintf(bakpath, sizeof(bakpath), "%s.bak", clean) >=
           sizeof(bakpath)) {
     webhttp::SendText(socket, 400, "Bad Request", "path too long\n");
     return;
@@ -811,19 +749,19 @@ void WebUiFsSave(CSocket *socket, const char *query,
   // aside once the new one is fully written, and is put back if the final
   // rename fails, so a failed save never leaves a config file missing.
   if (exists) {
-    f_unlink(bakpath);  // ignore result: an older backup may not exist
-    if (f_rename(fatpath, bakpath) != FR_OK) {
-      f_unlink(temppath);
+    sd_unlink(bakpath);  // ignore result: an older backup may not exist
+    if (sd_rename(clean, bakpath) != SD_OK) {
+      sd_unlink(temppath);
       webhttp::SendText(socket, 500, "Internal Server Error",
                         "cannot back up the existing file\n");
       return;
     }
   }
-  if (f_rename(temppath, fatpath) != FR_OK) {
+  if (sd_rename(temppath, clean) != SD_OK) {
     if (exists) {
-      f_rename(bakpath, fatpath);
+      sd_rename(bakpath, clean);
     }
-    f_unlink(temppath);
+    sd_unlink(temppath);
     webhttp::SendText(socket, 500, "Internal Server Error",
                       "cannot finalise save\n");
     return;
@@ -837,9 +775,7 @@ void WebUiFsSave(CSocket *socket, const char *query,
 
 void WebUiFsDelete(CSocket *socket, const char *query) {
   char clean[560];
-  char fatpath[560];
-  if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
-                    sizeof(fatpath), TRUE) != 0) {
+  if (ResolveTarget(socket, query, clean, sizeof(clean), TRUE) != 0) {
     return;
   }
   if (IsProtectedPath(clean)) {
@@ -850,13 +786,12 @@ void WebUiFsDelete(CSocket *socket, const char *query) {
   // &recursive=1 deletes a folder together with its contents; without it
   // only an empty folder can be removed.
   char recursive[4];
-  FILINFO stat;
+  sd_info stat;
   if (webhttp::QueryParam(query, "recursive", recursive, sizeof(recursive)) &&
-      recursive[0] == '1' && f_stat(fatpath, &stat) == FR_OK &&
-      (stat.fattrib & AM_DIR)) {
-    FILINFO info;
+      recursive[0] == '1' && sd_stat_info(clean, &stat) == SD_OK &&
+      stat.is_dir) {
     unsigned removed = 0;
-    if (DeleteTree(fatpath, sizeof(fatpath), 0, &info, &removed) == FR_OK) {
+    if (sd_remove_tree(clean, &removed, YieldWhileDeleting, 0) == SD_OK) {
       const char *ok = "{\"ok\":true}";
       webhttp::SendResponse(socket, 200, "OK", "application/json", ok,
                             (unsigned) strlen(ok));
@@ -871,17 +806,17 @@ void WebUiFsDelete(CSocket *socket, const char *query) {
     return;
   }
 
-  FRESULT fr = f_unlink(fatpath);
-  if (fr == FR_NO_FILE || fr == FR_NO_PATH || fr == FR_INVALID_NAME) {
+  int rc = sd_unlink(clean);
+  if (rc == SD_NOT_FOUND || rc == SD_INVALID) {
     webhttp::SendText(socket, 404, "Not Found", "no such file\n");
     return;
   }
-  if (fr == FR_DENIED) {
+  if (rc == SD_DENIED) {
     webhttp::SendText(socket, 409, "Conflict",
                       "cannot delete (directory not empty or read-only)\n");
     return;
   }
-  if (fr != FR_OK) {
+  if (rc != SD_OK) {
     webhttp::SendText(socket, 500, "Internal Server Error", "delete failed\n");
     return;
   }
@@ -895,9 +830,7 @@ void WebUiFsDelete(CSocket *socket, const char *query) {
 
 void WebUiFsMkdir(CSocket *socket, const char *query) {
   char clean[560];
-  char fatpath[560];
-  if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
-                    sizeof(fatpath), TRUE) != 0) {
+  if (ResolveTarget(socket, query, clean, sizeof(clean), TRUE) != 0) {
     return;
   }
   if (!IsValidEntryName(strrchr(clean, '/') + 1)) {
@@ -909,22 +842,21 @@ void WebUiFsMkdir(CSocket *socket, const char *query) {
     return;
   }
 
-  FILINFO info;
-  if (f_stat(fatpath, &info) == FR_OK) {
+  if (sd_stat_info(clean, 0) == SD_OK) {
     webhttp::SendText(socket, 409, "Conflict", "already exists\n");
     return;
   }
 
-  FRESULT fr = f_mkdir(fatpath);
-  if (fr == FR_EXIST) {
+  int rc = sd_mkdir(clean);
+  if (rc == SD_EXISTS) {
     webhttp::SendText(socket, 409, "Conflict", "already exists\n");
     return;
   }
-  if (fr == FR_NO_PATH || fr == FR_NO_FILE) {
+  if (rc == SD_NOT_FOUND) {
     webhttp::SendText(socket, 404, "Not Found", "parent folder not found\n");
     return;
   }
-  if (fr != FR_OK) {
+  if (rc != SD_OK) {
     webhttp::SendText(socket, 500, "Internal Server Error",
                       "cannot create folder\n");
     return;
@@ -939,9 +871,7 @@ void WebUiFsMkdir(CSocket *socket, const char *query) {
 // so `to` is a bare name, never a path.
 void WebUiFsRename(CSocket *socket, const char *query) {
   char clean[560];
-  char fatpath[560];
-  if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
-                    sizeof(fatpath), TRUE) != 0) {
+  if (ResolveTarget(socket, query, clean, sizeof(clean), TRUE) != 0) {
     return;
   }
 
@@ -954,12 +884,9 @@ void WebUiFsRename(CSocket *socket, const char *query) {
 
   const char *old_name = strrchr(clean, '/') + 1;
   char new_clean[560];
-  char new_fatpath[560];
   if ((unsigned) snprintf(new_clean, sizeof(new_clean), "%.*s/%s",
                           (int) (old_name - 1 - clean), clean,
-                          new_name) >= sizeof(new_clean) ||
-      BuildFatPath(circle_get_disk_volume(), new_clean, new_fatpath,
-                   sizeof(new_fatpath)) != 0) {
+                          new_name) >= sizeof(new_clean)) {
     webhttp::SendText(socket, 400, "Bad Request", "path too long\n");
     return;
   }
@@ -971,29 +898,28 @@ void WebUiFsRename(CSocket *socket, const char *query) {
     return;
   }
 
-  FILINFO info;
-  if (f_stat(fatpath, &info) != FR_OK) {
+  if (sd_stat_info(clean, 0) != SD_OK) {
     webhttp::SendText(socket, 404, "Not Found", "no such file\n");
     return;
   }
 
   boolean unchanged = strcmp(old_name, new_name) == 0;
   boolean case_only = !unchanged && CiEqual(old_name, new_name);
-  if (!unchanged && !case_only && f_stat(new_fatpath, &info) == FR_OK) {
+  if (!unchanged && !case_only && sd_stat_info(new_clean, 0) == SD_OK) {
     webhttp::SendText(socket, 409, "Conflict", "already exists\n");
     return;
   }
 
-  FRESULT fr = unchanged ? FR_OK : f_rename(fatpath, new_fatpath);
-  if (fr == FR_EXIST) {
+  int rc = unchanged ? SD_OK : sd_rename(clean, new_clean);
+  if (rc == SD_EXISTS) {
     webhttp::SendText(socket, 409, "Conflict", "already exists\n");
     return;
   }
-  if (fr == FR_NO_FILE || fr == FR_NO_PATH) {
+  if (rc == SD_NOT_FOUND) {
     webhttp::SendText(socket, 404, "Not Found", "no such file\n");
     return;
   }
-  if (fr != FR_OK) {
+  if (rc != SD_OK) {
     webhttp::SendText(socket, 500, "Internal Server Error",
                       "rename failed\n");
     return;
@@ -1008,9 +934,7 @@ void WebUiFsRename(CSocket *socket, const char *query) {
 
 void WebUiFsAutostart(CSocket *socket, const char *query) {
   char clean[560];
-  char fatpath[560];
-  if (ResolveTarget(socket, query, clean, sizeof(clean), fatpath,
-                    sizeof(fatpath), TRUE) != 0) {
+  if (ResolveTarget(socket, query, clean, sizeof(clean), TRUE) != 0) {
     return;
   }
   if (!IsAutostartable(clean)) {
@@ -1019,14 +943,23 @@ void WebUiFsAutostart(CSocket *socket, const char *query) {
     return;
   }
 
-  FILINFO info;
-  if (f_stat(fatpath, &info) != FR_OK || (info.fattrib & AM_DIR)) {
+  sd_info info;
+  if (sd_stat_info(clean, &info) != SD_OK || info.is_dir) {
     webhttp::SendText(socket, 404, "Not Found", "no such file\n");
     return;
   }
 
-  // Runs later on the emulator core; failures are only logged there.
-  emu_autostart_interrupt(fatpath);
+  // Runs later on the emulator core, through stdio, so it gets the path
+  // with the card's volume ("SD:/games/x.d64").
+  char volume_path[600];
+  if ((unsigned) snprintf(volume_path, sizeof(volume_path), "%s:%s",
+                          circle_get_disk_volume(), clean) >=
+      sizeof(volume_path)) {
+    webhttp::SendText(socket, 400, "Bad Request", "path too long\n");
+    return;
+  }
+  // Failures are only logged there.
+  emu_autostart_interrupt(volume_path);
 
   const char *ok = "{\"ok\":true}";
   webhttp::SendResponse(socket, 202, "Accepted", "application/json", ok,

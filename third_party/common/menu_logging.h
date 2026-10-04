@@ -15,7 +15,7 @@
 
 #include <circle/device.h>
 #include <circle/spinlock.h>
-#include <ff.h>
+#include "../../src/sdcard/sd_fs.h"
 
 #define BMC_LOG_FILE_QUEUE_SIZE 32768
 #define BMC_LOG_FILE_WRITE_SIZE 1024
@@ -33,7 +33,7 @@ public:
 
 private:
 	CDevice *mSerial;
-	FIL mFile;
+	sd_file *mFile;
 	CSpinLock mFileLock;
 	boolean mFileOpen;
 	char *mFileQueue;

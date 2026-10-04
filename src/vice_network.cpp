@@ -17,6 +17,7 @@
 #include "network_time_sync.h"
 #include "../third_party/common/circle.h"
 #include "fbl.h"
+#include "sdcard/sd_fs.h"
 
 #include <stddef.h>
 
@@ -73,13 +74,10 @@ static bool HasWifiFirmwareFile(const char *firmware_path,
   CString path;
   path.Format("%s%s", firmware_path, filename);
 
-  FIL file;
-  if (f_open(&file, (const char *)path, FA_READ) != FR_OK) {
-    return false;
-  }
-  bool has_contents = f_size(&file) > 0;
-  f_close(&file);
-  return has_contents;
+  uint32_t size = 0;
+  int is_dir = 0;
+  return sd_stat((const char *)path, &size, &is_dir) == SD_OK && !is_dir &&
+         size > 0;
 }
 
 static bool HasWifiFirmware(const char *firmware_path) {

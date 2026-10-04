@@ -27,7 +27,7 @@ extern "C" {
 #include <circle/device.h>
 #include <circle/devicenameservice.h>
 #include <circle/timer.h>
-#include <ff.h>
+#include "sdcard/sd_fs.h"
 
 extern "C" {
 
@@ -140,11 +140,11 @@ void circle_io_benchmark(void) {
   for (unsigned ci = 0; ci < sizeof(kFatChunks) / sizeof(kFatChunks[0]); ci++) {
     unsigned chunk = kFatChunks[ci];
 
-    FIL fil;
+    sd_file *fil = 0;
     const char *use = 0;
     for (unsigned i = 0; i < sizeof(candidates) / sizeof(candidates[0]) && !use;
          i++) {
-      if (f_open(&fil, candidates[i], FA_READ) == FR_OK) {
+      if ((fil = sd_open(candidates[i], SD_READ)) != 0) {
         use = candidates[i];
       }
     }
@@ -156,14 +156,14 @@ void circle_io_benchmark(void) {
     unsigned totKiB = 0;
     unsigned t0 = CTimer::GetClockTicks();
     for (;;) {
-      UINT nread = 0;
-      if (f_read(&fil, buf, chunk, &nread) != FR_OK || nread == 0) {
+      unsigned nread = 0;
+      if (sd_read(fil, buf, chunk, &nread) != SD_OK || nread == 0) {
         break;
       }
       totKiB += nread / 1024;
     }
     unsigned totUs = CTimer::GetClockTicks() - t0;
-    f_close(&fil);
+    sd_close(fil);
 
     unsigned kbps = totUs ? (unsigned)((totKiB * 1000000ull) / totUs) : 0;
     printf("%-9s %8u %8s %8s %8u %9u  (%s %uKiB)\n",

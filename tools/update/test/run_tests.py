@@ -59,7 +59,8 @@ def build(work):
         objs.append(obj)
     cmd = [cc, "-std=gnu11", "-Wall", "-Wextra", "-Werror"] + common + [
            "-I", SRC, "-o", exe,
-           os.path.join(HERE, "update_cli.c"), os.path.join(REPO, "tools", "sdcard", "sd_fs_posix.c")]
+           os.path.join(HERE, "update_cli.c"), os.path.join(REPO, "tools", "sdcard", "sd_fs_posix.c"),
+           os.path.join(REPO, "src", "sdcard", "sd_fs_file.c")]
     cmd += [os.path.join(SRC, s) for s in SOURCES] + objs
     subprocess.run(cmd, check=True)
     return exe
