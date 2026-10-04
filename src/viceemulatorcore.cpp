@@ -24,6 +24,7 @@
 extern "C" {
 #include "../third_party/vice-3.3/src/main.h"
 #include "../third_party/common/semaphore.h"
+#include "profiles/profiles.h"
 
 extern void circle_kernel_core_init_complete(int core);
 }
@@ -93,6 +94,7 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
   printf("Starting emulator main loop\n");
 
 #if defined(RASPI_C64)
+  const char *machine = "C64";
   int argc = 9;
   char *argv[] = {
       (char *)"vice", timing_option_, (char *)"-sounddev", (char *)"raspi",
@@ -102,6 +104,7 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
       (char *)"+VICIIvcache",
   };
 #elif defined(RASPI_C128)
+  const char *machine = "C128";
   int argc = 12;
   char *argv[] = {
       (char *)"vice", timing_option_, (char *)"-sounddev", (char *)"raspi",
@@ -112,6 +115,7 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
       (char *)"+VDCvcache",
   };
 #elif defined(RASPI_VIC20)
+  const char *machine = "VIC20";
   int argc = 11;
   char *argv[] = {
       (char *)"vice", timing_option_, (char *)"-sounddev", (char *)"raspi",
@@ -121,6 +125,7 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
       (char *)"+VICvcache",
   };
 #elif defined(RASPI_PLUS4)
+  const char *machine = "Plus4";
   int argc = 11;
   char *argv[] = {
       (char *)"vice", timing_option_, (char *)"-sounddev", (char *)"raspi",
@@ -130,6 +135,7 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
       (char *)"+TEDvcache",
   };
 #elif defined(RASPI_PET)
+  const char *machine = "Pet";
   int argc = 11;
   char *argv[] = {
       (char *)"vice", timing_option_, (char *)"-sounddev", (char *)"raspi",
@@ -141,7 +147,21 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
 #error "RASPI_[model] NOT DEFINED"
 #endif
   emu_machine_init(m_options->GetRasterSkip(), m_options->GetRasterSkip2());
-  main_program(argc, argv);
+
+  // Decide which profile runs before VICE reads its settings, and point
+  // VICE at the profile's vice.ini (Main: the usual one).
+  profiles_boot_init(machine);
+  const char *vice_config = profiles_vice_config();
+  char *all_argv[16];
+  int all_argc = 0;
+  for (int i = 0; i < argc; i++) {
+    all_argv[all_argc++] = argv[i];
+  }
+  if (vice_config != NULL) {
+    all_argv[all_argc++] = (char *)"-config";
+    all_argv[all_argc++] = (char *)vice_config;
+  }
+  main_program(all_argc, all_argv);
   emu_exit();
 }
 

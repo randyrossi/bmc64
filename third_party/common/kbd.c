@@ -54,7 +54,6 @@ static unsigned long video_reset_time_delay = TICKS_PER_SECOND * 5;
 
 key_combo_state_t key_combo_states[NUM_KEY_COMBOS];
 
-extern void reboot(void);
 
 void kbd_set_hotkey_function(unsigned int slot, long key, int function) {
   if (slot >= NUM_KEY_COMBOS)
@@ -442,9 +441,9 @@ void emu_key_released(long key) {
     f7_down = 0;
     if (commodore_down &&
        (circle_get_ticks() - video_reset_time_down >= video_reset_time_delay)) {
-       // Reset to 'safe' video mode.
-       switch_safe();
-       reboot();
+       // Reset to 'safe' video mode, on the main loop (this is the key
+       // interrupt, where writing files can lock up).
+       emu_safe_mode_interrupt();
     }
   }
 

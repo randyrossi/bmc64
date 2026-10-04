@@ -33,6 +33,7 @@
 #include <unistd.h>
 
 #include "circle.h"
+#include "../../src/profiles/profiles.h"
 
 #define OPTION_SCRATCH_LEN (KEY_LEN+1+VALUE_LEN+1)
 
@@ -804,6 +805,9 @@ int switch_apply_files(struct machine_entry* head) {
 }
 
 void switch_safe() {
+  // Safe mode also starts Main at the next power-on.
+  profiles_reset_to_main();
+
   struct machine_entry* entry =
      (struct machine_entry*) malloc(sizeof(struct machine_entry));
 

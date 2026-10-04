@@ -31,6 +31,7 @@ static int last_mod;
 static unsigned long ticks;
 static int safe_video_calls;
 static int reboot_calls;
+static int safe_mode_requests;
 
 void assertion_failed(const char *expression, const char *file, unsigned line) {
   fprintf(stderr, "%s:%u: %s\n", file, line, expression);
@@ -62,6 +63,7 @@ void circle_lock_acquire(void) {}
 void circle_lock_release(void) {}
 unsigned long circle_get_ticks(void) { return ticks; }
 void switch_safe(void) { safe_video_calls++; }
+void emu_safe_mode_interrupt(void) { safe_mode_requests++; }
 void reboot(void) { reboot_calls++; }
 
 int joy_key_down(unsigned int port, int key) {
@@ -387,7 +389,8 @@ int main(void) {
   ticks = 5000001UL;
   emu_key_released(KEYCODE_F7);
   emu_key_released(commodore_key_sym);
-  assert(safe_video_calls == 1 && reboot_calls == 1);
+  // The key handler only asks; the main loop does the switch and reboot.
+  assert(safe_mode_requests == 1 && safe_video_calls == 0 && reboot_calls == 0);
 
   int emulator_before = emulator_events;
   int menu_before = menu_events;

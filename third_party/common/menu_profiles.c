@@ -15,8 +15,13 @@
 #include "ui.h"
 #include "../../src/profiles/profiles.h"
 
+extern void reboot(void);
+
 // Folder whose name shows the running profile's autostart.
 static struct menu_item *autostart_folder;
+// Items that show the running profile's name (NULL for Main).
+static struct menu_item *status_item;
+static struct menu_item *save_item;
 
 static void show_result(int result) {
   if (result == PROFILES_NOT_IMPLEMENTED) {
@@ -133,10 +138,15 @@ static int add_profile_buttons(struct menu_item *root, int id,
 // ---- Select profile ----
 
 static void start_chosen(struct menu_item *item) {
-  if (item->id == MENU_PROFILES_SWITCH_TO) {
-    show_result(profiles_switch_to(item->str_value));
+  int result = item->id == MENU_PROFILES_SWITCH_TO
+                   ? profiles_switch_to(item->str_value)
+                   : profiles_start_once(item->str_value);
+  if (result == PROFILES_OK) {
+    reboot();
+  } else if (result == PROFILES_NOT_IMPLEMENTED) {
+    ui_error("Profiles for another machine\naren't supported yet");
   } else {
-    show_result(profiles_start_once(item->str_value));
+    ui_error("Can't start this profile");
   }
 }
 
@@ -180,14 +190,48 @@ static void show_select_list(void) {
 
 // ---- New profile / Rename ----
 
+static void update_name_labels(void) {
+  if (status_item != NULL) {
+    snprintf(status_item->name, sizeof(status_item->name), "Profile: %s",
+             profiles_running()->name);
+  }
+  if (save_item != NULL) {
+    snprintf(save_item->name, sizeof(save_item->name), "Save settings (%s)",
+             profiles_running()->name);
+  }
+}
+
+// Saves the current settings as a new profile and restarts into it ([P6]).
+static void create_profile(const char *name) {
+  char id[PROFILES_MAX_ID_LEN + 1];
+  if (profiles_create(name, id, sizeof(id)) != PROFILES_OK) {
+    ui_error("Can't create the profile");
+    return;
+  }
+  if (menu_save_settings_to_profile(id) != 0) {
+    profiles_delete(id);
+    ui_error("Can't save the new profile");
+    return;
+  }
+  if (profiles_switch_to(id) != PROFILES_OK) {
+    ui_error("Profile saved, but can't\nswitch to it");
+    return;
+  }
+  reboot();
+}
+
 static void name_entered(struct menu_item *item) {
   if (item->str_value[0] == '\0') {
     return;
   }
   if (item->id == MENU_PROFILES_NEW_NAME) {
-    show_result(profiles_save_new(item->str_value));
+    create_profile(item->str_value);
+  } else if (profiles_rename_running(item->str_value) == PROFILES_OK) {
+    update_name_labels();
+    ui_pop_menu();
+    ui_info("Profile renamed");
   } else {
-    show_result(profiles_rename_running(item->str_value));
+    ui_error("Can't rename the profile");
   }
 }
 
@@ -202,7 +246,14 @@ static void show_name_dialog(int id, const char *title, const char *name) {
 // ---- Delete ----
 
 static void delete_confirmed(struct menu_item *item) {
-  show_result(profiles_delete(item->str_value));
+  if (profiles_delete(item->str_value) != PROFILES_OK) {
+    ui_error("Can't delete the profile.\nIs anything else in its\nfolder?");
+    return;
+  }
+  // Close the confirmation and the list (item is freed by this).
+  ui_pop_menu();
+  ui_pop_menu();
+  ui_info("Profile deleted");
 }
 
 static void delete_selected(struct menu_item *item) {
@@ -292,9 +343,8 @@ void menu_profiles_add_status_line(struct menu_item *root) {
   if (profiles_running_is_main()) {
     return;
   }
-  struct menu_item *item = ui_menu_add_button(MENU_TEXT, root, "");
-  snprintf(item->name, sizeof(item->name), "Profile: %s",
-           profiles_running()->name);
+  status_item = ui_menu_add_button(MENU_TEXT, root, "");
+  update_name_labels();
 }
 
 void build_profiles_menu(struct menu_item *root) {
@@ -327,6 +377,14 @@ void menu_profiles_label_save_item(struct menu_item *item) {
   if (profiles_running_is_main()) {
     return;
   }
-  snprintf(item->name, sizeof(item->name), "Save settings (%s)",
-           profiles_running()->name);
+  save_item = item;
+  update_name_labels();
+}
+
+void menu_profiles_boot_complete(void) {
+  profiles_after_boot();
+  const char *message = profiles_boot_message();
+  if (message[0] != '\0') {
+    ui_error("%s", message);
+  }
 }

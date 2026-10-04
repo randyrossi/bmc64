@@ -21,6 +21,7 @@
 
 extern "C" {
 #include "../third_party/plus4emu/main.h"
+#include "profiles/profiles.h"
 }
 
 #include "../third_party/plus4emu/resid/filter.hpp"
@@ -52,6 +53,9 @@ void Plus4EmulatorCore::RunMainPlus4(bool wait) {
   int argc = 0;
   char *argv[] = {};
   emu_machine_init(m_options->GetRasterSkip(), false /* no vdc */);
+  // Decide which profile runs before its settings are read. Plus4Emu has
+  // no VICE settings file, so only the BMC64 settings file changes.
+  profiles_boot_init("Plus4Emu");
   main_program(argc, argv);
   emu_exit();
 }

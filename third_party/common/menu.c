@@ -52,6 +52,7 @@
 #include "menu_logging.h"
 #include "menu_gpio.h"
 #include "menu_profiles.h"
+#include "../../src/profiles/profiles.h"
 #include "overlay.h"
 #include "raspi_util.h"
 #include "ui.h"
@@ -1437,36 +1438,36 @@ static void next_integer_scaling(int layer,
   }
 }
 
-static int save_settings() {
-  FILE *fp;
-  const char *settings_filename;
+// The machine's usual settings file, which holds Main's settings.
+static const char *main_settings_filename(void) {
   switch (emux_machine_class) {
   case BMC64_MACHINE_CLASS_C64:
-    settings_filename = "/settings.txt";
-    break;
+    return "/settings.txt";
   case BMC64_MACHINE_CLASS_C128:
-    settings_filename = "/settings-c128.txt";
-    break;
+    return "/settings-c128.txt";
   case BMC64_MACHINE_CLASS_VIC20:
-    settings_filename = "/settings-vic20.txt";
-    break;
+    return "/settings-vic20.txt";
   case BMC64_MACHINE_CLASS_PLUS4:
-    settings_filename = "/settings-plus4.txt";
-    break;
+    return "/settings-plus4.txt";
   case BMC64_MACHINE_CLASS_PLUS4EMU:
-    settings_filename = "/settings-plus4emu.txt";
-    break;
+    return "/settings-plus4emu.txt";
   case BMC64_MACHINE_CLASS_PET:
-    settings_filename = "/settings-pet.txt";
-    break;
+    return "/settings-pet.txt";
   default:
     printf("ERROR: Unhandled machine\n");
-    return 1;
+    return NULL;
   }
+}
+
+// Writes the settings to settings_filename, and VICE's to vice_ini_path
+// (NULL: the vice.ini the emulator started with).
+static int save_settings_to(const char *settings_filename,
+                            const char *vice_ini_path) {
+  FILE *fp;
 
   fp = fopen(settings_filename, "w");
 
-  int r = emux_save_settings();
+  int r = emux_save_settings(vice_ini_path);
   if (r < 0) {
     printf("resource_save failed with %d\n", r);
     if (fp != NULL) {
@@ -1650,6 +1651,23 @@ static int save_settings() {
   return 0;
 }
 
+// Saves into the running profile (Main: the machine's usual files).
+static int save_settings() {
+  const char *main_file = main_settings_filename();
+  if (main_file == NULL) {
+    return 1;
+  }
+  return save_settings_to(profiles_settings_file(main_file), NULL);
+}
+
+int menu_save_settings_to_profile(const char *id) {
+  char settings_path[256];
+  char vice_ini_path[256];
+  profiles_path(id, "settings.txt", settings_path, sizeof(settings_path));
+  profiles_path(id, "vice.ini", vice_ini_path, sizeof(vice_ini_path));
+  return save_settings_to(settings_path, vice_ini_path);
+}
+
 // Make joydev reflect menu choice
 static void ui_set_joy_devs() {
   if (port_1_menu_item) {
@@ -1701,30 +1719,11 @@ static void load_settings() {
   pot_y_high_value = 192;
   pot_y_low_value = 64;
 
-  FILE *fp;
-  switch (emux_machine_class) {
-  case BMC64_MACHINE_CLASS_C64:
-    fp = fopen("/settings.txt", "r");
-    break;
-  case BMC64_MACHINE_CLASS_C128:
-    fp = fopen("/settings-c128.txt", "r");
-    break;
-  case BMC64_MACHINE_CLASS_VIC20:
-    fp = fopen("/settings-vic20.txt", "r");
-    break;
-  case BMC64_MACHINE_CLASS_PLUS4:
-    fp = fopen("/settings-plus4.txt", "r");
-    break;
-  case BMC64_MACHINE_CLASS_PLUS4EMU:
-    fp = fopen("/settings-plus4emu.txt", "r");
-    break;
-  case BMC64_MACHINE_CLASS_PET:
-    fp = fopen("/settings-pet.txt", "r");
-    break;
-  default:
-    printf("ERROR: Unhandled machine\n");
+  const char *main_file = main_settings_filename();
+  if (main_file == NULL) {
     return;
   }
+  FILE *fp = fopen(profiles_settings_file(main_file), "r");
 
   if (wifi_ssid_item != NULL) {
     load_wifi_settings();
@@ -3421,6 +3420,7 @@ static void menu_value_changed(struct menu_item *item) {
     if (save_wifi_settings() != 0) {
       ui_error("Cannot save WiFi settings");
     } else {
+      profiles_before_reboot();
       reboot();
     }
     return;
@@ -3747,17 +3747,20 @@ static void menu_value_changed(struct menu_item *item) {
       }
     } else if (confirmation_id == MENU_NETWORK_ENABLED) {
       if (save_settings() == 0) {
+        profiles_before_reboot();
         reboot();
       } else {
         ui_error("Cannot save settings");
       }
     } else if (confirmation_id == MENU_WEBUI_ENABLED) {
       if (save_settings() == 0) {
+        profiles_before_reboot();
         reboot();
       } else {
         ui_error("Cannot save settings");
       }
     } else if (confirmation_id == MENU_LOGGING_DESTINATION) {
+      profiles_before_reboot();
       reboot();
     }
     break;

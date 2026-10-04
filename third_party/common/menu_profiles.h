@@ -25,4 +25,16 @@ void build_profiles_drive_items(struct menu_item *drives);
 // Labels "Save settings" with the running profile, unless Main is running.
 void menu_profiles_label_save_item(struct menu_item *item);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Called once the emulator is running: finishes start-up and shows any
+// message about it.
+void menu_profiles_boot_complete(void);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

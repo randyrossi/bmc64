@@ -745,6 +745,10 @@ void menu_update_network_status(void);
 void menu_quick_func(int button_assignment);
 // Autostart a file on the main loop (see emu_autostart_interrupt).
 void menu_autostart(const char *path);
+
+// Saves the current settings into a profile's folder (profiles_create()
+// makes the folder). Returns 0 on success.
+int menu_save_settings_to_profile(const char *id);
 const char* function_to_string(int);
 
 #endif

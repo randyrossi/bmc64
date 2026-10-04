@@ -1451,9 +1451,10 @@ void emux_get_string_1(StringSetting setting, const char** dest, int param) {
   }
 }
 
-int emux_save_settings(void) {
+int emux_save_settings(const char *vice_ini_path) {
   // All our  additional settings are handled by emux_save_additional_settings
-  // Nothing to do here.
+  // Nothing to do here. There is no VICE settings file.
+  (void)vice_ini_path;
   return 0;
 }
 

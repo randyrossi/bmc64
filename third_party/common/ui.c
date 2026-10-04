@@ -42,6 +42,9 @@
 #include "menu_text_layout.h"
 #include "font.h"
 #include "menu_timing.h"
+#include "menu_switch.h"
+
+extern void reboot(void);
 
 #define COLOR16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | (b)>>3)
 
@@ -117,6 +120,8 @@ int pending_emu_quick_func;
 // Guarded by the circle lock; consumed on the emulator main loop.
 static char pending_emu_autostart_path[PENDING_EMU_AUTOSTART_MAX];
 static volatile int pending_emu_autostart;
+// Set by emu_safe_mode_interrupt().
+static volatile int pending_emu_safe_mode;
 
 static int osd_active;
 // Set while a view outside the menu system owns the UI layer and key queue.
@@ -966,6 +971,14 @@ void ui_check_key(void) {
 }
 
 void ui_handle_toggle_or_quick_func() {
+  if (pending_emu_safe_mode) {
+    // Safe mode writes config.txt, cmdline.txt and /profiles/active.txt, so
+    // it runs here on the main loop rather than in the key interrupt.
+    pending_emu_safe_mode = 0;
+    switch_safe();
+    reboot();
+    return;
+  }
   // This ensures we transition from emulator to ui only after we've
   // submitted key events and let the emulator process them. Otherwise,
   // we can leave keys in a down state unintentionally. Needs to be set
@@ -1861,6 +1874,10 @@ void ui_set_render_current_item_only(int v) {
 
 void emu_quick_func_interrupt(int button_assignment) {
   pending_emu_quick_func = button_assignment;
+}
+
+void emu_safe_mode_interrupt(void) {
+  pending_emu_safe_mode = 1;
 }
 
 void emu_autostart_interrupt(const char *path) {
