@@ -47,6 +47,17 @@ void profiles_boot_init(const char *booted) {
       id = af.once;
       running_once = 1;
       once_to_remove = 1;
+   } else if (af.bad_once[0]) {
+      // A typo in once=: ignored, the usual profile starts.
+      snprintf(boot_message, sizeof(boot_message),
+               "once=%s in active.txt\nisn't a profile id.\nIgnored it.",
+               af.bad_once);
+   }
+   if (!af.once[0] && af.bad_profile[0]) {
+      // A typo in profile=: Main starts.
+      snprintf(boot_message, sizeof(boot_message),
+               "profile=%s in active.txt\nisn't a profile id.\n"
+               "Started Main instead.", af.bad_profile);
    }
    if (strcmp(id, PROFILES_MAIN_ID) == 0) {
       return;

@@ -173,19 +173,24 @@ int profile_file_write(const char *id, const ProfileFile *pf) {
 
 static void active_key(void *ctx, const char *key, const char *value) {
    ActiveFile *af = (ActiveFile *)ctx;
-   if (!profiles_id_valid(value)) {
+   int is_profile = strcmp(key, "profile") == 0;
+   if (!is_profile && strcmp(key, "once") != 0) {
       return;
    }
-   if (strcmp(key, "profile") == 0) {
-      strcpy(af->profile, value);
-   } else if (strcmp(key, "once") == 0) {
-      strcpy(af->once, value);
+   if (profiles_id_valid(value)) {
+      strcpy(is_profile ? af->profile : af->once, value);
+   } else if (value[0] != '\0') {
+      // A typo, a name instead of an id, upper case...
+      pkv_copy(is_profile ? af->bad_profile : af->bad_once,
+               sizeof(af->bad_profile), value);
    }
 }
 
 void active_file_parse(char *text, ActiveFile *af) {
    strcpy(af->profile, PROFILES_MAIN_ID);
    af->once[0] = '\0';
+   af->bad_profile[0] = '\0';
+   af->bad_once[0] = '\0';
    pkv_parse(text, active_key, af);
 }
 
@@ -194,6 +199,8 @@ int active_file_read(ActiveFile *af) {
    if (sd_read_file(PROFILES_ACTIVE_FILE, text, sizeof(text)) < 0) {
       strcpy(af->profile, PROFILES_MAIN_ID);
       af->once[0] = '\0';
+      af->bad_profile[0] = '\0';
+      af->bad_once[0] = '\0';
       return PROFILES_ERROR;
    }
    active_file_parse(text, af);

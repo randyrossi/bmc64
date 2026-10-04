@@ -374,6 +374,16 @@ static void test_active_parse(void) {
    active_file_parse(text, &af);
    CHECK_STR(af.profile, "main");
    CHECK_STR(af.once, "");
+   CHECK_STR(af.bad_profile, "");
+   CHECK_STR(af.bad_once, "");
+
+   // Invalid values are kept, so start-up can say what was wrong.
+   snprintf(text, sizeof(text), "profile=My Game\nonce=../x\n");
+   active_file_parse(text, &af);
+   CHECK_STR(af.profile, "main");
+   CHECK_STR(af.once, "");
+   CHECK_STR(af.bad_profile, "My Game");
+   CHECK_STR(af.bad_once, "../x");
 }
 
 // ---- Ids ----
@@ -490,6 +500,35 @@ static void test_boot_profile(void) {
    CHECK(strstr(profiles_boot_message(), "PAL 16K") != NULL);
    profiles_boot_init("VIC20");
    CHECK_STR(profiles_running()->id, "vic");
+
+   // A typo in profile= starts Main, with a message naming it.
+   write_file("/profiles/active.txt", "profile=GEOS\n");
+   profiles_boot_init("C64");
+   CHECK(profiles_running_is_main());
+   CHECK(strstr(profiles_boot_message(), "profile=GEOS") != NULL);
+   write_file("/profiles/active.txt", "profile=my game\n");
+   profiles_boot_init("C64");
+   CHECK(profiles_running_is_main());
+   CHECK(strstr(profiles_boot_message(), "my game") != NULL);
+
+   // A typo in once= is ignored with a message; the usual profile starts.
+   write_file("/profiles/active.txt", "profile=geos\nonce=Elite!\n");
+   profiles_boot_init("C64");
+   CHECK_STR(profiles_running()->id, "geos");
+   CHECK(strstr(profiles_boot_message(), "once=Elite!") != NULL);
+
+   // A valid once wins over a typo in profile=, without a message.
+   make_profile("elite", "name=Elite\nmachine=C64\n");
+   write_file("/profiles/active.txt", "profile=GEOS\nonce=elite\n");
+   profiles_boot_init("C64");
+   CHECK_STR(profiles_running()->id, "elite");
+   CHECK_STR(profiles_boot_message(), "");
+
+   // An empty value is just "not set": no message.
+   write_file("/profiles/active.txt", "profile=\n");
+   profiles_boot_init("C64");
+   CHECK(profiles_running_is_main());
+   CHECK_STR(profiles_boot_message(), "");
 
    // profile=main is Main without a message, with profiles in use.
    write_file("/profiles/active.txt", "profile=main\n");

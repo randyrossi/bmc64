@@ -49,10 +49,14 @@ int profile_file_write(const char *id, const ProfileFile *pf);
 typedef struct {
    char profile[PROFILES_MAX_ID_LEN + 1];
    char once[PROFILES_MAX_ID_LEN + 1];
+   // Values that aren't profile ids (e.g. a typo), cut to fit; "" if none.
+   char bad_profile[PROFILES_MAX_ID_LEN + 1];
+   char bad_once[PROFILES_MAX_ID_LEN + 1];
 } ActiveFile;
 
 // Fills af from active.txt text (changes text). Missing or invalid ids
-// become "main" (profile) and "" (once).
+// become "main" (profile) and "" (once); invalid ones are also kept in
+// bad_profile / bad_once so start-up can say so.
 void active_file_parse(char *text, ActiveFile *af);
 
 // Returns -1, with af set to Main, if there is no active.txt.
