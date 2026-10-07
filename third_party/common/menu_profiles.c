@@ -394,7 +394,7 @@ static void profiles_item_chosen(struct menu_item *item) {
     break;
   case MENU_PROFILES_AUTO_ATTACH_DISKS: {
     const char *paths[PROFILES_NUM_DRIVES];
-    char message[64] = "No disks attached, so none\nwill be attached at boot";
+    char message[64] = "No disks attached, so none will be attached at boot";
     int length = 0;
     for (int i = 0; i < PROFILES_NUM_DRIVES; i++) {
       paths[i] = attached_disk_name[i];
@@ -405,7 +405,7 @@ static void profiles_item_chosen(struct menu_item *item) {
     }
     if (length) {
       snprintf(message + length, sizeof(message) - length,
-               "\nwill be attached at boot");
+               " will be attached at boot");
     }
     show_saved(profiles_set_startup_disks(paths), message);
     break;
