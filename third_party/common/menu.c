@@ -64,7 +64,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "5.2.4"
+#define VERSION_STRING "5.2.5"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"

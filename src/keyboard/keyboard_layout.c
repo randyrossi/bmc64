@@ -19,6 +19,8 @@ static const KeyboardPreset c64_presets[] = {
    {KEYBOARD_PHYSICAL_FR, "French", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_FR},
    {KEYBOARD_PHYSICAL_NO, "Norwegian", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_no.vkm", KEYBOARD_LAYOUT_NO},
    {KEYBOARD_PHYSICAL_NO, "Norwegian", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_NO},
+   {KEYBOARD_PHYSICAL_LATAM, "Latin American", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_latam.vkm", KEYBOARD_LAYOUT_LATAM},
+   {KEYBOARD_PHYSICAL_LATAM, "Latin American", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_LATAM},
    {KEYBOARD_PHYSICAL_PETSCIIBOARD, "PETSCIIBOARD", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_petsciiboard_sym.vkm", KEYBOARD_LAYOUT_US},
 };
 
@@ -180,6 +182,7 @@ unsigned int keyboard_layout_key_to_codepoint(MenuKeyboardLayout layout, long ke
    case KEYBOARD_LAYOUT_NO: return keyboard_layout_no_char(key, shifted, altgr);
    case KEYBOARD_LAYOUT_FR: return keyboard_layout_fr_char(key, shifted, altgr);
    case KEYBOARD_LAYOUT_DE: return keyboard_layout_de_char(key, shifted, altgr);
+   case KEYBOARD_LAYOUT_LATAM: return keyboard_layout_latam_char(key, shifted, altgr);
    case KEYBOARD_LAYOUT_POSITIONAL: return keyboard_layout_positional_char(key, shifted);
    case KEYBOARD_LAYOUT_MAXI: return keyboard_layout_maxi_char(key, shifted);
    default: return '\0';
@@ -187,7 +190,8 @@ unsigned int keyboard_layout_key_to_codepoint(MenuKeyboardLayout layout, long ke
 }
 
 int keyboard_layout_has_altgr(MenuKeyboardLayout layout) {
-   return layout == KEYBOARD_LAYOUT_NO || layout == KEYBOARD_LAYOUT_FR || layout == KEYBOARD_LAYOUT_DE;
+   return layout == KEYBOARD_LAYOUT_NO || layout == KEYBOARD_LAYOUT_FR || layout == KEYBOARD_LAYOUT_DE ||
+          layout == KEYBOARD_LAYOUT_LATAM;
 }
 
 int keyboard_layout_effective_shift(int shifted, int caps_lock, int altgr) {

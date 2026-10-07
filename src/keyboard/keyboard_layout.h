@@ -14,6 +14,7 @@ typedef enum {
    KEYBOARD_LAYOUT_POSITIONAL,
    KEYBOARD_LAYOUT_MAXI,
    KEYBOARD_LAYOUT_UK,
+   KEYBOARD_LAYOUT_LATAM,
 } MenuKeyboardLayout;
 
 // The physical keyboard the user has. Saved in settings, so only append.
@@ -27,6 +28,7 @@ typedef enum {
    KEYBOARD_PHYSICAL_PET_GRAPHICS, // no longer used; kept so later values stay the same
    KEYBOARD_PHYSICAL_PET_BUSINESS, // no longer used; kept so later values stay the same
    KEYBOARD_PHYSICAL_UK,
+   KEYBOARD_PHYSICAL_LATAM,
 } KeyboardPhysicalLayout;
 
 // How that keyboard is mapped onto the machine. Saved in settings, so only append.
@@ -87,6 +89,7 @@ unsigned int keyboard_layout_uk_char(long key, int shifted);
 unsigned int keyboard_layout_no_char(long key, int shifted, int altgr);
 unsigned int keyboard_layout_fr_char(long key, int shifted, int altgr);
 unsigned int keyboard_layout_de_char(long key, int shifted, int altgr);
+unsigned int keyboard_layout_latam_char(long key, int shifted, int altgr);
 char keyboard_layout_c64_char(long key, int shifted);
 char keyboard_layout_positional_char(long key, int shifted);
 char keyboard_layout_maxi_char(long key, int shifted);

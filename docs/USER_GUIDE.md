@@ -565,7 +565,7 @@ Keyboard Layout | Keyboard Mapping | Use it for
 Commodore | Positional | A real Commodore keyboard on GPIO or a C64P, or any USB keyboard used by key position
 Commodore | TheC64 Maxi | TheC64 Maxi keyboard
 Commodore | Keyrah V3 | A real Commodore keyboard through a Keyrah V3
-US English, UK English, German, French, Norwegian | Symbolic or Positional | A USB keyboard with that layout
+US English, UK English, German, French, Norwegian, Latin American | Symbolic or Positional | A USB keyboard with that layout
 PETSCIIBOARD | Symbolic | A PETSCIIBOARD keyboard
 
 On the other machines:
@@ -603,7 +603,7 @@ If your keyboard has no right Alt key, switch **Keyboard Mapping** to **Position
 
 ### Typing in the menu
 
-Text fields in the menu, such as file names, follow your Keyboard Layout, including AltGr characters and accented letters such as æ, ø, å, ä, ö, ü and é. With a Commodore keyboard, use Shift+CRSR to move left and up in the menu.
+Text fields in the menu, such as file names, follow your Keyboard Layout, including AltGr characters and accented letters such as æ, ø, å, ä, ö, ü, é and ñ. With a Commodore keyboard, use Shift+CRSR to move left and up in the menu.
 
 ### If you use your own keymap files (.vkm)
 
