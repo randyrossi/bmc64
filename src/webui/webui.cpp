@@ -34,6 +34,7 @@
 #include "webui_assets.h"
 #include "webui_fs.h"
 #include "webui_http.h"
+#include "../profiles/profiles.h"
 
 #include <circle/bcmpropertytags.h>
 #include <circle/logger.h>
@@ -219,6 +220,22 @@ void ThrottledField(char *out, unsigned out_size) {
   }
 }
 
+// Copies s into out as the inside of a JSON string. Profile names come from
+// the menu, so they're plain text; anything else is replaced.
+void JsonText(const char *s, char *out, unsigned out_size) {
+  unsigned n = 0;
+  for (; *s != '\0' && n + 2 < out_size; s++) {
+    unsigned char c = (unsigned char) *s;
+    if (c == '"' || c == '\\') {
+      out[n++] = '\\';
+      out[n++] = (char) c;
+    } else {
+      out[n++] = (c < 0x20 || c >= 0x80) ? '?' : (char) c;
+    }
+  }
+  out[n] = '\0';
+}
+
 void HandleStatus(CSocket *socket) {
   char ip[32];
   boolean have_ip = circle_get_network_ip_address(ip, sizeof(ip)) != 0;
@@ -231,16 +248,24 @@ void HandleStatus(CSocket *socket) {
   SocTempField(soc_temp, sizeof(soc_temp));
   ThrottledField(throttled, sizeof(throttled));
 
-  char body[512];
+  // The profile running now (docs/PROFILES.md).
+  const ProfileInfo *profile = profiles_running();
+  char profile_name[2 * PROFILES_MAX_NAME_LEN + 1];
+  JsonText(profile->name, profile_name, sizeof(profile_name));
+
+  char body[768];
   int length = snprintf(
       body, sizeof(body),
       "{\"hostname\":\"%s\",\"version\":\"%s\",\"machine\":\"%s\","
       "\"model\":\"%s\",\"ip\":\"%s\",\"net_status\":%d,\"net_text\":\"%s\","
-      "\"uptime_secs\":%u,\"soc_temp_c\":%s,\"throttled\":%s}",
+      "\"uptime_secs\":%u,\"soc_temp_c\":%s,\"throttled\":%s,"
+      "\"profile_id\":\"%s\",\"profile_name\":\"%s\","
+      "\"profiles_in_use\":%s}",
       WEBUI_HOSTNAME, bmc64_version_string(), kMachineName,
       model != 0 ? model : "",
       have_ip ? ip : "", net_status, NetStatusText(net_status), uptime,
-      soc_temp, throttled);
+      soc_temp, throttled, profile->id, profile_name,
+      profiles_in_use() ? "true" : "false");
   if (length < 0 || (unsigned) length >= sizeof(body)) {
     SendText(socket, 500, "Internal Server Error", "status encode error\n");
     return;

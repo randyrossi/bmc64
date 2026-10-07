@@ -30,7 +30,7 @@
       <a class="nav-item" href="#/dashboard" data-view="dashboard"><span class="ni-ico">▦</span>Dashboard</a>
       <a class="nav-item" href="#/files" data-view="files"><span class="ni-ico">▤</span>Files</a>
       <a class="nav-item" href="#/update" data-view="update"><span class="ni-ico">⇪</span>Update</a>
-      <span class="nav-item disabled"><span class="ni-ico">☰</span>Profiles<span class="soon">soon</span></span>
+      <a class="nav-item" href="#/profiles" data-view="profiles"><span class="ni-ico">☰</span>Profiles</a>
     </nav>
     <label class="up-drop side-drop" id="fb-drop" hidden>
       <input type="file" id="fb-drop-file" multiple hidden>
@@ -88,6 +88,7 @@
             <dt>Hostname</dt><dd id="i-host">—</dd>
             <dt>IP Address</dt><dd id="i-ip">—</dd>
             <dt>Machine</dt><dd id="i-machine">—</dd>
+            <dt>Profile</dt><dd id="i-profile">—</dd>
             <dt>Model</dt><dd id="i-model">—</dd>
             <dt>Network</dt><dd id="i-net">—</dd>
             <dt>Firmware</dt><dd id="i-ver">—</dd>
@@ -135,6 +136,16 @@
           </table>
         </div>
       </div>
+    </section>
+
+    <section class="view" id="view-profiles" hidden>
+      <div class="pf-head">
+        <div class="pf-tiles" id="pf-summary"></div>
+        <button class="btn" id="pf-refresh" title="Refresh">⟳ Refresh</button>
+      </div>
+      <p class="fb-note">Profiles are switched from the BMC64 menu (Profiles → Select profile). Changes to their files take effect at the next restart.</p>
+      <p class="msg" id="pf-status"></p>
+      <div id="pf-list"></div>
     </section>
 
     <section class="view" id="view-update" hidden></section>

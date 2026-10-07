@@ -80,7 +80,7 @@ WEBUI_ASSET_SRCS = $(shell find src/webui/assets -type f)
 # The web UI's JavaScript tests must pass before the assets are embedded. They
 # need Node.js, which get_gnu_toolchain.sh puts on PATH. The stamp file means
 # they only run again when the code they test or the tests themselves change.
-WEBUI_TEST_SRCS = src/webui/assets/js/basic.js $(wildcard tools/webui_test/*.js tools/webui_test/*.mjs)
+WEBUI_TEST_SRCS = src/webui/assets/js/basic.js src/webui/assets/js/profiles_data.js $(wildcard tools/webui_test/*.js tools/webui_test/*.mjs)
 WEBUI_TEST_STAMP = build/.webui_tests.stamp
 
 $(WEBUI_TEST_STAMP): $(WEBUI_TEST_SRCS)

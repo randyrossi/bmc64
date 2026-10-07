@@ -292,6 +292,15 @@ with `#` are comments.
 
 ### Editing them in the Web UI
 
+The Web UI's **Profiles** page lists Main and every profile with its
+machine, auto-attached disks and autostart, and marks the profile that's
+running, the one used at power-on and any pending *Start once*. Each
+profile's buttons open its files in the editor, and its *Actions* menu can
+open its folder in *Files*, rename it or delete it, the same as the BMC64
+menu (the running profile can't be deleted). Deleting the power-on profile
+makes Main the power-on profile. Profiles are still switched from the BMC64
+menu.
+
 The Web UI's file editor can open and save `active.txt`, Main's files in
 `main/`, and each profile's `profile.txt`, `settings.txt` and `vice.ini`. As
 with the other config files, the previous version is kept as `<name>.bak`.

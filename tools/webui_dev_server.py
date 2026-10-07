@@ -9,6 +9,7 @@ without a Raspberry Pi.
     python3 tools/webui_dev_server.py            # http://localhost:8000
     python3 tools/webui_dev_server.py --root ~/  # browse a real folder
     python3 tools/webui_dev_server.py --no-watch # disable live reload
+    python3 tools/webui_dev_server.py --running geos  # pretend a profile runs
 
 With live reload on (default) the browser refreshes whenever a file in
 src/webui/assets/ changes, so you can edit and watch side by side.
@@ -263,6 +264,26 @@ class Handler(BaseHTTPRequestHandler):
     # -- mock API -----------------------------------------------------
 
     def api_status(self):
+        # Nothing is really running here, so there's no running profile
+        # unless --running pretends one is.
+        profile = {}
+        if ARGS.running:
+            name = "Main" if ARGS.running == "main" else ARGS.running
+            try:
+                with open(os.path.join(ARGS.root, "profiles", ARGS.running,
+                                       "profile.txt")) as fh:
+                    for line in fh:
+                        key, _, value = line.partition("=")
+                        if key.strip() == "name":
+                            name = value.strip()
+            except OSError:
+                pass
+            profile = {
+                "profile_id": ARGS.running,
+                "profile_name": name,
+                "profiles_in_use": os.path.isfile(
+                    os.path.join(ARGS.root, "profiles", "active.txt")),
+            }
         self._json(200, {
             "hostname": "bmc64-dev",
             "version": "5.1.2",
@@ -274,6 +295,7 @@ class Handler(BaseHTTPRequestHandler):
             "uptime_secs": 8123,
             "soc_temp_c": 48.6,
             "throttled": int(ARGS.throttled, 0),
+            **profile,
         })
 
     def api_volumes(self):
@@ -335,8 +357,8 @@ class Handler(BaseHTTPRequestHandler):
         })
 
     # Same lists as webui_fs.cpp: upload/delete refuse PROTECTED, and only the
-    # editor's save endpoint may change EDITABLE files (root folder only) or
-    # keyboard mapping files (*.vkm, any folder).
+    # editor's save endpoint may change EDITABLE files (root folder only),
+    # keyboard mapping files (*.vkm, any folder) or profile files.
     CONFIG_FILES = {
         "settings.txt", "settings-c128.txt", "settings-vic20.txt",
         "settings-plus4.txt", "settings-plus4emu.txt", "settings-pet.txt",
@@ -358,7 +380,22 @@ class Handler(BaseHTTPRequestHandler):
         name = parts[-1].lower() if parts else ""
         if name.endswith(".vkm") and len(name) > 4:
             return True
-        return len(parts) == 1 and name in cls.EDITABLE
+        return (len(parts) == 1 and name in cls.EDITABLE) or cls.is_profile_file(parts)
+
+    @staticmethod
+    def is_profile_file(parts):
+        """IsProfileFilePath(): /profiles/active.txt, /profiles/main/*.txt and
+        each profile's profile.txt, settings.txt and vice.ini."""
+        lower = [p.lower() for p in parts]
+        if not lower or lower[0] != "profiles":
+            return False
+        if len(lower) == 2:
+            return lower[1] == "active.txt"
+        if len(lower) != 3:
+            return False
+        if lower[1] == "main":
+            return len(lower[2]) > 4 and lower[2].endswith(".txt")
+        return lower[2] in ("profile.txt", "settings.txt", "vice.ini")
 
     def api_fs_upload(self, query):
         length = self.headers.get("Content-Length")
@@ -571,6 +608,8 @@ def main():
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--root", default=REPO_ROOT,
                         help="folder the mock file browser serves (default: repo root)")
+    parser.add_argument("--running", default="",
+                        help="pretend this profile id (or main) is running")
     parser.add_argument("--throttled", default="0x0",
                         help="mock /get_throttled bitmask, e.g. 0x50000 for past under-voltage")
     parser.add_argument("--pin", default="",
