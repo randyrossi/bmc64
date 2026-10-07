@@ -440,7 +440,7 @@ static void test_ids(void) {
 
 static void test_no_profiles(void) {
    fresh_card();
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    // Main, and nothing created on the card.
    CHECK(profiles_running_is_main());
    CHECK(!profiles_in_use());
@@ -469,7 +469,7 @@ static void test_boot_profile(void) {
    fresh_card();
    make_profile("geos", "name=GEOS\nmachine=C64/PAL/HDMI/VICE 720p@50Hz\n");
    write_file("/profiles/active.txt", "profile=geos\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK(!profiles_running_is_main());
    CHECK_STR(profiles_running()->id, "geos");
    CHECK_STR(profiles_running()->name, "GEOS");
@@ -478,61 +478,63 @@ static void test_boot_profile(void) {
    CHECK_STR(profiles_settings_file("/settings.txt"),
              "/profiles/geos/settings.txt");
    // The machine name is matched without regard to case.
-   profiles_boot_init("c64");
+   profiles_boot_init("c64/pal/hdmi");
    CHECK_STR(profiles_running()->id, "geos");
 
    // A missing or invalid profile starts Main, with a message.
    write_file("/profiles/active.txt", "profile=gone\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK(profiles_running_is_main());
    CHECK(strstr(profiles_boot_message(), "gone") != NULL);
    make_profile("broken", "name=No machine\n");
    write_file("/profiles/active.txt", "profile=broken\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK(profiles_running_is_main());
    CHECK(profiles_boot_message()[0] != '\0');
 
    // A profile for another machine starts Main, with a message.
-   make_profile("vic", "name=PAL 16K\nmachine=VIC20/PAL/HDMI/VICE 720p@50Hz\n");
+   make_profile("vic", "name=PAL 16K\nmachine=VIC20/PAL/HDMI\n");
    write_file("/profiles/active.txt", "profile=vic\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK(profiles_running_is_main());
    CHECK(strstr(profiles_boot_message(), "PAL 16K") != NULL);
-   profiles_boot_init("VIC20");
+   profiles_boot_init("VIC20/PAL/HDMI");
    CHECK_STR(profiles_running()->id, "vic");
+   profiles_boot_init("VIC20/NTSC/HDMI");
+   CHECK(profiles_running_is_main());
 
    // A typo in profile= starts Main, with a message naming it.
    write_file("/profiles/active.txt", "profile=GEOS\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK(profiles_running_is_main());
    CHECK(strstr(profiles_boot_message(), "profile=GEOS") != NULL);
    write_file("/profiles/active.txt", "profile=my game\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK(profiles_running_is_main());
    CHECK(strstr(profiles_boot_message(), "my game") != NULL);
 
    // A typo in once= is ignored with a message; the usual profile starts.
    write_file("/profiles/active.txt", "profile=geos\nonce=Elite!\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK_STR(profiles_running()->id, "geos");
    CHECK(strstr(profiles_boot_message(), "once=Elite!") != NULL);
 
    // A valid once wins over a typo in profile=, without a message.
    make_profile("elite", "name=Elite\nmachine=C64\n");
    write_file("/profiles/active.txt", "profile=GEOS\nonce=elite\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK_STR(profiles_running()->id, "elite");
    CHECK_STR(profiles_boot_message(), "");
 
    // An empty value is just "not set": no message.
    write_file("/profiles/active.txt", "profile=\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK(profiles_running_is_main());
    CHECK_STR(profiles_boot_message(), "");
 
    // profile=main is Main without a message, with profiles in use.
    write_file("/profiles/active.txt", "profile=main\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK(profiles_running_is_main());
    CHECK(profiles_in_use());
    CHECK_STR(profiles_boot_message(), "");
@@ -543,14 +545,14 @@ static void test_start_once(void) {
    make_profile("geos", "name=GEOS\nmachine=C64\n");
    make_profile("elite", "name=Elite\nmachine=C64\n");
    write_file("/profiles/active.txt", "profile=geos\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
 
    // Once is added, profile is unchanged.
    CHECK(profiles_start_once("elite") == PROFILES_OK);
    CHECK_STR(read_file("/profiles/active.txt"), "profile=geos\nonce=elite\n");
 
    // The once profile starts; once stays until after boot.
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK_STR(profiles_running()->id, "elite");
    CHECK_STR(read_file("/profiles/active.txt"), "profile=geos\nonce=elite\n");
    profiles_after_boot();
@@ -559,12 +561,12 @@ static void test_start_once(void) {
    // A restart BMC64 asks for keeps the once profile.
    profiles_before_reboot();
    CHECK_STR(read_file("/profiles/active.txt"), "profile=geos\nonce=elite\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK_STR(profiles_running()->id, "elite");
    profiles_after_boot();
 
    // The next power-on is back on GEOS.
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK_STR(profiles_running()->id, "geos");
    // A switched-to profile isn't put back as once.
    profiles_before_reboot();
@@ -572,48 +574,62 @@ static void test_start_once(void) {
 
    // A once profile that can't start still has its entry removed.
    write_file("/profiles/active.txt", "profile=geos\nonce=gone\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK(profiles_running_is_main());
    profiles_after_boot();
-   CHECK_STR(read_file("/profiles/active.txt"), "profile=geos\n");
+   // Main ran, so it also remembers its machine.
+   CHECK_STR(read_file("/profiles/active.txt"),
+             "profile=geos\nmain_machine=C64/PAL/HDMI\n");
 
    // Start once from Main with no active.txt.
    fresh_card();
    make_profile("elite", "name=Elite\nmachine=C64\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK(profiles_start_once("elite") == PROFILES_OK);
-   CHECK_STR(read_file("/profiles/active.txt"), "profile=main\nonce=elite\n");
+   CHECK_STR(read_file("/profiles/active.txt"),
+             "profile=main\nonce=elite\nmain_machine=C64/PAL/HDMI\n");
 }
 
 static void test_switch_to(void) {
    fresh_card();
    make_profile("geos", "name=GEOS\nmachine=C64\n");
    make_profile("vic", "name=PAL 16K\nmachine=VIC20\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
 
-
+   // Leaving Main remembers its machine.
    CHECK(profiles_switch_to("geos") == PROFILES_OK);
-   CHECK_STR(read_file("/profiles/active.txt"), "profile=geos\n");
+   CHECK_STR(read_file("/profiles/active.txt"),
+             "profile=geos\nmain_machine=C64/PAL/HDMI\n");
    CHECK(!exists("/profiles/active.new"));
    // Switching clears a pending once.
    write_file("/profiles/active.txt", "profile=geos\nonce=geos\n");
    CHECK(profiles_switch_to("main") == PROFILES_OK);
-   CHECK_STR(read_file("/profiles/active.txt"), "profile=main\n");
+   CHECK_STR(read_file("/profiles/active.txt"),
+             "profile=main\nmain_machine=C64/PAL/HDMI\n");
 
-   // Missing, invalid and other-machine profiles aren't started.
+   // Missing and invalid profiles aren't started.
    CHECK(profiles_switch_to("gone") == PROFILES_ERROR);
    CHECK(profiles_switch_to("../x") == PROFILES_ERROR);
    CHECK(profiles_switch_to(NULL) == PROFILES_ERROR);
    CHECK(profiles_start_once("gone") == PROFILES_ERROR);
-   CHECK(profiles_switch_to("vic") == PROFILES_NOT_IMPLEMENTED);
-   CHECK(profiles_start_once("vic") == PROFILES_NOT_IMPLEMENTED);
-   CHECK_STR(read_file("/profiles/active.txt"), "profile=main\n");
+   CHECK_STR(read_file("/profiles/active.txt"),
+             "profile=main\nmain_machine=C64/PAL/HDMI\n");
+
+   // Other machines can be chosen; the caller switches machine first.
+   CHECK_STR(profiles_machine_for("vic"), "VIC20");
+   CHECK_STR(profiles_machine_for("geos"), "");
+   CHECK_STR(profiles_machine_for("main"), "");
+   CHECK_STR(profiles_machine_for("gone"), "");
+   CHECK(profiles_switch_to("vic") == PROFILES_OK);
+   CHECK_STR(read_file("/profiles/active.txt"),
+             "profile=vic\nmain_machine=C64/PAL/HDMI\n");
 }
 
 static void test_safe_mode(void) {
    fresh_card();
    make_profile("geos", "name=GEOS\nmachine=C64\n");
-   write_file("/profiles/active.txt", "profile=geos\nonce=geos\n");
+   write_file("/profiles/active.txt",
+              "profile=geos\nonce=geos\nmain_machine=VIC20/PAL/HDMI\n");
 
    profiles_reset_to_main();
    CHECK_STR(read_file("/profiles/active.txt"), "profile=main\n");
@@ -633,7 +649,7 @@ static void test_list(void) {
    write_file("/profiles/notes.txt", "a file, not a profile\n");
    write_file("/profiles/active.txt", "profile=main\n");
    sd_mkdir("/profiles/empty");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
 
    // Main first, then valid profiles of every machine sorted by name.
    CHECK(profiles_list_open() == 4);
@@ -670,13 +686,13 @@ static void test_list(void) {
 
 static void test_create(void) {
    fresh_card();
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    char id[PROFILES_MAX_ID_LEN + 1];
-   // Main's new profiles are for the booted machine.
+   // Main's new profiles are for what booted.
    CHECK(profiles_create("  My GEOS  ", id, sizeof(id)) == PROFILES_OK);
    CHECK_STR(id, "my-geos");
    CHECK_STR(read_file("/profiles/my-geos/profile.txt"),
-             "name=My GEOS\nmachine=C64\n");
+             "name=My GEOS\nmachine=C64/PAL/HDMI\n");
    // No active.txt yet: creating doesn't switch.
    CHECK(!exists("/profiles/active.txt"));
 
@@ -688,7 +704,7 @@ static void test_create(void) {
    // A new profile made in a profile copies its machine entry.
    make_profile("pal", "name=PAL\nmachine=C64/PAL/HDMI/VICE 720p@50Hz\n");
    write_file("/profiles/active.txt", "profile=pal\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK(profiles_create("Copy", id, sizeof(id)) == PROFILES_OK);
    CHECK_STR(read_file("/profiles/copy/profile.txt"),
              "name=Copy\nmachine=C64/PAL/HDMI/VICE 720p@50Hz\n");
@@ -706,7 +722,7 @@ static void test_rename(void) {
    make_profile("geos", "name=GEOS\nmachine=C64\ncategory=Apps\n"
                         "disk_8=/disks/geos.d81\n");
    write_file("/profiles/active.txt", "profile=geos\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
 
    // Only the name changes; the id and other keys stay.
    CHECK(profiles_rename_running(" GEOS 2.0 ") == PROFILES_OK);
@@ -725,7 +741,7 @@ static void test_rename(void) {
 
    // Main can't be renamed.
    fresh_card();
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK(profiles_rename_running("Other") == PROFILES_ERROR);
    CHECK_STR(profiles_running()->name, "Main");
 }
@@ -743,7 +759,7 @@ static void test_delete(void) {
    write_file("/profiles/elite/vice.ini.bak", "[C64]\n");
    write_file("/disks/elite.d64", "disk image");
    write_file("/profiles/active.txt", "profile=geos\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
 
    // Not Main, not the running profile, nothing invalid.
    CHECK(profiles_delete("main") == PROFILES_ERROR);
@@ -773,7 +789,7 @@ static void test_autostart_profile(void) {
    fresh_card();
    make_profile("elite", "name=Elite\nmachine=C64\ncategory=Games\n");
    write_file("/profiles/active.txt", "profile=elite\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK_STR(profiles_autostart(), "");
 
    // Saved straight away into profile.txt; other keys are kept.
@@ -784,7 +800,7 @@ static void test_autostart_profile(void) {
              "autostart=SD:/games/elite.d64\n");
 
    // Start-up picks it up.
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK_STR(profiles_autostart(), "SD:/games/elite.d64");
 
    // A rename made since start-up isn't lost by a later autostart change.
@@ -810,66 +826,172 @@ static void test_autostart_main(void) {
    // Main with no profiles: setting it creates Main's file and active.txt,
    // so start-up knows to read it.
    fresh_card();
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK(profiles_set_autostart("SD:/geos/GEOS64.D81") == PROFILES_OK);
    CHECK_STR(profiles_autostart(), "SD:/geos/GEOS64.D81");
    CHECK_STR(read_file("/profiles/main/c64.txt"),
              "autostart=SD:/geos/GEOS64.D81\n");
    CHECK_STR(read_file("/profiles/active.txt"), "profile=main\n");
 
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK(profiles_running_is_main());
    CHECK(profiles_in_use());
    CHECK_STR(profiles_autostart(), "SD:/geos/GEOS64.D81");
 
    // Each machine has its own file.
-   profiles_boot_init("VIC20");
+   profiles_boot_init("VIC20/PAL/HDMI");
    CHECK_STR(profiles_autostart(), "");
    CHECK(profiles_set_autostart("SD:/vic/game.prg") == PROFILES_OK);
    CHECK_STR(read_file("/profiles/main/vic20.txt"),
              "autostart=SD:/vic/game.prg\n");
-   profiles_boot_init("Plus4Emu");
+   profiles_boot_init("Plus4Emu/PAL/HDMI");
    CHECK(profiles_set_autostart("SD:/p4/game.prg") == PROFILES_OK);
    CHECK(exists("/profiles/main/plus4emu.txt"));
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK_STR(profiles_autostart(), "SD:/geos/GEOS64.D81");
 
    // An existing active.txt is left alone.
    make_profile("elite", "name=Elite\nmachine=C64\n");
    write_file("/profiles/active.txt", "profile=main\nonce=elite\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK_STR(profiles_running()->id, "elite");
    CHECK_STR(profiles_autostart(), "");
    write_file("/profiles/active.txt", "profile=main\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK(profiles_clear_autostart() == PROFILES_OK);
    CHECK_STR(read_file("/profiles/active.txt"), "profile=main\n");
    CHECK_STR(read_file("/profiles/main/c64.txt"), "");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK_STR(profiles_autostart(), "");
 
    // Main's file is used when a profile can't start and Main runs instead.
    CHECK(profiles_set_autostart("SD:/x.prg") == PROFILES_OK);
    write_file("/profiles/active.txt", "profile=gone\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK(profiles_running_is_main());
    CHECK_STR(profiles_autostart(), "SD:/x.prg");
 
    // Main's file only holds startup actions, never a name or machine.
    write_file("/profiles/main/c64.txt",
               "name=Sneaky\nmachine=C64\nautostart=SD:/y.prg\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK(profiles_set_autostart("SD:/z.prg") == PROFILES_OK);
    CHECK_STR(read_file("/profiles/main/c64.txt"), "autostart=SD:/z.prg\n");
 
    // Without active.txt, nothing reads Main's file.
    fresh_card();
    write_file("/profiles/main/c64.txt", "autostart=SD:/x.prg\n");
-   profiles_boot_init("C64");
+   profiles_boot_init("C64/PAL/HDMI");
    CHECK_STR(profiles_autostart(), "");
 }
 
 // ---- Machines ----
+
+static void test_machine_switching(void) {
+   // Main remembers the machine it runs on, once profiles are in use.
+   fresh_card();
+   profiles_boot_init("C64/PAL/HDMI");
+   profiles_after_boot();
+   CHECK(!exists("/profiles"));
+   make_profile("elite", "name=Elite\nmachine=C64/PAL/HDMI\n");
+   make_profile("vic", "name=PAL 16K\nmachine=VIC20/PAL/HDMI\n");
+   write_file("/profiles/active.txt", "profile=main\n");
+   profiles_boot_init("C64/PAL/HDMI");
+   profiles_after_boot();
+   CHECK_STR(read_file("/profiles/active.txt"),
+             "profile=main\nmain_machine=C64/PAL/HDMI\n");
+   // A Switch machine entry for the same machine is kept as it is.
+   write_file("/profiles/active.txt",
+              "profile=main\nmain_machine=C64/PAL/HDMI/VICE 1080p@50Hz\n");
+   profiles_boot_init("C64/PAL/HDMI");
+   profiles_after_boot();
+   CHECK_STR(read_file("/profiles/active.txt"),
+             "profile=main\nmain_machine=C64/PAL/HDMI/VICE 1080p@50Hz\n");
+
+   // What each profile needs from here.
+   CHECK_STR(profiles_machine_for("vic"), "VIC20/PAL/HDMI");
+   CHECK_STR(profiles_machine_for("elite"), "");
+   CHECK_STR(profiles_machine_for("main"), "");
+   make_profile("ntsc", "name=NTSC\nmachine=C64/NTSC\n");
+   CHECK_STR(profiles_machine_for("ntsc"), "C64/NTSC");
+
+   // Back to Main from the VIC-20: Main's machine.
+   CHECK(profiles_switch_to("vic") == PROFILES_OK);
+   profiles_boot_init("VIC20/PAL/HDMI");
+   CHECK_STR(profiles_running()->id, "vic");
+   CHECK_STR(profiles_machine_for("main"), "C64/PAL/HDMI/VICE 1080p@50Hz");
+   CHECK_STR(profiles_machine_for("elite"), "C64/PAL/HDMI");
+   CHECK_STR(profiles_return_machine(), "");
+   // Main without a remembered machine stays where it is.
+   write_file("/profiles/active.txt", "profile=vic\n");
+   profiles_boot_init("VIC20/PAL/HDMI");
+   CHECK_STR(profiles_machine_for("main"), "");
+
+   // Start once on another machine: the power-on profile's machine is put
+   // back for the next power-on, and once is kept for BMC64's own restarts.
+   write_file("/profiles/active.txt", "profile=elite\n");
+   profiles_boot_init("C64/PAL/HDMI");
+   CHECK(profiles_start_once("vic") == PROFILES_OK);
+   CHECK_STR(read_file("/profiles/active.txt"), "profile=elite\nonce=vic\n");
+   profiles_boot_init("VIC20/PAL/HDMI");
+   CHECK_STR(profiles_running()->id, "vic");
+   CHECK_STR(profiles_return_machine(), "C64/PAL/HDMI");
+   profiles_after_boot();
+   CHECK_STR(read_file("/profiles/active.txt"), "profile=elite\n");
+   profiles_before_reboot();
+   CHECK_STR(read_file("/profiles/active.txt"), "profile=elite\nonce=vic\n");
+   // From Main: back to Main's machine.
+   write_file("/profiles/active.txt",
+              "profile=main\nonce=vic\nmain_machine=C64/PAL/HDMI\n");
+   profiles_boot_init("VIC20/PAL/HDMI");
+   CHECK_STR(profiles_return_machine(), "C64/PAL/HDMI");
+   // On the same machine there's nothing to put back.
+   write_file("/profiles/active.txt", "profile=main\nonce=elite\n");
+   profiles_boot_init("C64/PAL/HDMI");
+   CHECK_STR(profiles_running()->id, "elite");
+   CHECK_STR(profiles_return_machine(), "");
+   // Start once from Main remembers Main's machine first.
+   fresh_card();
+   make_profile("vic", "name=PAL 16K\nmachine=VIC20/PAL/HDMI\n");
+   profiles_boot_init("C64/PAL/HDMI");
+   CHECK(profiles_start_once("vic") == PROFILES_OK);
+   CHECK_STR(read_file("/profiles/active.txt"),
+             "profile=main\nonce=vic\nmain_machine=C64/PAL/HDMI\n");
+
+   // Switch machine: nothing without profiles.
+   fresh_card();
+   profiles_boot_init("C64/PAL/HDMI");
+   profiles_machine_switched("VIC20/PAL/HDMI/VICE 720p@50Hz");
+   CHECK(!exists("/profiles"));
+   // In Main: Main remembers the entry.
+   make_profile("hd", "name=HD\nmachine=C64/PAL/HDMI\n");
+   write_file("/profiles/active.txt", "profile=main\nonce=hd\n");
+   profiles_machine_switched("C64/NTSC/HDMI/VICE 720p@60Hz");
+   CHECK_STR(read_file("/profiles/active.txt"),
+             "profile=main\nmain_machine=C64/NTSC/HDMI/VICE 720p@60Hz\n");
+   // In a profile, same machine: the profile follows the standard and output.
+   write_file("/profiles/active.txt", "profile=hd\n");
+   profiles_machine_switched("C64/NTSC/HDMI/VICE 720p@60Hz");
+   CHECK_STR(read_file("/profiles/active.txt"), "profile=hd\n");
+   CHECK_STR(read_file("/profiles/hd/profile.txt"),
+             "name=HD\nmachine=C64/NTSC/HDMI\n");
+   // Another machine: Main from now on, on that machine.
+   profiles_machine_switched("VIC20/PAL/HDMI/VICE 720p@50Hz");
+   CHECK_STR(read_file("/profiles/active.txt"),
+             "profile=main\nmain_machine=VIC20/PAL/HDMI/VICE 720p@50Hz\n");
+
+   // A full header in machine= works too.
+   make_profile("full", "name=Full\nmachine=C64/PAL/HDMI/VICE 720p@50Hz\n");
+   write_file("/profiles/active.txt", "profile=full\n");
+   profiles_boot_init("C64/PAL/HDMI");
+   CHECK_STR(profiles_running()->id, "full");
+
+   char desc[64];
+   profiles_machine_desc("C64 / PAL / HDMI / VICE 720p@50Hz", desc, sizeof(desc));
+   CHECK_STR(desc, "C64/PAL/HDMI");
+   profiles_machine_desc("C64", desc, sizeof(desc));
+   CHECK_STR(desc, "C64");
+}
 
 static void check_label(const char *machine, const char *expected) {
    char label[16];
@@ -903,6 +1025,20 @@ static void test_machines(void) {
    CHECK(!profiles_machine_matches("/PAL", "C64"));
    CHECK(!profiles_machine_matches("C64", ""));
    CHECK(!profiles_machine_matches(NULL, "C64"));
+   CHECK(profiles_machine_matches("C64/PAL/HDMI", "c64 / pal / hdmi / VICE 720p@50Hz"));
+   CHECK(!profiles_machine_matches("C64/PAL/HDMI/VICE 1080p@50Hz",
+                                   "C64/PAL/HDMI/VICE 720p@50Hz"));
+
+   CHECK(profiles_machine_covers("C64/PAL", "C64/PAL/HDMI/VICE 720p@50Hz"));
+   CHECK(profiles_machine_covers("C64/PAL/HDMI/VICE 720p@50Hz",
+                                 "C64/PAL/HDMI/VICE 720p@50Hz"));
+   CHECK(!profiles_machine_covers("C64/PAL/HDMI", "C64/PAL"));
+   CHECK(!profiles_machine_covers("C64/NTSC", "C64/PAL/HDMI/VICE 720p@50Hz"));
+   CHECK(!profiles_machine_covers("", "C64"));
+   CHECK(!profiles_machine_covers("C64", ""));
+   // The description may hold '/'.
+   CHECK(profiles_machine_covers("C64/PAL/DPI/Gert 666/RGB",
+                                 "C64/PAL/DPI/Gert 666/RGB"));
 }
 
 int main(void) {
@@ -932,6 +1068,7 @@ int main(void) {
    test_autostart_profile();
    test_autostart_main();
    test_machines();
+   test_machine_switching();
 
    remove_tree(root);
 

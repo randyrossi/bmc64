@@ -12,8 +12,10 @@
 #include <sys/stat.h>
 
 // RASPI includes
+#include "circle.h"
 #include "demo.h"
 #include "menu.h"
+#include "menu_switch.h"
 #include "ui.h"
 #include "../../src/profiles/profiles.h"
 
@@ -137,16 +139,96 @@ static int add_profile_buttons(struct menu_item *root, int id,
   return added;
 }
 
+// ---- Machines ----
+
+static int booted_ntsc;
+static BMC64VideoOut booted_out;
+
+// What booted, in machines.txt terms, e.g. "C64/PAL/HDMI".
+static void describe_booted(const char *machine, char *out, int out_size) {
+  int timing = circle_get_machine_timing();
+  booted_ntsc = timing == MACHINE_TIMING_NTSC_HDMI ||
+                timing == MACHINE_TIMING_NTSC_COMPOSITE ||
+                timing == MACHINE_TIMING_NTSC_CUSTOM_HDMI ||
+                timing == MACHINE_TIMING_NTSC_DPI ||
+                timing == MACHINE_TIMING_NTSC_CUSTOM_DPI;
+  if (timing == MACHINE_TIMING_NTSC_COMPOSITE ||
+      timing == MACHINE_TIMING_PAL_COMPOSITE) {
+    booted_out = BMC64_VIDEO_OUT_COMPOSITE;
+  } else if (timing >= MACHINE_TIMING_NTSC_DPI &&
+             timing <= MACHINE_TIMING_NTSC_CUSTOM_DPI) {
+    booted_out = BMC64_VIDEO_OUT_DPI;
+  } else {
+    booted_out = BMC64_VIDEO_OUT_HDMI;
+  }
+  snprintf(out, out_size, "%s/%s/%s", machine, booted_ntsc ? "NTSC" : "PAL",
+           booted_out == BMC64_VIDEO_OUT_COMPOSITE ? "Composite"
+           : booted_out == BMC64_VIDEO_OUT_DPI     ? "DPI"
+                                                   : "HDMI");
+}
+
+// Applies the first machines.txt entry with every part of machine,
+// preferring the video standard and output that booted. Returns 0, or -1 if
+// there's no such entry or it can't be applied.
+static int apply_machine(const char *machine) {
+  struct machine_entry *head;
+  load_machines(&head);
+  struct machine_entry *best = NULL;
+  int best_score = -1;
+  for (struct machine_entry *ptr = head; ptr; ptr = ptr->next) {
+    if (ptr->class == BMC64_MACHINE_CLASS_PLUS4EMU && circle_get_model() < 3) {
+      continue;  // not offered on this Pi
+    }
+    if (!profiles_machine_covers(machine, ptr->header)) {
+      continue;
+    }
+    int ntsc = ptr->video_standard == BMC64_VIDEO_STANDARD_NTSC;
+    int score = (ntsc == booted_ntsc ? 2 : 0) + (ptr->video_out == booted_out);
+    if (score > best_score) {
+      best = ptr;
+      best_score = score;
+    }
+  }
+  int result = -1;
+  if (best != NULL && switch_apply_files(best) == 0) {
+    result = 0;
+  }
+  free_machines(head);
+  return result;
+}
+
+void menu_profiles_boot(const char *machine) {
+  char booted[64];
+  describe_booted(machine, booted, sizeof(booted));
+  profiles_boot_init(booted);
+}
+
+void menu_profiles_before_reboot(void) {
+  profiles_before_reboot();
+  // A Start-once profile on another machine: the power-on profile's machine
+  // was put back after boot, so this restart needs the profile's again.
+  if (profiles_return_machine()[0] != '\0') {
+    apply_machine(profiles_running()->machine);
+  }
+}
+
+void menu_profiles_machine_switched(struct machine_entry *entry) {
+  profiles_machine_switched(entry->header);
+}
+
 // ---- Select profile ----
 
 static void start_chosen(struct menu_item *item) {
-  int result = item->id == MENU_PROFILES_SWITCH_TO
-                   ? profiles_switch_to(item->str_value)
-                   : profiles_start_once(item->str_value);
+  const char *id = item->str_value;
+  const char *needed = profiles_machine_for(id);
+  if (needed[0] != '\0' && apply_machine(needed) != 0) {
+    ui_error("No machine for this profile\nin machines.txt");
+    return;
+  }
+  int result = item->id == MENU_PROFILES_START_ONCE ? profiles_start_once(id)
+                                                     : profiles_switch_to(id);
   if (result == PROFILES_OK) {
     reboot();
-  } else if (result == PROFILES_NOT_IMPLEMENTED) {
-    ui_error("Profiles for another machine\naren't supported yet");
   } else {
     ui_error("Can't start this profile");
   }
@@ -399,6 +481,12 @@ void menu_profiles_autostart_chosen(const char *path) {
 }
 
 void menu_profiles_boot_complete(void) {
+  // A Start-once profile on another machine: the next power-on is back on
+  // the power-on profile's machine.
+  const char *back = profiles_return_machine();
+  if (back[0] != '\0' && apply_machine(back) != 0) {
+    ui_error("No machine for %s\nin machines.txt", back);
+  }
   profiles_after_boot();
   const char *message = profiles_boot_message();
   if (message[0] != '\0') {

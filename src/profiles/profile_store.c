@@ -222,6 +222,10 @@ int main_file_write(const char *booted_machine, const ProfileFile *pf) {
 
 static void active_key(void *ctx, const char *key, const char *value) {
    ActiveFile *af = (ActiveFile *)ctx;
+   if (strcmp(key, "main_machine") == 0) {
+      pkv_copy(af->main_machine, sizeof(af->main_machine), value);
+      return;
+   }
    int is_profile = strcmp(key, "profile") == 0;
    if (!is_profile && strcmp(key, "once") != 0) {
       return;
@@ -235,21 +239,20 @@ static void active_key(void *ctx, const char *key, const char *value) {
    }
 }
 
-void active_file_parse(char *text, ActiveFile *af) {
+void active_file_clear(ActiveFile *af) {
+   memset(af, 0, sizeof(*af));
    strcpy(af->profile, PROFILES_MAIN_ID);
-   af->once[0] = '\0';
-   af->bad_profile[0] = '\0';
-   af->bad_once[0] = '\0';
+}
+
+void active_file_parse(char *text, ActiveFile *af) {
+   active_file_clear(af);
    pkv_parse(text, active_key, af);
 }
 
 int active_file_read(ActiveFile *af) {
    char text[PROFILES_MAX_FILE_LEN];
    if (sd_read_file(PROFILES_ACTIVE_FILE, text, sizeof(text)) < 0) {
-      strcpy(af->profile, PROFILES_MAIN_ID);
-      af->once[0] = '\0';
-      af->bad_profile[0] = '\0';
-      af->bad_once[0] = '\0';
+      active_file_clear(af);
       return PROFILES_ERROR;
    }
    active_file_parse(text, af);
@@ -257,11 +260,13 @@ int active_file_read(ActiveFile *af) {
 }
 
 int active_file_write(const ActiveFile *af) {
-   char text[128];
+   char text[512];
    int len = 0;
    text[0] = '\0';
    if (pkv_append(text, sizeof(text), &len, "profile", af->profile) != 0 ||
        pkv_append(text, sizeof(text), &len, "once", af->once) != 0 ||
+       pkv_append(text, sizeof(text), &len, "main_machine",
+                  af->main_machine) != 0 ||
        sd_mkdir(PROFILES_DIR) != 0) {
       return PROFILES_ERROR;
    }
@@ -341,19 +346,14 @@ void profiles_list_close(void) {
 
 // ---- Actions ----
 
-// A profile that can be started: Main, or a valid profile for this machine.
+// A profile that can be started: Main, or a valid profile. Whether it needs
+// another machine is profiles_machine_for()'s job.
 static int check_startable(const char *id) {
    if (id != NULL && strcmp(id, PROFILES_MAIN_ID) == 0) {
       return PROFILES_OK;
    }
    ProfileFile pf;
-   if (profile_file_read(id, &pf) != PROFILES_OK) {
-      return PROFILES_ERROR;
-   }
-   if (!profiles_machine_matches(pf.info.machine, profiles_booted_machine())) {
-      return PROFILES_NOT_IMPLEMENTED;
-   }
-   return PROFILES_OK;
+   return profile_file_read(id, &pf);
 }
 
 int profiles_switch_to(const char *id) {
@@ -362,8 +362,10 @@ int profiles_switch_to(const char *id) {
       return rc;
    }
    ActiveFile af;
+   active_file_read(&af);
    strcpy(af.profile, id);
    af.once[0] = '\0';
+   profiles_remember_main_machine(&af);
    return active_file_write(&af);
 }
 
@@ -375,6 +377,7 @@ int profiles_start_once(const char *id) {
    ActiveFile af;
    active_file_read(&af);
    strcpy(af.once, id);
+   profiles_remember_main_machine(&af);
    return active_file_write(&af);
 }
 
@@ -392,10 +395,11 @@ int profiles_create(const char *name, char *id_out, int id_size) {
    if (pf.info.name[0] == '\0') {
       return PROFILES_ERROR;
    }
-   // Same machine as the running profile; Main's is the booted machine.
+   // Same machine as the running profile; from Main, what booted
+   // ("C64/PAL/HDMI").
    const ProfileInfo *running = profiles_running();
    pkv_copy(pf.info.machine, sizeof(pf.info.machine),
-            running->machine[0] ? running->machine : profiles_booted_machine());
+            running->machine[0] ? running->machine : profiles_booted());
    if (pf.info.machine[0] == '\0') {
       return PROFILES_ERROR;
    }

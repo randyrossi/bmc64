@@ -33,6 +33,7 @@
 #define KEY_LEN 32
 #define VALUE_LEN 96
 #define DESC_LEN 64
+#define HEADER_LEN 129
 
 typedef enum {
   BMC64_VIDEO_STANDARD_UNKNOWN,
@@ -59,6 +60,8 @@ struct machine_entry {
    BMC64VideoStandard video_standard;   
    BMC64VideoOut video_out;
    char desc[DESC_LEN];
+   // The section header as written, e.g. "C64/PAL/HDMI/VICE 720p@50Hz".
+   char header[HEADER_LEN];
    struct machine_option *options;
    struct machine_entry *next;
 };

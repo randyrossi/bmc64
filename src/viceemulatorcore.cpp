@@ -25,6 +25,7 @@ extern "C" {
 #include "../third_party/vice-3.3/src/main.h"
 #include "../third_party/common/semaphore.h"
 #include "profiles/profiles.h"
+#include "../third_party/common/menu_profiles.h"
 
 extern void circle_kernel_core_init_complete(int core);
 }
@@ -150,7 +151,7 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
 
   // Decide which profile runs before VICE reads its settings, and point
   // VICE at the profile's vice.ini (Main: the usual one).
-  profiles_boot_init(machine);
+  menu_profiles_boot(machine);
   const char *vice_config = profiles_vice_config();
   char *all_argv[16];
   int all_argc = 0;

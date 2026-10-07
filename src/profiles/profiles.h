@@ -5,8 +5,9 @@
 // menu. How they work for users, and the file formats, are in
 // docs/PROFILES.md.
 //
-// This is the core logic only (profile files, start-up, machines). It doesn't depend on Circle or VICE, so it can be tested on the
-// PC (tools/profiles_test). File access goes through src/sdcard/sd_fs.h. The
+// This is the core logic only (profile files, start-up, machines). It
+// doesn't depend on Circle or VICE, so it can be tested on the PC
+// (tools/profiles_test). File access goes through src/sdcard/sd_fs.h. The
 // on-screen menu is in third_party/common/menu_profiles.c.
 //
 // Nothing here runs per frame, and with no profiles nothing is read or
@@ -24,7 +25,7 @@ extern "C" {
 #define PROFILES_MAX_NAME_LEN 32
 #define PROFILES_MAX_CATEGORY_LEN 32
 #define PROFILES_MAX_DESCRIPTION_LEN 64
-#define PROFILES_MAX_MACHINE_LEN 64
+#define PROFILES_MAX_MACHINE_LEN 128
 #define PROFILES_MAX_PATH_LEN 256
 
 // Startup disks are for drives 8 to 11.
@@ -48,23 +49,31 @@ typedef struct {
    char name[PROFILES_MAX_NAME_LEN + 1];
    char category[PROFILES_MAX_CATEGORY_LEN + 1];
    // A machines.txt section header, e.g. "C64/PAL/HDMI/VICE 720p@50Hz", or
-   // just the machine, e.g. "C64". Empty for Main, which runs on whatever
-   // machine booted.
+   // the start of one, e.g. "C64/PAL/HDMI" or "C64"; missing parts match
+   // anything. Empty for Main, which runs on whatever machine booted.
    char machine[PROFILES_MAX_MACHINE_LEN + 1];
    ProfileStart start;
 } ProfileInfo;
 
 // ---- Start-up (profile_boot.c) ----
 
-// Called once, before the emulator reads its settings. booted_machine is the
-// machine this kernel emulates, as machines.txt spells it ("C64", "C128",
-// "VIC20", "Plus4", "Plus4Emu", "Pet"). Decides which profile runs; any
-// problem falls back to Main with a message (profiles_boot_message).
-void profiles_boot_init(const char *booted_machine);
+// Called once, before the emulator reads its settings. booted describes what
+// booted in machines.txt terms: the machine ("C64", "C128", "VIC20",
+// "Plus4", "Plus4Emu", "Pet"), then the video standard and output, e.g.
+// "C64/PAL/HDMI". Decides which profile runs; any problem (including a
+// profile for another machine) falls back to Main with a message
+// (profiles_boot_message).
+void profiles_boot_init(const char *booted);
 
 // Called once the emulator is running ("boot complete"). Does the work that
-// mustn't slow boot down, such as removing a used Start-once entry.
+// mustn't slow boot down: removes a used Start-once entry, and remembers the
+// machine Main runs on.
 void profiles_after_boot(void);
+
+// After a Start-once profile on another machine: the power-on profile's
+// machine, which the caller applies so the next power-on is back on it.
+// Otherwise "".
+const char *profiles_return_machine(void);
 
 // A message for the user about how start-up went, or "".
 const char *profiles_boot_message(void);
@@ -107,8 +116,13 @@ void profiles_list_close(void);
 
 // ---- Profile actions (profile_store.c) ----
 
+// The machine a profile needs if it isn't what booted, or "". For Main it's
+// the machine Main last ran on. The caller applies a matching machines.txt
+// entry before Switch to / Start once.
+const char *profiles_machine_for(const char *id);
+
 // Switch to and Start once only update /profiles/active.txt; the caller then
-// restarts BMC64. Profiles for another machine aren't supported yet.
+// restarts BMC64.
 int profiles_switch_to(const char *id);
 int profiles_start_once(const char *id);
 
@@ -132,15 +146,29 @@ int profiles_clear_autostart(void);
 int profiles_set_startup_disks(const char *const paths[PROFILES_NUM_DRIVES]);
 int profiles_clear_startup_disks(void);
 
-// ---- Machines (profile_machine.c) ----
+// ---- Machines (profile_machine.c, profile_boot.c) ----
+
+// What booted, as passed to profiles_boot_init(), e.g. "C64/PAL/HDMI".
+const char *profiles_booted(void);
+
+// "Switch machine" applied entry (its machines.txt header). The power-on
+// profile follows it: on the same machine its standard and output are
+// updated; on another machine Main becomes the power-on profile. Main
+// remembers the entry.
+void profiles_machine_switched(const char *entry);
 
 // Short machine name for menus from a machine value,
 // e.g. "VIC20/PAL/HDMI/..." gives "VIC-20". Empty for an empty value.
 void profiles_machine_label(const char *machine, char *out, int out_size);
 
-// 1 if a profile's machine value is for the booted machine
-// ("C64/PAL/..." and "C64" are both for "C64"). Case doesn't matter.
-int profiles_machine_matches(const char *machine, const char *booted_machine);
+// 1 if two machine values don't contradict each other: every part that both
+// have is the same ("C64" and "C64/PAL/HDMI" match; "C64/NTSC" and
+// "C64/PAL/HDMI" don't). Case and spaces around parts don't matter.
+int profiles_machine_matches(const char *machine, const char *other);
+
+// 1 if a machines.txt header has every part of a machine value
+// ("C64/PAL" covers "C64/PAL/HDMI/VICE 720p@50Hz").
+int profiles_machine_covers(const char *machine, const char *header);
 
 #ifdef __cplusplus
 }
