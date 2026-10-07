@@ -87,8 +87,8 @@ int main(void) {
   static const char *machine_dirs[] = {
     NULL, "vic20", "c64", "c128", "plus4", "plus4emu", "pet"
   };
-  static const int expected_counts[] = {0, 3, 14, 3, 3, 3, 2};
-  static const int expected_layouts[] = {0, 2, 7, 2, 2, 1, 1};
+  static const int expected_counts[] = {0, 3, 16, 3, 3, 3, 2};
+  static const int expected_layouts[] = {0, 2, 8, 2, 2, 1, 1};
   for (int machine = BMC64_MACHINE_CLASS_VIC20; machine <= BMC64_MACHINE_CLASS_PET; machine++) {
     assert(keyboard_preset_count(machine) == expected_counts[machine]);
     assert(keyboard_preset_at(machine, expected_counts[machine]) == NULL);
@@ -178,6 +178,7 @@ int main(void) {
     {KEYBOARD_PHYSICAL_DE, "rpi_sym_de.vkm", KEYBOARD_LAYOUT_DE},
     {KEYBOARD_PHYSICAL_FR, "rpi_sym_fr.vkm", KEYBOARD_LAYOUT_FR},
     {KEYBOARD_PHYSICAL_NO, "rpi_sym_no.vkm", KEYBOARD_LAYOUT_NO},
+    {KEYBOARD_PHYSICAL_LATAM, "rpi_sym_latam.vkm", KEYBOARD_LAYOUT_LATAM},
   };
   for (unsigned index = 0; index < sizeof(c64_locales) / sizeof(c64_locales[0]); index++) {
     int layout = c64_locales[index].layout;
@@ -240,6 +241,19 @@ int main(void) {
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_UK, KEYCODE_NonUSBackSlash, 1, 0) == '|');
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_UK, KEYCODE_LeftBracket, 1, 0) == '{');
   assert(!keyboard_layout_has_altgr(KEYBOARD_LAYOUT_UK));
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_LATAM, KEYCODE_SemiColon, 0, 0) == 0xF1);
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_LATAM, KEYCODE_SemiColon, 1, 0) == 0xD1);
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_LATAM, KEYCODE_Equals, 0, 0) == 0xBF);
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_LATAM, KEYCODE_Equals, 1, 0) == 0xA1);
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_LATAM, KEYCODE_Dash, 0, 0) == '\'');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_LATAM, KEYCODE_Dash, 0, 1) == '\\');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_LATAM, KEYCODE_q, 0, 1) == '@');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_LATAM, KEYCODE_SingleQuote, 1, 0) == '[');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_LATAM, KEYCODE_Pound, 0, 0) == '}');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_LATAM, KEYCODE_BackSlash, 1, 0) == ']');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_LATAM, KEYCODE_BackQuote, 0, 0) == '|');
+  assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_LATAM, KEYCODE_7, 1, 0) == '/');
+  assert(keyboard_layout_has_altgr(KEYBOARD_LAYOUT_LATAM));
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_2, 1, 0) == '"');
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_4, 1, 0) == 0xA4);
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_NO, KEYCODE_LeftBracket, 0, 0) == 0xE5);

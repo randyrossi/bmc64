@@ -1,3 +1,6 @@
+## 5.2.5 (pre-release)
+  * Add Latin American keyboard layout for C64
+
 ## 5.2.4 (pre-release)
   * Fix for Logi Bolt receiver not connecting MX Mini or Mechanical keyboards #396
   * Add profiles (in development): save complete setups and switch between them from the new *Profiles* menu. See [PROFILES.md](docs/PROFILES.md) #213 #295 #92 
