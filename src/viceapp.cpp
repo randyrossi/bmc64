@@ -21,6 +21,8 @@
 #include "../third_party/common/circle.h"
 #include "../third_party/common/io_stats.h"
 #include "../third_party/common/menu_logging.h"
+#include "../third_party/common/menu_profiles.h"
+#include "profiles/profiles.h"
 #include "fbl.h"
 #include "sdcard/sd_fs.h"
 #include <circle/bcm2835.h>
@@ -491,6 +493,8 @@ void ViceStdioApp::LoadNetworkDevice() {
 #elif defined(RASPI_C128)
   settings_path = "/settings-c128.txt";
 #endif
+  // The running profile's settings (Main: the usual file).
+  settings_path = profiles_settings_file(settings_path);
 
   FILE *settings = fopen(settings_path, "r");
   if (settings == nullptr) {
@@ -842,6 +846,20 @@ bool ViceStdioApp::Initialize(void) {
   update_boot_check();
 
   InitBootStat();
+  // Decide which profile runs before any of its settings are read.
+#if defined(RASPI_C64)
+  menu_profiles_boot("C64");
+#elif defined(RASPI_C128)
+  menu_profiles_boot("C128");
+#elif defined(RASPI_VIC20)
+  menu_profiles_boot("VIC20");
+#elif defined(RASPI_PLUS4)
+  menu_profiles_boot("Plus4");
+#elif defined(RASPI_PLUS4EMU)
+  menu_profiles_boot("Plus4Emu");
+#elif defined(RASPI_PET)
+  menu_profiles_boot("Pet");
+#endif
   LoadNetworkDevice();
   if (!ConfigureSystemTimeZone(mTimezoneOffsetMinutes)) {
     mLogger.Write(GetKernelName(), LogWarning, "Cannot configure timezone");
