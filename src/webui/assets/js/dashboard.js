@@ -97,6 +97,9 @@ async function pollStatus() {
     $("i-host").textContent = s.hostname || "—";
     $("i-ip").textContent = s.ip || "—";
     $("i-machine").textContent = s.machine || "—";
+    $("i-profile").textContent = !s.profile_id ? "—"
+      : s.profile_id === "main" ? (s.profiles_in_use ? "Main" : "Main (no profile)")
+      : s.profile_name || s.profile_id;
     $("i-model").textContent = s.model || "—";
     $("i-net").textContent = s.net_text || ("status " + s.net_status);
     $("i-ver").textContent = s.version ? "BMC64 v" + s.version : "—";

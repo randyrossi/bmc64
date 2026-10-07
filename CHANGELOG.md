@@ -1,5 +1,11 @@
 ## 5.2.5 (pre-release)
   * Add Latin American keyboard layout for C64
+  * Profiles (in development, see [PROFILES.md](docs/PROFILES.md)):
+    * Profiles for another machine: choosing one switches machine and restarts #213
+    * Fix network, Web UI and timezone settings of a profile being ignored
+    * Auto-attach disks: *Drives → Auto-attach options* saves the attached disks to be attached at power-on #390
+    * Web UI: new *Profiles* page to view, rename, delete and switch profiles, and the running profile on the Dashboard
+  * Show the current model in the PET and Plus/4 *Model* menu
 
 ## 5.2.4 (pre-release)
   * Fix for Logi Bolt receiver not connecting MX Mini or Mechanical keyboards #396

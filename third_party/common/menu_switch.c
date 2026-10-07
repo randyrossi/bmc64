@@ -139,6 +139,8 @@ static int new_section(struct machine_entry** new_section, char* line) {
     if (header[i]==']') { header[i] = '\0'; break; }
   }
   header = trim(header);
+  char full_header[HEADER_LEN];
+  snprintf(full_header, sizeof(full_header), "%s", header);
 
   char *video_nam = trim(strtok(header, "/"));
   if (video_nam == NULL) return 1;
@@ -163,6 +165,7 @@ static int new_section(struct machine_entry** new_section, char* line) {
   strcat(entry->desc,video_out);
   strcat(entry->desc," ");
   strcat(entry->desc,video_res);
+  strcpy(entry->header, full_header);
 
   entry->options = NULL;
   entry->next = NULL;
@@ -816,6 +819,7 @@ void switch_safe() {
   entry->video_standard = BMC64_VIDEO_STANDARD_PAL;
   entry->video_out = BMC64_VIDEO_OUT_HDMI;
   strcpy(entry->desc,"Safe");
+  entry->header[0] = '\0';
   entry->options = NULL;
   entry->next = NULL;
 

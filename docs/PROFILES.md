@@ -1,8 +1,6 @@
 # BMC64 Profiles
 
 > **Status: in development.** Profiles work as described on this page.
-> *Drives → Auto-attach options* is already in the menu but doesn't do
-> anything yet.
 
 A **profile** is a complete, saved set of BMC64 settings that you can switch
 to from the menu. For example:
@@ -39,6 +37,7 @@ SD card.
     - [Switch to, or Start once](#switch-to-or-start-once)
     - [Saving settings](#saving-settings)
     - [Creating, renaming and deleting](#creating-renaming-and-deleting)
+    - [Auto-attach disks](#auto-attach-disks)
     - [Autostart](#autostart)
   - [What a profile keeps](#what-a-profile-keeps)
   - [Profiles and machines](#profiles-and-machines)
@@ -150,6 +149,31 @@ A hard reset doesn't change profiles, it resets the emulated machine as usual.
   never your disk images or other files. If you've put anything else into a
   profile's folder, it isn't deleted and you get an error instead.
 
+### Auto-attach disks
+
+A profile can attach disk images to drives 8 to 11 every time it starts, for
+example a GEOS boot disk on drive 8 and a data disk on drive 9:
+
+1. Attach the disks as usual from the *Drives* menu.
+2. Choose *Drives → Auto-attach options → Auto-attach current disks at
+   boot*. The disks attached now are saved straight away (no need for *Save
+   settings*), and a message says which drives they're on.
+
+*Clear auto-attached disks* (in the same folder) removes them. Choosing
+*Auto-attach current disks at boot* again replaces the saved disks with the
+ones attached now, so a drive with no disk attached is left empty.
+
+- The disks are attached a couple of seconds after power-on, once BMC64 has
+  finished starting, and before any autostart. A disk autostart replaces the
+  disk on drive 8.
+- Only disks attached from the *Drives* menu are saved, not the one an
+  autostart attached.
+- Main can have auto-attached disks too, one set for each machine.
+- If a disk isn't there any more, you get a message and the other drives are
+  still attached.
+- A C128 checks for a boot disk when it starts, which is before the disks
+  are attached. Use a hard reset to boot from the disk, or an autostart.
+
 ### Autostart
 
 A profile can start a program or disk image by itself every time it starts:
@@ -165,8 +189,9 @@ A profile can start a program or disk image by itself every time it starts:
   finished starting, exactly as if you'd picked it from *Autostart
   Prg/Disk…*. Set up the profile so the file runs (drives, kernal, memory…);
   BMC64 doesn't check that.
-- Main can have an autostart too, one for each machine. Setting one is the
-  only thing that creates the `profiles` folder without making a profile.
+- Main can have an autostart too, one for each machine. Setting one (or
+  auto-attached disks) is the only thing that creates the `profiles` folder
+  without making a profile.
 - If the file isn't there any more (moved or deleted, for example), you get
   a message and the machine starts normally.
 - A hard reset doesn't run the autostart again; only power-on (or a
@@ -188,24 +213,42 @@ their own on the SD card:
 
 - the Wi-Fi network and password (`wpa_supplicant.conf`)
 - the logging destination (`cmdline.txt`)
-- the machine and video mode chosen with **Switch machine** (`config.txt`,
-  `cmdline.txt`)
+
+The machine isn't a setting either: each profile remembers which machine it
+runs on (see below).
 
 ---
 
 ## Profiles and machines
 
-Each profile belongs to the machine it was made on (C64, C128, VIC-20, Plus/4
-or PET). For now a profile only starts on that machine: all profiles are
-listed, but choosing one for another machine shows a message instead. Switch
-to that machine first (**Switch machine**), then choose the profile.
+Each profile belongs to the machine it was made on: the machine, video
+standard and output, for example *C64, PAL, HDMI*. All profiles are listed
+whatever machine you're on.
+
+- **Choosing a profile for another machine** switches to it for you: BMC64
+  applies a matching **Switch machine** entry and restarts into the profile.
+- **Main remembers the machine it last ran on.** Going from Main on the C64
+  to a VIC-20 profile and back to Main puts you back on the C64.
+- **Start once** on another machine: the next power-on is back on your usual
+  profile's machine. Restarts BMC64 asks for during that session stay on the
+  Start-once profile's machine.
+- **Switch machine inside a profile:** to another video standard or output of
+  the same machine, the profile moves with you. To another machine, Main
+  becomes the power-on profile, since the profile's settings are for the old
+  machine.
+- **At power-on**, a profile whose machine isn't what booted (for example
+  after editing `config.txt` by hand) isn't used: Main starts with a message.
+
+If `machines.txt` has several entries for a machine, standard and output (for
+example 720p and 1080p), the first one is used. To pin a profile to one,
+set its `machine` to the whole entry (see `profile.txt` below).
 
 ---
 
 ## If something goes wrong
 
-- **A profile can't be read**, or it's for another machine: BMC64 starts Main
-  instead and shows a message once it's active.
+- **A profile can't be read**, or it's for another machine than the one that
+  booted: BMC64 starts Main instead and shows a message once it's active.
 - **A profile won't start properly at all:** hold **C=+F7 for 5 seconds**, then
   let go of F7 (safe mode). As well as the usual safe-mode reset of the video
   mode, this makes **Main** the power-on profile again.
@@ -229,7 +272,7 @@ don't need to touch these files, but you can.
 ```
 /profiles/
   active.txt          which profile starts at power-on
-  main/               Main's autostart, one file per machine
+  main/               Main's disks and autostart, one file per machine
     c64.txt
   jiffy-reu/          one folder per profile
     profile.txt       the profile's name, machine and autostart
@@ -249,10 +292,24 @@ with `#` are comments.
 
 ### Editing them in the Web UI
 
+The Web UI's **Profiles** page lists Main and every profile with its
+machine, auto-attached disks and autostart, and marks the profile that's
+running, the one used at power-on and any pending *Start once*. Each
+profile's buttons open its files in the editor, and its *Actions* menu can
+open its folder in *Files*, rename it or delete it, the same as the BMC64
+menu (the running profile can't be deleted). Deleting the power-on profile
+makes Main the power-on profile.
+
+Each card also has **Switch to** and **Start once** buttons, which work the
+same as in *Select profile*: BMC64 switches machine if needed and restarts
+into the profile, and the page waits until it's back. The Web UI only runs on
+the C64 and C128, so after starting a profile for another machine the page
+stays offline until a C64 or C128 profile is running again.
+
 The Web UI's file editor can open and save `active.txt`, Main's files in
-`main/`, and each profile's `profile.txt`, `settings.txt` and `vice.ini`. As with the other config files,
-the previous version is kept as `<name>.bak`. Changes take effect at the next
-restart; saving from the menus before then overwrites edits to the active
+`main/`, and each profile's `profile.txt`, `settings.txt` and `vice.ini`. As
+with the other config files, the previous version is kept as `<name>.bak`.
+Changes take effect at the next restart; saving from the menus before then overwrites edits to the active
 profile's files.
 
 ### `active.txt`
@@ -261,6 +318,7 @@ profile's files.
 |---|---|
 | `profile` | The id of the profile used at power-on, or `main` for Main. If the file or key is missing, Main is used. |
 | `once` | Optional: the id of a profile to use for the next start only. BMC64 removes it once that profile is active. |
+| `main_machine` | Written by BMC64: the machine Main last ran on, e.g. `C64/PAL/HDMI`, or the whole `machines.txt` entry if it was chosen with **Switch machine** in Main. |
 
 ```ini
 profile=jiffy-reu
@@ -272,22 +330,25 @@ once=stock-c64
 | Key | Required | Meaning |
 |---|---|---|
 | `name` | yes | The name shown in the menu (up to 32 characters) |
-| `machine` | yes | The machine: `C64`, `C128`, `VIC20`, `Plus4`, `Plus4Emu` or `Pet` |
+| `machine` | yes | The machine, video standard and output, as at the start of a `machines.txt` entry's `[...]` header, e.g. `C64/PAL/HDMI`. The machine is `C64`, `C128`, `VIC20`, `Plus4`, `Plus4Emu` or `Pet`. Just `C64` means any standard and output. A whole header, e.g. `C64/PAL/HDMI/VICE 1080p@50Hz`, picks that entry when switching to the profile. |
 | `category` | no | Groups profiles into folders in *Select profile*, e.g. `Games` |
 | `start` | no | `switch` (the default) or `once`: which choice *Select profile* offers first |
+| `disk_8` … `disk_11` | no | The disk image attached to that drive at power-on, with its volume, e.g. `SD:/disks/geos.d64` |
 | `autostart` | no | The program or disk image to start at power-on, with its volume, e.g. `SD:/games/elite.d64` |
 
 ```ini
 name=Elite
-machine=C64
+machine=C64/PAL/HDMI
 category=Games
+disk_9=SD:/games/elite-save.d64
 autostart=SD:/games/elite.d64
 ```
 
 ### `main/<machine>.txt`
 
-Main's autostart for one machine: `c64.txt`, `c128.txt`, `vic20.txt`,
-`plus4.txt`, `plus4emu.txt` or `pet.txt`. It only holds the `autostart` key.
+Main's auto-attached disks and autostart for one machine: `c64.txt`,
+`c128.txt`, `vic20.txt`, `plus4.txt`, `plus4emu.txt` or `pet.txt`. It only
+holds the `disk_8` … `disk_11` and `autostart` keys.
 
 `vice.ini` and `settings.txt` have the same format as the files at the root of
 the SD card. BMC64 writes them when you press **Save settings** in that

@@ -9,6 +9,7 @@ without a Raspberry Pi.
     python3 tools/webui_dev_server.py            # http://localhost:8000
     python3 tools/webui_dev_server.py --root ~/  # browse a real folder
     python3 tools/webui_dev_server.py --no-watch # disable live reload
+    python3 tools/webui_dev_server.py --running geos  # pretend a profile runs
 
 With live reload on (default) the browser refreshes whenever a file in
 src/webui/assets/ changes, so you can edit and watch side by side.
@@ -25,9 +26,11 @@ import datetime as _dt
 import json
 import os
 import posixpath
+import re
 import shutil
 import subprocess
 import sys
+import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -193,6 +196,9 @@ class Handler(BaseHTTPRequestHandler):
             self._drain_body()
             sys.stderr.write("  [mock] /api/reset (no-op)\n")
             return self._json(202, {"ok": True})
+        if path == "/api/profiles/start":
+            self._drain_body()
+            return self.api_profiles_start(parsed.query)
         if path == "/api/webui/disable":
             self._drain_body()
             sys.stderr.write("  [mock] /api/webui/disable - stopping server\n")
@@ -262,7 +268,71 @@ class Handler(BaseHTTPRequestHandler):
 
     # -- mock API -----------------------------------------------------
 
+    # A pretend restart: /api/status fails until RESTART_UNTIL, and the
+    # uptime counts from BOOT_TIME.
+    RESTART_UNTIL = 0.0
+    BOOT_TIME = time.time() - 8123
+    PROFILE_ERROR = ""
+
+    def api_profiles_start(self, query):
+        if self.headers.get("X-BMC64-Web") != "1":
+            return self._send(403, "missing X-BMC64-Web header\n")
+        q = urllib.parse.parse_qs(query)
+        pid = (q.get("id") or [""])[0]
+        once = (q.get("once") or ["0"])[0] == "1"
+        if not re.fullmatch(r"[a-z0-9-]{1,32}", pid):
+            return self._send(400, "bad profile id\n")
+        cls = type(self)
+        cls.PROFILE_ERROR = ""
+        profiles = os.path.join(ARGS.root, "profiles")
+        if pid != "main" and not os.path.isfile(
+                os.path.join(profiles, pid, "profile.txt")):
+            cls.PROFILE_ERROR = "Can't start this profile"
+            return self._json(202, {"ok": True})
+        # Like profiles_switch_to() / profiles_start_once(): active.txt.
+        active = os.path.join(profiles, "active.txt")
+        lines = []
+        if os.path.isfile(active):
+            with open(active) as fh:
+                lines = [l for l in fh.read().splitlines()
+                         if l.partition("=")[0].strip() not in ("once",)
+                         and (once or l.partition("=")[0].strip() != "profile")]
+        lines.insert(0, ("once=" if once else "profile=") + pid)
+        if once and not any(l.startswith("profile=") for l in lines):
+            lines.insert(0, "profile=main")
+        os.makedirs(profiles, exist_ok=True)
+        with open(active, "w") as fh:
+            fh.write("\n".join(lines) + "\n")
+        ARGS.running = pid
+        cls.RESTART_UNTIL = time.time() + 4
+        cls.BOOT_TIME = cls.RESTART_UNTIL
+        sys.stderr.write("  [mock] restarting into %s%s\n"
+                         % (pid, " (once)" if once else ""))
+        return self._json(202, {"ok": True})
+
     def api_status(self):
+        if time.time() < type(self).RESTART_UNTIL:
+            return self._send(503, "restarting\n")
+        # Nothing is really running here, so there's no running profile
+        # unless --running pretends one is.
+        profile = {}
+        if ARGS.running:
+            name = "Main" if ARGS.running == "main" else ARGS.running
+            try:
+                with open(os.path.join(ARGS.root, "profiles", ARGS.running,
+                                       "profile.txt")) as fh:
+                    for line in fh:
+                        key, _, value = line.partition("=")
+                        if key.strip() == "name":
+                            name = value.strip()
+            except OSError:
+                pass
+            profile = {
+                "profile_id": ARGS.running,
+                "profile_name": name,
+                "profiles_in_use": os.path.isfile(
+                    os.path.join(ARGS.root, "profiles", "active.txt")),
+            }
         self._json(200, {
             "hostname": "bmc64-dev",
             "version": "5.1.2",
@@ -271,9 +341,11 @@ class Handler(BaseHTTPRequestHandler):
             "ip": "127.0.0.1",
             "net_status": 13,
             "net_text": "connected (Wi-Fi)",
-            "uptime_secs": 8123,
+            "uptime_secs": int(time.time() - type(self).BOOT_TIME),
             "soc_temp_c": 48.6,
             "throttled": int(ARGS.throttled, 0),
+            **profile,
+            "profile_error": type(self).PROFILE_ERROR,
         })
 
     def api_volumes(self):
@@ -335,8 +407,8 @@ class Handler(BaseHTTPRequestHandler):
         })
 
     # Same lists as webui_fs.cpp: upload/delete refuse PROTECTED, and only the
-    # editor's save endpoint may change EDITABLE files (root folder only) or
-    # keyboard mapping files (*.vkm, any folder).
+    # editor's save endpoint may change EDITABLE files (root folder only),
+    # keyboard mapping files (*.vkm, any folder) or profile files.
     CONFIG_FILES = {
         "settings.txt", "settings-c128.txt", "settings-vic20.txt",
         "settings-plus4.txt", "settings-plus4emu.txt", "settings-pet.txt",
@@ -358,7 +430,22 @@ class Handler(BaseHTTPRequestHandler):
         name = parts[-1].lower() if parts else ""
         if name.endswith(".vkm") and len(name) > 4:
             return True
-        return len(parts) == 1 and name in cls.EDITABLE
+        return (len(parts) == 1 and name in cls.EDITABLE) or cls.is_profile_file(parts)
+
+    @staticmethod
+    def is_profile_file(parts):
+        """IsProfileFilePath(): /profiles/active.txt, /profiles/main/*.txt and
+        each profile's profile.txt, settings.txt and vice.ini."""
+        lower = [p.lower() for p in parts]
+        if not lower or lower[0] != "profiles":
+            return False
+        if len(lower) == 2:
+            return lower[1] == "active.txt"
+        if len(lower) != 3:
+            return False
+        if lower[1] == "main":
+            return len(lower[2]) > 4 and lower[2].endswith(".txt")
+        return lower[2] in ("profile.txt", "settings.txt", "vice.ini")
 
     def api_fs_upload(self, query):
         length = self.headers.get("Content-Length")
@@ -571,6 +658,8 @@ def main():
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--root", default=REPO_ROOT,
                         help="folder the mock file browser serves (default: repo root)")
+    parser.add_argument("--running", default="",
+                        help="pretend this profile id (or main) is running")
     parser.add_argument("--throttled", default="0x0",
                         help="mock /get_throttled bitmask, e.g. 0x50000 for past under-voltage")
     parser.add_argument("--pin", default="",

@@ -55,10 +55,16 @@ int main_file_write(const char *booted_machine, const ProfileFile *pf);
 typedef struct {
    char profile[PROFILES_MAX_ID_LEN + 1];
    char once[PROFILES_MAX_ID_LEN + 1];
+   // The machine Main last ran on ("main_machine"): what booted, e.g.
+   // "C64/PAL/HDMI", or the machines.txt entry chosen with Switch machine.
+   char main_machine[PROFILES_MAX_MACHINE_LEN + 1];
    // Values that aren't profile ids (e.g. a typo), cut to fit; "" if none.
    char bad_profile[PROFILES_MAX_ID_LEN + 1];
    char bad_once[PROFILES_MAX_ID_LEN + 1];
 } ActiveFile;
+
+// Empties af: Main, nothing else set.
+void active_file_clear(ActiveFile *af);
 
 // Fills af from active.txt text (changes text). Missing or invalid ids
 // become "main" (profile) and "" (once); invalid ones are also kept in
@@ -77,12 +83,25 @@ int profiles_id_valid(const char *id);
 // Makes an unused id from a name (docs/PROFILES.md, Profile files).
 int profiles_make_id(const char *name, char *out, int out_size);
 
+// ---- Machines (profile_machine.c) ----
+
+// The machine, standard and output of a machine value, e.g. "C64/PAL/HDMI"
+// from "C64/PAL/HDMI/VICE 720p@50Hz".
+void profiles_machine_desc(const char *machine, char *out, int out_size);
+
+// The machine part, e.g. "C64" from "C64/PAL/HDMI".
+void profiles_machine_name(const char *machine, char *out, int out_size);
+
 // ---- State (profile_store.c / profile_boot.c) ----
 
 const ProfileInfo *profiles_main_info(void);
 
-// The booted machine, as passed to profiles_boot_init().
+// The booted machine's name, e.g. "C64" from "C64/PAL/HDMI".
 const char *profiles_booted_machine(void);
+
+// Before leaving Main for a profile: sets af's main_machine to what booted,
+// if Main is running and hasn't remembered it.
+void profiles_remember_main_machine(ActiveFile *af);
 
 // Updates the running profile's name after a rename.
 void profiles_running_renamed(const char *name);

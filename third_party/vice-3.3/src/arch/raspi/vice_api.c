@@ -1345,8 +1345,7 @@ int emux_handle_quick_func(int button_func, fullpath_func f_fullpath) {
        for (drive=0;drive<4;drive++) {
           emux_detach_disk(drive+8);
           if (strlen(attached_disk_name[drive]) > 0) {
-             emux_attach_disk_image(drive+8,
-                f_fullpath(DIR_DISKS, attached_disk_name[drive]));
+             emux_attach_disk_image(drive+8, attached_disk_name[drive]);
           }
        }
 

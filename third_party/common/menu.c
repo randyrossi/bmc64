@@ -2186,7 +2186,8 @@ static void select_file(struct menu_item *item) {
 	 attached_disk_name[unit-8][0] = '\0';
        } else {
          ui_pop_all_and_toggle();
-	 strcpy (attached_disk_name[unit-8], item->str_value);
+	 snprintf(attached_disk_name[unit-8], MAX_STR_VAL_LEN, "%s",
+	          fullpath(DIR_DISKS, item->str_value));
        }
        return;
      case MENU_DRIVE_ROM_FILE_1541:
@@ -3425,7 +3426,7 @@ static void menu_value_changed(struct menu_item *item) {
     if (save_wifi_settings() != 0) {
       ui_error("Cannot save WiFi settings");
     } else {
-      profiles_before_reboot();
+      menu_profiles_before_reboot();
       reboot();
     }
     return;
@@ -3738,6 +3739,9 @@ static void menu_value_changed(struct menu_item *item) {
       while (ptr) {
           if (ptr->id == confirmation_value) {
             status = switch_apply_files(ptr);
+            if (status == 0) {
+              menu_profiles_machine_switched(ptr);
+            }
             break;
           }
           ptr = ptr->next;
@@ -3752,20 +3756,20 @@ static void menu_value_changed(struct menu_item *item) {
       }
     } else if (confirmation_id == MENU_NETWORK_ENABLED) {
       if (save_settings() == 0) {
-        profiles_before_reboot();
+        menu_profiles_before_reboot();
         reboot();
       } else {
         ui_error("Cannot save settings");
       }
     } else if (confirmation_id == MENU_WEBUI_ENABLED) {
       if (save_settings() == 0) {
-        profiles_before_reboot();
+        menu_profiles_before_reboot();
         reboot();
       } else {
         ui_error("Cannot save settings");
       }
     } else if (confirmation_id == MENU_LOGGING_DESTINATION) {
-      profiles_before_reboot();
+      menu_profiles_before_reboot();
       reboot();
     }
     break;

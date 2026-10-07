@@ -39,6 +39,11 @@ export const reboot = () => post("/api/reboot");
 export const hardReset = () => post("/api/reset");
 export const disableWebUi = () => post("/api/webui/disable");
 
+// Switch to (or, with `once`, Start once) a profile; BMC64 restarts into it.
+export const startProfile = (id, once) =>
+  post("/api/profiles/start?id=" + encodeURIComponent(id) + "&once=" + (once ? 1 : 0),
+       { headers: WEB_HEADER });
+
 // ---- files ----
 
 // No vol: the first listing tells us which volume the device uses.

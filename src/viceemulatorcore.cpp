@@ -94,7 +94,6 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
   printf("Starting emulator main loop\n");
 
 #if defined(RASPI_C64)
-  const char *machine = "C64";
   int argc = 9;
   char *argv[] = {
       (char *)"vice", timing_option_, (char *)"-sounddev", (char *)"raspi",
@@ -104,7 +103,6 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
       (char *)"+VICIIvcache",
   };
 #elif defined(RASPI_C128)
-  const char *machine = "C128";
   int argc = 12;
   char *argv[] = {
       (char *)"vice", timing_option_, (char *)"-sounddev", (char *)"raspi",
@@ -115,7 +113,6 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
       (char *)"+VDCvcache",
   };
 #elif defined(RASPI_VIC20)
-  const char *machine = "VIC20";
   int argc = 11;
   char *argv[] = {
       (char *)"vice", timing_option_, (char *)"-sounddev", (char *)"raspi",
@@ -125,7 +122,6 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
       (char *)"+VICvcache",
   };
 #elif defined(RASPI_PLUS4)
-  const char *machine = "Plus4";
   int argc = 11;
   char *argv[] = {
       (char *)"vice", timing_option_, (char *)"-sounddev", (char *)"raspi",
@@ -135,7 +131,6 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
       (char *)"+TEDvcache",
   };
 #elif defined(RASPI_PET)
-  const char *machine = "Pet";
   int argc = 11;
   char *argv[] = {
       (char *)"vice", timing_option_, (char *)"-sounddev", (char *)"raspi",
@@ -148,9 +143,8 @@ void ViceEmulatorCore::RunMainVice(bool wait) {
 #endif
   emu_machine_init(m_options->GetRasterSkip(), m_options->GetRasterSkip2());
 
-  // Decide which profile runs before VICE reads its settings, and point
-  // VICE at the profile's vice.ini (Main: the usual one).
-  profiles_boot_init(machine);
+  // Point VICE at the running profile's vice.ini (Main: the usual one).
+  // The profile was chosen at start-up (ViceStdioApp::Initialize).
   const char *vice_config = profiles_vice_config();
   char *all_argv[16];
   int all_argc = 0;

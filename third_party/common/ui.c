@@ -42,6 +42,7 @@
 #include "menu_text_layout.h"
 #include "font.h"
 #include "menu_timing.h"
+#include "menu_profiles.h"
 #include "menu_switch.h"
 
 extern void reboot(void);
@@ -120,6 +121,9 @@ int pending_emu_quick_func;
 // Guarded by the circle lock; consumed on the emulator main loop.
 static char pending_emu_autostart_path[PENDING_EMU_AUTOSTART_MAX];
 static volatile int pending_emu_autostart;
+// Set by emu_profile_start_interrupt(): 1 for Switch to, 2 for Start once.
+static char pending_emu_profile_id[PENDING_EMU_PROFILE_ID_MAX];
+static volatile int pending_emu_profile_start;
 // Set by emu_safe_mode_interrupt().
 static volatile int pending_emu_safe_mode;
 
@@ -1001,6 +1005,14 @@ void ui_handle_toggle_or_quick_func() {
     pending_emu_autostart = 0;
     circle_lock_release();
     menu_autostart(path);
+  } else if (pending_emu_profile_start) {
+    char id[PENDING_EMU_PROFILE_ID_MAX];
+    circle_lock_acquire();
+    strcpy(id, pending_emu_profile_id);
+    int once = pending_emu_profile_start == 2;
+    pending_emu_profile_start = 0;
+    circle_lock_release();
+    menu_profiles_start(id, once);
   }
 }
 
@@ -1650,6 +1662,37 @@ int emu_is_ui_activated(void) {
   return ui_enabled;
 }
 
+// Characters that fit on one line of an Info or Error dialog.
+#define DIALOG_LINE_CHARS 28
+
+// Adds a dialog's message, one item per line. Lines are wrapped at spaces to
+// fit the dialog ('\n' also starts a new line); a word too long for a line
+// is split.
+static void add_dialog_lines(struct menu_item *root, int id, char *text) {
+  char *p = text;
+  do {
+    char line[DIALOG_LINE_CHARS + 1];
+    int len = (int)strcspn(p, "\n");
+    if (len > DIALOG_LINE_CHARS) {
+      // Break at the last space that fits, if there is one.
+      len = DIALOG_LINE_CHARS;
+      for (int i = DIALOG_LINE_CHARS; i > 0; i--) {
+        if (p[i] == ' ') {
+          len = i;
+          break;
+        }
+      }
+    }
+    memcpy(line, p, len);
+    line[len] = '\0';
+    ui_menu_add_button(id, root, line);
+    p += len;
+    if (*p == ' ' || *p == '\n') {
+      p++;
+    }
+  } while (*p != '\0');
+}
+
 static struct menu_item *ui_push_dialog_header(int is_error) {
   struct menu_item *root = ui_push_menu(30, 4);
   if (is_error) {
@@ -1681,15 +1724,7 @@ void ui_error(const char *format, ...) {
   va_start(args, format);
   vsnprintf(buffer, 255, format, args);
   va_end(args);
-
-  char *line = buffer;
-  char *next_line;
-  while ((next_line = strchr(line, '\n')) != NULL) {
-    *next_line = '\0';
-    ui_menu_add_button(MENU_ERROR_DIALOG, root, line);
-    line = next_line + 1;
-  }
-  ui_menu_add_button(MENU_ERROR_DIALOG, root, line);
+  add_dialog_lines(root, MENU_ERROR_DIALOG, buffer);
   ui_render_single_frame();
 }
 
@@ -1706,8 +1741,8 @@ void ui_info(const char *format, ...) {
   va_list args;
   va_start(args, format);
   vsnprintf(buffer, 255, format, args);
-  ui_menu_add_button(MENU_INFO_DIALOG, root, buffer);
   va_end(args);
+  add_dialog_lines(root, MENU_INFO_DIALOG, buffer);
   ui_render_single_frame();
 }
 
@@ -1878,6 +1913,14 @@ void emu_quick_func_interrupt(int button_assignment) {
 
 void emu_safe_mode_interrupt(void) {
   pending_emu_safe_mode = 1;
+}
+
+void emu_profile_start_interrupt(const char *id, int once) {
+  circle_lock_acquire();
+  strncpy(pending_emu_profile_id, id, PENDING_EMU_PROFILE_ID_MAX - 1);
+  pending_emu_profile_id[PENDING_EMU_PROFILE_ID_MAX - 1] = '\0';
+  pending_emu_profile_start = once ? 2 : 1;
+  circle_lock_release();
 }
 
 void emu_autostart_interrupt(const char *path) {

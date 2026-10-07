@@ -10,7 +10,7 @@
 // POST /api/reset, GET /api/volumes, GET /api/fs/list, GET /api/fs/download,
 // POST /api/fs/upload, POST /api/fs/save, POST /api/fs/delete,
 // POST /api/fs/mkdir, POST /api/fs/rename, POST /api/fs/autostart,
-// POST /api/webui/disable.
+// POST /api/profiles/start, POST /api/webui/disable.
 //
 // When a PIN is configured, every request must carry HTTP Basic Auth
 // (Authorization: Basic base64(<user>:<pin>)); the username is ignored.
@@ -34,6 +34,7 @@
 #include "webui_assets.h"
 #include "webui_fs.h"
 #include "webui_http.h"
+#include "../profiles/profiles.h"
 
 #include <circle/bcmpropertytags.h>
 #include <circle/logger.h>
@@ -61,6 +62,12 @@ extern "C" const char *bmc64_version_string(void);
 // Queues a "quick function" for the emulator main loop (interrupt safe;
 // see third_party/common/circle.h / ui.c).
 extern "C" void emu_quick_func_interrupt(int button_assignment);
+// Queues Switch to / Start once of a profile for the emulator main loop
+// (third_party/common/circle.h), and why the last one failed
+// (third_party/common/menu_profiles.h).
+extern "C" void emu_profile_start_interrupt(const char *id, int once);
+extern "C" const char *menu_profiles_start_error(void);
+extern "C" void menu_profiles_clear_start_error(void);
 // BTN_ASSIGN_RESET_HARD2 from third_party/common/circle.h: hard reset the
 // emulated machine with no on-screen confirmation dialog.
 #define WEBUI_QUICKFUNC_RESET_HARD 916
@@ -219,6 +226,34 @@ void ThrottledField(char *out, unsigned out_size) {
   }
 }
 
+// Copies s into out as the inside of a JSON string. Profile names come from
+// the menu, so they're plain text; anything else is replaced.
+void JsonText(const char *s, char *out, unsigned out_size) {
+  unsigned n = 0;
+  for (; *s != '\0' && n + 2 < out_size; s++) {
+    unsigned char c = (unsigned char) *s;
+    if (c == '"' || c == '\\') {
+      out[n++] = '\\';
+      out[n++] = (char) c;
+    } else {
+      out[n++] = (c < 0x20 || c >= 0x80) ? '?' : (char) c;
+    }
+  }
+  out[n] = '\0';
+}
+
+// "main" or a profile id: 1 to 32 lowercase letters, digits and '-'.
+boolean IsProfileId(const char *id) {
+  unsigned length = 0;
+  for (; id[length] != '\0'; length++) {
+    char c = id[length];
+    if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-')) {
+      return FALSE;
+    }
+  }
+  return length > 0 && length <= PROFILES_MAX_ID_LEN;
+}
+
 void HandleStatus(CSocket *socket) {
   char ip[32];
   boolean have_ip = circle_get_network_ip_address(ip, sizeof(ip)) != 0;
@@ -231,16 +266,26 @@ void HandleStatus(CSocket *socket) {
   SocTempField(soc_temp, sizeof(soc_temp));
   ThrottledField(throttled, sizeof(throttled));
 
-  char body[512];
+  // The profile running now (docs/PROFILES.md).
+  const ProfileInfo *profile = profiles_running();
+  char profile_name[2 * PROFILES_MAX_NAME_LEN + 1];
+  JsonText(profile->name, profile_name, sizeof(profile_name));
+  char profile_error[128];
+  JsonText(menu_profiles_start_error(), profile_error, sizeof(profile_error));
+
+  char body[768];
   int length = snprintf(
       body, sizeof(body),
       "{\"hostname\":\"%s\",\"version\":\"%s\",\"machine\":\"%s\","
       "\"model\":\"%s\",\"ip\":\"%s\",\"net_status\":%d,\"net_text\":\"%s\","
-      "\"uptime_secs\":%u,\"soc_temp_c\":%s,\"throttled\":%s}",
+      "\"uptime_secs\":%u,\"soc_temp_c\":%s,\"throttled\":%s,"
+      "\"profile_id\":\"%s\",\"profile_name\":\"%s\","
+      "\"profiles_in_use\":%s,\"profile_error\":\"%s\"}",
       WEBUI_HOSTNAME, bmc64_version_string(), kMachineName,
       model != 0 ? model : "",
       have_ip ? ip : "", net_status, NetStatusText(net_status), uptime,
-      soc_temp, throttled);
+      soc_temp, throttled, profile->id, profile_name,
+      profiles_in_use() ? "true" : "false", profile_error);
   if (length < 0 || (unsigned) length >= sizeof(body)) {
     SendText(socket, 500, "Internal Server Error", "status encode error\n");
     return;
@@ -515,6 +560,32 @@ boolean HandleConnection(CSocket *socket) {
     CScheduler::Get()->MsSleep(250);  // give the socket time to flush
     reboot();                         // does not return
     return TRUE;
+  }
+
+  if (is_post && strcmp(target, "/api/profiles/start") == 0) {
+    // Restarts BMC64 into another profile, so it gets the same cross-site
+    // protection as /api/fs/save.
+    if (!HasHeader(request, "x-bmc64-web:")) {
+      SendText(socket, 403, "Forbidden", "missing X-BMC64-Web header\n");
+      return FALSE;
+    }
+    char id[PROFILES_MAX_ID_LEN + 1];
+    char once[4] = "";
+    if (!webhttp::QueryParam(query, "id", id, sizeof(id)) || !IsProfileId(id)) {
+      SendText(socket, 400, "Bad Request", "bad profile id\n");
+      return FALSE;
+    }
+    webhttp::QueryParam(query, "once", once, sizeof(once));
+    // Queued for the emulator main loop, which switches machine if needed
+    // and restarts, or sets the error /api/status reports.
+    menu_profiles_clear_start_error();
+    emu_profile_start_interrupt(id, once[0] == '1');
+    const char *ok = "{\"ok\":true}";
+    SendResponse(socket, 202, "Accepted", "application/json", ok,
+                 (unsigned) strlen(ok));
+    CLogger::Get()->Write(WEBUI_LOG, LogNotice,
+                          "Profile %s requested via web UI", id);
+    return FALSE;
   }
 
   if (is_post && strcmp(target, "/api/reset") == 0) {
