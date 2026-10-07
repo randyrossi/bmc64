@@ -720,6 +720,8 @@ typedef enum {
 
 extern long keyset_codes[2][7];
 extern long key_bindings[6];
+// The disk image attached to drives 8-11 from the menu, with its volume
+// (e.g. "SD:/disks/geos.d64"), or "".
 extern char attached_disk_name[4][MAX_STR_VAL_LEN];
 
 extern int pot_x_high_value;

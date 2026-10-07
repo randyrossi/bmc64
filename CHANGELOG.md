@@ -3,6 +3,7 @@
   * Profiles (in development, see [PROFILES.md](docs/PROFILES.md)):
     * Profiles for another machine: choosing one switches machine and restarts #213
     * Fix network, Web UI and timezone settings of a profile being ignored
+    * Auto-attach disks: *Drives → Auto-attach options* saves the attached disks to be attached at power-on #390
   * Show the current model in the PET and Plus/4 *Model* menu
 
 ## 5.2.4 (pre-release)

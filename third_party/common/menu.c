@@ -2186,7 +2186,8 @@ static void select_file(struct menu_item *item) {
 	 attached_disk_name[unit-8][0] = '\0';
        } else {
          ui_pop_all_and_toggle();
-	 strcpy (attached_disk_name[unit-8], item->str_value);
+	 snprintf(attached_disk_name[unit-8], MAX_STR_VAL_LEN, "%s",
+	          fullpath(DIR_DISKS, item->str_value));
        }
        return;
      case MENU_DRIVE_ROM_FILE_1541:

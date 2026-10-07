@@ -3,11 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 
-// Start-up: which profile runs, the machine to go back to, and the
-// autostart (docs/PROFILES.md, Switch to, or Start once; Profiles and
-// machines; Autostart).
-//
-// Not implemented yet: startup disks.
+// Start-up: which profile runs, the machine to go back to, and the startup
+// disks and autostart (docs/PROFILES.md, Switch to, or Start once; Profiles
+// and machines; Auto-attach disks; Autostart).
 
 // What booted ("C64/PAL/HDMI") and its machine name ("C64").
 static char booted_desc[64];
@@ -274,14 +272,43 @@ const char *profiles_autostart(void) {
    return running_is_main ? main_extras.autostart : running.autostart;
 }
 
-// Saves path ("" for none) as the running profile's autostart, straight away.
-static int save_autostart(const char *path) {
-   if (path == NULL || strlen(path) >= sizeof(running.autostart)) {
+// The running profile's startup actions as they'll be saved.
+typedef struct {
+   const char *autostart;  // NULL: unchanged
+   const char *disks[PROFILES_NUM_DRIVES];
+   int set_disks;
+} StartupChange;
+
+static int change_fits(const StartupChange *c) {
+   if (c->autostart && strlen(c->autostart) >= sizeof(running.autostart)) {
+      return 0;
+   }
+   for (int i = 0; c->set_disks && i < PROFILES_NUM_DRIVES; i++) {
+      if (c->disks[i] && strlen(c->disks[i]) >= sizeof(running.disks[i])) {
+         return 0;
+      }
+   }
+   return 1;
+}
+
+static void apply_change(ProfileFile *pf, const StartupChange *c) {
+   if (c->autostart) {
+      pkv_copy(pf->autostart, sizeof(pf->autostart), c->autostart);
+   }
+   for (int i = 0; c->set_disks && i < PROFILES_NUM_DRIVES; i++) {
+      pkv_copy(pf->disks[i], sizeof(pf->disks[i]),
+               c->disks[i] ? c->disks[i] : "");
+   }
+}
+
+// Saves the running profile's autostart and/or startup disks straight away.
+static int save_startup(const StartupChange *c) {
+   if (!change_fits(c)) {
       return PROFILES_ERROR;
    }
    if (running_is_main) {
       ProfileFile extras = main_extras;
-      pkv_copy(extras.autostart, sizeof(extras.autostart), path);
+      apply_change(&extras, c);
       if (main_file_write(booted_machine, &extras) != PROFILES_OK) {
          return PROFILES_ERROR;
       }
@@ -299,11 +326,11 @@ static int save_autostart(const char *path) {
    if (profile_file_read(running.info.id, &pf) != PROFILES_OK) {
       return PROFILES_ERROR;
    }
-   pkv_copy(pf.autostart, sizeof(pf.autostart), path);
+   apply_change(&pf, c);
    if (profile_file_write(running.info.id, &pf) != PROFILES_OK) {
       return PROFILES_ERROR;
    }
-   pkv_copy(running.autostart, sizeof(running.autostart), path);
+   apply_change(&running, c);
    return PROFILES_OK;
 }
 
@@ -311,18 +338,31 @@ int profiles_set_autostart(const char *path) {
    if (path == NULL || path[0] == '\0') {
       return PROFILES_ERROR;
    }
-   return save_autostart(path);
+   StartupChange c = {path, {NULL}, 0};
+   return save_startup(&c);
 }
 
 int profiles_clear_autostart(void) {
-   return save_autostart("");
+   StartupChange c = {"", {NULL}, 0};
+   return save_startup(&c);
+}
+
+const char *profiles_startup_disk(int drive) {
+   if (drive < 0 || drive >= PROFILES_NUM_DRIVES) {
+      return "";
+   }
+   return running_is_main ? main_extras.disks[drive] : running.disks[drive];
 }
 
 int profiles_set_startup_disks(const char *const paths[PROFILES_NUM_DRIVES]) {
-   (void)paths;
-   return PROFILES_NOT_IMPLEMENTED;
+   StartupChange c = {NULL, {NULL}, 1};
+   for (int i = 0; paths && i < PROFILES_NUM_DRIVES; i++) {
+      c.disks[i] = paths[i];
+   }
+   return save_startup(&c);
 }
 
 int profiles_clear_startup_disks(void) {
-   return PROFILES_NOT_IMPLEMENTED;
+   StartupChange c = {NULL, {NULL}, 1};
+   return save_startup(&c);
 }

@@ -822,6 +822,66 @@ static void test_autostart_profile(void) {
    CHECK_STR(profiles_autostart(), "");
 }
 
+static void test_startup_disks(void) {
+   fresh_card();
+   make_profile("geos", "name=GEOS\nmachine=C64\n");
+   write_file("/profiles/active.txt", "profile=geos\n");
+   profiles_boot_init("C64/PAL/HDMI");
+   CHECK_STR(profiles_startup_disk(0), "");
+   CHECK_STR(profiles_startup_disk(-1), "");
+   CHECK_STR(profiles_startup_disk(PROFILES_NUM_DRIVES), "");
+
+   // Saved straight away; empty drives are left out.
+   const char *disks[PROFILES_NUM_DRIVES] = {"SD:/disks/geos.d64", "", NULL,
+                                             "SD:/disks/data.d81"};
+   CHECK(profiles_set_startup_disks(disks) == PROFILES_OK);
+   CHECK_STR(profiles_startup_disk(0), "SD:/disks/geos.d64");
+   CHECK_STR(profiles_startup_disk(1), "");
+   CHECK_STR(profiles_startup_disk(3), "SD:/disks/data.d81");
+   CHECK_STR(read_file("/profiles/geos/profile.txt"),
+             "name=GEOS\nmachine=C64\ndisk_8=SD:/disks/geos.d64\n"
+             "disk_11=SD:/disks/data.d81\n");
+
+   // Start-up picks them up; the autostart is kept separately.
+   CHECK(profiles_set_autostart("SD:/disks/geos.d64") == PROFILES_OK);
+   profiles_boot_init("C64/PAL/HDMI");
+   CHECK_STR(profiles_startup_disk(0), "SD:/disks/geos.d64");
+   CHECK_STR(profiles_startup_disk(3), "SD:/disks/data.d81");
+   CHECK_STR(profiles_autostart(), "SD:/disks/geos.d64");
+
+   // Setting again replaces all four drives.
+   const char *one[PROFILES_NUM_DRIVES] = {NULL, "SD:/disks/b.d64", NULL, NULL};
+   CHECK(profiles_set_startup_disks(one) == PROFILES_OK);
+   CHECK_STR(profiles_startup_disk(0), "");
+   CHECK_STR(profiles_startup_disk(1), "SD:/disks/b.d64");
+
+   // Clearing removes them and keeps the autostart.
+   CHECK(profiles_clear_startup_disks() == PROFILES_OK);
+   CHECK_STR(profiles_startup_disk(1), "");
+   CHECK_STR(read_file("/profiles/geos/profile.txt"),
+             "name=GEOS\nmachine=C64\nautostart=SD:/disks/geos.d64\n");
+
+   // A path too long to keep isn't saved cut short.
+   char long_path[PROFILES_MAX_PATH_LEN + 10];
+   memset(long_path, 'a', sizeof(long_path) - 1);
+   long_path[sizeof(long_path) - 1] = '\0';
+   const char *too_long[PROFILES_NUM_DRIVES] = {long_path, NULL, NULL, NULL};
+   CHECK(profiles_set_startup_disks(too_long) == PROFILES_ERROR);
+   CHECK_STR(profiles_startup_disk(0), "");
+
+   // Main keeps them in its own file per machine.
+   fresh_card();
+   profiles_boot_init("C64/PAL/HDMI");
+   CHECK(profiles_set_startup_disks(disks) == PROFILES_OK);
+   CHECK_STR(read_file("/profiles/main/c64.txt"),
+             "disk_8=SD:/disks/geos.d64\ndisk_11=SD:/disks/data.d81\n");
+   CHECK(exists("/profiles/active.txt"));
+   profiles_boot_init("C64/PAL/HDMI");
+   CHECK_STR(profiles_startup_disk(0), "SD:/disks/geos.d64");
+   profiles_boot_init("VIC20/PAL/HDMI");
+   CHECK_STR(profiles_startup_disk(0), "");
+}
+
 static void test_autostart_main(void) {
    // Main with no profiles: setting it creates Main's file and active.txt,
    // so start-up knows to read it.
@@ -1067,6 +1127,7 @@ int main(void) {
    test_delete();
    test_autostart_profile();
    test_autostart_main();
+   test_startup_disks();
    test_machines();
    test_machine_switching();
 

@@ -142,6 +142,10 @@ const char *profiles_autostart(void);
 int profiles_set_autostart(const char *path);
 int profiles_clear_autostart(void);
 
+// The disk image for drive PROFILES_FIRST_DRIVE + drive at start-up, with
+// its volume (e.g. "SD:/disks/geos.d64"), or "".
+const char *profiles_startup_disk(int drive);
+
 // paths[0] is drive 8; empty or NULL entries mean no disk.
 int profiles_set_startup_disks(const char *const paths[PROFILES_NUM_DRIVES]);
 int profiles_clear_startup_disks(void);
