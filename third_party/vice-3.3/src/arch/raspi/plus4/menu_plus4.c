@@ -27,6 +27,7 @@
 #include "../raspi_machine.h"
 
 #include <memory.h>
+#include <stdio.h>
 
 // VICE includes
 #include "plus4/plus4.h"
@@ -61,6 +62,21 @@ static void update_memory_item() {
   }
 }
 
+// The Model folder shows the model the settings add up to.
+static struct menu_item* model_folder;
+
+static void update_model_label(void) {
+  if (model_folder == NULL) {
+    return;
+  }
+  static const char* labels[PLUS4MODEL_NUM] = {
+     "C16 (PAL)", "C16 (NTSC)", "Plus/4 (PAL)", "Plus/4 (NTSC)",
+     "V364 (NTSC)", "C232 (NTSC)" };
+  int model = plus4model_get();
+  snprintf(model_folder->name, sizeof(model_folder->name), "Model: %s",
+           model >= 0 && model < PLUS4MODEL_NUM ? labels[model] : "Custom");
+}
+
 static void menu_value_changed(struct menu_item *item) {
   switch (item->id) {
      case MENU_MODEL_C16_PAL:
@@ -70,6 +86,7 @@ static void menu_value_changed(struct menu_item *item) {
      case MENU_MODEL_V364_NTSC:
      case MENU_MODEL_C232_NTSC:
         plus4model_set(item->sub_id);
+        update_model_label();
         update_memory_item();
         ui_pop_all_and_toggle();
         break;
@@ -173,6 +190,8 @@ void cartridge_freeze(void) { }
 
 void emux_add_machine_options(struct menu_item* parent) {
   struct menu_item* model_parent = ui_menu_add_folder(parent, "Model...");
+  model_folder = model_parent;
+  update_model_label();
   int timing = circle_get_machine_timing();
 
   struct menu_item* item;

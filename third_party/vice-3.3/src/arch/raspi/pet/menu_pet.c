@@ -27,6 +27,7 @@
 #include "../raspi_machine.h"
 
 #include <memory.h>
+#include <stdio.h>
 
 // VICE includes
 #include "pet/pet.h"
@@ -43,6 +44,20 @@
 
 extern struct video_canvas_s *vic_canvas;
 
+static const char* model_labels[] = { "2001-NB", "3008", "3016", "3032", "3032B", "4016", "4032","4032B","8032","8096","8296","SUPERPET" };
+
+// The Model folder shows the model the settings add up to.
+static struct menu_item* model_folder;
+
+static void update_model_label(void) {
+  if (model_folder == NULL) {
+    return;
+  }
+  int model = petmodel_get();
+  snprintf(model_folder->name, sizeof(model_folder->name), "Model: %s",
+           model >= 0 && model < PETMODEL_NUM ? model_labels[model] : "Custom");
+}
+
 static void menu_value_changed(struct menu_item *item) {
   switch (item->id) {
      case MENU_MODEL_PET_2001:
@@ -58,6 +73,7 @@ static void menu_value_changed(struct menu_item *item) {
      case MENU_MODEL_PET_8296:
      case MENU_MODEL_PET_SUPERPET:
         petmodel_set(item->sub_id);
+        update_model_label();
         ui_pop_all_and_toggle();
         break;
      default:
@@ -158,17 +174,18 @@ struct menu_item* emux_add_palette_options(int menu_id, struct menu_item* parent
 
 void emux_add_machine_options(struct menu_item* parent) {
   struct menu_item* model_parent = ui_menu_add_folder(parent, "Model...");
+  model_folder = model_parent;
+  update_model_label();
   int timing = circle_get_machine_timing();
 
   struct menu_item* item;
 
   int num_models = 12;
-  static const char* labels[] = { "2001-NB", "3008", "3016", "3032", "3032B", "4016", "4032","4032B","8032","8096","8296","SUPERPET" };
   static int menu_values[] = { MENU_MODEL_PET_2001, MENU_MODEL_PET_3008, MENU_MODEL_PET_3016, MENU_MODEL_PET_3032, MENU_MODEL_PET_3032B, MENU_MODEL_PET_4016, MENU_MODEL_PET_4032, MENU_MODEL_PET_4032B, MENU_MODEL_PET_8032, MENU_MODEL_PET_8096, MENU_MODEL_PET_8296, MENU_MODEL_PET_SUPERPET };
   static int id_values[] = { PETMODEL_2001, PETMODEL_3008, PETMODEL_3016, PETMODEL_3032, PETMODEL_3032B, PETMODEL_4016, PETMODEL_4032, PETMODEL_4032B, PETMODEL_8032, PETMODEL_8096, PETMODEL_8296, PETMODEL_SUPERPET };
 
   for (int i=0;i<num_models;i++) {
-    item = ui_menu_add_button(menu_values[i], model_parent, labels[i]);
+    item = ui_menu_add_button(menu_values[i], model_parent, model_labels[i]);
     item->sub_id = id_values[i];
     item->on_value_changed = menu_value_changed;
   }
