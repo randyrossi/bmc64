@@ -513,6 +513,34 @@ body.modal-open { overflow: hidden; }
 }
 .pf-actions .btn { padding: 4px 10px; font-size: 12.5px; border-radius: 7px; }
 .pf-actions .pf-more { margin-left: auto; }
+.pf-start { display: flex; gap: 8px; }
+.pf-start .btn { flex: 1; padding: 8px 12px; font-weight: 600; }
+
+.pf-restart {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 32px;
+  max-width: 420px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.pf-restart h2 { margin: 0; font-size: 17px; }
+.pf-restart p { margin: 0; color: var(--muted); }
+.pf-spinner {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 4px solid var(--panel-2);
+  border-top-color: var(--blue);
+  border-right-color: var(--purple);
+  animation: pf-spin 0.9s linear infinite;
+}
+.pf-spinner[hidden] { display: none; }
+@keyframes pf-spin { to { transform: rotate(360deg); } }
 
 /* ---------- responsive ---------- */
 

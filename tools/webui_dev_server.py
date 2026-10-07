@@ -26,9 +26,11 @@ import datetime as _dt
 import json
 import os
 import posixpath
+import re
 import shutil
 import subprocess
 import sys
+import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -194,6 +196,9 @@ class Handler(BaseHTTPRequestHandler):
             self._drain_body()
             sys.stderr.write("  [mock] /api/reset (no-op)\n")
             return self._json(202, {"ok": True})
+        if path == "/api/profiles/start":
+            self._drain_body()
+            return self.api_profiles_start(parsed.query)
         if path == "/api/webui/disable":
             self._drain_body()
             sys.stderr.write("  [mock] /api/webui/disable - stopping server\n")
@@ -263,7 +268,51 @@ class Handler(BaseHTTPRequestHandler):
 
     # -- mock API -----------------------------------------------------
 
+    # A pretend restart: /api/status fails until RESTART_UNTIL, and the
+    # uptime counts from BOOT_TIME.
+    RESTART_UNTIL = 0.0
+    BOOT_TIME = time.time() - 8123
+    PROFILE_ERROR = ""
+
+    def api_profiles_start(self, query):
+        if self.headers.get("X-BMC64-Web") != "1":
+            return self._send(403, "missing X-BMC64-Web header\n")
+        q = urllib.parse.parse_qs(query)
+        pid = (q.get("id") or [""])[0]
+        once = (q.get("once") or ["0"])[0] == "1"
+        if not re.fullmatch(r"[a-z0-9-]{1,32}", pid):
+            return self._send(400, "bad profile id\n")
+        cls = type(self)
+        cls.PROFILE_ERROR = ""
+        profiles = os.path.join(ARGS.root, "profiles")
+        if pid != "main" and not os.path.isfile(
+                os.path.join(profiles, pid, "profile.txt")):
+            cls.PROFILE_ERROR = "Can't start this profile"
+            return self._json(202, {"ok": True})
+        # Like profiles_switch_to() / profiles_start_once(): active.txt.
+        active = os.path.join(profiles, "active.txt")
+        lines = []
+        if os.path.isfile(active):
+            with open(active) as fh:
+                lines = [l for l in fh.read().splitlines()
+                         if l.partition("=")[0].strip() not in ("once",)
+                         and (once or l.partition("=")[0].strip() != "profile")]
+        lines.insert(0, ("once=" if once else "profile=") + pid)
+        if once and not any(l.startswith("profile=") for l in lines):
+            lines.insert(0, "profile=main")
+        os.makedirs(profiles, exist_ok=True)
+        with open(active, "w") as fh:
+            fh.write("\n".join(lines) + "\n")
+        ARGS.running = pid
+        cls.RESTART_UNTIL = time.time() + 4
+        cls.BOOT_TIME = cls.RESTART_UNTIL
+        sys.stderr.write("  [mock] restarting into %s%s\n"
+                         % (pid, " (once)" if once else ""))
+        return self._json(202, {"ok": True})
+
     def api_status(self):
+        if time.time() < type(self).RESTART_UNTIL:
+            return self._send(503, "restarting\n")
         # Nothing is really running here, so there's no running profile
         # unless --running pretends one is.
         profile = {}
@@ -292,10 +341,11 @@ class Handler(BaseHTTPRequestHandler):
             "ip": "127.0.0.1",
             "net_status": 13,
             "net_text": "connected (Wi-Fi)",
-            "uptime_secs": 8123,
+            "uptime_secs": int(time.time() - type(self).BOOT_TIME),
             "soc_temp_c": 48.6,
             "throttled": int(ARGS.throttled, 0),
             **profile,
+            "profile_error": type(self).PROFILE_ERROR,
         })
 
     def api_volumes(self):

@@ -218,20 +218,38 @@ void menu_profiles_machine_switched(struct machine_entry *entry) {
 
 // ---- Select profile ----
 
-static void start_chosen(struct menu_item *item) {
-  const char *id = item->str_value;
-  const char *needed = profiles_machine_for(id);
-  if (needed[0] != '\0' && apply_machine(needed) != 0) {
-    ui_error("No machine for this profile\nin machines.txt");
-    return;
-  }
-  int result = item->id == MENU_PROFILES_START_ONCE ? profiles_start_once(id)
-                                                     : profiles_switch_to(id);
-  if (result == PROFILES_OK) {
-    reboot();
+// Why the last menu_profiles_start() couldn't start a profile, or "".
+static char start_error[64];
+
+void menu_profiles_start(const char *id, int once) {
+  start_error[0] = '\0';
+  if (strcmp(id, profiles_running()->id) == 0) {
+    snprintf(start_error, sizeof(start_error), "Already running");
   } else {
-    ui_error("Can't start this profile");
+    const char *needed = profiles_machine_for(id);
+    if (needed[0] != '\0' && apply_machine(needed) != 0) {
+      snprintf(start_error, sizeof(start_error),
+               "No machine for this profile in machines.txt");
+    } else if ((once ? profiles_start_once(id) : profiles_switch_to(id)) !=
+               PROFILES_OK) {
+      snprintf(start_error, sizeof(start_error), "Can't start this profile");
+    } else {
+      reboot();
+    }
   }
+  ui_error("%s", start_error);
+}
+
+const char *menu_profiles_start_error(void) {
+  return start_error;
+}
+
+void menu_profiles_clear_start_error(void) {
+  start_error[0] = '\0';
+}
+
+static void start_chosen(struct menu_item *item) {
+  menu_profiles_start(item->str_value, item->id == MENU_PROFILES_START_ONCE);
 }
 
 static void profile_selected(struct menu_item *item) {

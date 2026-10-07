@@ -19,8 +19,9 @@ const MAIN_SETTINGS = { C64: "/settings.txt", C128: "/settings-c128.txt" };
 
 let pfVol = "SD";
 let loading = false;
-// What the page last showed: running, power-on and Start-once ids.
-let lastState = { running: "", powerOn: MAIN_ID, once: "" };
+// What the page last showed: running, power-on and Start-once ids, and the
+// machine running now ("C64" or "C128": the web UI runs on those only).
+let lastState = { running: "", powerOn: MAIN_ID, once: "", machine: "" };
 
 function setMsg(text, isErr) {
   $("pf-status").className = "msg" + (isErr ? " err" : "");
@@ -101,6 +102,7 @@ function profileCard(p, state, actions) {
   card.appendChild(el("div", "pf-name", p.name));
   if (p.description) card.appendChild(el("div", "pf-desc", p.description));
   card.appendChild(startsList(p));
+  if (p.id !== state.running) card.appendChild(startButtons(p));
 
   const bar = el("div", "pf-actions");
   for (const action of actions.buttons) {
@@ -121,6 +123,123 @@ function profileCard(p, state, actions) {
   }
   card.appendChild(bar);
   return card;
+}
+
+// ---- Switch to / Start once ----
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// The profile's choice ("start" in profile.txt) is the main button.
+function startButtons(p) {
+  const row = el("div", "pf-start");
+  const make = (once) => {
+    const b = el("button", "btn", once ? "Start once" : "▶ Switch to");
+    b.type = "button";
+    b.title = once ? "Restart into " + p.name + " for this session only"
+                   : "Restart into " + p.name + " and use it at every power-on";
+    b.addEventListener("click", () => startProfile(p, once));
+    return b;
+  };
+  const first = p.start === "once";
+  const main = make(first);
+  main.classList.add("btn-primary");
+  row.appendChild(main);
+  row.appendChild(make(!first));
+  return row;
+}
+
+function showRestart(title, text, { spinning = true, closable = false } = {}) {
+  $("pf-restart-title").textContent = title;
+  $("pf-restart-msg").textContent = text;
+  $("pf-restart-spin").hidden = !spinning;
+  $("pf-restart-close").hidden = !closable;
+  $("pf-restart").hidden = false;
+  document.body.classList.add("modal-open");
+  if (closable) $("pf-restart-close").focus();
+}
+
+function hideRestart() {
+  $("pf-restart").hidden = true;
+  document.body.classList.remove("modal-open");
+}
+
+async function startProfile(p, once) {
+  const target = (p.machine.split("/")[0] || "").trim().toLowerCase();
+  const label = machineLabel(p.machine);
+  const current = lastState.machine.toLowerCase();
+  const otherMachine = target && current && target !== current;
+  // The web UI only runs on the C64 and C128.
+  const webUi = !target || target === "c64" || target === "c128";
+  let question = once
+    ? "Start “" + p.name + "” once?\n\nBMC64 restarts into it for this " +
+      "session only; your usual profile starts at the next power-on."
+    : "Switch to “" + p.name + "”?\n\nBMC64 restarts into it, and it's " +
+      "used at every power-on from now on.";
+  if (otherMachine) {
+    question += "\n\nIt's for the " + label + ", so BMC64 switches machine too.";
+  }
+  if (!confirm(question + "\n\nAnything not saved in the emulator is lost.")) return;
+
+  let uptime = Infinity;
+  try {
+    uptime = (await api.getStatus()).uptime_secs;
+  } catch (e) {
+    /* checked again below */
+  }
+  try {
+    await api.startProfile(p.id, once);
+  } catch (e) {
+    setMsg("Could not start " + p.name + " — " + e.message, true);
+    return;
+  }
+  await waitForRestart(p.name, webUi, uptime);
+}
+
+// Waits for BMC64 to restart (it goes offline, or its uptime starts again),
+// or for the reason it couldn't.
+async function waitForRestart(name, webUi, uptimeBefore) {
+  showRestart("Restarting into " + name + "…",
+              "BMC64 is restarting. This page reconnects by itself.");
+  let wentDown = false;
+  const giveUp = Date.now() + 120000;
+  while (Date.now() < giveUp) {
+    await sleep(1500);
+    let s = null;
+    try {
+      s = await api.getStatus();
+    } catch (e) {
+      if (e.status === 401) {
+        hideRestart();
+        setMsg("Authentication required — reload the page and enter the PIN.", true);
+        return;
+      }
+    }
+    if (!s) {
+      wentDown = true;
+      if (!webUi) {
+        showRestart("Starting " + name,
+                    "The Web UI isn't available on that machine, so this page " +
+                    "stays offline until a C64 or C128 profile is running.",
+                    { spinning: false, closable: true });
+        return;
+      }
+      continue;
+    }
+    const restarted = wentDown || s.uptime_secs < uptimeBefore;
+    if (!restarted && s.profile_error) {
+      hideRestart();
+      setMsg("Could not start " + name + " — " + s.profile_error, true);
+      return;
+    }
+    if (restarted) {
+      hideRestart();
+      await loadProfiles();
+      return;
+    }
+  }
+  showRestart("Still waiting for BMC64",
+              "It hasn't come back yet. Refresh this page once it has.",
+              { spinning: false, closable: true });
 }
 
 // ---- rename / delete ----
@@ -319,6 +438,7 @@ async function render() {
     powerOn: active.profile,
     once: active.once,
   };
+  state.machine = machine;
   lastState = state;
   const names = new Map([[MAIN_ID, "Main"], ...profiles.map((p) => [p.id, p.name])]);
 
@@ -352,4 +472,5 @@ async function render() {
 
 export function initProfiles() {
   $("pf-refresh").addEventListener("click", loadProfiles);
+  $("pf-restart-close").addEventListener("click", hideRestart);
 }

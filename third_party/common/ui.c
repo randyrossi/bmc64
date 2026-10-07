@@ -42,6 +42,7 @@
 #include "menu_text_layout.h"
 #include "font.h"
 #include "menu_timing.h"
+#include "menu_profiles.h"
 #include "menu_switch.h"
 
 extern void reboot(void);
@@ -120,6 +121,9 @@ int pending_emu_quick_func;
 // Guarded by the circle lock; consumed on the emulator main loop.
 static char pending_emu_autostart_path[PENDING_EMU_AUTOSTART_MAX];
 static volatile int pending_emu_autostart;
+// Set by emu_profile_start_interrupt(): 1 for Switch to, 2 for Start once.
+static char pending_emu_profile_id[PENDING_EMU_PROFILE_ID_MAX];
+static volatile int pending_emu_profile_start;
 // Set by emu_safe_mode_interrupt().
 static volatile int pending_emu_safe_mode;
 
@@ -1001,6 +1005,14 @@ void ui_handle_toggle_or_quick_func() {
     pending_emu_autostart = 0;
     circle_lock_release();
     menu_autostart(path);
+  } else if (pending_emu_profile_start) {
+    char id[PENDING_EMU_PROFILE_ID_MAX];
+    circle_lock_acquire();
+    strcpy(id, pending_emu_profile_id);
+    int once = pending_emu_profile_start == 2;
+    pending_emu_profile_start = 0;
+    circle_lock_release();
+    menu_profiles_start(id, once);
   }
 }
 
@@ -1901,6 +1913,14 @@ void emu_quick_func_interrupt(int button_assignment) {
 
 void emu_safe_mode_interrupt(void) {
   pending_emu_safe_mode = 1;
+}
+
+void emu_profile_start_interrupt(const char *id, int once) {
+  circle_lock_acquire();
+  strncpy(pending_emu_profile_id, id, PENDING_EMU_PROFILE_ID_MAX - 1);
+  pending_emu_profile_id[PENDING_EMU_PROFILE_ID_MAX - 1] = '\0';
+  pending_emu_profile_start = once ? 2 : 1;
+  circle_lock_release();
 }
 
 void emu_autostart_interrupt(const char *path) {

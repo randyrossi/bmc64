@@ -386,6 +386,11 @@ extern void emu_safe_mode_interrupt(void);
 #define PENDING_EMU_AUTOSTART_MAX 560
 extern void emu_autostart_interrupt(const char *path);
 
+// Queues Switch to (once = 0) or Start once (once = 1) of profile id for the
+// emulator main loop, as if chosen from Select profile. Interrupt safe.
+#define PENDING_EMU_PROFILE_ID_MAX 33
+extern void emu_profile_start_interrupt(const char *id, int once);
+
 // Ask emulator what the current gpio config index is.
 extern int emu_get_gpio_config(void);
 

@@ -143,7 +143,7 @@
         <div class="pf-tiles" id="pf-summary"></div>
         <button class="btn" id="pf-refresh" title="Refresh">⟳ Refresh</button>
       </div>
-      <p class="fb-note">Profiles are switched from the BMC64 menu (Profiles → Select profile). Changes to their files take effect at the next restart.</p>
+      <p class="fb-note">Switch to and Start once restart BMC64 into that profile. Changes to the files take effect at the next restart.</p>
       <p class="msg" id="pf-status"></p>
       <div id="pf-list"></div>
     </section>
@@ -155,6 +155,15 @@
       <span class="rainbow-sm"></span>
     </footer>
   </main>
+</div>
+
+<div class="overlay" id="pf-restart" role="alertdialog" aria-modal="true" aria-labelledby="pf-restart-title" hidden>
+  <div class="pf-restart">
+    <div class="pf-spinner" id="pf-restart-spin"></div>
+    <h2 id="pf-restart-title"></h2>
+    <p id="pf-restart-msg"></p>
+    <button class="btn" id="pf-restart-close" hidden>Close</button>
+  </div>
 </div>
 
 <div class="overlay" id="editor" role="dialog" aria-modal="true" aria-labelledby="ed-title" hidden>

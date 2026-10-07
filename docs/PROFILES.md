@@ -298,8 +298,13 @@ running, the one used at power-on and any pending *Start once*. Each
 profile's buttons open its files in the editor, and its *Actions* menu can
 open its folder in *Files*, rename it or delete it, the same as the BMC64
 menu (the running profile can't be deleted). Deleting the power-on profile
-makes Main the power-on profile. Profiles are still switched from the BMC64
-menu.
+makes Main the power-on profile.
+
+Each card also has **Switch to** and **Start once** buttons, which work the
+same as in *Select profile*: BMC64 switches machine if needed and restarts
+into the profile, and the page waits until it's back. The Web UI only runs on
+the C64 and C128, so after starting a profile for another machine the page
+stays offline until a C64 or C128 profile is running again.
 
 The Web UI's file editor can open and save `active.txt`, Main's files in
 `main/`, and each profile's `profile.txt`, `settings.txt` and `vice.ini`. As

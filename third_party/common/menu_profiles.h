@@ -45,6 +45,17 @@ extern "C" {
 // that booted ("C64", "VIC20", "Plus4Emu", ...). Decides which profile runs.
 void menu_profiles_boot(const char *machine);
 
+// Switch to, or Start once (once != 0), profile id ("main" for Main), as
+// from Select profile: switches machine first if needed, then restarts.
+// Only returns if the profile can't be started; the reason is shown on
+// screen and kept for menu_profiles_start_error(). Call on the emulator's
+// main loop (emu_profile_start_interrupt() queues it from elsewhere).
+void menu_profiles_start(const char *id, int once);
+
+// Why the last menu_profiles_start() failed, or "" (for the Web UI).
+const char *menu_profiles_start_error(void);
+void menu_profiles_clear_start_error(void);
+
 // Called once the emulator is running: finishes start-up and shows any
 // message about it.
 void menu_profiles_boot_complete(void);
