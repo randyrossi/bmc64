@@ -188,24 +188,42 @@ their own on the SD card:
 
 - the Wi-Fi network and password (`wpa_supplicant.conf`)
 - the logging destination (`cmdline.txt`)
-- the machine and video mode chosen with **Switch machine** (`config.txt`,
-  `cmdline.txt`)
+
+The machine isn't a setting either: each profile remembers which machine it
+runs on (see below).
 
 ---
 
 ## Profiles and machines
 
-Each profile belongs to the machine it was made on (C64, C128, VIC-20, Plus/4
-or PET). For now a profile only starts on that machine: all profiles are
-listed, but choosing one for another machine shows a message instead. Switch
-to that machine first (**Switch machine**), then choose the profile.
+Each profile belongs to the machine it was made on: the machine, video
+standard and output, for example *C64, PAL, HDMI*. All profiles are listed
+whatever machine you're on.
+
+- **Choosing a profile for another machine** switches to it for you: BMC64
+  applies a matching **Switch machine** entry and restarts into the profile.
+- **Main remembers the machine it last ran on.** Going from Main on the C64
+  to a VIC-20 profile and back to Main puts you back on the C64.
+- **Start once** on another machine: the next power-on is back on your usual
+  profile's machine. Restarts BMC64 asks for during that session stay on the
+  Start-once profile's machine.
+- **Switch machine inside a profile:** to another video standard or output of
+  the same machine, the profile moves with you. To another machine, Main
+  becomes the power-on profile, since the profile's settings are for the old
+  machine.
+- **At power-on**, a profile whose machine isn't what booted (for example
+  after editing `config.txt` by hand) isn't used: Main starts with a message.
+
+If `machines.txt` has several entries for a machine, standard and output (for
+example 720p and 1080p), the first one is used. To pin a profile to one,
+set its `machine` to the whole entry (see `profile.txt` below).
 
 ---
 
 ## If something goes wrong
 
-- **A profile can't be read**, or it's for another machine: BMC64 starts Main
-  instead and shows a message once it's active.
+- **A profile can't be read**, or it's for another machine than the one that
+  booted: BMC64 starts Main instead and shows a message once it's active.
 - **A profile won't start properly at all:** hold **C=+F7 for 5 seconds**, then
   let go of F7 (safe mode). As well as the usual safe-mode reset of the video
   mode, this makes **Main** the power-on profile again.
@@ -250,9 +268,9 @@ with `#` are comments.
 ### Editing them in the Web UI
 
 The Web UI's file editor can open and save `active.txt`, Main's files in
-`main/`, and each profile's `profile.txt`, `settings.txt` and `vice.ini`. As with the other config files,
-the previous version is kept as `<name>.bak`. Changes take effect at the next
-restart; saving from the menus before then overwrites edits to the active
+`main/`, and each profile's `profile.txt`, `settings.txt` and `vice.ini`. As
+with the other config files, the previous version is kept as `<name>.bak`.
+Changes take effect at the next restart; saving from the menus before then overwrites edits to the active
 profile's files.
 
 ### `active.txt`
@@ -261,6 +279,7 @@ profile's files.
 |---|---|
 | `profile` | The id of the profile used at power-on, or `main` for Main. If the file or key is missing, Main is used. |
 | `once` | Optional: the id of a profile to use for the next start only. BMC64 removes it once that profile is active. |
+| `main_machine` | Written by BMC64: the machine Main last ran on, e.g. `C64/PAL/HDMI`, or the whole `machines.txt` entry if it was chosen with **Switch machine** in Main. |
 
 ```ini
 profile=jiffy-reu
@@ -272,14 +291,14 @@ once=stock-c64
 | Key | Required | Meaning |
 |---|---|---|
 | `name` | yes | The name shown in the menu (up to 32 characters) |
-| `machine` | yes | The machine: `C64`, `C128`, `VIC20`, `Plus4`, `Plus4Emu` or `Pet` |
+| `machine` | yes | The machine, video standard and output, as at the start of a `machines.txt` entry's `[...]` header, e.g. `C64/PAL/HDMI`. The machine is `C64`, `C128`, `VIC20`, `Plus4`, `Plus4Emu` or `Pet`. Just `C64` means any standard and output. A whole header, e.g. `C64/PAL/HDMI/VICE 1080p@50Hz`, picks that entry when switching to the profile. |
 | `category` | no | Groups profiles into folders in *Select profile*, e.g. `Games` |
 | `start` | no | `switch` (the default) or `once`: which choice *Select profile* offers first |
 | `autostart` | no | The program or disk image to start at power-on, with its volume, e.g. `SD:/games/elite.d64` |
 
 ```ini
 name=Elite
-machine=C64
+machine=C64/PAL/HDMI
 category=Games
 autostart=SD:/games/elite.d64
 ```
