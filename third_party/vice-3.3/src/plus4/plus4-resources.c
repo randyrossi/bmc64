@@ -46,6 +46,10 @@
 #include "vsync.h"
 #include "ted-resources.h"
 
+#ifdef RASPI_COMPILE
+extern int is_ntsc();
+#endif
+
 /* What sync factor between the CPU and the drive?  If equal to
    `MACHINE_SYNC_PAL', the same as PAL machines.  If equal to
    `MACHINE_SYNC_NTSC', the same as NTSC machines.  The sync factor is
@@ -237,6 +241,13 @@ int plus4_resources_init(void)
     if (resources_register_string(resources_string) < 0) {
         return -1;
     }
+#ifdef RASPI_COMPILE
+    /* The video standard is known before the settings load, so an NTSC
+       boot defaults to the NTSC kernal; a saved KernalName still wins. */
+    if (is_ntsc()) {
+        resources_set_default_string("KernalName", (char *)"kernal.005");
+    }
+#endif
 
     return resources_register_int(resources_int);
 }
