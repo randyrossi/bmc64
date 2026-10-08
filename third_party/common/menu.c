@@ -64,7 +64,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "5.2.5"
+#define VERSION_STRING "5.2.6"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -1663,7 +1663,7 @@ static int save_settings() {
 int menu_save_settings_to_profile(const char *id) {
   char settings_path[256];
   char vice_ini_path[256];
-  profiles_path(id, "settings.txt", settings_path, sizeof(settings_path));
+  profiles_new_settings_file(id, settings_path, sizeof(settings_path));
   profiles_path(id, "vice.ini", vice_ini_path, sizeof(vice_ini_path));
   return save_settings_to(settings_path, vice_ini_path);
 }
