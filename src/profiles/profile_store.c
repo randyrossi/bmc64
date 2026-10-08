@@ -24,6 +24,24 @@ void profiles_path(const char *id, const char *file, char *out, int out_size) {
    snprintf(out, (size_t)out_size, "%s/%s/%s", PROFILES_DIR, id, file);
 }
 
+// A machine name as used in file names: "plus4emu" for "Plus4Emu".
+static void machine_file_part(const char *machine, char *out, int out_size) {
+   int i = 0;
+   for (; machine[i] && machine[i] != '/' && i < out_size - 1; i++) {
+      char c = machine[i];
+      out[i] = (c >= 'A' && c <= 'Z') ? c - 'A' + 'a' : c;
+   }
+   out[i] = '\0';
+}
+
+void profiles_settings_path(const char *id, const char *machine, char *out,
+                            int out_size) {
+   char name[16];
+   machine_file_part(machine, name, sizeof(name));
+   snprintf(out, (size_t)out_size, "%s/%s/settings-%s.txt", PROFILES_DIR, id,
+            name);
+}
+
 // ---- Ids ----
 
 int profiles_id_valid(const char *id) {
@@ -173,12 +191,7 @@ int profile_file_write(const char *id, const ProfileFile *pf) {
 
 static void main_file_path(const char *booted_machine, char *out, int size) {
    char machine[16];
-   int i = 0;
-   for (; booted_machine[i] && i < (int)sizeof(machine) - 1; i++) {
-      char c = booted_machine[i];
-      machine[i] = (c >= 'A' && c <= 'Z') ? c - 'A' + 'a' : c;
-   }
-   machine[i] = '\0';
+   machine_file_part(booted_machine, machine, sizeof(machine));
    snprintf(out, (size_t)size, "%s/%s/%s.txt", PROFILES_DIR, PROFILES_MAIN_ID,
             machine);
 }
@@ -439,12 +452,18 @@ int profiles_rename_running(const char *name) {
    return PROFILES_OK;
 }
 
-// The files a profile's folder can hold. VICE leaves vice.in~ behind if a
-// save of vice.ini is interrupted; the web UI's editor keeps the previous
-// version of a file it saves as <name>.bak.
+// The files a profile's folder can hold: settings-<machine>.txt for each
+// machine it has run on (settings.txt in older profiles). VICE leaves
+// vice.in~ behind if a save of vice.ini is interrupted; the web UI's editor
+// keeps the previous version of a file it saves as <name>.bak.
 static const char *const profile_files[] = {
    "profile.txt", "vice.ini", "vice.in~", "settings.txt",
+   "settings-c64.txt", "settings-c128.txt", "settings-vic20.txt",
+   "settings-plus4.txt", "settings-plus4emu.txt", "settings-pet.txt",
    "profile.txt.bak", "vice.ini.bak", "settings.txt.bak",
+   "settings-c64.txt.bak", "settings-c128.txt.bak", "settings-vic20.txt.bak",
+   "settings-plus4.txt.bak", "settings-plus4emu.txt.bak",
+   "settings-pet.txt.bak",
 };
 
 int profiles_delete(const char *id) {

@@ -311,8 +311,8 @@ const char *InProfilesFolder(const char *clean) {
 }
 
 // Profile files (docs/PROFILES.md, Profile files): active.txt in /profiles,
-// each profile's profile.txt, settings.txt and vice.ini, and Main's
-// /profiles/main/<machine>.txt.
+// each profile's profile.txt, settings files (settings.txt in older ones,
+// settings-<machine>.txt) and vice.ini, and Main's /profiles/main/<machine>.txt.
 boolean IsProfileFilePath(const char *clean) {
   const char *rest = InProfilesFolder(clean);
   if (rest == 0) return FALSE;
@@ -331,8 +331,17 @@ boolean IsProfileFilePath(const char *clean) {
     size_t length = strlen(name);
     return length > 4 && CiEqual(name + length - 4, ".txt");
   }
-  return CiEqual(name, "profile.txt") || CiEqual(name, "settings.txt") ||
-         CiEqual(name, "vice.ini");
+  // settings.txt, or settings-<machine>.txt
+  size_t length = strlen(name);
+  boolean settings = FALSE;
+  if (length >= 12 && CiEqual(name + length - 4, ".txt")) {
+    char start[9];
+    memcpy(start, name, 8);
+    start[8] = '\0';
+    settings = CiEqual(start, "settings") &&
+               (length == 12 || name[8] == '-');
+  }
+  return CiEqual(name, "profile.txt") || settings || CiEqual(name, "vice.ini");
 }
 
 // The config files are editable only in the volume root; keymaps anywhere;

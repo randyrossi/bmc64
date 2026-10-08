@@ -232,10 +232,13 @@ whatever machine you're on.
 - **Start once** on another machine: the next power-on is back on your usual
   profile's machine. Restarts BMC64 asks for during that session stay on the
   Start-once profile's machine.
-- **Switch machine inside a profile:** to another video standard or output of
-  the same machine, the profile moves with you. To another machine, Main
-  becomes the power-on profile, since the profile's settings are for the old
-  machine.
+- **Switch machine inside a profile:** the profile moves with you, to
+  another video mode or to another machine, and Main is left as it was. So
+  you can keep Main on the C64 and make a Plus/4 profile by making a new
+  profile, then switching it to the Plus/4. A profile keeps BMC64's settings
+  for each machine separately (like Main does), so on a machine that's new to
+  it, it starts with that machine's defaults: set it up and **Save
+  settings**. Its settings for the other machines are kept.
 - **At power-on**, a profile whose machine isn't what booted (for example
   after editing `config.txt` by hand) isn't used: Main starts with a message.
 
@@ -277,7 +280,7 @@ don't need to touch these files, but you can.
   jiffy-reu/          one folder per profile
     profile.txt       the profile's name, machine and autostart
     vice.ini          the profile's emulator settings
-    settings.txt      the profile's BMC64 settings
+    settings-c64.txt  the profile's BMC64 settings, one file per machine
   stock-c64/
     ...
 ```
@@ -307,7 +310,7 @@ the C64 and C128, so after starting a profile for another machine the page
 stays offline until a C64 or C128 profile is running again.
 
 The Web UI's file editor can open and save `active.txt`, Main's files in
-`main/`, and each profile's `profile.txt`, `settings.txt` and `vice.ini`. As
+`main/`, and each profile's `profile.txt`, settings files and `vice.ini`. As
 with the other config files, the previous version is kept as `<name>.bak`.
 Changes take effect at the next restart; saving from the menus before then overwrites edits to the active
 profile's files.
@@ -350,6 +353,11 @@ Main's auto-attached disks and autostart for one machine: `c64.txt`,
 `c128.txt`, `vic20.txt`, `plus4.txt`, `plus4emu.txt` or `pet.txt`. It only
 holds the `disk_8` … `disk_11` and `autostart` keys.
 
-`vice.ini` and `settings.txt` have the same format as the files at the root of
-the SD card. BMC64 writes them when you press **Save settings** in that
-profile.
+`vice.ini` and the settings files have the same format as the files at the
+root of the SD card. BMC64 writes them when you press **Save settings** in
+that profile. `vice.ini` holds a section for each machine, like the one at
+the root; BMC64's settings are in `settings-<machine>.txt` (`settings-c64.txt`,
+`settings-c128.txt`, `settings-vic20.txt`, `settings-plus4.txt`,
+`settings-plus4emu.txt`, `settings-pet.txt`). Profiles made with earlier
+versions have a single `settings.txt`; BMC64 renames it for its machine the
+next time the profile starts.

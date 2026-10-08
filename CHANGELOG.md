@@ -1,3 +1,7 @@
+## 5.2.6 (pre-release)
+  * Profiles (in development, see [PROFILES.md](docs/PROFILES.md)):
+    * Ability to switch machines within a profile added and profiles keep BMC64 settings per machine (`settings-<machine>.txt`)
+
 ## 5.2.5 (pre-release)
   * Add Latin American keyboard layout for C64
   * Profiles (in development, see [PROFILES.md](docs/PROFILES.md)):

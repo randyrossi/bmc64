@@ -75,6 +75,13 @@ void active_file_parse(char *text, ActiveFile *af);
 int active_file_read(ActiveFile *af);
 int active_file_write(const ActiveFile *af);
 
+// ---- Settings files (profile_store.c) ----
+
+// A profile's BMC64 settings for a machine:
+// /profiles/<id>/settings-<machine>.txt, e.g. settings-plus4.txt.
+void profiles_settings_path(const char *id, const char *machine, char *out,
+                            int out_size);
+
 // ---- Ids (profile_store.c) ----
 
 // 1 for a valid profile id: 1 to 32 lowercase letters, digits and '-'.

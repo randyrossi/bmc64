@@ -205,10 +205,20 @@ export function activeWithout(text, id) {
   return changed ? result : null;
 }
 
+// A profile keeps BMC64 settings per machine, e.g. settings-plus4.txt (an
+// older profile has one settings.txt until it next starts).
+const SETTINGS_MACHINES = ["c64", "c128", "vic20", "plus4", "plus4emu", "pet"];
+
+export function settingsFile(machine) {
+  const name = String(machine || "").split("/")[0].trim().toLowerCase();
+  return SETTINGS_MACHINES.includes(name) ? "settings-" + name + ".txt" : "settings.txt";
+}
+
 // The files the menu's Delete removes from a profile's folder (and the
 // backups the web UI's editor makes). Anything else in the folder is kept,
 // and then so is the folder.
+const OWN_FILES = ["profile.txt", "vice.ini", "settings.txt",
+                   ...SETTINGS_MACHINES.map((m) => "settings-" + m + ".txt")];
 export const PROFILE_FILES = [
-  "profile.txt", "vice.ini", "vice.in~", "settings.txt",
-  "profile.txt.bak", "vice.ini.bak", "settings.txt.bak",
+  ...OWN_FILES, "vice.in~", ...OWN_FILES.map((f) => f + ".bak"),
 ];

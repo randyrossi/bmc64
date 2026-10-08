@@ -9,6 +9,7 @@ import { filesHash } from "./files.js";
 import { toggleMenu } from "./menu.js";
 import {
   FIRST_DRIVE, MAIN_ID, PROFILE_FILES, activeWithout, baseName, cleanName,
+  settingsFile,
   groupProfiles, idValid, machineDetail, machineLabel, parseActive,
   parseMainFile, parseProfile, withName,
 } from "./profiles_data.js";
@@ -123,6 +124,16 @@ function profileCard(p, state, actions) {
   }
   card.appendChild(bar);
   return card;
+}
+
+// The profile's settings for its machine; an older profile has them in
+// settings.txt until it next starts.
+async function editSettings(dir, machine) {
+  const own = dir + "/" + settingsFile(machine);
+  const legacy = dir + "/settings.txt";
+  const path = (await readText(own)) === null && (await readText(legacy)) !== null
+    ? legacy : own;
+  editFile(path);
 }
 
 // ---- Switch to / Start once ----
@@ -312,8 +323,9 @@ function profileActions(p) {
     buttons: [
       { label: "profile.txt", title: "Edit " + dir + "/profile.txt",
         run: () => editFile(dir + "/profile.txt") },
-      { label: "settings.txt", title: "Edit " + dir + "/settings.txt",
-        run: () => editFile(dir + "/settings.txt") },
+      { label: "settings", title: "Edit the profile's BMC64 settings for the " +
+          (machineLabel(p.machine) || "machine"),
+        run: () => editSettings(dir, p.machine) },
       { label: "vice.ini", title: "Edit " + dir + "/vice.ini",
         run: () => editFile(dir + "/vice.ini") },
     ],

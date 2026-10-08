@@ -445,7 +445,8 @@ class Handler(BaseHTTPRequestHandler):
             return False
         if lower[1] == "main":
             return len(lower[2]) > 4 and lower[2].endswith(".txt")
-        return lower[2] in ("profile.txt", "settings.txt", "vice.ini")
+        return (lower[2] in ("profile.txt", "vice.ini")
+                or (lower[2].startswith("settings") and lower[2].endswith(".txt")))
 
     def api_fs_upload(self, query):
         length = self.headers.get("Content-Length")

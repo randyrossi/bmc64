@@ -99,8 +99,12 @@ int profiles_in_use(void);
 const char *profiles_vice_config(void);
 
 // The BMC64 settings file for the running profile. For Main it's main_file,
-// the machine's usual file (e.g. "/settings-vic20.txt").
+// the machine's usual file (e.g. "/settings-vic20.txt"); a profile has one
+// per machine, e.g. "/profiles/geos/settings-c64.txt".
 const char *profiles_settings_file(const char *main_file);
+
+// Where a new profile's BMC64 settings go, for the machine running now.
+void profiles_new_settings_file(const char *id, char *out, int out_size);
 
 // The path of a file in a profile's folder, e.g. ("geos", "vice.ini").
 void profiles_path(const char *id, const char *file, char *out, int out_size);
@@ -156,9 +160,8 @@ int profiles_clear_startup_disks(void);
 const char *profiles_booted(void);
 
 // "Switch machine" applied entry (its machines.txt header). The power-on
-// profile follows it: on the same machine its standard and output are
-// updated; on another machine Main becomes the power-on profile. Main
-// remembers the entry.
+// profile follows it, also to another machine (its settings for each
+// machine are kept apart); for Main, Main remembers the entry.
 void profiles_machine_switched(const char *entry);
 
 // Short machine name for menus from a machine value,
