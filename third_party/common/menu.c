@@ -4215,7 +4215,8 @@ void build_menu(struct menu_item *root) {
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C64 ||
     emux_machine_class == BMC64_MACHINE_CLASS_C128 ||
-    emux_machine_class == BMC64_MACHINE_CLASS_PLUS4) {
+    emux_machine_class == BMC64_MACHINE_CLASS_PLUS4 ||
+    emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
     network_status_item = ui_menu_add_read_only_heading(
       root, "Network Status:");
     parent = ui_menu_add_folder(root, "Network");
@@ -4233,7 +4234,8 @@ void build_menu(struct menu_item *root) {
     child->choice_disabled[2] = !circle_has_onboard_wifi();
 
     // The Plus/4 ACIA is built in at a fixed $FD00.
-    if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4) {
+    if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4 &&
+        emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
       child = network_modem_address_item = ui_menu_add_multiple_choice(
         MENU_NETWORK_MODEM_ADDRESS, parent, "Modem Address");
       child->num_choices = sizeof(acia_network_addresses) /
@@ -4272,14 +4274,17 @@ void build_menu(struct menu_item *root) {
     wifi_connect_item = ui_menu_add_button(MENU_WIFI_CONNECT, parent,
                          "Enter Password & Reboot");
 
-    parent = webui_settings_item =
-      ui_menu_add_folder(network_folder, "Web UI Settings");
-    webui_enabled_item =
-      ui_menu_add_toggle(MENU_WEBUI_ENABLED, parent, "Web UI (reboot)", 0);
-    webui_pin_item = ui_menu_add_text_field_limit(
-      MENU_WEBUI_PIN, parent, "Web UI PIN (blank = none)", "", 8);
-    webui_pin_item->textfield_masked = 1;
-    webui_pin_item->textfield_right_aligned = 1;
+    // The web UI is not built for plus4emu (see webui.h).
+    if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
+      parent = webui_settings_item =
+        ui_menu_add_folder(network_folder, "Web UI Settings");
+      webui_enabled_item =
+        ui_menu_add_toggle(MENU_WEBUI_ENABLED, parent, "Web UI (reboot)", 0);
+      webui_pin_item = ui_menu_add_text_field_limit(
+        MENU_WEBUI_PIN, parent, "Web UI PIN (blank = none)", "", 8);
+      webui_pin_item->textfield_masked = 1;
+      webui_pin_item->textfield_right_aligned = 1;
+    }
 
     update_wifi_menu_enabled();
 

@@ -501,6 +501,13 @@ extern "C" PLUS4EMU_EXPORT void Plus4VM_SetEnableACIAEmulation(
   vm->getVM().setEnableACIAEmulation(bool(isEnabled));
 }
 
+extern "C" PLUS4EMU_EXPORT void Plus4VM_SetACIASerialLine(
+    Plus4VM *vm, void *line)
+{
+  vm->getVM().setACIASerialLine(
+      reinterpret_cast<Plus4::ACIA6551::SerialLine *>(line));
+}
+
 extern "C" PLUS4EMU_EXPORT void Plus4VM_SetSIDConfiguration(
     Plus4VM *vm, int sidFlags, int enableDigiBlaster, int outputVolume)
 {

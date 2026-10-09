@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include "plus4lib/plus4emu.h"
+#include "plus4lib/acia_modem.h"
 #include "../common/circle.h"
 #include "../common/emux_api.h"
 #include "../common/keycodes.h"
@@ -772,6 +773,12 @@ int main_program(int argc, char **argv)
   // Use them to configure the VM.
   if (apply_settings()) {
      return -1;
+  }
+
+  // The built-in ACIA at $FD00 gets the network modem whenever a network
+  // device is selected (choosing one asks for a reboot).
+  if (circle_get_network_status() != CIRCLE_NETWORK_DISABLED) {
+    acia_modem_attach(vm);
   }
 
   set_video_font();

@@ -222,6 +222,11 @@ PLUS4EMU_EXPORT void Plus4VM_SetVideoClockFrequency(
  */
 PLUS4EMU_EXPORT void Plus4VM_SetEnableACIAEmulation(Plus4VM *vm, int isEnabled);
 /*!
+ * Connects a serial device to the 6551 ACIA (added for BMC64). 'line' is a
+ * Plus4::ACIA6551::SerialLine *, or NULL to disconnect it.
+ */
+PLUS4EMU_EXPORT void Plus4VM_SetACIASerialLine(Plus4VM *vm, void *line);
+/*!
  * Set SID emulation parameters. 'outputVolume' should be specified in decibels
  * (-8 to +2). 'sidFlags' can be the sum of:
  *   1: SID model is 6581

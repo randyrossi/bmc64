@@ -239,6 +239,13 @@ namespace Plus4 {
      */
     virtual void setEnableACIAEmulation(bool isEnabled);
     /*!
+     * Connect a serial device to the ACIA (NULL: none).
+     */
+    void setACIASerialLine(ACIA6551::SerialLine *line)
+    {
+      acia_.setSerialLine(line);
+    }
+    /*!
      * Set SID emulation parameters. 'outputVolume' should be specified in
      * decibels (-8 to +2). 'sidFlags_' can be the sum of:
      *   1: SID model is 6581

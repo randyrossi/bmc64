@@ -25,6 +25,25 @@
 namespace Plus4 {
 
   class ACIA6551 {
+   public:
+    // Optional device on the far end of the serial lines (BMC64: its
+    // modem). Without one the ACIA only emulates register timing.
+    class SerialLine {
+     public:
+      virtual ~SerialLine() {}
+      // DTR asserted / dropped.
+      virtual void open() = 0;
+      virtual void close() = 0;
+      // DTR and RTS output lines.
+      virtual void setLines(bool dtr, bool rts) = 0;
+      // Every write to the transmit data register (diagnostics).
+      virtual void noteDataWrite(uint8_t value) = 0;
+      // A byte that has started transmission.
+      virtual void put(uint8_t value) = 0;
+      // Fetches the next received byte; false if none is waiting.
+      virtual bool get(uint8_t& value) = 0;
+      virtual bool hasCarrier() = 0;
+    };
    private:
     uint8_t     transmitDataRegister;
     uint8_t     receiveDataRegister;
@@ -42,8 +61,17 @@ namespace Plus4 {
     int         receiveState;
     bool        transmitContinuousMark;
     bool        halfBitFlag;
+    SerialLine  *serialLine;
+    bool        serialLineOpen;
+    bool        serialCarrier;
+    uint8_t     receiveShiftRegister;
+    int         receivePollDelay;
     // --------
     void runHalfBit();
+    bool receiveFromLine();
+    void receiveComplete();
+    void updateSerialLines();
+    uint8_t modemStatusBits() const;
    public:
     ACIA6551();
     virtual ~ACIA6551();
@@ -67,6 +95,8 @@ namespace Plus4 {
     uint8_t readRegisterDebug(uint16_t addr) const;
     void writeRegister(uint16_t addr, uint8_t value);
     void reset();
+    // Connects (or with NULL, disconnects) the serial device.
+    void setSerialLine(SerialLine *line);
     static inline size_t getSnapshotSize()
     {
       return 11;

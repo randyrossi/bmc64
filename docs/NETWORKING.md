@@ -250,6 +250,8 @@ normal BMC64 disk or Autostart workflow.
 The BMC modem is on the Plus/4's built-in ACIA at `$FD00`. The address is
 fixed, so the `Modem Address` setting does not apply.
 
+This works on both Plus/4 images (VICE and Plus4Emu). Plus4Emu has no Web UI.
+
 1. Enable Ethernet or Wi-Fi in BMC64 and reboot it if prompted.
 2. Start Term-80.
 3. Enter a dial command in the terminal, for example:

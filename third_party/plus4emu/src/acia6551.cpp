@@ -28,6 +28,11 @@ static const uint32_t aciaBaudRateTable[16] = {
 namespace Plus4 {
 
   ACIA6551::ACIA6551()
+    : serialLine((SerialLine *) 0),
+      serialLineOpen(false),
+      serialCarrier(false),
+      receiveShiftRegister(0x00),
+      receivePollDelay(0)
   {
     this->reset();
   }
@@ -107,6 +112,8 @@ namespace Plus4 {
       break;
     case 23:                            // end of stop bit
       transmitState = 0;
+      if (serialLine && !(statusRegister & 0x10))
+        serialLine->put(transmitDataRegister);
       transmitContinuousMark = bool(statusRegister & 0x10);
       statusRegister |= uint8_t(0x10);
       if ((commandRegister & 0x0C) == 0x04)
@@ -123,6 +130,8 @@ namespace Plus4 {
       // using baud rate as receiver clock
       switch (receiveState) {
       case 0:                           // start bit
+        if (serialLine && !receiveFromLine())
+          break;                        // line idle
         receiveState++;
         break;
       case 1:
@@ -179,12 +188,7 @@ namespace Plus4 {
           uint8_t tmp = uint8_t((controlRegister & 0xE0)
                                 | ((commandRegister & 0x20) >> 1));
           if ((tmp & 0x80) == 0x00 || tmp == 0x90) {
-            if (!(statusRegister & 0x02)) {
-              // receive data register full, framing error
-              statusRegister |= uint8_t(0x0A);
-              if (!(commandRegister & 0x02))
-                statusRegister |= uint8_t(0x80);
-            }
+            receiveComplete();
             receiveState = 23;  // one stop bit
           }
           else if (tmp == 0xE0)
@@ -197,12 +201,7 @@ namespace Plus4 {
         receiveState++;
         break;
       case 22:
-        if (!(statusRegister & 0x02)) {
-          // receive data register full, framing error
-          statusRegister |= uint8_t(0x0A);
-          if (!(commandRegister & 0x02))
-            statusRegister |= uint8_t(0x80);
-        }
+        receiveComplete();
         receiveState++;
         break;
       case 23:                          // end of stop bit
@@ -226,7 +225,7 @@ namespace Plus4 {
       return receiveDataRegister;
     case 0x0001:                        // read status register
       {
-        uint8_t retval = statusRegister;
+        uint8_t retval = statusRegister | modemStatusBits();
         statusRegister &= uint8_t(0x7F);
         return retval;
       }
@@ -245,7 +244,7 @@ namespace Plus4 {
     case 0x0000:                        // read receive data register
       return receiveDataRegister;
     case 0x0001:                        // read status register
-      return statusRegister;
+      return statusRegister | modemStatusBits();
     case 0x0002:                        // read command register
       return commandRegister;
     case 0x0003:                        // read control register
@@ -258,15 +257,19 @@ namespace Plus4 {
   {
     switch (addr & 0x0003) {
     case 0x0000:                        // write transmit data register
+      if (serialLine)
+        serialLine->noteDataWrite(value);
       transmitDataRegister = value;
       statusRegister &= uint8_t(0xEF);
       break;
     case 0x0001:                        // program reset
       statusRegister &= uint8_t(0xFB);
       commandRegister &= uint8_t(0xE0);
+      updateSerialLines();
       break;
     case 0x0002:                        // write command register
       commandRegister = value;
+      updateSerialLines();
       break;
     case 0x0003:                        // write control register
       controlRegister = value;
@@ -289,6 +292,91 @@ namespace Plus4 {
     receiveState = 25;
     transmitContinuousMark = true;
     halfBitFlag = false;
+    receivePollDelay = 0;
+    updateSerialLines();
+  }
+
+  void ACIA6551::setSerialLine(SerialLine *line)
+  {
+    if (serialLine && serialLineOpen)
+      serialLine->close();
+    serialLine = line;
+    serialLineOpen = false;
+    serialCarrier = false;
+    receivePollDelay = 0;
+    updateSerialLines();
+  }
+
+  // DTR (command bit 0) opens the line; RTS is asserted unless the
+  // transmitter control bits (2-3) are 00.
+  void ACIA6551::updateSerialLines()
+  {
+    if (!serialLine)
+      return;
+    bool    dtr = bool(commandRegister & 0x01);
+    bool    rts = bool(commandRegister & 0x0C);
+    if (dtr && !serialLineOpen) {
+      serialLine->open();
+      serialLineOpen = true;
+    }
+    serialLine->setLines(dtr, rts);
+    if (!dtr && serialLineOpen) {
+      serialLine->close();
+      serialLineOpen = false;
+    }
+    serialCarrier = serialLine->hasCarrier();
+  }
+
+  // DCD (bit 5) and DSR (bit 6) are active low: a set bit means no carrier
+  // or not ready. The line is always ready.
+  uint8_t ACIA6551::modemStatusBits() const
+  {
+    if (!serialLine)
+      return 0x00;
+    return (serialCarrier ? 0x00 : 0x20);
+  }
+
+  // Called at the start-bit state while a line is connected: starts a frame
+  // with the next waiting byte. The line is polled about every eight bit
+  // times while idle, and not at all while the last byte is unread or RTS
+  // is off, so bytes wait on the line instead of overrunning.
+  bool ACIA6551::receiveFromLine()
+  {
+    if (receivePollDelay > 0) {
+      receivePollDelay--;
+      return false;
+    }
+    receivePollDelay = 15;
+    bool    carrier = serialLine->hasCarrier();
+    if (carrier != serialCarrier) {
+      serialCarrier = carrier;
+      if (!(commandRegister & 0x02))
+        statusRegister |= uint8_t(0x80);
+    }
+    if ((statusRegister & 0x08) || !(commandRegister & 0x0C))
+      return false;
+    if (!serialLine->get(receiveShiftRegister))
+      return false;
+    receivePollDelay = 0;
+    return true;
+  }
+
+  void ACIA6551::receiveComplete()
+  {
+    if (serialLine) {
+      // receive data register full
+      receiveDataRegister = receiveShiftRegister;
+      statusRegister |= uint8_t(0x08);
+      if (!(commandRegister & 0x02))
+        statusRegister |= uint8_t(0x80);
+      return;
+    }
+    if (!(statusRegister & 0x02)) {
+      // receive data register full, framing error
+      statusRegister |= uint8_t(0x0A);
+      if (!(commandRegister & 0x02))
+        statusRegister |= uint8_t(0x80);
+    }
   }
 
   void ACIA6551::saveSnapshot(uint8_t *buf)
@@ -329,6 +417,7 @@ namespace Plus4 {
     if (receiveState < 0 || receiveState > 25)
       receiveState = 25;
     halfBitFlag = bool(buf[10]);
+    updateSerialLines();
   }
 
 }       // namespace Plus4
