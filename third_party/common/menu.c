@@ -2243,7 +2243,7 @@ static void select_file(struct menu_item *item) {
        menu_profiles_autostart_chosen(fullpath(DIR_ROOT, item->str_value));
        return;
      case MENU_LOADPRG_FILE:
-       ui_info("Loading...");
+       ui_info("Starting...");
        if (emux_autostart_file(fullpath(DIR_ROOT, item->str_value)) < 0) {
          ui_pop_menu();
          ui_error("Failed to load file");
@@ -4292,7 +4292,7 @@ void build_menu(struct menu_item *root) {
 
   switch (emux_machine_class) {
     case BMC64_MACHINE_CLASS_PLUS4EMU:
-     ui_menu_add_button(MENU_LOADPRG, root, "Load .PRG File...");
+     ui_menu_add_button(MENU_LOADPRG, root, "Autostart .PRG File...");
      break;
     case BMC64_MACHINE_CLASS_PET:
      break;

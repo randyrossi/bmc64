@@ -416,6 +416,44 @@ static void videoLineCallback(void *userData,
    }
 }
 
+// Autostart, like VICE's: reset, wait for BASIC's READY prompt, then load
+// the program and type RUN. Driven from videoFrameCallback.
+#define AUTOSTART_MIN_FRAMES 10
+#define AUTOSTART_TIMEOUT_FRAMES 500 // about 10 seconds
+static char autostart_path[256];
+static int autostart_frames = -1;    // -1: idle
+
+// The kernal's line-input loop, the same test plus4emu's paste uses.
+static int basic_waiting_for_input(void) {
+  uint16_t pc = Plus4VM_GetProgramCounter(vm);
+  return pc >= 0xD90A && pc <= 0xD911 && Plus4VM_GetMemoryPage(vm, 3) == 0x01;
+}
+
+static void autostart_check(void) {
+  if (autostart_frames < 0) {
+    return;
+  }
+  autostart_frames++;
+  if (autostart_frames < AUTOSTART_MIN_FRAMES) {
+    return;
+  }
+  if (!basic_waiting_for_input()) {
+    if (autostart_frames >= AUTOSTART_TIMEOUT_FRAMES) {
+      printf("Autostart timed out waiting for BASIC: %s\n", autostart_path);
+      autostart_frames = -1;
+    }
+    return;
+  }
+  autostart_frames = -1;
+  if (Plus4VM_LoadProgram(vm, autostart_path) != PLUS4EMU_SUCCESS) {
+    printf("Autostart failed: %s: %s\n", autostart_path,
+           Plus4VM_GetLastErrorMessage(vm));
+    return;
+  }
+  // plus4emu's paste turns '\n' into Return.
+  Plus4VM_PasteText(vm, "RUN\n", -1, -1);
+}
+
 static void videoFrameCallback(void *userData)
 {
   circle_frames_ready_fbl(FB_LAYER_VIC,
@@ -576,6 +614,7 @@ static void videoFrameCallback(void *userData)
   circle_lock_release();
 
   ui_handle_toggle_or_quick_func();
+  autostart_check();
 
   if (reset_demo) {
     demo_reset_timeout();
@@ -1077,11 +1116,19 @@ double emux_calculate_fps() {
   return 50;
 }
 
-// Not really an autostart, just loads .PRG. TODO: Rename this.
+// Starts a .PRG/.P00 autostart (see autostart_check).
 int emux_autostart_file(char* filename) {
-  if (Plus4VM_LoadProgram(vm, filename) != PLUS4EMU_SUCCESS) {
-     return 1;
+  if (strlen(filename) >= sizeof(autostart_path)) {
+    return -1;
   }
+  FILE *fp = fopen(filename, "rb");
+  if (fp == NULL) {
+    return -1;
+  }
+  fclose(fp);
+  strcpy(autostart_path, filename);
+  emux_reset(0);
+  autostart_frames = 0;
   return 0;
 }
 
