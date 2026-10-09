@@ -14,10 +14,12 @@
 // limitations under the License.
 
 #include "webui_fs.h"
+#include "webui.h"
 
-#if defined(RASPI_C64) || defined(RASPI_C128)
+#if BMC64_WEBUI
 
 #include "webui_http.h"
+#include "webui_machine.h"
 
 #include <circle/net/socket.h>
 #include <circle/sched/scheduler.h>
@@ -250,24 +252,15 @@ boolean CiEqual(const char *a, const char *b) {
   return *a == *b;
 }
 
-// Only image/program types that the menu's Autostart accepts as-is. A .crt
-// cartridge image is one: VICE's autostart_autodetect attaches it on the
-// C64 and C128, which are the machines the web UI runs on.
+// Only the image/program types this machine's Autostart accepts as-is
+// (webui_machine.cpp).
 boolean IsAutostartable(const char *clean) {
   const char *dot = 0;
   for (const char *p = clean; *p != '\0'; p++) {
     if (*p == '/') dot = 0;
     else if (*p == '.') dot = p + 1;
   }
-  if (dot == 0) return FALSE;
-  static const char *const kExt[] = {
-      "d64", "d71", "d81", "d82", "g64", "x64", "t64", "tap", "prg", "p00",
-      "crt",
-  };
-  for (unsigned i = 0; i < sizeof(kExt) / sizeof(kExt[0]); i++) {
-    if (CiEqual(dot, kExt[i])) return TRUE;
-  }
-  return FALSE;
+  return dot != 0 && WebUiMachineCanRun(dot);
 }
 
 // BMC64's own configuration files. Upload and delete refuse them (in any
@@ -1013,4 +1006,4 @@ void WebUiFsAutostart(CSocket *socket, const char *query) {
                         (unsigned) strlen(ok));
 }
 
-#endif  // RASPI_C64 || RASPI_C128
+#endif  // BMC64_WEBUI

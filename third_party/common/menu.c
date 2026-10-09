@@ -4272,17 +4272,14 @@ void build_menu(struct menu_item *root) {
     wifi_connect_item = ui_menu_add_button(MENU_WIFI_CONNECT, parent,
                          "Enter Password & Reboot");
 
-    // The web UI is only built for C64 and C128.
-    if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4) {
-      parent = webui_settings_item =
-        ui_menu_add_folder(network_folder, "Web UI Settings");
-      webui_enabled_item =
-        ui_menu_add_toggle(MENU_WEBUI_ENABLED, parent, "Web UI (reboot)", 0);
-      webui_pin_item = ui_menu_add_text_field_limit(
-        MENU_WEBUI_PIN, parent, "Web UI PIN (blank = none)", "", 8);
-      webui_pin_item->textfield_masked = 1;
-      webui_pin_item->textfield_right_aligned = 1;
-    }
+    parent = webui_settings_item =
+      ui_menu_add_folder(network_folder, "Web UI Settings");
+    webui_enabled_item =
+      ui_menu_add_toggle(MENU_WEBUI_ENABLED, parent, "Web UI (reboot)", 0);
+    webui_pin_item = ui_menu_add_text_field_limit(
+      MENU_WEBUI_PIN, parent, "Web UI PIN (blank = none)", "", 8);
+    webui_pin_item->textfield_masked = 1;
+    webui_pin_item->textfield_right_aligned = 1;
 
     update_wifi_menu_enabled();
 

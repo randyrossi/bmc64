@@ -29,11 +29,12 @@
 
 #include "webui.h"
 
-#if defined(RASPI_C64) || defined(RASPI_C128)
+#if BMC64_WEBUI
 
 #include "webui_assets.h"
 #include "webui_fs.h"
 #include "webui_http.h"
+#include "webui_machine.h"
 #include "../profiles/profiles.h"
 
 #include <circle/bcmpropertytags.h>
@@ -84,12 +85,6 @@ extern "C" void menu_profiles_clear_start_error(void);
 
 // CNetSubSystem is created with this name in src/viceapp.cpp.
 #define WEBUI_HOSTNAME         "bmc64"
-
-#if defined(RASPI_C64)
-static const char *const kMachineName = "C64";
-#else
-static const char *const kMachineName = "C128";
-#endif
 
 namespace {
 
@@ -273,19 +268,26 @@ void HandleStatus(CSocket *socket) {
   char profile_error[128];
   JsonText(menu_profiles_start_error(), profile_error, sizeof(profile_error));
 
-  char body[768];
+  // What this machine's web UI can do (webui_machine.h).
+  char caps[256];
+  if (WebUiMachineCapsJson(caps, sizeof(caps)) < 0) {
+    SendText(socket, 500, "Internal Server Error", "status encode error\n");
+    return;
+  }
+
+  char body[1024];
   int length = snprintf(
       body, sizeof(body),
       "{\"hostname\":\"%s\",\"version\":\"%s\",\"machine\":\"%s\","
       "\"model\":\"%s\",\"ip\":\"%s\",\"net_status\":%d,\"net_text\":\"%s\","
       "\"uptime_secs\":%u,\"soc_temp_c\":%s,\"throttled\":%s,"
       "\"profile_id\":\"%s\",\"profile_name\":\"%s\","
-      "\"profiles_in_use\":%s,\"profile_error\":\"%s\"}",
-      WEBUI_HOSTNAME, bmc64_version_string(), kMachineName,
+      "\"profiles_in_use\":%s,\"profile_error\":\"%s\",\"caps\":%s}",
+      WEBUI_HOSTNAME, bmc64_version_string(), WebUiMachineGet()->name,
       model != 0 ? model : "",
       have_ip ? ip : "", net_status, NetStatusText(net_status), uptime,
       soc_temp, throttled, profile->id, profile_name,
-      profiles_in_use() ? "true" : "false", profile_error);
+      profiles_in_use() ? "true" : "false", profile_error, caps);
   if (length < 0 || (unsigned) length >= sizeof(body)) {
     SendText(socket, 500, "Internal Server Error", "status encode error\n");
     return;

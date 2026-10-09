@@ -3,8 +3,8 @@
 //
 // Optional LAN web UI for BMC64. Serves a small single-page app that
 // shows status and can reboot the machine. All web UI code lives under
-// src/webui/ and is only active on builds that have Circle networking
-// (C64 / C128); it is a no-op elsewhere.
+// src/webui/ and is only active on the builds BMC64_WEBUI names (C64,
+// C128, Plus/4); it is a no-op elsewhere.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +20,13 @@
 
 #ifndef _webui_h
 #define _webui_h
+
+// The machine builds the web UI runs on (see webui_machine.cpp).
+#if defined(RASPI_C64) || defined(RASPI_C128) || defined(RASPI_PLUS4)
+#define BMC64_WEBUI 1
+#else
+#define BMC64_WEBUI 0
+#endif
 
 class CNetSubSystem;
 

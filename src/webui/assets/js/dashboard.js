@@ -3,6 +3,7 @@
 
 import { $, fmtUptime, fmtKB } from "./util.js";
 import * as api from "./api.js";
+import { machineDisplayName, setMachine } from "./machine.js";
 
 // ---- status polling (polite: back off on failure, pause when hidden) ----
 
@@ -96,7 +97,9 @@ async function pollStatus() {
 
     $("i-host").textContent = s.hostname || "—";
     $("i-ip").textContent = s.ip || "—";
-    $("i-machine").textContent = s.machine || "—";
+    setMachine(s);
+    $("i-machine").textContent = s.machine ? machineDisplayName() : "—";
+    $("qa-reset-sub").textContent = "Reset the " + machineDisplayName();
     $("i-profile").textContent = !s.profile_id ? "—"
       : s.profile_id === "main" ? (s.profiles_in_use ? "Main" : "Main (no profile)")
       : s.profile_name || s.profile_id;

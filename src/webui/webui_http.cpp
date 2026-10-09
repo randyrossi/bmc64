@@ -14,8 +14,9 @@
 // limitations under the License.
 
 #include "webui_http.h"
+#include "webui.h"
 
-#if defined(RASPI_C64) || defined(RASPI_C128)
+#if BMC64_WEBUI
 
 #include <circle/net/socket.h>
 #include <circle/sched/scheduler.h>
@@ -231,4 +232,4 @@ boolean CChunkedResponse::Finish(void) {
 
 }  // namespace webhttp
 
-#endif  // RASPI_C64 || RASPI_C128
+#endif  // BMC64_WEBUI

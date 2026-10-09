@@ -7,6 +7,7 @@ import * as api from "./api.js";
 import { openEditor } from "./editor.js";
 import { filesHash } from "./files.js";
 import { toggleMenu } from "./menu.js";
+import { mainSettingsFile, setMachine } from "./machine.js";
 import {
   FIRST_DRIVE, MAIN_ID, PROFILE_FILES, activeWithout, baseName, cleanName,
   settingsFile,
@@ -14,15 +15,14 @@ import {
   parseMainFile, parseProfile, withName,
 } from "./profiles_data.js";
 
-// Main's usual settings files on the running machine (the web UI runs on
-// the C64 and C128 only).
-const MAIN_SETTINGS = { C64: "/settings.txt", C128: "/settings-c128.txt" };
-
 let pfVol = "SD";
 let loading = false;
 // What the page last showed: running, power-on and Start-once ids, and the
-// machine running now ("C64" or "C128": the web UI runs on those only).
+// machine running now ("C64", "C128" or "Plus4": the web UI runs on those
+// only).
 let lastState = { running: "", powerOn: MAIN_ID, once: "", machine: "" };
+// Machines (as profiles name them, lowercase) whose builds run the web UI.
+const WEBUI_MACHINES = ["c64", "c128", "plus4"];
 
 function setMsg(text, isErr) {
   $("pf-status").className = "msg" + (isErr ? " err" : "");
@@ -179,8 +179,8 @@ async function startProfile(p, once) {
   const label = machineLabel(p.machine);
   const current = lastState.machine.toLowerCase();
   const otherMachine = target && current && target !== current;
-  // The web UI only runs on the C64 and C128.
-  const webUi = !target || target === "c64" || target === "c128";
+  // The web UI only runs on the C64, C128 and Plus/4 (webui.h).
+  const webUi = !target || WEBUI_MACHINES.includes(target);
   let question = once
     ? "Start “" + p.name + "” once?\n\nBMC64 restarts into it for this " +
       "session only; your usual profile starts at the next power-on."
@@ -230,7 +230,7 @@ async function waitForRestart(name, webUi, uptimeBefore) {
       if (!webUi) {
         showRestart("Starting " + name,
                     "The Web UI isn't available on that machine, so this page " +
-                    "stays offline until a C64 or C128 profile is running.",
+                    "stays offline until a C64, C128 or Plus/4 profile is running.",
                     { spinning: false, closable: true });
         return;
       }
@@ -342,7 +342,7 @@ function profileActions(p) {
 
 function mainActions(machine, hasMainFile) {
   const actions = [];
-  const settings = MAIN_SETTINGS[machine];
+  const settings = mainSettingsFile();
   if (settings) {
     actions.push({ label: baseName(settings), title: "Edit " + settings,
                    run: () => editFile(settings) });
@@ -402,6 +402,7 @@ async function render() {
   } catch (e) {
     if (e.status === 401) throw e;
   }
+  if (status) setMachine(status);
   const machine = (status && status.machine) || "";
 
   let listing = null;
