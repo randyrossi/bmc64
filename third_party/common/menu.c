@@ -4214,7 +4214,8 @@ void build_menu(struct menu_item *root) {
   ui_menu_add_divider(root);
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C64 ||
-    emux_machine_class == BMC64_MACHINE_CLASS_C128) {
+    emux_machine_class == BMC64_MACHINE_CLASS_C128 ||
+    emux_machine_class == BMC64_MACHINE_CLASS_PLUS4) {
     network_status_item = ui_menu_add_read_only_heading(
       root, "Network Status:");
     parent = ui_menu_add_folder(root, "Network");
@@ -4231,16 +4232,19 @@ void build_menu(struct menu_item *root) {
     child->choice_disabled[1] = !circle_has_onboard_ethernet();
     child->choice_disabled[2] = !circle_has_onboard_wifi();
 
-    child = network_modem_address_item = ui_menu_add_multiple_choice(
-      MENU_NETWORK_MODEM_ADDRESS, parent, "Modem Address");
-    child->num_choices = sizeof(acia_network_addresses) /
-               sizeof(acia_network_addresses[0]);
-    child->value = acia_network_address_index(
-        circle_get_acia_network_address());
-    for (int address_index = 0; address_index < child->num_choices;
-         address_index++) {
-      strcpy(child->choices[address_index],
-             acia_network_address_labels[address_index]);
+    // The Plus/4 ACIA is built in at a fixed $FD00.
+    if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4) {
+      child = network_modem_address_item = ui_menu_add_multiple_choice(
+        MENU_NETWORK_MODEM_ADDRESS, parent, "Modem Address");
+      child->num_choices = sizeof(acia_network_addresses) /
+                 sizeof(acia_network_addresses[0]);
+      child->value = acia_network_address_index(
+          circle_get_acia_network_address());
+      for (int address_index = 0; address_index < child->num_choices;
+           address_index++) {
+        strcpy(child->choices[address_index],
+               acia_network_address_labels[address_index]);
+      }
     }
 
     timezone_offset_item = ui_menu_add_multiple_choice(
@@ -4268,14 +4272,17 @@ void build_menu(struct menu_item *root) {
     wifi_connect_item = ui_menu_add_button(MENU_WIFI_CONNECT, parent,
                          "Enter Password & Reboot");
 
-    parent = webui_settings_item =
-      ui_menu_add_folder(network_folder, "Web UI Settings");
-    webui_enabled_item =
-      ui_menu_add_toggle(MENU_WEBUI_ENABLED, parent, "Web UI (reboot)", 0);
-    webui_pin_item = ui_menu_add_text_field_limit(
-      MENU_WEBUI_PIN, parent, "Web UI PIN (blank = none)", "", 8);
-    webui_pin_item->textfield_masked = 1;
-    webui_pin_item->textfield_right_aligned = 1;
+    // The web UI is only built for C64 and C128.
+    if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4) {
+      parent = webui_settings_item =
+        ui_menu_add_folder(network_folder, "Web UI Settings");
+      webui_enabled_item =
+        ui_menu_add_toggle(MENU_WEBUI_ENABLED, parent, "Web UI (reboot)", 0);
+      webui_pin_item = ui_menu_add_text_field_limit(
+        MENU_WEBUI_PIN, parent, "Web UI PIN (blank = none)", "", 8);
+      webui_pin_item->textfield_masked = 1;
+      webui_pin_item->textfield_right_aligned = 1;
+    }
 
     update_wifi_menu_enabled();
 

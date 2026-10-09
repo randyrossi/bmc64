@@ -68,7 +68,7 @@ static int HasOnboardEthernet(TMachineModel machine_model) {
   }
 }
 
-#if defined(RASPI_C64) || defined(RASPI_C128)
+#if defined(RASPI_C64) || defined(RASPI_C128) || defined(RASPI_PLUS4)
 static bool HasWifiFirmwareFile(const char *firmware_path,
                                 const char *filename) {
   CString path;
@@ -105,7 +105,7 @@ static bool HasWifiFirmware(const char *firmware_path) {
 }
 #endif
 
-#if defined(RASPI_C64) || defined(RASPI_C128)
+#if defined(RASPI_C64) || defined(RASPI_C128) || defined(RASPI_PLUS4)
 struct wifi_bss_info {
   uint32_t version;
   uint32_t length;
@@ -244,6 +244,36 @@ extern "C" int circle_set_acia_network_enabled(int enabled) {
   }
   return resources_set_int("Acia1Enable", enabled) == 0;
 }
+#elif defined(RASPI_PLUS4)
+extern "C" {
+#include "../third_party/vice-3.3/src/resources.h"
+}
+
+// The Plus/4 ACIA is built in at a fixed $FD00 with no mode or base
+// resources, so the modem address cannot be changed.
+extern "C" int circle_get_acia_network_enabled(void) {
+  int enabled = 0;
+  resources_get_int("Acia1Enable", &enabled);
+  return enabled;
+}
+
+extern "C" int circle_get_acia_network_address(void) {
+  return 0xfd00;
+}
+
+extern "C" int circle_set_acia_network_address(int address) {
+  (void) address;
+  return 0;
+}
+
+// Turning networking off leaves the built-in ACIA alone; it is part of
+// the machine, not a cartridge.
+extern "C" int circle_set_acia_network_enabled(int enabled) {
+  if (!enabled) {
+    return 1;
+  }
+  return resources_set_int("Acia1Enable", 1) == 0;
+}
 #else
 extern "C" int circle_get_acia_network_enabled(void) {
   return 0;
@@ -266,7 +296,7 @@ extern "C" int circle_set_acia_network_enabled(int enabled) {
 
 extern "C" int circle_get_network_ip_address(char *address,
                                               unsigned int address_size) {
-#if defined(RASPI_C64) || defined(RASPI_C128)
+#if defined(RASPI_C64) || defined(RASPI_C128) || defined(RASPI_PLUS4)
   if (address == nullptr || address_size == 0 || network_subsystem == nullptr ||
       !network_subsystem->IsRunning()) {
     return 0;
@@ -287,7 +317,7 @@ extern "C" int circle_get_network_ip_address(char *address,
 #endif
 }
 extern "C" int circle_get_network_status(void) {
-#if defined(RASPI_C64) || defined(RASPI_C128)
+#if defined(RASPI_C64) || defined(RASPI_C128) || defined(RASPI_PLUS4)
   if (stdio_app != nullptr) {
     return stdio_app->GetNetworkStatus();
   }
@@ -340,7 +370,7 @@ int ViceNetworkHasOnboardEthernet(TMachineModel machine_model) {
 }
 
 bool ViceNetworkHasWifiFirmware(const char *firmware_path) {
-#if defined(RASPI_C64) || defined(RASPI_C128)
+#if defined(RASPI_C64) || defined(RASPI_C128) || defined(RASPI_PLUS4)
   return HasWifiFirmware(firmware_path);
 #else
   (void)firmware_path;
@@ -352,7 +382,7 @@ unsigned int ViceNetworkCollectWifiScanResults(
     CBcm4343Device *wlan, struct wifi_access_point *access_points,
     unsigned int max_access_points, unsigned int count,
     unsigned int *result_messages) {
-#if defined(RASPI_C64) || defined(RASPI_C128)
+#if defined(RASPI_C64) || defined(RASPI_C128) || defined(RASPI_PLUS4)
   return CollectWifiScanResults(wlan, access_points, max_access_points, count,
                                 result_messages);
 #else
