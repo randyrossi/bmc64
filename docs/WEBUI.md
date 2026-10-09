@@ -2,7 +2,7 @@
 
 BMC64 can serve a web page over the local network for checking the
 machine's status and managing files on the SD card. It is **off by default**,
-is available on **C64, C128 and Plus/4** (it shares the network stack described in
+is available on **C64, C128, Plus/4 and Plus4Emu** (it shares the network stack described in
 [NETWORKING.md](NETWORKING.md)), and can optionally be protected with a
 [PIN](#pin).
 
@@ -85,7 +85,9 @@ Actions button always fits.
   tape (`.t64`, `.tap`) or program (`.prg`, `.p00`): click its name or its
   **Autostart** action and BMC64 starts it, the same as the menu's *Autostart* item.
   This resets the emulated machine. If the file can't be started, the reason
-  is only written to the log.
+  is only written to the log. On Plus4Emu only programs (`.prg`, `.p00`) are
+  offered, and they are loaded into memory like the menu's *Load .PRG File*
+  item, without a reset or `RUN`.
 - **Write or edit a BASIC program** without leaving the browser (C64 BASIC V2,
   so on the C64 only; the C128 and Plus/4 don't offer it yet):
   - **Create BASIC PRG…** opens an editor where you type or paste a program

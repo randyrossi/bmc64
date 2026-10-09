@@ -5,6 +5,7 @@
   * Plus/4: networking and BMC modem on the built-in ACIA ($FD00)
   * Plus/4: Web UI support added
   * Plus4Emu: networking and BMC modem on the built-in ACIA ($FD00)
+  * Plus4Emu: Web UI support added
 
 
 ## 5.2.5 (pre-release)

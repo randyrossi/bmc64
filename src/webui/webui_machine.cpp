@@ -34,6 +34,11 @@ const char *const kRunTypes[] = {
 const char *const kRunTypes[] = {
     "d64", "d71", "d81", "g64", "x64", "t64", "tap", "prg", "p00", 0,
 };
+#elif defined(RASPI_PLUS4EMU)
+// plus4emu's Autostart only loads a program into memory.
+const char *const kRunTypes[] = {
+    "prg", "p00", 0,
+};
 #endif
 
 // The listing editor only knows C64 BASIC V2 so far.
@@ -44,6 +49,8 @@ const WebUiMachine kMachine = {
     "C128", "/settings-c128.txt", kRunTypes, "",
 #elif defined(RASPI_PLUS4)
     "Plus4", "/settings-plus4.txt", kRunTypes, "",
+#elif defined(RASPI_PLUS4EMU)
+    "Plus4Emu", "/settings-plus4emu.txt", kRunTypes, "",
 #endif
 };
 

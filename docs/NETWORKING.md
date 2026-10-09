@@ -130,7 +130,7 @@ After changing the file, reboot BMC64. If Wi-Fi was not already selected, set
 ## Web UI
 
 BMC64 can serve a small status / reboot / file-management web page over the
-local network on C64, C128 and Plus/4. It is off by default and can be protected with
+local network on C64, C128, Plus/4 and Plus4Emu. It is off by default and can be protected with
 an optional PIN. Enable it in `Network -> Web UI Settings` and open
 `http://<bmc64-ip>/`.
 
@@ -250,7 +250,7 @@ normal BMC64 disk or Autostart workflow.
 The BMC modem is on the Plus/4's built-in ACIA at `$FD00`. The address is
 fixed, so the `Modem Address` setting does not apply.
 
-This works on both Plus/4 images (VICE and Plus4Emu). Plus4Emu has no Web UI.
+This works on both Plus/4 images (VICE and Plus4Emu).
 
 1. Enable Ethernet or Wi-Fi in BMC64 and reboot it if prompted.
 2. Start Term-80.
