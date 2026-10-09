@@ -3,6 +3,7 @@
     * Ability to switch machines within a profile added and profiles keep BMC64 settings per machine (`settings-<machine>.txt`)
   * Plus/4: default to the NTSC kernal on NTSC boots #400
   * Plus/4: networking and BMC modem on the built-in ACIA ($FD00)
+  * Plus/4: Web UI support added
 
 
 ## 5.2.5 (pre-release)
