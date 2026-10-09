@@ -240,6 +240,31 @@ wait at least one second for `OK`, then enter `ATH`.
 **Note:** DesTerm 128 does not use PETSCII. Choose a character set supported
 by the BBS.
 
+### Plus/4
+
+[Term-80 (English) on Plus/4 World](https://plus4world.powweb.com/software/Term-80_English)
+is the recommended terminal program for the Plus/4. Transfer its disk image or
+program to the Plus/4 directory on the BMC64 SD card, then load it using the
+normal BMC64 disk or Autostart workflow.
+
+The BMC modem is on the Plus/4's built-in ACIA at `$FD00`. The address is
+fixed, so the `Modem Address` setting does not apply.
+
+1. Enable Ethernet or Wi-Fi in BMC64 and reboot it if prompted.
+2. Start Term-80.
+3. Enter a dial command in the terminal, for example:
+
+  ```text
+  ATDTbbs.example.org:23
+  ```
+
+4. Wait for `CONNECT`, then log in to the BBS.
+5. Use the port published by the BBS operator when it differs from the default
+  Telnet port `23`.
+
+To disconnect, wait at least one second, enter `+++`, wait at least one second
+for `OK`, then enter `ATH`.
+
 ## Using C64 OS Networking
 
 C64 OS provides SwiftLink drivers for the modem addresses configured in the
