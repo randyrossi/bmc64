@@ -394,7 +394,7 @@ File browsers will by default look in directories off the SD card using this con
    /tapes/C64
    /snapshots/C64
 
-   (Autostart starts off in "/")
+   (Autostart starts off in "/disks/C64")
 
 However, if you prefer to organize your files like this:
 
@@ -403,9 +403,13 @@ However, if you prefer to organize your files like this:
    /C64/tapes
    /C64/snapshots
 
-   (Autostart starts off in "/C64")
+   (Autostart starts off in "/C64/disks")
 
 Then change the 'Files Location Convention' in the Prefs menu accordingly.
+
+Autostart starts in the disks folder after every boot, and remembers the
+folder you browse to until BMC64 restarts. If the disks folder is missing it
+opens the next folder up that exists.
 
 * ROMS must always be located in "/C64".
 ** Replace "C64" above with the appropriate emulator sub dir for different emulators.

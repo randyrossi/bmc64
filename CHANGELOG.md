@@ -11,6 +11,7 @@
   * Web UI adds Shut Down quick action
   * Reboot now writes out disk images first too
   * Autostart: press Right on a disk or tape image to see its directory and pick the program to start #137
+  * Autostart opens in the disks folder (`/disks/<machine>`, or `/<machine>/disks`) instead of the card's root
 
 ## 5.2.5 (pre-release)
   * Add Latin American keyboard layout for C64

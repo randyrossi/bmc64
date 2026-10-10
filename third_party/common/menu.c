@@ -2170,19 +2170,21 @@ static void set_current_dir_names() {
           strcpy(current_dir_names[i], default_dir_names[i]);
           strcat(current_dir_names[i], machine_sub_dir);
         }
-        strcpy(current_dir_names[DIR_ROOT], "/");
         break;
      case MENU_DIR_CONVENTION_EMU_FOLDER:
         for (i = 0; i < NUM_DIR_TYPES; i++) {
           strcpy(current_dir_names[i], machine_sub_dir);
           strcat(current_dir_names[i], default_dir_names[i]);
         }
-        strcpy(current_dir_names[DIR_ROOT], machine_sub_dir);
         break;
      default:
         assert(0);
         break;
   }
+
+  // Autostart opens in the disks folder, where most people look first.
+  // If it isn't there, list_files() falls back a level at a time to "/".
+  strcpy(current_dir_names[DIR_ROOT], current_dir_names[DIR_DISKS]);
 
   // These don't change
   strcpy(current_dir_names[DIR_ROMS], machine_sub_dir);
