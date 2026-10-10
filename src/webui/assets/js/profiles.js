@@ -18,11 +18,9 @@ import {
 let pfVol = "SD";
 let loading = false;
 // What the page last showed: running, power-on and Start-once ids, and the
-// machine running now ("C64", "C128", "VIC20", "Plus4" or "Plus4Emu": the
-// web UI runs on those only).
+// machine running now ("C64", "C128", "VIC20", "Plus4", "Plus4Emu" or
+// "Pet").
 let lastState = { running: "", powerOn: MAIN_ID, once: "", machine: "" };
-// Machines (as profiles name them, lowercase) whose builds run the web UI.
-const WEBUI_MACHINES = ["c64", "c128", "vic20", "plus4", "plus4emu"];
 
 function setMsg(text, isErr) {
   $("pf-status").className = "msg" + (isErr ? " err" : "");
@@ -179,8 +177,6 @@ async function startProfile(p, once) {
   const label = machineLabel(p.machine);
   const current = lastState.machine.toLowerCase();
   const otherMachine = target && current && target !== current;
-  // The web UI runs on every machine except the PET (webui.h).
-  const webUi = !target || WEBUI_MACHINES.includes(target);
   let question = once
     ? "Start “" + p.name + "” once?\n\nBMC64 restarts into it for this " +
       "session only; your usual profile starts at the next power-on."
@@ -203,12 +199,12 @@ async function startProfile(p, once) {
     setMsg("Could not start " + p.name + " — " + e.message, true);
     return;
   }
-  await waitForRestart(p.name, webUi, uptime);
+  await waitForRestart(p.name, uptime);
 }
 
 // Waits for BMC64 to restart (it goes offline, or its uptime starts again),
 // or for the reason it couldn't.
-async function waitForRestart(name, webUi, uptimeBefore) {
+async function waitForRestart(name, uptimeBefore) {
   showRestart("Restarting into " + name + "…",
               "BMC64 is restarting. This page reconnects by itself.");
   let wentDown = false;
@@ -227,13 +223,6 @@ async function waitForRestart(name, webUi, uptimeBefore) {
     }
     if (!s) {
       wentDown = true;
-      if (!webUi) {
-        showRestart("Starting " + name,
-                    "The Web UI isn't available on that machine, so this page " +
-                    "stays offline until a profile for another machine is running.",
-                    { spinning: false, closable: true });
-        return;
-      }
       continue;
     }
     const restarted = wentDown || s.uptime_secs < uptimeBefore;

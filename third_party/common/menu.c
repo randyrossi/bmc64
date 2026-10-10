@@ -4240,101 +4240,96 @@ void build_menu(struct menu_item *root) {
 
   ui_menu_add_divider(root);
 
-  if (emux_machine_class == BMC64_MACHINE_CLASS_C64 ||
-    emux_machine_class == BMC64_MACHINE_CLASS_C128 ||
-    emux_machine_class == BMC64_MACHINE_CLASS_VIC20 ||
-    emux_machine_class == BMC64_MACHINE_CLASS_PLUS4 ||
-    emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
-    network_status_item = ui_menu_add_read_only_heading(
-      root, "Network Status:");
-    parent = ui_menu_add_folder(root, "Network");
-    parent->id = MENU_NETWORKING;
-    struct menu_item *network_folder = parent;
+  network_status_item = ui_menu_add_read_only_heading(
+    root, "Network Status:");
+  parent = ui_menu_add_folder(root, "Network");
+  parent->id = MENU_NETWORKING;
+  struct menu_item *network_folder = parent;
 
-    child = network_device_item =
-      ui_menu_add_multiple_choice(MENU_NETWORK_ENABLED, parent, "Network Device");
-    child->num_choices = 3;
-    child->value = 0;
-    strcpy(child->choices[0], "Off");
-    strcpy(child->choices[1], "Ethernet");
-    strcpy(child->choices[2], "WiFi");
-    child->choice_disabled[1] = !circle_has_onboard_ethernet();
-    child->choice_disabled[2] = !circle_has_onboard_wifi();
+  child = network_device_item =
+    ui_menu_add_multiple_choice(MENU_NETWORK_ENABLED, parent, "Network Device");
+  child->num_choices = 3;
+  child->value = 0;
+  strcpy(child->choices[0], "Off");
+  strcpy(child->choices[1], "Ethernet");
+  strcpy(child->choices[2], "WiFi");
+  child->choice_disabled[1] = !circle_has_onboard_ethernet();
+  child->choice_disabled[2] = !circle_has_onboard_wifi();
 
-    // The Plus/4 ACIA is built in at a fixed $FD00, and the VIC-20 modem
-    // is on the userport.
-    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 &&
-        emux_machine_class != BMC64_MACHINE_CLASS_PLUS4 &&
-        emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
-      child = network_modem_address_item = ui_menu_add_multiple_choice(
-        MENU_NETWORK_MODEM_ADDRESS, parent, "Modem Address");
-      child->num_choices = sizeof(acia_network_addresses) /
-                 sizeof(acia_network_addresses[0]);
-      child->value = acia_network_address_index(
-          circle_get_acia_network_address());
-      for (int address_index = 0; address_index < child->num_choices;
-           address_index++) {
-        strcpy(child->choices[address_index],
-               acia_network_address_labels[address_index]);
-      }
+  // The Plus/4 ACIA is built in at a fixed $FD00, the VIC-20 modem is
+  // on the userport, and the PET has no modem (web UI only).
+  if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 &&
+      emux_machine_class != BMC64_MACHINE_CLASS_PET &&
+      emux_machine_class != BMC64_MACHINE_CLASS_PLUS4 &&
+      emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
+    child = network_modem_address_item = ui_menu_add_multiple_choice(
+      MENU_NETWORK_MODEM_ADDRESS, parent, "Modem Address");
+    child->num_choices = sizeof(acia_network_addresses) /
+               sizeof(acia_network_addresses[0]);
+    child->value = acia_network_address_index(
+        circle_get_acia_network_address());
+    for (int address_index = 0; address_index < child->num_choices;
+         address_index++) {
+      strcpy(child->choices[address_index],
+             acia_network_address_labels[address_index]);
     }
-
-    // VICE runs the userport RS-232 at a fixed rate rather than the one
-    // the program sets, so the user matches it to the terminal.
-    if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20) {
-      child = network_modem_baud_item = ui_menu_add_multiple_choice(
-        MENU_NETWORK_MODEM_BAUD, parent, "Modem Baud");
-      child->num_choices = sizeof(network_modem_bauds) /
-                           sizeof(network_modem_bauds[0]);
-      for (int baud_index = 0; baud_index < child->num_choices;
-           baud_index++) {
-        child->choice_ints[baud_index] = network_modem_bauds[baud_index];
-        sprintf(child->choices[baud_index], "%d",
-                network_modem_bauds[baud_index]);
-      }
-      child->value = network_modem_baud_index(circle_get_network_modem_baud());
-    }
-
-    timezone_offset_item = ui_menu_add_multiple_choice(
-      MENU_TIMEZONE_OFFSET, parent, "Timezone (reboot)");
-    configure_timezone_offsets(timezone_offset_item);
-    timezone_offset_item->value = timezone_offset_index(0);
-
-    network_ip_address_item = ui_menu_add_button_with_value(
-      MENU_ID_DO_NOTHING, parent, "IP Address", 0,
-      " ", " ");
-    network_ip_address_item->disabled = 1;
-
-    parent = wifi_settings_item = ui_menu_add_folder(network_folder, "WiFi Settings");
-    wifi_ssid_item = ui_menu_add_text_field_limit(
-      MENU_WIFI_SSID, parent, "WiFi SSID", "", 32);
-    wifi_ssid_item->textfield_right_aligned = 1;
-    wifi_security_item = ui_menu_add_multiple_choice(
-      MENU_WIFI_SECURITY, parent, "WiFi Security");
-    wifi_security_item->num_choices = 2;
-    strcpy(wifi_security_item->choices[0], "WPA-PSK");
-    strcpy(wifi_security_item->choices[1], "None");
-    wifi_country_item = ui_menu_add_text_field_limit(
-      MENU_WIFI_COUNTRY, parent, "WiFi Country Code", "US", 2);
-    wifi_country_item->textfield_right_aligned = 1;
-    wifi_connect_item = ui_menu_add_button(MENU_WIFI_CONNECT, parent,
-                         "Enter Password & Reboot");
-
-    parent = webui_settings_item =
-      ui_menu_add_folder(network_folder, "Web UI Settings");
-    webui_enabled_item =
-      ui_menu_add_toggle(MENU_WEBUI_ENABLED, parent, "Web UI (reboot)", 0);
-    webui_pin_item = ui_menu_add_text_field_limit(
-      MENU_WEBUI_PIN, parent, "Web UI PIN (blank = none)", "", 8);
-    webui_pin_item->textfield_masked = 1;
-    webui_pin_item->textfield_right_aligned = 1;
-
-    update_wifi_menu_enabled();
-
-    circle_set_network_status_changed_handler(network_status_changed);
-    menu_update_network_status();
-    ui_menu_add_divider(root);
   }
+
+  // VICE runs the userport RS-232 at a fixed rate rather than the one
+  // the program sets, so the user matches it to the terminal.
+  if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20) {
+    child = network_modem_baud_item = ui_menu_add_multiple_choice(
+      MENU_NETWORK_MODEM_BAUD, parent, "Modem Baud");
+    child->num_choices = sizeof(network_modem_bauds) /
+                         sizeof(network_modem_bauds[0]);
+    for (int baud_index = 0; baud_index < child->num_choices;
+         baud_index++) {
+      child->choice_ints[baud_index] = network_modem_bauds[baud_index];
+      sprintf(child->choices[baud_index], "%d",
+              network_modem_bauds[baud_index]);
+    }
+    child->value = network_modem_baud_index(circle_get_network_modem_baud());
+  }
+
+  timezone_offset_item = ui_menu_add_multiple_choice(
+    MENU_TIMEZONE_OFFSET, parent, "Timezone (reboot)");
+  configure_timezone_offsets(timezone_offset_item);
+  timezone_offset_item->value = timezone_offset_index(0);
+
+  network_ip_address_item = ui_menu_add_button_with_value(
+    MENU_ID_DO_NOTHING, parent, "IP Address", 0,
+    " ", " ");
+  network_ip_address_item->disabled = 1;
+
+  parent = wifi_settings_item = ui_menu_add_folder(network_folder, "WiFi Settings");
+  wifi_ssid_item = ui_menu_add_text_field_limit(
+    MENU_WIFI_SSID, parent, "WiFi SSID", "", 32);
+  wifi_ssid_item->textfield_right_aligned = 1;
+  wifi_security_item = ui_menu_add_multiple_choice(
+    MENU_WIFI_SECURITY, parent, "WiFi Security");
+  wifi_security_item->num_choices = 2;
+  strcpy(wifi_security_item->choices[0], "WPA-PSK");
+  strcpy(wifi_security_item->choices[1], "None");
+  wifi_country_item = ui_menu_add_text_field_limit(
+    MENU_WIFI_COUNTRY, parent, "WiFi Country Code", "US", 2);
+  wifi_country_item->textfield_right_aligned = 1;
+  wifi_connect_item = ui_menu_add_button(MENU_WIFI_CONNECT, parent,
+                       "Enter Password & Reboot");
+
+  parent = webui_settings_item =
+    ui_menu_add_folder(network_folder, "Web UI Settings");
+  webui_enabled_item =
+    ui_menu_add_toggle(MENU_WEBUI_ENABLED, parent, "Web UI (reboot)", 0);
+  webui_pin_item = ui_menu_add_text_field_limit(
+    MENU_WEBUI_PIN, parent, "Web UI PIN (blank = none)", "", 8);
+  webui_pin_item->textfield_masked = 1;
+  webui_pin_item->textfield_right_aligned = 1;
+
+  update_wifi_menu_enabled();
+
+  circle_set_network_status_changed_handler(network_status_changed);
+  menu_update_network_status();
+  ui_menu_add_divider(root);
 
   switch (emux_machine_class) {
     case BMC64_MACHINE_CLASS_PLUS4EMU:

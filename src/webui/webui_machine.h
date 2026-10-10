@@ -24,7 +24,8 @@
 #include <circle/types.h>
 
 struct WebUiMachine {
-  // Machine name as profiles use it ("C64", "C128", "VIC20", "Plus4").
+  // Machine name as profiles use it ("C64", "C128", "VIC20", "Plus4",
+  // "Pet").
   const char *name;
   // Main's usual settings file.
   const char *settings;

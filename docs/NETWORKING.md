@@ -17,7 +17,8 @@ connections.
 Current behavior:
 
 - Networking is available from the `Network` menu on C64, C128, VIC-20,
-  Plus/4 and Plus4Emu.
+  Plus/4 and Plus4Emu. The PET also has the `Network` menu, but only for the
+  [Web UI](#web-ui): it has no modem.
 - The choices are `Off`, `Ethernet`, and `WiFi`.
 - `Modem Address` selects `$DE00` (default) or alternatively `$D700`, `$DF00`,
   or `$DF80`. On the Plus/4 the modem is fixed at `$FD00`, and on the VIC-20
@@ -132,7 +133,7 @@ After changing the file, reboot BMC64. If Wi-Fi was not already selected, set
 ## Web UI
 
 BMC64 can serve a small status / reboot / file-management web page over the
-local network on C64, C128, VIC-20, Plus/4 and Plus4Emu. It is off by default and can be protected with
+local network on every machine (C64, C128, VIC-20, Plus/4, Plus4Emu and PET). It is off by default and can be protected with
 an optional PIN. Enable it in `Network -> Web UI Settings` and open
 `http://<bmc64-ip>/`.
 

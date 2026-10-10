@@ -498,6 +498,8 @@ void ViceStdioApp::LoadNetworkDevice() {
   settings_path = "/settings-plus4.txt";
 #elif defined(RASPI_PLUS4EMU)
   settings_path = "/settings-plus4emu.txt";
+#elif defined(RASPI_PET)
+  settings_path = "/settings-pet.txt";
 #endif
   // The running profile's settings (Main: the usual file).
   settings_path = profiles_settings_file(settings_path);

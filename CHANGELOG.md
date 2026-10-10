@@ -1,15 +1,12 @@
 ## 5.2.6 (pre-release)
   * Profiles (in development, see [PROFILES.md](docs/PROFILES.md)):
     * Ability to switch machines within a profile added and profiles keep BMC64 settings per machine (`settings-<machine>.txt`)
-  * Plus/4: default to the NTSC kernal on NTSC boots #400
-  * Plus/4: networking and BMC modem on the built-in ACIA ($FD00)
-  * Plus/4: Web UI support added
-  * Plus4Emu: networking and BMC modem on the built-in ACIA ($FD00)
-  * Plus4Emu: Web UI support added
-  * VIC-20: networking and BMC modem on the userport RS-232 (KERNAL device 2)
-  * VIC-20: Web UI support added
+  * Fix Plus/4 when booting in NTSC to select NTSC default kernal correctly  #400
+  * Add networking to all machines (added to: Plus/4, Plus4Emu, Vic20, PET)
+  * Add WebUI to all machines (added to: Plus/4, Plus4Emu, Vic20, PET)
+  * Plus/4 & Plus4Emu add BMC modem on the built-in ACIA ($FD00)
+  * VIC-20 add BMC modem on the userport RS-232 (KERNAL device 2)
   * Fix for BMC modem to ignore anything typed before `AT`, so a stray byte no longer makes the next command fail
-
 
 ## 5.2.5 (pre-release)
   * Add Latin American keyboard layout for C64

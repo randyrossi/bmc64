@@ -39,6 +39,11 @@ const char *const kRunTypes[] = {
 const char *const kRunTypes[] = {
     "prg", "p00", 0,
 };
+#elif defined(RASPI_PET)
+// The PET has no Autostart in its menu, so the web UI offers none either.
+const char *const kRunTypes[] = {
+    0,
+};
 #endif
 
 // The listing editor only knows C64 BASIC V2 so far.
@@ -53,6 +58,8 @@ const WebUiMachine kMachine = {
     "Plus4", "/settings-plus4.txt", kRunTypes, "",
 #elif defined(RASPI_PLUS4EMU)
     "Plus4Emu", "/settings-plus4emu.txt", kRunTypes, "",
+#elif defined(RASPI_PET)
+    "Pet", "/settings-pet.txt", kRunTypes, "",
 #endif
 };
 
