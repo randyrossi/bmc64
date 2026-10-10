@@ -8,6 +8,7 @@
   * Plus4Emu: Web UI support added
   * VIC-20: networking and BMC modem on the userport RS-232 (KERNAL device 2)
   * VIC-20: Web UI support added
+  * Fix for BMC modem to ignore anything typed before `AT`, so a stray byte no longer makes the next command fail
 
 
 ## 5.2.5 (pre-release)
