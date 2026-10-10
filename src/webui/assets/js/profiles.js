@@ -7,20 +7,19 @@ import * as api from "./api.js";
 import { openEditor } from "./editor.js";
 import { filesHash } from "./files.js";
 import { toggleMenu } from "./menu.js";
+import { mainSettingsFile, setMachine } from "./machine.js";
 import {
   FIRST_DRIVE, MAIN_ID, PROFILE_FILES, activeWithout, baseName, cleanName,
+  settingsFile,
   groupProfiles, idValid, machineDetail, machineLabel, parseActive,
   parseMainFile, parseProfile, withName,
 } from "./profiles_data.js";
 
-// Main's usual settings files on the running machine (the web UI runs on
-// the C64 and C128 only).
-const MAIN_SETTINGS = { C64: "/settings.txt", C128: "/settings-c128.txt" };
-
 let pfVol = "SD";
 let loading = false;
 // What the page last showed: running, power-on and Start-once ids, and the
-// machine running now ("C64" or "C128": the web UI runs on those only).
+// machine running now ("C64", "C128", "VIC20", "Plus4", "Plus4Emu" or
+// "Pet").
 let lastState = { running: "", powerOn: MAIN_ID, once: "", machine: "" };
 
 function setMsg(text, isErr) {
@@ -125,6 +124,16 @@ function profileCard(p, state, actions) {
   return card;
 }
 
+// The profile's settings for its machine; an older profile has them in
+// settings.txt until it next starts.
+async function editSettings(dir, machine) {
+  const own = dir + "/" + settingsFile(machine);
+  const legacy = dir + "/settings.txt";
+  const path = (await readText(own)) === null && (await readText(legacy)) !== null
+    ? legacy : own;
+  editFile(path);
+}
+
 // ---- Switch to / Start once ----
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -168,8 +177,6 @@ async function startProfile(p, once) {
   const label = machineLabel(p.machine);
   const current = lastState.machine.toLowerCase();
   const otherMachine = target && current && target !== current;
-  // The web UI only runs on the C64 and C128.
-  const webUi = !target || target === "c64" || target === "c128";
   let question = once
     ? "Start “" + p.name + "” once?\n\nBMC64 restarts into it for this " +
       "session only; your usual profile starts at the next power-on."
@@ -192,12 +199,12 @@ async function startProfile(p, once) {
     setMsg("Could not start " + p.name + " — " + e.message, true);
     return;
   }
-  await waitForRestart(p.name, webUi, uptime);
+  await waitForRestart(p.name, uptime);
 }
 
 // Waits for BMC64 to restart (it goes offline, or its uptime starts again),
 // or for the reason it couldn't.
-async function waitForRestart(name, webUi, uptimeBefore) {
+async function waitForRestart(name, uptimeBefore) {
   showRestart("Restarting into " + name + "…",
               "BMC64 is restarting. This page reconnects by itself.");
   let wentDown = false;
@@ -216,13 +223,6 @@ async function waitForRestart(name, webUi, uptimeBefore) {
     }
     if (!s) {
       wentDown = true;
-      if (!webUi) {
-        showRestart("Starting " + name,
-                    "The Web UI isn't available on that machine, so this page " +
-                    "stays offline until a C64 or C128 profile is running.",
-                    { spinning: false, closable: true });
-        return;
-      }
       continue;
     }
     const restarted = wentDown || s.uptime_secs < uptimeBefore;
@@ -312,8 +312,9 @@ function profileActions(p) {
     buttons: [
       { label: "profile.txt", title: "Edit " + dir + "/profile.txt",
         run: () => editFile(dir + "/profile.txt") },
-      { label: "settings.txt", title: "Edit " + dir + "/settings.txt",
-        run: () => editFile(dir + "/settings.txt") },
+      { label: "settings", title: "Edit the profile's BMC64 settings for the " +
+          (machineLabel(p.machine) || "machine"),
+        run: () => editSettings(dir, p.machine) },
       { label: "vice.ini", title: "Edit " + dir + "/vice.ini",
         run: () => editFile(dir + "/vice.ini") },
     ],
@@ -330,7 +331,7 @@ function profileActions(p) {
 
 function mainActions(machine, hasMainFile) {
   const actions = [];
-  const settings = MAIN_SETTINGS[machine];
+  const settings = mainSettingsFile();
   if (settings) {
     actions.push({ label: baseName(settings), title: "Edit " + settings,
                    run: () => editFile(settings) });
@@ -390,6 +391,7 @@ async function render() {
   } catch (e) {
     if (e.status === 401) throw e;
   }
+  if (status) setMachine(status);
   const machine = (status && status.machine) || "";
 
   let listing = null;

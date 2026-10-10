@@ -16,10 +16,13 @@ connections.
 
 Current behavior:
 
-- Networking is available from the `Network` menu on C64 and C128.
+- Networking is available from the `Network` menu on C64, C128, VIC-20,
+  Plus/4 and Plus4Emu. The PET also has the `Network` menu, but only for the
+  [Web UI](#web-ui): it has no modem.
 - The choices are `Off`, `Ethernet`, and `WiFi`.
 - `Modem Address` selects `$DE00` (default) or alternatively `$D700`, `$DF00`,
-  or `$DF80`.
+  or `$DF80`. On the Plus/4 the modem is fixed at `$FD00`, and on the VIC-20
+  it is on the userport, where `Modem Baud` sets the speed instead.
   - `$D700` is recommended if you are using an IDE64 and REU at the same time.
 - Ethernet uses the Raspberry Pi's onboard Ethernet controller when present.
 - Wi-Fi uses the Raspberry Pi's onboard WLAN controller when present.
@@ -130,7 +133,7 @@ After changing the file, reboot BMC64. If Wi-Fi was not already selected, set
 ## Web UI
 
 BMC64 can serve a small status / reboot / file-management web page over the
-local network on C64 and C128. It is off by default and can be protected with
+local network on every machine (C64, C128, VIC-20, Plus/4, Plus4Emu and PET). It is off by default and can be protected with
 an optional PIN. Enable it in `Network -> Web UI Settings` and open
 `http://<bmc64-ip>/`.
 
@@ -239,6 +242,68 @@ wait at least one second for `OK`, then enter `ATH`.
 
 **Note:** DesTerm 128 does not use PETSCII. Choose a character set supported
 by the BBS.
+
+### Plus/4
+
+[Term-80 (English) on Plus/4 World](https://plus4world.powweb.com/software/Term-80_English)
+is the recommended terminal program for the Plus/4. Transfer its disk image or
+program to the Plus/4 directory on the BMC64 SD card, then load it using the
+normal BMC64 disk or Autostart workflow.
+
+The BMC modem is on the Plus/4's built-in ACIA at `$FD00`. The address is
+fixed, so the `Modem Address` setting does not apply.
+
+This works on both Plus/4 images (VICE and Plus4Emu).
+
+1. Enable Ethernet or Wi-Fi in BMC64 and reboot it if prompted.
+2. Start Term-80.
+3. Enter a dial command in the terminal, for example:
+
+  ```text
+  ATDTbbs.example.org:23
+  ```
+
+4. Wait for `CONNECT`, then log in to the BBS.
+5. Use the port published by the BBS operator when it differs from the default
+  Telnet port `23`.
+
+To disconnect, wait at least one second, enter `+++`, wait at least one second
+for `OK`, then enter `ATH`.
+
+### VIC-20
+
+VicTerm 40 (`victerm 40.prg`) is the recommended terminal program for the
+VIC-20. It is a cartridge image that loads at `$A000`, so it is attached as a
+cartridge rather than loaded from disk. Copy it to the VIC-20 directory on the
+BMC64 SD card.
+
+The VIC-20 has no built-in serial chip, so the BMC modem is connected to the
+userport RS-232, like a VIC-1011A modem adapter. Terminal programs that use
+the KERNAL's RS-232 (device 2) talk to it.
+
+VICE runs the userport RS-232 at a fixed speed rather than the one the program
+asks for, so set `Network -> Modem Baud` (`300`, `1200` or `2400`) to the same
+speed as VicTerm. If they differ, text comes out garbled. `1200` is the fastest
+speed the VIC-20 KERNAL handles reliably.
+
+The modem does not report carrier loss to the VIC-20, so a remote hang-up is
+not signalled to the terminal program; the modem prints `NO CARRIER` instead.
+
+1. Enable Ethernet or Wi-Fi in BMC64 and reboot it if prompted.
+2. Set `Modem Baud` to match the speed set in VicTerm.
+3. Attach VicTerm from `Cartridge -> Add to generic cartridge ->
+  Attach 4/8k $A000...` and select `victerm 40.prg`. The VIC-20 resets and
+  starts VicTerm.
+4. Enter a dial command in the terminal, for example:
+
+  ```text
+  ATDTbbs.example.org:23
+  ```
+
+5. Wait for `CONNECT`, then log in to the BBS.
+
+To disconnect, wait at least one second, enter `+++`, wait at least one second
+for `OK`, then enter `ATH`.
 
 ## Using C64 OS Networking
 

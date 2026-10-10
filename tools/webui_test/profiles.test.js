@@ -7,7 +7,8 @@
 
 import {
   activeWithout, cleanName, groupProfiles, idValid, machineDetail, machineLabel,
-  parseActive, parseKv, parseMainFile, parseProfile, withName,
+  parseActive, parseKv, parseMainFile, parseProfile, PROFILE_FILES, settingsFile,
+  withName,
 } from "../../src/webui/assets/js/profiles_data.js";
 
 export function runTests() {
@@ -132,6 +133,18 @@ export function runTests() {
     eq(activeWithout("profile=elite\n", "geos"), null, "not mentioned");
     eq(activeWithout("profile=geos-2\n", "geos"), null, "only that id");
     eq(activeWithout("profile = geos \r\n", "geos"), "profile=main\r\n");
+  });
+
+  test("settings files", () => {
+    eq(settingsFile("C64/PAL/HDMI"), "settings-c64.txt");
+    eq(settingsFile("Plus4Emu"), "settings-plus4emu.txt");
+    eq(settingsFile("VIC20 / PAL"), "settings-vic20.txt");
+    eq(settingsFile(""), "settings.txt");
+    for (const f of ["settings.txt", "settings-plus4.txt", "settings-pet.txt.bak",
+                     "vice.in~", "profile.txt.bak"]) {
+      eq(PROFILE_FILES.includes(f), true, f);
+    }
+    eq(PROFILE_FILES.includes("my-notes.txt"), false);
   });
 
   return { passed, failed, log };

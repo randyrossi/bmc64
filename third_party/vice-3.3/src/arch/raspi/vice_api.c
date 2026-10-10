@@ -66,6 +66,10 @@
 #include "sid-resources.h"
 #include "userport/userport_joystick.h"
 #include "cbmimage.h"
+#include "charset.h"
+#include "imagecontents.h"
+#include "diskcontents.h"
+#include "tapecontents.h"
 // RASPI includes
 #include "circle.h"
 #include "keycodes.h"
@@ -352,6 +356,53 @@ int emux_tape_control(int cmd) {
 
 int emux_autostart_file(char* filename) {
    return autostart_autodetect(filename, NULL, 0, AUTOSTART_MODE_RUN);
+}
+
+// Same readers, and the same file numbering, as autostart_disk() and
+// autostart_tape(), so a line's program number starts that file.
+int emux_read_image_contents(const char *path, struct emux_image_line *lines,
+                             int max_lines) {
+  image_contents_t *contents = diskcontents_filesystem_read(path);
+  if (contents == NULL) {
+    contents = tapecontents_read(path);
+  }
+  if (contents == NULL) {
+    return -1;
+  }
+
+  image_contents_screencode_t *screen = image_contents_to_screencode(contents);
+  image_contents_file_list_t *file = contents->file_list;
+  int file_number = 0;
+  int count = 0;
+  for (image_contents_screencode_t *line = screen;
+       line != NULL && count < max_lines; line = line->next, count++) {
+    struct emux_image_line *out = &lines[count];
+    out->length = line->length < EMUX_IMAGE_LINE_MAX ? (int)line->length
+                                                     : EMUX_IMAGE_LINE_MAX;
+    memcpy(out->text, line->line, out->length);
+    out->program = 0;
+    if (count == 0) {
+      // The header shows reversed after the "0 ", as on the real machine.
+      for (int i = 2; i < out->length; i++) {
+        out->text[i] |= 0x80;
+      }
+    } else if (file != NULL) {
+      // One line per file, in directory order, after the header.
+      file_number++;
+      if (strstr((const char *)file->type, "PRG") != NULL) {
+        out->program = file_number;
+      }
+      file = file->next;
+    }
+  }
+
+  image_contents_screencode_destroy(screen);
+  image_contents_destroy(contents);
+  return count;
+}
+
+int emux_autostart_image_file(char *path, int program) {
+   return autostart_autodetect(path, NULL, program, AUTOSTART_MODE_RUN);
 }
 
 void emux_drive_change_model(int unit) {

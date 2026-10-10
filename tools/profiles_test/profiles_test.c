@@ -476,7 +476,7 @@ static void test_boot_profile(void) {
    CHECK_STR(profiles_boot_message(), "");
    CHECK_STR(profiles_vice_config(), "/profiles/geos/vice.ini");
    CHECK_STR(profiles_settings_file("/settings.txt"),
-             "/profiles/geos/settings.txt");
+             "/profiles/geos/settings-c64.txt");
    // The machine name is matched without regard to case.
    profiles_boot_init("c64/pal/hdmi");
    CHECK_STR(profiles_running()->id, "geos");
@@ -1035,7 +1035,24 @@ static void test_machine_switching(void) {
    CHECK_STR(read_file("/profiles/active.txt"), "profile=hd\n");
    CHECK_STR(read_file("/profiles/hd/profile.txt"),
              "name=HD\nmachine=C64/NTSC/HDMI\n");
-   // Another machine: Main from now on, on that machine.
+   // Another machine: the profile follows too, and Main isn't changed.
+   write_file("/profiles/active.txt",
+              "profile=hd\nmain_machine=C64/PAL/HDMI\n");
+   write_file("/profiles/hd/settings-c64.txt", "c64 settings\n");
+   profiles_machine_switched("VIC20/PAL/HDMI/VICE 720p@50Hz");
+   CHECK_STR(read_file("/profiles/active.txt"),
+             "profile=hd\nmain_machine=C64/PAL/HDMI\n");
+   CHECK_STR(read_file("/profiles/hd/profile.txt"),
+             "name=HD\nmachine=VIC20/PAL/HDMI\n");
+   // It starts on the VIC-20 with the VIC-20's own (new) settings file; the
+   // C64's are kept for when it goes back.
+   profiles_boot_init("VIC20/PAL/HDMI");
+   CHECK_STR(profiles_running()->id, "hd");
+   CHECK_STR(profiles_settings_file("/settings-vic20.txt"),
+             "/profiles/hd/settings-vic20.txt");
+   CHECK_STR(read_file("/profiles/hd/settings-c64.txt"), "c64 settings\n");
+   // A profile that can't be read: Main.
+   write_file("/profiles/active.txt", "profile=gone\n");
    profiles_machine_switched("VIC20/PAL/HDMI/VICE 720p@50Hz");
    CHECK_STR(read_file("/profiles/active.txt"),
              "profile=main\nmain_machine=VIC20/PAL/HDMI/VICE 720p@50Hz\n");
@@ -1051,6 +1068,52 @@ static void test_machine_switching(void) {
    CHECK_STR(desc, "C64/PAL/HDMI");
    profiles_machine_desc("C64", desc, sizeof(desc));
    CHECK_STR(desc, "C64");
+}
+
+static void test_settings_files(void) {
+   // New profiles get the running machine's settings file.
+   fresh_card();
+   profiles_boot_init("Plus4Emu/PAL/HDMI");
+   char path[PROFILES_MAX_PATH_LEN];
+   profiles_new_settings_file("ted", path, sizeof(path));
+   CHECK_STR(path, "/profiles/ted/settings-plus4emu.txt");
+
+   // An older profile's settings.txt is read at boot, and renamed to the
+   // machine's own name once boot is complete.
+   make_profile("old", "name=Old\nmachine=C128/PAL/HDMI\n");
+   write_file("/profiles/old/settings.txt", "c128 settings\n");
+   write_file("/profiles/active.txt", "profile=old\n");
+   profiles_boot_init("C128/PAL/HDMI");
+   CHECK_STR(profiles_settings_file("/settings-c128.txt"),
+             "/profiles/old/settings.txt");
+   CHECK(exists("/profiles/old/settings.txt"));
+   profiles_after_boot();
+   CHECK_STR(profiles_settings_file("/settings-c128.txt"),
+             "/profiles/old/settings-c128.txt");
+   CHECK(!exists("/profiles/old/settings.txt"));
+   CHECK_STR(read_file("/profiles/old/settings-c128.txt"), "c128 settings\n");
+   profiles_boot_init("C128/PAL/HDMI");
+   CHECK_STR(profiles_settings_file("/settings-c128.txt"),
+             "/profiles/old/settings-c128.txt");
+
+   // Moving an older profile to another machine first gives its
+   // settings.txt the old machine's name, so the new machine never reads it.
+   make_profile("move", "name=Move\nmachine=C64/PAL/HDMI\n");
+   write_file("/profiles/move/settings.txt", "c64 settings\n");
+   write_file("/profiles/active.txt", "profile=move\n");
+   profiles_machine_switched("Plus4/PAL/HDMI/VICE 720p@50Hz");
+   CHECK(!exists("/profiles/move/settings.txt"));
+   CHECK_STR(read_file("/profiles/move/settings-c64.txt"), "c64 settings\n");
+   profiles_boot_init("Plus4/PAL/HDMI");
+   CHECK_STR(profiles_settings_file("/settings-plus4.txt"),
+             "/profiles/move/settings-plus4.txt");
+
+   // Delete removes every machine's settings.
+   profiles_boot_init("C64/PAL/HDMI");
+   write_file("/profiles/move/settings-plus4.txt", "x\n");
+   write_file("/profiles/move/settings-plus4.txt.bak", "x\n");
+   CHECK(profiles_delete("move") == PROFILES_OK);
+   CHECK(!exists("/profiles/move"));
 }
 
 static void check_label(const char *machine, const char *expected) {
@@ -1130,6 +1193,7 @@ int main(void) {
    test_startup_disks();
    test_machines();
    test_machine_switching();
+   test_settings_files();
 
    remove_tree(root);
 

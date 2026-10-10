@@ -8,6 +8,7 @@ import * as api from "./api.js";
 import { openEditor, openBasicEditor } from "./editor.js";
 import { LOAD_ADDRESS, parsePrg } from "./basic.js";
 import { toggleMenu } from "./menu.js";
+import { canRun, hasBasicEditor } from "./machine.js";
 
 // current location (set by loadDir)
 let fbVol = "SD";
@@ -19,14 +20,11 @@ const FILE_ICONS = {
   prg: "▶", crt: "▦", sid: "♪", txt: "≣", nfo: "≣", zip: "▤",
 };
 
-// Types the emulator can autostart (keep in sync with webui_fs.cpp).
-const RUNNABLE = new Set(
-  ["d64", "d71", "d81", "d82", "g64", "x64", "t64", "tap", "prg", "p00", "crt"]);
-
 const extOf = (name) => (name.split(".").pop() || "").toLowerCase();
 
+// Types this machine's Autostart accepts (the device says which).
 function isRunnable(name) {
-  return RUNNABLE.has(extOf(name));
+  return canRun(extOf(name));
 }
 
 // Disks, tapes and programs are autostarted, like the menu's Autostart item;
@@ -111,7 +109,7 @@ function rowActions(e, path) {
   }
   // Whether a .prg is BASIC can only be told by reading it, which is left to
   // the click rather than done for every file in a folder listing.
-  if (!e.dir && extOf(e.name) === "prg") {
+  if (!e.dir && extOf(e.name) === "prg" && hasBasicEditor()) {
     items.push({ label: "Edit listing…", run: () => editListing(path, e) });
   }
   if (!e.dir) {
@@ -145,6 +143,7 @@ const shortTime = (mtime) => mtime.slice(0, 16).replace("T", " ");
 export async function loadDir(path) {
   path = normPath(path);
   $("fb-up").disabled = path === "/";
+  $("fb-newbasic").hidden = !hasBasicEditor();
   $("fb-status").className = "msg";
   $("fb-status").textContent = "Loading…";
   $("fb-rows").textContent = "";

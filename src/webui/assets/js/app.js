@@ -2,6 +2,7 @@
 //
 //   api.js        every /api/* call
 //   util.js       DOM lookup, formatting, path helpers
+//   machine.js    the running machine and what the web UI can do on it
 //   dashboard.js  status polling, hardware / storage meters, reboot & reset
 //   files.js      SD card file browser
 //   menu.js       pop-up menu for a file row's Actions button
@@ -15,6 +16,7 @@ import { initDashboard, refreshVolumes, startStatusPolling } from "./dashboard.j
 import { initFiles, loadDir, filesHash, pathFromHash } from "./files.js";
 import { initEditor } from "./editor.js";
 import { initProfiles, loadProfiles } from "./profiles.js";
+import { loadMachine } from "./machine.js";
 import { initUpdate, showUpdate } from "../update/update.js";
 import { UPDATER } from "../update/settings.js";
 
@@ -58,5 +60,7 @@ if (UPDATER.enabled) {
 $("qa-files").addEventListener("click", () => { location.hash = filesHash("/"); });
 window.addEventListener("hashchange", route);
 
+// The file actions depend on the machine, so know it before the first view.
+await loadMachine();
 route();
 startStatusPolling();

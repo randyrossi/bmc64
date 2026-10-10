@@ -21,6 +21,7 @@ unsigned int rs232bmc_get_acia_capabilities(int device)
                  | RS232_ACIA_EXACT_RX_TIMING
                  | RS232_ACIA_NOTIFY_CARRIER_CHANGE;
         case VICE_MACHINE_C128:
+        case VICE_MACHINE_PLUS4:
             return RS232_ACIA_ASSERT_READY_WHEN_DISCONNECTED
                  | RS232_ACIA_EXACT_RX_TIMING
                  | RS232_ACIA_NOTIFY_CARRIER_CHANGE;

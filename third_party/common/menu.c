@@ -50,6 +50,8 @@
 #include "menu_keyset.h"
 #include "menu_switch.h"
 #include "menu_logging.h"
+#include "menu_image_contents.h"
+#include "menu_power.h"
 #include "menu_gpio.h"
 #include "menu_profiles.h"
 #include "../../src/profiles/profiles.h"
@@ -64,7 +66,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "5.2.5"
+#define VERSION_STRING "5.2.6"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -194,6 +196,7 @@ static struct menu_item *network_device_item;
 static struct menu_item *network_status_item;
 static struct menu_item *network_ip_address_item;
 static struct menu_item *network_modem_address_item;
+static struct menu_item *network_modem_baud_item;
 static struct menu_item *webui_settings_item;
 static struct menu_item *webui_enabled_item;
 static int saved_webui_enabled;
@@ -221,6 +224,7 @@ static int logging_destination_reboot_prompted;
 static const int acia_network_addresses[] = CIRCLE_ACIA_NETWORK_ADDRESS_VALUES;
 static const char *const acia_network_address_labels[] =
   CIRCLE_ACIA_NETWORK_ADDRESS_LABELS;
+static const int network_modem_bauds[] = { 300, 1200, 2400 };
 
 static void configure_timezone_offsets(struct menu_item *item) {
   int index = 0;
@@ -262,6 +266,15 @@ static int acia_network_address_index(int address) {
     }
   }
   return CIRCLE_ACIA_NETWORK_ADDRESS_DEFAULT;
+}
+
+static int network_modem_baud_index(int baud) {
+  for (int index = 0; index < network_modem_baud_item->num_choices; index++) {
+    if (network_modem_baud_item->choice_ints[index] == baud) {
+      return index;
+    }
+  }
+  return 0;
 }
 
 static const char *const network_status_labels[CIRCLE_NETWORK_STATUS_COUNT] = {
@@ -591,6 +604,11 @@ static char *fullpath(DirType dir_type, char *name) {
   return full_path_str;
 }
 
+// Right on a disk or tape image in the Autostart list: show its directory.
+static void autostart_file_open(struct menu_item *item) {
+  menu_image_contents_show(fullpath(DIR_ROOT, item->str_value));
+}
+
 // Remove one directory from the end of path
 static void remove_dir(char *path) {
   int i;
@@ -711,6 +729,10 @@ static void list_files(struct menu_item *parent,
               ui_menu_add_button(menu_id, &files_root, ep->d_name);
           new_button->sub_id = MENU_SUB_PICK_FILE;
           strncpy(new_button->str_value, ep->d_name, MAX_STR_VAL_LEN - 1);
+          if (menu_id == MENU_AUTOSTART_FILE &&
+              (test_disk_name(ep->d_name) || test_tape_name(ep->d_name))) {
+            new_button->on_open = autostart_file_open;
+          }
         }
       }
     }
@@ -1559,6 +1581,10 @@ static int save_settings_to(const char *settings_filename,
     fprintf(fp, "network_modem_address=%d\n",
             network_modem_address_item->value);
   }
+  if (network_modem_baud_item != NULL) {
+    fprintf(fp, "network_modem_baud=%d\n",
+            network_modem_baud_item->choice_ints[network_modem_baud_item->value]);
+  }
   fprintf(fp, "h_center_0=%d\n", h_center_item[0]->value);
   fprintf(fp, "v_center_0=%d\n", v_center_item[0]->value);
   fprintf(fp, "h_border_0=%d\n", h_border_item[0]->value);
@@ -1663,7 +1689,7 @@ static int save_settings() {
 int menu_save_settings_to_profile(const char *id) {
   char settings_path[256];
   char vice_ini_path[256];
-  profiles_path(id, "settings.txt", settings_path, sizeof(settings_path));
+  profiles_new_settings_file(id, settings_path, sizeof(settings_path));
   profiles_path(id, "vice.ini", vice_ini_path, sizeof(vice_ini_path));
   return save_settings_to(settings_path, vice_ini_path);
 }
@@ -1890,6 +1916,12 @@ static void load_settings() {
       if (value >= 0 && value < network_modem_address_item->num_choices &&
           circle_set_acia_network_address(acia_network_addresses[value])) {
         network_modem_address_item->value = value;
+      }
+    } else if (network_modem_baud_item != NULL &&
+               strcmp(name, "network_modem_baud") == 0) {
+      if (circle_set_network_modem_baud(value)) {
+        network_modem_baud_item->value = network_modem_baud_index(
+            circle_get_network_modem_baud());
       }
     } else if (timezone_offset_item != NULL &&
                strcmp(name, "timezone_offset_minutes") == 0) {
@@ -2138,19 +2170,21 @@ static void set_current_dir_names() {
           strcpy(current_dir_names[i], default_dir_names[i]);
           strcat(current_dir_names[i], machine_sub_dir);
         }
-        strcpy(current_dir_names[DIR_ROOT], "/");
         break;
      case MENU_DIR_CONVENTION_EMU_FOLDER:
         for (i = 0; i < NUM_DIR_TYPES; i++) {
           strcpy(current_dir_names[i], machine_sub_dir);
           strcat(current_dir_names[i], default_dir_names[i]);
         }
-        strcpy(current_dir_names[DIR_ROOT], machine_sub_dir);
         break;
      default:
         assert(0);
         break;
   }
+
+  // Autostart opens in the disks folder, where most people look first.
+  // If it isn't there, list_files() falls back a level at a time to "/".
+  strcpy(current_dir_names[DIR_ROOT], current_dir_names[DIR_DISKS]);
 
   // These don't change
   strcpy(current_dir_names[DIR_ROMS], machine_sub_dir);
@@ -2243,7 +2277,7 @@ static void select_file(struct menu_item *item) {
        menu_profiles_autostart_chosen(fullpath(DIR_ROOT, item->str_value));
        return;
      case MENU_LOADPRG_FILE:
-       ui_info("Loading...");
+       ui_info("Starting...");
        if (emux_autostart_file(fullpath(DIR_ROOT, item->str_value)) < 0) {
          ui_pop_menu();
          ui_error("Failed to load file");
@@ -3397,6 +3431,12 @@ static void menu_value_changed(struct menu_item *item) {
       ui_error("Cannot set modem address");
     }
     return;
+  case MENU_NETWORK_MODEM_BAUD:
+    if (!circle_set_network_modem_baud(item->choice_ints[item->value])) {
+      item->value = network_modem_baud_index(circle_get_network_modem_baud());
+      ui_error("Cannot set modem baud rate");
+    }
+    return;
   case MENU_WIFI_SSID:
     if (!circle_wifi_is_running()) {
       ui_confirm_wrapped_labels("Wi-Fi scan unavailable",
@@ -4213,24 +4253,28 @@ void build_menu(struct menu_item *root) {
 
   ui_menu_add_divider(root);
 
-  if (emux_machine_class == BMC64_MACHINE_CLASS_C64 ||
-    emux_machine_class == BMC64_MACHINE_CLASS_C128) {
-    network_status_item = ui_menu_add_read_only_heading(
-      root, "Network Status:");
-    parent = ui_menu_add_folder(root, "Network");
-    parent->id = MENU_NETWORKING;
-    struct menu_item *network_folder = parent;
+  network_status_item = ui_menu_add_read_only_heading(
+    root, "Network Status:");
+  parent = ui_menu_add_folder(root, "Network");
+  parent->id = MENU_NETWORKING;
+  struct menu_item *network_folder = parent;
 
-    child = network_device_item =
-      ui_menu_add_multiple_choice(MENU_NETWORK_ENABLED, parent, "Network Device");
-    child->num_choices = 3;
-    child->value = 0;
-    strcpy(child->choices[0], "Off");
-    strcpy(child->choices[1], "Ethernet");
-    strcpy(child->choices[2], "WiFi");
-    child->choice_disabled[1] = !circle_has_onboard_ethernet();
-    child->choice_disabled[2] = !circle_has_onboard_wifi();
+  child = network_device_item =
+    ui_menu_add_multiple_choice(MENU_NETWORK_ENABLED, parent, "Network Device");
+  child->num_choices = 3;
+  child->value = 0;
+  strcpy(child->choices[0], "Off");
+  strcpy(child->choices[1], "Ethernet");
+  strcpy(child->choices[2], "WiFi");
+  child->choice_disabled[1] = !circle_has_onboard_ethernet();
+  child->choice_disabled[2] = !circle_has_onboard_wifi();
 
+  // The Plus/4 ACIA is built in at a fixed $FD00, the VIC-20 modem is
+  // on the userport, and the PET has no modem (web UI only).
+  if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 &&
+      emux_machine_class != BMC64_MACHINE_CLASS_PET &&
+      emux_machine_class != BMC64_MACHINE_CLASS_PLUS4 &&
+      emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
     child = network_modem_address_item = ui_menu_add_multiple_choice(
       MENU_NETWORK_MODEM_ADDRESS, parent, "Modem Address");
     child->num_choices = sizeof(acia_network_addresses) /
@@ -4242,51 +4286,67 @@ void build_menu(struct menu_item *root) {
       strcpy(child->choices[address_index],
              acia_network_address_labels[address_index]);
     }
-
-    timezone_offset_item = ui_menu_add_multiple_choice(
-      MENU_TIMEZONE_OFFSET, parent, "Timezone (reboot)");
-    configure_timezone_offsets(timezone_offset_item);
-    timezone_offset_item->value = timezone_offset_index(0);
-
-    network_ip_address_item = ui_menu_add_button_with_value(
-      MENU_ID_DO_NOTHING, parent, "IP Address", 0,
-      " ", " ");
-    network_ip_address_item->disabled = 1;
-
-    parent = wifi_settings_item = ui_menu_add_folder(network_folder, "WiFi Settings");
-    wifi_ssid_item = ui_menu_add_text_field_limit(
-      MENU_WIFI_SSID, parent, "WiFi SSID", "", 32);
-    wifi_ssid_item->textfield_right_aligned = 1;
-    wifi_security_item = ui_menu_add_multiple_choice(
-      MENU_WIFI_SECURITY, parent, "WiFi Security");
-    wifi_security_item->num_choices = 2;
-    strcpy(wifi_security_item->choices[0], "WPA-PSK");
-    strcpy(wifi_security_item->choices[1], "None");
-    wifi_country_item = ui_menu_add_text_field_limit(
-      MENU_WIFI_COUNTRY, parent, "WiFi Country Code", "US", 2);
-    wifi_country_item->textfield_right_aligned = 1;
-    wifi_connect_item = ui_menu_add_button(MENU_WIFI_CONNECT, parent,
-                         "Enter Password & Reboot");
-
-    parent = webui_settings_item =
-      ui_menu_add_folder(network_folder, "Web UI Settings");
-    webui_enabled_item =
-      ui_menu_add_toggle(MENU_WEBUI_ENABLED, parent, "Web UI (reboot)", 0);
-    webui_pin_item = ui_menu_add_text_field_limit(
-      MENU_WEBUI_PIN, parent, "Web UI PIN (blank = none)", "", 8);
-    webui_pin_item->textfield_masked = 1;
-    webui_pin_item->textfield_right_aligned = 1;
-
-    update_wifi_menu_enabled();
-
-    circle_set_network_status_changed_handler(network_status_changed);
-    menu_update_network_status();
-    ui_menu_add_divider(root);
   }
+
+  // VICE runs the userport RS-232 at a fixed rate rather than the one
+  // the program sets, so the user matches it to the terminal.
+  if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20) {
+    child = network_modem_baud_item = ui_menu_add_multiple_choice(
+      MENU_NETWORK_MODEM_BAUD, parent, "Modem Baud");
+    child->num_choices = sizeof(network_modem_bauds) /
+                         sizeof(network_modem_bauds[0]);
+    for (int baud_index = 0; baud_index < child->num_choices;
+         baud_index++) {
+      child->choice_ints[baud_index] = network_modem_bauds[baud_index];
+      sprintf(child->choices[baud_index], "%d",
+              network_modem_bauds[baud_index]);
+    }
+    child->value = network_modem_baud_index(circle_get_network_modem_baud());
+  }
+
+  timezone_offset_item = ui_menu_add_multiple_choice(
+    MENU_TIMEZONE_OFFSET, parent, "Timezone (reboot)");
+  configure_timezone_offsets(timezone_offset_item);
+  timezone_offset_item->value = timezone_offset_index(0);
+
+  network_ip_address_item = ui_menu_add_button_with_value(
+    MENU_ID_DO_NOTHING, parent, "IP Address", 0,
+    " ", " ");
+  network_ip_address_item->disabled = 1;
+
+  parent = wifi_settings_item = ui_menu_add_folder(network_folder, "WiFi Settings");
+  wifi_ssid_item = ui_menu_add_text_field_limit(
+    MENU_WIFI_SSID, parent, "WiFi SSID", "", 32);
+  wifi_ssid_item->textfield_right_aligned = 1;
+  wifi_security_item = ui_menu_add_multiple_choice(
+    MENU_WIFI_SECURITY, parent, "WiFi Security");
+  wifi_security_item->num_choices = 2;
+  strcpy(wifi_security_item->choices[0], "WPA-PSK");
+  strcpy(wifi_security_item->choices[1], "None");
+  wifi_country_item = ui_menu_add_text_field_limit(
+    MENU_WIFI_COUNTRY, parent, "WiFi Country Code", "US", 2);
+  wifi_country_item->textfield_right_aligned = 1;
+  wifi_connect_item = ui_menu_add_button(MENU_WIFI_CONNECT, parent,
+                       "Enter Password & Reboot");
+
+  parent = webui_settings_item =
+    ui_menu_add_folder(network_folder, "Web UI Settings");
+  webui_enabled_item =
+    ui_menu_add_toggle(MENU_WEBUI_ENABLED, parent, "Web UI (reboot)", 0);
+  webui_pin_item = ui_menu_add_text_field_limit(
+    MENU_WEBUI_PIN, parent, "Web UI PIN (blank = none)", "", 8);
+  webui_pin_item->textfield_masked = 1;
+  webui_pin_item->textfield_right_aligned = 1;
+
+  update_wifi_menu_enabled();
+
+  circle_set_network_status_changed_handler(network_status_changed);
+  menu_update_network_status();
+  ui_menu_add_divider(root);
 
   switch (emux_machine_class) {
     case BMC64_MACHINE_CLASS_PLUS4EMU:
-     ui_menu_add_button(MENU_LOADPRG, root, "Load .PRG File...");
+     ui_menu_add_button(MENU_LOADPRG, root, "Autostart .PRG File...");
      break;
     case BMC64_MACHINE_CLASS_PET:
      break;
@@ -4898,9 +4958,7 @@ void build_menu(struct menu_item *root) {
     ui_menu_add_toggle(MENU_DEMO_MODE, root, "Demo Mode", raspi_demo_mode);
   }
 
-  parent = ui_menu_add_folder(root, "Reset");
-  ui_menu_add_button(MENU_SOFT_RESET, parent, "Soft Reset");
-  ui_menu_add_button(MENU_HARD_RESET, parent, "Hard Reset");
+  build_power_menu(root);
 
   logging_destination_item = ui_menu_add_multiple_choice(
     MENU_LOGGING_DESTINATION, root, "Logging");
@@ -4918,6 +4976,13 @@ void build_menu(struct menu_item *root) {
   ui_set_on_value_changed_callback(menu_value_changed);
 
   load_settings();
+
+  // The VIC-20 userport modem is off by default in VICE; follow Network
+  // Device (this also keeps the unused ACIA cartridge off).
+  if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20 &&
+      network_device_item != NULL) {
+    circle_set_acia_network_enabled(network_device_item->value != 0);
+  }
 
   if (use_scaling_params_item[0]->value) {
      if (!do_use_int_scaling(FB_LAYER_VIC, 1 /* silent */)) {

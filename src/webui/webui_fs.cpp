@@ -14,10 +14,12 @@
 // limitations under the License.
 
 #include "webui_fs.h"
+#include "webui.h"
 
-#if defined(RASPI_C64) || defined(RASPI_C128)
+#if BMC64_WEBUI
 
 #include "webui_http.h"
+#include "webui_machine.h"
 
 #include <circle/net/socket.h>
 #include <circle/sched/scheduler.h>
@@ -250,24 +252,15 @@ boolean CiEqual(const char *a, const char *b) {
   return *a == *b;
 }
 
-// Only image/program types that the menu's Autostart accepts as-is. A .crt
-// cartridge image is one: VICE's autostart_autodetect attaches it on the
-// C64 and C128, which are the machines the web UI runs on.
+// Only the image/program types this machine's Autostart accepts as-is
+// (webui_machine.cpp).
 boolean IsAutostartable(const char *clean) {
   const char *dot = 0;
   for (const char *p = clean; *p != '\0'; p++) {
     if (*p == '/') dot = 0;
     else if (*p == '.') dot = p + 1;
   }
-  if (dot == 0) return FALSE;
-  static const char *const kExt[] = {
-      "d64", "d71", "d81", "d82", "g64", "x64", "t64", "tap", "prg", "p00",
-      "crt",
-  };
-  for (unsigned i = 0; i < sizeof(kExt) / sizeof(kExt[0]); i++) {
-    if (CiEqual(dot, kExt[i])) return TRUE;
-  }
-  return FALSE;
+  return dot != 0 && WebUiMachineCanRun(dot);
 }
 
 // BMC64's own configuration files. Upload and delete refuse them (in any
@@ -311,8 +304,8 @@ const char *InProfilesFolder(const char *clean) {
 }
 
 // Profile files (docs/PROFILES.md, Profile files): active.txt in /profiles,
-// each profile's profile.txt, settings.txt and vice.ini, and Main's
-// /profiles/main/<machine>.txt.
+// each profile's profile.txt, settings files (settings.txt in older ones,
+// settings-<machine>.txt) and vice.ini, and Main's /profiles/main/<machine>.txt.
 boolean IsProfileFilePath(const char *clean) {
   const char *rest = InProfilesFolder(clean);
   if (rest == 0) return FALSE;
@@ -331,8 +324,17 @@ boolean IsProfileFilePath(const char *clean) {
     size_t length = strlen(name);
     return length > 4 && CiEqual(name + length - 4, ".txt");
   }
-  return CiEqual(name, "profile.txt") || CiEqual(name, "settings.txt") ||
-         CiEqual(name, "vice.ini");
+  // settings.txt, or settings-<machine>.txt
+  size_t length = strlen(name);
+  boolean settings = FALSE;
+  if (length >= 12 && CiEqual(name + length - 4, ".txt")) {
+    char start[9];
+    memcpy(start, name, 8);
+    start[8] = '\0';
+    settings = CiEqual(start, "settings") &&
+               (length == 12 || name[8] == '-');
+  }
+  return CiEqual(name, "profile.txt") || settings || CiEqual(name, "vice.ini");
 }
 
 // The config files are editable only in the volume root; keymaps anywhere;
@@ -1004,4 +1006,4 @@ void WebUiFsAutostart(CSocket *socket, const char *query) {
                         (unsigned) strlen(ok));
 }
 
-#endif  // RASPI_C64 || RASPI_C128
+#endif  // BMC64_WEBUI

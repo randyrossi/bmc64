@@ -75,6 +75,12 @@ int ViceApp::circle_get_machine_timing() {
   return mViceOptions.GetMachineTiming();
 }
 
+void ViceCloseLogFile(void) {
+  if (gLoggingDevice != nullptr) {
+    gLoggingDevice->CloseFile();
+  }
+}
+
 void ViceApp::DrainLogging() {
   if (gLoggingDevice != nullptr) {
     gLoggingDevice->Drain();
@@ -486,12 +492,20 @@ void ViceStdioApp::DisableBootStat() {
 }
 
 void ViceStdioApp::LoadNetworkDevice() {
-#if defined(RASPI_C64) || defined(RASPI_C128)
+#if BMC64_NETWORK
   const char *settings_path;
 #if defined(RASPI_C64)
   settings_path = "/settings.txt";
 #elif defined(RASPI_C128)
   settings_path = "/settings-c128.txt";
+#elif defined(RASPI_VIC20)
+  settings_path = "/settings-vic20.txt";
+#elif defined(RASPI_PLUS4)
+  settings_path = "/settings-plus4.txt";
+#elif defined(RASPI_PLUS4EMU)
+  settings_path = "/settings-plus4emu.txt";
+#elif defined(RASPI_PET)
+  settings_path = "/settings-pet.txt";
 #endif
   // The running profile's settings (Main: the usual file).
   settings_path = profiles_settings_file(settings_path);
@@ -539,7 +553,7 @@ void ViceStdioApp::LoadNetworkDevice() {
 #endif
 }
 void ViceStdioApp::InitializeNetwork() {
-#if defined(RASPI_C64) || defined(RASPI_C128)
+#if BMC64_NETWORK
   if (mNetworkDevice == 0) {
     SetNetworkStatus(CIRCLE_NETWORK_DISABLED);
     mLogger.Write(GetKernelName(), LogNotice, "Networking not enabled");
@@ -666,7 +680,7 @@ int ViceStdioApp::GetNetworkStatus(void) const {
 }
 
 int ViceStdioApp::WifiIsRunning(void) const {
-#if defined(RASPI_C64) || defined(RASPI_C128)
+#if BMC64_NETWORK
   return ViceNetworkHasOnboardWifi(mMachineInfo.GetMachineModel()) && mWLAN != nullptr;
 #else
   return 0;
@@ -674,7 +688,7 @@ int ViceStdioApp::WifiIsRunning(void) const {
 }
 
 int ViceStdioApp::ConnectWifi(void) {
-#if defined(RASPI_C64) || defined(RASPI_C128)
+#if BMC64_NETWORK
   if (!ViceNetworkHasOnboardWifi(mMachineInfo.GetMachineModel())) {
     SetNetworkStatus(CIRCLE_NETWORK_WIFI_UNAVAILABLE);
     return 0;
@@ -728,7 +742,7 @@ int ViceStdioApp::ConnectWifi(void) {
 
 int ViceStdioApp::ScanWifiAccessPoints(struct wifi_access_point *access_points,
                                        unsigned int max_access_points) {
-#if defined(RASPI_C64) || defined(RASPI_C128)
+#if BMC64_NETWORK
   if (!ViceNetworkHasOnboardWifi(mMachineInfo.GetMachineModel())) {
     return 0;
   }

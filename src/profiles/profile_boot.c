@@ -1,5 +1,7 @@
 #include "profiles_internal.h"
 
+#include "../sdcard/sd_fs.h"
+
 #include <stdio.h>
 #include <string.h>
 
@@ -22,6 +24,9 @@ static int once_to_remove;
 static char main_machine[PROFILES_MAX_MACHINE_LEN + 1];
 // The power-on profile's machine, after a Start-once profile on another one.
 static char return_machine[PROFILES_MAX_MACHINE_LEN + 1];
+// The running profile's settings are still in an older profile's
+// settings.txt; it's renamed to settings-<machine>.txt after boot.
+static int settings_legacy;
 // Main's startup actions (/profiles/main/<machine>.txt), when Main runs.
 static ProfileFile main_extras;
 static char boot_message[128];
@@ -97,6 +102,7 @@ void profiles_boot_init(const char *booted) {
    return_machine[0] = '\0';
    running_once = 0;
    once_to_remove = 0;
+   settings_legacy = 0;
    in_use = 0;
    boot_message[0] = '\0';
 
@@ -110,6 +116,15 @@ void profiles_boot_init(const char *booted) {
    start_from_active(&af);
    if (running_is_main) {
       main_file_read(booted_machine, &main_extras);
+   } else {
+      // An older profile keeps its settings in settings.txt, which is always
+      // for the machine it runs on (machine switches rename it first).
+      char own[PROFILES_MAX_PATH_LEN];
+      char legacy[PROFILES_MAX_PATH_LEN];
+      profiles_settings_path(running.info.id, booted_machine, own, sizeof(own));
+      profiles_path(running.info.id, "settings.txt", legacy, sizeof(legacy));
+      settings_legacy = sd_stat(own, NULL, NULL) != SD_OK &&
+                        sd_stat(legacy, NULL, NULL) == SD_OK;
    }
    // Start once on another machine: the next power-on goes back to the
    // power-on profile's machine.
@@ -127,7 +142,22 @@ const char *profiles_return_machine(void) {
    return return_machine;
 }
 
+// Renames an older profile's settings.txt to settings-<machine>.txt.
+static void rename_legacy_settings(const char *id, const char *machine) {
+   char own[PROFILES_MAX_PATH_LEN];
+   char legacy[PROFILES_MAX_PATH_LEN];
+   profiles_settings_path(id, machine, own, sizeof(own));
+   profiles_path(id, "settings.txt", legacy, sizeof(legacy));
+   if (sd_stat(own, NULL, NULL) != SD_OK) {
+      sd_rename(legacy, own);
+   }
+}
+
 void profiles_after_boot(void) {
+   if (settings_legacy) {
+      rename_legacy_settings(running.info.id, booted_machine);
+      settings_legacy = 0;
+   }
    // Main remembers the machine it last ran on.
    int remember = in_use && running_is_main &&
                   !profiles_machine_matches(main_machine, booted_desc);
@@ -207,23 +237,17 @@ void profiles_machine_switched(const char *entry) {
    if (active_file_read(&af) != PROFILES_OK) {
       return;
    }
-   char now[16];
-   profiles_machine_name(entry, now, sizeof(now));
    if (strcmp(af.profile, PROFILES_MAIN_ID) != 0) {
       ProfileFile pf;
-      char have[16];
-      int same = profile_file_read(af.profile, &pf) == PROFILES_OK;
-      if (same) {
-         profiles_machine_name(pf.info.machine, have, sizeof(have));
-         same = profiles_machine_matches(have, now);
-      }
-      if (same) {
-         // Same machine, another standard or output: the profile follows.
+      if (profile_file_read(af.profile, &pf) == PROFILES_OK) {
+         // The profile follows, also to another machine: each machine has
+         // its own settings file in it, so the old machine's are kept. An
+         // older profile's settings.txt is for its old machine.
+         rename_legacy_settings(af.profile, pf.info.machine);
          profiles_machine_desc(entry, pf.info.machine,
                                sizeof(pf.info.machine));
          profile_file_write(af.profile, &pf);
       } else {
-         // Its settings are for the old machine: Main from now on.
          strcpy(af.profile, PROFILES_MAIN_ID);
       }
    }
@@ -263,9 +287,18 @@ const char *profiles_settings_file(const char *main_file) {
    if (running_is_main) {
       return main_file;
    }
-   profiles_path(running.info.id, "settings.txt", settings_path,
-                 sizeof(settings_path));
+   if (settings_legacy) {
+      profiles_path(running.info.id, "settings.txt", settings_path,
+                    sizeof(settings_path));
+   } else {
+      profiles_settings_path(running.info.id, booted_machine, settings_path,
+                             sizeof(settings_path));
+   }
    return settings_path;
+}
+
+void profiles_new_settings_file(const char *id, char *out, int out_size) {
+   profiles_settings_path(id, booted_machine, out, out_size);
 }
 
 const char *profiles_autostart(void) {

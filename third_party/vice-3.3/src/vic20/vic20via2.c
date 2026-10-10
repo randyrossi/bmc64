@@ -47,7 +47,7 @@
 #include "vic20iec.h"
 #include "vic20via.h"
 
-#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET)
+#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET) || defined(HAVE_RS232BMC)
 #include "rsuser.h"
 #endif
 
@@ -154,7 +154,7 @@ static void store_prb(via_context_t *via_context, uint8_t byte, uint8_t myoldpb,
 
     store_userport_pbx(byte);
 
-#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET)
+#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET) || defined(HAVE_RS232BMC)
     rsuser_write_ctrl(byte);
 #endif
 }
@@ -168,7 +168,7 @@ static void reset(via_context_t *via_context)
     store_userport_pbx(0xff);
     store_userport_pa2(1);
 
-#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET)
+#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET) || defined(HAVE_RS232BMC)
     rsuser_write_ctrl(0xff);
     rsuser_set_tx_bit(1);
 #endif
@@ -189,7 +189,7 @@ static uint8_t store_pcr(via_context_t *via_context, uint8_t byte, uint16_t addr
 
         tapeport_set_motor(!(byte & 0x02));
 
-#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET)
+#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET) || defined(HAVE_RS232BMC)
         /* switching userport strobe with CB2 */
         if (rsuser_enabled) {
             rsuser_set_tx_bit(byte & 0x20);
@@ -266,7 +266,7 @@ inline static uint8_t read_prb(via_context_t *via_context)
     byte = read_userport_pbx((uint8_t)~via_context->via[VIA_DDRB], byte);
 
     /* The functions below will gradually be removed as the functionality is added to the new userport system. */
-#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET)
+#if defined(HAVE_RS232DEV) || defined(HAVE_RS232NET) || defined(HAVE_RS232BMC)
     if (rsuser_enabled) {
         byte = rsuser_read_ctrl(byte);
     }

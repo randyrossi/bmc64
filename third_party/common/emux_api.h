@@ -296,6 +296,28 @@ void emux_display_tape_motor_status(int motor);
 // Autostart a file
 int emux_autostart_file(char* filename);
 
+// One line of a disk or tape image's directory, as screen codes for the
+// machine's character ROM (bit 7 set: reversed), like LOAD"$",8 shows it.
+#define EMUX_IMAGE_LINE_MAX 34
+struct emux_image_line {
+  uint8_t text[EMUX_IMAGE_LINE_MAX];
+  int length;
+  // 1-based file number for emux_autostart_image_file(), or 0 when the
+  // line is not a program (header, blocks free, SEQ, DEL...).
+  int program;
+};
+
+// Reads the directory of a disk or tape image: the header, one line per
+// file, then blocks free. Returns the number of lines (at most max_lines),
+// or -1 if the file is not a disk or tape image or the machine can't list
+// images.
+int emux_read_image_contents(const char *path, struct emux_image_line *lines,
+                             int max_lines);
+
+// Autostart file number program (as above) of a disk or tape image.
+// Returns negative on error.
+int emux_autostart_image_file(char *path, int program);
+
 // Show change model menu
 void emux_drive_change_model(int unit);
 

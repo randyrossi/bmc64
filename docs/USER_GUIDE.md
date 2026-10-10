@@ -30,6 +30,7 @@ This guide covers installing, configuring, and using BMC64, including machine se
   - [Commodore 128 VDC raster\_skip2 flag](#commodore-128-vdc-raster_skip2-flag)
 - [Files \& Drives](#files--drives)
   - [Files Organization](#files-organization)
+  - [Autostart a Program on a Disk or Tape](#autostart-a-program-on-a-disk-or-tape)
   - [FileSystem/Drives](#filesystemdrives)
     - [USB Drives](#usb-drives)
     - [IEC Mode (C64/C128 Only)](#iec-mode-c64c128-only)
@@ -43,6 +44,7 @@ This guide covers installing, configuring, and using BMC64, including machine se
   - [Keyboards](#keyboards)
     - [Choosing your keyboard](#choosing-your-keyboard)
     - [Symbolic or Positional?](#symbolic-or-positional)
+    - [Graphics characters with a US keyboard](#graphics-characters-with-a-us-keyboard)
     - [Typing in the menu](#typing-in-the-menu)
     - [If you use your own keymap files (.vkm)](#if-you-use-your-own-keymap-files-vkm)
     - [Plus/4 Keyboard Notes](#plus4-keyboard-notes)
@@ -65,6 +67,7 @@ This guide covers installing, configuring, and using BMC64, including machine se
   - [UART Debugging](#uart-debugging)
 - [CPU Temperature](#cpu-temperature)
 - [Profiles](#profiles)
+- [Reboot and Shut Down](#reboot-and-shut-down)
 - [Networking Support](#networking-support)
 - [Web UI](#web-ui)
 - [Changelog](#changelog)
@@ -391,7 +394,7 @@ File browsers will by default look in directories off the SD card using this con
    /tapes/C64
    /snapshots/C64
 
-   (Autostart starts off in "/")
+   (Autostart starts off in "/disks/C64")
 
 However, if you prefer to organize your files like this:
 
@@ -400,12 +403,29 @@ However, if you prefer to organize your files like this:
    /C64/tapes
    /C64/snapshots
 
-   (Autostart starts off in "/C64")
+   (Autostart starts off in "/C64/disks")
 
 Then change the 'Files Location Convention' in the Prefs menu accordingly.
 
+Autostart starts in the disks folder after every boot, and remembers the
+folder you browse to until BMC64 restarts. If the disks folder is missing it
+opens the next folder up that exists.
+
 * ROMS must always be located in "/C64".
 ** Replace "C64" above with the appropriate emulator sub dir for different emulators.
+
+## Autostart a Program on a Disk or Tape
+
+In the **Autostart Prg/Disk...** file list, pressing Return on a disk or tape
+image starts its first program, as usual. Press **Right** (or push the joystick
+right) on a disk image (`.d64`, `.d71`, `.d81`, ...) or tape image (`.t64`,
+`.tap`) to look inside it instead: its directory is shown the way `LOAD"$",8`
+shows it, in the machine's own character set. Choose a program to autostart
+that one. Files that can't be started (`SEQ`, `DEL`, ...) are shown dimmed.
+**Left** or Back returns to the file list.
+
+This works on the C64, C128, VIC-20 and Plus/4. Plus4Emu's Autostart only
+loads `.prg` files, and the PET has no Autostart.
 
 ## FileSystem/Drives
 
@@ -968,13 +988,33 @@ IMPORTANT : BMC64 v1.0.6 through v1.4 were not properly putting the other 3 (unu
     development.
   * See [PROFILES.md](PROFILES.md).
 
+# Reboot and Shut Down
+
+The **Power** menu has the machine resets and two items for BMC64 itself:
+
+  * **Soft Reset** / **Hard Reset** reset the emulated machine only.
+  * **Reboot BMC64** restarts the Raspberry Pi.
+  * **Shut down** halts the Raspberry Pi. A message shows for a few seconds,
+    then the screen goes blank and it is safe to remove power. It stays off
+    until the power is switched off and on again.
+
+Both ask for confirmation, and both first detach the disk and tape images
+so the last writes to them reach the SD card. The [Web UI](#web-ui) has the
+same Reboot and Shut Down actions.
+
+A Raspberry Pi 0-3 cannot switch its own power off: a shut down Pi uses
+little power but is not off. On these boards, briefly connecting GPIO3
+(header pin 5) to ground should start a shut down Pi again. GPIO3 is also an
+input in some BMC64 GPIO configurations, so check yours before wiring a
+button to it.
+
 # Networking Support
 
-  * Networking is available for C64 and C128; see [NETWORKING.md](NETWORKING.md) for setup, BBS and C64OS usage.
+  * Networking is available for C64, C128, VIC-20, Plus/4 and Plus4Emu; see [NETWORKING.md](NETWORKING.md) for setup, BBS and C64OS usage.
 
 # Web UI
 
-  * On C64 and C128, BMC64 can serve a web page over the local network for
+  * On every machine, BMC64 can serve a web page over the local network for
     machine status, reboot, and browsing / downloading / uploading / deleting
     SD-card files. It is off by default and can be protected with an optional
     PIN. Enable it in `Network -> Web UI Settings` and open

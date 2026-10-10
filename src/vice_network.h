@@ -3,6 +3,15 @@
 
 #include <circle/machineinfo.h>
 
+// The machine builds with networking and the BMC modem.
+// The PET has networking for the web UI only; it has no modem.
+#if defined(RASPI_C64) || defined(RASPI_C128) || defined(RASPI_VIC20) || \
+    defined(RASPI_PLUS4) || defined(RASPI_PLUS4EMU) || defined(RASPI_PET)
+#define BMC64_NETWORK 1
+#else
+#define BMC64_NETWORK 0
+#endif
+
 class CBcm4343Device;
 class CNetSubSystem;
 class ViceStdioApp;

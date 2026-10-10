@@ -217,29 +217,66 @@ a:hover { text-decoration: underline; }
 .bar { height: 8px; border-radius: 5px; background: var(--panel-2); overflow: hidden; }
 .bar-fill { height: 100%; width: 0; border-radius: 5px; background: linear-gradient(90deg, var(--blue), var(--purple)); transition: width 0.4s; }
 
-.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* Quick Actions: as many tiles per row as fit in the panel (not the
+   window), each at least as wide as it is tall; when a square no longer
+   fits, tiles move to a new line. --qa-tile is that square's side, and
+   fits the longest labels on one line. */
+.qa-card { --qa-tile: 120px; container-type: inline-size; }
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--qa-tile), 1fr));
+  gap: 10px;
+}
+/* One column (no room for two squares): roomier tiles. */
+@container (max-width: 249px) {
+  .tiles { gap: 12px; }
+  .tile { padding: 18px 12px 16px; }
+  .tile-ico { width: 36px; height: 36px; }
+  .tile-t { font-size: 15px; }
+  .tile-s { font-size: 13px; }
+}
 .tile {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   gap: 2px;
-  padding: 14px;
-  border-radius: 11px;
+  min-height: var(--qa-tile);
+  padding: 14px 6px 12px;
+  border-radius: 12px;
   border: 1px solid var(--border);
-  background: var(--panel-2);
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
   color: var(--fg);
   cursor: pointer;
   font-family: inherit;
-  text-align: left;
+  text-align: center;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.tile:hover { border-color: currentColor; }
-.tile-ico { font-size: 20px; margin-bottom: 4px; }
-.tile-t { font-weight: 700; font-size: 14px; }
-.tile-s { font-size: 12px; color: var(--muted); }
+.tile:hover:not(:disabled) {
+  border-color: currentColor;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+.tile:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.tile:disabled { opacity: 0.5; cursor: default; }
+.tile-ico { width: 30px; height: 30px; margin-bottom: 6px; }
+.tile-ico svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tile-t { font-weight: 700; font-size: 13.5px; line-height: 1.3; text-wrap: balance; }
+.tile-s { font-size: 12px; line-height: 1.3; color: var(--fg); opacity: 0.78; text-wrap: balance; }
 .tile-blue { color: var(--blue); }
 .tile-pink { color: var(--pink); }
 .tile-purple { color: var(--purple); }
 .tile-amber { color: var(--amber); }
+.tile-red { color: var(--red); }
+/* No empty gap under the tiles until there is a message to show. */
+.qa-card .msg:empty { display: none; }
 
 .msg { color: var(--muted); min-height: 1.3em; margin: 12px 0 0; font-size: 13px; }
 .msg.err { color: var(--red); }
@@ -553,7 +590,7 @@ body.modal-open { overflow: hidden; }
   .sys-card { width: 100%; }
   .sidebar { position: static; height: auto; overflow-y: visible; flex-direction: row; flex-wrap: wrap; align-items: center; border-right: none; border-bottom: 1px solid var(--border-soft); padding: 10px 12px; }
   .nav, .nav-bottom { flex-direction: row; flex-wrap: wrap; border: none; margin: 0; padding: 0; flex: 0; }
-  .nav-item { width: auto; }
+  .nav-item { width: auto; white-space: nowrap; }
   .soon { display: none; }
   .side-drop { display: none; } /* the Upload… button covers narrow screens */
   .rainbow { display: none; }

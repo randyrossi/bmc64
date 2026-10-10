@@ -131,6 +131,9 @@ int circle_get_acia_network_enabled(void);
 int circle_get_acia_network_address(void);
 int circle_set_acia_network_address(int address);
 int circle_set_acia_network_enabled(int enabled);
+// Userport modem baud rate (VIC-20 only; 0 / failure elsewhere).
+int circle_get_network_modem_baud(void);
+int circle_set_network_modem_baud(int baud);
 int circle_has_onboard_ethernet(void);
 int circle_has_onboard_wifi(void);
 int circle_wifi_is_running(void);
@@ -240,6 +243,11 @@ extern unsigned int gpio_bindings[NUM_GPIO_PINS];
 // Functions called from emulator layer into kernel layer
 // -----------------------------------------------------------------------
 extern int circle_get_machine_timing();
+// Restart the Pi, or halt it through the firmware (lowest power, display
+// off, until power is cycled). Both write out the log file first and do
+// not return. Disk images are the caller's job (menu_power.c).
+extern void circle_reboot(void);
+extern void circle_power_off(void);
 extern void circle_sleep(long);
 extern unsigned long circle_get_ticks();
 extern void circle_yield();
@@ -379,6 +387,10 @@ extern void emu_quick_func_interrupt(int button_assignment);
 // for 5 seconds). Interrupt safe: the key handler runs in the USB interrupt,
 // where writing files to the card can lock up.
 extern void emu_safe_mode_interrupt(void);
+
+// Ask the main loop to write out disk images and reboot (power_off 0) or
+// power off (1), as the menu's Power items do. Interrupt safe.
+extern void emu_power_interrupt(int power_off);
 
 // Queue a file (full path including volume, e.g. "SD:/games/x.d64") to be
 // autostarted by the main loop, as if picked from Autostart in the menu.

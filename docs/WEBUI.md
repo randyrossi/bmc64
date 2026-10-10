@@ -2,7 +2,7 @@
 
 BMC64 can serve a web page over the local network for checking the
 machine's status and managing files on the SD card. It is **off by default**,
-is available on **C64 and C128 only** (it shares the network stack described in
+is available on **every machine** (it shares the network stack described in
 [NETWORKING.md](NETWORKING.md)), and can optionally be protected with a
 [PIN](#pin).
 
@@ -23,8 +23,16 @@ but it is still recommended to have it disabled if not in use. See
 
 ### Reboot
 
-A button that restarts BMC64, equivalent to a power cycle of the Raspberry Pi.
-Any unsaved emulator state is lost.
+A button that restarts BMC64, like **Power -> Reboot BMC64** in the menu. The
+disk and tape images are detached first so their last writes reach the SD
+card; any other unsaved emulator state is lost.
+
+### Shut Down
+
+Shuts BMC64 down like **Power -> Shut down** in the menu: the disk and tape
+images are written out, then the Raspberry Pi halts. Once its screen goes
+blank it is safe to remove power. The page then stays offline: the Web UI
+cannot start BMC64 again, so switch its power off and on, then reload the page.
 
 ### Hard Reset
 
@@ -81,12 +89,16 @@ Actions button always fits.
   card in a computer (the `.bak` file makes that easy). A mistake in a `.vkm`
   keymap can make keys type the wrong character or stop working; the `.bak` file
   restores it. Only plain UTF-8 text files up to 256 KB can be edited.
-- **Autostart** a disk image (`.d64`, `.d71`, `.d81`, `.d82`, `.g64`, `.x64`),
+- **Autostart** a disk image (`.d64`, `.d71`, `.d81`, `.d82` (C64 and C128 only), `.g64`, `.x64`),
   tape (`.t64`, `.tap`) or program (`.prg`, `.p00`): click its name or its
   **Autostart** action and BMC64 starts it, the same as the menu's *Autostart* item.
   This resets the emulated machine. If the file can't be started, the reason
-  is only written to the log.
-- **Write or edit a BASIC program** without leaving the browser (C64 BASIC V2):
+  is only written to the log. On Plus4Emu only programs (`.prg`, `.p00`) are
+  offered: the machine resets, the program is loaded at BASIC's `READY.`
+  prompt and `RUN` is typed for it. The PET has no Autostart, so nothing is
+  offered there.
+- **Write or edit a BASIC program** without leaving the browser (C64 BASIC V2,
+  so on the C64 only; the other machines don't offer it yet):
   - **Create BASIC PRG…** opens an editor where you type or paste a program
     listing (`10 PRINT "HELLO"`), give it a file name and press **Save PRG**. The
     listing is converted to a real tokenised `.prg` in the current folder, ready
@@ -110,7 +122,7 @@ Actions button always fits.
   length of the BASIC part unless the program allows for it. A program that
   wasn't made by a normal tokeniser can change slightly when saved; the editor
   warns you when it sees this.
-- **Attach a cartridge**: a `.crt` file has an **Attach cartridge** action
+- **Attach a cartridge** (C64 and C128): a `.crt` file has an **Attach cartridge** action
   (clicking the name does the same). It attaches the cartridge like the menu's
   *Attach CRT* item and, by default, hard resets the machine so it starts
   (VICE's *reset on cartridge change* setting). Only `.crt` files work; raw
@@ -288,7 +300,7 @@ warning and does not stop the server starting.
 | `POST /api/fs/delete` | removes the real file / empty directory (same protected-name rules); with `recursive=1` (and the required `X-BMC64-Web` header) a whole folder tree |
 | `POST /api/fs/mkdir` | creates a real folder (same name rules, protected-name rules and required `X-BMC64-Web` header as the device) |
 | `POST /api/fs/rename` | renames a real file or folder in place (same rules as `mkdir`; `to=` is the new bare name); `GET /api/fs/list` marks the entries the device would refuse to rename or delete with `"protected": true` |
-| `POST /api/reboot` | logs and does nothing |
+| `POST /api/reboot`, `POST /api/shutdown` | logs and does nothing (same required `X-BMC64-Web` header as the device) |
 | `POST /api/reset` | logs and does nothing |
 | `POST /api/webui/disable` | actually stops the dev server, like the device |
 

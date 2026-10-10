@@ -1,3 +1,18 @@
+## 5.2.6 (pre-release)
+  * Profiles (in development, see [PROFILES.md](docs/PROFILES.md)):
+    * Ability to switch machines within a profile added and profiles keep BMC64 settings per machine (`settings-<machine>.txt`)
+  * Fix Plus/4 when booting in NTSC to select NTSC default kernal correctly  #400
+  * Add networking to all machines (added to: Plus/4, Plus4Emu, Vic20, PET)
+  * Add WebUI to all machines (added to: Plus/4, Plus4Emu, Vic20, PET)
+  * Plus/4 & Plus4Emu add BMC modem on the built-in ACIA ($FD00)
+  * VIC-20 add BMC modem on the userport RS-232 (KERNAL device 2)
+  * Fix for BMC modem to ignore anything typed before `AT`, so a stray byte no longer makes the next command fail
+  * Power menu (replaces Reset): Soft / Hard Reset plus new Reboot BMC64 and Shut down
+  * Web UI adds Shut Down quick action
+  * Reboot now writes out disk images first too
+  * Autostart: press Right on a disk or tape image to see its directory and pick the program to start #137
+  * Autostart opens in the disks folder (`/disks/<machine>`, or `/<machine>/disks`) instead of the card's root
+
 ## 5.2.5 (pre-release)
   * Add Latin American keyboard layout for C64
   * Profiles (in development, see [PROFILES.md](docs/PROFILES.md)):

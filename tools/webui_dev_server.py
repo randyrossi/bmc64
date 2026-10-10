@@ -188,9 +188,12 @@ class Handler(BaseHTTPRequestHandler):
             return
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
-        if path == "/api/reboot":
+        if path in ("/api/reboot", "/api/shutdown"):
             self._drain_body()
-            sys.stderr.write("  [mock] /api/reboot (no-op)\n")
+            # Same cross-site protection as the device.
+            if not self.headers.get("X-BMC64-Web"):
+                return self._send(403, "missing X-BMC64-Web header\n")
+            sys.stderr.write("  [mock] %s (no-op)\n" % path)
             return self._json(202, {"ok": True})
         if path == "/api/reset":
             self._drain_body()
@@ -445,7 +448,8 @@ class Handler(BaseHTTPRequestHandler):
             return False
         if lower[1] == "main":
             return len(lower[2]) > 4 and lower[2].endswith(".txt")
-        return lower[2] in ("profile.txt", "settings.txt", "vice.ini")
+        return (lower[2] in ("profile.txt", "vice.ini")
+                or (lower[2].startswith("settings") and lower[2].endswith(".txt")))
 
     def api_fs_upload(self, query):
         length = self.headers.get("Content-Length")

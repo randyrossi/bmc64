@@ -124,6 +124,19 @@ struct menu_item {
   // Optional menu item specific value changed function
   void (*on_value_changed)(struct menu_item *);
 
+  // For BUTTON: optional, called when Right is pressed on it (e.g. to look
+  // inside a disk image in a file list).
+  void (*on_open)(struct menu_item *);
+
+  // For BUTTON: optional, called when Left is pressed on it (e.g. to close
+  // a view opened with on_open).
+  void (*on_back)(struct menu_item *);
+
+  // When > 0, name holds this many screen codes, drawn with the machine's
+  // character ROM instead of the menu font (bit 7 set: reversed). Screen
+  // code 0 is '@', so the length is kept here rather than by a terminator.
+  int raw_text_len;
+
   // Optional mapping of button value to some other int for display
   int (*map_value_func)(int);
 
