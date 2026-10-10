@@ -10,6 +10,7 @@
   * Power menu (replaces Reset): Soft / Hard Reset plus new Reboot BMC64 and Shut down
   * Web UI adds Shut Down quick action
   * Reboot now writes out disk images first too
+  * Autostart: press Right on a disk or tape image to see its directory and pick the program to start #137
 
 ## 5.2.5 (pre-release)
   * Add Latin American keyboard layout for C64

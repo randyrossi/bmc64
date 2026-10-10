@@ -1132,6 +1132,21 @@ int emux_autostart_file(char* filename) {
   return 0;
 }
 
+// plus4emu has no disk or tape directory reader.
+int emux_read_image_contents(const char *path, struct emux_image_line *lines,
+                             int max_lines) {
+  (void)path;
+  (void)lines;
+  (void)max_lines;
+  return -1;
+}
+
+int emux_autostart_image_file(char *path, int program) {
+  (void)path;
+  (void)program;
+  return -1;
+}
+
 void emux_drive_change_model(int unit) {
 }
 

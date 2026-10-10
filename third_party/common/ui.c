@@ -809,6 +809,8 @@ static void ui_action(long action) {
       } else {
         do_on_value_changed(menu_cursor_item[current_menu]);
       }
+    } else if (cur->type == BUTTON && cur->on_back) {
+      cur->on_back(cur);
     } else if (cur->type == MULTIPLE_CHOICE) {
       int orig = cur->value;
       cur->value -= 1;
@@ -869,6 +871,8 @@ static void ui_action(long action) {
     } else if (cur->type == TOGGLE) {
       cur->value = 1 - cur->value;
       do_on_value_changed(menu_cursor_item[current_menu]);
+    } else if (cur->type == BUTTON && cur->on_open) {
+      cur->on_open(cur);
     } else if (cur->type == TEXTFIELD) {
       // Move cursor right
 #if BMC64_NEW_KEYBOARD_INPUT
@@ -1225,6 +1229,24 @@ struct menu_item *ui_menu_add_text_field_limit(int id, struct menu_item *folder,
   return new_item;
 }
 
+// Draws an item's raw_text_len screen codes with the machine's character
+// ROM. Reverse video is drawn here (block, then the glyph in the background
+// colour) because not every ROM has reversed glyphs (the Plus/4's TED
+// reverses in hardware).
+static void ui_draw_raw_line(const struct menu_item *node, int x, int y,
+                             int colour) {
+  for (int i = 0; i < node->raw_text_len; i++) {
+    uint8_t c = (uint8_t)node->name[i];
+    if (c & 0x80) {
+      ui_draw_rect(x, y, 8, 8, colour, 1);
+      ui_draw_char_raw(c & 0x7f, x, y, BG_COLOR, NULL, 0, 1);
+    } else {
+      ui_draw_char_raw(c, x, y, colour, NULL, 0, 1);
+    }
+    x += 8;
+  }
+}
+
 static void ui_render_children(struct menu_item *node,
                                int stack_index, int *index, int indent) {
   while (node != NULL) {
@@ -1258,8 +1280,13 @@ static void ui_render_children(struct menu_item *node,
       if (!ui_render_current_item_only ||
           *index == menu_cursor[stack_index]) {
 
-        ui_draw_text(node->name,
-           node->menu_left + (indent + 1) * 8, y, colour);
+        if (node->raw_text_len > 0) {
+          ui_draw_raw_line(node, node->menu_left + (indent + 1) * 8, y,
+                           colour);
+        } else {
+          ui_draw_text(node->name,
+             node->menu_left + (indent + 1) * 8, y, colour);
+        }
 
         if (node->type == READ_ONLY_HEADING &&
           node->displayed_value[0] != '\0') {

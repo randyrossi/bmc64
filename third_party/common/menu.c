@@ -50,6 +50,7 @@
 #include "menu_keyset.h"
 #include "menu_switch.h"
 #include "menu_logging.h"
+#include "menu_image_contents.h"
 #include "menu_power.h"
 #include "menu_gpio.h"
 #include "menu_profiles.h"
@@ -603,6 +604,11 @@ static char *fullpath(DirType dir_type, char *name) {
   return full_path_str;
 }
 
+// Right on a disk or tape image in the Autostart list: show its directory.
+static void autostart_file_open(struct menu_item *item) {
+  menu_image_contents_show(fullpath(DIR_ROOT, item->str_value));
+}
+
 // Remove one directory from the end of path
 static void remove_dir(char *path) {
   int i;
@@ -723,6 +729,10 @@ static void list_files(struct menu_item *parent,
               ui_menu_add_button(menu_id, &files_root, ep->d_name);
           new_button->sub_id = MENU_SUB_PICK_FILE;
           strncpy(new_button->str_value, ep->d_name, MAX_STR_VAL_LEN - 1);
+          if (menu_id == MENU_AUTOSTART_FILE &&
+              (test_disk_name(ep->d_name) || test_tape_name(ep->d_name))) {
+            new_button->on_open = autostart_file_open;
+          }
         }
       }
     }

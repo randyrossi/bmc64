@@ -30,6 +30,7 @@ This guide covers installing, configuring, and using BMC64, including machine se
   - [Commodore 128 VDC raster\_skip2 flag](#commodore-128-vdc-raster_skip2-flag)
 - [Files \& Drives](#files--drives)
   - [Files Organization](#files-organization)
+  - [Autostart a Program on a Disk or Tape](#autostart-a-program-on-a-disk-or-tape)
   - [FileSystem/Drives](#filesystemdrives)
     - [USB Drives](#usb-drives)
     - [IEC Mode (C64/C128 Only)](#iec-mode-c64c128-only)
@@ -408,6 +409,19 @@ Then change the 'Files Location Convention' in the Prefs menu accordingly.
 
 * ROMS must always be located in "/C64".
 ** Replace "C64" above with the appropriate emulator sub dir for different emulators.
+
+## Autostart a Program on a Disk or Tape
+
+In the **Autostart Prg/Disk...** file list, pressing Return on a disk or tape
+image starts its first program, as usual. Press **Right** (or push the joystick
+right) on a disk image (`.d64`, `.d71`, `.d81`, ...) or tape image (`.t64`,
+`.tap`) to look inside it instead: its directory is shown the way `LOAD"$",8`
+shows it, in the machine's own character set. Choose a program to autostart
+that one. Files that can't be started (`SEQ`, `DEL`, ...) are shown dimmed.
+**Left** or Back returns to the file list.
+
+This works on the C64, C128, VIC-20 and Plus/4. Plus4Emu's Autostart only
+loads `.prg` files, and the PET has no Autostart.
 
 ## FileSystem/Drives
 
