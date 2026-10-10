@@ -7,7 +7,7 @@
 // scheduler keeps servicing the network stack and other tasks.
 //
 // Endpoints: GET static assets, GET /api/status, POST /api/reboot,
-// POST /api/reset, GET /api/volumes, GET /api/fs/list, GET /api/fs/download,
+// POST /api/shutdown, POST /api/reset, GET /api/volumes, GET /api/fs/list, GET /api/fs/download,
 // POST /api/fs/upload, POST /api/fs/save, POST /api/fs/delete,
 // POST /api/fs/mkdir, POST /api/fs/rename, POST /api/fs/autostart,
 // POST /api/profiles/start, POST /api/webui/disable.
@@ -46,7 +46,6 @@
 #include <circle/net/socket.h>
 #include <circle/sched/scheduler.h>
 #include <circle/sched/task.h>
-#include <circle/startup.h>
 #include <circle/timer.h>
 #include <circle/types.h>
 
@@ -63,6 +62,9 @@ extern "C" const char *bmc64_version_string(void);
 // Queues a "quick function" for the emulator main loop (interrupt safe;
 // see third_party/common/circle.h / ui.c).
 extern "C" void emu_quick_func_interrupt(int button_assignment);
+// Queues a reboot or power off for the emulator main loop, which writes out
+// the disk images first (third_party/common/menu_power.c).
+extern "C" void emu_power_interrupt(int power_off);
 // Queues Switch to / Start once of a profile for the emulator main loop
 // (third_party/common/circle.h), and why the last one failed
 // (third_party/common/menu_profiles.h).
@@ -415,8 +417,6 @@ void Send401(CSocket *socket) {
   }
 }
 
-// Returns TRUE if a reboot was requested (caller must not touch the
-// socket afterwards; reboot() does not return).
 boolean HandleConnection(CSocket *socket) {
   socket->SetOptionReceiveTimeout(WEBUI_RECV_TIMEOUT_US);
 
@@ -553,15 +553,25 @@ boolean HandleConnection(CSocket *socket) {
     return FALSE;
   }
 
-  if (is_post && strcmp(target, "/api/reboot") == 0) {
+  if (is_post && (strcmp(target, "/api/reboot") == 0 ||
+                  strcmp(target, "/api/shutdown") == 0)) {
+    // Same cross-site protection as /api/fs/save: another site must not be
+    // able to restart or power off the machine.
+    if (!HasHeader(request, "x-bmc64-web:")) {
+      SendText(socket, 403, "Forbidden", "missing X-BMC64-Web header\n");
+      return FALSE;
+    }
+    int power_off = strcmp(target, "/api/shutdown") == 0;
     const char *ok = "{\"ok\":true}";
     SendResponse(socket, 202, "Accepted", "application/json", ok,
                  (unsigned) strlen(ok));
-    CLogger::Get()->Write(WEBUI_LOG, LogNotice,
-                          "Reboot requested via web UI");
+    CLogger::Get()->Write(WEBUI_LOG, LogNotice, "%s requested via web UI",
+                          power_off ? "Power off" : "Reboot");
     CScheduler::Get()->MsSleep(250);  // give the socket time to flush
-    reboot();                         // does not return
-    return TRUE;
+    // Queued for the emulator main loop, which writes out the disk images
+    // and then restarts or halts.
+    emu_power_interrupt(power_off);
+    return FALSE;
   }
 
   if (is_post && strcmp(target, "/api/profiles/start") == 0) {

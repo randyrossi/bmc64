@@ -50,6 +50,7 @@
 #include "menu_keyset.h"
 #include "menu_switch.h"
 #include "menu_logging.h"
+#include "menu_power.h"
 #include "menu_gpio.h"
 #include "menu_profiles.h"
 #include "../../src/profiles/profiles.h"
@@ -4945,9 +4946,7 @@ void build_menu(struct menu_item *root) {
     ui_menu_add_toggle(MENU_DEMO_MODE, root, "Demo Mode", raspi_demo_mode);
   }
 
-  parent = ui_menu_add_folder(root, "Reset");
-  ui_menu_add_button(MENU_SOFT_RESET, parent, "Soft Reset");
-  ui_menu_add_button(MENU_HARD_RESET, parent, "Hard Reset");
+  build_power_menu(root);
 
   logging_destination_item = ui_menu_add_multiple_choice(
     MENU_LOGGING_DESTINATION, root, "Logging");

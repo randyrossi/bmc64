@@ -1,5 +1,6 @@
 // Dashboard view and the Pi/system controls: status polling, hardware and
-// storage meters, and the reboot / hard reset / disable-web-UI actions.
+// storage meters, and the reboot / shut down / hard reset / disable-web-UI
+// actions.
 
 import { $, fmtUptime, fmtKB } from "./util.js";
 import * as api from "./api.js";
@@ -11,6 +12,8 @@ const POLL_OK_MS = 5000;
 const POLL_FAIL_MS = 12000;
 let pollTimer = null;
 let rebooting = false;
+// Set once a shut down has been sent; the page then stays offline.
+let shutDown = false;
 
 function setConn(ok, text) {
   $("sys-dot").className = "dot " + (ok ? "ok" : "bad");
@@ -174,6 +177,38 @@ async function doReboot() {
   await rebootNow();
 }
 
+async function doShutdown() {
+  if (!confirm(
+    "Shut down BMC64 now?\n\n" +
+    "Disk images are saved first. Any other unsaved emulator state is lost, " +
+    "and BMC64 stays off until its power is switched off and on again.")) return;
+  for (const id of ["qa-shutdown", "nav-shutdown", "qa-reboot", "nav-reboot"]) {
+    $(id).disabled = true;
+  }
+  $("action-msg").className = "msg";
+  $("action-msg").textContent = "Sending shut down command…";
+  try {
+    await api.shutdown();
+  } catch (e) {
+    if (e.status) {
+      $("action-msg").className = "msg err";
+      $("action-msg").textContent = "Could not shut down — " + e.message;
+      for (const id of ["qa-shutdown", "nav-shutdown", "qa-reboot", "nav-reboot"]) {
+        $(id).disabled = false;
+      }
+      return;
+    }
+    /* no answer: the connection dropped as it went down */
+  }
+  shutDown = true;
+  clearTimeout(pollTimer);
+  pollTimer = null;
+  setConn(false, "Off");
+  $("action-msg").textContent =
+    "BMC64 is shutting down. Once its screen goes blank it is safe to " +
+    "remove power. Reload this page after switching it on again.";
+}
+
 async function doHardReset() {
   if (!confirm(
     "Hard reset the emulated machine now?\n\n")) return;
@@ -217,11 +252,13 @@ async function disableWebUi() {
 export function initDashboard() {
   $("qa-reboot").addEventListener("click", doReboot);
   $("nav-reboot").addEventListener("click", doReboot);
+  $("qa-shutdown").addEventListener("click", doShutdown);
+  $("nav-shutdown").addEventListener("click", doShutdown);
   $("qa-reset").addEventListener("click", doHardReset);
   $("qa-disable").addEventListener("click", disableWebUi);
 
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) { clearTimeout(pollTimer); pollTimer = null; }
-    else pollStatus();
+    else if (!shutDown) pollStatus();
   });
 }

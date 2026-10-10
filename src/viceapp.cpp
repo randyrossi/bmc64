@@ -75,6 +75,12 @@ int ViceApp::circle_get_machine_timing() {
   return mViceOptions.GetMachineTiming();
 }
 
+void ViceCloseLogFile(void) {
+  if (gLoggingDevice != nullptr) {
+    gLoggingDevice->CloseFile();
+  }
+}
+
 void ViceApp::DrainLogging() {
   if (gLoggingDevice != nullptr) {
     gLoggingDevice->Drain();

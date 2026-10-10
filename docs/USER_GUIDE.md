@@ -43,6 +43,7 @@ This guide covers installing, configuring, and using BMC64, including machine se
   - [Keyboards](#keyboards)
     - [Choosing your keyboard](#choosing-your-keyboard)
     - [Symbolic or Positional?](#symbolic-or-positional)
+    - [Graphics characters with a US keyboard](#graphics-characters-with-a-us-keyboard)
     - [Typing in the menu](#typing-in-the-menu)
     - [If you use your own keymap files (.vkm)](#if-you-use-your-own-keymap-files-vkm)
     - [Plus/4 Keyboard Notes](#plus4-keyboard-notes)
@@ -65,6 +66,7 @@ This guide covers installing, configuring, and using BMC64, including machine se
   - [UART Debugging](#uart-debugging)
 - [CPU Temperature](#cpu-temperature)
 - [Profiles](#profiles)
+- [Reboot and Shut Down](#reboot-and-shut-down)
 - [Networking Support](#networking-support)
 - [Web UI](#web-ui)
 - [Changelog](#changelog)
@@ -967,6 +969,26 @@ IMPORTANT : BMC64 v1.0.6 through v1.4 were not properly putting the other 3 (unu
     starts by itself. Your existing settings are the *Main* profile. In
     development.
   * See [PROFILES.md](PROFILES.md).
+
+# Reboot and Shut Down
+
+The **Power** menu has the machine resets and two items for BMC64 itself:
+
+  * **Soft Reset** / **Hard Reset** reset the emulated machine only.
+  * **Reboot BMC64** restarts the Raspberry Pi.
+  * **Shut down** halts the Raspberry Pi. A message shows for a few seconds,
+    then the screen goes blank and it is safe to remove power. It stays off
+    until the power is switched off and on again.
+
+Both ask for confirmation, and both first detach the disk and tape images
+so the last writes to them reach the SD card. The [Web UI](#web-ui) has the
+same Reboot and Shut Down actions.
+
+A Raspberry Pi 0-3 cannot switch its own power off: a shut down Pi uses
+little power but is not off. On these boards, briefly connecting GPIO3
+(header pin 5) to ground should start a shut down Pi again. GPIO3 is also an
+input in some BMC64 GPIO configurations, so check yours before wiring a
+button to it.
 
 # Networking Support
 

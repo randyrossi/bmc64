@@ -23,8 +23,16 @@ but it is still recommended to have it disabled if not in use. See
 
 ### Reboot
 
-A button that restarts BMC64, equivalent to a power cycle of the Raspberry Pi.
-Any unsaved emulator state is lost.
+A button that restarts BMC64, like **Power -> Reboot BMC64** in the menu. The
+disk and tape images are detached first so their last writes reach the SD
+card; any other unsaved emulator state is lost.
+
+### Shut Down
+
+Shuts BMC64 down like **Power -> Shut down** in the menu: the disk and tape
+images are written out, then the Raspberry Pi halts. Once its screen goes
+blank it is safe to remove power. The page then stays offline: the Web UI
+cannot start BMC64 again, so switch its power off and on, then reload the page.
 
 ### Hard Reset
 
@@ -292,7 +300,7 @@ warning and does not stop the server starting.
 | `POST /api/fs/delete` | removes the real file / empty directory (same protected-name rules); with `recursive=1` (and the required `X-BMC64-Web` header) a whole folder tree |
 | `POST /api/fs/mkdir` | creates a real folder (same name rules, protected-name rules and required `X-BMC64-Web` header as the device) |
 | `POST /api/fs/rename` | renames a real file or folder in place (same rules as `mkdir`; `to=` is the new bare name); `GET /api/fs/list` marks the entries the device would refuse to rename or delete with `"protected": true` |
-| `POST /api/reboot` | logs and does nothing |
+| `POST /api/reboot`, `POST /api/shutdown` | logs and does nothing (same required `X-BMC64-Web` header as the device) |
 | `POST /api/reset` | logs and does nothing |
 | `POST /api/webui/disable` | actually stops the dev server, like the device |
 

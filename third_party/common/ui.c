@@ -42,6 +42,7 @@
 #include "menu_text_layout.h"
 #include "font.h"
 #include "menu_timing.h"
+#include "menu_power.h"
 #include "menu_profiles.h"
 #include "menu_switch.h"
 
@@ -126,6 +127,8 @@ static char pending_emu_profile_id[PENDING_EMU_PROFILE_ID_MAX];
 static volatile int pending_emu_profile_start;
 // Set by emu_safe_mode_interrupt().
 static volatile int pending_emu_safe_mode;
+// Set by emu_power_interrupt(): 1 to reboot, 2 to power off.
+static volatile int pending_emu_power;
 
 static int osd_active;
 // Set while a view outside the menu system owns the UI layer and key queue.
@@ -982,6 +985,13 @@ void ui_handle_toggle_or_quick_func() {
     switch_safe();
     reboot();
     return;
+  }
+  if (pending_emu_power) {
+    // From the web UI; images are written out here on the main loop.
+    if (pending_emu_power == 2) {
+      menu_power_off();
+    }
+    menu_power_reboot();
   }
   // This ensures we transition from emulator to ui only after we've
   // submitted key events and let the emulator process them. Otherwise,
@@ -1913,6 +1923,10 @@ void emu_quick_func_interrupt(int button_assignment) {
 
 void emu_safe_mode_interrupt(void) {
   pending_emu_safe_mode = 1;
+}
+
+void emu_power_interrupt(int power_off) {
+  pending_emu_power = power_off ? 2 : 1;
 }
 
 void emu_profile_start_interrupt(const char *id, int once) {

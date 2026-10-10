@@ -46,6 +46,7 @@
     </div>
     <div class="nav nav-bottom">
       <button class="nav-item" id="nav-reboot"><span class="ni-ico">⟳</span>Reboot</button>
+      <button class="nav-item" id="nav-shutdown"><span class="ni-ico">⏻</span>Shut Down</button>
     </div>
     <div class="rainbow"></div>
   </aside>
@@ -63,20 +64,23 @@
       </div>
 
       <div class="grid">
-        <div class="card">
+        <div class="card qa-card">
           <h2><span class="c-ico">⚡</span>Quick Actions</h2>
           <div class="tiles">
             <button class="tile tile-blue" id="qa-files">
-              <span class="tile-ico">▤</span><span class="tile-t">Browse Files</span><span class="tile-s">SD card</span>
-            </button>
-            <button class="tile tile-pink" id="qa-reboot">
-              <span class="tile-ico">⟳</span><span class="tile-t">Reboot</span><span class="tile-s">Restart BMC64</span>
+              <span class="tile-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M8.5 7.5h7M8.5 11h7M8.5 14.5h7M8.5 18h4"/></svg></span><span class="tile-t">Browse Files</span><span class="tile-s">SD card</span>
             </button>
             <button class="tile tile-purple" id="qa-reset">
-              <span class="tile-ico">↺</span><span class="tile-t">Hard Reset</span><span class="tile-s" id="qa-reset-sub">Reset the machine</span>
+              <span class="tile-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.34-5.66"/><path d="M4 4v5h5"/></svg></span><span class="tile-t">Hard Reset</span><span class="tile-s" id="qa-reset-sub">Reset the machine</span>
+            </button>
+            <button class="tile tile-pink" id="qa-reboot">
+              <span class="tile-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg></span><span class="tile-t">Reboot</span><span class="tile-s">Restart BMC64</span>
+            </button>
+            <button class="tile tile-red" id="qa-shutdown">
+              <span class="tile-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v8"/><path d="M6.7 7a7.5 7.5 0 1 0 10.6 0"/></svg></span><span class="tile-t">Shut Down</span><span class="tile-s">Power off BMC64</span>
             </button>
             <button class="tile tile-amber" id="qa-disable">
-              <span class="tile-ico">⏻</span><span class="tile-t">Disable Web UI</span><span class="tile-s">Stop until reboot</span>
+              <span class="tile-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M6 18 18 6"/></svg></span><span class="tile-t">Disable Web UI</span><span class="tile-s">Stop until reboot</span>
             </button>
           </div>
           <p class="msg" id="action-msg"></p>

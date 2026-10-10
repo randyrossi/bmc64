@@ -7,6 +7,9 @@
   * Plus/4 & Plus4Emu add BMC modem on the built-in ACIA ($FD00)
   * VIC-20 add BMC modem on the userport RS-232 (KERNAL device 2)
   * Fix for BMC modem to ignore anything typed before `AT`, so a stray byte no longer makes the next command fail
+  * Power menu (replaces Reset): Soft / Hard Reset plus new Reboot BMC64 and Shut down
+  * Web UI adds Shut Down quick action
+  * Reboot now writes out disk images first too
 
 ## 5.2.5 (pre-release)
   * Add Latin American keyboard layout for C64

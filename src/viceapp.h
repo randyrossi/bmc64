@@ -208,6 +208,10 @@ extern "C" {
 void circle_fs_ready();
 }
 
+// Writes out and closes the log file before a reboot or power off
+// (src/power/power.cpp). Logging carries on to the serial port, if any.
+void ViceCloseLogFile(void);
+
 class ViceApp {
 public:
   enum TShutdownMode { ShutdownNone, ShutdownHalt, ShutdownReboot };

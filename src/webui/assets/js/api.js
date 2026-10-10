@@ -35,7 +35,8 @@ const WEB_HEADER = { "X-BMC64-Web": "1" };
 export const getStatus = () => getJson("/api/status");
 export const getVolumes = () => getJson("/api/volumes");
 
-export const reboot = () => post("/api/reboot");
+export const reboot = () => post("/api/reboot", { headers: WEB_HEADER });
+export const shutdown = () => post("/api/shutdown", { headers: WEB_HEADER });
 export const hardReset = () => post("/api/reset");
 export const disableWebUi = () => post("/api/webui/disable");
 
