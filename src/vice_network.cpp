@@ -295,6 +295,33 @@ extern "C" int circle_set_acia_network_enabled(int enabled) {
   (void) enabled;
   return 1;
 }
+#elif defined(RASPI_VIC20)
+extern "C" {
+#include "../third_party/vice-3.3/src/resources.h"
+}
+
+// The VIC-20 modem is on the userport RS-232 (KERNAL device 2), not an
+// ACIA, so "enabled" means the userport interface. The ACIA cartridge is
+// kept off: nothing uses it and it would occupy I/O2 at $9800.
+extern "C" int circle_get_acia_network_enabled(void) {
+  int enabled = 0;
+  resources_get_int("RsUserEnable", &enabled);
+  return enabled;
+}
+
+extern "C" int circle_get_acia_network_address(void) {
+  return 0;
+}
+
+extern "C" int circle_set_acia_network_address(int address) {
+  (void) address;
+  return 0;
+}
+
+extern "C" int circle_set_acia_network_enabled(int enabled) {
+  resources_set_int("Acia1Enable", 0);
+  return resources_set_int("RsUserEnable", enabled ? 1 : 0) == 0;
+}
 #else
 extern "C" int circle_get_acia_network_enabled(void) {
   return 0;
@@ -311,6 +338,29 @@ extern "C" int circle_set_acia_network_address(int address) {
 
 extern "C" int circle_set_acia_network_enabled(int enabled) {
   (void) enabled;
+  return 0;
+}
+#endif
+
+#if defined(RASPI_VIC20)
+// VICE samples the userport bits at this fixed rate; it does not follow
+// the rate the program sets, so the two must match.
+extern "C" int circle_get_network_modem_baud(void) {
+  int baud = 0;
+  resources_get_int("RsUserBaud", &baud);
+  return baud;
+}
+
+extern "C" int circle_set_network_modem_baud(int baud) {
+  return resources_set_int("RsUserBaud", baud) == 0;
+}
+#else
+extern "C" int circle_get_network_modem_baud(void) {
+  return 0;
+}
+
+extern "C" int circle_set_network_modem_baud(int baud) {
+  (void) baud;
   return 0;
 }
 #endif

@@ -970,11 +970,11 @@ IMPORTANT : BMC64 v1.0.6 through v1.4 were not properly putting the other 3 (unu
 
 # Networking Support
 
-  * Networking is available for C64 and C128; see [NETWORKING.md](NETWORKING.md) for setup, BBS and C64OS usage.
+  * Networking is available for C64, C128, VIC-20, Plus/4 and Plus4Emu; see [NETWORKING.md](NETWORKING.md) for setup, BBS and C64OS usage.
 
 # Web UI
 
-  * On C64 and C128, BMC64 can serve a web page over the local network for
+  * On every machine except the PET, BMC64 can serve a web page over the local network for
     machine status, reboot, and browsing / downloading / uploading / deleting
     SD-card files. It is off by default and can be protected with an optional
     PIN. Enable it in `Network -> Web UI Settings` and open

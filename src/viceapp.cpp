@@ -492,6 +492,8 @@ void ViceStdioApp::LoadNetworkDevice() {
   settings_path = "/settings.txt";
 #elif defined(RASPI_C128)
   settings_path = "/settings-c128.txt";
+#elif defined(RASPI_VIC20)
+  settings_path = "/settings-vic20.txt";
 #elif defined(RASPI_PLUS4)
   settings_path = "/settings-plus4.txt";
 #elif defined(RASPI_PLUS4EMU)

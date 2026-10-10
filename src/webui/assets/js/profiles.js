@@ -18,11 +18,11 @@ import {
 let pfVol = "SD";
 let loading = false;
 // What the page last showed: running, power-on and Start-once ids, and the
-// machine running now ("C64", "C128", "Plus4" or "Plus4Emu": the web UI runs
-// on those only).
+// machine running now ("C64", "C128", "VIC20", "Plus4" or "Plus4Emu": the
+// web UI runs on those only).
 let lastState = { running: "", powerOn: MAIN_ID, once: "", machine: "" };
 // Machines (as profiles name them, lowercase) whose builds run the web UI.
-const WEBUI_MACHINES = ["c64", "c128", "plus4", "plus4emu"];
+const WEBUI_MACHINES = ["c64", "c128", "vic20", "plus4", "plus4emu"];
 
 function setMsg(text, isErr) {
   $("pf-status").className = "msg" + (isErr ? " err" : "");
@@ -179,7 +179,7 @@ async function startProfile(p, once) {
   const label = machineLabel(p.machine);
   const current = lastState.machine.toLowerCase();
   const otherMachine = target && current && target !== current;
-  // The web UI only runs on the C64, C128 and both Plus/4 builds (webui.h).
+  // The web UI runs on every machine except the PET (webui.h).
   const webUi = !target || WEBUI_MACHINES.includes(target);
   let question = once
     ? "Start “" + p.name + "” once?\n\nBMC64 restarts into it for this " +
@@ -230,7 +230,7 @@ async function waitForRestart(name, webUi, uptimeBefore) {
       if (!webUi) {
         showRestart("Starting " + name,
                     "The Web UI isn't available on that machine, so this page " +
-                    "stays offline until a C64, C128 or Plus/4 profile is running.",
+                    "stays offline until a profile for another machine is running.",
                     { spinning: false, closable: true });
         return;
       }

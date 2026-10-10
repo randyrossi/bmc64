@@ -131,6 +131,9 @@ int circle_get_acia_network_enabled(void);
 int circle_get_acia_network_address(void);
 int circle_set_acia_network_address(int address);
 int circle_set_acia_network_enabled(int enabled);
+// Userport modem baud rate (VIC-20 only; 0 / failure elsewhere).
+int circle_get_network_modem_baud(void);
+int circle_set_network_modem_baud(int baud);
 int circle_has_onboard_ethernet(void);
 int circle_has_onboard_wifi(void);
 int circle_wifi_is_running(void);

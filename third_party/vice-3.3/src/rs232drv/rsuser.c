@@ -71,6 +71,7 @@ static void (*byte_rx_func)(uint8_t);
 static void clk_overflow_callback(CLOCK sub, void *data);
 
 static void int_rsuser(CLOCK offset, void *data);
+static void rsuser_setup(void);
 
 #undef DEBUG
 
@@ -145,6 +146,13 @@ static int set_enable(int value, void *param)
     rsuser_enabled = newval;
 
     calculate_baudrate();
+
+#ifdef HAVE_RS232BMC
+    /* The BMC modem is always attached; open it without waiting for DTR. */
+    if (rsuser_enabled && fd == -1 && rsuser_alarm != NULL) {
+        rsuser_setup();
+    }
+#endif
 
     return 0;
 }
@@ -273,6 +281,12 @@ void rsuser_reset(void)
 
     alarm_unset(rsuser_alarm);
     fd = -1;
+
+#ifdef HAVE_RS232BMC
+    if (rsuser_enabled) {
+        rsuser_setup();
+    }
+#endif
 }
 
 static void rsuser_setup(void)

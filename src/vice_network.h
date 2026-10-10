@@ -4,8 +4,8 @@
 #include <circle/machineinfo.h>
 
 // The machine builds with networking and the BMC modem.
-#if defined(RASPI_C64) || defined(RASPI_C128) || defined(RASPI_PLUS4) || \
-    defined(RASPI_PLUS4EMU)
+#if defined(RASPI_C64) || defined(RASPI_C128) || defined(RASPI_VIC20) || \
+    defined(RASPI_PLUS4) || defined(RASPI_PLUS4EMU)
 #define BMC64_NETWORK 1
 #else
 #define BMC64_NETWORK 0

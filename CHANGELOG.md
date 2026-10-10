@@ -6,6 +6,8 @@
   * Plus/4: Web UI support added
   * Plus4Emu: networking and BMC modem on the built-in ACIA ($FD00)
   * Plus4Emu: Web UI support added
+  * VIC-20: networking and BMC modem on the userport RS-232 (KERNAL device 2)
+  * VIC-20: Web UI support added
 
 
 ## 5.2.5 (pre-release)

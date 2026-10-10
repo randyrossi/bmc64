@@ -194,6 +194,7 @@ static struct menu_item *network_device_item;
 static struct menu_item *network_status_item;
 static struct menu_item *network_ip_address_item;
 static struct menu_item *network_modem_address_item;
+static struct menu_item *network_modem_baud_item;
 static struct menu_item *webui_settings_item;
 static struct menu_item *webui_enabled_item;
 static int saved_webui_enabled;
@@ -221,6 +222,7 @@ static int logging_destination_reboot_prompted;
 static const int acia_network_addresses[] = CIRCLE_ACIA_NETWORK_ADDRESS_VALUES;
 static const char *const acia_network_address_labels[] =
   CIRCLE_ACIA_NETWORK_ADDRESS_LABELS;
+static const int network_modem_bauds[] = { 300, 1200, 2400 };
 
 static void configure_timezone_offsets(struct menu_item *item) {
   int index = 0;
@@ -262,6 +264,15 @@ static int acia_network_address_index(int address) {
     }
   }
   return CIRCLE_ACIA_NETWORK_ADDRESS_DEFAULT;
+}
+
+static int network_modem_baud_index(int baud) {
+  for (int index = 0; index < network_modem_baud_item->num_choices; index++) {
+    if (network_modem_baud_item->choice_ints[index] == baud) {
+      return index;
+    }
+  }
+  return 0;
 }
 
 static const char *const network_status_labels[CIRCLE_NETWORK_STATUS_COUNT] = {
@@ -1559,6 +1570,10 @@ static int save_settings_to(const char *settings_filename,
     fprintf(fp, "network_modem_address=%d\n",
             network_modem_address_item->value);
   }
+  if (network_modem_baud_item != NULL) {
+    fprintf(fp, "network_modem_baud=%d\n",
+            network_modem_baud_item->choice_ints[network_modem_baud_item->value]);
+  }
   fprintf(fp, "h_center_0=%d\n", h_center_item[0]->value);
   fprintf(fp, "v_center_0=%d\n", v_center_item[0]->value);
   fprintf(fp, "h_border_0=%d\n", h_border_item[0]->value);
@@ -1890,6 +1905,12 @@ static void load_settings() {
       if (value >= 0 && value < network_modem_address_item->num_choices &&
           circle_set_acia_network_address(acia_network_addresses[value])) {
         network_modem_address_item->value = value;
+      }
+    } else if (network_modem_baud_item != NULL &&
+               strcmp(name, "network_modem_baud") == 0) {
+      if (circle_set_network_modem_baud(value)) {
+        network_modem_baud_item->value = network_modem_baud_index(
+            circle_get_network_modem_baud());
       }
     } else if (timezone_offset_item != NULL &&
                strcmp(name, "timezone_offset_minutes") == 0) {
@@ -3397,6 +3418,12 @@ static void menu_value_changed(struct menu_item *item) {
       ui_error("Cannot set modem address");
     }
     return;
+  case MENU_NETWORK_MODEM_BAUD:
+    if (!circle_set_network_modem_baud(item->choice_ints[item->value])) {
+      item->value = network_modem_baud_index(circle_get_network_modem_baud());
+      ui_error("Cannot set modem baud rate");
+    }
+    return;
   case MENU_WIFI_SSID:
     if (!circle_wifi_is_running()) {
       ui_confirm_wrapped_labels("Wi-Fi scan unavailable",
@@ -4215,6 +4242,7 @@ void build_menu(struct menu_item *root) {
 
   if (emux_machine_class == BMC64_MACHINE_CLASS_C64 ||
     emux_machine_class == BMC64_MACHINE_CLASS_C128 ||
+    emux_machine_class == BMC64_MACHINE_CLASS_VIC20 ||
     emux_machine_class == BMC64_MACHINE_CLASS_PLUS4 ||
     emux_machine_class == BMC64_MACHINE_CLASS_PLUS4EMU) {
     network_status_item = ui_menu_add_read_only_heading(
@@ -4233,8 +4261,10 @@ void build_menu(struct menu_item *root) {
     child->choice_disabled[1] = !circle_has_onboard_ethernet();
     child->choice_disabled[2] = !circle_has_onboard_wifi();
 
-    // The Plus/4 ACIA is built in at a fixed $FD00.
-    if (emux_machine_class != BMC64_MACHINE_CLASS_PLUS4 &&
+    // The Plus/4 ACIA is built in at a fixed $FD00, and the VIC-20 modem
+    // is on the userport.
+    if (emux_machine_class != BMC64_MACHINE_CLASS_VIC20 &&
+        emux_machine_class != BMC64_MACHINE_CLASS_PLUS4 &&
         emux_machine_class != BMC64_MACHINE_CLASS_PLUS4EMU) {
       child = network_modem_address_item = ui_menu_add_multiple_choice(
         MENU_NETWORK_MODEM_ADDRESS, parent, "Modem Address");
@@ -4247,6 +4277,22 @@ void build_menu(struct menu_item *root) {
         strcpy(child->choices[address_index],
                acia_network_address_labels[address_index]);
       }
+    }
+
+    // VICE runs the userport RS-232 at a fixed rate rather than the one
+    // the program sets, so the user matches it to the terminal.
+    if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20) {
+      child = network_modem_baud_item = ui_menu_add_multiple_choice(
+        MENU_NETWORK_MODEM_BAUD, parent, "Modem Baud");
+      child->num_choices = sizeof(network_modem_bauds) /
+                           sizeof(network_modem_bauds[0]);
+      for (int baud_index = 0; baud_index < child->num_choices;
+           baud_index++) {
+        child->choice_ints[baud_index] = network_modem_bauds[baud_index];
+        sprintf(child->choices[baud_index], "%d",
+                network_modem_bauds[baud_index]);
+      }
+      child->value = network_modem_baud_index(circle_get_network_modem_baud());
     }
 
     timezone_offset_item = ui_menu_add_multiple_choice(
@@ -4924,6 +4970,13 @@ void build_menu(struct menu_item *root) {
   ui_set_on_value_changed_callback(menu_value_changed);
 
   load_settings();
+
+  // The VIC-20 userport modem is off by default in VICE; follow Network
+  // Device (this also keeps the unused ACIA cartridge off).
+  if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20 &&
+      network_device_item != NULL) {
+    circle_set_acia_network_enabled(network_device_item->value != 0);
+  }
 
   if (use_scaling_params_item[0]->value) {
      if (!do_use_int_scaling(FB_LAYER_VIC, 1 /* silent */)) {

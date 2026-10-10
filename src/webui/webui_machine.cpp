@@ -30,7 +30,7 @@ const char *const kRunTypes[] = {
     "d64", "d71", "d81", "d82", "g64", "x64", "t64", "tap", "prg", "p00",
     "crt", 0,
 };
-#elif defined(RASPI_PLUS4)
+#elif defined(RASPI_VIC20) || defined(RASPI_PLUS4)
 const char *const kRunTypes[] = {
     "d64", "d71", "d81", "g64", "x64", "t64", "tap", "prg", "p00", 0,
 };
@@ -47,6 +47,8 @@ const WebUiMachine kMachine = {
     "C64", "/settings.txt", kRunTypes, "v2",
 #elif defined(RASPI_C128)
     "C128", "/settings-c128.txt", kRunTypes, "",
+#elif defined(RASPI_VIC20)
+    "VIC20", "/settings-vic20.txt", kRunTypes, "",
 #elif defined(RASPI_PLUS4)
     "Plus4", "/settings-plus4.txt", kRunTypes, "",
 #elif defined(RASPI_PLUS4EMU)
