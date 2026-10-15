@@ -593,7 +593,8 @@ On the other machines:
 Machine | Keyboard Layout | Keyboard Mapping
 --------|-----------------|-----------------
 C128, VIC-20, Plus/4 | Commodore | Positional, TheC64 Maxi
-C128, VIC-20, Plus/4 | US English | Symbolic
+C128, VIC-20, Plus/4 | US English | Symbolic, Positional
+C128 | German | Symbolic, Positional
 Plus/4 (plus4emu) | Commodore | Positional, TheC64 Maxi, Keyrah V2 (C16)
 PET | (not shown) | Symbolic, Positional
 
@@ -646,7 +647,21 @@ If you use a real C64 keyboard via GPIO Config #2, please be aware that BMPLUS4 
 
 ### C128 Keyboard Notes
 
-F11 is the 40/80 Column Key for C128
+The C128's extra keys are on these USB keys in the Symbolic and Positional mappings:
+
+USB key | C128 key
+--------|---------
+F9 | ESC
+F10 | TAB
+F11 | 40/80 DISPLAY
+End | HELP
+Page Down | LINE FEED
+Scroll Lock | NO SCROLL
+Pause | CAPS LOCK (ASCII/DIN)
+Left Alt (Symbolic), right Alt (Positional) | ALT
+Numeric keypad 0-9, `.`, `+`, `-`, Enter | Numeric keypad
+
+In Positional, Caps Lock is also CAPS LOCK, and in Symbolic it is SHIFT LOCK. The four separate cursor keys above the C128's keypad are not mapped: the USB cursor keys use CRSR, which works in both C128 and C64 mode. The keypad only works in C128 mode.
 
 Note: You will also need to do a hard reset when changing modes.
 

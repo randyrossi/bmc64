@@ -62,7 +62,7 @@
 # When a bigger spaced key is used,
 # it uses the upper left most key value.
 
-# SDL symbolic map for the C64, the SCPU64, and the C64DTV
+# BMC64 US English symbolic map for the C128
 
 # C128 Keyboard matrix
 #
@@ -203,6 +203,30 @@ Right 0 2 8          /*         Right -> Right       */
 # Restore key mappings
 PageUp -3 0
 
-End 8 0 8 /* HELP key -> End */
-F9  9 0 8 /* ESC -> F9 */
-F11 -4 0 /* 40/80 Columns */
+# C128 extra keys
+F9 9 0 8             /*           F9 -> ESC          */
+F10 8 3 8            /*          F10 -> TAB          */
+F11 -4 0             /*          F11 -> 40/80 DISPLAY */
+End 8 0 8            /*          End -> HELP         */
+PageDown 9 3 8       /*    Page Down -> LINE FEED    */
+ScrollLock 10 7 8    /*  Scroll Lock -> NO SCROLL    */
+Pause -4 1           /*        Pause -> CAPS LOCK    */
+Alt_L 10 0 8         /*     Left Alt -> ALT          */
+
+# C128 numeric keypad
+KP_0 10 1 8          /*     NumPad 0 -> KP 0         */
+KP_1 8 7 8           /*     NumPad 1 -> KP 1         */
+KP_2 8 4 8           /*     NumPad 2 -> KP 2         */
+KP_3 9 7 8           /*     NumPad 3 -> KP 3         */
+KP_4 8 5 8           /*     NumPad 4 -> KP 4         */
+KP_5 8 2 8           /*     NumPad 5 -> KP 5         */
+KP_6 9 5 8           /*     NumPad 6 -> KP 6         */
+KP_7 8 6 8           /*     NumPad 7 -> KP 7         */
+KP_8 8 1 8           /*     NumPad 8 -> KP 8         */
+KP_9 9 6 8           /*     NumPad 9 -> KP 9         */
+KP_Decimal 10 2 8    /*     NumPad . -> KP .         */
+KP_Add 9 1 8         /*     NumPad + -> KP +         */
+KP_Subtract 9 2 8    /*     NumPad - -> KP -         */
+KP_Enter 9 4 8       /* NumPad Enter -> KP ENTER     */
+KP_Divide 6 7 8      /*     NumPad / -> /            */
+KP_Multiply 6 1 8    /*     NumPad * -> *            */

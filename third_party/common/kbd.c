@@ -250,6 +250,8 @@ signed long kbd_arch_keyname_to_keynum(char *keyname) {
     return (long)KEYCODE_F11;
   } else if (KCMP("ScrollLock")) {
     return (long)KEYCODE_ScrollLock;
+  } else if (KCMP("Pause")) {
+    return (long)KEYCODE_Pause;
   } else if (KCMP("KP_Divide")) {
     return (long)KEYCODE_KP_Divide;
   } else if (KCMP("KP_Decimal")) {

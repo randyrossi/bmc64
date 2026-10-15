@@ -28,18 +28,23 @@ static const KeyboardPreset c128_presets[] = {
    {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64},
    {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_MAXI, "TheC64 Maxi", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},
    {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PHYSICAL_DE, "German", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_de.vkm", KEYBOARD_LAYOUT_DE},
+   {KEYBOARD_PHYSICAL_DE, "German", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_DE},
 };
 
 static const KeyboardPreset vic20_presets[] = {
    {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64},
    {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_MAXI, "TheC64 Maxi", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},
    {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_US},
 };
 
 static const KeyboardPreset plus4_presets[] = {
    {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64},
    {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_MAXI, "TheC64 Maxi", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},
    {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_US},
 };
 
 static const KeyboardPreset plus4emu_presets[] = {

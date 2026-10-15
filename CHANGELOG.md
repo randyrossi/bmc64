@@ -1,3 +1,8 @@
+## 5.2.7 (pre-release)
+  * C128 keymaps: add the numeric keypad and the TAB, ALT, LINE FEED, NO SCROLL and CAPS LOCK keys, and the £ key next to left Shift in Positional #229
+  * Add German keyboard layout for C128 #406
+  * Add US English Positional keyboard mapping for C128, VIC-20 and Plus/4
+
 ## 5.2.6 (pre-release)
   * Profiles (in development, see [PROFILES.md](docs/PROFILES.md)):
     * Ability to switch machines within a profile added and profiles keep BMC64 settings per machine (`settings-<machine>.txt`)

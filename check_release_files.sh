@@ -43,6 +43,7 @@ REQUIRED_FILES=(
     "C128/rpi_maxi_pos.vkm"
     "C128/rpi_pos.vkm"
     "C128/rpi_sym.vkm"
+    "C128/rpi_sym_de.vkm"
 
     # VIC20 files
     "VIC20/PUT_ROMS_HERE"

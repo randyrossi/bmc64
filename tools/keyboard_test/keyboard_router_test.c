@@ -87,8 +87,8 @@ int main(void) {
   static const char *machine_dirs[] = {
     NULL, "vic20", "c64", "c128", "plus4", "plus4emu", "pet"
   };
-  static const int expected_counts[] = {0, 3, 16, 3, 3, 3, 2};
-  static const int expected_layouts[] = {0, 2, 8, 2, 2, 1, 1};
+  static const int expected_counts[] = {0, 4, 16, 6, 4, 3, 2};
+  static const int expected_layouts[] = {0, 2, 8, 3, 2, 1, 1};
   for (int machine = BMC64_MACHINE_CLASS_VIC20; machine <= BMC64_MACHINE_CLASS_PET; machine++) {
     assert(keyboard_preset_count(machine) == expected_counts[machine]);
     assert(keyboard_preset_at(machine, expected_counts[machine]) == NULL);
@@ -194,7 +194,14 @@ int main(void) {
   const KeyboardPreset *petsciiboard = keyboard_preset_find(c64, KEYBOARD_PHYSICAL_PETSCIIBOARD, KEYBOARD_MAP_SYMBOLIC);
   assert(petsciiboard && keyboard_preset_mapping_count(c64, KEYBOARD_PHYSICAL_PETSCIIBOARD) == 1);
   assert(strcmp(petsciiboard->vkm_file, "rpi_petsciiboard_sym.vkm") == 0);
-  assert(keyboard_preset_find(BMC64_MACHINE_CLASS_C128, KEYBOARD_PHYSICAL_DE, KEYBOARD_MAP_SYMBOLIC) == NULL);
+
+  // C128: German has its own symbolic map and shares the positional one.
+  const int c128 = BMC64_MACHINE_CLASS_C128;
+  assert(keyboard_preset_mapping_count(c128, KEYBOARD_PHYSICAL_DE) == 2);
+  assert(strcmp(keyboard_preset_find(c128, KEYBOARD_PHYSICAL_DE, KEYBOARD_MAP_SYMBOLIC)->vkm_file, "rpi_sym_de.vkm") == 0);
+  assert(keyboard_preset_find(c128, KEYBOARD_PHYSICAL_DE, KEYBOARD_MAP_SYMBOLIC)->text_layout == KEYBOARD_LAYOUT_DE);
+  assert(strcmp(keyboard_preset_find(c128, KEYBOARD_PHYSICAL_DE, KEYBOARD_MAP_POSITIONAL)->vkm_file, "rpi_pos.vkm") == 0);
+  assert(keyboard_preset_find(c128, KEYBOARD_PHYSICAL_UK, KEYBOARD_MAP_SYMBOLIC) == NULL);
 
   // Defaults: US Symbolic where it exists, otherwise the first row.
   for (int machine = BMC64_MACHINE_CLASS_VIC20; machine <= BMC64_MACHINE_CLASS_PLUS4; machine++) {

@@ -72,6 +72,7 @@ SingleQuote 6 2 8     /* semicolon */
 Slash 6 7 8           /* slash */
 Space 7 4 8           /* space */
 Insert 6 0 8          /* sterling */
+NonUSBackSlash 6 0 8  /* sterling (ISO key left of Z) */
 RightBracket 6 1 8    /* asterisk */
 BackQuote 7 1 0       /* arrowleft */
 Del 6 6 8             /* arrowup */
@@ -114,5 +115,30 @@ z 1 4 8
 
 # Restore key mappings
 PageUp -3 0
-CapsLock -4 1
-F11 -4 0 /* 40/80 Columns */
+CapsLock -4 1         /* CAPS LOCK */
+
+# C128 extra keys
+F9 9 0 8              /* ESC */
+F10 8 3 8             /* TAB */
+F11 -4 0              /* 40/80 DISPLAY */
+End 8 0 8             /* HELP */
+PageDown 9 3 8        /* LINE FEED */
+ScrollLock 10 7 8     /* NO SCROLL */
+Pause -4 1            /* CAPS LOCK */
+Alt_R 10 0 8          /* ALT */
+
+# C128 numeric keypad
+KP_0 10 1 8
+KP_1 8 7 8
+KP_2 8 4 8
+KP_3 9 7 8
+KP_4 8 5 8
+KP_5 8 2 8
+KP_6 9 5 8
+KP_7 8 6 8
+KP_8 8 1 8
+KP_9 9 6 8
+KP_Decimal 10 2 8
+KP_Add 9 1 8
+KP_Subtract 9 2 8
+KP_Enter 9 4 8        /* ENTER */
