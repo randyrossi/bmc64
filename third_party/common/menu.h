@@ -178,6 +178,7 @@ typedef enum {
    MENU_CONFIG_GP_2,
 
    MENU_WARP_MODE,
+   MENU_WARP_AFTER_BOOT,
 
    MENU_AUTOSTART,
    MENU_AUTOSTART_WARP,
@@ -751,6 +752,9 @@ void menu_update_network_status(void);
 void menu_quick_func(int button_assignment);
 // Autostart a file on the main loop (see emu_autostart_interrupt).
 void menu_autostart(const char *path);
+
+// Turns warp on if Warp after boot is set. Called once boot warp is over.
+void menu_apply_warp_after_boot(void);
 
 // Saves the current settings into a profile's folder (profiles_create()
 // makes the folder). Returns 0 on success.

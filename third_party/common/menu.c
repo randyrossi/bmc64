@@ -66,7 +66,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "5.2.7"
+#define VERSION_STRING "5.2.8"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -152,6 +152,7 @@ struct menu_item *tint_item[2];
 struct menu_item *saturation_item[2];
 
 struct menu_item *warp_item;
+static struct menu_item *warp_after_boot_item;
 struct menu_item *reset_confirm_item;
 struct menu_item *drive_flush_item;
 struct menu_item *gpio_config_item;
@@ -1546,6 +1547,7 @@ static int save_settings_to(const char *settings_filename,
   fprintf(fp, "vkbd_trans=%d\n", vkbd_transparency_item->value);
   fprintf(fp, "tapereset=%d\n", tape_reset_with_machine_item->value);
   fprintf(fp, "reset_confirm=%d\n", reset_confirm_item->value);
+  fprintf(fp, "warp_after_boot=%d\n", warp_after_boot_item->value);
   if (drive_flush_item != NULL) {
     fprintf(fp, "drive_flush=%d\n", drive_flush_item->value);
   }
@@ -1846,6 +1848,8 @@ static void load_settings() {
       hotkey_tf7_item->value = value;
     } else if (strcmp(name, "reset_confirm") == 0) {
       reset_confirm_item->value = value;
+    } else if (strcmp(name, "warp_after_boot") == 0) {
+      warp_after_boot_item->value = value;
     } else if (strcmp(name, "drive_flush") == 0) {
       if (drive_flush_item != NULL && value >= 0 &&
           value < drive_flush_item->num_choices) {
@@ -2659,6 +2663,14 @@ static void toggle_warp(int value) {
   emux_set_warp(value);
   overlay_warp_changed(value);
   warp_item->value = value;
+}
+
+void menu_apply_warp_after_boot(void) {
+  // Boot warp has already turned warp off; only touch it when turning it on
+  // so the status bar doesn't pop up on every boot.
+  if (warp_after_boot_item->value) {
+    toggle_warp(1);
+  }
 }
 
 // Tell videoarch the new settings made from the menu.
@@ -4951,6 +4963,8 @@ void build_menu(struct menu_item *root) {
         folder_emu, emu_folder);
 
   warp_item = ui_menu_add_toggle(MENU_WARP_MODE, root, "Warp Mode", 0);
+  warp_after_boot_item = ui_menu_add_toggle(MENU_WARP_AFTER_BOOT, root,
+                                            "Warp after boot", 0);
 
   // This is an undocumented feature for now. Keep invisible unless it
   // is activated by cmdline.txt

@@ -528,10 +528,14 @@ void menu_profiles_boot_complete(void) {
     }
   }
 
+  // Before the autostart below, so with Warp after boot on, autostart sees
+  // warp already on and leaves it on when it finishes.
+  menu_apply_warp_after_boot();
+
   // The profile's autostart, as if picked from Autostart Prg/Disk. It's
-  // queued for the main loop rather than started here: this runs while boot
-  // warp is still on, and VICE's autostart puts back the warp state it
-  // started with when it finishes, which would leave warp (and no sound) on.
+  // queued for the main loop rather than started here: VICE's autostart puts
+  // back the warp state it started with when it finishes, so it must start
+  // after the warp state above is in place.
   const char *autostart = profiles_autostart();
   if (autostart[0] != '\0' && !raspi_demo_mode) {
     struct stat st;

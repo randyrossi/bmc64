@@ -1,3 +1,6 @@
+## 5.2.8 (pre-release)
+  * Add *Warp after boot* to start in warp mode at power-on and keep warp on after an autostart #405
+ 
 ## 5.2.7 (pre-release)
   * C128 keymaps: add the numeric keypad and the TAB, ALT, LINE FEED, NO SCROLL and CAPS LOCK keys, and the £ key next to left Shift in Positional #229
   * Add German keyboard layout for C128 #406

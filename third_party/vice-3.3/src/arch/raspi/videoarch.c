@@ -441,8 +441,9 @@ void vsyncarch_postsync(void) {
   }
   if (raspi_boot_warp && video_frame_count > 120) {
     raspi_boot_warp = 0;
-    circle_boot_complete();
+    // Off before boot complete, which may turn it back on (Warp after boot).
     resources_set_int("WarpMode", 0);
+    circle_boot_complete();
   }
 
   // Hold for vsync unless warping or in boot warp.
