@@ -124,6 +124,8 @@ cp "$SRC_DIR/sdcard/config.txt" "$SRC_DIR/sdcard/cmdline.txt" \
     "$SRC_DIR/sdcard/machines.txt" "$STAGING_DIR/"
 cp -a "$SRC_DIR/release/common_release_files/." "$STAGING_DIR/"
 cp "$SRC_DIR/LICENSE" "$SRC_DIR/README.md" "$STAGING_DIR/"
+python3 "$SRC_DIR/tools/gen_license_assets.py"
+cp -a "$SRC_DIR/sdcard/licenses" "$STAGING_DIR/"
 
 machine_dirs=(
     c64:C64

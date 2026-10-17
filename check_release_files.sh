@@ -5,6 +5,22 @@ REQUIRED_FILES=(
     # Root support files
     "LICENSE"
     "README.md"
+    "licenses/README.txt"
+    "licenses/GPL-3.0.txt"
+    "licenses/GPL-2.0.txt"
+    "licenses/Apache-2.0.txt"
+    "licenses/LGPL-2.1.txt"
+    "licenses/VICE.txt"
+    "licenses/Plus4Emu.txt"
+    "licenses/dotconf.txt"
+    "licenses/libsndfile-interface.txt"
+    "licenses/zlib.txt"
+    "licenses/crt-pi.txt"
+    "licenses/Bescii-CC0.txt"
+    "licenses/newlib.txt"
+    "licenses/libgloss.txt"
+    "licenses/GCC-Runtime.txt"
+    "licenses/RaspberryPi-Firmware.txt"
     "bootcode.bin"
     "cmdline.txt"
     "config.txt"
@@ -194,6 +210,15 @@ do
     if [ ! -f "$RELEASE_DIRECTORY/$required_file" ]
     then
         echo "Missing: $required_file"
+        missing_entries=1
+    fi
+done
+
+for notice in "$RELEASE_DIRECTORY"/licenses/*.txt
+do
+    if [ ! -s "$notice" ]
+    then
+        echo "Missing or empty license notice: $notice"
         missing_entries=1
     fi
 done

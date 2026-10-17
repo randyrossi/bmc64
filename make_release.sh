@@ -108,6 +108,14 @@ cp ${SRC_PI3}/sdcard/cmdline.txt stage_dir
 
 cp ${SRC_PI3}/LICENSE stage_dir
 cp ${SRC_PI3}/README.md stage_dir
+if ! python3 "$SRC_PI3/tools/gen_license_assets.py"
+then
+exit 1
+fi
+if ! cp -a "$SRC_PI3/sdcard/licenses" stage_dir/
+then
+exit 1
+fi
 
 if ! "$SCRIPT_DIR/make_wifi_firmware.sh" stage_dir
 then

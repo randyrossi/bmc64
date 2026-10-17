@@ -4,6 +4,9 @@ BMC64 incorporates software and other materials from third-party projects. Third
 
 The original copyright, license, and attribution notices supplied with these components are retained with their source where applicable.
 
+A bundle of license texts and third-party notices is included in the SD card's
+[`licenses/`](../sdcard/licenses/README.txt) folder.
+
 ## VICE
 
 BMC64 incorporates source code from the [VICE project](https://vice-emu.sourceforge.io/), version 3.3.
@@ -29,6 +32,20 @@ See [`third_party/plus4emu/`](../third_party/plus4emu/) for the source incorpora
 BMC64 incorporates source code from [zlib](https://github.com/madler/zlib), v1.3.2.
 
 See [`third_party/zlib/`](../third_party/zlib/) for the source incorporated into BMC64 and its accompanying copyright and license information.
+
+## Raspberry Pi firmware
+
+The boot firmware is supplied by [raspberrypi/firmware](https://github.com/raspberrypi/firmware).
+Its redistribution terms are included in
+[`RaspberryPi-Firmware.txt`](../sdcard/licenses/RaspberryPi-Firmware.txt).
+
+## GCC runtime
+
+BMC64 links runtime code from the
+[Arm GNU Toolchain](https://gitlab.arm.com/tooling/gnu-toolchains-for-arm).
+The GCC license section supplied with version 15.2.rel1, including the GCC
+Runtime Library Exception 3.1, is included in
+[`GCC-Runtime.txt`](../sdcard/licenses/GCC-Runtime.txt).
 
 ## Other Third-Party Components
 

@@ -28,6 +28,14 @@ INCLUDES = -I $(CIRCLE_STDLIB_HOME)/install/arm-none-circle/include \
 
 all: libbmc64common.a
 
+PYTHON ?= python3
+
+license_text.inc: ../../LICENSE ../../tools/gen_license_assets.py text.h ui.h
+	$(PYTHON) ../../tools/gen_license_assets.py
+
+text.o: license_text.inc text.h
+menu.o: text.h
+
 %.o : %.cpp
 	$(CXX_FOR_TARGET) $(INCLUDES) -c -O2 -o $@ $< $(CFLAGS_FOR_TARGET) $(CPPFLAGS_FOR_TARGET)
 

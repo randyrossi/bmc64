@@ -939,9 +939,17 @@ static void show_about() {
 }
 
 static void show_license() {
-  int i;
+  unsigned int i;
   struct menu_item *license_root = ui_push_menu(-1, -1);
-  for (i = 0; i < 510; i++) {
+  ui_menu_add_button(MENU_TEXT, license_root, "BMC64 is licensed under");
+  ui_menu_add_button(MENU_TEXT, license_root, "GNU GPL version 3.");
+  ui_menu_add_button(MENU_TEXT, license_root, "Third-party licenses and notices");
+  ui_menu_add_button(MENU_TEXT, license_root, "are included in the SD card's");
+  ui_menu_add_button(MENU_TEXT, license_root, "licenses/ folder.");
+  ui_menu_add_button(MENU_TEXT, license_root, "Wi-Fi firmware licenses are in");
+  ui_menu_add_button(MENU_TEXT, license_root, "firmware/.");
+  ui_menu_add_divider(license_root);
+  for (i = 0; i < num_license_lines; i++) {
     ui_menu_add_button(MENU_TEXT, license_root, license[i]);
   }
 }

@@ -26,8 +26,9 @@
 #ifndef RASPI_TEXT_H
 #define RASPI_TEXT_H
 
-#define NUM_LICENSE_LINES 510
+#define LICENSE_LINE_WIDTH 35
 
-extern char license[NUM_LICENSE_LINES][40];
+extern const char license[][LICENSE_LINE_WIDTH + 1];
+extern const unsigned int num_license_lines;
 
 #endif

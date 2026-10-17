@@ -91,7 +91,6 @@ Once the *make_machines.sh* build is complete, you will have kernel files with a
 
 3. I have a different build issue...
 
-    * Ensure you have set all environment variables in the "Building" step. For example, if you forget to set the ARM\_HOME and ARM\_VERSION variables, *make\_all.sh* will default to "$HOME/gcc-arm-none-eabi-7-2018-q2-update" with a version of "7.3.1" which may or may not exist on your system.
     * Ensure you have all prerequisites installed.
     * Ensure you follow each step above.
     * Ensure you run the build scripts in the following order: *clean\_all.sh*, *make\_all.sh*, *make\_machines.sh*
@@ -131,6 +130,16 @@ If you build with the individual scripts rather than `build_sdcard.sh`, pass `--
 #### General performance metrics
 
 For a build with the frame-budget and audio performance instrumentation, pass `--perf-stats`. Every 10 seconds it prints one `[perf] {...}` line to `/bmc64.log` and the serial console (enable one of them in `cmdline.txt`) describing how much of each frame's time budget the emulator used, missed vertical blanks and the audio buffer level. It is compiled out entirely by default and can be combined with `--io-stats`. As with `--io-stats`, pass `--perf-stats` to **both** `make_all.sh` and `make_machines.sh` when using the individual scripts. `make_all.sh` is also what passes it into the VICE build. See [tools/perftest/README.md](../tools/perftest/README.md) for how to capture and read the report. `build_sdcard.sh --perf-stats` also copies the test workloads from `tools/perftest/` into `prg/` on the staged card. It currently instruments the VICE-based machines only, not Plus4Emu.
+### License assets
+
+The build generates the OSD license text from the root `LICENSE`.
+SD-card and release packaging refresh and include the
+[`licenses/`](../sdcard/licenses/README.txt) folder.
+To regenerate manually or check for stale files:
+
+        python3 tools/gen_license_assets.py
+        python3 tools/gen_license_assets.py --check
+
 
 ## Configuring The Updater
 
@@ -241,4 +250,3 @@ Installation and use of the GNU toolchain is automated by the build scripts. To 
 Node.js 22.12 or newer is needed to run the web UI tests, which must pass for the build to succeed. You don't need to install it: the build scripts use the one on your `PATH` if it is new enough, and otherwise download one (with `curl` or `wget`) along with the Arm toolchain. To optionally install it manually instead, follow the instructions for your system at [https://nodejs.org/en/download](https://nodejs.org/en/download), then check it's new enough and on your `PATH`:
 
     node --version   # must print v22.12.0 or newer
-

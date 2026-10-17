@@ -1,4 +1,5 @@
 ## 5.3.0
+  * Review and update license notices
   * Add *Warp after boot* to start in warp mode at power-on and keep warp on after an autostart #405
   * Fix Plus/4 when booting in NTSC to select NTSC default kernal correctly  #400
   * Power menu (replaces Reset): Soft / Hard Reset plus new Reboot BMC64 and Shut down
@@ -600,4 +601,3 @@
 
 ## 1.0.1
   * Initial release
-
