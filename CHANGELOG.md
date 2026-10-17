@@ -1,55 +1,43 @@
-## 5.2.8 (pre-release)
+## 5.3.0
   * Add *Warp after boot* to start in warp mode at power-on and keep warp on after an autostart #405
- 
-## 5.2.7 (pre-release)
-  * C128 keymaps: add the numeric keypad and the TAB, ALT, LINE FEED, NO SCROLL and CAPS LOCK keys, and the £ key next to left Shift in Positional #229
-  * Add German keyboard layout for C128 #406
-  * Add US English Positional keyboard mapping for C128, VIC-20 and Plus/4
-
-## 5.2.6 (pre-release)
-  * Profiles (in development, see [PROFILES.md](docs/PROFILES.md)):
-    * Ability to switch machines within a profile added and profiles keep BMC64 settings per machine (`settings-<machine>.txt`)
   * Fix Plus/4 when booting in NTSC to select NTSC default kernal correctly  #400
-  * Add networking to all machines (added to: Plus/4, Plus4Emu, Vic20, PET)
-  * Add WebUI to all machines (added to: Plus/4, Plus4Emu, Vic20, PET)
-  * Plus/4 & Plus4Emu add BMC modem on the built-in ACIA ($FD00)
-  * VIC-20 add BMC modem on the userport RS-232 (KERNAL device 2)
-  * Fix for BMC modem to ignore anything typed before `AT`, so a stray byte no longer makes the next command fail
   * Power menu (replaces Reset): Soft / Hard Reset plus new Reboot BMC64 and Shut down
   * Web UI adds Shut Down quick action
   * Reboot now writes out disk images first too
   * Autostart: press Right on a disk or tape image to see its directory and pick the program to start #137
   * Autostart opens in the disks folder (`/disks/<machine>`, or `/<machine>/disks`) instead of the card's root
-
-## 5.2.5 (pre-release)
   * Add Latin American keyboard layout for C64
-  * Profiles (in development, see [PROFILES.md](docs/PROFILES.md)):
-    * Profiles for another machine: choosing one switches machine and restarts #213
-    * Fix network, Web UI and timezone settings of a profile being ignored
-    * Auto-attach disks: *Drives → Auto-attach options* saves the attached disks to be attached at power-on #390
-    * Web UI: new *Profiles* page to view, rename, delete and switch profiles, and the running profile on the Dashboard
   * Show the current model in the PET and Plus/4 *Model* menu
-
-## 5.2.4 (pre-release)
   * Fix for Logi Bolt receiver not connecting MX Mini or Mechanical keyboards #396
-  * Add profiles (in development): save complete setups and switch between them from the new *Profiles* menu. See [PROFILES.md](docs/PROFILES.md) #213 #295 #92 
-    * *Switch to* makes a profile the one used at every power-on; *Start once* uses it for one session only
-    * A profile can autostart a program or disk image at power-on #390 #185
-
-## 5.2.3 (pre-release)
   * Fix drive LED showing previous drive type's colour #112
   * Fix snapshot load cursor being one row off after save #200
   * Skip macOS AppleDouble metadata files ("._name") #251
   * Add drag-and-drop uploading of files to the WebUI File manager
-
-## 5.2.2 (pre-release)
   * Fix crash loading snapshots with a 1581 drive (e.g. GEOS D81) #393
   * Fix possible crash restoring D81/D80/D82 disk images from snapshots #393
-
-## 5.2.1 (pre-release)
   * Fix long filenames crashing disk attach and autostart #386
   * Support 255-byte names in the OSD and Web UI
   * Prevent Web UI rename truncation
+
+  * Profiles (see [PROFILES.md](docs/PROFILES.md)):  #213 #295 #92 
+    * Ability to switch machines within a profile added and profiles keep BMC64 settings per machine (`settings-<machine>.txt`)
+    * Profiles for another machine: choosing one switches machine and restarts #213
+    * Fix network, Web UI and timezone settings of a profile being ignored
+    * Auto-attach disks: *Drives → Auto-attach options* saves the attached disks to be attached at power-on #390
+    * Web UI: new *Profiles* page to view, rename, delete and switch profiles, and the running profile on the Dashboard
+    * *Switch to* makes a profile the one used at every power-on; *Start once* uses it for one session only
+    * A profile can autostart a program or disk image at power-on #390 #185
+    * C128 keymaps: add the numeric keypad and the TAB, ALT, LINE FEED, NO SCROLL and CAPS LOCK keys, and the £ key next to left Shift in Positional #229
+    * Add German keyboard layout for C128 #406
+    * Add US English Positional keyboard mapping for C128, VIC-20 and Plus/4
+
+  * Networking added to all machines
+    * Add networking to all machines (added to: Plus/4, Plus4Emu, Vic20, PET)
+    * Add WebUI to all machines (added to: Plus/4, Plus4Emu, Vic20, PET)
+    * Plus/4 & Plus4Emu add BMC modem on the built-in ACIA ($FD00)
+    * VIC-20 add BMC modem on the userport RS-232 (KERNAL device 2)
+    * Fix for BMC modem to ignore anything typed before `AT`, so a stray byte no longer makes the next command fail
+
   * Refactor of keyboard input (`BMC64_NEW_KEYBOARD_INPUT`) 
     * **Warning:** choose your keyboard again after updating, and back up any customised `.vkm` keymap files before copying the new ones over, as symbolic keymaps now use a new format. See [Keyboards in the User Guide](docs/USER_GUIDE.md#keyboards)
     * Add support for international keyboard layouts, in OSD and Vice
