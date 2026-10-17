@@ -29,10 +29,7 @@
 #include "circle.h"
 
 #include "emux_api.h"
-#include "../../src/keyboard/keyboard_feature.h"
-#if BMC64_NEW_KEYBOARD_INPUT
 #include "../../src/keyboard/keyboard_layout.h"
-#endif
 
 #ifndef RASPI_MENU_H
 #define RASPI_MENU_H

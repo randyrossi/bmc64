@@ -25,7 +25,6 @@
  */
 
 #include "emux_api.h"
-#include "../../../../../src/keyboard/keyboard_feature.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -48,9 +47,7 @@
 #include "menu_timing.h"
 #include "ui.h"
 #include "keyboard.h"
-#if BMC64_NEW_KEYBOARD_INPUT
 #include "lib.h"
-#endif
 #include "demo.h"
 #include "datasette.h"
 #include "log.h"
@@ -86,7 +83,6 @@ struct menu_item *sid_filter_item;
 struct menu_item *sid_resampling_item;
 
 struct menu_item *keyboard_mapping_item;
-#if BMC64_NEW_KEYBOARD_INPUT
 static const KeyboardPreset *keyboard_preset_active;
 static int keyboard_saved_index;
 static char *keyboard_saved_user_sym_file;
@@ -105,7 +101,6 @@ static int keyboard_apply_preset(const KeyboardPreset *entry) {
   if (index == KBD_INDEX_USERSYM) return 0;
   return resources_set_int("KeymapIndex", KBD_INDEX_USERSYM);
 }
-#endif
 
 // TODO: Fix these
 extern struct menu_item *port_3_menu_item;
@@ -1242,7 +1237,6 @@ void emux_get_string_1(StringSetting setting, const char** dest, int param) {
 }
 
 int emux_save_settings(const char *vice_ini_path) {
-#if BMC64_NEW_KEYBOARD_INPUT
   if (keyboard_preset_active) {
     resources_set_int("KeymapIndex", keyboard_saved_index);
     resources_set_string("KeymapUserSymFile", keyboard_saved_user_sym_file);
@@ -1252,16 +1246,12 @@ int emux_save_settings(const char *vice_ini_path) {
     keyboard_apply_preset(keyboard_preset_active);
   }
   return result;
-#else
-   return resources_save(vice_ini_path);
-#endif
 }
 
 void emux_log_settings_file(const char *filename) {
   log_message(LOG_DEFAULT, "Writing settings file `%s'.", filename);
 }
 
-#if BMC64_NEW_KEYBOARD_INPUT
 int emux_set_keyboard_preset(const struct KeyboardPreset *preset) {
   if (preset == NULL) return -1;
   if (!keyboard_preset_active) {
@@ -1286,7 +1276,6 @@ int emux_set_keyboard_preset(const struct KeyboardPreset *preset) {
   ui_set_keyboard_layout(preset->text_layout);
   return 0;
 }
-#endif
 
 int emux_handle_menu_change(struct menu_item* item) {
   switch (item->id) {

@@ -196,22 +196,13 @@ static int ui_key_ticks_repeats;
 static int ui_key_ticks_repeats_next;
 
 static void ui_action(long action);
-#if BMC64_NEW_KEYBOARD_INPUT
 static MenuKeyboardLayout ui_keyboard_layout = KEYBOARD_LAYOUT_US;
 static int keyboard_right_alt;
-#else
-static int ui_keyboard_mapping = KEYBOARD_MAPPING_SYM;
-#endif
 
 void ui_set_keyboard_mapping(int mapping) {
-#if BMC64_NEW_KEYBOARD_INPUT
   (void)mapping;
-#else
-  ui_keyboard_mapping = mapping;
-#endif
 }
 
-#if BMC64_NEW_KEYBOARD_INPUT
 void ui_set_keyboard_layout(MenuKeyboardLayout layout) {
   ui_keyboard_layout = layout;
 }
@@ -219,7 +210,6 @@ void ui_set_keyboard_layout(MenuKeyboardLayout layout) {
 static unsigned int ui_key_to_char(long key, int shifted) {
   return keyboard_layout_key_to_codepoint(ui_keyboard_layout, key, shifted, keyboard_right_alt);
 }
-#endif
 
 static int keyboard_shift = 0;
 
@@ -395,7 +385,6 @@ static void do_on_value_changed(struct menu_item *item) {
   }
 }
 
-#if BMC64_NEW_KEYBOARD_INPUT
 static void ui_type_char(unsigned int ch) {
   struct menu_item *cur = menu_cursor_item[current_menu];
   if (cur->type == TEXTFIELD) {
@@ -429,36 +418,9 @@ static void ui_type_char(unsigned int ch) {
     ui_find_first(ch);
   }
 }
-#else
-static void ui_type_char(char ch) {
-  struct menu_item *cur = menu_cursor_item[current_menu];
-  if (cur->type == TEXTFIELD) {
-    if (ch == '\b') {
-      if (cur->value <= 0)
-        return;
-      char *str = cur->str_value;
-      memmove(str + cur->value - 1, str + cur->value,
-              (strlen(str) - cur->value + 1) * sizeof(char));
-      cur->value--;
-    } else {
-      if (strlen(cur->str_value) >= cur->max_length)
-        return;
-
-      char *str = cur->str_value;
-      memmove(str + cur->value + 1, str + cur->value,
-              (strlen(str) - cur->value + 1) * sizeof(char));
-      str[cur->value] = ch;
-      cur->value++;
-    }
-  } else {
-    ui_find_first(ch);
-  }
-}
-#endif
 
 // Happens on main loop.
 static void ui_key_pressed(long key) {
-#if BMC64_NEW_KEYBOARD_INPUT
   // A C64 keyboard only has CRSR Right and CRSR Down; Shift gives Left/Up.
   // Physical Shift only, not Shift Lock. The key release needs no mapping
   // because releasing any arrow key stops the repeat.
@@ -467,7 +429,6 @@ static void ui_key_pressed(long key) {
   } else if (keyboard_shift && key == KEYCODE_Down) {
     key = KEYCODE_Up;
   }
-#endif
 
   // Anything other than left/right will reset transparency
   // and render current item only flags. They are applicable
@@ -487,20 +448,11 @@ static void ui_key_pressed(long key) {
   // USB Shift-Lock (Caps-Lock) counts as shift here too. The menu keeps its
   // own transient shift flag and does not run the emulator keymap, so this is
   // the only way the lock state reaches text entry.
-#if BMC64_NEW_KEYBOARD_INPUT
   int shift_eff = keyboard_layout_effective_shift(keyboard_shift,
                   emu_get_keyboard_shiftlock(), keyboard_right_alt);
-#else
-  int shift_eff = keyboard_shift || emu_get_keyboard_shiftlock();
-#endif
 
   if (menu_cursor_item[current_menu]->type == TEXTFIELD) {
-#if BMC64_NEW_KEYBOARD_INPUT
     unsigned int ch = ui_key_to_char(key, shift_eff);
-#else
-    char ch = menu_text_layout_key_to_char(key, shift_eff,
-                        ui_keyboard_mapping);
-#endif
     if (ch != '\0') {
       ui_type_char(ch);
       return;
@@ -544,38 +496,23 @@ static void ui_key_pressed(long key) {
   case KEYCODE_RightShift:
     keyboard_shift |= 2;
     return;
-#if BMC64_NEW_KEYBOARD_INPUT
   case KEYCODE_RightAlt:
     keyboard_right_alt = 1;
     return;
-#endif
   }
 
   if (key >= KEYCODE_a && key <= KEYCODE_z) {
-#if BMC64_NEW_KEYBOARD_INPUT
     unsigned int ch = ui_key_to_char(key, shift_eff);
     if (ch == 0) {
       if (keyboard_right_alt && keyboard_layout_has_altgr(ui_keyboard_layout))
         return;
       ch = (shift_eff ? 'A' : 'a') + key - KEYCODE_a;
     }
-#else
-    char ch;
-    if (shift_eff)
-      ch = 'A' + key - KEYCODE_a;
-    else
-      ch = 'a' + key - KEYCODE_a;
-#endif
     ui_type_char(ch);
   } else if (key == KEYCODE_Backspace) {
     ui_type_char('\b');
   } else {
-#if BMC64_NEW_KEYBOARD_INPUT
     unsigned int ch = ui_key_to_char(key, shift_eff);
-#else
-    char ch = menu_text_layout_key_to_char(key, shift_eff,
-                        ui_keyboard_mapping);
-#endif
     if (ch != '\0') {
       ui_type_char(ch);
     }
@@ -605,9 +542,7 @@ static void ui_key_released(long key) {
     ui_action(ACTION_Escape);
     return;
   case KEYCODE_BackQuote:
-#if BMC64_NEW_KEYBOARD_INPUT
     if (menu_cursor_item[current_menu]->type == TEXTFIELD) return;
-#endif
     ui_action(ACTION_Escape);
     return;
   case KEYCODE_F12:
@@ -640,11 +575,9 @@ static void ui_key_released(long key) {
   case KEYCODE_RightShift:
     keyboard_shift &= ~2;
     return;
-#if BMC64_NEW_KEYBOARD_INPUT
   case KEYCODE_RightAlt:
     keyboard_right_alt = 0;
     return;
-#endif
   }
 }
 
@@ -830,18 +763,11 @@ static void ui_action(long action) {
       do_on_value_changed(menu_cursor_item[current_menu]);
     } else if (cur->type == TEXTFIELD) {
       // Move cursor left
-#if BMC64_NEW_KEYBOARD_INPUT
       if (cur->value > 0) {
         cur->value--;
         while (cur->value > 0 &&
                ((unsigned char)cur->str_value[cur->value] & 0xC0) == 0x80) cur->value--;
       }
-#else
-      cur->value--;
-      if (cur->value < 0) {
-        cur->value = 0;
-      }
-#endif
     }
     break;
   case ACTION_Right:
@@ -875,19 +801,12 @@ static void ui_action(long action) {
       cur->on_open(cur);
     } else if (cur->type == TEXTFIELD) {
       // Move cursor right
-#if BMC64_NEW_KEYBOARD_INPUT
       size_t length = strlen(cur->str_value);
       if (cur->value < length) {
         cur->value++;
         while (cur->value < length &&
                ((unsigned char)cur->str_value[cur->value] & 0xC0) == 0x80) cur->value++;
       }
-#else
-      cur->value++;
-      if (cur->value >= strlen(cur->str_value)) {
-        cur->value = strlen(cur->str_value);
-      }
-#endif
     }
     break;
   case ACTION_Return:
@@ -1368,7 +1287,6 @@ static void ui_render_children(struct menu_item *node,
                       ui_text_width(display_text);
           }
           // draw cursor underneath text
-#if BMC64_NEW_KEYBOARD_INPUT
           int cursor_cells = node->value;
           if (!node->textfield_masked) {
             cursor_cells = 0;
@@ -1382,10 +1300,6 @@ static void ui_render_children(struct menu_item *node,
           }
           ui_draw_rect(value_x + cursor_cells * 8,
                        y, 8, 8, BORDER_COLOR, 1);
-#else
-          ui_draw_rect(value_x + node->value * 8,
-                       y, 8, 8, BORDER_COLOR, 1);
-#endif
           ui_draw_text(display_text, value_x, y, colour);
         }
       }

@@ -88,9 +88,7 @@ static struct menu_item *ram_size_item;
 static struct menu_item *drive_model_8_item;
 static struct menu_item *attach_3plus1_roms_item;
 static struct menu_item *keyboard_mapping_item;
-#if BMC64_NEW_KEYBOARD_INPUT
 static const char *active_keyboard_preset_file;
-#endif
 
 static struct menu_item *c0_lo_item;
 static struct menu_item *c0_hi_item;
@@ -677,9 +675,7 @@ static void load_keymap(void) {
    } else if (keyboard_mapping_item->value == KEYBOARD_MAPPING_MAXI) {
       keymap_file = "rpi_maxi_pos.vkm";
   }
-#if BMC64_NEW_KEYBOARD_INPUT
    if (active_keyboard_preset_file != NULL) keymap_file = active_keyboard_preset_file;
-#endif
    FILE *fp = NULL;
    if (keymap_file != NULL) {
       char path[80];
@@ -1532,7 +1528,6 @@ void emux_log_settings_file(const char *filename) {
 }
 
 // Handle any menu item we've created for this emulator.
-#if BMC64_NEW_KEYBOARD_INPUT
 int emux_set_keyboard_preset(const struct KeyboardPreset *preset) {
    if (preset == NULL || preset->vkm_file == NULL) return -1;
    char path[80];
@@ -1546,7 +1541,6 @@ int emux_set_keyboard_preset(const struct KeyboardPreset *preset) {
    machine_kbd_init();
    return 0;
 }
-#endif
 
 int emux_handle_menu_change(struct menu_item* item) {
   switch (item->id) {
@@ -1588,9 +1582,7 @@ int emux_handle_menu_change(struct menu_item* item) {
       Plus4VM_Reset(vm, 1);
       return 1;
     case MENU_KEYBOARD_MAPPING:
-#if BMC64_NEW_KEYBOARD_INPUT
          active_keyboard_preset_file = NULL;
-#endif
          ui_set_keyboard_mapping(item->value);
       load_keymap();
       machine_kbd_init();

@@ -15,8 +15,7 @@ fi
 
 mkdir -p build
 "$CC" -std=c11 -Wall -Wextra -Werror -Wno-unused-parameter \
-       -ffunction-sections -fdata-sections -DBMC64_KEYBOARD_FEATURE_H \
-       -DBMC64_NEW_KEYBOARD_INPUT=1 -Ithird_party/common \
+       -ffunction-sections -fdata-sections -Ithird_party/common \
        -Ithird_party/circle-stdlib/include \
        -Ithird_party/circle-stdlib/libs/circle/include \
        -Wl,--gc-sections tools/keyboard_test/keyboard_router_test.c \

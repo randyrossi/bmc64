@@ -103,7 +103,7 @@ KEYBOARD_TEST_CC ?= cc
 KEYBOARD_TEST_STAMP = build/.keyboard_tests.stamp
 KEYBOARD_TEST_BIN = build/.keyboard_router_test
 KEYBOARD_TEST_SRCS = tools/keyboard_test/keyboard_router_test.c tools/keyboard_test/run_tests.sh src/keyboard/keyboard_router.c \
-					 src/keyboard/keyboard_router.h src/keyboard/keyboard_feature.h third_party/common/kbd.c \
+					 src/keyboard/keyboard_router.h third_party/common/kbd.c \
 					 src/keyboard/keyboard_layout.h src/keyboard/keyboard_layout.c $(wildcard src/keyboard/layout_*.c)
 
 $(KEYBOARD_TEST_STAMP): $(KEYBOARD_TEST_SRCS)

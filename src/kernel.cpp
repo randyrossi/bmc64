@@ -14,12 +14,9 @@
 // limitations under the License.
 
 #include "kernel.h"
-#include "keyboard/keyboard_feature.h"
 #include "update/update.h"
 
-#if BMC64_NEW_KEYBOARD_INPUT
 #include "keyboard/keyboard_router.h"
-#endif
 
 #include <errno.h>
 #include <math.h>
@@ -56,10 +53,6 @@ static unsigned mouse_button_states[MAX_USB_DEVICES];
 static unsigned usb_input_indices[MAX_USB_DEVICES];
 static bool merged_key_states[MAX_KEY_CODES];
 static unsigned char merged_mod_states;
-#if !BMC64_NEW_KEYBOARD_INPUT
-static bool uiLeftShift = false;
-static bool uiRightShift = false;
-#endif
 
 // USB Caps-Lock -> C64 Shift-Lock. BMC64 consumes USB keys in raw mode, so
 // nothing here drove the keyboard LEDs or latched Shift-Lock. VICE's Shift-
@@ -123,7 +116,6 @@ static long kbdMatrixKeyCodes[8][8] = {
 #endif
 static int kbdRestoreState;
 
-#if BMC64_NEW_KEYBOARD_INPUT
 static void emit_usb_key(unsigned physical_id, long keycode, bool pressed) {
   keyboard_router_physical_key(KEYBOARD_SOURCE_USB, physical_id, keycode, pressed);
 }
@@ -131,7 +123,6 @@ static void emit_usb_key(unsigned physical_id, long keycode, bool pressed) {
 static void emit_gpio_key(unsigned physical_id, long keycode, bool pressed) {
   keyboard_router_physical_key(KEYBOARD_SOURCE_GPIO, physical_id, keycode, pressed);
 }
-#endif
 
 extern "C" {
 int circle_get_machine_timing() {
@@ -975,77 +966,6 @@ ViceApp::TShutdownMode CKernel::Run(void) {
 }
 
 void CKernel::ScanKeyboard() {
-#if !BMC64_NEW_KEYBOARD_INPUT
-  int ui_activated = emu_is_ui_activated();
-
-  int restore = gpioPins[GPIO_KBD_RESTORE_INDEX]->Read();
-  // For restore, there is no public API that triggers it so we will
-  // pass the keycode that will.  NOTE: On the plus/4, this key sym
-  // will be the CLR key according to the keymap.
-  if (restore == LOW && kbdRestoreState == HIGH) {
-     emu_key_pressed(restore_key_sym);
-  } else if (restore == HIGH && kbdRestoreState == LOW) {
-     emu_key_released(restore_key_sym);
-  }
-  kbdRestoreState = restore;
-
-  // Keyboard scan
-  for (int kbdPA = 0; kbdPA < 8; kbdPA++) {
-    gpioPins[kbdPA]->SetMode(GPIOModeOutput);
-    gpioPins[kbdPA]->Write(LOW);
-    circle_sleep(10);
-    for (int kbdPB = 0; kbdPB < 8; kbdPB++) {
-      // Read PB line
-      int val = gpioPins[kbdPB + 8]->Read();
-
-      // My PA/PB to keycode matrix is transposed and I'm too lazy to fix
-      // it. Just swap PB and PA here for the keycode lookup.
-      long keycode = kbdMatrixKeyCodes[kbdPB][kbdPA];
-
-      if (ui_activated) {
-        if (val == LOW && kbdMatrixStates[kbdPA][kbdPB] == HIGH) {
-          if (keycode == KEYCODE_LeftShift) {
-             uiLeftShift = true;
-          } else if (keycode == KEYCODE_RightShift) {
-             uiRightShift = true;
-          }
-
-          if (keycode == KEYCODE_Right && (uiLeftShift || uiRightShift)) {
-             emu_key_pressed(KEYCODE_Left);
-          } else if (keycode == KEYCODE_Down && (uiLeftShift || uiRightShift)) {
-             emu_key_pressed(KEYCODE_Up);
-          } else {
-             emu_key_pressed(keycode);
-          }
-        } else if (val == HIGH && kbdMatrixStates[kbdPA][kbdPB] == LOW) {
-          if (keycode == KEYCODE_LeftShift) {
-             uiLeftShift = false;
-          } else if (keycode == KEYCODE_RightShift) {
-             uiRightShift = false;
-          }
-          if (keycode == KEYCODE_Right && (uiLeftShift || uiRightShift)) {
-             emu_key_released(KEYCODE_Left);
-          } else if (keycode == KEYCODE_Down && (uiLeftShift || uiRightShift)) {
-             emu_key_released(KEYCODE_Up);
-          } else {
-             emu_key_released(keycode);
-          }
-        }
-      } else {
-        // TODO: Need to watch out for key combos here.  Hook into
-        // the handle functions directly in kbd.c so we can invoke the
-        // same hotkey funcs.
-        if (val == LOW && kbdMatrixStates[kbdPA][kbdPB] == HIGH) {
-          emu_key_pressed(keycode);
-        } else if (val == HIGH && kbdMatrixStates[kbdPA][kbdPB] == LOW) {
-          emu_key_released(keycode);
-        }
-      }
-      kbdMatrixStates[kbdPA][kbdPB] = val;
-    }
-    gpioPins[kbdPA]->SetMode(GPIOModeInputPullUp);
-  }
-#else
   int restore = gpioPins[GPIO_KBD_RESTORE_INDEX]->Read();
   // For restore, there is no public API that triggers it so we will
   // pass the keycode that will.  NOTE: On the plus/4, this key sym
@@ -1080,7 +1000,6 @@ void CKernel::ScanKeyboard() {
     }
     gpioPins[kbdPA]->SetMode(GPIOModeInputPullUp);
   }
-#endif
 }
 
 // Read joystick state.
@@ -1515,161 +1434,6 @@ void CKernel::MouseStatusHandler(unsigned nButtons, int deltaX, int deltaY,
 void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
                                   const unsigned char RawKeys[6],
                                   void *pContext) {
-#if !BMC64_NEW_KEYBOARD_INPUT
-
-  unsigned input_index = *(unsigned *)pContext;
-  if (input_index >= MAX_USB_DEVICES) {
-    return;
-  }
-
-  bool new_states[MAX_KEY_CODES];
-  memset(new_states, 0, MAX_KEY_CODES * sizeof(bool));
-
-  // Combine every keyboard report so releasing one device does not release
-  // a key that remains held on another device.
-  mod_states[input_index] = ucModifiers;
-  for (unsigned i = 0; i < 6; i++) {
-    const unsigned char key = RawKeys[i];
-    if (key != 0 && key < MAX_KEY_CODES) {
-      new_states[key] = true;
-    }
-  }
-  memcpy(key_states[input_index], new_states, sizeof(new_states));
-
-  unsigned char new_mod_states = 0;
-  for (unsigned i = 0; i < MAX_USB_DEVICES; i++) {
-    new_mod_states |= mod_states[i];
-  }
-
-  // Compare the merged modifier state to handle modifier key transitions.
-  int v = 1;
-  for (int i = 0; i < 8; i++) {
-    if ((new_mod_states & v) && !(merged_mod_states & v)) {
-      switch (i) {
-      case 0: // LeftControl
-        emu_key_pressed(KEYCODE_LeftControl);
-        break;
-      case 4: // RightControl
-        emu_key_pressed(KEYCODE_RightControl);
-        break;
-      case 1: // LeftShift
-        if (emu_is_ui_activated()) {
-          uiLeftShift = true;
-        }
-        emu_key_pressed(KEYCODE_LeftShift);
-        break;
-      case 5: // RightShift
-        if (emu_is_ui_activated()) {
-          uiRightShift = true;
-        }
-        emu_key_pressed(KEYCODE_RightShift);
-        break;
-      case 3: // LeftSuper
-        emu_key_pressed(KEYCODE_LeftSuper);
-        break;
-      case 2: // LeftAlt
-        emu_key_pressed(KEYCODE_LeftAlt);
-        break;
-      case 6: // RightAlt
-        emu_key_pressed(KEYCODE_RightAlt);
-        break;
-      default:
-        break;
-      }
-    } else if (!(new_mod_states & v) && (merged_mod_states & v)) {
-      switch (i) {
-      case 0: // LeftControl
-        emu_key_released(KEYCODE_LeftControl);
-        break;
-      case 4: // RightControl
-        emu_key_released(KEYCODE_RightControl);
-        break;
-      case 1: // LeftShift
-        if (emu_is_ui_activated()) {
-          uiLeftShift = false;
-        }
-        emu_key_released(KEYCODE_LeftShift);
-        break;
-      case 5: // RightShift
-        if (emu_is_ui_activated()) {
-          uiRightShift = false;
-        }
-        emu_key_released(KEYCODE_RightShift);
-        break;
-      case 3: // LeftSuper
-        emu_key_released(KEYCODE_LeftSuper);
-        break;
-      case 2: // LeftAlt
-        emu_key_released(KEYCODE_LeftAlt);
-        break;
-      case 6: // RightAlt
-        emu_key_released(KEYCODE_RightAlt);
-        break;
-      default:
-        break;
-      }
-    }
-    v = v * 2;
-  }
-  merged_mod_states = new_mod_states;
-
-  // Compare merged key state to handle press/release events.
-  int ui_activated = emu_is_ui_activated();
-  for (unsigned i = 1; i < MAX_KEY_CODES; i++) {
-    bool merged_state = false;
-    for (unsigned device = 0; device < MAX_USB_DEVICES; device++) {
-      merged_state |= key_states[device][i];
-    }
-
-    // Caps Lock -> C64 Shift-Lock. A physical make toggles the lock; the
-    // emulator then sees Caps Lock held for as long as the lock is engaged
-    // (VICE's Shift-Lock keymap flag is momentary), and the Caps LED follows.
-    // Works whether the menu is up or not: the menu reads the state via
-    // emu_get_keyboard_shiftlock(), and menu_about_to_deactivate() re-applies
-    // it to the emulator on the way out (the emulator does not see key events
-    // while the menu holds them).
-    if (i == KEYCODE_CapsLock) {
-      if (!caps_phys_prev && merged_state) {
-        kbd_caps_lock = !kbd_caps_lock;
-        kbd_refresh_led_state();
-      }
-      caps_phys_prev = merged_state;
-      merged_state = kbd_caps_lock; // emulator sees Shift Lock held while engaged
-    }
-
-    if (merged_key_states[i] == true && merged_state == false) {
-      if (ui_activated) {
-        // We have to handle shift+left/right here or else our ui
-        // isn't navigable by keyrah with real C64 board. Keep
-        // key_states below managing the state of the original key,
-        // not the translated one.
-        if ((uiLeftShift || uiRightShift) && i == KEYCODE_Right) {
-          emu_key_released(KEYCODE_Left);
-        } else if ((uiLeftShift || uiRightShift) && i == KEYCODE_Down) {
-          emu_key_released(KEYCODE_Up);
-        } else {
-          emu_key_released(i);
-        }
-      } else {
-        emu_key_released(i);
-      }
-    } else if (merged_key_states[i] == false && merged_state == true) {
-      if (ui_activated) {
-        // See above note on shift.
-        if ((uiLeftShift || uiRightShift) && i == KEYCODE_Right) {
-          emu_key_pressed(KEYCODE_Left);
-        } else if ((uiLeftShift || uiRightShift) && i == KEYCODE_Down) {
-          emu_key_pressed(KEYCODE_Up);
-        } else {
-          emu_key_pressed(i);
-        }
-      } else {
-        emu_key_pressed(i);
-      }
-    }
-    merged_key_states[i] = merged_state;
-  }
-#else
 
   unsigned input_index = *(unsigned *)pContext;
   if (input_index >= MAX_USB_DEVICES) {
@@ -1787,7 +1551,6 @@ void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
     }
     merged_key_states[i] = merged_state;
   }
-#endif
 }
 
 int CKernel::ReadDebounced(int pinIndex) {

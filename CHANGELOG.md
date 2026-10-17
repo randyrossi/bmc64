@@ -38,7 +38,7 @@
     * VIC-20 add BMC modem on the userport RS-232 (KERNAL device 2)
     * Fix for BMC modem to ignore anything typed before `AT`, so a stray byte no longer makes the next command fail
 
-  * Refactor of keyboard input (`BMC64_NEW_KEYBOARD_INPUT`) 
+  * Refactor of keyboard input 
     * **Warning:** choose your keyboard again after updating, and back up any customised `.vkm` keymap files before copying the new ones over, as symbolic keymaps now use a new format. See [Keyboards in the User Guide](docs/USER_GUIDE.md#keyboards)
     * Add support for international keyboard layouts, in OSD and Vice
     * Backport VICE 3.4 Shift, Ctrl and AltGr keymap conditions, and improve shift handling for symbolic mappings

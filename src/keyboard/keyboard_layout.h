@@ -1,9 +1,7 @@
 #ifndef BMC64_KEYBOARD_LAYOUT_H
 #define BMC64_KEYBOARD_LAYOUT_H
 
-#include "keyboard_feature.h"
 
-#if BMC64_NEW_KEYBOARD_INPUT
 
 typedef enum {
    KEYBOARD_LAYOUT_C64 = 1,
@@ -98,5 +96,4 @@ char keyboard_layout_maxi_char(long key, int shifted);
 }
 #endif
 
-#endif
 #endif

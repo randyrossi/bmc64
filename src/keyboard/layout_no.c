@@ -1,7 +1,6 @@
 #include "keyboard_layout.h"
 #include "../../third_party/common/keycodes.h"
 
-#if BMC64_NEW_KEYBOARD_INPUT
 static const KeyboardLayoutKey keys[] = {
    {KEYCODE_1, '1', '!', 0, 0}, {KEYCODE_2, '2', '"', '@', 0},
    {KEYCODE_3, '3', '#', 0xA3, 0}, {KEYCODE_4, '4', 0xA4, '$', 0},
@@ -20,4 +19,3 @@ static const KeyboardLayoutKey keys[] = {
 unsigned int keyboard_layout_no_char(long key, int shifted, int altgr) {
    return keyboard_layout_lookup(keys, sizeof(keys) / sizeof(keys[0]), key, shifted, altgr);
 }
-#endif

@@ -1,6 +1,5 @@
 #include "keyboard_layout.h"
 
-#if BMC64_NEW_KEYBOARD_INPUT
 #include "../../third_party/common/emux_api.h"
 
 // One row per choice. Rows with the same layout are the "Keyboard Mapping"
@@ -202,5 +201,3 @@ int keyboard_layout_has_altgr(MenuKeyboardLayout layout) {
 int keyboard_layout_effective_shift(int shifted, int caps_lock, int altgr) {
    return shifted || (caps_lock && !altgr);
 }
-
-#endif

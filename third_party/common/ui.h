@@ -223,9 +223,7 @@ void ui_render_single_frame(void);
 
 void ui_check_key(void);
 void ui_set_keyboard_mapping(int mapping);
-#if BMC64_NEW_KEYBOARD_INPUT
 void ui_set_keyboard_layout(MenuKeyboardLayout layout);
-#endif
 
 void ui_pop_all_and_toggle(void);
 

@@ -38,7 +38,6 @@
 
 #ifdef RASPI_COMPILE
 extern void raspi_keymap_changed(int, int, signed long);
-#include "../../../src/keyboard/keyboard_feature.h"
 /* BMC64: when one host key event changes both C64 Shift and another key
    (symbolic keymap DESHIFT / virtual shift), latch the two changes one
    frame apart so a keyboard scan cannot mix old Shift with the new key.
@@ -47,9 +46,7 @@ extern void raspi_keymap_changed(int, int, signed long);
      https://sourceforge.net/p/vice-emu/bugs/1658/ (Shift+8 sometimes gives a graphic char)
      https://sourceforge.net/p/vice-emu/bugs/2172/ (crsr up sometimes gives crsr down)
      https://vice-emu.sourceforge.io/vice_1.html#SEC10 (manual: symbolic keymap shift issues) */
-#if BMC64_NEW_KEYBOARD_INPUT
 #define BMC64_KEYBOARD_SPLIT_LATCH 1
-#endif
 #endif
 
 #ifndef RAND_MAX

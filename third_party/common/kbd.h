@@ -30,14 +30,6 @@
 #include "circle.h"
 #include "keycodes.h"
 
-struct key_combo_state_s {
-  long second_key; // the 2nd key to press to invoke this combo
-  int invoked;     // set when the combo is completed
-  int function;    // what to do
-};
-
-typedef struct key_combo_state_s key_combo_state_t;
-
 extern void kbd_arch_init(void);
 extern int kbd_arch_get_host_mapping(void);
 extern signed long kbd_arch_keyname_to_keynum(char *keyname);

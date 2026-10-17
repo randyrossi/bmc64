@@ -1,6 +1,4 @@
-#include "keyboard_feature.h"
 
-#if BMC64_NEW_KEYBOARD_INPUT
 
 #include <assert.h>
 
@@ -241,5 +239,3 @@ static void release_key(long key, int to_ui) {
 void emu_key_released(long key) {
 	release_key(key, ui_enabled);
 }
-
-#endif
