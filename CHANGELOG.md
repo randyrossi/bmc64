@@ -19,7 +19,6 @@
   * Fix long filenames crashing disk attach and autostart #386
   * Support 255-byte names in the OSD and Web UI
   * Prevent Web UI rename truncation
-
   * Profiles (see [PROFILES.md](docs/PROFILES.md)):  #213 #295 #92 
     * Ability to switch machines within a profile added and profiles keep BMC64 settings per machine (`settings-<machine>.txt`)
     * Profiles for another machine: choosing one switches machine and restarts #213
@@ -31,14 +30,12 @@
     * C128 keymaps: add the numeric keypad and the TAB, ALT, LINE FEED, NO SCROLL and CAPS LOCK keys, and the £ key next to left Shift in Positional #229
     * Add German keyboard layout for C128 #406
     * Add US English Positional keyboard mapping for C128, VIC-20 and Plus/4
-
   * Networking added to all machines
     * Add networking to all machines (added to: Plus/4, Plus4Emu, Vic20, PET)
     * Add WebUI to all machines (added to: Plus/4, Plus4Emu, Vic20, PET)
     * Plus/4 & Plus4Emu add BMC modem on the built-in ACIA ($FD00)
     * VIC-20 add BMC modem on the userport RS-232 (KERNAL device 2)
     * Fix for BMC modem to ignore anything typed before `AT`, so a stray byte no longer makes the next command fail
-
   * Refactor of keyboard input 
     * **Warning:** choose your keyboard again after updating, and back up any customised `.vkm` keymap files before copying the new ones over, as symbolic keymaps now use a new format. See [Keyboards in the User Guide](docs/USER_GUIDE.md#keyboards)
     * Add support for international keyboard layouts, in OSD and Vice
