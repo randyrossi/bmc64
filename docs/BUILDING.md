@@ -76,6 +76,24 @@ Once the *make_machines.sh* build is complete, you will have kernel files with a
 * *make\_all.sh [pi0|pi2|pi3]*: Builds third party libraries (Vice/Circle) and will also build a C64 image for the selected Pi model. This step will likely fail if you don't run *clean\_all.sh* first.
 * *make\_machines.sh [pi0|pi2|pi3]*: Builds all machines for the selected Pi model. This step will likely fail if you don't run *make\_all.sh* first.
 
+### Tag release CI
+
+Pushing a `v*` tag starts the GitHub Actions release workflow. It first checks
+that the tag matches the source version, then builds `pi0`, `pi2`, and `pi3`
+in parallel on separate runners. Each board builds all six emulator kernels
+and uploads them as a board-named artifact.
+
+Only after all three builds succeed does a separate release job download the
+artifacts into `pi0/`, `pi2/`, and `pi3/`. It uses a fresh recursive checkout
+in `pi3/` for the support files and packaging scripts, then runs
+`make_release.sh` to assemble and validate the complete SD-card release zip
+(including licenses, Wi-Fi firmware, and the updater manifest when enabled).
+The zip is attached to a draft GitHub release, as before. Intermediate kernel
+artifacts are retained for one day.
+
+This does not change local builds: `build_sdcard.sh` still builds the requested
+boards sequentially.
+
 
 ----
 ## Problems

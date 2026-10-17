@@ -6,25 +6,17 @@ on:
       - 'v*'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  build:
+  validate:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install dependencies
-        run: |
-             sudo apt-get install -y build-essential automake autoconf libtool pkg-config autoconf-archive autotools-dev xa65 make cmake automake m4 bison byacc flex texinfo
-
-      - name: Checkout for pi3
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          path: pi3
 
       - name: Verify tag matches source version
-        working-directory: pi3
         env:
           ACTUAL_TAG: ${{ github.ref_name }}
         run: |
@@ -43,35 +35,60 @@ jobs:
                exit 1
              fi
 
-      - name: Checkout for pi2
+  build:
+    needs: validate
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        board: [pi0, pi2, pi3]
+
+    steps:
+      - name: Install dependencies
+        run: |
+             sudo apt-get install -y build-essential automake autoconf libtool pkg-config autoconf-archive autotools-dev xa65 make cmake automake m4 bison byacc flex texinfo
+
+      - name: Checkout for ${{ matrix.board }}
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          path: pi2
+          path: ${{ matrix.board }}
 
-      - name: Checkout for pi0
+      - name: Build ${{ matrix.board }}
+        working-directory: ${{ matrix.board }}
+        env:
+          BOARD: ${{ matrix.board }}
+        run: |
+             ./make_all.sh "$BOARD"
+             ./make_machines.sh "$BOARD"
+
+      - name: Upload kernels
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.board }}
+          path: ${{ matrix.board }}/*.img.*
+          if-no-files-found: error
+          retention-days: 1
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout release files
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          path: pi0
+          path: pi3
 
-      - name: Build pi3
-        working-directory: pi3
-        run: |
-             ./make_all.sh pi3
-             ./make_machines.sh pi3
-
-      - name: Build pi2
-        working-directory: pi2
-        run: |
-             ./make_all.sh pi2
-             ./make_machines.sh pi2
-
-      - name: Build pi0
-        working-directory: pi0
-        run: |
-             ./make_all.sh pi0
-             ./make_machines.sh pi0
+      - name: Download kernels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: pi*
+          path: .
+          merge-multiple: false
 
       - name: Zip release
         run: ./pi3/make_release.sh
