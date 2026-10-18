@@ -1,0 +1,70 @@
+name: Manual C/C++ Build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        board: [pi0, pi2, pi3]
+
+    steps:
+      - name: Install dependencies
+        run: |
+             sudo apt-get install -y build-essential automake autoconf libtool pkg-config autoconf-archive autotools-dev xa65 make cmake automake m4 bison byacc flex texinfo
+
+      - name: Checkout for ${{ matrix.board }}
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: ${{ matrix.board }}
+
+      - name: Build ${{ matrix.board }}
+        working-directory: ${{ matrix.board }}
+        env:
+          BOARD: ${{ matrix.board }}
+        run: |
+             ./make_all.sh "$BOARD"
+             ./make_machines.sh "$BOARD"
+
+      - name: Upload kernels
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.board }}
+          path: ${{ matrix.board }}/*.img.*
+          if-no-files-found: error
+          retention-days: 1
+
+  package:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout release files
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: pi3
+
+      - name: Download kernels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: pi*
+          path: .
+          merge-multiple: false
+
+      - name: Zip release
+        run: ./pi3/make_release.sh
+
+      - name: Upload release zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: bmc64-files
+          path: bmc64-*.files.zip
+          if-no-files-found: error
