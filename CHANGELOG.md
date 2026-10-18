@@ -1,3 +1,7 @@
+## 5.3.1 (pre-release)
+  * Modem Address now has an *Off* option, and it is the default. 
+  * Fix the C64/C128 modem being enabled at $DE00 at power-on even with *Network Device* off or a different *Modem Address* selected
+
 ## 5.3.0
   * Review and update license notices
   * Add *Warp after boot* to start in warp mode at power-on and keep warp on after an autostart #405

@@ -65,7 +65,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "5.3.0"
+#define VERSION_STRING "5.3.1"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -1583,8 +1583,11 @@ static int save_settings_to(const char *settings_filename,
             timezone_offset_item->choice_ints[timezone_offset_item->value]);
   }
   if (network_modem_address_item != NULL) {
-    fprintf(fp, "network_modem_address=%d\n",
-            network_modem_address_item->value);
+    // Saved as the address (0 = Off) rather than the menu index. The
+    // old index key "network_modem_address" is ignored so every machine
+    // starts with the modem off and out of cartridge I/O space.
+    fprintf(fp, "network_modem_base=%d\n",
+            acia_network_addresses[network_modem_address_item->value]);
   }
   if (network_modem_baud_item != NULL) {
     fprintf(fp, "network_modem_baud=%d\n",
@@ -1913,10 +1916,9 @@ static void load_settings() {
               sizeof(saved_webui_pin) - 1);
       saved_webui_pin[sizeof(saved_webui_pin) - 1] = '\0';
     } else if (network_modem_address_item != NULL &&
-               strcmp(name, "network_modem_address") == 0) {
-      if (value >= 0 && value < network_modem_address_item->num_choices &&
-          circle_set_acia_network_address(acia_network_addresses[value])) {
-        network_modem_address_item->value = value;
+               strcmp(name, "network_modem_base") == 0) {
+      if (circle_set_acia_network_address(value)) {
+        network_modem_address_item->value = acia_network_address_index(value);
       }
     } else if (network_modem_baud_item != NULL &&
                strcmp(name, "network_modem_baud") == 0) {
@@ -4982,9 +4984,11 @@ void build_menu(struct menu_item *root) {
 
   load_settings();
 
-  // The VIC-20 userport modem is off by default in VICE; follow Network
-  // Device (this also keeps the unused ACIA cartridge off).
-  if (emux_machine_class == BMC64_MACHINE_CLASS_VIC20 &&
+  // The C64/C128 ACIA and the VIC-20 userport modem are off by default;
+  // follow Network Device (and on C64/C128 the Modem Address too).
+  if ((emux_machine_class == BMC64_MACHINE_CLASS_VIC20 ||
+       emux_machine_class == BMC64_MACHINE_CLASS_C64 ||
+       emux_machine_class == BMC64_MACHINE_CLASS_C128) &&
       network_device_item != NULL) {
     circle_set_acia_network_enabled(network_device_item->value != 0);
   }

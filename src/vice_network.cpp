@@ -216,6 +216,20 @@ extern "C" {
 #include "../third_party/vice-3.3/src/resources.h"
 }
 
+// The ACIA is only in I/O space when a network device is on and a modem
+// address is selected; address 0 is "Off".
+static int acia_network_enabled;
+static int acia_network_address;
+
+static int ApplyAciaNetwork(void) {
+  if (acia_network_enabled && acia_network_address != 0) {
+    return resources_set_int("Acia1Mode", 1) == 0 &&
+           resources_set_int("Acia1Base", acia_network_address) == 0 &&
+           resources_set_int("Acia1Enable", 1) == 0;
+  }
+  return resources_set_int("Acia1Enable", 0) == 0;
+}
+
 extern "C" int circle_get_acia_network_enabled(void) {
   int enabled = 0;
   resources_get_int("Acia1Enable", &enabled);
@@ -223,26 +237,26 @@ extern "C" int circle_get_acia_network_enabled(void) {
 }
 
 extern "C" int circle_get_acia_network_address(void) {
-  int address = 0;
-  resources_get_int("Acia1Base", &address);
-  return address;
+  return acia_network_address;
 }
 
 extern "C" int circle_set_acia_network_address(int address) {
   if (!IsAciaNetworkAddress(address)) {
     return 0;
   }
-  return resources_set_int("Acia1Mode", 1) == 0 &&
-         resources_set_int("Acia1Base", address) == 0;
+  int previous = acia_network_address;
+  acia_network_address = address;
+  if (!ApplyAciaNetwork()) {
+    acia_network_address = previous;
+    ApplyAciaNetwork();
+    return 0;
+  }
+  return 1;
 }
 
 extern "C" int circle_set_acia_network_enabled(int enabled) {
-  if (enabled) {
-    if (resources_set_int("Acia1Mode", 1) < 0) {
-      return 0;
-    }
-  }
-  return resources_set_int("Acia1Enable", enabled) == 0;
+  acia_network_enabled = enabled ? 1 : 0;
+  return ApplyAciaNetwork();
 }
 #elif defined(RASPI_PLUS4)
 extern "C" {

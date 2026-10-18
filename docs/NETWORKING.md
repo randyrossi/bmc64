@@ -10,8 +10,8 @@ On the Raspberry Pi Zero, see [Optimising BMC64](OPTIMISING.md) for how networki
 
 BMC64 runs without Linux. The Raspberry Pi networking stack is initialized at
 startup and is used by a software modem connected to VICE's ACIA1 interface.
-The emulated C64 or C128 program sees a SwiftLink/Turbo232-compatible ACIA at
-`$DE00` by default. The BMC modem translates modem commands into outbound TCP
+Once a `Modem Address` is selected, the emulated C64 or C128 program sees a
+SwiftLink/Turbo232-compatible ACIA at that address. The BMC modem translates modem commands into outbound TCP
 connections.
 
 Current behavior:
@@ -20,8 +20,10 @@ Current behavior:
   Plus/4 and Plus4Emu. The PET also has the `Network` menu, but only for the
   [Web UI](#web-ui): it has no modem.
 - The choices are `Off`, `Ethernet`, and `WiFi`.
-- `Modem Address` selects `$DE00` (default) or alternatively `$D700`, `$DF00`,
-  or `$DF80`. On the Plus/4 the modem is fixed at `$FD00`, and on the VIC-20
+- `Modem Address` is `Off` by default, which keeps the modem out of I/O space
+  so it cannot clash with cartridges. Networking (and the Web UI) still works
+  with the modem `Off`. To use the modem on the C64 or C128, select `$D700`
+  (recommended), `$DE00`, `$DF00` or `$DF80`. On the Plus/4 the modem is fixed at `$FD00`, and on the VIC-20
   it is on the userport, where `Modem Baud` sets the speed instead.
   - `$D700` is recommended if you are using an IDE64 and REU at the same time.
 - Ethernet uses the Raspberry Pi's onboard Ethernet controller when present.
@@ -44,9 +46,9 @@ HTTP client behavior.
 > [!WARNING]
 > The emulated SwiftLink modem occupies I/O space that some cartridges also
 use (for example REU, IDE64, GeoRAM, EasyFlash, MagicDisk or other `$DE00`/`$DF00` devices). If
-networking is enabled at the same time as a conflicting cartridge you may
+the modem is enabled at the same time as a conflicting cartridge you may
 see crashes or a non-responsive modem. Try a different `Modem Address`, or
-set `Network Device` to `Off` when you are not using networking.
+set `Modem Address` to `Off` when you are not using the modem.
 
 # Requirements
 
@@ -70,8 +72,9 @@ card.
 1. Connect the Raspberry Pi to the network with Ethernet.
 2. Boot BMC64 and open `Network`.
 3. Set `Network Device` to `Ethernet`.
-4. Save the setting and reboot when prompted.
-5. Open `Network` again and check `IP Address`.
+4. To use the modem, set `Modem Address` (`$D700` is recommended).
+5. Save the setting and reboot when prompted.
+6. Open `Network` again and check `IP Address`.
 
 The Ethernet choice is disabled when the selected Raspberry Pi model does not
 have onboard Ethernet. The IP address is populated when the Network menu is
@@ -91,7 +94,7 @@ firmware on the SD card.
 2. Accept the reboot prompt, or save the settings and reboot.
 3. After reboot, open `Network -> WiFi Settings`.
 4. Use the Wi-Fi scan to select an access point when scanning is available.
-5. Select the `Modem Address` desired.
+5. To use the modem, select the `Modem Address` desired (it is `Off` by default).
 6. Select `WPA-PSK` or `None` as appropriate.
 7. Set the two-letter Wi-Fi country code.
 8. Choose `Enter Password & Reboot`, enter the WPA password, and select
@@ -195,7 +198,7 @@ Autostart workflow.
 
 The current BMC64 changelog specifically calls out this setup:
 
-1. Enable Ethernet or Wi-Fi and reboot BMC64.
+1. Enable Ethernet or Wi-Fi, select a `Modem Address` and reboot BMC64.
 2. Start CCGMS Ultimate.
 3. In CCGMS, select the `Swift/DE` or appropriate modem.
    * `D7`, `DE` or `DF` should match the Modem address selected.
@@ -221,8 +224,8 @@ the normal BMC64 disk or Autostart workflow.
 **Note:** DesTerm 128 uses the C128 80-column display.
 
 1. Enable Ethernet or Wi-Fi in BMC64 and reboot it if prompted.
-2. In BMC64's `Network` menu, note the selected `Modem Address`. `$DE00` is
-  the default.
+2. In BMC64's `Network` menu, select a `Modem Address` (it is `Off` by
+  default).
 3. DesTerm should automatically detect the modem and address.
 4. Use DesTerm's dialer to enter the BBS hostname or IPv4 address and its TCP
   port. Alternatively, enter a dial command in the terminal, for example:

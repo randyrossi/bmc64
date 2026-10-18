@@ -118,8 +118,10 @@ enum circle_network_status {
 };
 
 #define CIRCLE_ACIA_NETWORK_ADDRESS_DEFAULT 0
-#define CIRCLE_ACIA_NETWORK_ADDRESS_VALUES { 0xd700, 0xde00, 0xdf00, 0xdf80 }
-#define CIRCLE_ACIA_NETWORK_ADDRESS_LABELS { "D700", "DE00", "DF00", "DF80" }
+// Address 0 is "Off": networking stays up (e.g. for the web UI) but the
+// modem ACIA is kept out of I/O space so it cannot clash with cartridges.
+#define CIRCLE_ACIA_NETWORK_ADDRESS_VALUES { 0, 0xd700, 0xde00, 0xdf00, 0xdf80 }
+#define CIRCLE_ACIA_NETWORK_ADDRESS_LABELS { "Off", "D700", "DE00", "DF00", "DF80" }
 
 // Returns nonzero and writes the current address when DHCP is bound.
 int circle_get_network_ip_address(char *address, unsigned int address_size);

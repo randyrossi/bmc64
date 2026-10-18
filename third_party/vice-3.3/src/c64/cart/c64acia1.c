@@ -45,8 +45,9 @@
 #define myaciadev       acia1dev
 
 #ifdef HAVE_RS232BMC
-/* BMC64 exposes its built-in TCP modem as an always-present SwiftLink. */
-#define ACIA1_DEFAULT_ENABLED 1
+/* BMC64 exposes its built-in TCP modem as a SwiftLink. It stays off until
+   the Network menu settings enable it, so it does not take I/O space. */
+#define ACIA1_DEFAULT_ENABLED 0
 #define ACIA1_DEFAULT_MODE ACIA_MODE_SWIFTLINK
 #else
 #define ACIA1_DEFAULT_ENABLED 0
