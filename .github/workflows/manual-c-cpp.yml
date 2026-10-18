@@ -63,8 +63,8 @@ jobs:
         run: ./pi3/make_release.sh
 
       - name: Upload release zip
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: bmc64-files
           path: bmc64-*.files.zip
+          archive: false
           if-no-files-found: error
