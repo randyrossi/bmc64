@@ -702,6 +702,11 @@ If your gamepad doesn't work drop create an issue, and we can see if we can get 
 
 Known gamepads now have a default binding configuration. Using "Reset to Default Bindings" can be used to revert to default bindings.
 
+**8BitDo M30 2.4G detected as a Switch Pro controller**: the receiver can
+be left in Switch mode, causing incorrect button mappings. With the pad
+connected, hold Home (the heart) and D-pad Down for 5 seconds until the
+LEDs flash to switch back to its own 6-button mode. The mode will then be retained solving connection issues.
+
 ### Gamepad config
 
 As mentioned, gamepad support is limited.  Some gamepads advertise their dpads as analog sticks so if your dpad setting doesn't work and you want to use a dpad, try switching to analog.  Also, if the analog setting doesn't work, you may have to do some work to find the right axis # for both X and Y.  Usually, axis 0 and 1 are left stick X and Y axes but not always.  My cheap 'Kiwitata' gamepads are 3 & 4.  If your gamepad has two sticks, try 2 & 3 for right X/Y.
