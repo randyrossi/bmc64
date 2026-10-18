@@ -1,6 +1,8 @@
 ## 5.3.1 (pre-release)
   * Modem Address now has an *Off* option, and it is the default. 
   * Fix the C64/C128 modem being enabled at $DE00 at power-on even with *Network Device* off or a different *Modem Address* selected
+    * Possible fix for some cartridges not loading
+  * Forcing the 8bitdo M30 2.4G controller into 6B mode resolves the intermittent Switch Pro detection issues and removes need for usbpowerdelay.
 
 ## 5.3.0
   * Review and update license notices
