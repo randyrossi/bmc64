@@ -37,7 +37,7 @@ gpu_mem=64
 disable_splash=1
 boot_delay=0
 
-# FOR RASBPERRY PI 1 USERS ONLY USING BMC64-LITE
+# FOR RASPBERRY PI 1 USERS ONLY USING BMC64-LITE
 # 
 # Some demos/games will simply not perform well at the
 # default 700mhz clock rate. This will be evident as

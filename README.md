@@ -34,7 +34,7 @@ See the [project scope](docs/SCOPE.md) for BMC64's priorities and what is consid
 
 This project uses VICE for emulation without any O/S (Linux) distribution installed on the Pi. VICE (Versatile Commodore Emulator) platform dependencies are satisfied using circle-stdlib.
 
-For Plus/4 emulation on the Rasbperry Pi 3, a more accurate emulator using Plus4Emu is also available.
+For Plus/4 emulation on the Raspberry Pi 3, a more accurate emulator using Plus4Emu is also available.
 
 ## Getting Started
 

@@ -927,9 +927,9 @@ static void show_about() {
   ui_menu_add_button(MENU_TEXT, about_root, desc);
 
 #ifdef RASPI_LITE
-  ui_menu_add_button(MENU_TEXT, about_root, "For the Rasbperry Pi Zero");
+  ui_menu_add_button(MENU_TEXT, about_root, "For the Raspberry Pi Zero");
 #else
-  ui_menu_add_button(MENU_TEXT, about_root, "For the Rasbperry Pi 2/3");
+  ui_menu_add_button(MENU_TEXT, about_root, "For the Raspberry Pi 2/3");
 #endif
 
   ui_menu_add_divider(about_root);
