@@ -93,7 +93,7 @@ Copy the ROMs for the machine you intend to use into its corresponding directory
 | `dos4000` | `dos4000-fd-350022.bin` | CMD FD-4000 drive ROM |
 | `dosCMDHD` | `bootromCMDHD-v2-80.bin` | CMD HD boot ROM |
 
-### PLUS4EMU (Pi 3 only)
+### PLUS4EMU (Pi 3, 4 and 5 only)
 
 | BMC ROM name | VICE 3.10 ROM name | Description |
 | --- | --- | --- |

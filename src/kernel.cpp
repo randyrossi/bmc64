@@ -14,6 +14,9 @@
 // limitations under the License.
 
 #include "kernel.h"
+#if RASPPI >= 4
+#include "pi45/board.h"
+#endif
 #include "update/update.h"
 
 #include "keyboard/keyboard_router.h"
@@ -955,6 +958,9 @@ ViceApp::TShutdownMode CKernel::Run(void) {
   while(1) {
       UpdateUSBPlugAndPlay();
       DrainLogging();
+#if RASPPI >= 4
+      Pi45BoardPoll();
+#endif
 #ifdef BMC64_PERF_STATS
       perf_stats_service();
 #endif
@@ -1434,6 +1440,9 @@ void CKernel::MouseStatusHandler(unsigned nButtons, int deltaX, int deltaY,
 void CKernel::KeyStatusHandlerRaw(unsigned char ucModifiers,
                                   const unsigned char RawKeys[6],
                                   void *pContext) {
+#if RASPPI >= 4
+  Pi45BoardKeys(RawKeys);
+#endif
 
   unsigned input_index = *(unsigned *)pContext;
   if (input_index >= MAX_USB_DEVICES) {
@@ -1922,6 +1931,9 @@ void CKernel::circle_get_scaling_params(int display,
                                         int *fbw, int *fbh,
                                         int *sx, int *sy) {
   mViceOptions.GetScalingParams(display, fbw, fbh, sx, sy);
+#if RASPPI >= 4
+  Pi45BoardScalingParams(fbw, fbh, sx, sy);
+#endif
 }
 
 void CKernel::circle_set_interpolation(int enable) {

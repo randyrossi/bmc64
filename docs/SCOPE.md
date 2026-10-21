@@ -10,7 +10,7 @@ BMC64 is a bare-metal Commodore emulator for the Raspberry Pi. This document des
 
 * **VICE defaults and settings are preferred.** Where practical, BMC64 aims to use the same settings, defaults, and behaviour as VICE rather than introducing BMC64-specific alternatives. Differences may be necessary where required by the bare-metal environment or BMC64-specific hardware support.
 
-* **BMC64 targets specific Raspberry Pi models.** Supported models include the Raspberry Pi Zero/W, Zero 2 W, 2B, 3B, 3B+, and other supported models within these families.
+* **BMC64 targets specific Raspberry Pi models.** Supported models include the Raspberry Pi Zero/W, Zero 2 W, 2B, 3B, 3B+, 4B, 400, 5, 500 and 500+, and other supported models within these families.
 
 * **Support for third-party hardware is best effort and community driven.** This includes custom or third-party PCBs and GPIO-connected boards, USB keyboards, gamepads and joysticks, adapters, audio and video devices, and similar peripherals. The project cannot test every device, so compatibility depends on what the maintainers and community are able to verify on real hardware. Reports of what does and doesn't work, and contributions that add or fix support, are very welcome, but a device working (or not working) is not a guarantee.
 
@@ -18,13 +18,11 @@ BMC64 is a bare-metal Commodore emulator for the Raspberry Pi. This document des
 
 The following are not currently within the intended scope of BMC64:
 
-* **Raspberry Pi 4 and later models.** This includes the Raspberry Pi 4B, Pi 400, Pi 5, Pi 500, and related devices in these families.
-
 * **Support for more original Commodore peripherals.** BMC64 already lets you use a real Commodore keyboard and joysticks (via GPIO), but it is not intended to keep adding support for other original hardware, such as real disk drives, datasettes, or cartridges and other expansion port devices.
 
 * **Keeping pace with current VICE development.** Features added to VICE after version 3.3 should not be assumed to be candidates for inclusion in BMC64.
 
-* **Cycle-exact accuracy at the cost of performance.** Changes such as switching to the x64sc core that would noticeably slow emulation on the older supported Raspberry Pi models are not intended.
+* **Cycle-exact accuracy at the cost of performance.** Changes such as switching to the x64sc core that would noticeably slow emulation on the older supported Raspberry Pi models (Pi0, P2, P3) is not intended.
 
 * **Support for community projects and third-party products.** The BMC64 project does not provide help with building, wiring or troubleshooting boards, kits, cases or other projects made by the community or third parties, even when they are designed for BMC64. Questions about these should go to the project's author. Bugs in BMC64's own hardware support, such as GPIO connected keyboards and joysticks, are still in scope. See [Community Projects](COMMUNITY_PROJECTS.md).
 

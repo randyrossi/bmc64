@@ -17,6 +17,11 @@
 #define KERNEL_DEFS_H
 
 // The sample rate we're asking vice to produce.
+#if RASPPI >= 4
+// The Pi 4's and Pi 5's HDMI sound runs at 48 kHz (src/av/sound.h).
+#define SAMPLE_RATE 48000
+#else
 #define SAMPLE_RATE 44100
+#endif
 
 #endif

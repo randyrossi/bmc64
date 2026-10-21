@@ -2,6 +2,11 @@
 
 SRC_DIR=$(cd "$(dirname "$0")" && pwd)
 
+# The Pi 4 and 5 are built 64-bit (AArch64)
+case " $* " in
+       *" pi4 "*|*" pi5 "*) export BMC64_AARCH=64 ;;
+esac
+
 if ! source "$SRC_DIR/get_gnu_toolchain.sh"
 then
    echo "Toolchain setup failed (Arm GNU Toolchain or Node.js)." >&2
@@ -15,7 +20,7 @@ PERF_STATS=0
 for arg in "$@"
 do
 case "$arg" in
-       pi0|pi2|pi3|pi4)
+       pi0|pi2|pi3|pi4|pi5)
               BOARD="$arg"
               ;;
        --perf-stats)
@@ -25,7 +30,7 @@ case "$arg" in
               IO_STATS=1
               ;;
        *)
-              echo "Need arg [pi0|pi2|pi3|pi4] [--io-stats] [--perf-stats]"
+              echo "Need arg [pi0|pi2|pi3|pi4|pi5] [--io-stats] [--perf-stats]"
               exit 1
               ;;
 esac
@@ -42,9 +47,16 @@ then
 KERNEL=kernel7.img
 elif [ "$BOARD" = "pi4" ]
 then
-KERNEL=kernel7l.img
+# Circle builds kernel8-rpi4.img; on the card it is kernel8.img, the
+# firmware's default for a 64-bit Pi 4 (so switching back to the C64,
+# which removes kernel=, still boots).
+KERNEL=kernel8-rpi4.img
+CARD_KERNEL=kernel8.img
+elif [ "$BOARD" = "pi5" ]
+then
+KERNEL=kernel_2712.img
 else
-echo "Need arg [pi0|pi2|pi3|pi4] [--io-stats] [--perf-stats]"
+echo "Need arg [pi0|pi2|pi3|pi4|pi5] [--io-stats] [--perf-stats]"
 exit
 fi
 
@@ -75,6 +87,11 @@ cd ../..
 
 cd third_party/vice-3.3
 make x64
+if [ "$BOARD" = "pi4" ] || [ "$BOARD" = "pi5" ]
+then
+# The Pi 4 and 5 run the cycle exact C64 (Makefile-C64)
+make x64sc
+fi
 make x128
 make xvic
 make xplus4
@@ -85,13 +102,15 @@ cd third_party/plus4emu
 make
 cd ../..
 
+CARD_KERNEL=${CARD_KERNEL:-$KERNEL}
+
 MACHINES="C64:c64 C128:c128 VIC20:vic20 Plus4:plus4 Plus4Emu:plus4emu PET:pet"
 
 for m in $MACHINES
 do
    P1=`echo $m | sed 's/:.*$//'`
    P2=`echo $m | sed 's/^.*://'`
-   echo "Building $P1 -> ${KERNEL}.$P2"
+   echo "Building $P1 -> ${CARD_KERNEL}.$P2"
    if ! make clean
    then
       exit 1
@@ -109,9 +128,9 @@ do
       exit 1
    fi
 
-   if ! cp "$KERNEL" "${KERNEL}.$P2"
+   if ! cp "$KERNEL" "${CARD_KERNEL}.$P2"
    then
-      echo "Copy failed for ${KERNEL}.$P2"
+      echo "Copy failed for ${CARD_KERNEL}.$P2"
       exit 1
    fi
 done

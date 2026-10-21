@@ -216,7 +216,14 @@ class ViceApp {
 public:
   enum TShutdownMode { ShutdownNone, ShutdownHalt, ShutdownReboot };
 
-  ViceApp(const char *kernel) : FromKernel(kernel) {}
+  ViceApp(const char *kernel)
+      : FromKernel(kernel)
+#if RASPPI >= 5
+        // Circle's default on the Pi 5 is the 3-pin debug connector, which
+        // the Pi 500 lacks; device 0 is GPIO14/15, as on the other boards.
+        , mSerial(0, FALSE, 0)
+#endif
+  {}
 
   virtual ~ViceApp(void) {}
 

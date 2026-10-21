@@ -179,6 +179,7 @@ void emu_machine_init(int raster_skip_enabled, int raster_skip2_enabled) {
 #endif
   switch (machine_class) {
     case VICE_MACHINE_C64:
+    case VICE_MACHINE_C64SC: /* x64sc, on the Pi 4 and 5 */
        emux_machine_class = BMC64_MACHINE_CLASS_C64;
        break;
     case VICE_MACHINE_C128:
@@ -881,7 +882,8 @@ void emux_add_sound_options(struct menu_item* parent) {
      return;
   }
 
-  int supports_dual_sid = (machine_class == VICE_MACHINE_C64 || machine_class == VICE_MACHINE_C128) &&
+  int supports_dual_sid = (machine_class == VICE_MACHINE_C64 || machine_class == VICE_MACHINE_C64SC ||
+                           machine_class == VICE_MACHINE_C128) &&
                            circle_get_model() >= 2;
 
   // Resid by default
@@ -1530,6 +1532,7 @@ void emux_add_userport_joys(struct menu_item* parent) {
 uint8_t circle_get_userport_ddr(void) {
   switch (machine_class) {
     case VICE_MACHINE_C64:
+    case VICE_MACHINE_C64SC: /* x64sc, on the Pi 4 and 5 */
     case VICE_MACHINE_C128:
     case VICE_MACHINE_VIC20:
     case VICE_MACHINE_PET:
@@ -1544,6 +1547,7 @@ uint8_t circle_get_userport_ddr(void) {
 uint8_t circle_get_userport(void) {
   switch (machine_class) {
     case VICE_MACHINE_C64:
+    case VICE_MACHINE_C64SC: /* x64sc, on the Pi 4 and 5 */
     case VICE_MACHINE_C128:
     case VICE_MACHINE_VIC20:
     case VICE_MACHINE_PET:
@@ -1558,6 +1562,7 @@ uint8_t circle_get_userport(void) {
 void circle_set_userport(uint8_t value) {
   switch (machine_class) {
     case VICE_MACHINE_C64:
+    case VICE_MACHINE_C64SC: /* x64sc, on the Pi 4 and 5 */
     case VICE_MACHINE_C128:
     case VICE_MACHINE_VIC20:
     case VICE_MACHINE_PET:

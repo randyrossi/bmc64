@@ -41,7 +41,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        board: [pi0, pi2, pi3]
+        board: [pi0, pi2, pi3, pi4, pi5]
 
     steps:
       - name: Install dependencies
@@ -66,7 +66,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.board }}
-          path: ${{ matrix.board }}/*.img.*
+          # The Pi 4 also boots with Circle's ARM stub (make_release.sh).
+          path: |
+            ${{ matrix.board }}/*.img.*
+            ${{ matrix.board }}/third_party/circle-stdlib/libs/circle/boot/armstub8-rpi4.bin
           if-no-files-found: error
           retention-days: 1
 

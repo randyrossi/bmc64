@@ -6,6 +6,11 @@ SRC_DIR=`pwd`
 CIRCLE_HOME="$SRC_DIR/third_party/circle-stdlib"
 COMMON_HOME="$SRC_DIR/third_party/common"
 
+# The Pi 4 and 5 are built 64-bit (AArch64)
+case " $* " in
+       *" pi4 "*|*" pi5 "*) export BMC64_AARCH=64 ;;
+esac
+
 # Check for the Arm GNU Toolchain and install it if necessary
 if ! source "$SRC_DIR/get_gnu_toolchain.sh"
 then
@@ -91,7 +96,7 @@ PERF_STATS=0
 for arg in "$@"
 do
 case "$arg" in
-       pi0|pi2|pi3|pi4)
+       pi0|pi2|pi3|pi4|pi5)
               BOARD="$arg"
               ;;
        --skip-patches)
@@ -107,7 +112,7 @@ case "$arg" in
               PERF_STATS=1
               ;;
        *)
-              echo "Need arg [pi0|pi2|pi3|pi4] [--skip-patches] [--kasan] [--io-stats] [--perf-stats]"
+              echo "Need arg [pi0|pi2|pi3|pi4|pi5] [--skip-patches] [--kasan] [--io-stats] [--perf-stats]"
               exit 1
               ;;
 esac
@@ -115,7 +120,7 @@ done
 
 if [ -z "$BOARD" ]
 then
-echo "Need arg [pi0|pi2|pi3|pi4] [--skip-patches] [--kasan] [--io-stats] [--perf-stats]"
+echo "Need arg [pi0|pi2|pi3|pi4|pi5] [--skip-patches] [--kasan] [--io-stats] [--perf-stats]"
 exit 1
 fi
 
@@ -256,7 +261,10 @@ then
 ./configure --raspberrypi=3 "${CIRCLE_CONFIGURE_ARGS[@]}"
 elif [ "$BOARD" = "pi4" ]
 then
-./configure --raspberrypi=4 "${CIRCLE_CONFIGURE_ARGS[@]}"
+./configure --raspberrypi=4 -p aarch64-none-elf- "${CIRCLE_CONFIGURE_ARGS[@]}"
+elif [ "$BOARD" = "pi5" ]
+then
+./configure --raspberrypi=5 -p aarch64-none-elf- "${CIRCLE_CONFIGURE_ARGS[@]}"
 else
 echo "I don't know what to do for $BOARD"
 exit
@@ -308,12 +316,17 @@ then
        exit
 fi
 
+# The Pi 4 and 5 don't use the VideoCore's services (VCHIQ)
+if [ "$BOARD" != "pi4" ] && [ "$BOARD" != "pi5" ]
+then
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon/linux
 make clean
 make
 if [ "$?" != "0" ]
 then
        exit
+fi
+
 fi
 
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon/wlan
@@ -332,6 +345,8 @@ then
        exit
 fi
 
+if [ "$BOARD" != "pi4" ] && [ "$BOARD" != "pi5" ]
+then
 cd $SRC_DIR/third_party/circle-stdlib/libs/circle/addon/vc4/vchiq
 make clean
 make 
@@ -366,6 +381,19 @@ make
 if [ "$?" != "0" ]
 then
        exit
+fi
+
+fi
+
+# The ARM stub the Pi 4's firmware starts the 64-bit kernel with (Circle's
+# boot/README, "FIQ support on Raspberry Pi 4, 400, CM4")
+if [ "$BOARD" = "pi4" ]
+then
+cd $SRC_DIR/third_party/circle-stdlib/libs/circle/boot
+if ! make armstub64
+then
+       exit 1
+fi
 fi
 
 # Common
@@ -452,13 +480,20 @@ then
        echo "Failed to configure VICE" >&2
        exit 1
 fi
-elif [ "$BOARD" = "pi4" ]
+elif [ "$BOARD" = "pi4" ] || [ "$BOARD" = "pi5" ]
 then
+# 64-bit (AArch64): Cortex-A72 on the Pi 4, Cortex-A76 on the Pi 5
+if [ "$BOARD" = "pi4" ]
+then
+VICE_CPU="-march=armv8-a -mtune=cortex-a72"
+else
+VICE_CPU="-march=armv8.2-a -mtune=cortex-a76"
+fi
 cd src/resid
-CXXFLAGS="-O3 -std=c++11 -march=armv8-a -mtune=cortex-a72 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard $CIRCLE_PUBLIC_INCLUDES" ./configure --host=arm-none-eabi
+CXXFLAGS="-O3 -std=c++11 $VICE_CPU $CIRCLE_PUBLIC_INCLUDES" ./configure --host=aarch64-none-elf
 cd ../..
 
-LDFLAGS="-nostdlib -Wl,-e,main -L$CIRCLE_HOME/install/arm-none-circle/lib" CXXFLAGS="-O3 -std=c++11 -fno-exceptions -march=armv8-a -mtune=cortex-a72 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard -ffreestanding -nostdlib -nostdinc++ $CIRCLE_PUBLIC_INCLUDES" CFLAGS="-O3 -I$COMMON_HOME -I$CIRCLE_HOME/install/arm-none-circle/include/ $CIRCLE_PUBLIC_INCLUDES -I$CIRCLE_HOME/libs/circle/addon/fatfs -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include-fixed -I$ARM_HOME/lib/gcc/arm-none-eabi/$ARM_VERSION/include -fno-exceptions -march=armv8-a -mtune=cortex-a72 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard -ffreestanding -nostdlib $VICE_KASAN_CFLAGS $VICE_PERF_CFLAGS" configure_vice ./configure --host=arm-none-eabi --disable-realdevice --disable-ipv6 --disable-ssi2001 --disable-catweasel --disable-hardsid --disable-parsid --disable-portaudio --disable-ahi --disable-bundle --disable-lame --disable-rs232 --disable-midi --disable-hidmgr --disable-hidutils --without-oss --without-alsa --without-pulse --without-zlib --disable-sdlui --disable-sdlui2 --enable-raspiui
+LDFLAGS="-nostdlib -Wl,-e,main -L$CIRCLE_HOME/install/aarch64-none-circle/lib" CXXFLAGS="-O3 -std=c++11 -fno-exceptions $VICE_CPU -ffreestanding -nostdlib -nostdinc++ $CIRCLE_PUBLIC_INCLUDES" CFLAGS="-O3 -I$COMMON_HOME -I$CIRCLE_HOME/install/aarch64-none-circle/include/ $CIRCLE_PUBLIC_INCLUDES -I$CIRCLE_HOME/libs/circle/addon/fatfs -I$ARM_HOME/lib/gcc/aarch64-none-elf/$ARM_VERSION/include-fixed -I$ARM_HOME/lib/gcc/aarch64-none-elf/$ARM_VERSION/include -fno-exceptions $VICE_CPU -ffreestanding -nostdlib $VICE_KASAN_CFLAGS $VICE_PERF_CFLAGS" configure_vice ./configure --host=aarch64-none-elf --disable-realdevice --disable-ipv6 --disable-ssi2001 --disable-catweasel --disable-hardsid --disable-parsid --disable-portaudio --disable-ahi --disable-bundle --disable-lame --disable-rs232 --disable-midi --disable-hidmgr --disable-hidutils --without-oss --without-alsa --without-pulse --without-zlib --disable-sdlui --disable-sdlui2 --enable-raspiui
 if [ "$?" != "0" ]
 then
        echo "Failed to configure VICE" >&2
@@ -508,6 +543,11 @@ cd ..
 
 # These will fail
 make x64
+if [ "$BOARD" = "pi4" ] || [ "$BOARD" = "pi5" ]
+then
+# The Pi 4 and 5 run the cycle exact C64 (Makefile-C64)
+make x64sc
+fi
 make x128
 make xvic
 make xplus4

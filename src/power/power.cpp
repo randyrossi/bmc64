@@ -19,6 +19,9 @@
 // limitations under the License.
 
 #include "../viceapp.h"
+#if RASPPI >= 4
+#include "../pi45/board.h"
+#endif
 
 #include <circle/bcmwatchdog.h>
 #include <circle/logger.h>
@@ -29,6 +32,9 @@
 extern "C" void circle_reboot(void) {
   CLogger::Get()->Write(POWER_LOG, LogNotice, "Rebooting");
   ViceCloseLogFile();
+#if RASPPI >= 4
+  Pi45BoardBeforeRestart();
+#endif
   reboot();
 }
 
@@ -39,6 +45,11 @@ extern "C" void circle_power_off(void) {
   // 63 makes the firmware halt instead of booting, as Linux's poweroff
   // does: the board idles at low power with the display off until power
   // is cycled.
+#if RASPPI >= 4
+  // The Pi 4 B halts (waking on GPIO3), the Pi 400 switches off, and the
+  // Pi 5, 500 and 500+ halt until their power button or key is pressed.
+  Pi45BoardBeforeRestart();
+#endif
   CBcmWatchdog watchdog;
   watchdog.Restart(CBcmWatchdog::PartitionHalt);
 }

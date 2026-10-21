@@ -52,6 +52,9 @@
 #include "menu_image_contents.h"
 #include "menu_power.h"
 #include "menu_gpio.h"
+#if RASPPI >= 4
+#include "menu_pi45.h"
+#endif
 #include "menu_profiles.h"
 #include "../../src/profiles/profiles.h"
 #include "overlay.h"
@@ -65,7 +68,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "5.3.1"
+#define VERSION_STRING "5.4.0"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -923,13 +926,17 @@ static void show_about() {
     break;
   }
 
+#if RASPPI >= 4
+  // The Raspberry Pi 4 and 5 support isn't final yet.
+  strncat(title, " (beta)", sizeof title - strlen(title) - 1);
+#endif
   ui_menu_add_button(MENU_TEXT, about_root, title);
   ui_menu_add_button(MENU_TEXT, about_root, desc);
 
 #ifdef RASPI_LITE
   ui_menu_add_button(MENU_TEXT, about_root, "For the Raspberry Pi Zero");
 #else
-  ui_menu_add_button(MENU_TEXT, about_root, "For the Raspberry Pi 2/3");
+  ui_menu_add_button(MENU_TEXT, about_root, "For the Raspberry Pi 2/3/4/5");
 #endif
 
   ui_menu_add_divider(about_root);
@@ -1859,6 +1866,9 @@ static void load_settings() {
       }
     } else if (strcmp(name, "scaling_interp") == 0) {
       scaling_interp_item->value = value;
+#if RASPPI >= 4
+    } else if (menu_pi45_load(name, value)) {
+#endif
     } else if (strcmp(name, "gpio_config") == 0) {
       // We save/restore the choice int and map back to
       // the value as index into the choices for this
@@ -4605,6 +4615,9 @@ void build_menu(struct menu_item *root) {
            0, 500, 10, 220);
 
      ui_menu_add_button(MENU_SHADER_RESET_ALL, shader, "Reset");
+#if RASPPI >= 4
+     menu_pi45_trim_shader(shader);
+#endif
 
   palette_item[0] = emux_add_palette_options(MENU_COLOR_PALETTE_0, parent);
 

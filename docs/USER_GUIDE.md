@@ -76,15 +76,15 @@ This guide covers installing, configuring, and using BMC64, including machine se
 - [Performance](#performance)
 
 # BMC64 Features
-  * Quick boot time (C64 in 4.1 seconds over composite!)
-  * Frames are timed to vsync for true 50/60 hz smooth scrolling (no horizontal tearing!)
+  * Quick boot time (C64 in 4.1 seconds over composite!) (Pi 0/2/3 only; see [PI4_PI5.md](PI4_PI5.md#boot-speed))
+  * Frames are timed to vsync for true 50/60 hz smooth scrolling (no horizontal tearing!) (Pi 5: only if the display offers a 50/60 Hz mode)
   * Low latency between input & audio/video
   * No shutdown sequence required, just power off
   * High C64 compatibility thanks to VICE
-  * High Plus/4 compatibility thanks to Plus4Emu (Rpi3 Only)
+  * High Plus/4 compatibility thanks to Plus4Emu (Rpi3, 4 and 5 Only)
   * Easily wire real Commodore/Atari Joysticks and nav buttons via GPIO using jumpers (GPIO Config 1)
   * Can use a real Commodore Keyboard and Joysticks via PCB (GPIO Config 2)
-  * Can use a Waveshare Game HAT (Pi2 or 3 Only) (GPIO Config 3)
+  * Can use a Waveshare Game HAT (Pi2 or 3 Only, not the Pi 4 or 5) (GPIO Config 3)
   * Also works with the Keyrah and TheC64 'Maxi' case
 
 Version 5.0 and above adds:
@@ -100,13 +100,14 @@ Version 5.0 and above adds:
   * Time sync on WiFi connect for IDE64 and CMD HD
 
 # Limitations
-  * BMC64 **only** supports Pi Zero, Pi Zero 2W, Pi 2, and Pi 3 based devices. Raspberry Pi 4 and greater is **not supported**.
+  * BMC64 supports Pi Zero, Pi Zero 2W, Pi 2, Pi 3, Pi 4 (Pi 400) and Pi 5 (Pi 500, Pi 500+) based devices. See [PI4_PI5.md](PI4_PI5.md) for the Pi 4 and 5.
+  * The Pi 4 and 5 have HDMI output only, and fewer CRT shader options; see [LIMITATIONS_PI4_PI5.md](LIMITATIONS_PI4_PI5.md).
   * USB Bluetooth gamepads are not supported directly but can be connected via the 8BitDo USB Wireless Adapter 2
   * Not all gamepads will work. Please let me know if yours doesn't.
   
 This project uses VICE for emulation without any O/S (Linux) distribution installed on the Pi.  VICE (Versatile Commodore Emulator) platform dependencies are satisfied using circle-stdlib.
 
-For Plus/4 emulation on the Raspberry Pi 3, a more accurate emulator using Plus4Emu is also available.
+For Plus/4 emulation on the Raspberry Pi 3, 4 and 5, a more accurate emulator using Plus4Emu is also available.
 
 # Installation
 
@@ -114,7 +115,7 @@ See [INSTALLATION.md](INSTALLATION.md) for SD-card preparation, required ROM fil
 
 # Machine Selection
 
-The default machine is a C64.  You can switch to VIC20, C128, Plus/4 or PET from the 'Machines->Switch' menu option.  These configurations are defined in machines.txt. There you will find configurations for each machine type for NTSC/PAL over HDMI/Composite combinations.  Most video modes are 720p but you can change this (see below).
+The default machine is a C64.  You can switch to VIC20, C128, Plus/4 or PET from the 'Machines->Switch' menu option.  These configurations are defined in machines.txt. There you will find configurations for each machine type for NTSC/PAL over HDMI/Composite combinations.  Most video modes are 720p but you can change this (see below).  On the Pi 4 and 5, only the HDMI entries are offered, each at both 720p and 1080p (see [PI4_PI5.md](PI4_PI5.md#display)).
 
 # Optimising BMC64
 
@@ -126,7 +127,7 @@ Zero W.
 
 ## machines.txt
 
-The emulated machine is timed by the video mode you select. The default config provided uses 720p PAL 50hz on HDMI.  This is a 'safe' mode that should work on all monitors.  A 50.125hz custom mode is provided for the C64/Vic20/C128 machines that will match the timing of the real machine.  However, this mode may not work on all monitors.
+The emulated machine is timed by the video mode you select. The default config provided uses 720p PAL 50hz on HDMI.  This is a 'safe' mode that should work on all monitors.  A 50.125hz custom mode is provided for the C64/Vic20/C128 machines that will match the timing of the real machine.  However, this mode may not work on all monitors.  The custom modes aren't offered on the Pi 5, whose firmware doesn't take them.
 
 Inside machines.txt, you can change or add new machine configurations. These will show up in the Machines->Switch menu.
 
@@ -142,9 +143,9 @@ Here is an example of a machine entry:
 
 NOTE: Even though a config is intended to be used for HDMI or Composite (never both), you should always define both composite and hdmi parameters.
 
-Valid machine names are C64, C128, VIC20, PET, PLUS4 and PLUS4EMU (Rpi3 only)
+Valid machine names are C64, C128, VIC20, PET, PLUS4 and PLUS4EMU (Rpi3, 4 and 5)
 Valid video standards are NTSC, PAL
-Valid video output types are HDMI, Composite, DPI
+Valid video output types are HDMI, Composite, DPI (HDMI only on the Pi 4 and 5; see [LIMITATIONS_PI4_PI5.md](LIMITATIONS_PI4_PI5.md))
 
 For HDMI, you should choose either a 50hz or 60hz mode.
 See below for notes on using DPI.
@@ -158,6 +159,8 @@ specify `gpu_mem` resets the split back to the 64MB default, so a value
 you set by hand in `config.txt` will not survive a machine switch unless
 you also add it to the `machines.txt` entry.
 
+On the Pi 4 and 5, `gpu_mem` has no effect.
+
 If you want to use composite out, you MUST set machine_timing parameter to ntsc-composite or pal-composite and set the corresponding sdtv_mode. Otherwise, you will have audio synchronization issues.
 
 Raspberry Pi Video Mode     | machine_timing | cycles_per_second
@@ -169,6 +172,8 @@ sdtv_mode=16                | ntsc-composite | not required
 hdmi_group=2,hdmi_mode=87   | pal-custom or ntsc-custom | see below
 
 ### How to add your own custom HDMI mode (VICE emulators only)
+
+NOTE: The Pi 5 doesn't take custom HDMI modes; see [LIMITATIONS_PI4_PI5.md](LIMITATIONS_PI4_PI5.md). The Pi 4 takes the `hdmi_timings` entries in `machines.txt`, but BMC64 then runs the display at the machine's own frame rate, so the timing calc tool and `hdmi_cvt` steps below are for the Pi 0 to 3.
 
 You are free to experiment with different modes. It may be advantageous to set the video mode to match the native resolution of your monitor.  That way, it may have less processing to do and _may_ save on latency (not confirmed).  That can be accomplished with either a different hdmi_mode or a custom mode.
 
@@ -210,6 +215,8 @@ And this option will show up in the Machine->Switch menu.
 Custom HDMI modes are not supported for plus4emu yet.
 
 ### DPI (Parallel Display Interface)
+
+NOTE: DPI isn't supported on the Pi 4 and 5; see [LIMITATIONS_PI4_PI5.md](LIMITATIONS_PI4_PI5.md).
 
 BMC64 v3.3 and higher supports video output via DPI. DPI is a (up to) 24-bit parallel RGB interface.  A DPI capable display device or RGB adapter board is required. You will have to match the output format to your device.  See https://www.raspberrypi.org/documentation/hardware/raspberrypi/dpi/README.md for more details.
 
@@ -259,7 +266,7 @@ The virtual display dimensions can be adjusted dynamically from the menu. Under 
       2. The resulting image is scaled according to stretch factors (1.0 is full vertical height, horizontal is a scalar of the display height)
       3. The scaled image is then centered within the display resolution.
 
-Using the settings, you should be able to customize the display to your liking. However, if you plan on using scaling_kernel=8 (nearest neighbor) there are benefits to chosing dimensions that result in integer multipliers of the frame buffer (see below).
+Using the settings, you should be able to customize the display to your liking. However, if you plan on using scaling_kernel=8 (nearest neighbor) there are benefits to chosing dimensions that result in integer multipliers of the frame buffer (see below). On the Pi 4 and 5, turn Scaling Interpolation off in the Video menu instead of using scaling_kernel=8.
 
 ### Integer Scaling
 
@@ -327,6 +334,8 @@ If you have a VGA monitor that doesn't support 15khz hsync, you can try using a 
 
 ## Video Scaling Algorithm
 
+NOTE: On the Pi 4 and 5, `scaling_kernel` isn't used: the Video menu's Scaling Interpolation chooses smooth or sharp scaling.
+
 The emulated resolutions are small and must be scaled up to the video mode's resolution.  You can tell the Pi to change the way it scales the video using the 'scaling_kernel' option in config.txt:
 
   * (Soft Look) This is what the default scaling_kernel option (absent from config.txt) will look like:
@@ -355,6 +364,8 @@ NOTE: It may not be possible for EVERY scanline to line up from top to bottom bu
 
 ## CRT Filter
 
+NOTE: On the Pi 4 and 5 the shader has fewer options; see [LIMITATIONS_PI4_PI5.md](LIMITATIONS_PI4_PI5.md).
+
 For HDMI displays, you can enable davej's shader which emulates a CRT. To use the shader properly, you will need to use (at the very least) integer scaling (see above).  I recommend at least 3x in both dimensions.  This will produce acceptable results on just about any resolution. However, if you want every scanline and every 'phosphor' (if using a mask) to be precicely the same height/width, you will also need to use a resolution that matches your monitor's native resolution.  That's because unless you have a resolution that matches your monitor's native resolution, your monitor will end up scaling the image itself.
 
   * Here is the CRT shader using a 1280x720 display resolution while the monitor is 1600x900.  Notice every few scanlines are slightly thicker.
@@ -370,6 +381,8 @@ The shader is not available if the mode is marked for composite. (There's no rea
 Vertical centering will be reset to 0 if the shader is enabled.
 
 ### CRT Filter + Performance
+
+The notes below are for the Pi 0 to 3. The Pi 4 and 5 draw the shader on the 3D GPU and only have the Curvature option.
 
 Some shader parameter combinations may cause stuttering or frame drops on the Pi0/2. Curvature + MultiSample + Filter might be too much (especially for the Pi0), but two out of three may work. If you see bad performance, try disabling the shader altogether to determine if that's the cause.  Then try disabling different features to see if you can isolate which option pushes your system over the limit. It's likely most games won't experience any problems but some demos might.  I have not tested the shader's performance or how it impacts emulation at all resolutions. Your mileage may vary.
 
@@ -523,6 +536,8 @@ You can switch between 6581 and 8580 models as well as turn on/off the filter.
 On the Pi0/Pi2, only 'Fast' sampling method is enabled.
 
 On the Pi3, 'Fast', 'Interpolation' and 'Fast Resampling" sampling methods have been enabled.  'Fast Resampling' produces the highest quality but consumes the most CPU.
+
+On the Pi 4 and 5, all four sampling methods are enabled, including 'Resampling'. Sound runs at 48 kHz on these boards (44.1 kHz on the others).
 
 On the Pi3 model B with a 1.2Ghz clock, 'Fast Resampling' passband is set to 13230hz.
 On the Pi3 model B+ with a 1.4Ghz clock, 'Fast Resampling' passband is set to ~~19845hz~~ 13230hz (Temporary until I can reliably detect Pi3B at boot).
@@ -864,6 +879,8 @@ Both real VIC20 and C64 keyboards should work in all emulated machines.  However
 
 ### GPIO Config 3 : Waveshare Game HAT
 
+NOTE: The Waveshare Game HAT doesn't work on the Pi 4 or 5.
+
 This GPIO configuration will let you use a Waveshare Game HAT with BMC64. Set either port 1 or 2 on the virtual machine to GPIO Bank 1. GPIO Bank 2 has no function in this configuration.  But you can still plug in a USB gamepad and use that as a second joystick if you like.
 
 https://www.waveshare.com/game-hat.htm
@@ -1015,8 +1032,9 @@ The **Power** menu has the machine resets and two items for BMC64 itself:
   * **Soft Reset** / **Hard Reset** reset the emulated machine only.
   * **Reboot BMC64** restarts the Raspberry Pi.
   * **Shut down** halts the Raspberry Pi. A message shows for a few seconds,
-    then the screen goes blank and it is safe to remove power. It stays off
-    until the power is switched off and on again.
+    then the screen goes blank and it is safe to remove power. On the Pi 0
+    to 3 it stays off until the power is switched off and on again (see
+    below for GPIO3). On the Pi 4 and 5, see [PI4_PI5.md](PI4_PI5.md#power).
 
 Both ask for confirmation, and both first detach the disk and tape images
 so the last writes to them reach the SD card. The [Web UI](#web-ui) has the

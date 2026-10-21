@@ -1,6 +1,6 @@
 # BMC64
 
-BMC64 is a bare metal C64 emulator for the Raspberry Pi Zero/2/3 models with true 50hz/60hz smooth scrolling and low latency between input & video/audio. Four other Commodore machines are available as well; C128, Vic20, Plus/4 and PET.
+BMC64 is a bare metal C64 emulator for the Raspberry Pi Zero/2/3/4/5 models with true 50hz/60hz smooth scrolling and low latency between input & video/audio. Four other Commodore machines are available as well; C128, Vic20, Plus/4 and PET.
 
 **NOTE:** Since V3.0, all machines are all bundled into one release for all Pi models. You can switch from the 'Machine' menu.
 
@@ -14,19 +14,22 @@ See [Community Projects](docs/COMMUNITY_PROJECTS.md) for PCBs, cases, guides and
 
 ## Features
 
-- Quick boot time (C64 in 4.1 seconds over composite!)
-- Frames are timed to vsync for true 50/60 hz smooth scrolling (no horizontal tearing!)
+- Quick boot time (C64 in 4.1 seconds over composite!) ** (Pi0/2/3 Only)
+- Frames are timed to vsync for true 50/60 hz smooth scrolling (no horizontal tearing!) ** (Pi 5: only if the display offers a 50/60 Hz mode)
 - Low latency between input & audio/video
 - No shutdown sequence required, just power off
 - High C64 compatibility thanks to VICE
-- High Plus/4 compatibility thanks to Plus4Emu (Rpi3 Only)
+- High Plus/4 compatibility thanks to Plus4Emu (Rpi3, 4 and 5)
 - USB Plug and Play (PnP)
 - Network support WiFi & Ethernet (e.g BBS, C64 OS networking)
 - Support for 8BitDo Retro Keyboards, including the C64 model, over USB or a 2.4GHz receiver
 
 ## Limitations
 
-- BMC64 **only** supports Pi Zero, Pi Zero 2W, Pi 2, and Pi 3 based devices. Raspberry Pi 4 and greater is **not supported**.
+- BMC64 supports Pi Zero, Pi Zero 2W, Pi 2, Pi 3, Pi 4 (Pi 400) and Pi 5 (Pi 500, Pi 500+) based devices. 
+  - See [docs/PI4_PI5.md](docs/PI4_PI5.md) for the Pi 4 and 5.
+- The Pi 4 and 5 have HDMI output only, and fewer CRT shader options. 
+  - See [docs/LIMITATIONS_PI4_PI5.md](docs/LIMITATIONS_PI4_PI5.md).
 - USB Bluetooth gamepads are not supported directly but can be connected via the 8BitDo USB Wireless Adapter 2.
 - Not all gamepads will work. Please let me know if yours doesn't.
 
@@ -34,7 +37,7 @@ See the [project scope](docs/SCOPE.md) for BMC64's priorities and what is consid
 
 This project uses VICE for emulation without any O/S (Linux) distribution installed on the Pi. VICE (Versatile Commodore Emulator) platform dependencies are satisfied using circle-stdlib.
 
-For Plus/4 emulation on the Raspberry Pi 3, a more accurate emulator using Plus4Emu is also available.
+For Plus/4 emulation on the Raspberry Pi 3, 4 and 5, a more accurate emulator using Plus4Emu is also available.
 
 ## Getting Started
 

@@ -1,0 +1,16 @@
+Linux notices
+=============
+
+BMC64's Raspberry Pi 4 and Pi 5 GPU code (src/v3d/gpu.cpp, regs.h)
+adapts parts of these Linux kernel files, from the Raspberry Pi kernel
+(https://github.com/raspberrypi/linux, branch rpi-6.18.y, Linux 6.18.57), all
+SPDX-License-Identifier: GPL-2.0+ (version 2 or later; GPL-2.0.txt):
+
+   drivers/gpu/drm/v3d/v3d_drv.c         Copyright (C) 2014-2018 Broadcom
+   drivers/gpu/drm/v3d/v3d_drv.h         Copyright (C) 2015-2018 Broadcom
+   drivers/gpu/drm/v3d/v3d_gem.c         Copyright (C) 2014-2018 Broadcom
+   drivers/gpu/drm/v3d/v3d_mmu.c         Copyright (C) 2017-2018 Broadcom
+   drivers/gpu/drm/v3d/v3d_power.c       Copyright (C) 2026 Raspberry Pi
+   drivers/gpu/drm/v3d/v3d_regs.h        Copyright (C) 2017-2018 Broadcom
+   drivers/gpu/drm/v3d/v3d_sched.c       Copyright (C) 2018 Broadcom
+   drivers/pmdomain/bcm/bcm2835-power.c  Copyright (C) 2018 Broadcom

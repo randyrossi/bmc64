@@ -1,5 +1,30 @@
 #include "semaphore.h"
 
+#if defined(__aarch64__)
+// The Pi 4 and 5 (64-bit): the same counting semaphore with GCC's atomic
+// builtins, waiting with WFE and waking with SEV as below.
+
+void sem_dec(uint32_t* semaphore) {
+  for (;;) {
+    uint32_t value = __atomic_load_n(semaphore, __ATOMIC_ACQUIRE);
+    if (value == 0) {
+      asm volatile("wfe");
+      continue;
+    }
+    if (__atomic_compare_exchange_n(semaphore, &value, value - 1, 0,
+                                    __ATOMIC_ACQ_REL, __ATOMIC_RELAXED)) {
+      return;
+    }
+  }
+}
+
+void sem_inc(uint32_t* semaphore) {
+  __atomic_add_fetch(semaphore, 1, __ATOMIC_RELEASE);
+  asm volatile("dsb sy\n\tsev" ::: "memory");
+}
+
+#else
+
 void sem_dec(uint32_t* semaphore) {
 #ifndef RASPI_LITE
     asm volatile (
@@ -39,3 +64,5 @@ void sem_inc(uint32_t* semaphore) {
     );
 #endif
 }
+
+#endif

@@ -1,4 +1,11 @@
-## 5.3.1 (pre-release)
+## 5.4.0
+  * Add Raspberry Pi 4 B / Pi 400 (`kernel8.img`) and Pi 5 / Pi 500 / Pi 500+ (`kernel_2712.img`) support (beta). See [PI4_PI5.md](docs/PI4_PI5.md) and [LIMITATIONS_PI4_PI5.md](docs/LIMITATIONS_PI4_PI5.md)
+    * HDMI only, at 720p or 1080p, with the display run at the machine's own frame rate
+    * HDMI sound at 48 kHz, and the headphone jack on the Pi 4 B
+    * CRT shader on the 3D GPU (crt-pi), with Curvature
+    * All machines, including Plus4Emu. The C64 runs the cycle exact x64sc
+    * Power button and power key support on the Pi 400, Pi 5 and Pi 500
+    * Build scripts and CI build the `pi4` and `pi5` boards
   * Modem Address now has an *Off* option, and it is the default. 
   * Fix the C64/C128 modem being enabled at $DE00 at power-on even with *Network Device* off or a different *Modem Address* selected
     * Possible fix for some cartridges not loading

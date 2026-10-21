@@ -2,6 +2,16 @@
 # Bare Metal Commodore 64 Emulator For The Raspberry Pi
 #
 
+# The Pi 4 and Pi 400 run BMC64 in 64-bit mode (kernel8.img), with
+# Circle's ARM stub; the Pi 5, 500 and 500+ start kernel_2712.img in 64-bit
+# mode by themselves. On the Pi 4 and 5 BMC64 sets the video mode itself,
+# at hdmi_mode's resolution (720p or 1080p) and the emulated machine's frame
+# rate; the Pi 4 also takes the custom modes (hdmi_timings).
+[pi4]
+arm_64bit=1
+armstub=armstub8-rpi4.bin
+[all]
+
 # uncomment scaling_kernel and set the desired value if you want to
 # change the scaling that affects the overall sharpness of the picture.
 # 8 = NEAREST NEIGHBOUR - sharp edges

@@ -16,6 +16,11 @@
 #ifndef _fb2_h
 #define _fb2_h
 
+#if RASPPI >= 4
+// The Pi 4 and 5 have no dispmanx or OpenGL ES: the same class on the HVS.
+#include "av/fbl.h"
+#else
+
 #include "bcm_host.h"
 #include "GLES2/gl2.h"
 #include "GLES2/gl2ext.h"
@@ -294,5 +299,7 @@ private:
   bool sharper_;
   bool bilinear_interpolation_;
 };
+
+#endif // RASPPI >= 4
 
 #endif

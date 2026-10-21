@@ -19,6 +19,9 @@ WLAN_FIRMWARE=(
     brcmfmac43455-sdio.bin
     brcmfmac43455-sdio.clm_blob
     brcmfmac43455-sdio.txt
+    brcmfmac43456-sdio.bin
+    brcmfmac43456-sdio.clm_blob
+    brcmfmac43456-sdio.txt
 )
 
 WLAN_LICENSES=(
@@ -113,6 +116,14 @@ mkdir -p "$OUTPUT_DIRECTORY/firmware"
 for firmware in "${WLAN_FIRMWARE[@]}"
 do
     cp "$WLAN_FIRMWARE_DIR/$firmware" "$OUTPUT_DIRECTORY/firmware/"
+done
+
+# Circle looks for the Pi 5's (and Pi 500's) firmware under its own name:
+# the 43455 files (Circle's firmware5 target downloads the same ones).
+for ext in bin txt clm_blob
+do
+    cp "$WLAN_FIRMWARE_DIR/brcmfmac43455-sdio.$ext" \
+        "$OUTPUT_DIRECTORY/firmware/brcmfmac43455-sdio.raspberrypi,5-model-b.$ext"
 done
 
 for license in "${WLAN_LICENSES[@]}"
