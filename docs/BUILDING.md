@@ -39,14 +39,14 @@ Below are the individual steps to clean and build useful when developing. For a 
 2. Run *make_all.sh* from the bmc64 directory to build the third party libraries and kernel:
 
         cd /path/to/store/files/bmc64/
-        ./make_all.sh [pi0|pi2|pi3]
+        ./make_all.sh [pi0|pi2|pi3|pi4|pi5]
 
         NOTE: In the above, set the required Pi version, such as ./make_all.sh pi3
 
 3. Run *make_machines.sh* to build the kernel images for each machine (C64, C128, etc):
 
         cd /path/to/store/files/bmc64/
-        ./make_machines.sh [pi0|pi2|pi3]
+        ./make_machines.sh [pi0|pi2|pi3|pi4|pi5]
 
         NOTE: In the above, set the required Pi version, such as ./make_machines.sh pi3
 
@@ -58,6 +58,8 @@ Once the *make_all.sh* build is complete, you will have a kernel file for the Pi
 * *Raspberry Pi Zero*: kernel.img
 * *Raspberry Pi 2*: kernel7.img
 * *Raspberry Pi 3*: kernel8-32.img
+* *Raspberry Pi 4*: kernel8-rpi4.img (kernel8.img on the SD card) and armstub8-rpi4.bin
+* *Raspberry Pi 5*: kernel_2712.img
 
 Once the *make_machines.sh* build is complete, you will have kernel files with a suffix (.c64, .c128, .vic20, etc) for the Pi version that you built for. For example, if pi3 was used you might get the following files:
 
@@ -73,18 +75,18 @@ Once the *make_machines.sh* build is complete, you will have kernel files with a
 ## More About The Build Files
 
 * *clean\_all.sh*: Cleans everything
-* *make\_all.sh [pi0|pi2|pi3]*: Builds third party libraries (Vice/Circle) and will also build a C64 image for the selected Pi model. This step will likely fail if you don't run *clean\_all.sh* first.
-* *make\_machines.sh [pi0|pi2|pi3]*: Builds all machines for the selected Pi model. This step will likely fail if you don't run *make\_all.sh* first.
+* *make\_all.sh [pi0|pi2|pi3|pi4|pi5]*: Builds third party libraries (Vice/Circle) and will also build a C64 image for the selected Pi model. This step will likely fail if you don't run *clean\_all.sh* first.
+* *make\_machines.sh [pi0|pi2|pi3|pi4|pi5]*: Builds all machines for the selected Pi model. This step will likely fail if you don't run *make\_all.sh* first.
 
 ### Tag release CI
 
 Pushing a `v*` tag starts the GitHub Actions release workflow. It first checks
-that the tag matches the source version, then builds `pi0`, `pi2`, and `pi3`
+that the tag matches the source version, then builds `pi0`, `pi2`, `pi3`, `pi4`, and `pi5`
 in parallel on separate runners. Each board builds all six emulator kernels
 and uploads them as a board-named artifact.
 
-Only after all three builds succeed does a separate release job download the
-artifacts into `pi0/`, `pi2/`, and `pi3/`. It uses a fresh recursive checkout
+Only after all five builds succeed does a separate release job download the
+artifacts into `pi0/`, `pi2/`, `pi3/`, `pi4/`, and `pi5/`. It uses a fresh recursive checkout
 in `pi3/` for the support files and packaging scripts, then runs
 `make_release.sh` to assemble and validate the complete SD-card release zip
 (including licenses, Wi-Fi firmware, and the updater manifest when enabled).
@@ -107,6 +109,8 @@ boards sequentially.
 
     Before you build, set the PREFIX environment variable so arm-none-eabi-g++ is used instead since the *GNU Embedded Toolchain for Arm* download seems to only have the commands with "none" in the filenames. For example: export PREFIX=arm-none-eabi-
 
+    This applies to the Pi 0, 2 and 3 builds only. The Pi 4 and 5 builds always use the 64-bit aarch64-none-elf toolchain.
+
 3. I have a different build issue...
 
     * Ensure you have all prerequisites installed.
@@ -120,10 +124,10 @@ To build a full SDCard layout use the *build_sdcard.sh*.
 
 This will use all of the above scripts together to build a full SDCard layout in the 'build/sdcard' folder. 
 
-If you pass no arguments it will build all three Pi versions pi0,pi2,pi3. Or you can pass one of the Pi versions to build a single version.
+If you pass no arguments it will build all five Pi versions pi0,pi2,pi3,pi4,pi5. Or you can pass one of the Pi versions to build a single version.
 
         cd /path/to/store/files/bmc64/
-        ./build_sdcard.sh [pi0|pi2|pi3]
+        ./build_sdcard.sh [pi0|pi2|pi3|pi4|pi5]
 
         NOTE: In the above, optinally set the required Pi version, such as ./build_sdcard.sh pi3 to build a single version
 
@@ -244,12 +248,14 @@ These are the git hashes for the repos under circle-stdlib this project is known
 
 Installation and use of the GNU toolchain is automated by the build scripts. To optionally install it manually follow the steps below
 
+The Pi 0, 2 and 3 builds use the 32-bit `arm-none-eabi` toolchain. The Pi 4 and 5 builds use the 64-bit `aarch64-none-elf` toolchain. If you build for both, you need both toolchains, and `ARM_HOME` must point to the right one for the board you are building.
+
 1. Download and unpack the *GNU Embedded Toolchain for Arm*:
 
     * Visit [https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
-    * Download the package for your system. For example, at the time of writing [arm-gnu-toolchain-15.2.rel1-x86_64-arm-none-eabi.tar.xz](https://gitlab.arm.com/api/v4/projects/tooling%2Fgnu-toolchains-for-arm/packages/generic/gnu-toolchain/15.2.rel1/arm-gnu-toolchain-15.2.rel1-x86_64-arm-none-eabi.tar.xz) was available for Linux x86\_64.
+    * Download the package for your system. For example, at the time of writing [arm-gnu-toolchain-15.2.rel1-x86_64-arm-none-eabi.tar.xz](https://gitlab.arm.com/api/v4/projects/tooling%2Fgnu-toolchains-for-arm/packages/generic/gnu-toolchain/15.2.rel1/arm-gnu-toolchain-15.2.rel1-x86_64-arm-none-eabi.tar.xz) (Pi 0, 2 and 3) and [arm-gnu-toolchain-15.2.rel1-x86_64-aarch64-none-elf.tar.xz](https://gitlab.arm.com/api/v4/projects/tooling%2Fgnu-toolchains-for-arm/packages/generic/gnu-toolchain/15.2.rel1/arm-gnu-toolchain-15.2.rel1-x86_64-aarch64-none-elf.tar.xz) (Pi 4 and 5) were available for Linux x86\_64.
     * Once downloaded, extract the file somewhere. Note down the path to the extracted directory. This will be used later.
-    * In the extracted directory, find the /lib/gcc/arm-none-eabi/ directory and note down the version number. This will be used later.
+    * In the extracted directory, find the /lib/gcc/arm-none-eabi/ (or /lib/gcc/aarch64-none-elf/) directory and note down the version number. This will be used later.
 
 2. Set the ARM_HOME environment variable to point to the extracted Arm toolchain directory:
 

@@ -31,13 +31,15 @@ Things you can fiddle with for video:
    framebuffer_aspect in config.txt (i.e. framebuffer_aspect=0x00070009 for 7:9)
    scaling_kernel (google for available algorithms)
 
+On the Pi 4 and 5, BMC64 drives the display itself, so these `config.txt` settings aren't used. Choose 720p or 1080p from the machine switch menu, and smooth or sharp scaling with the Video menu's Scaling Interpolation. See [LIMITATIONS_PI4_PI5.md](LIMITATIONS_PI4_PI5.md).
+
 ## Can I change option 'X' in VICE?
 
 **Answer:** Most video options are fixed right now to make sure video is rendered properly. VICE settings are read from 'vice.ini' located in the root of the emulator's partition. If there is no UI support for the option you are looking for, you can try setting it there using VICE documentation.
 
 ## Hey, isn't the real thing running at 50.125Hz?
 
-**Answer:** Yes, the original machine ran at 50.125Hz for PAL and 59.826Hz for NTSC. So, yeah, you'll be about 0.25% off in terms of timing.  If you really want 50.125Hz, you can try this custom HDMI mode (only applies to HDMI):
+**Answer:** Yes, the original machine ran at 50.125Hz for PAL and 59.826Hz for NTSC. So, yeah, you'll be about 0.25% off in terms of timing.  If you really want 50.125Hz, you can try this custom HDMI mode (only applies to HDMI, and not available on the Pi 5, whose firmware doesn't take custom modes):
 
     [C64/PAL/HDMI/768x544@50.125Hz]
     sdtv_mode=18
@@ -64,6 +66,8 @@ For NTSC, this mode will match the real timing very closely.  But again, since i
 ## Why is audio not coming out of HDMI or the analog jack?
 
 **Answer:** Sometimes the code that auto detects whether audio should be piped through HDMI vs analog jack doesn't work.  You can force audio to where you want it with a audio_out=hdmi or audio_out=analog parameter.  The default is audio_out=auto.  This ends up in cmdline.txt but you should set it in every machine config in machines.txt you want it to show up for.
+
+The Pi 400 and the Pi 5 family have no analog jack, so their sound is over HDMI only.
 
 ## How do I get Dolphin DOS to work?
 
@@ -94,12 +98,14 @@ truncate -s +3584 petrescue.d64
 
 Things to check:
 
-* Use a supply rated for at least 2.5A (Pi 3) at a steady 5V.
-* Avoid USB-C phone chargers and USB-C-to-micro-USB adapters/cables.  They frequently negotiate a lower voltage or can't sustain the current the Pi needs, which leads to exactly this kind of intermittent SD card write failure.
-* Use a good quality micro-USB cable.
+* Use a supply rated for at least 2.5A (Pi 3), 3A (Pi 4) or 5A (Pi 5) at a steady 5V.
+* On the Pi 0 to 3, avoid USB-C phone chargers and USB-C-to-micro-USB adapters/cables.  They frequently negotiate a lower voltage or can't sustain the current the Pi needs, which leads to exactly this kind of intermittent SD card write failure.
+* Use a good quality cable: micro-USB for the Pi 0 to 3, USB-C for the Pi 4 and 5.
 
-The official Raspberry Pi supply is a known-good option:
-https://www.raspberrypi.com/products/micro-usb-power-supply/
+The official Raspberry Pi supplies are known-good options:
+* Pi 0 to 3: https://www.raspberrypi.com/products/micro-usb-power-supply/
+* Pi 4: https://www.raspberrypi.com/products/type-c-power-supply/
+* Pi 5: https://www.raspberrypi.com/products/27w-power-supply/
 
 If the errors continue after ruling out power, try a different, freshly formatted (FAT32) SD card from a reputable brand.
 
@@ -169,7 +175,7 @@ See [If you use your own keymap files (.vkm)](USER_GUIDE.md#if-you-use-your-own-
         dos1551 (recommended)
         rpi_sym.vkm
         bootstat.txt
-    /PLUS4EMU (Available for Pi3 Only)
+    /PLUS4EMU (Available for Pi3, Pi4 and Pi5 Only)
         p4kernal.rom
         p4_ntsc.rom
         p4_basic.rom
@@ -177,7 +183,6 @@ See [If you use your own keymap files (.vkm)](USER_GUIDE.md#if-you-use-your-own-
         dos1541.rom (optional)
         dos1551.rom
         dos1581.rom (optional)
-        p4fileio.rom (optional)
         p4fileio.rom (optional)
     /PET
         basic1
@@ -209,17 +214,44 @@ See [If you use your own keymap files (.vkm)](USER_GUIDE.md#if-you-use-your-own-
     kernel.img (C64 kernel for Pi0)
     kernel7.img (C64 kernel for Pi2)
     kernel8-32.img (C64 kernel for Pi3)
+    kernel8.img (C64 kernel for Pi4)
+    kernel_2712.img (C64 kernel for Pi5)
     kernel.img.vic20
     kernel7.img.vic20
     kernel8-32.img.vic20
+    kernel8.img.vic20
+    kernel_2712.img.vic20
     kernel.img.c128
     kernel7.img.c128
     kernel8-32.img.c128
+    kernel8.img.c128
+    kernel_2712.img.c128
     kernel.img.plus4
     kernel7.img.plus4
     kernel8-32.img.plus4
-    kernel8-32.img.plus4emu (for Pi3 only)
+    kernel8.img.plus4
+    kernel_2712.img.plus4
+    kernel8-32.img.plus4emu (Plus4Emu is for Pi3, Pi4 and Pi5 only)
+    kernel8.img.plus4emu
+    kernel_2712.img.plus4emu
+    kernel.img.pet
+    kernel7.img.pet
+    kernel8-32.img.pet
+    kernel8.img.pet
+    kernel_2712.img.pet
     fixup.dat
+    armstub8-rpi4.bin (for Pi4)
+    start4.elf (for Pi4)
+    fixup4.dat (for Pi4)
+    bcm2711-rpi-4-b.dtb (for Pi4)
+    bcm2711-rpi-400.dtb (for Pi400)
+    bcm2712-rpi-5-b.dtb (for Pi5)
+    bcm2712d0-rpi-5-b.dtb (for Pi5)
+    bcm2712-rpi-500.dtb (for Pi500)
+    overlays/
+        bcm2712d0.dtbo (for Pi5)
+    LICENCE.broadcom
+    COPYING.linux
     bootstat.txt
     config.txt
     cmdline.txt

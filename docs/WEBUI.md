@@ -352,7 +352,7 @@ Run the generator (or just build):
 
 ```sh
 python3 tools/gen_webui_assets.py
-./make_all.sh <pi0|pi2|pi3>          # or build_sdcard.sh ...
+./make_all.sh <pi0|pi2|pi3|pi4|pi5>          # or build_sdcard.sh ...
 ```
 
 Then test on real hardware: the on-device server and FatFs behave slightly

@@ -1,0 +1,79 @@
+Mesa notices
+============
+
+BMC64's Raspberry Pi 4 and Pi 5 GPU code adapts material from the Mesa
+3D graphics library's Broadcom V3D drivers (https://mesa3d.org/). Those
+Mesa files are under the MIT licence below. Each file's copyright notice is
+listed with it, copied from Mesa 25.2.8; the files' own notices apply.
+
+1. Adapted into the Raspberry Pi 4 and Pi 5 kernels (src/v3d/)
+
+   The V3D 4.2 (Pi 4) material from Mesa 26.2.4, the V3D 7.1 (Pi 5)
+   material from Mesa 25.2.8; the packets for both were checked against
+   Mesa 25.2.8's generated packers.
+
+   src/broadcom/cle/v3d_packet.xml
+       No notice of its own; its directory, src/broadcom/cle/ (meson.build):
+       Copyright © 2017 Broadcom, SPDX-License-Identifier: MIT
+   src/broadcom/cle/gen_pack_header.py
+       Copyright (C) 2016 Intel Corporation
+       Copyright (C) 2016 Broadcom
+   src/broadcom/common/v3d_device_info.c, v3d_device_info.h
+       Copyright © 2016 Broadcom
+   src/broadcom/common/v3d_limits.h
+       Copyright © 2019 Broadcom
+   src/broadcom/common/v3d_tiling.c
+       Copyright © 2014-2017 Broadcom
+   src/broadcom/common/v3d_util.c
+       Copyright © 2021 Raspberry Pi Ltd
+   src/broadcom/compiler/v3d_compiler.h
+       Copyright © 2016 Broadcom
+   src/broadcom/vulkan/v3dvx_meta_common.c
+       Copyright © 2021 Raspberry Pi Ltd
+   src/gallium/drivers/v3d/v3d_job.c, v3d_uniforms.c, v3dx_draw.c,
+   v3dx_emit.c
+       Copyright © 2014-2017 Broadcom
+   src/gallium/drivers/v3d/v3d_resource.c, v3dx_state.c
+       Copyright © 2014-2017 Broadcom
+       Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
+   src/gallium/drivers/v3d/v3dx_rcl.c
+       Copyright © 2017 Broadcom
+
+2. Adapted into the shader compiler tool (tools/v3dshader/; source only,
+   built on a PC against Mesa 25.2.8, not part of the SD card)
+
+   src/broadcom/common/v3d_device_info.c
+       Copyright © 2016 Broadcom
+   src/broadcom/vulkan/v3dv_pipeline.c
+       Copyright © 2019 Raspberry Pi Ltd
+   src/gallium/drivers/v3d/v3d_program.c
+       Copyright © 2014-2017 Broadcom
+   src/vulkan/runtime/vk_nir.c
+       Copyright © 2015 Intel Corporation
+       Copyright © 2022 Collabora, LTD
+
+The compiled shaders in src/v3d/ (shader_*.h, shader71_*.h) are output
+of Mesa 25.2.8's V3D compiler run by that tool; they are not Mesa code.
+The crt-pi shaders among them are under crt-pi's licence (crt-pi.txt).
+
+MIT licence, as these Mesa files give it:
+
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice (including the next
+paragraph) shall be included in all copies or substantial portions of the
+Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.

@@ -49,6 +49,8 @@ static int HasOnboardWLAN(TMachineModel machine_model) {
   case MachineModel400:
   case MachineModelCM4:
   case MachineModelCM4S:
+  case MachineModel5:
+  case MachineModel500:
     return 1;
   default:
     return 0;
@@ -62,6 +64,8 @@ static int HasOnboardEthernet(TMachineModel machine_model) {
   case MachineModel3BPlus:
   case MachineModel4B:
   case MachineModel400:
+  case MachineModel5:
+  case MachineModel500:
     return 1;
   default:
     return 0;
@@ -93,6 +97,12 @@ static bool HasWifiFirmware(const char *firmware_path) {
       "brcmfmac43455-sdio.bin",
       "brcmfmac43455-sdio.clm_blob",
       "brcmfmac43455-sdio.txt",
+#if RASPPI >= 5
+      // The Pi 5's, under its own name (the 43455 files).
+      "brcmfmac43455-sdio.raspberrypi,5-model-b.bin",
+      "brcmfmac43455-sdio.raspberrypi,5-model-b.txt",
+      "brcmfmac43455-sdio.raspberrypi,5-model-b.clm_blob",
+#endif
   };
 
   for (unsigned int index = 0;

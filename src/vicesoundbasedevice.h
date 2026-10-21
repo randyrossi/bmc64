@@ -16,6 +16,11 @@
 #ifndef _vice_base_sound_device_h
 #define _vice_base_sound_device_h
 
+#if RASPPI >= 4
+// The Pi 4 and 5 have no VCHIQ sound service.
+#include "av/vicesound.h"
+#else
+
 #include <stdint.h>
 #include <circle/interrupt.h>
 #include <circle/sched/synchronizationevent.h>
@@ -136,5 +141,7 @@ private:
   int m_nVolume;
   int m_nChannels;
 };
+
+#endif // RASPPI >= 4
 
 #endif

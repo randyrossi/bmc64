@@ -14,6 +14,16 @@ kernel8-32.map
 kernel8-32.img*
 kernel8-32.img.*
 kernel7.img.*
+# The Pi 4 and 5 (64-bit)
+kernel8-rpi4.elf
+kernel8-rpi4.img
+kernel8-rpi4.lst
+kernel8-rpi4.map
+kernel8.img
+kernel_2712.elf
+kernel_2712.img
+kernel_2712.lst
+kernel_2712.map
 *.o
 
 # Root build outputs

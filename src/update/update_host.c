@@ -21,6 +21,10 @@ const char *uh_board_kernel(void) {
     return "kernel7.img";
   case 3:
     return "kernel8-32.img";
+  case 4:
+    return "kernel8.img";
+  case 5:
+    return "kernel_2712.img";
   default:
     return "kernel.img";
   }

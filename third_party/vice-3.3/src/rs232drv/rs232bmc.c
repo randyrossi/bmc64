@@ -15,6 +15,7 @@ unsigned int rs232bmc_get_acia_capabilities(int device)
        rs232drv.h for more details */
     switch (machine_class) {
         case VICE_MACHINE_C64:
+        case VICE_MACHINE_C64SC: /* x64sc, on the Pi 4 and 5 */
             return RS232_ACIA_OPEN_ON_RESET
                  | RS232_ACIA_SET_2400_ON_RESET
                  | RS232_ACIA_KEEP_DTR_ASSERTED

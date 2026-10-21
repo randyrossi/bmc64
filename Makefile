@@ -51,6 +51,9 @@ else
 OBJS	+= src/viceemulatorcore.o
 endif
 
+# The Raspberry Pi 4 and 5
+include src/pi45/pi45.mk
+
 include $(CIRCLEHOME)/Rules.mk
 
 CFLAGS += $(APP_INCLUDES) -D $(MACHINE_CLASS)
@@ -166,3 +169,5 @@ LIBS := $(VICELIBS) \
 	$(CIRCLEHOME)/lib/sound/libsound.a \
   	$(CIRCLEHOME)/lib/sched/libsched.a \
   	$(CIRCLEHOME)/lib/libcircle.a
+
+include src/pi45/pi45_libs.mk

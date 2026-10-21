@@ -10,8 +10,10 @@ This folder contains license texts and notices for included software.
 
   GPL-3.0.txt            BMC64's main license; also used by Circle.
   GPL-2.0.txt            GPL version 2 for upstream notices, including
-                        VICE, Plus4Emu, reSID and crt-pi. Their applicable
-                        "or later" grants remain in the source notices.
+                        VICE, Plus4Emu, reSID, crt-pi, the Linux code in
+                        the Raspberry Pi 4 and 5 GPU driver and the Pi 4
+                        and 5 device trees. Their applicable "or later"
+                        grants remain in the source notices.
   VICE.txt              VICE 3.3's README, copyright and author credits.
   Plus4Emu.txt           Plus4Emu's README, copyright and author credits.
                         It also describes desktop features/dependencies
@@ -25,6 +27,10 @@ This folder contains license texts and notices for included software.
                         BMC64 uses a local stub, not full libsndfile.
   zlib.txt              zlib decompression code used by the updater.
   crt-pi.txt            davej's CRT shader notice.
+  Linux-V3D.txt         Notices of the Linux V3D and BCM2835 power driver
+                        files the Raspberry Pi 4 and 5 GPU driver adapts.
+  Mesa-MIT.txt          Notices and MIT license of the Mesa files the
+                        Raspberry Pi 4 and 5 GPU driver adapts.
   Bescii-CC0.txt         CC0 text for Damian Vila's Bescii Mono glyphs.
   newlib.txt            Aggregate newlib C/math library notices.
   libgloss.txt          Aggregate libgloss runtime-adaptation notices.
@@ -34,7 +40,8 @@ This folder contains license texts and notices for included software.
                         some listed GCC components are not linked.
   RaspberryPi-Firmware.txt
                         Broadcom/Raspberry Pi redistribution terms for
-                        bootcode.bin, start.elf and fixup.dat.
+                        bootcode.bin, start.elf and fixup.dat, and the
+                        Raspberry Pi 4's start4.elf and fixup4.dat.
 
 Circle and VICE are upstream components, not newly licensed by BMC64.
 Their original per-file notices remain in the corresponding source.

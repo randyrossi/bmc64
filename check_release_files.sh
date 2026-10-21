@@ -16,6 +16,8 @@ REQUIRED_FILES=(
     "licenses/libsndfile-interface.txt"
     "licenses/zlib.txt"
     "licenses/crt-pi.txt"
+    "licenses/Linux-V3D.txt"
+    "licenses/Mesa-MIT.txt"
     "licenses/Bescii-CC0.txt"
     "licenses/newlib.txt"
     "licenses/libgloss.txt"
@@ -40,6 +42,9 @@ REQUIRED_FILES=(
     "firmware/brcmfmac43455-sdio.bin"
     "firmware/brcmfmac43455-sdio.clm_blob"
     "firmware/brcmfmac43455-sdio.txt"
+    "firmware/brcmfmac43456-sdio.bin"
+    "firmware/brcmfmac43456-sdio.clm_blob"
+    "firmware/brcmfmac43456-sdio.txt"
     "firmware/LICENCE.broadcom_bcm43xx"
     "firmware/LICENCE.cypress"
     "firmware/LICENCE.synaptics"
@@ -118,6 +123,34 @@ PI3_KERNEL_FILES=(
     "kernel8-32.img.vic20"
 )
 
+# The Pi 4 (64-bit) and Pi 5, with what they boot with besides the kernel.
+PI4_KERNEL_FILES=(
+    "kernel8.img"
+    "kernel8.img.c128"
+    "kernel8.img.pet"
+    "kernel8.img.plus4"
+    "kernel8.img.plus4emu"
+    "kernel8.img.vic20"
+    "armstub8-rpi4.bin"
+    "start4.elf"
+    "fixup4.dat"
+    "bcm2711-rpi-4-b.dtb"
+    "bcm2711-rpi-400.dtb"
+)
+
+PI5_KERNEL_FILES=(
+    "kernel_2712.img"
+    "kernel_2712.img.c128"
+    "kernel_2712.img.pet"
+    "kernel_2712.img.plus4"
+    "kernel_2712.img.plus4emu"
+    "kernel_2712.img.vic20"
+    "bcm2712-rpi-5-b.dtb"
+    "bcm2712d0-rpi-5-b.dtb"
+    "bcm2712-rpi-500.dtb"
+    "overlays/bcm2712d0.dtbo"
+)
+
 # Required directories from the known-good BMC64 4.2 release.
 REQUIRED_DIRECTORIES=(
     # Machine directories
@@ -165,7 +198,7 @@ REQUIRED_DIRECTORIES=(
 
 if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]
 then
-    echo "Usage: $0 RELEASE_DIRECTORY [pi0|pi2|pi3]" >&2
+    echo "Usage: $0 RELEASE_DIRECTORY [pi0|pi2|pi3|pi4|pi5]" >&2
     exit 2
 fi
 
@@ -180,7 +213,8 @@ fi
 
 case "$PI_MODEL" in
     "")
-        REQUIRED_FILES+=("${PI0_KERNEL_FILES[@]}" "${PI2_KERNEL_FILES[@]}" "${PI3_KERNEL_FILES[@]}")
+        REQUIRED_FILES+=("${PI0_KERNEL_FILES[@]}" "${PI2_KERNEL_FILES[@]}" "${PI3_KERNEL_FILES[@]}"
+                         "${PI4_KERNEL_FILES[@]}" "${PI5_KERNEL_FILES[@]}")
         ;;
     pi0)
         REQUIRED_FILES+=("${PI0_KERNEL_FILES[@]}")
@@ -191,8 +225,14 @@ case "$PI_MODEL" in
     pi3)
         REQUIRED_FILES+=("${PI3_KERNEL_FILES[@]}")
         ;;
+    pi4)
+        REQUIRED_FILES+=("${PI4_KERNEL_FILES[@]}")
+        ;;
+    pi5)
+        REQUIRED_FILES+=("${PI5_KERNEL_FILES[@]}")
+        ;;
     *)
-        echo "Pi model must be pi0, pi2, or pi3: $PI_MODEL" >&2
+        echo "Pi model must be pi0, pi2, pi3, pi4 or pi5: $PI_MODEL" >&2
         exit 2
         ;;
 esac

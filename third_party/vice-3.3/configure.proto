@@ -1653,7 +1653,8 @@ darwin*)
 
   ;;
 
-eabi*)
+dnl elf: aarch64-none-elf, the 64-bit Pi 4 and 5
+eabi*|elf*)
   echo "Configuring for bare metal raspberry pi"
   AC_DEFINE(HAVE_MOUSE,,[Enable 1351 mouse support])
   HAVE_MOUSE_SUPPORT="yes"

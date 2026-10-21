@@ -22,7 +22,7 @@ Please follow the project's [Code of Conduct](/docs/CODE_OF_CONDUCT.md) in all i
 4. **Test your changes**
    Test your changes before submitting a pull request and verify that they do not introduce regressions. Run any existing tests and add or update tests where appropriate.
 
-   In your pull request, clearly state which Raspberry Pi models you have tested your changes on. Supported hardware ranges from the **Raspberry Pi Zero through to the Raspberry Pi 3 Model B+**.
+   In your pull request, clearly state which Raspberry Pi models you have tested your changes on. Supported hardware ranges from the **Raspberry Pi Zero through to the Raspberry Pi 5**.
 
    You are not expected to test on every Raspberry Pi model, but please list the models you have personally tested. If your changes have not been tested on physical hardware, state this clearly in the pull request.
 

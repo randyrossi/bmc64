@@ -301,7 +301,7 @@ int is_composite() {
       timing == MACHINE_TIMING_PAL_COMPOSITE;
 }
 
-// Disable shader for composite or models > 3
+// Disable shader for composite (the Pi 4 and 5 draw it on their 3D GPU)
 int allow_shader() {
-  return circle_get_model() <= 3 && !is_composite();
+  return !is_composite();
 }

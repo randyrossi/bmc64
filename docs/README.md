@@ -5,6 +5,8 @@
 - [Installation](INSTALLATION.md)
 - [Machine Selection](USER_GUIDE.md#machine-selection)
 - [User Guide](USER_GUIDE.md)
+- [Raspberry Pi 4 and 5](PI4_PI5.md)
+- [Raspberry Pi 4 and 5 Limitations](LIMITATIONS_PI4_PI5.md)
 
 ## Using BMC64
 

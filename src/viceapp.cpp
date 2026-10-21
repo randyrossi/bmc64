@@ -14,6 +14,10 @@
 // limitations under the License.
 
 #include "viceapp.h"
+#if RASPPI >= 4
+#include "pi45/board.h"
+#include "vicesound.h"
+#endif
 #include "vice_network.h"
 #include "network_time_sync.h"
 #include "webui/webui.h"
@@ -623,7 +627,8 @@ void ViceStdioApp::InitializeNetwork() {
   if (!mWLAN->Initialize()) {
     SetNetworkStatus(CIRCLE_NETWORK_WIFI_DEVICE_INIT_FAILED);
     mLogger.Write(GetKernelName(), LogError, "Cannot initialize WLAN");
-    delete mWLAN;
+    // Not deleted: Circle's WLAN driver can't be shut down once it has
+    // started on the chip (its clean up fails and halts).
     mWLAN = nullptr;
     return;
   }
@@ -892,6 +897,13 @@ bool ViceStdioApp::Initialize(void) {
   } else {
     strcpy(mTimingOption, "-pal");
   }
+
+#if RASPPI >= 4
+  // The Pi 4 and 5: sound starts on core 0, and the display runs at the
+  // machine's frame rate (src/av/, src/pi45/board.h).
+  ViceSound::Start(&mInterrupt, mViceOptions.GetAudioOut());
+  Pi45BoardMatchRate(circle_cycles_per_second(), mTimingOption[1] == 'n');
+#endif
 
 #ifdef ARM_ALLOW_MULTI_CORE
   mEmulatorCore->LaunchEmulator(mTimingOption);

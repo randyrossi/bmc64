@@ -83,7 +83,7 @@ void Plus4EmulatorCore::Run(unsigned nCore) {
 
 #ifdef ARM_ALLOW_MULTI_CORE
   printf("Core %d idle\n", nCore);
-  asm("dsb\n\t"
+  asm("dsb sy\n\t"
       "1: wfi\n\t"
       "b 1b\n\t");
 #endif

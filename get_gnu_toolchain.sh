@@ -1,9 +1,16 @@
 #!/bin/bash
 
 # Source this file to configure the Arm GNU Toolchain required by BMC64.
+# With BMC64_AARCH=64 (the Pi 4 and 5), the 64-bit aarch64-none-elf one.
 TOOLCHAIN_VERSION=15.2.1
 TOOLCHAIN_RELEASE=15.2.rel1
-TOOLCHAIN_NAME=arm-gnu-toolchain-${TOOLCHAIN_RELEASE}-x86_64-arm-none-eabi
+if [ "${BMC64_AARCH:-32}" = "64" ]
+then
+    TOOLCHAIN_TARGET=aarch64-none-elf
+else
+    TOOLCHAIN_TARGET=arm-none-eabi
+fi
+TOOLCHAIN_NAME=arm-gnu-toolchain-${TOOLCHAIN_RELEASE}-x86_64-${TOOLCHAIN_TARGET}
 TOOLCHAIN_ARCHIVE=${TOOLCHAIN_NAME}.tar.xz
 TOOLCHAIN_URL=https://gitlab.arm.com/api/v4/projects/tooling%2Fgnu-toolchains-for-arm/packages/generic/gnu-toolchain/${TOOLCHAIN_RELEASE}/${TOOLCHAIN_ARCHIVE}
 TOOLCHAIN_CACHE=${XDG_CACHE_HOME:-$HOME/.cache}/bmc64/toolchains
@@ -11,16 +18,16 @@ TOOLCHAIN_HOME=${BMC64_TOOLCHAIN_HOME:-$TOOLCHAIN_CACHE/$TOOLCHAIN_NAME}
 
 toolchain_is_valid()
 {
-    [ -x "$1/bin/arm-none-eabi-gcc" ] &&
-        [ "$("$1/bin/arm-none-eabi-gcc" -dumpfullversion 2>/dev/null)" = "$TOOLCHAIN_VERSION" ]
+    [ -x "$1/bin/$TOOLCHAIN_TARGET-gcc" ] &&
+        [ "$("$1/bin/$TOOLCHAIN_TARGET-gcc" -dumpfullversion 2>/dev/null)" = "$TOOLCHAIN_VERSION" ]
 }
 
 if toolchain_is_valid "${ARM_HOME:-}"
 then
     TOOLCHAIN_HOME=$ARM_HOME
-elif command -v arm-none-eabi-gcc >/dev/null 2>&1
+elif command -v $TOOLCHAIN_TARGET-gcc >/dev/null 2>&1
 then
-    path_compiler=$(readlink -f "$(command -v arm-none-eabi-gcc)")
+    path_compiler=$(readlink -f "$(command -v $TOOLCHAIN_TARGET-gcc)")
     path_toolchain=$(dirname "$(dirname "$path_compiler")")
     if toolchain_is_valid "$path_toolchain"
     then

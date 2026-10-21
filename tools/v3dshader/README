@@ -1,0 +1,24 @@
+v3dshader: compiles the GPU shaders in this folder into the headers in
+src/v3d/: shader_NAME.h for the Pi 4's V3D 4.2 and shader71_NAME.h for
+the Pi 5's V3D 7.1, from rect.vert and NAME.frag. Only needed when a
+shader changes; the headers are in the repository.
+
+Needs a Linux PC with glslangValidator (glslang-tools), the SPIRV-Tools
+library, Python with mako, meson and ninja, and a Mesa source tree (built
+with 25.2.8), configured and built for the V3D driver:
+
+  meson setup build -Dgallium-drivers=v3d -Dvulkan-drivers= -Dplatforms= \
+    -Dglx=disabled -Degl=disabled -Dgbm=disabled -Dgles1=disabled \
+    -Dgles2=disabled -Dllvm=disabled -Dvalgrind=disabled \
+    -Dlibunwind=disabled -Dzstd=disabled -Dshader-cache=disabled \
+    -Dbuildtype=debugoptimized
+  ninja -C build src/broadcom/compiler/libbroadcom_compiler.a \
+    src/broadcom/qpu/libbroadcom_qpu.a src/broadcom/libbroadcom_v3d.a \
+    src/compiler/spirv/libvtn.a src/compiler/nir/libnir.a \
+    src/compiler/libcompiler.a src/util/libmesa_util.a \
+    src/util/libmesa_util_simd.a src/c11/impl/libmesa_util_c11.a \
+    src/util/blake3/libblake3.a
+
+Then, here:
+
+  make MESA=/path/to/mesa headers

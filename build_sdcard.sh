@@ -23,7 +23,7 @@ while [ "$#" -gt 0 ]
 do
     argument=$1
     case "$argument" in
-        pi0|pi2|pi3|pi4)
+        pi0|pi2|pi3|pi4|pi5)
             BOARDS+=("$argument")
             ;;
         --machine)
@@ -60,7 +60,7 @@ done
 
 if [ "${#BOARDS[@]}" -eq 0 ]
 then
-    BOARDS=(pi0 pi2 pi3)
+    BOARDS=(pi0 pi2 pi3 pi4 pi5)
 fi
 
 # Opt-in storage I/O instrumentation. Exported here so every sub-build in this
@@ -94,7 +94,18 @@ kernel_for_board()
         pi0) echo "kernel.img" ;;
         pi2) echo "kernel7.img" ;;
         pi3) echo "kernel8-32.img" ;;
-        pi4) echo "kernel7l.img" ;;
+        pi4) echo "kernel8.img" ;;
+        pi5) echo "kernel_2712.img" ;;
+    esac
+}
+
+# The image the kernel build makes (Circle names the Pi 4's 64-bit one
+# kernel8-rpi4.img; on the card it is kernel8.img).
+built_kernel_for_board()
+{
+    case "$1" in
+        pi4) echo "kernel8-rpi4.img" ;;
+        *) kernel_for_board "$1" ;;
     esac
 }
 
@@ -229,15 +240,16 @@ do
         make clean
         BOARD=$board make -f "Makefile-$machine_name"
 
-        image_artifact="$SRC_DIR/$kernel"
+        built_kernel=$(built_kernel_for_board "$board")
+        image_artifact="$SRC_DIR/$built_kernel"
         if [ ! -f "$image_artifact" ]
         then
             echo "Expected artifact was not created: $image_artifact" >&2
             exit 1
         fi
-        cp "$image_artifact" "$image_artifact.$MACHINE"
+        cp "$image_artifact" "$SRC_DIR/$kernel.$MACHINE"
 
-        artifact_base=${kernel%.img}
+        artifact_base=${built_kernel%.img}
         for artifact in elf lst map
         do
             source_artifact="$SRC_DIR/$artifact_base.$artifact"
@@ -264,7 +276,7 @@ do
         ./make_machines.sh "${make_machines_arguments[@]}"
         machines=(c64 c128 vic20 plus4 pet)
 
-        if [ "$board" = "pi3" ]
+        if [ "$board" = "pi3" ] || [ "$board" = "pi4" ] || [ "$board" = "pi5" ]
         then
             machines+=(plus4emu)
         fi
@@ -281,6 +293,17 @@ do
         done
 
         mv "$STAGING_DIR/$kernel.c64" "$STAGING_DIR/$kernel"
+    fi
+
+    # What the Pi 4 and 5 boot with besides their kernels; the Pi 4's ARM
+    # stub is built by make_all.sh (the next board's clean removes it).
+    if [ "$board" = "pi4" ] || [ "$board" = "pi5" ]
+    then
+        cp -a "$SRC_DIR/release/pi45_release_files/." "$STAGING_DIR/"
+    fi
+    if [ "$board" = "pi4" ]
+    then
+        cp "$SRC_DIR/third_party/circle-stdlib/libs/circle/boot/armstub8-rpi4.bin" "$STAGING_DIR/"
     fi
 done
 
@@ -301,7 +324,7 @@ fi
 if [ -z "$MACHINE" ]
 then
     check_release_arguments=("$STAGING_DIR")
-    if [ "${#BOARDS[@]}" -eq 1 ] && [[ "${BOARDS[0]}" =~ ^pi[023]$ ]]
+    if [ "${#BOARDS[@]}" -eq 1 ] && [[ "${BOARDS[0]}" =~ ^pi[02345]$ ]]
     then
         check_release_arguments+=("${BOARDS[0]}")
     fi

@@ -44,14 +44,14 @@ ViceEmulatorCore::ViceEmulatorCore(CMemorySystem *pMemorySystem,
   // done by cores 1 and 2 in parellel below.
 #ifdef ARM_ALLOW_MULTI_CORE
 
-  passBandFreq_ = 19845; // 90%
+  passBandFreq_ = SAMPLE_RATE * 9 / 20; // 90% (of SAMPLE_RATE / 2)
   //unsigned clock = circle_get_arm_clock();
   //if (clock < 1400000000) {
      // For Pi3 models with a lower clock rate (<= 1.2Ghz)
      // we must lower the passband freq to avoid stuttering
      // in the worst case.  This logic must match the passband
      // percentage we set in menu.c in common dir.
-     passBandFreq_ = 13230; // 60%
+     passBandFreq_ = SAMPLE_RATE * 3 / 10; // 60% (13230 at 44100 Hz)
   //}
 
   reSID::SID::ComputeSamplingTable(cyclesPerSecond_,
@@ -221,7 +221,7 @@ void ViceEmulatorCore::Run(unsigned nCore) {
 
 #ifdef ARM_ALLOW_MULTI_CORE
   printf("Core %d idle\n", nCore);
-  asm("dsb\n\t"
+  asm("dsb sy\n\t"
       "1: wfi\n\t"
       "b 1b\n\t");
 #endif

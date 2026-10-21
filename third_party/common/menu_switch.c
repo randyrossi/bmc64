@@ -33,6 +33,9 @@
 #include <unistd.h>
 
 #include "circle.h"
+#if RASPPI >= 4
+#include "menu_pi45.h"
+#endif
 #include "../../src/profiles/profiles.h"
 
 #define OPTION_SCRATCH_LEN (KEY_LEN+1+VALUE_LEN+1)
@@ -271,6 +274,9 @@ int load_machines(struct machine_entry** head) {
     }
   }
 
+#if RASPPI >= 4
+  menu_pi45_machines(&first_section);
+#endif
   *head = first_section;
   fclose(fp);
   return 0;
@@ -663,7 +669,11 @@ static int apply_config(struct machine_entry* head, int pi_model, struct s_cfg_f
        strcpy(kernel_name,"kernel8-32.img");
        break;
     case 4:
-       strcpy(kernel_name,"kernel7l.img");
+       // 64-bit (arm_64bit=1): the firmware's default kernel name
+       strcpy(kernel_name,"kernel8.img");
+       break;
+    case 5:
+       strcpy(kernel_name,"kernel_2712.img");
        break;
     default:
        return ERROR_5;

@@ -6,7 +6,7 @@ TOP=..
 
 OBJ = plus4api.o circle.o virtual_keyboard_plus4.o acia_modem.o
 
-INCLUDES = -I $(CIRCLE_STDLIB_HOME)/install/arm-none-circle/include -I $(CIRCLE_STDLIB_HOME)/libs/circle/addon/fatfs -I $(TOP)/src -I $(TOP) -I ../../common
+INCLUDES = -I $(CIRCLE_STDLIB_HOME)/install/$(NEWLIB_ARCH)/include -I $(CIRCLE_STDLIB_HOME)/libs/circle/addon/fatfs -I $(TOP)/src -I $(TOP) -I ../../common
 
 all: libplus4api.a
 

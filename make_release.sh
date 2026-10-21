@@ -15,6 +15,8 @@ fi
 SRC_PI3=pi3
 SRC_PI2=pi2
 SRC_PI0=pi0
+SRC_PI4=pi4
+SRC_PI5=pi5
 
 COUNT2=`ls -l $SRC_PI2/*.img.* | wc -l`
 COUNT3=`ls -l $SRC_PI3/*.img.* | wc -l`
@@ -34,6 +36,14 @@ if [ "$COUNT0" != "6" ]
 then
 exit -1
 fi
+
+for SRC_PI in $SRC_PI4 $SRC_PI5
+do
+if [ "`ls -l $SRC_PI/*.img.* | wc -l`" != "6" ]
+then
+exit -1
+fi
+done
 
 export MACHINE_C64_L=c64
 export MACHINE_C64_U=C64
@@ -94,6 +104,21 @@ cp ${SRC_PI3}/kernel8-32.img.${MACHINE_VIC20_L} stage_dir
 cp ${SRC_PI3}/kernel8-32.img.${MACHINE_PLUS4_L} stage_dir
 cp ${SRC_PI3}/kernel8-32.img.${MACHINE_PLUS4EMU_L} stage_dir
 cp ${SRC_PI3}/kernel8-32.img.${MACHINE_PET_L} stage_dir
+
+# The Pi 4 (64-bit) and Pi 5, and what they boot with besides the kernel
+for KERNEL_PI in "${SRC_PI4}:kernel8.img" "${SRC_PI5}:kernel_2712.img"
+do
+SRC_PI=${KERNEL_PI%%:*}
+KERNEL=${KERNEL_PI##*:}
+cp ${SRC_PI}/${KERNEL}.${MACHINE_C64_L} stage_dir/${KERNEL}
+cp ${SRC_PI}/${KERNEL}.${MACHINE_C128_L} stage_dir
+cp ${SRC_PI}/${KERNEL}.${MACHINE_VIC20_L} stage_dir
+cp ${SRC_PI}/${KERNEL}.${MACHINE_PLUS4_L} stage_dir
+cp ${SRC_PI}/${KERNEL}.${MACHINE_PLUS4EMU_L} stage_dir
+cp ${SRC_PI}/${KERNEL}.${MACHINE_PET_L} stage_dir
+done
+cp -R ${SRC_PI3}/release/pi45_release_files/. stage_dir/
+cp ${SRC_PI4}/third_party/circle-stdlib/libs/circle/boot/armstub8-rpi4.bin stage_dir
 
 cp ${SRC_PI3}/sdcard/$MACHINE_C64_L/* stage_dir/$MACHINE_C64_U
 cp ${SRC_PI3}/sdcard/$MACHINE_C128_L/* stage_dir/$MACHINE_C128_U
