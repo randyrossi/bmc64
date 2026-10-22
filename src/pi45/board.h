@@ -12,7 +12,8 @@
 #define BMC64_PI45_BOARD_H_
 
 // Core 0, often: on the Pi 5 the power button (the Pi 500's power key),
-// and the Pi 400's power key, power off as the menu does.
+// and the Pi 400's power key, power off as the menu does; on the Pi 5 the
+// fan (fan.h).
 void Pi45BoardPoll(void);
 
 // Each USB keyboard report's keys: the Pi 400's keyboard sends its power

@@ -5,6 +5,7 @@
 // tools/update/gen_update_manifest.py; do not edit.
 
 export const OFFICIAL_RELEASES = [
+  { tag: "v5.4.0", prerelease: false, sha256: "8ceefda27bef1c3ba944a7f925b6d21c3f2fe9ad5a5dd1de19e584e29825b771" },
   { tag: "v5.3.1", prerelease: true, sha256: "1c1bea27cc5ae7c0981c0c81cbacce514e0f5fcaec401e52998b59b6c3c93ca2" },
   { tag: "v5.3.0", prerelease: false, sha256: "8fbf5832e6c8d441233626effdc189e069ebdb87e878cf060baccba6e7e559ad" },
   { tag: "v5.2.7", prerelease: true, sha256: "ad258d8593aa28ed65d7880a97b6b9f5f3519fa565d2c53295362b9e83b65c02" },
