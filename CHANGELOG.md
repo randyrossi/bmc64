@@ -1,3 +1,6 @@
+## 5.4.1 (pre-release)
+  * Add PWM fan control on Pi5
+
 ## 5.4.0
   * Add Raspberry Pi 4 B / Pi 400 (`kernel8.img`) and Pi 5 / Pi 500 / Pi 500+ (`kernel_2712.img`) support (beta). See [PI4_PI5.md](docs/PI4_PI5.md) and [LIMITATIONS_PI4_PI5.md](docs/LIMITATIONS_PI4_PI5.md)
     * HDMI only, at 720p or 1080p, with the display run at the machine's own frame rate
