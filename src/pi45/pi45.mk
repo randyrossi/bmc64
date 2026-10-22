@@ -33,7 +33,8 @@ OBJS += src/kms/pi4/dlist.o src/kms/pi4/hvs.o src/kms/pi4/phy.o \
         src/kms/pi4/modeset.o
 else
 OBJS += src/kms/pi5/dlist.o src/kms/pi5/hvs.o src/kms/pi5/phy.o \
-        src/kms/pi5/modeset.o
+        src/kms/pi5/modeset.o \
+        src/pi45/fan.o
 endif
 
 EXTRACLEAN += src/pi45/*.o src/pi45/*.d src/av/*.o src/av/*.d \
