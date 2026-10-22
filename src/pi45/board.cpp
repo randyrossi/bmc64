@@ -30,6 +30,7 @@
 //
 
 #include "board.h"
+#include "fan.h"
 
 #include "../defs.h"
 #include "../av/fbl.h"
@@ -73,6 +74,8 @@ void Pi45BoardPoll(void) {
     return;
   }
 #if RASPPI >= 5
+  Pi45FanPoll();
+
   // The button is low while pressed, held for 50 ms; it counts only once
   // it has been seen released.
   static bool seen_up = false;
