@@ -22,6 +22,10 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  *  02111-1307  USA.
  *
+ * Modifications Copyright (C) 2025-2026 aminch <https://github.com/aminch>
+ * Modified for BMC64: 8BitDo 2C controller, gamepad pot settings, menu layout
+ * fix.
+ *
  */
 
 #include "menu_usb.h"

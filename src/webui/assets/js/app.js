@@ -1,3 +1,22 @@
+//
+// app.js
+//
+// BMC64 - A bare metal Commodore emulator for Raspberry Pi
+// Copyright (C) 2026 aminch <https://github.com/aminch>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
 // Entry point: wires the modules together and switches between views.
 //
 //   api.js        every /api/* call
@@ -10,6 +29,7 @@
 //   profiles.js   the Profiles page (profiles_data.js reads the files)
 //   basic.js      C64 BASIC V2 tokeniser / detokeniser (listing <-> PRG)
 //   ../update/    the Update page (release check, upload of bmc64-update.zip)
+//
 
 import { $ } from "./util.js";
 import { initDashboard, refreshVolumes, startStatusPolling } from "./dashboard.js";

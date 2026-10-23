@@ -1,3 +1,22 @@
+//
+// sd_fs.h
+//
+// BMC64 - A bare metal Commodore emulator for Raspberry Pi
+// Copyright (C) 2026 aminch <https://github.com/aminch>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
 // File access on the SD card, for BMC64's own code: the updater, profiles,
 // the web UI, the log file and the Wi-Fi checks. Paths are absolute on the
 // card ("/C64/rpi_pos.vkm"); the card's volume is added here.
@@ -8,6 +27,7 @@
 // same on both.
 //
 // The emulators' stdio (fopen etc.) doesn't use this; it is new_io.cpp.
+//
 
 #ifndef BMC64_SD_FS_H
 #define BMC64_SD_FS_H

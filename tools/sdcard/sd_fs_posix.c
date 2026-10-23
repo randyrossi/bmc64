@@ -1,9 +1,29 @@
+//
+// sd_fs_posix.c
+//
+// BMC64 - A bare metal Commodore emulator for Raspberry Pi
+// Copyright (C) 2026 aminch <https://github.com/aminch>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
 // sd_fs.h on a PC folder, for the host tests (updater and profiles). The
 // "card" is the folder in SD_TEST_ROOT. Setting SD_TEST_CRASH_AFTER=N makes
 // the Nth rename exit the process first, to simulate a power cut, and
 // SD_TEST_FREE_KB fakes the free space. Behaves like FatFs where it matters
 // (a rename never replaces an existing file; sd_mkdir accepts an existing
 // folder).
+//
 
 #include "../../src/sdcard/sd_fs.h"
 

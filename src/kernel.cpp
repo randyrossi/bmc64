@@ -12,6 +12,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// Modifications Copyright (C) 2026 aminch <https://github.com/aminch>
+// Modified for BMC64: Circle 51 port, networking, web UI, updater, profiles,
+// keyboard handling, performance tests, Pi 4 and 5 support.
 
 #include "kernel.h"
 #if RASPPI >= 4

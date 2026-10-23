@@ -1,6 +1,25 @@
 //
 // crt.h
 //
+// BMA800XL - A bare metal Atari 800XL emulator for Raspberry Pi
+// Copyright (C) 2026 aminch <https://github.com/aminch>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
+// Modified for BMC64 from BMA800XL's src/v3d/crt.h: without BMA800XL's self-
+// test against its ARM scaler.
+//
 // The picture drawn by the 3D GPU of the Pi 4 or Pi 5: the emulator's 8-bit
 // indexed screen is turned into colour in a texture by the ARM, and the GPU
 // scales it to the output, with crt-pi (tools/v3dshader/crt.frag) or as a
@@ -9,9 +28,6 @@
 // Pixels are 32-bit words 0xAARRGGBB, as the framebuffer and the HVS take
 // them. The GPU sees them as red in the low byte, but every channel is
 // treated alike, so they come out in the order they went in.
-//
-// This file is part of BMC64's Raspberry Pi 4 and 5 support, from BMA800XL.
-// See LICENSE for licensing details.
 //
 
 #ifndef BMC64_V3D_CRT_H_

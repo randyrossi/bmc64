@@ -1,6 +1,57 @@
 /*
  * v3dshader.c
  *
+ * BMA800XL - A bare metal Atari 800XL emulator for Raspberry Pi
+ * Copyright (C) 2026 aminch <https://github.com/aminch>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * Parts adapted from Mesa (25.2.8), which remain under their
+ * license:
+ *
+ *     src/broadcom/common/v3d_device_info.c:
+ *         Copyright © 2016 Broadcom
+ *     src/broadcom/vulkan/v3dv_pipeline.c:
+ *         Copyright © 2019 Raspberry Pi Ltd
+ *     src/gallium/drivers/v3d/v3d_program.c:
+ *         Copyright © 2014-2017 Broadcom
+ *     src/vulkan/runtime/vk_nir.c:
+ *         Copyright © 2015 Intel Corporation
+ *         Copyright © 2022 Collabora, LTD
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ *
+ * Modified for BMC64 from BMA800XL's tools/v3dshader/v3dshader.c: "BMA800XL"
+ * changed to "BMC64" in two comments.
+ *
  * Compiles a vertex and fragment shader pair, as SPIR-V from
  * glslangValidator, into QPU code for V3D 4.2 (the Pi 4) or, with -71,
  * V3D 7.1 (the Pi 5) with Mesa's Broadcom compiler, and writes it out as a
@@ -20,9 +71,6 @@
  * src/broadcom/common/v3d_device_info.c. Copyright (C) 2014-2019
  * Broadcom and Raspberry Pi Ltd; vk_nir.c Copyright (C) 2015 Intel
  * Corporation and (C) 2022 Collabora; all MIT licence.
- *
- * This file is part of BMC64's Raspberry Pi 4 and 5 support, from BMA800XL.
- * See LICENSE for licensing details.
  */
 
 #include "compiler/nir/nir.h"

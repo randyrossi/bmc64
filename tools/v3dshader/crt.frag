@@ -1,4 +1,36 @@
 #version 450
+//
+// crt.frag
+//
+// BMA800XL - A bare metal Atari 800XL emulator for Raspberry Pi
+// Copyright (C) 2026 aminch <https://github.com/aminch>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
+// Parts adapted from crt-pi, which remain under its license:
+//
+//     crt-pi - A Raspberry Pi friendly CRT shader.
+//
+//     Copyright (C) 2015-2016 davej
+//
+//     This program is free software; you can redistribute it and/or modify it
+//     under the terms of the GNU General Public License as published by the Free
+//     Software Foundation; either version 2 of the License, or (at your option)
+//     any later version.
+//
+// From BMA800XL's tools/v3dshader/crt.frag, unchanged.
+//
 // crt-pi, "A Raspberry Pi friendly CRT shader", Copyright (C) 2015-2016
 // davej, GPL 2 or later; adapted from the copy BMC64 ships in
 // src/crt_pi_idx.c (the fragment shader), with its default settings:
@@ -8,6 +40,7 @@
 // The picture is already in colour (no palette texture), the texture is
 // just the visible part (screenScale 1), and with SMOOTH the hardware's
 // bilinear filter is used with the scan lines on the texel centres.
+//
 
 layout(binding = 0) uniform sampler2D picture;
 

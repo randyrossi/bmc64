@@ -1,6 +1,32 @@
 //
 // regs.h
 //
+// BMA800XL - A bare metal Atari 800XL emulator for Raspberry Pi
+// Copyright (C) 2026 aminch <https://github.com/aminch>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
+// Parts adapted from Linux (the Raspberry Pi kernel, rpi-6.18.y),
+// which remain under their license, the GNU General Public License
+// version 2 or (at your option) any later version:
+//
+//     drivers/gpu/drm/v3d/v3d_regs.h        Copyright (C) 2017-2018 Broadcom
+//     drivers/gpu/drm/v3d/v3d_drv.h         Copyright (C) 2015-2018 Broadcom
+//     drivers/pmdomain/bcm/bcm2835-power.c  Copyright (C) 2018 Broadcom
+//
+// From BMA800XL's src/v3d/regs.h, unchanged but for the include guard's name.
+//
 // Addresses and registers of the 3D GPU, V3D 4.2 on the Pi 4 and V3D 7.1
 // on the Pi 5, and of the power controls it needs.
 //
@@ -12,9 +38,6 @@
 // device tree (bcm2712-ds.dtsi: v3d, pm), with Circle's
 // include/circle/memorymap64.h for where the BCM2712's AXI and SoC
 // peripherals are.
-//
-// This file is part of BMC64's Raspberry Pi 4 and 5 support, from BMA800XL.
-// See LICENSE for licensing details.
 //
 
 #ifndef BMC64_V3D_REGS_H_

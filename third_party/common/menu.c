@@ -22,6 +22,10 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  *  02111-1307  USA.
  *
+ * Modifications Copyright (C) 2025-2026 aminch <https://github.com/aminch>
+ * Modified for BMC64: networking, web UI, updater, profiles, keyboard layouts,
+ * power menu, Pi 4 and 5 menus.
+ *
  */
 
 #include "menu.h"

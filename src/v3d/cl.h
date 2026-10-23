@@ -1,6 +1,61 @@
 //
 // cl.h
 //
+// BMA800XL - A bare metal Atari 800XL emulator for Raspberry Pi
+// Copyright (C) 2026 aminch <https://github.com/aminch>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
+// Parts adapted from Mesa (26.2.4 and 25.2.8), which remain under their
+// license:
+//
+//     src/broadcom/cle/v3d_packet.xml (its directory, src/broadcom/cle/):
+//         Copyright © 2017 Broadcom
+//     src/broadcom/cle/gen_pack_header.py:
+//         Copyright (C) 2016 Intel Corporation
+//         Copyright (C) 2016 Broadcom
+//     src/broadcom/common/v3d_util.c:
+//         Copyright © 2021 Raspberry Pi Ltd
+//     src/gallium/drivers/v3d/v3dx_emit.c:
+//         Copyright © 2014-2017 Broadcom
+//     src/gallium/drivers/v3d/v3dx_state.c:
+//         Copyright © 2014-2017 Broadcom
+//         Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
+//     src/gallium/drivers/v3d/v3dx_rcl.c:
+//         Copyright © 2017 Broadcom
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice (including the next
+// paragraph) shall be included in all copies or substantial portions of the
+// Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+// IN THE SOFTWARE.
+//
+// From BMA800XL's src/v3d/cl.h, unchanged but for the include guard's name.
+//
 // Writes control list packets (an opcode byte, then the packet's fields at
 // their bit positions, little endian) and the records they point to, for
 // V3D 4.2 (the Pi 4) or V3D 7.1 (the Pi 5). Only the packets and records
@@ -12,9 +67,6 @@
 // V3D 7.1 render target and texture settings from
 // src/gallium/drivers/v3d/v3dx_rcl.c, v3dx_emit.c and v3dx_state.c, and
 // src/broadcom/common/v3d_util.c (tile size, render target stride).
-//
-// This file is part of BMC64's Raspberry Pi 4 and 5 support, from BMA800XL.
-// See LICENSE for licensing details.
 //
 
 #ifndef BMC64_V3D_CL_H_
