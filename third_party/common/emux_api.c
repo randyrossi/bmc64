@@ -126,25 +126,33 @@ void emux_ensure_video(void) {
   }
 
   if ((statusbar_enabled && !statusbar_showing) ||
-         (vkbd_enabled && !vkbd_showing)) {
+         (vkbd_enabled && !vkbd_showing) ||
+         (overlay_message_enabled && !overlay_message_showing)) {
      if (statusbar_enabled && !statusbar_showing) {
         statusbar_showing = 1;
      }
      if (vkbd_enabled && !vkbd_showing) {
         vkbd_showing = 1;
      }
-     if (statusbar_showing || vkbd_showing) {
+     if (overlay_message_enabled && !overlay_message_showing) {
+        overlay_message_showing = 1;
+     }
+     if (statusbar_showing || vkbd_showing || overlay_message_showing) {
         circle_show_fbl(FB_LAYER_STATUS);
      }
   } else if ((!statusbar_enabled && statusbar_showing) ||
-                 (!vkbd_enabled && vkbd_showing)) {
+                 (!vkbd_enabled && vkbd_showing) ||
+                 (!overlay_message_enabled && overlay_message_showing)) {
      if (!statusbar_enabled && statusbar_showing) {
         statusbar_showing = 0;
      }
      if (!vkbd_enabled && vkbd_showing) {
         vkbd_showing = 0;
      }
-     if (!statusbar_showing && !vkbd_showing) {
+     if (!overlay_message_enabled && overlay_message_showing) {
+        overlay_message_showing = 0;
+     }
+     if (!statusbar_showing && !vkbd_showing && !overlay_message_showing) {
         circle_hide_fbl(FB_LAYER_STATUS);
      }
   }

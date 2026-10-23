@@ -400,6 +400,7 @@ typedef enum {
    MENU_WIFI_CONNECT_NOW,
    MENU_WEBUI_ENABLED,
    MENU_WEBUI_PIN,
+   MENU_SHOW_IP_ON_CONNECT,
 
    MENU_VIC20_MEMORY_3K,
    MENU_VIC20_MEMORY_8K_2000,
@@ -761,6 +762,9 @@ void menu_apply_warp_after_boot(void);
 // Nonzero if Delay autostart for time sync is set: the boot autostart
 // waits for the Pi's clock to be set from the network.
 int menu_delay_autostart_for_time_sync(void);
+
+// Nonzero if Show IP Address on Connect is set.
+int menu_show_ip_on_connect(void);
 
 // Saves the current settings into a profile's folder (profiles_create()
 // makes the folder). Returns 0 on success.

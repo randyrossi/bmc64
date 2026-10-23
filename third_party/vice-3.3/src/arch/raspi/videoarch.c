@@ -419,7 +419,7 @@ void vsyncarch_postsync(void) {
     ui_check_key();
   }
 
-  if (statusbar_showing || vkbd_showing) {
+  if (statusbar_showing || vkbd_showing || overlay_message_showing) {
     overlay_check();
     if (overlay_dirty) {
        circle_frames_ready_fbl(FB_LAYER_STATUS,

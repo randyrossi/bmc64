@@ -201,6 +201,7 @@ struct menu_item *active_display_item;
 static struct menu_item *network_device_item;
 static struct menu_item *network_status_item;
 static struct menu_item *network_ip_address_item;
+static struct menu_item *show_ip_on_connect_item;
 static struct menu_item *network_modem_address_item;
 static struct menu_item *network_modem_baud_item;
 static struct menu_item *webui_settings_item;
@@ -1580,6 +1581,9 @@ static int save_settings_to(const char *settings_filename,
     saved_network_device = network_device_item->value;
     network_reboot_prompted = 0;
   }
+  if (show_ip_on_connect_item != NULL) {
+    fprintf(fp, "show_ip_on_connect=%d\n", show_ip_on_connect_item->value);
+  }
   if (webui_enabled_item != NULL) {
     fprintf(fp, "webui_enabled=%d\n", webui_enabled_item->value);
     saved_webui_enabled = webui_enabled_item->value;
@@ -1920,6 +1924,9 @@ static void load_settings() {
         network_device_item->value = value;
         saved_network_device = value;
       }
+    } else if (show_ip_on_connect_item != NULL &&
+               strcmp(name, "show_ip_on_connect") == 0) {
+      show_ip_on_connect_item->value = value ? 1 : 0;
     } else if (webui_enabled_item != NULL &&
                strcmp(name, "webui_enabled") == 0) {
       webui_enabled_item->value = value ? 1 : 0;
@@ -2688,6 +2695,10 @@ void menu_apply_warp_after_boot(void) {
   if (warp_after_boot_item->value) {
     toggle_warp(1);
   }
+}
+
+int menu_show_ip_on_connect(void) {
+  return show_ip_on_connect_item != NULL && show_ip_on_connect_item->value;
 }
 
 int menu_delay_autostart_for_time_sync(void) {
@@ -4344,6 +4355,9 @@ void build_menu(struct menu_item *root) {
     MENU_ID_DO_NOTHING, parent, "IP Address", 0,
     " ", " ");
   network_ip_address_item->disabled = 1;
+
+  show_ip_on_connect_item = ui_menu_add_toggle(
+    MENU_SHOW_IP_ON_CONNECT, parent, "Show IP Address on Connect", 1);
 
   parent = wifi_settings_item = ui_menu_add_folder(network_folder, "WiFi Settings");
   wifi_ssid_item = ui_menu_add_text_field_limit(
