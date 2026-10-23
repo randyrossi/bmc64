@@ -11669,7 +11669,7 @@ printf "%s\n" "#define MACOSX_BUNDLE /**/" >>confdefs.h
 
   ;;
 
-eabi*)
+eabi*|elf*)
   echo "Configuring for bare metal raspberry pi"
 
 printf "%s\n" "#define HAVE_MOUSE /**/" >>confdefs.h
