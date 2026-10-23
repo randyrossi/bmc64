@@ -1,0 +1,211 @@
+# Bare Metal Commodore keyboard mapping file suitable for real C64 keyboards using Keymmodore-64 interfase by K-rnivoro. https://github.com/K-rnivoro/Keymmodore-64
+# Tested with BMC v5.+ (https://github.com/randyrossi/bmc64)
+# Mapped for positional compatibility to C-64 Keyboards.
+#
+# File format:
+# - comment lines start with '#'
+# - keyword lines start with '!keyword'
+# - normal line has 'keysym/scancode row column shiftflag'
+#
+# Keywords and their lines are:
+# '!CLEAR'               clear whole table
+# '!INCLUDE filename'    read file as mapping file
+# '!LSHIFT row col'      left shift keyboard row/column
+# '!RSHIFT row col'      right shift keyboard row/column
+# '!VSHIFT shiftkey'     virtual shift key (RSHIFT or LSHIFT)
+# '!SHIFTL shiftkey'     shift lock key (RSHIFT or LSHIFT)
+# '!UNDEF keysym'        remove keysym from table
+#
+# Shiftflag can have the values:
+# 0      key is not shifted for this keysym/scancode
+# 1      key is shifted for this keysym/scancode
+# 2      left shift
+# 4      right shift
+# 8      key can be shifted or not with this keysym/scancode
+# 16     deshift key for this keysym/scancode
+# 32     another definition for this keysym/scancode follows
+#
+# Negative row values:
+# 'keysym -1 n' joystick keymap A, direction n
+# 'keysym -2 n' joystick keymap B, direction n
+# 'keysym -3 0' first RESTORE key
+# 'keysym -3 1' second RESTORE key
+# 'keysym -4 0' 40/80 column key
+# 'keysym -4 1' CAPS (ASCII/DIN) key
+#
+# Joystick direction values:
+# 0      Fire
+# 1      South/West
+# 2      South
+# 3      South/East
+# 4      West
+# 5      East
+# 6      North/West
+# 7      North
+# 8      North/East
+#
+# Joyport keypad key layout:
+# --------------------------
+# |  0 |  1 |  2 |  3 |  4 |
+# --------------------------
+# |  5 |  6 |  7 |  8 |  9 |
+# --------------------------
+# | 10 | 11 | 12 | 13 | 14 |
+# --------------------------
+# | 15 | 16 | 17 | 18 | 19 |
+# --------------------------
+#
+# When a bigger spaced key is used,
+# it uses the upper left most key value.
+
+# Positional Mapping, US Layout, C64, X11
+
+# C64 keyboard matrix:
+#
+#       +-----+-----+-----+-----+-----+-----+-----+-----+
+#       |Bit 0|Bit 1|Bit 2|Bit 3|Bit 4|Bit 5|Bit 6|Bit 7|
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 0| DEL |Retrn|C_L/R|  F7 |  F1 |  F3 |  F5 |C_U/D|
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 1| 3 # |  W  |  A  | 4 $ |  Z  |  S  |  E  | S_L |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 2| 5 % |  R  |  D  | 6 & |  C  |  F  |  T  |  X  |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 3| 7 ' |  Y  |  G  | 8 ( |  B  |  H  |  U  |  V  |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 4| 9 ) |  I  |  J  |  0  |  M  |  K  |  O  |  N  |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 5|  +  |  P  |  L  |  -  | . > | : [ |  @  | , < |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 6|POUND|  *  | ; ] | HOME| S_R |  =  | A_UP| / ? |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 7| 1 ! |A_LFT| CTRL| 2 " |SPACE|  C= |  Q  | R/S |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+
+!CLEAR
+!LSHIFT 1 7
+!RSHIFT 6 4
+!VSHIFT RSHIFT
+!SHIFTL LSHIFT
+
+#####################
+# |Bit 0| DEL |Retrn|C_L/R|  F7 |  F1 |  F3 |  F5 |C_U/D|
+
+BackSpace       0 0 8
+Return          0 1 8
+Right           0 2 8
+F7              0 3 8
+F1              0 4 8
+F3              0 5 8
+F5              0 6 8
+F6              0 6 1
+Down            0 7 8
+
+
+#####################
+# |Bit 1| 3 # |  W  |  A  | 4 $ |  Z  |  S  |  E  | S_L |
+
+Shift_L         1 7 2
+
+
+#####################
+# |Bit 2| 5 % |  R  |  D  | 6 & |  C  |  F  |  T  |  X  |
+
+
+#####################
+# |Bit 3| 7 ' |  Y  |  G  | 8 ( |  B  |  H  |  U  |  V  |
+
+
+#####################
+# |Bit 4| 9 ) |  I  |  J  |  0  |  M  |  K  |  O  |  N  |
+
+
+#####################
+# |Bit 5|  +  |  P  |  L  |  -  | . > | : [ |  @  | , < |
+
+Dash			5 0 8
+Equals    		5 3 8
+Period      	5 4 8
+SemiColon   	5 5 8
+LeftBracket     5 6 8
+Comma           5 7 8
+
+
+#####################
+# |Bit 6|POUND|  *  | ; ] | HOME| S_R |  =  | A_UP| / ? |
+
+Insert          6 0 8
+RightBracket    6 1 8
+SingleQuote     6 2 8
+Home            6 3 8
+Shift_R         6 4 4
+BackSlash       6 5 8
+Del	            6 6 8
+Slash           6 7 8
+
+#####################
+# |Bit 7| 1 ! |A_LFT| CTRL| 2 " |SPACE|  C= |  Q  | R/S |
+
+BackQuote       7 1 8
+Tab             7 2 8
+Space           7 4 8
+Control_L       7 5 8
+Escape          7 7 8
+
+#####################
+# letters and numbers
+
+0 4 3 8
+1 7 0 8
+2 7 3 8
+3 1 0 8
+4 1 3 8
+5 2 0 8
+6 2 3 8
+7 3 0 8
+8 3 3 8
+9 4 0 8
+
+a 1 2 8
+b 3 4 8
+c 2 4 8
+d 2 2 8
+e 1 6 8
+f 2 5 8
+g 3 2 8
+h 3 5 8
+i 4 1 8
+j 4 2 8
+k 4 5 8
+l 5 2 8
+m 4 4 8
+n 4 7 8
+o 4 6 8
+p 5 1 8
+q 7 6 8
+r 2 1 8
+s 1 5 8
+t 2 6 8
+u 3 6 8
+v 3 7 8
+w 1 1 8
+x 2 7 8
+y 3 1 8
+z 1 4 8
+
+# Restore key mappings
+PageUp -3 0
+
+# joystick keymap A (port 1)
+KP_8 -1 7              /*     NumPad 8 -> UP           */
+KP_2 -1 2              /*     NumPad 2 -> DOWN         */
+KP_4 -1 4              /*     NumPad 4 -> LEFT         */
+KP_6 -1 5              /*     NumPad 6 -> RIGHT        */
+KP_0 -1 0              /*     NumPad 0 -> FIRE         */
+
+# joystick Keymap B (port 2)
+KP_7 -2 7              /*     NumPad 7 -> UP           */
+KP_3 -2 2              /*     NumPad 3 -> DOWN         */
+KP_1 -2 4              /*     NumPad 1 -> LEFT         */
+KP_9 -2 5              /*     NumPad 9 -> RIGHT        */
+KP_Decimal -2 0        /*     NumPad . -> FIRE         */

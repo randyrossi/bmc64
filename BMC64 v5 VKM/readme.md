@@ -1,0 +1,1 @@
+These .vkm files are compatible with BMC64 v5. onwards only.
