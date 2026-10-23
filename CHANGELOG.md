@@ -1,3 +1,9 @@
+## 5.4.2 (pre-release)
+  * New *Prefs > Boot Options* menu. Move *Warp after boot* here.
+  * Add *Delay autostart for time sync* to *Boot Options*, allows time setting before autostart. (30 second timeout) #403
+  * Show the IP address as overlay on screen for 10 seconds when the network connects. 
+  * Add Network menu item *Show IP Address on Connect* to disable showing IP address overlay on connect.
+
 ## 5.4.1 (pre-release)
   * Add PWM fan control on Pi5
 
