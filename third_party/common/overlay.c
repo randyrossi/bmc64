@@ -23,7 +23,7 @@
  *  02111-1307  USA.
  *
  * Modifications Copyright (C) 2026 aminch <https://github.com/aminch>
- * Modified for BMC64: drive LED colour fix (#112).
+ * Modified for BMC64: drive LED colour fix (#112), network address message.
  *
  */
 
@@ -137,6 +137,16 @@ int vkbd_cntrl_down;
 int statusbar_enabled;
 int statusbar_showing;
 
+// A message shown on a line above the status bar for a while (the IP
+// address once the network is up).
+#define MESSAGE_SECONDS 10
+int overlay_message_enabled;
+int overlay_message_showing;
+static char overlay_message[64];
+static unsigned long overlay_message_start;
+static int network_address_shown;
+static unsigned long network_address_checked;
+
 static int last_c480_80_state;
 static char *template;
 
@@ -149,6 +159,7 @@ static void draw_tape_control_status(int control);
 static void draw_tape_motor_status(int motor);
 static void draw_warp(int warp);
 static void draw_joyswap(int swap);
+static void overlay_draw_virtual_keyboard(void);
 
 static void draw_statusbar() {
   // Now draw the bg for the status bar
@@ -499,6 +510,65 @@ void overlay_check(void) {
   if (statusbar_enabled && circle_get_ticks() - statusbar_start >= statusbar_delay) {
       overlay_statusbar_dismiss();
   }
+  if (overlay_message_enabled &&
+      circle_get_ticks() - overlay_message_start >=
+          MESSAGE_SECONDS * TICKS_PER_SECOND) {
+      overlay_hide_message();
+  }
+}
+
+// The message line sits just above the status bar.
+static int message_y(void) {
+  return OVERLAY_HEIGHT - 2 * STATUS_BAR_HEIGHT - 2 * SCALE_XY;
+}
+
+void overlay_show_message(const char *text) {
+  if (!overlay_buf) return;
+
+  if (overlay_message_enabled) {
+    overlay_hide_message();
+  }
+  snprintf(overlay_message, sizeof(overlay_message), "%s", text);
+  int width = (strlen(overlay_message) + 2) * FONT_ADVANCE;
+  int x = (OVERLAY_WIDTH - width) / 2;
+  ui_draw_rect_buf(x, message_y(), width, STATUS_BAR_HEIGHT,
+                   BG_COLOR, 1, overlay_buf, overlay_buf_pitch);
+  ui_draw_text_buf(overlay_message, x + FONT_ADVANCE, message_y() + SCALE_XY,
+                   FG_COLOR, overlay_buf, overlay_buf_pitch, SCALE_XY);
+  overlay_message_start = circle_get_ticks();
+  overlay_message_enabled = 1;
+  overlay_dirty = 1;
+}
+
+void overlay_hide_message(void) {
+  if (!overlay_buf) return;
+
+  ui_draw_rect_buf(0, message_y(), OVERLAY_WIDTH, STATUS_BAR_HEIGHT,
+                   TRANSPARENT_COLOR, 1, overlay_buf, overlay_buf_pitch);
+  overlay_message_enabled = 0;
+  // The keyboard can reach down behind the message line.
+  if (vkbd_enabled) {
+    overlay_draw_virtual_keyboard();
+  }
+  overlay_dirty = 1;
+}
+
+void overlay_check_network_address(void) {
+  if (network_address_shown || !overlay_buf) return;
+
+  // Once a second is plenty.
+  unsigned long now = circle_get_ticks();
+  if (now - network_address_checked < TICKS_PER_SECOND) return;
+  network_address_checked = now;
+
+  char ip[32];
+  if (!circle_get_network_ip_address(ip, sizeof(ip))) return;
+  network_address_shown = 1;
+  if (!menu_show_ip_on_connect()) return;
+
+  char text[sizeof(overlay_message)];
+  snprintf(text, sizeof(text), "IP Address: %s", ip);
+  overlay_show_message(text);
 }
 
 void overlay_statusbar_dismiss(void) {
@@ -511,6 +581,7 @@ void overlay_change_padding(int padding) {
   circle_hide_fbl(FB_LAYER_STATUS);
   statusbar_showing = 0;
   vkbd_showing = 0;
+  overlay_message_showing = 0;
   circle_set_valign_fbl(FB_LAYER_STATUS, 1 /* BOTTOM */, padding);
 }
 

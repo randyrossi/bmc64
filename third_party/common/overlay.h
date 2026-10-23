@@ -49,6 +49,8 @@ extern int overlay_dirty;
 
 extern int statusbar_enabled;
 extern int statusbar_showing;
+extern int overlay_message_enabled;
+extern int overlay_message_showing;
 
 uint8_t *overlay_init(int padding, int c40_80_state, int vkbd_transparency);
 void overlay_check(void);
@@ -61,6 +63,12 @@ void overlay_statusbar_disable(void);
 void overlay_change_padding(int padding);
 void overlay_change_vkbd_transparency(int transparency);
 void overlay_40_80_columns_changed(int value);
+// Shows text on a line above the status bar for a few seconds.
+void overlay_show_message(const char *text);
+void overlay_hide_message(void);
+// Shows the IP address once, when the network first comes up (if Show IP
+// Address on Connect is set). Call on the main loop.
+void overlay_check_network_address(void);
 void vkbd_nav_up(void);
 void vkbd_nav_down(void);
 void vkbd_nav_left(void);
