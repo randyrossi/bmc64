@@ -130,6 +130,8 @@ enum circle_network_status {
 // Returns nonzero and writes the current address when DHCP is bound.
 int circle_get_network_ip_address(char *address, unsigned int address_size);
 int circle_get_network_status(void);
+// Nonzero once the Pi's clock has been set from the network (NTP).
+int circle_network_time_synced(void);
 typedef void circle_network_status_changed_handler_t(void);
 void circle_set_network_status_changed_handler(
   circle_network_status_changed_handler_t *handler);

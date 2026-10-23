@@ -511,6 +511,40 @@ void menu_profiles_autostart_chosen(const char *path) {
   }
 }
 
+// How long the boot autostart waits for the Pi's clock to be set from the
+// network before starting anyway.
+#define DELAYED_AUTOSTART_TIMEOUT_SECS 30
+
+// The boot autostart while it waits for time sync, or "".
+static char delayed_autostart[PENDING_EMU_AUTOSTART_MAX];
+static unsigned long delayed_autostart_start;
+
+// Whether the network is up or may still come up, so time sync may yet come.
+static int network_coming_up(void) {
+  switch (circle_get_network_status()) {
+  case CIRCLE_NETWORK_ETHERNET_INITIALIZING:
+  case CIRCLE_NETWORK_ETHERNET_WAITING_FOR_DHCP:
+  case CIRCLE_NETWORK_ETHERNET_CONNECTED:
+  case CIRCLE_NETWORK_WIFI_DEVICE_INITIALIZING:
+  case CIRCLE_NETWORK_WIFI_WPA_INITIALIZING:
+  case CIRCLE_NETWORK_WIFI_CONNECTING:
+  case CIRCLE_NETWORK_WIFI_CONNECTED:
+    return 1;
+  default:
+    return 0;
+  }
+}
+
+static void start_boot_autostart(const char *path) {
+  // Before the autostart, so with Warp after boot on, autostart sees warp
+  // already on and leaves it on when it finishes.
+  menu_apply_warp_after_boot();
+  // Queued for the main loop rather than started here: VICE's autostart puts
+  // back the warp state it started with when it finishes, so it must start
+  // after the warp state above is in place.
+  emu_autostart_interrupt(path);
+}
+
 void menu_profiles_boot_complete(void) {
   // A Start-once profile on another machine: the next power-on is back on
   // the power-on profile's machine.
@@ -541,21 +575,45 @@ void menu_profiles_boot_complete(void) {
     }
   }
 
-  // Before the autostart below, so with Warp after boot on, autostart sees
-  // warp already on and leaves it on when it finishes.
-  menu_apply_warp_after_boot();
-
-  // The profile's autostart, as if picked from Autostart Prg/Disk. It's
-  // queued for the main loop rather than started here: VICE's autostart puts
-  // back the warp state it started with when it finishes, so it must start
-  // after the warp state above is in place.
+  // The profile's autostart, as if picked from Autostart Prg/Disk.
   const char *autostart = profiles_autostart();
   if (autostart[0] != '\0' && !raspi_demo_mode) {
     struct stat st;
     if (stat(autostart, &st) != 0) {
       ui_error("Can't find the autostart\n%s", base_name(autostart));
+    } else if (menu_delay_autostart_for_time_sync() &&
+               !circle_network_time_synced() && network_coming_up()) {
+      // Held until the Pi's clock is set, so software that reads the time
+      // as it loads (GEOS, C64 OS via a CMD HD or IDE64) gets it right.
+      snprintf(delayed_autostart, sizeof(delayed_autostart), "%s", autostart);
+      delayed_autostart_start = circle_get_ticks();
+      printf("Autostart waiting for time sync\n");
+      return;
     } else {
-      emu_autostart_interrupt(autostart);
+      start_boot_autostart(autostart);
+      return;
     }
   }
+  menu_apply_warp_after_boot();
+}
+
+void menu_profiles_check_delayed_autostart(void) {
+  if (delayed_autostart[0] == '\0') {
+    return;
+  }
+  int synced = circle_network_time_synced();
+  if (!synced && network_coming_up() &&
+      circle_get_ticks() - delayed_autostart_start <
+          DELAYED_AUTOSTART_TIMEOUT_SECS * 1000000UL) {
+    return;
+  }
+  printf("Autostart %s\n", synced ? "after time sync" : "without time sync");
+  char path[sizeof(delayed_autostart)];
+  strcpy(path, delayed_autostart);
+  delayed_autostart[0] = '\0';
+  start_boot_autostart(path);
+}
+
+void menu_profiles_cancel_delayed_autostart(void) {
+  delayed_autostart[0] = '\0';
 }

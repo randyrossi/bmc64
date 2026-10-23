@@ -905,6 +905,7 @@ void ui_check_key(void) {
 }
 
 void ui_handle_toggle_or_quick_func() {
+  menu_profiles_check_delayed_autostart();
   if (pending_emu_safe_mode) {
     // Safe mode writes config.txt, cmdline.txt and /profiles/active.txt, so
     // it runs here on the main loop rather than in the key interrupt.
