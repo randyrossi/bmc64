@@ -163,7 +163,8 @@ with the editor above (`bmc64.log` and `/firmware` cannot be changed at all).
 ## Requirements
 
 - `Network Device` set to `Ethernet` or `WiFi` and connected, so the `Network`
-  menu shows an `IP Address`. See [NETWORKING.md](NETWORKING.md) for network
+  menu shows an `IP Address` (it is also shown on screen for a few seconds
+  when the network connects). See [NETWORKING.md](NETWORKING.md) for network
   setup.
 - A phone or computer on the same local network with a web browser.
 

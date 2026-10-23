@@ -74,7 +74,9 @@ card.
 3. Set `Network Device` to `Ethernet`.
 4. To use the modem, set `Modem Address` (`$D700` is recommended).
 5. Save the setting and reboot when prompted.
-6. Open `Network` again and check `IP Address`.
+6. The IP address shows on screen once connected (see
+   [IP Address on Connect](#ip-address-on-connect)), or open `Network` again
+   and check `IP Address`.
 
 The Ethernet choice is disabled when the selected Raspberry Pi model does not
 have onboard Ethernet. The IP address is populated when the Network menu is
@@ -99,7 +101,8 @@ firmware on the SD card.
 7. Set the two-letter Wi-Fi country code.
 8. Choose `Enter Password & Reboot`, enter the WPA password, and select
    `Save & Reboot`.
-9. After reboot, open `Network` and verify the assigned `IP Address`.
+9. After reboot, the IP address shows on screen once connected, or open
+   `Network` and check the assigned `IP Address`.
 
 Selecting Wi-Fi makes the Wi-Fi stack available at boot. It may take a 5-20 seconds after boot to connect to an access point depending if it needs to retry.
 
@@ -132,6 +135,33 @@ network={
 
 After changing the file, reboot BMC64. If Wi-Fi was not already selected, set
 `Network Device` to `WiFi` and reboot when prompted.
+
+## IP Address on Connect
+
+When the network first gets an address after power-on, BMC64 shows it on
+screen, just above the status bar, for 15 seconds, e.g.
+`IP Address: 192.168.1.42`. It is shown once per boot.
+
+To turn it off, set `Network -> Show IP Address on Connect` to off (it is on by
+default) and save the settings. The address is still listed as `IP Address` in
+the `Network` menu.
+
+## Time Sync
+
+The Raspberry Pi has no clock that keeps time while it is off. Once the
+network is up, BMC64 sets the Pi's clock from the internet (`pool.ntp.org`)
+and keeps it in step every 15 minutes. Set your local time zone with
+`Network -> Timezone (reboot)`.
+
+The emulated IDE64 and CMD HD real-time clocks read the Pi's clock, so GEOS
+and C64 OS get the right time from them once it has been set.
+
+The clock is only set once the network has connected, which can take 5-20
+seconds on Wi-Fi. If a [profile autostart](PROFILES.md#autostart) starts
+GEOS or C64 OS before that, they read the wrong time. Turn on
+`Prefs -> Boot Options -> Delay autostart for time sync` to hold the power-on
+autostart until the clock is set. It waits up to 30 seconds, and doesn't wait
+at all if networking is off or has failed.
 
 ## Web UI
 

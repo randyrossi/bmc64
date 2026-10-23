@@ -196,6 +196,12 @@ A profile can start a program or disk image by itself every time it starts:
   a message and the machine starts normally.
 - A hard reset doesn't run the autostart again; only power-on (or a
   restart) does.
+- With *Prefs → Boot Options → Delay autostart for time sync* on, the
+  power-on autostart waits (up to 30 seconds) for the Pi's clock to be set
+  from the network, for GEOS or C64 OS that read the time as they start. See
+  [Time Sync](NETWORKING.md#time-sync).
+- With *Prefs → Boot Options → Warp after boot* on, the autostart runs in
+  warp and warp stays on afterwards.
 
 ---
 

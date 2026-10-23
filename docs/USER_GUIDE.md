@@ -68,6 +68,7 @@ This guide covers installing, configuring, and using BMC64, including machine se
 - [CPU Temperature](#cpu-temperature)
 - [Profiles](#profiles)
 - [Reboot and Shut Down](#reboot-and-shut-down)
+- [Boot Options](#boot-options)
 - [Networking Support](#networking-support)
 - [Web UI](#web-ui)
 - [Changelog](#changelog)
@@ -520,6 +521,12 @@ This will create a 16Mb image.  You can then use CREATE SYS and HD-TOOLS.64 to c
 C64OS will work with BMC64 from 4.1 onward but only with JiffyDOS kernal replacement installed.  For some reason, the regular kernal hangs on application launches.  This happens on desktop versions of VICE as well so I don't think it's a problem with BMC64 specifically.  If you are able to use C64OS without JiffyDOS on VICE, let me know.
 
 From BMC64 5.0.0 onwards C64OS is supported with networking! Follow the [NETWORKING.md](NETWORKING.md) readme or this [post](https://retro.minch.io/2026/09/c64-os-on-bmc64-with-networking/) has a step by step to get going.
+
+C64OS can take the time from the IDE64 or CMD HD real-time clock, which BMC64
+sets from the network once connected. If C64OS starts from a profile
+autostart, turn on **Prefs -> Boot Options -> Delay autostart for time sync**
+so it isn't started before the time is set. See
+[Time Sync](NETWORKING.md#time-sync).
 
 For mouse-wheel scrolling in C64OS, assign **USB Mouse (MicroMys)** to the
 appropriate port in the Joyports menu. The 1351 mouse protocol does not expose
@@ -1046,9 +1053,29 @@ little power but is not off. On these boards, briefly connecting GPIO3
 input in some BMC64 GPIO configurations, so check yours before wiring a
 button to it.
 
+# Boot Options
+
+**Prefs -> Boot Options** sets what happens once BMC64 has started:
+
+  * **Warp after boot** turns on warp mode as soon as the machine has
+    started. Warp stays on after a [profile autostart](PROFILES.md#autostart)
+    finishes. Turn it off again from **Warp Mode** in the main menu or a
+    warp hotkey.
+  * **Delay autostart for time sync** holds the power-on autostart until the
+    Pi's clock has been set from the network, so software that reads the
+    time as it loads (GEOS or C64 OS via an IDE64 or CMD HD) gets it right.
+    It waits up to 30 seconds, and doesn't wait at all if networking is off
+    or has failed. If you start something else yourself while it is waiting,
+    the autostart is dropped. See
+    [Time Sync](NETWORKING.md#time-sync).
+
+Both are off by default.
+
 # Networking Support
 
   * Networking is available for C64, C128, VIC-20, Plus/4 and Plus4Emu; see [NETWORKING.md](NETWORKING.md) for setup, BBS and C64OS usage.
+  * The IP address shows on screen for 15 seconds when the network connects. Turn it off with **Network -> Show IP Address on Connect**.
+  * The Pi's clock is set from the internet once connected, for the IDE64 and CMD HD real-time clocks. See [Time Sync](NETWORKING.md#time-sync).
 
 # Web UI
 
