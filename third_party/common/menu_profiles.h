@@ -73,6 +73,15 @@ void menu_profiles_clear_start_error(void);
 // message about it.
 void menu_profiles_boot_complete(void);
 
+// With Delay autostart for time sync on, the boot autostart waits for the
+// Pi's clock to be set from the network. Called every frame on the main loop
+// to start it once the time is set, the network gives up, or it times out.
+void menu_profiles_check_delayed_autostart(void);
+
+// Drops a boot autostart that is still waiting (another autostart was
+// started in the meantime).
+void menu_profiles_cancel_delayed_autostart(void);
+
 #ifdef __cplusplus
 }
 #endif

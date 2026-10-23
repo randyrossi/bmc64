@@ -180,6 +180,7 @@ typedef enum {
 
    MENU_WARP_MODE,
    MENU_WARP_AFTER_BOOT,
+   MENU_DELAY_AUTOSTART_TIME_SYNC,
 
    MENU_AUTOSTART,
    MENU_AUTOSTART_WARP,
@@ -756,6 +757,10 @@ void menu_autostart(const char *path);
 
 // Turns warp on if Warp after boot is set. Called once boot warp is over.
 void menu_apply_warp_after_boot(void);
+
+// Nonzero if Delay autostart for time sync is set: the boot autostart
+// waits for the Pi's clock to be set from the network.
+int menu_delay_autostart_for_time_sync(void);
 
 // Saves the current settings into a profile's folder (profiles_create()
 // makes the folder). Returns 0 on success.

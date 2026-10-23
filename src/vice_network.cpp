@@ -426,6 +426,14 @@ extern "C" int circle_get_network_status(void) {
   return CIRCLE_NETWORK_DISABLED;
 }
 
+extern "C" int circle_network_time_synced(void) {
+#if BMC64_NETWORK
+  return NetworkTimeSynced() ? 1 : 0;
+#else
+  return 0;
+#endif
+}
+
 extern "C" void circle_set_network_status_changed_handler(
     circle_network_status_changed_handler_t *handler) {
   network_status_changed_handler = handler;

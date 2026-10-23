@@ -51,6 +51,9 @@ bool ConfigureSystemTimeZone(int offset_minutes) {
 
 namespace {
 
+// Set once the first NTP time has been written to the Pi's clock.
+volatile bool time_synced = false;
+
 class NetworkTimeSyncTask : public CTask {
 public:
   explicit NetworkTimeSyncTask(CNetSubSystem *network) : mNetwork(network) {
@@ -82,6 +85,7 @@ public:
       }
 
       if (CTimer::Get()->SetTime(timestamp, FALSE)) {
+        time_synced = true;
         CLogger::Get()->Write("ntp", LogNotice,
                               "System time set from NTP: %u UTC", timestamp);
       } else {
@@ -100,4 +104,8 @@ private:
 
 void StartNetworkTimeSync(CNetSubSystem *network) {
   new NetworkTimeSyncTask(network);
+}
+
+bool NetworkTimeSynced(void) {
+  return time_synced;
 }

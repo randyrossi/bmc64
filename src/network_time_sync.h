@@ -5,5 +5,7 @@ class CNetSubSystem;
 
 bool ConfigureSystemTimeZone(int offset_minutes);
 void StartNetworkTimeSync(CNetSubSystem *network);
+// True once the Pi's clock has been set from the network.
+bool NetworkTimeSynced(void);
 
 #endif
