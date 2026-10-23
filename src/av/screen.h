@@ -1,6 +1,24 @@
 //
 // screen.h
 //
+// BMA800XL - A bare metal Atari 800XL emulator for Raspberry Pi
+// Copyright (C) 2026 aminch <https://github.com/aminch>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
+// Written for BMC64's Raspberry Pi 4 and 5 support.
+//
 // The Pi 4's and Pi 5's screen: BMC64 takes over the HVS channel feeding
 // the HDMI port with a display, and shows its layers (src/av/fbl.h) on it
 // as planes of its own display lists, each scaled to its place by the HVS,
@@ -26,9 +44,6 @@
 //    tasks on the core that calls it.
 //  - BMA800XL, src/kms/pi4/display.cpp and src/kms/pi5/display.cpp: the
 //    single plane version of this.
-//
-// This file is part of BMC64's Raspberry Pi 4 and 5 support, from BMA800XL.
-// See LICENSE for licensing details.
 //
 
 #ifndef BMC64_AV_SCREEN_H_

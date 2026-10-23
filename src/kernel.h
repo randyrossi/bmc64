@@ -12,6 +12,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// Modifications Copyright (C) 2026 aminch <https://github.com/aminch>
+// Modified for BMC64: Circle 51 port, USB plug and play, up to 4 keyboards and
+// mice, Caps Lock LED.
 
 #ifndef _kernel_h
 #define _kernel_h

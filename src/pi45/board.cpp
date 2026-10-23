@@ -1,6 +1,22 @@
 //
 // board.cpp
 //
+// BMC64 - A bare metal Commodore emulator for Raspberry Pi
+// Copyright (C) 2026 aminch <https://github.com/aminch>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
 // See board.h.
 //
 // Sources:
@@ -24,9 +40,6 @@
 //    CEA modes 4 (720p60), 16 (1080p60), 19 (720p50), 31 (1080p50) and 32
 //    to 34 (1080p24 to 30); [pi4], [pi400], [pi5], [pi500], [all] and
 //    [none] sections.
-//
-// This file is part of BMC64's Raspberry Pi 4 and 5 support, from BMA800XL.
-// See LICENSE for licensing details.
 //
 
 #include "board.h"

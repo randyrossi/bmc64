@@ -12,6 +12,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// Modifications Copyright (C) 2026 aminch <https://github.com/aminch>
+// Modified for BMC64: Circle 51 port; the Pi 4/5 FrameBufferLayer
+// (src/av/fbl.h) on those boards.
 
 #ifndef _fb2_h
 #define _fb2_h

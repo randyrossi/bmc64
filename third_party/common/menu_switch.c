@@ -22,6 +22,9 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  *  02111-1307  USA.
  *
+ * Modifications Copyright (C) 2026 aminch <https://github.com/aminch>
+ * Modified for BMC64: profiles, PET gpu_mem switch, Pi 4 and 5 support.
+ *
  */
 
 #include "menu_switch.h"

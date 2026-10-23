@@ -1,6 +1,25 @@
 //
 // filter.h
 //
+// BMA800XL - A bare metal Atari 800XL emulator for Raspberry Pi
+// Copyright (C) 2026 aminch <https://github.com/aminch>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
+// From BMA800XL's src/kms/common/filter.h, unchanged but for the include
+// guard's name.
+//
 // The HVS's scaling filter kernels, worked out from their definitions:
 //  - Smooth: the Mitchell-Netravali cubic with B = C = 1/3 (D. P. Mitchell
 //    and A. N. Netravali, "Reconstruction Filters in Computer Graphics",
@@ -11,9 +30,6 @@
 // source pixels from the centre, symmetric, 256 = one; an output pixel
 // uses the four i = p, p + 8, p + 16, p + 24 for its phase p (0..7), which
 // are made to add up to 256. The HVS takes them as 11 words.
-//
-// This file is part of BMC64's Raspberry Pi 4 and 5 support, from BMA800XL.
-// See LICENSE for licensing details.
 //
 
 #ifndef BMC64_KMS_COMMON_FILTER_H_

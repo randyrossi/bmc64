@@ -1,3 +1,22 @@
+//
+// update.js
+//
+// BMC64 - A bare metal Commodore emulator for Raspberry Pi
+// Copyright (C) 2026 aminch <https://github.com/aminch>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
 // The Update page: shows the latest releases, checks a downloaded release zip
 // and uploads it to the card as /bmc64-update.zip. BMC64 applies it on the
 // next boot, where the user picks Replace or Keep for each file in BMC64's
@@ -6,6 +25,7 @@
 //   logic.js   checks that don't need the page (tested with Node)
 //   zip.js     zip directory and entry reading
 //   sha256.js  SHA-256 (crypto.subtle needs https, the web UI is http)
+//
 
 import * as api from "../js/api.js";
 import { fmtBytes } from "../js/util.js";

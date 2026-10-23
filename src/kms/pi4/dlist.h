@@ -1,13 +1,29 @@
 //
 // dlist.h
 //
+// BMA800XL - A bare metal Atari 800XL emulator for Raspberry Pi
+// Copyright (C) 2026 aminch <https://github.com/aminch>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
+// Modified for BMC64 from BMA800XL's src/kms/pi4/dlist.h: planes can be
+// blended by per-pixel alpha.
+//
 // Builds HVS display list entries: RGB planes from memory, placed and
 // scaled on the screen, opaque or blended by their pixels' alpha.
 //
 // Pure computation, so tools/pi4kms can test it on a PC.
-//
-// This file is part of BMC64's Raspberry Pi 4 and 5 support, from BMA800XL.
-// See LICENSE for licensing details.
 //
 
 #ifndef BMC64_KMS_PI4_DLIST_H_

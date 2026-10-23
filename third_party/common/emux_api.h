@@ -22,6 +22,10 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  *  02111-1307  USA.
  *
+ * Modifications Copyright (C) 2026 aminch <https://github.com/aminch>
+ * Modified for BMC64: network menu, IDE64 and modem addresses, REU image,
+ * keymaps, profiles, autostart browser.
+ *
  */
 
 // API between common code and emulator specific impl

@@ -12,6 +12,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// Modifications Copyright (C) 2026 aminch <https://github.com/aminch>
+// Modified for BMC64: Pi 4 and 5 build settings.
 
 #ifndef KERNEL_DEFS_H
 #define KERNEL_DEFS_H

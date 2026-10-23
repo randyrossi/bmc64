@@ -1,6 +1,23 @@
 //
 // fbl.h
 //
+// BMC64 - A bare metal Commodore emulator for Raspberry Pi
+// Copyright (C) 2019 Randy Rossi <randy.rossi@gmail.com>
+// Copyright (C) 2026 aminch <https://github.com/aminch>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
 // The Pi 4's and Pi 5's FrameBufferLayer: the same interface as BMC64's
 // dispmanx and OpenGL ES one (src/fbl.h, which includes this on those
 // boards), on the HVS (src/av/screen.h). Each layer that is showing is a
@@ -16,9 +33,6 @@
 //  - BMC64, src/fbl.h and src/fbl.cpp: the interface, what each call does,
 //    the default palettes and how the destination rectangle is worked out
 //    from the stretch, alignment, padding and centre offset.
-//
-// This file is part of BMC64's Raspberry Pi 4 and 5 support, from BMA800XL.
-// See LICENSE for licensing details.
 //
 
 #ifndef BMC64_AV_FBL_H_

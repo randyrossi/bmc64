@@ -57,6 +57,10 @@ The GCC license section supplied with version 15.2.rel1, including the GCC
 Runtime Library Exception 3.1, is included in
 [`GCC-Runtime.txt`](../sdcard/licenses/GCC-Runtime.txt).
 
+## Raspberry Pi Pico SDK
+
+[`tools/keyrah_test/pico_sdk_import.cmake`](../tools/keyrah_test/pico_sdk_import.cmake) is an unmodified copy of the [Raspberry Pi Pico SDK](https://github.com/raspberrypi/pico-sdk)'s `external/pico_sdk_import.cmake`, under its BSD 3-Clause licence; the Keyrah test tool it builds is not part of the SD card.
+
 ## BMA800XL
 
 BMC64's Raspberry Pi 4 and 5 support (`src/pi45/`, `src/av/`, `src/kms/`, `src/v3d/`, `tools/v3dshader/`) is taken from [BMA800XL](https://github.com/aminch/bma800xl), under the GNU General Public License version 3. The sections below cover the third-party material that support brings. The license texts they name are in the SD card's [`licenses/`](../sdcard/licenses/README.txt) folder.
