@@ -35,6 +35,7 @@ public:
   bool SerialEnabled(void) const;
   bool FileLoggingEnabled(void) const;
   bool GPIOOutputsEnabled(void) const;
+  int GetGPIOMachineSignal(void) const;
   int GetDiskPartition(void) const;
   const char *GetDiskVolume(void) const;
   unsigned long GetCyclesPerSecond(void) const;
@@ -65,6 +66,7 @@ private:
   bool m_bSerialEnabled;
   bool m_bFileLoggingEnabled;
   bool m_bGPIOOutputsEnabled;
+  int m_nGPIOMachineSignal;
   int m_disk_partition;
   char m_disk_volume[VOLUME_NAME_LEN];
   unsigned long m_nCyclesPerSecond;

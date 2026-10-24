@@ -323,6 +323,14 @@ int circle_gpio_outputs_enabled() {
   return static_kernel->circle_gpio_outputs_enabled();
 }
 
+int circle_gpio_machine_signal() {
+  return static_kernel->circle_gpio_machine_signal();
+}
+
+void circle_set_machine_signal(int bits) {
+  static_kernel->circle_set_machine_signal(bits);
+}
+
 void circle_kernel_core_init_complete(int core) {
   static_kernel->circle_kernel_core_init_complete(core);
 }
@@ -1184,7 +1192,14 @@ void CKernel::ReadCustomGPIO() {
   int ui_activated = emu_is_ui_activated();
   int port_is_gpio_joy[2] = {0,0};
 
+  int machine_signal = mMachineSignal.IsDriving();
+
   for (i = 0 ; i < NUM_GPIO_PINS; i++) {
+    // GPIO 9 and 10 are reserved while the machine signal drives them.
+    if (machine_signal && (i == NO_FIXED_PURPOSE_3_INDEX ||
+                           i == NO_FIXED_PURPOSE_4_INDEX)) {
+      continue;
+    }
     bank = gpio_bindings[i] >> 8;
     func = gpio_bindings[i] & 0xFF;
     if (bank > 0) {
@@ -1724,6 +1739,9 @@ void CKernel::circle_reset_gpio(int gpio_config) {
       // Disabled
       break;
   }
+
+  // The loop above makes GPIO 9 and 10 inputs again.
+  mMachineSignal.Apply();
 }
 
 void CKernel::circle_lock_acquire() { m_Lock.Acquire(); }
@@ -1909,6 +1927,18 @@ int CKernel::circle_gpio_enabled() {
 
 int CKernel::circle_gpio_outputs_enabled() {
   return !mViceOptions.DPIEnabled() && mViceOptions.GPIOOutputsEnabled();
+}
+
+int CKernel::circle_gpio_machine_signal() {
+  // DPI video uses the whole GPIO header.
+  return mViceOptions.DPIEnabled() ? GPIO_MACHINE_SIGNAL_OFF
+                                   : mViceOptions.GetGPIOMachineSignal();
+}
+
+void CKernel::circle_set_machine_signal(int bits) {
+  // Unless enable_gpio_machine_signal is set, the pins are never driven.
+  mMachineSignal.Set(circle_gpio_machine_signal() != GPIO_MACHINE_SIGNAL_OFF,
+                     bits);
 }
 
 // Called by cores 1 and 2 after they are done initializing

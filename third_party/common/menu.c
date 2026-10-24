@@ -60,6 +60,7 @@
 #include "menu_pi45.h"
 #endif
 #include "menu_profiles.h"
+#include "machine_signal.h"
 #include "../../src/profiles/profiles.h"
 #include "overlay.h"
 #include "raspi_util.h"
@@ -72,7 +73,7 @@
 
 extern void reboot(void);
 
-#define VERSION_STRING "5.4.2"
+#define VERSION_STRING "5.4.3"
 
 #ifdef RASPI_LITE
 #define VARIANT_STRING "-Lite"
@@ -5029,6 +5030,9 @@ void build_menu(struct menu_item *root) {
   ui_set_on_value_changed_callback(menu_value_changed);
 
   load_settings();
+
+  // After the gpio_config setting has reset the pins.
+  machine_signal_update();
 
   // The C64/C128 ACIA and the VIC-20 userport modem are off by default;
   // follow Network Device (and on C64/C128 the Modem Address too).

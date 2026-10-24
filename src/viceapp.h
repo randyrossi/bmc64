@@ -44,6 +44,7 @@
 #include <wlan/hostap/wpa_supplicant/wpasupplicant.h>
 
 #include "circle_glue.h"
+#include "gpio/machine_signal.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -86,9 +87,10 @@ struct wifi_access_point;
 // 02 I2C (Currently unused by BMC64)
 // 03 I2C (Currently unused by BMC64)
 //
-// 10 SPI (Currently unused by BMC64)
-// 09 SPI (Currently unused by BMC64)
-// 11 SPI (Currently unused by BMC64)
+// 10 SPI  Machine signal bit 1 when enable_gpio_machine_signal is on
+// 09 SPI  Machine signal bit 0 when enable_gpio_machine_signal is on
+// 11 SPI  Machine signal bit 2 when enable_gpio_machine_signal is on
+//         (src/gpio/machine_signal.cpp)
 
 // Joystick select pins for config 1.
 #define GPIO_JS1_SELECT  7
@@ -295,6 +297,9 @@ protected:
 
   CGPIOPin *gpioPins[NUM_GPIO_PINS];
   CGPIOPin *DPIPins[28];
+
+  // GPIO 9, 10 and 11 when enable_gpio_machine_signal is on.
+  CMachineSignal mMachineSignal;
 
 private:
   void SetupGPIOForInput();

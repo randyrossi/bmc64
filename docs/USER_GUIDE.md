@@ -62,6 +62,7 @@ This guide covers installing, configuring, and using BMC64, including machine se
     - [GPIO Config 3 : Waveshare Game HAT](#gpio-config-3--waveshare-game-hat)
     - [GPIO Config 4 : Userport and Joysticks](#gpio-config-4--userport-and-joysticks)
     - [GPIO Config 5 : Custom Defined](#gpio-config-5--custom-defined)
+  - [GPIO Machine Signal](#gpio-machine-signal)
 - [Logging](#logging)
   - [Logging Configuration](#logging-configuration)
   - [UART Debugging](#uart-debugging)
@@ -946,6 +947,18 @@ When used as inputs, the pins use pull-up resistors (just like the real C64) so 
 ### GPIO Config 5 : Custom Defined
 
 If the pre-defined GPIO configurations don't suit your needs, you can define your own GPIO mappings if you wish.  Use the 'Configure Custom GPIO' menu option under 'Prefs'.
+
+## GPIO Machine Signal
+
+  * GPIO 9, 10 and 11 can show which machine is running, as a 3-bit code for
+    a microcontroller (for example a C64 keyboard to USB interface that
+    switches its key layout) or as the colour of an RGB LED, for example in
+    place of the power LED in a C64 case.
+  * Turn it on with `enable_gpio_machine_signal=code`, `led-high` or
+    `led-low` in `cmdline.txt`. It is off by default, works alongside every
+    GPIO configuration, and is the same on every machine.
+  * See [GPIO_MACHINE_SIGNAL.md](GPIO_MACHINE_SIGNAL.md) for the machine codes,
+    the LED colours and how to wire it.
 
 # Logging
 

@@ -1210,6 +1210,9 @@ void emux_get_int(IntSetting setting, int* dest) {
     case Setting_AutostartWarp:
       resources_get_int("AutostartWarp", dest);
       break;
+    case Setting_KeyboardType:
+      resources_get_int("KeyboardType", dest);
+      break;
     default:
       assert(0);
   }
