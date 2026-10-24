@@ -1,0 +1,269 @@
+# Bare Metal Commodore keyboard mapping file suitable for real C64 keyboards using Keymmodore-64 interfase by K-rnivoro. https://github.com/K-rnivoro/Keymmodore-64
+# Tested with BMC v5+ (https://github.com/randyrossi/bmc64)
+# Mapped for positional compatibility to C-128 Keyboards.
+# Keys not present in C-64 (like NumPad Keys, ESC, TAB) are accessed with Right Shift Key. 
+#
+# File format:
+# - comment lines start with '#'
+# - keyword lines start with '!keyword'
+# - normal line has 'keysym/scancode row column shiftflag'
+#
+# Keywords and their lines are:
+# '!CLEAR'               clear whole table
+# '!INCLUDE filename'    read file as mapping file
+# '!LSHIFT row col'      left shift keyboard row/column
+# '!RSHIFT row col'      right shift keyboard row/column
+# '!VSHIFT shiftkey'     virtual shift key (RSHIFT or LSHIFT)
+# '!UNDEF keysym'        remove keysym from table
+#
+# Shiftflag can have the values:
+# 0      key is not shifted for this keysym/scancode
+# 1      key is shifted for this keysym/scancode
+# 2      left shift
+# 4      right shift
+# 8      key can be shifted or not with this keysym/scancode
+# 16     deshift key for this keysym/scancode
+# 32     another definition for this keysym/scancode follows
+#
+# Negative row values:
+# 'keysym -1 n' joystick #1, direction n
+# 'keysym -2 n' joystick #2, direction n
+# 'keysym -3 0' first RESTORE key
+# 'keysym -3 1' second RESTORE key
+# 'keysym -4 0' 40/80 column key
+# 'keysym -4 1' CAPS (ASCII/DIN) key
+# 'keysym -5 n' joyport keypad, key n
+#
+# Joystick direction values:
+# 0      Fire
+# 1      South/West
+# 2      South
+# 3      South/East
+# 4      West
+# 5      East
+# 6      North/West
+# 7      North
+# 8      North/East
+#
+# Joyport keypad key layout:
+# --------------------------
+# |  0 |  1 |  2 |  3 |  4 |
+# --------------------------
+# |  5 |  6 |  7 |  8 |  9 |
+# --------------------------
+# | 10 | 11 | 12 | 13 | 14 |
+# --------------------------
+# | 15 | 16 | 17 | 18 | 19 |
+# --------------------------
+#
+# When a bigger spaced key is used,
+# it uses the upper left most key value.
+
+# Positional Mapping, US Layout, C128, X11
+
+# C128 Keyboard matrix
+#
+#       +-----+-----+-----+-----+-----+-----+-----+-----+
+#       |Bit 0|Bit 1|Bit 2|Bit 3|Bit 4|Bit 5|Bit 6|Bit 7|
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 0| DEL |Retrn|C_L/R|  F7 |  F1 |  F3 |  F5 |C_U/D|
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 1| 3 # |  W  |  A  | 4 $ |  Z  |  S  |  E  | S_L |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 2| 5 % |  R  |  D  | 6 & |  C  |  F  |  T  |  X  |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 3| 7 ' |  Y  |  G  | 8 ( |  B  |  H  |  U  |  V  |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 4| 9 ) |  I  |  J  |  0  |  M  |  K  |  O  |  N  |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 5|  +  |  P  |  L  |  -  | . > | : [ |  @  | , < |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 6|POUND|  *  | ; ] | HOME| S_R |  =  | A_UP| / ? |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 7| 1 ! |A_LFT| CTRL| 2 " |SPACE|  C= |  Q  | R/S |
+# +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+#
+#        +-----+-----+-----+-----+-----+-----+-----+-----+
+#        |Bit 0|Bit 1|Bit 2|Bit 3|Bit 4|Bit 5|Bit 6|Bit 7|
+# +------+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 8 |HELP | KP 8| KP 5| TAB | KP 2| KP 4| KP 7| KP 1|
+# +------+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 9 | ESC | KP +| KP -| LF  |KP CR| KP 6| KP 9| KP 3|
+# +------+-----+-----+-----+-----+-----+-----+-----+-----+
+# |Bit 10| ALT | KP 0| KP .|A.UP |A.DWN|A.LFT|A.RGT|NOSCR|
+# +------+-----+-----+-----+-----+-----+-----+-----+-----+
+
+
+!CLEAR
+!LSHIFT 1 7
+!RSHIFT 6 4
+!VSHIFT RSHIFT
+
+
+# 40/80 column key
+F6 -4 0
+
+# CAPS LOCK (ASCII/DIN) key
+F10 -4 1
+
+
+####################
+# Restore key mappings
+PageUp -3 0
+
+
+
+#####################
+# |Bit 0| DEL |Retrn|C_L/R|  F7 |  F1 |  F3 |  F5 |C_U/D|
+
+BackSpace       0 0 8
+Return          0 1 8
+#Left           0 2 1
+Right           0 2 8
+F1              0 4 8
+F3              0 5 8
+F5              0 6 8
+F7              0 3 8
+Down            0 7 8
+#Up             0 7 1
+
+#####################
+# |Bit 1| 3 # |  W  |  A  | 4 $ |  Z  |  S  |  E  | S_L |
+
+Shift_L         1 7 2
+
+
+#####################
+# |Bit 2| 5 % |  R  |  D  | 6 & |  C  |  F  |  T  |  X  |
+
+
+#####################
+# |Bit 3| 7 ' |  Y  |  G  | 8 ( |  B  |  H  |  U  |  V  |
+
+
+#####################
+# |Bit 4| 9 ) |  I  |  J  |  0  |  M  |  K  |  O  |  N  |
+
+
+#####################
+# |Bit 5|  +  |  P  |  L  |  -  | . > | : [ |  @  | , < |
+
+Dash	        5 0 8
+Equals          5 3 8
+Period          5 4 8
+#Period         5 4 32
+#Period			5 4 1
+SemiColon       5 5 8
+#SemiColon       5 5 32
+#SemiColon       5 5 1
+LeftBracket     5 6 8
+Comma           5 7 8
+#Comma           5 7 32
+#Comma           5 7 1
+
+#####################
+# |Bit 6| POUND |  *  |  ; ] | HOME| S_R |  =  | A_UP| / ? |
+
+Insert          6 0 8
+RightBracket    6 1 8
+SingleQuote     6 2 8
+#SingleQuote     6 2 32
+#SingleQuote     6 2 1
+Home            6 3 8
+Shift_R         6 4 4
+BackSlash       6 5 8
+Del             6 6 8
+Slash           6 7 8
+#Slash           6 7 32
+#Slash           6 7 1
+
+#####################
+# |Bit 7| 1 ! |A_LFT| CTRL| 2 " |SPACE|  C= |  Q  | R/S |
+
+BackQuote        7 1 8  # Arrow_LFT <-
+Tab		         7 2 8  # Control <-
+Space            7 4 8
+Control_L  		 7 5 8 	# CBM Key 
+Escape 			 7 7 8 	# RUN/STOP <-
+
+#####################
+# |Bit 8 |HELP | KP 8| KP 5| TAB | KP 2| KP 4| KP 7| KP 1|
+
+F2 		 	 8 0 8
+KP_8 		 8 1 8
+KP_5 		 8 2 8
+F11 		 8 3 8  # TAB <-
+KP_2		 8 4 8
+KP_4 		 8 5 8
+KP_7		 8 6 8
+KP_1 		 8 7 8
+
+#####################
+# |Bit 9 | ESC | KP +| KP -| LF  |KP CR| KP 6| KP 9| KP 3|
+
+KP_Multiply	    9 0 8
+KP_Add 			9 1 8
+KP_Subtract		9 2 8
+F4  			9 3 8
+KP_Enter 		9 4 8 
+KP_6			9 5 8
+KP_9			9 6 8
+KP_3			9 7 8
+
+#####################
+# |Bit 10| ALT | KP 0| KP .|A.UP |A.DWN|A.LFT|A.RGT|NOSCR|
+
+F9 			10 0 8
+KP_0 		10 1 8
+KP_Decimal	10 2 8
+Up			10 3 8
+PageDown    10 4 8
+Left		10 5 8
+End 		10 6 8
+KP_Divide	10 7 8
+
+
+#####################
+# letters and numbers
+
+0 4 3 8
+1 7 0 8
+2 7 3 8
+3 1 0 8
+4 1 3 8
+5 2 0 8
+6 2 3 8
+7 3 0 8
+8 3 3 8
+9 4 0 8
+a 1 2 8
+b 3 4 8
+c 2 4 8
+d 2 2 8
+e 1 6 8
+f 2 5 8
+g 3 2 8
+h 3 5 8
+i 4 1 8
+j 4 2 8
+k 4 5 8
+l 5 2 8
+m 4 4 8
+n 4 7 8
+o 4 6 8
+p 5 1 8
+q 7 6 8
+r 2 1 8
+s 1 5 8
+t 2 6 8
+u 3 6 8
+v 3 7 8
+w 1 1 8
+x 2 7 8
+y 3 1 8
+z 1 4 8
+
+
+
+
+##############################################################################
