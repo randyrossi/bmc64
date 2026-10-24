@@ -38,7 +38,8 @@ ViceOptions::ViceOptions(void)
     : m_nMachineTiming(MACHINE_TIMING_PAL_HDMI),
       m_bDemoEnabled(false), m_bSerialEnabled(false),
       m_bFileLoggingEnabled(false),
-      m_bGPIOOutputsEnabled(false), m_nCyclesPerSecond(0),
+      m_bGPIOOutputsEnabled(false),
+      m_nGPIOMachineSignal(GPIO_MACHINE_SIGNAL_OFF), m_nCyclesPerSecond(0),
       m_audioOut(VCHIQSoundDestinationAuto), m_bDPIEnabled(false),
       m_scaling_param_fbw{0,0}, m_scaling_param_fbh{0,0},
       m_scaling_param_sx{0,0}, m_scaling_param_sy{0,0},
@@ -119,6 +120,17 @@ ViceOptions::ViceOptions(void)
         m_bGPIOOutputsEnabled = true;
       } else {
         m_bGPIOOutputsEnabled = false;
+      }
+    } else if (strcmp(pOption, "enable_gpio_machine_signal") == 0) {
+      // Drives GPIO 9, 10 and 11 when on. Anything unknown is off.
+      if (strcmp(pValue, "code") == 0) {
+        m_nGPIOMachineSignal = GPIO_MACHINE_SIGNAL_CODE;
+      } else if (strcmp(pValue, "led-high") == 0) {
+        m_nGPIOMachineSignal = GPIO_MACHINE_SIGNAL_LED_HIGH;
+      } else if (strcmp(pValue, "led-low") == 0) {
+        m_nGPIOMachineSignal = GPIO_MACHINE_SIGNAL_LED_LOW;
+      } else {
+        m_nGPIOMachineSignal = GPIO_MACHINE_SIGNAL_OFF;
       }
     } else if (strcmp(pOption, "disk_partition") == 0) {
       m_disk_partition = atoi(pValue);
@@ -222,6 +234,8 @@ bool ViceOptions::FileLoggingEnabled(void) const {
 }
 
 bool ViceOptions::GPIOOutputsEnabled(void) const { return m_bGPIOOutputsEnabled; }
+
+int ViceOptions::GetGPIOMachineSignal(void) const { return m_nGPIOMachineSignal; }
 
 bool ViceOptions::DPIEnabled(void) const { return m_bDPIEnabled; }
 

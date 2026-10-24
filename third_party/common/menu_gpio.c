@@ -33,6 +33,7 @@
 // RASPI includes
 #include "circle.h"
 #include "menu.h"
+#include "machine_signal.h"
 #include "ui.h"
 
 // These are listed in the same order as the array in viceapp.cpp
@@ -93,9 +94,22 @@ static void menu_value_changed(struct menu_item *item) {
 
 void build_gpio_menu(struct menu_item *root) {
    struct menu_item* item;
+   int machine_signal = machine_signal_reserved();
    for (int i=0;i<NUM_GPIO_PINS;i++) {
      item = ui_menu_add_multiple_choice(i, root, "");
      item->num_choices = NUM_GPIO_BINDINGS;
+
+     // The binding is kept, but not used, while the machine signal drives
+     // the pin.
+     if (machine_signal &&
+         (custom_gpio_pins[i] == 9 || custom_gpio_pins[i] == 10)) {
+        sprintf (item->name, "GPIO%02d Machine signal", custom_gpio_pins[i]);
+        item->num_choices = 1;
+        strcpy(item->choices[0], "Reserved");
+        item->disabled = 1;
+        continue;
+     }
+
      sprintf (item->name, "GPIO%02d Binding", custom_gpio_pins[i]);
 
      for (int j = 0; j < NUM_GPIO_BINDINGS; j++) {

@@ -755,12 +755,8 @@ static void ui_action(long action) {
       if (cur->value < 0) {
         cur->value = cur->num_choices - 1;
       }
-      // NOTE: This doesn't support the first choice being disabled!
       while (cur->choice_disabled[cur->value] && cur->value != orig) {
-        cur->value -= 1;
-      }
-      if (cur->value < 0) {
-        cur->value = cur->num_choices - 1;
+        cur->value = (cur->value + cur->num_choices - 1) % cur->num_choices;
       }
       do_on_value_changed(menu_cursor_item[current_menu]);
     } else if (cur->type == TOGGLE) {
@@ -834,7 +830,7 @@ static void ui_action(long action) {
         cur->value = 0;
       }
       while (cur->choice_disabled[cur->value] && cur->value != orig) {
-        cur->value += 1;
+        cur->value = (cur->value + 1) % cur->num_choices;
       }
       do_on_value_changed(menu_cursor_item[current_menu]);
     } else if (cur->type == TEXTFIELD) {

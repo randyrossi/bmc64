@@ -96,6 +96,7 @@ typedef enum {
   Setting_VideoSize, // PET
   Setting_VideoFilter,
   Setting_AutostartWarp,
+  Setting_KeyboardType, // PET
 } IntSetting;
 
 typedef enum {

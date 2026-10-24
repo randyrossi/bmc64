@@ -330,6 +330,12 @@ void ViceScreenApp::SetupGPIOForInput() {
   gpioPins[NO_FIXED_PURPOSE_4_INDEX] =
       new CGPIOPin(10, GPIOModeInputPullUp, &mGPIOManager);
 
+  // Here rather than later: the emulator is launched before
+  // ViceStdioApp::Initialize() returns, and it sets the machine signal as
+  // soon as its menu is built.
+  mMachineSignal.Init(gpioPins[NO_FIXED_PURPOSE_3_INDEX],
+                      gpioPins[NO_FIXED_PURPOSE_4_INDEX], &mGPIOManager);
+
   // Convenience arrays for joysticks
   config_1_joystickPins1[JOY_UP] = gpioPins[GPIO_CONFIG_1_JOY_1_UP_INDEX];
   config_1_joystickPins1[JOY_DOWN] = gpioPins[GPIO_CONFIG_1_JOY_1_DOWN_INDEX];
