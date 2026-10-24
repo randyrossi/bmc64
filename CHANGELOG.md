@@ -1,5 +1,6 @@
 ## 5.4.3 (pre-release)
   * Add `enable_gpio_machine_signal` to `cmdline.txt`: GPIO 9, 10 and 11 show which machine is running, as a 3-bit code for a microcontroller or as the colour of an RGB LED. See [GPIO_MACHINE_SIGNAL.md](docs/GPIO_MACHINE_SIGNAL.md) #401
+  * Fix the emulated userport reading leftover values when `enable_gpio_outputs` is set but GPIO Config #4 isn't selected
 
 ## 5.4.2 (pre-release)
   * New *Prefs > Boot Options* menu. Move *Warp after boot* here.

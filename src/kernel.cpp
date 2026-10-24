@@ -49,7 +49,8 @@ CKernel *static_kernel = NULL;
 #define TICKS_PER_SECOND 1000000L
 
 // A global to control whether our special VICE CIA port changes
-// should take effect. Only set when gpio_outputs_enabled is allowed.
+// should take effect. Only set while GPIO config #4 (userport) is in use,
+// which needs gpio_outputs_enabled.
 int raspi_userport_enabled;
 
 // USB keyboard and mouse state by device slot.
@@ -482,10 +483,6 @@ CKernel::CKernel(void)
 
   fbl[FB_LAYER_UI].SetLayer(3);
   fbl[FB_LAYER_UI].SetTransparency(true);
-
-  if (circle_gpio_outputs_enabled()) {
-     raspi_userport_enabled = 1;
-  }
 }
 
 bool CKernel::Initialize(void) {
@@ -1717,6 +1714,11 @@ void CKernel::circle_check_gpio() {
 // Reset the state of the GPIO pins.
 // Needed when switching to and from GPIO_CONFIG_USERPORT
 void CKernel::circle_reset_gpio(int gpio_config) {
+  // The emulated userport only reads the real pins while config #4 copies
+  // them in (ReadWriteUserport); otherwise it reads as nothing connected.
+  raspi_userport_enabled =
+      gpio_config == GPIO_CONFIG_USERPORT && circle_gpio_outputs_enabled();
+
   switch (gpio_config) {
     case GPIO_CONFIG_NAV_JOY:
     case GPIO_CONFIG_KYB_JOY:
