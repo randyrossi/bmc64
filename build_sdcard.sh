@@ -256,6 +256,19 @@ do
     then
         machine_name=$(makefile_for_machine "$MACHINE")
         echo "Building $machine_name -> $kernel.$MACHINE"
+        # make_all.sh sets up the toolchain for itself only; the Pi 4 and 5
+        # need the 64-bit one here too.
+        if [ "$board" = "pi4" ] || [ "$board" = "pi5" ]
+        then
+            export BMC64_AARCH=64
+        else
+            export BMC64_AARCH=32
+        fi
+        if ! source "$SRC_DIR/get_gnu_toolchain.sh"
+        then
+            echo "Toolchain setup failed (Arm GNU Toolchain or Node.js)." >&2
+            exit 1
+        fi
         make clean
         BOARD=$board make -f "Makefile-$machine_name"
 
