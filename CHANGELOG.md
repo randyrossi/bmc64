@@ -3,6 +3,7 @@
   * Add *Delay autostart for time sync* to *Boot Options*, allows time setting before autostart. (30 second timeout) #403
   * Show the IP address as overlay on screen for 10 seconds when the network connects. 
   * Add Network menu item *Show IP Address on Connect* to disable showing IP address overlay on connect.
+  * Speed up WebUI uploads 5x
 
 ## 5.4.1 (pre-release)
   * Add PWM fan control on Pi5
