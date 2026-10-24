@@ -32,6 +32,7 @@
 // VICE includes
 #include "pet/pet.h"
 #include "pet/petmodel.h"
+#include "pet/pet-resources.h"
 #include "resources.h"
 #include "keyboard.h"
 #include "cartridge.h"
@@ -59,6 +60,14 @@ static void update_model_label(void) {
            model >= 0 && model < PETMODEL_NUM ? model_labels[model] : "Custom");
 }
 
+// Show the keyboard rows for the model's Graphics or Business keyboard.
+static void update_keyboard_type(void) {
+  int type = KBD_TYPE_BUSINESS_US;
+  resources_get_int("KeyboardType", &type);
+  keyboard_preset_set_pet_type(type == KBD_TYPE_GRAPHICS_US ? KEYBOARD_PET_TYPE_GRAPHICS
+                                                            : KEYBOARD_PET_TYPE_BUSINESS);
+}
+
 static void menu_value_changed(struct menu_item *item) {
   switch (item->id) {
      case MENU_MODEL_PET_2001:
@@ -74,6 +83,8 @@ static void menu_value_changed(struct menu_item *item) {
      case MENU_MODEL_PET_8296:
      case MENU_MODEL_PET_SUPERPET:
         petmodel_set(item->sub_id);
+        update_keyboard_type();
+        menu_keyboard_type_changed();
         update_model_label();
         // The model sets the keyboard type, which the machine signal reports.
         machine_signal_update();
@@ -176,6 +187,7 @@ struct menu_item* emux_add_palette_options(int menu_id, struct menu_item* parent
 }
 
 void emux_add_machine_options(struct menu_item* parent) {
+  update_keyboard_type();
   struct menu_item* model_parent = ui_menu_add_folder(parent, "Model...");
   model_folder = model_parent;
   update_model_label();
@@ -208,6 +220,7 @@ void emux_reu_image_loaded(int size_kb) {
 }
 
 void emux_machine_load_settings_done(void) {
+  update_keyboard_type();
 }
 
 void machine_keymap_changed(int row, int col, signed long sym) {

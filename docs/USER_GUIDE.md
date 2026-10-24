@@ -608,6 +608,7 @@ Keyboard Layout | Keyboard Mapping | Use it for
 Commodore | Positional | A real Commodore keyboard on GPIO or a C64P, or any USB keyboard used by key position
 Commodore | TheC64 Maxi | TheC64 Maxi keyboard
 Commodore | Keyrah V3 | A real Commodore keyboard through a Keyrah V3
+Commodore | Pimmodore | A real C64 keyboard through a [Keymmodore-64](https://github.com/K-rnivoro/Keymmodore-64) interface
 US English, UK English, German, French, Norwegian, Latin American | Symbolic or Positional | A USB keyboard with that layout
 PETSCIIBOARD | Symbolic | A PETSCIIBOARD keyboard
 
@@ -615,15 +616,16 @@ On the other machines:
 
 Machine | Keyboard Layout | Keyboard Mapping
 --------|-----------------|-----------------
-C128, VIC-20, Plus/4 | Commodore | Positional, TheC64 Maxi
+C128, VIC-20, Plus/4 | Commodore | Positional, TheC64 Maxi, Pimmodore
 C128, VIC-20, Plus/4 | US English | Symbolic, Positional
 C128 | German | Symbolic, Positional
-Plus/4 (plus4emu) | Commodore | Positional, TheC64 Maxi, Keyrah V2 (C16)
-PET | (not shown) | Symbolic, Positional
+Plus/4 (plus4emu) | Commodore | Positional, TheC64 Maxi, Keyrah V2 (C16), Pimmodore
+PET | Commodore | Positional, Pimmodore
+PET | US English | Symbolic, Positional
 
-The default is US English / Symbolic. On plus4emu it is Commodore / Positional, and on the PET it is Symbolic.
+The default is US English / Symbolic. On plus4emu it is Commodore / Positional.
 
-On the PET, the menu only shows **Keyboard Mapping**. Whether the emulated PET has a Graphics or a Business keyboard depends on the PET model you choose, and BMC64 picks the matching keymap for it automatically.
+On the PET, whether the emulated PET has a Graphics or a Business keyboard depends on the PET model you choose, and BMC64 picks the matching keymap for every choice automatically, including when you change model.
 
 Your keyboard setting from earlier versions is not carried over, so choose your keyboard again after updating.
 

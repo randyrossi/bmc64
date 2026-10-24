@@ -73,6 +73,7 @@ REQUIRED_FILES=(
     "C64/bootstat.txt"
     "C64/rpi_maxi_pos.vkm"
     "C64/rpi_petsciiboard_sym.vkm"
+    "C64/rpi_pimmodore_pos.vkm"
     "C64/rpi_pos.vkm"
     "C64/rpi_sym.vkm"
     "C64/rpi_sym_no.vkm"
@@ -81,6 +82,7 @@ REQUIRED_FILES=(
     "C128/PUT_ROMS_HERE"
     "C128/bootstat.txt"
     "C128/rpi_maxi_pos.vkm"
+    "C128/rpi_pimmodore_pos.vkm"
     "C128/rpi_pos.vkm"
     "C128/rpi_sym.vkm"
     "C128/rpi_sym_de.vkm"
@@ -89,6 +91,7 @@ REQUIRED_FILES=(
     "VIC20/PUT_ROMS_HERE"
     "VIC20/bootstat.txt"
     "VIC20/rpi_maxi_pos.vkm"
+    "VIC20/rpi_pimmodore_pos.vkm"
     "VIC20/rpi_pos.vkm"
     "VIC20/rpi_sym.vkm"
 
@@ -96,6 +99,7 @@ REQUIRED_FILES=(
     "PLUS4/PUT_ROMS_HERE"
     "PLUS4/bootstat.txt"
     "PLUS4/rpi_maxi_pos.vkm"
+    "PLUS4/rpi_pimmodore_pos.vkm"
     "PLUS4/rpi_pos.vkm"
     "PLUS4/rpi_sym.vkm"
 
@@ -103,6 +107,7 @@ REQUIRED_FILES=(
     "PLUS4EMU/PUT_ROMS_HERE"
     "PLUS4EMU/rpi_c16_keyrah_pos.vkm"
     "PLUS4EMU/rpi_maxi_pos.vkm"
+    "PLUS4EMU/rpi_pimmodore_pos.vkm"
     "PLUS4EMU/rpi_pos.vkm"
 
     # PET files
@@ -111,6 +116,8 @@ REQUIRED_FILES=(
     "PET/rpi_buus_sym.vkm"
     "PET/rpi_grus_pos.vkm"
     "PET/rpi_grus_sym.vkm"
+    "PET/rpi_pimmodore_buus_pos.vkm"
+    "PET/rpi_pimmodore_grus_pos.vkm"
 
     # Cartridge files
     "carts/C64/delayjoy.crt"

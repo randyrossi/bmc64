@@ -25,59 +25,70 @@
 // One row per choice. Rows with the same layout are the "Keyboard Mapping"
 // choices for that "Keyboard Layout"; the first one is the layout's default.
 static const KeyboardPreset c64_presets[] = {
-   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64},
-   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_MAXI, "TheC64 Maxi", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},
-   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_KEYRAH, "Keyrah V3", "rpi_keyrah_v3_pos.vkm", KEYBOARD_LAYOUT_C64},
-   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PHYSICAL_UK, "UK English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_uk.vkm", KEYBOARD_LAYOUT_UK},
-   {KEYBOARD_PHYSICAL_UK, "UK English", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_UK},
-   {KEYBOARD_PHYSICAL_DE, "German", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_de.vkm", KEYBOARD_LAYOUT_DE},
-   {KEYBOARD_PHYSICAL_DE, "German", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_DE},
-   {KEYBOARD_PHYSICAL_FR, "French", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_fr.vkm", KEYBOARD_LAYOUT_FR},
-   {KEYBOARD_PHYSICAL_FR, "French", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_FR},
-   {KEYBOARD_PHYSICAL_NO, "Norwegian", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_no.vkm", KEYBOARD_LAYOUT_NO},
-   {KEYBOARD_PHYSICAL_NO, "Norwegian", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_NO},
-   {KEYBOARD_PHYSICAL_LATAM, "Latin American", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_latam.vkm", KEYBOARD_LAYOUT_LATAM},
-   {KEYBOARD_PHYSICAL_LATAM, "Latin American", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_LATAM},
-   {KEYBOARD_PHYSICAL_PETSCIIBOARD, "PETSCIIBOARD", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_petsciiboard_sym.vkm", KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_MAXI, "TheC64 Maxi", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_KEYRAH, "Keyrah V3", "rpi_keyrah_v3_pos.vkm", KEYBOARD_LAYOUT_C64, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_PIMMODORE, "Pimmodore", "rpi_pimmodore_pos.vkm", KEYBOARD_LAYOUT_C64, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym.vkm", KEYBOARD_LAYOUT_US, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_US, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_UK, "UK English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_uk.vkm", KEYBOARD_LAYOUT_UK, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_UK, "UK English", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_UK, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_DE, "German", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_de.vkm", KEYBOARD_LAYOUT_DE, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_DE, "German", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_DE, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_FR, "French", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_fr.vkm", KEYBOARD_LAYOUT_FR, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_FR, "French", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_FR, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_NO, "Norwegian", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_no.vkm", KEYBOARD_LAYOUT_NO, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_NO, "Norwegian", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_NO, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_LATAM, "Latin American", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_latam.vkm", KEYBOARD_LAYOUT_LATAM, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_LATAM, "Latin American", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_LATAM, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_PETSCIIBOARD, "PETSCIIBOARD", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_petsciiboard_sym.vkm", KEYBOARD_LAYOUT_US, KEYBOARD_PET_TYPE_ANY},
 };
 
 static const KeyboardPreset c128_presets[] = {
-   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64},
-   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_MAXI, "TheC64 Maxi", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},
-   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PHYSICAL_DE, "German", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_de.vkm", KEYBOARD_LAYOUT_DE},
-   {KEYBOARD_PHYSICAL_DE, "German", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_DE},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_MAXI, "TheC64 Maxi", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_PIMMODORE, "Pimmodore", "rpi_pimmodore_pos.vkm", KEYBOARD_LAYOUT_C64, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym.vkm", KEYBOARD_LAYOUT_US, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_US, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_DE, "German", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym_de.vkm", KEYBOARD_LAYOUT_DE, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_DE, "German", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_DE, KEYBOARD_PET_TYPE_ANY},
 };
 
 static const KeyboardPreset vic20_presets[] = {
-   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64},
-   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_MAXI, "TheC64 Maxi", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},
-   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_MAXI, "TheC64 Maxi", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_PIMMODORE, "Pimmodore", "rpi_pimmodore_pos.vkm", KEYBOARD_LAYOUT_C64, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym.vkm", KEYBOARD_LAYOUT_US, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_US, KEYBOARD_PET_TYPE_ANY},
 };
 
 static const KeyboardPreset plus4_presets[] = {
-   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64},
-   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_MAXI, "TheC64 Maxi", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},
-   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_C64, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_MAXI, "TheC64 Maxi", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_PIMMODORE, "Pimmodore", "rpi_pimmodore_pos.vkm", KEYBOARD_LAYOUT_C64, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_sym.vkm", KEYBOARD_LAYOUT_US, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_US, KEYBOARD_PET_TYPE_ANY},
 };
 
 static const KeyboardPreset plus4emu_presets[] = {
-   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_MAXI, "TheC64 Maxi", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI},
-   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_KEYRAH, "Keyrah V2 (C16)", "rpi_c16_keyrah_pos.vkm", KEYBOARD_LAYOUT_POSITIONAL},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_pos.vkm", KEYBOARD_LAYOUT_US, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_MAXI, "TheC64 Maxi", "rpi_maxi_pos.vkm", KEYBOARD_LAYOUT_MAXI, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_KEYRAH, "Keyrah V2 (C16)", "rpi_c16_keyrah_pos.vkm", KEYBOARD_LAYOUT_POSITIONAL, KEYBOARD_PET_TYPE_ANY},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_PIMMODORE, "Pimmodore", "rpi_pimmodore_pos.vkm", KEYBOARD_LAYOUT_C64, KEYBOARD_PET_TYPE_ANY},
 };
 
-// The PET's keyboard (Graphics or Business) follows the PET model, so the
-// emulator picks rpi_grus_* or rpi_buus_* itself. The menu hides Keyboard
-// Layout (see machine_tables), and menu text entry is always US.
+// The PET's keyboard (Graphics or Business) follows the PET model, so each
+// choice is a pair of rows, one per keyboard; only the half for the current
+// keyboard is visible. Menu text entry is always US.
 static const KeyboardPreset pet_presets[] = {
-   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_SYMBOLIC, "Symbolic", NULL, KEYBOARD_LAYOUT_US},
-   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", NULL, KEYBOARD_LAYOUT_US},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_grus_pos.vkm", KEYBOARD_LAYOUT_US, KEYBOARD_PET_TYPE_GRAPHICS},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_buus_pos.vkm", KEYBOARD_LAYOUT_US, KEYBOARD_PET_TYPE_BUSINESS},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_PIMMODORE, "Pimmodore", "rpi_pimmodore_grus_pos.vkm", KEYBOARD_LAYOUT_US, KEYBOARD_PET_TYPE_GRAPHICS},
+   {KEYBOARD_PHYSICAL_MACHINE, "Commodore", KEYBOARD_MAP_PIMMODORE, "Pimmodore", "rpi_pimmodore_buus_pos.vkm", KEYBOARD_LAYOUT_US, KEYBOARD_PET_TYPE_BUSINESS},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_grus_sym.vkm", KEYBOARD_LAYOUT_US, KEYBOARD_PET_TYPE_GRAPHICS},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_SYMBOLIC, "Symbolic", "rpi_buus_sym.vkm", KEYBOARD_LAYOUT_US, KEYBOARD_PET_TYPE_BUSINESS},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_grus_pos.vkm", KEYBOARD_LAYOUT_US, KEYBOARD_PET_TYPE_GRAPHICS},
+   {KEYBOARD_PHYSICAL_US, "US English", KEYBOARD_MAP_POSITIONAL, "Positional", "rpi_buus_pos.vkm", KEYBOARD_LAYOUT_US, KEYBOARD_PET_TYPE_BUSINESS},
 };
 
 typedef struct {
@@ -92,7 +103,7 @@ static const KeyboardPresetTable machine_tables[] = {
    [BMC64_MACHINE_CLASS_VIC20] = {vic20_presets, sizeof(vic20_presets) / sizeof(vic20_presets[0])},
    [BMC64_MACHINE_CLASS_PLUS4] = {plus4_presets, sizeof(plus4_presets) / sizeof(plus4_presets[0])},
    [BMC64_MACHINE_CLASS_PLUS4EMU] = {plus4emu_presets, sizeof(plus4emu_presets) / sizeof(plus4emu_presets[0])},
-   [BMC64_MACHINE_CLASS_PET] = {pet_presets, sizeof(pet_presets) / sizeof(pet_presets[0]), 1},
+   [BMC64_MACHINE_CLASS_PET] = {pet_presets, sizeof(pet_presets) / sizeof(pet_presets[0])},
 };
 
 static const KeyboardPreset *machine_presets(int machine_class, int *count) {
@@ -109,23 +120,42 @@ int keyboard_preset_layout_hidden(int machine_class) {
    return machine_presets(machine_class, &count) != 0 && machine_tables[machine_class].hide_layout;
 }
 
+// VICE's default KeyboardType is Business (us).
+static KeyboardPetType pet_type = KEYBOARD_PET_TYPE_BUSINESS;
+
+void keyboard_preset_set_pet_type(KeyboardPetType type) {
+   pet_type = type;
+}
+
+static int visible(const KeyboardPreset *preset) {
+   return preset->pet_type == KEYBOARD_PET_TYPE_ANY || preset->pet_type == pet_type;
+}
+
 int keyboard_preset_count(int machine_class) {
-   int count;
-   machine_presets(machine_class, &count);
-   return count;
+   int count, visible_count = 0;
+   const KeyboardPreset *presets = machine_presets(machine_class, &count);
+   for (int index = 0; index < count; index++) {
+      if (visible(&presets[index])) visible_count++;
+   }
+   return visible_count;
 }
 
 const KeyboardPreset *keyboard_preset_at(int machine_class, int index) {
    int count;
    const KeyboardPreset *presets = machine_presets(machine_class, &count);
-   return index >= 0 && index < count ? &presets[index] : 0;
+   for (int row = 0; index >= 0 && row < count; row++) {
+      if (visible(&presets[row]) && index-- == 0) return &presets[row];
+   }
+   return 0;
 }
 
 const KeyboardPreset *keyboard_preset_find(int machine_class, int layout, int mapping) {
    int count;
    const KeyboardPreset *presets = machine_presets(machine_class, &count);
    for (int index = 0; index < count; index++) {
-      if ((int)presets[index].layout == layout && (int)presets[index].mapping == mapping) return &presets[index];
+      if (visible(&presets[index]) && (int)presets[index].layout == layout && (int)presets[index].mapping == mapping) {
+         return &presets[index];
+      }
    }
    return 0;
 }
@@ -136,10 +166,20 @@ const KeyboardPreset *keyboard_preset_default(int machine_class) {
    return preset ? preset : keyboard_preset_at(machine_class, 0);
 }
 
-// True for the first row of each layout.
+// PET settings saved before it had a US English layout kept Symbolic under
+// Commodore. Only while that row doesn't exist, so a future one is kept.
+void keyboard_preset_upgrade_saved(int machine_class, int *layout, int *mapping) {
+   if (machine_class == BMC64_MACHINE_CLASS_PET && *layout == KEYBOARD_PHYSICAL_MACHINE &&
+       *mapping == KEYBOARD_MAP_SYMBOLIC && keyboard_preset_find(machine_class, *layout, *mapping) == 0) {
+      *layout = KEYBOARD_PHYSICAL_US;
+   }
+}
+
+// True for the first visible row of each layout.
 static int starts_layout(const KeyboardPreset *presets, int index) {
+   if (!visible(&presets[index])) return 0;
    for (int earlier = 0; earlier < index; earlier++) {
-      if (presets[earlier].layout == presets[index].layout) return 0;
+      if (visible(&presets[earlier]) && presets[earlier].layout == presets[index].layout) return 0;
    }
    return 1;
 }
@@ -173,7 +213,7 @@ int keyboard_preset_mapping_count(int machine_class, int layout) {
    int count, mappings = 0;
    const KeyboardPreset *presets = machine_presets(machine_class, &count);
    for (int index = 0; index < count; index++) {
-      if ((int)presets[index].layout == layout) mappings++;
+      if (visible(&presets[index]) && (int)presets[index].layout == layout) mappings++;
    }
    return mappings;
 }
@@ -182,7 +222,7 @@ const KeyboardPreset *keyboard_preset_mapping_at(int machine_class, int layout, 
    int count;
    const KeyboardPreset *presets = machine_presets(machine_class, &count);
    for (int row = 0; index >= 0 && row < count; row++) {
-      if ((int)presets[row].layout == layout && index-- == 0) return &presets[row];
+      if (visible(&presets[row]) && (int)presets[row].layout == layout && index-- == 0) return &presets[row];
    }
    return 0;
 }

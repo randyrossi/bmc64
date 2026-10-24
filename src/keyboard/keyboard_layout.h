@@ -55,7 +55,17 @@ typedef enum {
    KEYBOARD_MAP_SYMBOLIC,
    KEYBOARD_MAP_MAXI,
    KEYBOARD_MAP_KEYRAH,
+   KEYBOARD_MAP_PIMMODORE,
 } KeyboardMapType;
+
+// The PET keyboard a row's keymap is for. A PET model has a Graphics or a
+// Business keyboard, so PET rows come in pairs and only the pair half for
+// the current keyboard is visible (keyboard_preset_set_pet_type).
+typedef enum {
+   KEYBOARD_PET_TYPE_ANY = 0, // not a PET row
+   KEYBOARD_PET_TYPE_GRAPHICS,
+   KEYBOARD_PET_TYPE_BUSINESS,
+} KeyboardPetType;
 
 // One selectable (Keyboard Layout, Keyboard Mapping) pair for a machine.
 typedef struct KeyboardPreset {
@@ -63,10 +73,9 @@ typedef struct KeyboardPreset {
    const char *layout_label;
    KeyboardMapType mapping;
    const char *mapping_label;
-   // NULL: the emulator picks its own keymap for the machine's keyboard
-   // type, as the PET does for its Graphics and Business models.
    const char *vkm_file;
    MenuKeyboardLayout text_layout; // table used for menu text entry
+   KeyboardPetType pet_type;
 } KeyboardPreset;
 
 typedef struct {
@@ -81,15 +90,21 @@ typedef struct {
 extern "C" {
 #endif
 
+// Which PET keyboard rows are visible; set from the PET model before the
+// presets are read, and again when the model changes.
+void keyboard_preset_set_pet_type(KeyboardPetType type);
+
 int keyboard_preset_count(int machine_class);
 const KeyboardPreset *keyboard_preset_at(int machine_class, int index);
 const KeyboardPreset *keyboard_preset_find(int machine_class, int layout, int mapping);
 const KeyboardPreset *keyboard_preset_default(int machine_class);
+// Map a saved (layout, mapping) from an older table onto the current one.
+void keyboard_preset_upgrade_saved(int machine_class, int *layout, int *mapping);
 
 // Menu helpers. A machine's layouts are listed in table order, and so are
 // the mappings of one layout; the first mapping is that layout's default.
 // keyboard_preset_layout_hidden() is true for machines whose menu shows
-// only "Keyboard Mapping" (PET).
+// only "Keyboard Mapping".
 int keyboard_preset_layout_hidden(int machine_class);
 int keyboard_preset_layout_count(int machine_class);
 const KeyboardPreset *keyboard_preset_layout_at(int machine_class, int index);

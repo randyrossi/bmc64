@@ -744,6 +744,7 @@ const char *bmc64_version_string(void);
 void build_menu(struct menu_item *root);
 
 void menu_swap_joysticks(void);
+void menu_keyboard_type_changed(void);
 int menu_get_drive_flush(void);
 int statusbar_never(void);
 int statusbar_always(void);

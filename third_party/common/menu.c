@@ -198,6 +198,16 @@ static void apply_keyboard_preset(const KeyboardPreset *preset) {
   }
   show_keyboard_preset(keyboard_active_preset);
 }
+
+// The visible rows follow the machine's keyboard (PET), so after it changes
+// pick the same layout and mapping again.
+void menu_keyboard_type_changed(void) {
+  if (keyboard_active_preset != NULL) {
+    apply_keyboard_preset(keyboard_preset_find(emux_machine_class, keyboard_active_preset->layout,
+                                               keyboard_active_preset->mapping));
+  }
+}
+
 struct menu_item *active_display_item;
 static struct menu_item *network_device_item;
 static struct menu_item *network_status_item;
@@ -2151,6 +2161,7 @@ static void load_settings() {
   emux_load_settings_done();
   if (keyboard_layout_mapping_item != NULL) {
     // Saved layout and mapping, else that layout's first mapping, else the default.
+    keyboard_preset_upgrade_saved(emux_machine_class, &saved_keyboard_layout, &saved_keyboard_mapping);
     const KeyboardPreset *preset = keyboard_preset_find(emux_machine_class, saved_keyboard_layout, saved_keyboard_mapping);
     if (preset == NULL) preset = keyboard_preset_mapping_at(emux_machine_class, saved_keyboard_layout, 0);
     if (preset == NULL) preset = keyboard_active_preset;

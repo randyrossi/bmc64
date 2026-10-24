@@ -107,8 +107,11 @@ int main(void) {
   static const char *machine_dirs[] = {
     NULL, "vic20", "c64", "c128", "plus4", "plus4emu", "pet"
   };
-  static const int expected_counts[] = {0, 4, 16, 6, 4, 3, 2};
-  static const int expected_layouts[] = {0, 2, 8, 3, 2, 1, 1};
+  static const int expected_counts[] = {0, 5, 17, 7, 5, 4, 4};
+  static const int expected_layouts[] = {0, 2, 8, 3, 2, 1, 2};
+  // Every check holds for either PET keyboard.
+  for (int pet_type = KEYBOARD_PET_TYPE_GRAPHICS; pet_type <= KEYBOARD_PET_TYPE_BUSINESS; pet_type++) {
+  keyboard_preset_set_pet_type(pet_type);
   for (int machine = BMC64_MACHINE_CLASS_VIC20; machine <= BMC64_MACHINE_CLASS_PET; machine++) {
     assert(keyboard_preset_count(machine) == expected_counts[machine]);
     assert(keyboard_preset_at(machine, expected_counts[machine]) == NULL);
@@ -121,7 +124,6 @@ int main(void) {
       assert(keyboard_preset_find(machine, preset->layout, preset->mapping) == preset);
       assert(strlen(preset->layout_label) < 36 && strlen(preset->mapping_label) < 36);
       assert(keyboard_preset_layout_index(machine, preset->layout) >= 0);
-      if (preset->vkm_file == NULL) continue; // the emulator picks the file
       char path[128];
       snprintf(path, sizeof(path), "sdcard/%s/%s", machine_dirs[machine], preset->vkm_file);
       FILE *file = fopen(path, "r");
@@ -154,21 +156,19 @@ int main(void) {
       size_t length = strlen(map->d_name);
       if (length < 4 || strncmp(map->d_name, "rpi_", 4) != 0 ||
           strcmp(map->d_name + length - 4, ".vkm") != 0) continue;
-      // Used when a row names it, or when a row without a file lets the
-      // emulator pick rpi_<keyboard type>_sym/pos.vkm for that mapping.
+      // Some row names it, for one PET keyboard or the other.
       int found = 0;
-      for (int index = 0; index < keyboard_preset_count(machine); index++) {
-        const KeyboardPreset *preset = keyboard_preset_at(machine, index);
-        if (preset->vkm_file != NULL) {
-          if (strcmp(preset->vkm_file, map->d_name) == 0) found++;
-        } else if (length > 8 && strcmp(map->d_name + length - 8,
-                   preset->mapping == KEYBOARD_MAP_POSITIONAL ? "_pos.vkm" : "_sym.vkm") == 0) {
-          found++;
+      for (int type = KEYBOARD_PET_TYPE_GRAPHICS; type <= KEYBOARD_PET_TYPE_BUSINESS; type++) {
+        keyboard_preset_set_pet_type(type);
+        for (int index = 0; index < keyboard_preset_count(machine); index++) {
+          if (strcmp(keyboard_preset_at(machine, index)->vkm_file, map->d_name) == 0) found++;
         }
       }
+      keyboard_preset_set_pet_type(pet_type);
       assert(found > 0);
     }
     closedir(maps);
+  }
   }
   assert(keyboard_preset_count(BMC64_MACHINE_CLASS_UNKNOWN) == 0);
   assert(keyboard_preset_at(BMC64_MACHINE_CLASS_UNKNOWN, 0) == NULL);
@@ -181,17 +181,23 @@ int main(void) {
   assert(keyboard_preset_mapping_count(BMC64_MACHINE_CLASS_C64, KEYBOARD_PHYSICAL_PET_BUSINESS) == 0);
   assert(keyboard_preset_mapping_at(BMC64_MACHINE_CLASS_C64, KEYBOARD_PHYSICAL_US, -1) == NULL);
 
-  // C64: the Commodore layout has three mappings; each locale has Symbolic
+  // C64: the Commodore layout has four mappings; each locale has Symbolic
   // (default) and Positional, which keeps the locale's menu text table.
   const int c64 = BMC64_MACHINE_CLASS_C64;
   assert(strcmp(keyboard_preset_layout_at(c64, 0)->layout_label, "Commodore") == 0);
-  assert(keyboard_preset_mapping_count(c64, KEYBOARD_PHYSICAL_MACHINE) == 3);
+  assert(keyboard_preset_mapping_count(c64, KEYBOARD_PHYSICAL_MACHINE) == 4);
   assert(strcmp(keyboard_preset_mapping_at(c64, KEYBOARD_PHYSICAL_MACHINE, 0)->vkm_file, "rpi_pos.vkm") == 0);
   assert(strcmp(keyboard_preset_find(c64, KEYBOARD_PHYSICAL_MACHINE, KEYBOARD_MAP_MAXI)->vkm_file, "rpi_maxi_pos.vkm") == 0);
   assert(keyboard_preset_find(c64, KEYBOARD_PHYSICAL_MACHINE, KEYBOARD_MAP_MAXI)->text_layout == KEYBOARD_LAYOUT_MAXI);
   assert(strcmp(keyboard_preset_find(c64, KEYBOARD_PHYSICAL_MACHINE, KEYBOARD_MAP_KEYRAH)->vkm_file, "rpi_keyrah_v3_pos.vkm") == 0);
   assert(keyboard_preset_find(c64, KEYBOARD_PHYSICAL_MACHINE, KEYBOARD_MAP_KEYRAH)->text_layout == KEYBOARD_LAYOUT_C64);
   assert(keyboard_preset_find(c64, KEYBOARD_PHYSICAL_MACHINE, KEYBOARD_MAP_SYMBOLIC) == NULL);
+  // Pimmodore (Keymmodore-64 interface) on the Commodore layout of every machine but the PET.
+  for (int machine = BMC64_MACHINE_CLASS_VIC20; machine < BMC64_MACHINE_CLASS_PET; machine++) {
+    const KeyboardPreset *pimmodore = keyboard_preset_find(machine, KEYBOARD_PHYSICAL_MACHINE, KEYBOARD_MAP_PIMMODORE);
+    assert(pimmodore && strcmp(pimmodore->vkm_file, "rpi_pimmodore_pos.vkm") == 0);
+    assert(pimmodore->text_layout == KEYBOARD_LAYOUT_C64);
+  }
   static const struct { int layout; const char *file; MenuKeyboardLayout text; } c64_locales[] = {
     {KEYBOARD_PHYSICAL_US, "rpi_sym.vkm", KEYBOARD_LAYOUT_US},
     {KEYBOARD_PHYSICAL_UK, "rpi_sym_uk.vkm", KEYBOARD_LAYOUT_UK},
@@ -232,30 +238,50 @@ int main(void) {
   assert(strcmp(keyboard_preset_default(BMC64_MACHINE_CLASS_PLUS4EMU)->vkm_file, "rpi_pos.vkm") == 0);
   assert(keyboard_preset_default(BMC64_MACHINE_CLASS_PET)->mapping == KEYBOARD_MAP_SYMBOLIC);
 
-  // PET: one layout, hidden in the menu so only Keyboard Mapping shows; Symbolic
-  // (default) or Positional. The PET model picks the Graphics or Business
-  // keymap, so no row names a file, and menu text entry is always US.
+  // PET: Commodore (Positional, Pimmodore) and US English (Symbolic, Positional),
+  // like the other machines. Each row comes in a Graphics and a Business half,
+  // and only the half for the model's keyboard is visible. Menu text entry is
+  // always US.
   const int pet = BMC64_MACHINE_CLASS_PET;
-  assert(keyboard_preset_layout_hidden(pet));
-  for (int machine = BMC64_MACHINE_CLASS_VIC20; machine < BMC64_MACHINE_CLASS_PET; machine++) {
+  for (int machine = BMC64_MACHINE_CLASS_VIC20; machine <= BMC64_MACHINE_CLASS_PET; machine++) {
     assert(!keyboard_preset_layout_hidden(machine));
   }
   assert(!keyboard_preset_layout_hidden(BMC64_MACHINE_CLASS_UNKNOWN));
-  assert(keyboard_preset_mapping_count(pet, KEYBOARD_PHYSICAL_MACHINE) == 2);
-  assert(keyboard_preset_mapping_at(pet, KEYBOARD_PHYSICAL_MACHINE, 0)->mapping == KEYBOARD_MAP_SYMBOLIC);
-  assert(keyboard_preset_mapping_at(pet, KEYBOARD_PHYSICAL_MACHINE, 1)->mapping == KEYBOARD_MAP_POSITIONAL);
-  for (int index = 0; index < keyboard_preset_count(pet); index++) {
-    assert(keyboard_preset_at(pet, index)->vkm_file == NULL);
-    assert(keyboard_preset_at(pet, index)->text_layout == KEYBOARD_LAYOUT_US);
+  static const struct { int layout; int mapping; const char *graphics; const char *business; } pet_rows[] = {
+    {KEYBOARD_PHYSICAL_MACHINE, KEYBOARD_MAP_POSITIONAL, "rpi_grus_pos.vkm", "rpi_buus_pos.vkm"},
+    {KEYBOARD_PHYSICAL_MACHINE, KEYBOARD_MAP_PIMMODORE, "rpi_pimmodore_grus_pos.vkm", "rpi_pimmodore_buus_pos.vkm"},
+    {KEYBOARD_PHYSICAL_US, KEYBOARD_MAP_SYMBOLIC, "rpi_grus_sym.vkm", "rpi_buus_sym.vkm"},
+    {KEYBOARD_PHYSICAL_US, KEYBOARD_MAP_POSITIONAL, "rpi_grus_pos.vkm", "rpi_buus_pos.vkm"},
+  };
+  for (int type = KEYBOARD_PET_TYPE_GRAPHICS; type <= KEYBOARD_PET_TYPE_BUSINESS; type++) {
+    keyboard_preset_set_pet_type(type);
+    assert(keyboard_preset_mapping_count(pet, KEYBOARD_PHYSICAL_MACHINE) == 2);
+    assert(keyboard_preset_mapping_count(pet, KEYBOARD_PHYSICAL_US) == 2);
+    assert(keyboard_preset_default(pet)->layout == KEYBOARD_PHYSICAL_US);
+    for (unsigned index = 0; index < sizeof(pet_rows) / sizeof(pet_rows[0]); index++) {
+      const KeyboardPreset *preset = keyboard_preset_find(pet, pet_rows[index].layout, pet_rows[index].mapping);
+      assert(preset && (int)preset->pet_type == type && preset->text_layout == KEYBOARD_LAYOUT_US);
+      assert(strcmp(preset->vkm_file, type == KEYBOARD_PET_TYPE_GRAPHICS ? pet_rows[index].graphics
+                                                                         : pet_rows[index].business) == 0);
+    }
   }
-  static const char *pet_maps[] = {"rpi_grus_sym.vkm", "rpi_grus_pos.vkm", "rpi_buus_sym.vkm", "rpi_buus_pos.vkm"};
-  for (unsigned index = 0; index < sizeof(pet_maps) / sizeof(pet_maps[0]); index++) {
-    char path[64];
-    snprintf(path, sizeof(path), "sdcard/pet/%s", pet_maps[index]);
-    FILE *file = fopen(path, "r");
-    assert(file != NULL);
-    fclose(file);
-  }
+  // Old PET Commodore / Symbolic settings load as US English / Symbolic; nothing else changes.
+  int layout = KEYBOARD_PHYSICAL_MACHINE, mapping = KEYBOARD_MAP_SYMBOLIC;
+  keyboard_preset_upgrade_saved(pet, &layout, &mapping);
+  assert(layout == KEYBOARD_PHYSICAL_US && mapping == KEYBOARD_MAP_SYMBOLIC);
+  layout = KEYBOARD_PHYSICAL_MACHINE;
+  mapping = KEYBOARD_MAP_PIMMODORE;
+  keyboard_preset_upgrade_saved(pet, &layout, &mapping);
+  assert(layout == KEYBOARD_PHYSICAL_MACHINE && mapping == KEYBOARD_MAP_PIMMODORE);
+  layout = KEYBOARD_PHYSICAL_MACHINE;
+  mapping = KEYBOARD_MAP_SYMBOLIC;
+  keyboard_preset_upgrade_saved(BMC64_MACHINE_CLASS_C64, &layout, &mapping);
+  assert(layout == KEYBOARD_PHYSICAL_MACHINE && mapping == KEYBOARD_MAP_SYMBOLIC);
+
+  // Rows of other machines are visible whichever PET keyboard is set.
+  assert(keyboard_preset_count(BMC64_MACHINE_CLASS_C64) == 17);
+  keyboard_preset_set_pet_type(KEYBOARD_PET_TYPE_GRAPHICS);
+  assert(keyboard_preset_count(BMC64_MACHINE_CLASS_C64) == 17);
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_US, KEYCODE_2, 1, 0) == '@');
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_UK, KEYCODE_2, 1, 0) == '"');
   assert(keyboard_layout_key_to_codepoint(KEYBOARD_LAYOUT_UK, KEYCODE_3, 1, 0) == 0xA3);
