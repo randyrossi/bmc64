@@ -53,6 +53,13 @@
 
 #define NUM_GPIO_PINS 23
 
+// enable_gpio_machine_signal in cmdline.txt: what GPIO 9, 10 and 11 show
+// about the running machine (third_party/common/machine_signal.c).
+#define GPIO_MACHINE_SIGNAL_OFF 0
+#define GPIO_MACHINE_SIGNAL_CODE 1
+#define GPIO_MACHINE_SIGNAL_LED_HIGH 2
+#define GPIO_MACHINE_SIGNAL_LED_LOW 3
+
 #define MACHINE_TIMING_NTSC_HDMI 0
 #define MACHINE_TIMING_PAL_HDMI 1
 #define MACHINE_TIMING_NTSC_COMPOSITE 2
@@ -312,6 +319,12 @@ extern int circle_get_model();
 extern unsigned circle_get_arm_clock();
 extern int circle_gpio_enabled();
 extern int circle_gpio_outputs_enabled();
+// The enable_gpio_machine_signal mode (GPIO_MACHINE_SIGNAL_*), OFF when DPI
+// is enabled.
+extern int circle_gpio_machine_signal();
+// Drive GPIO 9, 10 and 11 with bits 0, 1 and 2 of BITS. Has no effect when
+// circle_gpio_machine_signal() is OFF.
+extern void circle_set_machine_signal(int bits);
 
 extern int circle_sound_init(const char *param, int *speed, int *fragsize,
                         int *fragnr, int *channels);

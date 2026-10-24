@@ -113,6 +113,8 @@ public:
   int circle_get_model();
   int circle_gpio_enabled();
   int circle_gpio_outputs_enabled();
+  int circle_gpio_machine_signal();
+  void circle_set_machine_signal(int bits);
   void circle_kernel_core_init_complete(int core);
   unsigned circle_get_arm_clock();
   void circle_get_fbl_dimensions(int layer, int *display_w, int *display_h,

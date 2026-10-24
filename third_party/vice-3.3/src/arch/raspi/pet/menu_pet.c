@@ -39,6 +39,7 @@
 // RASPI includes
 #include "emux_api.h"
 #include "menu.h"
+#include "machine_signal.h"
 #include "ui.h"
 #include "keycodes.h"
 
@@ -74,6 +75,8 @@ static void menu_value_changed(struct menu_item *item) {
      case MENU_MODEL_PET_SUPERPET:
         petmodel_set(item->sub_id);
         update_model_label();
+        // The model sets the keyboard type, which the machine signal reports.
+        machine_signal_update();
         ui_pop_all_and_toggle();
         break;
      default:

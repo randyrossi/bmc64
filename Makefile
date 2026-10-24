@@ -28,7 +28,7 @@ OBJS	= src/main.o src/kernel.o src/new_io.o src/io_stats_bench.o src/perf_stats_
 				  src/keyboard/layout_fr.o src/keyboard/layout_de.o src/keyboard/layout_latam.o src/keyboard/layout_c64.o src/keyboard/layout_positional.o src/keyboard/layout_maxi.o \
 				  src/profiles/profile_store.o src/profiles/profile_boot.o src/profiles/profile_machine.o \
 				  src/profiles/profile_kv.o src/sdcard/sd_fs_fatfs.o src/sdcard/sd_fs_file.o \
-				  src/power/power.o
+				  src/power/power.o src/gpio/machine_signal.o
 
 # The updater (src/update/, with zlib) is built in when updater.cfg says
 # updater = on or kernel_only; otherwise a stub whose two entry points do
