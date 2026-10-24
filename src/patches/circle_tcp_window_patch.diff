@@ -1,0 +1,13 @@
+diff --git a/lib/net/tcpconnection.cpp b/lib/net/tcpconnection.cpp
+index aa934cb4..adfb811b 100644
+--- a/lib/net/tcpconnection.cpp
++++ b/lib/net/tcpconnection.cpp
+@@ -47,7 +47,7 @@
+ #define TCP_MSS_S			(ETH_MAX_LEN - ETH_HEADER_LEN - IP_HEADER_LEN)
+ 
+ #define TCP_CONFIG_MSS			(TCP_MSS_R - TCP_HEADER_LEN)
+-#define TCP_CONFIG_WINDOW		(TCP_CONFIG_MSS * 10)
++#define TCP_CONFIG_WINDOW		(TCP_CONFIG_MSS * 44)	// BMC64: largest fit in 16 bits, for web UI uploads
+ 
+ #define TCP_CONFIG_TX_THRESHOLD		0x10000	// TX stops, if this number of bytes is queued
+ #define TCP_CONFIG_RX_THRESHOLD		0x10000	// kicks RX, if this number of bytes is queued
