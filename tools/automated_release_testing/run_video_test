@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+TEST_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+exec python3 "$TEST_DIR/preview_video.py" "$@"
