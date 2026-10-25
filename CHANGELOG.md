@@ -1,3 +1,7 @@
+## 5.4.4 (pre-release)
+  * Fix a freeze after attaching or autostarting cartridges around 15-20 times. #414
+  * Fix a small memory leak each time a flash cartridge (EasyFlash, Retro Replay, GMod2, etc.) is detached.
+
 ## 5.4.3 (pre-release)
   * Add *Pimmodore* Keyboard Mapping for a real C64 keyboard through the Keymmodore-64 interface by K-rnivoro, on every machine.
   * PET Keyboard menu now shows Keyboard Layout like the other machines: Commodore (Positional, Pimmodore) and US English (Symbolic, Positional). Each choice follows the model's Graphics or Business keyboard.
