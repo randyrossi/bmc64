@@ -189,8 +189,8 @@ def configure(directory: Path = HERE) -> bool:
     }
     if bmc_uart and os.path.realpath(bmc_uart) == os.path.realpath(pico_uart):
         raise ValueError("Pico and BMC64 UART paths must be different; no settings saved")
-    print("\nThe generated run_tests command WILL upload/autostart the diagnostic,")
-    print("reset the emulated C64, record HDMI/audio and send Space through the Pico.")
+    print("\nThe generated run_tests command WILL restart BMC64 through the test profiles,")
+    print("upload/autostart the C64 diagnostic, record HDMI/audio and type through the Pico.")
     print("Close viewers/serial terminals and save guest work before running it.")
     if not ask_yes_no("Save this setup and create run_tests?", True):
         print("Cancelled; existing setup unchanged.")

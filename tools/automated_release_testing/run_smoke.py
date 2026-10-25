@@ -48,6 +48,9 @@ from diagnostic import (
     HEIGHT, SAMPLE_RATE, WIDTH, Marker, audio_metrics, build_guest,
     decode_frame, is_silence, is_tone,
 )
+from harness import (
+    TestFailure, WaitProgress, classify_uart, frame_health, print_summary, progress, save_frame,
+)
 
 
 HERE = Path(__file__).resolve().parent
@@ -63,13 +66,14 @@ class NoRedirect(HTTPRedirectHandler):
 
 
 class Api:
-    def __init__(self, url: str, pin: str | None = None):
+    def __init__(self, url: str, pin: str | None = None, timeout: float = 15):
         parsed = urlsplit(url)
         if (parsed.scheme not in ("http", "https") or not parsed.hostname
                 or parsed.username or parsed.password or parsed.query
                 or parsed.fragment or parsed.path not in ("", "/")):
             raise ValueError("use a base HTTP(S) URL without credentials or a path")
         self.url = url.rstrip("/")
+        self.timeout = timeout
         self.headers = {"X-BMC64-Web": "1"}
         if pin is not None:
             encoded = base64.b64encode(f"bmc64:{pin}".encode()).decode("ascii")
@@ -81,7 +85,7 @@ class Api:
         suffix = "?" + urlencode(query) if query else ""
         request = Request(self.url + endpoint + suffix, data=data,
                           headers=self.headers)
-        with self.opener.open(request, timeout=15) as response:
+        with self.opener.open(request, timeout=self.timeout) as response:
             return response.read()
 
     def get_json(self, endpoint: str, **query: str) -> dict[str, object]:
@@ -182,16 +186,27 @@ class UartLog:
         self.port = port
         self.stop = threading.Event()
         self.errors: list[str] = []
+        self.findings: list[dict[str, object]] = []
         self.file = output.open("wb")
         self.thread = threading.Thread(target=self.collect, daemon=True)
         self.thread.start()
 
     def collect(self) -> None:
         line_start = True
+        pending = b""
         try:
             while not self.stop.is_set():
                 data = self.port.read(0.2)
                 if data:
+                    pending += data
+                    while b"\n" in pending:
+                        line, pending = pending.split(b"\n", 1)
+                        finding = classify_uart(line.decode("utf-8", errors="replace").strip())
+                        if finding:
+                            self.findings.append({"monotonic": time.monotonic(), **finding})
+                    if len(pending) > 16384:
+                        self.errors.append("UART line exceeded 16384 bytes")
+                        return
                     while data:
                         if line_start:
                             self.file.write(f"[{time.monotonic():.6f}] ".encode())
@@ -201,25 +216,39 @@ class UartLog:
                     self.file.flush()
         except (OSError, RuntimeError) as error:
             self.errors.append(str(error))
+        finally:
+            if pending:
+                finding = classify_uart(pending.decode("utf-8", errors="replace").strip())
+                if finding:
+                    self.findings.append({"monotonic": time.monotonic(), **finding})
 
-    def check(self) -> None:
+    def check(self, since: int = 0) -> None:
         if self.errors:
-            raise RuntimeError("BMC64 UART collector: " + "; ".join(self.errors))
+            raise TestFailure("uart_transport", "BMC64 UART collector: " + "; ".join(self.errors))
+        critical = [item for item in self.findings[since:]
+                    if item["severity"] == "critical"]
+        if critical:
+            raise TestFailure("uart_critical", f"critical UART message: {critical[0]['line']}")
 
     def close(self) -> None:
         self.stop.set()
         self.thread.join(2)
         self.file.close()
-        self.check()
+        if self.errors:
+            raise RuntimeError("BMC64 UART collector: " + "; ".join(self.errors))
         if self.thread.is_alive():
             raise RuntimeError("BMC64 UART collector did not stop")
 
 
 class Capture:
-    def __init__(self, command: list[str], output: Path):
+    def __init__(self, command: list[str], output: Path,
+                 width: int = WIDTH, height: int = HEIGHT):
+        self.width, self.height = width, height
         self.frames: queue.Queue[tuple[float, bytes]] = queue.Queue(maxsize=4)
         self.audio: queue.Queue[tuple[float, bytes]] = queue.Queue(maxsize=4)
         self.errors: list[str] = []
+        self.latest_frame: tuple[float, bytes] | None = None
+        self.latest_audio: tuple[float, bytes] | None = None
         self.log = (output / "ffmpeg.log").open("wb")
         audio_read, audio_write = os.pipe()
         self.audio_pipe = os.fdopen(audio_read, "rb")
@@ -239,7 +268,7 @@ class Capture:
         assert self.process.stdout is not None
         self.threads = [
             threading.Thread(target=self.collect, args=(
-                self.process.stdout, WIDTH * HEIGHT * 3, self.frames), daemon=True),
+                self.process.stdout, width * height * 3, self.frames), daemon=True),
             threading.Thread(target=self.collect, args=(
                 self.audio_pipe, SAMPLE_RATE * 2, self.audio), daemon=True),
         ]
@@ -257,6 +286,10 @@ class Capture:
                     self.errors.append("capture ended with an incomplete frame/audio block")
                     return
                 item = (time.monotonic(), data)
+                if target is self.frames:
+                    self.latest_frame = item
+                elif target is self.audio:
+                    self.latest_audio = item
                 try:
                     target.put_nowait(item)
                 except queue.Full:
@@ -270,9 +303,10 @@ class Capture:
 
     def check(self) -> None:
         if self.errors:
-            raise RuntimeError("capture reader: " + "; ".join(self.errors))
+            raise TestFailure("capture_reader", "capture reader: " + "; ".join(self.errors))
         if self.process.poll() is not None:
-            raise RuntimeError(f"FFmpeg exited ({self.process.returncode}); see ffmpeg.log")
+            raise TestFailure("capture_process",
+                              f"FFmpeg exited ({self.process.returncode}); see ffmpeg.log")
 
     def close(self) -> None:
         forced = False
@@ -309,16 +343,18 @@ class Capture:
             self.log.close()
 
 
-def capture_command(video: str, audio: str, output: Path) -> list[str]:
+def capture_command(video: str, audio: str, output: Path,
+                    width: int = WIDTH, height: int = HEIGHT,
+                    video_size: str = "1280x720") -> list[str]:
     return [
         "ffmpeg", "-hide_banner", "-loglevel", "warning", "-n",
         "-thread_queue_size", "512", "-f", "v4l2", "-input_format", "mjpeg",
-        "-video_size", "1280x720", "-framerate", "30", "-i", video,
+        "-video_size", video_size, "-framerate", "30", "-i", video,
         "-thread_queue_size", "512", "-f", "alsa", "-i", audio,
         "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy", "-c:a", "pcm_s16le",
         "-af", "asetpts=N/SR/TB",
         str(output / "capture.mkv"),
-        "-map", "0:v:0", "-vf", f"fps=5,scale={WIDTH}:{HEIGHT}",
+        "-map", "0:v:0", "-vf", f"fps=5,scale={width}:{height}",
         "-pix_fmt", "rgb24", "-f", "rawvideo", "pipe:1",
         "-map", "1:a:0", "-ac", "1", "-ar", str(SAMPLE_RATE),
         "-af", "asetpts=N/SR/TB",
@@ -329,14 +365,41 @@ def capture_command(video: str, audio: str, output: Path) -> list[str]:
 def wait_for(capture: Capture, uart: UartLog | None, timeout: float,
              predicate: Callable[[], bool], description: str) -> None:
     deadline = time.monotonic() + timeout
+    updates = WaitProgress(description, timeout)
     while time.monotonic() < deadline:
         capture.check()
         if uart:
             uart.check()
         if predicate():
+            updates.update("verified", force=True)
             return
+        updates.update("still waiting for matching capture evidence")
         time.sleep(0.02)
-    raise RuntimeError(f"timeout: {description}")
+    latest = getattr(capture, "latest_frame", None)
+    if hasattr(capture, "latest_frame") and latest is None:
+        raise TestFailure("capture_no_frames", f"timeout: {description}; no video frames received")
+    if latest and frame_health(latest[1], capture.width, capture.height)["black"]:
+        raise TestFailure("capture_black",
+                          f"timeout: {description}; latest HDMI frame is black")
+    if latest and time.monotonic() - latest[0] > 5:
+        raise TestFailure("capture_stalled", f"timeout: {description}; video frames stopped")
+    if hasattr(capture, "latest_audio") and capture.latest_audio is None:
+        raise TestFailure("capture_no_audio", f"timeout: {description}; no audio blocks received")
+    raise TestFailure("assertion_timeout", f"timeout: {description}")
+
+
+def failure_evidence(capture: Capture, output: Path, report: dict) -> None:
+    latest = capture.latest_frame
+    if latest:
+        failed = report["status"] != "PASS" or report.get("cleanup_errors")
+        save_frame(output / ("failure.ppm" if failed else "last-frame.ppm"),
+                   latest[1], capture.width, capture.height)
+        save_json(output / "capture-health.json", {
+            "frame_age_seconds": time.monotonic() - latest[0],
+            **frame_health(latest[1], capture.width, capture.height),
+        })
+    else:
+        save_json(output / "capture-health.json", {"video": "no frames received"})
 
 
 class Observations:
@@ -375,10 +438,31 @@ class Observations:
                 self.events.flush()
 
 
+def switch_to_c64_profile(api: Api, manifest: Path, timeout: float, output: Path,
+                          report: dict, health: Callable[[], None]) -> None:
+    """Start the suite's C64 test profile unless it is already running."""
+    from profile_suite import read_manifest, resolve_profiles, switch_profile
+    report["stage"] = "profile_switch"
+    case = next((item for item in read_manifest(manifest) if item["machine"] == "C64"), None)
+    if case is None:
+        raise RuntimeError(f"{manifest} has no C64 profile for the diagnostic")
+    profile = resolve_profiles(api, [case])[0]
+    report["profile"] = profile["id"]
+    current = api.get_json("/api/status")
+    if current.get("profile_id") == profile["id"] and current.get("machine") == "C64":
+        progress(f"C64 test profile {profile['id']} is already running")
+    else:
+        progress(f"Switching from {current.get('profile_id')} / {current.get('machine')} "
+                 f"to the C64 test profile {profile['id']}")
+        switch_profile(api, profile, timeout, health, output)
+    report["stage"] = "fixture"
+
+
 def execute(args: argparse.Namespace, output: Path, report: dict,
             stack: ExitStack) -> None:
     def register(label: str, function: Callable[[], object]) -> None:
         def cleanup() -> None:
+            progress(f"Cleanup: {label}")
             try:
                 function()
             except (OSError, termios.error, RuntimeError, subprocess.SubprocessError) as error:
@@ -388,17 +472,15 @@ def execute(args: argparse.Namespace, output: Path, report: dict,
         stack.callback(cleanup)
 
     report["stage"] = "guest_generation"
+    progress("Generating the C64 diagnostic PRG")
     program = build_guest(int(report["run_id"], 16), output)
     report["guest_sha256"] = hashlib.sha256(program.read_bytes()).hexdigest()
     if not args.execute:
         report.update(status="PREPARED", stage="offline", detail="No hardware accessed")
         return
     report["stage"] = "fixture"
+    progress("Checking C64 HTTP status, storage and Pico USB fixture")
     api = Api(args.url, getpass.getpass("BMC64 PIN: ") if args.ask_pin else None)
-    status = api.get_json("/api/status")
-    save_json(output / "status-before.json", status)
-    if str(status.get("machine", "")).upper() != "C64":
-        raise RuntimeError("this diagnostic supports C64 only; target reports another machine")
     listing_result = api.get_json("/api/fs/list", path="/")
     save_json(output / "volume.json", listing_result)
     volume = listing_result.get("vol")
@@ -422,17 +504,39 @@ def execute(args: argparse.Namespace, output: Path, report: dict,
         port = SerialPort(args.bmc_uart)
         register("close BMC64 UART", port.close)
         uart = UartLog(port, output / "bmc64-uart.log")
+        register("save UART classification", lambda: save_json(
+            output / "uart-findings.json", uart.findings))
+        register("check final UART messages", uart.check)
         register("stop BMC64 UART logger", uart.close)
     report["uart_collected"] = uart is not None
     report["stage"] = "capture"
+    # Record before any profile restart, as the suite does: a Pi that reboots
+    # while the capture device is closed has come up with no HDMI picture.
+    progress("Starting HDMI video/audio recording")
     capture = Capture(capture_command(args.video, args.audio, output), output)
+    register("save capture evidence", lambda: failure_evidence(capture, output, report))
     register("finish capture", capture.close)
-    wait_for(capture, uart, 15, lambda: (
+
+    def health() -> None:
+        capture.check()
+        if uart:
+            uart.check()
+
+    # UART logging is running, so a profile restart's boot messages are kept.
+    switch_to_c64_profile(api, args.manifest, args.timeout, output, report, health)
+    status = api.get_json("/api/status")
+    save_json(output / "status-before.json", status)
+    if str(status.get("machine", "")).upper() != "C64":
+        raise RuntimeError("this diagnostic supports C64 only; target reports another machine")
+    report["stage"] = "capture"
+    wait_for(capture, uart, args.timeout, lambda: (
         not capture.frames.empty() and not capture.audio.empty()
+        and (capture.latest_frame is None or not frame_health(capture.latest_frame[1])["black"])
     ), "HDMI video and audio capture startup")
     observed = Observations(capture, int(report["run_id"], 16), output)
     stack.callback(observed.events.close)
     report["stage"] = "upload_autostart"
+    progress("Uploading and autostarting the diagnostic PRG")
     remote_path = f"/bmc64-smoke-{report['run_id']}.prg"
     report["guest_path"] = remote_path
     api.request("/api/fs/upload", program.read_bytes(), vol=volume, path=remote_path)
@@ -453,6 +557,7 @@ def execute(args: argparse.Namespace, output: Path, report: dict,
     report["checks"].extend(["current_run_id", "guest_progress", "sid_tone"])
     tone_rms = max(metrics["rms"] for _, metrics in observed.metrics if is_tone(metrics))
     report["stage"] = "input_round_trip"
+    progress("Sending USB Space and checking the guest response")
     sent = time.monotonic()
     pico.command("KEY 0 44")
     time.sleep(0.1)
@@ -481,6 +586,7 @@ def execute(args: argparse.Namespace, output: Path, report: dict,
     wait_for(capture, uart, args.timeout, quiet, "tone stops after guest receives Space")
     report["checks"].append("sid_silence")
     report["stage"] = "final_status"
+    progress("Checking final HTTP status")
     save_json(output / "status-after.json", api.get_json("/api/status"))
     report.update(status="PASS", stage="complete")
 
@@ -491,6 +597,11 @@ def parser() -> argparse.ArgumentParser:
                         help="saved setup JSON; explicit command-line options override it")
     result.add_argument("--execute", action="store_true",
                         help="allow PRG upload/autostart, capture and Pico input")
+    result.add_argument("--list", action="store_true", help="list the test names and exit")
+    result.add_argument("tests", nargs="*", metavar="TEST",
+                        help="test names to run (see --list); default: every test")
+    result.add_argument("--manifest", type=Path, default=HERE / "suite_profiles.json",
+                        help="profile manifest for the boot/typing tests")
     result.add_argument("--url", help="BMC64 base URL, including port if needed")
     result.add_argument("--pico-uart", help="exclusive Pico serial adapter")
     result.add_argument("--bmc-uart", help="optional exclusive diagnostic UART")
@@ -551,29 +662,20 @@ def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
     return argument_parser.parse_args(argv)
 
 
-def main() -> int:
-    argument_parser = parser()
-    args = parse_arguments()
-    if not math.isfinite(args.timeout) or args.timeout <= 0:
-        argument_parser.error("--timeout must be finite and positive")
-    if args.execute and (not args.url or not args.pico_uart):
-        argument_parser.error("--execute requires --url and --pico-uart")
-    if args.bmc_uart and args.pico_uart and (
-            os.path.realpath(args.bmc_uart) == os.path.realpath(args.pico_uart)):
-        argument_parser.error("Pico and BMC64 UART paths must be different")
-    required = ["petcat", "ffmpeg"] if args.execute else ["petcat"]
-    for tool in required:
-        if shutil.which(tool) is None:
-            argument_parser.error(f"required tool is missing: {tool}")
+DIAGNOSTIC = "c64-default"
+
+
+def run_diagnostic(args: argparse.Namespace) -> dict:
+    """The C64 PRG video/audio/input diagnostic; returns the saved report."""
     run_id = secrets.token_hex(4)
     output = args.results / (
         datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + run_id
     )
     output.mkdir(parents=True, exist_ok=False)
     report = {
-        "schema": 1, "run_id": run_id, "status": "FAIL", "stage": "starting",
-        "setup": args.setup, "url": args.url, "video": args.video, "audio": args.audio,
-        "pico_uart": args.pico_uart, "bmc_uart": args.bmc_uart,
+        "schema": 1, "run_id": run_id, "name": DIAGNOSTIC, "status": "FAIL",
+        "stage": "starting", "setup": args.setup, "url": args.url, "video": args.video,
+        "audio": args.audio, "pico_uart": args.pico_uart, "bmc_uart": args.bmc_uart,
         "checks": [], "cleanup_errors": [],
         "started_utc": datetime.now(timezone.utc).isoformat(),
     }
@@ -590,6 +692,7 @@ def main() -> int:
             except (OSError, termios.error, ValueError, RuntimeError, URLError,
                     subprocess.SubprocessError) as error:
                 report["error"] = str(error)
+                report["category"] = getattr(error, "category", "fixture_or_api")
                 print(f"FAIL [{report['stage']}]: {error}", file=sys.stderr)
             except KeyboardInterrupt:
                 report["error"] = "interrupted by user or termination signal"
@@ -599,9 +702,65 @@ def main() -> int:
     finally:
         signal.signal(signal.SIGTERM, previous)
         report["finished_utc"] = datetime.now(timezone.utc).isoformat()
+        report["evidence"] = str(output / "result.json")
         save_json(output / "result.json", report)
     print(f"{report['status']}: {output / 'result.json'}")
-    return 0 if report["status"] in ("PASS", "PREPARED") else 1
+    return report
+
+
+def available_tests(manifest: list[dict[str, str]]) -> dict[str, str]:
+    from profile_suite import case_name
+    tests = {case_name(case["machine"]):
+             f"{case['machine']}: start profile {case['profile']}, check the BASIC boot "
+             "screen, type a token over USB" for case in manifest}
+    tests[DIAGNOSTIC] = ("C64: upload and autostart a PRG, check its video counter, SID tone, "
+                         "USB Space response and silence")
+    return tests
+
+
+def main() -> int:
+    from profile_suite import case_name, main as suite_main, read_manifest
+    argument_parser = parser()
+    args = parse_arguments()
+    try:
+        manifest = read_manifest(args.manifest)
+    except (OSError, ValueError) as error:
+        argument_parser.error(f"cannot read manifest {args.manifest}: {error}")
+    tests = available_tests(manifest)
+    if args.list:
+        width = max(len(name) for name in tests)
+        for name, description in tests.items():
+            print(f"{name:<{width}}  {description}")
+        return 0
+    unknown = [name for name in args.tests if name not in tests]
+    if unknown:
+        argument_parser.error(f"unknown test {', '.join(unknown)}; see --list")
+    selected = args.tests or list(tests)
+    if not math.isfinite(args.timeout) or args.timeout <= 0:
+        argument_parser.error("--timeout must be finite and positive")
+    if args.execute and (not args.url or not args.pico_uart):
+        argument_parser.error("--execute requires --url and --pico-uart")
+    if args.bmc_uart and args.pico_uart and (
+            os.path.realpath(args.bmc_uart) == os.path.realpath(args.pico_uart)):
+        argument_parser.error("Pico and BMC64 UART paths must be different")
+    required = (["petcat"] if DIAGNOSTIC in selected else []) + (["ffmpeg"] if args.execute else [])
+    for tool in required:
+        if shutil.which(tool) is None:
+            argument_parser.error(f"required tool is missing: {tool}; see docs/prerequisites.md")
+    results, evidence = [], []
+    cases = [case for case in manifest if case_name(case["machine"]) in selected]
+    if cases:
+        report = suite_main(args, cases)
+        results.extend(report["cases"])
+        evidence.append(report["evidence"])
+    if DIAGNOSTIC in selected:
+        report = run_diagnostic(args)
+        results.append(report)
+        evidence.append(report["evidence"])
+    print_summary(results)
+    for path in evidence:
+        print(f"  Evidence: {path}", flush=True)
+    return 0 if all(result["status"] in ("PASS", "PREPARED") for result in results) else 1
 
 
 if __name__ == "__main__":

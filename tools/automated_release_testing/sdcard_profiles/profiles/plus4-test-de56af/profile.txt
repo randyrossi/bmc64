@@ -1,0 +1,3 @@
+name=plus4_test
+machine=Plus4/PAL/HDMI
+start=once

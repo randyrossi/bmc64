@@ -1,0 +1,2 @@
+network_device=2
+webui_enabled=1

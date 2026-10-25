@@ -363,12 +363,14 @@ class SetupTests(unittest.TestCase):
                 "--config", str(config), "--results", str(root / "results"),
             ], capture_output=True, text=True, timeout=10)
             self.assertEqual(completed.returncode, 0, completed.stderr)
+            # With no --name, every test is prepared: the suite and c64-default.
             reports = list((root / "results").glob("*/result.json"))
-            self.assertEqual(len(reports), 1)
-            report = json.loads(reports[0].read_text())
-            self.assertEqual(report["status"], "PREPARED")
-            self.assertEqual(report["url"], self.settings()["url"])
-            self.assertEqual(report["pico_uart"], self.settings()["pico_uart"])
+            self.assertEqual(len(reports), 2)
+            for path in reports:
+                report = json.loads(path.read_text())
+                self.assertEqual(report["status"], "PREPARED")
+                self.assertEqual(report["url"], self.settings()["url"])
+                self.assertEqual(report["pico_uart"], self.settings()["pico_uart"])
 
 
 def render_marker(data: bytes, bounds=(64, 72, 384, 252)) -> bytes:
@@ -546,6 +548,11 @@ class ApiTests(unittest.TestCase):
 
 class CaptureTests(unittest.TestCase):
     def test_real_ffmpeg_with_synthetic_sources(self):
+        for width, height in ((WIDTH, HEIGHT), (960, 720)):
+            with self.subTest(width=width, height=height):
+                self.capture_resolution(width, height)
+
+    def capture_resolution(self, width, height):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)
             source = output / "source.mkv"
@@ -555,19 +562,19 @@ class CaptureTests(unittest.TestCase):
                 "-f", "lavfi", "-i", "sine=frequency=1000:sample_rate=48000",
                 "-t", "8", "-c:v", "mjpeg", "-c:a", "pcm_s16le", str(source),
             ], check=True, capture_output=True, timeout=15)
-            baseline = capture_command("unused", "unused", output)
+            baseline = capture_command("unused", "unused", output, width, height)
             command = [
                 "ffmpeg", "-hide_banner", "-loglevel", "error", "-n",
                 "-re", "-i", str(source), "-re", "-i", str(source),
             ] + baseline[baseline.index("-map"):]
-            capture = Capture(command, output)
+            capture = Capture(command, output, width, height)
             try:
                 wait_for(capture, None, 15, lambda: (
                     not capture.frames.empty() and not capture.audio.empty()
                 ), "synthetic capture")
                 _, frame = capture.frames.get(timeout=1)
                 _, pcm = capture.audio.get(timeout=1)
-                self.assertEqual(len(frame), WIDTH * HEIGHT * 3)
+                self.assertEqual(len(frame), width * height * 3)
                 self.assertTrue(is_tone(audio_metrics(pcm)))
             finally:
                 capture.close()
@@ -601,11 +608,13 @@ class CaptureTests(unittest.TestCase):
 
 
 class RunnerTests(unittest.TestCase):
-    def simulate(self, failure=None):
+    def simulate(self, failure=None, active=("c64-test-de56af", "C64")):
         clock = [0.0]
         state = [0]
         commands = []
         requests = []
+        current = {"profile_id": active[0], "machine": active[1], "uptime_secs": 500,
+                   "profile_error": ""}
         tone = pcm_tone()
         quiet = bytes(SAMPLE_RATE * 2)
         frames = {
@@ -623,10 +632,22 @@ class RunnerTests(unittest.TestCase):
 
             def get_json(self, endpoint, **query):
                 requests.append(endpoint)
-                return {"machine": "C64", "vol": "SD:"}
+                if endpoint == "/api/status":
+                    return dict(current)
+                if query.get("path") == "/profiles":
+                    return {"vol": "SD:", "truncated": False, "entries": [
+                        {"name": "c64-test-de56af", "dir": True},
+                        {"name": "pet-test-de56af", "dir": True}]}
+                return {"vol": "SD:", "entries": [], "truncated": False}
 
-            def request(self, endpoint, data, **query):
+            def request(self, endpoint, data=b"", **query):
                 requests.append(endpoint)
+                if endpoint == "/api/fs/download":
+                    machine = "C64" if "c64" in query["path"] else "Pet"
+                    return f"name={machine.lower()}_test\nmachine={machine}/PAL/HDMI\n".encode()
+                if endpoint == "/api/profiles/start":
+                    current.update(profile_id=query["id"], machine="C64", uptime_secs=1)
+                    return b'{"ok":true}'
                 if endpoint == "/api/fs/upload" and failure == "upload":
                     raise RuntimeError("simulated upload failure")
                 return b""
@@ -653,15 +674,18 @@ class RunnerTests(unittest.TestCase):
 
         class FakeCapture:
             def __init__(self, *args):
+                self.width, self.height = WIDTH, HEIGHT
                 self.frames = queue.Queue()
                 self.audio = queue.Queue()
                 self.count = 0
+                self.latest_frame = None
 
             def check(self):
                 self.count += 1
                 timestamp = tick()
                 counter = 0 if failure == "frozen" else self.count % 2
-                self.frames.put((timestamp, frames[counter, state[0]]))
+                self.latest_frame = (timestamp, frames[counter, state[0]])
+                self.frames.put(self.latest_frame)
                 sound = tone if state[0] == 0 or failure == "silence" else quiet
                 self.audio.put((timestamp, sound))
 
@@ -699,6 +723,15 @@ class RunnerTests(unittest.TestCase):
         ])
         self.assertIn("/api/fs/autostart", requests)
         self.assertIn("KEY 0 44", commands)
+
+    def test_switches_to_the_c64_test_profile_only_when_needed(self):
+        report, requests, _ = self.simulate()
+        self.assertNotIn("/api/profiles/start", requests)
+        self.assertEqual(report["profile"], "c64-test-de56af")
+        report, requests, _ = self.simulate(active=("pet-test-de56af", "Pet"))
+        self.assertEqual(requests.count("/api/profiles/start"), 1)
+        self.assertLess(requests.index("/api/profiles/start"), requests.index("/api/fs/upload"))
+        self.assertEqual(report["status"], "PASS")
 
     def test_upload_failure_never_sends_input(self):
         report, requests, commands = self.simulate("upload")

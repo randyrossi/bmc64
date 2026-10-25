@@ -7,9 +7,16 @@ Python uses only the standard library; no pip packages are required.
 
 ## Safety and preparation
 
-- Coordinate target access first. Autostart resets the emulated C64 and loses
-  its current unsaved state. There is no Pi reboot, update or firmware flash.
+- Coordinate target access first. If the `c64-test-de56af` profile is not
+  running, the test starts it (Start once, restarting BMC64; the profile must
+  be installed, see the [profile suite guide](profile-suite.md)). Autostart
+  then resets the emulated C64 and loses its current unsaved state. There is
+  no update or firmware flash.
 - Close FFplay, VLC, OBS and all serial terminals, including picocom.
+- The Pi appears to enable HDMI only if the capture device is active while it
+  boots: a reboot with the capture closed has given a black picture until the
+  next reboot. Both tests keep recording through their own profile restarts.
+  After rebooting the Pi by hand, start `run_video_test` before power-on.
 - Use separate adapters for Pico control and BMC64 diagnostics; enable BMC64
   UART logging. Never connect adapter power or 5 V UART signals.
 - Keep the PC playback volume low. The diagnostic plays a roughly 1 kHz SID
@@ -87,14 +94,17 @@ After saving guest work and closing capture viewers/serial terminals, run
 from the repository root:
 
 ```sh
-./tools/automated_release_testing/run_tests
+./tools/automated_release_testing/run_tests c64-default
 ```
 
 Or, from `tools/automated_release_testing/`:
 
 ```sh
-./run_tests
+./run_tests c64-default
 ```
+
+Plain `./run_tests` runs this diagnostic after all the profile boot/typing
+tests.
 
 The launcher finds its own directory, so it also works by absolute path from
 another working directory. It loads the saved setup and explicitly enables
@@ -104,7 +114,7 @@ questions on ordinary runs except the PIN prompt if configured.
 Additional runner options override saved values for that invocation:
 
 ```sh
-./tools/automated_release_testing/run_tests --timeout 90
+./tools/automated_release_testing/run_tests c64-default --timeout 90
 ```
 
 To use the saved settings for offline generation instead of executing:
@@ -140,8 +150,8 @@ and is not written to the result or command log. HTTP Basic Auth is not
 encrypted on an HTTP LAN connection.
 
 `--bmc-uart` is optional; its absence is explicitly recorded as
-`uart_collected: false`. There is currently no automatic assertion against
-UART errors. `--setup` records operator-supplied ROM/profile/filter notes;
+`uart_collected: false`. Known critical UART signatures fail the run;
+other error/warning lines are retained for review. `--setup` records operator-supplied ROM/profile/filter notes;
 ROM identity is not automatically measured. Each guest assertion has a
 60-second monotonic deadline, adjustable with `--timeout`.
 
@@ -195,16 +205,27 @@ Each ignored `results/<UTC-time>-<run-id>/` contains:
 - `status-before.json` / `status-after.json`: firmware, board and API profile.
 - `capture.mkv`: original MJPEG video and stereo PCM audio.
 - `ready.ppm` / `response.ppm`: first recognised ready/response frames.
+- `failure.ppm` on failure, or `last-frame.ppm` on success: last available
+  video frame even when no guest marker was recognised. `capture-health.json`
+  records black/flat-frame metrics, frame age, or that no video frames arrived.
 - `observations.jsonl`: monotonic observation times, counters, states and
   measured audio values.
 - `pico.log`, optional `bmc64-uart.log`, `ffmpeg.log`, `petcat.log`,
   `volume.json` and `capture-command.json`.
+- Optional `uart-findings.json`: critical signatures, known informational
+  autostart probes and unclassified warnings, with raw lines and monotonic times.
 
 BMC64 UART logging adds one monotonic timestamp at the start of each
 LF-delimited line, rather than at serial-read boundaries. Original UART
 bytes, CR/LF endings and partial final lines are retained; fragmented
 serial reads do not insert newlines into messages. Binary/garbled source
 bytes are retained rather than hidden.
+
+Known panic, abort, assertion, memory and profile-start failure signatures
+are critical. Expected VICE disk/tape/cartridge PRG probes and
+`archdep_mkdir unimpl` are informational; other error/warning messages are
+retained without automatically failing the run. This is not exhaustive
+crash detection.
 
 Exit status is zero only for PASS or offline PREPARED; hardware failures are
 nonzero. Ctrl+C/SIGTERM attempts input release and recording finalization.
@@ -225,6 +246,8 @@ Web UI when no longer needed. Recordings can be large; manage retained runs.
   and waits for its own correlated reply. It does not retry uncertain input.
 - **Capture startup failure:** close competing viewers and check device paths.
   Confirm video preview and HDMI audio independently using the hardware guide.
+  Black startup frames fail before uploading the guest. Inspect `failure.ppm`
+  and `capture-health.json`; they identify unusable capture, not its root cause.
 - **Guest readiness timeout:** inspect the recording, UART log and API status.
   Autostart acceptance does not prove the guest started. Check that C64 is
   selected, no menu obscures the display and the colour grid is visible.
@@ -252,4 +275,5 @@ recording output is MJPEG 1280x720 plus 48 kHz stereo PCM.
 This does not qualify other profiles, NTSC, mouse/gamepad routing, modifiers,
 reconnect recovery, HDMI no-signal detection, long soaks, disk persistence,
 candidate deployment, clean installs or performance/frame timing. JSON is
-implemented; JUnit export and automatic UART error classification are not.
+implemented; JUnit export is not. See the separate
+[profile suite](profile-suite.md) for basic boot/typing checks on other cores.

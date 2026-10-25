@@ -1,0 +1,3 @@
+name=c128_test
+machine=C128/PAL/HDMI
+start=once

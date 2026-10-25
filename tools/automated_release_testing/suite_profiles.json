@@ -1,0 +1,8 @@
+[
+  {"machine": "C64", "profile": "c64-test-de56af"},
+  {"machine": "C128", "profile": "c128-test-de56af"},
+  {"machine": "VIC20", "profile": "vic20-test-de56af"},
+  {"machine": "Plus4", "profile": "plus4-test-de56af"},
+  {"machine": "Plus4Emu", "profile": "plus4emu-test-de56af"},
+  {"machine": "Pet", "profile": "pet-test-de56af"}
+]
