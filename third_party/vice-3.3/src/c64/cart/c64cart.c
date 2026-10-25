@@ -133,6 +133,7 @@ static char *cartridge_file = NULL; /* (resource) file name */
 static int cartridge_type = CARTRIDGE_NONE; /* (resource) is == CARTRIDGE_CRT (0) if CRT file */
 /* actually in use for the "Main Slot" */
 static char *cartfile = NULL; /* file name */
+static uint8_t *rawcart_buffer = NULL; /* reused by cartridge_attach_image() */
 static int c64cart_type = CARTRIDGE_NONE; /* is == CARTRIDGE_CRT (0) if CRT file */
 static int crttype = CARTRIDGE_NONE; /* contains CRT ID if c64cart_type == 0 */
 
@@ -570,8 +571,14 @@ int cartridge_attach_image(int type, const char *filename)
     }
     DBG(("CART: cartridge_attach_image type: %d ID: %d\n", type, carttype));
 
-    /* allocate temporary array */
-    rawcart = lib_malloc(C64CART_IMAGE_LIMIT);
+    /* allocate temporary array once and keep it, as the Circle heap never
+       reclaims a freed block this large, so each attach would leak it.
+       clear it to keep the zeroed memory a fresh allocation gave */
+    if (rawcart_buffer == NULL) {
+        rawcart_buffer = lib_malloc(C64CART_IMAGE_LIMIT);
+    }
+    rawcart = rawcart_buffer;
+    memset(rawcart, 0, C64CART_IMAGE_LIMIT);
 
 /*  cart should always be detached. there is no reason for doing fancy checks
     here, and it will cause problems incase a cart MUST be detached before
@@ -637,14 +644,12 @@ int cartridge_attach_image(int type, const char *filename)
     }
 
     DBG(("CART: cartridge_attach_image type: %d ID: %d done.\n", type, carttype));
-    lib_free(rawcart);
     log_message(LOG_DEFAULT, "CART: attached '%s' as ID %d.", abs_filename, carttype);
     lib_free(abs_filename);
     return 0;
 
 exiterror:
     DBG(("CART: error\n"));
-    lib_free(rawcart);
     log_message(LOG_DEFAULT, "CART: could not attach '%s'.", abs_filename);
     lib_free(abs_filename);
     return -1;
