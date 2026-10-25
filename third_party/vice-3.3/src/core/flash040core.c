@@ -494,6 +494,10 @@ void flash040core_init(struct flash040_context_s *flash040_context,
 void flash040core_shutdown(flash040_context_t *flash040_context)
 {
     FLASH_DEBUG(("Shutdown"));
+    /* free the alarm from flash040core_init(), otherwise it leaks and stays
+       in the alarm list pointing at the freed context */
+    alarm_destroy(flash040_context->erase_alarm);
+    flash040_context->erase_alarm = NULL;
 }
 
 /* -------------------------------------------------------------------------- */
