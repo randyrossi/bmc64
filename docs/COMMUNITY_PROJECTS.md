@@ -16,12 +16,15 @@ Hardware, guides and other projects made by the community for use with BMC64. If
 | [BMC64 Keyboard/Joystick PCB](https://www.pcbway.com/project/shareproject/BMC64_Keyboard_Joystick_PCB.html) | The original PCB made when BMC64 started. Connects an original C64 keyboard and DB9 joysticks to the Raspberry Pi GPIO header. **No longer maintained or supported, and the design files are not available.** Listed for reference only. | Randy Rossi |
 | [BMC64 PCB](https://github.com/aminch/bmc64-pcb) | All-in-one drop in PCB for an original C64 or C64C case. Mounts a Raspberry Pi, keyboard adapter, DB9 joystick ports, moves ports to the rear of the case and adds USB-C power. | [aminch](https://github.com/aminch) |
 | [TheC64 Maxi to BMC64 Conversion](https://www.reddit.com/r/Commodore/comments/ejtggy/the_c64_maxi_to_bmc64_conversion_rough_tutorial) | Tutorial on putting BMC64 inside TheC64 Maxi case and using its keyboard. A [video version](https://www.youtube.com/channel/UCrXCNM2oXmIA7sTUwXrumiw) is also available. | ody81 |
+| [Pimmodore-64](https://github.com/K-rnivoro/Pimmodore-64) | 3D printed frames and supports for mounting a Raspberry Pi 3B/3B+ inside an original "breadbin" C64 case, using Keymmodore-64 for the keyboard and joysticks. Fits the existing mounting points with no drilling or gluing. Does not fit the C64C case. | [K-rnivoro](https://github.com/K-rnivoro) |
 
 ## Keyboard and Joystick Adapters
 
 | Project | Description | Author |
 |---|---|---|
 | [C64P](https://github.com/aminch/c64p) | QMK keyboard firmware and adapter PCBs for connecting an original C64 keyboard over USB using a Raspberry Pi Pico or RP2040-Zero. | [aminch](https://github.com/aminch) |
+| [BMC Joy PCB](https://github.com/aminch/bmc-joy-pcb) | Compact board that plugs onto the Raspberry Pi GPIO header and adds two DB9 joystick ports. Works on all Pis, designed for Pi400/500/500+.| [aminch](https://github.com/aminch) |
+| [Keymmodore-64](https://github.com/K-rnivoro/Keymmodore-64) | QMK firmware and wiring for connecting an original C64 keyboard, and optionally DB9 joysticks, over USB using a Raspberry Pi Pico. Includes keyboard modes for emulating the C64, C128, Plus/4 and PET keyboards, with an RGB LED showing the current mode. | [K-rnivoro](https://github.com/K-rnivoro) |
 
 ## Guides
 

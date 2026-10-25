@@ -13,9 +13,8 @@ It works alongside every GPIO configuration (#1 to #5), so you can keep using
 your joysticks, keyboard or buttons as you do now. It is the same on every
 machine.
 
-[Pimmodore-64](https://github.com/K-rnivoro/Pimmodore-64) uses the machine
-code to switch its keyboard layout to match the running machine. Follow that
-project's documentation for its wiring and firmware. 
+Pimmodore-64 uses the machine code to switch its keyboard layout to match the 
+running machine. See the [Community Projects](COMMUNITY_PROJECTS.md) page for information and support.
 
 ---
 

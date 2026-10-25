@@ -608,7 +608,7 @@ Keyboard Layout | Keyboard Mapping | Use it for
 Commodore | Positional | A real Commodore keyboard on GPIO or a C64P, or any USB keyboard used by key position
 Commodore | TheC64 Maxi | TheC64 Maxi keyboard
 Commodore | Keyrah V3 | A real Commodore keyboard through a Keyrah V3
-Commodore | Pimmodore | A real C64 keyboard through a [Keymmodore-64](https://github.com/K-rnivoro/Keymmodore-64) interface
+Commodore | Pimmodore | A real C64 keyboard through a Keymmodore-64 interface (See: [Community Projects](COMMUNITY_PROJECTS.md))
 US English, UK English, German, French, Norwegian, Latin American | Symbolic or Positional | A USB keyboard with that layout
 PETSCIIBOARD | Symbolic | A PETSCIIBOARD keyboard
 
@@ -816,9 +816,7 @@ NOTE: The default config is 1.  If you are installing BMC64 for the first time a
 
 ### BMC64 PCBs for Original C64 Cases
 
-The original [BMC64 Keyboard/Joystick PCB](https://www.pcbway.com/project/shareproject/BMC64_Keyboard_Joystick_PCB.html) connects an original Commodore keyboard and DB9 joysticks directly to the Raspberry Pi GPIO header. It uses GPIO Config 2.
-
-[BMC64 PCB](https://github.com/aminch/bmc64-pcb) is a newer optional all-in-one solution for installing BMC64 in an original C64 breadbin or C64C case. It combines a Raspberry Pi 3B+, original C64 keyboard support, DB9 joystick ports, USB-C power, and accessible HDMI, USB, and MicroSD connections without modifying the case. It uses GPIO Config 1, and a Rasperry Pi Pico to connect an original C64 keyboard over USB.
+There are a number of community projects for combining all the hardware you need inside original Commodore cases. Check out the [Community Projects](COMMUNITY_PROJECTS.md) for information and support on the options that the community has created.
 
 ### GPIO Config 1 : Menu Nav Buttons and Joysticks
 
