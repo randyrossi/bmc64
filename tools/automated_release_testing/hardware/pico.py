@@ -90,7 +90,9 @@ class Pico:
         prefix = f"{self.request_id} "
         self.log.write(f"{time.monotonic():.6f} TX {prefix}{command}\n".encode())
         self.log.flush()
-        self.port.write(f"{prefix}{command}\n".encode("ascii"))
+        # A Pico restart can leave UART noise in its unfinished input line.
+        # Terminate that line before sending this command exactly once.
+        self.port.write(f"\n{prefix}{command}\n".encode("ascii"))
         deadline = time.monotonic() + 4
         while time.monotonic() < deadline:
             while b"\n" in self.buffer:

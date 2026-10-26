@@ -46,6 +46,8 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--manifest", type=Path, default=HERE / "suite_profiles.json",
                         help="profile manifest for the boot/typing tests")
     result.add_argument("--url", help="BMC64 base URL, including port if needed")
+    result.add_argument("--network", choices=("wifi", "ethernet"),
+                        help="require this network setting in the selected test profiles")
     result.add_argument("--pico-uart", help="exclusive Pico serial adapter")
     result.add_argument("--bmc-uart", help="optional exclusive diagnostic UART")
     result.add_argument("--ask-pin", action="store_true",
@@ -62,7 +64,7 @@ def parser() -> argparse.ArgumentParser:
 def load_setup(path: Path) -> dict[str, object]:
     settings = json.loads(path.read_text(encoding="utf-8"))
     string_fields = {"url", "pico_uart", "bmc_uart", "video", "audio", "setup"}
-    allowed = string_fields | {"ask_pin", "timeout"}
+    allowed = string_fields | {"ask_pin", "timeout", "network"}
     if not isinstance(settings, dict) or settings.keys() - allowed:
         raise ValueError("setup must be a JSON object containing only supported setup options")
     for name in string_fields & settings.keys():
@@ -84,6 +86,8 @@ def load_setup(path: Path) -> dict[str, object]:
             raise ValueError(f"setup option {name} must not be empty")
     if "ask_pin" in settings and not isinstance(settings["ask_pin"], bool):
         raise ValueError("setup option ask_pin must be true or false")
+    if "network" in settings and settings["network"] not in ("wifi", "ethernet"):
+        raise ValueError("setup option network must be wifi or ethernet")
     if "timeout" in settings:
         timeout = settings["timeout"]
         if (isinstance(timeout, bool) or not isinstance(timeout, (int, float))

@@ -70,31 +70,29 @@ No Pico SDK is needed to use the supplied fixture firmware.
 1. Follow the [hardware setup](docs/hardware.md).
 2. Flash the [supplied Pico firmware](mock_hid/bin/mock_hid.uf2), following
    the [fixture instructions](mock_hid/README.md).
-3. From the repository root, configure your rig once:
+3. Install the six supplied [test profiles](docs/profile-suite.md) on the SD card.
+4. Close other capture viewers. From the repository root, configure your rig:
 
    ```sh
    ./tools/automated_release_testing/configure_test_setup
    ```
 
-   Answer the prompts for the BMC64 IP address, UARTs, capture devices and setup
-   notes. UARTs and video devices have numbered selection menus; manual paths
-   are also accepted. Enter keeps a displayed default. Configuration lists
-   devices without opening them; it saves ignored `test_setup.json`
-   beside the supplied executable launchers. `run_tests` uses that saved setup.
+   The wizard selects the HDMI device and opens the preview first. Power on the
+   Pi, wait for its display and enter the current IP shown. Choose Wi-Fi or
+   Ethernet, then supply the UART paths, audio device and other rig settings.
+   Ethernet requires an onboard port and a connected cable, not a USB adapter.
 
-4. **Before running the tests, start the video preview.** Close other viewers
-   and run:
+   After confirmation, it updates and verifies `network_device` in all six
+   installed test profiles, preserving other settings. It restarts into C64
+   while keeping the preview open. **Enter the IP shown AFTER reboot**, which
+   may differ from the original Wi-Fi address. Setup verifies C64 and the
+   selected network before saving ignored `test_setup.json`. Press Enter at
+   the final prompt to close the preview; keep it open until then.
 
-   ```sh
-   ./tools/automated_release_testing/run_video_test
-   ```
-
-   If the Pi is off, start the preview before powering it on manually.
-   **Confirm that the BMC64 display is visible and shows its IP address.**
-   Check that this matches the IP address saved during configuration.
-   Do not proceed if the preview is black or the IP address is not displayed.
-   Press Q to close the preview before the automated test. This only previews
-   video; it does not control the Pi or produce a PASS/FAIL result.
+   Save guest work before confirming the update: setup now controls and
+   restarts BMC64. UARTs are listed but are not opened. Existing Wi-Fi
+   credentials and Web UI PINs are not modified; a required PIN is prompted
+   without saving it.
 
 5. Save guest work and close capture viewers and serial terminals. Run:
 
@@ -102,9 +100,9 @@ No Pico SDK is needed to use the supplied fixture firmware.
    ./tools/automated_release_testing/run_tests
    ```
 
-For subsequent tests, repeat the video/IP check, close the preview, then run
-`run_tests`. Every test needs the six test profiles installed first; see the
-[profile suite guide](docs/profile-suite.md). Run the configurator again only when the rig changes; existing
+For subsequent tests, use `./tools/automated_release_testing/run_video_test`
+if you need a fresh video/IP check, close it, then run `run_tests`.
+Run the configurator again when the network or rig changes; existing
 answers become its defaults. If the Web UI requires a PIN, the test prompts
 for it each time rather than storing it.
 

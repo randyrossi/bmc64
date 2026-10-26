@@ -31,6 +31,7 @@ from hardware.pico import Pico, SerialPort
 from hardware.uart import UartLog
 from support.evidence import failure_evidence, frame_health
 from support.profiles import read_manifest, resolve_profiles, switch_profile
+from support.network import validate_network
 from .diagnostic import (
     HEIGHT, WIDTH, Marker, audio_metrics, decode_frame, is_silence, is_tone, payload,
 )
@@ -115,13 +116,15 @@ class Observations:
 
 
 def switch_to_c64_profile(api: Api, manifest: Path, timeout: float, output: Path,
-                          report: dict, health: Callable[[], None]) -> None:
+                          report: dict, health: Callable[[], None],
+                          network: str | None = None) -> None:
     """Start the suite's C64 test profile unless it is already running."""
     report["stage"] = "profile_switch"
     case = next((item for item in read_manifest(manifest) if item["machine"] == "C64"), None)
     if case is None:
         raise RuntimeError(f"{manifest} has no C64 profile for the diagnostic")
     profile = resolve_profiles(api, [case])[0]
+    validate_network(api, [profile], network)
     report["profile"] = profile["id"]
     current = api.get_json("/api/status")
     if current.get("profile_id") == profile["id"] and current.get("machine") == "C64":
@@ -199,7 +202,7 @@ class Test(BmcTest):
                 uart.check()
 
         # UART logging is running, so a profile restart's boot messages are kept.
-        switch_to_c64_profile(api, args.manifest, args.timeout, output, report, health)
+        switch_to_c64_profile(api, args.manifest, args.timeout, output, report, health, args.network)
         status = api.get_json("/api/status")
         save_json(output / "status-before.json", status)
         if str(status.get("machine", "")).upper() != "C64":

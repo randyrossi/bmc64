@@ -37,6 +37,7 @@ from hardware.uart import UartLog
 from support.constants import DEFAULT_CAPTURE_SIZE
 from support.evidence import failure_evidence
 from support.keyboard import wait_pico
+from support.network import validate_network
 from support.profiles import status, resolve_profiles, recover_api
 
 
@@ -102,6 +103,7 @@ def execute(args: argparse.Namespace, output: Path, report: dict, stack: ExitSta
     progress("Preflight: checking HTTP status and resolving selected SD-card profiles")
     save_json(output / "status-before.json", status(api))
     cases = resolve_profiles(api, report["manifest"])
+    validate_network(api, cases, args.network)
     save_json(output / "resolved-profiles.json", cases)
     progress(f"Preflight complete: {len(cases)} case(s): " +
              ", ".join(case["machine"] for case in cases))

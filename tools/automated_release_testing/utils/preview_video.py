@@ -22,6 +22,8 @@ import argparse
 import shutil
 import subprocess
 import sys
+import time
+from contextlib import contextmanager
 from pathlib import Path
 
 from utils.runner import HERE, load_setup, parser
@@ -29,12 +31,41 @@ from utils.runner import HERE, load_setup, parser
 
 def preview_command(video: str) -> list[str]:
     return [
-        "ffplay", "-window_title", "BMC64 HDMI video test",
+        "ffplay", "-loglevel", "warning", "-nostats",
+        "-window_title", "BMC64 HDMI video test",
         "-f", "v4l2", "-input_format", "mjpeg",
         "-video_size", "1280x720", "-framerate", "30",
         "-fflags", "nobuffer", "-flags", "low_delay", "-framedrop", "-an",
         "-i", video,
     ]
+
+
+def check_preview(process: subprocess.Popen) -> None:
+    code = process.poll()
+    if code is not None:
+        raise RuntimeError(f"HDMI preview exited (status {code}); keep it open during setup")
+
+
+@contextmanager
+def preview(video: str):
+    if not Path(video).is_absolute():
+        raise ValueError("video device must be an absolute path")
+    if shutil.which("ffplay") is None:
+        raise RuntimeError("ffplay is required but was not found on PATH")
+    print(f"Opening HDMI preview: {video}", flush=True)
+    process = subprocess.Popen(preview_command(video), start_new_session=True)
+    try:
+        time.sleep(0.5)
+        check_preview(process)
+        yield process
+    finally:
+        if process.poll() is None:
+            process.terminate()
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=5)
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -16,18 +16,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-"""Interactively save a local rig configuration and create ./run_tests."""
+"""Preview the Pi, configure test-profile networking and save the verified rig setup."""
 
 import argparse
+import getpass
 import ipaddress
 import json
 import math
 import os
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Callable
 from urllib.parse import urlsplit
+from urllib.error import HTTPError
+
+from framework.errors import ERRORS
+from framework.reporting import WaitProgress, progress
+from hardware.api import Api
+from support.network import (
+    CONNECTED_STATUS, network_settings, read_settings, setting,
+)
+from support.profiles import read_manifest, recover_api, resolve_profiles, status, transient
+from utils.preview_video import check_preview, preview
 
 from utils.runner import HERE, load_setup, parser
 
@@ -160,6 +172,115 @@ def write_atomic(path: Path, text: str, mode: int) -> None:
                 name.unlink()
 
 
+def ask_address(label: str, previous_url: str) -> str:
+    previous = urlsplit(previous_url)
+    address = ask_text(label, previous.hostname or "", required=True,
+                       validate=ipaddress.ip_address)
+    host = f"[{address}]" if ipaddress.ip_address(address).version == 6 else address
+    port = f":{previous.port}" if previous.port is not None else ""
+    return f"{previous.scheme or 'http'}://{host}{port}/"
+
+
+def ask_network(default: str) -> str:
+    choices = {"1": "wifi", "2": "ethernet", "wifi": "wifi", "ethernet": "ethernet"}
+    print("\nTest network: 1) Wi-Fi  2) Ethernet")
+    print("Ethernet needs an onboard Ethernet port and connected cable; USB adapters are not supported.")
+
+    def validate(value: str) -> None:
+        if value.lower() not in choices:
+            raise ValueError("Choose 1/wifi or 2/ethernet.")
+
+    return choices[ask_text("Test network", default, required=True, validate=validate).lower()]
+
+
+def apply_network(api: Api, cases: list[dict[str, str]], network: str,
+                  health: Callable[[], None]) -> None:
+    plan = []
+    # Read and validate every file before changing any profile.
+    for case in cases:
+        health()
+        progress(f"{case['id']}: reading network settings")
+        path, original = read_settings(api, case)
+        if setting(original, "webui_enabled") != "1":
+            raise RuntimeError(f"{path}: Web UI must already be enabled; no profiles changed")
+        plan.append((case, path, original, network_settings(original, network)))
+    completed = []
+    for index, (case, path, original, updated) in enumerate(plan):
+        try:
+            health()
+            if original != updated:
+                progress(f"{case['id']}: saving {network} settings")
+                reply = json.loads(api.request(
+                    "/api/fs/save", updated, vol=case["volume"], path=path))
+                if not isinstance(reply, dict) or reply.get("ok") is not True:
+                    raise RuntimeError("settings save was not acknowledged")
+            received = api.request("/api/fs/download", vol=case["volume"], path=path)
+            if received != updated:
+                raise RuntimeError("settings read-back differs from the intended contents")
+        except ERRORS as error:
+            remaining = ", ".join(item[0]["id"] for item in plan[index + 1:]) or "none"
+            raise RuntimeError(
+                f"{path}: {error}. Verified profiles: {', '.join(completed) or 'none'}. "
+                f"Current file may have changed; remaining profiles not processed: {remaining}. "
+                "Pi was not restarted; rerun setup to finish the updates.") from error
+        completed.append(case["id"])
+        progress(f"{case['id']}: {network} settings verified")
+
+
+def begin_restart(api: Api, c64: dict[str, str]) -> tuple[dict[str, object], float]:
+    before = status(api)
+    restarting = before["profile_id"] == c64["id"]
+    endpoint = "/api/reboot" if restarting else "/api/profiles/start"
+    query = {} if restarting else {"id": c64["id"], "once": "1"}
+    requested = time.monotonic()
+    progress(f"Restarting into {c64['id']} using {endpoint}")
+    try:
+        reply = json.loads(api.request(endpoint, b"", **query))
+    except HTTPError:
+        raise
+    except OSError as error:
+        print(f"Restart reply lost ({error}); request will NOT be repeated. "
+              "Check the preview and enter the IP shown after reboot.", flush=True)
+    else:
+        if not isinstance(reply, dict) or reply.get("ok") is not True:
+            raise RuntimeError("C64 restart request was not accepted")
+    return before, requested
+
+
+def verify_restart(api: Api, c64: dict[str, str], before: dict[str, object],
+                   requested: float, network: str, timeout: float,
+                   health: Callable[[], None]) -> None:
+    deadline = time.monotonic() + timeout
+    updates = WaitProgress("C64 setup restart", timeout)
+    detail = "waiting for the new address and C64 profile"
+    while time.monotonic() < deadline:
+        health()
+        try:
+            current = status(api)
+        except OSError as error:
+            if not transient(error):
+                raise
+            detail = f"HTTP not ready: {error}"
+        else:
+            transitioned = (before["profile_id"] != current["profile_id"]
+                            or current["uptime_secs"] < before["uptime_secs"]
+                            or current["uptime_secs"] < time.monotonic() - requested - 1)
+            if transitioned and current["profile_error"]:
+                raise RuntimeError(f"Profile restart failed: {current['profile_error']}")
+            if (transitioned and current["profile_id"] == c64["id"]
+                    and current["machine"] == "C64"):
+                if current.get("net_status") != CONNECTED_STATUS[network]:
+                    raise RuntimeError(
+                        f"C64 connected using {current.get('net_text', 'unknown network')}, "
+                        f"not the selected {network}")
+                updates.update(f"{c64['id']} and {network} connection verified", force=True)
+                return
+            detail = f"reported {current['profile_id']} / {current['machine']}; waiting for restart"
+        updates.update(detail)
+        time.sleep(0.3)
+    raise RuntimeError(f"C64 setup restart could not be verified: {detail}; local setup not saved")
+
+
 def configure(directory: Path = HERE) -> bool:
     config_path = directory / "test_setup.json"
     launcher_path = directory / "run_tests"
@@ -169,43 +290,69 @@ def configure(directory: Path = HERE) -> bool:
     saved = load_setup(config_path) if config_path.exists() else {}
     defaults = vars(parser().parse_args([]))
     defaults.update(saved)
-    print("Configure the C64 hardware smoke test. Devices are listed but never opened.")
+    print("Configure the release-test rig with a live HDMI preview.")
     print("Enter keeps the displayed value; '-' clears an optional value.")
     print("Use stable UART paths from /dev/serial/by-id/ where available.")
-    saved_url = urlsplit(defaults["url"] or "")
-    address = ask_text("BMC64 IP address", saved_url.hostname or "",
-                       required=True, validate=ipaddress.ip_address)
-    host = f"[{address}]" if ipaddress.ip_address(address).version == 6 else address
-    port = f":{saved_url.port}" if saved_url.port is not None else ""
-    url = f"{saved_url.scheme or 'http'}://{host}{port}/"
-    uart_devices = discover_devices("uart")
-    pico_uart = ask_device("Pico UART device", uart_devices, defaults["pico_uart"] or "",
-                          required=True)
-    bmc_uart = ask_device("BMC64 diagnostic UART (optional)", uart_devices,
-                         defaults["bmc_uart"] or "", exclude=pico_uart)
-    settings = {
-        "url": url,
-        "pico_uart": pico_uart,
-        "bmc_uart": bmc_uart,
-        "video": ask_device("HDMI video device", discover_devices("video"),
-                            defaults["video"], required=True),
-        "audio": ask_text("HDMI ALSA audio device", defaults["audio"], required=True),
-        "setup": ask_text("Board/profile/ROM/setup notes (optional)", defaults["setup"]),
-        "timeout": float(ask_text("Guest assertion timeout in seconds", str(defaults["timeout"]),
-                                  required=True, validate=positive_timeout)),
-        "ask_pin": ask_yes_no("Does the Web UI require a PIN?", defaults["ask_pin"]),
-    }
-    if bmc_uart and os.path.realpath(bmc_uart) == os.path.realpath(pico_uart):
-        raise ValueError("Pico and BMC64 UART paths must be different; no settings saved")
-    print("\nThe generated run_tests command WILL restart BMC64 through the test profiles,")
-    print("upload/autostart the C64 diagnostic, record HDMI/audio and type through the Pico.")
-    print("Close viewers/serial terminals and save guest work before running it.")
-    if not ask_yes_no("Save this setup and create run_tests?", True):
-        print("Cancelled; existing setup unchanged.")
-        return False
-    config_path.parent.mkdir(parents=True, exist_ok=True)
-    write_atomic(launcher_path, LAUNCHER, 0o755)
-    write_atomic(config_path, json.dumps(settings, indent=2) + "\n", 0o600)
+    print("Close other capture viewers before continuing. UART devices will not be opened.")
+    video = ask_device("HDMI video device", discover_devices("video"),
+                       defaults["video"], required=True)
+    with preview(video) as process:
+        def health() -> None:
+            check_preview(process)
+
+        print("\nPower on the Pi now if needed. Keep this preview open throughout setup.")
+        print("Wait for BMC64 to boot and show its current IP address.")
+        url = ask_address("Current BMC64 IP address shown in preview", defaults["url"] or "")
+        ask_pin = ask_yes_no("Does the Web UI require a PIN? (same PIN on all test profiles)",
+                             defaults["ask_pin"])
+        pin = getpass.getpass("BMC64 PIN: ") if ask_pin else None
+        health()
+        api = Api(url, pin, timeout=3)
+        current = recover_api(api, defaults["timeout"], "Initial HTTP connection")
+        print(f"Connected: {current['machine']} / {current['profile_id']}", flush=True)
+        network = ask_network(defaults["network"] or "wifi")
+        progress("Reading installed test-profile definitions")
+        cases = resolve_profiles(api, read_manifest(HERE / "suite_profiles.json"))
+        c64 = next((case for case in cases if case["machine"] == "C64"), None)
+        if c64 is None:
+            raise RuntimeError("The setup manifest must include a C64 test profile")
+        uart_devices = discover_devices("uart")
+        pico_uart = ask_device("Pico UART device", uart_devices, defaults["pico_uart"] or "",
+                              required=True)
+        bmc_uart = ask_device("BMC64 diagnostic UART (optional)", uart_devices,
+                             defaults["bmc_uart"] or "", exclude=pico_uart)
+        settings = {
+            "url": url, "network": network, "pico_uart": pico_uart, "bmc_uart": bmc_uart,
+            "video": video,
+            "audio": ask_text("HDMI ALSA audio device", defaults["audio"], required=True),
+            "setup": ask_text("Board/profile/ROM/setup notes (optional)", defaults["setup"]),
+            "timeout": float(ask_text("Guest assertion timeout in seconds", str(defaults["timeout"]),
+                                      required=True, validate=positive_timeout)),
+            "ask_pin": ask_pin,
+        }
+        if bmc_uart and os.path.realpath(bmc_uart) == os.path.realpath(pico_uart):
+            raise ValueError("Pico and BMC64 UART paths must be different; no settings saved")
+        print(f"\nThis will set {network} on these test profiles: " +
+              ", ".join(case["id"] for case in cases))
+        print("Only network_device is changed; all other settings and PINs are preserved.")
+        print("Files saved through the Web UI keep their previous version as a .bak file.")
+        print("BMC64 will restart into the C64 test profile. Save any guest work first.")
+        print("Ethernet: connect its cable now. Wi-Fi: existing credentials must already work.")
+        if not ask_yes_no("Update these profiles, restart C64 and save the verified setup?", True):
+            print("Cancelled; no profiles or local settings changed.")
+            return False
+        apply_network(api, cases, network, health)
+        health()
+        before, requested = begin_restart(api, c64)
+        print("\nWait for the C64 display and the NEW IP address in the preview.")
+        print("The IP may change with the network interface. Do not enter it before reboot finishes.")
+        settings["url"] = ask_address("BMC64 IP address AFTER reboot", url)
+        verify_restart(Api(settings["url"], pin, timeout=3), c64, before, requested,
+                       network, settings["timeout"], health)
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        write_atomic(launcher_path, LAUNCHER, 0o755)
+        write_atomic(config_path, json.dumps(settings, indent=2) + "\n", 0o600)
+        input("Setup verified and saved. Press Enter to close the HDMI preview and finish.")
     print(f"\nSaved setup: {config_path}")
     print(f"Reusable launcher: {launcher_path}")
     print("Run ./run_tests from this folder, or use its full path from anywhere.")
@@ -220,9 +367,10 @@ def main() -> int:
     try:
         return 0 if configure() else 1
     except (EOFError, KeyboardInterrupt):
-        print("\nConfiguration cancelled.", file=sys.stderr)
+        print("\nConfiguration cancelled. Any profile updates already written remain applied; "
+              "local setup is saved only after verification.", file=sys.stderr)
         return 1
-    except (OSError, ValueError, RuntimeError) as error:
+    except ERRORS as error:
         print(f"Configuration failed: {error}", file=sys.stderr)
         return 1
 

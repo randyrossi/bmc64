@@ -48,15 +48,35 @@ From the repository root:
 ./tools/automated_release_testing/configure_test_setup
 ```
 
-The wizard asks for:
+Install the six [test profiles](profile-suite.md) first. Close existing capture
+viewers and keep guest work saved before approving the restart.
 
-- BMC64 IP address only (for example `192.168.1.50`), without `http://`
-  or a trailing slash. The wizard constructs the HTTP URL automatically.
-- Pico UART path and optional separate BMC64 diagnostic UART path.
-- HDMI video path and ALSA audio device, with capture defaults displayed.
-- Optional board/profile/ROM notes and the assertion timeout.
-- Whether to prompt for a Web UI PIN at test time. The PIN itself is never
-  requested or saved by configuration.
+The wizard now performs the setup with a live preview:
+
+1. Select the HDMI video device. FFplay opens before you power on the Pi.
+2. Power on the Pi if needed, wait for its display, and enter the current
+   BMC64 IP address (for example `192.168.1.50`, without `http://`).
+3. If the Web UI requires a PIN, enter it at the hidden prompt. Use the same
+   PIN on the test profiles. The PIN is kept in memory only, never saved.
+4. Verify the initial HTTP connection and choose Wi-Fi or Ethernet. Ethernet
+   requires an onboard Ethernet port and cable; USB Ethernet is not supported.
+5. Select the Pico UART and optional BMC64 diagnostic UART, ALSA audio device,
+   notes and guest assertion timeout.
+6. Confirm the listed test-profile updates and C64 restart. The wizard reads
+   every settings file first, then saves only the changed `network_device`
+   value using `/api/fs/save` and verifies the entire file by reading it back.
+   Other settings, Wi-Fi credentials and PINs are preserved. The Web UI save
+   endpoint keeps the previous changed file as a `.bak`.
+7. With the preview still open, wait for C64 to reboot and show its IP.
+   **Enter the address shown after reboot**, even if it is different from the
+   address used initially.
+8. The wizard verifies the C64 profile, a real restart and the selected network
+   connection. Only then does it save the local setup.
+9. Press Enter at the final prompt to close the preview and finish.
+
+Do not press Q to close the preview mid-setup. If it exits, setup stops before
+its next operation; the process is also closed on cancellation or failure.
+The standalone `run_video_test` remains available for later manual checks.
 
 IPv4 and IPv6 addresses are accepted. New setups use HTTP on its default
 port. Reconfiguring an existing setup preserves its saved URL scheme and
@@ -76,14 +96,25 @@ which camera is HDMI. Use device names and the
 [hardware guide](hardware.md) to identify them; for the validated dongle
 choose the MacroSilicon `video-index0` interface. If no devices are found,
 the wizard explicitly offers manual path entry. Audio remains a text prompt.
-This is configuration only: directory entries are inspected, but devices
-are not opened and no HTTP requests, serial connections or captures start.
+Configuration opens video and uses HTTP, but does not open UART adapters,
+send USB input, upload a diagnostic or install firmware. The profiles must
+already exist, with the Web UI enabled.
 
-On confirmation, the wizard saves `test_setup.json` with owner-only
-permissions beside executable `run_tests` and the Python scripts.
-Both are ignored by Git. Run the wizard again to change settings: Enter
-keeps each saved value, and `-` clears an optional UART or notes field.
-Cancellation before saving leaves the existing configuration unchanged.
+After verification, the wizard saves `test_setup.json` with owner-only
+permissions beside executable `run_tests`. The settings file is ignored by Git.
+It records `network` as `wifi` or `ethernet` and the final verified URL.
+Test preflight checks selected profiles against that saved network setting.
+Old setup files without `network` still load; rerun configuration to add it.
+Run the wizard again to change settings: Enter keeps each saved value, and
+`-` clears an optional UART or notes field.
+
+Cancellation before confirming the remote updates changes no settings.
+If saving a profile fails, the wizard names the failed file, verified
+profiles and unprocessed profiles, and does not restart the Pi or replace the
+local setup. A lost save reply may mean that file was written: inspect the
+message and rerun setup to finish. Already-written remote profiles are not
+automatically rolled back. Likewise, if final address/network verification
+fails, the local setup remains unchanged but remote updates remain applied.
 Malformed saved settings cause an explicit error, not a fallback to defaults.
 
 ## Run repeatedly
@@ -243,9 +274,14 @@ Web UI when no longer needed. Recordings can be large; manage retained runs.
 
 - **UART locked/busy:** close picocom or any other serial reader. Pico
   control and BMC64 logging must use different adapters.
-- **Pico invalid-line error during manual bring-up:** a stale partial line
-  can be rejected before a valid command. The runner sends a leading newline
-  and waits for its own correlated reply. It does not retry uncertain input.
+- **Pico invalid-line error or first-command timeout after reboot:** the Pico
+  can restart with the Pi and receive UART noise in an unfinished input line.
+  The runner sends a leading newline before every command, including after
+  profile restarts, then waits for that command's correlated reply. A
+  `0 ERROR syntax` or `0 ERROR invalid-or-long-line` from the clearing newline
+  is logged, not accepted as the command response. Input is still sent only
+  once; uncertain commands are not retried. If timeouts persist, inspect
+  `pico.log` for repeated restarts/noise and check fixture power and UART wiring.
 - **Capture startup failure:** close competing viewers and check device paths.
   Confirm video preview and HDMI audio independently using the hardware guide.
   Black startup frames fail before uploading the guest. Inspect `failure.ppm`

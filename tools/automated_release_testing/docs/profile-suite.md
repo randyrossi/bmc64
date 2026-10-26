@@ -34,7 +34,16 @@ All supplied folder IDs share the collision-avoidance suffix `-de56af`:
 The default suite manifest targets these exact IDs, not the readable
 display names, so an existing profile named `c64_test` is not selected.
 
-These select onboard Wi-Fi and enable the Web UI. The existing SD-root
+The supplied templates select onboard Wi-Fi and enable the Web UI.
+`configure_test_setup` can switch all six installed test profiles to Ethernet
+(`network_device=1`) or Wi-Fi (`network_device=2`) over the current HTTP
+connection. It preserves other settings, verifies the saved files, restarts
+into C64 and asks for its new IP before saving the local setup. No SD remount
+is needed to change the test network. Only the manifest's test profiles are
+updated, not Main or unrelated profiles. The Ethernet path requires onboard
+Ethernet; USB adapters are not supported.
+
+For Wi-Fi, the existing SD-root
 `wpa_supplicant.conf` and Wi-Fi firmware are reused unchanged; no network
 credentials are bundled. Web UI has **no PIN**, matching its default:
 use these profiles only on a trusted test LAN, or set the same PIN in each
@@ -173,8 +182,8 @@ file such as `local/my-suite.json`, edit it, and supply its path:
 ./run_tests --manifest local/my-suite.json --timeout 90
 ```
 
-The manifest defines the boot/typing tests: `--list` shows the names it
-produces. Each item needs only `machine` and `profile`; machines may not be
+The manifest maps machines to profiles; Python test files define the test
+names shown by `--list`. Each item needs only `machine` and `profile`; machines may not be
 repeated. `c64-default` uses the manifest's C64 profile.
 Case order follows the manifest. A subset run proves only its listed cases;
 the actual manifest is always recorded in the result.

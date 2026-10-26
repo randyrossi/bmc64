@@ -62,6 +62,10 @@ live in `utils/`; default manifest, results and saved setup paths still resolve
 relative to the test directory, not `utils/` or the caller's working directory.
 Saved `test_setup.json` needs no changes. The setup wizard also recognises and
 upgrades the old generated launcher when reconfiguring an existing rig.
+New configurations record `network` and verify profile settings during
+preflight. The setup wizard opens its own HDMI preview, updates the installed
+profiles and verifies the final C64 connection before saving; this is an
+interactive hardware operation, unlike offline test preparation.
 
 Without `--execute`, direct CLI use only prepares results and generates the
 C64 diagnostic when selected; it never calls hardware before/run/after hooks.

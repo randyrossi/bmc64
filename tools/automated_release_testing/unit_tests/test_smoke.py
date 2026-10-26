@@ -158,13 +158,25 @@ class SetupTests(unittest.TestCase):
         discovery = patch("utils.configure_test_setup.discover_devices", return_value=[])
         self.discovery = discovery.start()
         self.addCleanup(discovery.stop)
+        replacements = {
+            "preview": {}, "check_preview": {}, "Api": {}, "apply_network": {},
+            "recover_api": {"return_value": {"machine": "C64", "profile_id": "main"}},
+            "resolve_profiles": {"return_value": [
+                {"machine": "C64", "id": "c64-test", "volume": "SD"}]},
+            "begin_restart": {"return_value": ({}, 0)},
+            "verify_restart": {}, "getpass.getpass": {"return_value": "private-pin"},
+        }
+        for name, options in replacements.items():
+            mock = patch(f"utils.configure_test_setup.{name}", **options)
+            mock.start()
+            self.addCleanup(mock.stop)
 
     def test_numbered_wizard_saves_selected_device_paths(self):
         self.discovery.side_effect = [
-            ["/dev/serial/by-id/PICO", "/dev/serial/by-id/BMC64"],
             ["/dev/v4l/by-id/WEBCAM", "/dev/v4l/by-id/HDMI"],
+            ["/dev/serial/by-id/PICO", "/dev/serial/by-id/BMC64"],
         ]
-        answers = ["192.0.2.1", "1", "1", "2", "", "", "", "n", "y"]
+        answers = ["2", "192.0.2.1", "n", "wifi", "1", "1", "", "", "", "y", "", ""]
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             with patch("builtins.input", side_effect=answers), \
@@ -248,6 +260,8 @@ class SetupTests(unittest.TestCase):
             {**self.settings(), "pico_uart": "relative-device"},
             {**self.settings(), "audio": ""},
             {**self.settings(), "setup": "line\nbreak"},
+            {**self.settings(), "network": "auto"},
+            {**self.settings(), "network": 1},
         ]
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "setup.json"
@@ -265,8 +279,9 @@ class SetupTests(unittest.TestCase):
             self.assertEqual(failure.exception.code, 2)
 
     def test_wizard_creates_private_setup_and_executable_launcher_without_hardware(self):
-        answers = ["http://192.0.2.1/", "not-an-ip", "192.0.2.999", "192.0.2.1", "/dev/PICO", "/dev/BMC",
-                   "", "", "Pi test", "nan", "45", "yes", "yes"]
+        answers = ["", "http://192.0.2.1/", "not-an-ip", "192.0.2.999", "192.0.2.1",
+                   "yes", "wifi", "/dev/PICO", "/dev/BMC", "", "Pi test", "nan", "45",
+                   "yes", "", ""]
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             with patch("builtins.input", side_effect=answers), \
@@ -291,18 +306,19 @@ class SetupTests(unittest.TestCase):
             settings = self.settings()
             (root / "test_setup.json").write_text(json.dumps(settings))
             (root / "run_tests").write_text(LEGACY_LAUNCHER)
-            with patch("builtins.input", side_effect=[""] * 9), \
+            with patch("builtins.input", side_effect=[""] * 12), \
                     patch("sys.stdout", new_callable=io.StringIO):
                 self.assertTrue(configure(root))
             self.assertEqual((root / "run_tests").read_text(), LAUNCHER)
-            self.assertEqual(load_setup(root / "test_setup.json"), settings)
+            self.assertEqual(load_setup(root / "test_setup.json"), {**settings, "network": "wifi"})
 
     def test_reconfigure_reuses_values_and_can_clear_optional_fields(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             config = root / "test_setup.json"
             config.write_text(json.dumps(self.settings()), encoding="utf-8")
-            with patch("builtins.input", side_effect=["", "", "-", "", "", "-", "", "", ""]), \
+            with patch("builtins.input", side_effect=[
+                    "", "", "", "", "", "-", "", "-", "", "", "", ""]), \
                     patch("sys.stdout", new_callable=io.StringIO):
                 self.assertTrue(configure(root))
             updated = load_setup(config)
@@ -323,12 +339,12 @@ class SetupTests(unittest.TestCase):
                     settings = self.settings()
                     settings["url"] = saved
                     (root / "test_setup.json").write_text(json.dumps(settings))
-                answers = [address, "/dev/PICO", "-", "", "", "", "", "n", "y"]
+                answers = ["", address, "n", "", "/dev/PICO", "-", "", "", "", "y", "", ""]
                 with patch("builtins.input", side_effect=answers) as prompt, \
                         patch("sys.stdout", new_callable=io.StringIO):
                     self.assertTrue(configure(root))
                 self.assertEqual(load_setup(root / "test_setup.json")["url"], expected)
-                first_prompt = prompt.call_args_list[0].args[0]
+                first_prompt = prompt.call_args_list[1].args[0]
                 self.assertIn("BMC64 IP address", first_prompt)
                 self.assertNotIn("http://", first_prompt)
                 self.assertNotIn(":8080", first_prompt)
@@ -339,7 +355,7 @@ class SetupTests(unittest.TestCase):
             config = root / "test_setup.json"
             config.write_text(json.dumps(self.settings()), encoding="utf-8")
             original = config.read_bytes()
-            with patch("builtins.input", side_effect=[""] * 8 + ["n"]), \
+            with patch("builtins.input", side_effect=[""] * 9 + ["n"]), \
                     patch("sys.stdout", new_callable=io.StringIO):
                 self.assertFalse(configure(root))
             self.assertEqual(config.read_bytes(), original)
@@ -354,7 +370,7 @@ class SetupTests(unittest.TestCase):
             root = Path(directory) / "test rig"
             root.mkdir()
             (root / "test_setup.json").write_text(json.dumps(self.settings()))
-            with patch("builtins.input", side_effect=[""] * 9), \
+            with patch("builtins.input", side_effect=[""] * 12), \
                     patch("sys.stdout", new_callable=io.StringIO):
                 configure(root)
             (root / "run_smoke").write_text(
@@ -495,6 +511,55 @@ class GuestTests(unittest.TestCase):
 
 
 class SerialTests(unittest.TestCase):
+    def test_first_command_after_pico_restart_resynchronizes_without_replaying_input(self):
+        clock = [0.0]
+
+        class Port:
+            def __init__(self):
+                self.restart()
+                self.executed = []
+                self.writes = []
+
+            def restart(self):
+                # Like the firmware: any non-ASCII RX byte poisons the current
+                # line until LF. A USB-powered restart can leave this state.
+                self.pending = b"\0"
+                self.received = b"\x80\0" + b"0 EVENT ready protocol=1\r\n"
+
+            def write(self, data):
+                self.writes.append(data)
+                self.pending += data
+                while b"\n" in self.pending:
+                    line, self.pending = self.pending.split(b"\n", 1)
+                    if any(value < 32 or value > 126 for value in line):
+                        self.received += b"0 ERROR invalid-or-long-line\r\n"
+                    elif not line:
+                        self.received += b"0 ERROR syntax\r\n"
+                    else:
+                        request_id, command = line.split(b" ", 1)
+                        self.executed.append(command)
+                        reply = (b"OK protocol=1 mounted=1 suspended=0 pending=0"
+                                 if command == b"STATUS" else b"OK")
+                        self.received += request_id + b" " + reply + b"\r\n"
+
+            def read(self, timeout):
+                if self.received:
+                    result, self.received = self.received, b""
+                    return result
+                clock[0] += timeout
+                return None
+
+        port, log = Port(), io.BytesIO()
+        with patch("hardware.pico.time.monotonic", side_effect=lambda: clock[0]):
+            pico = Pico(port, log)
+            self.assertIn("mounted=1", pico.command("STATUS"))
+            port.restart()
+            self.assertEqual(pico.command("KEY 0 44"), "OK")
+        self.assertEqual(port.executed, [b"STATUS", b"KEY 0 44"])
+        self.assertEqual(len(port.writes), 2)
+        self.assertTrue(all(data.startswith(b"\n") for data in port.writes))
+        self.assertIn(b"invalid-or-long-line", log.getvalue())
+
     def test_busy_uart_has_actionable_error(self):
         master, slave = pty.openpty()
         try:
@@ -512,12 +577,16 @@ class SerialTests(unittest.TestCase):
 
         def peer():
             try:
+                pending = b""
                 for reply in ("OK protocol=1 mounted=1", "ERROR usb-unavailable"):
-                    request = b""
-                    while not request.endswith(b"\n"):
-                        if not select.select([master], [], [], 2)[0]:
-                            raise RuntimeError("test UART peer timed out")
-                        request += os.read(master, 1024)
+                    while True:
+                        while b"\n" not in pending:
+                            if not select.select([master], [], [], 2)[0]:
+                                raise RuntimeError("test UART peer timed out")
+                            pending += os.read(master, 1024)
+                        request, pending = pending.split(b"\n", 1)
+                        if request.strip():
+                            break
                     request_id = request.split()[0]
                     os.write(master, b"0 EVENT ready\r\n1 OK\r\n" +
                              request_id + b" " + reply.encode() + b"\r\n")
