@@ -38,5 +38,7 @@ typedef struct {
 
 /* On failure, id is preserved if valid, so errors can be correlated. */
 bool command_parse(const char *line, command_t *command);
+/* Whitespace-only lines resynchronise framing and are ignored, without a reply. */
+bool command_line_blank(const char *line);
 
 #endif

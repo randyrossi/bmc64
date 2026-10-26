@@ -67,6 +67,10 @@ int main(void) {
     long_line[sizeof(long_line) - 1] = '\0';
     assert(!command_parse(long_line, &cmd));
     assert(cmd.id == 0);
+    assert(command_line_blank(""));
+    assert(command_line_blank(" \t\r"));
+    assert(!command_line_blank("1 PING"));
+    assert(!command_line_blank(" x"));
     puts("PASS: protocol command shapes, IDs, bounds and malformed inputs");
     return 0;
 }

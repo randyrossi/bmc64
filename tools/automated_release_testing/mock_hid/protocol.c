@@ -38,6 +38,10 @@ static bool number(const char *text, long min, long max, int *value) {
     return true;
 }
 
+bool command_line_blank(const char *line) {
+    return line[strspn(line, " \t\r")] == '\0';
+}
+
 bool command_parse(const char *line, command_t *command) {
     memset(command, 0, sizeof(*command));
     if (strlen(line) >= COMMAND_LINE_SIZE) return false;

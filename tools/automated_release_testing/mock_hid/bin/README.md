@@ -24,7 +24,7 @@ a Pico 2 or a BMC64 Raspberry Pi board.
 SHA-256 of the supplied UF2:
 
 ```text
-d9ae30244bbac4ddd2cd0cb0378c16961f49a0a1fcddb5ff204e068115a91214
+b95b1b0ebd1667f498f284c72e6f0732671027745440dba3a8233aea2977175a
 ```
 
 From this directory, verify it with:
@@ -40,7 +40,10 @@ bytes.
 
 ## Updating the supplied image
 
-Follow [the source build instructions](../README.md#build-firmware-from-source).
+From `mock_hid/`, run `./build_uf2`. It rebuilds, runs the native tests,
+copies the UF2 here and updates the checksum, size, SDK, GCC and CMake
+versions above; check the picotool version by hand. To do it manually,
+follow [the source build instructions](../README.md#build-firmware-from-source).
 From `mock_hid/`, after rebuilding and running `make test all`:
 
 ```sh

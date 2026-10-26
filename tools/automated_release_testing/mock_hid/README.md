@@ -41,7 +41,12 @@ This produces `build/mock_hid.uf2`. With newer SDKs, UF2 generation may also
 require a matching installed `picotool`; follow the SDK's configuration
 diagnostic. Do not confuse a Pico-only build with a BMC64 firmware build.
 
-To refresh the supplied firmware after a source change, rebuild, run the
+`./build_uf2` does all of this in one step: it finds the SDK and compiler
+(from the environment or an existing `build/`), builds, runs the native
+tests, copies the UF2 to `bin/` and updates its checksum, size and tool
+versions in `bin/README.md`. `./build_uf2 --clean` reconfigures from scratch.
+
+To refresh the supplied firmware by hand after a source change, rebuild, run the
 native tests below, copy `build/mock_hid.uf2` to `bin/mock_hid.uf2`, and update
 the checksum/tool versions in `bin/README.md`. Do not copy the whole build
 directory: ELF files, SDK helpers and native executables are build outputs.
@@ -82,6 +87,8 @@ and logs correlated requests/replies.
 ASCII, case-sensitive, decimal integers, LF termination; CRLF accepted.
 Maximum line length 127 bytes excluding LF (including CR if present).
 Stop-and-wait: do not pipeline requests. Partial lines are not executed.
+Empty or whitespace-only lines are ignored without a reply; send one to
+terminate any UART noise left in an unfinished line.
 
 ```text
 <id> PING

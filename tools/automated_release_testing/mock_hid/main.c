@@ -218,6 +218,7 @@ int main(void) {
             line[used] = '\0';
             command_t cmd;
             if (invalid_line) reply(0, "ERROR invalid-or-long-line");
+            else if (command_line_blank(line)) {}
             else if (!command_parse(line, &cmd)) reply(cmd.id, "ERROR syntax");
             else execute(&cmd);
             used = 0;
