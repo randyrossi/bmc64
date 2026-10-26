@@ -111,6 +111,7 @@ class Pico:
         self.port, self.log, self.readable = port, log, readable
         self.request_id = secrets.randbelow(1_000_000_000) + 1
         self.buffer = b""
+        self.restarted = False
 
     def note(self, text: str, wall: float | None = None) -> None:
         if self.readable:
@@ -125,8 +126,12 @@ class Pico:
         # Keep the Pico's own message, not restart noise in front of it.
         start = line.find(" EVENT ") if " EVENT " in line else line.find(" ERROR ")
         text = line[start + 1:] if start >= 0 else line
-        if text.startswith("EVENT ready"):
+        restarted, self.restarted = self.restarted, text.startswith("EVENT ready")
+        if self.restarted:
             return f"Pico restarted ({text})"
+        if restarted and text == "ERROR invalid-or-long-line":
+            # The clearing newline ended the restart's UART noise; expected.
+            return "Pico discarded restart noise (expected after a restart)"
         return f"Pico: {text}"
 
     def command(self, command: str) -> str:

@@ -627,6 +627,12 @@ class SerialTests(unittest.TestCase):
             self.assertEqual(lines[0], "===== marker =====")
             self.assertRegex(lines[1], r"^STATUS -> protocol=1 mounted=1 \(\d+ ms\)$")
             self.assertEqual(lines[2:4], ["Pico restarted (EVENT ready)", "Pico: 1 OK"])
+            self.assertEqual(pico.unsolicited("0 EVENT ready protocol=1"),
+                             "Pico restarted (EVENT ready protocol=1)")
+            self.assertEqual(pico.unsolicited("\ufffd0 ERROR invalid-or-long-line"),
+                             "Pico discarded restart noise (expected after a restart)")
+            self.assertEqual(pico.unsolicited("0 ERROR invalid-or-long-line"),
+                             "Pico: ERROR invalid-or-long-line")
             self.assertRegex(lines[4], r"^KEY Space -> ERROR usb-unavailable \(\d+ ms\)$")
         finally:
             thread.join(3)

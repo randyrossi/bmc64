@@ -30,6 +30,18 @@ def classify_uart(line: str) -> dict[str, str] | None:
     )
     if any(re.search(pattern, line) for pattern in probes):
         return {"severity": "info", "category": "autostart_probe", "line": line}
+    # Every boot reports the printer, plotter and drive ROMs BMC64 does not ship.
+    startup = (
+        r"^MPS-803: Error - (?:Could not load MPS-803 charset|Cannot load palette file)",
+        r"^NL10: Error - Could not load NL-10 ROM file",
+        r"^Palette: Error - Palette not found: `(?:mps803|1520)\.vpl'",
+        r"^plot1520: Error - Cannot load palette file",
+        r"^DriveROM: Error - \S+ ROM image not found\. "
+        r"Hardware-level \S+ emulation is not available\.",
+        r"^Warning - ROM `[^']*/dosCMDHD': long file, discarding end\.",
+    )
+    if any(re.search(pattern, line) for pattern in startup):
+        return {"severity": "info", "category": "boot_startup", "line": line}
     critical = (
         ("panic", r"\bpanic\b"),
         ("exception", r"\b(?:data abort|prefetch abort|unhandled exception)\b"),

@@ -880,6 +880,18 @@ class UartTests(unittest.TestCase):
                      "Error - archdep_mkdir unimpl: ."):
             with self.subTest(line=line):
                 self.assertEqual(classify_uart(line)["severity"], "info")
+        for line in ("MPS-803: Error - Could not load MPS-803 charset 'mps803'.",
+                     "Palette: Error - Palette not found: `1520.vpl'.",
+                     "NL10: Error - Could not load NL-10 ROM file 'nl10-cbm'.",
+                     "DriveROM: Error - 1001/8050/8250 ROM image not found. "
+                     "Hardware-level 1001/8050/8250 emulation is not available.",
+                     "Warning - ROM `/C128/dosCMDHD': long file, discarding end."):
+            with self.subTest(line=line):
+                self.assertEqual(classify_uart(line)["category"], "boot_startup")
+        for line in ("Palette: Error - Palette not found: `pepto-pal.vpl'.",
+                     "Sound: Warning - Buffer drained"):
+            with self.subTest(line=line):
+                self.assertEqual(classify_uart(line)["severity"], "warning")
         self.assertEqual(classify_uart("Sound buffer drained: warning")["severity"], "warning")
         self.assertIsNone(classify_uart("kernel: Keyboard 1 connected and registered."))
 

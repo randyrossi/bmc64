@@ -264,8 +264,10 @@ received bytes for diagnosing garbled output. Findings in
 monotonic time used by test results.
 
 Known panic, abort, assertion, memory and profile-start failure signatures
-are critical. Expected VICE disk/tape/cartridge PRG probes and
-`archdep_mkdir unimpl` are informational; other error/warning messages are
+are critical. Expected VICE disk/tape/cartridge PRG probes,
+`archdep_mkdir unimpl`, and the printer, plotter and drive ROM messages every
+boot reports (MPS-803, NL-10, 1520, `DriveROM`, the long `dosCMDHD` ROM) are
+informational; other error/warning messages are
 retained without automatically failing the run. This is not exhaustive
 crash detection.
 
@@ -289,7 +291,8 @@ Web UI when no longer needed. Recordings can be large; manage retained runs.
   profile restarts, then waits for that command's correlated reply. The
   firmware ignores the empty line itself; if it terminated UART noise, the
   resulting `0 ERROR invalid-or-long-line` is logged, not accepted as the
-  command response. Input is still sent only
+  command response. In `pico.log` that appears after `Pico restarted` as
+  `Pico discarded restart noise`; without a restart it is shown as an error. Input is still sent only
   once; uncertain commands are not retried. If timeouts persist, inspect
   `pico.log` for repeated `Pico restarted` lines or errors and check fixture power and UART wiring.
 - **Capture startup failure:** close competing viewers and check device paths.
