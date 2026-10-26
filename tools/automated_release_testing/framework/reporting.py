@@ -25,6 +25,12 @@ from pathlib import Path
 def save_json(path: Path, value: object) -> None:
     path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
 
+def clock(wall: float | None = None) -> str:
+    """Wall-clock HH:MM:SS.mmm used at the start of readable log lines."""
+    moment = datetime.now() if wall is None else datetime.fromtimestamp(wall)
+    return moment.strftime("%H:%M:%S.%f")[:-3]
+
+
 def progress(message: str) -> None:
     print(f"[{datetime.now():%H:%M:%S}] {message}", flush=True)
 
@@ -43,7 +49,16 @@ class WaitProgress:
             self.next_update = now + 5
 
 
-def print_summary(results: list[dict]) -> None:
+def duration(seconds: float) -> str:
+    """72.4 -> 1m 12s; 3725 -> 1h 2m 5s."""
+    minutes, seconds = divmod(round(seconds), 60)
+    hours, minutes = divmod(minutes, 60)
+    if hours:
+        return f"{hours}h {minutes}m {seconds}s"
+    return f"{minutes}m {seconds}s" if minutes else f"{seconds}s"
+
+
+def print_summary(results: list[dict], seconds: float | None = None) -> None:
     """One line per test at the very end of a run, so results need no scrolling."""
     print("\nSummary:", flush=True)
     for result in results:
@@ -56,3 +71,5 @@ def print_summary(results: list[dict]) -> None:
               for status in ("PASS", "PREPARED", "FAIL", "NOT_RUN")}
     print("  " + ", ".join(f"{count} {status}" for status, count in counts.items() if count),
           flush=True)
+    if seconds is not None:
+        print(f"  Total time: {duration(seconds)}", flush=True)

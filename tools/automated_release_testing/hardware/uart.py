@@ -18,9 +18,9 @@
 
 import threading
 import time
-from datetime import datetime
 from pathlib import Path
 from framework.errors import TestFailure
+from framework.reporting import clock
 from hardware.pico import SerialPort
 from support.uart_findings import classify_uart
 
@@ -49,14 +49,10 @@ class UartLog:
         self.thread = threading.Thread(target=self.collect, daemon=True)
         self.thread.start()
 
-    @staticmethod
-    def clock(wall: float) -> str:
-        return datetime.fromtimestamp(wall).strftime("%H:%M:%S.%f")[:-3]
-
     def mark(self, text: str) -> None:
         """Write a runner note, such as the start of a test, between UART lines."""
         with self.lock:
-            self.file.write(f"{self.clock(time.time())}  {text}\n")
+            self.file.write(f"{clock(time.time())}  {text}\n")
             self.file.flush()
 
     def end_line(self) -> None:
@@ -67,10 +63,10 @@ class UartLog:
         self.line.clear()
         self.started = None
         with self.lock:
-            self.file.write(f"{self.clock(wall)}  {text}\n")
+            self.file.write(f"{clock(wall)}  {text}\n")
         finding = classify_uart(text.strip())
         if finding:
-            self.findings.append({"monotonic": monotonic, "time": self.clock(wall), **finding})
+            self.findings.append({"monotonic": monotonic, "time": clock(wall), **finding})
 
     def feed(self, data: bytes) -> None:
         for value in data:

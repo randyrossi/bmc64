@@ -568,6 +568,15 @@ class SerialTests(unittest.TestCase):
         self.assertTrue(all(data.startswith(b"\n") for data in port.writes))
         self.assertIn(b"invalid-or-long-line", log.getvalue())
 
+    def test_readable_log_names_keys(self):
+        from hardware.pico import describe
+        self.assertEqual(describe("KEY 0 25"), "KEY V")
+        self.assertEqual(describe("KEY 2 4"), "KEY LShift+A")
+        self.assertEqual(describe("KEY 0 30 39 44"), "KEY 1+0+Space")
+        self.assertEqual(describe("KEY 0"), "KEY release")
+        self.assertEqual(describe("KEY 0 200"), "KEY usage 200")
+        self.assertEqual(describe("STATUS"), "STATUS")
+
     def test_busy_uart_has_actionable_error(self):
         master, slave = pty.openpty()
         try:
@@ -605,13 +614,20 @@ class SerialTests(unittest.TestCase):
         try:
             port = SerialPort(os.ttyname(slave))
             thread.start()
-            log = io.BytesIO()
-            pico = Pico(port, log)
+            log, readable = io.BytesIO(), io.StringIO()
+            pico = Pico(port, log, readable)
+            pico.mark("===== marker =====")
             self.assertEqual(pico.command("STATUS"), "OK protocol=1 mounted=1")
             with self.assertRaisesRegex(RuntimeError, "usb-unavailable"):
                 pico.command("KEY 0 44")
             self.assertIn(b"EVENT ready", log.getvalue())
             self.assertIn(b"TX", log.getvalue())
+            # One line per command, its reply and time; Pico events after it.
+            lines = [line[14:] for line in readable.getvalue().splitlines()]
+            self.assertEqual(lines[0], "===== marker =====")
+            self.assertRegex(lines[1], r"^STATUS -> protocol=1 mounted=1 \(\d+ ms\)$")
+            self.assertEqual(lines[2:4], ["Pico restarted (EVENT ready)", "Pico: 1 OK"])
+            self.assertRegex(lines[4], r"^KEY Space -> ERROR usb-unavailable \(\d+ ms\)$")
         finally:
             thread.join(3)
             if port:

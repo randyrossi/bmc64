@@ -296,7 +296,7 @@ If HTTP control cannot be recovered, remaining cases are NOT_RUN and no
 more switches are requested. There is no automatic power recovery.
 
 The terminal ends with a summary: one line per case (PASS, FAIL with its
-stage and reason, or NOT_RUN), then the totals.
+stage and reason, or NOT_RUN), then the totals and the total run time.
 
 The overall hardware result is PASS only if **all selected cases pass**
 and cleanup succeeds. Any FAIL, NOT_RUN, interrupted run or cleanup failure

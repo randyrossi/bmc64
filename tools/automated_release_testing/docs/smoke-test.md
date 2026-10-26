@@ -248,7 +248,7 @@ by the run) contains:
 - `observations.jsonl`: monotonic observation times, counters, states and
   measured audio values.
 
-The run folder holds `pico.log` and, with a BMC64 UART:
+The run folder holds `pico.log` (readable) and `pico.raw` (exact transcript) and, with a BMC64 UART:
 
 - Optional `uart-findings.json`: critical signatures, known informational
   autostart probes and unclassified warnings, with raw lines and monotonic times.
@@ -291,7 +291,7 @@ Web UI when no longer needed. Recordings can be large; manage retained runs.
   resulting `0 ERROR invalid-or-long-line` is logged, not accepted as the
   command response. Input is still sent only
   once; uncertain commands are not retried. If timeouts persist, inspect
-  `pico.log` for repeated restarts/noise and check fixture power and UART wiring.
+  `pico.log` for repeated `Pico restarted` lines or errors and check fixture power and UART wiring.
 - **Capture startup failure:** close competing viewers and check device paths.
   Confirm video preview and HDMI audio independently using the hardware guide.
   Black startup frames fail before uploading the guest. Inspect `failure.ppm`

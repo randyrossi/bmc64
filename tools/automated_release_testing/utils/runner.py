@@ -140,7 +140,7 @@ def main() -> int:
         if shutil.which(tool) is None:
             argument_parser.error(f"required tool is missing: {tool}; see docs/prerequisites.md")
     report = run(args, selected, manifest)
-    print_summary(report["tests"])
+    print_summary(report["tests"], report["duration_seconds"])
     print(f"  Evidence: {report['evidence']}", flush=True)
     return 0 if report["status"] in ("PASS", "PREPARED") else 1
 

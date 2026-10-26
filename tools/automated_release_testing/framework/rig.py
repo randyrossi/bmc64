@@ -47,9 +47,11 @@ def open_rig(args: argparse.Namespace, api: Api, output: Path, report: dict,
     progress("Opening Pico UART and checking USB fixture")
     port = SerialPort(args.pico_uart)
     register("close Pico UART", port.close)
-    log = (output / "pico.log").open("wb")
+    raw = (output / "pico.raw").open("wb")
+    register("close Pico transcript", raw.close)
+    log = (output / "pico.log").open("w", encoding="utf-8")
     register("close Pico log", log.close)
-    pico = Pico(port, log)
+    pico = Pico(port, raw, log)
     # A newline discards any incomplete/noisy line left by manual bring-up.
     port.write(b"\n")
     register("release inputs", lambda: pico.command("RELEASE"))

@@ -908,6 +908,9 @@ class RotationTests(unittest.TestCase):
         class Pico:
             text = ""
 
+            def mark(self, text):
+                pass
+
             def command(self, command):
                 commands.append(command)
                 if command.startswith("KEY 0 ") and not (
@@ -1169,7 +1172,7 @@ class RotationTests(unittest.TestCase):
             {"name": "c64-default", "status": "PREPARED", "stage": "offline"},
         ]
         with patch("sys.stdout", new_callable=io.StringIO) as terminal:
-            print_summary(results)
+            print_summary(results, 3725.4)
         self.assertEqual(terminal.getvalue().splitlines()[1:], [
             "Summary:",
             "  PASS     c64-boot-typing",
@@ -1177,7 +1180,10 @@ class RotationTests(unittest.TestCase):
             "  NOT_RUN  pet-boot-typing: HTTP control unavailable",
             "  PREPARED c64-default",
             "  1 PASS, 1 PREPARED, 1 FAIL, 1 NOT_RUN",
+            "  Total time: 1h 2m 5s",
         ])
+        from framework.reporting import duration
+        self.assertEqual([duration(value) for value in (4.4, 72.4, 600)], ["4s", "1m 12s", "10m 0s"])
 
 
 if __name__ == "__main__":

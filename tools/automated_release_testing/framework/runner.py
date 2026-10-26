@@ -96,8 +96,10 @@ def run_tests(args: argparse.Namespace, rig: Rig, tests: list[type[BmcTest]],
             continue
         profile = profiles[test.machine]
         progress(f"{label}: starting ({test.machine}, profile {profile['id']})")
+        marker = f"===== {label} ({test.machine}) ====="
+        rig.pico.mark(marker)
         if rig.uart:
-            rig.uart.mark(f"===== {label} ({test.machine}) =====")
+            rig.uart.mark(marker)
         directory = output / f"{index:02d}-{test.name}"
         directory.mkdir()
         result.update(id=profile["id"], status="FAIL", evidence=directory.name)
@@ -136,6 +138,7 @@ def prepare_tests(args: argparse.Namespace, tests: list[type[BmcTest]],
 def run(args: argparse.Namespace, tests: list[type[BmcTest]],
         manifest: list[dict[str, str]]) -> dict:
     """Run tests in order; returns the saved run report with one result per test."""
+    started = time.monotonic()
     run_id = secrets.token_hex(4)
     output = args.results / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
                              + "-" + run_id)
@@ -200,6 +203,7 @@ def run(args: argparse.Namespace, tests: list[type[BmcTest]],
         elif statuses == {"PASS"}:
             report["status"] = "PASS"
         report["finished_utc"] = datetime.now(timezone.utc).isoformat()
+        report["duration_seconds"] = round(time.monotonic() - started, 1)
         save_json(output / "result.json", report)
     report["evidence"] = str(output / "result.json")
     print(f"{report['status']}: {output / 'result.json'}", flush=True)

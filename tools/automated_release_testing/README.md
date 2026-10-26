@@ -117,7 +117,7 @@ To see the test names, or run just some of them:
 ```
 
 The run ends with a summary: one line per test (PASS, FAIL with its stage and
-reason, or NOT_RUN), the totals and the run's evidence folder.
+reason, or NOT_RUN), the totals, the total run time and the run's evidence folder.
 
 The terminal reports preflight, fixture/capture startup, each profile switch,
 boot recognition, the token being typed, verification and cleanup. Long waits
