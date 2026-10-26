@@ -2,7 +2,7 @@
 
 This is a smoke test of an already running C64 release, not a candidate
 installer or a complete release certification. It requires Python 3.10+,
-VICE's `petcat`, FFmpeg with V4L2/ALSA input, and the qualified Pico fixture.
+FFmpeg with V4L2/ALSA input, and the qualified Pico fixture.
 Python uses only the standard library; no pip packages are required.
 
 ## Safety and preparation
@@ -36,8 +36,8 @@ python3 -m unittest discover \
   -t tools/automated_release_testing -p test_smoke.py -v
 ```
 
-Without `--execute`, the script only generates a BASIC listing, tokenised
-PRG and `PREPARED` result under ignored `results/`. It opens no UART,
+Without `--execute`, the script only assembles the guest program (source,
+listing and PRG) and writes a `PREPARED` result under ignored `results/`. It opens no UART,
 capture device or HTTP connection. `PREPARED` is not a hardware PASS.
 
 ## Configure once
@@ -211,15 +211,21 @@ run creates a separate result and does not erase the first failure.
 
 ## Guest marker
 
-[`tests/basic/test_c64_default.py`](../tests/basic/test_c64_default.py) defines the diagnostic, generates C64 BASIC V2 and invokes the installed `petcat`
-tokeniser. The guest uses screen RAM at $0400, colour RAM at $D800 and SID
-voice 1. It is not suitable for C128/other cores or relocated screen memory.
+[`tests/basic/guest.py`](../tests/basic/guest.py) holds the guest: 6502
+assembly source with the run's marker data, assembled by the small built-in
+[`assembler.py`](../tests/basic/assembler.py) into a PRG whose BASIC line is
+`10 SYS<start>:REM BMC64 SMOKE <run id>`. The guest uses screen RAM at $0400,
+colour RAM at $D800, SID voice 1 and the KERNAL `GETIN` keyboard buffer (as
+BASIC's `GET` does). It is not suitable for C128/other cores or relocated
+screen memory.
 
 A red 32-by-18-character rectangle surrounds an 80-bit black/white grid.
 Each bit occupies three columns and two rows. Bytes, most-significant bit
 first: `$B6 $64`, four run-ID bytes, counter, input state, sum of the preceding
 eight bytes modulo 256, and `$A5`. State 0 waits for Space; state 1 latches
-receipt and closes the SID gate. The counter wraps at 255.
+receipt and closes the SID gate. The counter advances every 10 frames and
+wraps at 255. Each update redraws the counter, state and checksum while the
+raster is in the bottom border, so captured frames are not half-updated.
 
 The PC searches for the red bounding rectangle in 480x360 RGB samples at
 5 fps, then samples cell centres. Checksum validation rejects partially
@@ -236,7 +242,8 @@ by the run) contains:
 
 - `result.json`: status, stage, assertions, guest hash, target path and
   cleanup errors.
-- `diagnostic.bas` / `diagnostic.prg`, `petcat.log`: exact generated payload.
+- `diagnostic.asm`, `diagnostic.lst` (addresses and bytes) and
+  `diagnostic.prg`: the exact guest program.
 - `status-before.json` / `status-after.json`: firmware, board and API profile.
 - `capture-1/`: `capture.mkv` with the original MJPEG video and stereo PCM
   audio, `ffmpeg.log` and `capture-command.json`. The capture is reopened

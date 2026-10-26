@@ -10,18 +10,18 @@ Run these commands yourself in a terminal:
 
 ```sh
 sudo apt-get update
-sudo apt-get install python3 ffmpeg vice
+sudo apt-get install python3 ffmpeg
 ```
 
 - `ffmpeg` records HDMI audio/video; `ffplay` provides the manual video check.
-- VICE supplies `petcat`, used only by the deeper C64 diagnostic and its
-  offline tests. VICE itself and its ROMs are not needed to run the suite.
+- VICE is not needed. The C64 diagnostic's guest program is assembled in
+  Python. Only the optional offline test that runs the guest in host VICE
+  (`BMC64_VICE_DIR`) uses `x64`, with C64 ROMs you supply.
 - No OCR engine is needed. The profile suite reads screens against the
   character ROMs already on the BMC64 SD card, downloaded through the Web UI.
 
-Package availability varies by distribution. On Debian, VICE may require
-the distribution's `contrib` repository. Use your distribution's supported
-package sources; do not download emulator ROMs to satisfy these host tools.
+Package availability varies by distribution. Use your distribution's
+supported package sources.
 
 Verify installation:
 
@@ -29,7 +29,6 @@ Verify installation:
 python3 --version
 ffmpeg -version
 ffplay -version
-petcat -help
 ```
 
 FFmpeg must include V4L2 and ALSA inputs. The HDMI capture device must offer

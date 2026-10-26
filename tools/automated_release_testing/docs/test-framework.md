@@ -23,8 +23,10 @@ tests/
     test_c128.py
     ...
   basic/
+    assembler.py           Minimal 6502 assembler for the guest
     diagnostic.py          Signal decoding and audio measurements
-    test_c64_default.py    C64 guest program and full diagnostic assertions
+    guest.py               C64 guest program (6502 assembly)
+    test_c64_default.py    Full C64 diagnostic setup and assertions
 unit_tests/                Offline tests of the above, never hardware discovery
 ```
 
@@ -115,8 +117,9 @@ borderless frame geometry.
 
 The C64 diagnostic derives directly from [`BmcTest`](../framework/case.py)
 and implements its own steps in
-[`test_c64_default.py`](../tests/basic/test_c64_default.py). Only low-level
-signal helpers live in [`diagnostic.py`](../tests/basic/diagnostic.py).
+[`test_c64_default.py`](../tests/basic/test_c64_default.py). Its guest program
+is in [`guest.py`](../tests/basic/guest.py) and low-level signal helpers are in
+[`diagnostic.py`](../tests/basic/diagnostic.py).
 
 Use a unique lowercase hyphenated `name` as the stable CLI ID. The containing
 folder supplies `suite`; do not register new tests in the CLI. Modules must
@@ -238,6 +241,7 @@ unittest discovery on the hardware `tests/` folder: its files follow the custom
 Offline checks cover discovery, selectors, hook failures, partial setup,
 cleanup failures and interruption, alongside the mocked rig, transport,
 capture and screen regression coverage. Recorded-ROM checks still require
-`BMC64_ROM_ROOT`; they skip explicitly when it is absent.
+`BMC64_ROM_ROOT`, and running the C64 guest in host VICE requires
+`BMC64_VICE_DIR`; they skip explicitly when absent.
 
 No offline result substitutes for a run on the connected rig.

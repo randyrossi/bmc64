@@ -57,7 +57,8 @@ from utils.runner import HERE, load_setup, parse_arguments, parser
 from framework.context import TestContext
 from framework.rig import Rig
 from framework.runner import execute_case
-from tests.basic.test_c64_default import Test as DiagnosticCase, build_guest
+from tests.basic.guest import build_guest
+from tests.basic.test_c64_default import Test as DiagnosticCase
 
 
 RUN_ID = 0x1234ABCD
@@ -485,19 +486,23 @@ class GuestTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             decode_frame(b"", RUN_ID)
 
-    def test_guest_build_and_detokenize(self):
+    def test_guest_prg_has_sys_stub_code_and_marker(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)
-            program = build_guest(RUN_ID, output)
-            decoded = subprocess.run(
-                ["petcat", "-2", "--", str(program)], check=True,
-                capture_output=True, text=True,
-            ).stdout.lower()
-            self.assertIn("get a$", decoded)
-            self.assertIn("1234abcd", decoded)
-            self.assertIn("poke 54276,32", decoded)
-            self.assertIn("for b=l to h", decoded)
-            self.assertIn("data 182,100,18,52,171,205,0,0,216,165", decoded)
+            program = build_guest(RUN_ID, output).read_bytes()
+            listing = (output / "diagnostic.lst").read_text()
+            self.assertTrue((output / "diagnostic.asm").exists())
+        self.assertEqual(program[:2], b"\x01\x08")
+        # 10 SYS<start>:REM BMC64 SMOKE <run id>, then the code at <start>.
+        stub = program[2:program.index(b"\0\0\0", 2) + 3]
+        start = int(stub[5:9])
+        self.assertEqual(stub[4], 0x9E)
+        self.assertIn(f"BMC64 SMOKE {RUN_ID:08X}".encode(), stub)
+        self.assertEqual(0x0801 + len(stub), start)
+        self.assertIn(f"${start:04X}", listing)
+        marker = int(re.search(r"\$([0-9A-F]{4}) .*marker:", listing)[1], 16)
+        offset = marker - 0x0801 + 2
+        self.assertEqual(program[offset:offset + 10], payload(RUN_ID, 0, 0))
 
     def test_audio_tone_noise_silence_and_thresholds(self):
         for frequency in (995, 1000, 1038, 1045):

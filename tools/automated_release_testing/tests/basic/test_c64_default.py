@@ -19,58 +19,14 @@
 import hashlib
 import json
 import queue
-import subprocess
 import time
 from pathlib import Path
 from framework.case import BmcTest
 from framework.reporting import progress, save_json
 from hardware.capture import Capture, wait_for
 from support.constants import DEFAULT_CAPTURE_SIZE
-from .diagnostic import (
-    HEIGHT, WIDTH, Marker, audio_metrics, decode_frame, is_silence, is_tone, payload,
-)
-
-
-def listing(run_id: int) -> str:
-    values = ",".join(str(value) for value in payload(run_id, 0, 0))
-    return f"""10 rem bmc64 smoke run {run_id:08x}
-20 poke 53280,0:poke 53281,0:print chr$(147)
-30 dim d(9):for i=0 to 9:read d(i):next
-40 for i=0 to 999:poke 1024+i,160:poke 55296+i,0:next
-50 for y=3 to 20:for x=4 to 35:poke 55296+y*40+x,2:next:next
-60 poke 54296,8:poke 54272,132:poke 54273,66
-70 poke 54277,0:poke 54278,240:poke 54276,33
-80 c=0:s=0:l=0:h=9:gosub 500
-90 get a$:if a$=" " then s=1:poke 54276,32
-100 c=c+1:if c>255 then c=0
-110 d(6)=c:d(7)=s:v=0:for i=0 to 7:v=v+d(i):next
-120 d(8)=v-256*int(v/256):l=6:h=8:gosub 500:goto 90
-500 for b=l to h:v=d(b)
-510 for k=0 to 7:p=int(v/2^(7-k)) and 1
-520 n=b*8+k:y=int(n/10):x=n-y*10
-530 a=55296+(4+y*2)*40+5+x*3
-540 for j=0 to 1:for i=0 to 2:poke a+j*40+i,p:next:next
-550 next:next:return
-600 data {values}
-"""
-
-
-def build_guest(run_id: int, output: Path) -> Path:
-    source = output / "diagnostic.bas"
-    program = output / "diagnostic.prg"
-    source.write_text(listing(run_id), encoding="ascii")
-    completed = subprocess.run(
-        ["petcat", "-w2", "-o", str(program), "--", str(source)],
-        capture_output=True, text=True, timeout=10, check=False,
-    )
-    (output / "petcat.log").write_text(
-        completed.stdout + completed.stderr, encoding="utf-8"
-    )
-    if completed.returncode:
-        raise RuntimeError(f"petcat failed; see {output / 'petcat.log'}")
-    if not program.read_bytes().startswith(b"\x01\x08"):
-        raise RuntimeError("petcat did not produce a C64 BASIC PRG at $0801")
-    return program
+from .diagnostic import HEIGHT, WIDTH, Marker, audio_metrics, decode_frame, is_silence, is_tone
+from .guest import build_guest
 
 
 class Observations:
@@ -115,11 +71,10 @@ class Test(BmcTest):
     machine = "C64"
     suite = "basic"
     order = 70
-    requirements = ("petcat",)
 
     def prepare_test(self) -> None:
         self.stage("guest_generation")
-        progress("Generating the C64 diagnostic PRG")
+        progress("Assembling the C64 diagnostic PRG")
         self.program = build_guest(int(self.report["run_id"], 16), self.output)
         self.report["guest_sha256"] = hashlib.sha256(self.program.read_bytes()).hexdigest()
 

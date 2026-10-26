@@ -53,9 +53,9 @@ not covered by that validation.
 
 ## Requirements
 
-- Linux PC with Python 3.10+, FFmpeg/FFplay with V4L2/ALSA input,
-  and VICE's `petcat` for the C64 diagnostic. Python uses only its standard
-  library.
+- Linux PC with Python 3.10+ and FFmpeg/FFplay with V4L2/ALSA input.
+  Python uses only its standard library; the C64 diagnostic's guest program
+  is assembled in Python, so no VICE tools are needed.
 - BMC64 with its Web UI enabled, and prepared profiles for the suite.
 - Raspberry Pi Pico (RP2040), connected to BMC64 as a USB HID device, with a
   separate PC-side 3.3 V UART adapter.
@@ -177,6 +177,10 @@ BMC64_ROM_ROOT=/path/to/sdcard-copy python3 -m unittest discover \
   -t tools/automated_release_testing -p 'test_*.py'
 ```
 
+To also run the C64 diagnostic's guest program in host VICE (`x64`) and
+decode its screen, set `BMC64_VICE_DIR` to a VICE data directory that
+contains the C64 ROMs; otherwise that test is skipped.
+
 Hardware tests live in `tests/<suite>/test_*.py`. Offline regression tests
 live separately in `unit_tests/`; the hardware runner never discovers them.
 See [writing and organising tests](docs/test-framework.md) for the lifecycle,
@@ -195,7 +199,7 @@ suite base classes and cleanup contract.
 | `hardware/` | HTTP client, UART/Pico access and FFmpeg capture |
 | `support/` | Cross-suite profiles, keyboard operations, evidence and constants |
 | `tests/boot/` | Six explicit test flows with local machine expectations; shared boot operations and ROM screen reader |
-| `tests/basic/` | Full C64 diagnostic test and guest program; signal decoding/audio helpers |
+| `tests/basic/` | Full C64 diagnostic test, its 6502 guest program and assembler; signal decoding/audio helpers |
 | `suite_profiles.json` | Machine-to-profile mapping; not a test registration file |
 | `sdcard_profiles/profiles/` | Six ready-to-copy default PAL HDMI profiles with Wi-Fi/Web UI enabled |
 | `unit_tests/` | Offline framework, screen, transport and diagnostic regression tests |
