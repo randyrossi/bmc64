@@ -19,9 +19,17 @@
 """The lifecycle contract implemented by every discoverable hardware test."""
 
 from abc import ABC, abstractmethod
-import argparse
+from pathlib import Path
 
 from framework.context import TestContext
+from framework.reporting import progress, save_json
+from framework.rig import Rig
+from hardware.api import Api
+from hardware.capture import SuiteCapture
+from hardware.pico import Pico
+from hardware.uart import UartLog
+from support.keyboard import wait_pico
+from support.profiles import status, switch_profile
 
 
 class BmcTest(ABC):
@@ -31,14 +39,13 @@ class BmcTest(ABC):
     suite: str
     order = 100
     requirements: tuple[str, ...] = ()
-    profile_required = False
     context: TestContext
-
-    def before_test(self) -> None:
-        pass
 
     def prepare_test(self) -> None:
         """Optional offline preparation; must never access the rig."""
+
+    def before_test(self) -> None:
+        pass
 
     @abstractmethod
     def run_test(self) -> None:
@@ -49,36 +56,98 @@ class BmcTest(ABC):
 
     def invoke(self, context: TestContext) -> None:
         self.context = context
-        if not context.args.execute:
-            try:
-                self.prepare_test()
-                context.report.update(status="PREPARED", stage="offline", detail="No hardware accessed")
-            finally:
-                context.close()
-            return
         try:
-            self.before_test()
-            self.run_test()
-            context.report.update(status="PASS", stage="complete")
-        finally:
+            if not context.args.execute:
+                self.prepare_test()
+                context.report.update(status="PREPARED", stage="offline",
+                                      detail="No hardware accessed")
+                return
             try:
-                context.cleanup("after_test", self.after_test)
+                self.before_test()
+                self.run_test()
+                # Provisional: a failing after_test() or cleanup revokes it.
+                context.report["status"] = "PASS"
             finally:
-                context.close()
+                context.cleanup("after_test", self.after_test)
+        finally:
+            context.close()
 
-    @classmethod
-    def run_suite(cls, args: argparse.Namespace, tests: list[type["BmcTest"]],
-                  manifest: list[dict[str, str]]) -> tuple[list[dict], list[str], str | None]:
-        from framework.session import run as run_standalone
-        results, evidence = [], []
-        blocked = None
-        for test in tests:
-            if blocked:
-                results.append({"name": test.name, "status": "NOT_RUN", "error": blocked})
-                continue
-            report = run_standalone(args, test)
-            results.append(report)
-            evidence.append(report["evidence"])
-            if report.get("category") == "interrupted":
-                blocked = report["error"]
-        return results, evidence, blocked
+    # Shortcuts to the context, so test steps read as what they do.
+
+    @property
+    def rig(self) -> Rig:
+        if self.context.rig is None:
+            raise RuntimeError("the rig is not available during offline preparation")
+        return self.context.rig
+
+    @property
+    def api(self) -> Api:
+        return self.rig.api
+
+    @property
+    def pico(self) -> Pico:
+        return self.rig.pico
+
+    @property
+    def capture(self) -> SuiteCapture:
+        return self.rig.capture
+
+    @property
+    def uart(self) -> UartLog | None:
+        return self.rig.uart
+
+    @property
+    def report(self) -> dict:
+        return self.context.report
+
+    @property
+    def output(self) -> Path:
+        return self.context.output
+
+    @property
+    def timeout(self) -> float:
+        return self.context.args.timeout
+
+    @property
+    def profile(self) -> dict[str, str]:
+        return self.context.profile
+
+    def health(self) -> None:
+        self.context.health()
+
+    def stage(self, name: str) -> None:
+        self.report["stage"] = name
+
+    def passed(self, check: str) -> None:
+        self.report["checks"].append(check)
+
+    # Steps shared by every suite.
+
+    def start_profile(self, *, fresh: bool = True) -> None:
+        """Boot this test's profile, verifying the profile ID and core.
+
+        A fresh start always restarts BMC64, even if the profile is already
+        running; otherwise a running profile with the right core is kept.
+        """
+        self.stage("profile_switch")
+        current = status(self.api)
+        if (not fresh and current["profile_id"] == self.profile["id"]
+                and current["machine"] == self.machine):
+            progress(f"{self.machine}: test profile {self.profile['id']} is already running")
+            save_json(self.output / "status-before.json", current)
+        else:
+            switch_profile(self.api, self.profile, self.timeout, self.health, self.output)
+        self.passed("profile_and_core")
+
+    def open_capture(self, size: tuple[int, int], directory: str = "capture-1",
+                     video_size: tuple[int, int] | None = None) -> None:
+        """Reopen the capture into this test's evidence, locked to the current mode."""
+        self.stage("capture_reopen")
+        self.capture.open(self.output / directory, size, self.health, self.timeout,
+                          self.machine, video_size)
+
+    def wait_for_keyboard(self) -> None:
+        """Wait for the Pico to remount as a USB keyboard after a restart."""
+        self.stage("pico_remount")
+        wait_pico(self.pico, self.health, self.timeout)
+        self.pico.command("RELEASE")

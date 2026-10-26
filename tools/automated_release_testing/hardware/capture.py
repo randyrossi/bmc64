@@ -25,7 +25,6 @@ from pathlib import Path
 from typing import BinaryIO, Callable
 from framework.errors import ERRORS, TestFailure
 from framework.reporting import WaitProgress, progress, save_json
-from hardware.uart import UartLog
 from support.constants import DEFAULT_CAPTURE_SIZE, HEIGHT, SAMPLE_RATE, WIDTH
 from support.evidence import frame_health
 
@@ -152,14 +151,13 @@ def capture_command(video: str, audio: str, output: Path,
     ]
 
 
-def wait_for(capture: Capture, uart: UartLog | None, timeout: float,
+def wait_for(capture: Capture, health: Callable[[], None], timeout: float,
              predicate: Callable[[], bool], description: str) -> None:
+    """Poll predicate until timeout, checking rig health; classify a timeout from capture."""
     deadline = time.monotonic() + timeout
     updates = WaitProgress(description, timeout)
     while time.monotonic() < deadline:
-        capture.check()
-        if uart:
-            uart.check()
+        health()
         if predicate():
             updates.update("verified", force=True)
             return
@@ -195,6 +193,10 @@ class SuiteCapture:
         return self.current.latest_frame if self.current else None
 
     @property
+    def latest_audio(self) -> tuple[float, bytes] | None:
+        return self.current.latest_audio if self.current else None
+
+    @property
     def width(self) -> int:
         return self.current.width if self.current else DEFAULT_CAPTURE_SIZE[0]
 
@@ -215,13 +217,15 @@ class SuiteCapture:
                 self.errors.append(str(error))
 
     def open(self, output: Path, size: tuple[int, int], health: Callable[[], None],
-             timeout: float, label: str) -> None:
+             timeout: float, label: str, video_size: tuple[int, int] | None = None) -> None:
+        """Record into output; analyse frames at size, captured at video_size (default size)."""
         self.close()
         output.mkdir(exist_ok=True)
         width, height = size
-        progress(f"{label}: opening HDMI capture at {width}x{height} in {output.name}/")
-        self.current = Capture(capture_command(self.video, self.audio, output, width, height,
-                                               f"{width}x{height}"),
+        mode = "x".join(map(str, video_size or size))
+        progress(f"{label}: opening HDMI capture at {mode}, analysed at {width}x{height}, "
+                 f"in {output.name}/")
+        self.current = Capture(capture_command(self.video, self.audio, output, width, height, mode),
                                output, width, height)
         deadline = time.monotonic() + timeout
         updates = WaitProgress(f"{label} HDMI capture startup", timeout)

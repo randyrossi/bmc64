@@ -43,11 +43,11 @@ class Api:
         self.opener = build_opener(ProxyHandler({}), NoRedirect())
 
     def request(self, endpoint: str, data: bytes | None = None,
-                **query: str) -> bytes:
+                timeout: float | None = None, **query: str) -> bytes:
         suffix = "?" + urlencode(query) if query else ""
         request = Request(self.url + endpoint + suffix, data=data,
                           headers=self.headers)
-        with self.opener.open(request, timeout=self.timeout) as response:
+        with self.opener.open(request, timeout=timeout or self.timeout) as response:
             return response.read()
 
     def get_json(self, endpoint: str, **query: str) -> dict[str, object]:

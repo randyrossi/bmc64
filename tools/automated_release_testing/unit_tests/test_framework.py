@@ -31,7 +31,8 @@ from framework.case import BmcTest
 from framework.context import TestContext
 from framework.discovery import discover, select_tests
 from framework.errors import TestFailure
-from framework.runner import execute_case, run_selected
+from framework.rig import Rig
+from framework.runner import execute_case, run, run_tests
 
 
 class FrameworkTests(unittest.TestCase):
@@ -217,35 +218,46 @@ class FrameworkTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "must define a concrete Test"):
                     discover()
 
-    def test_shared_suite_session_dispatch_and_blocking_are_generic(self):
-        calls = []
+    def rig(self):
+        return Rig(api=Mock(), pico=Mock(), capture=Mock())
+
+    def results(self, tests):
+        return [{"name": test.name, "status": "NOT_RUN", "checks": [], "cleanup_errors": []}
+                for test in tests]
+
+    def test_lost_http_control_blocks_later_tests_on_the_shared_rig(self):
+        seen = []
 
         class First(BmcTest):
-            name, suite = "first", "first-suite"
+            name, machine, suite = "first", "C64", "first-suite"
 
             def run_test(self):
-                pass
-
-            @classmethod
-            def run_suite(cls, args, tests, manifest):
-                calls.append([test.name for test in tests])
-                return [{"name": cls.name, "status": "FAIL"}], ["first-result"], "rig unavailable"
+                seen.append(self.rig)
+                raise TestFailure("example", "first failed")
 
         class Second(BmcTest):
-            name, suite = "second", "second-suite"
+            name, machine, suite = "second", "C64", "second-suite"
 
             def run_test(self):
                 raise AssertionError("blocked test ran")
 
-        results, evidence = run_selected(argparse.Namespace(), [First, Second], [])
-        self.assertEqual(calls, [["first"]])
-        self.assertEqual(evidence, ["first-result"])
-        self.assertEqual(results[1], {
-            "name": "second", "status": "NOT_RUN", "error": "rig unavailable"})
+        rig, report = self.rig(), {}
+        results = self.results([First, Second])
+        with tempfile.TemporaryDirectory() as directory, \
+                patch("framework.runner.failure_evidence"), \
+                patch("framework.runner.recover_api",
+                      side_effect=TestFailure("http_unavailable", "no reply")), \
+                patch("sys.stdout", new_callable=io.StringIO), \
+                patch("sys.stderr", new_callable=io.StringIO):
+            run_tests(argparse.Namespace(timeout=1, execute=True), rig, [First, Second], results,
+                      {"C64": {"machine": "C64", "id": "c64-test"}}, Path(directory), report)
+        self.assertEqual(seen, [rig])
+        self.assertEqual([result["status"] for result in results], ["FAIL", "NOT_RUN"])
+        self.assertIn("HTTP control unavailable after first", results[1]["error"])
+        self.assertIn("control_error", report)
+        rig.pico.command.assert_called_with("RELEASE")
 
-    def test_multiple_boot_files_for_one_machine_are_not_collapsed(self):
-        from tests.boot.base import BootTypingTest
-        from tests.boot.session import rotate
+    def test_multiple_files_for_one_machine_are_not_collapsed(self):
         events = []
 
         class First(BmcTest):
@@ -257,25 +269,16 @@ class FrameworkTests(unittest.TestCase):
         class Second(First):
             name = "second-c64"
 
+        results = self.results([First, Second])
         with tempfile.TemporaryDirectory() as directory, \
                 patch("framework.runner.failure_evidence"), \
                 patch("sys.stdout", new_callable=io.StringIO):
             output = Path(directory)
-
-            def session(args, cases, test_types):
-                report = {"cases": [], "evidence": "result.json"}
-                rotate(Mock(), Mock(), Mock(), None, cases, args.timeout, output,
-                       report, test_types)
-                return report
-
-            with patch("tests.boot.session.main", side_effect=session):
-                results, _, _ = BootTypingTest.run_suite(
-                    argparse.Namespace(timeout=1), [First, Second],
-                    [{"machine": "C64", "id": "c64-test"}])
-            self.assertEqual([result["name"] for result in results], ["first-c64", "second-c64"])
+            run_tests(argparse.Namespace(timeout=1, execute=True), self.rig(), [First, Second], results,
+                      {"C64": {"machine": "C64", "id": "c64-test"}}, output, {})
             self.assertEqual([result["status"] for result in results], ["PASS", "PASS"])
-            self.assertTrue((output / "01-c64" / "result.json").is_file())
-            self.assertTrue((output / "02-c64" / "result.json").is_file())
+            self.assertTrue((output / "01-first-c64" / "result.json").is_file())
+            self.assertTrue((output / "02-second-c64" / "result.json").is_file())
         self.assertEqual(events, ["first-c64", "second-c64"])
 
     def test_nested_suite_selector_includes_descendants_only(self):
@@ -291,25 +294,39 @@ class FrameworkTests(unittest.TestCase):
         self.assertEqual(select_tests([First, Second], ["boot"]), [First])
         self.assertEqual(select_tests([First, Second], ["boot/c64"]), [First])
 
-    def test_default_suite_stops_after_interruption(self):
+    def test_interruption_stops_the_run_and_closes_the_rig(self):
+        closed = []
+
         class First(BmcTest):
-            name, suite = "first", "example"
+            name, machine, suite = "first", "C64", "example"
 
             def run_test(self):
-                pass
+                raise KeyboardInterrupt
 
         class Second(First):
             name = "second"
 
-        with patch("framework.session.run", return_value={
-                "name": "first", "status": "FAIL", "category": "interrupted",
-                "error": "interrupted", "evidence": "first.json"}) as standalone:
-            results, evidence, blocked = First.run_suite(
-                argparse.Namespace(), [First, Second], [])
-        standalone.assert_called_once()
-        self.assertEqual(results[1]["status"], "NOT_RUN")
-        self.assertEqual(evidence, ["first.json"])
-        self.assertEqual(blocked, "interrupted")
+        def open_rig(args, api, output, report, register):
+            register("close rig", lambda: closed.append(True))
+            return self.rig()
+
+        with tempfile.TemporaryDirectory() as directory, \
+                patch("framework.runner.preflight",
+                      return_value={"C64": {"machine": "C64", "id": "c64-test"}}), \
+                patch("framework.runner.open_rig", side_effect=open_rig), \
+                patch("framework.runner.failure_evidence"), \
+                patch("sys.stdout", new_callable=io.StringIO), \
+                patch("sys.stderr", new_callable=io.StringIO):
+            args = argparse.Namespace(
+                execute=True, ask_pin=False, url="http://192.0.2.1", timeout=1,
+                results=Path(directory), setup="", video="", audio="", pico_uart="",
+                bmc_uart=None, network=None)
+            report = run(args, [First, Second], [])
+            saved = json.loads(Path(report["evidence"]).read_text())
+        self.assertEqual(closed, [True])
+        self.assertEqual(report["status"], "FAIL")
+        self.assertEqual([test["status"] for test in saved["tests"]], ["FAIL", "NOT_RUN"])
+        self.assertEqual(saved["tests"][1]["error"], "interrupted")
 
 
 if __name__ == "__main__":

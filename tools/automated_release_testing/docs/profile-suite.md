@@ -313,29 +313,25 @@ machine active: inspect the saved status and the target.
 
 ## Evidence and diagnosis
 
-Each ignored `results/<UTC-time>-suite-<run-id>/` contains:
+A run writes one ignored `results/<UTC-time>-<run-id>/` folder for every
+selected test; see [run evidence](test-framework.md#run-evidence) for the files
+shared by the run. Each boot test's numbered directory
+(`01-c64-boot-typing/` ...) contains:
 
-- `result.json`: overall result, selected manifest, case outcomes and cleanup
-  errors. A case never reached is explicitly NOT_RUN.
-- `resolved-profiles.json`: display names, actual IDs and expected cores.
-- `capture.mkv`, `ffmpeg.log`, `capture-command.json`: the startup recording
-  segment, from capture start until the first case reopens the capture.
-- `pico.log`, optional `bmc64-uart.log` and `uart-findings.json`.
-- Initial/final API snapshots and final `capture-health.json`.
-- Per-case numbered directories with their own result, status snapshots,
-  switch polling log, `switch-request.json` recording accepted/unknown
-  request outcome and endpoint (start or reboot), and:
-  - `capture-1/` (and `capture-2/` after a reopen): that case's recording
-    segment, which continues through the next case's profile switch.
-  - accepted `boot.ppm` and `typing.ppm`, the latest frame examined at each
-    stage (`*-last.ppm`), and `boot-frames.jsonl`/`typing-frames.jsonl` with
-    every fresh frame's timestamp, decision, fitted grid and first mismatched
-    cells.
-  - In `result.json`: `font` (ROM path, offset, size, SHA-256),
-    `typing_alphabet`, `typing_method=rom_glyphs`, `screen_grid` and the
-    typed letters' bit distances in `typing_glyph_distances`.
-- `failure.ppm` for failed cases that received frames, including black
-  frames. Successful cases retain `last-frame.ppm`. If no frame arrived,
+- `result.json`, status snapshots, the switch polling log and
+  `switch-request.json`, recording the accepted/unknown request outcome and
+  endpoint (start or reboot).
+- `capture-1/` (and `capture-2/` after a reopen): that test's recording
+  segment, which continues through the next test's profile switch.
+- Accepted `boot.ppm` and `typing.ppm`, the latest frame examined at each
+  stage (`*-last.ppm`), and `boot-frames.jsonl`/`typing-frames.jsonl` with
+  every fresh frame's timestamp, decision, fitted grid and first mismatched
+  cells.
+- In `result.json`: `font` (ROM path, offset, size, SHA-256),
+  `typing_alphabet`, `typing_method=rom_glyphs`, `screen_grid` and the
+  typed letters' bit distances in `typing_glyph_distances`.
+- `failure.ppm` for failed tests that received frames, including black
+  frames. Successful tests retain `last-frame.ppm`. If no frame arrived,
   `capture-health.json` says so instead of fabricating a screenshot.
 
 Case timestamps and UART findings use the same PC monotonic clock, allowing

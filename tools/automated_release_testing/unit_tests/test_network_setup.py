@@ -1,3 +1,22 @@
+#!/usr/bin/env python3
+#
+# BMC64 - A bare metal Commodore emulator for Raspberry Pi
+# Copyright (C) 2026 aminch <https://github.com/aminch>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+
 """Offline tests of preview-led setup, profile edits and network transitions."""
 
 import io
@@ -5,7 +24,6 @@ import json
 import subprocess
 import tempfile
 import unittest
-from contextlib import ExitStack
 from pathlib import Path
 from unittest.mock import Mock, patch
 from urllib.error import HTTPError, URLError
@@ -140,20 +158,19 @@ class NetworkSettingsTests(unittest.TestCase):
         self.assertEqual(sum(endpoint == "/api/fs/download"
                              for endpoint, _, _ in rig.requests), 12)
 
-    def test_boot_preflight_rejects_network_mismatch_before_opening_uart_or_capture(self):
-        from tests.boot.session import execute
+    def test_preflight_rejects_network_mismatch_before_opening_uart_or_capture(self):
+        from framework.discovery import discover
+        from framework.runner import preflight
         rig = Rig()
         with tempfile.TemporaryDirectory() as directory, \
-                patch("tests.boot.session.Api", return_value=rig), \
-                patch("tests.boot.session.SerialPort", side_effect=AssertionError("UART opened")), \
-                patch("tests.boot.session.SuiteCapture",
-                      side_effect=AssertionError("capture opened")), \
-                patch("sys.stdout", new_callable=io.StringIO), ExitStack() as stack:
+                patch("framework.rig.SerialPort", side_effect=AssertionError("UART opened")), \
+                patch("framework.rig.SuiteCapture", side_effect=AssertionError("capture opened")), \
+                patch("sys.stdout", new_callable=io.StringIO):
             args = parser().parse_args([
                 "--execute", "--url", "http://192.0.2.1", "--pico-uart", "/unused",
                 "--network", "ethernet"])
             with self.assertRaisesRegex(TestFailure, "expected ethernet"):
-                execute(args, Path(directory), {"manifest": rig.manifest}, stack)
+                preflight(rig, discover(), rig.manifest, args, Path(directory), {})
 
 
 class SetupWorkflowTests(unittest.TestCase):

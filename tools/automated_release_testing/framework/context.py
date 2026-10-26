@@ -27,37 +27,21 @@ from typing import Callable
 
 from framework.errors import ERRORS
 from framework.reporting import progress
-from hardware.api import Api
-from hardware.capture import SuiteCapture
-from hardware.pico import Pico
-from hardware.uart import UartLog
+from framework.rig import Rig
 
 
 def no_health_check() -> None:
     pass
 
 
-@dataclass
-class Rig:
-    api: Api
-    pico: Pico
-    capture: SuiteCapture
-    uart: UartLog | None = None
+class Cleanups:
+    """Reverse-order cleanup whose errors are recorded in a report, never raised."""
 
+    def __init__(self, report: dict):
+        self.report = report
+        self.stack = ExitStack()
 
-@dataclass
-class TestContext:
-    args: argparse.Namespace
-    output: Path
-    report: dict
-    rig: Rig | None = None
-    profile: dict[str, str] = field(default_factory=dict)
-    health: Callable[[], None] = no_health_check
-    uart_start: int = 0
-    pin: str | None = None
-    stack: ExitStack = field(default_factory=ExitStack)
-
-    def cleanup(self, label: str, action: Callable[[], object]) -> None:
+    def run(self, label: str, action: Callable[[], object]) -> None:
         progress(f"Cleanup: {label}")
         try:
             action()
@@ -72,7 +56,31 @@ class TestContext:
             print(f"{label}: {error}", file=sys.stderr, flush=True)
 
     def register(self, label: str, action: Callable[[], object]) -> None:
-        self.stack.callback(self.cleanup, label, action)
+        self.stack.callback(self.run, label, action)
 
     def close(self) -> None:
         self.stack.close()
+
+
+@dataclass
+class TestContext:
+    args: argparse.Namespace
+    output: Path
+    report: dict
+    rig: Rig | None = None
+    profile: dict[str, str] = field(default_factory=dict)
+    health: Callable[[], None] = no_health_check
+    uart_start: int = 0
+    cleanups: Cleanups = field(init=False)
+
+    def __post_init__(self) -> None:
+        self.cleanups = Cleanups(self.report)
+
+    def cleanup(self, label: str, action: Callable[[], object]) -> None:
+        self.cleanups.run(label, action)
+
+    def register(self, label: str, action: Callable[[], object]) -> None:
+        self.cleanups.register(label, action)
+
+    def close(self) -> None:
+        self.cleanups.close()

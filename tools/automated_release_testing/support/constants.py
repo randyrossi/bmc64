@@ -16,9 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
-
-
 WIDTH, HEIGHT = 480, 360
 SAMPLE_RATE = 8000
 MACHINES = ("C64", "C128", "VIC20", "Plus4", "Plus4Emu", "Pet")

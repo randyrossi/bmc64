@@ -16,28 +16,38 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-"""Common case execution and sequential suite dispatch."""
+"""Run selected tests in one session: one preflight, one rig, one evidence folder."""
 
 import argparse
+import getpass
+import secrets
+import signal
 import sys
 import time
+from datetime import datetime, timezone
 
 from framework.case import BmcTest
-from framework.context import TestContext
+from framework.context import Cleanups, TestContext
 from framework.errors import ERRORS
 from framework.reporting import progress, save_json
+from framework.rig import Rig, open_rig
+from hardware.api import Api
 from support.evidence import failure_evidence
+from support.network import validate_network
+from support.profiles import recover_api, resolve_profiles, status
 
 
 def execute_case(test: BmcTest, context: TestContext) -> None:
+    """Run one test's hooks, then the teardown every test gets, and save its result."""
     report = context.report
     report.setdefault("started_monotonic", time.monotonic())
+    rig = context.rig
     try:
         test.invoke(context)
         if report["cleanup_errors"]:
             report["status"] = "FAIL"
-        elif report["status"] != "PREPARED":
-            report.update(status="PASS", stage="complete")
+        elif report["status"] == "PASS":
+            report["stage"] = "complete"
     except ERRORS as error:
         report.update(status="FAIL", error=str(error),
                       category=getattr(error, "category", "fixture_or_api"))
@@ -48,28 +58,147 @@ def execute_case(test: BmcTest, context: TestContext) -> None:
         raise
     finally:
         report["finished_monotonic"] = time.monotonic()
-        if context.rig:
-            progress(f"{test.machine}: releasing USB input and saving case evidence")
-            if context.rig.uart:
-                report["uart_findings"] = context.rig.uart.findings[context.uart_start:]
-            context.cleanup("save case capture evidence",
-                            lambda: failure_evidence(context.rig.capture, context.output, report))
+        if rig:
+            progress(f"{test.name}: releasing USB input and saving test evidence")
+            context.cleanup("release inputs", lambda: rig.pico.command("RELEASE"))
+            if rig.uart:
+                context.cleanup("check test UART", lambda: rig.uart.check(context.uart_start))
+                report["uart_findings"] = rig.uart.findings[context.uart_start:]
+            context.cleanup("save test capture evidence",
+                            lambda: failure_evidence(rig.capture, context.output, report))
         save_json(context.output / "result.json", report)
 
 
-def run_selected(args: argparse.Namespace, tests: list[type[BmcTest]],
-                 manifest: list[dict[str, str]]) -> tuple[list[dict], list[str]]:
-    results, evidence = [], []
-    suites: dict[str, list[type[BmcTest]]] = {}
-    for test in tests:
-        suites.setdefault(test.suite, []).append(test)
+def preflight(api: Api, tests: list[type[BmcTest]], manifest: list[dict[str, str]],
+              args: argparse.Namespace, output, report: dict) -> dict[str, dict[str, str]]:
+    """Resolve and check every selected test's profile before touching the fixture."""
+    report["stage"] = "profile_preflight"
+    progress("Preflight: checking HTTP status and resolving selected SD-card profiles")
+    save_json(output / "status-before.json", status(api))
+    machines = {test.machine for test in tests}
+    cases = resolve_profiles(api, [case for case in manifest if case["machine"] in machines])
+    validate_network(api, cases, args.network)
+    save_json(output / "resolved-profiles.json", cases)
+    progress(f"Preflight complete: {len(cases)} profile(s): " +
+             ", ".join(case["machine"] for case in cases))
+    return {case["machine"]: case for case in cases}
+
+
+def run_tests(args: argparse.Namespace, rig: Rig, tests: list[type[BmcTest]],
+              results: list[dict], profiles: dict[str, dict[str, str]], output,
+              report: dict) -> None:
     blocked = None
-    for suite_tests in suites.values():
+    for index, (test, result) in enumerate(zip(tests, results), 1):
+        label = f"[{index}/{len(tests)}] {test.name}"
         if blocked:
-            results.extend({"name": test.name, "status": "NOT_RUN", "error": blocked}
-                           for test in suite_tests)
+            result["error"] = blocked
+            progress(f"{label}: NOT_RUN; {blocked}")
             continue
-        suite_results, suite_evidence, blocked = suite_tests[0].run_suite(args, suite_tests, manifest)
-        results.extend(suite_results)
-        evidence.extend(suite_evidence)
-    return results, evidence
+        profile = profiles[test.machine]
+        progress(f"{label}: starting ({test.machine}, profile {profile['id']})")
+        directory = output / f"{index:02d}-{test.name}"
+        directory.mkdir()
+        result.update(id=profile["id"], status="FAIL", evidence=directory.name)
+        uart_start = len(rig.uart.findings) if rig.uart else 0
+
+        def health() -> None:
+            rig.capture.check()
+            if rig.uart:
+                rig.uart.check(uart_start)
+
+        execute_case(test(), TestContext(args, directory, result, rig, profile,
+                                         health, uart_start))
+        print(f"{result['status']}: {test.name}", flush=True)
+        if result["status"] != "PASS":
+            progress(f"{test.name}: checking HTTP control before continuing")
+            try:
+                recover_api(rig.api, args.timeout)
+            except ERRORS as error:
+                blocked = f"HTTP control unavailable after {test.name}: {error}"
+                report["control_error"] = blocked
+                print(blocked, file=sys.stderr, flush=True)
+
+
+def prepare_tests(args: argparse.Namespace, tests: list[type[BmcTest]],
+                  results: list[dict], manifest: list[dict[str, str]], output) -> None:
+    """Offline: run each test's prepare_test() only; nothing touches the rig."""
+    cases = {case["machine"]: case for case in manifest}
+    for index, (test, result) in enumerate(zip(tests, results), 1):
+        directory = output / f"{index:02d}-{test.name}"
+        directory.mkdir()
+        result.update(evidence=directory.name)
+        execute_case(test(), TestContext(args, directory, result,
+                                         profile=cases.get(test.machine, {})))
+
+
+def run(args: argparse.Namespace, tests: list[type[BmcTest]],
+        manifest: list[dict[str, str]]) -> dict:
+    """Run tests in order; returns the saved run report with one result per test."""
+    run_id = secrets.token_hex(4)
+    output = args.results / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+                             + "-" + run_id)
+    output.mkdir(parents=True, exist_ok=False)
+    cases = {case["machine"]: case for case in manifest}
+    results = [{**cases.get(test.machine, {}), "name": test.name, "suite": test.suite,
+                "machine": test.machine, "run_id": run_id, "status": "NOT_RUN",
+                "checks": [], "cleanup_errors": []} for test in tests]
+    report = {
+        "schema": 2, "run_id": run_id, "status": "FAIL", "stage": "starting",
+        "tests": results, "cleanup_errors": [],
+        "setup": args.setup, "url": args.url, "video": args.video, "audio": args.audio,
+        "pico_uart": args.pico_uart, "bmc_uart": args.bmc_uart,
+        "started_utc": datetime.now(timezone.utc).isoformat(),
+    }
+    print(f"Evidence: {output}", flush=True)
+
+    def interrupted(signum, frame):
+        raise KeyboardInterrupt
+
+    previous = signal.signal(signal.SIGTERM, interrupted)
+    try:
+        if not args.execute:
+            report["stage"] = "offline"
+            prepare_tests(args, tests, results, manifest, output)
+        else:
+            cleanups = Cleanups(report)
+            rig = None
+            try:
+                pin = getpass.getpass("BMC64 PIN: ") if args.ask_pin else None
+                api = Api(args.url, pin, timeout=3)
+                profiles = preflight(api, tests, manifest, args, output, report)
+                rig = open_rig(args, api, output, report, cleanups.register)
+                report["stage"] = "tests"
+                run_tests(args, rig, tests, results, profiles, output, report)
+                if not report.get("control_error"):
+                    progress("All selected tests finished; checking final HTTP status")
+                    save_json(output / "status-after.json", recover_api(api, args.timeout))
+                    report["stage"] = "complete"
+            except ERRORS as error:
+                report.update(error=str(error),
+                              category=getattr(error, "category", "fixture_or_api"))
+                print(f"FAIL [{report['stage']}]: {error}", file=sys.stderr, flush=True)
+                if rig:
+                    cleanups.run("save capture evidence",
+                                 lambda: failure_evidence(rig.capture, output, report))
+            except KeyboardInterrupt:
+                report.update(error="interrupted", category="interrupted")
+                print("interrupted by user or termination signal", file=sys.stderr, flush=True)
+            finally:
+                cleanups.close()
+    finally:
+        signal.signal(signal.SIGTERM, previous)
+        for result in results:
+            if result["status"] == "NOT_RUN" and not result.get("error"):
+                result["error"] = report.get("error", "run stopped before this test")
+        statuses = {result["status"] for result in results}
+        if report["cleanup_errors"] or report.get("error") or report.get("control_error"):
+            report["status"] = "FAIL"
+        elif statuses <= {"PREPARED"}:
+            report["status"] = "PREPARED"
+        elif statuses == {"PASS"}:
+            report["status"] = "PASS"
+        report["finished_utc"] = datetime.now(timezone.utc).isoformat()
+        save_json(output / "result.json", report)
+    report["evidence"] = str(output / "result.json")
+    print(f"{report['status']}: {output / 'result.json'}", flush=True)
+    return report

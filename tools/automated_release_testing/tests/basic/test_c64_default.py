@@ -22,16 +22,10 @@ import queue
 import subprocess
 import time
 from pathlib import Path
-from typing import Callable
 from framework.case import BmcTest
 from framework.reporting import progress, save_json
-from hardware.api import Api
-from hardware.capture import Capture, capture_command, wait_for
-from hardware.pico import Pico, SerialPort
-from hardware.uart import UartLog
-from support.evidence import failure_evidence, frame_health
-from support.profiles import read_manifest, resolve_profiles, switch_profile
-from support.network import validate_network
+from hardware.capture import Capture, wait_for
+from support.constants import DEFAULT_CAPTURE_SIZE
 from .diagnostic import (
     HEIGHT, WIDTH, Marker, audio_metrics, decode_frame, is_silence, is_tone, payload,
 )
@@ -115,27 +109,6 @@ class Observations:
                 self.events.flush()
 
 
-def switch_to_c64_profile(api: Api, manifest: Path, timeout: float, output: Path,
-                          report: dict, health: Callable[[], None],
-                          network: str | None = None) -> None:
-    """Start the suite's C64 test profile unless it is already running."""
-    report["stage"] = "profile_switch"
-    case = next((item for item in read_manifest(manifest) if item["machine"] == "C64"), None)
-    if case is None:
-        raise RuntimeError(f"{manifest} has no C64 profile for the diagnostic")
-    profile = resolve_profiles(api, [case])[0]
-    validate_network(api, [profile], network)
-    report["profile"] = profile["id"]
-    current = api.get_json("/api/status")
-    if current.get("profile_id") == profile["id"] and current.get("machine") == "C64":
-        progress(f"C64 test profile {profile['id']} is already running")
-    else:
-        progress(f"Switching from {current.get('profile_id')} / {current.get('machine')} "
-                 f"to the C64 test profile {profile['id']}")
-        switch_profile(api, profile, timeout, health, output)
-    report["stage"] = "fixture"
-
-
 class Test(BmcTest):
     name = "c64-default"
     description = "C64: PRG video counter, SID tone, USB Space response and silence"
@@ -145,93 +118,33 @@ class Test(BmcTest):
     requirements = ("petcat",)
 
     def prepare_test(self) -> None:
-        context = self.context
-        output, report = context.output, context.report
-        report["stage"] = "guest_generation"
+        self.stage("guest_generation")
         progress("Generating the C64 diagnostic PRG")
-        program = build_guest(int(report["run_id"], 16), output)
-        report["guest_sha256"] = hashlib.sha256(program.read_bytes()).hexdigest()
-        self.program = program
+        self.program = build_guest(int(self.report["run_id"], 16), self.output)
+        self.report["guest_sha256"] = hashlib.sha256(self.program.read_bytes()).hexdigest()
 
     def before_test(self) -> None:
         self.prepare_test()
-        context = self.context
-        args, output, report = context.args, context.output, context.report
-        report["stage"] = "fixture"
-        progress("Checking C64 HTTP status, storage and Pico USB fixture")
-        api = Api(args.url, context.pin)
-        listing_result = api.get_json("/api/fs/list", path="/")
-        save_json(output / "volume.json", listing_result)
-        volume = listing_result.get("vol")
-        if not isinstance(volume, str) or not volume:
-            raise RuntimeError("root directory listing did not return a volume")
-        pico_port = SerialPort(args.pico_uart)
-        context.register("close Pico UART", pico_port.close)
-        pico_log = context.stack.enter_context((output / "pico.log").open("wb"))
-        pico = Pico(pico_port, pico_log)
-        # A newline discards any incomplete/noisy line left by manual bring-up.
-        pico_port.write(b"\n")
-        context.register("release inputs", lambda: pico.command("RELEASE"))
-        reply = pico.command("STATUS")
-        fields = dict(part.split("=", 1) for part in reply.split()[1:] if "=" in part)
-        if any(fields.get(key) != value for key, value in {
-                "protocol": "1", "mounted": "1", "suspended": "0", "pending": "0"}.items()):
-            raise RuntimeError(f"Pico is not ready: {reply}")
-        pico.command("RELEASE")
-        uart = None
-        if args.bmc_uart:
-            port = SerialPort(args.bmc_uart)
-            context.register("close BMC64 UART", port.close)
-            uart = UartLog(port, output / "bmc64-uart.log")
-            context.register("save UART classification", lambda: save_json(
-                output / "uart-findings.json", uart.findings))
-            context.register("check final UART messages", uart.check)
-            context.register("stop BMC64 UART logger", uart.close)
-        report["uart_collected"] = uart is not None
-        report["stage"] = "capture"
-        # Record before any profile restart, as the suite does: a Pi that reboots
-        # while the capture device is closed has come up with no HDMI picture.
-        progress("Starting HDMI video/audio recording")
-        capture = Capture(capture_command(args.video, args.audio, output), output)
-        context.register("save capture evidence", lambda: failure_evidence(capture, output, report))
-        context.register("finish capture", capture.close)
-
-        def health() -> None:
-            capture.check()
-            if uart:
-                uart.check()
-
-        # UART logging is running, so a profile restart's boot messages are kept.
-        switch_to_c64_profile(api, args.manifest, args.timeout, output, report, health, args.network)
-        status = api.get_json("/api/status")
-        save_json(output / "status-before.json", status)
-        if str(status.get("machine", "")).upper() != "C64":
-            raise RuntimeError("this diagnostic supports C64 only; target reports another machine")
-        report["stage"] = "capture"
-        wait_for(capture, uart, args.timeout, lambda: (
-            not capture.frames.empty() and not capture.audio.empty()
-            and (capture.latest_frame is None or not frame_health(capture.latest_frame[1])["black"])
-        ), "HDMI video and audio capture startup")
-        observed = Observations(capture, int(report["run_id"], 16), output)
-        context.stack.callback(observed.events.close)
-
-        self.api, self.volume = api, volume
-        self.pico, self.capture, self.uart, self.observed = pico, capture, uart, observed
+        # Keep an already running C64 test profile; the PRG resets the machine anyway.
+        self.start_profile(fresh=False)
+        # The diagnostic decodes small frames: analyse 720p capture at 480x360.
+        self.open_capture((WIDTH, HEIGHT), video_size=DEFAULT_CAPTURE_SIZE)
+        self.observed = Observations(self.capture.current, int(self.report["run_id"], 16),
+                                     self.output)
+        self.context.register("close observations", self.observed.events.close)
+        self.wait_for_keyboard()
 
     def run_test(self) -> None:
-        context = self.context
-        args, output, report = context.args, context.output, context.report
-        if not args.execute:
-            return
-        program, api, volume = self.program, self.api, self.volume
-        pico, capture, uart, observed = self.pico, self.capture, self.uart, self.observed
-        report["stage"] = "upload_autostart"
+        capture, observed, pico = self.capture.current, self.observed, self.pico
+        self.stage("upload_autostart")
         progress("Uploading and autostarting the diagnostic PRG")
-        remote_path = f"/bmc64-smoke-{report['run_id']}.prg"
-        report["guest_path"] = remote_path
-        api.request("/api/fs/upload", program.read_bytes(), vol=volume, path=remote_path)
-        api.request("/api/fs/autostart", b"", vol=volume, path=remote_path)
-        report["stage"] = "guest_ready"
+        remote_path = f"/bmc64-smoke-{self.report['run_id']}.prg"
+        self.report["guest_path"] = remote_path
+        volume = self.profile["volume"]
+        self.api.request("/api/fs/upload", self.program.read_bytes(), timeout=15,
+                         vol=volume, path=remote_path)
+        self.api.request("/api/fs/autostart", b"", timeout=15, vol=volume, path=remote_path)
+        self.stage("guest_ready")
 
         def ready() -> bool:
             observed.poll()
@@ -242,11 +155,12 @@ class Test(BmcTest):
                      if timestamp > first_marker + 1 and is_tone(metrics)]
             return len(counters) >= 2 and len(tones) >= 2
 
-        wait_for(capture, uart, args.timeout, ready,
+        wait_for(capture, self.health, self.timeout, ready,
                  "current run ID, advancing counter and two seconds of SID tone")
-        report["checks"].extend(["current_run_id", "guest_progress", "sid_tone"])
+        for check in ("current_run_id", "guest_progress", "sid_tone"):
+            self.passed(check)
         tone_rms = max(metrics["rms"] for _, metrics in observed.metrics if is_tone(metrics))
-        report["stage"] = "input_round_trip"
+        self.stage("input_round_trip")
         progress("Sending USB Space and checking the guest response")
         sent = time.monotonic()
         pico.command("KEY 0 44")
@@ -259,11 +173,11 @@ class Test(BmcTest):
                        if timestamp > sent and marker.state == 1]
             return len(markers) >= 2
 
-        wait_for(capture, uart, args.timeout, responded, "Space response in current guest")
-        report["checks"].append("space_round_trip")
+        wait_for(capture, self.health, self.timeout, responded, "Space response in current guest")
+        self.passed("space_round_trip")
         # Start fresh after the visual transition; do not accept pre-input silence.
         quiet_after = time.monotonic() + 1
-        report["stage"] = "audio_silence"
+        self.stage("audio_silence")
 
         def quiet() -> bool:
             observed.poll()
@@ -273,12 +187,11 @@ class Test(BmcTest):
                 is_silence(metrics, tone_rms) for metrics in recent[-2:]
             )
 
-        wait_for(capture, uart, args.timeout, quiet, "tone stops after guest receives Space")
-        report["checks"].append("sid_silence")
-        report["stage"] = "final_status"
+        wait_for(capture, self.health, self.timeout, quiet, "tone stops after guest receives Space")
+        self.passed("sid_silence")
+        self.stage("final_status")
         progress("Checking final HTTP status")
-        save_json(output / "status-after.json", api.get_json("/api/status"))
-
+        save_json(self.output / "status-after.json", self.api.get_json("/api/status"))
 
     def after_test(self) -> None:
         pass

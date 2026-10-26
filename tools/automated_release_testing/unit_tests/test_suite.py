@@ -23,6 +23,7 @@ of this repository. Set BMC64_ROM_ROOT to a copy of the SD card (or a folder
 with the same C64/chargen, PLUS4/kernal, ... layout) to run them.
 """
 
+import argparse
 import io
 import json
 import os
@@ -53,12 +54,28 @@ from support.profiles import (
     read_manifest, recover_api, resolve_profiles, switch_profile, profile_values,
 )
 from tests.boot.screen import screen_bounds, wait_screen
-from tests.boot.session import main, rotate
+from framework.rig import Rig
+from framework.runner import run, run_tests
 from utils.runner import parser
 from tests.boot.screen_text import LETTERS, Font, Geometry, Reading, ScreenText
 
 
 BOOT_TESTS = {test.machine: test for test in discover() if test.suite == "boot"}
+
+
+def rotate(api, pico, capture, uart, cases, timeout, output, report):
+    """Run the boot tests on a fake rig, as run() does after preflight."""
+    profiles = {case["machine"]: case for case in cases}
+    tests = [test for test in BOOT_TESTS.values() if test.machine in profiles]
+    report["cases"] = [{**profiles[test.machine], "name": test.name, "status": "NOT_RUN",
+                        "checks": [], "cleanup_errors": []} for test in tests]
+    args = argparse.Namespace(timeout=timeout, execute=True)
+    run_tests(args, Rig(api, pico, capture, uart), tests, report["cases"], profiles,
+              output, report)
+
+
+def boot_run(args, manifest):
+    return run(args, list(BOOT_TESTS.values()), manifest)
 LAYOUTS = {machine: test.layout for machine, test in BOOT_TESTS.items()}
 CAPTURE_SIZES = {machine: test.capture_size for machine, test in BOOT_TESTS.items()
                  if test.capture_size != DEFAULT_CAPTURE_SIZE}
@@ -201,7 +218,7 @@ class Capture:
         self.clock.now += 0.05
         self.latest_frame = (self.clock.now, self.frame)
 
-    def open(self, output, size, health, timeout, label):
+    def open(self, output, size, health, timeout, label, video_size=None):
         self.opened.append((output.name, size))
         output.mkdir(exist_ok=True)
 
@@ -952,12 +969,12 @@ class RotationTests(unittest.TestCase):
             rotate(api, pico, capture, uart, cases, 2, Path(directory), report)
             messages = terminal.getvalue()
             for message in (
-                "[1/6] C64: starting profile c64-test-de56af",
+                "[1/6] c64-boot-typing: starting (C64, profile c64-test-de56af)",
                 "reading character ROM /C64/chargen from the SD card",
                 "checking the BASIC boot screen cell by cell against the ROM font",
                 "Pico USB keyboard ready/remounted",
                 "typing token", "verified on two fresh frames",
-                "releasing USB input and saving case evidence",
+                "releasing USB input and saving test evidence",
             ):
                 self.assertIn(message, messages)
             for result in report["cases"]:
@@ -1049,13 +1066,13 @@ class RotationTests(unittest.TestCase):
     def test_offline_preparation_cannot_open_hardware(self):
         with tempfile.TemporaryDirectory() as directory:
             args = parser().parse_args(["--results", directory])
-            with patch("tests.boot.session.Api", side_effect=AssertionError("HTTP")), \
-                    patch("tests.boot.session.SerialPort", side_effect=AssertionError("UART")), \
+            with patch("framework.runner.Api", side_effect=AssertionError("HTTP")), \
+                    patch("framework.rig.SerialPort", side_effect=AssertionError("UART")), \
                     patch("hardware.capture.Capture", side_effect=AssertionError("capture")), \
                     patch("sys.stdout", new_callable=io.StringIO):
-                report = main(args, self.manifest())
+                report = boot_run(args, self.manifest())
             self.assertEqual(report["status"], "PREPARED")
-            self.assertEqual([case["status"] for case in report["cases"]], ["PREPARED"] * 6)
+            self.assertEqual([case["status"] for case in report["tests"]], ["PREPARED"] * 6)
             self.assertEqual(json.loads(Path(report["evidence"]).read_text())["status"], "PREPARED")
 
     def test_preflight_error_or_interruption_records_fail_and_all_unrun_cases(self):
@@ -1065,13 +1082,13 @@ class RotationTests(unittest.TestCase):
                     "--execute", "--url", "http://192.0.2.1", "--pico-uart", "/unused",
                     "--results", directory,
                 ])
-                with patch("tests.boot.session.execute", side_effect=error), \
+                with patch("framework.runner.preflight", side_effect=error), \
                         patch("sys.stdout", new_callable=io.StringIO), \
                         patch("sys.stderr", new_callable=io.StringIO):
-                    report = main(args, self.manifest())
+                    report = boot_run(args, self.manifest())
                 self.assertEqual(report["status"], "FAIL")
-                self.assertEqual([case["status"] for case in report["cases"]], ["NOT_RUN"] * 6)
-                self.assertEqual([case["name"] for case in report["cases"]],
+                self.assertEqual([case["status"] for case in report["tests"]], ["NOT_RUN"] * 6)
+                self.assertEqual([case["name"] for case in report["tests"]],
                                  [machine.lower() + "-boot-typing" for machine in MACHINES])
 
     def cli(self, *arguments):
@@ -1094,20 +1111,21 @@ class RotationTests(unittest.TestCase):
                              [["PREPARED", machine.lower() + "-boot-typing"] for machine in MACHINES]
                              + [["PREPARED", "c64-default"]])
             self.assertEqual(summary[8].strip(), "7 PREPARED")
-            self.assertEqual(len(list(Path(directory).glob("*/result.json"))), 2)
+            self.assertEqual(len(list(Path(directory).glob("*/result.json"))), 1)
 
     def test_names_select_tests_and_unknown_names_are_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             completed = self.cli("pet-boot-typing", "--results", directory)
             self.assertEqual(completed.returncode, 0, completed.stderr)
             result = json.loads(next(Path(directory).glob("*/result.json")).read_text())
-            self.assertEqual(result["kind"], "profile_suite")
-            self.assertEqual([case["name"] for case in result["cases"]], ["pet-boot-typing"])
+            self.assertEqual([case["name"] for case in result["tests"]], ["pet-boot-typing"])
             self.assertNotIn("c64-default", completed.stdout)
         with tempfile.TemporaryDirectory() as directory:
             completed = self.cli("--results", directory, "pet-boot-typing", "c64-default")
             self.assertEqual(completed.returncode, 0, completed.stderr)
-            self.assertEqual(len(list(Path(directory).glob("*/result.json"))), 2)
+            result = json.loads(next(Path(directory).glob("*/result.json")).read_text())
+            self.assertEqual([case["name"] for case in result["tests"]],
+                             ["pet-boot-typing", "c64-default"])
             self.assertNotIn("c64-boot-typing", completed.stdout)
         completed = self.cli("c64-typing")
         self.assertEqual(completed.returncode, 2)
@@ -1118,24 +1136,26 @@ class RotationTests(unittest.TestCase):
             manifest = Path(directory) / "only-pet.json"
             manifest.write_text('[{"machine":"Pet","profile":"pet-test-de56af"}]')
             completed = self.cli("--manifest", str(manifest), "--list")
+            # Every test needs its machine's profile, so the diagnostic is left out too.
             self.assertEqual([line.split()[0] for line in completed.stdout.splitlines()],
-                             ["pet-boot-typing", "c64-default"])
-            completed = self.cli("--manifest", str(manifest), "c64-boot-typing")
-            self.assertEqual(completed.returncode, 2)
+                             ["pet-boot-typing"])
+            for name in ("c64-boot-typing", "c64-default"):
+                completed = self.cli("--manifest", str(manifest), name)
+                self.assertEqual(completed.returncode, 2)
 
     def test_folder_suites_select_and_deduplicate_existing_tests(self):
-        for selectors, expected, reports in (
-            (["boot"], [machine.lower() + "-boot-typing" for machine in MACHINES], 1),
-            (["basic"], ["c64-default"], 1),
+        for selectors, expected in (
+            (["boot"], [machine.lower() + "-boot-typing" for machine in MACHINES]),
+            (["basic"], ["c64-default"]),
             (["boot", "c64-boot-typing", "basic"], [
-                machine.lower() + "-boot-typing" for machine in MACHINES] + ["c64-default"], 2),
+                machine.lower() + "-boot-typing" for machine in MACHINES] + ["c64-default"]),
         ):
             with self.subTest(selectors=selectors), tempfile.TemporaryDirectory() as directory:
                 completed = self.cli(*selectors, "--results", directory)
                 self.assertEqual(completed.returncode, 0, completed.stderr)
                 summary = completed.stdout[completed.stdout.index("Summary:"):].splitlines()
                 self.assertEqual([line.split()[1] for line in summary[1:1 + len(expected)]], expected)
-                self.assertEqual(len(list(Path(directory).glob("*/result.json"))), reports)
+                self.assertEqual(len(list(Path(directory).glob("*/result.json"))), 1)
 
     def test_summary_lists_every_test_last_with_failure_reasons(self):
         results = [

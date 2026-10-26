@@ -25,10 +25,11 @@ import os
 import shutil
 import sys
 from pathlib import Path
+
 from hardware.api import Api
 from framework.reporting import print_summary
 from framework.discovery import discover, select_tests
-from framework.runner import run_selected
+from framework.runner import run
 from support.profiles import read_manifest
 
 HERE = Path(__file__).resolve().parents[1]
@@ -115,8 +116,8 @@ def main() -> int:
     try:
         manifest = read_manifest(args.manifest)
         machines = {case["machine"] for case in manifest}
-        available = [test for test in discover()
-                     if not test.profile_required or test.machine in machines]
+        # A manifest without a test's machine (e.g. a subset) leaves it out.
+        available = [test for test in discover() if test.machine in machines]
         selected = select_tests(available, args.tests)
     except (OSError, ValueError) as error:
         argument_parser.error(str(error))
@@ -138,11 +139,10 @@ def main() -> int:
     for tool in sorted(required):
         if shutil.which(tool) is None:
             argument_parser.error(f"required tool is missing: {tool}; see docs/prerequisites.md")
-    results, evidence = run_selected(args, selected, manifest)
-    print_summary(results)
-    for path in evidence:
-        print(f"  Evidence: {path}", flush=True)
-    return 0 if all(result["status"] in ("PASS", "PREPARED") for result in results) else 1
+    report = run(args, selected, manifest)
+    print_summary(report["tests"])
+    print(f"  Evidence: {report['evidence']}", flush=True)
+    return 0 if report["status"] in ("PASS", "PREPARED") else 1
 
 
 if __name__ == "__main__":

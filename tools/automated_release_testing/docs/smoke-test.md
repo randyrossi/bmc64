@@ -230,21 +230,26 @@ not measure physical HDMI cadence or audio/video synchronization.
 
 ## Evidence and cleanup
 
-Each ignored `results/<UTC-time>-<run-id>/` contains:
+The diagnostic's directory in the run folder (`07-c64-default/` in a full
+run; see [run evidence](test-framework.md#run-evidence) for the files shared
+by the run) contains:
 
-- `result.json`: status, stage, assertions, setup, guest hash, target path
-  and cleanup errors.
-- `diagnostic.bas` / `diagnostic.prg`: exact generated payload.
+- `result.json`: status, stage, assertions, guest hash, target path and
+  cleanup errors.
+- `diagnostic.bas` / `diagnostic.prg`, `petcat.log`: exact generated payload.
 - `status-before.json` / `status-after.json`: firmware, board and API profile.
-- `capture.mkv`: original MJPEG video and stereo PCM audio.
+- `capture-1/`: `capture.mkv` with the original MJPEG video and stereo PCM
+  audio, `ffmpeg.log` and `capture-command.json`. The capture is reopened
+  after the C64 profile is verified, so it is locked to the C64 HDMI mode.
 - `ready.ppm` / `response.ppm`: first recognised ready/response frames.
 - `failure.ppm` on failure, or `last-frame.ppm` on success: last available
   video frame even when no guest marker was recognised. `capture-health.json`
   records black/flat-frame metrics, frame age, or that no video frames arrived.
 - `observations.jsonl`: monotonic observation times, counters, states and
   measured audio values.
-- `pico.log`, optional `bmc64-uart.log`, `ffmpeg.log`, `petcat.log`,
-  `volume.json` and `capture-command.json`.
+
+The run folder holds `pico.log` and, with a BMC64 UART:
+
 - Optional `uart-findings.json`: critical signatures, known informational
   autostart probes and unclassified warnings, with raw lines and monotonic times.
 

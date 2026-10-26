@@ -35,7 +35,6 @@ import tempfile
 import threading
 import time
 import unittest
-from contextlib import ExitStack
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
@@ -56,6 +55,8 @@ from hardware.pico import Pico, SerialPort
 from hardware.uart import UartLog
 from utils.runner import HERE, load_setup, parse_arguments, parser
 from framework.context import TestContext
+from framework.rig import Rig
+from framework.runner import execute_case
 from tests.basic.test_c64_default import Test as DiagnosticCase, build_guest
 
 
@@ -397,14 +398,16 @@ class SetupTests(unittest.TestCase):
                 "--config", str(config), "--results", str(root / "results"),
             ], capture_output=True, text=True, timeout=10)
             self.assertEqual(completed.returncode, 0, completed.stderr)
-            # With no --name, every test is prepared: the suite and c64-default.
+            # With no test names, every test is prepared in one run folder.
             reports = list((root / "results").glob("*/result.json"))
-            self.assertEqual(len(reports), 2)
-            for path in reports:
-                report = json.loads(path.read_text())
-                self.assertEqual(report["status"], "PREPARED")
-                self.assertEqual(report["url"], self.settings()["url"])
-                self.assertEqual(report["pico_uart"], self.settings()["pico_uart"])
+            self.assertEqual(len(reports), 1)
+            report = json.loads(reports[0].read_text())
+            self.assertEqual(report["status"], "PREPARED")
+            self.assertEqual(len(report["tests"]), 7)
+            self.assertEqual({test["status"] for test in report["tests"]}, {"PREPARED"})
+            self.assertEqual(report["url"], self.settings()["url"])
+            self.assertEqual(report["pico_uart"], self.settings()["pico_uart"])
+            self.assertTrue(list((root / "results").glob("*/07-c64-default/diagnostic.prg")))
 
     def test_root_launchers_work_from_an_unrelated_directory(self):
         with tempfile.TemporaryDirectory(prefix="test rig ") as directory:
@@ -681,7 +684,7 @@ class CaptureTests(unittest.TestCase):
             ] + baseline[baseline.index("-map"):]
             capture = Capture(command, output, width, height)
             try:
-                wait_for(capture, None, 15, lambda: (
+                wait_for(capture, capture.check, 15, lambda: (
                     not capture.frames.empty() and not capture.audio.empty()
                 ), "synthetic capture")
                 _, frame = capture.frames.get(timeout=1)
@@ -705,18 +708,17 @@ class CaptureTests(unittest.TestCase):
                 pass
 
         with self.assertRaisesRegex(RuntimeError, "timeout: expected failure"):
-            wait_for(HealthyCapture(), None, 0.03, lambda: False, "expected failure")
+            wait_for(HealthyCapture(), lambda: None, 0.03, lambda: False, "expected failure")
 
     def test_offline_mode_cannot_access_hardware(self):
         with tempfile.TemporaryDirectory() as directory:
             args = parser().parse_args([])
-            report = {"run_id": f"{RUN_ID:08x}"}
-            with patch("tests.basic.test_c64_default.Api", side_effect=AssertionError("HTTP accessed")), \
-                    patch("tests.basic.test_c64_default.SerialPort", side_effect=AssertionError("UART accessed")), \
-                    patch("tests.basic.test_c64_default.Capture", side_effect=AssertionError("capture accessed")), \
-                    ExitStack() as stack:
-                DiagnosticCase().invoke(TestContext(args, Path(directory), report, stack=stack))
-            self.assertEqual(report["status"], "PREPARED")
+            report = {"run_id": f"{RUN_ID:08x}", "status": "NOT_RUN", "checks": [],
+                      "cleanup_errors": []}
+            # No rig: any hardware access would raise and fail the test.
+            execute_case(DiagnosticCase(), TestContext(args, Path(directory), report))
+            self.assertEqual(report["status"], "PREPARED", report.get("error"))
+            self.assertTrue((Path(directory) / "diagnostic.prg").exists())
 
 
 class RunnerTests(unittest.TestCase):
@@ -764,16 +766,6 @@ class RunnerTests(unittest.TestCase):
                     raise RuntimeError("simulated upload failure")
                 return b""
 
-        class FakePort:
-            def __init__(self, *args):
-                pass
-
-            def write(self, data):
-                pass
-
-            def close(self):
-                pass
-
         class FakePico:
             def __init__(self, *args):
                 pass
@@ -785,7 +777,7 @@ class RunnerTests(unittest.TestCase):
                 return "OK protocol=1 mounted=1 suspended=0 pending=0"
 
         class FakeCapture:
-            def __init__(self, *args):
+            def __init__(self):
                 self.width, self.height = WIDTH, HEIGHT
                 self.frames = queue.Queue()
                 self.audio = queue.Queue()
@@ -801,8 +793,18 @@ class RunnerTests(unittest.TestCase):
                 sound = tone if state[0] == 0 or failure == "silence" else quiet
                 self.audio.put((timestamp, sound))
 
-            def close(self):
-                pass
+        class FakeSuiteCapture:
+            current = None
+            width, height = WIDTH, HEIGHT
+            latest_frame = None
+
+            def open(self, output, size, health, timeout, label, video_size=None):
+                self.current = FakeCapture()
+
+            def check(self):
+                if self.current:
+                    self.current.check()
+                    self.latest_frame = self.current.latest_frame
 
         with tempfile.TemporaryDirectory() as directory:
             args = parser().parse_args([
@@ -813,17 +815,13 @@ class RunnerTests(unittest.TestCase):
                 "run_id": f"{RUN_ID:08x}", "checks": [], "cleanup_errors": [],
                 "status": "FAIL",
             }
-            with patch("tests.basic.test_c64_default.Api", FakeApi), \
-                    patch("tests.basic.test_c64_default.Pico", FakePico), \
-                    patch("tests.basic.test_c64_default.SerialPort", FakePort), \
-                    patch("tests.basic.test_c64_default.Capture", FakeCapture), \
-                    patch("tests.basic.test_c64_default.time.monotonic", tick), \
-                    patch("tests.basic.test_c64_default.time.sleep"), ExitStack() as stack:
-                if failure:
-                    with self.assertRaises(RuntimeError):
-                        DiagnosticCase().invoke(TestContext(args, Path(directory), report, stack=stack))
-                else:
-                    DiagnosticCase().invoke(TestContext(args, Path(directory), report, stack=stack))
+            rig = Rig(api=FakeApi(), pico=FakePico(), capture=FakeSuiteCapture())
+            profile = {"machine": "C64", "profile": "c64-test-de56af", "id": "c64-test-de56af",
+                       "name": "c64_test", "volume": "SD:"}
+            with patch("tests.basic.test_c64_default.time.monotonic", tick), \
+                    patch("tests.basic.test_c64_default.time.sleep"):
+                execute_case(DiagnosticCase(), TestContext(
+                    args, Path(directory), report, rig, profile, rig.capture.check))
         self.assertEqual(commands[-1], "RELEASE")
         return report, requests, commands
 
@@ -831,7 +829,7 @@ class RunnerTests(unittest.TestCase):
         report, requests, commands = self.simulate()
         self.assertEqual(report["status"], "PASS")
         self.assertEqual(report["checks"], [
-            "current_run_id", "guest_progress", "sid_tone",
+            "profile_and_core", "current_run_id", "guest_progress", "sid_tone",
             "space_round_trip", "sid_silence",
         ])
         self.assertIn("/api/fs/autostart", requests)
@@ -840,7 +838,7 @@ class RunnerTests(unittest.TestCase):
     def test_switches_to_the_c64_test_profile_only_when_needed(self):
         report, requests, _ = self.simulate()
         self.assertNotIn("/api/profiles/start", requests)
-        self.assertEqual(report["profile"], "c64-test-de56af")
+        self.assertNotIn("/api/reboot", requests)
         report, requests, _ = self.simulate(active=("pet-test-de56af", "Pet"))
         self.assertEqual(requests.count("/api/profiles/start"), 1)
         self.assertLess(requests.index("/api/profiles/start"), requests.index("/api/fs/upload"))

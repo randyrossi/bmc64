@@ -40,7 +40,7 @@ class Test(BootTypingTest):
     def before_test(self) -> None:
         super().before_test()
         self.prepare_screen_reader(self.layout, self.capture_size, token_length=8)
-        self.start_profile()
+        self.start_profile(fresh=True)
         self.open_native_capture()
 
     def run_test(self) -> None:
