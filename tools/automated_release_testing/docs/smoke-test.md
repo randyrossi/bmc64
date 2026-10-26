@@ -253,11 +253,15 @@ The run folder holds `pico.log` and, with a BMC64 UART:
 - Optional `uart-findings.json`: critical signatures, known informational
   autostart probes and unclassified warnings, with raw lines and monotonic times.
 
-BMC64 UART logging adds one monotonic timestamp at the start of each
-LF-delimited line, rather than at serial-read boundaries. Original UART
-bytes, CR/LF endings and partial final lines are retained; fragmented
-serial reads do not insert newlines into messages. Binary/garbled source
-bytes are retained rather than hidden.
+`bmc64-uart.log` is the readable UART log. Each line starts with the PC
+wall-clock time its first byte arrived, and the runner adds a
+`===== [n/total] test-name (machine) =====` line when each test starts.
+BMC64 ends lines with LF CR, so any run of CR/LF is one line break; a
+partial final line is kept, and fragmented serial reads do not split
+messages. Undecodable bytes appear as `�`. `bmc64-uart.raw` keeps the exact
+received bytes for diagnosing garbled output. Findings in
+`uart-findings.json` carry both the log's wall-clock `time` and the
+monotonic time used by test results.
 
 Known panic, abort, assertion, memory and profile-start failure signatures
 are critical. Expected VICE disk/tape/cartridge PRG probes and
@@ -282,9 +286,10 @@ Web UI when no longer needed. Recordings can be large; manage retained runs.
 - **Pico invalid-line error or first-command timeout after reboot:** the Pico
   can restart with the Pi and receive UART noise in an unfinished input line.
   The runner sends a leading newline before every command, including after
-  profile restarts, then waits for that command's correlated reply. A
-  `0 ERROR syntax` or `0 ERROR invalid-or-long-line` from the clearing newline
-  is logged, not accepted as the command response. Input is still sent only
+  profile restarts, then waits for that command's correlated reply. The
+  firmware ignores the empty line itself; if it terminated UART noise, the
+  resulting `0 ERROR invalid-or-long-line` is logged, not accepted as the
+  command response. Input is still sent only
   once; uncertain commands are not retried. If timeouts persist, inspect
   `pico.log` for repeated restarts/noise and check fixture power and UART wiring.
 - **Capture startup failure:** close competing viewers and check device paths.

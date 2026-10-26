@@ -934,6 +934,9 @@ class RotationTests(unittest.TestCase):
             def __init__(self):
                 self.findings = []
 
+            def mark(self, text):
+                pass
+
             def check(self, since=0):
                 if api.current["machine"] == "C128" and not self.findings:
                     self.findings.append({"severity": "critical", "line": "kernel: panic"})

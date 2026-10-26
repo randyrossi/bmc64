@@ -96,6 +96,8 @@ def run_tests(args: argparse.Namespace, rig: Rig, tests: list[type[BmcTest]],
             continue
         profile = profiles[test.machine]
         progress(f"{label}: starting ({test.machine}, profile {profile['id']})")
+        if rig.uart:
+            rig.uart.mark(f"===== {label} ({test.machine}) =====")
         directory = output / f"{index:02d}-{test.name}"
         directory.mkdir()
         result.update(id=profile["id"], status="FAIL", evidence=directory.name)

@@ -86,12 +86,17 @@ class UartLogTests(unittest.TestCase):
                 logger = UartLog(Port(), path)
                 try:
                     self.assertTrue(exhausted.wait(2))
+                    logger.mark("===== marker =====")
                 finally:
                     logger.close()
-                logged = path.read_bytes()
-                self.assertEqual(re.sub(rb"\[\d+\.\d+\] ", b"", logged), source)
-                self.assertEqual(len(re.findall(rb"\[\d+\.\d+\] ", logged)), 3)
-                self.assertNotIn(b"\n[", logged.split(b"\r\n", 1)[0])
+                self.assertEqual((Path(directory) / "uart.raw").read_bytes(), source)
+                lines = path.read_text(encoding="utf-8").splitlines()
+                self.assertTrue(all(re.match(r"\d\d:\d\d:\d\d\.\d{3}  ", line)
+                                    for line in lines))
+                # CRLF and BMC64's LF CR each end one line; the partial line is kept.
+                self.assertEqual([line[14:] for line in lines], [
+                    "Oct 25 kernel: ready", "second line", "===== marker =====",
+                    "third \ufffdline"])
 
     def test_read_failure_is_explicit(self):
         class Port:

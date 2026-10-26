@@ -207,7 +207,8 @@ Each run writes one ignored `results/<UTC-time>-<run-id>/` folder:
 - `status-before.json` / `status-after.json` and `resolved-profiles.json`.
 - `capture.mkv`, `ffmpeg.log`, `capture-command.json`: the startup recording
   segment, until the first test reopens the capture.
-- `pico.log`, and with `--bmc-uart`, `bmc64-uart.log` and `uart-findings.json`
+- `pico.log`, and with `--bmc-uart`, `bmc64-uart.log` (readable, marked at
+  each test start), `bmc64-uart.raw` (exact bytes) and `uart-findings.json`
   for the whole run.
 - One numbered directory per test (`01-c64-boot-typing/`, ...), with its own
   `result.json`, recording segments and assertion evidence. See the
