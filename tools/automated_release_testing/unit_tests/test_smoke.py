@@ -38,19 +38,25 @@ import unittest
 from contextlib import ExitStack
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+ROOT = Path(__file__).resolve().parents[1]
 from unittest.mock import patch
 from urllib.parse import parse_qs, urlsplit
 
-from diagnostic import (
-    HEIGHT, SAMPLE_RATE, WIDTH, audio_metrics, build_guest, decode_frame,
+from tests.basic.diagnostic import (
+    HEIGHT, SAMPLE_RATE, WIDTH, audio_metrics, decode_frame,
     is_silence, is_tone, payload,
 )
-from configure_test_setup import LAUNCHER, ask_device, configure, discover_devices
-from preview_video import main as preview_main, preview_command
-from run_smoke import (
-    Api, Capture, Pico, SerialPort, UartLog, capture_command, execute, load_setup,
-    parse_arguments, parser, wait_for,
+from utils.configure_test_setup import (
+    LAUNCHER, LEGACY_LAUNCHER, ask_device, configure, discover_devices,
 )
+from utils.preview_video import main as preview_main, preview_command
+from hardware.api import Api
+from hardware.capture import Capture, capture_command, wait_for
+from hardware.pico import Pico, SerialPort
+from hardware.uart import UartLog
+from utils.runner import HERE, load_setup, parse_arguments, parser
+from framework.context import TestContext
+from tests.basic.test_c64_default import Test as DiagnosticCase, build_guest
 
 
 RUN_ID = 0x1234ABCD
@@ -106,8 +112,8 @@ class VideoPreviewTests(unittest.TestCase):
                 "url": "http://192.0.2.1/", "pico_uart": "/dev/unused",
                 "video": "/dev/v4l/by-id/HDMI capture",
             }))
-            with patch("preview_video.shutil.which", return_value="/usr/bin/ffplay"), \
-                    patch("preview_video.subprocess.run") as run, \
+            with patch("utils.preview_video.shutil.which", return_value="/usr/bin/ffplay"), \
+                    patch("utils.preview_video.subprocess.run") as run, \
                     patch("sys.stdout", new_callable=io.StringIO), \
                     patch.object(Api, "request", side_effect=AssertionError("HTTP accessed")):
                 run.return_value.returncode = 0
@@ -118,9 +124,9 @@ class VideoPreviewTests(unittest.TestCase):
             self.assertIn("mjpeg", command)
 
     def test_override_without_config_and_exit_status(self):
-        with patch("preview_video.shutil.which", return_value="/usr/bin/ffplay"), \
-                patch("preview_video.subprocess.run") as run, \
-                patch("preview_video.load_setup", side_effect=AssertionError("config accessed")), \
+        with patch("utils.preview_video.shutil.which", return_value="/usr/bin/ffplay"), \
+                patch("utils.preview_video.subprocess.run") as run, \
+                patch("utils.preview_video.load_setup", side_effect=AssertionError("config accessed")), \
                 patch("sys.stdout", new_callable=io.StringIO):
             run.return_value.returncode = 3
             self.assertEqual(preview_main(["--video", "/dev/video4"]), 3)
@@ -131,14 +137,14 @@ class VideoPreviewTests(unittest.TestCase):
                          ["--video", "/dev/video4"],
                          ["--video", "relative"]):
                 with self.subTest(argv=argv), \
-                        patch("preview_video.shutil.which", return_value=None), \
-                        patch("preview_video.subprocess.run") as run, \
+                        patch("utils.preview_video.shutil.which", return_value=None), \
+                        patch("utils.preview_video.subprocess.run") as run, \
                         patch("sys.stderr", new_callable=io.StringIO):
                     self.assertEqual(preview_main(argv), 1)
                     run.assert_not_called()
 
     def test_preview_launcher_resolves_its_directory_without_opening_device(self):
-        script = Path(__file__).with_name("run_video_test")
+        script = ROOT.joinpath("run_video_test")
         completed = subprocess.run(
             [str(script.resolve()), "--help"], cwd=script.parent / "mock_hid",
             capture_output=True, text=True, timeout=10,
@@ -149,7 +155,7 @@ class VideoPreviewTests(unittest.TestCase):
 
 class SetupTests(unittest.TestCase):
     def setUp(self):
-        discovery = patch("configure_test_setup.discover_devices", return_value=[])
+        discovery = patch("utils.configure_test_setup.discover_devices", return_value=[])
         self.discovery = discovery.start()
         self.addCleanup(discovery.stop)
 
@@ -279,6 +285,18 @@ class SetupTests(unittest.TestCase):
             self.assertEqual(launcher.stat().st_mode & 0o777, 0o755)
             self.assertFalse((root / "local").exists())
 
+    def test_existing_generated_launcher_can_be_upgraded_without_changing_settings(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            settings = self.settings()
+            (root / "test_setup.json").write_text(json.dumps(settings))
+            (root / "run_tests").write_text(LEGACY_LAUNCHER)
+            with patch("builtins.input", side_effect=[""] * 9), \
+                    patch("sys.stdout", new_callable=io.StringIO):
+                self.assertTrue(configure(root))
+            self.assertEqual((root / "run_tests").read_text(), LAUNCHER)
+            self.assertEqual(load_setup(root / "test_setup.json"), settings)
+
     def test_reconfigure_reuses_values_and_can_clear_optional_fields(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -339,7 +357,7 @@ class SetupTests(unittest.TestCase):
             with patch("builtins.input", side_effect=[""] * 9), \
                     patch("sys.stdout", new_callable=io.StringIO):
                 configure(root)
-            (root / "run_smoke.py").write_text(
+            (root / "run_smoke").write_text(
                 "import json,sys\nprint(json.dumps(sys.argv[1:]))\nsys.exit(7)\n",
                 encoding="utf-8",
             )
@@ -359,7 +377,7 @@ class SetupTests(unittest.TestCase):
             config = root / "setup.json"
             config.write_text(json.dumps(self.settings()), encoding="utf-8")
             completed = subprocess.run([
-                sys.executable, str(Path(__file__).with_name("run_smoke.py")),
+                sys.executable, str(ROOT.joinpath("run_smoke")),
                 "--config", str(config), "--results", str(root / "results"),
             ], capture_output=True, text=True, timeout=10)
             self.assertEqual(completed.returncode, 0, completed.stderr)
@@ -371,6 +389,31 @@ class SetupTests(unittest.TestCase):
                 self.assertEqual(report["status"], "PREPARED")
                 self.assertEqual(report["url"], self.settings()["url"])
                 self.assertEqual(report["pico_uart"], self.settings()["pico_uart"])
+
+    def test_root_launchers_work_from_an_unrelated_directory(self):
+        with tempfile.TemporaryDirectory(prefix="test rig ") as directory:
+            for command in ("configure_test_setup", "run_smoke", "run_video_test"):
+                with self.subTest(command=command):
+                    completed = subprocess.run(
+                        [str(ROOT / command), "--help"], cwd=directory,
+                        capture_output=True, text=True, timeout=10)
+                    self.assertEqual(completed.returncode, 0, completed.stderr)
+                    self.assertIn("usage:", completed.stdout)
+            config = Path(directory) / "test setup.json"
+            config.write_text(json.dumps(self.settings()))
+            completed = subprocess.run(
+                [str(ROOT / "run_tests"), "--config", str(config), "--list"],
+                cwd=directory, capture_output=True, text=True, timeout=10)
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertEqual(len(completed.stdout.splitlines()), 7)
+            self.assertIn("c64-default", completed.stdout)
+
+    def test_moved_utilities_keep_root_paths_and_the_supplied_launcher_matches(self):
+        self.assertEqual(HERE, ROOT)
+        args = parser().parse_args([])
+        self.assertEqual(args.manifest, ROOT / "suite_profiles.json")
+        self.assertEqual(args.results, ROOT / "results")
+        self.assertEqual((ROOT / "run_tests").read_text(), LAUNCHER)
 
 
 def render_marker(data: bytes, bounds=(64, 72, 384, 252)) -> bytes:
@@ -599,11 +642,11 @@ class CaptureTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             args = parser().parse_args([])
             report = {"run_id": f"{RUN_ID:08x}"}
-            with patch("run_smoke.Api", side_effect=AssertionError("HTTP accessed")), \
-                    patch("run_smoke.SerialPort", side_effect=AssertionError("UART accessed")), \
-                    patch("run_smoke.Capture", side_effect=AssertionError("capture accessed")), \
+            with patch("tests.basic.test_c64_default.Api", side_effect=AssertionError("HTTP accessed")), \
+                    patch("tests.basic.test_c64_default.SerialPort", side_effect=AssertionError("UART accessed")), \
+                    patch("tests.basic.test_c64_default.Capture", side_effect=AssertionError("capture accessed")), \
                     ExitStack() as stack:
-                execute(args, Path(directory), report, stack)
+                DiagnosticCase().invoke(TestContext(args, Path(directory), report, stack=stack))
             self.assertEqual(report["status"], "PREPARED")
 
 
@@ -701,16 +744,17 @@ class RunnerTests(unittest.TestCase):
                 "run_id": f"{RUN_ID:08x}", "checks": [], "cleanup_errors": [],
                 "status": "FAIL",
             }
-            with patch("run_smoke.Api", FakeApi), patch("run_smoke.Pico", FakePico), \
-                    patch("run_smoke.SerialPort", FakePort), \
-                    patch("run_smoke.Capture", FakeCapture), \
-                    patch("run_smoke.time.monotonic", tick), \
-                    patch("run_smoke.time.sleep"), ExitStack() as stack:
+            with patch("tests.basic.test_c64_default.Api", FakeApi), \
+                    patch("tests.basic.test_c64_default.Pico", FakePico), \
+                    patch("tests.basic.test_c64_default.SerialPort", FakePort), \
+                    patch("tests.basic.test_c64_default.Capture", FakeCapture), \
+                    patch("tests.basic.test_c64_default.time.monotonic", tick), \
+                    patch("tests.basic.test_c64_default.time.sleep"), ExitStack() as stack:
                 if failure:
                     with self.assertRaises(RuntimeError):
-                        execute(args, Path(directory), report, stack)
+                        DiagnosticCase().invoke(TestContext(args, Path(directory), report, stack=stack))
                 else:
-                    execute(args, Path(directory), report, stack)
+                    DiagnosticCase().invoke(TestContext(args, Path(directory), report, stack=stack))
         self.assertEqual(commands[-1], "RELEASE")
         return report, requests, commands
 

@@ -126,13 +126,15 @@ Install the supplied profiles (or create your own), install the
 and perform the video/IP check in the [README](../README.md).
 Close the preview and all serial terminals.
 
-Each manifest case is a test named `<machine>-boot-typing`:
+The files in [tests/boot/](../tests/boot/) define tests named `<machine>-boot-typing`;
+the manifest maps their machines to installed profiles:
 `c64-boot-typing`, `c128-boot-typing`, `vic20-boot-typing`,
 `plus4-boot-typing`, `plus4emu-boot-typing` and `pet-boot-typing`. From this
 directory:
 
 ```sh
 ./run_tests                            # every test, including c64-default
+./run_tests boot                       # all boot/typing tests, no diagnostic
 ./run_tests --list                     # test names and descriptions
 ./run_tests pet-boot-typing            # only the named tests (any number)
 ```
@@ -158,7 +160,7 @@ until that call completes or times out.
 To check the manifest without opening hardware:
 
 ```sh
-python3 tools/automated_release_testing/run_smoke.py
+./tools/automated_release_testing/run_smoke
 ```
 
 This records PREPARED, not PASS. It does not check whether profiles actually
@@ -180,7 +182,7 @@ the actual manifest is always recorded in the result.
 Direct execution is also available with the normal setup options:
 
 ```sh
-python3 tools/automated_release_testing/run_smoke.py \
+./tools/automated_release_testing/run_smoke \
   --config tools/automated_release_testing/test_setup.json --execute
 ```
 

@@ -2,7 +2,6 @@
 /mock_hid/build-native/
 /results/
 /local/
-/run_tests
 /test_setup.json
 __pycache__/
 *.py[cod]

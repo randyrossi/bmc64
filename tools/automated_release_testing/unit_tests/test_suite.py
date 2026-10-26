@@ -33,23 +33,40 @@ import threading
 import time
 import unittest
 from pathlib import Path
+ROOT = Path(__file__).resolve().parents[1]
 from unittest.mock import patch
 from urllib.error import HTTPError, URLError
 
-from diagnostic import HEIGHT, WIDTH
-from harness import TestFailure, WaitProgress, classify_uart, frame_health, print_summary
-from profile_suite import (
-    CAPTURE_SIZES, DEFAULT_CAPTURE_SIZE, MACHINES, SuiteCapture, main, read_manifest,
-    recover_api, resolve_profiles, rotate, screen_bounds, switch_profile, type_token,
-    wait_pico, wait_screen,
+from tests.basic.diagnostic import HEIGHT, WIDTH
+from framework.errors import TestFailure
+from framework.reporting import WaitProgress, print_summary
+from support.evidence import frame_health
+from support.uart_findings import classify_uart
+from support.constants import DEFAULT_CAPTURE_SIZE, MACHINES
+from framework.discovery import discover
+from hardware.capture import SuiteCapture, Capture as HardwareCapture, capture_command
+from hardware.pico import Pico
+from hardware.uart import UartLog
+from support.evidence import failure_evidence
+from support.keyboard import type_token, wait_pico
+from support.profiles import (
+    read_manifest, recover_api, resolve_profiles, switch_profile, profile_values,
 )
-from run_smoke import UartLog, capture_command, failure_evidence, parser
-from screen_text import LAYOUTS, LETTERS, Font, Geometry, Reading, ScreenText
+from tests.boot.screen import screen_bounds, wait_screen
+from tests.boot.session import main, rotate
+from utils.runner import parser
+from tests.boot.screen_text import LETTERS, Font, Geometry, Reading, ScreenText
+
+
+BOOT_TESTS = {test.machine: test for test in discover() if test.suite == "boot"}
+LAYOUTS = {machine: test.layout for machine, test in BOOT_TESTS.items()}
+CAPTURE_SIZES = {machine: test.capture_size for machine, test in BOOT_TESTS.items()
+                 if test.capture_size != DEFAULT_CAPTURE_SIZE}
 
 
 SIZE = WIDTH * HEIGHT * 3
 FRAME = bytes([70]) * (SIZE // 2) + bytes([180]) * (SIZE // 2)
-SCREENS = Path(__file__).with_name("test_data") / "screens"
+SCREENS = ROOT.joinpath("test_data") / "screens"
 ROM_ROOT = os.environ.get("BMC64_ROM_ROOT")
 
 # Border, background and ink as seen through the capture for each default screen.
@@ -154,7 +171,7 @@ class Clock:
 class ProgressTests(unittest.TestCase):
     def test_wait_updates_are_flushed_throttled_and_show_elapsed_time(self):
         clock = Clock()
-        with patch("harness.time.monotonic", clock.monotonic), \
+        with patch("framework.reporting.time.monotonic", clock.monotonic), \
                 patch("builtins.print") as output:
             updates = WaitProgress("C64 typing", 60)
             updates.update("no match")
@@ -242,9 +259,9 @@ class Profiles:
 
 class ManifestTests(unittest.TestCase):
     def test_supplied_profiles_match_suite_and_only_override_network(self):
-        from profile_suite import profile_values
-        root = Path(__file__).with_name("sdcard_profiles") / "profiles"
-        cases = read_manifest(Path(__file__).with_name("suite_profiles.json"))
+        from support.profiles import profile_values
+        root = ROOT.joinpath("sdcard_profiles") / "profiles"
+        cases = read_manifest(ROOT.joinpath("suite_profiles.json"))
         self.assertEqual(len(list(root.iterdir())), 6)
         api = Profiles()
         api.files = {}
@@ -276,7 +293,7 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(len(resolve_profiles(api, cases)), 6)
 
     def test_default_manifest_has_all_six_distinct_cores(self):
-        cases = read_manifest(Path(__file__).with_name("suite_profiles.json"))
+        cases = read_manifest(ROOT.joinpath("suite_profiles.json"))
         self.assertEqual({case["machine"] for case in cases}, set(MACHINES))
         resolved = resolve_profiles(Profiles("-de56af"), cases)
         self.assertEqual(len(resolved), 6)
@@ -339,8 +356,8 @@ class SwitchTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as directory, \
                 patch.object(api, "get_json", side_effect=response), \
-                patch("profile_suite.time.monotonic", clock.monotonic), \
-                patch("profile_suite.time.sleep", clock.sleep):
+                patch("tests.boot.screen.time.monotonic", clock.monotonic), \
+                patch("tests.boot.screen.time.sleep", clock.sleep):
             return switch_profile(api, {"id": "c64-test", "machine": "C64"},
                                   2, lambda: None, Path(directory))
 
@@ -376,8 +393,8 @@ class SwitchTests(unittest.TestCase):
                     return reply
 
                 with patch.object(api, "request", side_effect=request) as requests, \
-                        patch("profile_suite.time.monotonic", clock.monotonic), \
-                        patch("profile_suite.time.sleep", clock.sleep), \
+                        patch("tests.boot.screen.time.monotonic", clock.monotonic), \
+                        patch("tests.boot.screen.time.sleep", clock.sleep), \
                         patch("sys.stderr", new_callable=io.StringIO):
                     current = switch_profile(
                         api, {"id": "c64-test", "machine": "C64"}, 2, lambda: None,
@@ -435,8 +452,8 @@ class SwitchTests(unittest.TestCase):
                     raise TimeoutError("timed out waiting for start reply")
 
                 with patch.object(api, "request", side_effect=request), \
-                        patch("profile_suite.time.monotonic", clock.monotonic), \
-                        patch("profile_suite.time.sleep", clock.sleep), \
+                        patch("tests.boot.screen.time.monotonic", clock.monotonic), \
+                        patch("tests.boot.screen.time.sleep", clock.sleep), \
                         patch("sys.stderr", new_callable=io.StringIO):
                     if applied:
                         value = switch_profile(api, {"id": "c64-test", "machine": "C64"},
@@ -465,8 +482,8 @@ class SwitchTests(unittest.TestCase):
         clock = Clock()
         api = Profiles()
         api.outage = True
-        with patch("profile_suite.time.monotonic", clock.monotonic), \
-                patch("profile_suite.time.sleep", clock.sleep), \
+        with patch("tests.boot.screen.time.monotonic", clock.monotonic), \
+                patch("tests.boot.screen.time.sleep", clock.sleep), \
                 self.assertRaisesRegex(TestFailure, "HTTP control did not return"):
             recover_api(api, 1)
 
@@ -481,7 +498,7 @@ class ScreenTextTests(unittest.TestCase):
         rng = random.Random(5)
         for machine in MACHINES:
             width, height = CAPTURE_SIZES.get(machine, DEFAULT_CAPTURE_SIZE)
-            reader = ScreenText(machine, cls.font, width, height)
+            reader = ScreenText(machine, cls.font, width, height, LAYOUTS[machine])
             token = "".join(rng.choice(reader.alphabet) for _ in range(8))
             frame = render(machine, cls.font, boot_lines(machine, token), width=width,
                            height=height, cursor=(8, LAYOUTS[machine].input_row))
@@ -593,7 +610,7 @@ class ScreenTextTests(unittest.TestCase):
         data = bytearray(synthetic_font())
         data[q:q + 8] = data[o:o + 8]
         data[q + 7] = 0x10
-        reader = ScreenText("C64", Font(bytes(data), 0), 1280, 720)
+        reader = ScreenText("C64", Font(bytes(data), 0), 1280, 720, LAYOUTS["C64"])
         self.assertNotIn("O", reader.alphabet)
         self.assertNotIn("Q", reader.alphabet)
         self.assertGreaterEqual(len(reader.alphabet), 8)
@@ -605,7 +622,7 @@ class ScreenTextTests(unittest.TestCase):
             row, bit = free[letter - 1]
             data[letter * 8 + row] |= 0x80 >> bit
         with self.assertRaisesRegex(TestFailure, "too few distinct letters"):
-            ScreenText("C64", Font(bytes(data), 0), 1280, 720)
+            ScreenText("C64", Font(bytes(data), 0), 1280, 720, LAYOUTS["C64"])
 
     def test_reading_reports_frame_level_failures(self):
         self.assertTrue(Reading(None, unreadable=True).unreadable)
@@ -623,7 +640,7 @@ class RecordedScreenTests(unittest.TestCase):
     def reader(self, machine, width, height):
         layout = LAYOUTS[machine]
         data = Path(ROM_ROOT, layout.font_path.lstrip("/")).read_bytes()
-        return ScreenText(machine, Font(data, layout.font_offset), width, height)
+        return ScreenText(machine, Font(data, layout.font_offset), width, height, layout)
 
     def read(self, machine, name, typed=""):
         rgb, width, height = read_png(SCREENS / name)
@@ -679,8 +696,8 @@ class WaitScreenTests(unittest.TestCase):
     def wait(self, capture, timeout, read, after=None, reopen=None):
         clock = capture.clock
         with tempfile.TemporaryDirectory() as directory, \
-                patch("profile_suite.time.monotonic", clock.monotonic), \
-                patch("profile_suite.time.sleep", clock.sleep), \
+                patch("tests.boot.screen.time.monotonic", clock.monotonic), \
+                patch("tests.boot.screen.time.sleep", clock.sleep), \
                 patch("sys.stdout", new_callable=io.StringIO):
             result = wait_screen(capture, capture.check, timeout,
                                  clock.now if after is None else after, Path(directory),
@@ -769,7 +786,7 @@ class SuiteCaptureTests(unittest.TestCase):
     def test_each_open_records_a_new_segment_at_the_cores_native_size(self):
         self.Recorder.instances = []
         with tempfile.TemporaryDirectory() as directory, \
-                patch("profile_suite.Capture", self.Recorder), \
+                patch("hardware.capture.Capture", self.Recorder), \
                 patch("sys.stdout", new_callable=io.StringIO):
             capture = SuiteCapture("/video", "audio")
             capture.open(Path(directory) / "fails", (64, 36), lambda: None, 1, "C64")
@@ -799,9 +816,9 @@ class SuiteCaptureTests(unittest.TestCase):
 
         clock = Clock()
         with tempfile.TemporaryDirectory() as directory, \
-                patch("profile_suite.Capture", Black), \
-                patch("profile_suite.time.monotonic", clock.monotonic), \
-                patch("profile_suite.time.sleep", clock.sleep), \
+                patch("hardware.capture.Capture", Black), \
+                patch("tests.boot.screen.time.monotonic", clock.monotonic), \
+                patch("tests.boot.screen.time.sleep", clock.sleep), \
                 patch("sys.stdout", new_callable=io.StringIO), \
                 self.assertRaises(TestFailure) as failure:
             SuiteCapture("/video", "audio").open(Path(directory), (8, 8), lambda: None, 1, "C64")
@@ -866,7 +883,7 @@ class RotationTests(unittest.TestCase):
     def simulate(self, failure=None):
         clock, api = Clock(), Profiles("-de56af")
         capture = Capture(clock)
-        cases = resolve_profiles(api, read_manifest(Path(__file__).with_name("suite_profiles.json")))
+        cases = resolve_profiles(api, read_manifest(ROOT.joinpath("suite_profiles.json")))
         commands = []
         if failure == "font":
             api.fonts[LAYOUTS["C128"].font_path] = b"\0" * 100
@@ -887,8 +904,9 @@ class RotationTests(unittest.TestCase):
         class Reader:
             alphabet = "ADJKLMPQ"
 
-            def __init__(self, machine, font, width, height):
+            def __init__(self, machine, font, width, height, layout):
                 test.assertEqual((width, height), CAPTURE_SIZES.get(machine, DEFAULT_CAPTURE_SIZE))
+                test.assertEqual(layout, LAYOUTS[machine])
 
             def read(self, rgb, bounds, typed=""):
                 if failure == "outage" and api.current["machine"] == "C128":
@@ -923,10 +941,10 @@ class RotationTests(unittest.TestCase):
 
         report = {"cases": []}
         with tempfile.TemporaryDirectory() as directory, \
-                patch("profile_suite.time.monotonic", clock.monotonic), \
-                patch("profile_suite.time.sleep", clock.sleep), \
-                patch("profile_suite.ScreenText", Reader), \
-                patch("profile_suite.screen_bounds", return_value=(0, 0, 1, 1)), \
+                patch("tests.boot.screen.time.monotonic", clock.monotonic), \
+                patch("tests.boot.screen.time.sleep", clock.sleep), \
+                patch("tests.boot.base.ScreenText", Reader), \
+                patch("tests.boot.base.screen_bounds", return_value=(0, 0, 1, 1)), \
                 patch.object(api, "request", side_effect=request), \
                 patch.object(api, "get_json", side_effect=get_json), \
                 patch("sys.stdout", new_callable=io.StringIO) as terminal, \
@@ -1007,16 +1025,16 @@ class RotationTests(unittest.TestCase):
         for reply, expected in (("OK protocol=1 mounted=0", "pico_unavailable"),
                                 ("OK protocol=2 mounted=1", "pico_protocol")):
             with self.subTest(reply=reply), \
-                    patch("profile_suite.time.monotonic", clock.monotonic), \
-                    patch("profile_suite.time.sleep", clock.sleep), \
-                    patch("profile_suite.Pico") as pico:
+                    patch("tests.boot.screen.time.monotonic", clock.monotonic), \
+                    patch("tests.boot.screen.time.sleep", clock.sleep), \
+                    patch("support.keyboard.Pico") as pico:
                 pico.command.return_value = reply
                 with self.assertRaises(TestFailure) as failure:
                     wait_pico(pico, lambda: None, 1)
                 self.assertEqual(failure.exception.category, expected)
 
     def test_typing_is_bounded_and_never_sends_return(self):
-        with patch("profile_suite.time.sleep"), patch("profile_suite.Pico") as pico:
+        with patch("tests.boot.screen.time.sleep"), patch("support.keyboard.Pico") as pico:
             type_token(pico, "ACEFKMNT", lambda: None)
             commands = [call.args[0] for call in pico.command.call_args_list]
             self.assertEqual(len(commands), 16)
@@ -1026,14 +1044,14 @@ class RotationTests(unittest.TestCase):
                 type_token(pico, "PRINT123", lambda: None)
 
     def manifest(self):
-        return read_manifest(Path(__file__).with_name("suite_profiles.json"))
+        return read_manifest(ROOT.joinpath("suite_profiles.json"))
 
     def test_offline_preparation_cannot_open_hardware(self):
         with tempfile.TemporaryDirectory() as directory:
             args = parser().parse_args(["--results", directory])
-            with patch("profile_suite.Api", side_effect=AssertionError("HTTP")), \
-                    patch("profile_suite.SerialPort", side_effect=AssertionError("UART")), \
-                    patch("profile_suite.Capture", side_effect=AssertionError("capture")), \
+            with patch("tests.boot.session.Api", side_effect=AssertionError("HTTP")), \
+                    patch("tests.boot.session.SerialPort", side_effect=AssertionError("UART")), \
+                    patch("hardware.capture.Capture", side_effect=AssertionError("capture")), \
                     patch("sys.stdout", new_callable=io.StringIO):
                 report = main(args, self.manifest())
             self.assertEqual(report["status"], "PREPARED")
@@ -1047,7 +1065,7 @@ class RotationTests(unittest.TestCase):
                     "--execute", "--url", "http://192.0.2.1", "--pico-uart", "/unused",
                     "--results", directory,
                 ])
-                with patch("profile_suite.execute", side_effect=error), \
+                with patch("tests.boot.session.execute", side_effect=error), \
                         patch("sys.stdout", new_callable=io.StringIO), \
                         patch("sys.stderr", new_callable=io.StringIO):
                     report = main(args, self.manifest())
@@ -1057,7 +1075,7 @@ class RotationTests(unittest.TestCase):
                                  [machine.lower() + "-boot-typing" for machine in MACHINES])
 
     def cli(self, *arguments):
-        return subprocess.run(["python3", str(Path(__file__).with_name("run_smoke.py")), *arguments],
+        return subprocess.run(["python3", str(ROOT.joinpath("run_smoke")), *arguments],
                               capture_output=True, text=True, timeout=30)
 
     def test_list_names_every_test(self):
@@ -1104,6 +1122,20 @@ class RotationTests(unittest.TestCase):
                              ["pet-boot-typing", "c64-default"])
             completed = self.cli("--manifest", str(manifest), "c64-boot-typing")
             self.assertEqual(completed.returncode, 2)
+
+    def test_folder_suites_select_and_deduplicate_existing_tests(self):
+        for selectors, expected, reports in (
+            (["boot"], [machine.lower() + "-boot-typing" for machine in MACHINES], 1),
+            (["basic"], ["c64-default"], 1),
+            (["boot", "c64-boot-typing", "basic"], [
+                machine.lower() + "-boot-typing" for machine in MACHINES] + ["c64-default"], 2),
+        ):
+            with self.subTest(selectors=selectors), tempfile.TemporaryDirectory() as directory:
+                completed = self.cli(*selectors, "--results", directory)
+                self.assertEqual(completed.returncode, 0, completed.stderr)
+                summary = completed.stdout[completed.stdout.index("Summary:"):].splitlines()
+                self.assertEqual([line.split()[1] for line in summary[1:1 + len(expected)]], expected)
+                self.assertEqual(len(list(Path(directory).glob("*/result.json"))), reports)
 
     def test_summary_lists_every_test_last_with_failure_reasons(self):
         results = [

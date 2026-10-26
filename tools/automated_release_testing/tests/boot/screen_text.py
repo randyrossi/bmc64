@@ -23,58 +23,9 @@ run time. No ROM data is stored in this repository.
 """
 
 from dataclasses import dataclass, field
-from harness import TestFailure
+from framework.errors import TestFailure
+from .layouts import Layout
 
-
-@dataclass(frozen=True)
-class Layout:
-    columns: int
-    rows: int
-    input_row: int
-    channel: int
-    inverted: bool
-    font_path: str
-    font_offset: int
-    screen: tuple[tuple[int, str], ...]
-
-
-LAYOUTS = {
-    "C64": Layout(40, 25, 6, 0, False, "/C64/chargen", 0, (
-        (1, "    **** COMMODORE 64 BASIC V2 ****"),
-        (3, " 64K RAM SYSTEM  38911 BASIC BYTES FREE"),
-        (5, "READY."),
-    )),
-    "C128": Layout(40, 25, 7, 1, False, "/C128/chargen", 0, (
-        (1, " COMMODORE BASIC V7.0 122365 BYTES FREE"),
-        (2, "   (C)1986 COMMODORE ELECTRONICS, LTD."),
-        (3, "         (C)1977 MICROSOFT CORP."),
-        (4, "           ALL RIGHTS RESERVED"),
-        (6, "READY."),
-    )),
-    "VIC20": Layout(22, 23, 5, 0, True, "/VIC20/chargen", 0, (
-        (0, "**** CBM BASIC V2 ****"),
-        (2, "3583 BYTES FREE"),
-        (4, "READY."),
-    )),
-    # TED machines keep the character set inside the kernal ROM at $D000.
-    "Plus4": Layout(40, 25, 5, 0, True, "/PLUS4/kernal", 0x1000, (
-        (1, " COMMODORE BASIC V3.5 60671 BYTES FREE"),
-        (2, " 3-PLUS-1 ON KEY F1"),
-        (4, "READY."),
-    )),
-    "Plus4Emu": Layout(40, 25, 4, 0, True, "/PLUS4EMU/p4kernal.rom", 0x1000, (
-        (1, " COMMODORE BASIC V3.5 60671 BYTES FREE"),
-        (3, "READY."),
-    )),
-    # The test profile selects a 40-column 3016: 80-column glyphs are only two
-    # capture pixels wide, finer than the capture device resolves. Its
-    # graphics keyboard editor boots with the upper case set (first 1K).
-    "Pet": Layout(40, 25, 5, 1, False, "/PET/chargen", 0, (
-        (0, "### COMMODORE BASIC ###"),
-        (2, " 15359 BYTES FREE"),
-        (4, "READY."),
-    )),
-}
 
 LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 MAX_GLYPH_ERROR = 3
@@ -166,9 +117,9 @@ class Reading:
 
 
 class ScreenText:
-    def __init__(self, machine: str, font: Font, width: int, height: int):
+    def __init__(self, machine: str, font: Font, width: int, height: int, layout: Layout):
         self.machine = machine
-        self.layout = LAYOUTS[machine]
+        self.layout = layout
         self.font = font
         self.width, self.height = width, height
         self.expected = {row: text for row, text in self.layout.screen}
@@ -204,13 +155,12 @@ class ScreenText:
         return plane
 
     def nominal(self, bounds: tuple[int, int, int, int]) -> Geometry:
-        if self.machine == "Pet":
-            # The PET has no pane edge. Its 40-column PAL HDMI entry scales a
-            # 376x270 frame to the full output height and centres the 320x200
-            # text area in it.
-            pixel = self.height / 270
-            bounds = (round((self.width - 320 * pixel) / 2), round((self.height - 200 * pixel) / 2),
-                      round(320 * pixel), round(200 * pixel))
+        if self.layout.native_frame_height is not None:
+            pixel = self.height / self.layout.native_frame_height
+            text_width, text_height = self.layout.columns * 8, self.layout.rows * 8
+            bounds = (round((self.width - text_width * pixel) / 2),
+                      round((self.height - text_height * pixel) / 2),
+                      round(text_width * pixel), round(text_height * pixel))
         left, top, width, height = bounds
         return Geometry(left, top, width / (self.layout.columns * 8),
                         height / (self.layout.rows * 8))

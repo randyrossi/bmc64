@@ -61,7 +61,7 @@ Close serial terminals, FFplay, OBS and other capture users before testing.
 
 1. Wire and qualify the [hardware](hardware.md), and flash the supplied
    [Pico firmware](../mock_hid/bin/mock_hid.uf2).
-2. Run `configure_test_setup.py` as described in the [README](../README.md).
+2. Run `./configure_test_setup` as described in the [README](../README.md).
 3. Use `run_video_test`, starting it before Pi power-on if necessary.
    Confirm a visible BMC64 display with the configured IP address, then
    close the preview.

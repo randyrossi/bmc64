@@ -24,7 +24,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from run_smoke import HERE, load_setup, parser
+from utils.runner import HERE, load_setup, parser
 
 
 def preview_command(video: str) -> list[str]:
@@ -61,7 +61,7 @@ def main(argv: list[str] | None = None) -> int:
         return 130
     except (OSError, ValueError, RuntimeError) as error:
         print(f"Video preview failed: {error}", file=sys.stderr)
-        print("Run configure_test_setup.py or supply --video /dev/VIDEO_DEVICE.",
+        print("Run ./configure_test_setup or supply --video /dev/VIDEO_DEVICE.",
               file=sys.stderr)
         return 1
 

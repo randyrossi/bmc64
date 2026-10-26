@@ -30,8 +30,10 @@ Python uses only the standard library; no pip packages are required.
 From the repository root:
 
 ```sh
-python3 tools/automated_release_testing/run_smoke.py
-python3 -m unittest discover -s tools/automated_release_testing -p test_smoke.py -v
+./tools/automated_release_testing/run_smoke
+python3 -m unittest discover \
+  -s tools/automated_release_testing/unit_tests \
+  -t tools/automated_release_testing -p test_smoke.py -v
 ```
 
 Without `--execute`, the script only generates a BASIC listing, tokenised
@@ -43,7 +45,7 @@ capture device or HTTP connection. `PREPARED` is not a hardware PASS.
 From the repository root:
 
 ```sh
-python3 tools/automated_release_testing/configure_test_setup.py
+./tools/automated_release_testing/configure_test_setup
 ```
 
 The wizard asks for:
@@ -120,12 +122,12 @@ Additional runner options override saved values for that invocation:
 To use the saved settings for offline generation instead of executing:
 
 ```sh
-python3 tools/automated_release_testing/run_smoke.py \
+./tools/automated_release_testing/run_smoke \
   --config tools/automated_release_testing/test_setup.json
 ```
 
 Loading a configuration does not itself enable hardware access. Only the
-generated launcher or an explicit `--execute` does so. Configuration files
+`run_tests` launcher or an explicit `--execute` does so. Configuration files
 cannot contain `execute`, arbitrary command-line options or a saved PIN.
 
 ## Direct command-line use
@@ -133,7 +135,7 @@ cannot contain `execute`, arbitrary command-line options or a saved PIN.
 From the repository root, replace the URL and adapter placeholders:
 
 ```sh
-python3 tools/automated_release_testing/run_smoke.py \
+./tools/automated_release_testing/run_smoke \
   --execute \
   --url http://BMC64_HOST/ \
   --pico-uart /dev/serial/by-id/YOUR_PICO_UART \
@@ -178,7 +180,7 @@ run creates a separate result and does not erase the first failure.
 
 ## Guest marker
 
-`diagnostic.py` generates C64 BASIC V2 and invokes the installed `petcat`
+[`tests/basic/test_c64_default.py`](../tests/basic/test_c64_default.py) defines the diagnostic, generates C64 BASIC V2 and invokes the installed `petcat`
 tokeniser. The guest uses screen RAM at $0400, colour RAM at $D800 and SID
 voice 1. It is not suitable for C128/other cores or relocated screen memory.
 

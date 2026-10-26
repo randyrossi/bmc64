@@ -7,7 +7,9 @@ and HDMI video/audio capture.
 ## Tests available
 
 Every test has a name. `run_tests` runs all of them; `run_tests --list` lists
-them and `run_tests TEST...` runs only the named tests.
+them and `run_tests TEST...` runs only the named tests. Folder names select
+suites: `run_tests boot` runs the six boot/typing tests, and `run_tests basic`
+runs the C64 diagnostic. Existing individual names are unchanged.
 
 **Profile boot/typing tests** (`c64-boot-typing` ... `pet-boot-typing`):
 
@@ -71,14 +73,14 @@ No Pico SDK is needed to use the supplied fixture firmware.
 3. From the repository root, configure your rig once:
 
    ```sh
-   python3 tools/automated_release_testing/configure_test_setup.py
+   ./tools/automated_release_testing/configure_test_setup
    ```
 
    Answer the prompts for the BMC64 IP address, UARTs, capture devices and setup
    notes. UARTs and video devices have numbered selection menus; manual paths
    are also accepted. Enter keeps a displayed default. Configuration lists
    devices without opening them; it saves ignored `test_setup.json`
-   and creates an ignored, executable `run_tests` launcher.
+   beside the supplied executable launchers. `run_tests` uses that saved setup.
 
 4. **Before running the tests, start the video preview.** Close other viewers
    and run:
@@ -110,6 +112,8 @@ To see the test names, or run just some of them:
 
 ```sh
 ./run_tests --list
+./run_tests boot
+./run_tests basic
 ./run_tests pet-boot-typing
 ./run_tests c64-boot-typing c64-default
 ```
@@ -140,11 +144,13 @@ restore the starting machine or power-cycle a failed target.
 For offline diagnostic generation without any hardware access:
 
 ```sh
-python3 tools/automated_release_testing/run_smoke.py
+./tools/automated_release_testing/run_smoke
 ```
 
 That reports `PREPARED`, not a hardware PASS. Direct command-line use of
-`run_smoke.py` remains available; hardware access requires `--execute`.
+`run_smoke` is the direct CLI; hardware access requires `--execute`.
+The root contains only small launchers; their Python implementations live in
+`utils/`. All launchers work from any working directory.
 
 See the [smoke-test guide](docs/smoke-test.md) for options, assertions,
 troubleshooting, evidence and cleanup. The diagnostic remains running on the
@@ -155,7 +161,9 @@ target and its uniquely named PRG remains on the SD card after the test.
 From the repository root:
 
 ```sh
-python3 -m unittest discover -s tools/automated_release_testing -p 'test_*.py' -v
+python3 -m unittest discover \
+  -s tools/automated_release_testing/unit_tests \
+  -t tools/automated_release_testing -p 'test_*.py' -v
 make -C tools/automated_release_testing/mock_hid test all
 ```
 
@@ -167,22 +175,32 @@ card, otherwise they are skipped.
 
 ```sh
 BMC64_ROM_ROOT=/path/to/sdcard-copy python3 -m unittest discover \
-  -s tools/automated_release_testing -p 'test_*.py'
+  -s tools/automated_release_testing/unit_tests \
+  -t tools/automated_release_testing -p 'test_*.py'
 ```
+
+Hardware tests live in `tests/<suite>/test_*.py`. Offline regression tests
+live separately in `unit_tests/`; the hardware runner never discovers them.
+See [writing and organising tests](docs/test-framework.md) for the lifecycle,
+suite base classes and cleanup contract.
 
 ## Files and generated outputs
 
 | Location | Contents |
 | --- | --- |
-| `run_smoke.py` | PC orchestration and hardware access |
-| `profile_suite.py`, `suite_profiles.json` | Profile boot/typing suite and default case manifest |
-| `screen_text.py` | Reads boot screens and typed text against each core's character ROM |
+| `run_tests` | Execute tests with the saved rig setup |
+| `run_smoke` | Direct CLI; offline preparation unless `--execute` is supplied |
+| `configure_test_setup` | Interactive local rig configuration |
+| `run_video_test` | Manual FFplay video check using saved settings |
+| `utils/` | Python implementations of the CLI, setup wizard and video preview |
+| `framework/` | Discovery, before/run/after lifecycle, cleanup and reporting |
+| `hardware/` | HTTP client, UART/Pico access and FFmpeg capture |
+| `support/` | Cross-suite profiles, keyboard operations, evidence and constants |
+| `tests/boot/` | Six explicit test flows with local machine expectations; shared boot operations and ROM screen reader |
+| `tests/basic/` | Full C64 diagnostic test and guest program; signal decoding/audio helpers |
+| `suite_profiles.json` | Machine-to-profile mapping; not a test registration file |
 | `sdcard_profiles/profiles/` | Six ready-to-copy default PAL HDMI profiles with Wi-Fi/Web UI enabled |
-| `harness.py` | Capture evidence and conservative UART classification |
-| `configure_test_setup.py` | Interactive local setup and launcher generation |
-| `run_video_test`, `preview_video.py` | Manual FFplay video check using saved settings |
-| `diagnostic.py` | Guest generation, visual decoding and audio analysis |
-| `test_smoke.py`, `test_suite.py` | Offline tests |
+| `unit_tests/` | Offline framework, screen, transport and diagnostic regression tests |
 | `test_data/screens/` | Recorded 1280x720 boot, typed, corrupt and downscaled-PET frames |
 | `docs/` | Hardware setup and operating instructions |
 | `mock_hid/` | Pico firmware, native client, protocol and tests |
@@ -190,8 +208,7 @@ BMC64_ROM_ROOT=/path/to/sdcard-copy python3 -m unittest discover \
 | `results/` | Ignored per-run evidence, generated PRGs and recordings |
 | `mock_hid/build/`, `mock_hid/build-native/` | Ignored build products |
 | `local/` | Ignored operator-specific notes and configuration details |
-| `run_tests` | Ignored generated launcher using the saved setup |
-| `test_setup.json` | Ignored rig settings beside the generated launcher |
+| `test_setup.json` | Ignored rig settings beside the launchers |
 
 ## Limitations
 
