@@ -1,3 +1,13 @@
 port_1=1
 port_2=0
-drive_type_8=1541
+drive_type_8=1233376
+drive_type_9=1233376
+drive_type_10=1233376
+drive_type_11=1233376
+sid_model=0
+sid_write_access=0
+sid_digiblaster=1
+ram_size=256
+drive_model_8=1
+attach_3plus1_roms=0
+rom_c2_lo=/PLUS4EMU/carts/Jack Attack.bin

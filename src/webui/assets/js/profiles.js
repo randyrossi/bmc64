@@ -27,10 +27,10 @@ import * as api from "./api.js";
 import { openEditor } from "./editor.js";
 import { filesHash } from "./files.js";
 import { toggleMenu } from "./menu.js";
-import { mainSettingsFile, setMachine } from "./machine.js";
+import { setMachine } from "./machine.js";
 import {
   MAIN_ID, PROFILE_FILES, activeWithout, baseName, cleanName,
-  settingsFile,
+  settingsFile, mainFilePath, mainSettingsPath,
   groupProfiles, idValid, machineDetail, machineLabel, parseActive,
   parseMainFile, parseProfile, withName,
 } from "./profiles_data.js";
@@ -461,19 +461,19 @@ function profileActions(p) {
   };
 }
 
-function mainActions(machine, hasMainFile) {
+// Main's file buttons: its settings and startup file ("" when it has none)
+// for the machine it last ran on, and /vice.ini.
+function mainActions(settings, mainFile) {
   const files = [];
-  const settings = mainSettingsFile();
   if (settings) {
     files.push({ label: "settings", title: "Edit " + settings,
                  run: () => editFile(settings) });
   }
   files.push({ label: "vice.ini", title: "Edit /vice.ini",
                run: () => editFile("/vice.ini") });
-  if (hasMainFile) {
-    const file = "/profiles/main/" + machine.toLowerCase() + ".txt";
-    files.push({ label: "startup", title: "Edit " + file + " (autostart and disks)",
-                 run: () => editFile(file) });
+  if (mainFile) {
+    files.push({ label: "startup", title: "Edit " + mainFile + " (autostart and disks)",
+                 run: () => editFile(mainFile) });
   }
   return { files, menu: [] };
 }
@@ -555,14 +555,16 @@ async function render() {
 
   const activeText = listing ? await readText("/profiles/active.txt") : null;
   const active = parseActive(activeText || "");
-  const mainFile = listing && machine
-    ? await readText("/profiles/main/" + machine.toLowerCase() + ".txt")
-    : null;
+  // Main's files are those of the machine Main last ran on, which needn't
+  // be the one running now.
+  const mainMachine = active.mainMachine || machine;
+  const mainPath = mainFilePath(mainMachine);
+  const mainFile = listing && mainPath ? await readText(mainPath) : null;
   const main = {
     id: MAIN_ID,
     name: "Main",
     description: "Your usual settings, on whatever machine boots",
-    machine: active.mainMachine || machine,
+    machine: mainMachine,
     ...parseMainFile(mainFile || ""),
   };
 
@@ -586,13 +588,14 @@ async function render() {
     jobs.push({ box: c.spec, machine: p.machine, disks: p.disks, vice, settings });
     return c;
   };
-  const mainSettings = mainSettingsFile();
+  const mainSettings = mainSettingsPath(mainMachine);
   const profileCardFor = (p) => card(p, profileActions(p),
     "/profiles/" + p.id + "/vice.ini",
     () => readSettings("/profiles/" + p.id, p.machine));
   // Main and the profiles without a category share the first grid.
   const first = section("");
-  first.grid.appendChild(card(main, mainActions(machine, mainFile !== null), "/vice.ini",
+  first.grid.appendChild(card(main,
+    mainActions(mainSettings, mainFile !== null ? mainPath : ""), "/vice.ini",
     () => (mainSettings ? readText(mainSettings) : Promise.resolve(null))));
   if (groups.length && !groups[0].category) {
     for (const p of groups.shift().profiles) first.grid.appendChild(profileCardFor(p));

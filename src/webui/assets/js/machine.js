@@ -25,14 +25,13 @@ import * as api from "./api.js";
 import { machineLabel } from "./profiles_data.js";
 
 // Nothing is offered until the device has answered.
-let current = { name: "", settings: "", run: new Set(), basic: "" };
+let current = { name: "", run: new Set(), basic: "" };
 
 // Takes the machine from a /api/status answer.
 export function setMachine(status) {
   const caps = (status && status.caps) || {};
   current = {
     name: (status && status.machine) || "",
-    settings: caps.settings || "",
     run: new Set((caps.run || []).map((t) => String(t).toLowerCase())),
     basic: caps.basic || "",
   };
@@ -52,9 +51,6 @@ export const machineName = () => current.name;
 
 // Name for display, e.g. "Plus/4".
 export const machineDisplayName = () => machineLabel(current.name) || "machine";
-
-// Main's usual settings file, e.g. "/settings-plus4.txt".
-export const mainSettingsFile = () => current.settings;
 
 // Whether Autostart accepts files with this extension.
 export const canRun = (ext) => current.run.has(String(ext).toLowerCase());

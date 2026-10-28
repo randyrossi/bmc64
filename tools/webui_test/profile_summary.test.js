@@ -119,6 +119,26 @@ export function runTests() {
        ["80 columns"]);
   });
 
+  test("drives: a drive_type that isn't a drive model is ignored", () => {
+    eq(summarise("Plus4", "[PLUS4]\nDrive8Type=1551\n", "drive_type_8=1233376\n")
+         .drives[0].type, "1551", "falls back to vice.ini");
+    eq(summarise("C64", null, "drive_type_9=77\n").drives[1].type, "", "then the default");
+  });
+
+  test("plus4emu: its own settings keys, not VICE's", () => {
+    const settings = "drive_type_8=1233376\ndrive_model_8=1\nram_size=256\n" +
+                     "rom_c2_lo=/PLUS4EMU/carts/Jack Attack.bin\nsid_digiblaster=1\n";
+    const s = summarise("Plus4Emu/PAL", null, settings, ["SD:/disks/Plus4/x.d64"]);
+    eq(s.drives.map((d) => [d.unit, d.type, d.disk]), [[8, "1551", "SD:/disks/Plus4/x.d64"]]);
+    eq(s.extras.map((x) => [x.key, x.value]),
+       [["RAM", "256 KB"], ["Cart", "Jack Attack"], ["SID", "Digiblaster"]]);
+    const stock = summarise("Plus4Emu", null,
+                            "drive_model_8=0\nram_size=64\nattach_3plus1_roms=1\n" +
+                            "rom_c0_lo=/PLUS4EMU/3plus1.rom\n");
+    eq(stock.drives[0].type, "1541");
+    eq(stock.extras.map((x) => [x.key, x.value]), [["ROM", "3-plus-1"]]);
+  });
+
   test("known only when a file was read", () => {
     eq(summarise("C64", null, null).known, false);
     eq(summarise("C64", "", null).known, true);
