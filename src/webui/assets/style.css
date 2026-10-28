@@ -336,6 +336,22 @@ a:hover { text-decoration: underline; }
   padding: 8px 10px;
   border-bottom: 1px solid var(--border);
 }
+/* Column headers sort the listing; the sorted one shows its direction. */
+.fb-sort-h {
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.fb-sort-h:hover, .fb-sort-h:focus-visible { color: var(--fg); }
+[aria-sort="ascending"] .fb-sort-h, [aria-sort="descending"] .fb-sort-h { color: var(--muted); }
+.fb-sort-h::after { content: attr(data-arrow); margin-left: 4px; font-size: 9px; }
+/* The phone's sort choice; on a wider screen the column headers do it. */
+.fb-sort-pick { display: none; }
 .fb-table td { padding: 8px 10px; border-bottom: 1px solid var(--border-soft); }
 .fb-table tr:hover td { background: rgba(255, 255, 255, 0.025); }
 .col-size { text-align: right; white-space: nowrap; }
@@ -514,7 +530,7 @@ body.modal-open { overflow: hidden; }
   letter-spacing: 0.6px;
   text-transform: uppercase;
 }
-.pf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
+.pf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
 .pf-card {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -555,23 +571,92 @@ body.modal-open { overflow: hidden; }
 .pf-badge.once { color: var(--amber); }
 .pf-name { font-weight: 700; font-size: 16px; overflow-wrap: anywhere; }
 .pf-desc { color: var(--muted); font-size: 13px; margin-top: -4px; }
-.pf-starts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
-.pf-starts li { display: flex; gap: 8px; min-width: 0; }
-.pf-starts .k { color: var(--dim); flex: none; width: 74px; }
-.pf-starts .v { overflow-wrap: anywhere; }
-.pf-starts .none { color: var(--dim); }
+.pf-autostart { display: flex; gap: 6px; min-width: 0; font-size: 13px; }
+.pf-autostart .k { color: var(--green); flex: none; }
+.pf-autostart .v { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-autostart.none, .pf-autostart.none .k { color: var(--dim); }
+
+/* The at-a-glance summary: drive slots, control ports and expansion chips. */
+.pf-spec { display: flex; flex-direction: column; gap: 8px; }
+.pf-drives { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: 5px; }
+.pf-drive {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-2);
+  font-size: 12px;
+  line-height: 1.3;
+}
+.pf-drive .u { color: var(--dim); font-size: 10.5px; font-weight: 600; }
+.pf-drive .t { font-weight: 700; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A disk or IEC folder in the drive: blue edge and a dot by the unit number. */
+.pf-drive.has-disk { border-color: rgba(77, 157, 255, 0.55); }
+.pf-drive.has-disk .u::after { content: " ●"; color: var(--blue); }
+.pf-drive.off { background: transparent; border-style: dashed; }
+.pf-drive.off .t { color: var(--dim); font-weight: 400; }
+.pf-rows { display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; }
+.pf-row { display: flex; gap: 8px; min-width: 0; }
+.pf-row .k { color: var(--dim); flex: none; width: 52px; }
+.pf-row .v { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-row.disk .k, .pf-row.iec .k { color: var(--blue); }
+.pf-row.none .v { color: var(--dim); }
+.pf-extras { display: flex; gap: 5px; flex-wrap: wrap; }
+.pf-x {
+  display: inline-flex;
+  gap: 5px;
+  max-width: 100%;
+  padding: 2px 8px;
+  border-radius: 7px;
+  font-size: 11.5px;
+  background: rgba(168, 85, 247, 0.12);
+  color: var(--fg);
+}
+.pf-x .k { color: var(--purple); font-weight: 700; flex: none; }
+.pf-x .v { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-x.none { background: transparent; color: var(--dim); padding-left: 0; }
+/* Cut in the middle: only the head shrinks. The tail keeps its size (letting
+   it shrink at all, even by a fraction of a pixel, shows an ellipsis) unless
+   it is wider than the whole space by itself. */
+.pf-card .mid { display: flex; min-width: 0; overflow: hidden; }
+.pf-card .mid .head, .pf-card .mid .tail { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: pre; }
+.pf-card .mid .head { flex: 0 1 auto; }
+.pf-card .mid .tail { flex: none; max-width: 100%; }
+.pf-spec-note { color: var(--dim); font-size: 11.5px; }
+.pf-skel { height: 14px; border-radius: 7px; background: var(--panel-2); animation: pf-pulse 1.2s ease-in-out infinite; }
+.pf-drives.pf-skel { height: 48px; }
+.pf-skel.short { width: 60%; }
+@keyframes pf-pulse { 50% { opacity: 0.45; } }
+
 .pf-actions {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 8px;
   margin-top: auto;
   padding-top: 10px;
   border-top: 1px solid var(--border-soft);
 }
-.pf-actions .btn { padding: 4px 10px; font-size: 12.5px; border-radius: 7px; }
-.pf-actions .pf-more { margin-left: auto; }
 .pf-start { display: flex; gap: 8px; }
-.pf-start .btn { flex: 1; padding: 8px 12px; font-weight: 600; }
+.pf-start .btn { flex: 1; padding: 7px 10px; font-weight: 600; white-space: nowrap; }
+/* The profile's files: see-through buttons, quieter than the start buttons. */
+/* One line with ⋯ at the end; on a narrow card the file buttons shrink
+   rather than push ⋯ onto a line of its own. */
+.pf-files { display: flex; align-items: center; gap: 5px; }
+.pf-files .pf-file {
+  background: transparent;
+  color: var(--muted);
+  padding: 4px 8px;
+  font-size: 12.5px;
+  border-radius: 7px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pf-files .pf-file:hover { color: var(--fg); }
+.pf-files .pf-more { flex: none; margin-left: auto; padding: 4px 10px; font-size: 15px; line-height: 1; border-radius: 7px; }
 
 .pf-restart {
   background: var(--panel);
@@ -625,6 +710,7 @@ body.modal-open { overflow: hidden; }
   /* buttons on the first row, the path on its own row below them */
   .fb-bar .crumbs { order: 1; flex: 1 0 100%; }
   .fb-table .col-size, .fb-table .col-mod { display: none; }
+  .fb-sort-pick { display: inline-block; }
   .fmeta { display: block; }
   .fb-table td { padding: 10px 6px; }
   .act-btn { padding: 7px 12px; }

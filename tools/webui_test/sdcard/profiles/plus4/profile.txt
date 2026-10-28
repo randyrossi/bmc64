@@ -1,0 +1,3 @@
+name=Plus/4 with 1551
+machine=Plus4/PAL/HDMI
+disk_8=SD:/disks/Plus4/Tutti Frutti.d64

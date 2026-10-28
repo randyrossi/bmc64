@@ -1,0 +1,2 @@
+name=Older profile (settings.txt)
+machine=C128/NTSC/HDMI

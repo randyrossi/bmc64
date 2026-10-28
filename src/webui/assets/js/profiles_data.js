@@ -234,6 +234,21 @@ export function settingsFile(machine) {
   return SETTINGS_MACHINES.includes(name) ? "settings-" + name + ".txt" : "settings.txt";
 }
 
+// Main's settings for a machine, in the SD card's top folder as each machine
+// keeps them (webui_machine.cpp): the C64's is /settings.txt. "" for an
+// unknown machine.
+export function mainSettingsPath(machine) {
+  const name = String(machine || "").split("/")[0].trim().toLowerCase();
+  if (name === "c64") return "/settings.txt";
+  return SETTINGS_MACHINES.includes(name) ? "/settings-" + name + ".txt" : "";
+}
+
+// Main's startup actions for a machine: /profiles/main/<machine>.txt.
+export function mainFilePath(machine) {
+  const name = String(machine || "").split("/")[0].trim().toLowerCase();
+  return name ? "/profiles/" + MAIN_ID + "/" + name + ".txt" : "";
+}
+
 // The files the menu's Delete removes from a profile's folder (and the
 // backups the web UI's editor makes). Anything else in the folder is kept,
 // and then so is the folder.

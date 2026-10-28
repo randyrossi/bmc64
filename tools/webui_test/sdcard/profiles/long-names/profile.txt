@@ -1,0 +1,6 @@
+name=A profile with a long name X
+machine=C64/PAL/HDMI/VICE 720p@50Hz
+description=Checks that long names and paths are cut off neatly
+autostart=SD:/disks/C64/Some Really Long Demo Name by Some Group (2024)(Party Version).d64
+disk_8=SD:/disks/C64/Some Really Long Demo Name by Some Group (2024)(Party Version).d64
+disk_9=SD:/disks/C64/Some Really Long Demo Name by Some Group (2024)(Side B).d64

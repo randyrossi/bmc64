@@ -1,0 +1,4 @@
+name=gdos64
+machine=C64/PAL/HDMI
+autostart=SD:/disks/C64/gdos64-260426.d81
+disk_8=SD:/disks/C64/TestDisk1581.d81

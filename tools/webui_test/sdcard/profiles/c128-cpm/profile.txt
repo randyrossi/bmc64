@@ -1,0 +1,5 @@
+name=CP/M 3.0
+machine=C128/PAL/HDMI
+description=80 columns, boots CP/M from drive 8
+disk_8=SD:/disks/C128/CPM 3.0 System.d71
+disk_9=SD:/disks/C128/CPM Utilities.d81

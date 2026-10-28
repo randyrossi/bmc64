@@ -79,6 +79,12 @@ void WebUiFsMkdir(CSocket *socket, const char *query);
 // answered if the new name is taken (a change of case only is allowed).
 void WebUiFsRename(CSocket *socket, const char *query);
 
+// Whether a path on the card (as "/profiles/geos/vice.ini") is one of the
+// profile files the editor may change: /profiles/active.txt, Main's
+// /profiles/main/<machine>.txt, and a profile's profile.txt, vice.ini and
+// settings files. GET /api/profiles/files sends these.
+bool WebUiFsIsProfileFile(const char *clean);
+
 // POST /api/fs/autostart?vol=SD&path=/dir/file.d64  -> queue the file to
 // be autostarted on the emulator (disk/tape image or PRG), like the
 // menu's Autostart. Answers 202 once queued; the outcome isn't reported.

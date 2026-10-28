@@ -150,12 +150,25 @@
           <button class="btn" id="fb-newbasic">Create BASIC PRG…</button>
           <label class="btn" id="fb-upload-btn">Upload…<input type="file" id="fb-upload" multiple hidden></label>
           <button class="btn" id="fb-refresh" title="Refresh">⟳</button>
+          <select class="btn fb-sort-pick" id="fb-sort" aria-label="Sort by">
+            <option value="name:1">Name A–Z</option>
+            <option value="name:-1">Name Z–A</option>
+            <option value="mtime:-1">Newest first</option>
+            <option value="mtime:1">Oldest first</option>
+            <option value="size:-1">Largest first</option>
+            <option value="size:1">Smallest first</option>
+          </select>
         </div>
         <p class="fb-note">Uploads write to this folder on the SD card. Don't overwrite a disk image the emulator currently has attached.</p>
         <p class="msg" id="fb-status"></p>
         <div class="fb-scroll">
           <table class="fb-table">
-            <thead><tr><th>Name</th><th class="col-size">Size</th><th class="col-mod">Modified</th><th></th></tr></thead>
+            <thead><tr>
+              <th><button class="fb-sort-h" data-sort="name">Name</button></th>
+              <th class="col-size"><button class="fb-sort-h" data-sort="size">Size</button></th>
+              <th class="col-mod"><button class="fb-sort-h" data-sort="mtime">Modified</button></th>
+              <th></th>
+            </tr></thead>
             <tbody id="fb-rows"></tbody>
           </table>
         </div>

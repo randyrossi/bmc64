@@ -27,8 +27,8 @@
 
 import {
   activeWithout, cleanName, groupProfiles, idValid, machineDetail, machineLabel,
-  parseActive, parseKv, parseMainFile, parseProfile, PROFILE_FILES, settingsFile,
-  withName,
+  mainFilePath, mainSettingsPath, parseActive, parseKv, parseMainFile, parseProfile,
+  PROFILE_FILES, settingsFile, withName,
 } from "../../src/webui/assets/js/profiles_data.js";
 
 export function runTests() {
@@ -165,6 +165,18 @@ export function runTests() {
       eq(PROFILE_FILES.includes(f), true, f);
     }
     eq(PROFILE_FILES.includes("my-notes.txt"), false);
+  });
+
+  test("Main's files for the machine it last ran on", () => {
+    // As webui_machine.cpp and main_file_path() in src/profiles name them.
+    eq(mainSettingsPath("C64/PAL/HDMI/VICE 720p@50Hz"), "/settings.txt");
+    eq(mainSettingsPath("C128"), "/settings-c128.txt");
+    eq(mainSettingsPath("Plus4Emu/PAL"), "/settings-plus4emu.txt");
+    eq(mainSettingsPath("Pet"), "/settings-pet.txt");
+    eq(mainSettingsPath(""), "");
+    eq(mainFilePath("C64/PAL/HDMI"), "/profiles/main/c64.txt");
+    eq(mainFilePath("Plus4Emu"), "/profiles/main/plus4emu.txt");
+    eq(mainFilePath(""), "");
   });
 
   return { passed, failed, log };

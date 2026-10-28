@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Runs the web UI's JavaScript tests (BASIC tokeniser, profile files).
+// Runs the web UI's JavaScript tests (BASIC tokeniser, profile files,
+// profile summaries).
 //
 //     node tools/webui_test/run_tests.mjs
 //
@@ -16,7 +17,8 @@ if (major < 22 || (major === 22 && minor < 12)) {
 
 let passed = 0;
 let failed = 0;
-for (const file of ["./basic.test.js", "./profiles.test.js"]) {
+for (const file of ["./basic.test.js", "./profiles.test.js",
+                   "./profile_summary.test.js"]) {
   const result = (await import(file)).runTests();
   for (const line of result.log) console.log(line);
   passed += result.passed;

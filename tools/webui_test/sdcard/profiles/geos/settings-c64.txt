@@ -1,0 +1,6 @@
+port_1=9
+port_2=1
+drive_type_8=1542
+drive_type_9=1571
+drive_type_10=1581
+drive_type_11=4844
