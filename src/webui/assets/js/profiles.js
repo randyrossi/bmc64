@@ -29,14 +29,18 @@ import { filesHash } from "./files.js";
 import { toggleMenu } from "./menu.js";
 import { mainSettingsFile, setMachine } from "./machine.js";
 import {
-  FIRST_DRIVE, MAIN_ID, PROFILE_FILES, activeWithout, baseName, cleanName,
+  MAIN_ID, PROFILE_FILES, activeWithout, baseName, cleanName,
   settingsFile,
   groupProfiles, idValid, machineDetail, machineLabel, parseActive,
   parseMainFile, parseProfile, withName,
 } from "./profiles_data.js";
+import { summarise } from "./profile_summary.js";
 
 let pfVol = "SD";
 let loading = false;
+// Bumped on every render, so summaries still loading for an older render
+// are dropped.
+let generation = 0;
 // What the page last showed: running, power-on and Start-once ids, and the
 // machine running now ("C64", "C128", "VIC20", "Plus4", "Plus4Emu" or
 // "Pet").
@@ -82,24 +86,125 @@ function machineChip(machine) {
   return el("span", "pf-chip " + kind, machineLabel(machine) || "Any machine");
 }
 
-// What the profile does at power-on: its autostart and startup disks.
-function startsList(p) {
-  const ul = el("ul", "pf-starts");
-  const add = (key, path) => {
-    const li = el("li");
-    li.appendChild(el("span", "k", key));
-    const v = el("span", "v", baseName(path));
-    v.title = path;
-    li.appendChild(v);
-    ul.appendChild(li);
+// Text that is cut in the middle when it doesn't fit: the start gives way
+// first, so the end stays readable. The end is the last 14 characters of a
+// file name (a disk's side and extension), or from `tailFrom` on.
+function midCut(text, title, tailFrom) {
+  const v = el("span", "v mid");
+  const at = tailFrom === undefined ? text.length - 14 : tailFrom;
+  if (at > 0) v.appendChild(el("span", "head", text.slice(0, at)));
+  v.appendChild(el("span", "tail", at > 0 ? text.slice(at) : text));
+  v.title = title || text;
+  return v;
+}
+
+// A folder path cut in the middle, keeping its last folder whole:
+// "/prg/games/" is "/prg" then "/games/".
+function midCutPath(path) {
+  return midCut(path, path, path.replace(/\/+$/, "").lastIndexOf("/"));
+}
+
+// What the profile runs at power-on.
+function autostartLine(p) {
+  const line = el("div", "pf-autostart" + (p.autostart ? "" : " none"));
+  line.appendChild(el("span", "k", "▶"));
+  line.appendChild(p.autostart ? midCut(baseName(p.autostart), p.autostart)
+                               : el("span", "v", "No autostart"));
+  return line;
+}
+
+// Placeholder for the summary until its files are read.
+function specBox() {
+  const box = el("div", "pf-spec loading");
+  box.appendChild(el("div", "pf-drives pf-skel"));
+  box.appendChild(el("div", "pf-skel short"));
+  return box;
+}
+
+// One slot per drive, always shown, so cards line up for comparing. The
+// slot only says what the drive is; its disk is listed below at full width.
+function driveSlot(d) {
+  const off = !d.type && !d.iec;
+  const slot = el("div", "pf-drive" + (off ? " off" : "") +
+                         (d.disk || d.iec ? " has-disk" : ""));
+  slot.appendChild(el("span", "u", String(d.unit)));
+  slot.appendChild(el("span", "t", d.type || (d.iec ? "IEC" : "—")));
+  slot.title = "Drive " + d.unit + ": " + (off ? "off" : d.type || "IEC file system") +
+    (d.disk ? "\nDisk: " + d.disk : "") +
+    (d.iec ? "\nIEC folder: " + (d.iecDir || "(default)") : "");
+  return slot;
+}
+
+// Label / value rows: the drives' disks and IEC folders, then the ports.
+function specRows(s) {
+  const rows = el("div", "pf-rows");
+  const add = (key, value, kind) => {
+    const row = el("span", "pf-row" + (kind ? " " + kind : ""));
+    row.appendChild(el("span", "k", key));
+    row.appendChild(value);
+    rows.appendChild(row);
   };
-  if (p.autostart) add("Autostart", p.autostart);
-  p.disks.forEach((disk, i) => { if (disk) add("Drive " + (FIRST_DRIVE + i), disk); });
-  if (!ul.childElementCount) {
-    const li = el("li", "none", "No autostart or disks");
-    ul.appendChild(li);
+  for (const d of s.drives) {
+    if (d.disk) add("Disk " + d.unit, midCut(baseName(d.disk), d.disk), "disk");
+    if (d.iec) {
+      add("IEC " + d.unit, d.iecDir ? midCutPath(d.iecDir)
+                                    : el("span", "v", "Default folder"), "iec");
+    }
   }
-  return ul;
+  for (const port of s.ports) {
+    add("Port " + port.port, el("span", "v", port.device), port.none ? "none" : "");
+  }
+  return rows;
+}
+
+function renderSpec(box, s) {
+  box.className = "pf-spec";
+  box.textContent = "";
+  const drives = el("div", "pf-drives");
+  drives.style.setProperty("--n", s.drives.length);
+  s.drives.forEach((d) => drives.appendChild(driveSlot(d)));
+  box.appendChild(drives);
+
+  const rows = specRows(s);
+  if (rows.childElementCount) box.appendChild(rows);
+
+  const extras = el("div", "pf-extras");
+  for (const x of s.extras) {
+    const chip = el("span", "pf-x");
+    chip.appendChild(el("span", "k", x.key));
+    chip.appendChild(midCut(x.value, x.title));
+    extras.appendChild(chip);
+  }
+  if (!s.extras.length) extras.appendChild(el("span", "pf-x none", "No expansions"));
+  box.appendChild(extras);
+
+  if (!s.known) {
+    box.appendChild(el("div", "pf-spec-note",
+                       "No settings saved yet; showing the defaults."));
+  }
+}
+
+// The settings file of a profile folder; an older profile has settings.txt
+// until it next starts.
+async function readSettings(dir, machine) {
+  const own = await readText(dir + "/" + settingsFile(machine));
+  return own !== null ? own : readText(dir + "/settings.txt");
+}
+
+// Fills in the cards' summaries one profile at a time, after the cards are
+// on screen, so the page doesn't wait on every profile's files.
+async function fillSpecs(jobs, gen) {
+  for (const job of jobs) {
+    let texts;
+    try {
+      texts = await Promise.all([readText(job.vice), job.settings()]);
+    } catch (e) {
+      if (gen === generation) setMsg("Could not read the profiles — " + e.message, true);
+      return;
+    }
+    if (gen !== generation) return;
+    renderSpec(job.box, summarise(job.machine, texts[0], texts[1], job.disks));
+  }
 }
 
 function profileCard(p, state, actions) {
@@ -120,26 +225,32 @@ function profileCard(p, state, actions) {
 
   card.appendChild(el("div", "pf-name", p.name));
   if (p.description) card.appendChild(el("div", "pf-desc", p.description));
-  card.appendChild(startsList(p));
-  if (p.id !== state.running) card.appendChild(startButtons(p));
+  card.appendChild(autostartLine(p));
+  card.spec = specBox();
+  card.appendChild(card.spec);
 
   const bar = el("div", "pf-actions");
-  for (const action of actions.buttons) {
-    const b = el("button", "btn", action.label);
+  if (p.id !== state.running) bar.appendChild(startButtons(p));
+  // The profile's files as quiet links, always one click away; the rarer
+  // actions behind ⋯ at the end of the same line.
+  const files = el("div", "pf-files");
+  for (const file of actions.files) {
+    const b = el("button", "btn pf-file", "✎ " + file.label);
     b.type = "button";
-    b.title = action.title || action.label;
-    b.addEventListener("click", action.run);
-    bar.appendChild(b);
+    b.title = file.title;
+    b.addEventListener("click", file.run);
+    files.appendChild(b);
   }
   if (actions.menu.length) {
-    const b = el("button", "btn act-btn pf-more", "Actions ▾");
+    const b = el("button", "btn act-btn pf-more", "⋯");
     b.type = "button";
-    b.title = "Actions for " + p.name;
+    b.title = "More for " + p.name;
     b.setAttribute("aria-haspopup", "menu");
     b.setAttribute("aria-expanded", "false");
     b.addEventListener("click", () => toggleMenu(b, actions.menu));
-    bar.appendChild(b);
+    files.appendChild(b);
   }
+  bar.appendChild(files);
   card.appendChild(bar);
   return card;
 }
@@ -158,6 +269,7 @@ async function editSettings(dir, machine) {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// The profile's choice ("start" in profile.txt) is the main button.
 // The profile's choice ("start" in profile.txt) is the main button.
 function startButtons(p) {
   const row = el("div", "pf-start");
@@ -325,12 +437,12 @@ async function deleteProfile(p) {
     ? " Its folder has other files in it, so the folder was kept." : ""));
 }
 
-// The card's file buttons, and the items of its Actions menu.
+// The items of the card's Actions menu: its files first.
 function profileActions(p) {
   const dir = "/profiles/" + p.id;
   return {
-    buttons: [
-      { label: "profile.txt", title: "Edit " + dir + "/profile.txt",
+    files: [
+      { label: "profile", title: "Edit " + dir + "/profile.txt",
         run: () => editFile(dir + "/profile.txt") },
       { label: "settings", title: "Edit the profile's BMC64 settings for the " +
           (machineLabel(p.machine) || "machine"),
@@ -350,20 +462,20 @@ function profileActions(p) {
 }
 
 function mainActions(machine, hasMainFile) {
-  const actions = [];
+  const files = [];
   const settings = mainSettingsFile();
   if (settings) {
-    actions.push({ label: baseName(settings), title: "Edit " + settings,
-                   run: () => editFile(settings) });
+    files.push({ label: "settings", title: "Edit " + settings,
+                 run: () => editFile(settings) });
   }
-  actions.push({ label: "vice.ini", title: "Edit /vice.ini",
-                 run: () => editFile("/vice.ini") });
+  files.push({ label: "vice.ini", title: "Edit /vice.ini",
+               run: () => editFile("/vice.ini") });
   if (hasMainFile) {
     const file = "/profiles/main/" + machine.toLowerCase() + ".txt";
-    actions.push({ label: "main/" + baseName(file), title: "Edit " + file,
-                   run: () => editFile(file) });
+    files.push({ label: "startup", title: "Edit " + file + " (autostart and disks)",
+                 run: () => editFile(file) });
   }
-  return { buttons: actions, menu: [] };
+  return { files, menu: [] };
 }
 
 function tile(key, value, kind) {
@@ -466,23 +578,33 @@ async function render() {
 
   const list = $("pf-list");
   const groups = groupProfiles(profiles);
+  // Summaries to read once the cards are shown: Main's from the machine's
+  // own vice.ini and settings, a profile's from its folder.
+  const jobs = [];
+  const card = (p, actions, vice, settings) => {
+    const c = profileCard(p, state, actions);
+    jobs.push({ box: c.spec, machine: p.machine, disks: p.disks, vice, settings });
+    return c;
+  };
+  const mainSettings = mainSettingsFile();
+  const profileCardFor = (p) => card(p, profileActions(p),
+    "/profiles/" + p.id + "/vice.ini",
+    () => readSettings("/profiles/" + p.id, p.machine));
   // Main and the profiles without a category share the first grid.
   const first = section("");
-  first.grid.appendChild(profileCard(main, state, mainActions(machine, mainFile !== null)));
+  first.grid.appendChild(card(main, mainActions(machine, mainFile !== null), "/vice.ini",
+    () => (mainSettings ? readText(mainSettings) : Promise.resolve(null))));
   if (groups.length && !groups[0].category) {
-    for (const p of groups.shift().profiles) {
-      first.grid.appendChild(profileCard(p, state, profileActions(p)));
-    }
+    for (const p of groups.shift().profiles) first.grid.appendChild(profileCardFor(p));
   }
   list.appendChild(first.frag);
   for (const group of groups) {
     const sec = section(group.category);
-    for (const p of group.profiles) {
-      sec.grid.appendChild(profileCard(p, state, profileActions(p)));
-    }
+    for (const p of group.profiles) sec.grid.appendChild(profileCardFor(p));
     list.appendChild(sec.frag);
   }
   renderSummary(state, names);
+  fillSpecs(jobs, ++generation);
 
   if (!profiles.length) {
     setMsg("No profiles yet. Make one on the BMC64 menu: Profiles → New " +

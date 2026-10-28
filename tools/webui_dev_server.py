@@ -31,6 +31,9 @@ without a Raspberry Pi.
     python3 tools/webui_dev_server.py --no-watch # disable live reload
     python3 tools/webui_dev_server.py --running geos  # pretend a profile runs
 
+    # A pretend SD card with a profile for every machine (Profiles page):
+    python3 tools/webui_dev_server.py --root tools/webui_test/sdcard --running geos
+
 With live reload on (default) the browser refreshes whenever a file in
 src/webui/assets/ changes, so you can edit and watch side by side.
 
