@@ -1,3 +1,9 @@
+## 5.4.5 (pre-release)
+  * Web UI Profiles page shows each profile's setup at a glance: drives and their disks or IEC folders, control ports, and expansions such as REU, GeoRAM, cartridge, Kernal, SID and 40/80 columns #416
+    * Profile files open from buttons on each card; Rename, Delete and Open folder are under ⋯
+    * The page loads every profile's files in one request
+  * Web UI file browser sorts by Name, Size or Modified (newest first) from the column headers, or a Sort choice on a phone #411
+
 ## 5.4.4 (pre-release)
   * Fix a freeze after attaching or autostarting cartridges around 15-20 times. #414
   * Fix a small memory leak each time a flash cartridge (EasyFlash, Retro Replay, GMod2, etc.) is detached.
