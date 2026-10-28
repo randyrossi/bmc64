@@ -1,0 +1,3 @@
+port_1=1
+port_2=0
+drive_type_8=1541

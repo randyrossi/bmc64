@@ -1,0 +1,3 @@
+name=EasyFlash Games
+machine=C64/NTSC/HDMI
+start=once

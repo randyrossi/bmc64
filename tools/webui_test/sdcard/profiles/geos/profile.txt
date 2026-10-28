@@ -1,0 +1,8 @@
+name=GEOS 2.0
+machine=C64/PAL/HDMI
+description=Desktop with mouse, GeoRAM and four drives
+autostart=SD:/disks/C64/GEOS 2.0 Boot.d64
+disk_8=SD:/disks/C64/GEOS 2.0 Boot.d64
+disk_9=SD:/disks/C64/GEOS Apps.d71
+disk_10=SD:/disks/C64/GEOS Fonts and Documents.d81
+disk_11=SD:/disks/C64/GEOS Work.dhd

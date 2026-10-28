@@ -1,0 +1,4 @@
+name=PET 8032
+machine=PET/PAL/HDMI
+disk_8=SD:/disks/PET/WordPro 4 Plus.d80
+disk_9=SD:/disks/PET/Data.d82

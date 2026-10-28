@@ -1,0 +1,3 @@
+profile=gdos64
+once=c128-cpm
+main_machine=C64/PAL/HDMI

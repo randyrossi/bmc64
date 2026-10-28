@@ -1,0 +1,3 @@
+name=Not started yet
+machine=C64
+description=No vice.ini or settings yet

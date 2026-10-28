@@ -1,0 +1,4 @@
+name=Plus/4 (plus4emu)
+machine=Plus4Emu/PAL/HDMI
+autostart=SD:/disks/Plus4/Pets Rescue.d64
+disk_8=SD:/disks/Plus4/Pets Rescue.d64

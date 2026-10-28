@@ -1,0 +1,4 @@
+name=VIC-20 +35K
+machine=VIC20/PAL/HDMI
+autostart=SD:/disks/VIC20/Omega Race.d64
+disk_8=SD:/disks/VIC20/Omega Race.d64
