@@ -184,20 +184,14 @@ function renderSpec(box, s) {
   }
 }
 
-// The settings file of a profile folder; an older profile has settings.txt
-// until it next starts.
-async function readSettings(dir, machine) {
-  const own = await readText(dir + "/" + settingsFile(machine));
-  return own !== null ? own : readText(dir + "/settings.txt");
-}
-
-// Fills in the cards' summaries one profile at a time, after the cards are
-// on screen, so the page doesn't wait on every profile's files.
+// Fills in the cards' summaries once the cards are on screen. Each job's
+// read() gives its [vice.ini, settings] texts: straight away for a
+// profile, whose files came with the page, or once Main's are downloaded.
 async function fillSpecs(jobs, gen) {
   for (const job of jobs) {
     let texts;
     try {
-      texts = await Promise.all([readText(job.vice), job.settings()]);
+      texts = await job.read();
     } catch (e) {
       if (gen === generation) setMsg("Could not read the profiles — " + e.message, true);
       return;
@@ -526,40 +520,33 @@ async function render() {
   if (status) setMachine(status);
   const machine = (status && status.machine) || "";
 
-  let listing = null;
-  try {
-    listing = await api.listDir("/profiles");
-  } catch (e) {
-    if (e.status === 401) throw e;
-  }
-  if (!listing) {
-    // No /profiles yet; the root listing still says which volume to use.
-    try {
-      pfVol = (await api.listDir("/")).vol || pfVol;
-    } catch (e) {
-      if (e.status === 401) throw e;
-    }
-  } else if (listing.vol) {
-    pfVol = listing.vol;
-  }
+  // Every profile file in one request (webui_profiles.h). The card is FAT,
+  // so a file's name is matched whatever its case.
+  const batch = await api.getProfileFiles();
+  pfVol = batch.vol || pfVol;
+  const files = new Map(Object.entries(batch.files || {})
+    .map(([path, text]) => [path.toLowerCase(), text]));
+  const fileText = (path) => {
+    const text = files.get(path.toLowerCase());
+    return text === undefined ? null : text;
+  };
 
   // Profiles in folders with a valid id and a valid profile.txt, as the
   // menu lists them.
   const profiles = [];
-  for (const entry of (listing && listing.entries) || []) {
-    if (!entry.dir || !idValid(entry.name) || entry.name === MAIN_ID) continue;
-    const text = await readText("/profiles/" + entry.name + "/profile.txt");
-    const p = text === null ? null : parseProfile(entry.name, text);
+  for (const id of batch.ids || []) {
+    if (!idValid(id) || id === MAIN_ID) continue;
+    const text = fileText("/profiles/" + id + "/profile.txt");
+    const p = text === null ? null : parseProfile(id, text);
     if (p) profiles.push(p);
   }
 
-  const activeText = listing ? await readText("/profiles/active.txt") : null;
-  const active = parseActive(activeText || "");
+  const active = parseActive(fileText("/profiles/active.txt") || "");
   // Main's files are those of the machine Main last ran on, which needn't
   // be the one running now.
   const mainMachine = active.mainMachine || machine;
   const mainPath = mainFilePath(mainMachine);
-  const mainFile = listing && mainPath ? await readText(mainPath) : null;
+  const mainFile = mainPath ? fileText(mainPath) : null;
   const main = {
     id: MAIN_ID,
     name: "Main",
@@ -580,23 +567,31 @@ async function render() {
 
   const list = $("pf-list");
   const groups = groupProfiles(profiles);
-  // Summaries to read once the cards are shown: Main's from the machine's
-  // own vice.ini and settings, a profile's from its folder.
+  // Summaries filled in once the cards are shown: a profile's from the
+  // files that came with the page, Main's from the top of the card (its
+  // vice.ini and the settings of the machine it last ran on), downloaded.
   const jobs = [];
-  const card = (p, actions, vice, settings) => {
+  const card = (p, actions, read) => {
     const c = profileCard(p, state, actions);
-    jobs.push({ box: c.spec, machine: p.machine, disks: p.disks, vice, settings });
+    jobs.push({ box: c.spec, machine: p.machine, disks: p.disks, read });
     return c;
   };
   const mainSettings = mainSettingsPath(mainMachine);
-  const profileCardFor = (p) => card(p, profileActions(p),
-    "/profiles/" + p.id + "/vice.ini",
-    () => readSettings("/profiles/" + p.id, p.machine));
+  // An older profile keeps its settings in settings.txt until it next starts.
+  const profileCardFor = (p) => {
+    const dir = "/profiles/" + p.id;
+    const settings = fileText(dir + "/" + settingsFile(p.machine));
+    return card(p, profileActions(p), () => [
+      fileText(dir + "/vice.ini"),
+      settings !== null ? settings : fileText(dir + "/settings.txt"),
+    ]);
+  };
   // Main and the profiles without a category share the first grid.
   const first = section("");
   first.grid.appendChild(card(main,
-    mainActions(mainSettings, mainFile !== null ? mainPath : ""), "/vice.ini",
-    () => (mainSettings ? readText(mainSettings) : Promise.resolve(null))));
+    mainActions(mainSettings, mainFile !== null ? mainPath : ""),
+    () => Promise.all([readText("/vice.ini"),
+                       mainSettings ? readText(mainSettings) : null])));
   if (groups.length && !groups[0].category) {
     for (const p of groups.shift().profiles) first.grid.appendChild(profileCardFor(p));
   }
@@ -613,7 +608,9 @@ async function render() {
     setMsg("No profiles yet. Make one on the BMC64 menu: Profiles → New " +
            "profile from current settings.");
   } else {
-    setMsg(profiles.length + (profiles.length === 1 ? " profile" : " profiles") + ".");
+    setMsg(profiles.length + (profiles.length === 1 ? " profile" : " profiles") + "." +
+           (batch.truncated ? " There are more folders in /profiles than " +
+                              "the page can show." : ""));
   }
 }
 

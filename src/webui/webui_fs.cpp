@@ -594,6 +594,10 @@ int ListEntry(void *ctx, const sd_info *info) {
 
 }  // namespace
 
+bool WebUiFsIsProfileFile(const char *clean) {
+  return IsProfileFilePath(clean);
+}
+
 void WebUiFsVolumes(CSocket *socket) {
   const char *vol = circle_get_disk_volume();
   uint32_t total_kb = 0;

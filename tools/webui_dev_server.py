@@ -269,6 +269,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.api_fs_list(query)
         if path == "/api/fs/download":
             return self.api_fs_download(query)
+        if path == "/api/profiles/files":
+            return self.api_profiles_files()
         if path.startswith("/api/"):
             return self._send(404, "unknown mock endpoint\n")
         return self.static(path)
@@ -335,6 +337,48 @@ class Handler(BaseHTTPRequestHandler):
         sys.stderr.write("  [mock] restarting into %s%s\n"
                          % (pid, " (once)" if once else ""))
         return self._json(202, {"ok": True})
+
+    def api_profiles_files(self):
+        """Like WebUiProfileFiles (webui_profiles.cpp): every profile file's
+        text in one answer."""
+        def is_profile_file(folder, name):
+            # Same rule as IsProfileFilePath in webui_fs.cpp.
+            lower = name.lower()
+            if folder == "main":
+                return len(lower) > 4 and lower.endswith(".txt")
+            return (lower in ("profile.txt", "vice.ini", "settings.txt")
+                    or (lower.startswith("settings-") and lower.endswith(".txt")))
+
+        profiles = os.path.join(ARGS.root, "profiles")
+        folder = os.path.isdir(profiles)
+        ids, files, truncated = [], {}, False
+
+        def add(rel):
+            full = os.path.join(ARGS.root, *rel.strip("/").split("/"))
+            if os.path.isfile(full) and os.path.getsize(full) <= 64 * 1024:
+                with open(full, "rb") as fh:
+                    files[rel] = fh.read().decode("utf-8", "replace")
+
+        def add_folder(name):
+            for entry in sorted(os.listdir(os.path.join(profiles, name))):
+                if entry.isascii() and is_profile_file(name, entry):
+                    add("/profiles/%s/%s" % (name, entry))
+
+        if folder:
+            for name in sorted(os.listdir(profiles)):
+                if (os.path.isdir(os.path.join(profiles, name)) and name != "main"
+                        and re.fullmatch(r"[a-z0-9-]{1,32}", name)):
+                    if len(ids) == 256:
+                        truncated = True
+                        break
+                    ids.append(name)
+            add("/profiles/active.txt")
+            if os.path.isdir(os.path.join(profiles, "main")):
+                add_folder("main")
+            for name in ids:
+                add_folder(name)
+        self._json(200, {"vol": "SD", "folder": folder, "ids": ids,
+                         "truncated": truncated, "files": files})
 
     def api_status(self):
         if time.time() < type(self).RESTART_UNTIL:

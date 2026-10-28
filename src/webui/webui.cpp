@@ -26,7 +26,7 @@
 // POST /api/shutdown, POST /api/reset, GET /api/volumes, GET /api/fs/list, GET /api/fs/download,
 // POST /api/fs/upload, POST /api/fs/save, POST /api/fs/delete,
 // POST /api/fs/mkdir, POST /api/fs/rename, POST /api/fs/autostart,
-// POST /api/profiles/start, POST /api/webui/disable.
+// GET /api/profiles/files, POST /api/profiles/start, POST /api/webui/disable.
 //
 // When a PIN is configured, every request must carry HTTP Basic Auth
 // (Authorization: Basic base64(<user>:<pin>)); the username is ignored.
@@ -40,6 +40,7 @@
 #include "webui_fs.h"
 #include "webui_http.h"
 #include "webui_machine.h"
+#include "webui_profiles.h"
 #include "../profiles/profiles.h"
 
 #include <circle/bcmpropertytags.h>
@@ -494,6 +495,11 @@ boolean HandleConnection(CSocket *socket) {
 
   if (is_get && strcmp(target, "/api/fs/download") == 0) {
     WebUiFsDownload(socket, query);
+    return FALSE;
+  }
+
+  if (is_get && strcmp(target, "/api/profiles/files") == 0) {
+    WebUiProfileFiles(socket);
     return FALSE;
   }
 
