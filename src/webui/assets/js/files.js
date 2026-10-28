@@ -160,6 +160,75 @@ function actionsButton(e, path) {
 // room for the seconds).
 const shortTime = (mtime) => mtime.slice(0, 16).replace("T", " ");
 
+// ---- sorting ----
+
+// Each column's first direction: names A–Z, sizes and dates largest and
+// newest first (so new uploads come to the top).
+const SORT_FIRST_DIR = { name: 1, size: -1, mtime: -1 };
+const SORT_STORE = "bmc64.files.sort";
+
+// Remembered in this browser only; any problem with storage just means
+// sorting by name.
+function loadSort() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SORT_STORE));
+    if (s && SORT_FIRST_DIR[s.key] && (s.dir === 1 || s.dir === -1)) return s;
+  } catch (e) {
+    /* no storage */
+  }
+  return { key: "name", dir: 1 };
+}
+
+let fbSort = loadSort();
+
+function setSort(key, dir) {
+  fbSort = { key, dir };
+  try {
+    localStorage.setItem(SORT_STORE, JSON.stringify(fbSort));
+  } catch (e) {
+    /* no storage */
+  }
+  showSort();
+  if (fbListing) renderListing();
+}
+
+// A header click sorts by that column, or turns the order round if it
+// already does.
+function sortBy(key) {
+  setSort(key, fbSort.key === key ? -fbSort.dir : SORT_FIRST_DIR[key]);
+}
+
+function showSort() {
+  for (const b of document.querySelectorAll(".fb-sort-h")) {
+    const on = b.dataset.sort === fbSort.key;
+    b.parentElement.setAttribute("aria-sort",
+      on ? (fbSort.dir === 1 ? "ascending" : "descending") : "none");
+    b.dataset.arrow = on ? (fbSort.dir === 1 ? "▲" : "▼") : "";
+  }
+  $("fb-sort").value = fbSort.key + ":" + fbSort.dir;
+}
+
+// Folders stay above files; within each, by the chosen column, then by name.
+function compareEntries(a, b) {
+  if (!!a.dir !== !!b.dir) return a.dir ? -1 : 1;
+  const byName = a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+  let order = 0;
+  if (fbSort.key === "size") {
+    order = (a.size || 0) - (b.size || 0);
+  } else if (fbSort.key === "mtime") {
+    // "YYYY-MM-DDTHH:MM:SS" sorts as text; an unknown date as the oldest.
+    const x = a.mtime || "";
+    const y = b.mtime || "";
+    order = x < y ? -1 : x > y ? 1 : 0;
+  } else {
+    order = byName;
+  }
+  return order * fbSort.dir || byName;
+}
+
+// The folder last listed, kept so a new sort order needs no new listing.
+let fbListing = null;
+
 export async function loadDir(path) {
   path = normPath(path);
   $("fb-up").disabled = path === "/";
@@ -167,6 +236,7 @@ export async function loadDir(path) {
   $("fb-status").className = "msg";
   $("fb-status").textContent = "Loading…";
   $("fb-rows").textContent = "";
+  fbListing = null;
 
   let data;
   try {
@@ -182,14 +252,17 @@ export async function loadDir(path) {
   fbPath = data.path || path;
   renderCrumbs(vol, fbPath);
   $("fb-drop-dest").textContent = fbPath;
+  fbListing = { data, path };
+  renderListing();
+}
 
-  const entries = (data.entries || []).slice().sort((a, b) => {
-    if (!!a.dir !== !!b.dir) return a.dir ? -1 : 1;
-    return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
-  });
+function renderListing() {
+  const { data, path } = fbListing;
+  const entries = (data.entries || []).slice().sort(compareEntries);
   fbNames = new Set(entries.filter((e) => !e.dir).map((e) => e.name));
 
   const tbody = $("fb-rows");
+  tbody.textContent = "";
   const frag = document.createDocumentFragment();
   for (const e of entries) {
     const childPath = normPath(path + "/" + e.name);
@@ -498,6 +571,16 @@ export function initFiles() {
 
   dropTarget($("fb-drop"));
   dropTarget($("fb-card"));
+
+  for (const b of document.querySelectorAll(".fb-sort-h")) {
+    b.type = "button";
+    b.addEventListener("click", () => sortBy(b.dataset.sort));
+  }
+  $("fb-sort").addEventListener("change", (e) => {
+    const [key, dir] = e.target.value.split(":");
+    setSort(key, Number(dir));
+  });
+  showSort();
 }
 
 // Files dropped on `el` upload to the current folder. Only file drags are

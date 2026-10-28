@@ -336,6 +336,22 @@ a:hover { text-decoration: underline; }
   padding: 8px 10px;
   border-bottom: 1px solid var(--border);
 }
+/* Column headers sort the listing; the sorted one shows its direction. */
+.fb-sort-h {
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.fb-sort-h:hover, .fb-sort-h:focus-visible { color: var(--fg); }
+[aria-sort="ascending"] .fb-sort-h, [aria-sort="descending"] .fb-sort-h { color: var(--muted); }
+.fb-sort-h::after { content: attr(data-arrow); margin-left: 4px; font-size: 9px; }
+/* The phone's sort choice; on a wider screen the column headers do it. */
+.fb-sort-pick { display: none; }
 .fb-table td { padding: 8px 10px; border-bottom: 1px solid var(--border-soft); }
 .fb-table tr:hover td { background: rgba(255, 255, 255, 0.025); }
 .col-size { text-align: right; white-space: nowrap; }
@@ -694,6 +710,7 @@ body.modal-open { overflow: hidden; }
   /* buttons on the first row, the path on its own row below them */
   .fb-bar .crumbs { order: 1; flex: 1 0 100%; }
   .fb-table .col-size, .fb-table .col-mod { display: none; }
+  .fb-sort-pick { display: inline-block; }
   .fmeta { display: block; }
   .fb-table td { padding: 10px 6px; }
   .act-btn { padding: 7px 12px; }
