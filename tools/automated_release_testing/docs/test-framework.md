@@ -17,7 +17,7 @@ tests/
   boot/
     base.py                Boot-suite steps (ROM reader, screen waits, typing)
     layouts.py             Layout data type, not machine expectations
-    screen.py              Screen waits and pane detection
+    screen.py              Screen waits
     screen_text.py         ROM-font reader
     test_c64.py            C64 expectations, ROM/capture settings and test flow
     test_c128.py

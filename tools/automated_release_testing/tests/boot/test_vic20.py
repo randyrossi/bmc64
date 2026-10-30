@@ -29,6 +29,7 @@ class Test(BootTypingTest):
     layout = Layout(
         columns=22, rows=23, input_row=5, channel=0, inverted=True,
         font_path="/VIC20/chargen", font_offset=0,
+        pixel_aspect=2,
         screen=(
             (0, "**** CBM BASIC V2 ****"),
             (2, "3583 BYTES FREE"),

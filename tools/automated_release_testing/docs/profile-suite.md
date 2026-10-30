@@ -245,12 +245,15 @@ downloads the character ROM the emulator draws with:
 Only the file's size and SHA-256 are recorded in the case result; ROM data is
 never written to the repository or the evidence.
 
-For each frame, the matcher fits the character grid (position and pixel
-scale) to the known boot text, starting from the detected BASIC pane, or the
-standard viewport for PET, which has no pane. It samples the centre of every
-character pixel after suppressing dark scanlines, thresholds 65% of the way
-from background to ink (MJPEG colour bleeds into neighbouring pixels at about
-half strength) and compares each 8x8 cell with its ROM glyph. Every cell from the
+For each frame, the matcher finds the character grid. The pixel size is known
+from the core's HDMI mode (3x3 capture pixels, 6x3 for VIC-20, 4x4 for PET), so
+it only searches for the position that best fits the known boot text, up to
+one character cell from where the text should sit. It averages all the capture
+pixels of each character pixel, so scanlines cancel out however the renderer
+draws them: the Pi 3 uses two bright rows and a dark one, the Pi 4 one bright
+row between two dim ones. It thresholds 60% of the way from background to ink
+(MJPEG colour bleeds into neighbouring pixels at about half strength) and
+compares each 8x8 cell with its ROM glyph. Every cell from the
 top of the screen to two rows below the input row must match within three
 bits of 64, and every other cell must be blank. If the boot banner itself no
 longer matches in more than half its cells, the frame is reported as
@@ -363,8 +366,8 @@ missing HDMI signal. Never mark a release good from an incomplete run.
 ## Coverage limits
 
 Offline tests cover the screen matcher on screens drawn with a synthetic
-font (every core's layout, blank/solid cursor, pane-estimate errors, every
-single-letter substitution, missing/extra/reordered input, smeared, tiled
+font (every core's layout, blank/solid cursor, off-centre text, Pi 3 and
+Pi 4 style scanlines, every single-letter substitution, missing/extra/reordered input, smeared, tiled
 and noisy frames, font validation), frame freshness and capture reopening,
 stale/wrong profile rejection, failed typing, lost status replies, HTTP loss,
 continuation/blocking, capture evidence and UART classification. These need

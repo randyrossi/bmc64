@@ -23,6 +23,7 @@ run time. No ROM data is stored in this repository.
 """
 
 from dataclasses import dataclass, field
+from itertools import accumulate
 from framework.errors import TestFailure
 from .layouts import Layout
 
@@ -34,9 +35,9 @@ MIN_TYPED_MARGIN = 2
 # A wrong key must never pass as the right one: type only letters whose ROM
 # glyph differs from every other letter by at least this many bits.
 TYPING_SEPARATION = 6
-# Fraction of the way from background to ink. 0.55-0.70 read every recorded
-# frame correctly; 0.65 reads them all with zero bit errors.
-INK_THRESHOLD = 0.65
+# Fraction of the way from background to ink. 0.50-0.65 read every frame
+# recorded from a Pi 3 and a Pi 4; 0.60 leaves typed letters at most 1 bit off.
+INK_THRESHOLD = 0.60
 SOLID = (1 << 64) - 1
 
 
@@ -122,6 +123,8 @@ class ScreenText:
         self.layout = layout
         self.font = font
         self.width, self.height = width, height
+        self.pixel_height = height / layout.frame_lines
+        self.pixel_width = self.pixel_height * layout.pixel_aspect
         self.expected = {row: text for row, text in self.layout.screen}
         self.reference_cells = [(column, row, char) for row, text in self.layout.screen
                                 for column, char in enumerate(text) if char != " "]
@@ -140,42 +143,49 @@ class ScreenText:
         if len(self.alphabet) < 8:
             raise TestFailure("font_rom", f"{machine} font has too few distinct letters for typing")
 
-    def plane(self, rgb: bytes) -> list[bytes]:
-        """One colour channel, text bright, with dark scanlines suppressed."""
+    def plane(self, rgb: bytes) -> list[list[int]]:
+        """One colour channel, text bright, as the mean of the machine pixel at each point.
+
+        Each entry averages the capture pixels of one machine pixel with that
+        point as its top left. Scanlines then cancel out whatever their shape:
+        the Pi 3 draws them as two bright rows and a dark one, the Pi 4 as one
+        bright row between dim ones.
+        """
         if len(rgb) != self.width * self.height * 3:
             raise ValueError("incorrect RGB frame size")
         channel = rgb[self.layout.channel::3]
         rows = [channel[y * self.width:(y + 1) * self.width] for y in range(self.height)]
-        # Suppress scanlines before inverting dark text, or they would read as ink.
-        plane = [bytes(map(max, rows[max(0, y - 1)], rows[y], rows[min(self.height - 1, y + 1)]))
-                 for y in range(self.height)]
-        if self.layout.inverted:
-            invert = bytes(range(255, -1, -1))
-            plane = [line.translate(invert) for line in plane]
+        across, down = round(self.pixel_width), round(self.pixel_height)
+        area = across * down
+        plane = []
+        for y in range(self.height):
+            sums = list(map(sum, zip(*rows[y:y + down])))
+            running = [0, *accumulate(sums)]
+            means = [(high - low) // area for high, low in zip(running[across:], running)]
+            means += means[-1:] * (self.width - len(means))
+            if self.layout.inverted:
+                means = [255 - value for value in means]
+            plane.append(means)
         return plane
 
-    def nominal(self, bounds: tuple[int, int, int, int]) -> Geometry:
-        if self.layout.native_frame_height is not None:
-            pixel = self.height / self.layout.native_frame_height
-            text_width, text_height = self.layout.columns * 8, self.layout.rows * 8
-            bounds = (round((self.width - text_width * pixel) / 2),
-                      round((self.height - text_height * pixel) / 2),
-                      round(text_width * pixel), round(text_height * pixel))
-        left, top, width, height = bounds
-        return Geometry(left, top, width / (self.layout.columns * 8),
-                        height / (self.layout.rows * 8))
+    def nominal(self) -> Geometry:
+        """Where the text should sit in the frame; fit() searches from here."""
+        return Geometry(round((self.width - self.layout.columns * 8 * self.pixel_width) / 2),
+                        round((self.height - self.layout.rows * 8 * self.pixel_height) / 2
+                              + self.layout.text_offset * self.pixel_height),
+                        self.pixel_width, self.pixel_height)
 
-    def samples(self, plane: list[bytes], geometry: Geometry,
+    def samples(self, plane: list[list[int]], geometry: Geometry,
                 column: int, row: int) -> list[int] | None:
-        """The centre of each of the cell's 8x8 character pixels."""
+        """The mean of each of the cell's 8x8 machine pixels."""
         values = []
         for gy in range(8):
-            y = int(geometry.top + (row * 8 + gy + 0.5) * geometry.pixel_height)
+            y = int(geometry.top + (row * 8 + gy) * geometry.pixel_height)
             if not 0 <= y < self.height:
                 return None
             line = plane[y]
             for gx in range(8):
-                x = int(geometry.left + (column * 8 + gx + 0.5) * geometry.pixel_width)
+                x = int(geometry.left + (column * 8 + gx) * geometry.pixel_width)
                 if not 0 <= x < self.width:
                     return None
                 values.append(line[x])
@@ -185,7 +195,7 @@ class ScreenText:
     def bits(values: list[int], threshold: float) -> int:
         return sum(1 << index for index, value in enumerate(values) if value > threshold)
 
-    def score(self, plane: list[bytes], geometry: Geometry,
+    def score(self, plane: list[list[int]], geometry: Geometry,
               cells: list[tuple[int, int, str]]) -> tuple[int, float, int] | None:
         """Total bit errors against the font; the threshold comes from non-blank cells."""
         samples = [self.samples(plane, geometry, column, row) for column, row, _ in cells]
@@ -201,15 +211,14 @@ class ScreenText:
                      for values, (_, _, char) in zip(samples, cells))
         return errors, threshold, high - low
 
-    def fit(self, plane: list[bytes], start: Geometry) -> tuple[Geometry, float, int] | None:
-        # Pane edges are only approximate: search one character cell for the
-        # longest banner line, then refine position and scale using every known
-        # character and the blank cells beside the text.
+    def fit(self, plane: list[list[int]]) -> tuple[Geometry, float, int] | None:
+        # The pixel size is known, so only the position is searched: one
+        # character cell either way for the longest banner line, then a
+        # refinement using every known character and the blank cells beside it.
+        start = self.nominal()
         best = None
-        steps_x = int(4 * start.pixel_width) + 1
-        steps_y = int(4 * start.pixel_height) + 1
-        for iy in range(-steps_y, steps_y + 1):
-            for ix in range(-steps_x, steps_x + 1):
+        for iy in range(-int(4 * start.pixel_height), int(4 * start.pixel_height) + 1):
+            for ix in range(-int(4 * start.pixel_width), int(4 * start.pixel_width) + 1):
                 candidate = start.moved(ix * 2, iy * 2)
                 result = self.score(plane, candidate, self.coarse_cells)
                 if result and (best is None or result[0] < best[0]):
@@ -217,29 +226,17 @@ class ScreenText:
         if best is None:
             return None
         geometry, current = best[1], None
-        for candidate in [best[1].moved(dx / 2, dy / 2, 1 + sx / 200, 1 + sy / 200)
-                          for dx in range(-2, 3) for dy in range(-2, 3)
-                          for sx in (-1, 0, 1) for sy in (-1, 0, 1)]:
-            result = self.score(plane, candidate, self.fit_cells)
-            if result and (current is None or result[0] < current[0]):
-                geometry, current = candidate, result
-        moves = [(dx, dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1) if dx or dy]
-        for step in (0.5, 0.25):
-            improved = True
-            while improved and current:
-                improved = False
-                candidates = [geometry.moved(dx * step, dy * step) for dx, dy in moves]
-                candidates += [geometry.moved(sx=1 + sx * step / 100, sy=1 + sy * step / 100)
-                               for sx, sy in moves]
-                for candidate in candidates:
-                    result = self.score(plane, candidate, self.fit_cells)
-                    if result and result[0] < current[0]:
-                        geometry, current, improved = candidate, result, True
+        for dy in range(-2, 3):
+            for dx in range(-2, 3):
+                candidate = best[1].moved(dx, dy)
+                result = self.score(plane, candidate, self.fit_cells)
+                if result and (current is None or result[0] < current[0]):
+                    geometry, current = candidate, result
         if current is None:
             return None
         return geometry, current[1], current[2]
 
-    def read(self, rgb: bytes, bounds: tuple[int, int, int, int], typed: str = "") -> Reading:
+    def read(self, rgb: bytes, typed: str = "") -> Reading:
         """Compare the frame with the boot screen, plus `typed` on the input row.
 
         Every cell in the checked rows must match: expected characters within
@@ -247,9 +244,9 @@ class ScreenText:
         cell after the input is the blinking cursor, so blank or solid passes.
         """
         plane = self.plane(rgb)
-        return self.compare(plane, self.fit(plane, self.nominal(bounds)), typed)
+        return self.compare(plane, self.fit(plane), typed)
 
-    def compare(self, plane: list[bytes], fitted: tuple[Geometry, float, int] | None,
+    def compare(self, plane: list[list[int]], fitted: tuple[Geometry, float, int] | None,
                 typed: str = "") -> Reading:
         if fitted is None:
             return Reading(None, unreadable=True)

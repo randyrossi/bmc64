@@ -203,7 +203,7 @@ suite base classes and cleanup contract.
 | `suite_profiles.json` | Machine-to-profile mapping; not a test registration file |
 | `sdcard_profiles/profiles/` | Six ready-to-copy default PAL HDMI profiles with Wi-Fi/Web UI enabled |
 | `unit_tests/` | Offline framework, screen, transport and diagnostic regression tests |
-| `test_data/screens/` | Recorded 1280x720 boot, typed, corrupt and downscaled-PET frames |
+| `test_data/screens/` | Recorded boot, typed, corrupt and downscaled-PET frames from a Pi 3, and `*-pi4*` frames from a Pi 4 |
 | `docs/` | Hardware setup and operating instructions |
 | `mock_hid/` | Pico firmware, native client, protocol and tests |
 | `mock_hid/bin/` | Supplied UF2 and build/checksum information |

@@ -29,4 +29,9 @@ class Layout:
     font_path: str
     font_offset: int
     screen: tuple[tuple[int, str], ...]
-    native_frame_height: int | None = None
+    # The HDMI picture is this many machine lines tall, which sets the pixel size.
+    frame_lines: int = 240
+    # Capture pixels are this many times wider than tall (VIC-20: double width).
+    pixel_aspect: int = 1
+    # Machine lines the text sits below the centre of the frame.
+    text_offset: int = 0

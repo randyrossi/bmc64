@@ -24,7 +24,7 @@ from framework.errors import TestFailure
 from framework.reporting import progress, save_json
 from support.keyboard import type_token
 from support.profiles import recover_api
-from .screen import screen_bounds, wait_screen
+from .screen import wait_screen
 from .layouts import Layout
 from .screen_text import Font, Reading, ScreenText
 
@@ -60,7 +60,7 @@ class BootTypingTest(BmcTest):
                           self.health, self.timeout, self.machine)
 
     def read_screen(self, rgb: bytes, typed: str = "") -> Reading:
-        return self.reader.read(rgb, screen_bounds(rgb, *self.capture_size), typed)
+        return self.reader.read(rgb, typed)
 
     def assert_boot_screen(self) -> None:
         self.stage("basic_boot")

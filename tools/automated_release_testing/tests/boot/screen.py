@@ -27,33 +27,6 @@ from support.evidence import frame_health, save_frame
 from .screen_text import Reading
 
 
-def screen_bounds(rgb: bytes, width: int, height: int) -> tuple[int, int, int, int]:
-    def colour(x: int, y: int) -> tuple[int, ...]:
-        return tuple(max(rgb[(row * width + x) * 3 + channel]
-                         for row in range(max(0, y - 2), min(height, y + 3)))
-                     for channel in range(3))
-
-    background = colour(width // 2, height // 2)
-
-    def matches(x: int, y: int) -> bool:
-        return max(abs(a - b) for a, b in zip(colour(x, y), background)) <= 35
-
-    left, right = width // 2, width // 2
-    while left > 0 and matches(left - 1, height // 2):
-        left -= 1
-    while right + 1 < width and matches(right + 1, height // 2):
-        right += 1
-    columns = [left + (right - left) * index // 10 for index in range(1, 10)]
-    rows = [row for row in range(height) if sum(matches(x, row) for x in columns) >= 5]
-    if right - left < width // 2 or not rows or rows[-1] - rows[0] < height // 2:
-        return 0, 0, width, height
-    if left == 0 and right == width - 1 and rows[0] == 0 and rows[-1] == height - 1:
-        return 0, 0, width, height
-    # Retain antialiased edge pixels, but exclude the vertical sampling halo.
-    left, right = max(0, left - 1), min(width - 1, right + 1)
-    return left, rows[0] + 2, right - left + 1, rows[-1] - rows[0] - 3
-
-
 def wait_screen(capture: SuiteCapture, health: Callable[[], None], timeout: float,
                 after: float, output: Path, stage: str, read: Callable[[bytes], Reading],
                 machine: str, reopen: Callable[[], None] | None = None) -> Reading:

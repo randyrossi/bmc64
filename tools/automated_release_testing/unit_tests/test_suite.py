@@ -53,7 +53,7 @@ from support.keyboard import type_token, wait_pico
 from support.profiles import (
     read_manifest, recover_api, resolve_profiles, switch_profile, profile_values,
 )
-from tests.boot.screen import screen_bounds, wait_screen
+from tests.boot.screen import wait_screen
 from framework.rig import Rig
 from framework.runner import run, run_tests
 from utils.runner import parser
@@ -113,21 +113,23 @@ def screen_geometry(machine: str, width: int, height: int) -> Geometry:
         # As recorded from the 3016: the text sits a little above the centred viewport.
         pixel = height / 270
         return Geometry((width - 320 * pixel) / 2 - 2, (height - 200 * pixel) / 2 - 31, pixel, pixel)
-    pixel_width = 6.0 if machine == "VIC20" else 3.0
-    return Geometry(112.0 if machine == "VIC20" else 160.0, 60.0, pixel_width, 3.0)
+    if machine == "VIC20":
+        return Geometry(112.0, 84.0, 6.0, 3.0)
+    return Geometry(160.0, 60.0, 3.0, 3.0)
 
 
 def render(machine: str, font: Font, lines: dict[int, str], *, width: int | None = None,
            height: int | None = None, shift: tuple[int, int] = (0, 0),
-           cursor: tuple[int, int] | None = None, scanlines: bool = True) -> bytes:
+           cursor: tuple[int, int] | None = None, scanlines: bool = True,
+           soft_scanlines: bool = False) -> bytes:
     """Draw a text screen as the capture shows it: border, pane, glyphs, scanlines."""
     width, height = width or 1280, height or 720
     layout = LAYOUTS[machine]
     geometry = screen_geometry(machine, width, height)
     border, background, ink = (bytes(colour) for colour in COLOURS[machine])
-    pane_left, pane_top = int(geometry.left), int(geometry.top)
-    pane_right = int(geometry.left + layout.columns * 8 * geometry.pixel_width)
-    pane_bottom = int(geometry.top + layout.rows * 8 * geometry.pixel_height)
+    pane_left, pane_top = int(geometry.left + shift[0]), int(geometry.top + shift[1])
+    pane_right = pane_left + int(layout.columns * 8 * geometry.pixel_width)
+    pane_bottom = pane_top + int(layout.rows * 8 * geometry.pixel_height)
     rows = []
     for y in range(height):
         row = bytearray(border * width)
@@ -149,7 +151,13 @@ def render(machine: str, font: Font, lines: dict[int, str], *, width: int | None
                     x1 = int(left + (column * 8 + gx + 1) * geometry.pixel_width)
                     for y in range(y0, y1):
                         rows[y][x0 * 3:x1 * 3] = ink * (x1 - x0)
-    if scanlines and machine != "Pet":
+    if soft_scanlines:
+        # As the Pi 4 draws them: one bright row between two dim ones.
+        dim = bytes(value * 65 // 100 for value in range(256))
+        for y in range(height):
+            if y % 3 != 1:
+                rows[y] = rows[y].translate(dim)
+    elif scanlines and machine != "Pet":
         dark = bytes(value * 3 // 10 for value in range(256))
         for y in range(2, height, 3):
             rows[y] = rows[y].translate(dark)
@@ -525,12 +533,12 @@ class ScreenTextTests(unittest.TestCase):
     @staticmethod
     def fitted(reader, frame, width, height):
         plane = reader.plane(frame)
-        return plane, reader.fit(plane, reader.nominal(screen_bounds(frame, width, height)))
+        return plane, reader.fit(plane)
 
     def read(self, machine, lines, typed="", **options):
         width, height = self.sizes[machine]
         frame = render(machine, self.font, lines, width=width, height=height, **options)
-        return self.readers[machine].read(frame, screen_bounds(frame, width, height), typed)
+        return self.readers[machine].read(frame, typed)
 
     def test_every_core_boot_screen_matches_with_blank_or_solid_cursor(self):
         for machine in MACHINES:
@@ -539,21 +547,17 @@ class ScreenTextTests(unittest.TestCase):
                     reading = self.read(machine, boot_lines(machine), cursor=cursor)
                     self.assertTrue(reading.matched, reading.summary())
 
-    def test_grid_is_fitted_when_the_pane_estimate_is_off(self):
-        for machine in ("C64", "VIC20"):
-            width, height = self.sizes[machine]
-            frame = render(machine, self.font, boot_lines(machine), width=width, height=height)
-            left, top, pane_width, pane_height = screen_bounds(frame, width, height)
-            for error in ((2, -3, 4, -2), (-4, 5, -3, 4)):
-                bounds = (left + error[0], top + error[1],
-                          pane_width + error[2], pane_height + error[3])
-                with self.subTest(machine=machine, error=error):
-                    reading = self.readers[machine].read(frame, bounds)
+    def test_grid_is_found_when_the_text_sits_off_centre(self):
+        for machine in ("C64", "VIC20", "Pet"):
+            for shift in ((3, -4), (-5, 6)):
+                with self.subTest(machine=machine, shift=shift):
+                    reading = self.read(machine, boot_lines(machine), shift=shift)
                     self.assertTrue(reading.matched, reading.summary())
-        # The PET has no pane: its text may sit away from the assumed viewport.
-        for shift in ((3, -4), (-5, 6)):
-            with self.subTest(machine="Pet", shift=shift):
-                reading = self.read("Pet", boot_lines("Pet"), shift=shift)
+
+    def test_pi_4_style_soft_scanlines_read_the_same(self):
+        for machine in ("C64", "C128", "VIC20", "Plus4", "Plus4Emu"):
+            with self.subTest(machine=machine):
+                reading = self.read(machine, boot_lines(machine), soft_scanlines=True)
                 self.assertTrue(reading.matched, reading.summary())
 
     def test_typed_token_matches_and_every_single_letter_substitution_fails(self):
@@ -614,7 +618,7 @@ class ScreenTextTests(unittest.TestCase):
         reader = self.readers[machine]
         for name, frame in (("smeared", smeared), ("tiled", bytes(tile)), ("noise", noise)):
             with self.subTest(frame=name):
-                reading = reader.read(frame, screen_bounds(frame, width, height))
+                reading = reader.read(frame)
                 self.assertFalse(reading.matched)
                 self.assertTrue(reading.unreadable, reading.summary())
 
@@ -645,7 +649,7 @@ class ScreenTextTests(unittest.TestCase):
         self.assertTrue(Reading(None, unreadable=True).unreadable)
         self.assertIn("no character grid", Reading(None, unreadable=True).summary())
         flat = bytes([200]) * (1280 * 720 * 3)
-        reading = self.readers["Plus4"].read(flat, (0, 0, 1280, 720))
+        reading = self.readers["Plus4"].read(flat)
         self.assertTrue(reading.unreadable)
         self.assertFalse(reading.matched)
 
@@ -661,12 +665,18 @@ class RecordedScreenTests(unittest.TestCase):
 
     def read(self, machine, name, typed=""):
         rgb, width, height = read_png(SCREENS / name)
-        return self.reader(machine, width, height).read(rgb, screen_bounds(rgb, width, height), typed)
+        return self.reader(machine, width, height).read(rgb, typed)
 
     def test_recorded_boot_screens_match_every_checked_cell(self):
         for machine in ("C64", "C128", "VIC20", "Plus4", "Plus4Emu", "Pet"):
             with self.subTest(machine=machine):
                 reading = self.read(machine, f"{machine.lower()}.png")
+                self.assertTrue(reading.matched, reading.summary())
+
+    def test_pi_4_boot_screens_match_every_checked_cell(self):
+        for machine in ("C64", "Plus4", "Plus4Emu"):
+            with self.subTest(machine=machine):
+                reading = self.read(machine, f"{machine.lower()}-pi4.png")
                 self.assertTrue(reading.matched, reading.summary())
 
     def test_recorded_typed_tokens_match_and_wrong_letters_fail(self):
@@ -676,7 +686,7 @@ class RecordedScreenTests(unittest.TestCase):
             rgb, width, height = read_png(name)
             reader = self.reader(machine, width, height)
             plane = reader.plane(rgb)
-            fitted = reader.fit(plane, reader.nominal(screen_bounds(rgb, width, height)))
+            fitted = reader.fit(plane)
             with self.subTest(name=name.name):
                 reading = reader.compare(plane, fitted, token)
                 self.assertTrue(reading.matched, reading.summary())
@@ -940,7 +950,7 @@ class RotationTests(unittest.TestCase):
                 test.assertEqual((width, height), CAPTURE_SIZES.get(machine, DEFAULT_CAPTURE_SIZE))
                 test.assertEqual(layout, LAYOUTS[machine])
 
-            def read(self, rgb, bounds, typed=""):
+            def read(self, rgb, typed=""):
                 if failure == "outage" and api.current["machine"] == "C128":
                     api.outage = True
                 return reading(pico.text == typed)
@@ -979,7 +989,6 @@ class RotationTests(unittest.TestCase):
                 patch("tests.boot.screen.time.monotonic", clock.monotonic), \
                 patch("tests.boot.screen.time.sleep", clock.sleep), \
                 patch("tests.boot.base.ScreenText", Reader), \
-                patch("tests.boot.base.screen_bounds", return_value=(0, 0, 1, 1)), \
                 patch.object(api, "request", side_effect=request), \
                 patch.object(api, "get_json", side_effect=get_json), \
                 patch("sys.stdout", new_callable=io.StringIO) as terminal, \

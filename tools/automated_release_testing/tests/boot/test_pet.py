@@ -37,7 +37,8 @@ class Test(BootTypingTest):
             (4, "READY."),
         ),
         # No pane edge: the PAL entry centres 320x200 text in a 376x270 frame.
-        native_frame_height=270,
+        frame_lines=270,
+        text_offset=-8,
     )
 
     def before_test(self) -> None:
