@@ -1109,7 +1109,10 @@ class RotationTests(unittest.TestCase):
                     "--execute", "--url", "http://192.0.2.1", "--pico-uart", "/unused",
                     "--results", directory,
                 ])
-                with patch("framework.runner.preflight", side_effect=error), \
+                with patch("framework.runner.start_capture"), \
+                        patch("framework.runner.failure_evidence"), \
+                        patch("framework.runner.locate_target"), \
+                        patch("framework.runner.preflight", side_effect=error), \
                         patch("sys.stdout", new_callable=io.StringIO), \
                         patch("sys.stderr", new_callable=io.StringIO):
                     report = boot_run(args, self.manifest())
@@ -1157,6 +1160,11 @@ class RotationTests(unittest.TestCase):
         completed = self.cli("c64-typing")
         self.assertEqual(completed.returncode, 2)
         self.assertIn("unknown test c64-typing", completed.stderr)
+
+    def test_hardware_runs_require_the_bmc64_uart(self):
+        completed = self.cli("--execute", "--url", "http://192.0.2.1", "--pico-uart", "/dev/PICO")
+        self.assertEqual(completed.returncode, 2)
+        self.assertIn("--bmc-uart", completed.stderr)
 
     def test_custom_manifest_defines_the_boot_typing_tests(self):
         with tempfile.TemporaryDirectory() as directory:

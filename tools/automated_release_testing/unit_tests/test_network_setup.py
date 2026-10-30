@@ -177,7 +177,7 @@ class SetupWorkflowTests(unittest.TestCase):
     def run_setup(self, rig, directory, *, network="ethernet", saved=None, cancel=False):
         if saved is not None:
             (directory / "test_setup.json").write_text(json.dumps(saved))
-        answers = ["/dev/video4", "192.0.2.1", "y", network, "/dev/PICO", "-",
+        answers = ["/dev/video4", "192.0.2.1", "y", network, "/dev/PICO", "/dev/BMC64",
                    "", "fixture", "5", "n" if cancel else "y", "192.0.2.9", ""]
         process = Mock()
         process.poll.return_value = None

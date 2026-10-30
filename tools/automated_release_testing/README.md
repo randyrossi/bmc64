@@ -41,7 +41,7 @@ Raspberry Pi 3 Model B and a Raspberry Pi 4 Model B, PET as a 40-column 3016.
 - Successful recording finalization and input cleanup.
 
 Each hardware run saves a JSON result, recording, screenshots, API snapshots,
-Pico exchanges and optional BMC64 UART logs with conservative error
+Pico exchanges and BMC64 UART logs with conservative error
 classification. A failed capture saves the last frame even if no guest was
 recognised; if no frames arrived, the evidence explicitly says so.
 An HTTP success or USB acknowledgement alone cannot pass a test.
@@ -60,7 +60,8 @@ not covered by that validation.
 - Raspberry Pi Pico (RP2040), connected to BMC64 as a USB HID device, with a
   separate PC-side 3.3 V UART adapter.
 - HDMI capture providing video and audio.
-- Optional second UART adapter for BMC64 diagnostic logs.
+- A second UART adapter on the BMC64 UART. Hardware runs require it: it gives
+  the Pi's address and the diagnostic logs.
 
 New PC: start with [prerequisites and installation](docs/prerequisites.md).
 No Pico SDK is needed to use the supplied fixture firmware.
@@ -101,7 +102,11 @@ No Pico SDK is needed to use the supplied fixture firmware.
    ```
 
 For subsequent tests, use `./tools/automated_release_testing/run_video_test`
-if you need a fresh video/IP check, close it, then run `run_tests`.
+if you need a fresh video check, close it, then run `run_tests`.
+You don't need to update the IP address. BMC64 logs it on the UART at every
+boot and the run follows it. If the saved address doesn't answer, for example
+after swapping Pis, the run asks you to reboot the Pi, reads the new address and
+saves it to `test_setup.json`.
 Run the configurator again when the network or rig changes; existing
 answers become its defaults. If the Web UI requires a PIN, the test prompts
 for it each time rather than storing it.

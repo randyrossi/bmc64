@@ -42,6 +42,12 @@ class Api:
             self.headers["Authorization"] = f"Basic {encoded}"
         self.opener = build_opener(ProxyHandler({}), NoRedirect())
 
+    def use_address(self, address: str) -> None:
+        """Talk to this IP address from now on, keeping the scheme and port."""
+        parsed = urlsplit(self.url)
+        host = f"[{address}]" if ":" in address else address
+        self.url = f"{parsed.scheme}://{host}" + (f":{parsed.port}" if parsed.port else "")
+
     def request(self, endpoint: str, data: bytes | None = None,
                 timeout: float | None = None, **query: str) -> bytes:
         suffix = "?" + urlencode(query) if query else ""

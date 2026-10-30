@@ -62,7 +62,7 @@ Close serial terminals, FFplay, OBS and other capture users before testing.
    [Pico firmware](../mock_hid/bin/mock_hid.uf2).
 2. Run `./configure_test_setup` as described in the [README](../README.md).
 3. Use `run_video_test`, starting it before Pi power-on if necessary.
-   Confirm a visible BMC64 display with the configured IP address, then
+   Confirm a visible BMC64 display, then
    close the preview.
 4. Install the six supplied SD-card profiles from the
    [profile suite guide](profile-suite.md).

@@ -99,6 +99,30 @@ class UartLogTests(unittest.TestCase):
                     "Oct 25 kernel: ready", "second line", "===== marker =====",
                     "third \ufffdline"])
 
+    def test_boot_address_is_reported_and_noise_is_ignored(self):
+        source = (b"00:00:01.51 dhcp: IP address is 192.168.68.70\n\r"
+                  b"00:00:01.51 dhcp: IP address is 19\xff.168\n\r"
+                  b"webui: Web UI listening on port 80\n\r")
+        addresses, exhausted = [], threading.Event()
+
+        class Port:
+            chunks = iter([source])
+
+            def read(self, timeout):
+                data = next(self.chunks, None)
+                if data is None:
+                    exhausted.set()
+                    time.sleep(0.001)
+                return data
+
+        with tempfile.TemporaryDirectory() as directory:
+            logger = UartLog(Port(), Path(directory) / "uart.log", addresses.append)
+            try:
+                self.assertTrue(exhausted.wait(2))
+            finally:
+                logger.close()
+        self.assertEqual(addresses, ["192.168.68.70"])
+
     def test_read_failure_is_explicit(self):
         class Port:
             def read(self, timeout):
@@ -325,12 +349,12 @@ class SetupTests(unittest.TestCase):
             config = root / "test_setup.json"
             config.write_text(json.dumps(self.settings()), encoding="utf-8")
             with patch("builtins.input", side_effect=[
-                    "", "", "", "", "", "-", "", "-", "", "", "", ""]), \
+                    "", "", "", "", "", "", "", "-", "", "", "", ""]), \
                     patch("sys.stdout", new_callable=io.StringIO):
                 self.assertTrue(configure(root))
             updated = load_setup(config)
             self.assertEqual(updated["url"], self.settings()["url"])
-            self.assertEqual(updated["bmc_uart"], "")
+            self.assertEqual(updated["bmc_uart"], self.settings()["bmc_uart"])
             self.assertEqual(updated["setup"], "")
             self.assertEqual(updated["timeout"], 30)
             self.assertTrue(updated["ask_pin"])
@@ -346,7 +370,7 @@ class SetupTests(unittest.TestCase):
                     settings = self.settings()
                     settings["url"] = saved
                     (root / "test_setup.json").write_text(json.dumps(settings))
-                answers = ["", address, "n", "", "/dev/PICO", "-", "", "", "", "y", "", ""]
+                answers = ["", address, "n", "", "/dev/PICO", "/dev/BMC64", "", "", "", "y", "", ""]
                 with patch("builtins.input", side_effect=answers) as prompt, \
                         patch("sys.stdout", new_callable=io.StringIO):
                     self.assertTrue(configure(root))
@@ -650,6 +674,13 @@ class SerialTests(unittest.TestCase):
 
 
 class ApiTests(unittest.TestCase):
+    def test_new_address_keeps_scheme_and_port(self):
+        api = Api("https://192.0.2.1:8080/")
+        api.use_address("192.0.2.9")
+        self.assertEqual(api.url, "https://192.0.2.9:8080")
+        api.use_address("fd00::9")
+        self.assertEqual(api.url, "https://[fd00::9]:8080")
+
     def test_actual_endpoint_shapes_auth_and_no_overwrite(self):
         requests = []
 

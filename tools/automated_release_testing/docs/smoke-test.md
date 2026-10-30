@@ -60,7 +60,7 @@ The wizard now performs the setup with a live preview:
    PIN on the test profiles. The PIN is kept in memory only, never saved.
 4. Verify the initial HTTP connection and choose Wi-Fi or Ethernet. Ethernet
    requires an onboard Ethernet port and cable; USB Ethernet is not supported.
-5. Select the Pico UART and optional BMC64 diagnostic UART, ALSA audio device,
+5. Select the Pico UART and BMC64 UART, ALSA audio device,
    notes and guest assertion timeout.
 6. Confirm the listed test-profile updates and C64 restart. The wizard reads
    every settings file first, then saves only the changed `network_device`
@@ -88,7 +88,7 @@ UART and video devices appear in numbered menus. Enter a number to select,
 or type an absolute path manually. Stable names are preferred and their
 resolved `/dev/ttyUSB...` or `/dev/video...` paths are shown alongside them;
 aliases for the same device are listed only once. The BMC64 UART menu
-excludes the selected Pico adapter. Enter `-` to omit the optional BMC64 UART.
+excludes the selected Pico adapter.
 Saved paths remain defaults, including when a device is temporarily unplugged.
 
 The wizard cannot infer which adapter is physically wired to the Pico or
@@ -102,11 +102,13 @@ already exist, with the Web UI enabled.
 
 After verification, the wizard saves `test_setup.json` with owner-only
 permissions beside executable `run_tests`. The settings file is ignored by Git.
-It records `network` as `wifi` or `ethernet` and the final verified URL.
+It records `network` as `wifi` or `ethernet` and the final verified URL. The
+URL is only a starting point: runs read BMC64's address from its UART and save
+any change.
 Test preflight checks selected profiles against that saved network setting.
 Old setup files without `network` still load; rerun configuration to add it.
 Run the wizard again to change settings: Enter keeps each saved value, and
-`-` clears an optional UART or notes field.
+`-` clears the notes field.
 
 Cancellation before confirming the remote updates changes no settings.
 If saving a profile fails, the wizard names the failed file, verified
@@ -182,8 +184,11 @@ Use `--ask-pin` if the Web UI requires a PIN; it is prompted without echo
 and is not written to the result or command log. HTTP Basic Auth is not
 encrypted on an HTTP LAN connection.
 
-`--bmc-uart` is optional; its absence is explicitly recorded as
-`uart_collected: false`. Known critical UART signatures fail the run;
+`--bmc-uart` is required with `--execute`. The UART opens first and each
+`dhcp: IP address is ...` line BMC64 logs at boot updates the address in use. If
+`--url` doesn't answer, the run asks you to reboot the Pi and waits up to
+`--timeout` for that line, then saves the new address to the `--config` file.
+Known critical UART signatures fail the run;
 other error/warning lines are retained for review. `--setup` records operator-supplied ROM/profile/filter notes;
 ROM identity is not automatically measured. Each guest assertion has a
 60-second monotonic deadline, adjustable with `--timeout`.
@@ -255,9 +260,9 @@ by the run) contains:
 - `observations.jsonl`: monotonic observation times, counters, states and
   measured audio values.
 
-The run folder holds `pico.log` (readable) and `pico.raw` (exact transcript) and, with a BMC64 UART:
+The run folder holds `pico.log` (readable), `pico.raw` (exact transcript) and:
 
-- Optional `uart-findings.json`: critical signatures, known informational
+- `uart-findings.json`: critical signatures, known informational
   autostart probes and unclassified warnings, with raw lines and monotonic times.
 
 `bmc64-uart.log` is the readable UART log. Each line starts with the PC

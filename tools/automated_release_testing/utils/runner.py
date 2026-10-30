@@ -50,7 +50,7 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--network", choices=("wifi", "ethernet"),
                         help="require this network setting in the selected test profiles")
     result.add_argument("--pico-uart", help="exclusive Pico serial adapter")
-    result.add_argument("--bmc-uart", help="optional exclusive diagnostic UART")
+    result.add_argument("--bmc-uart", help="exclusive BMC64 UART; required with --execute")
     result.add_argument("--ask-pin", action="store_true",
                         help="prompt without storing the Web UI PIN")
     result.add_argument("--video", default="/dev/v4l/by-id/usb-MACROSILICON_2109-video-index0")
@@ -128,8 +128,8 @@ def main() -> int:
         return 0
     if not math.isfinite(args.timeout) or args.timeout <= 0:
         argument_parser.error("--timeout must be finite and positive")
-    if args.execute and (not args.url or not args.pico_uart):
-        argument_parser.error("--execute requires --url and --pico-uart")
+    if args.execute and (not args.url or not args.pico_uart or not args.bmc_uart):
+        argument_parser.error("--execute requires --url, --pico-uart and --bmc-uart")
     if args.bmc_uart and args.pico_uart and (
             os.path.realpath(args.bmc_uart) == os.path.realpath(args.pico_uart)):
         argument_parser.error("Pico and BMC64 UART paths must be different")

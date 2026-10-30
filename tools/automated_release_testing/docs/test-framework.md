@@ -132,7 +132,7 @@ import test definitions without opening the rig.
 
 | Attribute | Meaning |
 | --- | --- |
-| `self.api`, `self.pico`, `self.capture`, `self.uart` | The shared rig (`uart` is `None` without `--bmc-uart`) |
+| `self.api`, `self.pico`, `self.capture`, `self.uart` | The shared rig |
 | `self.profile` | This test's resolved profile: `machine`, `id`, `name`, `volume` |
 | `self.output` | This test's evidence directory |
 | `self.report` | This test's `result.json` contents |
@@ -156,16 +156,23 @@ and the steps every suite shares:
 
 The runner does this once per run:
 
-1. **Preflight**: checks HTTP status and resolves every selected test's profile
-   (and network setting with `--network`), before opening anything else.
-2. **Opens the rig**: Pico UART (waiting until the keyboard is ready), the
-   optional BMC64 UART logger and the HDMI capture. A Pi that reboots while
-   the capture device is closed comes up with no HDMI picture, so the
-   capture is running before the first profile switch.
-3. Runs each test, as below.
-4. If a test fails, checks that HTTP control still answers. If it does not,
+1. **Starts logging and recording**: the BMC64 UART logger, which follows the
+   address BMC64 logs at every boot, and the HDMI capture. A Pi that reboots while
+   the capture device is closed comes up with no HDMI picture, so the capture
+   is running before any reboot.
+2. **Finds the Pi**: if the saved address doesn't answer, asks for a reboot and
+   waits for the UART to report the address. A changed address is saved at the
+   end of the run.
+3. **Preflight**: checks HTTP status and resolves every selected test's profile
+   (and network setting with `--network`), before any input is sent.
+4. **Checks the picture and opens the Pico**: waits for HDMI video and audio. If
+   there is none, for example because the Pi booted before the run started, it
+   restarts BMC64 once through the Web UI and waits again. Then it opens the Pico
+   UART and waits until the keyboard is ready.
+5. Runs each test, as below.
+6. If a test fails, checks that HTTP control still answers. If it does not,
    the remaining tests are NOT_RUN without further switches.
-5. Checks final HTTP status and closes the rig.
+7. Checks final HTTP status and closes the rig.
 
 For each test it calls:
 
@@ -214,7 +221,7 @@ Each run writes one ignored `results/<UTC-time>-<run-id>/` folder:
   keys shown by name (`KEY V`, `KEY release`), Pico restarts and errors, and
   a marker at each test start. `pico.raw` is the exact TX/RX transcript with
   request IDs.
-- With `--bmc-uart`, `bmc64-uart.log` (readable, marked at each test start),
+- `bmc64-uart.log` (readable, marked at each test start),
   `bmc64-uart.raw` (exact bytes) and `uart-findings.json` for the whole run.
 - One numbered directory per test (`01-c64-boot-typing/`, ...), with its own
   `result.json`, recording segments and assertion evidence. See the

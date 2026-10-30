@@ -319,8 +319,8 @@ def configure(directory: Path = HERE) -> bool:
         uart_devices = discover_devices("uart")
         pico_uart = ask_device("Pico UART device", uart_devices, defaults["pico_uart"] or "",
                               required=True)
-        bmc_uart = ask_device("BMC64 diagnostic UART (optional)", uart_devices,
-                             defaults["bmc_uart"] or "", exclude=pico_uart)
+        bmc_uart = ask_device("BMC64 UART", uart_devices, defaults["bmc_uart"] or "",
+                             required=True, exclude=pico_uart)
         settings = {
             "url": url, "network": network, "pico_uart": pico_uart, "bmc_uart": bmc_uart,
             "video": video,
@@ -330,7 +330,7 @@ def configure(directory: Path = HERE) -> bool:
                                       required=True, validate=positive_timeout)),
             "ask_pin": ask_pin,
         }
-        if bmc_uart and os.path.realpath(bmc_uart) == os.path.realpath(pico_uart):
+        if os.path.realpath(bmc_uart) == os.path.realpath(pico_uart):
             raise ValueError("Pico and BMC64 UART paths must be different; no settings saved")
         print(f"\nThis will set {network} on these test profiles: " +
               ", ".join(case["id"] for case in cases))

@@ -20,6 +20,7 @@
 
 import argparse
 import getpass
+import json
 import secrets
 import signal
 import sys
@@ -28,13 +29,14 @@ from datetime import datetime, timezone
 
 from framework.case import BmcTest
 from framework.context import Cleanups, TestContext
-from framework.errors import ERRORS
+from framework.errors import ERRORS, TestFailure
 from framework.reporting import progress, save_json
-from framework.rig import Rig, open_rig
+from framework.rig import Rig, ensure_picture, open_rig, open_uart, start_capture
 from hardware.api import Api
+from hardware.uart import UartLog
 from support.evidence import failure_evidence
 from support.network import validate_network
-from support.profiles import recover_api, resolve_profiles, status
+from support.profiles import recover_api, resolve_profiles, status, transient
 
 
 def execute_case(test: BmcTest, context: TestContext) -> None:
@@ -67,6 +69,36 @@ def execute_case(test: BmcTest, context: TestContext) -> None:
             context.cleanup("save test capture evidence",
                             lambda: failure_evidence(rig.capture, context.output, report))
         save_json(context.output / "result.json", report)
+
+
+def locate_target(api: Api, uart: UartLog | None, timeout: float) -> None:
+    """Reach BMC64, waiting for the UART to report its address if the saved one fails."""
+    try:
+        status(api)
+    except OSError as error:
+        if not transient(error):
+            raise
+        progress(f"No reply from {api.url}: reboot the Pi now; "
+                 "its address will be read from the BMC64 UART")
+        try:
+            recover_api(api, timeout, "BMC64 address from the UART")
+        except TestFailure as failure:
+            received = uart.received if uart else 0
+            hint = ("check the UART wiring and that enable_logging=uart is set" if not received
+                    else "no IP address line in it; see bmc64-uart.log")
+            raise TestFailure("uart_address", f"{failure}; BMC64 UART received "
+                              f"{received} bytes: {hint}") from None
+
+
+def save_address(args: argparse.Namespace, url: str) -> None:
+    """Keep the address BMC64 reported, so the next run starts from it."""
+    config = getattr(args, "config", None)
+    if not config or url == args.url.rstrip("/"):
+        return
+    settings = json.loads(config.read_text(encoding="utf-8"))
+    settings["url"] = url + "/"
+    config.write_text(json.dumps(settings, indent=2) + "\n", encoding="utf-8")
+    progress(f"Saved {url} to {config.name}")
 
 
 def preflight(api: Api, tests: list[type[BmcTest]], manifest: list[dict[str, str]],
@@ -166,12 +198,18 @@ def run(args: argparse.Namespace, tests: list[type[BmcTest]],
             prepare_tests(args, tests, results, manifest, output)
         else:
             cleanups = Cleanups(report)
-            rig = None
+            capture = api = None
             try:
                 pin = getpass.getpass("BMC64 PIN: ") if args.ask_pin else None
                 api = Api(args.url, pin, timeout=3)
+                report["stage"] = "target_address"
+                uart = open_uart(args, api, output, report, cleanups.register)
+                capture = start_capture(args, output, report, cleanups.register)
+                report["stage"] = "target_address"
+                locate_target(api, uart, args.timeout)
                 profiles = preflight(api, tests, manifest, args, output, report)
-                rig = open_rig(args, api, output, report, cleanups.register)
+                ensure_picture(capture, api, uart, args.timeout, report)
+                rig = open_rig(args, api, uart, capture, output, report, cleanups.register)
                 report["stage"] = "tests"
                 run_tests(args, rig, tests, results, profiles, output, report)
                 if not report.get("control_error"):
@@ -182,14 +220,17 @@ def run(args: argparse.Namespace, tests: list[type[BmcTest]],
                 report.update(error=str(error),
                               category=getattr(error, "category", "fixture_or_api"))
                 print(f"FAIL [{report['stage']}]: {error}", file=sys.stderr, flush=True)
-                if rig:
+                if capture:
                     cleanups.run("save capture evidence",
-                                 lambda: failure_evidence(rig.capture, output, report))
+                                 lambda: failure_evidence(capture, output, report))
             except KeyboardInterrupt:
                 report.update(error="interrupted", category="interrupted")
                 print("interrupted by user or termination signal", file=sys.stderr, flush=True)
             finally:
                 cleanups.close()
+                if api:
+                    report["url"] = api.url
+                    cleanups.run("save BMC64 address", lambda: save_address(args, api.url))
     finally:
         signal.signal(signal.SIGTERM, previous)
         for result in results:

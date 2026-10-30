@@ -32,7 +32,8 @@ control connection. See the [firmware instructions](../mock_hid/README.md).
 
 ## BMC64 diagnostic UART
 
-Use the wiring and logging options in
+Hardware runs require this connection: BMC64 logs its IP address here at every
+boot, and the run reads it from this log. Use the wiring and logging options in
 [the user guide](../../../docs/USER_GUIDE.md#uart-debugging). Enable UART
 logging before a test; capture from before boot when investigating startup.
 UART output is 115200 baud. Logging can perturb timing, so do not treat a

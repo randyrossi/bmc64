@@ -16,16 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+import ipaddress
+import re
 import threading
 import time
 from pathlib import Path
+from typing import Callable
 from framework.errors import TestFailure
-from framework.reporting import clock
+from framework.reporting import clock, progress
 from hardware.pico import SerialPort
 from support.uart_findings import classify_uart
 
 
 MAX_LINE = 16384
+# Printed on every boot, so it follows a DHCP change or a different Pi.
+ADDRESS_LINE = re.compile(r"\bdhcp: IP address is (\S+)")
 
 
 class UartLog:
@@ -34,10 +39,14 @@ class UartLog:
     BMC64 ends lines with LF CR, so any run of CR/LF is one line break in the
     readable log. Each line is stamped with the PC wall-clock time its first
     byte arrived; findings also keep the monotonic time used by test results.
+    Each IP address BMC64 reports is passed to on_address.
     """
 
-    def __init__(self, port: SerialPort, output: Path):
+    def __init__(self, port: SerialPort, output: Path,
+                 on_address: Callable[[str], None] | None = None):
         self.port = port
+        self.on_address = on_address
+        self.received = 0
         self.stop = threading.Event()
         self.lock = threading.Lock()
         self.errors: list[str] = []
@@ -64,9 +73,19 @@ class UartLog:
         self.started = None
         with self.lock:
             self.file.write(f"{clock(wall)}  {text}\n")
+        self.read_address(text)
         finding = classify_uart(text.strip())
         if finding:
             self.findings.append({"monotonic": monotonic, "time": clock(wall), **finding})
+
+    def read_address(self, text: str) -> None:
+        match = ADDRESS_LINE.search(text)
+        if match and self.on_address:
+            try:
+                ipaddress.ip_address(match[1])
+            except ValueError:
+                return  # Serial noise in the line, not an address.
+            self.on_address(match[1])
 
     def feed(self, data: bytes) -> None:
         for value in data:
@@ -84,6 +103,9 @@ class UartLog:
             while not self.stop.is_set():
                 data = self.port.read(0.2)
                 if data:
+                    if not self.received:
+                        progress("BMC64 UART: receiving data")
+                    self.received += len(data)
                     self.raw.write(data)
                     self.raw.flush()
                     self.feed(data)

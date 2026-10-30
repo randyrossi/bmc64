@@ -216,8 +216,8 @@ class SuiteCapture:
             except ERRORS as error:
                 self.errors.append(str(error))
 
-    def open(self, output: Path, size: tuple[int, int], health: Callable[[], None],
-             timeout: float, label: str, video_size: tuple[int, int] | None = None) -> None:
+    def start(self, output: Path, size: tuple[int, int], label: str,
+              video_size: tuple[int, int] | None = None) -> None:
         """Record into output; analyse frames at size, captured at video_size (default size)."""
         self.close()
         output.mkdir(exist_ok=True)
@@ -227,13 +227,15 @@ class SuiteCapture:
                  f"in {output.name}/")
         self.current = Capture(capture_command(self.video, self.audio, output, width, height, mode),
                                output, width, height)
+
+    def wait_ready(self, health: Callable[[], None], timeout: float, label: str) -> None:
         deadline = time.monotonic() + timeout
         updates = WaitProgress(f"{label} HDMI capture startup", timeout)
         while time.monotonic() < deadline:
             health()
-            latest = self.current.latest_frame
+            latest = self.latest_frame
             if latest and self.current.latest_audio is not None:
-                metrics = frame_health(latest[1], width, height)
+                metrics = frame_health(latest[1], self.width, self.height)
                 if not metrics["black"] and not metrics["flat"]:
                     updates.update("nonblack video and audio received", force=True)
                     return
@@ -241,3 +243,8 @@ class SuiteCapture:
             time.sleep(0.1)
         raise TestFailure("capture_startup", f"{label}: no nonblack HDMI video and audio "
                           f"within {timeout:g}s of opening the capture")
+
+    def open(self, output: Path, size: tuple[int, int], health: Callable[[], None],
+             timeout: float, label: str, video_size: tuple[int, int] | None = None) -> None:
+        self.start(output, size, label, video_size)
+        self.wait_ready(health, timeout, label)
