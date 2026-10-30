@@ -326,9 +326,9 @@ produce duplicate DTS warnings from rounding variable capture timestamps.
 
 ## Validated configuration and limits
 
-Validated on BMC64 5.4.4, Raspberry Pi 3 Model A+, C64 PAL, with the MS2109
-dongle and RP2040 fixture. A run takes about one minute on this configuration;
-recording output is MJPEG 1280x720 plus 48 kHz stereo PCM.
+Validated on BMC64 5.4.5, Raspberry Pi 3 Model B and Raspberry Pi 4 Model B,
+C64 PAL, with the MS2109 dongle and RP2040 fixture. The test takes 20-30 seconds
+on this configuration; recording output is MJPEG 1280x720 plus 48 kHz stereo PCM.
 
 This does not qualify other profiles, NTSC, mouse/gamepad routing, modifiers,
 reconnect recovery, HDMI no-signal detection, long soaks, disk persistence,

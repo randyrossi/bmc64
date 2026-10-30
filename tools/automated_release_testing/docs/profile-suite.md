@@ -251,7 +251,7 @@ it only searches for the position that best fits the known boot text, up to
 one character cell from where the text should sit. It averages all the capture
 pixels of each character pixel, so scanlines cancel out however the renderer
 draws them: the Pi 3 uses two bright rows and a dark one, the Pi 4 one bright
-row between two dim ones. It thresholds 60% of the way from background to ink
+row between two dim ones. It thresholds 55% of the way from background to ink
 (MJPEG colour bleeds into neighbouring pixels at about half strength) and
 compares each 8x8 cell with its ROM glyph. Every cell from the
 top of the screen to two rows below the input row must match within three
@@ -386,12 +386,15 @@ from run `20261025T181524Z`, and PET downscaled to 720p, which must never pass.
 PET fixtures are 1920x1080 frames of the 40-column 3016: its boot screen and
 a live typed token. An 80-column 8032 frame at 1080p and PET downscaled to
 720p must never pass. A live C128 frame whose `K` failed at the old midpoint
-threshold (`c128-typed-WQJKPDWJ.png`) guards the ink threshold.
+threshold (`c128-typed-WQJKPDWJ.png`) and a Pi 3 C64 frame whose `J` reached
+the 2-bit limit at a threshold of 0.60 (`c64-typed-QAKYKJRQ.png`) guard the ink
+threshold. The `*-pi4*` fixtures are Pi 4 frames from BMC64 5.4.5, whose softer
+scanlines failed the earlier reader.
 
-All six cores passed on hardware in run `20261025T212237Z`: BMC64 5.4.4,
-Raspberry Pi 3 Model A+, RP2040 Pico, MS2109 capture, with the supplied
-profiles, every typed letter 0 bits from its ROM glyph. That qualifies this
-rig and configuration only. Qualify it again on a different Pi, ROM set,
+All six cores passed on hardware on BMC64 5.4.5 with an RP2040 Pico, MS2109
+capture and the supplied profiles, on a Raspberry Pi 3 Model B (run
+`20261030T173145Z`) and a Raspberry Pi 4 Model B (run `20261030T171421Z`),
+both over Ethernet. That qualifies this rig and configuration only. Qualify it again on a different Pi, ROM set,
 profile, keyboard mapping or capture device before relying on it as a
 release gate. The earlier C64 diagnostic hardware
 validation does not qualify this suite.

@@ -28,8 +28,8 @@ See the [profile suite guide](docs/profile-suite.md) to install them and
 run it. Boot screens and typed text are checked cell by cell against each
 core's own character ROM, read from the SD card at run time; no OCR is used.
 The HDMI capture is reopened for each case at that core's resolution.
-All six cores passed on hardware in run `20261025T212237Z` (BMC64 5.4.4,
-Raspberry Pi 3 Model A+, MS2109 capture), PET as a 40-column 3016.
+All six cores passed on hardware on BMC64 5.4.5 with an MS2109 capture, on a
+Raspberry Pi 3 Model B and a Raspberry Pi 4 Model B, PET as a 40-column 3016.
 
 **C64 diagnostic** (`c64-default`):
 
@@ -46,8 +46,8 @@ classification. A failed capture saves the last frame even if no guest was
 recognised; if no frames arrived, the evidence explicitly says so.
 An HTTP success or USB acknowledgement alone cannot pass a test.
 
-Hardware-validated C64 diagnostic configuration: Raspberry Pi 3 Model A+,
-BMC64 5.4.4, C64 PAL,
+Hardware-validated C64 diagnostic configuration: Raspberry Pi 3 Model B and
+Raspberry Pi 4 Model B, BMC64 5.4.5, C64 PAL,
 RP2040 Pico and MacroSilicon MS2109 HDMI capture. Other configurations are
 not covered by that validation.
 

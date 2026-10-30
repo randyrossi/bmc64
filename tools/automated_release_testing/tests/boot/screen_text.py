@@ -36,8 +36,9 @@ MIN_TYPED_MARGIN = 2
 # glyph differs from every other letter by at least this many bits.
 TYPING_SEPARATION = 6
 # Fraction of the way from background to ink. 0.50-0.65 read every frame
-# recorded from a Pi 3 and a Pi 4; 0.60 leaves typed letters at most 1 bit off.
-INK_THRESHOLD = 0.60
+# recorded from a Pi 3 and a Pi 4. Low-contrast C64 strokes sit close to the
+# top of that range: at 0.60 a Pi 3 "J" was at the 2-bit limit, at 0.55 it is 0.
+INK_THRESHOLD = 0.55
 SOLID = (1 << 64) - 1
 
 
