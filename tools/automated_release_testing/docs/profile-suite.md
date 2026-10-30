@@ -281,7 +281,7 @@ Input commands are not retried when their result is uncertain.
 ### Capture per case
 
 A capture left running across profile switches recorded corrupted, tiled
-frames after an HDMI mode change: run `20261025T181524Z` lost Plus4Emu and
+frames after an HDMI mode change: one early run lost Plus4Emu and
 PET this way, even though both booted. The suite therefore keeps one
 recording segment per case. Once a case's profile/core is verified, it
 closes the previous segment and reopens the capture device at that core's
@@ -381,8 +381,8 @@ tests are skipped. The fixtures in `test_data/screens/` are native 1280x720
 frames from the BMC64 5.4.4 recordings (Raspberry Pi 3 Model A+, MS2109):
 boot screens for C64, C128, VIC20, Plus4 and Plus4Emu, live typed tokens
 for C64, C128, VIC20 and Plus4 (with every single-letter substitution
-rejected), a half-typed Plus4 screen, the corrupt Plus4Emu and PET captures
-from run `20261025T181524Z`, and PET downscaled to 720p, which must never pass.
+rejected), a half-typed Plus4 screen, corrupt Plus4Emu and PET captures, and
+PET downscaled to 720p, which must never pass.
 
 PET fixtures are 1920x1080 frames of the 40-column 3016: its boot screen and
 a live typed token. An 80-column 8032 frame at 1080p and PET downscaled to
@@ -393,9 +393,9 @@ threshold. The `*-pi4*` fixtures are Pi 4 frames from BMC64 5.4.5, whose softer
 scanlines failed the earlier reader.
 
 All six cores passed on hardware on BMC64 5.4.5 with an RP2040 Pico, MS2109
-capture and the supplied profiles, on a Raspberry Pi 3 Model B (run
-`20261030T173145Z`) and a Raspberry Pi 4 Model B (run `20261030T171421Z`),
-both over Ethernet. That qualifies this rig and configuration only. Qualify it again on a different Pi, ROM set,
+capture and the supplied profiles, on a Raspberry Pi 3 Model B and a Raspberry
+Pi 4 Model B, both over Ethernet, with every typed letter 0 bits from its ROM
+glyph. That qualifies this rig and configuration only. Qualify it again on a different Pi, ROM set,
 profile, keyboard mapping or capture device before relying on it as a
 release gate. The earlier C64 diagnostic hardware
 validation does not qualify this suite.
