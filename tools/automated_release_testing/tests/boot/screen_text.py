@@ -35,10 +35,6 @@ MIN_TYPED_MARGIN = 2
 # A wrong key must never pass as the right one: type only letters whose ROM
 # glyph differs from every other letter by at least this many bits.
 TYPING_SEPARATION = 6
-# Fraction of the way from background to ink. 0.50-0.65 read every frame
-# recorded from a Pi 3 and a Pi 4. Low-contrast C64 strokes sit close to the
-# top of that range: at 0.60 a Pi 3 "J" was at the 2-bit limit, at 0.55 it is 0.
-INK_THRESHOLD = 0.55
 SOLID = (1 << 64) - 1
 
 
@@ -207,7 +203,7 @@ class ScreenText:
         low, high = ordered[len(ordered) // 10], ordered[-len(ordered) // 10]
         # MJPEG stores colour at half horizontal resolution, so ink bleeds into
         # its neighbours at about half strength: threshold above that.
-        threshold = low + (high - low) * INK_THRESHOLD
+        threshold = low + (high - low) * self.layout.ink_threshold
         errors = sum((self.bits(values, threshold) ^ self.font.glyph(char)).bit_count()
                      for values, (_, _, char) in zip(samples, cells))
         return errors, threshold, high - low

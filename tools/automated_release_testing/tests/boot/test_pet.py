@@ -39,6 +39,8 @@ class Test(BootTypingTest):
         # No pane edge: the PAL entry centres 320x200 text in a 376x270 frame.
         frame_lines=270,
         text_offset=-8,
+        # High contrast: at 0.55 Pi 3 typed letters reached the 2-bit limit.
+        ink_threshold=0.60,
     )
 
     def before_test(self) -> None:

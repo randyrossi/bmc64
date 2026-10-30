@@ -251,9 +251,10 @@ it only searches for the position that best fits the known boot text, up to
 one character cell from where the text should sit. It averages all the capture
 pixels of each character pixel, so scanlines cancel out however the renderer
 draws them: the Pi 3 uses two bright rows and a dark one, the Pi 4 one bright
-row between two dim ones. It thresholds 55% of the way from background to ink
-(MJPEG colour bleeds into neighbouring pixels at about half strength) and
-compares each 8x8 cell with its ROM glyph. Every cell from the
+row between two dim ones. It thresholds 55% of the way from background to ink,
+or 60% for PET, whose contrast is higher, because MJPEG colour bleeds into
+neighbouring pixels at about half strength. It then compares each 8x8 cell with
+its ROM glyph. Every cell from the
 top of the screen to two rows below the input row must match within three
 bits of 64, and every other cell must be blank. If the boot banner itself no
 longer matches in more than half its cells, the frame is reported as
