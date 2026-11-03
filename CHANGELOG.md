@@ -1,29 +1,21 @@
-## 5.4.5 (pre-release)
+## 5.5.0
   * Web UI Profiles page shows each profile's setup at a glance: drives and their disks or IEC folders, control ports, and expansions such as REU, GeoRAM, cartridge, Kernal, SID and 40/80 columns #416
     * Profile files open from buttons on each card; Rename, Delete and Open folder are under ⋯
     * The page loads every profile's files in one request
   * Web UI file browser sorts by Name, Size or Modified (newest first) from the column headers, or a Sort choice on a phone #411
-
-## 5.4.4 (pre-release)
   * Fix a freeze after attaching or autostarting cartridges around 15-20 times. #414
   * Fix a small memory leak each time a flash cartridge (EasyFlash, Retro Replay, GMod2, etc.) is detached.
-
-## 5.4.3 (pre-release)
   * Add *Pimmodore* Keyboard Mapping for a real C64 keyboard through the Keymmodore-64 interface by K-rnivoro, on every machine.
   * PET Keyboard menu now shows Keyboard Layout like the other machines: Commodore (Positional, Pimmodore) and US English (Symbolic, Positional). Each choice follows the model's Graphics or Business keyboard.
     * A saved PET Symbolic setting, now loads as US English / Symbolic
   * Add `enable_gpio_machine_signal` to `cmdline.txt`: GPIO 9, 10 and 11 show which machine is running, as a 3-bit code for a microcontroller or as the colour of an RGB LED. See [GPIO_MACHINE_SIGNAL.md](docs/GPIO_MACHINE_SIGNAL.md) #401
   * Fix the emulated userport reading leftover values when `enable_gpio_outputs` is set but GPIO Config #4 isn't selected
   * Fix a menu choice going blank when pressing Return on an item whose last choices are disabled
-
-## 5.4.2 (pre-release)
   * New *Prefs > Boot Options* menu. Move *Warp after boot* here.
   * Add *Delay autostart for time sync* to *Boot Options*, allows time setting before autostart. (30 second timeout) #403
   * Show the IP address as overlay on screen for 10 seconds when the network connects. 
   * Add Network menu item *Show IP Address on Connect* to disable showing IP address overlay on connect.
   * Speed up WebUI uploads 5x
-
-## 5.4.1 (pre-release)
   * Add PWM fan control on Pi5
 
 ## 5.4.0
