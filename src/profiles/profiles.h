@@ -197,6 +197,58 @@ int profiles_machine_matches(const char *machine, const char *other);
 // ("C64/PAL" covers "C64/PAL/HDMI/VICE 720p@50Hz").
 int profiles_machine_covers(const char *machine, const char *header);
 
+// ---- Summary of a profile's setup (profile_summary.c) ----
+// The same summary as the WebUI's Profiles page shows.
+
+#define PROFILES_SUMMARY_MAX_EXTRAS 8
+#define PROFILES_SUMMARY_VALUE_LEN 31
+
+typedef struct {
+   int unit;
+   // The drive model, e.g. "1541II", or "" for no drive.
+   const char *type;
+   // The startup disk, with its volume, or "".
+   char disk[PROFILES_MAX_PATH_LEN + 1];
+   // The IEC file system device is on, and its folder ("" for the default).
+   int iec;
+   char iec_dir[PROFILES_MAX_PATH_LEN + 1];
+} ProfileSummaryDrive;
+
+typedef struct {
+   int port;
+   // The menu's choice, e.g. "USB Gamepad 1".
+   char device[PROFILES_SUMMARY_VALUE_LEN + 1];
+   int none;
+} ProfileSummaryPort;
+
+// An expansion or other thing that sets the profile apart, e.g. "REU" with
+// "2 MB" and its image file, or "SID" with "8580".
+typedef struct {
+   char key[8];
+   char value[PROFILES_SUMMARY_VALUE_LEN + 1];
+   // The file behind it, or "".
+   char file[PROFILES_MAX_PATH_LEN + 1];
+} ProfileSummaryExtra;
+
+typedef struct {
+   ProfileInfo info;
+   char description[PROFILES_MAX_DESCRIPTION_LEN + 1];
+   char autostart[PROFILES_MAX_PATH_LEN + 1];
+   // 0 when the profile has no vice.ini or settings file yet, so the drives
+   // and ports are only the defaults.
+   int known;
+   int num_drives;
+   ProfileSummaryDrive drives[PROFILES_NUM_DRIVES];
+   int num_ports;
+   ProfileSummaryPort ports[4];
+   int num_extras;
+   ProfileSummaryExtra extras[PROFILES_SUMMARY_MAX_EXTRAS];
+} ProfileSummary;
+
+// Reads a profile's files into s. For Main, its usual files of the machine
+// it last ran on. Returns PROFILES_ERROR if the profile can't be read.
+int profiles_summary(const char *id, ProfileSummary *s);
+
 #ifdef __cplusplus
 }
 #endif

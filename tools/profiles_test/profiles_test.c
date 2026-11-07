@@ -1184,6 +1184,253 @@ static void test_machines(void) {
                                  "C64/PAL/DPI/Gert 666/RGB"));
 }
 
+// ---- Summary ----
+// The same cases as the WebUI's summary (tools/webui_test/
+// profile_summary.test.js), so the menu and the WebUI agree.
+
+static ProfileSummary summary;
+
+// Summarises texts (NULL when missing), copied as parsing changes them.
+static const ProfileSummary *summarise(const char *machine, const char *vice,
+                                       const char *settings,
+                                       const char *const disks[]) {
+   static char vice_text[1024];
+   static char settings_text[1024];
+   if (vice) snprintf(vice_text, sizeof(vice_text), "%s", vice);
+   if (settings) snprintf(settings_text, sizeof(settings_text), "%s", settings);
+   memset(&summary, 0, sizeof(summary));
+   profile_summary_parse(machine, vice ? vice_text : NULL,
+                         settings ? settings_text : NULL, disks, &summary);
+   return &summary;
+}
+
+// The extras as "key=value,key=value".
+static const char *extras_text(const ProfileSummary *s) {
+   static char text[256];
+   int length = 0;
+   text[0] = '\0';
+   for (int i = 0; i < s->num_extras; i++) {
+      length += snprintf(text + length, sizeof(text) - (size_t)length, "%s%s=%s",
+                         i ? "," : "", s->extras[i].key, s->extras[i].value);
+   }
+   return text;
+}
+
+static void test_summary_drives(void) {
+   const char *disks[PROFILES_NUM_DRIVES] = {"SD:/disks/C64/game.d64", "", "",
+                                             ""};
+   const ProfileSummary *s =
+       summarise("C64", "[C64]\nDrive9Type=1581\nDrive10Type=4844\n",
+                 "drive_type_8=1542\ndrive_type_10=2000\n", disks);
+   CHECK(s->known);
+   CHECK(s->num_drives == 4);
+   CHECK_STR(s->drives[0].type, "1541II");
+   CHECK_STR(s->drives[1].type, "1581");
+   CHECK_STR(s->drives[2].type, "FD2000");
+   CHECK_STR(s->drives[3].type, "");
+   CHECK(s->drives[3].unit == 11);
+   CHECK_STR(s->drives[0].disk, "SD:/disks/C64/game.d64");
+
+   // Defaults.
+   s = summarise("C64", NULL, NULL, NULL);
+   CHECK(!s->known);
+   CHECK_STR(s->drives[0].type, "1541");
+   CHECK_STR(s->drives[1].type, "");
+   CHECK_STR(summarise("Pet", NULL, NULL, NULL)->drives[0].type, "2031");
+   CHECK(summarise("Plus4Emu", NULL, NULL, NULL)->num_drives == 1);
+   CHECK(summarise("C64", "", NULL, NULL)->known);
+
+   // Only the machine's section of vice.ini; names in any case, quotes off.
+   s = summarise("C64/PAL",
+                 "[C128]\nDrive8Type=1571\n[ c64 ]\r\ndrive8type=1581\r\n"
+                 "[VIC20]\nDrive8Type=1540\n",
+                 NULL, NULL);
+   CHECK_STR(s->drives[0].type, "1581");
+
+   // A drive_type that isn't a drive model is ignored.
+   CHECK_STR(summarise("Plus4", "[PLUS4]\nDrive8Type=1551\n",
+                       "drive_type_8=1233376\n", NULL)->drives[0].type,
+             "1551");
+   CHECK_STR(summarise("C64", NULL, "drive_type_9=77\n", NULL)->drives[1].type,
+             "");
+
+   // IEC file system on the C64, not on the VIC-20.
+   const char *ini = "[C64]\nIECDevice11=1\nFSDevice11Dir=\"/disks/c64/\"\n"
+                     "[VIC20]\nIECDevice11=1\n";
+   s = summarise("C64", ini, "drive_type_11=0\n", NULL);
+   CHECK_STR(s->drives[3].type, "");
+   CHECK(s->drives[3].iec);
+   CHECK_STR(s->drives[3].iec_dir, "/disks/c64/");
+   CHECK(!summarise("VIC20", ini, NULL, NULL)->drives[3].iec);
+}
+
+static void test_summary_ports(void) {
+   const ProfileSummary *s =
+       summarise("C64", NULL, "port_1=10\nport_2=1\nport_3=0\nport_4=3\n", NULL);
+   CHECK(s->num_ports == 3);
+   CHECK(s->ports[0].port == 1);
+   CHECK_STR(s->ports[0].device, "USB Mouse (MicroMys)");
+   CHECK(s->ports[1].port == 2);
+   CHECK_STR(s->ports[1].device, "USB Gamepad 1");
+   CHECK(s->ports[2].port == 4);
+   CHECK_STR(s->ports[2].device, "GPIO Bank 1");
+
+   s = summarise("VIC20", NULL, "port_1=0\nport_2=1\n", NULL);
+   CHECK(s->num_ports == 1);
+   CHECK(s->ports[0].none);
+   CHECK_STR(s->ports[0].device, "None");
+   CHECK(summarise("Pet", NULL, "port_1=1\n", NULL)->num_ports == 0);
+   CHECK_STR(summarise("C64", NULL, "port_1=99\n", NULL)->ports[0].device,
+             "Port choice 99");
+}
+
+static void test_summary_extras(void) {
+   const ProfileSummary *s = summarise(
+       "C64",
+       "[C64]\nREU=1\nREUsize=16384\nREUfilename=\"SD:/carts/C64/reu.bin\"\n"
+       "CartridgeFile=\"SD:/carts/C64/ide.crt\"\n"
+       "KernalName=\"JiffyDOS_C64.bin\"\nSidModel=1\nSidStereo=1\n",
+       NULL, NULL);
+   CHECK_STR(extras_text(s),
+             "REU=16 MB,Cart=ide.crt,Kernal=JiffyDOS_C64,SID=8580 x2");
+   CHECK_STR(s->extras[0].file, "SD:/carts/C64/reu.bin");
+   CHECK_STR(s->extras[1].file, "SD:/carts/C64/ide.crt");
+   CHECK_STR(extras_text(summarise("C64", "[C64]\nREU=1\nKernalName=\"kernal\"\n",
+                                   NULL, NULL)),
+             "REU=512 KB");
+   CHECK_STR(extras_text(summarise("C64", "[C64]\nGEORAM=1\nGEORAMsize=4096\n",
+                                   NULL, NULL)),
+             "GeoRAM=4 MB");
+
+   // The C128's 40/80 key.
+   CHECK_STR(extras_text(summarise("C128", "[C128]\nC128ColumnKey=0\n", NULL,
+                                   NULL)),
+             "Screen=80 columns");
+   CHECK_STR(extras_text(summarise("C128", "[C128]\nC128ColumnKey=1\n", NULL,
+                                   NULL)),
+             "Screen=40 columns");
+   CHECK_STR(extras_text(summarise("C128", "", NULL, NULL)), "Screen=40 columns");
+   CHECK_STR(extras_text(summarise("C64", "[C64]\nC128ColumnKey=0\n", NULL,
+                                   NULL)),
+             "");
+
+   // VIC-20 memory, PET screen.
+   CHECK_STR(extras_text(summarise(
+                 "VIC20", "[VIC20]\nRAMBlock0=1\nRAMBlock1=1\nRAMBlock2=1\n",
+                 NULL, NULL)),
+             "RAM=+19 KB");
+   CHECK_STR(extras_text(summarise("Pet", "[PET]\nVideoSize=80\n", NULL, NULL)),
+             "Screen=80 columns");
+}
+
+static void test_summary_plus4emu(void) {
+   const char *disks[PROFILES_NUM_DRIVES] = {"SD:/disks/Plus4/x.d64", "", "",
+                                             ""};
+   const ProfileSummary *s = summarise(
+       "Plus4Emu/PAL", NULL,
+       "drive_type_8=1233376\ndrive_model_8=1\nram_size=256\n"
+       "rom_c2_lo=/PLUS4EMU/carts/Jack Attack.bin\nsid_digiblaster=1\n",
+       disks);
+   CHECK(s->num_drives == 1);
+   CHECK(s->drives[0].unit == 8);
+   CHECK_STR(s->drives[0].type, "1551");
+   CHECK_STR(s->drives[0].disk, "SD:/disks/Plus4/x.d64");
+   CHECK_STR(extras_text(s), "RAM=256 KB,Cart=Jack Attack,SID=Digiblaster");
+
+   s = summarise("Plus4Emu", NULL,
+                 "drive_model_8=0\nram_size=64\nattach_3plus1_roms=1\n"
+                 "rom_c0_lo=/PLUS4EMU/3plus1.rom\n",
+                 NULL);
+   CHECK_STR(s->drives[0].type, "1541");
+   CHECK_STR(extras_text(s), "ROM=3-plus-1");
+}
+
+// Copies one of the WebUI tests' sample profiles onto the test card.
+static void copy_sample(const char *id, const char *file) {
+   char from[256];
+   snprintf(from, sizeof(from), "tools/webui_test/sdcard/profiles/%s/%s", id,
+            file);
+   FILE *f = fopen(from, "rb");
+   CHECK(f != NULL);
+   if (f == NULL) return;
+   static char text[4096];
+   size_t length = fread(text, 1, sizeof(text) - 1, f);
+   fclose(f);
+   text[length] = '\0';
+   char to[256];
+   snprintf(to, sizeof(to), "/profiles/%s/%s", id, file);
+   write_file(to, text);
+}
+
+static void test_summary_read(void) {
+   fresh_card();
+   copy_sample("gdos64", "profile.txt");
+   copy_sample("gdos64", "vice.ini");
+   copy_sample("gdos64", "settings-c64.txt");
+
+   ProfileSummary s;
+   CHECK(profiles_summary("gdos64", &s) == PROFILES_OK);
+   CHECK_STR(s.info.name, "gdos64");
+   CHECK_STR(s.info.machine, "C64/PAL/HDMI");
+   CHECK_STR(s.autostart, "SD:/disks/C64/gdos64-260426.d81");
+   CHECK(s.known);
+   CHECK_STR(s.drives[0].type, "FD2000");
+   CHECK_STR(s.drives[0].disk, "SD:/disks/C64/TestDisk1581.d81");
+   CHECK_STR(s.drives[3].type, "");
+   CHECK(s.drives[3].iec);
+   CHECK_STR(s.drives[3].iec_dir, "/disks/c64/");
+   CHECK(s.num_ports == 2);
+   CHECK_STR(s.ports[0].device, "USB Mouse (MicroMys)");
+   CHECK_STR(s.ports[1].device, "USB Gamepad 1");
+   CHECK_STR(extras_text(&s), "REU=2 MB,SID=8580");
+   CHECK_STR(s.extras[0].file, "SD:/carts/C64/reu2048.bin");
+
+   // No vice.ini or settings yet: defaults.
+   make_profile("fresh", "name=Fresh\nmachine=C128\n");
+   CHECK(profiles_summary("fresh", &s) == PROFILES_OK);
+   CHECK(!s.known);
+   CHECK_STR(s.drives[0].type, "1541");
+
+   // An older profile's settings.txt.
+   make_profile("older", "name=Older\nmachine=C64\n");
+   write_file("/profiles/older/settings.txt", "port_2=10\n");
+   CHECK(profiles_summary("older", &s) == PROFILES_OK);
+   CHECK_STR(s.ports[1].device, "USB Mouse (MicroMys)");
+
+   CHECK(profiles_summary("missing", &s) == PROFILES_ERROR);
+}
+
+static void test_summary_main(void) {
+   fresh_card();
+   write_file("/vice.ini", "[C64]\nREU=1\n[C128]\nGEORAM=1\n");
+   write_file("/settings.txt", "port_1=1\n");
+   write_file("/settings-c128.txt", "port_1=2\n");
+   write_file("/profiles/main/c64.txt", "autostart=SD:/games/elite.d64\n"
+                                        "disk_8=SD:/games/elite.d64\n");
+
+   // Main running: the usual files of what booted.
+   profiles_boot_init("C64/PAL/HDMI");
+   ProfileSummary s;
+   CHECK(profiles_summary(PROFILES_MAIN_ID, &s) == PROFILES_OK);
+   CHECK_STR(s.info.name, "Main");
+   CHECK_STR(s.info.machine, "C64/PAL/HDMI");
+   CHECK_STR(s.autostart, "SD:/games/elite.d64");
+   CHECK_STR(s.drives[0].disk, "SD:/games/elite.d64");
+   CHECK_STR(s.ports[0].device, "USB Gamepad 1");
+   CHECK_STR(extras_text(&s), "REU=512 KB");
+
+   // A profile running: Main's files are those of the machine it last ran on.
+   copy_sample("gdos64", "profile.txt");
+   write_file("/profiles/active.txt",
+              "profile=gdos64\nmain_machine=C128/PAL/HDMI\n");
+   profiles_boot_init("C64/PAL/HDMI");
+   CHECK(profiles_summary(PROFILES_MAIN_ID, &s) == PROFILES_OK);
+   CHECK_STR(s.info.machine, "C128/PAL/HDMI");
+   CHECK_STR(s.autostart, "");
+   CHECK_STR(s.ports[0].device, "USB Gamepad 2");
+   CHECK_STR(extras_text(&s), "GeoRAM=512 KB,Screen=40 columns");
+}
+
 int main(void) {
    char root[] = "/tmp/bmc64-profiles-test-XXXXXX";
    if (mkdtemp(root) == NULL) {
@@ -1214,6 +1461,12 @@ int main(void) {
    test_machines();
    test_machine_switching();
    test_settings_files();
+   test_summary_drives();
+   test_summary_ports();
+   test_summary_extras();
+   test_summary_plus4emu();
+   test_summary_read();
+   test_summary_main();
 
    remove_tree(root);
 

@@ -119,12 +119,26 @@ void profiles_machine_desc(const char *machine, char *out, int out_size);
 // The machine part, e.g. "C64" from "C64/PAL/HDMI".
 void profiles_machine_name(const char *machine, char *out, int out_size);
 
+// ---- Summary (profile_summary.c) ----
+
+// Fills s's drives, ports, extras and known from a profile's vice.ini and
+// settings file texts (NULL when missing; both are changed) and its startup
+// disks (NULL for none). Leaves s's info, description and autostart alone.
+void profile_summary_parse(const char *machine, char *vice_text,
+                           char *settings_text,
+                           const char *const disks[PROFILES_NUM_DRIVES],
+                           ProfileSummary *s);
+
 // ---- State (profile_store.c / profile_boot.c) ----
 
 const ProfileInfo *profiles_main_info(void);
 
 // The booted machine's name, e.g. "C64" from "C64/PAL/HDMI".
 const char *profiles_booted_machine(void);
+
+// The machine Main's files are for: what booted when Main runs, otherwise
+// the machine Main last ran on (or what booted if it isn't known).
+const char *profiles_main_machine(void);
 
 // Before leaving Main for a profile: sets af's main_machine to what booted,
 // if Main is running and hasn't remembered it.
