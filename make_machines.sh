@@ -106,16 +106,16 @@ fi
 cd ../..
 
 cd third_party/vice-3.3
-make x64
+make -k x64
 if [ "$BOARD" = "pi4" ] || [ "$BOARD" = "pi5" ]
 then
 # The Pi 4 and 5 run the cycle exact C64 (Makefile-C64)
-make x64sc
+make -k x64sc
 fi
-make x128
-make xvic
-make xplus4
-make xpet || true
+make -k x128
+make -k xvic
+make -k xplus4
+make -k xpet || true
 cd ../..
 
 cd third_party/plus4emu
