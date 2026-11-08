@@ -64,7 +64,7 @@ jobs:
 
       - name: Zip release
         run: |
-          sed -i 's/wget -q /wget -nv /g' pi3/third_party/circle-stdlib/libs/circle/addon/wlan/firmware/Makefile
+          sed -i 's/wget -q /wget -d /g' pi3/third_party/circle-stdlib/libs/circle/addon/wlan/firmware/Makefile
           ./pi3/make_release.sh
 
       - name: Upload release zip
