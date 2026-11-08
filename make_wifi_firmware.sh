@@ -81,7 +81,8 @@ done
 
 if [ ! -f "$firmware_marker" ] || [ "$firmware_missing" -eq 1 ]
 then
-    make -C "$WLAN_FIRMWARE_DIR" firmware
+    make -C "$WLAN_FIRMWARE_DIR" firmware \
+        BASEURL="$FIRMWARE_LICENSE_URL_BASE/$firmware_revision/debian/config/brcm80211"
     mkdir -p "$FIRMWARE_CACHE_DIR"
     touch "$firmware_marker"
 fi
