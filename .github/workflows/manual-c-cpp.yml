@@ -63,7 +63,9 @@ jobs:
           merge-multiple: false
 
       - name: Zip release
-        run: ./pi3/make_release.sh
+        run: |
+          sed -i 's/wget -q /wget -nv /g' pi3/third_party/circle-stdlib/libs/circle/addon/wlan/firmware/Makefile
+          ./pi3/make_release.sh
 
       - name: Upload release zip
         uses: actions/upload-artifact@v7
