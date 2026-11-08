@@ -1,3 +1,6 @@
+## 5.5.1 (pre-release)
+  * Added Profile Summary: Press Right on a profile, or the main menu's *Profile:* line, to see a summary of its setup
+
 ## 5.5.0
   * Web UI Profiles page shows each profile's setup at a glance: drives and their disks or IEC folders, control ports, and expansions such as REU, GeoRAM, cartridge, Kernal, SID and 40/80 columns #416
     * Profile files open from buttons on each card; Rename, Delete and Open folder are under ⋯
