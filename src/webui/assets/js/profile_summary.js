@@ -20,7 +20,8 @@
 // An at-a-glance summary of a profile's setup for the Profiles page: its
 // drives, control ports and expansions, read from the profile's vice.ini
 // and BMC64 settings file. Plain functions with no DOM, so tools/webui_test
-// can run them under Node.js.
+// can run them under Node.js. The menu shows the same summary
+// (src/profiles/profile_summary.c); keep the two in step.
 //
 
 import { FIRST_DRIVE, NUM_DRIVES, baseName, parseKv } from "./profiles_data.js";

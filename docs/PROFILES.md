@@ -130,6 +130,20 @@ to *Profiles → Select profile…*. With Main active, the button is just
 
 A hard reset doesn't change profiles, it resets the emulated machine as usual.
 
+### What's in a profile
+
+Press **Right** on a profile in *Select profile…* or *Delete profile…* to see
+what's in it, the same summary as the web interface's Profiles page: its
+machine, autostart, drives (model and startup disk or IEC folder), control
+ports and expansions such as an REU, cartridge, kernal or SID. Switch to and
+Start once (or, from *Delete profile…*, Delete this profile) are at the top of
+the page. Press **Right** on the main menu's *Profile:* line to see the same
+summary of the active profile, without the buttons. Left or Esc goes back.
+
+The summary shows what's saved in the profile's files, so changes you haven't
+saved yet aren't in it. Main's is of your usual files for the machine Main
+last ran on.
+
 ### Saving settings
 
 - **Save settings** saves into the active profile; the button shows its name,

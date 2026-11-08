@@ -67,3 +67,7 @@ docs/a*/*.md
 # SD Card simulation files
 bmc64-manifest.txt
 profiles/**
+
+# Automated testing results
+tools/automated_release_testing/test_setup.json
+tools/automated_release_testing/results/**

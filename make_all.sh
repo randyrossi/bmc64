@@ -315,9 +315,9 @@ cd $SRC_DIR/third_party/circle-stdlib
 # For pi0, we turn on our HID report throttle
 if [ "$BOARD" = "pi0" ]
 then
-CFLAGS=-DBMC64_REPORT_THROTTLE make -j4
+CFLAGS=-DBMC64_REPORT_THROTTLE make -j"$BMC64_JOBS"
 else
-make -j4
+make -j"$BMC64_JOBS"
 if [ "$?" != "0" ]
 then
        exit
@@ -561,17 +561,19 @@ fi
 
 cd ..
 
-# These will fail
-make x64
+# These will fail (at the final link). -k keeps going past that so, with
+# parallel make, everything the BMC64 build needs is built whatever order the
+# jobs ran in; without it a failure can stop make before usleep.o and the like.
+make -k x64
 if [ "$BOARD" = "pi4" ] || [ "$BOARD" = "pi5" ]
 then
 # The Pi 4 and 5 run the cycle exact C64 (Makefile-C64)
-make x64sc
+make -k x64sc
 fi
-make x128
-make xvic
-make xplus4
-make xpet
+make -k x128
+make -k xvic
+make -k xplus4
+make -k xpet
 
 VICE_LINK_ARTIFACTS=(
        src/core/libcore.a

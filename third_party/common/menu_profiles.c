@@ -103,10 +103,12 @@ static void list_popped(struct menu_item *old_root,
 
 // Adds one button per profile to a list, grouped into folders by category.
 // Main and profiles without a category come first. The button's str_value
-// holds the profile id. Returns the number of buttons added.
+// holds the profile id; Right on it calls on_open. Returns the number of
+// buttons added.
 static int add_profile_buttons(struct menu_item *root, int id,
                                int skip_main_and_running,
-                               void (*on_chosen)(struct menu_item *)) {
+                               void (*on_chosen)(struct menu_item *),
+                               void (*on_open)(struct menu_item *)) {
   const char *running = profiles_running()->id;
   int count = profiles_list_open();
   int added = 0;
@@ -146,6 +148,7 @@ static int add_profile_buttons(struct menu_item *root, int id,
         strcpy(item->displayed_value, "(*)");
       }
       item->on_value_changed = on_chosen;
+      item->on_open = on_open;
       added++;
     }
   }
@@ -265,6 +268,30 @@ static void start_chosen(struct menu_item *item) {
   menu_profiles_start(item->str_value, item->id == MENU_PROFILES_START_ONCE);
 }
 
+// Adds Switch to and Start once for a profile, its "start" choice first.
+// Returns the first of them.
+static struct menu_item *add_start_buttons(struct menu_item *root,
+                                           const char *id,
+                                           ProfileStart start) {
+  static const int switch_first[] = {MENU_PROFILES_SWITCH_TO,
+                                     MENU_PROFILES_START_ONCE};
+  static const int once_first[] = {MENU_PROFILES_START_ONCE,
+                                   MENU_PROFILES_SWITCH_TO};
+  const int *order = start == PROFILE_START_ONCE ? once_first : switch_first;
+  struct menu_item *first = NULL;
+  for (int i = 0; i < 2; i++) {
+    struct menu_item *button = ui_menu_add_button(
+        order[i], root,
+        order[i] == MENU_PROFILES_SWITCH_TO ? "Switch to" : "Start once");
+    strcpy(button->str_value, id);
+    button->on_value_changed = start_chosen;
+    if (first == NULL) {
+      first = button;
+    }
+  }
+  return first;
+}
+
 static void profile_selected(struct menu_item *item) {
   if (strcmp(item->str_value, profiles_running()->id) == 0) {
     ui_info("Already running");
@@ -278,28 +305,209 @@ static void profile_selected(struct menu_item *item) {
     }
   }
 
-  // The profile's "start" choice is offered first.
-  static const int switch_first[] = {MENU_PROFILES_SWITCH_TO,
-                                     MENU_PROFILES_START_ONCE};
-  static const int once_first[] = {MENU_PROFILES_START_ONCE,
-                                   MENU_PROFILES_SWITCH_TO};
-  const int *order = start == PROFILE_START_ONCE ? once_first : switch_first;
-
   struct menu_item *root = push_menu(32, 4, item->name);
-  for (int i = 0; i < 2; i++) {
-    struct menu_item *button = ui_menu_add_button(
-        order[i], root,
-        order[i] == MENU_PROFILES_SWITCH_TO ? "Switch to" : "Start once");
-    strcpy(button->str_value, item->str_value);
-    button->on_value_changed = start_chosen;
-  }
+  add_start_buttons(root, item->str_value, start);
   ready();
+}
+
+// ---- Profile details ----
+// Right on a profile in Select profile or Delete profile, or on the main
+// menu's Profile: line: what's in it, the same summary as the WebUI's
+// Profiles page.
+
+typedef enum {
+  DETAILS_SELECT,  // with Switch to and Start once
+  DETAILS_DELETE,  // with Delete this profile
+  DETAILS_VIEW,    // just the summary
+} DetailsMode;
+
+// Width of the label column, e.g. "Autostart".
+#define DETAILS_LABEL_WIDTH 9
+// Room for the value after the label and a space.
+#define DETAILS_VALUE_WIDTH (MAX_MENU_STR - 1 - DETAILS_LABEL_WIDTH - 1)
+
+// Large, so not on the stack.
+static ProfileSummary details;
+
+// Left anywhere on the page goes back to the list.
+static void details_back(struct menu_item *item) {
+  ui_pop_menu();
+}
+
+// A line of the page. The cursor can move onto it, so a long page scrolls.
+static void add_detail(struct menu_item *root, const char *label,
+                       const char *value) {
+  struct menu_item *line = ui_menu_add_button(MENU_TEXT, root, "");
+  snprintf(line->name, sizeof(line->name), "%-*s %s", DETAILS_LABEL_WIDTH,
+           label, value);
+  line->on_back = details_back;
+}
+
+// A folder path cut to its end when it's too long, e.g. ".../games/".
+static void fit_path(const char *path, int width, char *out, int out_size) {
+  int length = (int)strlen(path);
+  if (length <= width) {
+    snprintf(out, out_size, "%s", path);
+  } else {
+    snprintf(out, out_size, "...%s", path + length - (width - 3));
+  }
+}
+
+// "C64/PAL/HDMI/VICE 720p@50Hz" gives "C64 PAL HDMI".
+static void machine_text(const char *machine, char *out, int out_size) {
+  int parts = 1;
+  int i = 0;
+  for (; machine[i] && i < out_size - 1; i++) {
+    if (machine[i] == '/' && ++parts > 3) {
+      break;
+    }
+    out[i] = machine[i] == '/' ? ' ' : machine[i];
+  }
+  out[i] = '\0';
+}
+
+static void add_drive_lines(struct menu_item *root) {
+  int shown = 0;
+  for (int i = 0; i < details.num_drives; i++) {
+    const ProfileSummaryDrive *d = &details.drives[i];
+    if (!d->type[0] && !d->iec && !d->disk[0]) {
+      continue;
+    }
+    char label[16];
+    snprintf(label, sizeof(label), "Drive %d", d->unit);
+    // The model, then the disk or the IEC folder.
+    const char *model = d->type[0] ? d->type : "IEC";
+    int room = DETAILS_VALUE_WIDTH - 7;
+    char where[MAX_MENU_STR];
+    if (d->disk[0]) {
+      snprintf(where, sizeof(where), "%s", base_name(d->disk));
+    } else if (d->iec) {
+      const char *iec = d->type[0] ? "IEC " : "";
+      char dir[MAX_MENU_STR];
+      fit_path(d->iec_dir[0] ? d->iec_dir : "(default)",
+               room - (int)strlen(iec), dir, sizeof(dir));
+      snprintf(where, sizeof(where), "%s%s", iec, dir);
+    } else {
+      snprintf(where, sizeof(where), "No disk");
+    }
+    char value[MAX_MENU_STR];
+    snprintf(value, sizeof(value), "%-6s %s", model, where);
+    add_detail(root, label, value);
+    shown++;
+  }
+  if (!shown) {
+    add_detail(root, "Drives", "None");
+  }
+}
+
+static void add_extra_lines(struct menu_item *root) {
+  for (int i = 0; i < details.num_extras; i++) {
+    const ProfileSummaryExtra *x = &details.extras[i];
+    char value[MAX_MENU_STR];
+    // The value of a cart or kernal is already its file's name; a RAM
+    // expansion's is its size, so its image file goes after it.
+    if (x->file[0] && (strcmp(x->key, "REU") == 0 ||
+                       strcmp(x->key, "GeoRAM") == 0)) {
+      snprintf(value, sizeof(value), "%s  %s", x->value, base_name(x->file));
+    } else {
+      snprintf(value, sizeof(value), "%s", x->value);
+    }
+    add_detail(root, x->key, value);
+  }
+  if (details.num_extras == 0) {
+    add_detail(root, "Extras", "None");
+  }
+}
+
+static void delete_confirmed(struct menu_item *item);
+
+static void show_details(const char *id, DetailsMode mode) {
+  if (profiles_summary(id, &details) != PROFILES_OK) {
+    ui_error("Can't read this profile");
+    return;
+  }
+  struct menu_item *root = push_menu(-1, -1, details.info.name);
+
+  struct menu_item *button;
+  if (mode == DETAILS_DELETE) {
+    button = ui_menu_add_button(MENU_PROFILES_DELETE_CONFIRM, root,
+                                "Delete this profile");
+    strcpy(button->str_value, id);
+    button->on_value_changed = delete_confirmed;
+    button->on_back = details_back;
+    ui_menu_add_divider(root);
+  } else if (mode == DETAILS_SELECT) {
+    if (strcmp(id, profiles_running()->id) == 0) {
+      add_detail(root, "Running now", "");
+    } else {
+      button = add_start_buttons(root, id, details.info.start);
+      for (; button != NULL; button = button->next) {
+        button->on_back = details_back;
+      }
+    }
+    ui_menu_add_divider(root);
+  }
+
+  char value[MAX_MENU_STR];
+  machine_text(details.info.machine, value, sizeof(value));
+  add_detail(root, "Machine", value);
+  if (details.description[0]) {
+    // Up to two lines, broken at a space.
+    const char *rest = details.description;
+    for (int line = 0; line < 2 && rest[0]; line++) {
+      int length = (int)strlen(rest);
+      int take = length;
+      if (take > DETAILS_VALUE_WIDTH) {
+        take = DETAILS_VALUE_WIDTH;
+        while (take > 0 && rest[take] != ' ') take--;
+        if (take == 0) take = DETAILS_VALUE_WIDTH;
+      }
+      snprintf(value, sizeof(value), "%.*s", take, rest);
+      add_detail(root, line == 0 ? "About" : "", value);
+      rest += take;
+      while (*rest == ' ') rest++;
+    }
+  }
+  add_detail(root, "Autostart",
+             details.autostart[0] ? base_name(details.autostart) : "None");
+  ui_menu_add_divider(root);
+
+  if (!details.known) {
+    add_detail(root, "No settings saved yet:", "");
+    add_detail(root, "showing the defaults", "");
+  }
+  add_drive_lines(root);
+  if (details.num_ports) {
+    ui_menu_add_divider(root);
+    for (int i = 0; i < details.num_ports; i++) {
+      char label[16];
+      snprintf(label, sizeof(label), "Port %d", details.ports[i].port);
+      add_detail(root, label, details.ports[i].device);
+    }
+  }
+  ui_menu_add_divider(root);
+  add_extra_lines(root);
+  ready();
+}
+
+static void select_item_opened(struct menu_item *item) {
+  show_details(item->str_value, DETAILS_SELECT);
+}
+
+static void delete_item_opened(struct menu_item *item) {
+  show_details(item->str_value, DETAILS_DELETE);
+}
+
+// The main menu's Profile: line.
+static void status_line_opened(struct menu_item *item) {
+  show_details(profiles_running()->id, DETAILS_VIEW);
 }
 
 static void show_select_list(void) {
   struct menu_item *root = push_menu(-1, -1, "Select profile");
   root->on_popped_off = list_popped;
-  add_profile_buttons(root, MENU_PROFILES_SELECT_ITEM, 0, profile_selected);
+  add_profile_buttons(root, MENU_PROFILES_SELECT_ITEM, 0, profile_selected,
+                      select_item_opened);
   ready();
 }
 
@@ -389,7 +597,7 @@ static void show_delete_list(void) {
   struct menu_item *root = push_menu(-1, -1, "Delete profile");
   root->on_popped_off = list_popped;
   if (add_profile_buttons(root, MENU_PROFILES_DELETE_ITEM, 1,
-                          delete_selected) == 0) {
+                          delete_selected, delete_item_opened) == 0) {
     ui_menu_add_button(MENU_TEXT, root, "No profiles to delete");
   }
   ready();
@@ -459,11 +667,12 @@ static struct menu_item *add_item(int id, struct menu_item *parent,
 
 void menu_profiles_add_status_line(struct menu_item *root) {
   // Shown once profiles are in use, also for Main; choosing it opens the
-  // profile list.
+  // profile list, Right shows what's in the running profile.
   if (profiles_running_is_main() && !profiles_in_use()) {
     return;
   }
   status_item = add_item(MENU_PROFILES_SELECT, root, "");
+  status_item->on_open = status_line_opened;
   update_name_labels();
 }
 

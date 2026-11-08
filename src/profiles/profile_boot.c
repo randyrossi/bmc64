@@ -278,6 +278,15 @@ void profiles_machine_switched(const char *entry) {
    active_file_write(&af);
 }
 
+const char *profiles_main_machine(void) {
+   // Running Main is on what booted; otherwise Main's files are those of the
+   // machine it last ran on.
+   if (running_is_main || main_machine[0] == '\0') {
+      return booted_desc;
+   }
+   return main_machine;
+}
+
 const ProfileInfo *profiles_running(void) {
    return &running.info;
 }

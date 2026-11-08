@@ -35,6 +35,14 @@ TOOLCHAIN_URL=https://gitlab.arm.com/api/v4/projects/tooling%2Fgnu-toolchains-fo
 TOOLCHAIN_CACHE=${XDG_CACHE_HOME:-$HOME/.cache}/bmc64/toolchains
 TOOLCHAIN_HOME=${BMC64_TOOLCHAIN_HOME:-$TOOLCHAIN_CACHE/$TOOLCHAIN_NAME}
 
+# The ccache links (see "Build speed-ups" below) are taken off PATH while the
+# real toolchain is looked for, so a link is never mistaken for the compiler.
+BMC64_CCACHE_BIN=$TOOLCHAIN_CACHE/ccache-bin
+PATH=:$PATH:
+PATH=${PATH//:$BMC64_CCACHE_BIN:/:}
+PATH=${PATH#:}
+export PATH=${PATH%:}
+
 toolchain_is_valid()
 {
     [ -x "$1/bin/$TOOLCHAIN_TARGET-gcc" ] &&
@@ -99,6 +107,103 @@ case ":$PATH:" in
 esac
 
 echo "Using Arm GNU Toolchain $ARM_VERSION: $ARM_HOME"
+
+# Build speed-ups for local builds. Neither changes what is built; the build
+# scripts still clean everything, these only make the rebuild quicker.
+#
+# ccache: the cross compilers are reached through a directory of ccache links
+# put first on PATH, so every compile (Circle, VICE, the common library, the
+# kernel) is looked up in the cache. The cache key covers the source, the
+# headers it pulls in and the flags, so an object built with different defines
+# (--perf-stats, --io-stats, a different board) is never reused. A ccache on
+# PATH is used as it is; otherwise the pinned static release is downloaded and
+# its checksum verified, like the toolchain. If that fails the build carries on
+# without it. BMC64_CCACHE=0 turns it off.
+#
+# Parallel make: MAKEFLAGS gives every make the job count, BMC64_JOBS (by
+# default the number of CPUs). BMC64_JOBS=1 builds one file at a time.
+CCACHE_VERSION=4.14.2
+CCACHE_NAME=ccache-${CCACHE_VERSION}-linux-x86_64-musl-static
+CCACHE_ARCHIVE=${CCACHE_NAME}.tar.xz
+CCACHE_URL=https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/${CCACHE_ARCHIVE}
+CCACHE_SHA256=b20ff6415151226ac5a10dfd6839700c694bd67d1871c8fddb266d366ff25bfb
+CCACHE_HOME=${BMC64_CCACHE_HOME:-$TOOLCHAIN_CACHE/$CCACHE_NAME}
+
+ccache_install()
+{
+    local archive_path=$TOOLCHAIN_CACHE/$CCACHE_ARCHIVE
+    local install_path=$TOOLCHAIN_CACHE/.${CCACHE_NAME}.installing
+
+    mkdir -p "$TOOLCHAIN_CACHE" || return 1
+    if ! { [ -f "$archive_path" ] &&
+           [ "$(sha256sum "$archive_path" 2>/dev/null | cut -d' ' -f1)" = "$CCACHE_SHA256" ]; }
+    then
+        rm -f "$archive_path"
+        echo "Downloading ccache $CCACHE_VERSION..."
+        if command -v curl >/dev/null 2>&1
+        then
+            curl --fail --location --retry 3 --output "$archive_path" "$CCACHE_URL" || return 1
+        elif command -v wget >/dev/null 2>&1
+        then
+            wget --output-document="$archive_path" "$CCACHE_URL" || return 1
+        else
+            return 1
+        fi
+        if [ "$(sha256sum "$archive_path" 2>/dev/null | cut -d' ' -f1)" != "$CCACHE_SHA256" ]
+        then
+            echo "ccache download does not match its expected checksum." >&2
+            rm -f "$archive_path"
+            return 1
+        fi
+    fi
+
+    echo "Installing ccache $CCACHE_VERSION..."
+    rm -rf "$install_path"
+    mkdir -p "$install_path" || return 1
+    tar -xJf "$archive_path" -C "$install_path" || return 1
+    rm -rf "$CCACHE_HOME"
+    mv "$install_path/$CCACHE_NAME" "$CCACHE_HOME" || return 1
+    rmdir "$install_path"
+}
+
+ccache_path=""
+if [ "${BMC64_CCACHE:-1}" != "0" ]
+then
+    if command -v ccache >/dev/null 2>&1
+    then
+        ccache_path=$(command -v ccache)
+    else
+        if [ ! -x "$CCACHE_HOME/ccache" ]
+        then
+            ccache_install || true
+        fi
+        if [ -x "$CCACHE_HOME/ccache" ] && "$CCACHE_HOME/ccache" --version >/dev/null 2>&1
+        then
+            ccache_path=$CCACHE_HOME/ccache
+        fi
+    fi
+fi
+
+if [ -n "$ccache_path" ]
+then
+    mkdir -p "$BMC64_CCACHE_BIN"
+    for compiler in gcc g++ c++
+    do
+        ln -sfn "$ccache_path" "$BMC64_CCACHE_BIN/$TOOLCHAIN_TARGET-$compiler"
+    done
+    # Kept first on PATH even when this file is sourced again for the other
+    # toolchain, which puts its own bin directory in front.
+    export PATH=$BMC64_CCACHE_BIN:$PATH
+    echo "Using ccache: $ccache_path ($("$ccache_path" --get-config cache_dir 2>/dev/null))"
+elif [ "${BMC64_CCACHE:-1}" != "0" ]
+then
+    echo "ccache could not be found or installed; compiling without it"
+fi
+
+BMC64_JOBS=${BMC64_JOBS:-$(nproc 2>/dev/null || echo 1)}
+export BMC64_JOBS
+export MAKEFLAGS="-j$BMC64_JOBS"
+echo "Make jobs: $BMC64_JOBS"
 
 # Node.js runs the web UI's JavaScript tests (tools/webui_test), which the
 # build requires to pass. A Node.js on PATH that is new enough is used as it
