@@ -49,8 +49,10 @@ using webhttp::CChunkedResponse;
 namespace {
 
 const unsigned WEBUI_FS_MAX_ENTRIES = 6000;
-// Matches Circle's TCP receive window (see circle_tcp_window_patch.diff), so
-// one upload batch can take a whole window of segments.
+// Uploads are collected into batches of this size before each SD write:
+// fewer, larger writes are much faster than one per TCP segment, and on a
+// Pi 3 a 64 KB write (about 11 ms) is short enough for the network to keep
+// up. Downloads read the card in pieces of this size too.
 const unsigned WEBUI_FS_IO_CHUNK = 64 * 1024;
 // Largest file the editor will open or save (the config files are a few KB;
 // the body is streamed to a temp file, so this is not a RAM limit).
@@ -440,7 +442,7 @@ BodyResult ReceiveBodyToFile(CSocket *socket, const char *temppath,
   }
 
   // Circle returns one TCP segment per Receive, so fill the whole buffer
-  // before writing: a blocking Receive on an empty queue lets the other
+  // before writing: waiting on an empty queue (webhttp::Receive) lets the other
   // tasks run, and the SD card gets a few large writes instead of many
   // small ones (no task, including the network, runs during a write).
   // A Receive into less space than the segment drops the rest of it, so
@@ -450,6 +452,11 @@ BodyResult ReceiveBodyToFile(CSocket *socket, const char *temppath,
   u64 wait_ticks = 0;
   u64 write_ticks = 0;
   u64 yield_ticks = 0;
+  // The longest single wait and the number of long ones tell a few long
+  // stalls (lost packets being resent) from a steady slow trickle.
+  u64 longest_wait_ticks = 0;
+  unsigned long long_waits = 0;
+  const u64 long_wait_limit = 100 * (CLOCKHZ / 1000);
   while (result == BODY_OK && written < total) {
     unsigned fill = 0;
     for (;;) {
@@ -460,10 +467,24 @@ BodyResult ReceiveBodyToFile(CSocket *socket, const char *temppath,
       }
       unsigned want = remain < space ? (unsigned) remain : space;
       u64 t0 = CTimer::GetClockTicks64();
-      int n = socket->Receive(s_io_buffer + fill, want, 0);
-      wait_ticks += CTimer::GetClockTicks64() - t0;
+      int n = webhttp::Receive(socket, s_io_buffer + fill, want);
+      u64 waited = CTimer::GetClockTicks64() - t0;
+      wait_ticks += waited;
+      if (waited > longest_wait_ticks) {
+        longest_wait_ticks = waited;
+      }
+      if (waited >= long_wait_limit) {
+        long_waits++;
+      }
       if (n <= 0) {
         result = BODY_TRUNCATED;
+        CLogger::Get()->Write("webui", LogWarning,
+                              "Upload truncated at %lu of %lu bytes after "
+                              "%lu ms: Receive returned %d",
+                              written + fill, total,
+                              (unsigned long) ((CTimer::GetClockTicks64() - t0) /
+                                               (CLOCKHZ / 1000)),
+                              n);
         break;
       }
       fill += (unsigned) n;
@@ -488,22 +509,34 @@ BodyResult ReceiveBodyToFile(CSocket *socket, const char *temppath,
     yield_ticks += CTimer::GetClockTicks64() - t2;
   }
 
-  // Throughput, the average batch size and where the time went show what
-  // limits an upload: waiting for data (the network; other tasks also run
-  // while it waits), SD writes, or other tasks between batches.
-  if (result == BODY_OK && batches > 0) {
+  // Throughput for every upload. When something waited 100 ms or more, also
+  // the average batch size and where the time went: waiting for data (the
+  // network; other tasks also run while it waits), SD writes, or other tasks
+  // between batches. The serial log is written synchronously, so normal
+  // uploads get the short line.
+  if (result == BODY_OK && batches > 0 && long_waits == 0) {
+    const u64 per_ms = CLOCKHZ / 1000;
+    u64 ms = (CTimer::GetClockTicks64() - start_ticks) / per_ms;
+    CLogger::Get()->Write("webui", LogNotice,
+                          "Received %lu bytes in %lu ms (%lu KB/s)",
+                          total, (unsigned long) ms,
+                          ms > 0 ? (unsigned long) (total / ms) : 0UL);
+  } else if (result == BODY_OK && batches > 0) {
     const u64 per_ms = CLOCKHZ / 1000;
     u64 ms = (CTimer::GetClockTicks64() - start_ticks) / per_ms;
     CLogger::Get()->Write("webui", LogNotice,
                           "Received %lu bytes in %lu ms (%lu KB/s), "
                           "%lu batches of %lu bytes avg; "
-                          "waiting %lu ms, SD writes %lu ms, other tasks %lu ms",
+                          "waiting %lu ms, SD writes %lu ms, other tasks %lu ms; "
+                          "longest wait %lu ms, %lu waits of 100 ms or more",
                           total, (unsigned long) ms,
                           ms > 0 ? (unsigned long) (total / ms) : 0UL,
                           batches, (unsigned long) (total / batches),
                           (unsigned long) (wait_ticks / per_ms),
                           (unsigned long) (write_ticks / per_ms),
-                          (unsigned long) (yield_ticks / per_ms));
+                          (unsigned long) (yield_ticks / per_ms),
+                          (unsigned long) (longest_wait_ticks / per_ms),
+                          long_waits);
   }
 
   if (sd_close(file) != SD_OK && result == BODY_OK) {

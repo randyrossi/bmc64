@@ -52,6 +52,7 @@
 #include <circle/net/socket.h>
 #include <circle/sched/scheduler.h>
 #include <circle/sched/task.h>
+#include <circle/string.h>
 #include <circle/timer.h>
 #include <circle/types.h>
 
@@ -85,8 +86,13 @@ extern "C" void menu_profiles_clear_start_error(void);
 #define WEBUI_PORT             80
 #define WEBUI_ALT_PORT         8080
 #define WEBUI_TASK_STACK       0x10000
-#define WEBUI_RECV_TIMEOUT_US  8000000
 #define WEBUI_REQUEST_MAX      4096
+#define WEBUI_SLOW_HEADER_MS   1000
+// Browsers open spare connections that send nothing until needed. Requests
+// are handled one at a time, so an idle one would hold up the rest for the
+// whole receive timeout; drop it sooner. 2 s still lets a real request
+// through when its first packet is lost and resent.
+#define WEBUI_FIRST_BYTE_MS    2000
 #define WEBUI_LISTEN_BACKLOG   8
 #define WEBUI_PIN_MAX          16
 #define WEBUI_AUTH_FAIL_MS     500  // slow brute-forcing a wrong PIN
@@ -423,26 +429,57 @@ void Send401(CSocket *socket) {
   }
 }
 
-boolean HandleConnection(CSocket *socket) {
-  socket->SetOptionReceiveTimeout(WEBUI_RECV_TIMEOUT_US);
-
+boolean HandleConnection(CSocket *socket, const CIPAddress &client_ip,
+                         u16 client_port) {
   char request[WEBUI_REQUEST_MAX];
   unsigned length = 0;
+  u64 header_start = CTimer::GetClockTicks64();
   for (;;) {
     if (length >= sizeof(request) - 1) {
       SendText(socket, 431, "Request Header Fields Too Large",
                "request too large\n");
       return FALSE;
     }
-    int n = socket->Receive(request + length, sizeof(request) - 1 - length, 0);
+    int n = webhttp::Receive(socket, request + length,
+                             sizeof(request) - 1 - length,
+                             length == 0 ? WEBUI_FIRST_BYTE_MS
+                                         : webhttp::RECEIVE_TIMEOUT_MS);
     if (n <= 0) {
-      return FALSE;  // client closed, timed out, or error
+      // Client closed, timed out, or error. A browser's spare connection that
+      // never sent anything is normal, so only a request cut off part way
+      // is logged, with the client it came from.
+      if (length > 0) {
+        CString client;
+        client_ip.Format(&client);
+        CLogger::Get()->Write(WEBUI_LOG, LogNotice,
+                              "Dropped a connection after %lu ms: Receive "
+                              "returned %d with %u bytes of request, from %s:%u",
+                              (unsigned long) ((CTimer::GetClockTicks64() -
+                                                header_start) / (CLOCKHZ / 1000)),
+                              n, length, (const char *) client,
+                              (unsigned) client_port);
+      }
+      return FALSE;
     }
     length += (unsigned) n;
     request[length] = '\0';
     if (strstr(request, "\r\n\r\n") != 0) {
       break;
     }
+  }
+
+  // Headers normally arrive in a millisecond or two; a slow start to a
+  // request (a lost packet being resent) shows up here, not in the
+  // upload's own timing.
+  unsigned long header_ms = (unsigned long)
+      ((CTimer::GetClockTicks64() - header_start) / (CLOCKHZ / 1000));
+  if (header_ms >= WEBUI_SLOW_HEADER_MS) {
+    CString client;
+    client_ip.Format(&client);
+    CLogger::Get()->Write(WEBUI_LOG, LogNotice,
+                          "Request headers took %lu ms (%u bytes), from %s:%u",
+                          header_ms, length, (const char *) client,
+                          (unsigned) client_port);
   }
 
   // Body bytes that arrived in the same read(s) as the headers, plus the
@@ -681,7 +718,7 @@ public:
         CScheduler::Get()->MsSleep(50);
         continue;
       }
-      HandleConnection(connection);
+      HandleConnection(connection, client_ip, client_port);
       delete connection;
       if (g_webui_stop) {
         break;
