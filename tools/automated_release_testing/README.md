@@ -64,8 +64,9 @@ not covered by that validation.
 - Checks the folder lists every file at its full size, downloads each one and
   compares it with what was sent, then checks the Web UI still answers.
 - Records each upload's time and speed in `uploads.json`, with the matching
-  `Received ... bytes` line BMC64 logs on the UART (including its longest
-  wait for data), any slow request headers it logs, and the change in this
+  `Received ... bytes` line BMC64 logs on the UART (with the longest wait for
+  data when any wait took 100 ms or more), any slow request headers (1 s or
+  more) or part-received requests it logs, and the change in this
   PC's TCP retransmit counters (Linux `/proc/net/snmp` and
   `/proc/net/netstat`). The counters cover all of the PC's TCP traffic, so
   keep other network use low during a run. The run ends by saying how many
@@ -74,8 +75,8 @@ not covered by that validation.
   and works in a new `/bmc64-upload-<run id>` folder that it deletes afterwards.
 
 A Web UI tab open in a browser on the same PC is fine, but its spare
-connections can hold up an upload for a couple of seconds; the progress line
-shows this as `BMC64 first dropped another connection ... this PC`.
+connections can hold up an upload for a couple of seconds: the Web UI handles
+one connection at a time and drops an idle one after 2 s, without logging it.
 
 To test uploads over a lossy network, add packet loss on the PC's interface
 to the Pi while it runs (Linux; remove it afterwards):

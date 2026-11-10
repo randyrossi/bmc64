@@ -47,15 +47,17 @@ BATCH = [D64_SIZE] * 30 + [MB] * 10 + [16 * MB] * 2 + [64 * MB]
 REQUEST_TIMEOUT = 60.0
 # How long to wait for the UART line BMC64 logs after each upload.
 UART_LINE_WAIT = 3.0
+# BMC64 logs a short Received line for a normal upload; when something
+# waited 100 ms or more it adds batches, where the time went, the longest
+# single wait for data and how many waits took 100 ms or more.
 RECEIVED_LINE = re.compile(
-    r"Received (\d+) bytes in (\d+) ms \((\d+) KB/s\), (\d+) batches")
-# Added to the Received line by newer builds: the longest single wait for
-# data and how many waits took 100 ms or more.
+    r"Received (\d+) bytes in (\d+) ms \((\d+) KB/s\)(?:, (\d+) batches)?")
 WAITS = re.compile(r"longest wait (\d+) ms, (\d+) waits of 100 ms or more")
 # Logged when a request's headers were slow to arrive.
 SLOW_HEADERS = re.compile(r"Request headers took (\d+) ms")
-# Logged when a connection is dropped before sending a whole request; the
-# Web UI handles one connection at a time, so this holds up the next one.
+# Logged when a connection is dropped part way through a request; the Web
+# UI handles one connection at a time, so this holds up the next one.
+# (Idle connections that sent nothing are dropped after 2 s without a log.)
 DROPPED = re.compile(r"Dropped a connection after (\d+) ms"
                      r"(?:.*? with (\d+) bytes of request, from ([\d.]+):(\d+))?")
 # What BMC64 logs when an upload stops arriving before it is complete.
@@ -315,7 +317,8 @@ class Test(BmcTest):
                 match = RECEIVED_LINE.search(line)
                 if match and int(match[1]) == size:
                     found = {"ms": int(match[2]), "kb_per_s": int(match[3]),
-                             "batches": int(match[4]), "line": line.split("  ", 1)[-1]}
+                             "batches": int(match[4]) if match[4] else None,
+                             "line": line.split("  ", 1)[-1]}
                     waits = WAITS.search(line)
                     if waits:
                         found.update(longest_wait_ms=int(waits[1]),

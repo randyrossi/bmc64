@@ -192,7 +192,14 @@ class WebUiUploadTest(unittest.TestCase):
                 "longest wait 2900 ms, 2 waits of 100 ms or more")
         waits = test_upload_batch.WAITS.search(line)
         self.assertEqual((waits[1], waits[2]), ("2900", "2"))
-        self.assertTrue(test_upload_batch.RECEIVED_LINE.search(line))
+        self.assertEqual(test_upload_batch.RECEIVED_LINE.search(line).groups(),
+                         ("1048576", "3386", "309", "17"))
+
+    def test_the_short_received_line_of_a_normal_upload_is_read(self):
+        line = "webui: Received 1048576 bytes in 690 ms (1519 KB/s)"
+        self.assertEqual(test_upload_batch.RECEIVED_LINE.search(line).groups(),
+                         ("1048576", "690", "1519", None))
+        self.assertIsNone(test_upload_batch.WAITS.search(line))
 
     def test_a_file_that_reads_back_different_fails(self):
         with self.assertRaises(TestFailure) as raised:
