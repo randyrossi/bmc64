@@ -27,6 +27,8 @@ tests/
     diagnostic.py          Signal decoding and audio measurements
     guest.py               C64 guest program (6502 assembly)
     test_c64_default.py    Full C64 diagnostic setup and assertions
+  webui/
+    test_upload_batch.py   Batch upload, read-back and Web UI checks
 unit_tests/                Offline tests of the above, never hardware discovery
 ```
 
@@ -48,13 +50,15 @@ for a suite base class when only one test uses the procedure.
 ./run_tests --list                   # stable IDs, descriptions and suite names
 ./run_tests boot                     # six boot/typing tests
 ./run_tests basic                    # C64 diagnostic
+./run_tests webui                    # Web UI upload batch
 ./run_tests pet-boot-typing
 ./run_tests boot c64-default
 ```
 
 Repeated selections are deduplicated. Tests run sequentially, not in
 parallel; the Pi, UARTs and capture device are exclusive resources. They run
-in `order` (ties use suite/name): boot tests 10-60, then the diagnostic at 70.
+in `order` (ties use suite/name): boot tests 10-60, then the diagnostic at 70,
+then the Web UI upload test at 80.
 
 Every test names its `machine`. `--manifest` (default `suite_profiles.json`)
 maps each machine to its SD-card test profile; it is not a registry of Python

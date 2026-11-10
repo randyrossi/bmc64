@@ -1130,17 +1130,18 @@ class RotationTests(unittest.TestCase):
         self.assertEqual(completed.returncode, 0, completed.stderr)
         names = [line.split()[0] for line in completed.stdout.splitlines()]
         self.assertEqual(names, [machine.lower() + "-boot-typing" for machine in MACHINES]
-                         + ["c64-default"])
+                         + ["c64-default", "webui-upload-batch"])
 
     def test_no_arguments_prepares_every_test_and_ends_with_a_summary(self):
         with tempfile.TemporaryDirectory() as directory:
             completed = self.cli("--results", directory)
             self.assertEqual(completed.returncode, 0, completed.stderr)
             summary = completed.stdout[completed.stdout.index("Summary:"):].splitlines()
-            self.assertEqual([line.split()[:2] for line in summary[1:8]],
+            self.assertEqual([line.split()[:2] for line in summary[1:9]],
                              [["PREPARED", machine.lower() + "-boot-typing"] for machine in MACHINES]
-                             + [["PREPARED", "c64-default"]])
-            self.assertEqual(summary[8].strip(), "7 PREPARED")
+                             + [["PREPARED", "c64-default"],
+                                ["PREPARED", "webui-upload-batch"]])
+            self.assertEqual(summary[9].strip(), "8 PREPARED")
             self.assertEqual(len(list(Path(directory).glob("*/result.json"))), 1)
 
     def test_names_select_tests_and_unknown_names_are_rejected(self):

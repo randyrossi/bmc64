@@ -9,7 +9,8 @@ and HDMI video/audio capture.
 Every test has a name. `run_tests` runs all of them; `run_tests --list` lists
 them and `run_tests TEST...` runs only the named tests. Folder names select
 suites: `run_tests boot` runs the six boot/typing tests, and `run_tests basic`
-runs the C64 diagnostic. Existing individual names are unchanged.
+runs the C64 diagnostic, and `run_tests webui` runs the Web UI upload test.
+Existing individual names are unchanged.
 
 **Profile boot/typing tests** (`c64-boot-typing` ... `pet-boot-typing`):
 
@@ -50,6 +51,40 @@ Hardware-validated C64 diagnostic configuration: Raspberry Pi 3 Model B and
 Raspberry Pi 4 Model B, BMC64 5.4.5, C64 PAL,
 RP2040 Pico and MacroSilicon MS2109 HDMI capture. Other configurations are
 not covered by that validation.
+
+**Web UI upload batch** (`webui-upload-batch`):
+
+- Uploads 43 files, about 111 MB: thirty D64-sized files, ten 1 MB files,
+  two 16 MB files and one 64 MB file (larger than a BMC64 update package),
+  one request each and back to back, as the Files view does when several
+  files are dropped at once. Needs about 127 MB free on the SD card.
+- Fails if an upload is rejected (for example `upload truncated`, quoting
+  the line BMC64 logs) or gets no answer in time (60 seconds, plus a
+  second for every 256 KB), naming the file.
+- Checks the folder lists every file at its full size, downloads each one and
+  compares it with what was sent, then checks the Web UI still answers.
+- Records each upload's time and speed in `uploads.json`, with the matching
+  `Received ... bytes` line BMC64 logs on the UART (including its longest
+  wait for data), any slow request headers it logs, and the change in this
+  PC's TCP retransmit counters (Linux `/proc/net/snmp` and
+  `/proc/net/netstat`). The counters cover all of the PC's TCP traffic, so
+  keep other network use low during a run. The run ends by saying how many
+  slow uploads (under half the median speed) had retransmits.
+- Uses the C64 test profile without restarting it if it is already running,
+  and works in a new `/bmc64-upload-<run id>` folder that it deletes afterwards.
+
+A Web UI tab open in a browser on the same PC is fine, but its spare
+connections can hold up an upload for a couple of seconds; the progress line
+shows this as `BMC64 first dropped another connection ... this PC`.
+
+To test uploads over a lossy network, add packet loss on the PC's interface
+to the Pi while it runs (Linux; remove it afterwards):
+
+```sh
+sudo tc qdisc add dev <interface> root netem loss 1%
+./tools/automated_release_testing/run_tests webui
+sudo tc qdisc del dev <interface> root
+```
 
 ## Requirements
 

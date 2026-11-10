@@ -433,7 +433,7 @@ class SetupTests(unittest.TestCase):
             self.assertEqual(len(reports), 1)
             report = json.loads(reports[0].read_text())
             self.assertEqual(report["status"], "PREPARED")
-            self.assertEqual(len(report["tests"]), 7)
+            self.assertEqual(len(report["tests"]), 8)
             self.assertEqual({test["status"] for test in report["tests"]}, {"PREPARED"})
             self.assertEqual(report["url"], self.settings()["url"])
             self.assertEqual(report["pico_uart"], self.settings()["pico_uart"])
@@ -454,7 +454,7 @@ class SetupTests(unittest.TestCase):
                 [str(ROOT / "run_tests"), "--config", str(config), "--list"],
                 cwd=directory, capture_output=True, text=True, timeout=10)
             self.assertEqual(completed.returncode, 0, completed.stderr)
-            self.assertEqual(len(completed.stdout.splitlines()), 7)
+            self.assertEqual(len(completed.stdout.splitlines()), 8)
             self.assertIn("c64-default", completed.stdout)
 
     def test_moved_utilities_keep_root_paths_and_the_supplied_launcher_matches(self):
