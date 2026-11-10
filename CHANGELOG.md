@@ -1,5 +1,9 @@
 ## 5.5.1 (pre-release)
   * Added Profile Summary: Press Right on a profile, or the main menu's *Profile:* line, to see a summary of its setup
+  * Fix Web UI uploads of several or large files stopping with *upload truncated* or slowing right down #422
+  * Web UI no longer pauses for up to 8 seconds when a browser leaves a connection idle
+  * Development: Add automated tests using test rig on actual hardware
+  * Development: Faster builds with parallel make and ccache
 
 ## 5.5.0
   * Web UI Profiles page shows each profile's setup at a glance: drives and their disks or IEC folders, control ports, and expansions such as REU, GeoRAM, cartridge, Kernal, SID and 40/80 columns #416

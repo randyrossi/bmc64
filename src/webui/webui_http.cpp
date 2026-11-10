@@ -23,14 +23,32 @@
 
 #if BMC64_WEBUI
 
+#include <circle/net/in.h>
 #include <circle/net/socket.h>
 #include <circle/sched/scheduler.h>
+#include <circle/timer.h>
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
 namespace webhttp {
+
+int Receive(CSocket *socket, void *buffer, unsigned length,
+            unsigned timeout_ms) {
+  const u64 limit = (u64) timeout_ms * (CLOCKHZ / 1000);
+  const u64 start = CTimer::GetClockTicks64();
+  for (;;) {
+    int n = socket->Receive(buffer, length, MSG_DONTWAIT);
+    if (n != 0) {
+      return n;
+    }
+    if (CTimer::GetClockTicks64() - start >= limit) {
+      return 0;
+    }
+    CScheduler::Get()->Yield();
+  }
+}
 
 boolean SendAll(CSocket *socket, const void *data, unsigned length) {
   const u8 *bytes = (const u8 *) data;

@@ -1,0 +1,5 @@
+#!/bin/sh
+# Managed by configure_test_setup; settings are in test_setup.json.
+set -eu
+TEST_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+exec python3 "$TEST_DIR/run_smoke" --config "$TEST_DIR/test_setup.json" --execute "$@"

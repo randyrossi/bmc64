@@ -36,9 +36,16 @@
 #include <circle/bcm2835.h>
 #include <circle/bcmpropertytags.h>
 #include <circle/memio.h>
+#include <circle/net/tcpconnection.h>
 
 static const unsigned int WIFI_SCAN_DURATION_US = 4000000;
 static const unsigned int WIFI_CONNECT_TIMEOUT_US = 30000000;
+// TCP receive window, in segments. A larger window nearly doubles web UI
+// upload speed over Wi-Fi, where each round trip is longer; 44 is the most
+// without window scaling. Ethernet keeps Circle's default of 10: the Pi 3's
+// USB Ethernet drops the end of larger bursts.
+static const unsigned int WIFI_TCP_RECEIVE_WINDOW_SEGMENTS = 44;
+static const unsigned int ETHERNET_TCP_RECEIVE_WINDOW_SEGMENTS = 10;
 static CLoggingDevice *gLoggingDevice = nullptr;
 
 // BMC64 version string; single source of truth is menu.c's VERSION_STRING.
@@ -566,6 +573,13 @@ void ViceStdioApp::LoadNetworkDevice() {
   fclose(settings);
 #endif
 }
+// Set before the network starts, so every TCP connection uses it.
+void ViceStdioApp::SetTcpReceiveWindow(unsigned segments, const char *network) {
+  CTCPConnection::SetReceiveWindow(segments);
+  mLogger.Write(GetKernelName(), LogNotice,
+                "TCP receive window: %u segments (%s)", segments, network);
+}
+
 void ViceStdioApp::InitializeNetwork() {
 #if BMC64_NETWORK
   if (mNetworkDevice == 0) {
@@ -577,6 +591,7 @@ void ViceStdioApp::InitializeNetwork() {
   if (mNetworkDevice == 1 &&
       ViceNetworkHasOnboardEthernet(mMachineInfo.GetMachineModel())) {
     SetNetworkStatus(CIRCLE_NETWORK_ETHERNET_INITIALIZING);
+    SetTcpReceiveWindow(ETHERNET_TCP_RECEIVE_WINDOW_SEGMENTS, "Ethernet");
     mNet = new CNetSubSystem(0, 0, 0, 0, "bmc64", NetDeviceTypeEthernet);
     if (!mNet->Initialize(FALSE)) {
       SetNetworkStatus(CIRCLE_NETWORK_ETHERNET_INIT_FAILED);
@@ -643,6 +658,7 @@ void ViceStdioApp::InitializeNetwork() {
     return;
   }
 
+  SetTcpReceiveWindow(WIFI_TCP_RECEIVE_WINDOW_SEGMENTS, "Wi-Fi");
   mNet = new CNetSubSystem(0, 0, 0, 0, "bmc64", NetDeviceTypeWLAN);
   if (!mNet->Initialize(FALSE)) {
     SetNetworkStatus(CIRCLE_NETWORK_WIFI_NETWORK_INIT_FAILED);

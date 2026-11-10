@@ -1,0 +1,3 @@
+name=c64_test
+machine=C64/PAL/HDMI
+start=once

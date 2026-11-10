@@ -1,0 +1,83 @@
+--- a/include/circle/net/tcpconnection.h
++++ b/include/circle/net/tcpconnection.h
+@@ -72,6 +72,10 @@
+ 			u16		 nOwnPort);
+ 	~CTCPConnection (void);
+ 
++	// Adjust the receive window, in segments, for connections opened after this
++	// call (1 to 44, the most that fits without window scaling; default 10)
++	static void SetReceiveWindow (unsigned nSegments);
++
+ 	const char *GetStateName (void) const;
+ 
+ 	int Connect (void);
+@@ -195,6 +199,7 @@
+ 	unsigned m_nSendTimeout;	// us
+ 
+ 	static unsigned s_nConnections;
++	static u32 s_nReceiveWindow;
+ 
+ 	static const char *s_pStateName[];
+ };
+--- a/lib/net/tcpconnection.cpp
++++ b/lib/net/tcpconnection.cpp
+@@ -131,6 +131,23 @@
+ 
+ unsigned CTCPConnection::s_nConnections = 0;
+ 
++u32 CTCPConnection::s_nReceiveWindow = TCP_CONFIG_WINDOW;
++
++void CTCPConnection::SetReceiveWindow (unsigned nSegments)
++{
++	const unsigned nMaxSegments = 0xFFFF / TCP_CONFIG_MSS;
++	if (nSegments < 1)
++	{
++		nSegments = 1;
++	}
++	else if (nSegments > nMaxSegments)
++	{
++		nSegments = nMaxSegments;
++	}
++
++	s_nReceiveWindow = nSegments * TCP_CONFIG_MSS;
++}
++
+ const char *CTCPConnection::s_pStateName[] =	// must match TTCPState
+ {
+ 	"CLOSED",
+@@ -159,7 +176,7 @@
+ 	m_nErrno (0),
+ 	m_TxQueue (TRUE),
+ 	m_RxQueue (TRUE),
+-	m_ReassemblyQueue (&m_RxQueue, TCP_CONFIG_WINDOW),
++	m_ReassemblyQueue (&m_RxQueue, s_nReceiveWindow),
+ 	m_bRetransmit (FALSE),
+ 	m_bSendSYN (FALSE),
+ 	m_bFINQueued (FALSE),
+@@ -171,7 +188,7 @@
+ 	m_nSND_WND (TCP_CONFIG_WINDOW),
+ 	m_nSND_UP (0),
+ 	m_nRCV_NXT (0),
+-	m_nRCV_WND (TCP_CONFIG_WINDOW),
++	m_nRCV_WND (s_nReceiveWindow),
+ 	m_nIRS (0),
+ 	m_nSND_MSS (536),	// RFC 1122 section 4.2.2.6
+ 	m_nIW (4 * m_nSND_MSS),
+@@ -216,7 +233,7 @@
+ 	m_nErrno (0),
+ 	m_TxQueue (TRUE),
+ 	m_RxQueue (TRUE),
+-	m_ReassemblyQueue (&m_RxQueue, TCP_CONFIG_WINDOW),
++	m_ReassemblyQueue (&m_RxQueue, s_nReceiveWindow),
+ 	m_bRetransmit (FALSE),
+ 	m_bSendSYN (FALSE),
+ 	m_bFINQueued (FALSE),
+@@ -228,7 +245,7 @@
+ 	m_nSND_WND (TCP_CONFIG_WINDOW),
+ 	m_nSND_UP (0),
+ 	m_nRCV_NXT (0),
+-	m_nRCV_WND (TCP_CONFIG_WINDOW),
++	m_nRCV_WND (s_nReceiveWindow),
+ 	m_nIRS (0),
+ 	m_nSND_MSS (536),	// RFC 1122 section 4.2.2.6
+ 	m_nIW (4 * m_nSND_MSS),

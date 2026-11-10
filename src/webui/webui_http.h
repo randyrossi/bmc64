@@ -32,6 +32,19 @@ class CSocket;
 
 namespace webhttp {
 
+// How long a request may go without receiving anything before it is
+// dropped (or an upload is reported as truncated).
+const unsigned RECEIVE_TIMEOUT_MS = 8000;
+
+// Receive up to `length` bytes, as CSocket::Receive does (one TCP segment
+// per call; a segment longer than `length` loses the rest). Returns the
+// byte count, a negative error, or 0 after `timeout_ms` with nothing
+// received. Polls without blocking and yields between polls: a blocking
+// Receive can sleep through data that is already queued, which stalled
+// large uploads until the timeout (#422).
+int Receive(CSocket *socket, void *buffer, unsigned length,
+            unsigned timeout_ms = RECEIVE_TIMEOUT_MS);
+
 // Send every byte, yielding between sends. FALSE on socket error.
 boolean SendAll(CSocket *socket, const void *data, unsigned length);
 

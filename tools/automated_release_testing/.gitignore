@@ -1,0 +1,7 @@
+/mock_hid/build/
+/mock_hid/build-native/
+/results/
+/local/
+/test_setup.json
+__pycache__/
+*.py[cod]

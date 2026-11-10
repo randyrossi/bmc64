@@ -1,0 +1,3 @@
+name=plus4emu_test
+machine=Plus4Emu/PAL/HDMI
+start=once

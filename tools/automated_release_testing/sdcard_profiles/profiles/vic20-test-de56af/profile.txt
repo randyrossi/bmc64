@@ -1,0 +1,3 @@
+name=vic20_test
+machine=VIC20/PAL/HDMI
+start=once
