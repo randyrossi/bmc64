@@ -337,6 +337,7 @@ private:
   void InitBootStat();
   void LoadNetworkDevice();
   void InitializeNetwork();
+  void SetTcpReceiveWindow(unsigned segments, const char *network);
   void SetNetworkStatus(int status);
 
 protected:
