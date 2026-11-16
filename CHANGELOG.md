@@ -1,3 +1,6 @@
+## 5.5.2 (pre-release)
+  * Web UI: Add support for USB sticks, including displaying in the sidebar
+
 ## 5.5.1 (pre-release)
   * Added Profile Summary: Press Right on a profile, or the main menu's *Profile:* line, to see a summary of its setup
   * Fix Web UI uploads of several or large files stopping with *upload truncated* or slowing right down #422
