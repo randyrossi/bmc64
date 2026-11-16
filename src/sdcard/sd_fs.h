@@ -112,6 +112,8 @@ int sd_remove_tree(const char *path, unsigned *removed,
 
 // The card's size and free space, in KB.
 int sd_space_kb(uint32_t *total_kb, uint32_t *free_kb);
+// The same for the volume holding PATH ("/" the card, "USB:/" a stick).
+int sd_path_space_kb(const char *path, uint32_t *total_kb, uint32_t *free_kb);
 
 // ---- Shorter forms (sd_fs_file.c) ----
 

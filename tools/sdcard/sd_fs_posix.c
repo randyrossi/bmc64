@@ -272,9 +272,13 @@ int sd_remove_tree(const char *path, unsigned *removed,
 }
 
 int sd_space_kb(uint32_t *total_kb, uint32_t *free_kb) {
+  return sd_path_space_kb("/", total_kb, free_kb);
+}
+
+int sd_path_space_kb(const char *path, uint32_t *total_kb, uint32_t *free_kb) {
   char p[1024];
   struct statvfs st;
-  full("/", p, sizeof(p));
+  full(path, p, sizeof(p));
   if (statvfs(p, &st) != 0) {
     return SD_ERROR;
   }

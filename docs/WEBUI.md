@@ -47,7 +47,11 @@ boot unless you also turn off `Web UI (reboot)` in
 
 ### Files
 
-Browse the SD card. Click a folder to open it. Every file and folder has an
+Browse the SD card and USB sticks. While a stick is plugged in, each drive
+gets a button under **Files** in the sidebar (reload the page, or press
+Refresh, after plugging one in); the dashboard shows a storage bar for each.
+Every file action works on the sticks; config files are editable and
+protected on the SD card only. Click a folder to open it. Every file and folder has an
 **Actions** button that opens a menu of what applies to it: **Autostart**, **Edit…**,
 **Edit listing…**, **Download**, **Rename…** and **Delete**. Clicking a file's name does its main
 action: it runs a disk, tape or program, edits a config file, and does nothing

@@ -301,6 +301,10 @@ int circle_unmount_usb(int usb) {
   return static_kernel->circle_unmount_usb(usb);
 }
 
+int circle_usb_stick_ready(int usb) {
+  return static_kernel->circle_usb_stick_ready(usb);
+}
+
 // circle_io_stats_dump() / circle_io_benchmark() live in src/io_stats_bench.cpp
 // (compiled only with --io-stats).
 

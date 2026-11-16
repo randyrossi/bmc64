@@ -294,6 +294,7 @@ extern void circle_boot_complete();
 extern void circle_find_usb(int (*usb)[3]);
 extern int circle_mount_usb(int usb);
 extern int circle_unmount_usb(int usb);
+extern int circle_usb_stick_ready(int usb);
 
 #ifdef BMC64_IO_STATS
 // Storage I/O measurement (see third_party/common/io_stats.h).

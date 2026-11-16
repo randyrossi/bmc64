@@ -321,6 +321,9 @@ public:
 
   void circle_find_usb(int (*usb)[3]);
   int circle_mount_usb(int usb);
+  // True if USB stick USB (0-2) is plugged in and mounted (mounting it if
+  // need be), for the web UI.
+  int circle_usb_stick_ready(int usb);
   int circle_unmount_usb(int usb);
   int WifiIsRunning(void) const;
   int ConnectWifi(void);

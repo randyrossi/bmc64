@@ -44,8 +44,14 @@ struct sd_file {
   FIL fil;
 };
 
+// A path naming its volume ("USB:/games") is used as it is; others are on
+// the card.
 static int fat_path(const char *path, char *out, unsigned size) {
-  int n = snprintf(out, size, "%s:%s", circle_get_disk_volume(), path);
+  const char *colon = strchr(path, ':');
+  const char *slash = strchr(path, '/');
+  int n = colon != NULL && (slash == NULL || colon < slash)
+              ? snprintf(out, size, "%s", path)
+              : snprintf(out, size, "%s:%s", circle_get_disk_volume(), path);
   return (n > 0 && (unsigned)n < size) ? 0 : -1;
 }
 
@@ -310,10 +316,14 @@ int sd_remove_tree(const char *path, unsigned *removed,
 }
 
 int sd_space_kb(uint32_t *total_kb, uint32_t *free_kb) {
-  char p[32];
+  return sd_path_space_kb("", total_kb, free_kb);
+}
+
+int sd_path_space_kb(const char *path, uint32_t *total_kb, uint32_t *free_kb) {
+  char p[FAT_PATH_LEN];
   DWORD clusters = 0;
   FATFS *fs = NULL;
-  if (fat_path("", p, sizeof(p)) != 0) {
+  if (fat_path(path, p, sizeof(p)) != 0) {
     return SD_INVALID;
   }
   FRESULT fr = f_getfree(p, &clusters, &fs);

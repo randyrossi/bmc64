@@ -405,7 +405,7 @@ async function deleteProfile(p) {
   setMsg("Deleting " + p.name + "…");
   let keptFolder = false;
   try {
-    const listing = await api.listDir(dir);
+    const listing = await api.listDir(null, dir);
     const ours = new Set(PROFILE_FILES);
     for (const entry of listing.entries || []) {
       if (!entry.dir && ours.has(entry.name.toLowerCase())) {

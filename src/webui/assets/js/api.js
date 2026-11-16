@@ -71,9 +71,10 @@ export const startProfile = (id, once) =>
 
 // ---- files ----
 
-// No vol: the first listing tells us which volume the device uses.
-export const listDir = (path) =>
-  getJson("/api/fs/list?path=" + encodeURIComponent(path));
+// No vol: the card, whose name the listing gives.
+export const listDir = (vol, path) =>
+  getJson("/api/fs/list?" + (vol ? fsQuery(vol, path)
+                                 : "path=" + encodeURIComponent(path)));
 
 export const downloadUrl = (vol, path) =>
   "/api/fs/download?" + fsQuery(vol, path);

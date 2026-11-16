@@ -982,27 +982,46 @@ void ViceStdioApp::circle_find_usb(int (*usb)[3]) {
   (*usb)[2] = usb3 ? 1 : 0;
 }
 
-int ViceStdioApp::circle_mount_usb(int usb) {
-  int status;
-  switch (usb) {
-     case 0:
-       status = f_mount(&mFileSystemUSB1, "USB:", 1);
-       break;
-     case 1:
-       status = f_mount(&mFileSystemUSB1, "USB2:", 1);
-       break;
-     case 2:
-       status = f_mount(&mFileSystemUSB1, "USB3:", 1);
-       break;
-     default: return 0;
-  }
+// The USB sticks' volumes, each mounted at most once whether the menu or
+// the web UI asks first: mounting a volume again would invalidate the files
+// open on it. 0 not mounted, 1 being mounted, 2 mounted.
+static const char *const kUSBVolumes[3] = {"USB:", "USB2:", "USB3:"};
+static volatile int s_usb_mount_state[3];
 
-  if (status != FR_OK) {
-    mLogger.Write(GetKernelName(), LogError, "Cannot mount usb %d", usb);
+int ViceStdioApp::circle_mount_usb(int usb) {
+  if (usb < 0 || usb > 2) {
     return 0;
   }
+  for (;;) {
+    int expected = 0;
+    if (__atomic_compare_exchange_n(&s_usb_mount_state[usb], &expected, 1,
+                                    false, __ATOMIC_ACQ_REL, __ATOMIC_ACQUIRE)) {
+      break;
+    }
+    if (expected == 2) {
+      return 1;
+    }
+    // The other core is mounting it.
+    CTimer::SimpleusDelay(100);
+  }
 
+  FATFS *fs = usb == 0 ? &mFileSystemUSB1 : usb == 1 ? &mFileSystemUSB2 : &mFileSystemUSB3;
+  if (f_mount(fs, kUSBVolumes[usb], 1) != FR_OK) {
+    mLogger.Write(GetKernelName(), LogError, "Cannot mount usb %d", usb);
+    __atomic_store_n(&s_usb_mount_state[usb], 0, __ATOMIC_RELEASE);
+    return 0;
+  }
+  __atomic_store_n(&s_usb_mount_state[usb], 2, __ATOMIC_RELEASE);
   return 1;
+}
+
+int ViceStdioApp::circle_usb_stick_ready(int usb) {
+  int available[3];
+  circle_find_usb(&available);
+  if (usb < 0 || usb > 2 || !available[usb]) {
+    return 0;
+  }
+  return circle_mount_usb(usb);
 }
 
 int ViceStdioApp::circle_unmount_usb(int usb) {
@@ -1019,6 +1038,7 @@ int ViceStdioApp::circle_unmount_usb(int usb) {
        break;
      default: return 0;
   }
+  __atomic_store_n(&s_usb_mount_state[usb], 0, __ATOMIC_RELEASE);
 
   if (status != FR_OK) {
     mLogger.Write(GetKernelName(), LogError, "Cannot unmount usb %d", usb);
