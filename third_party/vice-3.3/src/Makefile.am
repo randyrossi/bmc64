@@ -3,6 +3,14 @@
 LINK = @LINKCC@ $(CFLAGS) $(LDFLAGS) -o $@
 CCLD = @LINKCC@
 
+# BMC64: run this directory's targets one at a time. The lib* targets below
+# each cd into a subdirectory, and several share one (libvic20, libvic20cart
+# and libmascuerade all build in vic20/cart). Under make -j they ran at once
+# and deleted each other's .deps files, leaving objects out of the library.
+# Sub-makes still get the job server, so each subdirectory compiles in
+# parallel.
+.NOTPARALLEL:
+
 ARCH_LIBS = @ARCH_LIBS@
 
 if DUMMY_COMPILE
