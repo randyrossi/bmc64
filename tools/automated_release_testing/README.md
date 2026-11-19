@@ -9,7 +9,7 @@ and HDMI video/audio capture.
 Every test has a name. `run_tests` runs all of them; `run_tests --list` lists
 them and `run_tests TEST...` runs only the named tests. Folder names select
 suites: `run_tests boot` runs the six boot/typing tests, and `run_tests basic`
-runs the C64 diagnostic, and `run_tests webui` runs the Web UI upload test.
+runs the C64 diagnostic, and `run_tests webui` runs the two Web UI tests.
 Existing individual names are unchanged.
 
 **Profile boot/typing tests** (`c64-boot-typing` ... `pet-boot-typing`):
@@ -77,6 +77,19 @@ not covered by that validation.
 A Web UI tab open in a browser on the same PC is fine, but its spare
 connections can hold up an upload for a couple of seconds: the Web UI handles
 one connection at a time and drops an idle one after 2 s, without logging it.
+
+**Web UI spare connections** (`webui-spare-connection`):
+
+- Does what a browser that opens connections before it needs them (Safari)
+  does: opens a TCP connection to the Web UI, sends nothing for 3 s, then
+  10 s (one connection each), then asks for `/api/status` on it. Fails if
+  the connection was closed without an answer (`spare_dropped`), as builds
+  that drop an idle connection after 2 s do.
+- With a spare connection sitting idle, asks for `/api/status` on a new
+  connection and fails if the answer takes more than 1 s (`spare_holds_up`).
+- Saves each spare's wait and reply time in `spares.json`, then checks the
+  Web UI still answers. Uses the C64 test profile without restarting it if
+  it is already running.
 
 To test uploads over a lossy network, add packet loss on the PC's interface
 to the Pi while it runs (Linux; remove it afterwards):
