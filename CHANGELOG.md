@@ -1,3 +1,6 @@
+## 5.5.3 (pre-release)
+  * Fix the web UI failing in Safari: idle connections stay open until a request arrives
+  
 ## 5.5.2 (pre-release)
   * Web UI: Add support for USB sticks, including displaying in the sidebar
 
