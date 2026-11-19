@@ -50,7 +50,7 @@ for a suite base class when only one test uses the procedure.
 ./run_tests --list                   # stable IDs, descriptions and suite names
 ./run_tests boot                     # six boot/typing tests
 ./run_tests basic                    # C64 diagnostic
-./run_tests webui                    # Web UI upload batch
+./run_tests webui                    # Web UI upload batch and spare connections
 ./run_tests pet-boot-typing
 ./run_tests boot c64-default
 ```

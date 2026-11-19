@@ -156,15 +156,16 @@ class FrameworkTests(unittest.TestCase):
         self.assertEqual(events, ["remaining"])
         self.assertEqual(context.report["cleanup_errors"], ["broken: close failed"])
 
-    def test_discovery_finds_only_eight_executable_test_modules(self):
+    def test_discovery_finds_only_nine_executable_test_modules(self):
         tests = discover()
         self.assertEqual([test.name for test in tests], [
             "c64-boot-typing", "c128-boot-typing", "vic20-boot-typing",
             "plus4-boot-typing", "plus4emu-boot-typing", "pet-boot-typing", "c64-default",
-            "webui-upload-batch"])
+            "webui-upload-batch", "webui-spare-connection"])
         self.assertTrue(all(test.__module__.split(".")[-1].startswith("test_") for test in tests))
         self.assertTrue(all("unit_tests" not in test.__module__ for test in tests))
-        self.assertEqual([test.suite for test in tests], ["boot"] * 6 + ["basic", "webui"])
+        self.assertEqual([test.suite for test in tests],
+                         ["boot"] * 6 + ["basic", "webui", "webui"])
 
     def test_boot_files_own_their_layouts_and_explicit_test_flow(self):
         from tests.boot.base import BootTypingTest
