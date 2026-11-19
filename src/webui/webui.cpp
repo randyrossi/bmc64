@@ -17,10 +17,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
-// Minimal HTTP/1.1 server for the BMC64 LAN web UI. Runs as a single
-// Circle scheduler task on the kernel/networking core (core 0). It never
-// runs on the emulator core; long I/O loops yield so the cooperative
-// scheduler keeps servicing the network stack and other tasks.
+// Minimal HTTP/1.1 server for the BMC64 LAN web UI. Runs as two Circle
+// scheduler tasks on the kernel/networking core (core 0): one accepts
+// connections, the other answers the requests on them, one at a time, in
+// the order they arrive. Connections are kept open until a request arrives
+// on one, so a browser's spare connections neither hold up nor lose
+// requests. It never runs on the emulator core; long I/O loops yield so
+// the cooperative scheduler keeps servicing the network stack and other
+// tasks.
 //
 // Endpoints: GET static assets, GET /api/status, POST /api/reboot,
 // POST /api/shutdown, POST /api/reset, GET /api/volumes, GET /api/fs/list, GET /api/fs/download,
@@ -88,11 +92,13 @@ extern "C" void menu_profiles_clear_start_error(void);
 #define WEBUI_TASK_STACK       0x10000
 #define WEBUI_REQUEST_MAX      4096
 #define WEBUI_SLOW_HEADER_MS   1000
-// Browsers open spare connections that send nothing until needed. Requests
-// are handled one at a time, so an idle one would hold up the rest for the
-// whole receive timeout; drop it sooner. 2 s still lets a real request
-// through when its first packet is lost and resent.
-#define WEBUI_FIRST_BYTE_MS    2000
+// Browsers open spare connections that send nothing until needed. Up to
+// this many are kept open, each until it sends a request, is closed by the
+// browser, or has been idle this long; with all in use, the one idle the
+// longest makes way for a new one.
+#define WEBUI_MAX_CONNECTIONS  8
+#define WEBUI_IDLE_MS          30000
+#define WEBUI_POLL_MS          5
 #define WEBUI_LISTEN_BACKLOG   8
 #define WEBUI_PIN_MAX          16
 #define WEBUI_AUTH_FAIL_MS     500  // slow brute-forcing a wrong PIN
@@ -310,9 +316,53 @@ void HandleStatus(CSocket *socket) {
 }
 
 // Server lifecycle flags. s_started guards against a second task;
-// g_webui_stop is set by POST /api/webui/disable to end the accept loop.
+// g_webui_stop is set by POST /api/webui/disable to end both tasks.
 boolean s_started = FALSE;
 boolean g_webui_stop = FALSE;
+
+// The open connections no request has arrived on yet. Both tasks run on
+// core 0's scheduler, which switches only when a task yields, so they share
+// this without a lock.
+struct TConnection {
+  CSocket *socket;
+  CIPAddress ip;
+  u16 port;
+  u64 since;  // clock ticks
+};
+TConnection s_connections[WEBUI_MAX_CONNECTIONS];
+unsigned s_connection_count = 0;
+
+// The first part of a request, read while looking for one.
+char s_first[WEBUI_REQUEST_MAX];
+
+void RemoveConnection(unsigned i) {
+  s_connection_count--;
+  if (i != s_connection_count) {
+    TConnection &last = s_connections[s_connection_count];
+    s_connections[i].socket = last.socket;
+    s_connections[i].ip.Set(last.ip);
+    s_connections[i].port = last.port;
+    s_connections[i].since = last.since;
+  }
+}
+
+void AddConnection(CSocket *socket, const CIPAddress &ip, u16 port) {
+  if (s_connection_count == WEBUI_MAX_CONNECTIONS) {
+    unsigned oldest = 0;
+    for (unsigned i = 1; i < s_connection_count; i++) {
+      if (s_connections[i].since < s_connections[oldest].since) {
+        oldest = i;
+      }
+    }
+    delete s_connections[oldest].socket;
+    RemoveConnection(oldest);
+  }
+  TConnection &c = s_connections[s_connection_count++];
+  c.socket = socket;
+  c.ip.Set(ip);
+  c.port = port;
+  c.since = CTimer::GetClockTicks64();
+}
 
 // HTTP Basic Auth PIN; empty means the server is open.
 char s_pin[WEBUI_PIN_MAX] = {0};
@@ -429,43 +479,41 @@ void Send401(CSocket *socket) {
   }
 }
 
+// Answers the request that starts with the FIRST_LENGTH bytes in FIRST.
 boolean HandleConnection(CSocket *socket, const CIPAddress &client_ip,
-                         u16 client_port) {
+                         u16 client_port, const char *first,
+                         unsigned first_length) {
   char request[WEBUI_REQUEST_MAX];
-  unsigned length = 0;
+  unsigned length = first_length;
+  memcpy(request, first, length);
   u64 header_start = CTimer::GetClockTicks64();
   for (;;) {
+    request[length] = '\0';
+    if (strstr(request, "\r\n\r\n") != 0) {
+      break;
+    }
     if (length >= sizeof(request) - 1) {
       SendText(socket, 431, "Request Header Fields Too Large",
                "request too large\n");
       return FALSE;
     }
     int n = webhttp::Receive(socket, request + length,
-                             sizeof(request) - 1 - length,
-                             length == 0 ? WEBUI_FIRST_BYTE_MS
-                                         : webhttp::RECEIVE_TIMEOUT_MS);
+                             sizeof(request) - 1 - length);
     if (n <= 0) {
-      // Client closed, timed out, or error. A browser's spare connection that
-      // never sent anything is normal, so only a request cut off part way
-      // is logged, with the client it came from.
-      if (length > 0) {
-        CString client;
-        client_ip.Format(&client);
-        CLogger::Get()->Write(WEBUI_LOG, LogNotice,
-                              "Dropped a connection after %lu ms: Receive "
-                              "returned %d with %u bytes of request, from %s:%u",
-                              (unsigned long) ((CTimer::GetClockTicks64() -
-                                                header_start) / (CLOCKHZ / 1000)),
-                              n, length, (const char *) client,
-                              (unsigned) client_port);
-      }
+      // Client closed, timed out, or error part way through a request:
+      // logged, with the client it came from.
+      CString client;
+      client_ip.Format(&client);
+      CLogger::Get()->Write(WEBUI_LOG, LogNotice,
+                            "Dropped a connection after %lu ms: Receive "
+                            "returned %d with %u bytes of request, from %s:%u",
+                            (unsigned long) ((CTimer::GetClockTicks64() -
+                                              header_start) / (CLOCKHZ / 1000)),
+                            n, length, (const char *) client,
+                            (unsigned) client_port);
       return FALSE;
     }
     length += (unsigned) n;
-    request[length] = '\0';
-    if (strstr(request, "\r\n\r\n") != 0) {
-      break;
-    }
   }
 
   // Headers normally arrive in a millisecond or two; a slow start to a
@@ -677,11 +725,12 @@ boolean HandleConnection(CSocket *socket, const CIPAddress &client_ip,
   return FALSE;
 }
 
-class CWebUiTask : public CTask {
+// Accepts connections and adds them to s_connections.
+class CWebUiListenTask : public CTask {
 public:
-  explicit CWebUiTask(CNetSubSystem *network)
+  explicit CWebUiListenTask(CNetSubSystem *network)
       : CTask(WEBUI_TASK_STACK), m_network(network) {
-    SetName("webui");
+    SetName("webui-listen");
   }
 
   void Run(void) override {
@@ -718,12 +767,11 @@ public:
         CScheduler::Get()->MsSleep(50);
         continue;
       }
-      HandleConnection(connection, client_ip, client_port);
-      delete connection;
       if (g_webui_stop) {
+        delete connection;
         break;
       }
-      CScheduler::Get()->Yield();
+      AddConnection(connection, client_ip, client_port);
     }
 
     // listener goes out of scope here, freeing the port.
@@ -733,6 +781,48 @@ public:
 
 private:
   CNetSubSystem *m_network;
+};
+
+// Waits for a request on any of s_connections and answers it; closes the
+// connections the browser has closed or that have been idle too long.
+class CWebUiTask : public CTask {
+public:
+  CWebUiTask(void) : CTask(WEBUI_TASK_STACK) { SetName("webui"); }
+
+  void Run(void) override {
+    const u64 idle_limit = (u64) WEBUI_IDLE_MS * (CLOCKHZ / 1000);
+    while (!g_webui_stop) {
+      boolean answered = FALSE;
+      for (unsigned i = 0; i < s_connection_count; i++) {
+        TConnection &c = s_connections[i];
+        int n = c.socket->Receive(s_first, sizeof(s_first) - 1, MSG_DONTWAIT);
+        if (n == 0 && CTimer::GetClockTicks64() - c.since < idle_limit) {
+          continue;
+        }
+        // A request, or a connection that is closed or idle too long: it
+        // leaves the list, which may change while the request is answered.
+        CSocket *socket = c.socket;
+        CIPAddress ip;
+        ip.Set(c.ip);
+        u16 port = c.port;
+        RemoveConnection(i);
+        if (n > 0) {
+          HandleConnection(socket, ip, port, s_first, (unsigned) n);
+          answered = TRUE;
+        }
+        delete socket;
+        break;
+      }
+      if (!answered) {
+        CScheduler::Get()->MsSleep(WEBUI_POLL_MS);
+      }
+    }
+
+    while (s_connection_count > 0) {
+      delete s_connections[0].socket;
+      RemoveConnection(0);
+    }
+  }
 };
 
 }  // namespace
@@ -747,7 +837,9 @@ void WebUiStart(CNetSubSystem *network, const char *pin) {
     strncpy(s_pin, pin, sizeof(s_pin) - 1);
     s_pin[sizeof(s_pin) - 1] = '\0';
   }
-  new CWebUiTask(network);  // registers itself with the scheduler
+  // Both register themselves with the scheduler.
+  new CWebUiListenTask(network);
+  new CWebUiTask();
 }
 
 #else  // no Circle networking on this machine build
