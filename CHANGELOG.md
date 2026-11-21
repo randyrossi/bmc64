@@ -1,4 +1,5 @@
 ## 5.5.3 (pre-release)
+  * Add directional repeat to BMC64 Updater menu
   * Fix the web UI failing in Safari: idle connections stay open until a request arrives
   
 ## 5.5.2 (pre-release)

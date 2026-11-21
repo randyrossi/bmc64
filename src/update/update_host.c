@@ -23,6 +23,7 @@
 #include "update_host.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #include "circle.h"
 #include "emux_api.h"
@@ -50,7 +51,32 @@ const char *uh_board_kernel(void) {
   }
 }
 
-void uh_take_screen(int active) { ui_set_external_owner(active); }
+// Held Up/Down repeat. Keyboard and joysticks share the UI key queue, so
+// each direction counts its presses minus releases.
+#define REPEAT_DELAY_US 400000
+#define REPEAT_RATE_US 60000
+
+static struct {
+  int held;
+  unsigned long next;
+} repeat[2];
+
+static void repeat_key(int key, int pressed) {
+  int i = key == UH_KEY_UP ? 0 : 1;
+  if (pressed) {
+    if (!repeat[i].held) {
+      repeat[i].next = circle_get_ticks() + REPEAT_DELAY_US;
+    }
+    repeat[i].held++;
+  } else if (repeat[i].held) {
+    repeat[i].held--;
+  }
+}
+
+void uh_take_screen(int active) {
+  memset(repeat, 0, sizeof(repeat));
+  ui_set_external_owner(active);
+}
 
 int uh_begin_frame(int *left, int *top) {
   return ui_external_begin_frame(left, top);
@@ -83,9 +109,11 @@ int uh_read_key(int *key, int *pressed) {
     switch (code) {
     case KEYCODE_Up:
       *key = UH_KEY_UP;
+      repeat_key(*key, *pressed);
       return 1;
     case KEYCODE_Down:
       *key = UH_KEY_DOWN;
+      repeat_key(*key, *pressed);
       return 1;
     case KEYCODE_Left:
       *key = UH_KEY_LEFT;
@@ -109,6 +137,15 @@ int uh_read_key(int *key, int *pressed) {
       return 1;
     default:
       break; // Ignore everything else.
+    }
+  }
+  unsigned long now = circle_get_ticks();
+  for (int i = 0; i < 2; i++) {
+    if (repeat[i].held && (long)(now - repeat[i].next) >= 0) {
+      repeat[i].next = now + REPEAT_RATE_US;
+      *key = i == 0 ? UH_KEY_UP : UH_KEY_DOWN;
+      *pressed = 1;
+      return 1;
     }
   }
   return 0;

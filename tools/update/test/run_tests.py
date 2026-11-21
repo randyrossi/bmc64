@@ -21,10 +21,10 @@
 
 """Host tests for the BMC64 updater (src/update/).
 
-Builds the planner/apply/zip code with the PC's C compiler against a folder
-that stands in for the SD card, then runs update scenarios end to end with
-synthetic releases: plan, apply, backups, downgrade, repair, bad packages and
-power cuts at every step of the commit.
+Tests the updater's input, then builds the planner/apply/zip code with the
+PC's C compiler against a folder that stands in for the SD card. It runs
+update scenarios with synthetic releases: plan, apply, backups, downgrade,
+repair, bad packages and power cuts at every step of the commit.
 
   python3 tools/update/test/run_tests.py
   python3 tools/update/test/run_tests.py --cache DIR   # also a real-release
@@ -84,6 +84,19 @@ def build(work):
     cmd += [os.path.join(SRC, s) for s in SOURCES] + objs
     subprocess.run(cmd, check=True)
     return exe
+
+
+def test_input(work):
+    exe = os.path.join(work, "input_test")
+    cc = os.environ.get("HOST_CC", "cc")
+    subprocess.run([
+        cc, "-std=gnu11", "-Wall", "-Wextra", "-Werror",
+        "-ffunction-sections", "-fdata-sections", "-Wl,--gc-sections",
+        "-I", SRC, "-I", os.path.join(REPO, "third_party", "common"),
+        "-o", exe, os.path.join(HERE, "input_test.c"),
+        os.path.join(SRC, "update_host.c")
+    ], check=True)
+    subprocess.run([exe], check=True)
 
 
 def cli(exe, card, *args, crash_after=None, free_kb=None):
@@ -653,6 +666,7 @@ def main():
     opts = ap.parse_args()
     work = tempfile.mkdtemp(prefix="bmc64-update-test-")
     try:
+        test_input(work)
         exe = build(work)
         test_inflate(exe, work)
         hist, stage0, zip0, stage1, zip1 = test_update(exe, work)

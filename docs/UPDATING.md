@@ -43,8 +43,8 @@ version). It lists every file that differs from the new version:
 | **New** | A file the new version adds | Add |
 | **Changed** | A file you changed (it matches no release) | Keep |
 
-Use Up/Down (keyboard or joystick) to move and Return, Space or Fire to switch
-a file between Replace and Keep. A group heading switches the whole group.
+Use Up/Down (keyboard or joystick) to move and hold either direction to repeat.
+Use Return, Space or Fire to switch a file between Replace and Keep. A group heading switches the whole group.
 `start.elf` and `fixup.dat` always switch together. Replacing `config.txt` or
 `cmdline.txt` resets the machine and video mode to the release's defaults.
 

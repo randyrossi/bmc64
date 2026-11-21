@@ -49,8 +49,8 @@ struct uh_colors {
 };
 void uh_colors(struct uh_colors *c);
 
-// Input. Returns 1 and a key code (UH_KEY_*) if a key was pressed or
-// released since the last call.
+// Input. Returns 1 and a key code (UH_KEY_*) for a press or release;
+// held Up and Down also produce repeated presses.
 enum {
   UH_KEY_NONE,
   UH_KEY_UP,
